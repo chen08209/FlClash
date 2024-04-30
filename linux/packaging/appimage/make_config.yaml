@@ -1,0 +1,19 @@
+display_name: FlClash
+
+icon: ./assets/images/launch_icon.png
+
+keywords:
+  - FlClash
+  - Clash
+  - ClashMeta
+  - Proxy
+
+generic_name: FlClash
+
+
+categories:
+  - Network
+
+startup_notify: true
+
+include: []

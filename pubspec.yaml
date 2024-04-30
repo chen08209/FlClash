@@ -1,0 +1,63 @@
+name: fl_clash
+description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
+publish_to: 'none'
+version: 0.7.0
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.18.1
+  path_provider: ^2.1.0
+  path: ^1.8.3
+  shared_preferences: ^2.2.0
+  provider: ^6.0.5
+  window_manager: ^0.3.8
+  ffi: ^2.1.0
+  dynamic_color: ^1.7.0
+  proxy:
+    path: plugins/proxy
+  launch_at_startup: ^0.2.2
+  windows_single_instance: ^1.0.1
+  json_annotation: ^4.9.0
+  http: ^1.2.0
+  file_picker: ^6.1.1
+  mobile_scanner: ^5.0.1
+  app_links: ^3.5.0
+  win32_registry: ^1.1.2
+  tray_manager: ^0.2.1
+  collection: ^1.18.0
+  animations: ^2.0.11
+  package_info_plus: ^7.0.0
+  url_launcher: ^6.2.6
+  flutter_adaptive_scaffold: ^0.1.10+1
+  freezed_annotation: ^2.4.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  ffigen: ^11.0.0
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.9
+  args: ^2.4.2
+  freezed: ^2.5.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/geoip.metadb
+    - assets/images/
+ffigen:
+  name: "ClashFFI"
+  output: 'lib/clash/generated/clash_ffi.dart'
+  headers:
+    entry-points:
+      - 'libclash/android/arm64-v8a/libclash.h'
+flutter_intl:
+  enabled: true
+  class_name: AppLocalizations
+  arb_dir: lib/l10n/arb
+  output_dir: lib/l10n

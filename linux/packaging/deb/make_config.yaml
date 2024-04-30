@@ -1,0 +1,25 @@
+display_name: FlClash
+package_name: FlClash
+maintainer:
+  name: chen08209
+  email: chen08209@gmail.com
+
+priority: optional
+section: x11
+installed_size: 6604
+essential: false
+icon: ./assets/images/launch_icon.png
+
+
+keywords:
+  - FlClash
+  - Clash
+  - ClashMeta
+  - Proxy
+
+generic_name: FlClash
+
+categories:
+  - Network
+
+startup_notify: true

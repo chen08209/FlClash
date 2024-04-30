@@ -1,0 +1,112 @@
+import com.android.build.gradle.tasks.MergeSourceSetFolders
+
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+def defStoreFile = file("keystore.jks")
+def defStorePassword = localProperties.getProperty('storePassword')
+def defKeyAlias = localProperties.getProperty('keyAlias')
+def defKeyPassword = localProperties.getProperty('keyPassword')
+def isRelease = defStoreFile.exists() && defStorePassword != null && defKeyAlias != null && defKeyPassword != null
+
+android {
+    namespace "com.follow.clash"
+    compileSdkVersion 34
+    ndkVersion "25.1.8937393"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+    signingConfigs {
+        if (isRelease){
+            release {
+                storeFile defStoreFile
+                storePassword defStorePassword
+                keyAlias defKeyAlias
+                keyPassword defKeyPassword
+            }
+        }
+    }
+
+
+    defaultConfig {
+        applicationId "com.follow.clash"
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            applicationIdSuffix '.debug'
+        }
+        release {
+            minifyEnabled true
+            if(isRelease){
+                signingConfig signingConfigs.release
+            }else{
+                signingConfig signingConfigs.debug
+            }
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+}
+
+tasks.register('copyNativeLibs', Copy) {
+    delete('src/main/jniLibs')
+    from('../../libclash/android')
+    into('src/main/jniLibs')
+}
+
+tasks.withType(MergeSourceSetFolders).configureEach {
+    dependsOn copyNativeLibs
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'com.google.code.gson:gson:2.10'
+}
+
+
+afterEvaluate {
+    assembleDebug.dependsOn copyNativeLibs
+
+    assembleRelease.dependsOn copyNativeLibs
+}
