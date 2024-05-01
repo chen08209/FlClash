@@ -10,12 +10,12 @@
 
 on Desktop:
 <p style="text-align: center;">
-    <img src="snapshots/desktop.gif">
+    <img alt="desktop" src="snapshots/desktop.gif">
 </p>
 
 on Mobile:
 <p style="text-align: center;">
-    <img src="snapshots/mobile.gif">
+    <img alt="mobile" src="snapshots/mobile.gif">
 </p>
 
 ## Features
@@ -27,6 +27,10 @@ on Mobile:
 💡 基本 Material You 设计, 类[Surfboard](https://github.com/getsurfboard/surfboard)用户界面
 
 ✨ 支持一键导入订阅, 深色模式
+
+## Contact
+
+[Telegram](https://t.me/+G-veVtwBOl4wODc1)
 
 ## Build
 
