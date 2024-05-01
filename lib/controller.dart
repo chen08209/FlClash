@@ -71,28 +71,10 @@ class AppController {
   }
 
   changeProxy() {
-    final currentGroupName =
-        appState.getCurrentGroupName(config.currentGroupName, clashConfig.mode);
-    final currentProxyName =
-        appState.getCurrentProxyName(config.currentProxyName, clashConfig.mode);
-    if (config.profiles.isEmpty || currentProxyName == null) {
-      updateSystemProxy(false);
-      return;
-    }
-    if (currentGroupName == null) return;
-    final groupIndex = appState.groups.indexWhere(
-      (element) => element.name == currentGroupName,
-    );
-    if (groupIndex == -1) return;
-    final proxyIndex = appState.groups[groupIndex].all.indexWhere(
-      (element) => element.name == currentProxyName,
-    );
-    if (proxyIndex == -1) return;
-    clashCore.changeProxy(
-      ChangeProxyParams(
-        groupName: currentGroupName,
-        proxyName: currentProxyName,
-      ),
+    globalState.changeProxy(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
     );
   }
 
@@ -226,7 +208,6 @@ class AppController {
 
   afterInit() async {
     if (appState.isInit) {
-      changeProxy();
       if (config.autoRun) {
         await updateSystemProxy(true);
       } else {

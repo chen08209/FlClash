@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:animations/animations.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
@@ -107,6 +108,41 @@ class GlobalState {
     );
     updateGroups(appState);
     updateCoreVersionInfo(appState);
+    changeProxy(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
+    );
+  }
+
+  changeProxy({
+    required AppState appState,
+    required Config config,
+    required ClashConfig clashConfig,
+  }) {
+    final currentGroupName =
+        appState.getCurrentGroupName(config.currentGroupName, clashConfig.mode);
+    final currentProxyName =
+        appState.getCurrentProxyName(config.currentProxyName, clashConfig.mode);
+    if (config.profiles.isEmpty || currentProxyName == null) {
+      stopSystemProxy();
+      return;
+    }
+    if (currentGroupName == null) return;
+    final groupIndex = appState.groups.indexWhere(
+      (element) => element.name == currentGroupName,
+    );
+    if (groupIndex == -1) return;
+    final proxyIndex = appState.groups[groupIndex].all.indexWhere(
+      (element) => element.name == currentProxyName,
+    );
+    if (proxyIndex == -1) return;
+    clashCore.changeProxy(
+      ChangeProxyParams(
+        groupName: currentGroupName,
+        proxyName: currentProxyName,
+      ),
+    );
   }
 
   updatePackages(AppState appState) async {
@@ -198,7 +234,7 @@ class GlobalState {
     required Config config,
   }) {
     final traffic = clashCore.getTraffic();
-    if(appState != null){
+    if (appState != null) {
       appState.addTraffic(traffic);
     }
     if (Platform.isAndroid) {
