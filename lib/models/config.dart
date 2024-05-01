@@ -87,7 +87,7 @@ class Config extends ChangeNotifier {
         _isMinimizeOnExit = true,
         _isAccessControl = false,
         _accessControl = AccessControl(),
-        _isAnimateToPage = false;
+        _isAnimateToPage = true;
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
