@@ -10,12 +10,12 @@ A multi-platform proxy client based on ClashMeta, simple and easy to use, open-s
 
 on Desktop:
 <p style="text-align: center;">
-    <img src="snapshots/desktop.gif">
+    <img alt="desktop" src="snapshots/desktop.gif">
 </p>
 
 on Mobile:
 <p style="text-align: center;">
-    <img src="snapshots/mobile.gif">
+    <img alt="mobile" src="snapshots/mobile.gif">
 </p>
 
 ## Features
@@ -27,6 +27,10 @@ on Mobile:
 💡 Based on Material You Design, [Surfboard](https://github.com/getsurfboard/surfboard)-like UI
 
 ✨ Support subscription link, Dark mode
+
+## Contact
+
+[Telegram](https://t.me/+G-veVtwBOl4wODc1)
 
 ## Build
 
@@ -82,3 +86,6 @@ on Mobile:
            ```bash
            dart .\setup.dart	
            ```
+           
+
+    
