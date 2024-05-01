@@ -258,10 +258,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_adaptive_scaffold
-      sha256: "600bbe237530a249f957f7d0f36273c20bd38d137e28e098c5231c30cadbe927"
+      sha256: "9a1d5e9f728815e27b7b612883db19107ba8a35a46a97c757ea00896cb027451"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.1.10+1"
+    version: "0.1.10+2"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -957,10 +957,10 @@ packages:
     dependency: "direct main"
     description:
       name: win32_registry
-      sha256: "41fd8a189940d8696b1b810efb9abcf60827b6cbfab90b0c43e8439e3a39d85a"
+      sha256: "10589e0d7f4e053f2c61023a31c9ce01146656a70b7b7f0828c0b46d7da2a9bb"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.1.2"
+    version: "1.1.3"
   window_manager:
     dependency: "direct main"
     description:
