@@ -25,7 +25,8 @@ class FlClashVpnService : VpnService() {
 
     private val CHANNEL = "FlClash"
 
-    var fd: Int? = null;
+    var fd: Int? = null
+    private val notificationId: Int = 1
 
     private val passList = listOf(
         "*zhihu.com",
@@ -100,11 +101,12 @@ class FlClashVpnService : VpnService() {
     fun startForeground(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel =
-                NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_DEFAULT)
+                NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
 
             val intent = Intent(this, MainActivity::class.java)
+
             val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.getActivity(
                     this,
@@ -120,7 +122,9 @@ class FlClashVpnService : VpnService() {
                     PendingIntent.FLAG_UPDATE_CURRENT
                 )
             }
+
             val icon = IconCompat.createWithResource(this, this.applicationInfo.icon)
+
             val notification = with(NotificationCompat.Builder(this, CHANNEL)) {
                 setSmallIcon(icon)
                 setContentTitle(title)
@@ -132,12 +136,13 @@ class FlClashVpnService : VpnService() {
                 build()
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(1, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+                startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
             } else {
-                startForeground(1, notification)
+                startForeground(notificationId, notification)
             }
         }
     }
+
     private fun stopForeground() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             stopForeground(Service.STOP_FOREGROUND_REMOVE)
