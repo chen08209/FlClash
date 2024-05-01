@@ -78,6 +78,7 @@ Future<void> vpnService() async {
       TileListenerWithVpn(
         onStop: () async {
           await app?.tip(appLocalizations.stopVpn);
+          await globalState.stopSystemProxy();
           clashCore.shutdown();
           exit(0);
         },
