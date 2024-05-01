@@ -37,13 +37,11 @@ class FlClashTileService : TileService() {
         }
     }
 
-
     override fun onStartListening() {
         super.onStartListening()
         GlobalState.runState.value?.let { updateTile(it) }
         GlobalState.runState.observeForever(observer)
     }
-
 
     @SuppressLint("StartActivityAndCollapseDeprecated")
     private fun activityTransfer() {
@@ -88,7 +86,7 @@ class FlClashTileService : TileService() {
             if(currentTilePlugin == null){
                 initFlutterEngine()
             }else{
-                currentTilePlugin?.handleStart()
+                currentTilePlugin.handleStart()
             }
         } else if(GlobalState.runState.value == RunState.START){
             GlobalState.runState.value = RunState.PENDING
@@ -96,7 +94,6 @@ class FlClashTileService : TileService() {
         }
 
     }
-
 
     override fun onDestroy() {
         GlobalState.runState.removeObserver(observer)
