@@ -74,14 +74,19 @@ class ClashCore {
     final proxiesRawString = proxiesRaw.cast<Utf8>().toDartString();
     return Isolate.run<List<Group>>(() {
       final proxies = json.decode(proxiesRawString);
-      final groupNames =
-          (proxies[UsedProxy.GLOBAL.name]["all"] as List).where((e) {
-        final proxy = proxies[e];
-        return GroupTypeExtension.valueList.contains(proxy['type']);
-      });
-      final groupsRaw = [UsedProxy.GLOBAL.name, ...groupNames].map((groupName) {
+      final groupNames = [
+        UsedProxy.GLOBAL.name,
+        ...(proxies[UsedProxy.GLOBAL.name]["all"] as List).where((e) {
+          final proxy = proxies[e];
+          return GroupTypeExtension.valueList.contains(proxy['type']);
+        })
+      ];
+      final groupsRaw = groupNames.map((groupName) {
         final group = proxies[groupName];
         group["all"] = ((group["all"] ?? []) as List)
+            .where(
+              (name) => !groupNames.contains(groupNames),
+            )
             .map(
               (name) => proxies[name],
             )

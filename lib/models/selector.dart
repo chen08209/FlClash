@@ -111,3 +111,10 @@ class ProxiesSelectorState with _$ProxiesSelectorState{
   }) = _ProxiesSelectorState;
 }
 
+@freezed
+class ProxiesCardSelectorState with _$ProxiesCardSelectorState{
+  const factory ProxiesCardSelectorState({
+    required String? currentGroupName,
+    required String? currentProxyName,
+  }) = _ProxiesCardSelectorState;
+}
