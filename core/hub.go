@@ -82,7 +82,7 @@ func updateConfig(s *C.char) bool {
 
 //export getProxies
 func getProxies() *C.char {
-	data, err := json.Marshal(tunnel.Proxies())
+	data, err := json.Marshal(tunnel.ProxiesWithProviders())
 	if err != nil {
 		return C.CString("")
 	}
@@ -234,7 +234,6 @@ func getProviders() *C.char {
 	}
 	return C.CString(string(data))
 }
-
 
 //export getProvider
 func getProvider(name *C.char) *C.char {
