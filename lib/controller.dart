@@ -127,7 +127,7 @@ class AppController {
     if (value == config.currentProfileId) return;
     config.currentProfileId = value;
     await updateClashConfig(isPatch: false);
-    updateGroups();
+    await updateGroups();
     changeProxy();
     appState.delayMap = {};
     saveConfigPreferences();
@@ -144,13 +144,13 @@ class AppController {
       if (isNotNeedUpdate == false) continue;
       final result = await profile.update();
       if (result.type == ResultType.error) continue;
-      updateGroups();
+      await updateGroups();
       changeProxy();
     }
   }
 
-  updateGroups() {
-    globalState.updateGroups(appState);
+  Future<void> updateGroups() async {
+    await globalState.updateGroups(appState);
   }
 
   updateSystemColorSchemes(SystemColorSchemes systemColorSchemes) {

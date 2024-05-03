@@ -165,17 +165,24 @@ class AppState with ChangeNotifier {
     }
   }
 
-  String? getCurrentGroupName(String? groupName, Mode mode) {
-    final currentGroups = getCurrentGroups(mode);
+  String? getCurrentGroupNameWithGroups(
+    List<Group> groups,
+    String? groupName,
+    Mode mode,
+  ) {
     switch (mode) {
       case Mode.direct:
         return null;
       case Mode.global:
         return UsedProxy.GLOBAL.name;
       case Mode.rule:
-        return groupName ??
-            (currentGroups.isNotEmpty ? currentGroups.first.name : null);
+        return groupName ?? (groups.isNotEmpty ? groups.first.name : null);
     }
+  }
+
+  String? getCurrentGroupName(String? groupName, Mode mode) {
+    final currentGroups = getCurrentGroups(mode);
+    return getCurrentGroupNameWithGroups(currentGroups, groupName, mode);
   }
 
   String? getCurrentProxyName(String? proxyName, Mode mode) {

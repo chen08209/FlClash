@@ -21,7 +21,7 @@ import (
 	"unsafe"
 )
 
-var currentConfig *config.RawConfig
+var currentConfig = config.DefaultRawConfig()
 
 var isInit = false
 
@@ -234,6 +234,7 @@ func getProviders() *C.char {
 	}
 	return C.CString(string(data))
 }
+
 
 //export getProvider
 func getProvider(name *C.char) *C.char {

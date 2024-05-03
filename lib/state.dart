@@ -166,8 +166,8 @@ class GlobalState {
     );
   }
 
-  updateGroups(AppState appState) {
-    appState.groups = clashCore.getProxiesGroups();
+  Future<void> updateGroups(AppState appState) async {
+    appState.groups =  await clashCore.getProxiesGroups();
   }
 
   showMessage({
