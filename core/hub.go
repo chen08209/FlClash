@@ -98,7 +98,7 @@ func changeProxy(s *C.char) bool {
 		log.Infoln("Unmarshal ChangeProxyParams %v", err)
 		return false
 	}
-	proxies := tunnel.Proxies()
+	proxies := tunnel.ProxiesWithProviders()
 	proxy := proxies[*params.GroupName]
 	if proxy == nil {
 		return false
@@ -148,7 +148,7 @@ func asyncTestDelay(s *C.char) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
 		defer cancel()
 
-		proxies := tunnel.Proxies()
+		proxies := tunnel.ProxiesWithProviders()
 		proxy := proxies[params.ProxyName]
 
 		delayData := &Delay{
