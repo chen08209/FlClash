@@ -1887,3 +1887,148 @@ abstract class _ProxiesSelectorState implements ProxiesSelectorState {
   _$$ProxiesSelectorStateImplCopyWith<_$ProxiesSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
+
+/// @nodoc
+mixin _$ProxiesCardSelectorState {
+  String? get currentGroupName => throw _privateConstructorUsedError;
+  String? get currentProxyName => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $ProxiesCardSelectorStateCopyWith<ProxiesCardSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxiesCardSelectorStateCopyWith<$Res> {
+  factory $ProxiesCardSelectorStateCopyWith(ProxiesCardSelectorState value,
+          $Res Function(ProxiesCardSelectorState) then) =
+      _$ProxiesCardSelectorStateCopyWithImpl<$Res, ProxiesCardSelectorState>;
+  @useResult
+  $Res call({String? currentGroupName, String? currentProxyName});
+}
+
+/// @nodoc
+class _$ProxiesCardSelectorStateCopyWithImpl<$Res,
+        $Val extends ProxiesCardSelectorState>
+    implements $ProxiesCardSelectorStateCopyWith<$Res> {
+  _$ProxiesCardSelectorStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? currentGroupName = freezed,
+    Object? currentProxyName = freezed,
+  }) {
+    return _then(_value.copyWith(
+      currentGroupName: freezed == currentGroupName
+          ? _value.currentGroupName
+          : currentGroupName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      currentProxyName: freezed == currentProxyName
+          ? _value.currentProxyName
+          : currentProxyName // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxiesCardSelectorStateImplCopyWith<$Res>
+    implements $ProxiesCardSelectorStateCopyWith<$Res> {
+  factory _$$ProxiesCardSelectorStateImplCopyWith(
+          _$ProxiesCardSelectorStateImpl value,
+          $Res Function(_$ProxiesCardSelectorStateImpl) then) =
+      __$$ProxiesCardSelectorStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String? currentGroupName, String? currentProxyName});
+}
+
+/// @nodoc
+class __$$ProxiesCardSelectorStateImplCopyWithImpl<$Res>
+    extends _$ProxiesCardSelectorStateCopyWithImpl<$Res,
+        _$ProxiesCardSelectorStateImpl>
+    implements _$$ProxiesCardSelectorStateImplCopyWith<$Res> {
+  __$$ProxiesCardSelectorStateImplCopyWithImpl(
+      _$ProxiesCardSelectorStateImpl _value,
+      $Res Function(_$ProxiesCardSelectorStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? currentGroupName = freezed,
+    Object? currentProxyName = freezed,
+  }) {
+    return _then(_$ProxiesCardSelectorStateImpl(
+      currentGroupName: freezed == currentGroupName
+          ? _value.currentGroupName
+          : currentGroupName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      currentProxyName: freezed == currentProxyName
+          ? _value.currentProxyName
+          : currentProxyName // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ProxiesCardSelectorStateImpl implements _ProxiesCardSelectorState {
+  const _$ProxiesCardSelectorStateImpl(
+      {required this.currentGroupName, required this.currentProxyName});
+
+  @override
+  final String? currentGroupName;
+  @override
+  final String? currentProxyName;
+
+  @override
+  String toString() {
+    return 'ProxiesCardSelectorState(currentGroupName: $currentGroupName, currentProxyName: $currentProxyName)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxiesCardSelectorStateImpl &&
+            (identical(other.currentGroupName, currentGroupName) ||
+                other.currentGroupName == currentGroupName) &&
+            (identical(other.currentProxyName, currentProxyName) ||
+                other.currentProxyName == currentProxyName));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, currentGroupName, currentProxyName);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxiesCardSelectorStateImplCopyWith<_$ProxiesCardSelectorStateImpl>
+      get copyWith => __$$ProxiesCardSelectorStateImplCopyWithImpl<
+          _$ProxiesCardSelectorStateImpl>(this, _$identity);
+}
+
+abstract class _ProxiesCardSelectorState implements ProxiesCardSelectorState {
+  const factory _ProxiesCardSelectorState(
+          {required final String? currentGroupName,
+          required final String? currentProxyName}) =
+      _$ProxiesCardSelectorStateImpl;
+
+  @override
+  String? get currentGroupName;
+  @override
+  String? get currentProxyName;
+  @override
+  @JsonKey(ignore: true)
+  _$$ProxiesCardSelectorStateImplCopyWith<_$ProxiesCardSelectorStateImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}

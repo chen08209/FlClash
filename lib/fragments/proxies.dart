@@ -194,7 +194,7 @@ class _ProxiesTabViewState extends State<ProxiesTabView>
     _controller.dispose();
   }
 
-  get group => widget.group;
+  Group get group => widget.group;
 
   get measure => context.appController.measure;
 
@@ -374,17 +374,26 @@ class _ProxiesTabViewState extends State<ProxiesTabView>
           return ObjectKey(item);
         },
         builder: (_, proxy) {
-          return Selector3<AppState, Config, ClashConfig, String?>(
+          return Selector3<AppState, Config, ClashConfig,
+              ProxiesCardSelectorState>(
             selector: (_, appState, config, clashConfig) =>
-                appState.getCurrentProxyName(
-              config.currentProxyName,
-              clashConfig.mode,
+                ProxiesCardSelectorState(
+              currentGroupName: appState.getCurrentGroupName(
+                config.currentGroupName,
+                clashConfig.mode,
+              ),
+              currentProxyName: appState.getCurrentProxyName(
+                config.currentProxyName,
+                clashConfig.mode,
+              ),
             ),
-            builder: (_, value, __) {
-              final currentProxyName =
-                  group.type == GroupType.Selector ? value : group.now;
+            builder: (_, state, __) {
+              final isSelected = group.type == GroupType.Selector
+                  ? group.name == state.currentGroupName &&
+                      proxy.name == state.currentProxyName
+                  : group.now == state.currentProxyName;
               return _card(
-                isSelected: proxy.name == currentProxyName,
+                isSelected: isSelected,
                 onPressed: () {
                   if (group.type == GroupType.Selector) {
                     final config = context.read<Config>();
