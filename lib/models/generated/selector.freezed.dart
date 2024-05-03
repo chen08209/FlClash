@@ -1740,3 +1740,150 @@ abstract class _HomeNavigationSelectorState
   _$$HomeNavigationSelectorStateImplCopyWith<_$HomeNavigationSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
+
+/// @nodoc
+mixin _$ProxiesSelectorState {
+  int get currentIndex => throw _privateConstructorUsedError;
+  List<Group> get groups => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $ProxiesSelectorStateCopyWith<ProxiesSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxiesSelectorStateCopyWith<$Res> {
+  factory $ProxiesSelectorStateCopyWith(ProxiesSelectorState value,
+          $Res Function(ProxiesSelectorState) then) =
+      _$ProxiesSelectorStateCopyWithImpl<$Res, ProxiesSelectorState>;
+  @useResult
+  $Res call({int currentIndex, List<Group> groups});
+}
+
+/// @nodoc
+class _$ProxiesSelectorStateCopyWithImpl<$Res,
+        $Val extends ProxiesSelectorState>
+    implements $ProxiesSelectorStateCopyWith<$Res> {
+  _$ProxiesSelectorStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? currentIndex = null,
+    Object? groups = null,
+  }) {
+    return _then(_value.copyWith(
+      currentIndex: null == currentIndex
+          ? _value.currentIndex
+          : currentIndex // ignore: cast_nullable_to_non_nullable
+              as int,
+      groups: null == groups
+          ? _value.groups
+          : groups // ignore: cast_nullable_to_non_nullable
+              as List<Group>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxiesSelectorStateImplCopyWith<$Res>
+    implements $ProxiesSelectorStateCopyWith<$Res> {
+  factory _$$ProxiesSelectorStateImplCopyWith(_$ProxiesSelectorStateImpl value,
+          $Res Function(_$ProxiesSelectorStateImpl) then) =
+      __$$ProxiesSelectorStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int currentIndex, List<Group> groups});
+}
+
+/// @nodoc
+class __$$ProxiesSelectorStateImplCopyWithImpl<$Res>
+    extends _$ProxiesSelectorStateCopyWithImpl<$Res, _$ProxiesSelectorStateImpl>
+    implements _$$ProxiesSelectorStateImplCopyWith<$Res> {
+  __$$ProxiesSelectorStateImplCopyWithImpl(_$ProxiesSelectorStateImpl _value,
+      $Res Function(_$ProxiesSelectorStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? currentIndex = null,
+    Object? groups = null,
+  }) {
+    return _then(_$ProxiesSelectorStateImpl(
+      currentIndex: null == currentIndex
+          ? _value.currentIndex
+          : currentIndex // ignore: cast_nullable_to_non_nullable
+              as int,
+      groups: null == groups
+          ? _value._groups
+          : groups // ignore: cast_nullable_to_non_nullable
+              as List<Group>,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ProxiesSelectorStateImpl implements _ProxiesSelectorState {
+  const _$ProxiesSelectorStateImpl(
+      {required this.currentIndex, required final List<Group> groups})
+      : _groups = groups;
+
+  @override
+  final int currentIndex;
+  final List<Group> _groups;
+  @override
+  List<Group> get groups {
+    if (_groups is EqualUnmodifiableListView) return _groups;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_groups);
+  }
+
+  @override
+  String toString() {
+    return 'ProxiesSelectorState(currentIndex: $currentIndex, groups: $groups)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxiesSelectorStateImpl &&
+            (identical(other.currentIndex, currentIndex) ||
+                other.currentIndex == currentIndex) &&
+            const DeepCollectionEquality().equals(other._groups, _groups));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, currentIndex, const DeepCollectionEquality().hash(_groups));
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxiesSelectorStateImplCopyWith<_$ProxiesSelectorStateImpl>
+      get copyWith =>
+          __$$ProxiesSelectorStateImplCopyWithImpl<_$ProxiesSelectorStateImpl>(
+              this, _$identity);
+}
+
+abstract class _ProxiesSelectorState implements ProxiesSelectorState {
+  const factory _ProxiesSelectorState(
+      {required final int currentIndex,
+      required final List<Group> groups}) = _$ProxiesSelectorStateImpl;
+
+  @override
+  int get currentIndex;
+  @override
+  List<Group> get groups;
+  @override
+  @JsonKey(ignore: true)
+  _$$ProxiesSelectorStateImplCopyWith<_$ProxiesSelectorStateImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}

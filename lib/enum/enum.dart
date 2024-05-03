@@ -9,8 +9,7 @@ extension GroupTypeExtension on GroupType {
       )
       .toList();
 
-  static GroupType? getGroupType(String? value) {
-    if (value == null) return null;
+  static GroupType? getGroupType(String value) {
     final index = GroupTypeExtension.valueList.indexOf(value);
     if (index == -1) return null;
     return GroupType.values[index];

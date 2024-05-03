@@ -69,43 +69,30 @@ class ClashCore {
         1;
   }
 
-  List<Group> getProxiesGroups() {
+  Future<List<Group>> getProxiesGroups() {
     final proxiesRaw = clashFFI.getProxies();
-    final proxies = json.decode(proxiesRaw.cast<Utf8>().toDartString());
-    final groupsRaw = List.from(proxies.values).where((e) {
-      final excludeName = !UsedProxyExtension.valueList
-          .where((element) => element != UsedProxy.GLOBAL.name)
-          .contains(e['name']);
-      final validType = GroupTypeExtension.valueList.contains(e['type']);
-      return excludeName && validType;
-    }).map(
-          (e) {
-        e["all"] = ((e["all"] ?? []) as List)
+    final proxiesRawString = proxiesRaw.cast<Utf8>().toDartString();
+    return Isolate.run<List<Group>>(() {
+      final proxies = json.decode(proxiesRawString);
+      final groupsRaw = (proxies[UsedProxy.GLOBAL.name]["all"] as List)
+          .where((e) {
+        final proxy = proxies[e];
+        final excludeName = !UsedProxyExtension.valueList
+            .where((element) => element != UsedProxy.GLOBAL.name)
+            .contains(proxy['name']);
+        final validType = GroupTypeExtension.valueList.contains(proxy['type']);
+        return excludeName && validType;
+      }).map((groupName) {
+        final group = proxies[groupName];
+        group["all"] = ((group["all"] ?? []) as List)
             .map(
               (name) => proxies[name],
-        )
+            )
             .toList();
-        return e;
-      },
-    ).toList()
-      ..sort(
-            (a, b) {
-          final aIndex = GroupTypeExtension.getGroupType(a['type'])?.index;
-          final bIndex = GroupTypeExtension.getGroupType(b['type'])?.index;
-          if (a == null && b == null) {
-            return 0;
-          }
-          if (a == null) {
-            return 1;
-          }
-          if (b == null) {
-            return -1;
-          }
-          return aIndex! - bIndex!;
-        },
-      );
-    final groups = groupsRaw.map((e) => Group.fromJson(e)).toList();
-    return groups;
+        return group;
+      }).toList();
+      return groupsRaw.map((e) => Group.fromJson(e)).toList();
+    });
   }
 
   bool changeProxy(ChangeProxyParams changeProxyParams) {

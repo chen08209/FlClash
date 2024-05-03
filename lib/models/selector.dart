@@ -5,6 +5,7 @@ import 'config.dart';
 import 'navigation.dart';
 import 'package.dart';
 import 'profile.dart';
+import 'proxy.dart';
 
 part 'generated/selector.freezed.dart';
 
@@ -101,3 +102,12 @@ class HomeNavigationSelectorState with _$HomeNavigationSelectorState{
     required String? locale,
   }) = _HomeNavigationSelectorState;
 }
+
+@freezed
+class ProxiesSelectorState with _$ProxiesSelectorState{
+  const factory ProxiesSelectorState({
+    required int currentIndex,
+    required List<Group> groups,
+  }) = _ProxiesSelectorState;
+}
+

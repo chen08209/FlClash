@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
@@ -57,26 +56,6 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
     });
   }
 
-  _updateTabController(length) {
-    if (_tabController != null) {
-      _tabController!.dispose();
-      _tabController = null;
-    }
-    _tabController = TabController(
-      length: length,
-      vsync: this,
-    );
-  }
-
-  @override
-  void dispose() {
-    if (_tabController != null) {
-      _tabController!.dispose();
-      _tabController = null;
-    }
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Selector<AppState, bool>(
@@ -87,14 +66,32 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
         }
         return child!;
       },
-      child: Selector2<AppState, ClashConfig, List<Group>>(
-        selector: (_, appState, clashConfig) =>
-            appState.getCurrentGroups(clashConfig.mode),
-        shouldRebuild: (prev, next) =>
-            !const ListEquality<Group>().equals(prev, next),
-        builder: (_, groups, __) {
+      child: Selector3<AppState, Config, ClashConfig, ProxiesSelectorState>(
+        selector: (_, appState, config, clashConfig) {
+          final currentGroups = appState.getCurrentGroups(clashConfig.mode);
+          final currentProxyName = appState.getCurrentGroupNameWithGroups(
+            currentGroups,
+            config.currentGroupName,
+            clashConfig.mode,
+          );
+          final currentIndex = currentGroups
+              .indexWhere((element) => element.name == currentProxyName);
+          return ProxiesSelectorState(
+            currentIndex: currentIndex != -1 ? currentIndex : 0,
+            groups: currentGroups,
+          );
+        },
+        builder: (_, state, __) {
+          if (_tabController != null) {
+            _tabController!.dispose();
+            _tabController = null;
+          }
+          _tabController = TabController(
+            length: state.groups.length,
+            vsync: this,
+            initialIndex: state.currentIndex,
+          );
           debugPrint("[Proxies] update===>");
-          _updateTabController(groups.length);
           return Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +105,7 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
                 overlayColor:
                     const MaterialStatePropertyAll(Colors.transparent),
                 tabs: [
-                  for (final group in groups)
+                  for (final group in state.groups)
                     Tab(
                       text: group.name,
                     ),
@@ -118,7 +115,7 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    for (final group in groups)
+                    for (final group in state.groups)
                       KeepContainer(
                         child: ProxiesTabView(
                           group: group,
