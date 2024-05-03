@@ -366,32 +366,31 @@ class _ProxiesTabViewState extends State<ProxiesTabView>
   }) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: AnimateGrid<Proxy>(
-        items: _getProxies(group.all, proxiesSortType),
-        columns: columns,
-        itemHeight: _getItemHeight(),
-        keyBuilder: (item) {
-          return ObjectKey(item);
-        },
-        builder: (_, proxy) {
-          return Selector3<AppState, Config, ClashConfig,
-              ProxiesCardSelectorState>(
-            selector: (_, appState, config, clashConfig) =>
-                ProxiesCardSelectorState(
-              currentGroupName: appState.getCurrentGroupName(
-                config.currentGroupName,
-                clashConfig.mode,
-              ),
-              currentProxyName: appState.getCurrentProxyName(
-                config.currentProxyName,
-                clashConfig.mode,
-              ),
-            ),
-            builder: (_, state, __) {
+      child: Selector3<AppState, Config, ClashConfig, ProxiesCardSelectorState>(
+        selector: (_, appState, config, clashConfig) =>
+            ProxiesCardSelectorState(
+          currentGroupName: appState.getCurrentGroupName(
+            config.currentGroupName,
+            clashConfig.mode,
+          ),
+          currentProxyName: appState.getCurrentProxyName(
+            config.currentProxyName,
+            clashConfig.mode,
+          ),
+        ),
+        builder: (_, state, __) {
+          return AnimateGrid<Proxy>(
+            items: _getProxies(group.all, proxiesSortType),
+            columns: columns,
+            itemHeight: _getItemHeight(),
+            keyBuilder: (item) {
+              return ObjectKey(item);
+            },
+            builder: (_, proxy) {
               final isSelected = group.type == GroupType.Selector
                   ? group.name == state.currentGroupName &&
-                      proxy.name == state.currentProxyName
-                  : group.now == state.currentProxyName;
+                  proxy.name == state.currentProxyName
+                  : group.now == proxy.name;
               return _card(
                 isSelected: isSelected,
                 onPressed: () {
