@@ -19,8 +19,8 @@ Function debounce<F extends Function>(F func,{int milliseconds = 600}) {
     if (timer != null) {
       timer!.cancel();
     }
-    timer = Timer(Duration(milliseconds: milliseconds), () {
-      Function.apply(func, args ?? [], namedArgs);
+    timer = Timer(Duration(milliseconds: milliseconds), () async {
+      await Function.apply(func, args ?? [], namedArgs);
     });
   };
 }

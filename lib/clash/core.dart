@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/cupertino.dart';
 import '../enum/enum.dart';
 import '../models/models.dart';
 import '../common/common.dart';
@@ -16,19 +18,23 @@ class ClashCore {
   late final ClashFFI clashFFI;
   late final DynamicLibrary lib;
 
-  ClashCore._internal() {
+  DynamicLibrary _getClashLib() {
+    debugPrint("OpenClash");
     if (Platform.isWindows) {
-      lib = DynamicLibrary.open("libclash.dll");
-      clashFFI = ClashFFI(lib);
+      return DynamicLibrary.open("libclash.dll");
     }
     if (Platform.isMacOS) {
-      lib = DynamicLibrary.open("libclash.dylib");
-      clashFFI = ClashFFI(lib);
+      return DynamicLibrary.open("libclash.dylib");
     }
     if (Platform.isAndroid || Platform.isLinux) {
-      lib = DynamicLibrary.open("libclash.so");
-      clashFFI = ClashFFI(lib);
+      return DynamicLibrary.open("libclash.so");
     }
+    throw "Platform is not supported";
+  }
+
+  ClashCore._internal() {
+    lib = _getClashLib();
+    clashFFI = ClashFFI(lib);
     clashFFI.initNativeApiBridge(
       NativeApi.initializeApiDLData,
       receiver.sendPort.nativePort,
