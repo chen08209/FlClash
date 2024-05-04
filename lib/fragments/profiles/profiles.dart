@@ -235,7 +235,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
           currentProfileId: config.currentProfileId,
         ),
         builder: (context, state, child) {
-          debugPrint("[Profiles] update===>");
           if (state.profiles.isEmpty) {
             return NullStatus(
               label: appLocalizations.nullProfileDesc,

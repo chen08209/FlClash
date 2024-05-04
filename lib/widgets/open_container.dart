@@ -446,7 +446,6 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
     return Selector<Config, ThemeMode>(
       selector: (_, config) => config.themeMode,
       builder: (_, __, ___) {
-        debugPrint("[OpenContainerTheme] update===>");
         _colorTween = _getColorTween(
           transitionType: transitionType,
           closedColor: Theme.of(context).colorScheme.background,

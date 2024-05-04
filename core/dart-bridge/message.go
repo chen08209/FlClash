@@ -24,5 +24,5 @@ func (message *Message) toJson() string {
 }
 
 func SendMessage(message Message) {
-	sendToPort(*Port, message.toJson())
+	SendToPort(*Port, message.toJson())
 }

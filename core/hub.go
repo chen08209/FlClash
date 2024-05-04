@@ -63,21 +63,25 @@ func validateConfig(s *C.char) bool {
 }
 
 //export updateConfig
-func updateConfig(s *C.char) bool {
-	paramsString := C.GoString(s)
-	var params = &GenerateConfigParams{}
-	err := json.Unmarshal([]byte(paramsString), params)
-	if err != nil {
-		log.Errorln("generateConfig Unmarshal error %v", err)
-		return false
-	}
-	prof := decorationConfig(params.ProfilePath, *params.Config)
-	currentConfig = prof
-	if *params.IsPatch {
-		return applyConfig(true)
-	} else {
-		return applyConfig(false)
-	}
+func updateConfig(s *C.char, port C.longlong) {
+	i := int64(port)
+	go func() {
+		paramsString := C.GoString(s)
+		var params = &GenerateConfigParams{}
+		err := json.Unmarshal([]byte(paramsString), params)
+		if err != nil {
+			bridge.SendToPort(i, err.Error())
+			return
+		}
+		prof := decorationConfig(params.ProfilePath, *params.Config)
+		currentConfig = prof
+		if *params.IsPatch {
+			applyConfig(true)
+		} else {
+			applyConfig(false)
+		}
+		bridge.SendToPort(i, "")
+	}()
 }
 
 //export getProxies

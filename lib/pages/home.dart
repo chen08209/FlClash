@@ -140,7 +140,6 @@ class HomePage extends StatelessWidget {
         child: Selector<AppState, List<NavigationItem>>(
           selector: (_, appState) => appState.navigationItems,
           builder: (_, navigationItems, __) {
-            debugPrint("[Home] update===>");
             final desktopNavigationItems = navigationItems
                 .where(
                   (element) =>

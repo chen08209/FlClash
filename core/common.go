@@ -164,10 +164,7 @@ func patchConfig(general *config.General) {
 	resolver.DisableIPv6 = !general.IPv6
 }
 
-func applyConfig(isPatch bool) bool {
-	if currentConfig == nil {
-		return false
-	}
+func applyConfig(isPatch bool) {
 	cfg, err := config.ParseRawConfig(currentConfig)
 	if err != nil {
 		cfg, _ = config.ParseRawConfig(config.DefaultRawConfig())
@@ -177,5 +174,4 @@ func applyConfig(isPatch bool) bool {
 	} else {
 		executor.ApplyConfig(cfg, true)
 	}
-	return true
 }

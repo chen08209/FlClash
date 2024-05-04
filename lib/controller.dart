@@ -117,7 +117,7 @@ class AppController {
     }
   }
 
-  Future<bool> updateClashConfig({bool isPatch = true}) async {
+  Future<String> updateClashConfig({bool isPatch = true}) async {
     return await globalState.updateClashConfig(
       clashConfig: clashConfig,
       config: config,
@@ -125,8 +125,8 @@ class AppController {
     );
   }
 
-  applyProfile() {
-    globalState.applyProfile(
+  applyProfile() async {
+    await globalState.applyProfile(
       appState: appState,
       config: config,
       clashConfig: clashConfig,
@@ -139,11 +139,9 @@ class AppController {
     if (profileId == config.currentProfileId) return;
     config.currentProfileId = profileId;
     _changeProfileDebounce ??= debounce<Function(String?)>((profileId) async {
-      if (context.mounted) {
-        await applyProfile();
-        appState.delayMap = {};
-        saveConfigPreferences();
-      }
+      await applyProfile();
+      appState.delayMap = {};
+      saveConfigPreferences();
     });
     _changeProfileDebounce!([profileId]);
   }

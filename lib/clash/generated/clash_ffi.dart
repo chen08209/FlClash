@@ -907,19 +907,22 @@ class ClashFFI {
   late final _validateConfig =
       _validateConfigPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
-  int updateConfig(
+  void updateConfig(
     ffi.Pointer<ffi.Char> s,
+    int port,
   ) {
     return _updateConfig(
       s,
+      port,
     );
   }
 
-  late final _updateConfigPtr =
-      _lookup<ffi.NativeFunction<GoUint8 Function(ffi.Pointer<ffi.Char>)>>(
-          'updateConfig');
+  late final _updateConfigPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<ffi.Char>, ffi.LongLong)>>('updateConfig');
   late final _updateConfig =
-      _updateConfigPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+      _updateConfigPtr.asFunction<void Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> getProxies() {
     return _getProxies();

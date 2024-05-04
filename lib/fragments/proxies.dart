@@ -91,7 +91,6 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
             vsync: this,
             initialIndex: state.currentIndex,
           );
-          debugPrint("[Proxies] update===>");
           return Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,

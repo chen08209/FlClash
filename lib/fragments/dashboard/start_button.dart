@@ -63,7 +63,6 @@ class _StartButtonState extends State<StartButton>
         hasProfile: config.profiles.isNotEmpty,
       ),
       builder: (_, state, child) {
-        debugPrint("[StartButton] update===>");
         if (!state.isInit || !state.hasProfile) {
           return Container();
         }
