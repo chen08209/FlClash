@@ -176,7 +176,6 @@ func applyConfig(isPatch bool) bool {
 		patchConfig(cfg.General)
 	} else {
 		executor.ApplyConfig(cfg, true)
-
 	}
 	return true
 }

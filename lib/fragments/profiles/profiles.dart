@@ -24,6 +24,7 @@ class ProfilesFragment extends StatefulWidget {
 }
 
 class _ProfilesFragmentState extends State<ProfilesFragment> {
+
   String _getLastUpdateTimeDifference(DateTime lastDateTime) {
     final currentDateTime = DateTime.now();
     final difference = currentDateTime.difference(lastDateTime);
@@ -209,7 +210,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
               child: _profileItem(
                 profile: profile,
                 groupValue: state.currentProfileId,
-                onChanged: context.appController.changeProfile,
+                onChanged: context.appController.changeProfileDebounce,
               ),
             ),
         ],
