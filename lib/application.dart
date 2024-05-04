@@ -112,7 +112,6 @@ class ApplicationState extends State<Application> {
               primaryColor: config.primaryColor,
             ),
             builder: (_, state, child) {
-              debugPrint("[Application] update===>");
               return DynamicColorBuilder(
                 builder: (lightDynamic, darkDynamic) {
                   _updateSystemColorSchemes(lightDynamic, darkDynamic);

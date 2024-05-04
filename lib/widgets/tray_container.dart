@@ -144,7 +144,6 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
         locale: config.locale,
       ),
       builder: (_, state, child) {
-        debugPrint("[TrayContainer] update===>");
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           updateMenu(state);
         });

@@ -19,7 +19,6 @@ class ClashCore {
   late final DynamicLibrary lib;
 
   DynamicLibrary _getClashLib() {
-    debugPrint("OpenClash");
     if (Platform.isWindows) {
       return DynamicLibrary.open("libclash.dll");
     }
@@ -67,12 +66,21 @@ class ClashCore {
         1;
   }
 
-  bool updateConfig(UpdateConfigParams updateConfigParams) {
+  Future<String> updateConfig(UpdateConfigParams updateConfigParams) {
+    final completer = Completer<String>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if(!completer.isCompleted){
+        completer.complete(message);
+        receiver.close();
+      }
+    });
     final params = json.encode(updateConfigParams);
-    return clashFFI.updateConfig(
-          params.toNativeUtf8().cast(),
-        ) ==
-        1;
+    clashFFI.updateConfig(
+      params.toNativeUtf8().cast(),
+      receiver.sendPort.nativePort,
+    );
+    return completer.future;
   }
 
   Future<List<Group>> getProxiesGroups() {

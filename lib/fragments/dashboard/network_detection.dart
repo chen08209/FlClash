@@ -111,7 +111,6 @@ class _NetworkDetectionState extends State<NetworkDetection> {
         );
       },
       builder: (_, state, __) {
-        debugPrint("[UpdateCurrentDelay] update===>");
         _updateCurrentDelay(
           state.currentProxyName,
           state.delay,
@@ -145,7 +144,6 @@ class _NetworkDetectionState extends State<NetworkDetection> {
             );
           },
           builder: (_, state, __) {
-            debugPrint("[NetworkDetection] update===>");
             return Container(
               padding: const EdgeInsets.all(16).copyWith(top: 0),
               child: Column(

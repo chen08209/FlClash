@@ -38,7 +38,7 @@ class GlobalState {
     timer?.cancel();
   }
 
-  Future<bool> updateClashConfig({
+  Future<String> updateClashConfig({
     required ClashConfig clashConfig,
     required Config config,
     bool isPatch = true,
@@ -92,11 +92,12 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) async {
-    await updateClashConfig(
+    final res = await updateClashConfig(
       clashConfig: clashConfig,
       config: config,
       isPatch: false,
     );
+    if (res.isNotEmpty) return Result.error(message: res);
     await updateGroups(appState);
     changeProxy(
       appState: appState,

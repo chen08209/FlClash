@@ -15,7 +15,6 @@ class AppStateContainer extends StatelessWidget {
     return Selector<Config, bool>(
       selector: (_, config) => config.autoLaunch,
       builder: (_, isAutoLaunch, child) {
-        debugPrint("[autoLaunchContainer] update===>");
         autoLaunch?.updateStatus(isAutoLaunch);
         return child!;
       },
@@ -35,7 +34,6 @@ class AppStateContainer extends StatelessWidget {
         );
       },
       builder: (context, state, child) {
-        debugPrint("[NavigationsContainer] update===>");
         WidgetsBinding.instance.addPostFrameCallback(
           (_) {
             context.appController.appState.navigationItems =
