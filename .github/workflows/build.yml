@@ -107,7 +107,7 @@ jobs:
           else
             current="${{ github.ref_name }}"
             echo -e "\n\n<details markdown=1><summary>All changes from $current to the latest commit:</summary>\n\n" >> release.md
-            gitchangelog "${pre}" >> release.md 2>&1 || echo "Error in gitchangelog"
+            gitchangelog "${pre}.." >> release.md 2>&1 || echo "Error in gitchangelog"
             echo -e "\n\n</details>" >> release.md
           fi
       - name: Release
