@@ -89,7 +89,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          fetch-depth: 0
 
       - name: Download
         uses: actions/download-artifact@v4
@@ -101,13 +101,13 @@ jobs:
       - name: Pre Release
         run: |
           pip install gitchangelog pystache mustache markdown
-          prelease=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
-          if [ -z "$prelease" ]; then
+          pre=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
+          if [ -z "pre" ]; then
             echo "init" > release.md
           else
             current="${{ github.ref_name }}"
             echo -e "\n\n<details markdown=1><summary>All changes from $current to the latest commit:</summary>\n\n" >> release.md
-            gitchangelog "${prelease}" >> release.md 2>&1 || echo "Error in gitchangelog"
+            gitchangelog "${pre}" >> release.md 2>&1 || echo "Error in gitchangelog"
             echo -e "\n\n</details>" >> release.md
           fi
       - name: Release
