@@ -279,10 +279,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_plugin_android_lifecycle
-      sha256: "592dc01a18961a51c24ae5d963b724b2b7fa4a95c100fe8eb6ca8a5a4732cadf"
+      sha256: "8cf40eebf5dec866a6d1956ad7b4f7016e6c0cc69847ab946833b7d43743809f"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.18"
+    version: "2.0.19"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -957,10 +957,10 @@ packages:
     dependency: "direct main"
     description:
       name: win32_registry
-      sha256: "10589e0d7f4e053f2c61023a31c9ce01146656a70b7b7f0828c0b46d7da2a9bb"
+      sha256: "41fd8a189940d8696b1b810efb9abcf60827b6cbfab90b0c43e8439e3a39d85a"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.1.3"
+    version: "1.1.2"
   window_manager:
     dependency: "direct main"
     description:
@@ -997,10 +997,10 @@ packages:
     dependency: transitive
     description:
       name: yaml_edit
-      sha256: c566f4f804215d84a7a2c377667f546c6033d5b34b4f9e60dfb09d17c4e97826
+      sha256: e9c1a3543d2da0db3e90270dbb1e4eebc985ee5e3ffe468d83224472b2194a5f
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.2.0"
+    version: "2.2.1"
 sdks:
   dart: ">=3.3.0 <4.0.0"
   flutter: ">=3.19.0"

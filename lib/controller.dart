@@ -123,12 +123,18 @@ class AppController {
     );
   }
 
+  applyProfile() {
+    globalState.applyProfile(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
+    );
+  }
+
   changeProfile(String? value) async {
     if (value == config.currentProfileId) return;
     config.currentProfileId = value;
-    await updateClashConfig(isPatch: false);
-    await updateGroups();
-    changeProxy();
+    await applyProfile();
     appState.delayMap = {};
     saveConfigPreferences();
   }
@@ -142,10 +148,7 @@ class AppController {
           )
           .isBeforeNow();
       if (isNotNeedUpdate == false) continue;
-      final result = await profile.update();
-      if (result.type == ResultType.error) continue;
-      await updateGroups();
-      changeProxy();
+      await profile.update();
     }
   }
 
