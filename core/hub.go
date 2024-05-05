@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
+	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
@@ -243,8 +244,7 @@ func getProviders() *C.char {
 func getProvider(name *C.char) *C.char {
 	providerName := C.GoString(name)
 	providers := tunnel.Providers()
-	var provider = providers[providerName]
-	data, err := json.Marshal(provider)
+	data, err := json.Marshal(providers[providerName])
 	if err != nil {
 		return C.CString("")
 	}
@@ -256,4 +256,30 @@ func initNativeApiBridge(api unsafe.Pointer, port C.longlong) {
 	bridge.InitDartApi(api)
 	i := int64(port)
 	bridge.Port = &i
+}
+
+func init() {
+	provider.HealthcheckHook = func(name string, delay uint16) {
+		delayData := &Delay{
+			Name: name,
+		}
+		if delay == 0 {
+			delayData.Value = -1
+		} else {
+			delayData.Value = int32(delay)
+		}
+		bridge.SendMessage(bridge.Message{
+			Type: bridge.Delay,
+			Data: delayData,
+		})
+	}
+	adapter.NowChangeHook = func(name, value string) {
+		bridge.SendMessage(bridge.Message{
+			Type: bridge.Now,
+			Data: Now{
+				Name:  name,
+				Value: value,
+			},
+		})
+	}
 }

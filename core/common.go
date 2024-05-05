@@ -46,6 +46,11 @@ type Process struct {
 	Target  string `json:"target"`
 }
 
+type Now struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 func restartExecutable(execPath string) {
 	var err error
 	executor.Shutdown()
