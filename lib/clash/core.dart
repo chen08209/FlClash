@@ -5,7 +5,6 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:flutter/cupertino.dart';
 import '../enum/enum.dart';
 import '../models/models.dart';
 import '../common/common.dart';
