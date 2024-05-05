@@ -52,4 +52,4 @@ enum ProfileType { file, url }
 
 enum ResultType { success, error }
 
-enum MessageType { log, tun, delay, process }
+enum MessageType { log, tun, delay, process, now }

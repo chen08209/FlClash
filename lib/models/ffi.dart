@@ -53,6 +53,16 @@ class Delay with _$Delay {
 }
 
 @freezed
+class Now with _$Now {
+  const factory Now({
+    required String name,
+    required String value,
+  }) = _Now;
+
+  factory Now.fromJson(Map<String, Object?> json) => _$NowFromJson(json);
+}
+
+@freezed
 class Process with _$Process {
   const factory Process({
     required int uid,

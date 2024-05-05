@@ -56,6 +56,18 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
   }
 
   @override
+  void onNow(Now now) {
+    List<Group> groups = List.from(context.appController.appState.groups);
+    final index = groups.indexWhere(
+      (element) => element.name == now.name,
+    );
+    if (index == -1 || groups[index].now == now.value) return;
+    groups[index] = groups[index].copyWith(now: now.value);
+    context.appController.appState.groups = groups;
+    super.onNow(now);
+  }
+
+  @override
   void onProcess(Metadata metadata) async {
     var packageName = await app?.getPackageName(metadata);
     globalState.packageNameMap[metadata.uid] = packageName;

@@ -53,6 +53,7 @@ const _$MessageTypeEnumMap = {
   MessageType.tun: 'tun',
   MessageType.delay: 'delay',
   MessageType.process: 'process',
+  MessageType.now: 'now',
 };
 
 _$DelayImpl _$$DelayImplFromJson(Map<String, dynamic> json) => _$DelayImpl(
@@ -62,6 +63,16 @@ _$DelayImpl _$$DelayImplFromJson(Map<String, dynamic> json) => _$DelayImpl(
 
 Map<String, dynamic> _$$DelayImplToJson(_$DelayImpl instance) =>
     <String, dynamic>{
+      'name': instance.name,
+      'value': instance.value,
+    };
+
+_$NowImpl _$$NowImplFromJson(Map<String, dynamic> json) => _$NowImpl(
+      name: json['name'] as String,
+      value: json['value'] as String,
+    );
+
+Map<String, dynamic> _$$NowImplToJson(_$NowImpl instance) => <String, dynamic>{
       'name': instance.name,
       'value': instance.value,
     };

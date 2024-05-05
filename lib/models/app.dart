@@ -79,6 +79,15 @@ class AppState with ChangeNotifier {
     }
   }
 
+  int? getDelay(String? proxyName) {
+    if (proxyName == null) return null;
+    final index = groups.indexWhere((element) => element.name == proxyName);
+    if (index == -1) return _delayMap[proxyName];
+    final group = groups[index];
+    if (group.now == null) return null;
+    return _delayMap[group.now];
+  }
+
   setDelay(Delay delay) {
     if (_delayMap[delay.name] != delay.value) {
       _delayMap = Map.from(_delayMap)..[delay.name] = delay.value;
@@ -144,7 +153,7 @@ class AppState with ChangeNotifier {
   List<Group> get groups => _groups;
 
   set groups(List<Group> value) {
-    if (_groups != value) {
+    if (!const ListEquality<Group>().equals(_groups, value)) {
       _groups = value;
       notifyListeners();
     }

@@ -10,6 +10,7 @@ const (
 	Log     MessageType = "log"
 	Tun     MessageType = "tun"
 	Delay   MessageType = "delay"
+	Now     MessageType = "now"
 	Process MessageType = "process"
 )
 
