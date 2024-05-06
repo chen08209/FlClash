@@ -81,6 +81,15 @@ class AboutFragment extends StatelessWidget {
           },
         ),
         ListTile(
+          title: const Text("Telegram"),
+          onTap: () {
+            launchUrl(
+              Uri.parse("https://t.me/+G-veVtwBOl4wODc1"),
+            );
+          },
+          trailing: const Icon(Icons.launch),
+        ),
+        ListTile(
           title: Text(appLocalizations.project),
           onTap: () {
             launchUrl(

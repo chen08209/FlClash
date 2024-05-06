@@ -234,19 +234,6 @@ class AppController {
     if (!config.silentLaunch) {
       window?.show();
     }
-    periodicUpdateGroups();
-  }
-
-  periodicUpdateGroups() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (globalState.updateGroupsTimer != null) {
-        globalState.updateGroupsTimer!.cancel();
-      }
-      globalState.updateGroupsTimer =
-          Timer.periodic(const Duration(seconds: 5), (Timer t) {
-        updateGroups();
-      });
-    });
   }
 
   setDelay(Delay delay) {

@@ -70,6 +70,7 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
         child: Selector3<AppState, Config, ClashConfig, ProxiesSelectorState>(
           selector: (_, appState, config, clashConfig) {
             final currentGroups = appState.getCurrentGroups(clashConfig.mode);
+            final groupNames = currentGroups.map((e) => e.name).toList();
             final currentProxyName = appState.getCurrentGroupNameWithGroups(
               currentGroups,
               config.currentGroupName,
@@ -78,13 +79,13 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
             final currentIndex = currentGroups
                 .indexWhere((element) => element.name == currentProxyName);
             return ProxiesSelectorState(
-              currentIndex: currentIndex != -1 ? currentIndex : 0,
-              groups: currentGroups,
+              currentIndex: currentIndex,
+              groupNames: groupNames,
             );
           },
           builder: (_, state, __) {
             _tabController ??= TabController(
-              length: state.groups.length,
+              length: state.groupNames.length,
               vsync: this,
               initialIndex: state.currentIndex,
             );
@@ -101,9 +102,9 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
                   overlayColor:
                       const MaterialStatePropertyAll(Colors.transparent),
                   tabs: [
-                    for (final group in state.groups)
+                    for (final groupName in state.groupNames)
                       Tab(
-                        text: group.name,
+                        text: groupName,
                       ),
                   ],
                 ),
@@ -111,10 +112,11 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      for (final group in state.groups)
+                      for (final groupName in state.groupNames)
                         KeepContainer(
+                          key: ObjectKey(groupName),
                           child: ProxiesTabView(
-                            group: group,
+                            groupName: groupName,
                           ),
                         ),
                     ],
@@ -129,22 +131,13 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
   }
 }
 
-class ProxiesTabView extends StatefulWidget {
-  final Group group;
+class ProxiesTabView extends StatelessWidget {
+  final String groupName;
 
   const ProxiesTabView({
     super.key,
-    required this.group,
+    required this.groupName,
   });
-
-  @override
-  State<ProxiesTabView> createState() => _ProxiesTabViewState();
-}
-
-class _ProxiesTabViewState extends State<ProxiesTabView> {
-  Group get group => widget.group;
-
-  get measure => context.appController.measure;
 
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
@@ -153,7 +146,7 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
       );
   }
 
-  List<Proxy> _sortOfDelay(List<Proxy> proxies) {
+  List<Proxy> _sortOfDelay(BuildContext context, List<Proxy> proxies) {
     final appState = context.read<AppState>();
     final delayMap = appState.delayMap;
     return proxies = List.of(proxies)
@@ -176,15 +169,19 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
   }
 
   _getProxies(
+    BuildContext context,
     List<Proxy> proxies,
     ProxiesSortType proxiesSortType,
   ) {
-    if (proxiesSortType == ProxiesSortType.delay) return _sortOfDelay(proxies);
+    if (proxiesSortType == ProxiesSortType.delay) {
+      return _sortOfDelay(context, proxies);
+    }
     if (proxiesSortType == ProxiesSortType.name) return _sortOfName(proxies);
     return proxies;
   }
 
-  double _getItemHeight() {
+  double _getItemHeight(BuildContext context) {
+    final measure = context.appController.measure;
     return 12 * 2 +
         measure.bodyMediumHeight * 2 +
         measure.bodySmallHeight +
@@ -192,11 +189,13 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
         8 * 2;
   }
 
-  _card({
+  _card(
+    BuildContext context, {
     required void Function() onPressed,
     required bool isSelected,
     required Proxy proxy,
   }) {
+    final measure = context.appController.measure;
     return CommonCard(
       isSelected: isSelected,
       onPressed: onPressed,
@@ -285,66 +284,83 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
     );
   }
 
-  _buildGrid({
+  Widget _buildGrid(
+    BuildContext context, {
     required List<Proxy> proxies,
     required int columns,
   }) {
-    return SingleChildScrollView(
+    return GridView.builder(
       padding: const EdgeInsets.all(16),
-      child: Selector3<AppState, Config, ClashConfig, ProxiesCardSelectorState>(
-        selector: (_, appState, config, clashConfig) =>
-            ProxiesCardSelectorState(
-          currentGroupName: appState.getCurrentGroupName(
-            config.currentGroupName,
-            clashConfig.mode,
-          ),
-          currentProxyName: appState.getCurrentProxyName(
-            config.currentProxyName,
-            clashConfig.mode,
-          ),
-        ),
-        builder: (_, state, __) {
-          return AnimateGrid<Proxy>(
-            items: proxies,
-            columns: columns,
-            itemHeight: _getItemHeight(),
-            keyBuilder: (item) {
-              return ObjectKey(item);
-            },
-            builder: (_, proxy) {
-              final isSelected = group.type == GroupType.Selector
-                  ? group.name == state.currentGroupName &&
-                      proxy.name == state.currentProxyName
-                  : group.now == proxy.name;
-              return _card(
-                isSelected: isSelected,
-                onPressed: () {
-                  if (group.type == GroupType.Selector) {
-                    final config = context.read<Config>();
-                    config.currentProfile?.groupName = group.name;
-                    config.currentProfile?.proxyName = proxy.name;
-                    config.update();
-                    context.appController.changeProxy();
-                  }
-                },
-                proxy: proxy,
-              );
-            },
-          );
-        },
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        mainAxisExtent: _getItemHeight(context),
       ),
+      itemCount: proxies.length,
+      itemBuilder: (_, index) {
+        final proxy = proxies[index];
+        return Selector3<AppState, Config, ClashConfig,
+            ProxiesCardSelectorState>(
+          selector: (_, appState, config, clashConfig) {
+            final currentGroupName = appState.getCurrentGroupName(
+              config.currentGroupName,
+              clashConfig.mode,
+            );
+            final currentProxyName = appState.getCurrentProxyName(
+              config.currentProxyName,
+              clashConfig.mode,
+            );
+            final group = appState.getGroupWithName(groupName);
+            final isSelected = group.type == GroupType.Selector
+                ? group.name == currentGroupName &&
+                    proxy.name == currentProxyName
+                : group.now == proxy.name;
+            return ProxiesCardSelectorState(
+              isSelected: isSelected,
+              currentGroupName: currentGroupName,
+              currentProxyName: currentProxyName,
+            );
+          },
+          builder: (_, state, __) {
+            return _card(
+              context,
+              isSelected: state.isSelected,
+              onPressed: () {
+                final group =
+                    context.appController.appState.getGroupWithName(groupName);
+                if (group.type == GroupType.Selector) {
+                  final config = context.read<Config>();
+                  config.currentProfile?.groupName = group.name;
+                  config.currentProfile?.proxyName = proxy.name;
+                  config.update();
+                  context.appController.changeProxy();
+                }
+              },
+              proxy: proxy,
+            );
+          },
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Selector2<AppState, Config, ProxiesSortSelectorState>(
-      selector: (_, appState, config) => ProxiesSortSelectorState(
-        proxiesSortType: config.proxiesSortType,
-        sortNum: appState.sortNum,
-      ),
+    return Selector2<AppState, Config, ProxiesTabViewSelectorState>(
+      selector: (_, appState, config) {
+        return ProxiesTabViewSelectorState(
+          proxiesSortType: config.proxiesSortType,
+          sortNum: appState.sortNum,
+          group: appState.getGroupWithName(groupName),
+        );
+      },
       builder: (_, state, __) {
-        final proxies = _getProxies(group.all, state.proxiesSortType);
+        final proxies = _getProxies(
+          context,
+          state.group.all,
+          state.proxiesSortType,
+        );
         return Align(
           alignment: Alignment.topCenter,
           child: SlotLayout(
@@ -352,6 +368,7 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
               Breakpoints.small: SlotLayout.from(
                 key: const Key('proxies_grid_small'),
                 builder: (_) => _buildGrid(
+                  context,
                   proxies: proxies,
                   columns: 2,
                 ),
@@ -359,6 +376,7 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
               Breakpoints.medium: SlotLayout.from(
                 key: const Key('proxies_grid_medium'),
                 builder: (_) => _buildGrid(
+                  context,
                   proxies: proxies,
                   columns: 3,
                 ),
@@ -366,6 +384,7 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
               Breakpoints.large: SlotLayout.from(
                 key: const Key('proxies_grid_large'),
                 builder: (_) => _buildGrid(
+                  context,
                   proxies: proxies,
                   columns: 4,
                 ),
@@ -409,6 +428,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
     await Future.delayed(
       appConstant.httpTimeoutDuration + appConstant.moreDuration,
     );
+    context.appController.appState.sortNum++;
     _controller.reverse();
   }
 

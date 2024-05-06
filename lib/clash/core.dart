@@ -69,7 +69,7 @@ class ClashCore {
     final completer = Completer<String>();
     final receiver = ReceivePort();
     receiver.listen((message) {
-      if(!completer.isCompleted){
+      if (!completer.isCompleted) {
         completer.complete(message);
         receiver.close();
       }
@@ -97,11 +97,11 @@ class ClashCore {
       final groupsRaw = groupNames.map((groupName) {
         final group = proxies[groupName];
         group["all"] = ((group["all"] ?? []) as List)
-            .where(
-              (name) => !groupNames.contains(groupNames),
-            )
             .map(
               (name) => proxies[name],
+            )
+            .where(
+              (proxy) => proxy["type"] != GroupType.Selector.value,
             )
             .toList();
         return group;
@@ -124,7 +124,7 @@ class ClashCore {
     return true;
   }
 
-  healthcheck(){
+  healthcheck() {
     clashFFI.healthcheck();
   }
 

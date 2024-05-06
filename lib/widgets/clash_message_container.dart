@@ -41,10 +41,11 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
     context.appController.setDelay(delay);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       globalState.updateSortNumDebounce ??= debounce<Function()>(
-            () {
+        () {
+          context.appController.updateGroups();
           context.appController.appState.sortNum++;
         },
-        milliseconds: appConstant.httpTimeoutDuration.inMilliseconds,
+        milliseconds: 5000,
       );
       globalState.updateSortNumDebounce!();
     });
@@ -53,7 +54,6 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
 
   @override
   void onLog(Log log) {
-    debugPrint("$log");
     context.appController.appState.addLog(log);
     super.onLog(log);
   }
