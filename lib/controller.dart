@@ -236,7 +236,6 @@ class AppController {
   }
 
   healthcheck() {
-    if (globalState.healthcheckLock) return;
     for (final delay in appState.delayMap.entries) {
       setDelay(
         Delay(

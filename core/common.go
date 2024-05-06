@@ -175,8 +175,10 @@ func patchConfig(general *config.General) {
 
 const concurrentCount = math.MaxInt
 
+var wg = sync.WaitGroup{}
+var exit = make(chan struct{})
+
 func hcCompatibleProvider(proxyProviders map[string]provider.ProxyProvider) {
-	wg := sync.WaitGroup{}
 	ch := make(chan struct{}, concurrentCount)
 	for _, proxyProvider := range proxyProviders {
 		proxyProvider := proxyProvider
@@ -184,6 +186,11 @@ func hcCompatibleProvider(proxyProviders map[string]provider.ProxyProvider) {
 			log.Infoln("Start initial Compatible provider %s", proxyProvider.Name())
 			wg.Add(1)
 			ch <- struct{}{}
+			select {
+			case <-exit:
+				return // 收到退出信号，退出协程
+			default:
+			}
 			go func() {
 				defer func() { <-ch; wg.Done() }()
 				if err := proxyProvider.Initial(); err != nil {
@@ -193,7 +200,13 @@ func hcCompatibleProvider(proxyProviders map[string]provider.ProxyProvider) {
 		}
 
 	}
+}
 
+func cancelHc() {
+	close(exit)
+	wg.Wait()
+	exit = make(chan struct{})
+	wg = sync.WaitGroup{}
 }
 
 func applyConfig(isPatch bool) {
@@ -205,5 +218,6 @@ func applyConfig(isPatch bool) {
 		patchConfig(cfg.General)
 	} else {
 		executor.ApplyConfig(cfg, true)
+		healthcheck()
 	}
 }

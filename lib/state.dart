@@ -23,7 +23,6 @@ class GlobalState {
   List<Function> updateFunctionLists = [];
   List<NavigationItem> currentNavigationItems = [];
   bool updatePackagesLock = false;
-  bool healthcheckLock = false;
 
   startListenUpdate() {
     if (timer != null && timer!.isActive == true) return;

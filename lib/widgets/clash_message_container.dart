@@ -38,14 +38,12 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
 
   @override
   void onDelay(Delay delay) {
-    globalState.healthcheckLock = true;
     context.appController.setDelay(delay);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       globalState.updateSortNumDebounce ??= debounce<Function()>(
         () {
           context.appController.updateGroups();
           context.appController.appState.sortNum++;
-          globalState.healthcheckLock = false;
         },
         milliseconds: 5000,
       );
