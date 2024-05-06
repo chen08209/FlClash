@@ -51,7 +51,7 @@ class _StartButtonState extends State<StartButton>
     final appController = context.appController;
     await appController.updateSystemProxy(isStart);
     if (isStart && mounted) {
-      appController.clearCurrentDelay();
+      appController.healthcheck();
     }
   }
 
