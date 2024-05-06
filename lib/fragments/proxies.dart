@@ -83,12 +83,15 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
               groupNames: groupNames,
             );
           },
-          builder: (_, state, __) {
-            if (_tabController != null) {
-              _tabController!.dispose();
-              _tabController = null;
+          shouldRebuild: (prev,next){
+            if(prev.groupNames.length != next.groupNames.length){
+              _tabController?.dispose();
+              _tabController =null;
             }
-            _tabController = TabController(
+            return prev != next;
+          },
+          builder: (_, state, __) {
+            _tabController ??= TabController(
               length: state.groupNames.length,
               vsync: this,
               initialIndex: state.currentIndex,
@@ -118,7 +121,6 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
                     children: [
                       for (final groupName in state.groupNames)
                         KeepContainer(
-                          key: ObjectKey(groupName),
                           child: ProxiesTabView(
                             groupName: groupName,
                           ),
