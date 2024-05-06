@@ -205,6 +205,10 @@ class AppState with ChangeNotifier {
     return getCurrentGroupNameWithGroups(currentGroups, groupName, mode);
   }
 
+  Group getGroupWithName(String groupName) {
+    return groups.firstWhere((e) => e.name == groupName);
+  }
+
   String? getCurrentProxyName(String? proxyName, Mode mode) {
     final currentGroups = getCurrentGroups(mode);
     switch (mode) {
