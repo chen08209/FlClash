@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/common/common.dart';

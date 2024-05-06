@@ -56,9 +56,7 @@ class AppController {
   updateRunTime() {
     if (proxyManager.startTime != null) {
       final startTimeStamp = proxyManager.startTime!.millisecondsSinceEpoch;
-      final nowTimeStamp = DateTime
-          .now()
-          .millisecondsSinceEpoch;
+      final nowTimeStamp = DateTime.now().millisecondsSinceEpoch;
       appState.runTime = nowTimeStamp - startTimeStamp;
     } else {
       appState.runTime = null;
@@ -133,7 +131,7 @@ class AppController {
     );
   }
 
-  Function?  _changeProfileDebounce;
+  Function? _changeProfileDebounce;
 
   changeProfileDebounce(String? profileId) {
     if (profileId == config.currentProfileId) return;
@@ -159,8 +157,8 @@ class AppController {
       if (!profile.autoUpdate) return;
       final isNotNeedUpdate = profile.lastUpdateDate
           ?.add(
-        profile.autoUpdateDuration,
-      )
+            profile.autoUpdateDuration,
+          )
           .isBeforeNow();
       if (isNotNeedUpdate == false) continue;
       await profile.update();
@@ -177,7 +175,7 @@ class AppController {
 
   clearCurrentDelay() {
     final currentProxyName =
-    appState.getCurrentProxyName(config.currentProxyName, clashConfig.mode);
+        appState.getCurrentProxyName(config.currentProxyName, clashConfig.mode);
     if (currentProxyName == null) return;
     appState.setDelay(Delay(name: currentProxyName, value: null));
   }
@@ -225,19 +223,30 @@ class AppController {
   }
 
   afterInit() async {
-    if (appState.isInit) {
-      if (config.autoRun) {
-        await updateSystemProxy(true);
-      } else {
-        await proxyManager.updateStartTime();
-        await updateSystemProxy(proxyManager.isStart);
-      }
-      autoUpdateProfiles();
-      updateLogStatus();
-      if (!config.silentLaunch) {
-        window?.show();
-      }
+    if (config.autoRun) {
+      await updateSystemProxy(true);
+    } else {
+      await proxyManager.updateStartTime();
+      await updateSystemProxy(proxyManager.isStart);
     }
+    autoUpdateProfiles();
+    updateLogStatus();
+    if (!config.silentLaunch) {
+      window?.show();
+    }
+    periodicUpdateGroups();
+  }
+
+  periodicUpdateGroups() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (globalState.updateGroupsTimer != null) {
+        globalState.updateGroupsTimer!.cancel();
+      }
+      globalState.updateGroupsTimer =
+          Timer.periodic(const Duration(seconds: 5), (Timer t) {
+        updateGroups();
+      });
+    });
   }
 
   setDelay(Delay delay) {
@@ -264,7 +273,7 @@ class AppController {
 
   toProfiles() {
     final index = globalState.currentNavigationItems.indexWhere(
-          (element) => element.label == "profiles",
+      (element) => element.label == "profiles",
     );
     if (index != -1) {
       toPage(index);
@@ -277,7 +286,7 @@ class AppController {
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
     commonScaffoldState?.loadingRun(
-          () async {
+      () async {
         await Future.delayed(const Duration(milliseconds: 300));
         final profile = Profile(
           url: url,
@@ -298,7 +307,7 @@ class AppController {
 
   initLink() {
     linkManager.initAppLinksListen(
-          (url) {
+      (url) {
         globalState.showMessage(
           title: "${appLocalizations.add}${appLocalizations.profile}",
           message: TextSpan(
@@ -307,20 +316,14 @@ class AppController {
               TextSpan(
                 text: " $url ",
                 style: TextStyle(
-                  color: Theme
-                      .of(context)
-                      .colorScheme
-                      .primary,
+                  color: Theme.of(context).colorScheme.primary,
                   decoration: TextDecoration.underline,
-                  decorationColor: Theme
-                      .of(context)
-                      .colorScheme
-                      .primary,
+                  decorationColor: Theme.of(context).colorScheme.primary,
                 ),
               ),
               TextSpan(
                   text:
-                  "${appLocalizations.create}${appLocalizations.profile}"),
+                      "${appLocalizations.create}${appLocalizations.profile}"),
             ],
           ),
           onTab: () {
@@ -340,7 +343,7 @@ class AppController {
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
     commonScaffoldState?.loadingRun(
-          () async {
+      () async {
         await Future.delayed(const Duration(milliseconds: 300));
         final bytes = result.data?.bytes;
         if (bytes == null) {

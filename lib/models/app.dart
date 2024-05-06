@@ -22,6 +22,7 @@ class AppState with ChangeNotifier {
   String _currentLabel;
   SystemColorSchemes _systemColorSchemes;
   List<Group> _groups;
+  num _sortNum;
 
   AppState()
       : _navigationItems = [],
@@ -32,6 +33,7 @@ class AppState with ChangeNotifier {
         _logs = [],
         _groups = [],
         _packages = [],
+        _sortNum = 0,
         _systemColorSchemes = SystemColorSchemes();
 
   String get currentLabel => _currentLabel;
@@ -155,6 +157,15 @@ class AppState with ChangeNotifier {
   set groups(List<Group> value) {
     if (!const ListEquality<Group>().equals(_groups, value)) {
       _groups = value;
+      notifyListeners();
+    }
+  }
+
+  num get sortNum => _sortNum;
+
+  set sortNum(num value) {
+    if (_sortNum != value) {
+      _sortNum = value;
       notifyListeners();
     }
   }

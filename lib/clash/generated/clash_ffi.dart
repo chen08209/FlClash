@@ -1040,6 +1040,14 @@ class ClashFFI {
   late final _getProvider = _getProviderPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
+  void healthcheck() {
+    return _healthcheck();
+  }
+
+  late final _healthcheckPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('healthcheck');
+  late final _healthcheck = _healthcheckPtr.asFunction<void Function()>();
+
   void initNativeApiBridge(
     ffi.Pointer<ffi.Void> api,
     int port,

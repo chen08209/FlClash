@@ -14,8 +14,9 @@ import 'common/common.dart';
 
 class GlobalState {
   Timer? timer;
-  Timer? currentDelayTimer;
+  Timer? updateGroupsTimer;
   Function? updateCurrentDelayDebounce;
+  Function? updateSortNumDebounce;
   PageController? pageController;
   final navigatorKey = GlobalKey<NavigatorState>();
   final Map<int, String?> packageNameMap = {};

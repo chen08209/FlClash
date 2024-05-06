@@ -251,6 +251,11 @@ func getProvider(name *C.char) *C.char {
 	return C.CString(string(data))
 }
 
+//export healthcheck
+func healthcheck() {
+	hcCompatibleProvider(tunnel.Providers())
+}
+
 //export initNativeApiBridge
 func initNativeApiBridge(api unsafe.Pointer, port C.longlong) {
 	bridge.InitDartApi(api)
@@ -271,15 +276,6 @@ func init() {
 		bridge.SendMessage(bridge.Message{
 			Type: bridge.Delay,
 			Data: delayData,
-		})
-	}
-	adapter.NowChangeHook = func(name, value string) {
-		bridge.SendMessage(bridge.Message{
-			Type: bridge.Now,
-			Data: Now{
-				Name:  name,
-				Value: value,
-			},
 		})
 	}
 }

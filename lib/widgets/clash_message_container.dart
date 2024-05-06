@@ -39,6 +39,15 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
   @override
   void onDelay(Delay delay) {
     context.appController.setDelay(delay);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      globalState.updateSortNumDebounce ??= debounce<Function()>(
+            () {
+          context.appController.appState.sortNum++;
+        },
+        milliseconds: appConstant.httpTimeoutDuration.inMilliseconds,
+      );
+      globalState.updateSortNumDebounce!();
+    });
     super.onDelay(delay);
   }
 
