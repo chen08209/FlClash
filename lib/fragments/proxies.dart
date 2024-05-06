@@ -416,19 +416,12 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
   late Animation<double> _scale;
   late Animation<double> _opacity;
 
-  _getDelayMap() async {
+  _healthcheck() async {
     _controller.forward();
-    for (final delay in context.appController.appState.delayMap.entries) {
-      context.appController.setDelay(Delay(
-        name: delay.key,
-        value: 0,
-      ));
-    }
-    clashCore.healthcheck();
+    context.appController.healthcheck();
     await Future.delayed(
       appConstant.httpTimeoutDuration + appConstant.moreDuration,
     );
-    context.appController.appState.sortNum++;
     _controller.reverse();
   }
 
@@ -496,7 +489,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
           },
           child: FloatingActionButton(
             heroTag: null,
-            onPressed: _getDelayMap,
+            onPressed: _healthcheck,
             child: const Icon(Icons.network_ping),
           ),
         ),

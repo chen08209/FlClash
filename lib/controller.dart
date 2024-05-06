@@ -35,7 +35,6 @@ class AppController {
         config: config,
         clashConfig: clashConfig,
       );
-
       updateRunTime();
       updateTraffic();
       globalState.updateFunctionLists = [
@@ -234,6 +233,19 @@ class AppController {
     if (!config.silentLaunch) {
       window?.show();
     }
+  }
+
+  healthcheck() {
+    if (globalState.healthcheckLock) return;
+    for (final delay in appState.delayMap.entries) {
+      setDelay(
+        Delay(
+          name: delay.key,
+          value: 0,
+        ),
+      );
+    }
+    clashCore.healthcheck();
   }
 
   setDelay(Delay delay) {
