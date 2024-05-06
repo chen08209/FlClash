@@ -120,6 +120,10 @@ func changeProxy(s *C.char) bool {
 	return true
 }
 
+// clearEffect
+func clearConfigEffect() {
+}
+
 //export getTraffic
 func getTraffic() *C.char {
 	up, down := statistic.DefaultManager.Now()

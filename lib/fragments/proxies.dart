@@ -84,7 +84,11 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
             );
           },
           builder: (_, state, __) {
-            _tabController ??= TabController(
+            if (_tabController != null) {
+              _tabController!.dispose();
+              _tabController = null;
+            }
+            _tabController = TabController(
               length: state.groupNames.length,
               vsync: this,
               initialIndex: state.currentIndex,
