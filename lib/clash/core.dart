@@ -124,6 +124,10 @@ class ClashCore {
     return true;
   }
 
+  healthcheck(){
+    clashFFI.healthcheck();
+  }
+
   VersionInfo getVersionInfo() {
     final versionInfoRaw = clashFFI.getVersionInfo();
     final versionInfo = json.decode(versionInfoRaw.cast<Utf8>().toDartString());

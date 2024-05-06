@@ -118,3 +118,11 @@ class ProxiesCardSelectorState with _$ProxiesCardSelectorState{
     required String? currentProxyName,
   }) = _ProxiesCardSelectorState;
 }
+
+@freezed
+class ProxiesSortSelectorState with _$ProxiesSortSelectorState{
+  const factory ProxiesSortSelectorState({
+    required ProxiesSortType proxiesSortType,
+    required num sortNum,
+  }) = _ProxiesSortSelectorState;
+}

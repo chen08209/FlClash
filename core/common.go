@@ -7,14 +7,17 @@ import (
 	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/config"
+	"github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
+	"math"
 	"os"
 	"os/exec"
 	"runtime"
+	"sync"
 	"syscall"
 )
 
@@ -168,6 +171,29 @@ func patchConfig(general *config.General) {
 	tunnel.SetMode(general.Mode)
 	log.SetLevel(general.LogLevel)
 	resolver.DisableIPv6 = !general.IPv6
+}
+
+const concurrentCount = math.MaxInt
+
+func hcCompatibleProvider(proxyProviders map[string]provider.ProxyProvider) {
+	wg := sync.WaitGroup{}
+	ch := make(chan struct{}, concurrentCount)
+	for _, proxyProvider := range proxyProviders {
+		proxyProvider := proxyProvider
+		if proxyProvider.VehicleType() == provider.Compatible {
+			log.Infoln("Start initial Compatible provider %s", proxyProvider.Name())
+			wg.Add(1)
+			ch <- struct{}{}
+			go func() {
+				defer func() { <-ch; wg.Done() }()
+				if err := proxyProvider.Initial(); err != nil {
+					log.Errorln("initial Compatible provider %s error: %v", proxyProvider.Name(), err)
+				}
+			}()
+		}
+
+	}
+
 }
 
 func applyConfig(isPatch bool) {

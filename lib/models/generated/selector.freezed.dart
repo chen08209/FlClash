@@ -2032,3 +2032,145 @@ abstract class _ProxiesCardSelectorState implements ProxiesCardSelectorState {
   _$$ProxiesCardSelectorStateImplCopyWith<_$ProxiesCardSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
+
+/// @nodoc
+mixin _$ProxiesSortSelectorState {
+  ProxiesSortType get proxiesSortType => throw _privateConstructorUsedError;
+  num get sortNum => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $ProxiesSortSelectorStateCopyWith<ProxiesSortSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxiesSortSelectorStateCopyWith<$Res> {
+  factory $ProxiesSortSelectorStateCopyWith(ProxiesSortSelectorState value,
+          $Res Function(ProxiesSortSelectorState) then) =
+      _$ProxiesSortSelectorStateCopyWithImpl<$Res, ProxiesSortSelectorState>;
+  @useResult
+  $Res call({ProxiesSortType proxiesSortType, num sortNum});
+}
+
+/// @nodoc
+class _$ProxiesSortSelectorStateCopyWithImpl<$Res,
+        $Val extends ProxiesSortSelectorState>
+    implements $ProxiesSortSelectorStateCopyWith<$Res> {
+  _$ProxiesSortSelectorStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? proxiesSortType = null,
+    Object? sortNum = null,
+  }) {
+    return _then(_value.copyWith(
+      proxiesSortType: null == proxiesSortType
+          ? _value.proxiesSortType
+          : proxiesSortType // ignore: cast_nullable_to_non_nullable
+              as ProxiesSortType,
+      sortNum: null == sortNum
+          ? _value.sortNum
+          : sortNum // ignore: cast_nullable_to_non_nullable
+              as num,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxiesSortSelectorStateImplCopyWith<$Res>
+    implements $ProxiesSortSelectorStateCopyWith<$Res> {
+  factory _$$ProxiesSortSelectorStateImplCopyWith(
+          _$ProxiesSortSelectorStateImpl value,
+          $Res Function(_$ProxiesSortSelectorStateImpl) then) =
+      __$$ProxiesSortSelectorStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({ProxiesSortType proxiesSortType, num sortNum});
+}
+
+/// @nodoc
+class __$$ProxiesSortSelectorStateImplCopyWithImpl<$Res>
+    extends _$ProxiesSortSelectorStateCopyWithImpl<$Res,
+        _$ProxiesSortSelectorStateImpl>
+    implements _$$ProxiesSortSelectorStateImplCopyWith<$Res> {
+  __$$ProxiesSortSelectorStateImplCopyWithImpl(
+      _$ProxiesSortSelectorStateImpl _value,
+      $Res Function(_$ProxiesSortSelectorStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? proxiesSortType = null,
+    Object? sortNum = null,
+  }) {
+    return _then(_$ProxiesSortSelectorStateImpl(
+      proxiesSortType: null == proxiesSortType
+          ? _value.proxiesSortType
+          : proxiesSortType // ignore: cast_nullable_to_non_nullable
+              as ProxiesSortType,
+      sortNum: null == sortNum
+          ? _value.sortNum
+          : sortNum // ignore: cast_nullable_to_non_nullable
+              as num,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ProxiesSortSelectorStateImpl implements _ProxiesSortSelectorState {
+  const _$ProxiesSortSelectorStateImpl(
+      {required this.proxiesSortType, required this.sortNum});
+
+  @override
+  final ProxiesSortType proxiesSortType;
+  @override
+  final num sortNum;
+
+  @override
+  String toString() {
+    return 'ProxiesSortSelectorState(proxiesSortType: $proxiesSortType, sortNum: $sortNum)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxiesSortSelectorStateImpl &&
+            (identical(other.proxiesSortType, proxiesSortType) ||
+                other.proxiesSortType == proxiesSortType) &&
+            (identical(other.sortNum, sortNum) || other.sortNum == sortNum));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, proxiesSortType, sortNum);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxiesSortSelectorStateImplCopyWith<_$ProxiesSortSelectorStateImpl>
+      get copyWith => __$$ProxiesSortSelectorStateImplCopyWithImpl<
+          _$ProxiesSortSelectorStateImpl>(this, _$identity);
+}
+
+abstract class _ProxiesSortSelectorState implements ProxiesSortSelectorState {
+  const factory _ProxiesSortSelectorState(
+      {required final ProxiesSortType proxiesSortType,
+      required final num sortNum}) = _$ProxiesSortSelectorStateImpl;
+
+  @override
+  ProxiesSortType get proxiesSortType;
+  @override
+  num get sortNum;
+  @override
+  @JsonKey(ignore: true)
+  _$$ProxiesSortSelectorStateImplCopyWith<_$ProxiesSortSelectorStateImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}

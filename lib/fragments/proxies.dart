@@ -83,11 +83,7 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
             );
           },
           builder: (_, state, __) {
-            if (_tabController != null) {
-              _tabController!.dispose();
-              _tabController = null;
-            }
-            _tabController = TabController(
+            _tabController ??= TabController(
               length: state.groups.length,
               vsync: this,
               initialIndex: state.currentIndex,
@@ -290,7 +286,7 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
   }
 
   _buildGrid({
-    required ProxiesSortType proxiesSortType,
+    required List<Proxy> proxies,
     required int columns,
   }) {
     return SingleChildScrollView(
@@ -309,7 +305,7 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
         ),
         builder: (_, state, __) {
           return AnimateGrid<Proxy>(
-            items: _getProxies(group.all, proxiesSortType),
+            items: proxies,
             columns: columns,
             itemHeight: _getItemHeight(),
             keyBuilder: (item) {
@@ -342,9 +338,13 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<Config, ProxiesSortType>(
-      selector: (_, config) => config.proxiesSortType,
-      builder: (_, proxiesSortType, __) {
+    return Selector2<AppState, Config, ProxiesSortSelectorState>(
+      selector: (_, appState, config) => ProxiesSortSelectorState(
+        proxiesSortType: config.proxiesSortType,
+        sortNum: appState.sortNum,
+      ),
+      builder: (_, state, __) {
+        final proxies = _getProxies(group.all, state.proxiesSortType);
         return Align(
           alignment: Alignment.topCenter,
           child: SlotLayout(
@@ -352,21 +352,21 @@ class _ProxiesTabViewState extends State<ProxiesTabView> {
               Breakpoints.small: SlotLayout.from(
                 key: const Key('proxies_grid_small'),
                 builder: (_) => _buildGrid(
-                  proxiesSortType: proxiesSortType,
+                  proxies: proxies,
                   columns: 2,
                 ),
               ),
               Breakpoints.medium: SlotLayout.from(
                 key: const Key('proxies_grid_medium'),
                 builder: (_) => _buildGrid(
-                  proxiesSortType: proxiesSortType,
+                  proxies: proxies,
                   columns: 3,
                 ),
               ),
               Breakpoints.large: SlotLayout.from(
                 key: const Key('proxies_grid_large'),
                 builder: (_) => _buildGrid(
-                  proxiesSortType: proxiesSortType,
+                  proxies: proxies,
                   columns: 4,
                 ),
               ),
@@ -399,22 +399,17 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
 
   _getDelayMap() async {
     _controller.forward();
-    // for (final proxy in group.all) {
-    //   context.appController.setDelay(
-    //     Delay(
-    //       name: proxy.name,
-    //       value: 0,
-    //     ),
-    //   );
-    //   clashCore.delay(
-    //     proxy.name,
-    //   );
-    // }
+    for (final delay in context.appController.appState.delayMap.entries) {
+      context.appController.setDelay(Delay(
+        name: delay.key,
+        value: 0,
+      ));
+    }
+    clashCore.healthcheck();
     await Future.delayed(
       appConstant.httpTimeoutDuration + appConstant.moreDuration,
     );
     _controller.reverse();
-    setState(() {});
   }
 
   @override
