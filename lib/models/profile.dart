@@ -62,7 +62,6 @@ class UserInfo {
 class Profile {
   String id;
   String? label;
-  String? groupName;
   String? proxyName;
   String? url;
   DateTime? lastUpdateDate;
@@ -75,7 +74,6 @@ class Profile {
     this.label,
     this.url,
     this.userInfo,
-    this.groupName,
     this.proxyName,
     this.lastUpdateDate,
     Duration? autoUpdateDuration,
@@ -158,7 +156,6 @@ class Profile {
           runtimeType == other.runtimeType &&
           id == other.id &&
           label == other.label &&
-          groupName == other.groupName &&
           proxyName == other.proxyName &&
           url == other.url &&
           lastUpdateDate == other.lastUpdateDate &&
@@ -170,7 +167,6 @@ class Profile {
   int get hashCode =>
       id.hashCode ^
       label.hashCode ^
-      groupName.hashCode ^
       proxyName.hashCode ^
       url.hashCode ^
       lastUpdateDate.hashCode ^
@@ -180,7 +176,7 @@ class Profile {
 
   @override
   String toString() {
-    return 'Profile{id: $id, label: $label, groupName: $groupName, proxyName: $proxyName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, userInfo: $userInfo, autoUpdate: $autoUpdate}';
+    return 'Profile{id: $id, label: $label, proxyName: $proxyName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, userInfo: $userInfo, autoUpdate: $autoUpdate}';
   }
 
   Profile copyWith({
@@ -197,7 +193,6 @@ class Profile {
       id: id,
       label: label ?? this.label,
       url: url ?? this.url,
-      groupName: groupName ?? this.groupName,
       proxyName: proxyName ?? this.proxyName,
       userInfo: userInfo ?? this.userInfo,
       lastUpdateDate: lastUpdateDate ?? this.lastUpdateDate,

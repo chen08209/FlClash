@@ -57,6 +57,7 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
 
   @override
   void onLog(Log log) {
+    print("$log");
     context.appController.appState.addLog(log);
     super.onLog(log);
   }

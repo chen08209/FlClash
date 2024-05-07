@@ -23,14 +23,13 @@ class AppStateContainer extends StatelessWidget {
   }
 
   _updateNavigationsContainer(Widget child) {
-    return Selector3<AppState, Config, ClashConfig, UpdateNavigationsSelector>(
-      selector: (_, appState, config, clashConfig) {
-        final hasGroups =
-            appState.getCurrentGroups(clashConfig.mode).isNotEmpty;
+    return Selector2<AppState, Config, UpdateNavigationsSelector>(
+      selector: (_, appState, config) {
+        final group = appState.currentGroup;
         final hasProfile = config.profiles.isNotEmpty;
         return UpdateNavigationsSelector(
           openLogs: config.openLogs,
-          hasProxies: hasGroups && hasProfile,
+          hasProxies: group != null && hasProfile,
         );
       },
       builder: (context, state, child) {

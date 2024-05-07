@@ -1,4 +1,3 @@
-import 'package:fl_clash/clash/clash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:provider/provider.dart';
@@ -17,8 +16,6 @@ class ProxiesFragment extends StatefulWidget {
 
 class _ProxiesFragmentState extends State<ProxiesFragment>
     with TickerProviderStateMixin {
-  TabController? _tabController;
-
   _initActions() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final commonScaffoldState =
@@ -56,95 +53,6 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return DelayTestButtonContainer(
-      child: Selector<AppState, bool>(
-        selector: (_, appState) => appState.currentLabel == 'proxies',
-        builder: (_, isCurrent, child) {
-          if (isCurrent) {
-            _initActions();
-          }
-          return child!;
-        },
-        child: Selector3<AppState, Config, ClashConfig, ProxiesSelectorState>(
-          selector: (_, appState, config, clashConfig) {
-            final currentGroups = appState.getCurrentGroups(clashConfig.mode);
-            final groupNames = currentGroups.map((e) => e.name).toList();
-            final currentProxyName = appState.getCurrentGroupNameWithGroups(
-              currentGroups,
-              config.currentGroupName,
-              clashConfig.mode,
-            );
-            final currentIndex = currentGroups
-                .indexWhere((element) => element.name == currentProxyName);
-            return ProxiesSelectorState(
-              currentIndex: currentIndex,
-              groupNames: groupNames,
-            );
-          },
-          shouldRebuild: (prev,next){
-            if(prev.groupNames.length != next.groupNames.length){
-              _tabController?.dispose();
-              _tabController =null;
-            }
-            return prev != next;
-          },
-          builder: (_, state, __) {
-            _tabController ??= TabController(
-              length: state.groupNames.length,
-              vsync: this,
-              initialIndex: state.currentIndex,
-            );
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TabBar(
-                  controller: _tabController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  dividerColor: Colors.transparent,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  overlayColor:
-                      const MaterialStatePropertyAll(Colors.transparent),
-                  tabs: [
-                    for (final groupName in state.groupNames)
-                      Tab(
-                        text: groupName,
-                      ),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      for (final groupName in state.groupNames)
-                        KeepContainer(
-                          child: ProxiesTabView(
-                            groupName: groupName,
-                          ),
-                        ),
-                    ],
-                  ),
-                )
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class ProxiesTabView extends StatelessWidget {
-  final String groupName;
-
-  const ProxiesTabView({
-    super.key,
-    required this.groupName,
-  });
-
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
       ..sort(
@@ -175,7 +83,6 @@ class ProxiesTabView extends StatelessWidget {
   }
 
   _getProxies(
-    BuildContext context,
     List<Proxy> proxies,
     ProxiesSortType proxiesSortType,
   ) {
@@ -195,8 +102,7 @@ class ProxiesTabView extends StatelessWidget {
         8 * 2;
   }
 
-  _card(
-    BuildContext context, {
+  _card({
     required void Function() onPressed,
     required bool isSelected,
     required Proxy proxy,
@@ -238,12 +144,22 @@ class ProxiesTabView extends StatelessWidget {
             ),
             SizedBox(
               height: measure.bodySmallHeight,
-              child: Text(
-                proxy.type,
-                style: context.textTheme.bodySmall?.copyWith(
-                  overflow: TextOverflow.ellipsis,
-                  color: context.textTheme.bodySmall?.color?.toLight(),
+              child: Selector<AppState, String>(
+                selector: (context, appState) => appState.getDesc(
+                  proxy.type,
+                  proxy.name,
                 ),
+                builder: (_, desc, __) {
+                  return TooltipText(
+                    text: Text(
+                      desc,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        overflow: TextOverflow.ellipsis,
+                        color: context.textTheme.bodySmall?.color?.toLight(),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(
@@ -306,42 +222,14 @@ class ProxiesTabView extends StatelessWidget {
       itemCount: proxies.length,
       itemBuilder: (_, index) {
         final proxy = proxies[index];
-        return Selector3<AppState, Config, ClashConfig,
-            ProxiesCardSelectorState>(
-          selector: (_, appState, config, clashConfig) {
-            final currentGroupName = appState.getCurrentGroupName(
-              config.currentGroupName,
-              clashConfig.mode,
-            );
-            final currentProxyName = appState.getCurrentProxyName(
-              config.currentProxyName,
-              clashConfig.mode,
-            );
-            final group = appState.getGroupWithName(groupName);
-            final isSelected = group.type == GroupType.Selector
-                ? group.name == currentGroupName &&
-                    proxy.name == currentProxyName
-                : group.now == proxy.name;
-            return ProxiesCardSelectorState(
-              isSelected: isSelected,
-              currentGroupName: currentGroupName,
-              currentProxyName: currentProxyName,
-            );
-          },
-          builder: (_, state, __) {
+        return Selector<AppState, bool>(
+          selector: (_, appState) => proxy.name == appState.currentProxyName,
+          builder: (_, isSelected, __) {
             return _card(
-              context,
-              isSelected: state.isSelected,
+              isSelected: isSelected,
               onPressed: () {
-                final group =
-                    context.appController.appState.getGroupWithName(groupName);
-                if (group.type == GroupType.Selector) {
-                  final config = context.read<Config>();
-                  config.currentProfile?.groupName = group.name;
-                  config.currentProfile?.proxyName = proxy.name;
-                  config.update();
-                  context.appController.changeProxy();
-                }
+                context.appController.config.currentProxyName = proxy.name;
+                context.appController.changeProxy();
               },
               proxy: proxy,
             );
@@ -353,52 +241,63 @@ class ProxiesTabView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector2<AppState, Config, ProxiesTabViewSelectorState>(
-      selector: (_, appState, config) {
-        return ProxiesTabViewSelectorState(
-          proxiesSortType: config.proxiesSortType,
-          sortNum: appState.sortNum,
-          group: appState.getGroupWithName(groupName),
-        );
-      },
-      builder: (_, state, __) {
-        final proxies = _getProxies(
-          context,
-          state.group.all,
-          state.proxiesSortType,
-        );
-        return Align(
-          alignment: Alignment.topCenter,
-          child: SlotLayout(
-            config: {
-              Breakpoints.small: SlotLayout.from(
-                key: const Key('proxies_grid_small'),
-                builder: (_) => _buildGrid(
-                  context,
-                  proxies: proxies,
-                  columns: 2,
-                ),
+    return DelayTestButtonContainer(
+      child: Selector<AppState, bool>(
+        selector: (_, appState) => appState.currentLabel == 'proxies',
+        builder: (_, isCurrent, child) {
+          if (isCurrent) {
+            _initActions();
+          }
+          return child!;
+        },
+        child: Selector2<AppState, Config, ProxiesSelectorState>(
+          selector: (_, appState, config) {
+            return ProxiesSelectorState(
+              proxiesSortType: config.proxiesSortType,
+              sortNum: appState.sortNum,
+              group: appState.currentGroup,
+            );
+          },
+          builder: (_, state, __) {
+            if (state.group == null) return Container();
+            final proxies = _getProxies(
+              state.group!.all,
+              state.proxiesSortType,
+            );
+            return Align(
+              alignment: Alignment.topCenter,
+              child: SlotLayout(
+                config: {
+                  Breakpoints.small: SlotLayout.from(
+                    key: const Key('proxies_grid_small'),
+                    builder: (_) => _buildGrid(
+                      context,
+                      proxies: proxies,
+                      columns: 2,
+                    ),
+                  ),
+                  Breakpoints.medium: SlotLayout.from(
+                    key: const Key('proxies_grid_medium'),
+                    builder: (_) => _buildGrid(
+                      context,
+                      proxies: proxies,
+                      columns: 3,
+                    ),
+                  ),
+                  Breakpoints.large: SlotLayout.from(
+                    key: const Key('proxies_grid_large'),
+                    builder: (_) => _buildGrid(
+                      context,
+                      proxies: proxies,
+                      columns: 4,
+                    ),
+                  ),
+                },
               ),
-              Breakpoints.medium: SlotLayout.from(
-                key: const Key('proxies_grid_medium'),
-                builder: (_) => _buildGrid(
-                  context,
-                  proxies: proxies,
-                  columns: 3,
-                ),
-              ),
-              Breakpoints.large: SlotLayout.from(
-                key: const Key('proxies_grid_large'),
-                builder: (_) => _buildGrid(
-                  context,
-                  proxies: proxies,
-                  columns: 4,
-                ),
-              ),
-            },
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 }

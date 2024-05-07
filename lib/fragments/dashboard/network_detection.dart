@@ -88,12 +88,8 @@ class _NetworkDetectionState extends State<NetworkDetection> {
       child: Selector3<AppState, Config, ClashConfig,
           NetworkDetectionSelectorState>(
         selector: (_, appState, config, clashConfig) {
-          final proxyName = appState.getCurrentProxyName(
-            config.currentProxyName,
-            clashConfig.mode,
-          );
+          final proxyName = appState.currentProxyName;
           return NetworkDetectionSelectorState(
-            isInit: appState.isInit,
             currentProxyName: proxyName,
             delay: appState.getDelay(
               proxyName,

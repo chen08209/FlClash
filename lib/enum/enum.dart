@@ -2,6 +2,8 @@
 
 enum GroupType { Selector, URLTest, Fallback }
 
+enum GroupName { GLOBAL, Proxy, Auto, Fallback }
+
 extension GroupTypeExtension on GroupType {
   static List<String> get valueList => GroupType.values
       .map(

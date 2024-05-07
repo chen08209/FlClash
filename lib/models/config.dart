@@ -161,7 +161,12 @@ class Config extends ChangeNotifier {
 
   String? get currentProxyName => currentProfile?.proxyName;
 
-  String? get currentGroupName => currentProfile?.groupName;
+  set currentProxyName(String? value){
+    if (currentProfile?.proxyName != value) {
+      currentProfile?.proxyName = value;
+      notifyListeners();
+    }
+  }
 
   @JsonKey(defaultValue: false)
   bool get autoLaunch {

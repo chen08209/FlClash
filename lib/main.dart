@@ -17,7 +17,10 @@ Future<void> main() async {
   await window?.init();
   final config = await preferences.getConfig() ?? Config();
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
-  final appState = AppState();
+  final appState = AppState(
+    mode: clashConfig.mode,
+    currentProxyName: config.currentProxyName,
+  );
   await globalState.init(
     appState: appState,
     config: config,
@@ -41,7 +44,10 @@ Future<void> vpnService() async {
   WidgetsFlutterBinding.ensureInitialized();
   final config = await preferences.getConfig() ?? Config();
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
-  final appState = AppState();
+  final appState = AppState(
+    mode: clashConfig.mode,
+    currentProxyName: config.currentProxyName,
+  );
   clashMessage.addListener(ClashMessageListenerWithVpn(onTun: (String fd) {
     proxyManager.setProtect(
       int.parse(fd),

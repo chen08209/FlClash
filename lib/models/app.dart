@@ -23,8 +23,10 @@ class AppState with ChangeNotifier {
   SystemColorSchemes _systemColorSchemes;
   List<Group> _groups;
   num _sortNum;
+  Mode _mode;
+  String? _currentProxyName;
 
-  AppState()
+  AppState({required Mode mode, required currentProxyName})
       : _navigationItems = [],
         _delayMap = {},
         _isInit = false,
@@ -34,6 +36,8 @@ class AppState with ChangeNotifier {
         _groups = [],
         _packages = [],
         _sortNum = 0,
+        _mode = mode,
+        _currentProxyName = currentProxyName,
         _systemColorSchemes = SystemColorSchemes();
 
   String get currentLabel => _currentLabel;
@@ -81,6 +85,17 @@ class AppState with ChangeNotifier {
     }
   }
 
+  String getDesc(String type, String? proxyName) {
+    final groupTypeNamesList = GroupType.values.map((e) => e.name).toList();
+    if (!groupTypeNamesList.contains(type)) {
+      return type;
+    }else{
+      final index = groups.indexWhere((element) => element.name == proxyName);
+      if(index == -1) return type;
+      return "$type(${groups[index].now})";
+    }
+  }
+
   int? getDelay(String? proxyName) {
     if (proxyName == null) return null;
     final index = groups.indexWhere((element) => element.name == proxyName);
@@ -88,6 +103,15 @@ class AppState with ChangeNotifier {
     final group = groups[index];
     if (group.now == null) return null;
     return _delayMap[group.now];
+  }
+
+  String? get realCurrentProxyName {
+    if (currentProxyName == null) return null;
+    final index = groups.indexWhere((element) => element.name == currentProxyName);
+    if (index == -1) return currentProxyName;
+    final group = groups[index];
+    if (group.now == null) return null;
+    return group.now;
   }
 
   setDelay(Delay delay) {
@@ -170,53 +194,48 @@ class AppState with ChangeNotifier {
     }
   }
 
-  List<Group> getCurrentGroups(Mode mode) {
-    switch (mode) {
-      case Mode.direct:
-        return [];
-      case Mode.global:
-        return groups
-            .where((element) => element.name == UsedProxy.GLOBAL.name)
-            .toList();
-      case Mode.rule:
-        return groups
-            .where((element) => element.name != UsedProxy.GLOBAL.name)
-            .toList();
+  Mode get mode => _mode;
+
+  set mode(Mode value) {
+    if (_mode != value) {
+      _mode = value;
+      notifyListeners();
     }
   }
 
-  String? getCurrentGroupNameWithGroups(
-    List<Group> groups,
-    String? groupName,
-    Mode mode,
-  ) {
+  String? get currentProxyName {
+    if (mode == Mode.direct) return UsedProxy.DIRECT.name;
+    if (_currentProxyName != null) return _currentProxyName!;
+    return currentGroup?.now;
+  }
+
+  set currentProxyName(String? value) {
+    if (_currentProxyName != value) {
+      _currentProxyName = value;
+      notifyListeners();
+    }
+  }
+
+  Group? get currentGroup {
     switch (mode) {
       case Mode.direct:
         return null;
       case Mode.global:
-        return UsedProxy.GLOBAL.name;
+        return globalGroup;
       case Mode.rule:
-        return groupName ?? (groups.isNotEmpty ? groups.first.name : null);
+        return ruleGroup;
     }
   }
 
-  String? getCurrentGroupName(String? groupName, Mode mode) {
-    final currentGroups = getCurrentGroups(mode);
-    return getCurrentGroupNameWithGroups(currentGroups, groupName, mode);
+  Group? get globalGroup {
+    final index =
+        groups.indexWhere((element) => element.name == GroupName.GLOBAL.name);
+    return index != -1 ? groups[index] : null;
   }
 
-  Group getGroupWithName(String groupName) {
-    return groups.firstWhere((e) => e.name == groupName);
-  }
-
-  String? getCurrentProxyName(String? proxyName, Mode mode) {
-    final currentGroups = getCurrentGroups(mode);
-    switch (mode) {
-      case Mode.direct:
-        return UsedProxy.DIRECT.name;
-      case Mode.global || Mode.rule:
-        return proxyName ??
-            (currentGroups.isNotEmpty ? currentGroups.first.now : null);
-    }
+  Group? get ruleGroup {
+    final index =
+        groups.indexWhere((element) => element.name == GroupName.Proxy.name);
+    return index != -1 ? groups[index] : null;
   }
 }
