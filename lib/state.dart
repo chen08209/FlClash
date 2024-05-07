@@ -14,7 +14,6 @@ import 'common/common.dart';
 
 class GlobalState {
   Timer? timer;
-  Function? updateCurrentDelayDebounce;
   Function? updateSortNumDebounce;
   PageController? pageController;
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -75,18 +74,6 @@ class GlobalState {
     stopListenUpdate();
   }
 
-  void updateCurrentDelay(
-    String? proxyName,
-  ) {
-    updateCurrentDelayDebounce ??= debounce<Function(String?)>((proxyName) {
-      if (proxyName != null) {
-        clashCore.delay(
-          proxyName,
-        );
-      }
-    });
-    updateCurrentDelayDebounce!([proxyName]);
-  }
 
   applyProfile({
     required AppState appState,
@@ -133,29 +120,36 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) {
-    final currentGroupName =
-        appState.getCurrentGroupName(config.currentGroupName, clashConfig.mode);
-    final currentProxyName =
-        appState.getCurrentProxyName(config.currentProxyName, clashConfig.mode);
-    if (config.profiles.isEmpty || currentProxyName == null) {
-      stopSystemProxy();
-      return;
-    }
-    if (currentGroupName == null) return;
-    final groupIndex = appState.groups.indexWhere(
-      (element) => element.name == currentGroupName,
-    );
-    if (groupIndex == -1) return;
-    final proxyIndex = appState.groups[groupIndex].all.indexWhere(
-      (element) => element.name == currentProxyName,
-    );
-    if (proxyIndex == -1) return;
-    clashCore.changeProxy(
-      ChangeProxyParams(
-        groupName: currentGroupName,
-        proxyName: currentProxyName,
-      ),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (config.profiles.isEmpty) {
+        stopSystemProxy();
+        return;
+      }
+      final currentProxyName = appState.currentProxyName;
+      if (currentProxyName == null) return;
+      final index1 = appState.globalGroup?.all.indexWhere(
+        (element) =>  element.name == currentProxyName,
+      );
+      if (index1 != null && index1 != -1) {
+        clashCore.changeProxy(
+          ChangeProxyParams(
+            groupName: GroupName.GLOBAL.name,
+            proxyName: currentProxyName,
+          ),
+        );
+      }
+      final index2 = appState.ruleGroup?.all.indexWhere(
+        (element) => element.name == currentProxyName,
+      );
+      if (index2 != null && index2 != -1) {
+        clashCore.changeProxy(
+          ChangeProxyParams(
+            groupName: GroupName.Proxy.name,
+            proxyName: currentProxyName,
+          ),
+        );
+      }
+    });
   }
 
   updatePackages(AppState appState) async {
@@ -171,11 +165,11 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) {
-    final hasGroups = appState.getCurrentGroups(clashConfig.mode).isNotEmpty;
+    final group = appState.currentGroup;
     final hasProfile = config.profiles.isNotEmpty;
     appState.navigationItems = navigation.getItems(
       openLogs: config.openLogs,
-      hasProxies: hasGroups && hasProfile,
+      hasProxies: group != null && hasProfile,
     );
   }
 

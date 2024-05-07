@@ -1,5 +1,7 @@
+import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -50,9 +52,6 @@ class _StartButtonState extends State<StartButton>
   updateSystemProxy() async {
     final appController = context.appController;
     await appController.updateSystemProxy(isStart);
-    if (isStart && mounted) {
-      appController.healthcheck();
-    }
   }
 
   @override
@@ -66,14 +65,17 @@ class _StartButtonState extends State<StartButton>
         if (!state.isInit || !state.hasProfile) {
           return Container();
         }
-        final textWidth = context.appController.measure.computeTextSize(
-              Text(
-                Other.getTimeDifference(
-                  DateTime.now(),
-                ),
-                style: Theme.of(context).textTheme.titleMedium?.toSoftBold(),
-              ),
-            ).width +
+        final textWidth = context.appController.measure
+                .computeTextSize(
+                  Text(
+                    Other.getTimeDifference(
+                      DateTime.now(),
+                    ),
+                    style:
+                        Theme.of(context).textTheme.titleMedium?.toSoftBold(),
+                  ),
+                )
+                .width +
             16;
         return AnimatedBuilder(
           animation: _controller.view,

@@ -27,7 +27,6 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) => Profile(
       userInfo: json['userInfo'] == null
           ? null
           : UserInfo.fromJson(json['userInfo'] as Map<String, dynamic>),
-      groupName: json['groupName'] as String?,
       proxyName: json['proxyName'] as String?,
       lastUpdateDate: json['lastUpdateDate'] == null
           ? null
@@ -41,7 +40,6 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) => Profile(
 Map<String, dynamic> _$ProfileToJson(Profile instance) => <String, dynamic>{
       'id': instance.id,
       'label': instance.label,
-      'groupName': instance.groupName,
       'proxyName': instance.proxyName,
       'url': instance.url,
       'lastUpdateDate': instance.lastUpdateDate?.toIso8601String(),

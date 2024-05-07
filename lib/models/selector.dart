@@ -32,7 +32,6 @@ class NetworkDetectionSelectorState with _$NetworkDetectionSelectorState {
   const factory NetworkDetectionSelectorState({
     required String? currentProxyName,
     required int? delay,
-    required bool isInit,
   }) = _NetworkDetectionSelectorState;
 }
 
@@ -104,27 +103,18 @@ class HomeNavigationSelectorState with _$HomeNavigationSelectorState{
 }
 
 @freezed
-class ProxiesSelectorState with _$ProxiesSelectorState{
-  const factory ProxiesSelectorState({
-    required int currentIndex,
-    required List<String> groupNames,
-  }) = _ProxiesSelectorState;
-}
-
-@freezed
 class ProxiesCardSelectorState with _$ProxiesCardSelectorState{
   const factory ProxiesCardSelectorState({
-    required String? currentGroupName,
     required String? currentProxyName,
     required bool isSelected,
   }) = _ProxiesCardSelectorState;
 }
 
 @freezed
-class ProxiesTabViewSelectorState with _$ProxiesTabViewSelectorState{
-  const factory ProxiesTabViewSelectorState({
+class ProxiesSelectorState with _$ProxiesSelectorState{
+  const factory ProxiesSelectorState({
     required ProxiesSortType proxiesSortType,
     required num sortNum,
-    required Group group,
-  }) = _ProxiesTabViewSelectorState;
+    required Group? group,
+  }) = _ProxiesSelectorState;
 }

@@ -100,9 +100,6 @@ class ClashCore {
             .map(
               (name) => proxies[name],
             )
-            .where(
-              (proxy) => proxy["type"] != GroupType.Selector.value,
-            )
             .toList();
         return group;
       }).toList();
@@ -115,13 +112,38 @@ class ClashCore {
     return clashFFI.changeProxy(params.toNativeUtf8().cast()) == 1;
   }
 
-  bool delay(String proxyName) {
+  Future<Delay> delay(String proxyName) {
+    final completer = Completer<Delay>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if (!completer.isCompleted) {
+        final m = Message.fromJson(json.decode(message));
+        final delay = Delay.fromJson(m.data);
+        completer.complete(delay);
+        receiver.close();
+      }
+    });
     final delayParams = {
       "proxy-name": proxyName,
       "timeout": appConstant.httpTimeoutDuration.inMilliseconds,
     };
-    clashFFI.asyncTestDelay(json.encode(delayParams).toNativeUtf8().cast());
-    return true;
+    clashFFI.asyncTestDelay(
+      json.encode(delayParams).toNativeUtf8().cast(),
+      receiver.sendPort.nativePort,
+    );
+    Future.delayed(appConstant.httpTimeoutDuration + appConstant.moreDuration,
+        () {
+      if (!completer.isCompleted) {
+        receiver.close();
+        completer.complete(
+          Delay(
+            name: proxyName,
+            value: -1,
+          ),
+        );
+      }
+    });
+    return completer.future;
   }
 
   healthcheck() {

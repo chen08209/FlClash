@@ -172,13 +172,6 @@ class AppController {
     appState.systemColorSchemes = systemColorSchemes;
   }
 
-  clearCurrentDelay() {
-    final currentProxyName =
-        appState.getCurrentProxyName(config.currentProxyName, clashConfig.mode);
-    if (currentProxyName == null) return;
-    appState.setDelay(Delay(name: currentProxyName, value: null));
-  }
-
   savePreferences() async {
     await saveConfigPreferences();
     await saveClashConfigPreferences();

@@ -96,32 +96,29 @@ func getProxies() *C.char {
 
 //export changeProxy
 func changeProxy(s *C.char) bool {
-	paramsString := C.GoString(s)
-	var params = &ChangeProxyParams{}
-	err := json.Unmarshal([]byte(paramsString), params)
-	if err != nil {
-		log.Infoln("Unmarshal ChangeProxyParams %v", err)
-		return false
-	}
-	proxies := tunnel.ProxiesWithProviders()
-	proxy := proxies[*params.GroupName]
-	if proxy == nil {
-		return false
-	}
-	log.Infoln("change proxy %s", proxy.Name())
-	adapterProxy := proxy.(*adapter.Proxy)
-	selector, ok := adapterProxy.ProxyAdapter.(*outboundgroup.Selector)
-	if !ok {
-		return false
-	}
-	if err := selector.Set(*params.ProxyName); err != nil {
-		return false
-	}
+	go func() {
+		paramsString := C.GoString(s)
+		var params = &ChangeProxyParams{}
+		err := json.Unmarshal([]byte(paramsString), params)
+		if err != nil {
+			log.Infoln("Unmarshal ChangeProxyParams %v", err)
+		}
+		proxies := tunnel.ProxiesWithProviders()
+		proxy := proxies[*params.GroupName]
+		if proxy == nil {
+			return
+		}
+		log.Infoln("change proxy %s", proxy.Name())
+		adapterProxy := proxy.(*adapter.Proxy)
+		selector, ok := adapterProxy.ProxyAdapter.(*outboundgroup.Selector)
+		if !ok {
+			return
+		}
+		if err := selector.Set(*params.ProxyName); err != nil {
+			return
+		}
+	}()
 	return true
-}
-
-// clearEffect
-func clearConfigEffect() {
 }
 
 //export getTraffic
@@ -140,7 +137,8 @@ func getTraffic() *C.char {
 }
 
 //export asyncTestDelay
-func asyncTestDelay(s *C.char) {
+func asyncTestDelay(s *C.char, port C.longlong) {
+	i := int64(port)
 	go func() {
 		paramsString := C.GoString(s)
 		var params = &TestDelayParams{}
@@ -148,42 +146,34 @@ func asyncTestDelay(s *C.char) {
 		if err != nil {
 			return
 		}
-
 		expectedStatus, err := utils.NewUnsignedRanges[uint16]("")
 		if err != nil {
 			return
 		}
-
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
 		defer cancel()
-
 		proxies := tunnel.ProxiesWithProviders()
 		proxy := proxies[params.ProxyName]
-
 		delayData := &Delay{
 			Name: params.ProxyName,
 		}
-
 		message := bridge.Message{
 			Type: bridge.Delay,
 			Data: delayData,
 		}
-
 		if proxy == nil {
 			delayData.Value = -1
-			bridge.SendMessage(message)
+			bridge.SendToPort(i, message.Json())
 			return
 		}
-
 		delay, err := proxy.URLTest(ctx, constant.DefaultTestURL, expectedStatus)
 		if err != nil || delay == 0 {
 			delayData.Value = -1
-			bridge.SendMessage(message)
+			bridge.SendToPort(i, message.Json())
 			return
 		}
-
 		delayData.Value = int32(delay)
-		bridge.SendMessage(message)
+		bridge.SendToPort(i, message.Json())
 	}()
 }
 

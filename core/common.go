@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 )
@@ -114,6 +115,152 @@ func decorationConfig(profilePath *string, cfg config.RawConfig) *config.RawConf
 	return prof
 }
 
+func Reduce[T any, U any](s []T, initVal U, f func(U, T) U) U {
+	for _, v := range s {
+		initVal = f(initVal, v)
+	}
+	return initVal
+}
+
+func Map[T, U any](slice []T, fn func(T) U) []U {
+	result := make([]U, len(slice))
+	for i, v := range slice {
+		result[i] = fn(v)
+	}
+	return result
+}
+
+func replaceFromMap(s string, m map[string]string) string {
+	for k, v := range m {
+		s = strings.ReplaceAll(s, k, v)
+	}
+	return s
+}
+
+func removeDuplicateFromSlice[T any](slice []T) []T {
+	result := make([]T, 0)
+	seen := make(map[any]struct{})
+	for _, value := range slice {
+		if _, ok := seen[value]; !ok {
+			result = append(result, value)
+			seen[value] = struct{}{}
+		}
+	}
+	return result
+}
+
+func generateProxyGroupAndRule(proxyGroup *[]map[string]any, rule *[]string) {
+	var replacements = map[string]string{}
+	var selectArr []map[string]any
+	var urlTestArr []map[string]any
+	var fallbackArr []map[string]any
+	for _, group := range *proxyGroup {
+		switch group["type"] {
+		case "select":
+			selectArr = append(selectArr, group)
+			replacements[group["name"].(string)] = "Proxy"
+			break
+		case "url-test":
+			urlTestArr = append(urlTestArr, group)
+			replacements[group["name"].(string)] = "Auto"
+			break
+		case "fallback":
+			fallbackArr = append(fallbackArr, group)
+			replacements[group["name"].(string)] = "Fallback"
+			break
+		default:
+			break
+		}
+	}
+
+	ProxyProxies := Reduce(selectArr, []string{}, func(res []string, cur map[string]any) []string {
+		if cur["proxies"] == nil {
+			return res
+		}
+		for _, proxyName := range cur["proxies"].([]interface{}) {
+			if str, ok := proxyName.(string); ok {
+				str = replaceFromMap(str, replacements)
+				if str != "Proxy" {
+					res = append(res, str)
+				}
+			}
+		}
+		return res
+	})
+
+	ProxyProxies = removeDuplicateFromSlice(ProxyProxies)
+
+	AutoProxies := Reduce(urlTestArr, []string{}, func(res []string, cur map[string]any) []string {
+		if cur["proxies"] == nil {
+			return res
+		}
+		for _, proxyName := range cur["proxies"].([]interface{}) {
+			if str, ok := proxyName.(string); ok {
+				str = replaceFromMap(str, replacements)
+				if str != "Auto" {
+					res = append(res, str)
+				}
+			}
+		}
+		return res
+	})
+
+	AutoProxies = removeDuplicateFromSlice(AutoProxies)
+
+	FallbackProxies := Reduce(fallbackArr, []string{}, func(res []string, cur map[string]any) []string {
+		if cur["proxies"] == nil {
+			return res
+		}
+		for _, proxyName := range cur["proxies"].([]interface{}) {
+			if str, ok := proxyName.(string); ok {
+				str = replaceFromMap(str, replacements)
+				if str != "Fallback" {
+					res = append(res, str)
+				}
+			}
+		}
+		return res
+	})
+
+	FallbackProxies = removeDuplicateFromSlice(FallbackProxies)
+
+	var computedProxyGroup []map[string]any
+
+	if len(ProxyProxies) > 0 {
+		computedProxyGroup = append(computedProxyGroup,
+			map[string]any{
+				"name":    "Proxy",
+				"type":    "select",
+				"proxies": ProxyProxies,
+			})
+	}
+
+	if len(AutoProxies) > 0 {
+		computedProxyGroup = append(computedProxyGroup,
+			map[string]any{
+				"name":    "Auto",
+				"type":    "url-test",
+				"proxies": AutoProxies,
+			})
+	}
+
+	if len(FallbackProxies) > 0 {
+		computedProxyGroup = append(computedProxyGroup,
+			map[string]any{
+				"name":    "Fallback",
+				"type":    "fallback",
+				"proxies": FallbackProxies,
+			})
+	}
+
+	computedRule := Map(*rule, func(value string) string {
+		return replaceFromMap(value, replacements)
+	})
+
+	*proxyGroup = computedProxyGroup
+	*rule = computedRule
+}
+
 func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig) {
 	targetConfig.ExternalController = ""
 	targetConfig.ExternalUI = ""
@@ -129,23 +276,19 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Tun.Device = patchConfig.Tun.Device
 	targetConfig.Tun.DNSHijack = patchConfig.Tun.DNSHijack
 	targetConfig.Tun.Stack = patchConfig.Tun.Stack
+	targetConfig.GeodataLoader = "standard"
 	targetConfig.Profile.StoreSelected = false
 	if targetConfig.DNS.Enable == false {
 		targetConfig.DNS = patchConfig.DNS
-	} else {
-		targetConfig.DNS.UseHosts = patchConfig.DNS.UseHosts
-		targetConfig.DNS.EnhancedMode = patchConfig.DNS.EnhancedMode
-		targetConfig.DNS.IPv6 = patchConfig.DNS.IPv6
-		targetConfig.DNS.DefaultNameserver = append(patchConfig.DNS.DefaultNameserver, targetConfig.DNS.DefaultNameserver...)
-		targetConfig.DNS.NameServer = append(patchConfig.DNS.NameServer, targetConfig.DNS.NameServer...)
-		targetConfig.DNS.FakeIPFilter = append(patchConfig.DNS.FakeIPFilter, targetConfig.DNS.FakeIPFilter...)
-		targetConfig.DNS.Fallback = append(patchConfig.DNS.Fallback, targetConfig.DNS.Fallback...)
-		if runtime.GOOS == "android" {
-			targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, "dhcp://"+dns.SystemDNSPlaceholder)
-		} else if runtime.GOOS == "windows" {
-			targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, dns.SystemDNSPlaceholder)
-		}
 	}
+	if runtime.GOOS == "android" {
+		targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, "dhcp://"+dns.SystemDNSPlaceholder)
+	} else if runtime.GOOS == "windows" {
+		targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, dns.SystemDNSPlaceholder)
+	}
+	targetConfig.ProxyProvider = make(map[string]map[string]any)
+	targetConfig.RuleProvider = make(map[string]map[string]any)
+	generateProxyGroupAndRule(&targetConfig.ProxyGroup, &targetConfig.Rule)
 }
 
 func patchConfig(general *config.General) {

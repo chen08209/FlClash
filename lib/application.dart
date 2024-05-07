@@ -27,8 +27,13 @@ runAppWithPreferences(
       ChangeNotifierProvider<Config>(
         create: (_) => config,
       ),
-      ChangeNotifierProvider<AppState>(
+      ChangeNotifierProxyProvider2<Config, ClashConfig, AppState>(
         create: (_) => appState,
+        update: (_, config, clashConfig, appState) {
+          appState?.mode = clashConfig.mode;
+          appState?.currentProxyName = config.currentProxyName;
+          return appState!;
+        },
       )
     ],
     child: child,

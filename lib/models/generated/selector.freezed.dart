@@ -349,7 +349,6 @@ abstract class _UpdateCurrentDelaySelectorState
 mixin _$NetworkDetectionSelectorState {
   String? get currentProxyName => throw _privateConstructorUsedError;
   int? get delay => throw _privateConstructorUsedError;
-  bool get isInit => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $NetworkDetectionSelectorStateCopyWith<NetworkDetectionSelectorState>
@@ -364,7 +363,7 @@ abstract class $NetworkDetectionSelectorStateCopyWith<$Res> {
       _$NetworkDetectionSelectorStateCopyWithImpl<$Res,
           NetworkDetectionSelectorState>;
   @useResult
-  $Res call({String? currentProxyName, int? delay, bool isInit});
+  $Res call({String? currentProxyName, int? delay});
 }
 
 /// @nodoc
@@ -383,7 +382,6 @@ class _$NetworkDetectionSelectorStateCopyWithImpl<$Res,
   $Res call({
     Object? currentProxyName = freezed,
     Object? delay = freezed,
-    Object? isInit = null,
   }) {
     return _then(_value.copyWith(
       currentProxyName: freezed == currentProxyName
@@ -394,10 +392,6 @@ class _$NetworkDetectionSelectorStateCopyWithImpl<$Res,
           ? _value.delay
           : delay // ignore: cast_nullable_to_non_nullable
               as int?,
-      isInit: null == isInit
-          ? _value.isInit
-          : isInit // ignore: cast_nullable_to_non_nullable
-              as bool,
     ) as $Val);
   }
 }
@@ -411,7 +405,7 @@ abstract class _$$NetworkDetectionSelectorStateImplCopyWith<$Res>
       __$$NetworkDetectionSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? currentProxyName, int? delay, bool isInit});
+  $Res call({String? currentProxyName, int? delay});
 }
 
 /// @nodoc
@@ -429,7 +423,6 @@ class __$$NetworkDetectionSelectorStateImplCopyWithImpl<$Res>
   $Res call({
     Object? currentProxyName = freezed,
     Object? delay = freezed,
-    Object? isInit = null,
   }) {
     return _then(_$NetworkDetectionSelectorStateImpl(
       currentProxyName: freezed == currentProxyName
@@ -440,10 +433,6 @@ class __$$NetworkDetectionSelectorStateImplCopyWithImpl<$Res>
           ? _value.delay
           : delay // ignore: cast_nullable_to_non_nullable
               as int?,
-      isInit: null == isInit
-          ? _value.isInit
-          : isInit // ignore: cast_nullable_to_non_nullable
-              as bool,
     ));
   }
 }
@@ -453,20 +442,16 @@ class __$$NetworkDetectionSelectorStateImplCopyWithImpl<$Res>
 class _$NetworkDetectionSelectorStateImpl
     implements _NetworkDetectionSelectorState {
   const _$NetworkDetectionSelectorStateImpl(
-      {required this.currentProxyName,
-      required this.delay,
-      required this.isInit});
+      {required this.currentProxyName, required this.delay});
 
   @override
   final String? currentProxyName;
   @override
   final int? delay;
-  @override
-  final bool isInit;
 
   @override
   String toString() {
-    return 'NetworkDetectionSelectorState(currentProxyName: $currentProxyName, delay: $delay, isInit: $isInit)';
+    return 'NetworkDetectionSelectorState(currentProxyName: $currentProxyName, delay: $delay)';
   }
 
   @override
@@ -476,12 +461,11 @@ class _$NetworkDetectionSelectorStateImpl
             other is _$NetworkDetectionSelectorStateImpl &&
             (identical(other.currentProxyName, currentProxyName) ||
                 other.currentProxyName == currentProxyName) &&
-            (identical(other.delay, delay) || other.delay == delay) &&
-            (identical(other.isInit, isInit) || other.isInit == isInit));
+            (identical(other.delay, delay) || other.delay == delay));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, currentProxyName, delay, isInit);
+  int get hashCode => Object.hash(runtimeType, currentProxyName, delay);
 
   @JsonKey(ignore: true)
   @override
@@ -496,15 +480,12 @@ abstract class _NetworkDetectionSelectorState
     implements NetworkDetectionSelectorState {
   const factory _NetworkDetectionSelectorState(
       {required final String? currentProxyName,
-      required final int? delay,
-      required final bool isInit}) = _$NetworkDetectionSelectorStateImpl;
+      required final int? delay}) = _$NetworkDetectionSelectorStateImpl;
 
   @override
   String? get currentProxyName;
   @override
   int? get delay;
-  @override
-  bool get isInit;
   @override
   @JsonKey(ignore: true)
   _$$NetworkDetectionSelectorStateImplCopyWith<
@@ -1742,156 +1723,7 @@ abstract class _HomeNavigationSelectorState
 }
 
 /// @nodoc
-mixin _$ProxiesSelectorState {
-  int get currentIndex => throw _privateConstructorUsedError;
-  List<String> get groupNames => throw _privateConstructorUsedError;
-
-  @JsonKey(ignore: true)
-  $ProxiesSelectorStateCopyWith<ProxiesSelectorState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ProxiesSelectorStateCopyWith<$Res> {
-  factory $ProxiesSelectorStateCopyWith(ProxiesSelectorState value,
-          $Res Function(ProxiesSelectorState) then) =
-      _$ProxiesSelectorStateCopyWithImpl<$Res, ProxiesSelectorState>;
-  @useResult
-  $Res call({int currentIndex, List<String> groupNames});
-}
-
-/// @nodoc
-class _$ProxiesSelectorStateCopyWithImpl<$Res,
-        $Val extends ProxiesSelectorState>
-    implements $ProxiesSelectorStateCopyWith<$Res> {
-  _$ProxiesSelectorStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? currentIndex = null,
-    Object? groupNames = null,
-  }) {
-    return _then(_value.copyWith(
-      currentIndex: null == currentIndex
-          ? _value.currentIndex
-          : currentIndex // ignore: cast_nullable_to_non_nullable
-              as int,
-      groupNames: null == groupNames
-          ? _value.groupNames
-          : groupNames // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$ProxiesSelectorStateImplCopyWith<$Res>
-    implements $ProxiesSelectorStateCopyWith<$Res> {
-  factory _$$ProxiesSelectorStateImplCopyWith(_$ProxiesSelectorStateImpl value,
-          $Res Function(_$ProxiesSelectorStateImpl) then) =
-      __$$ProxiesSelectorStateImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({int currentIndex, List<String> groupNames});
-}
-
-/// @nodoc
-class __$$ProxiesSelectorStateImplCopyWithImpl<$Res>
-    extends _$ProxiesSelectorStateCopyWithImpl<$Res, _$ProxiesSelectorStateImpl>
-    implements _$$ProxiesSelectorStateImplCopyWith<$Res> {
-  __$$ProxiesSelectorStateImplCopyWithImpl(_$ProxiesSelectorStateImpl _value,
-      $Res Function(_$ProxiesSelectorStateImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? currentIndex = null,
-    Object? groupNames = null,
-  }) {
-    return _then(_$ProxiesSelectorStateImpl(
-      currentIndex: null == currentIndex
-          ? _value.currentIndex
-          : currentIndex // ignore: cast_nullable_to_non_nullable
-              as int,
-      groupNames: null == groupNames
-          ? _value._groupNames
-          : groupNames // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$ProxiesSelectorStateImpl implements _ProxiesSelectorState {
-  const _$ProxiesSelectorStateImpl(
-      {required this.currentIndex, required final List<String> groupNames})
-      : _groupNames = groupNames;
-
-  @override
-  final int currentIndex;
-  final List<String> _groupNames;
-  @override
-  List<String> get groupNames {
-    if (_groupNames is EqualUnmodifiableListView) return _groupNames;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_groupNames);
-  }
-
-  @override
-  String toString() {
-    return 'ProxiesSelectorState(currentIndex: $currentIndex, groupNames: $groupNames)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ProxiesSelectorStateImpl &&
-            (identical(other.currentIndex, currentIndex) ||
-                other.currentIndex == currentIndex) &&
-            const DeepCollectionEquality()
-                .equals(other._groupNames, _groupNames));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, currentIndex,
-      const DeepCollectionEquality().hash(_groupNames));
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ProxiesSelectorStateImplCopyWith<_$ProxiesSelectorStateImpl>
-      get copyWith =>
-          __$$ProxiesSelectorStateImplCopyWithImpl<_$ProxiesSelectorStateImpl>(
-              this, _$identity);
-}
-
-abstract class _ProxiesSelectorState implements ProxiesSelectorState {
-  const factory _ProxiesSelectorState(
-      {required final int currentIndex,
-      required final List<String> groupNames}) = _$ProxiesSelectorStateImpl;
-
-  @override
-  int get currentIndex;
-  @override
-  List<String> get groupNames;
-  @override
-  @JsonKey(ignore: true)
-  _$$ProxiesSelectorStateImplCopyWith<_$ProxiesSelectorStateImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
 mixin _$ProxiesCardSelectorState {
-  String? get currentGroupName => throw _privateConstructorUsedError;
   String? get currentProxyName => throw _privateConstructorUsedError;
   bool get isSelected => throw _privateConstructorUsedError;
 
@@ -1906,8 +1738,7 @@ abstract class $ProxiesCardSelectorStateCopyWith<$Res> {
           $Res Function(ProxiesCardSelectorState) then) =
       _$ProxiesCardSelectorStateCopyWithImpl<$Res, ProxiesCardSelectorState>;
   @useResult
-  $Res call(
-      {String? currentGroupName, String? currentProxyName, bool isSelected});
+  $Res call({String? currentProxyName, bool isSelected});
 }
 
 /// @nodoc
@@ -1924,15 +1755,10 @@ class _$ProxiesCardSelectorStateCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? currentGroupName = freezed,
     Object? currentProxyName = freezed,
     Object? isSelected = null,
   }) {
     return _then(_value.copyWith(
-      currentGroupName: freezed == currentGroupName
-          ? _value.currentGroupName
-          : currentGroupName // ignore: cast_nullable_to_non_nullable
-              as String?,
       currentProxyName: freezed == currentProxyName
           ? _value.currentProxyName
           : currentProxyName // ignore: cast_nullable_to_non_nullable
@@ -1954,8 +1780,7 @@ abstract class _$$ProxiesCardSelectorStateImplCopyWith<$Res>
       __$$ProxiesCardSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String? currentGroupName, String? currentProxyName, bool isSelected});
+  $Res call({String? currentProxyName, bool isSelected});
 }
 
 /// @nodoc
@@ -1971,15 +1796,10 @@ class __$$ProxiesCardSelectorStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? currentGroupName = freezed,
     Object? currentProxyName = freezed,
     Object? isSelected = null,
   }) {
     return _then(_$ProxiesCardSelectorStateImpl(
-      currentGroupName: freezed == currentGroupName
-          ? _value.currentGroupName
-          : currentGroupName // ignore: cast_nullable_to_non_nullable
-              as String?,
       currentProxyName: freezed == currentProxyName
           ? _value.currentProxyName
           : currentProxyName // ignore: cast_nullable_to_non_nullable
@@ -1996,12 +1816,8 @@ class __$$ProxiesCardSelectorStateImplCopyWithImpl<$Res>
 
 class _$ProxiesCardSelectorStateImpl implements _ProxiesCardSelectorState {
   const _$ProxiesCardSelectorStateImpl(
-      {required this.currentGroupName,
-      required this.currentProxyName,
-      required this.isSelected});
+      {required this.currentProxyName, required this.isSelected});
 
-  @override
-  final String? currentGroupName;
   @override
   final String? currentProxyName;
   @override
@@ -2009,7 +1825,7 @@ class _$ProxiesCardSelectorStateImpl implements _ProxiesCardSelectorState {
 
   @override
   String toString() {
-    return 'ProxiesCardSelectorState(currentGroupName: $currentGroupName, currentProxyName: $currentProxyName, isSelected: $isSelected)';
+    return 'ProxiesCardSelectorState(currentProxyName: $currentProxyName, isSelected: $isSelected)';
   }
 
   @override
@@ -2017,8 +1833,6 @@ class _$ProxiesCardSelectorStateImpl implements _ProxiesCardSelectorState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ProxiesCardSelectorStateImpl &&
-            (identical(other.currentGroupName, currentGroupName) ||
-                other.currentGroupName == currentGroupName) &&
             (identical(other.currentProxyName, currentProxyName) ||
                 other.currentProxyName == currentProxyName) &&
             (identical(other.isSelected, isSelected) ||
@@ -2026,8 +1840,7 @@ class _$ProxiesCardSelectorStateImpl implements _ProxiesCardSelectorState {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, currentGroupName, currentProxyName, isSelected);
+  int get hashCode => Object.hash(runtimeType, currentProxyName, isSelected);
 
   @JsonKey(ignore: true)
   @override
@@ -2039,12 +1852,9 @@ class _$ProxiesCardSelectorStateImpl implements _ProxiesCardSelectorState {
 
 abstract class _ProxiesCardSelectorState implements ProxiesCardSelectorState {
   const factory _ProxiesCardSelectorState(
-      {required final String? currentGroupName,
-      required final String? currentProxyName,
+      {required final String? currentProxyName,
       required final bool isSelected}) = _$ProxiesCardSelectorStateImpl;
 
-  @override
-  String? get currentGroupName;
   @override
   String? get currentProxyName;
   @override
@@ -2056,34 +1866,32 @@ abstract class _ProxiesCardSelectorState implements ProxiesCardSelectorState {
 }
 
 /// @nodoc
-mixin _$ProxiesTabViewSelectorState {
+mixin _$ProxiesSelectorState {
   ProxiesSortType get proxiesSortType => throw _privateConstructorUsedError;
   num get sortNum => throw _privateConstructorUsedError;
-  Group get group => throw _privateConstructorUsedError;
+  Group? get group => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ProxiesTabViewSelectorStateCopyWith<ProxiesTabViewSelectorState>
-      get copyWith => throw _privateConstructorUsedError;
+  $ProxiesSelectorStateCopyWith<ProxiesSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  factory $ProxiesTabViewSelectorStateCopyWith(
-          ProxiesTabViewSelectorState value,
-          $Res Function(ProxiesTabViewSelectorState) then) =
-      _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-          ProxiesTabViewSelectorState>;
+abstract class $ProxiesSelectorStateCopyWith<$Res> {
+  factory $ProxiesSelectorStateCopyWith(ProxiesSelectorState value,
+          $Res Function(ProxiesSelectorState) then) =
+      _$ProxiesSelectorStateCopyWithImpl<$Res, ProxiesSelectorState>;
   @useResult
-  $Res call({ProxiesSortType proxiesSortType, num sortNum, Group group});
+  $Res call({ProxiesSortType proxiesSortType, num sortNum, Group? group});
 
-  $GroupCopyWith<$Res> get group;
+  $GroupCopyWith<$Res>? get group;
 }
 
 /// @nodoc
-class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-        $Val extends ProxiesTabViewSelectorState>
-    implements $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  _$ProxiesTabViewSelectorStateCopyWithImpl(this._value, this._then);
+class _$ProxiesSelectorStateCopyWithImpl<$Res,
+        $Val extends ProxiesSelectorState>
+    implements $ProxiesSelectorStateCopyWith<$Res> {
+  _$ProxiesSelectorStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -2095,7 +1903,7 @@ class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
   $Res call({
     Object? proxiesSortType = null,
     Object? sortNum = null,
-    Object? group = null,
+    Object? group = freezed,
   }) {
     return _then(_value.copyWith(
       proxiesSortType: null == proxiesSortType
@@ -2106,45 +1914,46 @@ class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
           ? _value.sortNum
           : sortNum // ignore: cast_nullable_to_non_nullable
               as num,
-      group: null == group
+      group: freezed == group
           ? _value.group
           : group // ignore: cast_nullable_to_non_nullable
-              as Group,
+              as Group?,
     ) as $Val);
   }
 
   @override
   @pragma('vm:prefer-inline')
-  $GroupCopyWith<$Res> get group {
-    return $GroupCopyWith<$Res>(_value.group, (value) {
+  $GroupCopyWith<$Res>? get group {
+    if (_value.group == null) {
+      return null;
+    }
+
+    return $GroupCopyWith<$Res>(_value.group!, (value) {
       return _then(_value.copyWith(group: value) as $Val);
     });
   }
 }
 
 /// @nodoc
-abstract class _$$ProxiesTabViewSelectorStateImplCopyWith<$Res>
-    implements $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  factory _$$ProxiesTabViewSelectorStateImplCopyWith(
-          _$ProxiesTabViewSelectorStateImpl value,
-          $Res Function(_$ProxiesTabViewSelectorStateImpl) then) =
-      __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>;
+abstract class _$$ProxiesSelectorStateImplCopyWith<$Res>
+    implements $ProxiesSelectorStateCopyWith<$Res> {
+  factory _$$ProxiesSelectorStateImplCopyWith(_$ProxiesSelectorStateImpl value,
+          $Res Function(_$ProxiesSelectorStateImpl) then) =
+      __$$ProxiesSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({ProxiesSortType proxiesSortType, num sortNum, Group group});
+  $Res call({ProxiesSortType proxiesSortType, num sortNum, Group? group});
 
   @override
-  $GroupCopyWith<$Res> get group;
+  $GroupCopyWith<$Res>? get group;
 }
 
 /// @nodoc
-class __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>
-    extends _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-        _$ProxiesTabViewSelectorStateImpl>
-    implements _$$ProxiesTabViewSelectorStateImplCopyWith<$Res> {
-  __$$ProxiesTabViewSelectorStateImplCopyWithImpl(
-      _$ProxiesTabViewSelectorStateImpl _value,
-      $Res Function(_$ProxiesTabViewSelectorStateImpl) _then)
+class __$$ProxiesSelectorStateImplCopyWithImpl<$Res>
+    extends _$ProxiesSelectorStateCopyWithImpl<$Res, _$ProxiesSelectorStateImpl>
+    implements _$$ProxiesSelectorStateImplCopyWith<$Res> {
+  __$$ProxiesSelectorStateImplCopyWithImpl(_$ProxiesSelectorStateImpl _value,
+      $Res Function(_$ProxiesSelectorStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2152,9 +1961,9 @@ class __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>
   $Res call({
     Object? proxiesSortType = null,
     Object? sortNum = null,
-    Object? group = null,
+    Object? group = freezed,
   }) {
-    return _then(_$ProxiesTabViewSelectorStateImpl(
+    return _then(_$ProxiesSelectorStateImpl(
       proxiesSortType: null == proxiesSortType
           ? _value.proxiesSortType
           : proxiesSortType // ignore: cast_nullable_to_non_nullable
@@ -2163,19 +1972,18 @@ class __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>
           ? _value.sortNum
           : sortNum // ignore: cast_nullable_to_non_nullable
               as num,
-      group: null == group
+      group: freezed == group
           ? _value.group
           : group // ignore: cast_nullable_to_non_nullable
-              as Group,
+              as Group?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$ProxiesTabViewSelectorStateImpl
-    implements _ProxiesTabViewSelectorState {
-  const _$ProxiesTabViewSelectorStateImpl(
+class _$ProxiesSelectorStateImpl implements _ProxiesSelectorState {
+  const _$ProxiesSelectorStateImpl(
       {required this.proxiesSortType,
       required this.sortNum,
       required this.group});
@@ -2185,18 +1993,18 @@ class _$ProxiesTabViewSelectorStateImpl
   @override
   final num sortNum;
   @override
-  final Group group;
+  final Group? group;
 
   @override
   String toString() {
-    return 'ProxiesTabViewSelectorState(proxiesSortType: $proxiesSortType, sortNum: $sortNum, group: $group)';
+    return 'ProxiesSelectorState(proxiesSortType: $proxiesSortType, sortNum: $sortNum, group: $group)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProxiesTabViewSelectorStateImpl &&
+            other is _$ProxiesSelectorStateImpl &&
             (identical(other.proxiesSortType, proxiesSortType) ||
                 other.proxiesSortType == proxiesSortType) &&
             (identical(other.sortNum, sortNum) || other.sortNum == sortNum) &&
@@ -2209,26 +2017,26 @@ class _$ProxiesTabViewSelectorStateImpl
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProxiesTabViewSelectorStateImplCopyWith<_$ProxiesTabViewSelectorStateImpl>
-      get copyWith => __$$ProxiesTabViewSelectorStateImplCopyWithImpl<
-          _$ProxiesTabViewSelectorStateImpl>(this, _$identity);
+  _$$ProxiesSelectorStateImplCopyWith<_$ProxiesSelectorStateImpl>
+      get copyWith =>
+          __$$ProxiesSelectorStateImplCopyWithImpl<_$ProxiesSelectorStateImpl>(
+              this, _$identity);
 }
 
-abstract class _ProxiesTabViewSelectorState
-    implements ProxiesTabViewSelectorState {
-  const factory _ProxiesTabViewSelectorState(
+abstract class _ProxiesSelectorState implements ProxiesSelectorState {
+  const factory _ProxiesSelectorState(
       {required final ProxiesSortType proxiesSortType,
       required final num sortNum,
-      required final Group group}) = _$ProxiesTabViewSelectorStateImpl;
+      required final Group? group}) = _$ProxiesSelectorStateImpl;
 
   @override
   ProxiesSortType get proxiesSortType;
   @override
   num get sortNum;
   @override
-  Group get group;
+  Group? get group;
   @override
   @JsonKey(ignore: true)
-  _$$ProxiesTabViewSelectorStateImplCopyWith<_$ProxiesTabViewSelectorStateImpl>
+  _$$ProxiesSelectorStateImplCopyWith<_$ProxiesSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

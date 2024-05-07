@@ -19,11 +19,11 @@ type Message struct {
 	Data interface{} `json:"data"`
 }
 
-func (message *Message) toJson() string {
+func (message *Message) Json() string {
 	data, _ := json.Marshal(message)
 	return string(data)
 }
 
 func SendMessage(message Message) {
-	SendToPort(*Port, message.toJson())
+	SendToPort(*Port, message.Json())
 }
