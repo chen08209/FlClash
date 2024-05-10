@@ -6,7 +6,7 @@ part 'generated/proxy.g.dart';
 
 part 'generated/proxy.freezed.dart';
 
-typedef DelayMap = Map<String, int?>;
+typedef ProxyMap = Map<String, Proxy>;
 
 @freezed
 class Group with _$Group {
@@ -23,8 +23,9 @@ class Group with _$Group {
 @freezed
 class Proxy with _$Proxy {
   const factory Proxy({
-    @Default("") String name,
-    @Default("") String type,
+    required String name,
+    required String type,
+    String? now,
   }) = _Proxy;
 
   factory Proxy.fromJson(Map<String, Object?> json) => _$ProxyFromJson(json);

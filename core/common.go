@@ -3,6 +3,7 @@ package main
 import "C"
 import (
 	"github.com/metacubex/mihomo/adapter/inbound"
+	ap "github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/resolver"
@@ -16,16 +17,53 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 	"syscall"
 )
 
+type healthCheckSchema struct {
+	Enable         bool   `provider:"enable"`
+	URL            string `provider:"url"`
+	Interval       int    `provider:"interval"`
+	TestTimeout    int    `provider:"timeout,omitempty"`
+	Lazy           bool   `provider:"lazy,omitempty"`
+	ExpectedStatus string `provider:"expected-status,omitempty"`
+}
+
+type proxyProviderSchema struct {
+	Type          string `provider:"type"`
+	Path          string `provider:"path,omitempty"`
+	URL           string `provider:"url,omitempty"`
+	Proxy         string `provider:"proxy,omitempty"`
+	Interval      int    `provider:"interval,omitempty"`
+	Filter        string `provider:"filter,omitempty"`
+	ExcludeFilter string `provider:"exclude-filter,omitempty"`
+	ExcludeType   string `provider:"exclude-type,omitempty"`
+	DialerProxy   string `provider:"dialer-proxy,omitempty"`
+
+	HealthCheck healthCheckSchema   `provider:"health-check,omitempty"`
+	Override    ap.OverrideSchema   `provider:"override,omitempty"`
+	Header      map[string][]string `provider:"header,omitempty"`
+}
+
+type ruleProviderSchema struct {
+	Type     string `provider:"type"`
+	Behavior string `provider:"behavior"`
+	Path     string `provider:"path,omitempty"`
+	URL      string `provider:"url,omitempty"`
+	Proxy    string `provider:"proxy,omitempty"`
+	Format   string `provider:"format,omitempty"`
+	Interval int    `provider:"interval,omitempty"`
+}
+
 type GenerateConfigParams struct {
-	ProfilePath *string           `json:"profile-path"`
-	Config      *config.RawConfig `json:"config" `
-	IsPatch     *bool             `json:"is-patch"`
+	ProfilePath  *string           `json:"profile-path"`
+	Config       *config.RawConfig `json:"config" `
+	IsPatch      *bool             `json:"is-patch"`
+	IsCompatible *bool             `json:"is-compatible"`
 }
 
 type ChangeProxyParams struct {
@@ -91,6 +129,19 @@ func readFile(path string) ([]byte, error) {
 	return data, err
 }
 
+func removeFile(path string) error {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	err = os.Remove(absPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func getRawConfigWithPath(path *string) *config.RawConfig {
 	if path == nil {
 		return config.DefaultRawConfig()
@@ -109,9 +160,9 @@ func getRawConfigWithPath(path *string) *config.RawConfig {
 	}
 }
 
-func decorationConfig(profilePath *string, cfg config.RawConfig) *config.RawConfig {
+func decorationConfig(profilePath *string, cfg config.RawConfig, compatible bool) *config.RawConfig {
 	prof := getRawConfigWithPath(profilePath)
-	overwriteConfig(prof, cfg)
+	overwriteConfig(prof, cfg, compatible)
 	return prof
 }
 
@@ -261,12 +312,12 @@ func generateProxyGroupAndRule(proxyGroup *[]map[string]any, rule *[]string) {
 	*rule = computedRule
 }
 
-func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig) {
+func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig, compatible bool) {
 	targetConfig.ExternalController = ""
 	targetConfig.ExternalUI = ""
 	targetConfig.Interface = ""
 	targetConfig.ExternalUIURL = ""
-	targetConfig.IPv6 = patchConfig.IPv6
+	//targetConfig.IPv6 = patchConfig.IPv6
 	targetConfig.LogLevel = patchConfig.LogLevel
 	targetConfig.FindProcessMode = process.FindProcessAlways
 	targetConfig.AllowLan = patchConfig.AllowLan
@@ -286,9 +337,12 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	} else if runtime.GOOS == "windows" {
 		targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, dns.SystemDNSPlaceholder)
 	}
-	targetConfig.ProxyProvider = make(map[string]map[string]any)
-	targetConfig.RuleProvider = make(map[string]map[string]any)
-	generateProxyGroupAndRule(&targetConfig.ProxyGroup, &targetConfig.Rule)
+	if compatible == false {
+		targetConfig.ProxyProvider = make(map[string]map[string]any)
+		targetConfig.RuleProvider = make(map[string]map[string]any)
+		generateProxyGroupAndRule(&targetConfig.ProxyGroup, &targetConfig.Rule)
+	}
+
 }
 
 func patchConfig(general *config.General) {

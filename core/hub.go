@@ -8,6 +8,7 @@ import (
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
+	"github.com/metacubex/mihomo/common/structure"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
@@ -74,7 +75,7 @@ func updateConfig(s *C.char, port C.longlong) {
 			bridge.SendToPort(i, err.Error())
 			return
 		}
-		prof := decorationConfig(params.ProfilePath, *params.Config)
+		prof := decorationConfig(params.ProfilePath, *params.Config, *params.IsCompatible)
 		currentConfig = prof
 		if *params.IsPatch {
 			applyConfig(true)
@@ -82,6 +83,39 @@ func updateConfig(s *C.char, port C.longlong) {
 			applyConfig(false)
 		}
 		bridge.SendToPort(i, "")
+	}()
+}
+
+//export clearEffect
+func clearEffect(s *C.char) {
+	path := C.GoString(s)
+	go func() {
+		rawCfg := getRawConfigWithPath(&path)
+		for _, mapping := range rawCfg.RuleProvider {
+			schema := &ruleProviderSchema{}
+			decoder := structure.NewDecoder(structure.Option{TagName: "provider", WeaklyTypedInput: true})
+			if err := decoder.Decode(mapping, schema); err != nil {
+				return
+			}
+			if schema.Type == "http" {
+				_ = removeFile(constant.Path.Resolve(schema.Path))
+			}
+		}
+		for _, mapping := range rawCfg.ProxyProvider {
+			schema := &proxyProviderSchema{
+				HealthCheck: healthCheckSchema{
+					Lazy: true,
+				},
+			}
+			decoder := structure.NewDecoder(structure.Option{TagName: "provider", WeaklyTypedInput: true})
+			if err := decoder.Decode(mapping, schema); err != nil {
+				return
+			}
+			if schema.Type == "http" {
+				_ = removeFile(constant.Path.Resolve(schema.Path))
+			}
+		}
+		_ = removeFile(path)
 	}()
 }
 
@@ -137,8 +171,7 @@ func getTraffic() *C.char {
 }
 
 //export asyncTestDelay
-func asyncTestDelay(s *C.char, port C.longlong) {
-	i := int64(port)
+func asyncTestDelay(s *C.char) {
 	go func() {
 		paramsString := C.GoString(s)
 		var params = &TestDelayParams{}
@@ -146,34 +179,42 @@ func asyncTestDelay(s *C.char, port C.longlong) {
 		if err != nil {
 			return
 		}
+
 		expectedStatus, err := utils.NewUnsignedRanges[uint16]("")
 		if err != nil {
 			return
 		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
 		defer cancel()
+
 		proxies := tunnel.ProxiesWithProviders()
 		proxy := proxies[params.ProxyName]
+
 		delayData := &Delay{
 			Name: params.ProxyName,
 		}
+
 		message := bridge.Message{
 			Type: bridge.Delay,
 			Data: delayData,
 		}
+
 		if proxy == nil {
 			delayData.Value = -1
-			bridge.SendToPort(i, message.Json())
+			bridge.SendMessage(message)
 			return
 		}
+
 		delay, err := proxy.URLTest(ctx, constant.DefaultTestURL, expectedStatus)
 		if err != nil || delay == 0 {
 			delayData.Value = -1
-			bridge.SendToPort(i, message.Json())
+			bridge.SendMessage(message)
 			return
 		}
+
 		delayData.Value = int32(delay)
-		bridge.SendToPort(i, message.Json())
+		bridge.SendMessage(message)
 	}()
 }
 

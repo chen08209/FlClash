@@ -1,7 +1,5 @@
-import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -52,6 +50,9 @@ class _StartButtonState extends State<StartButton>
   updateSystemProxy() async {
     final appController = context.appController;
     await appController.updateSystemProxy(isStart);
+    if (isStart && mounted) {
+      appController.clearShowProxyDelay();
+    }
   }
 
   @override

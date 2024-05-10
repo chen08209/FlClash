@@ -5,39 +5,47 @@ import 'ffi.dart';
 import 'log.dart';
 import 'navigation.dart';
 import 'package.dart';
+import 'profile.dart';
 import 'proxy.dart';
 import 'system_color_scheme.dart';
 import 'traffic.dart';
 import 'version.dart';
 
+typedef DelayMap = Map<String, int?>;
+
 class AppState with ChangeNotifier {
   List<NavigationItem> _navigationItems;
   int? _runTime;
   bool _isInit;
-  DelayMap _delayMap;
   VersionInfo? _versionInfo;
   List<Traffic> _traffics;
   List<Log> _logs;
   List<Package> _packages;
   String _currentLabel;
   SystemColorSchemes _systemColorSchemes;
-  List<Group> _groups;
   num _sortNum;
   Mode _mode;
-  String? _currentProxyName;
+  DelayMap _delayMap;
+  SelectedMap _selectedMap;
+  bool _isCompatible;
+  List<Group> _groups;
 
-  AppState({required Mode mode, required currentProxyName})
-      : _navigationItems = [],
-        _delayMap = {},
+  AppState({
+    required Mode mode,
+    required bool isCompatible,
+    required SelectedMap selectedMap,
+  })  : _navigationItems = [],
         _isInit = false,
         _currentLabel = "dashboard",
         _traffics = [],
         _logs = [],
-        _groups = [],
+        _selectedMap = selectedMap,
         _packages = [],
         _sortNum = 0,
         _mode = mode,
-        _currentProxyName = currentProxyName,
+        _delayMap = {},
+        _groups = [],
+        _isCompatible = isCompatible,
         _systemColorSchemes = SystemColorSchemes();
 
   String get currentLabel => _currentLabel;
@@ -76,49 +84,38 @@ class AppState with ChangeNotifier {
     }
   }
 
-  DelayMap get delayMap => _delayMap;
-
-  set delayMap(DelayMap value) {
-    if (_delayMap != value) {
-      _delayMap = value;
-      notifyListeners();
-    }
-  }
-
   String getDesc(String type, String? proxyName) {
     final groupTypeNamesList = GroupType.values.map((e) => e.name).toList();
     if (!groupTypeNamesList.contains(type)) {
       return type;
-    }else{
+    } else {
       final index = groups.indexWhere((element) => element.name == proxyName);
-      if(index == -1) return type;
+      if (index == -1) return type;
       return "$type(${groups[index].now})";
     }
   }
 
-  int? getDelay(String? proxyName) {
+  String? getRealProxyName(String? proxyName) {
     if (proxyName == null) return null;
     final index = groups.indexWhere((element) => element.name == proxyName);
-    if (index == -1) return _delayMap[proxyName];
+    if (index == -1) return proxyName;
     final group = groups[index];
-    if (group.now == null) return null;
-    return _delayMap[group.now];
+    return getRealProxyName(selectedMap.containsKey(proxyName)
+        ? selectedMap[proxyName]
+        : group.now);
   }
 
-  String? get realCurrentProxyName {
-    if (currentProxyName == null) return null;
-    final index = groups.indexWhere((element) => element.name == currentProxyName);
-    if (index == -1) return currentProxyName;
-    final group = groups[index];
-    if (group.now == null) return null;
-    return group.now;
-  }
-
-  setDelay(Delay delay) {
-    if (_delayMap[delay.name] != delay.value) {
-      _delayMap = Map.from(_delayMap)..[delay.name] = delay.value;
-      notifyListeners();
+  String? get showProxyName {
+    if (currentGroups.isEmpty) {
+      return UsedProxy.DIRECT.name;
     }
+    final firstGroup = currentGroups.first;
+    final firstGroupName = firstGroup.name;
+    return selectedMap[firstGroupName] ?? firstGroup.now;
+  }
+
+  int? getDelay(String? proxyName) {
+    return _delayMap[getRealProxyName(proxyName)];
   }
 
   VersionInfo? get versionInfo => _versionInfo;
@@ -203,39 +200,77 @@ class AppState with ChangeNotifier {
     }
   }
 
-  String? get currentProxyName {
-    if (mode == Mode.direct) return UsedProxy.DIRECT.name;
-    if (_currentProxyName != null) return _currentProxyName!;
-    return currentGroup?.now;
+  // String? get currentProxyName {
+  //   if (mode == Mode.direct) return UsedProxy.DIRECT.name;
+  //   if (_currentProxyName != null) return _currentProxyName!;
+  //   return currentGroup?.now;
+  // }
+  //
+  // set currentProxyName(String? value) {
+  //   if (_currentProxyName != value) {
+  //     _currentProxyName = value;
+  //     notifyListeners();
+  //   }
+  // }
+
+  bool get isCompatible {
+    return _isCompatible;
   }
 
-  set currentProxyName(String? value) {
-    if (_currentProxyName != value) {
-      _currentProxyName = value;
+  set isCompatible(bool value) {
+    if (_isCompatible != value) {
+      _isCompatible = value;
       notifyListeners();
     }
   }
 
-  Group? get currentGroup {
-    switch (mode) {
-      case Mode.direct:
-        return null;
-      case Mode.global:
-        return globalGroup;
-      case Mode.rule:
-        return ruleGroup;
+  SelectedMap get selectedMap {
+    return _selectedMap;
+  }
+
+  set selectedMap(SelectedMap value) {
+    if (!const MapEquality<String, String>().equals(_selectedMap, value)) {
+      _selectedMap = value;
+      notifyListeners();
     }
   }
 
-  Group? get globalGroup {
-    final index =
-        groups.indexWhere((element) => element.name == GroupName.GLOBAL.name);
-    return index != -1 ? groups[index] : null;
+  List<Group> get currentGroups {
+    switch (mode) {
+      case Mode.direct:
+        return [];
+      case Mode.global:
+        return groups
+            .where((element) => element.name == GroupName.GLOBAL.name)
+            .toList();
+      case Mode.rule:
+        return groups
+            .where((element) => element.name != GroupName.GLOBAL.name)
+            .toList();
+    }
   }
 
-  Group? get ruleGroup {
+  DelayMap get delayMap {
+    return _delayMap;
+  }
+
+  set delayMap(DelayMap value) {
+    if (!const MapEquality<String, int?>().equals(_delayMap, value)) {
+      _delayMap = value;
+      notifyListeners();
+    }
+  }
+
+  setDelay(Delay delay) {
+    if (_delayMap[delay.name] != delay.value) {
+      _delayMap = Map.from(_delayMap)..[delay.name] = delay.value;
+      notifyListeners();
+    }
+  }
+
+  Group? getGroupWithName(String groupName) {
     final index =
-        groups.indexWhere((element) => element.name == GroupName.Proxy.name);
-    return index != -1 ? groups[index] : null;
+        currentGroups.indexWhere((element) => element.name == groupName);
+    return index != -1 ? currentGroups[index] : null;
   }
 }

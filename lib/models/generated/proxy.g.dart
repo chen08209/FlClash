@@ -31,12 +31,14 @@ const _$GroupTypeEnumMap = {
 };
 
 _$ProxyImpl _$$ProxyImplFromJson(Map<String, dynamic> json) => _$ProxyImpl(
-      name: json['name'] as String? ?? "",
-      type: json['type'] as String? ?? "",
+      name: json['name'] as String,
+      type: json['type'] as String,
+      now: json['now'] as String?,
     );
 
 Map<String, dynamic> _$$ProxyImplToJson(_$ProxyImpl instance) =>
     <String, dynamic>{
       'name': instance.name,
       'type': instance.type,
+      'now': instance.now,
     };

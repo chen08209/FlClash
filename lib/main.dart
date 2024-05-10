@@ -19,7 +19,8 @@ Future<void> main() async {
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
   final appState = AppState(
     mode: clashConfig.mode,
-    currentProxyName: config.currentProxyName,
+    isCompatible: config.isCompatible,
+    selectedMap: config.currentSelectedMap,
   );
   await globalState.init(
     appState: appState,
@@ -46,7 +47,8 @@ Future<void> vpnService() async {
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
   final appState = AppState(
     mode: clashConfig.mode,
-    currentProxyName: config.currentProxyName,
+    isCompatible: config.isCompatible,
+    selectedMap: config.currentSelectedMap,
   );
   clashMessage.addListener(ClashMessageListenerWithVpn(onTun: (String fd) {
     proxyManager.setProtect(

@@ -24,7 +24,9 @@ mixin _$UpdateConfigParams {
   String? get profilePath => throw _privateConstructorUsedError;
   ClashConfig get config => throw _privateConstructorUsedError;
   @JsonKey(name: "is-patch")
-  bool? get isPatch => throw _privateConstructorUsedError;
+  bool get isPatch => throw _privateConstructorUsedError;
+  @JsonKey(name: "is-compatible")
+  bool get isCompatible => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -41,7 +43,8 @@ abstract class $UpdateConfigParamsCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: "profile-path") String? profilePath,
       ClashConfig config,
-      @JsonKey(name: "is-patch") bool? isPatch});
+      @JsonKey(name: "is-patch") bool isPatch,
+      @JsonKey(name: "is-compatible") bool isCompatible});
 }
 
 /// @nodoc
@@ -59,7 +62,8 @@ class _$UpdateConfigParamsCopyWithImpl<$Res, $Val extends UpdateConfigParams>
   $Res call({
     Object? profilePath = freezed,
     Object? config = null,
-    Object? isPatch = freezed,
+    Object? isPatch = null,
+    Object? isCompatible = null,
   }) {
     return _then(_value.copyWith(
       profilePath: freezed == profilePath
@@ -70,10 +74,14 @@ class _$UpdateConfigParamsCopyWithImpl<$Res, $Val extends UpdateConfigParams>
           ? _value.config
           : config // ignore: cast_nullable_to_non_nullable
               as ClashConfig,
-      isPatch: freezed == isPatch
+      isPatch: null == isPatch
           ? _value.isPatch
           : isPatch // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
+      isCompatible: null == isCompatible
+          ? _value.isCompatible
+          : isCompatible // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -89,7 +97,8 @@ abstract class _$$UpdateConfigParamsImplCopyWith<$Res>
   $Res call(
       {@JsonKey(name: "profile-path") String? profilePath,
       ClashConfig config,
-      @JsonKey(name: "is-patch") bool? isPatch});
+      @JsonKey(name: "is-patch") bool isPatch,
+      @JsonKey(name: "is-compatible") bool isCompatible});
 }
 
 /// @nodoc
@@ -105,7 +114,8 @@ class __$$UpdateConfigParamsImplCopyWithImpl<$Res>
   $Res call({
     Object? profilePath = freezed,
     Object? config = null,
-    Object? isPatch = freezed,
+    Object? isPatch = null,
+    Object? isCompatible = null,
   }) {
     return _then(_$UpdateConfigParamsImpl(
       profilePath: freezed == profilePath
@@ -116,10 +126,14 @@ class __$$UpdateConfigParamsImplCopyWithImpl<$Res>
           ? _value.config
           : config // ignore: cast_nullable_to_non_nullable
               as ClashConfig,
-      isPatch: freezed == isPatch
+      isPatch: null == isPatch
           ? _value.isPatch
           : isPatch // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
+      isCompatible: null == isCompatible
+          ? _value.isCompatible
+          : isCompatible // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -130,7 +144,8 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
   const _$UpdateConfigParamsImpl(
       {@JsonKey(name: "profile-path") this.profilePath,
       required this.config,
-      @JsonKey(name: "is-patch") this.isPatch});
+      @JsonKey(name: "is-patch") required this.isPatch,
+      @JsonKey(name: "is-compatible") required this.isCompatible});
 
   factory _$UpdateConfigParamsImpl.fromJson(Map<String, dynamic> json) =>
       _$$UpdateConfigParamsImplFromJson(json);
@@ -142,11 +157,14 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
   final ClashConfig config;
   @override
   @JsonKey(name: "is-patch")
-  final bool? isPatch;
+  final bool isPatch;
+  @override
+  @JsonKey(name: "is-compatible")
+  final bool isCompatible;
 
   @override
   String toString() {
-    return 'UpdateConfigParams(profilePath: $profilePath, config: $config, isPatch: $isPatch)';
+    return 'UpdateConfigParams(profilePath: $profilePath, config: $config, isPatch: $isPatch, isCompatible: $isCompatible)';
   }
 
   @override
@@ -157,12 +175,15 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
             (identical(other.profilePath, profilePath) ||
                 other.profilePath == profilePath) &&
             (identical(other.config, config) || other.config == config) &&
-            (identical(other.isPatch, isPatch) || other.isPatch == isPatch));
+            (identical(other.isPatch, isPatch) || other.isPatch == isPatch) &&
+            (identical(other.isCompatible, isCompatible) ||
+                other.isCompatible == isCompatible));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, profilePath, config, isPatch);
+  int get hashCode =>
+      Object.hash(runtimeType, profilePath, config, isPatch, isCompatible);
 
   @JsonKey(ignore: true)
   @override
@@ -183,7 +204,8 @@ abstract class _UpdateConfigParams implements UpdateConfigParams {
   const factory _UpdateConfigParams(
           {@JsonKey(name: "profile-path") final String? profilePath,
           required final ClashConfig config,
-          @JsonKey(name: "is-patch") final bool? isPatch}) =
+          @JsonKey(name: "is-patch") required final bool isPatch,
+          @JsonKey(name: "is-compatible") required final bool isCompatible}) =
       _$UpdateConfigParamsImpl;
 
   factory _UpdateConfigParams.fromJson(Map<String, dynamic> json) =
@@ -196,7 +218,10 @@ abstract class _UpdateConfigParams implements UpdateConfigParams {
   ClashConfig get config;
   @override
   @JsonKey(name: "is-patch")
-  bool? get isPatch;
+  bool get isPatch;
+  @override
+  @JsonKey(name: "is-compatible")
+  bool get isCompatible;
   @override
   @JsonKey(ignore: true)
   _$$UpdateConfigParamsImplCopyWith<_$UpdateConfigParamsImpl> get copyWith =>
