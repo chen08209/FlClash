@@ -35,6 +35,26 @@ class ApplicationSettingFragment extends StatelessWidget {
           );
         },
       ),
+      Selector<Config, bool>(
+        selector: (_, config) => config.isCompatible,
+        builder: (_, isCompatible, __) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.device_hub),
+            title: const Text("兼容模式"),
+            subtitle: const Text("开启将失去部分应用能力，获得全量的Clash的支持"),
+            delegate: SwitchDelegate(
+              value: isCompatible,
+              onChanged: (bool value) async {
+                final appController = context.appController;
+                appController.config.isCompatible = value;
+                await appController.updateClashConfig(isPatch: false);
+                await appController.updateGroups();
+                appController.changeProxy();
+              },
+            ),
+          );
+        },
+      ),
       if (system.isDesktop)
         Selector<Config, bool>(
           selector: (_, config) => config.autoLaunch,

@@ -25,11 +25,11 @@ class AppStateContainer extends StatelessWidget {
   _updateNavigationsContainer(Widget child) {
     return Selector2<AppState, Config, UpdateNavigationsSelector>(
       selector: (_, appState, config) {
-        final group = appState.currentGroup;
+        final group = appState.currentGroups;
         final hasProfile = config.profiles.isNotEmpty;
         return UpdateNavigationsSelector(
           openLogs: config.openLogs,
-          hasProxies: group != null && hasProfile,
+          hasProxies: group.isNotEmpty && hasProfile,
         );
       },
       builder: (context, state, child) {

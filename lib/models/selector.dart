@@ -105,7 +105,6 @@ class HomeNavigationSelectorState with _$HomeNavigationSelectorState{
 @freezed
 class ProxiesCardSelectorState with _$ProxiesCardSelectorState{
   const factory ProxiesCardSelectorState({
-    required String? currentProxyName,
     required bool isSelected,
   }) = _ProxiesCardSelectorState;
 }
@@ -113,8 +112,15 @@ class ProxiesCardSelectorState with _$ProxiesCardSelectorState{
 @freezed
 class ProxiesSelectorState with _$ProxiesSelectorState{
   const factory ProxiesSelectorState({
+    required List<String> groupNames,
+  }) = _ProxiesSelectorState;
+}
+
+@freezed
+class ProxiesTabViewSelectorState with _$ProxiesTabViewSelectorState{
+  const factory ProxiesTabViewSelectorState({
     required ProxiesSortType proxiesSortType,
     required num sortNum,
-    required Group? group,
-  }) = _ProxiesSelectorState;
+    required Group group,
+  }) = _ProxiesTabViewSelectorState;
 }

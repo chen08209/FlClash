@@ -31,6 +31,9 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) => Profile(
       lastUpdateDate: json['lastUpdateDate'] == null
           ? null
           : DateTime.parse(json['lastUpdateDate'] as String),
+      selectedMap: (json['selectedMap'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ),
       autoUpdateDuration: json['autoUpdateDuration'] == null
           ? null
           : Duration(microseconds: (json['autoUpdateDuration'] as num).toInt()),
@@ -46,4 +49,5 @@ Map<String, dynamic> _$ProfileToJson(Profile instance) => <String, dynamic>{
       'autoUpdateDuration': instance.autoUpdateDuration.inMicroseconds,
       'userInfo': instance.userInfo,
       'autoUpdate': instance.autoUpdate,
+      'selectedMap': instance.selectedMap,
     };

@@ -12,6 +12,8 @@ import 'common.dart';
 
 part 'generated/profile.g.dart';
 
+typedef SelectedMap = Map<String, String>;
+
 @JsonSerializable()
 class UserInfo {
   int upload;
@@ -68,6 +70,7 @@ class Profile {
   Duration autoUpdateDuration;
   UserInfo? userInfo;
   bool autoUpdate;
+  SelectedMap selectedMap;
 
   Profile({
     String? id,
@@ -76,11 +79,13 @@ class Profile {
     this.userInfo,
     this.proxyName,
     this.lastUpdateDate,
+    SelectedMap? selectedMap,
     Duration? autoUpdateDuration,
     this.autoUpdate = true,
   })  : id = id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         autoUpdateDuration =
-            autoUpdateDuration ?? appConstant.defaultUpdateDuration;
+            autoUpdateDuration ?? appConstant.defaultUpdateDuration,
+        selectedMap = selectedMap ?? {};
 
   ProfileType get type => url == null ? ProfileType.file : ProfileType.url;
 
@@ -188,6 +193,7 @@ class Profile {
     DateTime? lastUpdateDate,
     Duration? autoUpdateDuration,
     bool? autoUpdate,
+    SelectedMap? selectedMap,
   }) {
     return Profile(
       id: id,
@@ -195,6 +201,7 @@ class Profile {
       url: url ?? this.url,
       proxyName: proxyName ?? this.proxyName,
       userInfo: userInfo ?? this.userInfo,
+      selectedMap: selectedMap ?? this.selectedMap,
       lastUpdateDate: lastUpdateDate ?? this.lastUpdateDate,
       autoUpdateDuration: autoUpdateDuration ?? this.autoUpdateDuration,
       autoUpdate: autoUpdate ?? this.autoUpdate,

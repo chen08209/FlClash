@@ -15,6 +15,8 @@ import 'common/common.dart';
 class GlobalState {
   Timer? timer;
   Function? updateSortNumDebounce;
+  Timer? groupsUpdateTimer;
+  Function? updateCurrentDelayDebounce;
   PageController? pageController;
   final navigatorKey = GlobalKey<NavigatorState>();
   final Map<int, String?> packageNameMap = {};
@@ -22,7 +24,6 @@ class GlobalState {
   List<Function> updateFunctionLists = [];
   List<NavigationItem> currentNavigationItems = [];
   bool updatePackagesLock = false;
-  bool healthcheckLock = false;
 
   startListenUpdate() {
     if (timer != null && timer!.isActive == true) return;
@@ -49,6 +50,7 @@ class GlobalState {
       profilePath: profilePath,
       config: clashConfig,
       isPatch: isPatch,
+      isCompatible: config.isCompatible,
     ));
   }
 
@@ -73,7 +75,6 @@ class GlobalState {
     await proxyManager.stopProxy();
     stopListenUpdate();
   }
-
 
   applyProfile({
     required AppState appState,
@@ -125,30 +126,14 @@ class GlobalState {
         stopSystemProxy();
         return;
       }
-      final currentProxyName = appState.currentProxyName;
-      if (currentProxyName == null) return;
-      final index1 = appState.globalGroup?.all.indexWhere(
-        (element) =>  element.name == currentProxyName,
-      );
-      if (index1 != null && index1 != -1) {
+      config.currentSelectedMap.forEach((key, value) {
         clashCore.changeProxy(
           ChangeProxyParams(
-            groupName: GroupName.GLOBAL.name,
-            proxyName: currentProxyName,
+            groupName: key,
+            proxyName: value,
           ),
         );
-      }
-      final index2 = appState.ruleGroup?.all.indexWhere(
-        (element) => element.name == currentProxyName,
-      );
-      if (index2 != null && index2 != -1) {
-        clashCore.changeProxy(
-          ChangeProxyParams(
-            groupName: GroupName.Proxy.name,
-            proxyName: currentProxyName,
-          ),
-        );
-      }
+      });
     });
   }
 
@@ -165,11 +150,11 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) {
-    final group = appState.currentGroup;
+    final group = appState.currentGroups;
     final hasProfile = config.profiles.isNotEmpty;
     appState.navigationItems = navigation.getItems(
       openLogs: config.openLogs,
-      hasProxies: group != null && hasProfile,
+      hasProxies: group.isNotEmpty && hasProfile,
     );
   }
 
@@ -253,6 +238,52 @@ class GlobalState {
       );
     }
   }
+
+  showSnackBar(
+    BuildContext context, {
+    required String message,
+    SnackBarAction? action,
+  }) {
+    final width = context.width;
+    EdgeInsets margin;
+    if (width < 600) {
+      margin = const EdgeInsets.only(
+        bottom: 96,
+        right: 16,
+        left: 16,
+      );
+    } else {
+      margin = EdgeInsets.only(
+        bottom: 16,
+        left: 16,
+        right: width - 316,
+      );
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        action: action,
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(milliseconds: 1500),
+        margin: margin,
+      ),
+    );
+  }
+
+  void updateCurrentDelay(
+      String? proxyName,
+      ) {
+    updateCurrentDelayDebounce ??= debounce<Function(String?)>((proxyName) {
+      if (proxyName != null) {
+        debugPrint("[delay]=====> $proxyName");
+        clashCore.delay(
+          proxyName,
+        );
+      }
+    });
+    updateCurrentDelayDebounce!([proxyName]);
+  }
+
 }
 
 final globalState = GlobalState();

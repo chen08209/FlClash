@@ -13,7 +13,8 @@ class UpdateConfigParams with _$UpdateConfigParams {
   const factory UpdateConfigParams({
     @JsonKey(name: "profile-path") String? profilePath,
     required ClashConfig config,
-    @JsonKey(name: "is-patch") bool? isPatch,
+    @JsonKey(name: "is-patch") required bool isPatch,
+    @JsonKey(name: "is-compatible") required bool isCompatible,
   }) = _UpdateConfigParams;
 
   factory UpdateConfigParams.fromJson(Map<String, Object?> json) =>

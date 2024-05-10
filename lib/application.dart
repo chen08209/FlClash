@@ -31,7 +31,8 @@ runAppWithPreferences(
         create: (_) => appState,
         update: (_, config, clashConfig, appState) {
           appState?.mode = clashConfig.mode;
-          appState?.currentProxyName = config.currentProxyName;
+          appState?.isCompatible = config.isCompatible;
+          appState?.selectedMap = config.currentSelectedMap;
           return appState!;
         },
       )
@@ -75,6 +76,7 @@ class ApplicationState extends State<Application> {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       appController.afterInit();
       appController.initLink();
+      _updateGroups();
     });
   }
 
@@ -104,6 +106,18 @@ class ApplicationState extends State<Application> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       appController.updateSystemColorSchemes(systemColorSchemes);
+    });
+  }
+
+  _updateGroups() {
+    if (globalState.groupsUpdateTimer != null) {
+      globalState.groupsUpdateTimer?.cancel();
+      globalState.groupsUpdateTimer = null;
+    }
+    globalState.groupsUpdateTimer ??=
+        Timer.periodic(appConstant.httpTimeoutDuration, (timer) async {
+      await appController.updateGroups();
+      appController.appState.sortNum++;
     });
   }
 

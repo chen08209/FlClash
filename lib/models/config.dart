@@ -61,6 +61,7 @@ class AccessControl {
 @JsonSerializable()
 class Config extends ChangeNotifier {
   List<Profile> _profiles;
+  bool _isCompatible;
   String? _currentProfileId;
   bool _autoLaunch;
   bool _silentLaunch;
@@ -82,6 +83,7 @@ class Config extends ChangeNotifier {
         _autoRun = false,
         _themeMode = ThemeMode.system,
         _openLog = false,
+        _isCompatible = false,
         _primaryColor = appConstant.defaultPrimaryColor.value,
         _proxiesSortType = ProxiesSortType.none,
         _isMinimizeOnExit = true,
@@ -159,11 +161,15 @@ class Config extends ChangeNotifier {
     }
   }
 
-  String? get currentProxyName => currentProfile?.proxyName;
 
-  set currentProxyName(String? value){
-    if (currentProfile?.proxyName != value) {
-      currentProfile?.proxyName = value;
+  SelectedMap get currentSelectedMap {
+    return currentProfile?.selectedMap ?? {};
+  }
+
+  updateCurrentSelectedMap(String groupName, String proxyName) {
+    if (currentProfile?.selectedMap[groupName] != proxyName) {
+      currentProfile?.selectedMap = Map.from(currentProfile?.selectedMap ?? {})
+        ..[groupName] = proxyName;
       notifyListeners();
     }
   }
@@ -290,6 +296,18 @@ class Config extends ChangeNotifier {
   set isAnimateToPage(bool value) {
     if (_isAnimateToPage != value) {
       _isAnimateToPage = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(defaultValue: false)
+  bool get isCompatible {
+    return _isCompatible;
+  }
+
+  set isCompatible(bool value) {
+    if (_isCompatible != value) {
+      _isCompatible = value;
       notifyListeners();
     }
   }

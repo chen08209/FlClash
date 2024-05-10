@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:isolate';
 
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -87,13 +85,7 @@ class AppController {
     config.deleteProfileById(id);
     final profilePath = await appPath.getProfilePath(id);
     if (profilePath == null) return;
-    final file = File(profilePath);
-    Isolate.run(() async {
-      final isExists = await file.exists();
-      if (isExists) {
-        file.delete();
-      }
-    });
+    clashCore.clearEffect(profilePath);
     if (config.currentProfileId == id) {
       if (config.profiles.isNotEmpty) {
         final updateId = config.profiles.first.id;
@@ -229,7 +221,6 @@ class AppController {
   }
 
   healthcheck() {
-    if (globalState.healthcheckLock) return;
     for (final delay in appState.delayMap.entries) {
       setDelay(
         Delay(
@@ -243,6 +234,10 @@ class AppController {
 
   setDelay(Delay delay) {
     appState.setDelay(delay);
+  }
+
+  updateDelayMap() async {
+    appState.delayMap = await clashCore.getDelayMap();
   }
 
   toPage(int index, {bool hasAnimate = false}) {
@@ -354,5 +349,14 @@ class AppController {
         addProfile(profile);
       },
     );
+  }
+
+  clearShowProxyDelay() {
+    final showProxyDelay = appState.getRealProxyName(appState.showProxyName);
+    if (showProxyDelay != null) {
+      appState.setDelay(
+        Delay(name: showProxyDelay, value: null),
+      );
+    }
   }
 }

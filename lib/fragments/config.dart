@@ -120,7 +120,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     return ListView.separated(
       itemBuilder: (_, index) {
         return Container(
-          height: 84,
+          padding: kMaterialListPadding,
           alignment: Alignment.center,
           child: items[index],
         );

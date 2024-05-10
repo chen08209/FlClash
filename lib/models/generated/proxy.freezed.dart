@@ -219,6 +219,7 @@ Proxy _$ProxyFromJson(Map<String, dynamic> json) {
 mixin _$Proxy {
   String get name => throw _privateConstructorUsedError;
   String get type => throw _privateConstructorUsedError;
+  String? get now => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -230,7 +231,7 @@ abstract class $ProxyCopyWith<$Res> {
   factory $ProxyCopyWith(Proxy value, $Res Function(Proxy) then) =
       _$ProxyCopyWithImpl<$Res, Proxy>;
   @useResult
-  $Res call({String name, String type});
+  $Res call({String name, String type, String? now});
 }
 
 /// @nodoc
@@ -248,6 +249,7 @@ class _$ProxyCopyWithImpl<$Res, $Val extends Proxy>
   $Res call({
     Object? name = null,
     Object? type = null,
+    Object? now = freezed,
   }) {
     return _then(_value.copyWith(
       name: null == name
@@ -258,6 +260,10 @@ class _$ProxyCopyWithImpl<$Res, $Val extends Proxy>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as String,
+      now: freezed == now
+          ? _value.now
+          : now // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -269,7 +275,7 @@ abstract class _$$ProxyImplCopyWith<$Res> implements $ProxyCopyWith<$Res> {
       __$$ProxyImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String name, String type});
+  $Res call({String name, String type, String? now});
 }
 
 /// @nodoc
@@ -285,6 +291,7 @@ class __$$ProxyImplCopyWithImpl<$Res>
   $Res call({
     Object? name = null,
     Object? type = null,
+    Object? now = freezed,
   }) {
     return _then(_$ProxyImpl(
       name: null == name
@@ -295,6 +302,10 @@ class __$$ProxyImplCopyWithImpl<$Res>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as String,
+      now: freezed == now
+          ? _value.now
+          : now // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -302,21 +313,21 @@ class __$$ProxyImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ProxyImpl implements _Proxy {
-  const _$ProxyImpl({this.name = "", this.type = ""});
+  const _$ProxyImpl({required this.name, required this.type, this.now});
 
   factory _$ProxyImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProxyImplFromJson(json);
 
   @override
-  @JsonKey()
   final String name;
   @override
-  @JsonKey()
   final String type;
+  @override
+  final String? now;
 
   @override
   String toString() {
-    return 'Proxy(name: $name, type: $type)';
+    return 'Proxy(name: $name, type: $type, now: $now)';
   }
 
   @override
@@ -325,12 +336,13 @@ class _$ProxyImpl implements _Proxy {
         (other.runtimeType == runtimeType &&
             other is _$ProxyImpl &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.type, type) || other.type == type));
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.now, now) || other.now == now));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, name, type);
+  int get hashCode => Object.hash(runtimeType, name, type, now);
 
   @JsonKey(ignore: true)
   @override
@@ -347,7 +359,10 @@ class _$ProxyImpl implements _Proxy {
 }
 
 abstract class _Proxy implements Proxy {
-  const factory _Proxy({final String name, final String type}) = _$ProxyImpl;
+  const factory _Proxy(
+      {required final String name,
+      required final String type,
+      final String? now}) = _$ProxyImpl;
 
   factory _Proxy.fromJson(Map<String, dynamic> json) = _$ProxyImpl.fromJson;
 
@@ -355,6 +370,8 @@ abstract class _Proxy implements Proxy {
   String get name;
   @override
   String get type;
+  @override
+  String? get now;
   @override
   @JsonKey(ignore: true)
   _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>

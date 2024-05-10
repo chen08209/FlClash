@@ -55,7 +55,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..isAccessControl = json['isAccessControl'] as bool? ?? false
   ..accessControl =
       AccessControl.fromJson(json['accessControl'] as Map<String, dynamic>)
-  ..isAnimateToPage = json['isAnimateToPage'] as bool? ?? true;
+  ..isAnimateToPage = json['isAnimateToPage'] as bool? ?? true
+  ..isCompatible = json['isCompatible'] as bool? ?? false;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -72,6 +73,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'isAccessControl': instance.isAccessControl,
       'accessControl': instance.accessControl,
       'isAnimateToPage': instance.isAnimateToPage,
+      'isCompatible': instance.isCompatible,
     };
 
 const _$ThemeModeEnumMap = {

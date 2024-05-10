@@ -924,6 +924,20 @@ class ClashFFI {
   late final _updateConfig =
       _updateConfigPtr.asFunction<void Function(ffi.Pointer<ffi.Char>, int)>();
 
+  void clearEffect(
+    ffi.Pointer<ffi.Char> s,
+  ) {
+    return _clearEffect(
+      s,
+    );
+  }
+
+  late final _clearEffectPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+          'clearEffect');
+  late final _clearEffect =
+      _clearEffectPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+
   ffi.Pointer<ffi.Char> getProxies() {
     return _getProxies();
   }
@@ -960,20 +974,17 @@ class ClashFFI {
 
   void asyncTestDelay(
     ffi.Pointer<ffi.Char> s,
-    int port,
   ) {
     return _asyncTestDelay(
       s,
-      port,
     );
   }
 
-  late final _asyncTestDelayPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Char>, ffi.LongLong)>>('asyncTestDelay');
-  late final _asyncTestDelay = _asyncTestDelayPtr
-      .asFunction<void Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _asyncTestDelayPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+          'asyncTestDelay');
+  late final _asyncTestDelay =
+      _asyncTestDelayPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> getVersionInfo() {
     return _getVersionInfo();

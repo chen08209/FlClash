@@ -11,7 +11,8 @@ _$UpdateConfigParamsImpl _$$UpdateConfigParamsImplFromJson(
     _$UpdateConfigParamsImpl(
       profilePath: json['profile-path'] as String?,
       config: ClashConfig.fromJson(json['config'] as Map<String, dynamic>),
-      isPatch: json['is-patch'] as bool?,
+      isPatch: json['is-patch'] as bool,
+      isCompatible: json['is-compatible'] as bool,
     );
 
 Map<String, dynamic> _$$UpdateConfigParamsImplToJson(
@@ -20,6 +21,7 @@ Map<String, dynamic> _$$UpdateConfigParamsImplToJson(
       'profile-path': instance.profilePath,
       'config': instance.config,
       'is-patch': instance.isPatch,
+      'is-compatible': instance.isCompatible,
     };
 
 _$ChangeProxyParamsImpl _$$ChangeProxyParamsImplFromJson(
