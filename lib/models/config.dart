@@ -112,7 +112,7 @@ class Config extends ChangeNotifier {
             (element) => element.label == label && element.id != id) !=
         -1;
     if (hasDup) {
-      return _getLabel(Other.getOverwriteLabel(label!), id);
+      return _getLabel(other.getOverwriteLabel(label!), id);
     } else {
       return label;
     }

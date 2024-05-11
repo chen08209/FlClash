@@ -114,7 +114,7 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
         selector: (_, config) => config.locale,
         builder: (_, localeString, __) {
           final subTitle = localeString ?? appLocalizations.defaultText;
-          final currentLocale = Other.getLocaleForString(localeString);
+          final currentLocale = other.getLocaleForString(localeString);
           return ListTile(
             leading: const Icon(Icons.language_outlined),
             title: Text(appLocalizations.language),
@@ -211,31 +211,23 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
   @override
   Widget build(BuildContext context) {
     final items = [
-      LayoutBuilder(builder: (context, container) {
-        final isMobile = context.isMobile;
-        if (!isMobile) {
-          return Container(
-            margin: const EdgeInsets.only(top: 18),
+      Selector<AppState, List<NavigationItem>>(
+        selector: (_, appState) => appState.navigationItems,
+        builder: (_, navigationItems, __) {
+          final moreNavigationItems = navigationItems
+              .where(
+                (element) => element.modes.contains(NavigationItemMode.more),
+          )
+              .toList();
+          if (moreNavigationItems.isEmpty) {
+            return Container();
+          }
+          return _buildSection(
+            title: appLocalizations.more,
+            content: _buildNavigationMenu(moreNavigationItems),
           );
-        }
-        return Selector<AppState, List<NavigationItem>>(
-          selector: (_, appState) => appState.navigationItems,
-          builder: (_, navigationItems, __) {
-            final moreNavigationItems = navigationItems
-                .where(
-                  (element) => element.modes.contains(NavigationItemMode.more),
-                )
-                .toList();
-            if (moreNavigationItems.isEmpty) {
-              return Container();
-            }
-            return _buildSection(
-              title: appLocalizations.more,
-              content: _buildNavigationMenu(moreNavigationItems),
-            );
-          },
-        );
-      }),
+        },
+      ),
       _buildSection(
         title: appLocalizations.settings,
         content: _getSettingList(),

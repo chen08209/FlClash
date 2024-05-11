@@ -9,6 +9,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 
+import 'controller.dart';
 import 'models/models.dart';
 import 'common/common.dart';
 
@@ -20,6 +21,7 @@ class GlobalState {
   PageController? pageController;
   final navigatorKey = GlobalKey<NavigatorState>();
   final Map<int, String?> packageNameMap = {};
+  late AppController appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
   List<Function> updateFunctionLists = [];
   List<NavigationItem> currentNavigationItems = [];

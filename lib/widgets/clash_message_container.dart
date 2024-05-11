@@ -38,14 +38,14 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
 
   @override
   void onDelay(Delay delay) {
-    final appController = context.appController;
+    final appController = globalState.appController;
     appController.setDelay(delay);
     super.onDelay(delay);
   }
 
   @override
   void onLog(Log log) {
-    context.appController.appState.addLog(log);
+    globalState.appController.appState.addLog(log);
     super.onLog(log);
   }
 

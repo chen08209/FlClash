@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -90,6 +91,12 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               },
               icon: const Icon(Icons.close),
             ),
+            actions: [
+              IconButton(
+                onPressed: globalState.appController.addProfileFormQrCode,
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+              )
+            ],
           ),
           Container(
             margin: const EdgeInsets.only(bottom: 32),
@@ -115,7 +122,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                   icon: icon,
                   style: ButtonStyle(
                     foregroundColor:
-                    const MaterialStatePropertyAll(Colors.white),
+                        const MaterialStatePropertyAll(Colors.white),
                     backgroundColor: MaterialStatePropertyAll(backgroundColor),
                   ),
                   padding: const EdgeInsets.all(16),

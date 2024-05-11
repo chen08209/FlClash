@@ -51,7 +51,6 @@ class Application extends StatefulWidget {
 }
 
 class ApplicationState extends State<Application> {
-  late AppController appController;
   late SystemColorSchemes systemColorSchemes;
 
   ColorScheme _getAppColorScheme({
@@ -72,10 +71,10 @@ class ApplicationState extends State<Application> {
   @override
   void initState() {
     super.initState();
-    appController = AppController(context);
+    globalState.appController = AppController(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      appController.afterInit();
-      appController.initLink();
+      globalState.appController.afterInit();
+      globalState.appController.initLink();
       _updateGroups();
     });
   }
@@ -105,7 +104,7 @@ class ApplicationState extends State<Application> {
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      appController.updateSystemColorSchemes(systemColorSchemes);
+      globalState.appController.updateSystemColorSchemes(systemColorSchemes);
     });
   }
 
@@ -114,11 +113,13 @@ class ApplicationState extends State<Application> {
       globalState.groupsUpdateTimer?.cancel();
       globalState.groupsUpdateTimer = null;
     }
-    globalState.groupsUpdateTimer ??=
-        Timer.periodic(appConstant.httpTimeoutDuration, (timer) async {
-      await appController.updateGroups();
-      appController.appState.sortNum++;
-    });
+    globalState.groupsUpdateTimer ??= Timer.periodic(
+      appConstant.httpTimeoutDuration,
+      (timer) async {
+        await globalState.appController.updateGroups();
+        globalState.appController.appState.sortNum++;
+      },
+    );
   }
 
   @override
@@ -145,9 +146,9 @@ class ApplicationState extends State<Application> {
                       GlobalWidgetsLocalizations.delegate
                     ],
                     title: appConstant.name,
-                    locale: Other.getLocaleForString(state.locale),
+                    locale: other.getLocaleForString(state.locale),
                     supportedLocales:
-                        AppLocalizations.delegate.supportedLocales,
+                    AppLocalizations.delegate.supportedLocales,
                     themeMode: state.themeMode,
                     theme: ThemeData(
                       useMaterial3: true,
@@ -180,7 +181,7 @@ class ApplicationState extends State<Application> {
   @override
   Future<void> dispose() async {
     linkManager.destroy();
-    await appController.savePreferences();
+    await globalState.appController.savePreferences();
     super.dispose();
   }
 }

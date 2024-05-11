@@ -410,10 +410,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Tun`
+  /// `Tun mode`
   String get tun {
     return Intl.message(
-      'Tun',
+      'Tun mode',
       name: 'tun',
       desc: '',
       args: [],
@@ -980,6 +980,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Please upload a valid QR code`
+  String get pleaseUploadValidQrcode {
+    return Intl.message(
+      'Please upload a valid QR code',
+      name: 'pleaseUploadValidQrcode',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Blacklist mode`
   String get blacklistMode {
     return Intl.message(
@@ -1255,6 +1265,46 @@ class AppLocalizations {
     return Intl.message(
       'Discovery a new version',
       name: 'discovery',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Compatibility mode`
+  String get compatible {
+    return Intl.message(
+      'Compatibility mode',
+      name: 'compatible',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Opening it will lose part of its application ability and gain the support of full amount of Clash.`
+  String get compatibleDesc {
+    return Intl.message(
+      'Opening it will lose part of its application ability and gain the support of full amount of Clash.',
+      name: 'compatibleDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The current proxy group cannot be selected.`
+  String get notSelectedTip {
+    return Intl.message(
+      'The current proxy group cannot be selected.',
+      name: 'notSelectedTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `tip`
+  String get tip {
+    return Intl.message(
+      'tip',
+      name: 'tip',
       desc: '',
       args: [],
     );

@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -38,7 +39,7 @@ class _EditProfileState extends State<EditProfile> {
 
   _handleConfirm() {
     if (!_formKey.currentState!.validate()) return;
-    final config = context.read<Config>();
+    final config = widget.context.read<Config>();
     final hasUpdate = widget.profile.url != urlController.text;
     widget.profile.url = urlController.text;
     widget.profile.label = labelController.text;
@@ -48,7 +49,7 @@ class _EditProfileState extends State<EditProfile> {
     config.setProfile(widget.profile);
     if (hasUpdate) {
       widget.context.findAncestorStateOfType<CommonScaffoldState>()?.loadingRun(
-            () => context.appController.updateProfile(
+            () => globalState.appController.updateProfile(
               widget.profile.id,
             ),
           );

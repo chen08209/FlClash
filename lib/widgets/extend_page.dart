@@ -16,28 +16,6 @@ showExtendPage(
     key: globalKey,
     child: body,
   );
-
-  // Flexible(
-  //   flex: 0,
-  //   child: Row(
-  //     children: [
-  //       Expanded(
-  //         child: Padding(
-  //           padding: kTabLabelPadding,
-  //           child: Text(
-  //             title,
-  //             style: Theme.of(context).textTheme.titleMedium,
-  //           ),
-  //         ),
-  //       ),
-  //       const SizedBox(
-  //         height: kToolbarHeight,
-  //         width: kToolbarHeight,
-  //         child: CloseButton(),
-  //       ),
-  //     ],
-  //   ),
-  // )
   navigator.push(
     ModalSideSheetRoute(
       modalBarrierColor: Colors.black38,

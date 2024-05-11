@@ -1,6 +1,7 @@
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
@@ -24,7 +25,6 @@ class ProfilesFragment extends StatefulWidget {
 }
 
 class _ProfilesFragmentState extends State<ProfilesFragment> {
-
   String _getLastUpdateTimeDifference(DateTime lastDateTime) {
     final currentDateTime = DateTime.now();
     final difference = currentDateTime.difference(lastDateTime);
@@ -50,12 +50,12 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
   }
 
   _handleDeleteProfile(String id) async {
-    context.appController.deleteProfile(id);
+    globalState.appController.deleteProfile(id);
   }
 
   _handleUpdateProfile(String id) async {
     context.findAncestorStateOfType<CommonScaffoldState>()?.loadingRun(
-          () => context.appController.updateProfile(id),
+          () => globalState.appController.updateProfile(id),
         );
   }
 
@@ -175,9 +175,9 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
 
   _handleShowAddExtendPage() {
     showExtendPage(
-      context,
+      globalState.navigatorKey.currentState!.context,
       body: AddProfile(
-        context: context,
+        context: globalState.navigatorKey.currentState!.context,
       ),
       title: "${appLocalizations.add}${appLocalizations.profile}",
     );
@@ -210,7 +210,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
               child: _profileItem(
                 profile: profile,
                 groupValue: state.currentProfileId,
-                onChanged: context.appController.changeProfileDebounce,
+                onChanged: globalState.appController.changeProfileDebounce,
               ),
             ),
         ],

@@ -62,7 +62,7 @@ Future<void> vpnService() async {
   );
 
   final appLocalizations = await AppLocalizations.load(
-    Other.getLocaleForString(config.locale) ??
+    other.getLocaleForString(config.locale) ??
         WidgetsBinding.instance.platformDispatcher.locale,
   );
 

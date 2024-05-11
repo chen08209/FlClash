@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'card.dart';
 import 'grid.dart';
@@ -25,7 +25,7 @@ class ColorSchemeBox extends StatelessWidget {
       );
     } else {
       return Theme.of(context).copyWith(
-        colorScheme: context.appController.appState.systemColorSchemes
+        colorScheme: globalState.appController.appState.systemColorSchemes
             .getSystemColorSchemeForBrightness(Theme.of(context).brightness),
       );
     }

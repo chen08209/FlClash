@@ -140,7 +140,7 @@ class ProxiesTabView extends StatelessWidget {
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
       ..sort(
-        (a, b) => Other.sortByChar(a.name, b.name),
+        (a, b) => other.sortByChar(a.name, b.name),
       );
   }
 
@@ -178,7 +178,7 @@ class ProxiesTabView extends StatelessWidget {
   }
 
   double _getItemHeight(BuildContext context) {
-    final measure = context.appController.measure;
+    final measure = globalState.appController.measure;
     return 12 * 2 +
         measure.bodyMediumHeight * 2 +
         measure.bodySmallHeight +
@@ -192,7 +192,7 @@ class ProxiesTabView extends StatelessWidget {
     required bool isSelected,
     required Proxy proxy,
   }) {
-    final measure = context.appController.measure;
+    final measure = globalState.appController.measure;
     return CommonCard(
       isSelected: isSelected,
       onPressed: onPressed,
@@ -276,7 +276,7 @@ class ProxiesTabView extends StatelessWidget {
                           delay > 0 ? '$delay ms' : "Timeout",
                           style: context.textTheme.labelSmall?.copyWith(
                             overflow: TextOverflow.ellipsis,
-                            color: Other.getDelayColor(
+                            color: other.getDelayColor(
                               delay,
                             ),
                           ),
@@ -325,21 +325,21 @@ class ProxiesTabView extends StatelessWidget {
               context,
               isSelected: state.isSelected,
               onPressed: () {
-                final appController = context.appController;
+                final appController = globalState.appController;
                 final group =
                     appController.appState.getGroupWithName(groupName)!;
                 if (group.type != GroupType.Selector) {
                   globalState.showSnackBar(
                     context,
-                    message: "当前代理组无法选择",
+                    message: appLocalizations.notSelectedTip,
                   );
                   return;
                 }
-                context.appController.config.updateCurrentSelectedMap(
+                globalState.appController.config.updateCurrentSelectedMap(
                   groupName,
                   proxy.name,
                 );
-                context.appController.changeProxy();
+                globalState.appController.changeProxy();
               },
               proxy: proxy,
             );
@@ -422,7 +422,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
 
   _healthcheck() async {
     _controller.forward();
-    context.appController.healthcheck();
+    globalState.appController.healthcheck();
     await Future.delayed(
       appConstant.httpTimeoutDuration + appConstant.moreDuration,
     );

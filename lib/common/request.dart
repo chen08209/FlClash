@@ -29,7 +29,7 @@ class Request {
     final packageInfo = await appPackage.packageInfoCompleter.future;
     final version = packageInfo.version;
     final hasUpdate =
-        Other.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
+        other.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
     if (!hasUpdate) return Result.error();
     return Result.success(data: body['body']);
   }

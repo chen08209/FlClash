@@ -1,23 +1,27 @@
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:zxing2/qrcode.dart';
+import 'package:image/image.dart' as img;
 
 class Other {
-  static Color? getDelayColor(int? delay) {
+  Color? getDelayColor(int? delay) {
     if (delay == null) return null;
     if (delay < 0) return Colors.red;
     if (delay < 600) return Colors.green;
     return const Color(0xFFC57F0A);
   }
 
-  static String getDateStringLast2(int value) {
+  String getDateStringLast2(int value) {
     var valueRaw = "0$value";
     return valueRaw.substring(
       valueRaw.length - 2,
     );
   }
 
-  static String getTimeDifference(DateTime dateTime) {
+  String getTimeDifference(DateTime dateTime) {
     var currentDateTime = DateTime.now();
     var difference = currentDateTime.difference(dateTime);
     var inHours = difference.inHours;
@@ -27,7 +31,7 @@ class Other {
     return "${getDateStringLast2(inHours)}:${getDateStringLast2(inMinutes)}:${getDateStringLast2(inSeconds)}";
   }
 
-  static String getTimeText(int? timeStamp) {
+  String getTimeText(int? timeStamp) {
     if (timeStamp == null) {
       return '00:00:00';
     }
@@ -39,7 +43,7 @@ class Other {
     return "${getDateStringLast2(inHours)}:${getDateStringLast2(inMinutes)}:${getDateStringLast2(inSeconds)}";
   }
 
-  static Locale? getLocaleForString(String? localString) {
+  Locale? getLocaleForString(String? localString) {
     if (localString == null) return null;
     var localSplit = localString.split("_");
     if (localSplit.length == 1) {
@@ -57,7 +61,7 @@ class Other {
     return null;
   }
 
-  static int sortByChar(String a, String b) {
+  int sortByChar(String a, String b) {
     if (a.isEmpty && b.isEmpty) {
       return 0;
     }
@@ -77,7 +81,7 @@ class Other {
     }
   }
 
-  static String getOverwriteLabel(String label) {
+  String getOverwriteLabel(String label) {
     final reg = RegExp(r'\((\d+)\)$');
     final matches = reg.allMatches(label);
     if (matches.isNotEmpty) {
@@ -89,21 +93,7 @@ class Other {
     }
   }
 
-  // static FutureOr<void> Function(T p) debounce<T>(void Function(T? p) func,
-  //     {Duration? duration}) {
-  //   Timer? timer;
-  //   return ([T? p]) {
-  //     if (timer != null) {
-  //       timer?.cancel();
-  //     }
-  //     timer = Timer(duration ?? const Duration(milliseconds: 300), () {
-  //       func(p);
-  //     });
-  //   };
-  // }
-
-
-  static String getTrayIconPath() {
+  String getTrayIconPath() {
     if (Platform.isWindows) {
       return "assets/images/app_icon.ico";
     } else {
@@ -111,7 +101,7 @@ class Other {
     }
   }
 
-  static int compareVersions(String version1, String version2) {
+  int compareVersions(String version1, String version2) {
     List<String> v1 = version1.split('+')[0].split('.');
     List<String> v2 = version2.split('+')[0].split('.');
     int major1 = int.parse(v1[0]);
@@ -133,4 +123,30 @@ class Other {
     int build2 = version2.contains('+') ? int.parse(version2.split('+')[1]) : 0;
     return build1.compareTo(build2);
   }
+
+  Future<String?> parseQRCode(Uint8List? bytes) {
+    return Isolate.run<String?>(() {
+      if (bytes == null) return null;
+      img.Image? image = img.decodeImage(bytes);
+      LuminanceSource source = RGBLuminanceSource(
+        image!.width,
+        image.height,
+        image
+            .convert(numChannels: 4)
+            .getBytes(order: img.ChannelOrder.abgr)
+            .buffer
+            .asInt32List(),
+      );
+      final bitmap = BinaryBitmap(GlobalHistogramBinarizer(source));
+      final reader = QRCodeReader();
+      try {
+        final result = reader.decode(bitmap);
+        return result.text;
+      } catch (_) {
+        return null;
+      }
+    });
+  }
 }
+
+final other = Other();

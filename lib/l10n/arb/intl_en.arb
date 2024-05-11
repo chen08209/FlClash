@@ -35,7 +35,7 @@
   "overrideDesc": "Override Proxy related config",
   "allowLan": "AllowLan",
   "allowLanDesc": "Allow access proxy through the LAN",
-  "tun": "Tun",
+  "tun": "Tun mode",
   "tunDesc": "only effective in administrator mode",
   "minimizeOnExit": "Minimize on exit",
   "minimizeOnExitDesc": "Modify the default system exit event",
@@ -92,6 +92,7 @@
   "delaySort": "Sort by delay",
   "nameSort": "Sort by name",
   "pleaseUploadFile": "Please upload file",
+  "pleaseUploadValidQrcode": "Please upload a valid QR code",
   "blacklistMode": "Blacklist mode",
   "whitelistMode": "Whitelist mode",
   "filterSystemApp": "Filter system app",
@@ -119,5 +120,9 @@
   "desc": "A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.",
   "startVpn": "Staring VPN...",
   "stopVpn": "Stopping VPN...",
-  "discovery": "Discovery a new version"
+  "discovery": "Discovery a new version",
+  "compatible": "Compatibility mode",
+  "compatibleDesc": "Opening it will lose part of its application ability and gain the support of full amount of Clash.",
+  "notSelectedTip": "The current proxy group cannot be selected.",
+  "tip": "tip"
 }

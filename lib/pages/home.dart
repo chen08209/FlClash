@@ -1,4 +1,3 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +27,7 @@ class HomePage extends StatelessWidget {
       builder: (context, currentIndex, __) {
         if (globalState.pageController != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.appController.toPage(currentIndex, hasAnimate: true);
+            globalState.appController.toPage(currentIndex, hasAnimate: true);
           });
         } else {
           globalState.pageController = PageController(
@@ -67,7 +66,7 @@ class HomePage extends StatelessWidget {
       },
       builder: (context, state, __) {
         return AdaptiveScaffold.standardNavigationRail(
-          onDestinationSelected: context.appController.toPage,
+          onDestinationSelected: globalState.appController.toPage,
           destinations: navigationItems
               .map(
                 (e) => NavigationRailDestination(
@@ -113,7 +112,7 @@ class HomePage extends StatelessWidget {
             .toList();
         return AdaptiveScaffold.standardBottomNavigationBar(
           destinations: mobileDestinations,
-          onDestinationSelected: context.appController.toPage,
+          onDestinationSelected: globalState.appController.toPage,
           currentIndex: state.currentIndex,
         );
       },

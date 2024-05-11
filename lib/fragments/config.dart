@@ -24,8 +24,8 @@ class _ConfigFragmentState extends State<ConfigFragment> {
       try {
         final mixedPort = int.parse(port);
         if (mixedPort < 1024 || mixedPort > 49151) throw "Invalid port";
-        context.appController.clashConfig.mixedPort = mixedPort;
-        context.appController.updateClashConfigDebounce();
+        globalState.appController.clashConfig.mixedPort = mixedPort;
+        globalState.appController.updateClashConfigDebounce();
       } catch (e) {
         globalState.showMessage(
           title: appLocalizations.proxyPort,
@@ -39,9 +39,9 @@ class _ConfigFragmentState extends State<ConfigFragment> {
 
   _updateLoglevel(LogLevel? logLevel) {
     if (logLevel == null ||
-        logLevel == context.appController.clashConfig.logLevel) return;
-    context.appController.clashConfig.logLevel = logLevel;
-    context.appController.updateClashConfigDebounce();
+        logLevel == globalState.appController.clashConfig.logLevel) return;
+    globalState.appController.clashConfig.logLevel = logLevel;
+    globalState.appController.updateClashConfigDebounce();
   }
 
   @override
@@ -59,12 +59,31 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               onChanged: (bool value) async {
                 final clashConfig = context.read<ClashConfig>();
                 clashConfig.allowLan = value;
-                context.appController.updateClashConfigDebounce();
+                globalState.appController.updateClashConfigDebounce();
               },
             ),
           );
         },
       ),
+      if (system.isDesktop)
+        Selector<ClashConfig, bool>(
+          selector: (_, clashConfig) => clashConfig.tun.enable,
+          builder: (_, tunEnable, __) {
+            return ListItem.switchItem(
+              leading: const Icon(Icons.support),
+              title: Text(appLocalizations.tun),
+              subtitle: Text(appLocalizations.tunDesc),
+              delegate: SwitchDelegate(
+                value: tunEnable,
+                onChanged: (bool value) async {
+                  final clashConfig = context.read<ClashConfig>();
+                  clashConfig.tun = Tun(enable: value);
+                  globalState.appController.updateClashConfigDebounce();
+                },
+              ),
+            );
+          },
+        ),
       Selector<ClashConfig, int>(
         selector: (_, clashConfig) => clashConfig.mixedPort,
         builder: (_, mixedPort, __) {

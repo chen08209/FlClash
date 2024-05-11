@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/pages/scan.dart';
 import 'package:fl_clash/state.dart';
@@ -8,17 +7,21 @@ import 'package:flutter/material.dart';
 class AddProfile extends StatelessWidget {
   final BuildContext context;
 
-  const AddProfile({super.key, required this.context});
+  const AddProfile({super.key, required this.context,});
 
   _handleAddProfileFormFile() async {
-    context.appController.addProfileFormFile();
+    globalState.appController.addProfileFormFile();
   }
 
   _handleAddProfileFormURL(String url) async {
-    context.appController.addProfileFormURL(url);
+    globalState.appController.addProfileFormURL(url);
   }
 
   _toScan() async {
+    if(system.isDesktop){
+      globalState.appController.addProfileFormQrCode();
+      return;
+    }
     final url = await Navigator.of(context)
         .push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
     if (url != null) {
@@ -39,7 +42,6 @@ class AddProfile extends StatelessWidget {
   Widget build(context) {
     return ListView(
       children: [
-        if (Platform.isAndroid)
           ListItem(
             leading: const Icon(Icons.qr_code),
             title: Text(appLocalizations.qrcode),

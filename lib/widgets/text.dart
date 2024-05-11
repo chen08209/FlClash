@@ -1,5 +1,6 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
+
+import '../state.dart';
 
 class TooltipText extends StatelessWidget {
   final Text text;
@@ -14,7 +15,7 @@ class TooltipText extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, container) {
         final maxWidth = container.maxWidth;
-        final size = context.appController.measure.computeTextSize(
+        final size = globalState.appController.measure.computeTextSize(
           text,
         );
         if (maxWidth < size.width) {

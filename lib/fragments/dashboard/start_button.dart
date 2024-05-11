@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -48,7 +49,7 @@ class _StartButtonState extends State<StartButton>
   }
 
   updateSystemProxy() async {
-    final appController = context.appController;
+    final appController = globalState.appController;
     await appController.updateSystemProxy(isStart);
     if (isStart && mounted) {
       appController.clearShowProxyDelay();
@@ -66,10 +67,10 @@ class _StartButtonState extends State<StartButton>
         if (!state.isInit || !state.hasProfile) {
           return Container();
         }
-        final textWidth = context.appController.measure
+        final textWidth = globalState.appController.measure
                 .computeTextSize(
                   Text(
-                    Other.getTimeDifference(
+                    other.getTimeDifference(
                       DateTime.now(),
                     ),
                     style:
@@ -133,7 +134,7 @@ class _StartButtonState extends State<StartButton>
         child: Selector<AppState, int?>(
           selector: (_, appState) => appState.runTime,
           builder: (_, int? value, __) {
-            final text = Other.getTimeText(value);
+            final text = other.getTimeText(value);
             return Text(
               text,
               style: Theme.of(context).textTheme.titleMedium?.toSoftBold(),

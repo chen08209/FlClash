@@ -49,6 +49,9 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("取消过滤系统应用"),
         "cancelSelectAll": MessageLookupByLibrary.simpleMessage("取消全选"),
         "checkUpdate": MessageLookupByLibrary.simpleMessage("检查更新"),
+        "compatible": MessageLookupByLibrary.simpleMessage("兼容模式"),
+        "compatibleDesc":
+            MessageLookupByLibrary.simpleMessage("开启将失去部分应用能力，获得全量的Clash的支持"),
         "confirm": MessageLookupByLibrary.simpleMessage("确定"),
         "core": MessageLookupByLibrary.simpleMessage("内核"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("内核信息"),
@@ -97,6 +100,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "noProxy": MessageLookupByLibrary.simpleMessage("暂无代理"),
         "noProxyDesc":
             MessageLookupByLibrary.simpleMessage("请创建配置文件或者添加有效配置文件"),
+        "notSelectedTip": MessageLookupByLibrary.simpleMessage("当前代理组无法选中"),
         "nullCoreInfoDesc": MessageLookupByLibrary.simpleMessage("无法获取内核信息"),
         "nullLogsDesc": MessageLookupByLibrary.simpleMessage("暂无日志"),
         "nullProfileDesc":
@@ -106,6 +110,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "override": MessageLookupByLibrary.simpleMessage("覆写"),
         "overrideDesc": MessageLookupByLibrary.simpleMessage("覆写代理相关配置"),
         "pleaseUploadFile": MessageLookupByLibrary.simpleMessage("请上传文件"),
+        "pleaseUploadValidQrcode":
+            MessageLookupByLibrary.simpleMessage("请上传有效的二维码"),
         "port": MessageLookupByLibrary.simpleMessage("端口"),
         "preview": MessageLookupByLibrary.simpleMessage("预览"),
         "profile": MessageLookupByLibrary.simpleMessage("配置"),
@@ -146,9 +152,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeColor": MessageLookupByLibrary.simpleMessage("主题色彩"),
         "themeDesc": MessageLookupByLibrary.simpleMessage("设置深色模式，调整色彩"),
         "themeMode": MessageLookupByLibrary.simpleMessage("主题模式"),
+        "tip": MessageLookupByLibrary.simpleMessage("提示"),
         "tools": MessageLookupByLibrary.simpleMessage("工具"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("流量统计"),
-        "tun": MessageLookupByLibrary.simpleMessage("虚拟网络设备"),
+        "tun": MessageLookupByLibrary.simpleMessage("Tun模式"),
         "tunDesc": MessageLookupByLibrary.simpleMessage("仅在管理员模式生效"),
         "unableToUpdateCurrentProfileDesc":
             MessageLookupByLibrary.simpleMessage("无法更新当前配置文件"),

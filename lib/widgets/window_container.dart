@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -29,13 +29,13 @@ class _WindowContainerState extends State<WindowContainer>
 
   @override
   void onWindowClose() async {
-    await context.appController.handleBackOrExit();
+    await globalState.appController.handleBackOrExit();
     super.onWindowClose();
   }
 
   @override
   void onWindowMinimize() async {
-    await context.appController.savePreferences();
+    await globalState.appController.savePreferences();
     super.onWindowMinimize();
   }
 
