@@ -8,7 +8,7 @@ export 'num.dart';
 export 'navigation.dart';
 export 'window.dart';
 export 'system.dart';
-export 'file.dart';
+export 'picker.dart';
 export 'android.dart';
 export 'launch.dart';
 export 'protocol.dart';

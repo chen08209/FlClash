@@ -1,7 +1,7 @@
 import 'dart:io';
 
 
-import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
 
 class PopContainer extends StatefulWidget {
@@ -24,7 +24,7 @@ class _PopContainerState extends State<PopContainer> {
           if (canPop) {
             Navigator.pop(context);
           } else {
-            await context.appController.handleBackOrExit();
+            await globalState.appController.handleBackOrExit();
           }
         },
         child: widget.child,

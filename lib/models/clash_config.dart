@@ -1,37 +1,28 @@
+// ignore_for_file: invalid_annotation_target
+
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:flutter/material.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../enum/enum.dart';
 
 part 'generated/clash_config.g.dart';
 
-@JsonSerializable()
-class Tun {
-  bool enable;
-  String device;
-  TunStack stack;
-  @JsonKey(name: "dns-hijack")
-  List<String> dnsHijack;
+part 'generated/clash_config.freezed.dart';
 
-  Tun()  : enable = false,
-        stack = TunStack.gvisor,
-        dnsHijack = ["any:53"],
-        device = appConstant.name;
 
-  factory Tun.fromJson(Map<String, dynamic> json) {
-    return _$TunFromJson(json);
-  }
+@freezed
+class Tun with _$Tun {
+  const factory Tun({
+    @Default(false) bool enable,
+    @Default(appName) String device,
+    @Default(TunStack.gvisor) TunStack stack,
+    @JsonKey(name: "dns-hijack") @Default(["any:53"])
+    List<String> dnsHijack,
+  }) = _Tun;
 
-  Map<String, dynamic> toJson() {
-    return _$TunToJson(this);
-  }
-
-  // Tun copyWith({bool? enable, int? fileDescriptor}) {
-  //   return Tun(
-  //     enable: enable ?? this.enable,
-  //   );
-  // }
+  factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
 }
 
 @JsonSerializable()
@@ -137,7 +128,7 @@ class ClashConfig extends ChangeNotifier {
         _mode = mode ?? Mode.rule,
         _allowLan = allowLan ?? false,
         _logLevel = logLevel ?? LogLevel.info,
-        _tun = tun ?? Tun(),
+        _tun = tun ?? const Tun(),
         _dns = dns ?? Dns(),
         _rules = rules ?? [];
 

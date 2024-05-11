@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -68,7 +69,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
       style: bodyMedium,
       maxLines: 1,
     );
-    final size = context.appController.measure.computeTextSize(valueText);
+    final size = globalState.appController.measure.computeTextSize(valueText);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,

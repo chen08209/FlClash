@@ -267,31 +267,6 @@ class AppController {
     }
   }
 
-  addProfileFormURL(String url) async {
-    globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
-    toProfiles();
-    final commonScaffoldState = globalState.homeScaffoldKey.currentState;
-    if (commonScaffoldState?.mounted != true) return;
-    commonScaffoldState?.loadingRun(
-      () async {
-        await Future.delayed(const Duration(milliseconds: 300));
-        final profile = Profile(
-          url: url,
-        );
-        final res = await profile.update();
-        if (res.type == ResultType.success) {
-          addProfile(profile);
-        } else {
-          debugPrint(res.message);
-          globalState.showMessage(
-            title: "${appLocalizations.add}${appLocalizations.profile}",
-            message: TextSpan(text: res.message!),
-          );
-        }
-      },
-    );
-  }
-
   initLink() {
     linkManager.initAppLinksListen(
       (url) {
@@ -321,8 +296,33 @@ class AppController {
     );
   }
 
+  addProfileFormURL(String url) async {
+    globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    toProfiles();
+    final commonScaffoldState = globalState.homeScaffoldKey.currentState;
+    if (commonScaffoldState?.mounted != true) return;
+    commonScaffoldState?.loadingRun(
+      () async {
+        await Future.delayed(const Duration(milliseconds: 300));
+        final profile = Profile(
+          url: url,
+        );
+        final res = await profile.update();
+        if (res.type == ResultType.success) {
+          addProfile(profile);
+        } else {
+          debugPrint(res.message);
+          globalState.showMessage(
+            title: "${appLocalizations.add}${appLocalizations.profile}",
+            message: TextSpan(text: res.message!),
+          );
+        }
+      },
+    );
+  }
+
   addProfileFormFile() async {
-    final result = await FileUtil.pickerConfig();
+    final result = await picker.pickerConfigFile();
     if (result.type == ResultType.error) return;
     if (!context.mounted) return;
     globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
@@ -349,6 +349,22 @@ class AppController {
         addProfile(profile);
       },
     );
+  }
+
+  addProfileFormQrCode() async {
+    final result = await picker.pickerConfigQRCode();
+    if (result.type == ResultType.error) {
+      if(result.message != null){
+        globalState.showMessage(
+          title: appLocalizations.tip,
+          message: TextSpan(
+            text: result.message,
+          ),
+        );
+      }
+      return;
+    }
+    addProfileFormURL(result.data!);
   }
 
   clearShowProxyDelay() {

@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +11,7 @@ class OutboundMode extends StatelessWidget {
   const OutboundMode({super.key});
 
   _changeMode(BuildContext context, Mode? value) async {
-    final appController = context.appController;
+    final appController = globalState.appController;
     final clashConfig = appController.clashConfig;
     final config = appController.config;
     if (value == null || clashConfig.mode == value) return;

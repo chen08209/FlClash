@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -69,8 +70,10 @@ class CommonScaffoldState extends State<CommonScaffold> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  _platformContainer({required Widget child}) {
+    if (system.isDesktop) {
+      return child;
+    }
     return AnnotatedRegion(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -80,6 +83,13 @@ class CommonScaffoldState extends State<CommonScaffold> {
         systemNavigationBarColor: Colors.transparent,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _platformContainer(
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -110,6 +120,26 @@ class CommonScaffoldState extends State<CommonScaffold> {
         ),
         body: widget.body,
         bottomNavigationBar: widget.bottomNavigationBar,
+      ),
+    );
+  }
+}
+
+class AppIcon extends StatelessWidget {
+  const AppIcon({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 16,
+      ),
+      width: 30,
+      height: 30,
+      child: const CircleAvatar(
+        foregroundImage: AssetImage("assets/images/launch_icon.png"),
+        backgroundColor: Colors.transparent,
       ),
     );
   }

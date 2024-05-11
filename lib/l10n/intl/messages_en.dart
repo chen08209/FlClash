@@ -56,6 +56,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "cancelSelectAll":
             MessageLookupByLibrary.simpleMessage("Cancel select all"),
         "checkUpdate": MessageLookupByLibrary.simpleMessage("Check update"),
+        "compatible":
+            MessageLookupByLibrary.simpleMessage("Compatibility mode"),
+        "compatibleDesc": MessageLookupByLibrary.simpleMessage(
+            "Opening it will lose part of its application ability and gain the support of full amount of Clash."),
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
         "core": MessageLookupByLibrary.simpleMessage("Core"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
@@ -112,6 +116,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "noProxy": MessageLookupByLibrary.simpleMessage("No proxy"),
         "noProxyDesc": MessageLookupByLibrary.simpleMessage(
             "Please create a profile or add a valid profile"),
+        "notSelectedTip": MessageLookupByLibrary.simpleMessage(
+            "The current proxy group cannot be selected."),
         "nullCoreInfoDesc":
             MessageLookupByLibrary.simpleMessage("Unable to obtain core info"),
         "nullLogsDesc": MessageLookupByLibrary.simpleMessage("No logs"),
@@ -124,6 +130,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "Override Proxy related config"),
         "pleaseUploadFile":
             MessageLookupByLibrary.simpleMessage("Please upload file"),
+        "pleaseUploadValidQrcode": MessageLookupByLibrary.simpleMessage(
+            "Please upload a valid QR code"),
         "port": MessageLookupByLibrary.simpleMessage("Port"),
         "preview": MessageLookupByLibrary.simpleMessage("Preview"),
         "profile": MessageLookupByLibrary.simpleMessage("Profile"),
@@ -169,9 +177,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeDesc": MessageLookupByLibrary.simpleMessage(
             "Set dark mode,adjust the color"),
         "themeMode": MessageLookupByLibrary.simpleMessage("Theme mode"),
+        "tip": MessageLookupByLibrary.simpleMessage("tip"),
         "tools": MessageLookupByLibrary.simpleMessage("Tools"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
-        "tun": MessageLookupByLibrary.simpleMessage("Tun"),
+        "tun": MessageLookupByLibrary.simpleMessage("Tun mode"),
         "tunDesc": MessageLookupByLibrary.simpleMessage(
             "only effective in administrator mode"),
         "unableToUpdateCurrentProfileDesc":

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -39,13 +40,13 @@ class ApplicationSettingFragment extends StatelessWidget {
         selector: (_, config) => config.isCompatible,
         builder: (_, isCompatible, __) {
           return ListItem.switchItem(
-            leading: const Icon(Icons.device_hub),
-            title: const Text("兼容模式"),
-            subtitle: const Text("开启将失去部分应用能力，获得全量的Clash的支持"),
+            leading: const Icon(Icons.expand),
+            title:  Text(appLocalizations.compatible),
+            subtitle: Text(appLocalizations.compatibleDesc),
             delegate: SwitchDelegate(
               value: isCompatible,
               onChanged: (bool value) async {
-                final appController = context.appController;
+                final appController = globalState.appController;
                 appController.config.isCompatible = value;
                 await appController.updateClashConfig(isPatch: false);
                 await appController.updateGroups();
@@ -120,7 +121,7 @@ class ApplicationSettingFragment extends StatelessWidget {
               onChanged: (bool value) {
                 final config = context.read<Config>();
                 config.openLogs = value;
-                context.appController.updateLogStatus();
+                globalState.appController.updateLogStatus();
               },
             ),
           );

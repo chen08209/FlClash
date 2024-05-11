@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,7 +29,7 @@ class ThemeFragment extends StatelessWidget {
     return CommonCard(
       isSelected: isSelected,
       onPressed: () {
-        context.appController.config.themeMode = themeModeItem.themeMode;
+        globalState.appController.config.themeMode = themeModeItem.themeMode;
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal:16),
@@ -62,7 +63,7 @@ class ThemeFragment extends StatelessWidget {
       isSelected: isSelected,
       primaryColor: color,
       onPressed: () {
-        context.appController.config.primaryColor = color?.value;
+        globalState.appController.config.primaryColor = color?.value;
       },
     );
   }

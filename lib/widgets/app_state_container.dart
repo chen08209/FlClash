@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -35,7 +36,7 @@ class AppStateContainer extends StatelessWidget {
       builder: (context, state, child) {
         WidgetsBinding.instance.addPostFrameCallback(
           (_) {
-            context.appController.appState.navigationItems =
+            globalState.appController.appState.navigationItems =
                 navigation.getItems(
               openLogs: state.openLogs,
               hasProxies: state.hasProxies,

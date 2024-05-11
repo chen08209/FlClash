@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+const appName = "FlClash";
+
 class AppConstant {
   final packageName = "com.follow.clash";
   final name = "FlClash";

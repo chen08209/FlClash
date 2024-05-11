@@ -82,7 +82,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     if (!isCurrent || currentProxyName == null || !isInit) return;
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (delay == null) {
-        context.appController.setDelay(
+        globalState.appController.setDelay(
           Delay(
             name: currentProxyName,
             value: 0,
@@ -162,7 +162,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                   ),
                   Flexible(
                     child: Container(
-                      height: context.appController.measure.titleLargeHeight,
+                      height: globalState.appController.measure.titleLargeHeight,
                       alignment: Alignment.centerLeft,
                       child: FadeBox(
                         child: _buildDescription(

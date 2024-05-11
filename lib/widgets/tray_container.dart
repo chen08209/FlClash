@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -32,7 +33,7 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
   _updateOtherTray() async {
     if (isTrayInit == false) {
       await trayManager.setIcon(
-        Other.getTrayIconPath(),
+        other.getTrayIconPath(),
       );
       isTrayInit = true;
     }
@@ -41,7 +42,7 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
   _updateLinuxTray() async {
     await trayManager.destroy();
     await trayManager.setIcon(
-      Other.getTrayIconPath(),
+      other.getTrayIconPath(),
     );
   }
 
@@ -68,11 +69,11 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
     //           label: proxy.name,
     //           checked: isCurrentGroup && isCurrentProxy,
     //           onClick: (_) {
-    //             final config = context.appController.config;
+    //             final config = globalState.appController.config;
     //             config.currentProfile?.groupName = group.name;
     //             config.currentProfile?.proxyName = proxy.name;
     //             config.update();
-    //             context.appController.changeProxy();
+    //             globalState.appController.changeProxy();
     //           }),
     //     );
     //   }
@@ -93,7 +94,7 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
         MenuItem.checkbox(
           label: Intl.message(mode.name),
           onClick: (_) {
-            context.appController.clashConfig.mode = mode;
+            globalState.appController.clashConfig.mode = mode;
           },
           checked: mode == state.mode,
         ),
@@ -103,7 +104,7 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
     final proxyMenuItem = MenuItem.checkbox(
       label: appLocalizations.systemProxy,
       onClick: (_) async {
-        context.appController.updateSystemProxy(!state.isRun);
+        globalState.appController.updateSystemProxy(!state.isRun);
       },
       checked: state.isRun,
     );
@@ -111,8 +112,8 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
     final autoStartMenuItem = MenuItem.checkbox(
       label: appLocalizations.autoLaunch,
       onClick: (_) async {
-        context.appController.config.autoLaunch =
-            !context.appController.config.autoLaunch;
+        globalState.appController.config.autoLaunch =
+            !globalState.appController.config.autoLaunch;
       },
       checked: state.autoLaunch,
     );
@@ -121,7 +122,7 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
     final exitMenuItem = MenuItem(
       label: appLocalizations.exit,
       onClick: (_) async {
-        await context.appController.handleExit();
+        await globalState.appController.handleExit();
       },
     );
     menuItems.add(exitMenuItem);

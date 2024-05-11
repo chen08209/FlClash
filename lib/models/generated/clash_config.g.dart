@@ -6,26 +6,6 @@ part of '../clash_config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Tun _$TunFromJson(Map<String, dynamic> json) => Tun()
-  ..enable = json['enable'] as bool
-  ..device = json['device'] as String
-  ..stack = $enumDecode(_$TunStackEnumMap, json['stack'])
-  ..dnsHijack =
-      (json['dns-hijack'] as List<dynamic>).map((e) => e as String).toList();
-
-Map<String, dynamic> _$TunToJson(Tun instance) => <String, dynamic>{
-      'enable': instance.enable,
-      'device': instance.device,
-      'stack': _$TunStackEnumMap[instance.stack]!,
-      'dns-hijack': instance.dnsHijack,
-    };
-
-const _$TunStackEnumMap = {
-  TunStack.gvisor: 'gvisor',
-  TunStack.system: 'system',
-  TunStack.mixed: 'mixed',
-};
-
 Dns _$DnsFromJson(Map<String, dynamic> json) => Dns()
   ..enable = json['enable'] as bool
   ..ipv6 = json['ipv6'] as bool
@@ -93,4 +73,28 @@ const _$LogLevelEnumMap = {
   LogLevel.warning: 'warning',
   LogLevel.error: 'error',
   LogLevel.silent: 'silent',
+};
+
+_$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
+      enable: json['enable'] as bool? ?? false,
+      device: json['device'] as String? ?? appName,
+      stack: $enumDecodeNullable(_$TunStackEnumMap, json['stack']) ??
+          TunStack.gvisor,
+      dnsHijack: (json['dns-hijack'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const ["any:53"],
+    );
+
+Map<String, dynamic> _$$TunImplToJson(_$TunImpl instance) => <String, dynamic>{
+      'enable': instance.enable,
+      'device': instance.device,
+      'stack': _$TunStackEnumMap[instance.stack]!,
+      'dns-hijack': instance.dnsHijack,
+    };
+
+const _$TunStackEnumMap = {
+  TunStack.gvisor: 'gvisor',
+  TunStack.system: 'system',
+  TunStack.mixed: 'mixed',
 };

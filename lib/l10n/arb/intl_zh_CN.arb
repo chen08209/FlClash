@@ -35,7 +35,7 @@
   "overrideDesc": "覆写代理相关配置",
   "allowLan": "局域网代理",
   "allowLanDesc": "允许通过局域网访问代理",
-  "tun": "虚拟网络设备",
+  "tun": "Tun模式",
   "tunDesc": "仅在管理员模式生效",
   "minimizeOnExit": "退出时最小化",
   "minimizeOnExitDesc": "修改系统默认退出事件",
@@ -92,6 +92,7 @@
   "delaySort": "按延迟排序",
   "nameSort": "按名称排序",
   "pleaseUploadFile": "请上传文件",
+  "pleaseUploadValidQrcode": "请上传有效的二维码",
   "blacklistMode": "黑名单模式",
   "whitelistMode": "白名单模式",
   "filterSystemApp": "过滤系统应用",
@@ -119,5 +120,9 @@
   "desc": "基于ClashMeta的多平台代理客户端，简单易用，开源无广告。",
   "startVpn": "正在启动VPN...",
   "stopVpn": "正在停止VPN...",
-  "discovery": "发现新版本"
+  "discovery": "发现新版本",
+  "compatible": "兼容模式",
+  "compatibleDesc": "开启将失去部分应用能力，获得全量的Clash的支持",
+  "notSelectedTip": "当前代理组无法选中",
+  "tip": "提示"
 }
