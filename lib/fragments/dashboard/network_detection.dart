@@ -95,30 +95,6 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     });
   }
 
-  _updateCurrentDelayContainer(Widget child) {
-    return Selector2<AppState, Config, UpdateCurrentDelaySelectorState>(
-      selector: (_, appState, config) {
-        return UpdateCurrentDelaySelectorState(
-          isInit: appState.isInit,
-          currentProxyName: appState.getRealProxyName(appState.showProxyName),
-          delay: appState
-              .delayMap[appState.getRealProxyName(appState.showProxyName)],
-          isCurrent: appState.currentLabel == 'dashboard',
-        );
-      },
-      builder: (_, state, __) {
-        _updateCurrentDelay(
-          state.currentProxyName,
-          state.delay,
-          state.isCurrent,
-          state.isInit,
-        );
-        return child;
-      },
-      child: child,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return CommonCard(
@@ -126,57 +102,55 @@ class _NetworkDetectionState extends State<NetworkDetection> {
         iconData: Icons.network_check,
         label: appLocalizations.networkDetection,
       ),
-      child: _updateCurrentDelayContainer(
-        Selector<AppState, NetworkDetectionSelectorState>(
-          selector: (_, appState) {
-            return NetworkDetectionSelectorState(
-              currentProxyName: appState.showProxyName,
-              delay: appState.getDelay(
-                appState.showProxyName,
-              ),
-            );
-          },
-          builder: (_, state, __) {
-            return Container(
-              padding: const EdgeInsets.all(16).copyWith(top: 0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible(
-                    flex: 0,
-                    child: TooltipText(
-                      text: Text(
-                        state.currentProxyName ?? appLocalizations.noProxy,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.toSoftBold(),
+      child: Selector<AppState, NetworkDetectionSelectorState>(
+        selector: (_, appState) {
+          return NetworkDetectionSelectorState(
+            currentProxyName: appState.showProxyName,
+            delay: appState.getDelay(
+              appState.showProxyName,
+            ),
+          );
+        },
+        builder: (_, state, __) {
+          return Container(
+            padding: const EdgeInsets.all(16).copyWith(top: 0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Flexible(
+                  flex: 0,
+                  child: TooltipText(
+                    text: Text(
+                      state.currentProxyName ?? appLocalizations.noProxy,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.toSoftBold(),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                Flexible(
+                  child: Container(
+                    height: globalState.appController.measure.titleLargeHeight,
+                    alignment: Alignment.centerLeft,
+                    child: FadeBox(
+                      child: _buildDescription(
+                        state.currentProxyName,
+                        state.delay,
                       ),
                     ),
                   ),
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  Flexible(
-                    child: Container(
-                      height: globalState.appController.measure.titleLargeHeight,
-                      alignment: Alignment.centerLeft,
-                      child: FadeBox(
-                        child: _buildDescription(
-                          state.currentProxyName,
-                          state.delay,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

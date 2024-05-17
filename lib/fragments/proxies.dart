@@ -149,8 +149,8 @@ class ProxiesTabView extends StatelessWidget {
     return proxies = List.of(proxies)
       ..sort(
         (a, b) {
-          final aDelay = appState.delayMap[a.name];
-          final bDelay = appState.delayMap[b.name];
+          final aDelay = appState.getDelay(a.name);
+          final bDelay = appState.getDelay(b.name);
           if (aDelay == null && bDelay == null) {
             return 0;
           }
@@ -313,9 +313,10 @@ class ProxiesTabView extends StatelessWidget {
             ProxiesCardSelectorState>(
           selector: (_, appState, config, clashConfig) {
             final group = appState.getGroupWithName(groupName)!;
-            bool isSelected = config.currentSelectedMap[group.name] == proxy.name ||
-                (config.currentSelectedMap[group.name] == null &&
-                    group.now == proxy.name);
+            bool isSelected =
+                config.currentSelectedMap[group.name] == proxy.name ||
+                    (config.currentSelectedMap[group.name] == null &&
+                        group.now == proxy.name);
             return ProxiesCardSelectorState(
               isSelected: isSelected,
             );
@@ -420,13 +421,15 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
   late Animation<double> _scale;
   late Animation<double> _opacity;
 
-  _healthcheck() async {
+  _healthcheck() async
+  {
+    if(globalState.healthcheckLock) return;
     _controller.forward();
     globalState.appController.healthcheck();
-    await Future.delayed(
-      appConstant.httpTimeoutDuration + appConstant.moreDuration,
-    );
-    _controller.reverse();
+    Future.delayed(appConstant.httpTimeoutDuration + appConstant.moreDuration,
+        () {
+      _controller.reverse();
+    });
   }
 
   @override
@@ -447,7 +450,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
         curve: const Interval(
           0,
           1,
-          curve: Curves.easeIn,
+          curve: Curves.elasticInOut,
         ),
       ),
     );
