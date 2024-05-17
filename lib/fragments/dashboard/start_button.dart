@@ -51,9 +51,6 @@ class _StartButtonState extends State<StartButton>
   updateSystemProxy() async {
     final appController = globalState.appController;
     await appController.updateSystemProxy(isStart);
-    if (isStart && mounted) {
-      appController.clearShowProxyDelay();
-    }
   }
 
   @override

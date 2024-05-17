@@ -38,8 +38,16 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
 
   @override
   void onDelay(Delay delay) {
+    globalState.healthcheckLock = true;
     final appController = globalState.appController;
     appController.setDelay(delay);
+    globalState.healthcheckLockDebounce ??= debounce<Function()>(
+      () async {
+        globalState.healthcheckLock = false;
+      },
+      milliseconds: 5000,
+    );
+    globalState.healthcheckLockDebounce!();
     super.onDelay(delay);
   }
 

@@ -39,6 +39,8 @@ class AppController {
         updateRunTime,
         updateTraffic,
       ];
+      clearShowProxyDelay();
+      testShowProxyDelay();
     } else {
       await globalState.stopSystemProxy();
       appState.traffics = [];
@@ -221,6 +223,7 @@ class AppController {
   }
 
   healthcheck() {
+    if(globalState.healthcheckLock) return;
     for (final delay in appState.delayMap.entries) {
       setDelay(
         Delay(
@@ -373,6 +376,13 @@ class AppController {
       appState.setDelay(
         Delay(name: showProxyDelay, value: null),
       );
+    }
+  }
+
+  testShowProxyDelay() {
+    final showProxyDelay = appState.getRealProxyName(appState.showProxyName);
+    if (showProxyDelay != null) {
+      globalState.updateCurrentDelay(showProxyDelay);
     }
   }
 }
