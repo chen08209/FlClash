@@ -52,6 +52,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
     }
+
     private fun tip(message: String?) {
         if (toast != null) {
             toast!!.cancel()
@@ -146,9 +147,9 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             val packageManager = context?.packageManager
             val packages: List<Package>? =
                 packageManager?.getInstalledPackages(PackageManager.GET_META_DATA)?.filter {
-                    it.packageName == context?.packageName
-                            || it.requestedPermissions?.contains(Manifest.permission.INTERNET) == false
-                            || it.packageName != "android"
+                    it.packageName != context?.packageName
+                            || it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
+                            || it.packageName == "android"
 
                 }?.map {
                     Package(

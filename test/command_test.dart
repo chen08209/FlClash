@@ -1,18 +1,13 @@
 // ignore_for_file: avoid_print
 
+import 'package:http/io_client.dart';
 import 'dart:io';
 
-main() async {
-  final result = await Process.run(
-    'netstat',
-    ["-ano","|","findstr",":7890","|","findstr","LISTENING"],
-    runInShell: true,
-  );
-  final output = result.stdout as String;
-  final line = output.split('\n').first;
-  final pid = line.split(' ').firstWhere(
-        (value) => value.trim().contains(RegExp(r'^\d+$')),
-    orElse: () => '',
-  );
-  print(pid);
+void main() async {
+  HttpClient httpClient = HttpClient();
+  httpClient.findProxy = HttpClient.findProxyFromEnvironment;
+
+  IOClient ioClient = IOClient(httpClient);
+  var response = await ioClient.get(Uri.parse('https://mirror.ghproxy.com/https://raw.githubusercontent.com/Ruk1ng001/freeSub/main/clash_top30.yaml'));
+  print(response.body);
 }

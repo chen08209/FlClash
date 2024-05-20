@@ -109,7 +109,7 @@ class ThemeFragment extends StatelessWidget {
     ];
     List<Color?> primaryColors = [
       null,
-      appConstant.defaultPrimaryColor,
+      defaultPrimaryColor,
       Colors.pinkAccent,
       Colors.greenAccent,
       Colors.yellowAccent,

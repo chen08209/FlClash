@@ -116,7 +116,7 @@ class AppController {
     );
   }
 
-  applyProfile() async {
+  Future applyProfile() async {
     await globalState.applyProfile(
       appState: appState,
       config: config,
@@ -208,6 +208,17 @@ class AppController {
     }
   }
 
+  autoCheckUpdate() async {
+    final res = await Request.checkForUpdate();
+    if(res.type != ResultType.success) return;
+    globalState.showMessage(
+      title: appLocalizations.checkUpdate,
+      message: TextSpan(
+        text: res.data,
+      ),
+    );
+  }
+
   afterInit() async {
     if (config.autoRun) {
       await updateSystemProxy(true);
@@ -220,6 +231,7 @@ class AppController {
     if (!config.silentLaunch) {
       window?.show();
     }
+    autoCheckUpdate();
   }
 
   healthcheck() {
@@ -244,8 +256,7 @@ class AppController {
   }
 
   toPage(int index, {bool hasAnimate = false}) {
-    final nextLabel = globalState.currentNavigationItems[index].label;
-    appState.currentLabel = nextLabel;
+    appState.currentLabel = appState.currentNavigationItems[index].label;
     if ((config.isAnimateToPage || hasAnimate)) {
       globalState.pageController?.animateToPage(
         index,
@@ -257,12 +268,9 @@ class AppController {
     }
   }
 
-  updatePackages() async {
-    await globalState.updatePackages(appState);
-  }
 
   toProfiles() {
-    final index = globalState.currentNavigationItems.indexWhere(
+    final index = appState.currentNavigationItems.indexWhere(
       (element) => element.label == "profiles",
     );
     if (index != -1) {
@@ -383,6 +391,15 @@ class AppController {
     final showProxyDelay = appState.getRealProxyName(appState.showProxyName);
     if (showProxyDelay != null) {
       globalState.updateCurrentDelay(showProxyDelay);
+    }
+  }
+
+  updateViewWidth(){
+    appState.viewWidth = context.width;
+    if(appState.viewWidth == 0){
+      Future.delayed(moreDuration,(){
+        updateViewWidth();
+      });
     }
   }
 }

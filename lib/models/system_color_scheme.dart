@@ -6,10 +6,10 @@ class SystemColorSchemes {
     ColorScheme? lightColorScheme,
     ColorScheme? darkColorScheme,
   })  : lightColorScheme = lightColorScheme ??
-            ColorScheme.fromSeed(seedColor: appConstant.defaultPrimaryColor),
+            ColorScheme.fromSeed(seedColor: defaultPrimaryColor),
         darkColorScheme = darkColorScheme ??
             ColorScheme.fromSeed(
-              seedColor: appConstant.defaultPrimaryColor,
+              seedColor: defaultPrimaryColor,
               brightness: Brightness.dark,
             );
   ColorScheme lightColorScheme;

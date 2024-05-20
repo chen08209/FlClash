@@ -11,15 +11,13 @@ part 'generated/clash_config.g.dart';
 
 part 'generated/clash_config.freezed.dart';
 
-
 @freezed
 class Tun with _$Tun {
   const factory Tun({
     @Default(false) bool enable,
     @Default(appName) String device,
     @Default(TunStack.gvisor) TunStack stack,
-    @JsonKey(name: "dns-hijack") @Default(["any:53"])
-    List<String> dnsHijack,
+    @JsonKey(name: "dns-hijack") @Default(["any:53"]) List<String> dnsHijack,
   }) = _Tun;
 
   factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
@@ -198,6 +196,19 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
+  update([ClashConfig? clashConfig]) {
+    if (clashConfig != null) {
+      _mixedPort = clashConfig._mixedPort;
+      _allowLan = clashConfig._allowLan;
+      _mode = clashConfig._mode;
+      _logLevel = clashConfig._logLevel;
+      _tun = clashConfig._tun;
+      _dns = clashConfig._dns;
+      _rules = clashConfig._rules;
+    }
+    notifyListeners();
+  }
+
   Map<String, dynamic> toJson() {
     return _$ClashConfigToJson(this);
   }
@@ -215,5 +226,10 @@ class ClashConfig extends ChangeNotifier {
       dns: dns,
       allowLan: allowLan,
     );
+  }
+
+  @override
+  String toString() {
+    return 'ClashConfig{_mixedPort: $_mixedPort, _allowLan: $_allowLan, _mode: $_mode, _logLevel: $_logLevel, _tun: $_tun, _dns: $_dns, _rules: $_rules}';
   }
 }

@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../widgets/widgets.dart';
+import 'backup_and_recovery.dart';
 import 'theme.dart';
 
 class ToolsFragment extends StatefulWidget {
@@ -47,33 +48,6 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
                 )
               : Container(),
         ]
-      ],
-    );
-  }
-
-  Widget _buildSection({
-    required String title,
-    required Widget content,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Flexible(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-            ),
-          ),
-        ),
-        Expanded(
-          flex: 0,
-          child: content,
-        )
       ],
     );
   }
@@ -161,9 +135,19 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
         title: Text(appLocalizations.theme),
         subtitle: Text(appLocalizations.themeDesc),
         delegate: OpenDelegate(
-            title: appLocalizations.theme,
-            widget: const ThemeFragment(),
-            extendPageWidth: 360),
+          title: appLocalizations.theme,
+          widget: const ThemeFragment(),
+          extendPageWidth: 360,
+        ),
+      ),
+      ListItem.open(
+        leading: const Icon(Icons.cloud_sync),
+        title: Text(appLocalizations.backupAndRecovery),
+        subtitle: Text(appLocalizations.backupAndRecoveryDesc),
+        delegate: OpenDelegate(
+          title: appLocalizations.backupAndRecovery,
+          widget: const BackupAndRecovery(),
+        ),
       ),
       if (Platform.isAndroid)
         ListItem.open(
@@ -210,36 +194,47 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      Selector<AppState, List<NavigationItem>>(
-        selector: (_, appState) => appState.navigationItems,
-        builder: (_, navigationItems, __) {
-          final moreNavigationItems = navigationItems
-              .where(
-                (element) => element.modes.contains(NavigationItemMode.more),
-          )
-              .toList();
-          if (moreNavigationItems.isEmpty) {
-            return Container();
-          }
-          return _buildSection(
-            title: appLocalizations.more,
-            content: _buildNavigationMenu(moreNavigationItems),
-          );
-        },
-      ),
-      _buildSection(
-        title: appLocalizations.settings,
-        content: _getSettingList(),
-      ),
-      _buildSection(
-        title: appLocalizations.other,
-        content: _getOtherList(),
-      ),
-    ];
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (_, index) => items[index],
+    return Selector<Config, String?>(
+      selector: (_, config) => config.locale,
+      builder: (_, __, ___) {
+        final items = [
+          Selector<AppState, MoreToolsSelectorState>(
+            selector: (_, appState) {
+              return MoreToolsSelectorState(
+                navigationItems: appState.viewMode == ViewMode.mobile
+                    ? appState.navigationItems.where(
+                        (element) {
+                          return element.modes
+                              .contains(NavigationItemMode.more);
+                        },
+                      ).toList()
+                    : [],
+              );
+            },
+            builder: (_, state, __) {
+              if (state.navigationItems.isEmpty) {
+                return Container();
+              }
+              return Section(
+                title: appLocalizations.more,
+                child: _buildNavigationMenu(state.navigationItems),
+              );
+            },
+          ),
+          Section(
+            title: appLocalizations.settings,
+            child: _getSettingList(),
+          ),
+          Section(
+            title: appLocalizations.other,
+            child: _getOtherList(),
+          ),
+        ];
+        return ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (_, index) => items[index],
+        );
+      },
     );
   }
 }

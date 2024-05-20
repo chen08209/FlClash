@@ -4,8 +4,6 @@ import 'dart:io';
 
 import 'package:animations/animations.dart';
 import 'package:fl_clash/clash/clash.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 
@@ -24,8 +22,6 @@ class GlobalState {
   late AppController appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
   List<Function> updateFunctionLists = [];
-  List<NavigationItem> currentNavigationItems = [];
-  bool updatePackagesLock = false;
   bool healthcheckLock = false;
 
   startListenUpdate() {
@@ -48,6 +44,7 @@ class GlobalState {
     bool isPatch = true,
   }) async {
     final profilePath = await appPath.getProfilePath(config.currentProfileId);
+    await config.currentProfile?.checkAndUpdate();
     debugPrint("update config");
     return clashCore.updateConfig(UpdateConfigParams(
       profilePath: profilePath,
@@ -89,7 +86,7 @@ class GlobalState {
       config: config,
       isPatch: false,
     );
-    if (res.isNotEmpty) return Result.error(message: res);
+    if (res.isNotEmpty) return Result.error(res);
     await updateGroups(appState);
     changeProxy(
       appState: appState,
@@ -140,14 +137,6 @@ class GlobalState {
     });
   }
 
-  updatePackages(AppState appState) async {
-    if (appState.packages.isEmpty && updatePackagesLock == false) {
-      updatePackagesLock = true;
-      appState.packages = await app?.getPackages() ?? [];
-      updatePackagesLock = false;
-    }
-  }
-
   updateNavigationItems({
     required AppState appState,
     required Config config,
@@ -179,8 +168,9 @@ class GlobalState {
               width: 300,
               child: RichText(
                 text: TextSpan(
-                    style: Theme.of(context).textTheme.labelLarge,
-                    children: [message]),
+                  style: Theme.of(context).textTheme.labelLarge,
+                  children: [message],
+                ),
               ),
             ),
             actions: [
@@ -198,7 +188,7 @@ class GlobalState {
     );
   }
 
-  showCommonDialog<T>({
+  Future<T?> showCommonDialog<T>({
     required Widget child,
   }) async {
     return await showModal<T>(
@@ -207,23 +197,9 @@ class GlobalState {
         barrierColor: Colors.black38,
       ),
       builder: (_) => child,
-      filter: appConstant.filter,
+      filter: filter,
     );
   }
-
-  checkUpdate(Function()? onTab) async {
-    final result = await Request.checkForUpdate();
-    if (result.type == ResultType.success) {
-      showMessage(
-        title: appLocalizations.discovery,
-        message: TextSpan(
-          text: result.data,
-        ),
-        onTab: onTab,
-      );
-    }
-  }
-
   updateTraffic({
     AppState? appState,
     required Config config,
@@ -274,8 +250,8 @@ class GlobalState {
   }
 
   void updateCurrentDelay(
-      String? proxyName,
-      ) {
+    String? proxyName,
+  ) {
     updateCurrentDelayDebounce ??= debounce<Function(String?)>((proxyName) {
       if (proxyName != null) {
         debugPrint("[delay]=====> $proxyName");
@@ -286,7 +262,6 @@ class GlobalState {
     });
     updateCurrentDelayDebounce!([proxyName]);
   }
-
 }
 
 final globalState = GlobalState();

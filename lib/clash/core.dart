@@ -140,7 +140,7 @@ class ClashCore {
   bool delay(String proxyName) {
     final delayParams = {
       "proxy-name": proxyName,
-      "timeout": appConstant.httpTimeoutDuration.inMilliseconds,
+      "timeout": httpTimeoutDuration.inMilliseconds,
     };
     clashFFI.asyncTestDelay(json.encode(delayParams).toNativeUtf8().cast());
     return true;

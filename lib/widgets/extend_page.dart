@@ -1,6 +1,10 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'side_sheet.dart';
 
 showExtendPage(
@@ -19,9 +23,11 @@ showExtendPage(
   navigator.push(
     ModalSideSheetRoute(
       modalBarrierColor: Colors.black38,
-      builder: (context) => LayoutBuilder(
-        builder: (_, __) {
-          final isMobile = context.isMobile;
+      builder: (context) => Selector<AppState, double>(
+        selector: (_, appState) => appState.viewWidth,
+        builder: (_, viewWidth, __) {
+          final isMobile =
+              globalState.appController.appState.viewMode == ViewMode.mobile;
           final commonScaffold = CommonScaffold(
             automaticallyImplyLeading: isMobile ? true : false,
             actions: isMobile
@@ -33,18 +39,18 @@ showExtendPage(
                       child: CloseButton(),
                     ),
                   ],
-            title: Text(title),
+            title: title,
             body: uniqueBody,
           );
           return AnimatedContainer(
             duration: kThemeAnimationDuration,
-            width: isMobile ? context.width : extendPageWidth ?? 300,
+            width: isMobile ? viewWidth : extendPageWidth ?? 300,
             child: commonScaffold,
           );
         },
       ),
       constraints: const BoxConstraints(),
-      filter: appConstant.filter,
+      filter: filter,
     ),
   );
 }

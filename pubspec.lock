@@ -217,6 +217,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.3.6"
+  dio:
+    dependency: transitive
+    description:
+      name: dio
+      sha256: "11e40df547d418cc0c4900a9318b26304e665da6fa4755399a9ff9efd09034b5"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.4.3+1"
   dynamic_color:
     dependency: "direct main"
     description:
@@ -310,14 +318,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_adaptive_scaffold:
-    dependency: "direct main"
-    description:
-      name: flutter_adaptive_scaffold
-      sha256: "9a1d5e9f728815e27b7b612883db19107ba8a35a46a97c757ea00896cb027451"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.1.10+2"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -1081,6 +1081,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.4.5"
+  webdav_client:
+    dependency: "direct main"
+    description:
+      name: webdav_client
+      sha256: "682fffc50b61dc0e8f46717171db03bf9caaa17347be41c0c91e297553bf86b2"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.2.2"
   win32:
     dependency: transitive
     description:

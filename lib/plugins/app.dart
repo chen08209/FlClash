@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
@@ -44,9 +45,11 @@ class App {
   Future<List<Package>> getPackages() async {
     final packagesString =
         await methodChannel?.invokeMethod<String>("getPackages");
-    final List<dynamic> packagesRaw =
-        packagesString != null ? json.decode(packagesString) : [];
-    return packagesRaw.map((e) => Package.fromJson(e)).toList();
+    return Isolate.run<List<Package>>(() {
+      final List<dynamic> packagesRaw =
+          packagesString != null ? json.decode(packagesString) : [];
+      return packagesRaw.map((e) => Package.fromJson(e)).toList();
+    });
   }
 
   Future<ImageProvider?> getPackageIcon(String packageName) async {

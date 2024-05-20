@@ -530,6 +530,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Auto check updates`
+  String get autoCheckUpdate {
+    return Intl.message(
+      'Auto check updates',
+      name: 'autoCheckUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auto check for updates when the app starts`
+  String get autoCheckUpdateDesc {
+    return Intl.message(
+      'Auto check for updates when the app starts',
+      name: 'autoCheckUpdateDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `AccessControl`
   String get accessControl {
     return Intl.message(
@@ -1200,16 +1220,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Check update`
-  String get checkUpdate {
-    return Intl.message(
-      'Check update',
-      name: 'checkUpdate',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Tab animation`
   String get tabAnimation {
     return Intl.message(
@@ -1305,6 +1315,246 @@ class AppLocalizations {
     return Intl.message(
       'tip',
       name: 'tip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup and Recovery`
+  String get backupAndRecovery {
+    return Intl.message(
+      'Backup and Recovery',
+      name: 'backupAndRecovery',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sync data by WebDAV`
+  String get backupAndRecoveryDesc {
+    return Intl.message(
+      'Sync data by WebDAV',
+      name: 'backupAndRecoveryDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Account`
+  String get account {
+    return Intl.message(
+      'Account',
+      name: 'account',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup`
+  String get backup {
+    return Intl.message(
+      'Backup',
+      name: 'backup',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup local data to WebDAV`
+  String get backupDesc {
+    return Intl.message(
+      'Backup local data to WebDAV',
+      name: 'backupDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recovery`
+  String get recovery {
+    return Intl.message(
+      'Recovery',
+      name: 'recovery',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recovery data from WebDAV`
+  String get recoveryDesc {
+    return Intl.message(
+      'Recovery data from WebDAV',
+      name: 'recoveryDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only recovery profiles`
+  String get recoveryProfiles {
+    return Intl.message(
+      'Only recovery profiles',
+      name: 'recoveryProfiles',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recovery all data`
+  String get recoveryAll {
+    return Intl.message(
+      'Recovery all data',
+      name: 'recoveryAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recovery success`
+  String get recoverySuccess {
+    return Intl.message(
+      'Recovery success',
+      name: 'recoverySuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup success`
+  String get backupSuccess {
+    return Intl.message(
+      'Backup success',
+      name: 'backupSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No info`
+  String get noInfo {
+    return Intl.message(
+      'No info',
+      name: 'noInfo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please bind WebDAV`
+  String get pleaseBindWebDAV {
+    return Intl.message(
+      'Please bind WebDAV',
+      name: 'pleaseBindWebDAV',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Bind`
+  String get bind {
+    return Intl.message(
+      'Bind',
+      name: 'bind',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connectivity：`
+  String get connectivity {
+    return Intl.message(
+      'Connectivity：',
+      name: 'connectivity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `WebDAV configuration`
+  String get webDAVConfiguration {
+    return Intl.message(
+      'WebDAV configuration',
+      name: 'webDAVConfiguration',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Address`
+  String get address {
+    return Intl.message(
+      'Address',
+      name: 'address',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `WebDAV server address`
+  String get addressHelp {
+    return Intl.message(
+      'WebDAV server address',
+      name: 'addressHelp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please enter a valid WebDAV address`
+  String get addressTip {
+    return Intl.message(
+      'Please enter a valid WebDAV address',
+      name: 'addressTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password`
+  String get password {
+    return Intl.message(
+      'Password',
+      name: 'password',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password cannot be empty`
+  String get passwordTip {
+    return Intl.message(
+      'Password cannot be empty',
+      name: 'passwordTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Account cannot be empty`
+  String get accountTip {
+    return Intl.message(
+      'Account cannot be empty',
+      name: 'accountTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check for updates`
+  String get checkUpdate {
+    return Intl.message(
+      'Check for updates',
+      name: 'checkUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The current application is already the latest version`
+  String get checkUpdateError {
+    return Intl.message(
+      'The current application is already the latest version',
+      name: 'checkUpdateError',
       desc: '',
       args: [],
     );

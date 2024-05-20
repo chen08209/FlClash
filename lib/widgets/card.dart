@@ -66,25 +66,25 @@ class CommonCard extends StatelessWidget {
   final Widget child;
   final Info? info;
 
-  BorderSide getBorderSide(BuildContext context, Set<MaterialState> states) {
+  BorderSide getBorderSide(BuildContext context, Set<WidgetState> states) {
     final colorScheme = Theme.of(context).colorScheme;
     var hoverColor = isSelected
         ? colorScheme.primary.toLight()
         : colorScheme.primary.toLighter();
-    if (states.contains(MaterialState.hovered) ||
-        states.contains(MaterialState.focused) ||
-        states.contains(MaterialState.pressed)) {
+    if (states.contains(WidgetState.hovered) ||
+        states.contains(WidgetState.focused) ||
+        states.contains(WidgetState.pressed)) {
       return BorderSide(
         color: hoverColor,
       );
     }
     return BorderSide(
       color:
-          isSelected ? colorScheme.primary : colorScheme.onBackground.toSoft(),
+          isSelected ? colorScheme.primary : colorScheme.onSurface.toSoft(),
     );
   }
 
-  Color? getBackgroundColor(BuildContext context, Set<MaterialState> states) {
+  Color? getBackgroundColor(BuildContext context, Set<WidgetState> states) {
     final colorScheme = Theme.of(context).colorScheme;
     if (isSelected) {
       return colorScheme.secondaryContainer;
@@ -123,16 +123,16 @@ class CommonCard extends StatelessWidget {
     return OutlinedButton(
       clipBehavior: Clip.antiAlias,
       style: ButtonStyle(
-        padding: const MaterialStatePropertyAll(EdgeInsets.zero),
-        shape: MaterialStatePropertyAll(
+        padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+        shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        backgroundColor: MaterialStateProperty.resolveWith(
+        backgroundColor: WidgetStateProperty.resolveWith(
           (states) => getBackgroundColor(context, states),
         ),
-        side: MaterialStateProperty.resolveWith(
+        side: WidgetStateProperty.resolveWith(
           (states) => getBorderSide(context, states),
         ),
       ),

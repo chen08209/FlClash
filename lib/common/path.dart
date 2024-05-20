@@ -26,14 +26,9 @@ class AppPath {
     return directory.path;
   }
 
-  Future<String> getConfigPath() async {
-    final directory = await applicationSupportDirectoryCompleter.future;
-    return join(directory.path, appConstant.configFileName);
-  }
-
   Future<String> getProfilesPath() async {
     final directory = await applicationSupportDirectoryCompleter.future;
-    return join(directory.path, appConstant.profilesDirectoryName);
+    return join(directory.path, profilesDirectoryName);
   }
 
   Future<String?> getProfilePath(String? id) async {
@@ -44,7 +39,7 @@ class AppPath {
 
   Future<String> getMMDBPath() async {
     var directory = await applicationSupportDirectoryCompleter.future;
-    return join(directory.path, appConstant.mmdbFileName);
+    return join(directory.path, mmdbFileName);
   }
 }
 

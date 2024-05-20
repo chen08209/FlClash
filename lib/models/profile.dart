@@ -84,42 +84,40 @@ class Profile {
     this.autoUpdate = true,
   })  : id = id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         autoUpdateDuration =
-            autoUpdateDuration ?? appConstant.defaultUpdateDuration,
+            autoUpdateDuration ?? defaultUpdateDuration,
         selectedMap = selectedMap ?? {};
 
   ProfileType get type => url == null ? ProfileType.file : ProfileType.url;
 
+  Future<Result<bool>> checkAndUpdate() async {
+    final isExists = await check();
+    if(!isExists){
+      if(url != null){
+        return await update();
+      }
+      return Result.error();
+    }
+    return Result.success();
+  }
+
   Future<Result<bool>> update() async {
     if (url == null) {
       return Result.error(
-        message: appLocalizations.unableToUpdateCurrentProfileDesc,
+        appLocalizations.unableToUpdateCurrentProfileDesc,
       );
     }
     final responseResult = await Request.getFileResponseForUrl(url!);
     final response = responseResult.data;
     if (responseResult.type != ResultType.success || response == null) {
-      return Result.error(message: responseResult.message);
+      return Result.error(responseResult.message);
     }
     final disposition = response.headers['content-disposition'];
-    if (disposition != null && label == null) {
-      final parseValue = HeaderValue.parse(disposition);
-      parseValue.parameters.forEach(
-        (key, value) {
-          if (key.startsWith("filename")) {
-            if (key == "filename*") {
-              label = Uri.decodeComponent((value ?? "").split("'").last);
-            } else {
-              label = value ?? id;
-            }
-          }
-        },
-      );
-    }
+    label ??= other.getFileNameForDisposition(disposition) ?? id;
     final userinfo = response.headers['subscription-userinfo'];
     userInfo = UserInfo.formHString(userinfo);
     final saveResult = await saveFile(response.bodyBytes);
     if (saveResult.type == ResultType.error) {
-      return Result.error(message: saveResult.message);
+      return Result.error(saveResult.message);
     }
     lastUpdateDate = DateTime.now();
     return Result.success();
@@ -133,7 +131,7 @@ class Profile {
   Future<Result<void>> saveFile(Uint8List bytes) async {
     final isValidate = clashCore.validateConfig(utf8.decode(bytes));
     if (!isValidate) {
-      return Result.error(message: appLocalizations.profileParseErrorDesc);
+      return Result.error(appLocalizations.profileParseErrorDesc);
     }
     final path = await appPath.getProfilePath(id);
     final file = File(path!);

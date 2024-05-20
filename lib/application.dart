@@ -53,6 +53,15 @@ class Application extends StatefulWidget {
 class ApplicationState extends State<Application> {
   late SystemColorSchemes systemColorSchemes;
 
+  final _pageTransitionsTheme = const PageTransitionsTheme(
+    builders: <TargetPlatform, PageTransitionsBuilder>{
+      TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+    },
+  );
+
   ColorScheme _getAppColorScheme({
     required Brightness brightness,
     int? primaryColor,
@@ -73,6 +82,7 @@ class ApplicationState extends State<Application> {
     super.initState();
     globalState.appController = AppController(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      globalState.appController.updateViewWidth();
       globalState.appController.afterInit();
       globalState.appController.initLink();
       _updateGroups();
@@ -114,7 +124,7 @@ class ApplicationState extends State<Application> {
       globalState.groupsUpdateTimer = null;
     }
     globalState.groupsUpdateTimer ??= Timer.periodic(
-      appConstant.httpTimeoutDuration,
+      httpTimeoutDuration,
       (timer) async {
         await globalState.appController.updateGroups();
         globalState.appController.appState.sortNum++;
@@ -145,12 +155,13 @@ class ApplicationState extends State<Application> {
                       GlobalCupertinoLocalizations.delegate,
                       GlobalWidgetsLocalizations.delegate
                     ],
-                    title: appConstant.name,
+                    title: appName,
                     locale: other.getLocaleForString(state.locale),
                     supportedLocales:
-                    AppLocalizations.delegate.supportedLocales,
+                        AppLocalizations.delegate.supportedLocales,
                     themeMode: state.themeMode,
                     theme: ThemeData(
+                      pageTransitionsTheme: _pageTransitionsTheme,
                       useMaterial3: true,
                       colorScheme: _getAppColorScheme(
                         brightness: Brightness.light,
@@ -160,6 +171,7 @@ class ApplicationState extends State<Application> {
                     ),
                     darkTheme: ThemeData(
                       useMaterial3: true,
+                      pageTransitionsTheme: _pageTransitionsTheme,
                       colorScheme: _getAppColorScheme(
                         brightness: Brightness.dark,
                         systemColorSchemes: systemColorSchemes,

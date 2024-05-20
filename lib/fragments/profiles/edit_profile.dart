@@ -86,6 +86,7 @@ class _EditProfileState extends State<EditProfile> {
         ListItem(
           title: TextFormField(
             controller: urlController,
+            minLines: 1,
             maxLines: 2,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),

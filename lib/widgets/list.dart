@@ -1,4 +1,5 @@
-import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/open_container.dart';
 import 'package:flutter/material.dart';
 
@@ -56,10 +57,12 @@ class OpenDelegate extends Delegate {
 class NextDelegate extends Delegate {
   final Widget widget;
   final String title;
+  final double? extendPageWidth;
 
   const NextDelegate({
     required this.title,
     required this.widget,
+    this.extendPageWidth,
   });
 }
 
@@ -203,7 +206,7 @@ class ListItem<T> extends StatelessWidget {
       return OpenContainer(
         closedBuilder: (_, action) {
           openAction() {
-            final isMobile = context.isMobile;
+            final isMobile = globalState.appController.appState.viewMode == ViewMode.mobile;
             if (!isMobile) {
               showExtendPage(
                 context,
@@ -220,8 +223,9 @@ class ListItem<T> extends StatelessWidget {
         },
         openBuilder: (_, action) {
           return CommonScaffold.open(
+            key: Key(openDelegate.title),
             onBack: action,
-            title: Text(openDelegate.title),
+            title: openDelegate.title,
             body: openDelegate.widget,
           );
         },
@@ -231,11 +235,22 @@ class ListItem<T> extends StatelessWidget {
       final nextDelegate = delegate as NextDelegate;
       return _buildListTile(
         onTab: () {
+          final isMobile = globalState.appController.appState.viewMode == ViewMode.mobile;
+          if (!isMobile) {
+            showExtendPage(
+              context,
+              body: nextDelegate.widget,
+              title: nextDelegate.title,
+              extendPageWidth: nextDelegate.extendPageWidth,
+            );
+            return;
+          }
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => CommonScaffold(
+                key: Key(nextDelegate.title),
                 body: nextDelegate.widget,
-                title: Text(nextDelegate.title),
+                title: nextDelegate.title,
               ),
             ),
           );

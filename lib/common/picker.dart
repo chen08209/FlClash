@@ -23,9 +23,9 @@ class Picker {
     }
     final file = filePickerResult?.files.first;
     if (file == null) {
-      return Result.error(message: appLocalizations.pleaseUploadFile);
+      return Result.error(appLocalizations.pleaseUploadFile);
     }
-    return Result.success(data: file);
+    return Result.success(file);
   }
 
   Future<Result<String>> pickerConfigQRCode() async {
@@ -34,9 +34,9 @@ class Picker {
     if (bytes == null) return Result.error();
     final result = await other.parseQRCode(bytes);
     if (result == null || !result.isUrl) {
-      return Result.error(message: appLocalizations.pleaseUploadValidQrcode);
+      return Result.error(appLocalizations.pleaseUploadValidQrcode);
     }
-    return Result.success(data: result);
+    return Result.success(result);
   }
 }
 
