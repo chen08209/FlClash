@@ -16,6 +16,7 @@ class AndroidContainer extends StatefulWidget {
 
 class _AndroidContainerState extends State<AndroidContainer>
     with WidgetsBindingObserver {
+
   @override
   void initState() {
     super.initState();

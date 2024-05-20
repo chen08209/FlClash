@@ -83,8 +83,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
             automaticallyImplyLeading: false,
             leading: IconButton(
               style: const ButtonStyle(
-                iconSize: MaterialStatePropertyAll(32),
-                foregroundColor: MaterialStatePropertyAll(Colors.white),
+                iconSize: WidgetStatePropertyAll(32),
+                foregroundColor: WidgetStatePropertyAll(Colors.white),
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -92,44 +92,54 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               icon: const Icon(Icons.close),
             ),
             actions: [
-              IconButton(
-                onPressed: globalState.appController.addProfileFormQrCode,
-                icon: const Icon(Icons.add_photo_alternate_outlined),
+              ValueListenableBuilder<MobileScannerState>(
+                valueListenable: controller,
+                builder: (context, state, _) {
+                  var icon = const Icon(Icons.flash_off);
+                  var backgroundColor = Colors.black12;
+                  switch (state.torchState) {
+                    case TorchState.off:
+                      icon = const Icon(Icons.flash_off);
+                      backgroundColor = Colors.black12;
+                    case TorchState.on:
+                      icon = const Icon(Icons.flash_on);
+                      backgroundColor = Colors.orange;
+                    case TorchState.unavailable:
+                      icon = const Icon(Icons.flash_off);
+                      backgroundColor = Colors.transparent;
+                  }
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    child: AbsorbPointer(
+                      absorbing: state.torchState == TorchState.unavailable,
+                      child: IconButton(
+                        color: Colors.white,
+                        icon: icon,
+                        style: ButtonStyle(
+                          foregroundColor: const WidgetStatePropertyAll(Colors.white),
+                          backgroundColor: WidgetStatePropertyAll(backgroundColor),
+                        ),
+                        onPressed: () => controller.toggleTorch(),
+                      ),
+                    ),
+                  );
+                },
               )
             ],
           ),
           Container(
             margin: const EdgeInsets.only(bottom: 32),
             alignment: Alignment.bottomCenter,
-            child: ValueListenableBuilder<MobileScannerState>(
-              valueListenable: controller,
-              builder: (context, state, _) {
-                var icon = const Icon(Icons.flash_off);
-                var backgroundColor = Colors.black12;
-                switch (state.torchState) {
-                  case TorchState.off:
-                    icon = const Icon(Icons.flash_off);
-                    backgroundColor = Colors.black12;
-                  case TorchState.on:
-                    icon = const Icon(Icons.flash_on);
-                    backgroundColor = Colors.orange;
-                  case TorchState.unavailable:
-                    icon = const Icon(Icons.no_flash);
-                    backgroundColor = Colors.grey;
-                }
-                return IconButton(
-                  color: Colors.white,
-                  icon: icon,
-                  style: ButtonStyle(
-                    foregroundColor:
-                        const MaterialStatePropertyAll(Colors.white),
-                    backgroundColor: MaterialStatePropertyAll(backgroundColor),
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  iconSize: 32.0,
-                  onPressed: () => controller.toggleTorch(),
-                );
-              },
+            child: IconButton(
+              color: Colors.white,
+              style: const ButtonStyle(
+                foregroundColor: WidgetStatePropertyAll(Colors.white),
+                backgroundColor: WidgetStatePropertyAll(Colors.grey),
+              ),
+              padding: const EdgeInsets.all(16),
+              iconSize: 32.0,
+              onPressed: globalState.appController.addProfileFormQrCode,
+              icon: const Icon(Icons.photo_camera_back),
             ),
           ),
         ],

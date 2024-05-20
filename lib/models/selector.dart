@@ -40,6 +40,7 @@ class ProfilesSelectorState with _$ProfilesSelectorState {
   const factory ProfilesSelectorState({
     required List<Profile> profiles,
     required String? currentProfileId,
+    required ViewMode viewMode,
   }) = _ProfilesSelectorState;
 }
 
@@ -61,14 +62,6 @@ class ApplicationSelectorState with _$ApplicationSelectorState {
 }
 
 @freezed
-class HomeLayoutSelectorState with _$HomeLayoutSelectorState{
-  const factory HomeLayoutSelectorState({
-    required List<NavigationItem> navigationItems,
-    required int currentIndex,
-  })=_HomeLayoutSelectorState;
-}
-
-@freezed
 class TrayContainerSelectorState with _$TrayContainerSelectorState{
   const factory TrayContainerSelectorState({
     required Mode mode,
@@ -86,20 +79,22 @@ class UpdateNavigationsSelector with _$UpdateNavigationsSelector{
   }) = _UpdateNavigationsSelector;
 }
 
+
 @freezed
-class HomeCommonScaffoldSelectorState with _$HomeCommonScaffoldSelectorState {
-  const factory HomeCommonScaffoldSelectorState({
+class HomeSelectorState with _$HomeSelectorState {
+  const factory HomeSelectorState({
     required String currentLabel,
+    required List<NavigationItem> navigationItems,
+    required ViewMode viewMode,
     required String? locale,
-  }) = _HomeCommonScaffoldSelectorState;
+  }) = _HomeSelectorState;
 }
 
 @freezed
-class HomeNavigationSelectorState with _$HomeNavigationSelectorState{
-  const factory HomeNavigationSelectorState({
-    required int currentIndex,
-    required String? locale,
-  }) = _HomeNavigationSelectorState;
+class HomeBodySelectorState with _$HomeBodySelectorState {
+  const factory HomeBodySelectorState({
+    required List<NavigationItem> navigationItems,
+  }) = _HomeBodySelectorState;
 }
 
 @freezed
@@ -122,5 +117,13 @@ class ProxiesTabViewSelectorState with _$ProxiesTabViewSelectorState{
     required ProxiesSortType proxiesSortType,
     required num sortNum,
     required Group group,
+    required ViewMode viewMode,
   }) = _ProxiesTabViewSelectorState;
+}
+
+@freezed
+class MoreToolsSelectorState with _$MoreToolsSelectorState {
+  const factory MoreToolsSelectorState({
+    required List<NavigationItem> navigationItems,
+  }) = _MoreToolsSelectorState;
 }

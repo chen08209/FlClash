@@ -1,6 +1,5 @@
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:provider/provider.dart';
 
 import '../enum/enum.dart';
@@ -98,7 +97,7 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
                   isScrollable: true,
                   tabAlignment: TabAlignment.start,
                   overlayColor:
-                      const MaterialStatePropertyAll(Colors.transparent),
+                      const WidgetStatePropertyAll(Colors.transparent),
                   tabs: [
                     for (final groupName in state.groupNames)
                       Tab(
@@ -186,168 +185,15 @@ class ProxiesTabView extends StatelessWidget {
         8 * 2;
   }
 
-  _card(
-    BuildContext context, {
-    required void Function() onPressed,
-    required bool isSelected,
-    required Proxy proxy,
-  }) {
-    final measure = globalState.appController.measure;
-    return CommonCard(
-      isSelected: isSelected,
-      onPressed: onPressed,
-      selectWidget: Container(
-        alignment: Alignment.topRight,
-        margin: const EdgeInsets.all(8),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Theme.of(context).colorScheme.secondaryContainer,
-          ),
-          child: const SelectIcon(),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: measure.bodyMediumHeight * 2,
-              child: Text(
-                proxy.name,
-                maxLines: 2,
-                style: context.textTheme.bodyMedium?.copyWith(
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
-            SizedBox(
-              height: measure.bodySmallHeight,
-              child: Selector<AppState, String>(
-                selector: (context, appState) => appState.getDesc(
-                  proxy.type,
-                  proxy.name,
-                ),
-                builder: (_, desc, __) {
-                  return TooltipText(
-                    text: Text(
-                      desc,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        overflow: TextOverflow.ellipsis,
-                        color: context.textTheme.bodySmall?.color?.toLight(),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
-            SizedBox(
-              height: measure.labelSmallHeight,
-              child: Selector<AppState, int?>(
-                selector: (context, appState) => appState.getDelay(
-                  proxy.name,
-                ),
-                builder: (_, delay, __) {
-                  return FadeBox(
-                    child: Builder(
-                      builder: (_) {
-                        if (delay == null) {
-                          return Container();
-                        }
-                        if (delay == 0) {
-                          return SizedBox(
-                            height: measure.labelSmallHeight,
-                            width: measure.labelSmallHeight,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          );
-                        }
-                        return Text(
-                          delay > 0 ? '$delay ms' : "Timeout",
-                          style: context.textTheme.labelSmall?.copyWith(
-                            overflow: TextOverflow.ellipsis,
-                            color: other.getDelayColor(
-                              delay,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGrid(
-    BuildContext context, {
-    required List<Proxy> proxies,
-    required int columns,
-  }) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        mainAxisExtent: _getItemHeight(context),
-      ),
-      itemCount: proxies.length,
-      itemBuilder: (_, index) {
-        final proxy = proxies[index];
-        return Selector3<AppState, Config, ClashConfig,
-            ProxiesCardSelectorState>(
-          selector: (_, appState, config, clashConfig) {
-            final group = appState.getGroupWithName(groupName)!;
-            bool isSelected =
-                config.currentSelectedMap[group.name] == proxy.name ||
-                    (config.currentSelectedMap[group.name] == null &&
-                        group.now == proxy.name);
-            return ProxiesCardSelectorState(
-              isSelected: isSelected,
-            );
-          },
-          builder: (_, state, __) {
-            return _card(
-              context,
-              isSelected: state.isSelected,
-              onPressed: () {
-                final appController = globalState.appController;
-                final group =
-                    appController.appState.getGroupWithName(groupName)!;
-                if (group.type != GroupType.Selector) {
-                  globalState.showSnackBar(
-                    context,
-                    message: appLocalizations.notSelectedTip,
-                  );
-                  return;
-                }
-                globalState.appController.config.updateCurrentSelectedMap(
-                  groupName,
-                  proxy.name,
-                );
-                globalState.appController.changeProxy();
-              },
-              proxy: proxy,
-            );
-          },
-        );
-      },
-    );
+  int _getColumns(ViewMode viewMode) {
+    switch (viewMode) {
+      case ViewMode.mobile:
+        return 2;
+      case ViewMode.laptop:
+        return 3;
+      case ViewMode.desktop:
+        return 4;
+    }
   }
 
   @override
@@ -358,6 +204,7 @@ class ProxiesTabView extends StatelessWidget {
           proxiesSortType: config.proxiesSortType,
           sortNum: appState.sortNum,
           group: appState.getGroupWithName(groupName)!,
+          viewMode: appState.viewMode,
         );
       },
       builder: (_, state, __) {
@@ -368,33 +215,166 @@ class ProxiesTabView extends StatelessWidget {
         );
         return Align(
           alignment: Alignment.topCenter,
-          child: SlotLayout(
-            config: {
-              Breakpoints.small: SlotLayout.from(
-                key: const Key('proxies_grid_small'),
-                builder: (_) => _buildGrid(
-                  context,
-                  proxies: proxies,
-                  columns: 2,
-                ),
-              ),
-              Breakpoints.medium: SlotLayout.from(
-                key: const Key('proxies_grid_medium'),
-                builder: (_) => _buildGrid(
-                  context,
-                  proxies: proxies,
-                  columns: 3,
-                ),
-              ),
-              Breakpoints.large: SlotLayout.from(
-                key: const Key('proxies_grid_large'),
-                builder: (_) => _buildGrid(
-                  context,
-                  proxies: proxies,
-                  columns: 4,
-                ),
-              ),
+          child: GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: _getColumns(state.viewMode),
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              mainAxisExtent: _getItemHeight(context),
+            ),
+            itemCount: proxies.length,
+            itemBuilder: (_, index) {
+              final proxy = proxies[index];
+              return ProxyCard(
+                key: ValueKey('$groupName.${proxy.name}'),
+                proxy: proxy,
+                groupName: groupName,
+              );
             },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class ProxyCard extends StatelessWidget {
+  final String groupName;
+  final Proxy proxy;
+
+  const ProxyCard({
+    super.key,
+    required this.groupName,
+    required this.proxy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final measure = globalState.appController.measure;
+    return Selector3<AppState, Config, ClashConfig, ProxiesCardSelectorState>(
+      selector: (_, appState, config, clashConfig) {
+        final group = appState.getGroupWithName(groupName)!;
+        bool isSelected = config.currentSelectedMap[group.name] == proxy.name ||
+            (config.currentSelectedMap[group.name] == null &&
+                group.now == proxy.name);
+        return ProxiesCardSelectorState(
+          isSelected: isSelected,
+        );
+      },
+      builder: (_, state, __) {
+        return CommonCard(
+          isSelected: state.isSelected,
+          onPressed: () {
+            final appController = globalState.appController;
+            final group = appController.appState.getGroupWithName(groupName)!;
+            if (group.type != GroupType.Selector) {
+              globalState.showSnackBar(
+                context,
+                message: appLocalizations.notSelectedTip,
+              );
+              return;
+            }
+            globalState.appController.config.updateCurrentSelectedMap(
+              groupName,
+              proxy.name,
+            );
+            globalState.appController.changeProxy();
+          },
+          selectWidget: Container(
+            alignment: Alignment.topRight,
+            margin: const EdgeInsets.all(8),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.secondaryContainer,
+              ),
+              child: const SelectIcon(),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: measure.bodyMediumHeight * 2,
+                  child: Text(
+                    proxy.name,
+                    maxLines: 2,
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                SizedBox(
+                  height: measure.bodySmallHeight,
+                  child: Selector<AppState, String>(
+                    selector: (context, appState) => appState.getDesc(
+                      proxy.type,
+                      proxy.name,
+                    ),
+                    builder: (_, desc, __) {
+                      return TooltipText(
+                        text: Text(
+                          desc,
+                          style: context.textTheme.bodySmall?.copyWith(
+                            overflow: TextOverflow.ellipsis,
+                            color:
+                                context.textTheme.bodySmall?.color?.toLight(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                SizedBox(
+                  height: measure.labelSmallHeight,
+                  child: Selector<AppState, int?>(
+                    selector: (context, appState) => appState.getDelay(
+                      proxy.name,
+                    ),
+                    builder: (_, delay, __) {
+                      return FadeBox(
+                        child: Builder(
+                          builder: (_) {
+                            if (delay == null) {
+                              return Container();
+                            }
+                            if (delay == 0) {
+                              return SizedBox(
+                                height: measure.labelSmallHeight,
+                                width: measure.labelSmallHeight,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              );
+                            }
+                            return Text(
+                              delay > 0 ? '$delay ms' : "Timeout",
+                              style: context.textTheme.labelSmall?.copyWith(
+                                overflow: TextOverflow.ellipsis,
+                                color: other.getDelayColor(
+                                  delay,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -421,13 +401,11 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
   late Animation<double> _scale;
   late Animation<double> _opacity;
 
-  _healthcheck() async
-  {
-    if(globalState.healthcheckLock) return;
+  _healthcheck() async {
+    if (globalState.healthcheckLock) return;
     _controller.forward();
     globalState.appController.healthcheck();
-    Future.delayed(appConstant.httpTimeoutDuration + appConstant.moreDuration,
-        () {
+    Future.delayed(httpTimeoutDuration + moreDuration, () {
       _controller.reverse();
     });
   }

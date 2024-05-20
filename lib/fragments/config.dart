@@ -47,6 +47,27 @@ class _ConfigFragmentState extends State<ConfigFragment> {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [
+      Selector<ClashConfig, int>(
+        selector: (_, clashConfig) => clashConfig.mixedPort,
+        builder: (_, mixedPort, __) {
+          return ListItem(
+            onTab: () {
+              _modifyMixedPort(mixedPort);
+            },
+            padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
+            leading: const Icon(Icons.adjust),
+            title: Text(appLocalizations.proxyPort),
+            trailing: FilledButton.tonal(
+              onPressed: () {
+                _modifyMixedPort(mixedPort);
+              },
+              child: Text(
+                "$mixedPort",
+              ),
+            ),
+          );
+        },
+      ),
       Selector<ClashConfig, bool>(
         selector: (_, clashConfig) => clashConfig.allowLan,
         builder: (_, allowLan, __) {
@@ -84,62 +105,64 @@ class _ConfigFragmentState extends State<ConfigFragment> {
             );
           },
         ),
-      Selector<ClashConfig, int>(
-        selector: (_, clashConfig) => clashConfig.mixedPort,
-        builder: (_, mixedPort, __) {
-          return ListItem(
-            onTab: () {
-              _modifyMixedPort(mixedPort);
-            },
-            leading: const Icon(Icons.adjust),
-            title: Text(appLocalizations.proxyPort),
-            trailing: FilledButton.tonal(
-              onPressed: () {
-                _modifyMixedPort(mixedPort);
+      Selector<Config, bool>(
+        selector: (_, config) => config.isCompatible,
+        builder: (_, isCompatible, __) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.expand),
+            title: Text(appLocalizations.compatible),
+            subtitle: Text(appLocalizations.compatibleDesc),
+            delegate: SwitchDelegate(
+              value: isCompatible,
+              onChanged: (bool value) async {
+                final appController = globalState.appController;
+                appController.config.isCompatible = value;
+                await appController.updateClashConfig(isPatch: false);
+                await appController.updateGroups();
+                appController.changeProxy();
               },
-              child: Text(
-                "$mixedPort",
-              ),
             ),
           );
         },
       ),
-      Selector<ClashConfig, LogLevel>(
-        selector: (_, clashConfig) => clashConfig.logLevel,
-        builder: (_, value, __) {
-          return ListItem(
-            leading: const Icon(Icons.feedback),
-            title: Text(appLocalizations.logLevel),
-            trailing: SizedBox(
-              height: 48,
-              child: DropdownMenu<LogLevel>(
-                width: 124,
-                inputDecorationTheme: const InputDecorationTheme(
-                  filled: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 16,
+      Padding(
+        padding: kMaterialListPadding,
+        child: Selector<ClashConfig, LogLevel>(
+          selector: (_, clashConfig) => clashConfig.logLevel,
+          builder: (_, value, __) {
+            return ListItem(
+              leading: const Icon(Icons.feedback),
+              title: Text(appLocalizations.logLevel),
+              trailing: SizedBox(
+                height: 48,
+                child: DropdownMenu<LogLevel>(
+                  width: 124,
+                  inputDecorationTheme: const InputDecorationTheme(
+                    filled: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 5,
+                      horizontal: 16,
+                    ),
                   ),
+                  initialSelection: value,
+                  dropdownMenuEntries: [
+                    for (final logLevel in LogLevel.values)
+                      DropdownMenuEntry<LogLevel>(
+                        value: logLevel,
+                        label: logLevel.name,
+                      )
+                  ],
+                  onSelected: _updateLoglevel,
                 ),
-                initialSelection: value,
-                dropdownMenuEntries: [
-                  for (final logLevel in LogLevel.values)
-                    DropdownMenuEntry<LogLevel>(
-                      value: logLevel,
-                      label: logLevel.name,
-                    )
-                ],
-                onSelected: _updateLoglevel,
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     ];
     return ListView.separated(
       itemBuilder: (_, index) {
         return Container(
-          padding: kMaterialListPadding,
           alignment: Alignment.center,
           child: items[index],
         );

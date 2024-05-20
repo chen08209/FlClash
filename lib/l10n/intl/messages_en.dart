@@ -30,7 +30,15 @@ class MessageLookup extends MessageLookupByLibrary {
             "Configure application access proxy"),
         "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
             "The selected application will be excluded from VPN"),
+        "account": MessageLookupByLibrary.simpleMessage("Account"),
+        "accountTip":
+            MessageLookupByLibrary.simpleMessage("Account cannot be empty"),
         "add": MessageLookupByLibrary.simpleMessage("Add"),
+        "address": MessageLookupByLibrary.simpleMessage("Address"),
+        "addressHelp":
+            MessageLookupByLibrary.simpleMessage("WebDAV server address"),
+        "addressTip": MessageLookupByLibrary.simpleMessage(
+            "Please enter a valid WebDAV address"),
         "ago": MessageLookupByLibrary.simpleMessage(" Ago"),
         "allowLan": MessageLookupByLibrary.simpleMessage("AllowLan"),
         "allowLanDesc": MessageLookupByLibrary.simpleMessage(
@@ -41,6 +49,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "applicationDesc": MessageLookupByLibrary.simpleMessage(
             "Modify application related settings"),
         "auto": MessageLookupByLibrary.simpleMessage("Auto"),
+        "autoCheckUpdate":
+            MessageLookupByLibrary.simpleMessage("Auto check updates"),
+        "autoCheckUpdateDesc": MessageLookupByLibrary.simpleMessage(
+            "Auto check for updates when the app starts"),
         "autoLaunch": MessageLookupByLibrary.simpleMessage("AutoLaunch"),
         "autoLaunchDesc": MessageLookupByLibrary.simpleMessage(
             "Follow the system self startup"),
@@ -50,17 +62,30 @@ class MessageLookup extends MessageLookupByLibrary {
         "autoUpdate": MessageLookupByLibrary.simpleMessage("Auto update"),
         "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
             "Auto update interval (minutes)"),
+        "backup": MessageLookupByLibrary.simpleMessage("Backup"),
+        "backupAndRecovery":
+            MessageLookupByLibrary.simpleMessage("Backup and Recovery"),
+        "backupAndRecoveryDesc":
+            MessageLookupByLibrary.simpleMessage("Sync data by WebDAV"),
+        "backupDesc":
+            MessageLookupByLibrary.simpleMessage("Backup local data to WebDAV"),
+        "backupSuccess": MessageLookupByLibrary.simpleMessage("Backup success"),
+        "bind": MessageLookupByLibrary.simpleMessage("Bind"),
         "blacklistMode": MessageLookupByLibrary.simpleMessage("Blacklist mode"),
         "cancelFilterSystemApp":
             MessageLookupByLibrary.simpleMessage("Cancel filter system app"),
         "cancelSelectAll":
             MessageLookupByLibrary.simpleMessage("Cancel select all"),
-        "checkUpdate": MessageLookupByLibrary.simpleMessage("Check update"),
+        "checkUpdate":
+            MessageLookupByLibrary.simpleMessage("Check for updates"),
+        "checkUpdateError": MessageLookupByLibrary.simpleMessage(
+            "The current application is already the latest version"),
         "compatible":
             MessageLookupByLibrary.simpleMessage("Compatibility mode"),
         "compatibleDesc": MessageLookupByLibrary.simpleMessage(
             "Opening it will lose part of its application ability and gain the support of full amount of Clash."),
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
+        "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
         "core": MessageLookupByLibrary.simpleMessage("Core"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
         "create": MessageLookupByLibrary.simpleMessage("Create"),
@@ -112,6 +137,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "networkDetection":
             MessageLookupByLibrary.simpleMessage("Network detection"),
         "networkSpeed": MessageLookupByLibrary.simpleMessage("Network speed"),
+        "noInfo": MessageLookupByLibrary.simpleMessage("No info"),
         "noMoreInfoDesc": MessageLookupByLibrary.simpleMessage("No more info"),
         "noProxy": MessageLookupByLibrary.simpleMessage("No proxy"),
         "noProxyDesc": MessageLookupByLibrary.simpleMessage(
@@ -128,6 +154,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "override": MessageLookupByLibrary.simpleMessage("Override"),
         "overrideDesc": MessageLookupByLibrary.simpleMessage(
             "Override Proxy related config"),
+        "password": MessageLookupByLibrary.simpleMessage("Password"),
+        "passwordTip":
+            MessageLookupByLibrary.simpleMessage("Password cannot be empty"),
+        "pleaseBindWebDAV":
+            MessageLookupByLibrary.simpleMessage("Please bind WebDAV"),
         "pleaseUploadFile":
             MessageLookupByLibrary.simpleMessage("Please upload file"),
         "pleaseUploadValidQrcode": MessageLookupByLibrary.simpleMessage(
@@ -156,6 +187,15 @@ class MessageLookup extends MessageLookupByLibrary {
         "qrcode": MessageLookupByLibrary.simpleMessage("QR code"),
         "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
             "Scan QR code to obtain profile"),
+        "recovery": MessageLookupByLibrary.simpleMessage("Recovery"),
+        "recoveryAll":
+            MessageLookupByLibrary.simpleMessage("Recovery all data"),
+        "recoveryDesc":
+            MessageLookupByLibrary.simpleMessage("Recovery data from WebDAV"),
+        "recoveryProfiles":
+            MessageLookupByLibrary.simpleMessage("Only recovery profiles"),
+        "recoverySuccess":
+            MessageLookupByLibrary.simpleMessage("Recovery success"),
         "rule": MessageLookupByLibrary.simpleMessage("Rule"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
         "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
@@ -191,6 +231,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "url": MessageLookupByLibrary.simpleMessage("URL"),
         "urlDesc":
             MessageLookupByLibrary.simpleMessage("Obtain profile through URL"),
+        "webDAVConfiguration":
+            MessageLookupByLibrary.simpleMessage("WebDAV configuration"),
         "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
         "years": MessageLookupByLibrary.simpleMessage("Years"),
         "zh_CN": MessageLookupByLibrary.simpleMessage("Simplified Chinese")

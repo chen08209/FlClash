@@ -73,28 +73,6 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     );
   }
 
-  _updateCurrentDelay(
-    String? currentProxyName,
-    int? delay,
-    bool isCurrent,
-    bool isInit,
-  ) {
-    if (!isCurrent || currentProxyName == null || !isInit) return;
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (delay == null) {
-        globalState.appController.setDelay(
-          Delay(
-            name: currentProxyName,
-            value: 0,
-          ),
-        );
-        globalState.updateCurrentDelay(
-          currentProxyName,
-        );
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return CommonCard(

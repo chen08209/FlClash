@@ -10,7 +10,7 @@ class AutoLaunch {
 
   AutoLaunch._internal() {
     launchAtStartup.setup(
-      appName: appConstant.name,
+      appName: appName,
       appPath: Platform.resolvedExecutable,
     );
   }

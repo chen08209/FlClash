@@ -1,10 +1,10 @@
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:provider/provider.dart';
 
 import 'add_profile.dart';
@@ -25,6 +25,157 @@ class ProfilesFragment extends StatefulWidget {
 }
 
 class _ProfilesFragmentState extends State<ProfilesFragment> {
+
+  _handleDeleteProfile(String id) async {
+    globalState.appController.deleteProfile(id);
+  }
+
+  _handleUpdateProfile(String id) async {
+    context.findAncestorStateOfType<CommonScaffoldState>()?.loadingRun(
+          () => globalState.appController.updateProfile(id),
+        );
+  }
+
+  _handleShowAddExtendPage() {
+    showExtendPage(
+      globalState.navigatorKey.currentState!.context,
+      body: AddProfile(
+        context: globalState.navigatorKey.currentState!.context,
+      ),
+      title: "${appLocalizations.add}${appLocalizations.profile}",
+    );
+  }
+
+  _handleShowEditExtendPage(Profile profile) {
+    showExtendPage(
+      context,
+      body: EditProfile(
+        profile: profile.copyWith(),
+        context: context,
+      ),
+      title: "${appLocalizations.edit}${appLocalizations.profile}",
+    );
+  }
+
+  _buildGrid({
+    required ProfilesSelectorState state,
+    int crossAxisCount = 1,
+  }) {
+    return SingleChildScrollView(
+      padding: crossAxisCount > 1
+          ? const EdgeInsets.symmetric(horizontal: 16)
+          : EdgeInsets.zero,
+      child: Grid.baseGap(
+        crossAxisCount: crossAxisCount,
+        children: [
+          for (final profile in state.profiles)
+            GridItem(
+              child: ProfileItem(
+                profile: profile,
+                commonPopupMenu: CommonPopupMenu<ProfileActions>(
+                  items: [
+                    CommonPopupMenuItem(
+                      action: ProfileActions.edit,
+                      label: appLocalizations.edit,
+                      iconData: Icons.edit,
+                    ),
+                    if (profile.url != null)
+                      CommonPopupMenuItem(
+                        action: ProfileActions.update,
+                        label: appLocalizations.update,
+                        iconData: Icons.sync,
+                      ),
+                    CommonPopupMenuItem(
+                      action: ProfileActions.delete,
+                      label: appLocalizations.delete,
+                      iconData: Icons.delete,
+                    ),
+                  ],
+                  onSelected: (ProfileActions? action) async {
+                    switch (action) {
+                      case ProfileActions.edit:
+                        _handleShowEditExtendPage(profile);
+                        break;
+                      case ProfileActions.delete:
+                        _handleDeleteProfile(profile.id);
+                        break;
+                      case ProfileActions.update:
+                        _handleUpdateProfile(profile.id);
+                        break;
+                      case null:
+                        break;
+                    }
+                  },
+                ),
+                groupValue: state.currentProfileId,
+                onChanged: globalState.appController.changeProfile,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  _getColumns(ViewMode viewMode) {
+    switch (viewMode) {
+      case ViewMode.mobile:
+        return 1;
+      case ViewMode.laptop:
+        return 1;
+      case ViewMode.desktop:
+        return 2;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatLayout(
+      floatingWidget: Container(
+        margin: const EdgeInsets.all(kFloatingActionButtonMargin),
+        child: FloatingActionButton(
+          heroTag: null,
+          onPressed: _handleShowAddExtendPage,
+          child: const Icon(Icons.add),
+        ),
+      ),
+      child: Selector2<AppState, Config, ProfilesSelectorState>(
+        selector: (_, appState, config) => ProfilesSelectorState(
+            profiles: config.profiles,
+            currentProfileId: config.currentProfileId,
+            viewMode: appState.viewMode),
+        builder: (context, state, child) {
+          if (state.profiles.isEmpty) {
+            return NullStatus(
+              label: appLocalizations.nullProfileDesc,
+            );
+          }
+          return Align(
+            alignment: Alignment.topCenter,
+            child: _buildGrid(
+              state: state,
+              crossAxisCount: _getColumns(state.viewMode),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ProfileItem extends StatelessWidget {
+  final Profile profile;
+  final String? groupValue;
+  final CommonPopupMenu commonPopupMenu;
+  final void Function(String? value) onChanged;
+
+  const ProfileItem({
+    super.key,
+    required this.profile,
+    required this.commonPopupMenu,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
   String _getLastUpdateTimeDifference(DateTime lastDateTime) {
     final currentDateTime = DateTime.now();
     final difference = currentDateTime.difference(lastDateTime);
@@ -49,21 +200,8 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
     return appLocalizations.just;
   }
 
-  _handleDeleteProfile(String id) async {
-    globalState.appController.deleteProfile(id);
-  }
-
-  _handleUpdateProfile(String id) async {
-    context.findAncestorStateOfType<CommonScaffoldState>()?.loadingRun(
-          () => globalState.appController.updateProfile(id),
-        );
-  }
-
-  Widget _profileItem({
-    required Profile profile,
-    required String? groupValue,
-    required void Function(String? value) onChanged,
-  }) {
+  @override
+  Widget build(BuildContext context) {
     String useShow;
     String totalShow;
     double progress;
@@ -87,41 +225,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
         onChanged: onChanged,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      trailing: CommonPopupMenu<ProfileActions>(
-        items: [
-          CommonPopupMenuItem(
-            action: ProfileActions.edit,
-            label: appLocalizations.edit,
-            iconData: Icons.edit,
-          ),
-          if (profile.url != null)
-            CommonPopupMenuItem(
-              action: ProfileActions.update,
-              label: appLocalizations.update,
-              iconData: Icons.sync,
-            ),
-          CommonPopupMenuItem(
-            action: ProfileActions.delete,
-            label: appLocalizations.delete,
-            iconData: Icons.delete,
-          ),
-        ],
-        onSelected: (ProfileActions? action) async {
-          switch (action) {
-            case ProfileActions.edit:
-              _handleShowEditExtendPage(profile);
-              break;
-            case ProfileActions.delete:
-              _handleDeleteProfile(profile.id);
-              break;
-            case ProfileActions.update:
-              _handleUpdateProfile(profile.id);
-              break;
-            case null:
-              break;
-          }
-        },
-      ),
+      trailing: commonPopupMenu,
       title: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,106 +273,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  _handleShowAddExtendPage() {
-    showExtendPage(
-      globalState.navigatorKey.currentState!.context,
-      body: AddProfile(
-        context: globalState.navigatorKey.currentState!.context,
-      ),
-      title: "${appLocalizations.add}${appLocalizations.profile}",
-    );
-  }
-
-  _handleShowEditExtendPage(Profile profile) {
-    showExtendPage(
-      context,
-      body: EditProfile(
-        profile: profile.copyWith(),
-        context: context,
-      ),
-      title: "${appLocalizations.edit}${appLocalizations.profile}",
-    );
-  }
-
-  _buildGrid({
-    required ProfilesSelectorState state,
-    int crossAxisCount = 1,
-  }) {
-    return SingleChildScrollView(
-      padding: crossAxisCount > 1
-          ? const EdgeInsets.symmetric(horizontal: 16)
-          : EdgeInsets.zero,
-      child: Grid.baseGap(
-        crossAxisCount: crossAxisCount,
-        children: [
-          for (final profile in state.profiles)
-            GridItem(
-              child: _profileItem(
-                profile: profile,
-                groupValue: state.currentProfileId,
-                onChanged: globalState.appController.changeProfileDebounce,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FloatLayout(
-      floatingWidget: Container(
-        margin: const EdgeInsets.all(kFloatingActionButtonMargin),
-        child: FloatingActionButton(
-          heroTag: null,
-          onPressed: _handleShowAddExtendPage,
-          child: const Icon(Icons.add),
-        ),
-      ),
-      child: Selector<Config, ProfilesSelectorState>(
-        selector: (_, config) => ProfilesSelectorState(
-          profiles: config.profiles,
-          currentProfileId: config.currentProfileId,
-        ),
-        builder: (context, state, child) {
-          if (state.profiles.isEmpty) {
-            return NullStatus(
-              label: appLocalizations.nullProfileDesc,
-            );
-          }
-          return Align(
-            alignment: Alignment.topCenter,
-            child: SlotLayout(
-              config: {
-                Breakpoints.small: SlotLayout.from(
-                  key: const Key('profiles_grid_small'),
-                  builder: (_) => _buildGrid(
-                    state: state,
-                    crossAxisCount: 1,
-                  ),
-                ),
-                Breakpoints.medium: SlotLayout.from(
-                  key: const Key('profiles_grid_medium'),
-                  builder: (_) => _buildGrid(
-                    state: state,
-                    crossAxisCount: 1,
-                  ),
-                ),
-                Breakpoints.large: SlotLayout.from(
-                  key: const Key('profiles_grid_large'),
-                  builder: (_) => _buildGrid(
-                    state: state,
-                    crossAxisCount: 2,
-                  ),
-                ),
-              },
-            ),
-          );
-        },
       ),
     );
   }

@@ -21,6 +21,7 @@ Future<void> main() async {
     mode: clashConfig.mode,
     isCompatible: config.isCompatible,
     selectedMap: config.currentSelectedMap,
+    viewWidth: other.getViewWidth(),
   );
   await globalState.init(
     appState: appState,

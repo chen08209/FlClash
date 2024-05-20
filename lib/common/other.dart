@@ -147,6 +147,26 @@ class Other {
       }
     });
   }
+
+  String? getFileNameForDisposition(String? disposition) {
+    if (disposition == null) return null;
+    final parseValue = HeaderValue.parse(disposition);
+    final parameters = parseValue.parameters;
+    final key = parameters.keys
+        .firstWhere((key) => key.startsWith("filename"), orElse: () => '');
+    if (key.isEmpty) return null;
+    if (key == "filename*") {
+      return Uri.decodeComponent((parameters[key] ?? "").split("'").last);
+    } else {
+      return parameters[key];
+    }
+  }
+
+  double getViewWidth(){
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    final size = view.physicalSize / view.devicePixelRatio;
+    return size.width;
+  }
 }
 
 final other = Other();

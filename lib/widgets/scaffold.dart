@@ -1,11 +1,13 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/system.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Widget? bottomNavigationBar;
-  final Widget? title;
+  final String title;
   final Widget? leading;
   final List<Widget>? actions;
   final bool automaticallyImplyLeading;
@@ -15,7 +17,7 @@ class CommonScaffold extends StatefulWidget {
     required this.body,
     this.bottomNavigationBar,
     this.leading,
-    this.title,
+    required this.title,
     this.actions,
     this.automaticallyImplyLeading = true,
   });
@@ -23,7 +25,7 @@ class CommonScaffold extends StatefulWidget {
   CommonScaffold.open({
     Key? key,
     required Widget body,
-    Widget? title,
+    required String title,
     required Function onBack,
   }) : this(
           key: key,
@@ -56,10 +58,26 @@ class CommonScaffoldState extends State<CommonScaffold> {
     }
   }
 
-  loadingRun(Future<void> Function() futureFunction) async {
+  Future<T?> loadingRun<T>(
+    Future<T> Function() futureFunction, {
+    String? title,
+  }) async {
+    if (_loading.value == true) return null;
     _loading.value = true;
-    await futureFunction();
-    _loading.value = false;
+    try {
+      final res = await futureFunction();
+      _loading.value = false;
+      return res;
+    } catch (e) {
+      globalState.showMessage(
+        title: title ?? appLocalizations.tip,
+        message: TextSpan(
+          text: e.toString(),
+        ),
+      );
+      _loading.value = false;
+      return null;
+    }
   }
 
   @override
@@ -102,7 +120,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
                   return AppBar(
                     automaticallyImplyLeading: widget.automaticallyImplyLeading,
                     leading: widget.leading,
-                    title: widget.title,
+                    title: Text(widget.title),
                     actions: actions.isNotEmpty ? actions : widget.actions,
                   );
                 },

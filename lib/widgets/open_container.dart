@@ -448,8 +448,8 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
       builder: (_, __, ___) {
         _colorTween = _getColorTween(
           transitionType: transitionType,
-          closedColor: Theme.of(context).colorScheme.background,
-          openColor: Theme.of(context).colorScheme.background,
+          closedColor: Theme.of(context).colorScheme.surface,
+          openColor: Theme.of(context).colorScheme.surface,
           middleColor: middleColor,
         );
         return Align(

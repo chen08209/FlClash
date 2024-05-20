@@ -3,28 +3,25 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 const appName = "FlClash";
+const coreName = "clash.meta";
+const packageName = "FlClash";
+const httpTimeoutDuration = Duration(milliseconds: 5000);
+const moreDuration = Duration(milliseconds: 100);
+const defaultUpdateDuration = Duration(days: 1);
+const mmdbFileName = "geoip.metadb";
+const profilesDirectoryName = "profiles";
+const localhost = "127.0.0.1";
+const clashConfigKey = "clash_config";
+const configKey = "config";
+const listItemPadding = EdgeInsets.symmetric(horizontal: 16);
+const double dialogCommonWidth = 300;
+const repository = "chen08209/FlClash";
+const maxMobileWidth = 600;
+const maxLaptopWidth = 840;
+final filter = ImageFilter.blur(
+  sigmaX: 5,
+  sigmaY: 5,
+  tileMode: TileMode.mirror,
+);
 
-class AppConstant {
-  final packageName = "com.follow.clash";
-  final name = "FlClash";
-  final httpTimeoutDuration = const Duration(milliseconds: 5000);
-  final moreDuration = const Duration(milliseconds: 100);
-  final defaultUpdateDuration = const Duration(days: 1);
-  final mmdbFileName = "geoip.metadb";
-  final profilesDirectoryName = "profiles";
-  final configFileName = "config.yaml";
-  final localhost = "127.0.0.1";
-  final clashKey = "clash";
-  final configKey = "config";
-  final listItemPadding = const EdgeInsets.symmetric(horizontal: 16);
-  final dialogCommonWidth = 300;
-  final repository = "chen08209/FlClash";
-  final filter = ImageFilter.blur(
-    sigmaX: 5,
-    sigmaY: 5,
-    tileMode: TileMode.mirror,
-  );
-  final defaultPrimaryColor = Colors.brown;
-}
-
-final appConstant = AppConstant();
+const defaultPrimaryColor = Colors.brown;

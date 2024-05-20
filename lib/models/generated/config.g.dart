@@ -55,8 +55,12 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..isAccessControl = json['isAccessControl'] as bool? ?? false
   ..accessControl =
       AccessControl.fromJson(json['accessControl'] as Map<String, dynamic>)
+  ..dav = json['dav'] == null
+      ? null
+      : DAV.fromJson(json['dav'] as Map<String, dynamic>)
   ..isAnimateToPage = json['isAnimateToPage'] as bool? ?? true
-  ..isCompatible = json['isCompatible'] as bool? ?? false;
+  ..isCompatible = json['isCompatible'] as bool? ?? false
+  ..autoCheckUpdate = json['autoCheckUpdate'] as bool? ?? true;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -72,8 +76,10 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'isMinimizeOnExit': instance.isMinimizeOnExit,
       'isAccessControl': instance.isAccessControl,
       'accessControl': instance.accessControl,
+      'dav': instance.dav,
       'isAnimateToPage': instance.isAnimateToPage,
       'isCompatible': instance.isCompatible,
+      'autoCheckUpdate': instance.autoCheckUpdate,
     };
 
 const _$ThemeModeEnumMap = {

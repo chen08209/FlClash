@@ -1,47 +1,16 @@
-import 'dart:async';
-
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../widgets/widgets.dart';
 
-class LogsFragment extends StatefulWidget {
+class LogsFragment extends StatelessWidget {
   const LogsFragment({super.key});
 
-  @override
-  State<LogsFragment> createState() => _LogsFragmentState();
-}
-
-class _LogsFragmentState extends State<LogsFragment> {
-  final logsNotifier = ValueNotifier<List<Log>>([]);
-  Timer? timer;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      logsNotifier.value = context.read<AppState>().logs;
-      if (timer != null) {
-        timer?.cancel();
-        timer = null;
-      }
-      timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-        if (mounted) {
-          logsNotifier.value = context.read<AppState>().logs;
-        }
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    timer?.cancel();
-    timer = null;
-  }
-
-  _initActions() {
+  _initActions(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final commonScaffoldState =
           context.findAncestorStateOfType<CommonScaffoldState>();
@@ -51,7 +20,7 @@ class _LogsFragmentState extends State<LogsFragment> {
             showSearch(
               context: context,
               delegate: LogsSearchDelegate(
-                logs: logsNotifier.value.reversed.toList(),
+                logs: globalState.appController.appState.logs.reversed.toList(),
               ),
             );
           },
@@ -62,8 +31,10 @@ class _LogsFragmentState extends State<LogsFragment> {
   }
 
   _buildList() {
-    return ValueListenableBuilder<List<Log>>(
-      valueListenable: logsNotifier,
+    return Selector<AppState, List<Log>>(
+      selector: (_, appState) => appState.logs,
+      shouldRebuild: (prev, next) =>
+          !const ListEquality<Log>().equals(prev, next),
       builder: (_, List<Log> logs, __) {
         if (logs.isEmpty) {
           return NullStatus(
@@ -77,6 +48,7 @@ class _LogsFragmentState extends State<LogsFragment> {
           itemBuilder: (BuildContext context, int index) {
             final log = logs[index];
             return LogItem(
+              key: ValueKey(log.dateTime),
               log: log,
             );
           },
@@ -93,12 +65,14 @@ class _LogsFragmentState extends State<LogsFragment> {
   @override
   Widget build(BuildContext context) {
     return Selector<AppState, bool?>(
-      selector: (_, appState) =>
-          appState.currentLabel == 'logs' ||
-          context.isMobile && appState.currentLabel == "tools",
+      selector: (_, appState) {
+        return appState.currentLabel == 'logs' ||
+            appState.viewMode == ViewMode.mobile &&
+                appState.currentLabel == "tools";
+      },
       builder: (_, isCurrent, child) {
         if (isCurrent == null || isCurrent) {
-          _initActions();
+          _initActions(context);
         }
         return child!;
       },
@@ -114,13 +88,16 @@ class LogsSearchDelegate extends SearchDelegate {
     required this.logs,
   });
 
-  List<Log> get _results => logs
-      .where(
-        (log) =>
-            (log.payload?.contains(query) ?? false) ||
-            log.logLevel.name.contains(query),
-      )
-      .toList();
+  List<Log> get _results {
+    final lowQuery = query.toLowerCase();
+    return logs
+        .where(
+          (log) =>
+              (log.payload?.toLowerCase().contains(lowQuery) ?? false) ||
+              log.logLevel.name.contains(lowQuery),
+        )
+        .toList();
+  }
 
   @override
   List<Widget>? buildActions(BuildContext context) {
@@ -161,6 +138,7 @@ class LogsSearchDelegate extends SearchDelegate {
       itemBuilder: (BuildContext context, int index) {
         final log = _results[index];
         return LogItem(
+          key: ValueKey(log.dateTime),
           log: log,
         );
       },

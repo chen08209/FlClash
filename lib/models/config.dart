@@ -56,6 +56,23 @@ class AccessControl {
   factory AccessControl.fromJson(Map<String, dynamic> json) {
     return _$AccessControlFromJson(json);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AccessControl &&
+          runtimeType == other.runtimeType &&
+          mode == other.mode &&
+          acceptList == other.acceptList &&
+          rejectList == other.rejectList &&
+          isFilterSystemApp == other.isFilterSystemApp;
+
+  @override
+  int get hashCode =>
+      mode.hashCode ^
+      acceptList.hashCode ^
+      rejectList.hashCode ^
+      isFilterSystemApp.hashCode;
 }
 
 @JsonSerializable()
@@ -75,6 +92,8 @@ class Config extends ChangeNotifier {
   bool _isAccessControl;
   AccessControl _accessControl;
   bool _isAnimateToPage;
+  bool _autoCheckUpdate;
+  DAV? _dav;
 
   Config()
       : _profiles = [],
@@ -84,10 +103,11 @@ class Config extends ChangeNotifier {
         _themeMode = ThemeMode.system,
         _openLog = false,
         _isCompatible = false,
-        _primaryColor = appConstant.defaultPrimaryColor.value,
+        _primaryColor = defaultPrimaryColor.value,
         _proxiesSortType = ProxiesSortType.none,
         _isMinimizeOnExit = true,
         _isAccessControl = false,
+        _autoCheckUpdate = true,
         _accessControl = AccessControl(),
         _isAnimateToPage = true;
 
@@ -108,17 +128,18 @@ class Config extends ChangeNotifier {
   }
 
   String? _getLabel(String? label, String id) {
+    final realLabel = label ?? id;
     final hasDup = _profiles.indexWhere(
-            (element) => element.label == label && element.id != id) !=
+            (element) => element.label == realLabel && element.id != id) !=
         -1;
     if (hasDup) {
-      return _getLabel(other.getOverwriteLabel(label!), id);
+      return _getLabel(other.getOverwriteLabel(realLabel), id);
     } else {
       return label;
     }
   }
 
-  setProfile(Profile profile) {
+  _setProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(_profiles);
     final index =
         profilesTemp.indexWhere((element) => element.id == profile.id);
@@ -131,6 +152,10 @@ class Config extends ChangeNotifier {
       profilesTemp[index] = updateProfile;
     }
     _profiles = profilesTemp;
+  }
+
+  setProfile(Profile profile) {
+    _setProfile(profile);
     notifyListeners();
   }
 
@@ -160,7 +185,6 @@ class Config extends ChangeNotifier {
       return null;
     }
   }
-
 
   SelectedMap get currentSelectedMap {
     return currentProfile?.selectedMap ?? {};
@@ -280,9 +304,18 @@ class Config extends ChangeNotifier {
 
   AccessControl get accessControl => _accessControl;
 
-  set accessControl(AccessControl? value) {
+  set accessControl(AccessControl value) {
     if (_accessControl != value) {
-      _accessControl = value ?? AccessControl();
+      _accessControl = value;
+      notifyListeners();
+    }
+  }
+
+  DAV? get dav => _dav;
+
+  set dav(DAV? value) {
+    if (_dav != value) {
+      _dav = value;
       notifyListeners();
     }
   }
@@ -312,7 +345,46 @@ class Config extends ChangeNotifier {
     }
   }
 
-  update() {
+  @JsonKey(defaultValue: true)
+  bool get autoCheckUpdate {
+    return _autoCheckUpdate;
+  }
+
+  set autoCheckUpdate(bool value) {
+    if (_autoCheckUpdate != value) {
+      _autoCheckUpdate = value;
+      notifyListeners();
+    }
+  }
+
+  update([Config? config, RecoveryOption recoveryOptions = RecoveryOption.all]) {
+    if (config != null) {
+      _profiles = config._profiles;
+      for (final profile in config._profiles) {
+        _setProfile(profile);
+      }
+      final onlyProfiles = recoveryOptions == RecoveryOption.onlyProfiles;
+      if(_currentProfileId == null && onlyProfiles && profiles.isNotEmpty){
+        _currentProfileId = _profiles.first.id;
+      }
+      if(onlyProfiles) return;
+      _currentProfileId = config._currentProfileId;
+      _isCompatible = config._isCompatible;
+      _autoLaunch = config._autoLaunch;
+      _silentLaunch = config._silentLaunch;
+      _autoRun = config._autoRun;
+      _openLog = config._openLog;
+      _themeMode = config._themeMode;
+      _locale = config._locale;
+      _primaryColor = config._primaryColor;
+      _proxiesSortType = config._proxiesSortType;
+      _isMinimizeOnExit = config._isMinimizeOnExit;
+      _isAccessControl = config._isAccessControl;
+      _accessControl = config._accessControl;
+      _isAnimateToPage = config._isAnimateToPage;
+      _autoCheckUpdate = config._autoCheckUpdate;
+      _dav = config._dav;
+    }
     notifyListeners();
   }
 
@@ -322,5 +394,10 @@ class Config extends ChangeNotifier {
 
   factory Config.fromJson(Map<String, dynamic> json) {
     return _$ConfigFromJson(json);
+  }
+
+  @override
+  String toString() {
+    return 'Config{_profiles: $_profiles, _isCompatible: $_isCompatible, _currentProfileId: $_currentProfileId, _autoLaunch: $_autoLaunch, _silentLaunch: $_silentLaunch, _autoRun: $_autoRun, _openLog: $_openLog, _themeMode: $_themeMode, _locale: $_locale, _primaryColor: $_primaryColor, _proxiesSortType: $_proxiesSortType, _isMinimizeOnExit: $_isMinimizeOnExit, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _isAnimateToPage: $_isAnimateToPage, _dav: $_dav}';
   }
 }

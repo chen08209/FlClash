@@ -36,26 +36,6 @@ class ApplicationSettingFragment extends StatelessWidget {
           );
         },
       ),
-      Selector<Config, bool>(
-        selector: (_, config) => config.isCompatible,
-        builder: (_, isCompatible, __) {
-          return ListItem.switchItem(
-            leading: const Icon(Icons.expand),
-            title:  Text(appLocalizations.compatible),
-            subtitle: Text(appLocalizations.compatibleDesc),
-            delegate: SwitchDelegate(
-              value: isCompatible,
-              onChanged: (bool value) async {
-                final appController = globalState.appController;
-                appController.config.isCompatible = value;
-                await appController.updateClashConfig(isPatch: false);
-                await appController.updateGroups();
-                appController.changeProxy();
-              },
-            ),
-          );
-        },
-      ),
       if (system.isDesktop)
         Selector<Config, bool>(
           selector: (_, config) => config.autoLaunch,
@@ -109,24 +89,6 @@ class ApplicationSettingFragment extends StatelessWidget {
           );
         },
       ),
-      Selector<Config, bool>(
-        selector: (_, config) => config.openLogs,
-        builder: (_, openLogs, child) {
-          return ListItem.switchItem(
-            leading: const Icon(Icons.bug_report),
-            title: Text(appLocalizations.logcat),
-            subtitle: Text(appLocalizations.logcatDesc),
-            delegate: SwitchDelegate(
-              value: openLogs,
-              onChanged: (bool value) {
-                final config = context.read<Config>();
-                config.openLogs = value;
-                globalState.appController.updateLogStatus();
-              },
-            ),
-          );
-        },
-      ),
       if (Platform.isAndroid)
         Selector<Config, bool>(
           selector: (_, config) => config.isAnimateToPage,
@@ -145,6 +107,41 @@ class ApplicationSettingFragment extends StatelessWidget {
             );
           },
         ),
+      Selector<Config, bool>(
+        selector: (_, config) => config.openLogs,
+        builder: (_, openLogs, child) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.bug_report),
+            title: Text(appLocalizations.logcat),
+            subtitle: Text(appLocalizations.logcatDesc),
+            delegate: SwitchDelegate(
+              value: openLogs,
+              onChanged: (bool value) {
+                final config = context.read<Config>();
+                config.openLogs = value;
+                globalState.appController.updateLogStatus();
+              },
+            ),
+          );
+        },
+      ),
+      Selector<Config, bool>(
+        selector: (_, config) => config.autoCheckUpdate,
+        builder: (_, autoCheckUpdate, child) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.system_update),
+            title: Text(appLocalizations.autoCheckUpdate),
+            subtitle: Text(appLocalizations.autoCheckUpdateDesc),
+            delegate: SwitchDelegate(
+              value: autoCheckUpdate,
+              onChanged: (bool value) {
+                final config = context.read<Config>();
+                config.autoCheckUpdate = value;
+              },
+            ),
+          );
+        },
+      ),
     ];
     return ListView.separated(
       itemBuilder: (_, index) {

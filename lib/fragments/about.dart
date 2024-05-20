@@ -1,4 +1,6 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -6,6 +8,31 @@ import 'package:url_launcher/url_launcher.dart';
 
 class AboutFragment extends StatelessWidget {
   const AboutFragment({super.key});
+
+  _checkUpdate(BuildContext context) async {
+    final commonScaffoldState = context.commonScaffoldState;
+    if (commonScaffoldState?.mounted != true) return;
+    final res = await commonScaffoldState?.loadingRun<Result<String>>(
+      Request.checkForUpdate,
+      title: appLocalizations.checkUpdate,
+    );
+    if (res == null) return;
+    if (res.type == ResultType.success) {
+      globalState.showMessage(
+        title: appLocalizations.checkUpdate,
+        message: TextSpan(
+          text: res.data,
+        ),
+      );
+    } else {
+      globalState.showMessage(
+        title: appLocalizations.checkUpdate,
+        message: TextSpan(
+          text: appLocalizations.checkUpdateError,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +59,7 @@ class AboutFragment extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        appConstant.name,
+                        appName,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       FutureBuilder<PackageInfo>(
@@ -65,19 +92,8 @@ class AboutFragment extends StatelessWidget {
         ),
         ListTile(
           title: Text(appLocalizations.checkUpdate),
-          onTap: () {
-            final commonScaffoldState = context.commonScaffoldState;
-            if (commonScaffoldState?.mounted != true) return;
-            commonScaffoldState?.loadingRun(() async {
-              await globalState.checkUpdate(
-                () {
-                  launchUrl(
-                    Uri.parse(
-                        "https://github.com/${appConstant.repository}/releases/latest"),
-                  );
-                },
-              );
-            });
+          onTap: (){
+            _checkUpdate(context);
           },
         ),
         ListTile(
@@ -93,7 +109,7 @@ class AboutFragment extends StatelessWidget {
           title: Text(appLocalizations.project),
           onTap: () {
             launchUrl(
-              Uri.parse("https://github.com/${appConstant.repository}"),
+              Uri.parse("https://github.com/$repository"),
             );
           },
           trailing: const Icon(Icons.launch),

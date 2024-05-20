@@ -1,10 +1,10 @@
 import 'package:collection/collection.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
 import 'ffi.dart';
 import 'log.dart';
 import 'navigation.dart';
-import 'package.dart';
 import 'profile.dart';
 import 'proxy.dart';
 import 'system_color_scheme.dart';
@@ -20,7 +20,6 @@ class AppState with ChangeNotifier {
   VersionInfo? _versionInfo;
   List<Traffic> _traffics;
   List<Log> _logs;
-  List<Package> _packages;
   String _currentLabel;
   SystemColorSchemes _systemColorSchemes;
   num _sortNum;
@@ -29,9 +28,11 @@ class AppState with ChangeNotifier {
   SelectedMap _selectedMap;
   bool _isCompatible;
   List<Group> _groups;
+  double _viewWidth;
 
   AppState({
     required Mode mode,
+    double? viewWidth,
     required bool isCompatible,
     required SelectedMap selectedMap,
   })  : _navigationItems = [],
@@ -39,8 +40,8 @@ class AppState with ChangeNotifier {
         _currentLabel = "dashboard",
         _traffics = [],
         _logs = [],
+        _viewWidth = viewWidth ?? 0,
         _selectedMap = selectedMap,
-        _packages = [],
         _sortNum = 0,
         _mode = mode,
         _delayMap = {},
@@ -64,6 +65,20 @@ class AppState with ChangeNotifier {
       _navigationItems = value;
       notifyListeners();
     }
+  }
+
+  List<NavigationItem> get currentNavigationItems {
+    NavigationItemMode navigationItemMode;
+    if (_viewWidth <= maxMobileWidth) {
+      navigationItemMode = NavigationItemMode.mobile;
+    } else {
+      navigationItemMode = NavigationItemMode.desktop;
+    }
+    return navigationItems
+        .where(
+          (element) => element.modes.contains(navigationItemMode),
+        )
+        .toList();
   }
 
   bool get isInit => _isInit;
@@ -164,14 +179,6 @@ class AppState with ChangeNotifier {
     }
   }
 
-  List<Package> get packages => _packages;
-
-  set packages(List<Package> value) {
-    if (_packages != value) {
-      _packages = value;
-      notifyListeners();
-    }
-  }
 
   List<Group> get groups => _groups;
 
@@ -199,19 +206,6 @@ class AppState with ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // String? get currentProxyName {
-  //   if (mode == Mode.direct) return UsedProxy.DIRECT.name;
-  //   if (_currentProxyName != null) return _currentProxyName!;
-  //   return currentGroup?.now;
-  // }
-  //
-  // set currentProxyName(String? value) {
-  //   if (_currentProxyName != value) {
-  //     _currentProxyName = value;
-  //     notifyListeners();
-  //   }
-  // }
 
   bool get isCompatible {
     return _isCompatible;
@@ -248,6 +242,21 @@ class AppState with ChangeNotifier {
             .where((element) => element.name != GroupName.GLOBAL.name)
             .toList();
     }
+  }
+
+  double get viewWidth => _viewWidth;
+
+  set viewWidth(double value) {
+    if (_viewWidth != value) {
+      _viewWidth = value;
+      notifyListeners();
+    }
+  }
+
+  ViewMode get viewMode {
+    if (_viewWidth <= maxMobileWidth) return ViewMode.mobile;
+    if (_viewWidth <= maxLaptopWidth) return ViewMode.laptop;
+    return ViewMode.desktop;
   }
 
   DelayMap get delayMap {

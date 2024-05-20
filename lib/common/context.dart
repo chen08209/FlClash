@@ -11,8 +11,6 @@ extension BuildContextExtension on BuildContext {
     return MediaQuery.of(this).size.width;
   }
 
-  bool get isMobile => width < 600;
-
   ColorScheme get colorScheme => Theme.of(this).colorScheme;
 
   TextTheme get textTheme => Theme.of(this).textTheme;

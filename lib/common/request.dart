@@ -6,21 +6,21 @@ import '../models/models.dart';
 
 class Request {
   static Future<Result<Response>> getFileResponseForUrl(String url) async {
-    final headers = {'User-Agent': appConstant.name};
+    final headers = {'User-Agent': coreName};
     try {
       final response = await get(Uri.parse(url), headers: headers).timeout(
-        appConstant.httpTimeoutDuration,
+        httpTimeoutDuration,
       );
-      return Result.success(data: response);
+      return Result.success(response);
     } catch (err) {
-      return Result.error(message: err.toString());
+      return Result.error(err.toString());
     }
   }
 
   static Future<Result<String>> checkForUpdate() async {
     final response = await get(
       Uri.parse(
-        "https://api.github.com/repos/${appConstant.repository}/releases/latest",
+        "https://api.github.com/repos/$repository/releases/latest",
       ),
     );
     if (response.statusCode != 200) return Result.error();
@@ -31,6 +31,6 @@ class Request {
     final hasUpdate =
         other.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
     if (!hasUpdate) return Result.error();
-    return Result.success(data: body['body']);
+    return Result.success(body['body']);
   }
 }

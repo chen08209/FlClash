@@ -11,14 +11,10 @@ class Result<T> {
     this.data,
   });
 
-  Result.success({
-    this.data,
-  })  : type = ResultType.success,
+  Result.success([this.data])  : type = ResultType.success,
         message = null;
 
-  Result.error({
-    this.message,
-  })  : type = ResultType.error,
+  Result.error([this.message])  : type = ResultType.error,
         data = null;
 
   @override
