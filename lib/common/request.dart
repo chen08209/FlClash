@@ -17,20 +17,20 @@ class Request {
     }
   }
 
-  static Future<Result<String>> checkForUpdate() async {
+  static Future<Result<Map<String,dynamic>>> checkForUpdate() async {
     final response = await get(
       Uri.parse(
         "https://api.github.com/repos/$repository/releases/latest",
       ),
     );
     if (response.statusCode != 200) return Result.error();
-    final body = json.decode(response.body);
+    final body = json.decode(response.body) as Map<String,dynamic>;
     final remoteVersion = body['tag_name'];
     final packageInfo = await appPackage.packageInfoCompleter.future;
     final version = packageInfo.version;
     final hasUpdate =
         other.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
     if (!hasUpdate) return Result.error();
-    return Result.success(body['body']);
+    return Result.success(body);
   }
 }

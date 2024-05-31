@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'clash/core.dart';
 import 'enum/enum.dart';
@@ -209,14 +210,52 @@ class AppController {
   }
 
   autoCheckUpdate() async {
+    if (!config.autoCheckUpdate) return;
     final res = await Request.checkForUpdate();
-    if(res.type != ResultType.success) return;
-    globalState.showMessage(
-      title: appLocalizations.checkUpdate,
-      message: TextSpan(
-        text: res.data,
-      ),
-    );
+    checkUpdateResultHandle(result: res);
+  }
+
+  checkUpdateResultHandle({
+    Result<Map<String, dynamic>>? result,
+    bool handleError = false
+}) async {
+    if (result == null) return;
+    if (result.type == ResultType.success) {
+      final tagName = result.data?['tag_name'];
+      final body = result.data?['body'];
+      final submits = other.parseReleaseBody(body);
+      globalState.showMessage(
+        title: appLocalizations.discoverNewVersion,
+        message: TextSpan(
+          text: "$tagName \n",
+          style: context.textTheme.headlineSmall,
+          children: [
+            TextSpan(
+              text: "\n",
+              style: context.textTheme.bodyMedium,
+            ),
+            for (final submit in submits)
+              TextSpan(
+                text: "- $submit \n",
+                style: context.textTheme.bodyMedium,
+              ),
+          ],
+        ),
+        onTab: () {
+          launchUrl(
+            Uri.parse("https://github.com/$repository/releases/latest"),
+          );
+        },
+        confirmText: appLocalizations.goDownload,
+      );
+    } else if(handleError){
+      globalState.showMessage(
+        title: appLocalizations.checkUpdate,
+        message: TextSpan(
+          text: appLocalizations.checkUpdateError,
+        ),
+      );
+    }
   }
 
   afterInit() async {
@@ -235,7 +274,7 @@ class AppController {
   }
 
   healthcheck() {
-    if(globalState.healthcheckLock) return;
+    if (globalState.healthcheckLock) return;
     for (final delay in appState.delayMap.entries) {
       setDelay(
         Delay(
@@ -267,7 +306,6 @@ class AppController {
       globalState.pageController?.jumpToPage(index);
     }
   }
-
 
   toProfiles() {
     final index = appState.currentNavigationItems.indexWhere(
@@ -365,7 +403,7 @@ class AppController {
   addProfileFormQrCode() async {
     final result = await picker.pickerConfigQRCode();
     if (result.type == ResultType.error) {
-      if(result.message != null){
+      if (result.message != null) {
         globalState.showMessage(
           title: appLocalizations.tip,
           message: TextSpan(
@@ -394,10 +432,10 @@ class AppController {
     }
   }
 
-  updateViewWidth(){
+  updateViewWidth() {
     appState.viewWidth = context.width;
-    if(appState.viewWidth == 0){
-      Future.delayed(moreDuration,(){
+    if (appState.viewWidth == 0) {
+      Future.delayed(moreDuration, () {
         updateViewWidth();
       });
     }

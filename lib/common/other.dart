@@ -162,10 +162,21 @@ class Other {
     }
   }
 
-  double getViewWidth(){
+  double getViewWidth() {
     final view = WidgetsBinding.instance.platformDispatcher.views.first;
     final size = view.physicalSize / view.devicePixelRatio;
     return size.width;
+  }
+
+  List<String> parseReleaseBody(String? body) {
+    if(body == null) return [];
+    const pattern = r'- (.+?)\. \[.+?\]';
+    final regex = RegExp(pattern);
+    return regex
+        .allMatches(body)
+        .map((match) => match.group(1) ?? '')
+        .where((item) => item.isNotEmpty)
+        .toList();
   }
 }
 

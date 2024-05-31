@@ -149,5 +149,7 @@
   "passwordTip": "Password cannot be empty",
   "accountTip": "Account cannot be empty",
   "checkUpdate": "Check for updates",
-  "checkUpdateError": "The current application is already the latest version"
+  "discoverNewVersion": "Discover the new version",
+  "checkUpdateError": "The current application is already the latest version",
+  "goDownload": "Go to download"
 }

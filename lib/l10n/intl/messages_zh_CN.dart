@@ -83,6 +83,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "desc": MessageLookupByLibrary.simpleMessage(
             "基于ClashMeta的多平台代理客户端，简单易用，开源无广告。"),
         "direct": MessageLookupByLibrary.simpleMessage("直连"),
+        "discoverNewVersion": MessageLookupByLibrary.simpleMessage("发现新版本"),
         "discovery": MessageLookupByLibrary.simpleMessage("发现新版本"),
         "doYouWantToPass": MessageLookupByLibrary.simpleMessage("是否要通过"),
         "download": MessageLookupByLibrary.simpleMessage("下载"),
@@ -93,6 +94,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "fileDesc": MessageLookupByLibrary.simpleMessage("直接上传配置文件"),
         "filterSystemApp": MessageLookupByLibrary.simpleMessage("过滤系统应用"),
         "global": MessageLookupByLibrary.simpleMessage("全局"),
+        "goDownload": MessageLookupByLibrary.simpleMessage("前往下载"),
         "hours": MessageLookupByLibrary.simpleMessage("小时"),
         "importFromURL": MessageLookupByLibrary.simpleMessage("从URL导入"),
         "just": MessageLookupByLibrary.simpleMessage("刚刚"),
