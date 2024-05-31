@@ -8,7 +8,10 @@
 
 <p style="text-align: left;">
     <img alt="stars" src="https://img.shields.io/github/stars/chen08209/FlClash?style=flat-square&logo=github"/>
-    <img alt="total" src="https://img.shields.io/github/downloads/chen08209/FlClash/total?logo=GitHub release"/>
+    <img alt="downloads" src="https://img.shields.io/github/downloads/chen08209/FlClash/total"/>
+    <a href="LICENSE">
+        <img alt="license" src="https://img.shields.io/github/license/chen08209/FlClash"/>
+    </a>
 </p>
 
 基于ClashMeta的多平台代理客户端，简单易用，开源无广告。
@@ -98,8 +101,8 @@ on Mobile:
 
 支持开发者的最简单方式是点击页面顶部的星标（⭐）。
 
-<p style="text-align: left;">
-
-<img alt="Star History Chart" width=50% src="https://api.star-history.com/svg?repos=chen08209/FlClash&Date(https://star-history.com/#chen08209/FlClash&Date)" />
-
+<p style="text-align: center;">
+    <a href="https://api.star-history.com/svg?repos=chen08209/FlClash&Date">
+        <img alt="start" width=50% src="https://api.star-history.com/svg?repos=chen08209/FlClash&Date"/>
+    </a>
 </p>

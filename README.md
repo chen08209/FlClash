@@ -8,7 +8,10 @@
 
 <p style="text-align: left;">
     <img alt="stars" src="https://img.shields.io/github/stars/chen08209/FlClash?style=flat-square&logo=github"/>
-    <img alt="total" src="https://img.shields.io/github/downloads/chen08209/FlClash/total?logo=GitHub release"/>
+    <img alt="downloads" src="https://img.shields.io/github/downloads/chen08209/FlClash/total"/>
+    <a href="LICENSE">
+        <img alt="license" src="https://img.shields.io/github/license/chen08209/FlClash"/>
+    </a>
 </p>
 
 A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
@@ -97,12 +100,12 @@ on Mobile:
 
     
 
-## Star History
+## Star
 
 The easiest way to support developers is to click on the star (⭐) at the top of the page.
 
-<p style="text-align: left;">
-
-<img alt="Star History Chart" width=50% src="https://api.star-history.com/svg?repos=chen08209/FlClash&Date(https://star-history.com/#chen08209/FlClash&Date)" />
-
+<p style="text-align: center;">
+    <a href="https://api.star-history.com/svg?repos=chen08209/FlClash&Date">
+        <img alt="start" width=50% src="https://api.star-history.com/svg?repos=chen08209/FlClash&Date"/>
+    </a>
 </p>
