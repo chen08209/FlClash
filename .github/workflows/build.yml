@@ -82,7 +82,6 @@ jobs:
 
 
   upload-release:
-    if: github.base_ref == 'refs/heads/main'
     permissions: write-all
     needs: [ build ]
     runs-on: ubuntu-latest
