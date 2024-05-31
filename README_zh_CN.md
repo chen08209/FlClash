@@ -6,6 +6,9 @@
 
 ## FlClash
 
+<img alt="stars" src="https://img.shields.io/github/stars/chen08209/FlClash?style=flat-square&logo=github"/>
+<img alt="total" src="https://img.shields.io/github/downloads/chen08209/FlClash/total?logo=GitHub release"/>
+
 基于ClashMeta的多平台代理客户端，简单易用，开源无广告。
 
 on Desktop:
@@ -86,3 +89,13 @@ on Mobile:
            ```bash
              dart .\setup.dart	
            ```
+
+## Star History
+
+支持开发者的最简单方式是点击页面顶部的星标（⭐）。
+
+<p style="text-align: left;">
+
+<img alt="Star History Chart" width=50% src="https://api.star-history.com/svg?repos=chen08209/FlClash&Date)](https://star-history.com/#chen08209/FlClash&Date" />
+
+</p>
