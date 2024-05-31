@@ -149,5 +149,7 @@
   "passwordTip": "密码不能为空",
   "accountTip": "账号不能为空",
   "checkUpdate": "检查更新",
-  "checkUpdateError": "当前应用已经是最新版了"
+  "discoverNewVersion": "发现新版本",
+  "checkUpdateError": "当前应用已经是最新版了",
+  "goDownload": "前往下载"
 }

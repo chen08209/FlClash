@@ -1550,11 +1550,31 @@ class AppLocalizations {
     );
   }
 
+  /// `Discover the new version`
+  String get discoverNewVersion {
+    return Intl.message(
+      'Discover the new version',
+      name: 'discoverNewVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `The current application is already the latest version`
   String get checkUpdateError {
     return Intl.message(
       'The current application is already the latest version',
       name: 'checkUpdateError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Go to download`
+  String get goDownload {
+    return Intl.message(
+      'Go to download',
+      name: 'goDownload',
       desc: '',
       args: [],
     );

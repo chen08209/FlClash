@@ -99,6 +99,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "desc": MessageLookupByLibrary.simpleMessage(
             "A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free."),
         "direct": MessageLookupByLibrary.simpleMessage("Direct"),
+        "discoverNewVersion":
+            MessageLookupByLibrary.simpleMessage("Discover the new version"),
         "discovery":
             MessageLookupByLibrary.simpleMessage("Discovery a new version"),
         "doYouWantToPass":
@@ -113,6 +115,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "filterSystemApp":
             MessageLookupByLibrary.simpleMessage("Filter system app"),
         "global": MessageLookupByLibrary.simpleMessage("Global"),
+        "goDownload": MessageLookupByLibrary.simpleMessage("Go to download"),
         "hours": MessageLookupByLibrary.simpleMessage("Hours"),
         "importFromURL":
             MessageLookupByLibrary.simpleMessage("Import from URL"),

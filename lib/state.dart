@@ -158,18 +158,25 @@ class GlobalState {
     required String title,
     required InlineSpan message,
     Function()? onTab,
+    String? confirmText,
   }) {
     showCommonDialog(
       child: Builder(
         builder: (context) {
           return AlertDialog(
             title: Text(title),
-            content: SizedBox(
+            content: Container(
               width: 300,
-              child: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.labelLarge,
-                  children: [message],
+              constraints: const BoxConstraints(
+                  maxHeight: 200
+              ),
+              child: SingleChildScrollView(
+                child: RichText(
+                  overflow: TextOverflow.visible,
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.labelLarge,
+                    children: [message],
+                  ),
                 ),
               ),
             ),
@@ -179,7 +186,7 @@ class GlobalState {
                     () {
                       Navigator.of(context).pop();
                     },
-                child: Text(appLocalizations.confirm),
+                child: Text(confirmText ?? appLocalizations.confirm),
               )
             ],
           );
@@ -200,6 +207,7 @@ class GlobalState {
       filter: filter,
     );
   }
+
   updateTraffic({
     AppState? appState,
     required Config config,

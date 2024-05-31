@@ -12,26 +12,15 @@ class AboutFragment extends StatelessWidget {
   _checkUpdate(BuildContext context) async {
     final commonScaffoldState = context.commonScaffoldState;
     if (commonScaffoldState?.mounted != true) return;
-    final res = await commonScaffoldState?.loadingRun<Result<String>>(
+    final res =
+        await commonScaffoldState?.loadingRun<Result<Map<String, dynamic>>>(
       Request.checkForUpdate,
       title: appLocalizations.checkUpdate,
     );
-    if (res == null) return;
-    if (res.type == ResultType.success) {
-      globalState.showMessage(
-        title: appLocalizations.checkUpdate,
-        message: TextSpan(
-          text: res.data,
-        ),
-      );
-    } else {
-      globalState.showMessage(
-        title: appLocalizations.checkUpdate,
-        message: TextSpan(
-          text: appLocalizations.checkUpdateError,
-        ),
-      );
-    }
+    globalState.appController.checkUpdateResultHandle(
+      result: res,
+      handleError: true,
+    );
   }
 
   @override
@@ -92,7 +81,7 @@ class AboutFragment extends StatelessWidget {
         ),
         ListTile(
           title: Text(appLocalizations.checkUpdate),
-          onTap: (){
+          onTap: () {
             _checkUpdate(context);
           },
         ),
