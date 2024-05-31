@@ -26,6 +26,8 @@ on Mobile:
 
 💡 基本 Material You 设计, 类[Surfboard](https://github.com/getsurfboard/surfboard)用户界面
 
+☁️ 支持通过WebDAV同步数据
+
 ✨ 支持一键导入订阅, 深色模式
 
 ## Contact

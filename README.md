@@ -26,6 +26,8 @@ on Mobile:
 
 💡 Based on Material You Design, [Surfboard](https://github.com/getsurfboard/surfboard)-like UI
 
+☁️ Supports data sync via WebDAV
+
 ✨ Support subscription link, Dark mode
 
 ## Contact
