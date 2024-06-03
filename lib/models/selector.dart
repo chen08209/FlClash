@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'config.dart';
 import 'navigation.dart';
-import 'package.dart';
 import 'profile.dart';
 import 'proxy.dart';
 
@@ -42,14 +41,6 @@ class ProfilesSelectorState with _$ProfilesSelectorState {
     required String? currentProfileId,
     required ViewMode viewMode,
   }) = _ProfilesSelectorState;
-}
-
-@freezed
-class PackageListSelectorState with _$PackageListSelectorState {
-  const factory PackageListSelectorState({
-    required AccessControl accessControl,
-    required List<Package> packages,
-  }) = _PackageListSelectorState;
 }
 
 @freezed
@@ -126,4 +117,12 @@ class MoreToolsSelectorState with _$MoreToolsSelectorState {
   const factory MoreToolsSelectorState({
     required List<NavigationItem> navigationItems,
   }) = _MoreToolsSelectorState;
+}
+
+@freezed
+class PackageListSelectorState with _$PackageListSelectorState {
+  const factory PackageListSelectorState({
+    required AccessControl accessControl,
+    required bool isAccessControl,
+  }) = _PackageListSelectorState;
 }

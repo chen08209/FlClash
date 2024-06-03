@@ -1,78 +1,26 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../enum/enum.dart';
 import '../common/common.dart';
 import 'models.dart';
 
 part 'generated/config.g.dart';
+part 'generated/config.freezed.dart';
 
-@JsonSerializable()
-class AccessControl {
-  AccessControlMode mode;
-  List<String> acceptList;
-  List<String> rejectList;
-  bool isFilterSystemApp;
+@freezed
+class AccessControl with _$AccessControl {
+  const factory AccessControl({
+    @Default(AccessControlMode.rejectSelected) AccessControlMode mode,
+    @Default([]) List<String> acceptList,
+    @Default([]) List<String> rejectList,
+    @Default(true) bool isFilterSystemApp,
+  }) = _AccessControl;
 
-  AccessControl({
-    this.isFilterSystemApp = true,
-    this.mode = AccessControlMode.rejectSelected,
-    this.acceptList = const [],
-    this.rejectList = const [],
-  });
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  List<String> get currentList =>
-      mode == AccessControlMode.acceptSelected ? acceptList : rejectList;
-
-  set currentList(List<String> currentList) {
-    if (mode == AccessControlMode.acceptSelected) {
-      acceptList = currentList;
-    } else {
-      rejectList = currentList;
-    }
-  }
-
-  AccessControl copyWith({
-    AccessControlMode? mode,
-    List<String>? acceptList,
-    List<String>? rejectList,
-    bool? isFilterSystemApp,
-  }) {
-    return AccessControl(
-      mode: mode ?? this.mode,
-      acceptList: acceptList ?? this.acceptList,
-      rejectList: rejectList ?? this.rejectList,
-      isFilterSystemApp: isFilterSystemApp ?? this.isFilterSystemApp,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return _$AccessControlToJson(this);
-  }
-
-  factory AccessControl.fromJson(Map<String, dynamic> json) {
-    return _$AccessControlFromJson(json);
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is AccessControl &&
-          runtimeType == other.runtimeType &&
-          mode == other.mode &&
-          acceptList == other.acceptList &&
-          rejectList == other.rejectList &&
-          isFilterSystemApp == other.isFilterSystemApp;
-
-  @override
-  int get hashCode =>
-      mode.hashCode ^
-      acceptList.hashCode ^
-      rejectList.hashCode ^
-      isFilterSystemApp.hashCode;
+  factory AccessControl.fromJson(Map<String, Object?> json) =>
+      _$AccessControlFromJson(json);
 }
 
 @JsonSerializable()
@@ -108,7 +56,7 @@ class Config extends ChangeNotifier {
         _isMinimizeOnExit = true,
         _isAccessControl = false,
         _autoCheckUpdate = true,
-        _accessControl = AccessControl(),
+        _accessControl = const AccessControl(),
         _isAnimateToPage = true;
 
   deleteProfileById(String id) {
@@ -142,7 +90,7 @@ class Config extends ChangeNotifier {
   _setProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(_profiles);
     final index =
-        profilesTemp.indexWhere((element) => element.id == profile.id);
+    profilesTemp.indexWhere((element) => element.id == profile.id);
     final updateProfile = profile.copyWith(
       label: _getLabel(profile.label, profile.id),
     );
@@ -357,17 +305,18 @@ class Config extends ChangeNotifier {
     }
   }
 
-  update([Config? config, RecoveryOption recoveryOptions = RecoveryOption.all]) {
+  update(
+      [Config? config, RecoveryOption recoveryOptions = RecoveryOption.all]) {
     if (config != null) {
       _profiles = config._profiles;
       for (final profile in config._profiles) {
         _setProfile(profile);
       }
       final onlyProfiles = recoveryOptions == RecoveryOption.onlyProfiles;
-      if(_currentProfileId == null && onlyProfiles && profiles.isNotEmpty){
+      if (_currentProfileId == null && onlyProfiles && profiles.isNotEmpty) {
         _currentProfileId = _profiles.first.id;
       }
-      if(onlyProfiles) return;
+      if (onlyProfiles) return;
       _currentProfileId = config._currentProfileId;
       _isCompatible = config._isCompatible;
       _autoLaunch = config._autoLaunch;

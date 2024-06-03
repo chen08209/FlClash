@@ -668,155 +668,6 @@ abstract class _ProfilesSelectorState implements ProfilesSelectorState {
 }
 
 /// @nodoc
-mixin _$PackageListSelectorState {
-  AccessControl get accessControl => throw _privateConstructorUsedError;
-  List<Package> get packages => throw _privateConstructorUsedError;
-
-  @JsonKey(ignore: true)
-  $PackageListSelectorStateCopyWith<PackageListSelectorState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $PackageListSelectorStateCopyWith<$Res> {
-  factory $PackageListSelectorStateCopyWith(PackageListSelectorState value,
-          $Res Function(PackageListSelectorState) then) =
-      _$PackageListSelectorStateCopyWithImpl<$Res, PackageListSelectorState>;
-  @useResult
-  $Res call({AccessControl accessControl, List<Package> packages});
-}
-
-/// @nodoc
-class _$PackageListSelectorStateCopyWithImpl<$Res,
-        $Val extends PackageListSelectorState>
-    implements $PackageListSelectorStateCopyWith<$Res> {
-  _$PackageListSelectorStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? accessControl = null,
-    Object? packages = null,
-  }) {
-    return _then(_value.copyWith(
-      accessControl: null == accessControl
-          ? _value.accessControl
-          : accessControl // ignore: cast_nullable_to_non_nullable
-              as AccessControl,
-      packages: null == packages
-          ? _value.packages
-          : packages // ignore: cast_nullable_to_non_nullable
-              as List<Package>,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$PackageListSelectorStateImplCopyWith<$Res>
-    implements $PackageListSelectorStateCopyWith<$Res> {
-  factory _$$PackageListSelectorStateImplCopyWith(
-          _$PackageListSelectorStateImpl value,
-          $Res Function(_$PackageListSelectorStateImpl) then) =
-      __$$PackageListSelectorStateImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({AccessControl accessControl, List<Package> packages});
-}
-
-/// @nodoc
-class __$$PackageListSelectorStateImplCopyWithImpl<$Res>
-    extends _$PackageListSelectorStateCopyWithImpl<$Res,
-        _$PackageListSelectorStateImpl>
-    implements _$$PackageListSelectorStateImplCopyWith<$Res> {
-  __$$PackageListSelectorStateImplCopyWithImpl(
-      _$PackageListSelectorStateImpl _value,
-      $Res Function(_$PackageListSelectorStateImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? accessControl = null,
-    Object? packages = null,
-  }) {
-    return _then(_$PackageListSelectorStateImpl(
-      accessControl: null == accessControl
-          ? _value.accessControl
-          : accessControl // ignore: cast_nullable_to_non_nullable
-              as AccessControl,
-      packages: null == packages
-          ? _value._packages
-          : packages // ignore: cast_nullable_to_non_nullable
-              as List<Package>,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$PackageListSelectorStateImpl implements _PackageListSelectorState {
-  const _$PackageListSelectorStateImpl(
-      {required this.accessControl, required final List<Package> packages})
-      : _packages = packages;
-
-  @override
-  final AccessControl accessControl;
-  final List<Package> _packages;
-  @override
-  List<Package> get packages {
-    if (_packages is EqualUnmodifiableListView) return _packages;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_packages);
-  }
-
-  @override
-  String toString() {
-    return 'PackageListSelectorState(accessControl: $accessControl, packages: $packages)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$PackageListSelectorStateImpl &&
-            (identical(other.accessControl, accessControl) ||
-                other.accessControl == accessControl) &&
-            const DeepCollectionEquality().equals(other._packages, _packages));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, accessControl,
-      const DeepCollectionEquality().hash(_packages));
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$PackageListSelectorStateImplCopyWith<_$PackageListSelectorStateImpl>
-      get copyWith => __$$PackageListSelectorStateImplCopyWithImpl<
-          _$PackageListSelectorStateImpl>(this, _$identity);
-}
-
-abstract class _PackageListSelectorState implements PackageListSelectorState {
-  const factory _PackageListSelectorState(
-      {required final AccessControl accessControl,
-      required final List<Package> packages}) = _$PackageListSelectorStateImpl;
-
-  @override
-  AccessControl get accessControl;
-  @override
-  List<Package> get packages;
-  @override
-  @JsonKey(ignore: true)
-  _$$PackageListSelectorStateImplCopyWith<_$PackageListSelectorStateImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
 mixin _$ApplicationSelectorState {
   String? get locale => throw _privateConstructorUsedError;
   ThemeMode? get themeMode => throw _privateConstructorUsedError;
@@ -2217,5 +2068,161 @@ abstract class _MoreToolsSelectorState implements MoreToolsSelectorState {
   @override
   @JsonKey(ignore: true)
   _$$MoreToolsSelectorStateImplCopyWith<_$MoreToolsSelectorStateImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$PackageListSelectorState {
+  AccessControl get accessControl => throw _privateConstructorUsedError;
+  bool get isAccessControl => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $PackageListSelectorStateCopyWith<PackageListSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $PackageListSelectorStateCopyWith<$Res> {
+  factory $PackageListSelectorStateCopyWith(PackageListSelectorState value,
+          $Res Function(PackageListSelectorState) then) =
+      _$PackageListSelectorStateCopyWithImpl<$Res, PackageListSelectorState>;
+  @useResult
+  $Res call({AccessControl accessControl, bool isAccessControl});
+
+  $AccessControlCopyWith<$Res> get accessControl;
+}
+
+/// @nodoc
+class _$PackageListSelectorStateCopyWithImpl<$Res,
+        $Val extends PackageListSelectorState>
+    implements $PackageListSelectorStateCopyWith<$Res> {
+  _$PackageListSelectorStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? accessControl = null,
+    Object? isAccessControl = null,
+  }) {
+    return _then(_value.copyWith(
+      accessControl: null == accessControl
+          ? _value.accessControl
+          : accessControl // ignore: cast_nullable_to_non_nullable
+              as AccessControl,
+      isAccessControl: null == isAccessControl
+          ? _value.isAccessControl
+          : isAccessControl // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $AccessControlCopyWith<$Res> get accessControl {
+    return $AccessControlCopyWith<$Res>(_value.accessControl, (value) {
+      return _then(_value.copyWith(accessControl: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$PackageListSelectorStateImplCopyWith<$Res>
+    implements $PackageListSelectorStateCopyWith<$Res> {
+  factory _$$PackageListSelectorStateImplCopyWith(
+          _$PackageListSelectorStateImpl value,
+          $Res Function(_$PackageListSelectorStateImpl) then) =
+      __$$PackageListSelectorStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({AccessControl accessControl, bool isAccessControl});
+
+  @override
+  $AccessControlCopyWith<$Res> get accessControl;
+}
+
+/// @nodoc
+class __$$PackageListSelectorStateImplCopyWithImpl<$Res>
+    extends _$PackageListSelectorStateCopyWithImpl<$Res,
+        _$PackageListSelectorStateImpl>
+    implements _$$PackageListSelectorStateImplCopyWith<$Res> {
+  __$$PackageListSelectorStateImplCopyWithImpl(
+      _$PackageListSelectorStateImpl _value,
+      $Res Function(_$PackageListSelectorStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? accessControl = null,
+    Object? isAccessControl = null,
+  }) {
+    return _then(_$PackageListSelectorStateImpl(
+      accessControl: null == accessControl
+          ? _value.accessControl
+          : accessControl // ignore: cast_nullable_to_non_nullable
+              as AccessControl,
+      isAccessControl: null == isAccessControl
+          ? _value.isAccessControl
+          : isAccessControl // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$PackageListSelectorStateImpl implements _PackageListSelectorState {
+  const _$PackageListSelectorStateImpl(
+      {required this.accessControl, required this.isAccessControl});
+
+  @override
+  final AccessControl accessControl;
+  @override
+  final bool isAccessControl;
+
+  @override
+  String toString() {
+    return 'PackageListSelectorState(accessControl: $accessControl, isAccessControl: $isAccessControl)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PackageListSelectorStateImpl &&
+            (identical(other.accessControl, accessControl) ||
+                other.accessControl == accessControl) &&
+            (identical(other.isAccessControl, isAccessControl) ||
+                other.isAccessControl == isAccessControl));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, accessControl, isAccessControl);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PackageListSelectorStateImplCopyWith<_$PackageListSelectorStateImpl>
+      get copyWith => __$$PackageListSelectorStateImplCopyWithImpl<
+          _$PackageListSelectorStateImpl>(this, _$identity);
+}
+
+abstract class _PackageListSelectorState implements PackageListSelectorState {
+  const factory _PackageListSelectorState(
+      {required final AccessControl accessControl,
+      required final bool isAccessControl}) = _$PackageListSelectorStateImpl;
+
+  @override
+  AccessControl get accessControl;
+  @override
+  bool get isAccessControl;
+  @override
+  @JsonKey(ignore: true)
+  _$$PackageListSelectorStateImplCopyWith<_$PackageListSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

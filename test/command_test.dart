@@ -1,8 +1,5 @@
 // ignore_for_file: avoid_print
 
-import 'package:http/io_client.dart';
-import 'dart:io';
-
 void main() async {
   String input = """
 您
