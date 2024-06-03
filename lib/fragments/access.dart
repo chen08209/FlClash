@@ -219,6 +219,25 @@ class _AccessFragmentState extends State<AccessFragment> {
     return ValueListenableBuilder(
       valueListenable: packagesListenable,
       builder: (_, packages, ___) {
+        final accessControl = globalState.appController.config.accessControl;
+        final acceptList = accessControl.acceptList;
+        final rejectList = accessControl.rejectList;
+        final acceptPackages = packages.sorted((a, b) {
+          final isSelectA = acceptList.contains(a.packageName);
+          final isSelectB = acceptList.contains(b.packageName);
+          if (isSelectA && isSelectB) return 0;
+          if (isSelectA) return -1;
+          if (isSelectB) return 1;
+          return 0;
+        });
+        final rejectPackages = packages.sorted((a, b) {
+          final isSelectA = rejectList.contains(a.packageName);
+          final isSelectB = rejectList.contains(b.packageName);
+          if (isSelectA && isSelectB) return 0;
+          if (isSelectA) return -1;
+          if (isSelectB) return 1;
+          return 0;
+        });
         return Selector<Config, PackageListSelectorState>(
           selector: (_, config) => PackageListSelectorState(
             accessControl: config.accessControl,
@@ -228,18 +247,22 @@ class _AccessFragmentState extends State<AccessFragment> {
             final accessControl = state.accessControl;
             final isAccessControl = state.isAccessControl;
             final isFilterSystemApp = accessControl.isFilterSystemApp;
-            final currentPackages = isFilterSystemApp
-                ? packages
-                    .where((element) => element.isSystem == false)
-                    .toList()
-                : packages;
-            final packageNameList =
-                currentPackages.map((e) => e.packageName).toList();
             final accessControlMode = accessControl.mode;
+            final packages =
+                accessControlMode == AccessControlMode.acceptSelected
+                    ? acceptPackages
+                    : rejectPackages;
             final currentList =
                 accessControlMode == AccessControlMode.acceptSelected
                     ? accessControl.acceptList
                     : accessControl.rejectList;
+            final currentPackages = isFilterSystemApp
+                ? packages
+                .where((element) => element.isSystem == false)
+                .toList()
+                : packages;
+            final packageNameList =
+                currentPackages.map((e) => e.packageName).toList();
             final valueList = currentList.intersection(packageNameList);
             final describe =
                 accessControlMode == AccessControlMode.acceptSelected

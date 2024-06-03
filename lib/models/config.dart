@@ -90,7 +90,7 @@ class Config extends ChangeNotifier {
   _setProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(_profiles);
     final index =
-    profilesTemp.indexWhere((element) => element.id == profile.id);
+        profilesTemp.indexWhere((element) => element.id == profile.id);
     final updateProfile = profile.copyWith(
       label: _getLabel(profile.label, profile.id),
     );
