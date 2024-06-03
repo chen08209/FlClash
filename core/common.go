@@ -22,6 +22,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 )
 
 type healthCheckSchema struct {
@@ -91,6 +92,13 @@ type Process struct {
 type Now struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type ExternalProvider struct {
+	Name        string    `json:"name"`
+	Type        string    `json:"type"`
+	VehicleType string    `json:"vehicle-type"`
+	UpdateAt    time.Time `json:"update-at"`
 }
 
 func restartExecutable(execPath string) {

@@ -32,7 +32,6 @@ class AppState with ChangeNotifier {
 
   AppState({
     required Mode mode,
-    double? viewWidth,
     required bool isCompatible,
     required SelectedMap selectedMap,
   })  : _navigationItems = [],
@@ -40,7 +39,7 @@ class AppState with ChangeNotifier {
         _currentLabel = "dashboard",
         _traffics = [],
         _logs = [],
-        _viewWidth = viewWidth ?? 0,
+        _viewWidth = 0,
         _selectedMap = selectedMap,
         _sortNum = 0,
         _mode = mode,
@@ -167,6 +166,9 @@ class AppState with ChangeNotifier {
 
   addLog(Log log) {
     _logs.add(log);
+    if(_logs.length > 60){
+      _logs = _logs.sublist(_logs.length - 60);
+    }
     notifyListeners();
   }
 
@@ -178,7 +180,6 @@ class AppState with ChangeNotifier {
       notifyListeners();
     }
   }
-
 
   List<Group> get groups => _groups;
 
@@ -253,11 +254,7 @@ class AppState with ChangeNotifier {
     }
   }
 
-  ViewMode get viewMode {
-    if (_viewWidth <= maxMobileWidth) return ViewMode.mobile;
-    if (_viewWidth <= maxLaptopWidth) return ViewMode.laptop;
-    return ViewMode.desktop;
-  }
+  ViewMode get viewMode => other.getViewMode(_viewWidth);
 
   DelayMap get delayMap {
     return _delayMap;

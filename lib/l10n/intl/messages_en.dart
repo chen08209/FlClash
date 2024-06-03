@@ -109,11 +109,14 @@ class MessageLookup extends MessageLookupByLibrary {
         "edit": MessageLookupByLibrary.simpleMessage("Edit"),
         "en": MessageLookupByLibrary.simpleMessage("English"),
         "exit": MessageLookupByLibrary.simpleMessage("Exit"),
+        "externalResources":
+            MessageLookupByLibrary.simpleMessage("External resources"),
         "file": MessageLookupByLibrary.simpleMessage("File"),
         "fileDesc":
             MessageLookupByLibrary.simpleMessage("Directly upload profile"),
         "filterSystemApp":
             MessageLookupByLibrary.simpleMessage("Filter system app"),
+        "geoData": MessageLookupByLibrary.simpleMessage("GeoData"),
         "global": MessageLookupByLibrary.simpleMessage("Global"),
         "goDownload": MessageLookupByLibrary.simpleMessage("Go to download"),
         "hours": MessageLookupByLibrary.simpleMessage("Hours"),
@@ -199,6 +202,9 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Only recovery profiles"),
         "recoverySuccess":
             MessageLookupByLibrary.simpleMessage("Recovery success"),
+        "resources": MessageLookupByLibrary.simpleMessage("Resources"),
+        "resourcesDesc": MessageLookupByLibrary.simpleMessage(
+            "External resource related info"),
         "rule": MessageLookupByLibrary.simpleMessage("Rule"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
         "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
@@ -229,6 +235,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "unableToUpdateCurrentProfileDesc":
             MessageLookupByLibrary.simpleMessage(
                 "unable to update current profile"),
+        "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
         "update": MessageLookupByLibrary.simpleMessage("Update"),
         "upload": MessageLookupByLibrary.simpleMessage("Upload"),
         "url": MessageLookupByLibrary.simpleMessage("URL"),

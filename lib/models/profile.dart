@@ -5,10 +5,7 @@ import 'dart:typed_data';
 import 'package:fl_clash/clash/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:json_annotation/json_annotation.dart';
-
-import 'common.dart';
 
 part 'generated/profile.g.dart';
 
@@ -83,44 +80,31 @@ class Profile {
     Duration? autoUpdateDuration,
     this.autoUpdate = true,
   })  : id = id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        autoUpdateDuration =
-            autoUpdateDuration ?? defaultUpdateDuration,
+        autoUpdateDuration = autoUpdateDuration ?? defaultUpdateDuration,
         selectedMap = selectedMap ?? {};
 
   ProfileType get type => url == null ? ProfileType.file : ProfileType.url;
 
-  Future<Result<bool>> checkAndUpdate() async {
+  Future<void> checkAndUpdate() async {
     final isExists = await check();
-    if(!isExists){
-      if(url != null){
+    if (!isExists) {
+      if (url != null) {
         return await update();
       }
-      return Result.error();
     }
-    return Result.success();
   }
 
-  Future<Result<bool>> update() async {
+  Future<void> update() async {
     if (url == null) {
-      return Result.error(
-        appLocalizations.unableToUpdateCurrentProfileDesc,
-      );
+      throw appLocalizations.unableToUpdateCurrentProfileDesc;
     }
-    final responseResult = await Request.getFileResponseForUrl(url!);
-    final response = responseResult.data;
-    if (responseResult.type != ResultType.success || response == null) {
-      return Result.error(responseResult.message);
-    }
-    final disposition = response.headers['content-disposition'];
+    final response = await request.getFileResponseForUrl(url!);
+    final disposition = response.headers.value("content-disposition");
     label ??= other.getFileNameForDisposition(disposition) ?? id;
-    final userinfo = response.headers['subscription-userinfo'];
+    final userinfo = response.headers.value('subscription-userinfo');
     userInfo = UserInfo.formHString(userinfo);
-    final saveResult = await saveFile(response.bodyBytes);
-    if (saveResult.type == ResultType.error) {
-      return Result.error(saveResult.message);
-    }
+    await saveFile(response.data);
     lastUpdateDate = DateTime.now();
-    return Result.success();
   }
 
   Future<bool> check() async {
@@ -128,10 +112,10 @@ class Profile {
     return await File(profilePath!).exists();
   }
 
-  Future<Result<void>> saveFile(Uint8List bytes) async {
-    final isValidate = clashCore.validateConfig(utf8.decode(bytes));
-    if (!isValidate) {
-      return Result.error(appLocalizations.profileParseErrorDesc);
+  Future<void> saveFile(Uint8List bytes) async {
+    final message = await clashCore.validateConfig(utf8.decode(bytes));
+    if (message.isNotEmpty) {
+      throw message;
     }
     final path = await appPath.getProfilePath(id);
     final file = File(path!);
@@ -141,7 +125,6 @@ class Profile {
     }
     await file.writeAsBytes(bytes);
     lastUpdateDate = DateTime.now();
-    return Result.success();
   }
 
   Map<String, dynamic> toJson() {

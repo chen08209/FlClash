@@ -36,11 +36,6 @@ class AppPath {
     final directory = await getProfilesPath();
     return join(directory, "$id.yaml");
   }
-
-  Future<String> getMMDBPath() async {
-    var directory = await applicationSupportDirectoryCompleter.future;
-    return join(directory.path, mmdbFileName);
-  }
 }
 
 final appPath = AppPath();

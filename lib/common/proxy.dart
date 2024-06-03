@@ -11,7 +11,7 @@ class ProxyManager {
     _proxy = proxy ?? proxy_plugin.Proxy();
   }
 
-  bool get isStart => startTime != null && startTime!.isBeforeNow();
+  bool get isStart => startTime != null && startTime!.isBeforeNow;
 
   DateTime? get startTime => _proxy.startTime;
 

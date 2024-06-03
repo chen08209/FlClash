@@ -29,6 +29,14 @@ class Navigation {
         label: "profiles",
         fragment: ProfilesFragment(),
       ),
+      const NavigationItem(
+        icon: Icon(Icons.swap_vert_circle),
+        label: "resources",
+        description: "resourcesDesc",
+        keep: false,
+        fragment: Resources(),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
       NavigationItem(
         icon: const Icon(Icons.adb),
         label: "logs",

@@ -9,6 +9,8 @@
   "tools": "Tools",
   "logs": "Logs",
   "logsDesc": "Log capture records",
+  "resources": "Resources",
+  "resourcesDesc": "External resource related info",
   "trafficUsage": "Traffic usage",
   "coreInfo": "Core info",
   "nullCoreInfoDesc": "Unable to obtain core info",
@@ -151,5 +153,8 @@
   "checkUpdate": "Check for updates",
   "discoverNewVersion": "Discover the new version",
   "checkUpdateError": "The current application is already the latest version",
-  "goDownload": "Go to download"
+  "goDownload": "Go to download",
+  "unknown": "Unknown",
+  "geoData": "GeoData",
+  "externalResources": "External resources"
 }

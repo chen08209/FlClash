@@ -1029,3 +1029,214 @@ abstract class _Process implements Process {
   _$$ProcessImplCopyWith<_$ProcessImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+ExternalProvider _$ExternalProviderFromJson(Map<String, dynamic> json) {
+  return _ExternalProvider.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ExternalProvider {
+  String get name => throw _privateConstructorUsedError;
+  String get type => throw _privateConstructorUsedError;
+  @JsonKey(name: "vehicle-type")
+  String get vehicleType => throw _privateConstructorUsedError;
+  @JsonKey(name: "update-at")
+  DateTime get updateAt => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ExternalProviderCopyWith<ExternalProvider> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ExternalProviderCopyWith<$Res> {
+  factory $ExternalProviderCopyWith(
+          ExternalProvider value, $Res Function(ExternalProvider) then) =
+      _$ExternalProviderCopyWithImpl<$Res, ExternalProvider>;
+  @useResult
+  $Res call(
+      {String name,
+      String type,
+      @JsonKey(name: "vehicle-type") String vehicleType,
+      @JsonKey(name: "update-at") DateTime updateAt});
+}
+
+/// @nodoc
+class _$ExternalProviderCopyWithImpl<$Res, $Val extends ExternalProvider>
+    implements $ExternalProviderCopyWith<$Res> {
+  _$ExternalProviderCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? type = null,
+    Object? vehicleType = null,
+    Object? updateAt = null,
+  }) {
+    return _then(_value.copyWith(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      vehicleType: null == vehicleType
+          ? _value.vehicleType
+          : vehicleType // ignore: cast_nullable_to_non_nullable
+              as String,
+      updateAt: null == updateAt
+          ? _value.updateAt
+          : updateAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ExternalProviderImplCopyWith<$Res>
+    implements $ExternalProviderCopyWith<$Res> {
+  factory _$$ExternalProviderImplCopyWith(_$ExternalProviderImpl value,
+          $Res Function(_$ExternalProviderImpl) then) =
+      __$$ExternalProviderImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String name,
+      String type,
+      @JsonKey(name: "vehicle-type") String vehicleType,
+      @JsonKey(name: "update-at") DateTime updateAt});
+}
+
+/// @nodoc
+class __$$ExternalProviderImplCopyWithImpl<$Res>
+    extends _$ExternalProviderCopyWithImpl<$Res, _$ExternalProviderImpl>
+    implements _$$ExternalProviderImplCopyWith<$Res> {
+  __$$ExternalProviderImplCopyWithImpl(_$ExternalProviderImpl _value,
+      $Res Function(_$ExternalProviderImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? type = null,
+    Object? vehicleType = null,
+    Object? updateAt = null,
+  }) {
+    return _then(_$ExternalProviderImpl(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      vehicleType: null == vehicleType
+          ? _value.vehicleType
+          : vehicleType // ignore: cast_nullable_to_non_nullable
+              as String,
+      updateAt: null == updateAt
+          ? _value.updateAt
+          : updateAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ExternalProviderImpl implements _ExternalProvider {
+  const _$ExternalProviderImpl(
+      {required this.name,
+      required this.type,
+      @JsonKey(name: "vehicle-type") required this.vehicleType,
+      @JsonKey(name: "update-at") required this.updateAt});
+
+  factory _$ExternalProviderImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ExternalProviderImplFromJson(json);
+
+  @override
+  final String name;
+  @override
+  final String type;
+  @override
+  @JsonKey(name: "vehicle-type")
+  final String vehicleType;
+  @override
+  @JsonKey(name: "update-at")
+  final DateTime updateAt;
+
+  @override
+  String toString() {
+    return 'ExternalProvider(name: $name, type: $type, vehicleType: $vehicleType, updateAt: $updateAt)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ExternalProviderImpl &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.vehicleType, vehicleType) ||
+                other.vehicleType == vehicleType) &&
+            (identical(other.updateAt, updateAt) ||
+                other.updateAt == updateAt));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, name, type, vehicleType, updateAt);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ExternalProviderImplCopyWith<_$ExternalProviderImpl> get copyWith =>
+      __$$ExternalProviderImplCopyWithImpl<_$ExternalProviderImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ExternalProviderImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ExternalProvider implements ExternalProvider {
+  const factory _ExternalProvider(
+          {required final String name,
+          required final String type,
+          @JsonKey(name: "vehicle-type") required final String vehicleType,
+          @JsonKey(name: "update-at") required final DateTime updateAt}) =
+      _$ExternalProviderImpl;
+
+  factory _ExternalProvider.fromJson(Map<String, dynamic> json) =
+      _$ExternalProviderImpl.fromJson;
+
+  @override
+  String get name;
+  @override
+  String get type;
+  @override
+  @JsonKey(name: "vehicle-type")
+  String get vehicleType;
+  @override
+  @JsonKey(name: "update-at")
+  DateTime get updateAt;
+  @override
+  @JsonKey(ignore: true)
+  _$$ExternalProviderImplCopyWith<_$ExternalProviderImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

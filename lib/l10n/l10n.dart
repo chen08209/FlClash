@@ -150,6 +150,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Resources`
+  String get resources {
+    return Intl.message(
+      'Resources',
+      name: 'resources',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `External resource related info`
+  String get resourcesDesc {
+    return Intl.message(
+      'External resource related info',
+      name: 'resourcesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Traffic usage`
   String get trafficUsage {
     return Intl.message(
@@ -1575,6 +1595,36 @@ class AppLocalizations {
     return Intl.message(
       'Go to download',
       name: 'goDownload',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unknown`
+  String get unknown {
+    return Intl.message(
+      'Unknown',
+      name: 'unknown',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `GeoData`
+  String get geoData {
+    return Intl.message(
+      'GeoData',
+      name: 'geoData',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `External resources`
+  String get externalResources {
+    return Intl.message(
+      'External resources',
+      name: 'externalResources',
       desc: '',
       args: [],
     );

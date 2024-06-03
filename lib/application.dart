@@ -82,7 +82,6 @@ class ApplicationState extends State<Application> {
     super.initState();
     globalState.appController = AppController(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      globalState.appController.updateViewWidth();
       globalState.appController.afterInit();
       globalState.appController.initLink();
       _updateGroups();

@@ -1,5 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -11,13 +10,13 @@ class AboutFragment extends StatelessWidget {
   _checkUpdate(BuildContext context) async {
     final commonScaffoldState = context.commonScaffoldState;
     if (commonScaffoldState?.mounted != true) return;
-    final res =
-        await commonScaffoldState?.loadingRun<Result<Map<String, dynamic>>>(
-      Request.checkForUpdate,
+    final data =
+        await commonScaffoldState?.loadingRun<Map<String, dynamic>?>(
+      request.checkForUpdate,
       title: appLocalizations.checkUpdate,
     );
     globalState.appController.checkUpdateResultHandle(
-      result: res,
+      data: data,
       handleError: true,
     );
   }

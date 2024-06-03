@@ -1,24 +1,41 @@
 import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart';
 
 import 'core.dart';
 
 class ClashService {
-  Future<bool> initMmdb() async {
-    final mmdbPath = await appPath.getMMDBPath();
-    var mmdbFile = File(mmdbPath);
-    final isExists = await mmdbFile.exists();
-    if (isExists) return true;
+  Future<void> initGeo() async {
+    final homePath = await appPath.getHomeDirPath();
+    final homeDir = Directory(homePath);
+    final isExists = await homeDir.exists();
+    if (!isExists) {
+      await homeDir.create(recursive: true);
+    }
+    const geoFileNameList = [
+      mmdbFileName,
+      geoSiteFileName,
+      asnFileName,
+    ];
     try {
-      mmdbFile = await mmdbFile.create(recursive: true);
-      ByteData data = await rootBundle.load('assets/data/geoip.metadb');
-      List<int> bytes = data.buffer.asUint8List();
-      await mmdbFile.writeAsBytes(bytes, flush: true);
-      return true;
-    } catch (_) {
-      return false;
+      for (final geoFileName in geoFileNameList) {
+        final geoFile = File(
+          join(homePath, geoFileName),
+        );
+        final isExists = await geoFile.exists();
+        if (isExists) {
+          continue;
+        }
+        final data = await rootBundle.load('assets/data/$geoFileName');
+        List<int> bytes = data.buffer.asUint8List();
+        await geoFile.writeAsBytes(bytes, flush: true);
+      }
+    } catch (e) {
+      debugPrint("$e");
+      exit(0);
     }
   }
 
@@ -26,8 +43,7 @@ class ClashService {
     required ClashConfig clashConfig,
     required Config config,
   }) async {
-    final isInitMmdb = await initMmdb();
-    if (!isInitMmdb) return false;
+    await initGeo();
     final homeDirPath = await appPath.getHomeDirPath();
     final isInit = clashCore.init(homeDirPath);
     return isInit;

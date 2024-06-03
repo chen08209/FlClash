@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'clash/core.dart';
-import 'enum/enum.dart';
 import 'models/models.dart';
 import 'common/common.dart';
 
@@ -78,10 +77,10 @@ class AppController {
     );
   }
 
-  addProfile(Profile profile) {
+  addProfile(Profile profile) async {
     config.setProfile(profile);
     if (config.currentProfileId != null) return;
-    changeProfile(profile.id);
+    await changeProfile(profile.id);
   }
 
   deleteProfile(String id) async {
@@ -102,15 +101,12 @@ class AppController {
   updateProfile(String id) async {
     final profile = config.getCurrentProfileForId(id);
     if (profile != null) {
-      final res = await profile.update();
-      if (res.type == ResultType.success) {
-        config.setProfile(profile);
-      }
+      await profile.update();
     }
   }
 
-  Future<String> updateClashConfig({bool isPatch = true}) async {
-    return await globalState.updateClashConfig(
+  Future<void> updateClashConfig({bool isPatch = true}) async {
+    await globalState.updateClashConfig(
       clashConfig: clashConfig,
       config: config,
       isPatch: isPatch,
@@ -118,24 +114,15 @@ class AppController {
   }
 
   Future applyProfile() async {
-    await globalState.applyProfile(
-      appState: appState,
-      config: config,
-      clashConfig: clashConfig,
-    );
-  }
-
-  Function? _changeProfileDebounce;
-
-  changeProfileDebounce(String? profileId) {
-    if (profileId == config.currentProfileId) return;
-    config.currentProfileId = profileId;
-    _changeProfileDebounce ??= debounce<Function(String?)>((profileId) async {
-      await applyProfile();
-      appState.delayMap = {};
-      saveConfigPreferences();
+    final commonScaffoldState = globalState.homeScaffoldKey.currentState;
+    if (commonScaffoldState?.mounted != true) return;
+    commonScaffoldState?.loadingRun(() async {
+      await globalState.applyProfile(
+        appState: appState,
+        config: config,
+        clashConfig: clashConfig,
+      );
     });
-    _changeProfileDebounce!([profileId]);
   }
 
   changeProfile(String? value) async {
@@ -153,8 +140,10 @@ class AppController {
           ?.add(
             profile.autoUpdateDuration,
           )
-          .isBeforeNow();
-      if (isNotNeedUpdate == false) continue;
+          .isBeforeNow;
+      if (isNotNeedUpdate == false ||
+          profile.url == null ||
+          profile.url!.isEmpty) continue;
       await profile.update();
     }
   }
@@ -211,18 +200,17 @@ class AppController {
 
   autoCheckUpdate() async {
     if (!config.autoCheckUpdate) return;
-    final res = await Request.checkForUpdate();
-    checkUpdateResultHandle(result: res);
+    final res = await request.checkForUpdate();
+    checkUpdateResultHandle(data: res);
   }
 
   checkUpdateResultHandle({
-    Result<Map<String, dynamic>>? result,
-    bool handleError = false
-}) async {
-    if (result == null) return;
-    if (result.type == ResultType.success) {
-      final tagName = result.data?['tag_name'];
-      final body = result.data?['body'];
+    Map<String, dynamic>? data,
+    bool handleError = false,
+  }) async {
+    if (data != null) {
+      final tagName = data['tag_name'];
+      final body = data['body'];
       final submits = other.parseReleaseBody(body);
       globalState.showMessage(
         title: appLocalizations.discoverNewVersion,
@@ -248,7 +236,7 @@ class AppController {
         },
         confirmText: appLocalizations.goDownload,
       );
-    } else if(handleError){
+    } else if (handleError) {
       globalState.showMessage(
         title: appLocalizations.checkUpdate,
         message: TextSpan(
@@ -290,11 +278,10 @@ class AppController {
     appState.setDelay(delay);
   }
 
-  updateDelayMap() async {
-    appState.delayMap = await clashCore.getDelayMap();
-  }
-
   toPage(int index, {bool hasAnimate = false}) {
+    if (index > appState.currentNavigationItems.length - 1) {
+      return;
+    }
     appState.currentLabel = appState.currentNavigationItems[index].label;
     if ((config.isAnimateToPage || hasAnimate)) {
       globalState.pageController?.animateToPage(
@@ -350,70 +337,50 @@ class AppController {
     toProfiles();
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
-    commonScaffoldState?.loadingRun(
+    final profile = await commonScaffoldState?.loadingRun<Profile>(
       () async {
-        await Future.delayed(const Duration(milliseconds: 300));
         final profile = Profile(
           url: url,
         );
-        final res = await profile.update();
-        if (res.type == ResultType.success) {
-          addProfile(profile);
-        } else {
-          debugPrint(res.message);
-          globalState.showMessage(
-            title: "${appLocalizations.add}${appLocalizations.profile}",
-            message: TextSpan(text: res.message!),
-          );
-        }
+        await profile.update();
+        return profile;
       },
+      title: "${appLocalizations.add}${appLocalizations.profile}",
     );
+    if (profile != null) {
+      await addProfile(profile);
+    }
   }
 
   addProfileFormFile() async {
-    final result = await picker.pickerConfigFile();
-    if (result.type == ResultType.error) return;
+    final platformFile = await globalState.safeRun(picker.pickerConfigFile);
     if (!context.mounted) return;
     globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     toProfiles();
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
-    commonScaffoldState?.loadingRun(
+    final profile = await commonScaffoldState?.loadingRun<Profile?>(
       () async {
         await Future.delayed(const Duration(milliseconds: 300));
-        final bytes = result.data?.bytes;
+        final bytes = platformFile?.bytes;
         if (bytes == null) {
-          return;
+          return null;
         }
-        final profile = Profile(label: result.data?.name);
-        final sRes = await profile.saveFile(bytes);
-        if (sRes.type == ResultType.error) {
-          debugPrint(sRes.message);
-          globalState.showMessage(
-            title: "${appLocalizations.add}${appLocalizations.profile}",
-            message: TextSpan(text: sRes.message!),
-          );
-          return;
-        }
-        addProfile(profile);
+        final profile = Profile(label: platformFile?.name);
+        await profile.saveFile(bytes);
+        return profile;
       },
+      title: "${appLocalizations.add}${appLocalizations.profile}",
     );
+    if (profile != null) {
+      await addProfile(profile);
+    }
   }
 
   addProfileFormQrCode() async {
-    final result = await picker.pickerConfigQRCode();
-    if (result.type == ResultType.error) {
-      if (result.message != null) {
-        globalState.showMessage(
-          title: appLocalizations.tip,
-          message: TextSpan(
-            text: result.message,
-          ),
-        );
-      }
-      return;
-    }
-    addProfileFormURL(result.data!);
+    final url = await globalState.safeRun(picker.pickerConfigQRCode);
+    if (url == null) return;
+    addProfileFormURL(url);
   }
 
   clearShowProxyDelay() {
@@ -432,12 +399,9 @@ class AppController {
     }
   }
 
-  updateViewWidth() {
-    appState.viewWidth = context.width;
-    if (appState.viewWidth == 0) {
-      Future.delayed(moreDuration, () {
-        updateViewWidth();
-      });
-    }
+  updateViewWidth(double width) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      appState.viewWidth = width;
+    });
   }
 }

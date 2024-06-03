@@ -10,10 +10,13 @@ import (
 	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/common/structure"
 	"github.com/metacubex/mihomo/common/utils"
+	"github.com/metacubex/mihomo/component/mmdb"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
+	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/log"
+	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 	"golang.org/x/net/context"
@@ -58,10 +61,22 @@ func shutdownClash() bool {
 }
 
 //export validateConfig
-func validateConfig(s *C.char) bool {
-	bytes := []byte(C.GoString(s))
-	_, err := config.UnmarshalRawConfig(bytes)
-	return err == nil
+func validateConfig(s *C.char, port C.longlong) {
+	i := int64(port)
+	go func() {
+		bytes := []byte(C.GoString(s))
+		rawConfig, err := config.UnmarshalRawConfig(bytes)
+		if err != nil {
+			bridge.SendToPort(i, err.Error())
+			return
+		}
+		_, err = config.ParseRawConfig(rawConfig)
+		if err != nil {
+			bridge.SendToPort(i, err.Error())
+			return
+		}
+		bridge.SendToPort(i, "")
+	}()
 }
 
 //export updateConfig
@@ -284,6 +299,84 @@ func getProvider(name *C.char) *C.char {
 		return C.CString("")
 	}
 	return C.CString(string(data))
+}
+
+//export getExternalProviders
+func getExternalProviders() *C.char {
+	externalProviders := make([]ExternalProvider, 0)
+	providers := tunnel.Providers()
+	for n, p := range providers {
+		if p.VehicleType() != cp.Compatible {
+			p := p.(*provider.ProxySetProvider)
+			externalProviders = append(externalProviders, ExternalProvider{
+				Name:        n,
+				Type:        p.Type().String(),
+				VehicleType: p.VehicleType().String(),
+				UpdateAt:    p.UpdatedAt,
+			})
+		}
+	}
+	for n, p := range tunnel.RuleProviders() {
+		if p.VehicleType() != cp.Compatible {
+			p := p.(*rp.RuleSetProvider)
+			externalProviders = append(externalProviders, ExternalProvider{
+				Name:        n,
+				Type:        p.Type().String(),
+				VehicleType: p.VehicleType().String(),
+				UpdateAt:    p.UpdatedAt,
+			})
+		}
+	}
+	data, err := json.Marshal(externalProviders)
+	if err != nil {
+		return C.CString("")
+	}
+	return C.CString(string(data))
+}
+
+//export updateExternalProvider
+func updateExternalProvider(providerName *C.char, providerType *C.char, port C.longlong) {
+	i := int64(port)
+	go func() {
+		providerNameString := C.GoString(providerName)
+		providerTypeString := C.GoString(providerType)
+
+		switch providerTypeString {
+		case "Proxy":
+			providers := tunnel.Providers()
+			err := providers[providerNameString].Update()
+			if err != nil {
+				bridge.SendToPort(i, err.Error())
+				return
+			}
+		case "Rule":
+			providers := tunnel.RuleProviders()
+			err := providers[providerNameString].Update()
+			if err != nil {
+				bridge.SendToPort(i, err.Error())
+				return
+			}
+		case "GeoIp":
+			err := mmdb.DownloadMMDB(constant.Path.Resolve(providerNameString))
+			if err != nil {
+				bridge.SendToPort(i, err.Error())
+				return
+			}
+		case "GeoSite":
+			err := mmdb.DownloadGeoSite(constant.Path.Resolve(providerNameString))
+			if err != nil {
+				bridge.SendToPort(i, err.Error())
+				return
+			}
+		case "ASN":
+			err := mmdb.DownloadASN(constant.Path.Resolve(providerNameString))
+			if err != nil {
+				bridge.SendToPort(i, err.Error())
+				return
+			}
+		}
+		bridge.SendToPort(i, "")
+	}()
 }
 
 //export healthcheck

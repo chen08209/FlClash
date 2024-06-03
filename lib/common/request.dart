@@ -1,36 +1,78 @@
-import 'dart:convert';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:http/http.dart';
-import '../models/models.dart';
+import 'package:fl_clash/state.dart';
 
 class Request {
-  static Future<Result<Response>> getFileResponseForUrl(String url) async {
-    final headers = {'User-Agent': coreName};
-    try {
-      final response = await get(Uri.parse(url), headers: headers).timeout(
-        httpTimeoutDuration,
+  late final Dio _dio;
+  int? _port;
+
+  Request() {
+    _dio = Dio(
+      BaseOptions(
+        connectTimeout: httpTimeoutDuration,
+        sendTimeout: httpTimeoutDuration,
+        receiveTimeout: httpTimeoutDuration,
+        headers: {"User-Agent": coreName},
+      ),
+    );
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        _syncProxy();
+        return handler.next(options); // 继续请求
+      },
+    ));
+  }
+
+  _syncProxy(){
+    final port = globalState.appController.clashConfig.mixedPort;
+    if (_port != port) {
+      _port = port;
+      _dio.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          client.findProxy = (url) {
+            return "PROXY localhost:$_port;DIRECT";
+          };
+          return client;
+        },
       );
-      return Result.success(response);
-    } catch (err) {
-      return Result.error(err.toString());
     }
   }
 
-  static Future<Result<Map<String,dynamic>>> checkForUpdate() async {
-    final response = await get(
-      Uri.parse(
-        "https://api.github.com/repos/$repository/releases/latest",
+  Future<Response> getFileResponseForUrl(String url) async {
+    final response = await _dio
+        .get(
+      url,
+      options: Options(
+        responseType: ResponseType.bytes,
+      ),
+    )
+        .timeout(
+      httpTimeoutDuration,
+    );
+    return response;
+  }
+
+  Future<Map<String, dynamic>?> checkForUpdate() async {
+    final response = await _dio.get(
+      "https://api.github.com/repos/$repository/releases/latest",
+      options: Options(
+        responseType: ResponseType.json,
       ),
     );
-    if (response.statusCode != 200) return Result.error();
-    final body = json.decode(response.body) as Map<String,dynamic>;
-    final remoteVersion = body['tag_name'];
+    if (response.statusCode != 200) return null;
+    final data = response.data as Map<String, dynamic>;
+    final remoteVersion = data['tag_name'];
     final packageInfo = await appPackage.packageInfoCompleter.future;
     final version = packageInfo.version;
     final hasUpdate =
         other.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
-    if (!hasUpdate) return Result.error();
-    return Result.success(body);
+    if (!hasUpdate) return null;
+    return data;
   }
 }
+
+final request = Request();

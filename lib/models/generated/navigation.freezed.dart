@@ -20,6 +20,7 @@ mixin _$NavigationItem {
   String get label => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   Widget get fragment => throw _privateConstructorUsedError;
+  bool get keep => throw _privateConstructorUsedError;
   String? get path => throw _privateConstructorUsedError;
   List<NavigationItemMode> get modes => throw _privateConstructorUsedError;
 
@@ -39,6 +40,7 @@ abstract class $NavigationItemCopyWith<$Res> {
       String label,
       String? description,
       Widget fragment,
+      bool keep,
       String? path,
       List<NavigationItemMode> modes});
 }
@@ -60,6 +62,7 @@ class _$NavigationItemCopyWithImpl<$Res, $Val extends NavigationItem>
     Object? label = null,
     Object? description = freezed,
     Object? fragment = null,
+    Object? keep = null,
     Object? path = freezed,
     Object? modes = null,
   }) {
@@ -80,6 +83,10 @@ class _$NavigationItemCopyWithImpl<$Res, $Val extends NavigationItem>
           ? _value.fragment
           : fragment // ignore: cast_nullable_to_non_nullable
               as Widget,
+      keep: null == keep
+          ? _value.keep
+          : keep // ignore: cast_nullable_to_non_nullable
+              as bool,
       path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
@@ -105,6 +112,7 @@ abstract class _$$NavigationItemImplCopyWith<$Res>
       String label,
       String? description,
       Widget fragment,
+      bool keep,
       String? path,
       List<NavigationItemMode> modes});
 }
@@ -124,6 +132,7 @@ class __$$NavigationItemImplCopyWithImpl<$Res>
     Object? label = null,
     Object? description = freezed,
     Object? fragment = null,
+    Object? keep = null,
     Object? path = freezed,
     Object? modes = null,
   }) {
@@ -144,6 +153,10 @@ class __$$NavigationItemImplCopyWithImpl<$Res>
           ? _value.fragment
           : fragment // ignore: cast_nullable_to_non_nullable
               as Widget,
+      keep: null == keep
+          ? _value.keep
+          : keep // ignore: cast_nullable_to_non_nullable
+              as bool,
       path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
@@ -164,6 +177,7 @@ class _$NavigationItemImpl implements _NavigationItem {
       required this.label,
       this.description,
       required this.fragment,
+      this.keep = true,
       this.path,
       final List<NavigationItemMode> modes = const [
         NavigationItemMode.mobile,
@@ -180,6 +194,9 @@ class _$NavigationItemImpl implements _NavigationItem {
   @override
   final Widget fragment;
   @override
+  @JsonKey()
+  final bool keep;
+  @override
   final String? path;
   final List<NavigationItemMode> _modes;
   @override
@@ -192,7 +209,7 @@ class _$NavigationItemImpl implements _NavigationItem {
 
   @override
   String toString() {
-    return 'NavigationItem(icon: $icon, label: $label, description: $description, fragment: $fragment, path: $path, modes: $modes)';
+    return 'NavigationItem(icon: $icon, label: $label, description: $description, fragment: $fragment, keep: $keep, path: $path, modes: $modes)';
   }
 
   @override
@@ -206,13 +223,14 @@ class _$NavigationItemImpl implements _NavigationItem {
                 other.description == description) &&
             (identical(other.fragment, fragment) ||
                 other.fragment == fragment) &&
+            (identical(other.keep, keep) || other.keep == keep) &&
             (identical(other.path, path) || other.path == path) &&
             const DeepCollectionEquality().equals(other._modes, _modes));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, icon, label, description,
-      fragment, path, const DeepCollectionEquality().hash(_modes));
+      fragment, keep, path, const DeepCollectionEquality().hash(_modes));
 
   @JsonKey(ignore: true)
   @override
@@ -228,6 +246,7 @@ abstract class _NavigationItem implements NavigationItem {
       required final String label,
       final String? description,
       required final Widget fragment,
+      final bool keep,
       final String? path,
       final List<NavigationItemMode> modes}) = _$NavigationItemImpl;
 
@@ -239,6 +258,8 @@ abstract class _NavigationItem implements NavigationItem {
   String? get description;
   @override
   Widget get fragment;
+  @override
+  bool get keep;
   @override
   String? get path;
   @override
