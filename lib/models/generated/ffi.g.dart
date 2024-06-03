@@ -94,3 +94,21 @@ Map<String, dynamic> _$$ProcessImplToJson(_$ProcessImpl instance) =>
       'source': instance.source,
       'target': instance.target,
     };
+
+_$ExternalProviderImpl _$$ExternalProviderImplFromJson(
+        Map<String, dynamic> json) =>
+    _$ExternalProviderImpl(
+      name: json['name'] as String,
+      type: json['type'] as String,
+      vehicleType: json['vehicle-type'] as String,
+      updateAt: DateTime.parse(json['update-at'] as String),
+    );
+
+Map<String, dynamic> _$$ExternalProviderImplToJson(
+        _$ExternalProviderImpl instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'type': instance.type,
+      'vehicle-type': instance.vehicleType,
+      'update-at': instance.updateAt.toIso8601String(),
+    };

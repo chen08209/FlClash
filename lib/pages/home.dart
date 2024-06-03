@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -56,54 +57,65 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopContainer(
-      child: Selector2<AppState, Config, HomeSelectorState>(
-        selector: (_, appState, config) => HomeSelectorState(
-          currentLabel: appState.currentLabel,
-          navigationItems: appState.currentNavigationItems,
-          viewMode: appState.viewMode,
-          locale: config.locale,
-        ),
-        builder: (_, state, child) {
-          final viewMode = state.viewMode;
-          final navigationItems = state.navigationItems;
-          final currentLabel = state.currentLabel;
-          final index = navigationItems.lastIndexWhere(
-            (element) => element.label == currentLabel,
-          );
-          final currentIndex = index == -1 ? 0 : index;
-          final navigationBar = _getNavigationBar(
-            viewMode: viewMode,
-            navigationItems: navigationItems,
-            currentIndex: currentIndex,
-          );
-          final bottomNavigationBar =
-              viewMode == ViewMode.mobile ? navigationBar : null;
-          Widget body;
-          if (viewMode != ViewMode.mobile) {
-            body = Row(
-              children: [
-                navigationBar,
-                Expanded(
-                  flex: 1,
-                  child: child!,
-                )
-              ],
-            );
-          } else {
-            body = child!;
+      child: LayoutBuilder(
+        builder: (_, container) {
+          final appController = globalState.appController;
+          final maxWidth = container.maxWidth;
+          if (appController.appState.viewWidth != maxWidth) {
+            globalState.appController.updateViewWidth(maxWidth);
           }
-          return CommonScaffold(
-            key: globalState.homeScaffoldKey,
-            title: Intl.message(
-              currentLabel,
+          return Selector2<AppState, Config, HomeSelectorState>(
+            selector: (_, appState, config) {
+              return HomeSelectorState(
+                currentLabel: appState.currentLabel,
+                navigationItems: appState.currentNavigationItems,
+                viewMode: other.getViewMode(maxWidth),
+                locale: config.locale,
+              );
+            },
+            builder: (_, state, child) {
+              final viewMode = state.viewMode;
+              final navigationItems = state.navigationItems;
+              final currentLabel = state.currentLabel;
+              final index = navigationItems.lastIndexWhere(
+                (element) => element.label == currentLabel,
+              );
+              final currentIndex = index == -1 ? 0 : index;
+              final navigationBar = _getNavigationBar(
+                viewMode: viewMode,
+                navigationItems: navigationItems,
+                currentIndex: currentIndex,
+              );
+              final bottomNavigationBar =
+                  viewMode == ViewMode.mobile ? navigationBar : null;
+              Widget body;
+              if (viewMode != ViewMode.mobile) {
+                body = Row(
+                  children: [
+                    navigationBar,
+                    Expanded(
+                      flex: 1,
+                      child: child!,
+                    )
+                  ],
+                );
+              } else {
+                body = child!;
+              }
+              return CommonScaffold(
+                key: globalState.homeScaffoldKey,
+                title: Intl.message(
+                  currentLabel,
+                ),
+                body: body,
+                bottomNavigationBar: bottomNavigationBar,
+              );
+            },
+            child: const HomeBody(
+              key: Key("home_boy"),
             ),
-            body: body,
-            bottomNavigationBar: bottomNavigationBar,
           );
         },
-        child: const HomeBody(
-          key: Key("home_boy"),
-        ),
       ),
     );
   }
@@ -120,7 +132,7 @@ class HomeBody extends StatelessWidget {
     final currentIndex = index == -1 ? 0 : index;
     if (globalState.pageController != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        globalState.appController.toPage(currentIndex);
+        globalState.appController.toPage(currentIndex, hasAnimate: true);
       });
     } else {
       globalState.pageController = PageController(
@@ -146,6 +158,7 @@ class HomeBody extends StatelessWidget {
           itemBuilder: (_, index) {
             final navigationItem = navigationItems[index];
             return KeepContainer(
+              keep: navigationItem.keep,
               key: Key(navigationItem.label),
               child: navigationItem.fragment,
             );

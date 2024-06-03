@@ -25,7 +25,6 @@ class ProfilesFragment extends StatefulWidget {
 }
 
 class _ProfilesFragmentState extends State<ProfilesFragment> {
-
   _handleDeleteProfile(String id) async {
     globalState.appController.deleteProfile(id);
   }
@@ -176,30 +175,6 @@ class ProfileItem extends StatelessWidget {
     required this.onChanged,
   });
 
-  String _getLastUpdateTimeDifference(DateTime lastDateTime) {
-    final currentDateTime = DateTime.now();
-    final difference = currentDateTime.difference(lastDateTime);
-    final days = difference.inDays;
-    if (days >= 365) {
-      return "${(days / 365).floor()} ${appLocalizations.years}${appLocalizations.ago}";
-    }
-    if (days >= 30) {
-      return "${(days / 30).floor()} ${appLocalizations.months}${appLocalizations.ago}";
-    }
-    if (days >= 1) {
-      return "$days ${appLocalizations.days}${appLocalizations.ago}";
-    }
-    final hours = difference.inHours;
-    if (hours >= 1) {
-      return "$hours ${appLocalizations.hours}${appLocalizations.ago}";
-    }
-    final minutes = difference.inMinutes;
-    if (minutes >= 1) {
-      return "$minutes ${appLocalizations.minutes}${appLocalizations.ago}";
-    }
-    return appLocalizations.just;
-  }
-
   @override
   Widget build(BuildContext context) {
     String useShow;
@@ -246,9 +221,7 @@ class ProfileItem extends StatelessWidget {
                 ),
                 Flexible(
                   child: Text(
-                    profile.lastUpdateDate != null
-                        ? _getLastUpdateTimeDifference(profile.lastUpdateDate!)
-                        : '',
+                    profile.lastUpdateDate?.lastUpdateTimeDesc ?? '',
                     style: Theme.of(context).textTheme.labelMedium?.toLight(),
                   ),
                 ),

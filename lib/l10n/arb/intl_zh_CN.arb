@@ -9,6 +9,8 @@
   "tools": "工具",
   "logs": "日志",
   "logsDesc": "日志捕获记录",
+  "resources": "资源",
+  "resourcesDesc": "外部资源相关信息",
   "trafficUsage": "流量统计",
   "coreInfo": "内核信息",
   "nullCoreInfoDesc": "无法获取内核信息",
@@ -151,5 +153,8 @@
   "checkUpdate": "检查更新",
   "discoverNewVersion": "发现新版本",
   "checkUpdateError": "当前应用已经是最新版了",
-  "goDownload": "前往下载"
+  "goDownload": "前往下载",
+  "unknown": "未知",
+  "geoData": "地理数据",
+  "externalResources": "外部资源"
 }

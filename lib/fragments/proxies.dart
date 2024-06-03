@@ -399,7 +399,6 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scale;
-  late Animation<double> _opacity;
 
   _healthcheck() async {
     if (globalState.healthcheckLock) return;
@@ -416,7 +415,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(
-        milliseconds: 300,
+        milliseconds: 600,
       ),
     );
     _scale = Tween<double>(
@@ -429,19 +428,6 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
           0,
           1,
           curve: Curves.elasticInOut,
-        ),
-      ),
-    );
-    _opacity = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(
-          0,
-          1,
-          curve: Curves.easeIn,
         ),
       ),
     );
@@ -465,10 +451,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
               height: 56,
               child: Transform.scale(
                 scale: _scale.value,
-                child: Opacity(
-                  opacity: _opacity.value,
-                  child: child!,
-                ),
+                child: child,
               ),
             );
           },

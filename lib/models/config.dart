@@ -50,7 +50,7 @@ class Config extends ChangeNotifier {
         _autoRun = false,
         _themeMode = ThemeMode.system,
         _openLog = false,
-        _isCompatible = false,
+        _isCompatible = true,
         _primaryColor = defaultPrimaryColor.value,
         _proxiesSortType = ProxiesSortType.none,
         _isMinimizeOnExit = true,
@@ -281,7 +281,7 @@ class Config extends ChangeNotifier {
     }
   }
 
-  @JsonKey(defaultValue: false)
+  @JsonKey(defaultValue: true)
   bool get isCompatible {
     return _isCompatible;
   }

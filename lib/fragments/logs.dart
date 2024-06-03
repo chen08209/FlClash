@@ -1,4 +1,5 @@
-import 'package:collection/collection.dart';
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
@@ -7,10 +8,40 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../widgets/widgets.dart';
 
-class LogsFragment extends StatelessWidget {
+class LogsFragment extends StatefulWidget {
   const LogsFragment({super.key});
 
-  _initActions(BuildContext context) {
+  @override
+  State<LogsFragment> createState() => _LogsFragmentState();
+}
+
+class _LogsFragmentState extends State<LogsFragment> {
+  final logsNotifier = ValueNotifier<List<Log>>([]);
+  Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      logsNotifier.value = context.read<AppState>().logs;
+      if (timer != null) {
+        timer?.cancel();
+        timer = null;
+      }
+      timer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+        logsNotifier.value = globalState.appController.appState.logs;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    timer?.cancel();
+    timer = null;
+  }
+
+  _initActions() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final commonScaffoldState =
           context.findAncestorStateOfType<CommonScaffoldState>();
@@ -20,7 +51,7 @@ class LogsFragment extends StatelessWidget {
             showSearch(
               context: context,
               delegate: LogsSearchDelegate(
-                logs: globalState.appController.appState.logs.reversed.toList(),
+                logs: logsNotifier.value.reversed.toList(),
               ),
             );
           },
@@ -31,10 +62,8 @@ class LogsFragment extends StatelessWidget {
   }
 
   _buildList() {
-    return Selector<AppState, List<Log>>(
-      selector: (_, appState) => appState.logs,
-      shouldRebuild: (prev, next) =>
-          !const ListEquality<Log>().equals(prev, next),
+    return ValueListenableBuilder<List<Log>>(
+      valueListenable: logsNotifier,
       builder: (_, List<Log> logs, __) {
         if (logs.isEmpty) {
           return NullStatus(
@@ -48,7 +77,6 @@ class LogsFragment extends StatelessWidget {
           itemBuilder: (BuildContext context, int index) {
             final log = logs[index];
             return LogItem(
-              key: ValueKey(log.dateTime),
               log: log,
             );
           },
@@ -65,14 +93,13 @@ class LogsFragment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Selector<AppState, bool?>(
-      selector: (_, appState) {
-        return appState.currentLabel == 'logs' ||
-            appState.viewMode == ViewMode.mobile &&
-                appState.currentLabel == "tools";
-      },
+      selector: (_, appState) =>
+          appState.currentLabel == 'logs' ||
+          appState.viewMode == ViewMode.mobile &&
+              appState.currentLabel == "tools",
       builder: (_, isCurrent, child) {
         if (isCurrent == null || isCurrent) {
-          _initActions(context);
+          _initActions();
         }
         return child!;
       },

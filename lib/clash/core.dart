@@ -5,9 +5,9 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import '../enum/enum.dart';
-import '../models/models.dart';
-import '../common/common.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'generated/clash_ffi.dart';
 
 class ClashCore {
@@ -58,11 +58,20 @@ class ClashCore {
 
   bool get isInit => clashFFI.getIsInit() == 1;
 
-  bool validateConfig(String data) {
-    return clashFFI.validateConfig(
-          data.toNativeUtf8().cast(),
-        ) ==
-        1;
+  Future<String> validateConfig(String data) {
+    final completer = Completer<String>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if (!completer.isCompleted) {
+        completer.complete(message);
+        receiver.close();
+      }
+    });
+    clashFFI.validateConfig(
+      data.toNativeUtf8().cast(),
+      receiver.sendPort.nativePort,
+    );
+    return completer.future;
   }
 
   Future<String> updateConfig(UpdateConfigParams updateConfigParams) {
@@ -107,29 +116,39 @@ class ClashCore {
     });
   }
 
-  Future<DelayMap> getDelayMap() {
-    final proxiesRaw = clashFFI.getProxies();
-    final proxiesRawString = proxiesRaw.cast<Utf8>().toDartString();
-    return Isolate.run<DelayMap>(() {
-      final proxies = json.decode(proxiesRawString) as Map<String, dynamic>;
-      return proxies.map<String, int?>(
-        (k, v) {
-          final history = v["history"] as List<dynamic>;
-          if (history.isEmpty) {
-            return MapEntry(
-              k,
-              null,
-            );
-          } else {
-            final delay = history.last["delay"];
-            return MapEntry(
-              k,
-              delay != 0 ? delay : -1,
-            );
-          }
-        },
-      );
+  Future<List<ExternalProvider>> getExternalProviders() {
+    final externalProvidersRaw = clashFFI.getExternalProviders();
+    final externalProvidersRawString =
+        externalProvidersRaw.cast<Utf8>().toDartString();
+    return Isolate.run<List<ExternalProvider>>(() {
+      final externalProviders =
+          (json.decode(externalProvidersRawString) as List<dynamic>)
+              .map(
+                (item) => ExternalProvider.fromJson(item),
+              )
+              .toList();
+      return externalProviders;
     });
+  }
+
+  Future<String> updateExternalProvider({
+    required String providerName,
+    required String providerType,
+  }) {
+    final completer = Completer<String>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if (!completer.isCompleted) {
+        completer.complete(message);
+        receiver.close();
+      }
+    });
+    clashFFI.updateExternalProvider(
+      providerName.toNativeUtf8().cast(),
+      providerType.toNativeUtf8().cast(),
+      receiver.sendPort.nativePort,
+    );
+    return completer.future;
   }
 
   bool changeProxy(ChangeProxyParams changeProxyParams) {

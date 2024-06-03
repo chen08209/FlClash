@@ -28,11 +28,6 @@ class _WindowContainerState extends State<WindowContainer>
   }
 
   @override
-  void onWindowResize() {
-    globalState.appController.updateViewWidth();
-  }
-
-  @override
   void onWindowClose() async {
     await globalState.appController.handleBackOrExit();
     super.onWindowClose();

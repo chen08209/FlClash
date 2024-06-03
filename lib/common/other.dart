@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:zxing2/qrcode.dart';
 import 'package:image/image.dart' as img;
@@ -177,6 +179,12 @@ class Other {
         .map((match) => match.group(1) ?? '')
         .where((item) => item.isNotEmpty)
         .toList();
+  }
+
+  ViewMode getViewMode(double viewWidth){
+    if (viewWidth <= maxMobileWidth) return ViewMode.mobile;
+    if (viewWidth <= maxLaptopWidth) return ViewMode.laptop;
+    return ViewMode.desktop;
   }
 }
 

@@ -38,7 +38,7 @@ class GlobalState {
     timer?.cancel();
   }
 
-  Future<String> updateClashConfig({
+  Future<void> updateClashConfig({
     required ClashConfig clashConfig,
     required Config config,
     bool isPatch = true,
@@ -46,12 +46,13 @@ class GlobalState {
     final profilePath = await appPath.getProfilePath(config.currentProfileId);
     await config.currentProfile?.checkAndUpdate();
     debugPrint("update config");
-    return clashCore.updateConfig(UpdateConfigParams(
+    final res = await clashCore.updateConfig(UpdateConfigParams(
       profilePath: profilePath,
       config: clashConfig,
       isPatch: isPatch,
       isCompatible: config.isCompatible,
     ));
+    if (res.isNotEmpty) throw res;
   }
 
   updateCoreVersionInfo(AppState appState) {
@@ -76,17 +77,16 @@ class GlobalState {
     stopListenUpdate();
   }
 
-  applyProfile({
+  Future<void> applyProfile({
     required AppState appState,
     required Config config,
     required ClashConfig clashConfig,
   }) async {
-    final res = await updateClashConfig(
+    await updateClashConfig(
       clashConfig: clashConfig,
       config: config,
       isPatch: false,
     );
-    if (res.isNotEmpty) return Result.error(res);
     await updateGroups(appState);
     changeProxy(
       appState: appState,
@@ -167,9 +167,7 @@ class GlobalState {
             title: Text(title),
             content: Container(
               width: 300,
-              constraints: const BoxConstraints(
-                  maxHeight: 200
-              ),
+              constraints: const BoxConstraints(maxHeight: 200),
               child: SingleChildScrollView(
                 child: RichText(
                   overflow: TextOverflow.visible,
@@ -269,6 +267,24 @@ class GlobalState {
       }
     });
     updateCurrentDelayDebounce!([proxyName]);
+  }
+
+  Future<T?> safeRun<T>(
+    FutureOr<T> Function() futureFunction, {
+    String? title,
+  }) async {
+    try {
+      final res = await futureFunction();
+      return res;
+    } catch (e) {
+      showMessage(
+        title: title ?? appLocalizations.tip,
+        message: TextSpan(
+          text: e.toString(),
+        ),
+      );
+      return null;
+    }
   }
 }
 

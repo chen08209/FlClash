@@ -75,3 +75,16 @@ class Process with _$Process {
   factory Process.fromJson(Map<String, Object?> json) =>
       _$ProcessFromJson(json);
 }
+
+@freezed
+class ExternalProvider with _$ExternalProvider {
+  const factory ExternalProvider({
+    required String name,
+    required String type,
+    @JsonKey(name: "vehicle-type") required String vehicleType,
+    @JsonKey(name: "update-at") required DateTime updateAt,
+  }) = _ExternalProvider;
+
+  factory ExternalProvider.fromJson(Map<String, Object?> json) =>
+      _$ExternalProviderFromJson(json);
+}

@@ -70,7 +70,7 @@ class Proxy extends ProxyPlatform {
     });
   }
 
-  bool get isStart => startTime != null && startTime!.isBeforeNow();
+  bool get isStart => startTime != null && startTime!.isBeforeNow;
 
   startAfterHook(int? fd) {
     if (!isStart && fd != null) {

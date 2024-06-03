@@ -893,19 +893,22 @@ class ClashFFI {
       _lookup<ffi.NativeFunction<GoUint8 Function()>>('shutdownClash');
   late final _shutdownClash = _shutdownClashPtr.asFunction<int Function()>();
 
-  int validateConfig(
+  void validateConfig(
     ffi.Pointer<ffi.Char> s,
+    int port,
   ) {
     return _validateConfig(
       s,
+      port,
     );
   }
 
-  late final _validateConfigPtr =
-      _lookup<ffi.NativeFunction<GoUint8 Function(ffi.Pointer<ffi.Char>)>>(
-          'validateConfig');
-  late final _validateConfig =
-      _validateConfigPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final _validateConfigPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<ffi.Char>, ffi.LongLong)>>('validateConfig');
+  late final _validateConfig = _validateConfigPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Char>, int)>();
 
   void updateConfig(
     ffi.Pointer<ffi.Char> s,
@@ -1053,6 +1056,35 @@ class ClashFFI {
               ffi.Pointer<ffi.Char>)>>('getProvider');
   late final _getProvider = _getProviderPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+
+  ffi.Pointer<ffi.Char> getExternalProviders() {
+    return _getExternalProviders();
+  }
+
+  late final _getExternalProvidersPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
+          'getExternalProviders');
+  late final _getExternalProviders =
+      _getExternalProvidersPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
+
+  void updateExternalProvider(
+    ffi.Pointer<ffi.Char> providerName,
+    ffi.Pointer<ffi.Char> providerType,
+    int port,
+  ) {
+    return _updateExternalProvider(
+      providerName,
+      providerType,
+      port,
+    );
+  }
+
+  late final _updateExternalProviderPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+              ffi.LongLong)>>('updateExternalProvider');
+  late final _updateExternalProvider = _updateExternalProviderPtr.asFunction<
+      void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   void healthcheck() {
     return _healthcheck();
