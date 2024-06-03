@@ -13,6 +13,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
 import androidx.core.graphics.drawable.IconCompat
 import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
@@ -20,6 +21,7 @@ import com.follow.clash.models.AccessControl
 import com.follow.clash.models.AccessControlMode
 
 
+@SuppressLint("WrongConstant")
 class FlClashVpnService : VpnService() {
 
 
@@ -97,6 +99,43 @@ class FlClashVpnService : VpnService() {
         stopForeground()
     }
 
+
+    private val notificationBuilder by lazy {
+        val intent = Intent(this, MainActivity::class.java)
+
+        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        } else {
+            PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
+
+        val icon = IconCompat.createWithResource(this, this.applicationInfo.icon)
+
+        with(NotificationCompat.Builder(this, CHANNEL)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                setSmallIcon(icon)
+            }
+            setContentTitle("FlClash")
+            foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
+            setContentIntent(pendingIntent)
+            setCategory(NotificationCompat.CATEGORY_SERVICE)
+            priority = NotificationCompat.PRIORITY_LOW
+            setOngoing(true)
+            setShowWhen(false)
+            setOnlyAlertOnce(true)
+        }
+    }
+
     @SuppressLint("ForegroundServiceType", "WrongConstant")
     fun startForeground(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -104,42 +143,13 @@ class FlClashVpnService : VpnService() {
                 NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
-
-            val intent = Intent(this, MainActivity::class.java)
-
-            val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.getActivity(
-                    this,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            } else {
-                PendingIntent.getActivity(
-                    this,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            }
-
-            val icon = IconCompat.createWithResource(this, this.applicationInfo.icon)
-
-            val notification = with(NotificationCompat.Builder(this, CHANNEL)) {
-                setSmallIcon(icon)
-                setContentTitle(title)
-                setContentText(content)
-                foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
-                setContentIntent(pendingIntent)
-                setOngoing(true)
-                setShowWhen(false)
-                build()
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-            } else {
-                startForeground(notificationId, notification)
-            }
+        }
+        val notification =
+            notificationBuilder.setContentTitle(title).setContentText(content).build()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
+            startForeground(notificationId, notification)
         }
     }
 

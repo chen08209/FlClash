@@ -6,34 +6,6 @@ part of '../config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-AccessControl _$AccessControlFromJson(Map<String, dynamic> json) =>
-    AccessControl(
-      isFilterSystemApp: json['isFilterSystemApp'] as bool? ?? true,
-      mode: $enumDecodeNullable(_$AccessControlModeEnumMap, json['mode']) ??
-          AccessControlMode.rejectSelected,
-      acceptList: (json['acceptList'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
-      rejectList: (json['rejectList'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
-    );
-
-Map<String, dynamic> _$AccessControlToJson(AccessControl instance) =>
-    <String, dynamic>{
-      'mode': _$AccessControlModeEnumMap[instance.mode]!,
-      'acceptList': instance.acceptList,
-      'rejectList': instance.rejectList,
-      'isFilterSystemApp': instance.isFilterSystemApp,
-    };
-
-const _$AccessControlModeEnumMap = {
-  AccessControlMode.acceptSelected: 'acceptSelected',
-  AccessControlMode.rejectSelected: 'rejectSelected',
-};
-
 Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..profiles = (json['profiles'] as List<dynamic>?)
           ?.map((e) => Profile.fromJson(e as Map<String, dynamic>))
@@ -92,4 +64,32 @@ const _$ProxiesSortTypeEnumMap = {
   ProxiesSortType.none: 'none',
   ProxiesSortType.delay: 'delay',
   ProxiesSortType.name: 'name',
+};
+
+_$AccessControlImpl _$$AccessControlImplFromJson(Map<String, dynamic> json) =>
+    _$AccessControlImpl(
+      mode: $enumDecodeNullable(_$AccessControlModeEnumMap, json['mode']) ??
+          AccessControlMode.rejectSelected,
+      acceptList: (json['acceptList'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      rejectList: (json['rejectList'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      isFilterSystemApp: json['isFilterSystemApp'] as bool? ?? true,
+    );
+
+Map<String, dynamic> _$$AccessControlImplToJson(_$AccessControlImpl instance) =>
+    <String, dynamic>{
+      'mode': _$AccessControlModeEnumMap[instance.mode]!,
+      'acceptList': instance.acceptList,
+      'rejectList': instance.rejectList,
+      'isFilterSystemApp': instance.isFilterSystemApp,
+    };
+
+const _$AccessControlModeEnumMap = {
+  AccessControlMode.acceptSelected: 'acceptSelected',
+  AccessControlMode.rejectSelected: 'rejectSelected',
 };
