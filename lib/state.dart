@@ -121,19 +121,17 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (config.profiles.isEmpty) {
-        stopSystemProxy();
-        return;
-      }
-      config.currentSelectedMap.forEach((key, value) {
-        clashCore.changeProxy(
-          ChangeProxyParams(
-            groupName: key,
-            proxyName: value,
-          ),
-        );
-      });
+    if (config.profiles.isEmpty) {
+      stopSystemProxy();
+      return;
+    }
+    config.currentSelectedMap.forEach((key, value) {
+      clashCore.changeProxy(
+        ChangeProxyParams(
+          groupName: key,
+          proxyName: value,
+        ),
+      );
     });
   }
 
