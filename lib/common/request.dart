@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/models/ip.dart';
 import 'package:fl_clash/state.dart';
 
 class Request {
@@ -26,7 +27,7 @@ class Request {
     ));
   }
 
-  _syncProxy(){
+  _syncProxy() {
     final port = globalState.appController.clashConfig.mixedPort;
     if (_port != port) {
       _port = port;
@@ -45,14 +46,14 @@ class Request {
   Future<Response> getFileResponseForUrl(String url) async {
     final response = await _dio
         .get(
-      url,
-      options: Options(
-        responseType: ResponseType.bytes,
-      ),
-    )
+          url,
+          options: Options(
+            responseType: ResponseType.bytes,
+          ),
+        )
         .timeout(
-      httpTimeoutDuration,
-    );
+          httpTimeoutDuration,
+        );
     return response;
   }
 
@@ -72,6 +73,29 @@ class Request {
         other.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
     if (!hasUpdate) return null;
     return data;
+  }
+
+  final Map<String, IpInfo Function(Map<String, dynamic>)> _ipInfoSources = {
+    "https://ipwho.is/": IpInfo.fromIpwhoIsJson,
+    "https://api.ip.sb/geoip/": IpInfo.fromIpSbJson,
+    "https://ipapi.co/json/": IpInfo.fromIpApiCoJson,
+    "https://ipinfo.io/json/": IpInfo.fromIpInfoIoJson,
+  };
+
+  Future<IpInfo> checkIp() async {
+    for (final source in _ipInfoSources.entries) {
+      try {
+        final response = await _dio.get<Map<String, dynamic>>(
+          source.key,
+        );
+        if (response.statusCode == 200 && response.data != null) {
+          return source.value(response.data!);
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    throw "无法检索ip";
   }
 }
 
