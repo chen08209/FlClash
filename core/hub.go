@@ -237,7 +237,7 @@ func asyncTestDelay(s *C.char) {
 func getVersionInfo() *C.char {
 	versionInfo := map[string]string{
 		"clashName": constant.Name,
-		"version":   "v1.18.5",
+		"version":   "1.18.5",
 	}
 	data, err := json.Marshal(versionInfo)
 	if err != nil {
