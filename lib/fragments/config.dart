@@ -86,25 +86,25 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           );
         },
       ),
-      if (system.isDesktop)
-        Selector<ClashConfig, bool>(
-          selector: (_, clashConfig) => clashConfig.tun.enable,
-          builder: (_, tunEnable, __) {
-            return ListItem.switchItem(
-              leading: const Icon(Icons.support),
-              title: Text(appLocalizations.tun),
-              subtitle: Text(appLocalizations.tunDesc),
-              delegate: SwitchDelegate(
-                value: tunEnable,
-                onChanged: (bool value) async {
-                  final clashConfig = context.read<ClashConfig>();
-                  clashConfig.tun = Tun(enable: value);
-                  globalState.appController.updateClashConfigDebounce();
-                },
-              ),
-            );
-          },
-        ),
+      // if (system.isDesktop)
+      //   Selector<ClashConfig, bool>(
+      //     selector: (_, clashConfig) => clashConfig.tun.enable,
+      //     builder: (_, tunEnable, __) {
+      //       return ListItem.switchItem(
+      //         leading: const Icon(Icons.support),
+      //         title: Text(appLocalizations.tun),
+      //         subtitle: Text(appLocalizations.tunDesc),
+      //         delegate: SwitchDelegate(
+      //           value: tunEnable,
+      //           onChanged: (bool value) async {
+      //             final clashConfig = context.read<ClashConfig>();
+      //             clashConfig.tun = Tun(enable: value);
+      //             globalState.appController.updateClashConfigDebounce();
+      //           },
+      //         ),
+      //       );
+      //     },
+      //   ),
       Selector<Config, bool>(
         selector: (_, config) => config.isCompatible,
         builder: (_, isCompatible, __) {
