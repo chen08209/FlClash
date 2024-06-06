@@ -95,9 +95,6 @@ class Profile {
   }
 
   Future<void> update() async {
-    if (url == null) {
-      throw appLocalizations.unableToUpdateCurrentProfileDesc;
-    }
     final response = await request.getFileResponseForUrl(url!);
     final disposition = response.headers.value("content-disposition");
     label ??= other.getFileNameForDisposition(disposition) ?? id;

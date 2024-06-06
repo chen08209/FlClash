@@ -40,7 +40,7 @@ class _EditProfileState extends State<EditProfile> {
   _handleConfirm() {
     if (!_formKey.currentState!.validate()) return;
     final config = widget.context.read<Config>();
-    final hasUpdate = widget.profile.url != urlController.text;
+    final hasUpdate = urlController.text.isNotEmpty && widget.profile.url != urlController.text;
     widget.profile.url = urlController.text;
     widget.profile.label = labelController.text;
     widget.profile.autoUpdate = autoUpdate;
@@ -82,7 +82,7 @@ class _EditProfileState extends State<EditProfile> {
           },
         ),
       ),
-      if (widget.profile.url != null)...[
+      if (widget.profile.url != null && widget.profile.url!.isNotEmpty == true)...[
         ListItem(
           title: TextFormField(
             controller: urlController,

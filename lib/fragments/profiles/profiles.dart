@@ -139,9 +139,10 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
       ),
       child: Selector2<AppState, Config, ProfilesSelectorState>(
         selector: (_, appState, config) => ProfilesSelectorState(
-            profiles: config.profiles,
-            currentProfileId: config.currentProfileId,
-            viewMode: appState.viewMode),
+          profiles: config.profiles,
+          currentProfileId: config.currentProfileId,
+          viewMode: appState.viewMode,
+        ),
         builder: (context, state, child) {
           if (state.profiles.isEmpty) {
             return NullStatus(

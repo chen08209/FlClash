@@ -325,11 +325,14 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.ExternalUI = ""
 	targetConfig.Interface = ""
 	targetConfig.ExternalUIURL = ""
+	targetConfig.GeodataMode = false
 	//targetConfig.IPv6 = patchConfig.IPv6
 	targetConfig.LogLevel = patchConfig.LogLevel
+	targetConfig.Port = 0
+	targetConfig.SocksPort = 0
+	targetConfig.MixedPort = patchConfig.MixedPort
 	targetConfig.FindProcessMode = process.FindProcessAlways
 	targetConfig.AllowLan = patchConfig.AllowLan
-	targetConfig.MixedPort = patchConfig.MixedPort
 	targetConfig.Mode = patchConfig.Mode
 	targetConfig.Tun.Enable = patchConfig.Tun.Enable
 	targetConfig.Tun.Device = patchConfig.Tun.Device
