@@ -17,36 +17,35 @@ var tunLock sync.Mutex
 var tun *t.Tun
 
 //export startTUN
-func startTUN(fd C.int) bool {
-	tunLock.Lock()
-	defer tunLock.Unlock()
+func startTUN(fd C.int) {
+	go func() {
+		tunLock.Lock()
+		defer tunLock.Unlock()
 
-	if tun != nil {
-		tun.Close()
-		tun = nil
-	}
-	f := int(fd)
-	gateway := "172.16.0.1/30"
-	portal := "172.16.0.2"
-	dns := "0.0.0.0"
+		if tun != nil {
+			tun.Close()
+			tun = nil
+		}
+		f := int(fd)
+		gateway := "172.16.0.1/30"
+		portal := "172.16.0.2"
+		dns := "0.0.0.0"
 
-	tempTun := &t.Tun{Closed: false, Limit: semaphore.NewWeighted(4)}
+		tempTun := &t.Tun{Closed: false, Limit: semaphore.NewWeighted(4)}
 
-	closer, err := t.Start(f, gateway, portal, dns)
+		closer, err := t.Start(f, gateway, portal, dns)
 
-	applyConfig(true)
+		applyConfig(true)
 
-	if err != nil {
-		log.Errorln("startTUN error: %v", err)
-		tempTun.Close()
-		return false
-	}
+		if err != nil {
+			log.Errorln("startTUN error: %v", err)
+			tempTun.Close()
+		}
 
-	tempTun.Closer = closer
+		tempTun.Closer = closer
 
-	tun = tempTun
-
-	return true
+		tun = tempTun
+	}()
 }
 
 //export updateMarkSocketPort
@@ -61,14 +60,16 @@ func updateMarkSocketPort(markSocketPort C.longlong) bool {
 
 //export stopTun
 func stopTun() {
-	tunLock.Lock()
-	defer tunLock.Unlock()
+	go func() {
+		tunLock.Lock()
+		defer tunLock.Unlock()
 
-	if tun != nil {
-		tun.Close()
-		applyConfig(true)
-		tun = nil
-	}
+		if tun != nil {
+			tun.Close()
+			applyConfig(true)
+			tun = nil
+		}
+	}()
 }
 
 func init() {
