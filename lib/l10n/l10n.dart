@@ -1649,6 +1649,16 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Ip check timeout`
+  String get ipCheckError {
+    return Intl.message(
+      'Ip check timeout',
+      name: 'ipCheckError',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1,5 +1,4 @@
 import 'package:country_flags/country_flags.dart';
-import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -16,20 +15,21 @@ class NetworkDetection extends StatefulWidget {
 
 class _NetworkDetectionState extends State<NetworkDetection> {
   final ipInfoNotifier = ValueNotifier<IpInfo?>(null);
-  CancelToken? cancelToken;
+  final timeoutNotifier = ValueNotifier<bool>(false);
 
   _checkIp(
     bool isInit,
   ) async {
     if (!isInit) return;
-    await Future.delayed(const Duration(milliseconds: 300));
-    if (cancelToken != null) {
-      cancelToken!.cancel();
-      cancelToken = null;
-    }
     ipInfoNotifier.value = null;
-    cancelToken = CancelToken();
-    ipInfoNotifier.value = await request.checkIp(cancelToken!);
+    final ipInfo = await request.checkIp();
+    if (ipInfo == null) {
+      timeoutNotifier.value = true;
+      return;
+    } else {
+      timeoutNotifier.value = false;
+    }
+    ipInfoNotifier.value = await request.checkIp();
   }
 
   _checkIpContainer(Widget child) {
@@ -78,10 +78,10 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                           child: FadeBox(
                             child: ipInfo != null
                                 ? CountryFlag.fromCountryCode(
-                              ipInfo.countryCode,
-                              width: 24,
-                              height: 24,
-                            )
+                                    ipInfo.countryCode,
+                                    width: 24,
+                                    height: 24,
+                                  )
                                 : TooltipText(
                                     text: Text(
                                       appLocalizations.checking,
@@ -123,8 +123,22 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                               ),
                             ],
                           )
-                        : const SizedBox(
-                            child: CircularProgressIndicator(),
+                        : ValueListenableBuilder(
+                            valueListenable: timeoutNotifier,
+                            builder: (_, timeout, __) {
+                              if(timeout){
+                                return Text(
+                                  appLocalizations.ipCheckError,
+                                  style: context.textTheme.bodyMedium
+                                      ?.toSoftBold(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                );
+                              }
+                              return const SizedBox(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
                           ),
                   ),
                 )

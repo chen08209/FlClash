@@ -2,10 +2,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'config.dart';
-import 'navigation.dart';
-import 'profile.dart';
-import 'proxy.dart';
 
 part 'generated/selector.freezed.dart';
 
