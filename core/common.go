@@ -353,7 +353,6 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 		targetConfig.RuleProvider = make(map[string]map[string]any)
 		generateProxyGroupAndRule(&targetConfig.ProxyGroup, &targetConfig.Rule)
 	}
-
 }
 
 func patchConfig(general *config.General) {

@@ -16,7 +16,7 @@ class Tun with _$Tun {
   const factory Tun({
     @Default(false) bool enable,
     @Default(appName) String device,
-    @Default(TunStack.gvisor) TunStack stack,
+    @Default(TunStack.mixed) TunStack stack,
     @JsonKey(name: "dns-hijack") @Default(["any:53"]) List<String> dnsHijack,
   }) = _Tun;
 
