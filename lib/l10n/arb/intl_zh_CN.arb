@@ -156,5 +156,7 @@
   "goDownload": "前往下载",
   "unknown": "未知",
   "geoData": "地理数据",
-  "externalResources": "外部资源"
+  "externalResources": "外部资源",
+  "checking": "检测中...",
+  "country": "区域"
 }

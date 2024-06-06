@@ -1,4 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'config.dart';
@@ -17,13 +18,12 @@ class StartButtonSelectorState with _$StartButtonSelectorState {
 }
 
 @freezed
-class UpdateCurrentDelaySelectorState with _$UpdateCurrentDelaySelectorState {
-  const factory UpdateCurrentDelaySelectorState({
-    required String? currentProxyName,
-    required bool isCurrent,
-    required int? delay,
+class CheckIpSelectorState with _$CheckIpSelectorState {
+  const factory CheckIpSelectorState({
     required bool isInit,
-  }) = _UpdateCurrentDelaySelectorState;
+    required bool isStart,
+    required SelectedMap selectedMap,
+  }) = _CheckIpSelectorState;
 }
 
 @freezed
@@ -53,23 +53,22 @@ class ApplicationSelectorState with _$ApplicationSelectorState {
 }
 
 @freezed
-class TrayContainerSelectorState with _$TrayContainerSelectorState{
+class TrayContainerSelectorState with _$TrayContainerSelectorState {
   const factory TrayContainerSelectorState({
     required Mode mode,
     required bool autoLaunch,
     required bool isRun,
     required String? locale,
-  })=_TrayContainerSelectorState;
+  }) = _TrayContainerSelectorState;
 }
 
 @freezed
-class UpdateNavigationsSelector with _$UpdateNavigationsSelector{
+class UpdateNavigationsSelector with _$UpdateNavigationsSelector {
   const factory UpdateNavigationsSelector({
     required bool openLogs,
     required bool hasProxies,
   }) = _UpdateNavigationsSelector;
 }
-
 
 @freezed
 class HomeSelectorState with _$HomeSelectorState {
@@ -89,21 +88,21 @@ class HomeBodySelectorState with _$HomeBodySelectorState {
 }
 
 @freezed
-class ProxiesCardSelectorState with _$ProxiesCardSelectorState{
+class ProxiesCardSelectorState with _$ProxiesCardSelectorState {
   const factory ProxiesCardSelectorState({
     required bool isSelected,
   }) = _ProxiesCardSelectorState;
 }
 
 @freezed
-class ProxiesSelectorState with _$ProxiesSelectorState{
+class ProxiesSelectorState with _$ProxiesSelectorState {
   const factory ProxiesSelectorState({
     required List<String> groupNames,
   }) = _ProxiesSelectorState;
 }
 
 @freezed
-class ProxiesTabViewSelectorState with _$ProxiesTabViewSelectorState{
+class ProxiesTabViewSelectorState with _$ProxiesTabViewSelectorState {
   const factory ProxiesTabViewSelectorState({
     required ProxiesSortType proxiesSortType,
     required num sortNum,

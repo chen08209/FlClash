@@ -977,17 +977,20 @@ class ClashFFI {
 
   void asyncTestDelay(
     ffi.Pointer<ffi.Char> s,
+    int port,
   ) {
     return _asyncTestDelay(
       s,
+      port,
     );
   }
 
-  late final _asyncTestDelayPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
-          'asyncTestDelay');
-  late final _asyncTestDelay =
-      _asyncTestDelayPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+  late final _asyncTestDelayPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<ffi.Char>, ffi.LongLong)>>('asyncTestDelay');
+  late final _asyncTestDelay = _asyncTestDelayPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> getVersionInfo() {
     return _getVersionInfo();
@@ -1085,14 +1088,6 @@ class ClashFFI {
               ffi.LongLong)>>('updateExternalProvider');
   late final _updateExternalProvider = _updateExternalProviderPtr.asFunction<
       void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
-
-  void healthcheck() {
-    return _healthcheck();
-  }
-
-  late final _healthcheckPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('healthcheck');
-  late final _healthcheck = _healthcheckPtr.asFunction<void Function()>();
 
   void initNativeApiBridge(
     ffi.Pointer<ffi.Void> api,

@@ -89,6 +89,8 @@ class AppState with ChangeNotifier {
     }
   }
 
+  bool get isStart => _runTime != null;
+
   int? get runTime => _runTime;
 
   set runTime(int? value) {
@@ -166,7 +168,7 @@ class AppState with ChangeNotifier {
 
   addLog(Log log) {
     _logs.add(log);
-    if(_logs.length > 60){
+    if (_logs.length > 60) {
       _logs = _logs.sublist(_logs.length - 60);
     }
     notifyListeners();

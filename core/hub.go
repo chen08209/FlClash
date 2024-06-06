@@ -181,7 +181,8 @@ func getTraffic() *C.char {
 }
 
 //export asyncTestDelay
-func asyncTestDelay(s *C.char) {
+func asyncTestDelay(s *C.char, port C.longlong) {
+	i := int64(port)
 	go func() {
 		paramsString := C.GoString(s)
 		var params = &TestDelayParams{}
@@ -205,26 +206,25 @@ func asyncTestDelay(s *C.char) {
 			Name: params.ProxyName,
 		}
 
-		message := bridge.Message{
-			Type: bridge.Delay,
-			Data: delayData,
-		}
-
 		if proxy == nil {
 			delayData.Value = -1
-			bridge.SendMessage(message)
+			data, _ := json.Marshal(delayData)
+			bridge.SendToPort(i, string(data))
 			return
 		}
 
 		delay, err := proxy.URLTest(ctx, constant.DefaultTestURL, expectedStatus)
 		if err != nil || delay == 0 {
 			delayData.Value = -1
-			bridge.SendMessage(message)
+			data, _ := json.Marshal(delayData)
+			bridge.SendToPort(i, string(data))
 			return
 		}
 
 		delayData.Value = int32(delay)
-		bridge.SendMessage(message)
+		data, _ := json.Marshal(delayData)
+		bridge.SendToPort(i, string(data))
+		return
 	}()
 }
 
@@ -372,11 +372,6 @@ func updateExternalProvider(providerName *C.char, providerType *C.char, port C.l
 		}
 		bridge.SendToPort(i, "")
 	}()
-}
-
-//export healthcheck
-func healthcheck() {
-	hcCompatibleProvider(tunnel.Providers())
 }
 
 //export initNativeApiBridge

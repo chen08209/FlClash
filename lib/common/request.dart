@@ -9,6 +9,7 @@ import 'package:fl_clash/state.dart';
 class Request {
   late final Dio _dio;
   int? _port;
+  bool _isStart = false;
 
   Request() {
     _dio = Dio(
@@ -29,11 +30,14 @@ class Request {
 
   _syncProxy() {
     final port = globalState.appController.clashConfig.mixedPort;
-    if (_port != port) {
+    final isStart = globalState.appController.appState.isStart;
+    if (_port != port || isStart != _isStart) {
       _port = port;
+      _isStart = isStart;
       _dio.httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
           final client = HttpClient();
+          if(!_isStart) return client;
           client.findProxy = (url) {
             return "PROXY localhost:$_port;DIRECT";
           };
@@ -82,11 +86,12 @@ class Request {
     "https://ipinfo.io/json/": IpInfo.fromIpInfoIoJson,
   };
 
-  Future<IpInfo> checkIp() async {
+  Future<IpInfo?> checkIp(CancelToken cancelToken) async {
     for (final source in _ipInfoSources.entries) {
       try {
         final response = await _dio.get<Map<String, dynamic>>(
           source.key,
+          cancelToken: cancelToken,
         );
         if (response.statusCode == 200 && response.data != null) {
           return source.value(response.data!);
@@ -95,7 +100,7 @@ class Request {
         continue;
       }
     }
-    throw "无法检索ip";
+    return null;
   }
 }
 

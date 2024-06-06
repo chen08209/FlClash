@@ -412,6 +412,6 @@ func applyConfig(isPatch bool) {
 		patchConfig(cfg.General)
 	} else {
 		executor.ApplyConfig(cfg, true)
-		healthcheck()
+		hcCompatibleProvider(tunnel.Providers())
 	}
 }

@@ -19,7 +19,7 @@ class _StartButtonState extends State<StartButton>
 
   @override
   void initState() {
-    isStart = context.read<AppState>().runTime != null;
+    isStart = globalState.appController.appState.isStart;
     _controller = AnimationController(
       vsync: this,
       value: isStart ? 1 : 0,
@@ -48,9 +48,12 @@ class _StartButtonState extends State<StartButton>
     }
   }
 
-  updateSystemProxy() async {
-    final appController = globalState.appController;
-    await appController.updateSystemProxy(isStart);
+  updateSystemProxy() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final appController = globalState.appController;
+      await appController.updateSystemProxy(isStart);
+    });
+    ;
   }
 
   @override

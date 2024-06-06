@@ -80,6 +80,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Check for updates"),
         "checkUpdateError": MessageLookupByLibrary.simpleMessage(
             "The current application is already the latest version"),
+        "checking": MessageLookupByLibrary.simpleMessage("Checking..."),
         "compatible":
             MessageLookupByLibrary.simpleMessage("Compatibility mode"),
         "compatibleDesc": MessageLookupByLibrary.simpleMessage(
@@ -88,6 +89,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
         "core": MessageLookupByLibrary.simpleMessage("Core"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
+        "country": MessageLookupByLibrary.simpleMessage("Country"),
         "create": MessageLookupByLibrary.simpleMessage("Create"),
         "dark": MessageLookupByLibrary.simpleMessage("Dark"),
         "dashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
