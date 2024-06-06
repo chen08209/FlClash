@@ -53,7 +53,6 @@ class _StartButtonState extends State<StartButton>
       final appController = globalState.appController;
       await appController.updateSystemProxy(isStart);
     });
-    ;
   }
 
   @override

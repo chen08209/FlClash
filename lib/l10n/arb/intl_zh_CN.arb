@@ -158,5 +158,6 @@
   "geoData": "地理数据",
   "externalResources": "外部资源",
   "checking": "检测中...",
-  "country": "区域"
+  "country": "区域",
+  "ipCheckError": "Ip检测超时"
 }

@@ -101,6 +101,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "goDownload": MessageLookupByLibrary.simpleMessage("前往下载"),
         "hours": MessageLookupByLibrary.simpleMessage("小时"),
         "importFromURL": MessageLookupByLibrary.simpleMessage("从URL导入"),
+        "ipCheckError": MessageLookupByLibrary.simpleMessage("Ip检测超时"),
         "just": MessageLookupByLibrary.simpleMessage("刚刚"),
         "language": MessageLookupByLibrary.simpleMessage("语言"),
         "light": MessageLookupByLibrary.simpleMessage("浅色"),
