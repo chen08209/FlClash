@@ -62,4 +62,9 @@ class IpInfo {
       _ => throw const FormatException("invalid json"),
     };
   }
+
+  @override
+  String toString() {
+    return 'IpInfo{ip: $ip, countryCode: $countryCode}';
+  }
 }

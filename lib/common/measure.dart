@@ -24,9 +24,9 @@ class Measure {
   double? _bodySmallHeight;
   double? _labelSmallHeight;
   double? _titleLargeHeight;
+  double? _titleMediumHeight;
 
-
-  double get bodyMediumHeight{
+  double get bodyMediumHeight {
     _bodyMediumHeight ??= computeTextSize(
       Text(
         "",
@@ -36,7 +36,7 @@ class Measure {
     return _bodyMediumHeight!;
   }
 
-  double get bodySmallHeight{
+  double get bodySmallHeight {
     _bodySmallHeight ??= computeTextSize(
       Text(
         "",
@@ -46,7 +46,7 @@ class Measure {
     return _bodySmallHeight!;
   }
 
-  double get labelSmallHeight{
+  double get labelSmallHeight {
     _labelSmallHeight ??= computeTextSize(
       Text(
         "",
@@ -56,7 +56,7 @@ class Measure {
     return _labelSmallHeight!;
   }
 
-  double get titleLargeHeight{
+  double get titleLargeHeight {
     _titleLargeHeight ??= computeTextSize(
       Text(
         "",
@@ -64,5 +64,15 @@ class Measure {
       ),
     ).height;
     return _titleLargeHeight!;
+  }
+
+  double get titleMediumHeight {
+    _titleMediumHeight ??= computeTextSize(
+      Text(
+        "",
+        style: context.textTheme.titleMedium,
+      ),
+    ).height;
+    return _titleMediumHeight!;
   }
 }

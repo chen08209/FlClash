@@ -157,34 +157,30 @@ abstract class _StartButtonSelectorState implements StartButtonSelectorState {
 }
 
 /// @nodoc
-mixin _$UpdateCurrentDelaySelectorState {
-  String? get currentProxyName => throw _privateConstructorUsedError;
-  bool get isCurrent => throw _privateConstructorUsedError;
-  int? get delay => throw _privateConstructorUsedError;
+mixin _$CheckIpSelectorState {
   bool get isInit => throw _privateConstructorUsedError;
+  bool get isStart => throw _privateConstructorUsedError;
+  Map<String, String> get selectedMap => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $UpdateCurrentDelaySelectorStateCopyWith<UpdateCurrentDelaySelectorState>
-      get copyWith => throw _privateConstructorUsedError;
+  $CheckIpSelectorStateCopyWith<CheckIpSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $UpdateCurrentDelaySelectorStateCopyWith<$Res> {
-  factory $UpdateCurrentDelaySelectorStateCopyWith(
-          UpdateCurrentDelaySelectorState value,
-          $Res Function(UpdateCurrentDelaySelectorState) then) =
-      _$UpdateCurrentDelaySelectorStateCopyWithImpl<$Res,
-          UpdateCurrentDelaySelectorState>;
+abstract class $CheckIpSelectorStateCopyWith<$Res> {
+  factory $CheckIpSelectorStateCopyWith(CheckIpSelectorState value,
+          $Res Function(CheckIpSelectorState) then) =
+      _$CheckIpSelectorStateCopyWithImpl<$Res, CheckIpSelectorState>;
   @useResult
-  $Res call(
-      {String? currentProxyName, bool isCurrent, int? delay, bool isInit});
+  $Res call({bool isInit, bool isStart, Map<String, String> selectedMap});
 }
 
 /// @nodoc
-class _$UpdateCurrentDelaySelectorStateCopyWithImpl<$Res,
-        $Val extends UpdateCurrentDelaySelectorState>
-    implements $UpdateCurrentDelaySelectorStateCopyWith<$Res> {
-  _$UpdateCurrentDelaySelectorStateCopyWithImpl(this._value, this._then);
+class _$CheckIpSelectorStateCopyWithImpl<$Res,
+        $Val extends CheckIpSelectorState>
+    implements $CheckIpSelectorStateCopyWith<$Res> {
+  _$CheckIpSelectorStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -194,154 +190,136 @@ class _$UpdateCurrentDelaySelectorStateCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? currentProxyName = freezed,
-    Object? isCurrent = null,
-    Object? delay = freezed,
     Object? isInit = null,
+    Object? isStart = null,
+    Object? selectedMap = null,
   }) {
     return _then(_value.copyWith(
-      currentProxyName: freezed == currentProxyName
-          ? _value.currentProxyName
-          : currentProxyName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isCurrent: null == isCurrent
-          ? _value.isCurrent
-          : isCurrent // ignore: cast_nullable_to_non_nullable
-              as bool,
-      delay: freezed == delay
-          ? _value.delay
-          : delay // ignore: cast_nullable_to_non_nullable
-              as int?,
       isInit: null == isInit
           ? _value.isInit
           : isInit // ignore: cast_nullable_to_non_nullable
               as bool,
+      isStart: null == isStart
+          ? _value.isStart
+          : isStart // ignore: cast_nullable_to_non_nullable
+              as bool,
+      selectedMap: null == selectedMap
+          ? _value.selectedMap
+          : selectedMap // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
     ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$UpdateCurrentDelaySelectorStateImplCopyWith<$Res>
-    implements $UpdateCurrentDelaySelectorStateCopyWith<$Res> {
-  factory _$$UpdateCurrentDelaySelectorStateImplCopyWith(
-          _$UpdateCurrentDelaySelectorStateImpl value,
-          $Res Function(_$UpdateCurrentDelaySelectorStateImpl) then) =
-      __$$UpdateCurrentDelaySelectorStateImplCopyWithImpl<$Res>;
+abstract class _$$CheckIpSelectorStateImplCopyWith<$Res>
+    implements $CheckIpSelectorStateCopyWith<$Res> {
+  factory _$$CheckIpSelectorStateImplCopyWith(_$CheckIpSelectorStateImpl value,
+          $Res Function(_$CheckIpSelectorStateImpl) then) =
+      __$$CheckIpSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String? currentProxyName, bool isCurrent, int? delay, bool isInit});
+  $Res call({bool isInit, bool isStart, Map<String, String> selectedMap});
 }
 
 /// @nodoc
-class __$$UpdateCurrentDelaySelectorStateImplCopyWithImpl<$Res>
-    extends _$UpdateCurrentDelaySelectorStateCopyWithImpl<$Res,
-        _$UpdateCurrentDelaySelectorStateImpl>
-    implements _$$UpdateCurrentDelaySelectorStateImplCopyWith<$Res> {
-  __$$UpdateCurrentDelaySelectorStateImplCopyWithImpl(
-      _$UpdateCurrentDelaySelectorStateImpl _value,
-      $Res Function(_$UpdateCurrentDelaySelectorStateImpl) _then)
+class __$$CheckIpSelectorStateImplCopyWithImpl<$Res>
+    extends _$CheckIpSelectorStateCopyWithImpl<$Res, _$CheckIpSelectorStateImpl>
+    implements _$$CheckIpSelectorStateImplCopyWith<$Res> {
+  __$$CheckIpSelectorStateImplCopyWithImpl(_$CheckIpSelectorStateImpl _value,
+      $Res Function(_$CheckIpSelectorStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? currentProxyName = freezed,
-    Object? isCurrent = null,
-    Object? delay = freezed,
     Object? isInit = null,
+    Object? isStart = null,
+    Object? selectedMap = null,
   }) {
-    return _then(_$UpdateCurrentDelaySelectorStateImpl(
-      currentProxyName: freezed == currentProxyName
-          ? _value.currentProxyName
-          : currentProxyName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isCurrent: null == isCurrent
-          ? _value.isCurrent
-          : isCurrent // ignore: cast_nullable_to_non_nullable
-              as bool,
-      delay: freezed == delay
-          ? _value.delay
-          : delay // ignore: cast_nullable_to_non_nullable
-              as int?,
+    return _then(_$CheckIpSelectorStateImpl(
       isInit: null == isInit
           ? _value.isInit
           : isInit // ignore: cast_nullable_to_non_nullable
               as bool,
+      isStart: null == isStart
+          ? _value.isStart
+          : isStart // ignore: cast_nullable_to_non_nullable
+              as bool,
+      selectedMap: null == selectedMap
+          ? _value._selectedMap
+          : selectedMap // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
     ));
   }
 }
 
 /// @nodoc
 
-class _$UpdateCurrentDelaySelectorStateImpl
-    implements _UpdateCurrentDelaySelectorState {
-  const _$UpdateCurrentDelaySelectorStateImpl(
-      {required this.currentProxyName,
-      required this.isCurrent,
-      required this.delay,
-      required this.isInit});
+class _$CheckIpSelectorStateImpl implements _CheckIpSelectorState {
+  const _$CheckIpSelectorStateImpl(
+      {required this.isInit,
+      required this.isStart,
+      required final Map<String, String> selectedMap})
+      : _selectedMap = selectedMap;
 
   @override
-  final String? currentProxyName;
-  @override
-  final bool isCurrent;
-  @override
-  final int? delay;
-  @override
   final bool isInit;
+  @override
+  final bool isStart;
+  final Map<String, String> _selectedMap;
+  @override
+  Map<String, String> get selectedMap {
+    if (_selectedMap is EqualUnmodifiableMapView) return _selectedMap;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_selectedMap);
+  }
 
   @override
   String toString() {
-    return 'UpdateCurrentDelaySelectorState(currentProxyName: $currentProxyName, isCurrent: $isCurrent, delay: $delay, isInit: $isInit)';
+    return 'CheckIpSelectorState(isInit: $isInit, isStart: $isStart, selectedMap: $selectedMap)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$UpdateCurrentDelaySelectorStateImpl &&
-            (identical(other.currentProxyName, currentProxyName) ||
-                other.currentProxyName == currentProxyName) &&
-            (identical(other.isCurrent, isCurrent) ||
-                other.isCurrent == isCurrent) &&
-            (identical(other.delay, delay) || other.delay == delay) &&
-            (identical(other.isInit, isInit) || other.isInit == isInit));
+            other is _$CheckIpSelectorStateImpl &&
+            (identical(other.isInit, isInit) || other.isInit == isInit) &&
+            (identical(other.isStart, isStart) || other.isStart == isStart) &&
+            const DeepCollectionEquality()
+                .equals(other._selectedMap, _selectedMap));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, currentProxyName, isCurrent, delay, isInit);
+  int get hashCode => Object.hash(runtimeType, isInit, isStart,
+      const DeepCollectionEquality().hash(_selectedMap));
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$UpdateCurrentDelaySelectorStateImplCopyWith<
-          _$UpdateCurrentDelaySelectorStateImpl>
-      get copyWith => __$$UpdateCurrentDelaySelectorStateImplCopyWithImpl<
-          _$UpdateCurrentDelaySelectorStateImpl>(this, _$identity);
+  _$$CheckIpSelectorStateImplCopyWith<_$CheckIpSelectorStateImpl>
+      get copyWith =>
+          __$$CheckIpSelectorStateImplCopyWithImpl<_$CheckIpSelectorStateImpl>(
+              this, _$identity);
 }
 
-abstract class _UpdateCurrentDelaySelectorState
-    implements UpdateCurrentDelaySelectorState {
-  const factory _UpdateCurrentDelaySelectorState(
-      {required final String? currentProxyName,
-      required final bool isCurrent,
-      required final int? delay,
-      required final bool isInit}) = _$UpdateCurrentDelaySelectorStateImpl;
+abstract class _CheckIpSelectorState implements CheckIpSelectorState {
+  const factory _CheckIpSelectorState(
+          {required final bool isInit,
+          required final bool isStart,
+          required final Map<String, String> selectedMap}) =
+      _$CheckIpSelectorStateImpl;
 
-  @override
-  String? get currentProxyName;
-  @override
-  bool get isCurrent;
-  @override
-  int? get delay;
   @override
   bool get isInit;
   @override
+  bool get isStart;
+  @override
+  Map<String, String> get selectedMap;
+  @override
   @JsonKey(ignore: true)
-  _$$UpdateCurrentDelaySelectorStateImplCopyWith<
-          _$UpdateCurrentDelaySelectorStateImpl>
+  _$$CheckIpSelectorStateImplCopyWith<_$CheckIpSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
 

@@ -156,21 +156,34 @@ class ClashCore {
     return clashFFI.changeProxy(params.toNativeUtf8().cast()) == 1;
   }
 
-  bool delay(String proxyName) {
+  Future<Delay> getDelay(String proxyName) {
     final delayParams = {
       "proxy-name": proxyName,
       "timeout": httpTimeoutDuration.inMilliseconds,
     };
-    clashFFI.asyncTestDelay(json.encode(delayParams).toNativeUtf8().cast());
-    return true;
+    final completer = Completer<Delay>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if (!completer.isCompleted) {
+        completer.complete(Delay.fromJson(json.decode(message)));
+        receiver.close();
+      }
+    });
+    clashFFI.asyncTestDelay(
+      json.encode(delayParams).toNativeUtf8().cast(),
+      receiver.sendPort.nativePort,
+    );
+    Future.delayed(httpTimeoutDuration + moreDuration, () {
+      receiver.close();
+      completer.complete(
+        Delay(name: proxyName, value: -1),
+      );
+    });
+    return completer.future;
   }
 
   clearEffect(String path) {
     clashFFI.clearEffect(path.toNativeUtf8().cast());
-  }
-
-  healthcheck() {
-    clashFFI.healthcheck();
   }
 
   VersionInfo getVersionInfo() {

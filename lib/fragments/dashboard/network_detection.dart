@@ -1,3 +1,5 @@
+import 'package:country_flags/country_flags.dart';
+import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -13,118 +15,119 @@ class NetworkDetection extends StatefulWidget {
 }
 
 class _NetworkDetectionState extends State<NetworkDetection> {
-  Widget _buildDescription(String? currentProxyName, int? delay) {
-    if (currentProxyName == null) {
-      return TooltipText(
-        text: Text(
-          appLocalizations.noProxyDesc,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
+  final ipInfoNotifier = ValueNotifier<IpInfo?>(null);
+  CancelToken? cancelToken;
+
+  _checkIp(
+    bool isInit,
+  ) async {
+    if (!isInit) return;
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (cancelToken != null) {
+      cancelToken!.cancel();
+      cancelToken = null;
     }
-    if (delay == 0 || delay == null) {
-      return const AspectRatio(
-        aspectRatio: 1,
-        child: CircularProgressIndicator(
-          strokeCap: StrokeCap.round,
-        ),
-      );
-    }
-    if (delay > 0) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          TooltipText(
-            text: Text(
-              "$delay",
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              style: context.textTheme.titleLarge
-                  ?.copyWith(
-                    color: context.colorScheme.primary,
-                  )
-                  .toSoftBold(),
-            ),
-          ),
-          const Flexible(
-            child: SizedBox(
-              width: 4,
-            ),
-          ),
-          Flexible(
-            flex: 0,
-            child: Text(
-              'ms',
-              style: Theme.of(context).textTheme.bodyMedium?.toLight(),
-            ),
-          ),
-        ],
-      );
-    }
-    return Text(
-      "Timeout",
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Colors.red,
-          ),
+    ipInfoNotifier.value = null;
+    cancelToken = CancelToken();
+    ipInfoNotifier.value = await request.checkIp(cancelToken!);
+  }
+
+  _checkIpContainer(Widget child) {
+    return Selector2<AppState, Config, CheckIpSelectorState>(
+      selector: (_, appState, config) {
+        return CheckIpSelectorState(
+          isInit: appState.isInit,
+          selectedMap: appState.selectedMap,
+          isStart: appState.isStart,
+        );
+      },
+      builder: (_, state, __) {
+        _checkIp(
+          state.isInit,
+        );
+        return child;
+      },
+      child: child,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return CommonCard(
-      info: Info(
-        iconData: Icons.network_check,
-        label: appLocalizations.networkDetection,
-      ),
-      child: Selector<AppState, NetworkDetectionSelectorState>(
-        selector: (_, appState) {
-          return NetworkDetectionSelectorState(
-            currentProxyName: appState.showProxyName,
-            delay: appState.getDelay(
-              appState.showProxyName,
-            ),
-          );
-        },
-        builder: (_, state, __) {
-          return Container(
-            padding: const EdgeInsets.all(16).copyWith(top: 0),
+    return _checkIpContainer(
+      ValueListenableBuilder<IpInfo?>(
+        valueListenable: ipInfoNotifier,
+        builder: (_, ipInfo, __) {
+          return CommonCard(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Flexible(
                   flex: 0,
-                  child: TooltipText(
-                    text: Text(
-                      state.currentProxyName ?? appLocalizations.noProxy,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.toSoftBold(),
-                    ),
-                  ),
-                ),
-                const SizedBox(
-                  height: 8,
-                ),
-                Flexible(
                   child: Container(
-                    height: globalState.appController.measure.titleLargeHeight,
-                    alignment: Alignment.centerLeft,
-                    child: FadeBox(
-                      child: _buildDescription(
-                        state.currentProxyName,
-                        state.delay,
-                      ),
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.network_check,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        Flexible(
+                          flex: 1,
+                          child: FadeBox(
+                            child: ipInfo != null
+                                ? CountryFlag.fromCountryCode(
+                              ipInfo.countryCode,
+                              width: 24,
+                              height: 24,
+                            )
+                                : TooltipText(
+                                    text: Text(
+                                      appLocalizations.checking,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+                Container(
+                  height:
+                      globalState.appController.measure.titleLargeHeight + 24,
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.all(16).copyWith(top: 0),
+                  child: FadeBox(
+                    child: ipInfo != null
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                flex: 1,
+                                child: TooltipText(
+                                  text: Text(
+                                    ipInfo.ip,
+                                    style: context.textTheme.titleLarge
+                                        ?.toSoftBold(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : const SizedBox(
+                            child: CircularProgressIndicator(),
+                          ),
+                  ),
+                )
               ],
             ),
           );

@@ -1,3 +1,4 @@
+import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -57,72 +58,69 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
 
   @override
   Widget build(BuildContext context) {
-    return DelayTestButtonContainer(
-      child: Selector<AppState, bool>(
-        selector: (_, appState) => appState.currentLabel == 'proxies',
-        builder: (_, isCurrent, child) {
-          if (isCurrent) {
-            _initActions();
-          }
-          return child!;
+    return Selector<AppState, bool>(
+      selector: (_, appState) => appState.currentLabel == 'proxies',
+      builder: (_, isCurrent, child) {
+        if (isCurrent) {
+          _initActions();
+        }
+        return child!;
+      },
+      child: Selector3<AppState, Config, ClashConfig, ProxiesSelectorState>(
+        selector: (_, appState, config, clashConfig) {
+          final currentGroups = appState.currentGroups;
+          final groupNames = currentGroups.map((e) => e.name).toList();
+          return ProxiesSelectorState(
+            groupNames: groupNames,
+          );
         },
-        child: Selector3<AppState, Config, ClashConfig, ProxiesSelectorState>(
-          selector: (_, appState, config, clashConfig) {
-            final currentGroups = appState.currentGroups;
-            final groupNames = currentGroups.map((e) => e.name).toList();
-            return ProxiesSelectorState(
-              groupNames: groupNames,
-            );
-          },
-          shouldRebuild: (prev, next) {
-            if (prev.groupNames.length != next.groupNames.length) {
-              _tabController?.dispose();
-              _tabController = null;
-            }
-            return prev != next;
-          },
-          builder: (_, state, __) {
-            _tabController ??= TabController(
-              length: state.groupNames.length,
-              vsync: this,
-            );
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TabBar(
+        shouldRebuild: (prev, next) {
+          if (prev.groupNames.length != next.groupNames.length) {
+            _tabController?.dispose();
+            _tabController = null;
+          }
+          return prev != next;
+        },
+        builder: (_, state, __) {
+          _tabController ??= TabController(
+            length: state.groupNames.length,
+            vsync: this,
+          );
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TabBar(
+                controller: _tabController,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                dividerColor: Colors.transparent,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+                tabs: [
+                  for (final groupName in state.groupNames)
+                    Tab(
+                      text: groupName,
+                    ),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
                   controller: _tabController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  dividerColor: Colors.transparent,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  overlayColor:
-                      const WidgetStatePropertyAll(Colors.transparent),
-                  tabs: [
+                  children: [
                     for (final groupName in state.groupNames)
-                      Tab(
-                        text: groupName,
+                      KeepContainer(
+                        key: ObjectKey(groupName),
+                        child: ProxiesTabView(
+                          groupName: groupName,
+                        ),
                       ),
                   ],
                 ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      for (final groupName in state.groupNames)
-                        KeepContainer(
-                          key: ObjectKey(groupName),
-                          child: ProxiesTabView(
-                            groupName: groupName,
-                          ),
-                        ),
-                    ],
-                  ),
-                )
-              ],
-            );
-          },
-        ),
+              )
+            ],
+          );
+        },
       ),
     );
   }
@@ -196,6 +194,18 @@ class ProxiesTabView extends StatelessWidget {
     }
   }
 
+  _delayTest(List<Proxy> proxies) async {
+    for (final proxy in proxies) {
+      globalState.appController.setDelay(
+        Delay(name: proxy.name, value: 0),
+      );
+      clashCore.getDelay(proxy.name).then((delay) {
+        globalState.appController.setDelay(delay);
+      });
+    }
+    await Future.delayed(httpTimeoutDuration + moreDuration);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Selector2<AppState, Config, ProxiesTabViewSelectorState>(
@@ -213,25 +223,32 @@ class ProxiesTabView extends StatelessWidget {
           state.group.all,
           state.proxiesSortType,
         );
-        return Align(
-          alignment: Alignment.topCenter,
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: _getColumns(state.viewMode),
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              mainAxisExtent: _getItemHeight(context),
+        return DelayTestButtonContainer(
+          onClick: () async {
+            await _delayTest(
+              state.group.all,
+            );
+          },
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: _getColumns(state.viewMode),
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                mainAxisExtent: _getItemHeight(context),
+              ),
+              itemCount: proxies.length,
+              itemBuilder: (_, index) {
+                final proxy = proxies[index];
+                return ProxyCard(
+                  key: ValueKey('$groupName.${proxy.name}'),
+                  proxy: proxy,
+                  groupName: groupName,
+                );
+              },
             ),
-            itemCount: proxies.length,
-            itemBuilder: (_, index) {
-              final proxy = proxies[index];
-              return ProxyCard(
-                key: ValueKey('$groupName.${proxy.name}'),
-                proxy: proxy,
-                groupName: groupName,
-              );
-            },
           ),
         );
       },
@@ -384,10 +401,12 @@ class ProxyCard extends StatelessWidget {
 
 class DelayTestButtonContainer extends StatefulWidget {
   final Widget child;
+  final Future Function() onClick;
 
   const DelayTestButtonContainer({
     super.key,
     required this.child,
+    required this.onClick,
   });
 
   @override
@@ -401,12 +420,9 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
   late Animation<double> _scale;
 
   _healthcheck() async {
-    if (globalState.healthcheckLock) return;
     _controller.forward();
-    globalState.appController.healthcheck();
-    Future.delayed(httpTimeoutDuration + moreDuration, () {
-      _controller.reverse();
-    });
+    await widget.onClick();
+    _controller.reverse();
   }
 
   @override
@@ -415,7 +431,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(
-        milliseconds: 600,
+        milliseconds: 1200,
       ),
     );
     _scale = Tween<double>(
@@ -441,6 +457,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
 
   @override
   Widget build(BuildContext context) {
+    _controller.reverse();
     return FloatLayout(
       floatingWidget: FloatWrapper(
         child: AnimatedBuilder(

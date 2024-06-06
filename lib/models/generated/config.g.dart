@@ -31,7 +31,7 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
       ? null
       : DAV.fromJson(json['dav'] as Map<String, dynamic>)
   ..isAnimateToPage = json['isAnimateToPage'] as bool? ?? true
-  ..isCompatible = json['isCompatible'] as bool? ?? false
+  ..isCompatible = json['isCompatible'] as bool? ?? true
   ..autoCheckUpdate = json['autoCheckUpdate'] as bool? ?? true;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{

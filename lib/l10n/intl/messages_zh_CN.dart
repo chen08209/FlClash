@@ -65,6 +65,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "cancelSelectAll": MessageLookupByLibrary.simpleMessage("取消全选"),
         "checkUpdate": MessageLookupByLibrary.simpleMessage("检查更新"),
         "checkUpdateError": MessageLookupByLibrary.simpleMessage("当前应用已经是最新版了"),
+        "checking": MessageLookupByLibrary.simpleMessage("检测中..."),
         "compatible": MessageLookupByLibrary.simpleMessage("兼容模式"),
         "compatibleDesc":
             MessageLookupByLibrary.simpleMessage("开启将失去部分应用能力，获得全量的Clash的支持"),
@@ -72,6 +73,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "connectivity": MessageLookupByLibrary.simpleMessage("连通性："),
         "core": MessageLookupByLibrary.simpleMessage("内核"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("内核信息"),
+        "country": MessageLookupByLibrary.simpleMessage("区域"),
         "create": MessageLookupByLibrary.simpleMessage("创建"),
         "dark": MessageLookupByLibrary.simpleMessage("深色"),
         "dashboard": MessageLookupByLibrary.simpleMessage("仪表盘"),

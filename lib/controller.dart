@@ -39,8 +39,6 @@ class AppController {
         updateRunTime,
         updateTraffic,
       ];
-      clearShowProxyDelay();
-      testShowProxyDelay();
     } else {
       await globalState.stopSystemProxy();
       appState.traffics = [];
@@ -263,19 +261,6 @@ class AppController {
     autoCheckUpdate();
   }
 
-  healthcheck() {
-    if (globalState.healthcheckLock) return;
-    for (final delay in appState.delayMap.entries) {
-      setDelay(
-        Delay(
-          name: delay.key,
-          value: 0,
-        ),
-      );
-    }
-    clashCore.healthcheck();
-  }
-
   setDelay(Delay delay) {
     appState.setDelay(delay);
   }
@@ -383,22 +368,6 @@ class AppController {
     final url = await globalState.safeRun(picker.pickerConfigQRCode);
     if (url == null) return;
     addProfileFormURL(url);
-  }
-
-  clearShowProxyDelay() {
-    final showProxyDelay = appState.getRealProxyName(appState.showProxyName);
-    if (showProxyDelay != null) {
-      appState.setDelay(
-        Delay(name: showProxyDelay, value: null),
-      );
-    }
-  }
-
-  testShowProxyDelay() {
-    final showProxyDelay = appState.getRealProxyName(appState.showProxyName);
-    if (showProxyDelay != null) {
-      globalState.updateCurrentDelay(showProxyDelay);
-    }
   }
 
   updateViewWidth(double width) {

@@ -156,5 +156,7 @@
   "goDownload": "Go to download",
   "unknown": "Unknown",
   "geoData": "GeoData",
-  "externalResources": "External resources"
+  "externalResources": "External resources",
+  "checking": "Checking...",
+  "country": "Country"
 }

@@ -13,7 +13,6 @@ import 'common/common.dart';
 
 class GlobalState {
   Timer? timer;
-  Function? healthcheckLockDebounce;
   Timer? groupsUpdateTimer;
   Function? updateCurrentDelayDebounce;
   PageController? pageController;
@@ -22,7 +21,6 @@ class GlobalState {
   late AppController appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
   List<Function> updateFunctionLists = [];
-  bool healthcheckLock = false;
 
   startListenUpdate() {
     if (timer != null && timer!.isActive == true) return;
@@ -251,20 +249,6 @@ class GlobalState {
         margin: margin,
       ),
     );
-  }
-
-  void updateCurrentDelay(
-    String? proxyName,
-  ) {
-    updateCurrentDelayDebounce ??= debounce<Function(String?)>((proxyName) {
-      if (proxyName != null) {
-        debugPrint("[delay]=====> $proxyName");
-        clashCore.delay(
-          proxyName,
-        );
-      }
-    });
-    updateCurrentDelayDebounce!([proxyName]);
   }
 
   Future<T?> safeRun<T>(
