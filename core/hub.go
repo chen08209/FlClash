@@ -65,12 +65,7 @@ func validateConfig(s *C.char, port C.longlong) {
 	i := int64(port)
 	go func() {
 		bytes := []byte(C.GoString(s))
-		rawConfig, err := config.UnmarshalRawConfig(bytes)
-		if err != nil {
-			bridge.SendToPort(i, err.Error())
-			return
-		}
-		_, err = config.ParseRawConfig(rawConfig)
+		_, err := config.UnmarshalRawConfig(bytes)
 		if err != nil {
 			bridge.SendToPort(i, err.Error())
 			return

@@ -101,7 +101,9 @@ class AppController {
   updateProfile(String id) async {
     final profile = config.getCurrentProfileForId(id);
     if (profile != null) {
-      await profile.update();
+      final tempProfile = profile.copyWith();
+      await tempProfile.update();
+      config.setProfile(tempProfile);
     }
   }
 
