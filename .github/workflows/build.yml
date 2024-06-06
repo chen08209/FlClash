@@ -17,8 +17,8 @@ jobs:
             os: windows-latest
           - platform: linux
             os: ubuntu-latest
-          - platform: macos
-            os: macos-13
+#          - platform: macos
+#            os: macos-13
 
     steps:
       - name: Checkout
