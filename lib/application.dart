@@ -160,8 +160,9 @@ class ApplicationState extends State<Application> {
                         AppLocalizations.delegate.supportedLocales,
                     themeMode: state.themeMode,
                     theme: ThemeData(
-                      pageTransitionsTheme: _pageTransitionsTheme,
                       useMaterial3: true,
+                      fontFamily: '',
+                      pageTransitionsTheme: _pageTransitionsTheme,
                       colorScheme: _getAppColorScheme(
                         brightness: Brightness.light,
                         systemColorSchemes: systemColorSchemes,
@@ -170,6 +171,7 @@ class ApplicationState extends State<Application> {
                     ),
                     darkTheme: ThemeData(
                       useMaterial3: true,
+                      fontFamily: '',
                       pageTransitionsTheme: _pageTransitionsTheme,
                       colorScheme: _getAppColorScheme(
                         brightness: Brightness.dark,
