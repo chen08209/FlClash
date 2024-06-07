@@ -23,6 +23,7 @@ class Measure {
   double? _bodyMediumHeight;
   double? _bodySmallHeight;
   double? _labelSmallHeight;
+  double? _labelMediumHeight;
   double? _titleLargeHeight;
   double? _titleMediumHeight;
 
@@ -54,6 +55,16 @@ class Measure {
       ),
     ).height;
     return _labelSmallHeight!;
+  }
+
+  double get labelMediumHeight {
+    _labelMediumHeight ??= computeTextSize(
+      Text(
+        "",
+        style: context.textTheme.labelMedium,
+      ),
+    ).height;
+    return _labelMediumHeight!;
   }
 
   double get titleLargeHeight {

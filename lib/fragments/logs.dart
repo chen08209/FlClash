@@ -56,6 +56,9 @@ class _LogsFragmentState extends State<LogsFragment> {
             );
           },
           icon: const Icon(Icons.search),
+        ),
+        const SizedBox(
+          width: 8,
         )
       ];
     });
@@ -139,6 +142,9 @@ class LogsSearchDelegate extends SearchDelegate {
         },
         icon: const Icon(Icons.clear),
       ),
+      const SizedBox(
+        width: 8,
+      )
     ];
   }
 

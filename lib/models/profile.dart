@@ -16,16 +16,17 @@ class UserInfo {
   int upload;
   int download;
   int total;
-  int? expire;
+  int expire;
 
   UserInfo({
     int? upload,
     int? download,
     int? total,
-    this.expire,
+    int? expire,
   })  : upload = upload ?? 0,
         download = download ?? 0,
-        total = total ?? 0;
+        total = total ?? 0,
+        expire = expire ?? 0;
 
   Map<String, dynamic> toJson() {
     return _$UserInfoToJson(this);
@@ -37,10 +38,10 @@ class UserInfo {
 
   factory UserInfo.formHString(String? info) {
     if (info == null) return UserInfo();
-    var list = info.split(";");
+    final list = info.split(";");
     Map<String, int?> map = {};
-    for (var i in list) {
-      var keyValue = i.trim().split("=");
+    for (final i in list) {
+      final keyValue = i.trim().split("=");
       map[keyValue[0]] = int.tryParse(keyValue[1]);
     }
     return UserInfo(
@@ -83,7 +84,8 @@ class Profile {
         autoUpdateDuration = autoUpdateDuration ?? defaultUpdateDuration,
         selectedMap = selectedMap ?? {};
 
-  ProfileType get type => url == null ? ProfileType.file : ProfileType.url;
+  ProfileType get type =>
+      url == null || url?.isEmpty == true ? ProfileType.file : ProfileType.url;
 
   Future<void> checkAndUpdate() async {
     final isExists = await check();

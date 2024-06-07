@@ -63,6 +63,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "cancelFilterSystemApp":
             MessageLookupByLibrary.simpleMessage("取消过滤系统应用"),
         "cancelSelectAll": MessageLookupByLibrary.simpleMessage("取消全选"),
+        "checkError": MessageLookupByLibrary.simpleMessage("检测失败"),
         "checkUpdate": MessageLookupByLibrary.simpleMessage("检查更新"),
         "checkUpdateError": MessageLookupByLibrary.simpleMessage("当前应用已经是最新版了"),
         "checking": MessageLookupByLibrary.simpleMessage("检测中..."),
@@ -101,7 +102,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "goDownload": MessageLookupByLibrary.simpleMessage("前往下载"),
         "hours": MessageLookupByLibrary.simpleMessage("小时"),
         "importFromURL": MessageLookupByLibrary.simpleMessage("从URL导入"),
-        "ipCheckError": MessageLookupByLibrary.simpleMessage("Ip检测超时"),
+        "ipCheckTimeout": MessageLookupByLibrary.simpleMessage("Ip检测超时"),
         "just": MessageLookupByLibrary.simpleMessage("刚刚"),
         "language": MessageLookupByLibrary.simpleMessage("语言"),
         "light": MessageLookupByLibrary.simpleMessage("浅色"),

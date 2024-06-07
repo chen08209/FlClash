@@ -159,5 +159,6 @@
   "externalResources": "外部资源",
   "checking": "检测中...",
   "country": "区域",
-  "ipCheckError": "Ip检测超时"
+  "checkError": "检测失败",
+  "ipCheckTimeout": "Ip检测超时"
 }

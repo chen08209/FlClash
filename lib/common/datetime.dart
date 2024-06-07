@@ -35,4 +35,8 @@ extension DateTimeExtension on DateTime {
     }
     return appLocalizations.just;
   }
+
+  String get show {
+    return toIso8601String().substring(0, 10);
+  }
 }

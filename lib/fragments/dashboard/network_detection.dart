@@ -1,4 +1,5 @@
 import 'package:country_flags/country_flags.dart';
+import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -16,20 +17,29 @@ class NetworkDetection extends StatefulWidget {
 class _NetworkDetectionState extends State<NetworkDetection> {
   final ipInfoNotifier = ValueNotifier<IpInfo?>(null);
   final timeoutNotifier = ValueNotifier<bool>(false);
+  bool? _preIsStart;
+  CancelToken? cancelToken;
 
   _checkIp(
     bool isInit,
+    bool isStart,
   ) async {
     if (!isInit) return;
+    if (_preIsStart == false && _preIsStart == isStart) return;
+    if (cancelToken != null) {
+      cancelToken!.cancel();
+      cancelToken = null;
+    }
     ipInfoNotifier.value = null;
-    final ipInfo = await request.checkIp();
+    final ipInfo = await request.checkIp(cancelToken);
     if (ipInfo == null) {
       timeoutNotifier.value = true;
       return;
     } else {
       timeoutNotifier.value = false;
     }
-    ipInfoNotifier.value = await request.checkIp();
+    _preIsStart = isStart;
+    ipInfoNotifier.value = ipInfo;
   }
 
   _checkIpContainer(Widget child) {
@@ -42,9 +52,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
         );
       },
       builder: (_, state, __) {
-        _checkIp(
-          state.isInit,
-        );
+        _checkIp(state.isInit, state.isStart);
         return child;
       },
       child: child,
@@ -82,15 +90,30 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                                     width: 24,
                                     height: 24,
                                   )
-                                : TooltipText(
-                                    text: Text(
-                                      appLocalizations.checking,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium,
-                                    ),
+                                : ValueListenableBuilder(
+                                    valueListenable: timeoutNotifier,
+                                    builder: (_, timeout, __) {
+                                      if (timeout) {
+                                        return Text(
+                                          appLocalizations.checkError,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        );
+                                      }
+                                      return TooltipText(
+                                        text: Text(
+                                          appLocalizations.checking,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium,
+                                        ),
+                                      );
+                                    },
                                   ),
                           ),
                         ),
@@ -126,17 +149,21 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                         : ValueListenableBuilder(
                             valueListenable: timeoutNotifier,
                             builder: (_, timeout, __) {
-                              if(timeout){
+                              if (timeout) {
                                 return Text(
-                                  appLocalizations.ipCheckError,
-                                  style: context.textTheme.bodyMedium
+                                  appLocalizations.ipCheckTimeout,
+                                  style: context.textTheme.titleLarge
                                       ?.toSoftBold(),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 );
                               }
-                              return const SizedBox(
-                                child: CircularProgressIndicator(),
+                              return Container(
+                                padding: const EdgeInsets.all(2),
+                                child: const AspectRatio(
+                                  aspectRatio: 1,
+                                  child: CircularProgressIndicator(),
+                                ),
                               );
                             },
                           ),
