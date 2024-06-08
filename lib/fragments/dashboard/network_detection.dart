@@ -16,12 +16,15 @@ class NetworkDetection extends StatefulWidget {
 
 class _NetworkDetectionState extends State<NetworkDetection> {
   final ipInfoNotifier = ValueNotifier<IpInfo?>(null);
+  bool? _preIsStart;
   CancelToken? cancelToken;
 
   _checkIp(
     bool isInit,
+    bool isStart,
   ) async {
     if (!isInit) return;
+    if(_preIsStart == false && _preIsStart == isStart) return;
     await Future.delayed(const Duration(milliseconds: 300));
     if (cancelToken != null) {
       cancelToken!.cancel();
@@ -29,6 +32,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     }
     ipInfoNotifier.value = null;
     cancelToken = CancelToken();
+    _preIsStart = isStart;
     ipInfoNotifier.value = await request.checkIp(cancelToken!);
   }
 
@@ -42,9 +46,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
         );
       },
       builder: (_, state, __) {
-        _checkIp(
-          state.isInit,
-        );
+        _checkIp(state.isInit, state.isStart);
         return child;
       },
       child: child,
@@ -78,10 +80,10 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                           child: FadeBox(
                             child: ipInfo != null
                                 ? CountryFlag.fromCountryCode(
-                              ipInfo.countryCode,
-                              width: 24,
-                              height: 24,
-                            )
+                                    ipInfo.countryCode,
+                                    width: 24,
+                                    height: 24,
+                                  )
                                 : TooltipText(
                                     text: Text(
                                       appLocalizations.checking,

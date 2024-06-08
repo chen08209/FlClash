@@ -96,7 +96,7 @@ class AppController {
     }
   }
 
-  updateProfile(String id) async {
+  Future<void> updateProfile(String id) async {
     final profile = config.getCurrentProfileForId(id);
     if (profile != null) {
       final tempProfile = profile.copyWith();
@@ -144,7 +144,7 @@ class AppController {
       if (isNotNeedUpdate == false ||
           profile.url == null ||
           profile.url!.isEmpty) continue;
-      await profile.update();
+      await updateProfile(profile.id);
     }
   }
 

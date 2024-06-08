@@ -25,16 +25,6 @@ class ProfilesFragment extends StatefulWidget {
 }
 
 class _ProfilesFragmentState extends State<ProfilesFragment> {
-  _handleDeleteProfile(String id) async {
-    globalState.appController.deleteProfile(id);
-  }
-
-  _handleUpdateProfile(String id) async {
-    context.findAncestorStateOfType<CommonScaffoldState>()?.loadingRun(
-          () => globalState.appController.updateProfile(id),
-        );
-  }
-
   _handleShowAddExtendPage() {
     showExtendPage(
       globalState.navigatorKey.currentState!.context,
@@ -42,17 +32,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
         context: globalState.navigatorKey.currentState!.context,
       ),
       title: "${appLocalizations.add}${appLocalizations.profile}",
-    );
-  }
-
-  _handleShowEditExtendPage(Profile profile) {
-    showExtendPage(
-      context,
-      body: EditProfile(
-        profile: profile.copyWith(),
-        context: context,
-      ),
-      title: "${appLocalizations.edit}${appLocalizations.profile}",
     );
   }
 
@@ -71,41 +50,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
             GridItem(
               child: ProfileItem(
                 profile: profile,
-                commonPopupMenu: CommonPopupMenu<ProfileActions>(
-                  items: [
-                    CommonPopupMenuItem(
-                      action: ProfileActions.edit,
-                      label: appLocalizations.edit,
-                      iconData: Icons.edit,
-                    ),
-                    if (profile.url != null)
-                      CommonPopupMenuItem(
-                        action: ProfileActions.update,
-                        label: appLocalizations.update,
-                        iconData: Icons.sync,
-                      ),
-                    CommonPopupMenuItem(
-                      action: ProfileActions.delete,
-                      label: appLocalizations.delete,
-                      iconData: Icons.delete,
-                    ),
-                  ],
-                  onSelected: (ProfileActions? action) async {
-                    switch (action) {
-                      case ProfileActions.edit:
-                        _handleShowEditExtendPage(profile);
-                        break;
-                      case ProfileActions.delete:
-                        _handleDeleteProfile(profile.id);
-                        break;
-                      case ProfileActions.update:
-                        _handleUpdateProfile(profile.id);
-                        break;
-                      case null:
-                        break;
-                    }
-                  },
-                ),
                 groupValue: state.currentProfileId,
                 onChanged: globalState.appController.changeProfile,
               ),
@@ -162,22 +106,52 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
   }
 }
 
-class ProfileItem extends StatelessWidget {
+class ProfileItem extends StatefulWidget {
   final Profile profile;
   final String? groupValue;
-  final CommonPopupMenu commonPopupMenu;
   final void Function(String? value) onChanged;
 
   const ProfileItem({
     super.key,
     required this.profile,
-    required this.commonPopupMenu,
     required this.groupValue,
     required this.onChanged,
   });
 
   @override
+  State<ProfileItem> createState() => _ProfileItemState();
+}
+
+class _ProfileItemState extends State<ProfileItem> {
+
+  _handleDeleteProfile(String id) async {
+    globalState.appController.deleteProfile(id);
+  }
+
+  _handleUpdateProfile(String id) async {
+    context.findAncestorStateOfType<CommonScaffoldState>()?.loadingRun(
+          () => globalState.appController.updateProfile(id),
+        );
+  }
+
+  _handleShowEditExtendPage(
+    Profile profile,
+  ) {
+    showExtendPage(
+      context,
+      body: EditProfile(
+        profile: profile.copyWith(),
+        context: context,
+      ),
+      title: "${appLocalizations.edit}${appLocalizations.profile}",
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final profile = widget.profile;
+    final groupValue = widget.groupValue;
+    final onChanged = widget.onChanged;
     String useShow;
     String totalShow;
     double progress;
@@ -201,7 +175,41 @@ class ProfileItem extends StatelessWidget {
         onChanged: onChanged,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      trailing: commonPopupMenu,
+      trailing: CommonPopupMenu<ProfileActions>(
+        items: [
+          CommonPopupMenuItem(
+            action: ProfileActions.edit,
+            label: appLocalizations.edit,
+            iconData: Icons.edit,
+          ),
+          if (profile.type == ProfileType.url)
+            CommonPopupMenuItem(
+              action: ProfileActions.update,
+              label: appLocalizations.update,
+              iconData: Icons.sync,
+            ),
+          CommonPopupMenuItem(
+            action: ProfileActions.delete,
+            label: appLocalizations.delete,
+            iconData: Icons.delete,
+          ),
+        ],
+        onSelected: (ProfileActions? action) async {
+          switch (action) {
+            case ProfileActions.edit:
+              _handleShowEditExtendPage(profile);
+              break;
+            case ProfileActions.delete:
+              _handleDeleteProfile(profile.id);
+              break;
+            case ProfileActions.update:
+              _handleUpdateProfile(profile.id);
+              break;
+            case null:
+              break;
+          }
+        },
+      ),
       title: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -83,7 +83,8 @@ class Profile {
         autoUpdateDuration = autoUpdateDuration ?? defaultUpdateDuration,
         selectedMap = selectedMap ?? {};
 
-  ProfileType get type => url == null ? ProfileType.file : ProfileType.url;
+  ProfileType get type =>
+      url == null || url?.isEmpty == true ? ProfileType.file : ProfileType.url;
 
   Future<void> checkAndUpdate() async {
     final isExists = await check();

@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -82,7 +83,7 @@ class _EditProfileState extends State<EditProfile> {
           },
         ),
       ),
-      if (widget.profile.url != null && widget.profile.url!.isNotEmpty == true)...[
+      if (widget.profile.type == ProfileType.url)...[
         ListItem(
           title: TextFormField(
             controller: urlController,
