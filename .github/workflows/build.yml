@@ -82,7 +82,7 @@ jobs:
 
 
   upload-release:
-    if: startsWith(github.ref, 'refs/tags/v') && github.base_ref == 'main'
+    if: !contains(github.ref, '+')
     permissions: write-all
     needs: [ build ]
     runs-on: ubuntu-latest
