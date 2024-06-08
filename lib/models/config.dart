@@ -8,6 +8,7 @@ import '../common/common.dart';
 import 'models.dart';
 
 part 'generated/config.g.dart';
+
 part 'generated/config.freezed.dart';
 
 @freezed

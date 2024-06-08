@@ -171,6 +171,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "resourcesDesc": MessageLookupByLibrary.simpleMessage("外部资源相关信息"),
         "rule": MessageLookupByLibrary.simpleMessage("规则"),
         "save": MessageLookupByLibrary.simpleMessage("保存"),
+        "search": MessageLookupByLibrary.simpleMessage("搜索"),
         "selectAll": MessageLookupByLibrary.simpleMessage("全选"),
         "selected": MessageLookupByLibrary.simpleMessage("已选择"),
         "settings": MessageLookupByLibrary.simpleMessage("设置"),

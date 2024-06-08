@@ -135,7 +135,7 @@ class _$TunImpl implements _Tun {
   const _$TunImpl(
       {this.enable = false,
       this.device = appName,
-      this.stack = TunStack.mixed,
+      this.stack = TunStack.gvisor,
       @JsonKey(name: "dns-hijack")
       final List<String> dnsHijack = const ["any:53"]})
       : _dnsHijack = dnsHijack;

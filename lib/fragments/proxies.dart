@@ -434,7 +434,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(
-        milliseconds: 600,
+        milliseconds: 200,
       ),
     );
     _scale = Tween<double>(

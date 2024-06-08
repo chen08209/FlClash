@@ -82,7 +82,7 @@ jobs:
 
 
   upload-release:
-    if: ${{ !endsWith(github.ref, '-debug') }}
+    if: startsWith(github.ref, 'refs/tags/v') && github.base_ref == 'main'
     permissions: write-all
     needs: [ build ]
     runs-on: ubuntu-latest

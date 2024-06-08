@@ -17,8 +17,15 @@ enum ProfileActions {
   delete,
 }
 
-class ProfilesFragment extends StatelessWidget {
+class ProfilesFragment extends StatefulWidget {
   const ProfilesFragment({super.key});
+
+  @override
+  State<ProfilesFragment> createState() => _ProfilesFragmentState();
+}
+
+class _ProfilesFragmentState extends State<ProfilesFragment> {
+  final hasPadding = ValueNotifier<bool>(false);
 
   _handleShowAddExtendPage() {
     showExtendPage(
@@ -41,7 +48,7 @@ class ProfilesFragment extends StatelessWidget {
     }
   }
 
-  _initScaffoldState(BuildContext context) {
+  _initScaffoldState() {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
         final commonScaffoldState =
@@ -78,7 +85,7 @@ class ProfilesFragment extends StatelessWidget {
       selector: (_, appState) => appState.currentLabel == 'profiles',
       builder: (_, isCurrent, child) {
         if (isCurrent) {
-          _initScaffoldState(context);
+          _initScaffoldState();
         }
         return child!;
       },
@@ -98,27 +105,46 @@ class ProfilesFragment extends StatelessWidget {
           final isMobile = state.viewMode == ViewMode.mobile;
           return Align(
             alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              padding: !isMobile
-                  ? const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    )
-                  : EdgeInsets.zero,
-              child: Grid(
-                mainAxisSpacing: isMobile ? 8 : 16,
-                crossAxisSpacing: 16,
-                crossAxisCount: columns,
-                children: [
-                  for (final profile in state.profiles)
-                    GridItem(
-                      child: ProfileItem(
-                        profile: profile,
-                        groupValue: state.currentProfileId,
-                        onChanged: globalState.appController.changeProfile,
-                      ),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (scrollNotification) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  hasPadding.value =
+                      scrollNotification.metrics.maxScrollExtent > 0;
+                });
+                return true;
+              },
+              child: ValueListenableBuilder(
+                valueListenable: hasPadding,
+                builder: (_, hasPadding, __) {
+                  return SingleChildScrollView(
+                    padding: !isMobile
+                        ? EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            top: 16,
+                            bottom: 16 + (hasPadding ? 56 : 0),
+                          )
+                        : EdgeInsets.only(
+                            bottom: 0 + (hasPadding ? 56 : 0),
+                          ),
+                    child: Grid(
+                      mainAxisSpacing: isMobile ? 8 : 16,
+                      crossAxisSpacing: 16,
+                      crossAxisCount: columns,
+                      children: [
+                        for (final profile in state.profiles)
+                          GridItem(
+                            child: ProfileItem(
+                              profile: profile,
+                              groupValue: state.currentProfileId,
+                              onChanged:
+                                  globalState.appController.changeProfile,
+                            ),
+                          ),
+                      ],
                     ),
-                ],
+                  );
+                },
               ),
             ),
           );
