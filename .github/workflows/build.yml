@@ -3,7 +3,7 @@ name: build
 on:
   push:
     tags:
-      - 'v*'
+      - '*'
 
 jobs:
   build:
@@ -82,6 +82,7 @@ jobs:
 
 
   upload-release:
+    if: ${{ !endsWith(github.ref, '-debug') }}
     permissions: write-all
     needs: [ build ]
     runs-on: ubuntu-latest
