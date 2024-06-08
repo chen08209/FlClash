@@ -6,6 +6,11 @@ extension TextStyleExtension on TextStyle {
     return copyWith(color: color?.toLight());
   }
 
+  toLighter() {
+    return copyWith(color: color?.toLighter());
+  }
+
+
   toSoftBold() {
     return copyWith(fontWeight: FontWeight.w500);
   }

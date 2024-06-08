@@ -1650,11 +1650,21 @@ class AppLocalizations {
     );
   }
 
+  /// `Check error`
+  String get checkError {
+    return Intl.message(
+      'Check error',
+      name: 'checkError',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Ip check timeout`
-  String get ipCheckError {
+  String get ipCheckTimeout {
     return Intl.message(
       'Ip check timeout',
-      name: 'ipCheckError',
+      name: 'ipCheckTimeout',
       desc: '',
       args: [],
     );

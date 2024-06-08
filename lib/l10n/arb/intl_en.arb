@@ -159,5 +159,6 @@
   "externalResources": "External resources",
   "checking": "Checking...",
   "country": "Country",
-  "ipCheckError": "Ip check timeout"
+  "checkError": "Check error",
+  "ipCheckTimeout": "Ip check timeout"
 }

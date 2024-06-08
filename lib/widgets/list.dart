@@ -71,6 +71,7 @@ class ListItem<T> extends StatelessWidget {
   final Widget title;
   final Widget? subtitle;
   final EdgeInsets padding;
+  final ListTileTitleAlignment tileTitleAlignment;
   final bool? prue;
   final Widget? trailing;
   final Delegate delegate;
@@ -87,6 +88,7 @@ class ListItem<T> extends StatelessWidget {
     this.horizontalTitleGap,
     this.prue,
     this.onTab,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : delegate = const Delegate();
 
   const ListItem.open({
@@ -99,6 +101,7 @@ class ListItem<T> extends StatelessWidget {
     required OpenDelegate this.delegate,
     this.horizontalTitleGap,
     this.prue,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTab = null;
 
   const ListItem.next({
@@ -111,6 +114,7 @@ class ListItem<T> extends StatelessWidget {
     required NextDelegate this.delegate,
     this.horizontalTitleGap,
     this.prue,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTab = null;
 
   const ListItem.checkbox({
@@ -122,6 +126,7 @@ class ListItem<T> extends StatelessWidget {
     required CheckboxDelegate this.delegate,
     this.horizontalTitleGap,
     this.prue,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
   })  : trailing = null,
         onTab = null;
 
@@ -134,6 +139,7 @@ class ListItem<T> extends StatelessWidget {
     required SwitchDelegate this.delegate,
     this.horizontalTitleGap,
     this.prue,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
   })  : trailing = null,
         onTab = null;
 
@@ -146,6 +152,7 @@ class ListItem<T> extends StatelessWidget {
     required RadioDelegate<T> this.delegate,
     this.horizontalTitleGap = 8,
     this.prue,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
   })  : leading = null,
         onTab = null;
 
@@ -193,6 +200,7 @@ class ListItem<T> extends StatelessWidget {
       horizontalTitleGap: horizontalTitleGap,
       title: title,
       subtitle: subtitle,
+      titleAlignment: tileTitleAlignment,
       onTap: onTab,
       trailing: trailing ?? this.trailing,
       contentPadding: padding,

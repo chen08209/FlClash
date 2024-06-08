@@ -49,6 +49,7 @@ class CommonScaffold extends StatefulWidget {
 
 class CommonScaffoldState extends State<CommonScaffold> {
   final ValueNotifier<List<Widget>> _actions = ValueNotifier([]);
+  final ValueNotifier<Widget?> _floatingActionButton = ValueNotifier(null);
 
   final ValueNotifier<bool> _loading = ValueNotifier(false);
 
@@ -58,11 +59,16 @@ class CommonScaffoldState extends State<CommonScaffold> {
     }
   }
 
+  set floatingActionButton(Widget? actions) {
+    if (_floatingActionButton.value != actions) {
+      _floatingActionButton.value = actions;
+    }
+  }
+
   Future<T?> loadingRun<T>(
     Future<T> Function() futureFunction, {
     String? title,
   }) async {
-    if (_loading.value == true) return null;
     _loading.value = true;
     try {
       final res = await futureFunction();
@@ -85,6 +91,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.title != widget.title) {
       _actions.value = [];
+      _floatingActionButton.value = null;
     }
   }
 
@@ -109,6 +116,13 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget build(BuildContext context) {
     return _platformContainer(
       child: Scaffold(
+        floatingActionButton: ValueListenableBuilder(
+          valueListenable: _floatingActionButton,
+          builder: (_, floatingActionButton, __) {
+            return floatingActionButton ?? Container();
+          },
+        ),
+        floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: Stack(

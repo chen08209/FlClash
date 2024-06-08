@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -135,15 +136,24 @@ class AppController {
 
   autoUpdateProfiles() async {
     for (final profile in config.profiles) {
-      if (!profile.autoUpdate) return;
+      if (!profile.autoUpdate) continue;
       final isNotNeedUpdate = profile.lastUpdateDate
           ?.add(
             profile.autoUpdateDuration,
           )
           .isBeforeNow;
-      if (isNotNeedUpdate == false ||
-          profile.url == null ||
-          profile.url!.isEmpty) continue;
+      if (isNotNeedUpdate == false || profile.type == ProfileType.file) {
+        continue;
+      }
+      await updateProfile(profile.id);
+    }
+  }
+
+  updateProfiles() async {
+    for (final profile in config.profiles) {
+      if (profile.type == ProfileType.file) {
+        continue;
+      }
       await updateProfile(profile.id);
     }
   }

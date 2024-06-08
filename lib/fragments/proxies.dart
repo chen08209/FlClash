@@ -51,6 +51,9 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
               selectedValue: proxiesSortType,
             );
           },
+        ),
+        const SizedBox(
+          width: 8,
         )
       ];
     });
@@ -431,7 +434,7 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(
-        milliseconds: 1200,
+        milliseconds: 600,
       ),
     );
     _scale = Tween<double>(
@@ -443,7 +446,6 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
         curve: const Interval(
           0,
           1,
-          curve: Curves.elasticInOut,
         ),
       ),
     );

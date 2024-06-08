@@ -76,6 +76,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Cancel filter system app"),
         "cancelSelectAll":
             MessageLookupByLibrary.simpleMessage("Cancel select all"),
+        "checkError": MessageLookupByLibrary.simpleMessage("Check error"),
         "checkUpdate":
             MessageLookupByLibrary.simpleMessage("Check for updates"),
         "checkUpdateError": MessageLookupByLibrary.simpleMessage(
@@ -124,7 +125,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "hours": MessageLookupByLibrary.simpleMessage("Hours"),
         "importFromURL":
             MessageLookupByLibrary.simpleMessage("Import from URL"),
-        "ipCheckError":
+        "ipCheckTimeout":
             MessageLookupByLibrary.simpleMessage("Ip check timeout"),
         "just": MessageLookupByLibrary.simpleMessage("Just"),
         "language": MessageLookupByLibrary.simpleMessage("Language"),

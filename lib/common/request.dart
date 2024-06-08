@@ -14,9 +14,6 @@ class Request {
   Request() {
     _dio = Dio(
       BaseOptions(
-        connectTimeout: httpTimeoutDuration,
-        sendTimeout: httpTimeoutDuration,
-        receiveTimeout: httpTimeoutDuration,
         headers: {"User-Agent": coreName},
       ),
     );
@@ -37,7 +34,7 @@ class Request {
       _dio.httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
           final client = HttpClient();
-          if(!_isStart) return client;
+          if (!_isStart) return client;
           client.findProxy = (url) {
             return "PROXY localhost:$_port;DIRECT";
           };
@@ -56,7 +53,7 @@ class Request {
           ),
         )
         .timeout(
-          httpTimeoutDuration,
+          httpTimeoutDuration * 2,
         );
     return response;
   }
@@ -86,12 +83,14 @@ class Request {
     "https://ipinfo.io/json/": IpInfo.fromIpInfoIoJson,
   };
 
-  Future<IpInfo?> checkIp() async {
+  Future<IpInfo?> checkIp(CancelToken? cancelToken) async {
     for (final source in _ipInfoSources.entries) {
       try {
-        final response = await _dio.get<Map<String, dynamic>>(
-          source.key,
-        );
+        final response = await _dio
+            .get<Map<String, dynamic>>(source.key, cancelToken: cancelToken)
+            .timeout(
+              httpTimeoutDuration,
+            );
         if (response.statusCode == 200 && response.data != null) {
           return source.value(response.data!);
         }
