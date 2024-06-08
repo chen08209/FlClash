@@ -160,5 +160,6 @@
   "checking": "Checking...",
   "country": "Country",
   "checkError": "Check error",
-  "ipCheckTimeout": "Ip check timeout"
+  "ipCheckTimeout": "Ip check timeout",
+  "search": "Search"
 }

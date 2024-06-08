@@ -122,7 +122,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
             return floatingActionButton ?? Container();
           },
         ),
-        floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: Stack(

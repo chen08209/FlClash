@@ -19,7 +19,6 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 
 
-@RequiresApi(Build.VERSION_CODES.N)
 class FlClashTileService : TileService() {
 
     private val observer = Observer<RunState> { runState ->
@@ -43,19 +42,27 @@ class FlClashTileService : TileService() {
         GlobalState.runState.observeForever(observer)
     }
 
-    @SuppressLint("StartActivityAndCollapseDeprecated")
     private fun activityTransfer() {
         val intent = Intent(this, TempActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (Build.VERSION.SDK_INT >= 34) {
-            val pendingIntent = PendingIntent.getActivity(
+        val pendingIntent = if (Build.VERSION.SDK_INT >= 31) {
+            PendingIntent.getActivity(
                 this,
                 0,
                 intent,
-                PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
-            startActivityAndCollapse(pendingIntent)
         } else {
+            PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startActivityAndCollapse(pendingIntent)
+        }else{
             startActivityAndCollapse(intent)
         }
     }

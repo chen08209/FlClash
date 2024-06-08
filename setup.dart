@@ -12,10 +12,7 @@ enum PlatformType {
   macos,
 }
 
-enum Arch {
-  amd64,
-  arm64,
-}
+enum Arch { amd64, arm64, arm }
 
 class BuildLibItem {
   PlatformType platform;
@@ -63,6 +60,11 @@ class Build {
           platform: PlatformType.windows,
           arch: Arch.amd64,
           archName: 'amd64',
+        ),
+        BuildLibItem(
+          platform: PlatformType.android,
+          arch: Arch.arm,
+          archName: 'armeabi-v7a',
         ),
         BuildLibItem(
           platform: PlatformType.android,
@@ -334,7 +336,7 @@ class BuildCommand extends Command {
     final archName = argResults?['arch'];
     final currentArches =
         arches.where((element) => element.name == archName).toList();
-    final arch = currentArches.isEmpty ? null : arches.first;
+    final arch = currentArches.isEmpty ? null : currentArches.first;
     await _buildLib(arch);
     if (build != "all") {
       return;
@@ -357,10 +359,11 @@ class BuildCommand extends Command {
         break;
       case PlatformType.android:
         final targetMap = {
+          Arch.arm: "android-arm",
+          Arch.arm64: "android-arm64",
           Arch.amd64: "android-x64",
-          Arch.arm64: "android-arm64"
         };
-        final defaultArches = [Arch.amd64, Arch.arm64];
+        final defaultArches = [Arch.arm, Arch.arm64, Arch.amd64];
         final defaultTargets = defaultArches
             .where((element) => arch == null ? true : element == arch)
             .map((e) => targetMap[e])

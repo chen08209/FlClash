@@ -212,6 +212,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "External resource related info"),
         "rule": MessageLookupByLibrary.simpleMessage("Rule"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
+        "search": MessageLookupByLibrary.simpleMessage("Search"),
         "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
         "selected": MessageLookupByLibrary.simpleMessage("Selected"),
         "settings": MessageLookupByLibrary.simpleMessage("Settings"),

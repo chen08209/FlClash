@@ -160,5 +160,6 @@
   "checking": "检测中...",
   "country": "区域",
   "checkError": "检测失败",
-  "ipCheckTimeout": "Ip检测超时"
+  "ipCheckTimeout": "Ip检测超时",
+  "search": "搜索"
 }

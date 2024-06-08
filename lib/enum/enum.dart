@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
-enum GroupType { Selector, URLTest, Fallback }
+enum GroupType { Selector, URLTest, Fallback, LoadBalance, Relay }
 
 enum GroupName { GLOBAL, Proxy, Auto, Fallback }
 
