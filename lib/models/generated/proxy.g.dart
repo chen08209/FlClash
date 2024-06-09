@@ -28,6 +28,8 @@ const _$GroupTypeEnumMap = {
   GroupType.Selector: 'Selector',
   GroupType.URLTest: 'URLTest',
   GroupType.Fallback: 'Fallback',
+  GroupType.LoadBalance: 'LoadBalance',
+  GroupType.Relay: 'Relay',
 };
 
 _$ProxyImpl _$$ProxyImplFromJson(Map<String, dynamic> json) => _$ProxyImpl(

@@ -107,7 +107,7 @@ class AppState with ChangeNotifier {
     } else {
       final index = groups.indexWhere((element) => element.name == proxyName);
       if (index == -1) return type;
-      return "$type(${groups[index].now})";
+      return "$type(${groups[index].now ?? '*'})";
     }
   }
 

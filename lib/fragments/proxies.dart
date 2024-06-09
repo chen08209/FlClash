@@ -199,10 +199,15 @@ class ProxiesTabView extends StatelessWidget {
 
   _delayTest(List<Proxy> proxies) async {
     for (final proxy in proxies) {
+      final appController = globalState.appController;
+      final proxyName = appController.appState.getRealProxyName(proxy.name) ?? proxy.name;
       globalState.appController.setDelay(
-        Delay(name: proxy.name, value: 0),
+        Delay(
+          name: proxyName,
+          value: 0,
+        ),
       );
-      clashCore.getDelay(proxy.name).then((delay) {
+      clashCore.getDelay(proxyName).then((delay) {
         globalState.appController.setDelay(delay);
       });
     }
