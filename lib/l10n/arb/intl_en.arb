@@ -161,5 +161,7 @@
   "country": "Country",
   "checkError": "Check error",
   "ipCheckTimeout": "Ip check timeout",
-  "search": "Search"
+  "search": "Search",
+  "allowBypass": "Allow applications to bypass VPN",
+  "allowBypassDesc": "After opening, some applications can bypass VPN"
 }

@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import com.follow.clash.GlobalState
 import com.follow.clash.RunState
 import com.follow.clash.models.AccessControl
+import com.follow.clash.models.Props
 import com.follow.clash.services.FlClashVpnService
 import com.google.gson.Gson
 import io.flutter.embedding.android.FlutterActivity
@@ -41,7 +42,7 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
     private var flClashVpnService: FlClashVpnService? = null
     private var isBound = false
     private var port: Int? = null
-    private var accessControl: AccessControl? = null
+    private var props: Props? = null
     private lateinit var title: String
     private lateinit var content: String
 
@@ -73,8 +74,8 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
         "StartProxy" -> {
             port = call.argument<Int>("port")
             val args = call.argument<String>("args")
-            accessControl =
-                if (args != null) Gson().fromJson(args, AccessControl::class.java) else null
+            props =
+                if (args != null) Gson().fromJson(args, Props::class.java) else null
             handleStartVpn()
             result.success(true)
         }
@@ -121,7 +122,7 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
 
     private fun startVpn(port: Int) {
         if (GlobalState.runState.value == RunState.START) return;
-        flClashVpnService?.start(port, accessControl)
+        flClashVpnService?.start(port, props)
         GlobalState.runState.value = RunState.START
         GlobalState.runTime = Date()
         startAfter()

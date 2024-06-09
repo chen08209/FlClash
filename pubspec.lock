@@ -277,10 +277,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: "29c90806ac5f5fb896547720b73b17ee9aed9bba540dc5d91fe29f8c5745b10a"
+      sha256: a7eed9716c82453da5c09d3a82d4644e7070dd2da81bfe5b6c6873ae4f07cf4f
       url: "https://pub.dev"
     source: hosted
-    version: "8.0.3"
+    version: "8.0.4"
   file_selector_linux:
     dependency: transitive
     description:
@@ -649,10 +649,10 @@ packages:
     dependency: "direct main"
     description:
       name: mobile_scanner
-      sha256: f34c83198d9381f6c100dfaec647c275630840cbcda5d6c5eb6ba264beb96be4
+      sha256: b8c0e9afcfd52534f85ec666f3d52156f560b5e6c25b1e3d4fe2087763607926
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.1"
+    version: "5.1.1"
   nested:
     dependency: transitive
     description:
