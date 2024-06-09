@@ -530,12 +530,11 @@ class AccessControlSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    return _packageList(packages);
+    return buildSuggestions(context);
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final packages = _results;
-    return _packageList(packages);
+    return _packageList(_results);
   }
 }

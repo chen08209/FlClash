@@ -17,10 +17,16 @@ jobs:
             os: windows-latest
           - platform: linux
             os: ubuntu-latest
-#          - platform: macos
-#            os: macos-13
+          - platform: macos
+            os: macos-13
 
     steps:
+      - name: Check Matrix
+        run: |
+            echo "Running on ${{ matrix.os }}"
+            echo "Arch: ${{ runner.arch }}"
+            gcc --version
+
       - name: Checkout
         uses: actions/checkout@v4
         with:

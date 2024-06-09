@@ -161,5 +161,7 @@
   "country": "区域",
   "checkError": "检测失败",
   "ipCheckTimeout": "Ip检测超时",
-  "search": "搜索"
+  "search": "搜索",
+  "allowBypass": "允许应用绕过vpn",
+  "allowBypassDesc": "开启后部分应用可绕过VPN"
 }

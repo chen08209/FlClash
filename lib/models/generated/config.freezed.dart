@@ -239,3 +239,172 @@ abstract class _AccessControl implements AccessControl {
   _$$AccessControlImplCopyWith<_$AccessControlImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+Props _$PropsFromJson(Map<String, dynamic> json) {
+  return _Props.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Props {
+  AccessControl? get accessControl => throw _privateConstructorUsedError;
+  bool? get allowBypass => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $PropsCopyWith<Props> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $PropsCopyWith<$Res> {
+  factory $PropsCopyWith(Props value, $Res Function(Props) then) =
+      _$PropsCopyWithImpl<$Res, Props>;
+  @useResult
+  $Res call({AccessControl? accessControl, bool? allowBypass});
+
+  $AccessControlCopyWith<$Res>? get accessControl;
+}
+
+/// @nodoc
+class _$PropsCopyWithImpl<$Res, $Val extends Props>
+    implements $PropsCopyWith<$Res> {
+  _$PropsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? accessControl = freezed,
+    Object? allowBypass = freezed,
+  }) {
+    return _then(_value.copyWith(
+      accessControl: freezed == accessControl
+          ? _value.accessControl
+          : accessControl // ignore: cast_nullable_to_non_nullable
+              as AccessControl?,
+      allowBypass: freezed == allowBypass
+          ? _value.allowBypass
+          : allowBypass // ignore: cast_nullable_to_non_nullable
+              as bool?,
+    ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $AccessControlCopyWith<$Res>? get accessControl {
+    if (_value.accessControl == null) {
+      return null;
+    }
+
+    return $AccessControlCopyWith<$Res>(_value.accessControl!, (value) {
+      return _then(_value.copyWith(accessControl: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$PropsImplCopyWith<$Res> implements $PropsCopyWith<$Res> {
+  factory _$$PropsImplCopyWith(
+          _$PropsImpl value, $Res Function(_$PropsImpl) then) =
+      __$$PropsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({AccessControl? accessControl, bool? allowBypass});
+
+  @override
+  $AccessControlCopyWith<$Res>? get accessControl;
+}
+
+/// @nodoc
+class __$$PropsImplCopyWithImpl<$Res>
+    extends _$PropsCopyWithImpl<$Res, _$PropsImpl>
+    implements _$$PropsImplCopyWith<$Res> {
+  __$$PropsImplCopyWithImpl(
+      _$PropsImpl _value, $Res Function(_$PropsImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? accessControl = freezed,
+    Object? allowBypass = freezed,
+  }) {
+    return _then(_$PropsImpl(
+      accessControl: freezed == accessControl
+          ? _value.accessControl
+          : accessControl // ignore: cast_nullable_to_non_nullable
+              as AccessControl?,
+      allowBypass: freezed == allowBypass
+          ? _value.allowBypass
+          : allowBypass // ignore: cast_nullable_to_non_nullable
+              as bool?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$PropsImpl implements _Props {
+  const _$PropsImpl({this.accessControl, this.allowBypass});
+
+  factory _$PropsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$PropsImplFromJson(json);
+
+  @override
+  final AccessControl? accessControl;
+  @override
+  final bool? allowBypass;
+
+  @override
+  String toString() {
+    return 'Props(accessControl: $accessControl, allowBypass: $allowBypass)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PropsImpl &&
+            (identical(other.accessControl, accessControl) ||
+                other.accessControl == accessControl) &&
+            (identical(other.allowBypass, allowBypass) ||
+                other.allowBypass == allowBypass));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, accessControl, allowBypass);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PropsImplCopyWith<_$PropsImpl> get copyWith =>
+      __$$PropsImplCopyWithImpl<_$PropsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$PropsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Props implements Props {
+  const factory _Props(
+      {final AccessControl? accessControl,
+      final bool? allowBypass}) = _$PropsImpl;
+
+  factory _Props.fromJson(Map<String, dynamic> json) = _$PropsImpl.fromJson;
+
+  @override
+  AccessControl? get accessControl;
+  @override
+  bool? get allowBypass;
+  @override
+  @JsonKey(ignore: true)
+  _$$PropsImplCopyWith<_$PropsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

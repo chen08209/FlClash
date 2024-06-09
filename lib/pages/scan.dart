@@ -107,6 +107,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                     case TorchState.unavailable:
                       icon = const Icon(Icons.flash_off);
                       backgroundColor = Colors.transparent;
+                    case TorchState.auto:
+                      icon = const Icon(Icons.flash_auto);
+                      backgroundColor = Colors.orange;
                   }
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 8),

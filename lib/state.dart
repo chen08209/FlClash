@@ -61,8 +61,14 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) async {
-    final args =
-        config.isAccessControl ? json.encode(config.accessControl) : null;
+    final args = config.isAccessControl
+        ? json.encode(
+            Props(
+              accessControl: config.accessControl,
+              allowBypass: config.allowBypass,
+            ),
+          )
+        : null;
     await proxyManager.startProxy(
       port: clashConfig.mixedPort,
       args: args,

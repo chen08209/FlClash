@@ -24,7 +24,7 @@ dependencies:
   windows_single_instance: ^1.0.1
   json_annotation: ^4.9.0
   file_picker: ^8.0.3
-  mobile_scanner: 5.0.1
+  mobile_scanner: ^5.1.1
   app_links: ^3.5.0
   win32_registry: ^1.1.2
   tray_manager: ^0.2.1

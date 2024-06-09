@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -54,7 +56,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
             onTab: () {
               _modifyMixedPort(mixedPort);
             },
-            padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             leading: const Icon(Icons.adjust),
             title: Text(appLocalizations.proxyPort),
             trailing: FilledButton.tonal(
@@ -105,6 +107,24 @@ class _ConfigFragmentState extends State<ConfigFragment> {
       //       );
       //     },
       //   ),
+      if (Platform.isAndroid)
+        Selector<Config, bool>(
+          selector: (_, config) => config.allowBypass,
+          builder: (_, allowBypass, __) {
+            return ListItem.switchItem(
+              leading: const Icon(Icons.double_arrow),
+              title: Text(appLocalizations.allowBypass),
+              subtitle: Text(appLocalizations.allowBypassDesc),
+              delegate: SwitchDelegate(
+                value: allowBypass,
+                onChanged: (bool value) async {
+                  final appController = globalState.appController;
+                  appController.config.allowBypass = value;
+                },
+              ),
+            );
+          },
+        ),
       Selector<Config, bool>(
         selector: (_, config) => config.isCompatible,
         builder: (_, isCompatible, __) {

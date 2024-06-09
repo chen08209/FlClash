@@ -10,8 +10,7 @@ class Picker {
     if (Platform.isAndroid) {
       filePickerResult = await FilePicker.platform.pickFiles(
         withData: true,
-        type: FileType.custom,
-        allowedExtensions: ['txt', 'conf'],
+        allowMultiple: false,
       );
     } else {
       filePickerResult = await FilePicker.platform.pickFiles(

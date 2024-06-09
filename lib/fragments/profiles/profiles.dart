@@ -62,7 +62,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
                 },
               );
             },
-            icon: const Icon(Icons.download),
+            icon: const Icon(Icons.sync),
           ),
           const SizedBox(
             width: 8,

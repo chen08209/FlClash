@@ -1679,6 +1679,26 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Allow applications to bypass VPN`
+  String get allowBypass {
+    return Intl.message(
+      'Allow applications to bypass VPN',
+      name: 'allowBypass',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `After opening, some applications can bypass VPN`
+  String get allowBypassDesc {
+    return Intl.message(
+      'After opening, some applications can bypass VPN',
+      name: 'allowBypassDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
