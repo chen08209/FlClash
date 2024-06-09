@@ -10,3 +10,8 @@ data class AccessControl(
     val acceptList: List<String>,
     val rejectList: List<String>,
 )
+
+data class Props (
+    val accessControl: AccessControl?,
+    val allowBypass: Boolean?,
+)

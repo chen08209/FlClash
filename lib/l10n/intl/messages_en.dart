@@ -40,6 +40,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "addressTip": MessageLookupByLibrary.simpleMessage(
             "Please enter a valid WebDAV address"),
         "ago": MessageLookupByLibrary.simpleMessage(" Ago"),
+        "allowBypass": MessageLookupByLibrary.simpleMessage(
+            "Allow applications to bypass VPN"),
+        "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+            "After opening, some applications can bypass VPN"),
         "allowLan": MessageLookupByLibrary.simpleMessage("AllowLan"),
         "allowLanDesc": MessageLookupByLibrary.simpleMessage(
             "Allow access proxy through the LAN"),

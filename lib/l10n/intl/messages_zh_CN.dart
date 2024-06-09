@@ -36,6 +36,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "addressHelp": MessageLookupByLibrary.simpleMessage("WebDAV服务器地址"),
         "addressTip": MessageLookupByLibrary.simpleMessage("请输入有效的WebDAV地址"),
         "ago": MessageLookupByLibrary.simpleMessage("前"),
+        "allowBypass": MessageLookupByLibrary.simpleMessage("允许应用绕过vpn"),
+        "allowBypassDesc":
+            MessageLookupByLibrary.simpleMessage("开启后部分应用可绕过VPN"),
         "allowLan": MessageLookupByLibrary.simpleMessage("局域网代理"),
         "allowLanDesc": MessageLookupByLibrary.simpleMessage("允许通过局域网访问代理"),
         "appAccessControl": MessageLookupByLibrary.simpleMessage("应用访问控制"),

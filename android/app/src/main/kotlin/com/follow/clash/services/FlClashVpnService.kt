@@ -17,6 +17,7 @@ import com.follow.clash.MainActivity
 import com.follow.clash.R
 import com.follow.clash.models.AccessControl
 import com.follow.clash.models.AccessControlMode
+import com.follow.clash.models.Props
 
 
 class FlClashVpnService : VpnService() {
@@ -51,12 +52,12 @@ class FlClashVpnService : VpnService() {
         return START_STICKY
     }
 
-    fun start(port: Int, accessControl: AccessControl?) {
+    fun start(port: Int, props: Props?) {
         fd = with(Builder()) {
             addAddress("172.16.0.1", 30)
             setMtu(9000)
             addRoute("0.0.0.0", 0)
-            if (accessControl != null) {
+            props?.accessControl?.let { accessControl ->
                 when (accessControl.mode) {
                     AccessControlMode.acceptSelected -> {
                         (accessControl.acceptList + packageName).forEach {
@@ -77,7 +78,9 @@ class FlClashVpnService : VpnService() {
             if (Build.VERSION.SDK_INT >= 29) {
                 setMetered(false)
             }
-            allowBypass()
+            if (props?.allowBypass == true) {
+                allowBypass()
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 setHttpProxy(
                     ProxyInfo.buildDirectProxy(
@@ -144,8 +147,8 @@ class FlClashVpnService : VpnService() {
         val notification =
             notificationBuilder.setContentTitle(title).setContentText(content).build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(notificationId, notification,  FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        }else{
+            startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
             startForeground(notificationId, notification)
         }
     }

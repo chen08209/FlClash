@@ -24,6 +24,17 @@ class AccessControl with _$AccessControl {
       _$AccessControlFromJson(json);
 }
 
+@freezed
+class Props with _$Props {
+  const factory Props({
+    AccessControl? accessControl,
+    bool? allowBypass,
+  }) = _Props;
+
+  factory Props.fromJson(Map<String, Object?> json) =>
+      _$PropsFromJson(json);
+}
+
 @JsonSerializable()
 class Config extends ChangeNotifier {
   List<Profile> _profiles;
@@ -42,6 +53,7 @@ class Config extends ChangeNotifier {
   AccessControl _accessControl;
   bool _isAnimateToPage;
   bool _autoCheckUpdate;
+  bool _allowBypass;
   DAV? _dav;
 
   Config()
@@ -58,7 +70,8 @@ class Config extends ChangeNotifier {
         _isAccessControl = false,
         _autoCheckUpdate = true,
         _accessControl = const AccessControl(),
-        _isAnimateToPage = true;
+        _isAnimateToPage = true,
+        _allowBypass = true;
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
@@ -306,8 +319,22 @@ class Config extends ChangeNotifier {
     }
   }
 
-  update(
-      [Config? config, RecoveryOption recoveryOptions = RecoveryOption.all]) {
+  @JsonKey(defaultValue: true)
+  bool get allowBypass {
+    return _allowBypass;
+  }
+
+  set allowBypass(bool value) {
+    if (_allowBypass != value) {
+      _allowBypass = value;
+      notifyListeners();
+    }
+  }
+
+  update([
+    Config? config,
+    RecoveryOption recoveryOptions = RecoveryOption.all,
+  ]) {
     if (config != null) {
       _profiles = config._profiles;
       for (final profile in config._profiles) {
@@ -326,6 +353,7 @@ class Config extends ChangeNotifier {
       _openLog = config._openLog;
       _themeMode = config._themeMode;
       _locale = config._locale;
+      _allowBypass = config._allowBypass;
       _primaryColor = config._primaryColor;
       _proxiesSortType = config._proxiesSortType;
       _isMinimizeOnExit = config._isMinimizeOnExit;
