@@ -490,7 +490,7 @@ class AccessControlSearchDelegate extends SearchDelegate {
         final isAccessControl = state.isAccessControl;
         final accessControlMode = accessControl.mode;
         final currentList = accessControl.currentList;
-        final packageNameList = packages.map((e) => e.packageName).toList();
+        final packageNameList = this.packages.map((e) => e.packageName).toList();
         final valueList = currentList.intersection(packageNameList);
         return DisabledMask(
           status: !isAccessControl,
@@ -530,12 +530,12 @@ class AccessControlSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    final packages = _results;
     return _packageList(packages);
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
+    final packages = _results;
     return _packageList(packages);
   }
 }
