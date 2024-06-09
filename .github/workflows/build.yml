@@ -82,7 +82,7 @@ jobs:
 
 
   upload-release:
-    if: !contains(github.ref, '+')
+    if: ${{ !contains(github.ref, '+') }}
     permissions: write-all
     needs: [ build ]
     runs-on: ubuntu-latest
