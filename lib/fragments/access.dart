@@ -38,12 +38,12 @@ class _AccessFragmentState extends State<AccessFragment> {
   Widget _buildAppProxyModePopup() {
     final items = [
       CommonPopupMenuItem(
-        action: AccessControlMode.rejectSelected,
-        label: appLocalizations.blacklistMode,
-      ),
-      CommonPopupMenuItem(
         action: AccessControlMode.acceptSelected,
         label: appLocalizations.whitelistMode,
+      ),
+      CommonPopupMenuItem(
+        action: AccessControlMode.rejectSelected,
+        label: appLocalizations.blacklistMode,
       ),
     ];
     return Selector<Config, AccessControlMode>(

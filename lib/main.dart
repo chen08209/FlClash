@@ -14,7 +14,6 @@ import 'package:ignore_battery_optimization/ignore_battery_optimization.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await requestIgnoreBatteryOptimizations();
   await android?.init();
   await window?.init();
   final config = await preferences.getConfig() ?? Config();
@@ -34,6 +33,7 @@ Future<void> main() async {
     config: config,
     clashConfig: clashConfig,
   );
+  await requestIgnoreBatteryOptimizations();
   runAppWithPreferences(
     const Application(),
     appState: appState,

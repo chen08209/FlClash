@@ -25,7 +25,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "about": MessageLookupByLibrary.simpleMessage("关于"),
         "accessControl": MessageLookupByLibrary.simpleMessage("访问控制"),
         "accessControlAllowDesc":
-            MessageLookupByLibrary.simpleMessage("只允许选中应用进入VPN"),
+            MessageLookupByLibrary.simpleMessage("只允许选中应用使用VPN"),
         "accessControlDesc": MessageLookupByLibrary.simpleMessage("配置应用访问代理"),
         "accessControlNotAllowDesc":
             MessageLookupByLibrary.simpleMessage("选中应用将会被排除在VPN之外"),

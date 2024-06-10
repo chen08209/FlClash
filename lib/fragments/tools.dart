@@ -141,15 +141,15 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
         ),
       ),
       if (Platform.isAndroid)
-        ListItem.open(
-          leading: const Icon(Icons.view_list),
-          title: Text(appLocalizations.accessControl),
-          subtitle: Text(appLocalizations.accessControlDesc),
-          delegate: OpenDelegate(
-            title: appLocalizations.appAccessControl,
-            widget: const AccessFragment(),
-          ),
+      ListItem.open(
+        leading: const Icon(Icons.view_list),
+        title: Text(appLocalizations.accessControl),
+        subtitle: Text(appLocalizations.accessControlDesc),
+        delegate: OpenDelegate(
+          title: appLocalizations.appAccessControl,
+          widget: const AccessFragment(),
         ),
+      ),
       ListItem.open(
         leading: const Icon(Icons.edit),
         title: Text(appLocalizations.override),

@@ -32,7 +32,7 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
       : DAV.fromJson(json['dav'] as Map<String, dynamic>)
   ..isAnimateToPage = json['isAnimateToPage'] as bool? ?? true
   ..isCompatible = json['isCompatible'] as bool? ?? true
-  ..autoCheckUpdate = json['autoCheckUpdate'] as bool? ?? false
+  ..autoCheckUpdate = json['autoCheckUpdate'] as bool? ?? true
   ..allowBypass = json['allowBypass'] as bool? ?? true;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
@@ -71,7 +71,7 @@ const _$ProxiesSortTypeEnumMap = {
 _$AccessControlImpl _$$AccessControlImplFromJson(Map<String, dynamic> json) =>
     _$AccessControlImpl(
       mode: $enumDecodeNullable(_$AccessControlModeEnumMap, json['mode']) ??
-          AccessControlMode.rejectSelected,
+          AccessControlMode.acceptSelected,
       acceptList: (json['acceptList'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??

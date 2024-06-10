@@ -139,7 +139,7 @@ class __$$AccessControlImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$AccessControlImpl implements _AccessControl {
   const _$AccessControlImpl(
-      {this.mode = AccessControlMode.rejectSelected,
+      {this.mode = AccessControlMode.acceptSelected,
       final List<String> acceptList = const [],
       final List<String> rejectList = const [],
       this.isFilterSystemApp = true})

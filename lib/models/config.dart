@@ -14,7 +14,7 @@ part 'generated/config.freezed.dart';
 @freezed
 class AccessControl with _$AccessControl {
   const factory AccessControl({
-    @Default(AccessControlMode.rejectSelected) AccessControlMode mode,
+    @Default(AccessControlMode.acceptSelected) AccessControlMode mode,
     @Default([]) List<String> acceptList,
     @Default([]) List<String> rejectList,
     @Default(true) bool isFilterSystemApp,

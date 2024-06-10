@@ -104,7 +104,7 @@
   "selectAll": "全选",
   "cancelSelectAll": "取消全选",
   "appAccessControl": "应用访问控制",
-  "accessControlAllowDesc": "只允许选中应用进入VPN",
+  "accessControlAllowDesc": "只允许选中应用使用VPN",
   "accessControlNotAllowDesc": "选中应用将会被排除在VPN之外",
   "selected": "已选择",
   "unableToUpdateCurrentProfileDesc": "无法更新当前配置文件",
