@@ -10,9 +10,11 @@ import 'application.dart';
 import 'l10n/l10n.dart';
 import 'models/models.dart';
 import 'common/common.dart';
+import 'package:ignore_battery_optimization/ignore_battery_optimization.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await requestIgnoreBatteryOptimizations();
   await android?.init();
   await window?.init();
   final config = await preferences.getConfig() ?? Config();
@@ -38,6 +40,13 @@ Future<void> main() async {
     config: config,
     clashConfig: clashConfig,
   );
+}
+
+Future<void> requestIgnoreBatteryOptimizations() async {
+  bool isIgnoring = await IgnoreBatteryOptimization.isIgnoringBatteryOptimizations('com.tom.cla');
+  if (!isIgnoring) {
+    await IgnoreBatteryOptimization.openIgnoringBatteryOptimizations('com.tom.cla');
+  }
 }
 
 @pragma('vm:entry-point')

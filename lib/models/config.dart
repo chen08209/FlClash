@@ -56,7 +56,7 @@ class Config extends ChangeNotifier {
         _proxiesSortType = ProxiesSortType.none,
         _isMinimizeOnExit = true,
         _isAccessControl = false,
-        _autoCheckUpdate = true,
+        _autoCheckUpdate = false,
         _accessControl = const AccessControl(),
         _isAnimateToPage = true;
 

@@ -125,23 +125,23 @@ class ApplicationSettingFragment extends StatelessWidget {
           );
         },
       ),
-      Selector<Config, bool>(
-        selector: (_, config) => config.autoCheckUpdate,
-        builder: (_, autoCheckUpdate, child) {
-          return ListItem.switchItem(
-            leading: const Icon(Icons.system_update),
-            title: Text(appLocalizations.autoCheckUpdate),
-            subtitle: Text(appLocalizations.autoCheckUpdateDesc),
-            delegate: SwitchDelegate(
-              value: autoCheckUpdate,
-              onChanged: (bool value) {
-                final config = context.read<Config>();
-                config.autoCheckUpdate = value;
-              },
-            ),
-          );
-        },
-      ),
+      // Selector<Config, bool>(
+      //   selector: (_, config) => config.autoCheckUpdate,
+      //   builder: (_, autoCheckUpdate, child) {
+      //     return ListItem.switchItem(
+      //       leading: const Icon(Icons.system_update),
+      //       title: Text(appLocalizations.autoCheckUpdate),
+      //       subtitle: Text(appLocalizations.autoCheckUpdateDesc),
+      //       delegate: SwitchDelegate(
+      //         value: autoCheckUpdate,
+      //         onChanged: (bool value) {
+      //           final config = context.read<Config>();
+      //           config.autoCheckUpdate = value;
+      //         },
+      //       ),
+      //     );
+      //   },
+      // ),
     ];
     return ListView.separated(
       itemBuilder: (_, index) {

@@ -140,15 +140,6 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
           extendPageWidth: 360,
         ),
       ),
-      ListItem.open(
-        leading: const Icon(Icons.cloud_sync),
-        title: Text(appLocalizations.backupAndRecovery),
-        subtitle: Text(appLocalizations.backupAndRecoveryDesc),
-        delegate: OpenDelegate(
-          title: appLocalizations.backupAndRecovery,
-          widget: const BackupAndRecovery(),
-        ),
-      ),
       if (Platform.isAndroid)
         ListItem.open(
           leading: const Icon(Icons.view_list),
@@ -175,6 +166,15 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
         delegate: OpenDelegate(
           title: appLocalizations.application,
           widget: const ApplicationSettingFragment(),
+        ),
+      ),
+      ListItem.open(
+        leading: const Icon(Icons.cloud_sync),
+        title: Text(appLocalizations.backupAndRecovery),
+        subtitle: Text(appLocalizations.backupAndRecoveryDesc),
+        delegate: OpenDelegate(
+          title: appLocalizations.backupAndRecovery,
+          widget: const BackupAndRecovery(),
         ),
       ),
     ];
@@ -225,10 +225,10 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
             title: appLocalizations.settings,
             child: _getSettingList(),
           ),
-          Section(
-            title: appLocalizations.other,
-            child: _getOtherList(),
-          ),
+          // Section(
+          //   title: appLocalizations.other,
+          //   child: _getOtherList(),
+          // ),
         ];
         return ListView.builder(
           itemCount: items.length,

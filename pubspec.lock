@@ -429,6 +429,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.2"
+  ignore_battery_optimization:
+    dependency: "direct main"
+    description:
+      name: ignore_battery_optimization
+      sha256: "8a2c08a89553bfb0b50ee59b5566dfd068e27b548088ba2066e6c7177dfe0470"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   image:
     dependency: "direct main"
     description:

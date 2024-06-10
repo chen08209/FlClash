@@ -320,6 +320,7 @@ class BuildCommand extends Command {
     required PlatformType platform,
     required String targets,
     String args = '',
+    bool universalApk = false, // 添加一个新的参数以支持通用 APK
   }) async {
     await Build.getDistributor();
     await Build.exec(
@@ -374,6 +375,11 @@ class BuildCommand extends Command {
           args:
               "--flutter-build-args split-per-abi --build-target-platform ${defaultTargets.join(",")}",
         );
+        // _buildDistributor(
+        //   platform: platform,
+        //   targets: "apk",
+        //   universalApk: true,
+        // );
         break;
       case PlatformType.macos:
         await _getMacosDependencies();

@@ -39,6 +39,7 @@ dependencies:
   webdav_client: ^1.2.2
   dio: ^5.4.3+1
   country_flags: ^2.2.0
+  ignore_battery_optimization: ^0.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
