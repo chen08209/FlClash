@@ -25,6 +25,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     bool isStart,
   ) async {
     if (!isInit) return;
+    timeoutNotifier.value = false;
     if (_preIsStart == false && _preIsStart == isStart) return;
     if (cancelToken != null) {
       cancelToken!.cancel();
@@ -151,9 +152,10 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                             builder: (_, timeout, __) {
                               if (timeout) {
                                 return Text(
-                                  appLocalizations.ipCheckTimeout,
-                                  style: context.textTheme.titleLarge
-                                      ?.toSoftBold(),
+                                  "timeout",
+                                  style: context.textTheme.titleMedium
+                                      ?.copyWith(color: Colors.red)
+                                      .toSoftBold(),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 );

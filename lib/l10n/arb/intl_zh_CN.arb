@@ -163,5 +163,8 @@
   "ipCheckTimeout": "Ip检测超时",
   "search": "搜索",
   "allowBypass": "允许应用绕过vpn",
-  "allowBypassDesc": "开启后部分应用可绕过VPN"
+  "allowBypassDesc": "开启后部分应用可绕过VPN",
+  "externalController": "外部控制器",
+  "externalControllerDesc": "开启后可通过9090端口控制clash内核",
+  "ipv6Desc": "开启后将可以接收ipv6流量"
 }

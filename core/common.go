@@ -321,12 +321,12 @@ func generateProxyGroupAndRule(proxyGroup *[]map[string]any, rule *[]string) {
 }
 
 func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig, compatible bool) {
-	targetConfig.ExternalController = ""
+	targetConfig.ExternalController = patchConfig.ExternalController
 	targetConfig.ExternalUI = ""
 	targetConfig.Interface = ""
 	targetConfig.ExternalUIURL = ""
 	targetConfig.GeodataMode = false
-	//targetConfig.IPv6 = patchConfig.IPv6
+	targetConfig.IPv6 = patchConfig.IPv6
 	targetConfig.LogLevel = patchConfig.LogLevel
 	targetConfig.Port = 0
 	targetConfig.SocksPort = 0

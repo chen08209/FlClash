@@ -163,5 +163,8 @@
   "ipCheckTimeout": "Ip check timeout",
   "search": "Search",
   "allowBypass": "Allow applications to bypass VPN",
-  "allowBypassDesc": "After opening, some applications can bypass VPN"
+  "allowBypassDesc": "Enabled to some applications can bypass VPN",
+  "externalController": "ExternalController",
+  "externalControllerDesc": "Enabled to control the clash on port 9090",
+  "ipv6Desc": "Enabled to will allow it to receive ipv6 traffic"
 }

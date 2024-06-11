@@ -96,6 +96,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "edit": MessageLookupByLibrary.simpleMessage("编辑"),
         "en": MessageLookupByLibrary.simpleMessage("英语"),
         "exit": MessageLookupByLibrary.simpleMessage("退出"),
+        "externalController": MessageLookupByLibrary.simpleMessage("外部控制器"),
+        "externalControllerDesc":
+            MessageLookupByLibrary.simpleMessage("开启后可通过9090端口控制clash内核"),
         "externalResources": MessageLookupByLibrary.simpleMessage("外部资源"),
         "file": MessageLookupByLibrary.simpleMessage("文件"),
         "fileDesc": MessageLookupByLibrary.simpleMessage("直接上传配置文件"),
@@ -106,6 +109,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "hours": MessageLookupByLibrary.simpleMessage("小时"),
         "importFromURL": MessageLookupByLibrary.simpleMessage("从URL导入"),
         "ipCheckTimeout": MessageLookupByLibrary.simpleMessage("Ip检测超时"),
+        "ipv6Desc": MessageLookupByLibrary.simpleMessage("开启后将可以接收ipv6流量"),
         "just": MessageLookupByLibrary.simpleMessage("刚刚"),
         "language": MessageLookupByLibrary.simpleMessage("语言"),
         "light": MessageLookupByLibrary.simpleMessage("浅色"),
