@@ -40,6 +40,7 @@ ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig(
       mode: $enumDecodeNullable(_$ModeEnumMap, json['mode']),
       allowLan: json['allow-lan'] as bool?,
       logLevel: $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']),
+      externalController: json['external-controller'] as String? ?? '',
       tun: json['tun'] == null
           ? null
           : Tun.fromJson(json['tun'] as Map<String, dynamic>),
@@ -56,6 +57,7 @@ Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
       'mode': _$ModeEnumMap[instance.mode]!,
       'allow-lan': instance.allowLan,
       'log-level': _$LogLevelEnumMap[instance.logLevel]!,
+      'external-controller': instance.externalController,
       'tun': instance.tun,
       'dns': instance.dns,
       'rules': instance.rules,

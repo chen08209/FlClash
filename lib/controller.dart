@@ -256,6 +256,29 @@ class AppController {
     }
   }
 
+  init() async {
+    if (!config.silentLaunch) {
+      window?.show();
+    }
+    final commonScaffoldState = globalState.homeScaffoldKey.currentState;
+    if(commonScaffoldState?.mounted == true){
+      await commonScaffoldState?.loadingRun(() async {
+        await globalState.applyProfile(
+          appState: appState,
+          config: config,
+          clashConfig: clashConfig,
+        );
+      });
+    }else{
+      await globalState.applyProfile(
+        appState: appState,
+        config: config,
+        clashConfig: clashConfig,
+      );
+    }
+    await afterInit();
+  }
+
   afterInit() async {
     if (config.autoRun) {
       await updateSystemProxy(true);
@@ -265,9 +288,6 @@ class AppController {
     }
     autoUpdateProfiles();
     updateLogStatus();
-    if (!config.silentLaunch) {
-      window?.show();
-    }
     autoCheckUpdate();
   }
 

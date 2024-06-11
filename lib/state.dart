@@ -111,12 +111,6 @@ class GlobalState {
         clashConfig: clashConfig,
       );
     }
-    if (!appState.isInit) return;
-    await applyProfile(
-      appState: appState,
-      config: config,
-      clashConfig: clashConfig,
-    );
     updateCoreVersionInfo(appState);
   }
 
@@ -137,19 +131,6 @@ class GlobalState {
         ),
       );
     });
-  }
-
-  updateNavigationItems({
-    required AppState appState,
-    required Config config,
-    required ClashConfig clashConfig,
-  }) {
-    final group = appState.currentGroups;
-    final hasProfile = config.profiles.isNotEmpty;
-    appState.navigationItems = navigation.getItems(
-      openLogs: config.openLogs,
-      hasProxies: group.isNotEmpty && hasProfile,
-    );
   }
 
   Future<void> updateGroups(AppState appState) async {

@@ -57,7 +57,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               _modifyMixedPort(mixedPort);
             },
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            leading: const Icon(Icons.adjust),
+            leading: const Icon(Icons.adjust_outlined),
             title: Text(appLocalizations.proxyPort),
             trailing: FilledButton.tonal(
               onPressed: () {
@@ -66,6 +66,26 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               child: Text(
                 "$mixedPort",
               ),
+            ),
+          );
+        },
+      ),
+      Selector<ClashConfig, bool>(
+        selector: (_, clashConfig) => clashConfig.ipv6,
+        builder: (_, ipv6, __) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.water_outlined),
+            title: const Text("Ipv6"),
+            subtitle: Text(appLocalizations.ipv6Desc),
+            delegate: SwitchDelegate(
+              value: ipv6,
+              onChanged: (bool value) async {
+                final appController = globalState.appController;
+                appController.clashConfig.ipv6 = value;
+                await appController.updateClashConfig(
+                  isPatch: false,
+                );
+              },
             ),
           );
         },
@@ -129,7 +149,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
         selector: (_, config) => config.isCompatible,
         builder: (_, isCompatible, __) {
           return ListItem.switchItem(
-            leading: const Icon(Icons.expand),
+            leading: const Icon(Icons.expand_outlined),
             title: Text(appLocalizations.compatible),
             subtitle: Text(appLocalizations.compatibleDesc),
             delegate: SwitchDelegate(
@@ -145,25 +165,39 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           );
         },
       ),
+      // Selector<ClashConfig, bool>(
+      //   selector: (_, clashConfig) => clashConfig.externalController.isNotEmpty,
+      //   builder: (_, hasExternalController, __) {
+      //     return ListItem.switchItem(
+      //       leading: const Icon(Icons.api_outlined),
+      //       title: Text(appLocalizations.externalController),
+      //       subtitle: Text(appLocalizations.externalControllerDesc),
+      //       delegate: SwitchDelegate(
+      //         value: hasExternalController,
+      //         onChanged: (bool value) async {
+      //           final appController = globalState.appController;
+      //           appController.clashConfig.externalController =
+      //               value ? defaultExternalController : '';
+      //           await appController.updateClashConfig(
+      //             isPatch: false,
+      //           );
+      //         },
+      //       ),
+      //     );
+      //   },
+      // ),
       Padding(
         padding: kMaterialListPadding,
         child: Selector<ClashConfig, LogLevel>(
           selector: (_, clashConfig) => clashConfig.logLevel,
           builder: (_, value, __) {
             return ListItem(
-              leading: const Icon(Icons.feedback),
+              leading: const Icon(Icons.info_outline),
               title: Text(appLocalizations.logLevel),
               trailing: SizedBox(
                 height: 48,
                 child: DropdownMenu<LogLevel>(
                   width: 124,
-                  inputDecorationTheme: const InputDecorationTheme(
-                    filled: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 5,
-                      horizontal: 16,
-                    ),
-                  ),
                   initialSelection: value,
                   dropdownMenuEntries: [
                     for (final logLevel in LogLevel.values)

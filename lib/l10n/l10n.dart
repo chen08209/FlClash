@@ -1690,11 +1690,41 @@ class AppLocalizations {
     );
   }
 
-  /// `After opening, some applications can bypass VPN`
+  /// `Enabled to some applications can bypass VPN`
   String get allowBypassDesc {
     return Intl.message(
-      'After opening, some applications can bypass VPN',
+      'Enabled to some applications can bypass VPN',
       name: 'allowBypassDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `ExternalController`
+  String get externalController {
+    return Intl.message(
+      'ExternalController',
+      name: 'externalController',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enabled to control the clash on port 9090`
+  String get externalControllerDesc {
+    return Intl.message(
+      'Enabled to control the clash on port 9090',
+      name: 'externalControllerDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enabled to will allow it to receive ipv6 traffic`
+  String get ipv6Desc {
+    return Intl.message(
+      'Enabled to will allow it to receive ipv6 traffic',
+      name: 'ipv6Desc',
       desc: '',
       args: [],
     );

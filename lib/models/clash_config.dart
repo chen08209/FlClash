@@ -108,6 +108,8 @@ class Dns {
 class ClashConfig extends ChangeNotifier {
   int _mixedPort;
   bool _allowLan;
+  bool _ipv6;
+  String _externalController;
   Mode _mode;
   LogLevel _logLevel;
   Tun _tun;
@@ -118,15 +120,19 @@ class ClashConfig extends ChangeNotifier {
     int? mixedPort,
     Mode? mode,
     bool? allowLan,
+    bool? ipv6,
     LogLevel? logLevel,
+    String? externalController,
     Tun? tun,
     Dns? dns,
     List<String>? rules,
   })  : _mixedPort = mixedPort ?? 7890,
         _mode = mode ?? Mode.rule,
+        _ipv6 = ipv6 ?? false,
         _allowLan = allowLan ?? false,
         _logLevel = logLevel ?? LogLevel.info,
         _tun = tun ?? const Tun(),
+        _externalController = externalController ?? '',
         _dns = dns ?? Dns(),
         _rules = rules ?? [];
 
@@ -165,6 +171,26 @@ class ClashConfig extends ChangeNotifier {
   set logLevel(LogLevel value) {
     if (_logLevel != value) {
       _logLevel = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(name: "external-controller", defaultValue: '')
+  String get externalController => _externalController;
+
+  set externalController(String value) {
+    if (_externalController != value) {
+      _externalController = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(defaultValue: false)
+  bool get ipv6 => _ipv6;
+
+  set ipv6(bool value) {
+    if (_ipv6 != value) {
+      ipv6 = value;
       notifyListeners();
     }
   }
