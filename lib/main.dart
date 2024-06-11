@@ -22,16 +22,16 @@ Future<void> main() async {
     isCompatible: config.isCompatible,
     selectedMap: config.currentSelectedMap,
   );
+  appState.navigationItems = navigation.getItems(
+    openLogs: config.openLogs,
+    hasProxies: false,
+  );
   await globalState.init(
     appState: appState,
     config: config,
     clashConfig: clashConfig,
   );
-  globalState.updateNavigationItems(
-    appState: appState,
-    config: config,
-    clashConfig: clashConfig,
-  );
+
   runAppWithPreferences(
     const Application(),
     appState: appState,
@@ -60,6 +60,16 @@ Future<void> vpnService() async {
     config: config,
     clashConfig: clashConfig,
   );
+
+  if (appState.isInit) {
+    await globalState.applyProfile(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
+    );
+  } else {
+    exit(0);
+  }
 
   final appLocalizations = await AppLocalizations.load(
     other.getLocaleForString(config.locale) ??

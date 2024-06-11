@@ -43,7 +43,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "allowBypass": MessageLookupByLibrary.simpleMessage(
             "Allow applications to bypass VPN"),
         "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-            "After opening, some applications can bypass VPN"),
+            "Enabled to some applications can bypass VPN"),
         "allowLan": MessageLookupByLibrary.simpleMessage("AllowLan"),
         "allowLanDesc": MessageLookupByLibrary.simpleMessage(
             "Allow access proxy through the LAN"),
@@ -116,6 +116,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "edit": MessageLookupByLibrary.simpleMessage("Edit"),
         "en": MessageLookupByLibrary.simpleMessage("English"),
         "exit": MessageLookupByLibrary.simpleMessage("Exit"),
+        "externalController":
+            MessageLookupByLibrary.simpleMessage("ExternalController"),
+        "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
+            "Enabled to control the clash on port 9090"),
         "externalResources":
             MessageLookupByLibrary.simpleMessage("External resources"),
         "file": MessageLookupByLibrary.simpleMessage("File"),
@@ -131,6 +135,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Import from URL"),
         "ipCheckTimeout":
             MessageLookupByLibrary.simpleMessage("Ip check timeout"),
+        "ipv6Desc": MessageLookupByLibrary.simpleMessage(
+            "Enabled to will allow it to receive ipv6 traffic"),
         "just": MessageLookupByLibrary.simpleMessage("Just"),
         "language": MessageLookupByLibrary.simpleMessage("Language"),
         "light": MessageLookupByLibrary.simpleMessage("Light"),

@@ -105,49 +105,56 @@ class _AccessFragmentState extends State<AccessFragment> {
     );
   }
 
-  // Widget _buildSelectedAllButton({
-  //   required bool isSelectedAll,
-  //   required List<String> allValueList,
-  // }) {
-  //   return Builder(
-  //     builder: (context) {
-  //       final tooltip = isSelectedAll
-  //           ? appLocalizations.cancelSelectAll
-  //           : appLocalizations.selectAll;
-  //       return IconButton(
-  //         tooltip: tooltip,
-  //         onPressed: () {
-  //           final config = globalState.appController.config;
-  //           final isAccept =
-  //               config.accessControl.mode == AccessControlMode.acceptSelected;
-  //
-  //           if (isSelectedAll) {
-  //             config.accessControl = switch (isAccept) {
-  //               true => config.accessControl.copyWith(
-  //                   acceptList: [],
-  //                 ),
-  //               false => config.accessControl.copyWith(
-  //                   rejectList: [],
-  //                 ),
-  //             };
-  //           } else {
-  //             config.accessControl = switch (isAccept) {
-  //               true => config.accessControl.copyWith(
-  //                   acceptList: allValueList,
-  //                 ),
-  //               false => config.accessControl.copyWith(
-  //                   rejectList: allValueList,
-  //                 ),
-  //             };
-  //           }
-  //         },
-  //         icon: isSelectedAll
-  //             ? const Icon(Icons.deselect)
-  //             : const Icon(Icons.select_all),
-  //       );
-  //     },
-  //   );
-  // }
+  _buildSelectedAllButton({
+    required bool isAccessControl,
+    required bool isSelectedAll,
+    required List<String> allValueList,
+  }) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final tooltip = isSelectedAll
+          ? appLocalizations.cancelSelectAll
+          : appLocalizations.selectAll;
+      final commonScaffoldState =
+          context.findAncestorStateOfType<CommonScaffoldState>();
+      commonScaffoldState?.floatingActionButton = DisabledMask(
+        status: !isAccessControl,
+        child: AbsorbPointer(
+          absorbing: !isAccessControl,
+          child: FloatingActionButton (
+            tooltip: tooltip,
+            onPressed: () {
+              final config = globalState.appController.config;
+              final isAccept =
+                  config.accessControl.mode == AccessControlMode.acceptSelected;
+
+              if (isSelectedAll) {
+                config.accessControl = switch (isAccept) {
+                  true => config.accessControl.copyWith(
+                      acceptList: [],
+                    ),
+                  false => config.accessControl.copyWith(
+                      rejectList: [],
+                    ),
+                };
+              } else {
+                config.accessControl = switch (isAccept) {
+                  true => config.accessControl.copyWith(
+                      acceptList: allValueList,
+                    ),
+                  false => config.accessControl.copyWith(
+                      rejectList: allValueList,
+                    ),
+                };
+              }
+            },
+            child: isSelectedAll
+                ? const Icon(Icons.deselect)
+                : const Icon(Icons.select_all),
+          ),
+        ),
+      );
+    });
+  }
 
   Widget _buildPackageList() {
     return ValueListenableBuilder(
@@ -199,6 +206,11 @@ class _AccessFragmentState extends State<AccessFragment> {
                 accessControlMode == AccessControlMode.acceptSelected
                     ? appLocalizations.accessControlAllowDesc
                     : appLocalizations.accessControlNotAllowDesc;
+            _buildSelectedAllButton(
+              isAccessControl: isAccessControl,
+              isSelectedAll: valueList.length == packageNameList.length,
+              allValueList: packageNameList,
+            );
             return DisabledMask(
               status: !isAccessControl,
               child: Column(
@@ -490,7 +502,8 @@ class AccessControlSearchDelegate extends SearchDelegate {
         final isAccessControl = state.isAccessControl;
         final accessControlMode = accessControl.mode;
         final currentList = accessControl.currentList;
-        final packageNameList = this.packages.map((e) => e.packageName).toList();
+        final packageNameList =
+            this.packages.map((e) => e.packageName).toList();
         final valueList = currentList.intersection(packageNameList);
         return DisabledMask(
           status: !isAccessControl,
