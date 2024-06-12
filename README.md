@@ -50,8 +50,12 @@ on Mobile:
    ```
 
 2. Install `Flutter` and `Golang` environment
+    ```bash
+    brew install go
+    brew install flutter
+    ```
 
-3. Build Application
+4. Build Application
 
     - android
 
@@ -94,6 +98,7 @@ on Mobile:
         2. Run build script
 
            ```bash
+           dart pub get
            dart .\setup.dart	
            ```
            
