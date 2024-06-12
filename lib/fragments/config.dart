@@ -82,9 +82,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               onChanged: (bool value) async {
                 final appController = globalState.appController;
                 appController.clashConfig.ipv6 = value;
-                await appController.updateClashConfig(
-                  isPatch: false,
-                );
+                appController.updateClashConfigDebounce();
               },
             ),
           );
