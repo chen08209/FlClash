@@ -138,11 +138,12 @@ class FlClashVpnService : VpnService() {
 
     fun startForeground(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel =
-                NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
             val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-            channel.setShowBadge(false)
+            var channel = manager?.getNotificationChannel(CHANNEL)
+            if (channel == null) {
+                channel = NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
+                manager?.createNotificationChannel(channel)
+            }
         }
         val notification =
             notificationBuilder.setContentTitle(title).setContentText(content).build()
