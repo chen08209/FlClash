@@ -11,7 +11,8 @@ data class AccessControl(
     val rejectList: List<String>,
 )
 
-data class Props (
+data class Props(
     val accessControl: AccessControl?,
     val allowBypass: Boolean?,
+    val systemProxy: Boolean?,
 )

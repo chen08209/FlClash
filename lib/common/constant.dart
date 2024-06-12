@@ -21,6 +21,8 @@ const repository = "chen08209/FlClash";
 const defaultExternalController = "127.0.0.1:9090";
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
+const geodataLoaderMemconservative = "memconservative";
+const geodataLoaderStandard = "standard";
 final filter = ImageFilter.blur(
   sigmaX: 5,
   sigmaY: 5,

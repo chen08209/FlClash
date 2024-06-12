@@ -109,9 +109,12 @@ class ClashConfig extends ChangeNotifier {
   int _mixedPort;
   bool _allowLan;
   bool _ipv6;
+  String _geodataLoader;
+  LogLevel _logLevel;
   String _externalController;
   Mode _mode;
-  LogLevel _logLevel;
+  bool _unifiedDelay;
+  bool _tcpConcurrent;
   Tun _tun;
   Dns _dns;
   List<String> _rules;
@@ -123,15 +126,21 @@ class ClashConfig extends ChangeNotifier {
     bool? ipv6,
     LogLevel? logLevel,
     String? externalController,
+    String? geodataLoader,
+    bool? unifiedDelay,
     Tun? tun,
     Dns? dns,
+    bool? tcpConcurrent,
     List<String>? rules,
   })  : _mixedPort = mixedPort ?? 7890,
         _mode = mode ?? Mode.rule,
         _ipv6 = ipv6 ?? false,
         _allowLan = allowLan ?? false,
+        _tcpConcurrent = tcpConcurrent ?? false,
         _logLevel = logLevel ?? LogLevel.info,
         _tun = tun ?? const Tun(),
+        _unifiedDelay = unifiedDelay ?? false,
+        _geodataLoader = geodataLoader ?? geodataLoaderMemconservative,
         _externalController = externalController ?? '',
         _dns = dns ?? Dns(),
         _rules = rules ?? [];
@@ -191,6 +200,36 @@ class ClashConfig extends ChangeNotifier {
   set ipv6(bool value) {
     if (_ipv6 != value) {
       _ipv6 = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(name: "geodata-loader", defaultValue: geodataLoaderMemconservative)
+  String get geodataLoader => _geodataLoader;
+
+  set geodataLoader(String value) {
+    if (_geodataLoader != value) {
+      _geodataLoader = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(name: "unified-delay", defaultValue: false)
+  bool get unifiedDelay => _unifiedDelay;
+
+  set unifiedDelay(bool value) {
+    if (_unifiedDelay != value) {
+      _unifiedDelay = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(name: "tcp-concurrent", defaultValue: false)
+  bool get tcpConcurrent => _tcpConcurrent;
+
+  set tcpConcurrent(bool value) {
+    if (_tcpConcurrent != value) {
+      _tcpConcurrent = value;
       notifyListeners();
     }
   }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,20 +18,14 @@ class App {
       methodChannel = const MethodChannel("app");
       methodChannel!.setMethodCallHandler((call) async {
         switch (call.method) {
-          case "exit":
-            if (onExit != null) {
-              await onExit!();
-            }
+          case "gc":
+            clashCore.requestGc();
             break;
           default:
             throw MissingPluginException();
         }
       });
     }
-  }
-
-  setOnExit(Function() onExit) {
-    this.onExit = onExit;
   }
 
   factory App() {

@@ -893,6 +893,14 @@ class ClashFFI {
       _lookup<ffi.NativeFunction<GoUint8 Function()>>('shutdownClash');
   late final _shutdownClash = _shutdownClashPtr.asFunction<int Function()>();
 
+  void forceGc() {
+    return _forceGc();
+  }
+
+  late final _forceGcPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('forceGc');
+  late final _forceGc = _forceGcPtr.asFunction<void Function()>();
+
   void validateConfig(
     ffi.Pointer<ffi.Char> s,
     int port,
@@ -1122,7 +1130,7 @@ class ClashFFI {
       _lookup<ffi.NativeFunction<ffi.Void Function()>>('stopLog');
   late final _stopLog = _stopLogPtr.asFunction<void Function()>();
 
-  int startTUN(
+  void startTUN(
     int fd,
   ) {
     return _startTUN(
@@ -1131,8 +1139,8 @@ class ClashFFI {
   }
 
   late final _startTUNPtr =
-      _lookup<ffi.NativeFunction<GoUint8 Function(ffi.Int)>>('startTUN');
-  late final _startTUN = _startTUNPtr.asFunction<int Function(int)>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('startTUN');
+  late final _startTUN = _startTUNPtr.asFunction<void Function(int)>();
 
   int updateMarkSocketPort(
     int markSocketPort,

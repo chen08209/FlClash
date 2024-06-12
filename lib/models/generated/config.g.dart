@@ -33,7 +33,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..isAnimateToPage = json['isAnimateToPage'] as bool? ?? true
   ..isCompatible = json['isCompatible'] as bool? ?? true
   ..autoCheckUpdate = json['autoCheckUpdate'] as bool? ?? true
-  ..allowBypass = json['allowBypass'] as bool? ?? true;
+  ..allowBypass = json['allowBypass'] as bool? ?? true
+  ..systemProxy = json['systemProxy'] as bool? ?? true;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -54,6 +55,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'isCompatible': instance.isCompatible,
       'autoCheckUpdate': instance.autoCheckUpdate,
       'allowBypass': instance.allowBypass,
+      'systemProxy': instance.systemProxy,
     };
 
 const _$ThemeModeEnumMap = {
@@ -102,10 +104,12 @@ _$PropsImpl _$$PropsImplFromJson(Map<String, dynamic> json) => _$PropsImpl(
           : AccessControl.fromJson(
               json['accessControl'] as Map<String, dynamic>),
       allowBypass: json['allowBypass'] as bool?,
+      systemProxy: json['systemProxy'] as bool?,
     );
 
 Map<String, dynamic> _$$PropsImplToJson(_$PropsImpl instance) =>
     <String, dynamic>{
       'accessControl': instance.accessControl,
       'allowBypass': instance.allowBypass,
+      'systemProxy': instance.systemProxy,
     };

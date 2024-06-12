@@ -111,6 +111,7 @@
   "noMoreInfoDesc": "No more info",
   "profileParseErrorDesc": "profile parse error",
   "proxyPort": "ProxyPort",
+  "proxyPortDesc": "Set the clash listening port",
   "port": "Port",
   "logLevel": "LogLevel",
   "show": "Show",
@@ -163,8 +164,17 @@
   "ipCheckTimeout": "Ip check timeout",
   "search": "Search",
   "allowBypass": "Allow applications to bypass VPN",
-  "allowBypassDesc": "Enabled to some applications can bypass VPN",
+  "allowBypassDesc": "Some apps can bypass VPN when turned on",
   "externalController": "ExternalController",
-  "externalControllerDesc": "Enabled to control the clash on port 9090",
-  "ipv6Desc": "Enabled to will allow it to receive ipv6 traffic"
+  "externalControllerDesc": "Once enabled, the clash kernel can be controlled on port 9090",
+  "ipv6Desc": "When turned on it will be able to receive ipv6 traffic",
+  "app": "App",
+  "general": "General",
+  "systemProxyDesc": "Attach HTTP proxy to VpnService",
+  "unifiedDelay": "Unified delay",
+  "unifiedDelayDesc": "Remove extra delays such as handshaking",
+  "tcpConcurrent": "Tcp concurrent",
+  "tcpConcurrentDesc": "Enabling it will allow tcp concurrency",
+  "geodataLoader": "Geo Low Memory Mode",
+  "geodataLoaderDesc": "Enabling will use the Geo low memory loader"
 }
