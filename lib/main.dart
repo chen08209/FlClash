@@ -32,13 +32,13 @@ Future<void> main() async {
     config: config,
     clashConfig: clashConfig,
   );
-  await requestIgnoreBatteryOptimizations();
   runAppWithPreferences(
     const Application(),
     appState: appState,
     config: config,
     clashConfig: clashConfig,
   );
+  await requestIgnoreBatteryOptimizations();
 }
 
 Future<void> requestIgnoreBatteryOptimizations() async {
