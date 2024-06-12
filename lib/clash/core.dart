@@ -210,6 +210,10 @@ class ClashCore {
     clashFFI.startTUN(fd);
   }
 
+  requestGc(){
+    clashFFI.forceGc();
+  }
+
   void stopTun() {
     clashFFI.stopTun();
   }

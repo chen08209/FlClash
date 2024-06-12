@@ -43,10 +43,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "allowBypass": MessageLookupByLibrary.simpleMessage(
             "Allow applications to bypass VPN"),
         "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-            "Enabled to some applications can bypass VPN"),
+            "Some apps can bypass VPN when turned on"),
         "allowLan": MessageLookupByLibrary.simpleMessage("AllowLan"),
         "allowLanDesc": MessageLookupByLibrary.simpleMessage(
             "Allow access proxy through the LAN"),
+        "app": MessageLookupByLibrary.simpleMessage("App"),
         "appAccessControl":
             MessageLookupByLibrary.simpleMessage("App access control"),
         "application": MessageLookupByLibrary.simpleMessage("Application"),
@@ -119,7 +120,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "externalController":
             MessageLookupByLibrary.simpleMessage("ExternalController"),
         "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
-            "Enabled to control the clash on port 9090"),
+            "Once enabled, the clash kernel can be controlled on port 9090"),
         "externalResources":
             MessageLookupByLibrary.simpleMessage("External resources"),
         "file": MessageLookupByLibrary.simpleMessage("File"),
@@ -127,7 +128,12 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Directly upload profile"),
         "filterSystemApp":
             MessageLookupByLibrary.simpleMessage("Filter system app"),
+        "general": MessageLookupByLibrary.simpleMessage("General"),
         "geoData": MessageLookupByLibrary.simpleMessage("GeoData"),
+        "geodataLoader":
+            MessageLookupByLibrary.simpleMessage("Geo Low Memory Mode"),
+        "geodataLoaderDesc": MessageLookupByLibrary.simpleMessage(
+            "Enabling will use the Geo low memory loader"),
         "global": MessageLookupByLibrary.simpleMessage("Global"),
         "goDownload": MessageLookupByLibrary.simpleMessage("Go to download"),
         "hours": MessageLookupByLibrary.simpleMessage("Hours"),
@@ -136,7 +142,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "ipCheckTimeout":
             MessageLookupByLibrary.simpleMessage("Ip check timeout"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage(
-            "Enabled to will allow it to receive ipv6 traffic"),
+            "When turned on it will be able to receive ipv6 traffic"),
         "just": MessageLookupByLibrary.simpleMessage("Just"),
         "language": MessageLookupByLibrary.simpleMessage("Language"),
         "light": MessageLookupByLibrary.simpleMessage("Light"),
@@ -205,6 +211,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "project": MessageLookupByLibrary.simpleMessage("Project"),
         "proxies": MessageLookupByLibrary.simpleMessage("Proxies"),
         "proxyPort": MessageLookupByLibrary.simpleMessage("ProxyPort"),
+        "proxyPortDesc": MessageLookupByLibrary.simpleMessage(
+            "Set the clash listening port"),
         "qrcode": MessageLookupByLibrary.simpleMessage("QR code"),
         "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
             "Scan QR code to obtain profile"),
@@ -234,9 +242,14 @@ class MessageLookup extends MessageLookupByLibrary {
         "stopVpn": MessageLookupByLibrary.simpleMessage("Stopping VPN..."),
         "submit": MessageLookupByLibrary.simpleMessage("Submit"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("SystemProxy"),
+        "systemProxyDesc": MessageLookupByLibrary.simpleMessage(
+            "Attach HTTP proxy to VpnService"),
         "tabAnimation": MessageLookupByLibrary.simpleMessage("Tab animation"),
         "tabAnimationDesc": MessageLookupByLibrary.simpleMessage(
             "When enabled, the home tab will add a toggle animation"),
+        "tcpConcurrent": MessageLookupByLibrary.simpleMessage("Tcp concurrent"),
+        "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
+            "Enabling it will allow tcp concurrency"),
         "theme": MessageLookupByLibrary.simpleMessage("Theme"),
         "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),
         "themeDesc": MessageLookupByLibrary.simpleMessage(
@@ -251,6 +264,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "unableToUpdateCurrentProfileDesc":
             MessageLookupByLibrary.simpleMessage(
                 "unable to update current profile"),
+        "unifiedDelay": MessageLookupByLibrary.simpleMessage("Unified delay"),
+        "unifiedDelayDesc": MessageLookupByLibrary.simpleMessage(
+            "Remove extra delays such as handshaking"),
         "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
         "update": MessageLookupByLibrary.simpleMessage("Update"),
         "upload": MessageLookupByLibrary.simpleMessage("Upload"),

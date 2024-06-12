@@ -143,7 +143,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     private suspend fun getPackages(): String {
-        return withContext(Dispatchers.Default){
+        return withContext(Dispatchers.Default) {
             val packageManager = context?.packageManager
             val packages: List<Package>? =
                 packageManager?.getInstalledPackages(PackageManager.GET_META_DATA)?.filter {
@@ -160,6 +160,10 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 }
             Gson().toJson(packages)
         }
+    }
+
+    fun requestGc() {
+        channel.invokeMethod("gc",null)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {

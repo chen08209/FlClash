@@ -46,9 +46,110 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     globalState.appController.updateClashConfigDebounce();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> items = [
+  _buildAppSection() {
+    final items = [
+      if (Platform.isAndroid)
+        Selector<Config, bool>(
+          selector: (_, config) => config.allowBypass,
+          builder: (_, allowBypass, __) {
+            return ListItem.switchItem(
+              leading: const Icon(Icons.arrow_forward_outlined),
+              title: Text(appLocalizations.allowBypass),
+              subtitle: Text(appLocalizations.allowBypassDesc),
+              delegate: SwitchDelegate(
+                value: allowBypass,
+                onChanged: (bool value) async {
+                  final appController = globalState.appController;
+                  appController.config.allowBypass = value;
+                },
+              ),
+            );
+          },
+        ),
+      if (Platform.isAndroid)
+        Selector<Config, bool>(
+          selector: (_, config) => config.systemProxy,
+          builder: (_, systemProxy, __) {
+            return ListItem.switchItem(
+              leading: const Icon(Icons.settings_ethernet),
+              title: Text(appLocalizations.systemProxy),
+              subtitle: Text(appLocalizations.systemProxyDesc),
+              delegate: SwitchDelegate(
+                value: systemProxy,
+                onChanged: (bool value) async {
+                  final appController = globalState.appController;
+                  appController.config.systemProxy = value;
+                },
+              ),
+            );
+          },
+        ),
+      Selector<Config, bool>(
+        selector: (_, config) => config.isCompatible,
+        builder: (_, isCompatible, __) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.expand_outlined),
+            title: Text(appLocalizations.compatible),
+            subtitle: Text(appLocalizations.compatibleDesc),
+            delegate: SwitchDelegate(
+              value: isCompatible,
+              onChanged: (bool value) async {
+                final appController = globalState.appController;
+                appController.config.isCompatible = value;
+                await appController.updateClashConfig(isPatch: false);
+                await appController.updateGroups();
+                appController.changeProxy();
+              },
+            ),
+          );
+        },
+      ),
+    ];
+    return Section(
+      title: appLocalizations.app,
+      child: Column(
+        children: [
+          for (final item in items) ...[
+            item,
+            if (items.last != item)
+              const Divider(
+                height: 0,
+              )
+          ]
+        ],
+      ),
+    );
+  }
+
+  _buildGeneralSection() {
+    final items = [
+      Padding(
+        padding: kMaterialListPadding,
+        child: Selector<ClashConfig, LogLevel>(
+          selector: (_, clashConfig) => clashConfig.logLevel,
+          builder: (_, value, __) {
+            return ListItem(
+              leading: const Icon(Icons.info_outline),
+              title: Text(appLocalizations.logLevel),
+              trailing: SizedBox(
+                height: 48,
+                child: DropdownMenu<LogLevel>(
+                  width: 124,
+                  initialSelection: value,
+                  dropdownMenuEntries: [
+                    for (final logLevel in LogLevel.values)
+                      DropdownMenuEntry<LogLevel>(
+                        value: logLevel,
+                        label: logLevel.name,
+                      )
+                  ],
+                  onSelected: _updateLoglevel,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
       Selector<ClashConfig, int>(
         selector: (_, clashConfig) => clashConfig.mixedPort,
         builder: (_, mixedPort, __) {
@@ -56,9 +157,9 @@ class _ConfigFragmentState extends State<ConfigFragment> {
             onTab: () {
               _modifyMixedPort(mixedPort);
             },
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             leading: const Icon(Icons.adjust_outlined),
             title: Text(appLocalizations.proxyPort),
+            subtitle: Text(appLocalizations.proxyPortDesc),
             trailing: FilledButton.tonal(
               onPressed: () {
                 _modifyMixedPort(mixedPort);
@@ -106,122 +207,111 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           );
         },
       ),
-      // if (system.isDesktop)
-      //   Selector<ClashConfig, bool>(
-      //     selector: (_, clashConfig) => clashConfig.tun.enable,
-      //     builder: (_, tunEnable, __) {
-      //       return ListItem.switchItem(
-      //         leading: const Icon(Icons.support),
-      //         title: Text(appLocalizations.tun),
-      //         subtitle: Text(appLocalizations.tunDesc),
-      //         delegate: SwitchDelegate(
-      //           value: tunEnable,
-      //           onChanged: (bool value) async {
-      //             final clashConfig = context.read<ClashConfig>();
-      //             clashConfig.tun = Tun(enable: value);
-      //             globalState.appController.updateClashConfigDebounce();
-      //           },
-      //         ),
-      //       );
-      //     },
-      //   ),
-      if (Platform.isAndroid)
-        Selector<Config, bool>(
-          selector: (_, config) => config.allowBypass,
-          builder: (_, allowBypass, __) {
-            return ListItem.switchItem(
-              leading: const Icon(Icons.double_arrow),
-              title: Text(appLocalizations.allowBypass),
-              subtitle: Text(appLocalizations.allowBypassDesc),
-              delegate: SwitchDelegate(
-                value: allowBypass,
-                onChanged: (bool value) async {
-                  final appController = globalState.appController;
-                  appController.config.allowBypass = value;
-                },
-              ),
-            );
-          },
-        ),
-      Selector<Config, bool>(
-        selector: (_, config) => config.isCompatible,
-        builder: (_, isCompatible, __) {
+      Selector<ClashConfig, bool>(
+        selector: (_, clashConfig) => clashConfig.unifiedDelay,
+        builder: (_, unifiedDelay, __) {
           return ListItem.switchItem(
-            leading: const Icon(Icons.expand_outlined),
-            title: Text(appLocalizations.compatible),
-            subtitle: Text(appLocalizations.compatibleDesc),
+            leading: const Icon(Icons.compress_outlined),
+            title: Text(appLocalizations.unifiedDelay),
+            subtitle: Text(appLocalizations.unifiedDelayDesc),
             delegate: SwitchDelegate(
-              value: isCompatible,
+              value: unifiedDelay,
               onChanged: (bool value) async {
                 final appController = globalState.appController;
-                appController.config.isCompatible = value;
-                await appController.updateClashConfig(isPatch: false);
-                await appController.updateGroups();
-                appController.changeProxy();
+                appController.clashConfig.unifiedDelay = value;
+                appController.updateClashConfigDebounce();
               },
             ),
           );
         },
       ),
-      // Selector<ClashConfig, bool>(
-      //   selector: (_, clashConfig) => clashConfig.externalController.isNotEmpty,
-      //   builder: (_, hasExternalController, __) {
-      //     return ListItem.switchItem(
-      //       leading: const Icon(Icons.api_outlined),
-      //       title: Text(appLocalizations.externalController),
-      //       subtitle: Text(appLocalizations.externalControllerDesc),
-      //       delegate: SwitchDelegate(
-      //         value: hasExternalController,
-      //         onChanged: (bool value) async {
-      //           final appController = globalState.appController;
-      //           appController.clashConfig.externalController =
-      //               value ? defaultExternalController : '';
-      //           await appController.updateClashConfig(
-      //             isPatch: false,
-      //           );
-      //         },
-      //       ),
-      //     );
-      //   },
-      // ),
-      Padding(
-        padding: kMaterialListPadding,
-        child: Selector<ClashConfig, LogLevel>(
-          selector: (_, clashConfig) => clashConfig.logLevel,
-          builder: (_, value, __) {
-            return ListItem(
-              leading: const Icon(Icons.info_outline),
-              title: Text(appLocalizations.logLevel),
-              trailing: SizedBox(
-                height: 48,
-                child: DropdownMenu<LogLevel>(
-                  width: 124,
-                  initialSelection: value,
-                  dropdownMenuEntries: [
-                    for (final logLevel in LogLevel.values)
-                      DropdownMenuEntry<LogLevel>(
-                        value: logLevel,
-                        label: logLevel.name,
-                      )
-                  ],
-                  onSelected: _updateLoglevel,
-                ),
-              ),
-            );
-          },
-        ),
+      Selector<ClashConfig, bool>(
+        selector: (_, clashConfig) => clashConfig.tcpConcurrent,
+        builder: (_, tcpConcurrent, __) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.double_arrow_outlined),
+            title: Text(appLocalizations.tcpConcurrent),
+            subtitle: Text(appLocalizations.tcpConcurrentDesc),
+            delegate: SwitchDelegate(
+              value: tcpConcurrent,
+              onChanged: (bool value) async {
+                final appController = globalState.appController;
+                appController.clashConfig.tcpConcurrent = value;
+                appController.updateClashConfigDebounce();
+              },
+            ),
+          );
+        },
+      ),
+      Selector<ClashConfig, bool>(
+        selector: (_, clashConfig) =>
+            clashConfig.geodataLoader == geodataLoaderMemconservative,
+        builder: (_, memconservative, __) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.memory),
+            title: Text(appLocalizations.geodataLoader),
+            subtitle: Text(appLocalizations.geodataLoaderDesc),
+            delegate: SwitchDelegate(
+              value: memconservative,
+              onChanged: (bool value) async {
+                final appController = globalState.appController;
+                appController.clashConfig.geodataLoader = value
+                    ? geodataLoaderMemconservative
+                    : geodataLoaderStandard;
+                appController.updateClashConfigDebounce;
+              },
+            ),
+          );
+        },
+      ),
+      Selector<ClashConfig, bool>(
+        selector: (_, clashConfig) => clashConfig.externalController.isNotEmpty,
+        builder: (_, hasExternalController, __) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.api_outlined),
+            title: Text(appLocalizations.externalController),
+            subtitle: Text(appLocalizations.externalControllerDesc),
+            delegate: SwitchDelegate(
+              value: hasExternalController,
+              onChanged: (bool value) async {
+                final appController = globalState.appController;
+                appController.clashConfig.externalController =
+                    value ? defaultExternalController : '';
+                appController.updateClashConfigDebounce;
+              },
+            ),
+          );
+        },
       ),
     ];
-    return ListView.separated(
+    return Section(
+      title: appLocalizations.general,
+      child: Column(
+        children: [
+          for (final item in items) ...[
+            item,
+            if (items.last != item)
+              const Divider(
+                height: 0,
+              )
+          ]
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> items = [
+      _buildAppSection(),
+      _buildGeneralSection(),
+    ];
+    return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 16),
       itemBuilder: (_, index) {
         return Container(
           alignment: Alignment.center,
           child: items[index],
-        );
-      },
-      separatorBuilder: (_, __) {
-        return const Divider(
-          height: 0,
         );
       },
       itemCount: items.length,

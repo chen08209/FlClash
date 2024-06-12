@@ -15,7 +15,6 @@ import androidx.core.app.NotificationCompat
 import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
 import com.follow.clash.R
-import com.follow.clash.models.AccessControl
 import com.follow.clash.models.AccessControlMode
 import com.follow.clash.models.Props
 
@@ -81,7 +80,7 @@ class FlClashVpnService : VpnService() {
             if (props?.allowBypass == true) {
                 allowBypass()
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && props?.systemProxy == true) {
                 setHttpProxy(
                     ProxyInfo.buildDirectProxy(
                         "127.0.0.1",
@@ -135,14 +134,20 @@ class FlClashVpnService : VpnService() {
         }
     }
 
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        GlobalState.getCurrentAppPlugin()?.requestGc()
+    }
 
     fun startForeground(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel =
-                NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
             val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-            channel.setShowBadge(false)
+            var channel = manager?.getNotificationChannel(CHANNEL)
+            if (channel == null) {
+                channel =
+                    NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
+                manager?.createNotificationChannel(channel)
+            }
         }
         val notification =
             notificationBuilder.setContentTitle(title).setContentText(content).build()
