@@ -29,6 +29,7 @@ class Props with _$Props {
   const factory Props({
     AccessControl? accessControl,
     bool? allowBypass,
+    bool? systemProxy,
   }) = _Props;
 
   factory Props.fromJson(Map<String, Object?> json) =>
@@ -54,6 +55,7 @@ class Config extends ChangeNotifier {
   bool _isAnimateToPage;
   bool _autoCheckUpdate;
   bool _allowBypass;
+  bool _systemProxy;
   DAV? _dav;
 
   Config()
@@ -69,6 +71,7 @@ class Config extends ChangeNotifier {
         _isMinimizeOnExit = true,
         _isAccessControl = false,
         _autoCheckUpdate = true,
+        _systemProxy = false,
         _accessControl = const AccessControl(),
         _isAnimateToPage = true,
         _allowBypass = true;
@@ -327,6 +330,18 @@ class Config extends ChangeNotifier {
   set allowBypass(bool value) {
     if (_allowBypass != value) {
       _allowBypass = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(defaultValue: true)
+  bool get systemProxy {
+    return _systemProxy;
+  }
+
+  set systemProxy(bool value) {
+    if (_systemProxy != value) {
+      _systemProxy = value;
       notifyListeners();
     }
   }

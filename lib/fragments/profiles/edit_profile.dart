@@ -152,6 +152,7 @@ class _EditProfileState extends State<EditProfile> {
             vertical: 16,
           ),
           child: ListView.separated(
+            primary: true,
             itemBuilder: (_, index) {
               return items[index];
             },

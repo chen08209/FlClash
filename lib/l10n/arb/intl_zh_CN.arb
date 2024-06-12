@@ -111,6 +111,7 @@
   "noMoreInfoDesc": "暂无更多信息",
   "profileParseErrorDesc": "配置文件解析错误",
   "proxyPort": "代理端口",
+  "proxyPortDesc": "设置clash监听端口",
   "port": "端口",
   "logLevel": "日志等级",
   "show": "显示",
@@ -165,6 +166,15 @@
   "allowBypass": "允许应用绕过vpn",
   "allowBypassDesc": "开启后部分应用可绕过VPN",
   "externalController": "外部控制器",
-  "externalControllerDesc": "开启后可通过9090端口控制clash内核",
-  "ipv6Desc": "开启后将可以接收ipv6流量"
+  "externalControllerDesc": "开启后将可以通过9090端口控制clash内核",
+  "ipv6Desc": "开启后将可以接收ipv6流量",
+  "app": "应用",
+  "general": "基础",
+  "systemProxyDesc": "为VpnService附加HTTP代理",
+  "unifiedDelay": "统一延迟",
+  "unifiedDelayDesc": "去除握手等额外延迟",
+  "tcpConcurrent": "TCP并发",
+  "tcpConcurrentDesc": "开启后允许tcp并发",
+  "geodataLoader": "Geo低内存模式",
+  "geodataLoaderDesc": "开启将使用Geo低内存加载器"
 }

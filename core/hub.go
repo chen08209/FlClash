@@ -60,6 +60,14 @@ func shutdownClash() bool {
 	return true
 }
 
+//export forceGc
+func forceGc() {
+	go func() {
+		log.Infoln("[APP] request force GC")
+		runtime.GC()
+	}()
+}
+
 //export validateConfig
 func validateConfig(s *C.char, port C.longlong) {
 	i := int64(port)

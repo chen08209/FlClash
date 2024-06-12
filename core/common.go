@@ -10,6 +10,7 @@ import (
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/dns"
+	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
@@ -325,6 +326,8 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.ExternalUI = ""
 	targetConfig.Interface = ""
 	targetConfig.ExternalUIURL = ""
+	targetConfig.TCPConcurrent = patchConfig.TCPConcurrent
+	targetConfig.UnifiedDelay = patchConfig.UnifiedDelay
 	targetConfig.GeodataMode = false
 	targetConfig.IPv6 = patchConfig.IPv6
 	targetConfig.LogLevel = patchConfig.LogLevel
@@ -338,7 +341,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Tun.Device = patchConfig.Tun.Device
 	//targetConfig.Tun.DNSHijack = patchConfig.Tun.DNSHijack
 	//targetConfig.Tun.Stack = patchConfig.Tun.Stack
-	targetConfig.GeodataLoader = "standard"
+	targetConfig.GeodataLoader = patchConfig.GeodataLoader
 	targetConfig.Profile.StoreSelected = false
 	if targetConfig.DNS.Enable == false {
 		targetConfig.DNS = patchConfig.DNS
@@ -410,7 +413,7 @@ func applyConfig(isPatch bool) {
 	if isPatch {
 		patchConfig(cfg.General)
 	} else {
-		executor.ApplyConfig(cfg, true)
+		hub.UltraApplyConfig(cfg, true)
 		hcCompatibleProvider(tunnel.Providers())
 	}
 }

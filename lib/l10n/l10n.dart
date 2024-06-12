@@ -1170,6 +1170,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Set the clash listening port`
+  String get proxyPortDesc {
+    return Intl.message(
+      'Set the clash listening port',
+      name: 'proxyPortDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Port`
   String get port {
     return Intl.message(
@@ -1690,10 +1700,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Enabled to some applications can bypass VPN`
+  /// `Some apps can bypass VPN when turned on`
   String get allowBypassDesc {
     return Intl.message(
-      'Enabled to some applications can bypass VPN',
+      'Some apps can bypass VPN when turned on',
       name: 'allowBypassDesc',
       desc: '',
       args: [],
@@ -1710,21 +1720,111 @@ class AppLocalizations {
     );
   }
 
-  /// `Enabled to control the clash on port 9090`
+  /// `Once enabled, the clash kernel can be controlled on port 9090`
   String get externalControllerDesc {
     return Intl.message(
-      'Enabled to control the clash on port 9090',
+      'Once enabled, the clash kernel can be controlled on port 9090',
       name: 'externalControllerDesc',
       desc: '',
       args: [],
     );
   }
 
-  /// `Enabled to will allow it to receive ipv6 traffic`
+  /// `When turned on it will be able to receive ipv6 traffic`
   String get ipv6Desc {
     return Intl.message(
-      'Enabled to will allow it to receive ipv6 traffic',
+      'When turned on it will be able to receive ipv6 traffic',
       name: 'ipv6Desc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App`
+  String get app {
+    return Intl.message(
+      'App',
+      name: 'app',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `General`
+  String get general {
+    return Intl.message(
+      'General',
+      name: 'general',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Attach HTTP proxy to VpnService`
+  String get systemProxyDesc {
+    return Intl.message(
+      'Attach HTTP proxy to VpnService',
+      name: 'systemProxyDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unified delay`
+  String get unifiedDelay {
+    return Intl.message(
+      'Unified delay',
+      name: 'unifiedDelay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove extra delays such as handshaking`
+  String get unifiedDelayDesc {
+    return Intl.message(
+      'Remove extra delays such as handshaking',
+      name: 'unifiedDelayDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tcp concurrent`
+  String get tcpConcurrent {
+    return Intl.message(
+      'Tcp concurrent',
+      name: 'tcpConcurrent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enabling it will allow tcp concurrency`
+  String get tcpConcurrentDesc {
+    return Intl.message(
+      'Enabling it will allow tcp concurrency',
+      name: 'tcpConcurrentDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Geo Low Memory Mode`
+  String get geodataLoader {
+    return Intl.message(
+      'Geo Low Memory Mode',
+      name: 'geodataLoader',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enabling will use the Geo low memory loader`
+  String get geodataLoaderDesc {
+    return Intl.message(
+      'Enabling will use the Geo low memory loader',
+      name: 'geodataLoaderDesc',
       desc: '',
       args: [],
     );

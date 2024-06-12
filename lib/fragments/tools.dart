@@ -166,6 +166,7 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
         delegate: OpenDelegate(
           title: appLocalizations.override,
           widget: const ConfigFragment(),
+          extendPageWidth: 360,
         ),
       ),
       ListItem.open(
