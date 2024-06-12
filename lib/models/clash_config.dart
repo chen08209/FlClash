@@ -190,7 +190,7 @@ class ClashConfig extends ChangeNotifier {
 
   set ipv6(bool value) {
     if (_ipv6 != value) {
-      ipv6 = value;
+      _ipv6 = value;
       notifyListeners();
     }
   }
