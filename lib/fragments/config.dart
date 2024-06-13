@@ -39,13 +39,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     }
   }
 
-  _updateLoglevel(LogLevel? logLevel) {
-    if (logLevel == null ||
-        logLevel == globalState.appController.clashConfig.logLevel) return;
-    globalState.appController.clashConfig.logLevel = logLevel;
-    globalState.appController.updateClashConfigDebounce();
-  }
-
   _buildAppSection() {
     final items = [
       if (Platform.isAndroid)
@@ -121,34 +114,56 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     );
   }
 
+  _showLogLevelDialog(LogLevel value) {
+    globalState.showCommonDialog(
+      child: AlertDialog(
+        title: Text(appLocalizations.logLevel),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 16,
+        ),
+        content: SizedBox(
+          width: 250,
+          child: Wrap(
+            children: [
+              for (final logLevel in LogLevel.values)
+                ListItem.radio(
+                  delegate: RadioDelegate<LogLevel>(
+                    value: logLevel,
+                    groupValue: value,
+                    onChanged: (LogLevel? value) {
+                      if (value == null) {
+                        return;
+                      }
+                      final appController = globalState.appController;
+                      appController.clashConfig.logLevel = value;
+                      appController.updateClashConfigDebounce();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  title: Text(logLevel.name),
+                )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   _buildGeneralSection() {
     final items = [
-      Padding(
-        padding: kMaterialListPadding,
-        child: Selector<ClashConfig, LogLevel>(
-          selector: (_, clashConfig) => clashConfig.logLevel,
-          builder: (_, value, __) {
-            return ListItem(
-              leading: const Icon(Icons.info_outline),
-              title: Text(appLocalizations.logLevel),
-              trailing: SizedBox(
-                height: 48,
-                child: DropdownMenu<LogLevel>(
-                  width: 124,
-                  initialSelection: value,
-                  dropdownMenuEntries: [
-                    for (final logLevel in LogLevel.values)
-                      DropdownMenuEntry<LogLevel>(
-                        value: logLevel,
-                        label: logLevel.name,
-                      )
-                  ],
-                  onSelected: _updateLoglevel,
-                ),
-              ),
-            );
-          },
-        ),
+      Selector<ClashConfig, LogLevel>(
+        selector: (_, clashConfig) => clashConfig.logLevel,
+        builder: (_, value, __) {
+          return ListItem(
+            leading: const Icon(Icons.info_outline),
+            title: Text(appLocalizations.logLevel),
+            subtitle: Text(value.name),
+            onTab: () {
+              _showLogLevelDialog(value);
+            },
+          );
+        },
       ),
       Selector<ClashConfig, int>(
         selector: (_, clashConfig) => clashConfig.mixedPort,
@@ -226,6 +241,26 @@ class _ConfigFragmentState extends State<ConfigFragment> {
         },
       ),
       Selector<ClashConfig, bool>(
+        selector: (_, clashConfig) =>
+            clashConfig.findProcessMode == FindProcessMode.always,
+        builder: (_, findProcess, __) {
+          return ListItem.switchItem(
+            leading: const Icon(Icons.polymer_outlined),
+            title: Text(appLocalizations.findProcessMode),
+            subtitle: Text(appLocalizations.findProcessModeDesc),
+            delegate: SwitchDelegate(
+              value: findProcess,
+              onChanged: (bool value) async {
+                final appController = globalState.appController;
+                appController.clashConfig.findProcessMode =
+                    value ? FindProcessMode.always : FindProcessMode.off;
+                appController.updateClashConfigDebounce();
+              },
+            ),
+          );
+        },
+      ),
+      Selector<ClashConfig, bool>(
         selector: (_, clashConfig) => clashConfig.tcpConcurrent,
         builder: (_, tcpConcurrent, __) {
           return ListItem.switchItem(
@@ -258,7 +293,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 appController.clashConfig.geodataLoader = value
                     ? geodataLoaderMemconservative
                     : geodataLoaderStandard;
-                appController.updateClashConfigDebounce;
+                appController.updateClashConfigDebounce();
               },
             ),
           );
@@ -277,7 +312,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 final appController = globalState.appController;
                 appController.clashConfig.externalController =
                     value ? defaultExternalController : '';
-                appController.updateClashConfigDebounce;
+                appController.updateClashConfigDebounce();
               },
             ),
           );

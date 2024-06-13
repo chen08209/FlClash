@@ -7,6 +7,7 @@ class Android {
   init() async {
     app?.onExit = () {
       clashCore.shutdown();
+      print("adsadda==>");
       exit(0);
     };
   }

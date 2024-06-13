@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
@@ -22,14 +23,21 @@ class _LogsFragmentState extends State<LogsFragment> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      logsNotifier.value = context.read<AppState>().logs;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final appState = globalState.appController.appState;
+      logsNotifier.value = List<Log>.from(appState.logs);
       if (timer != null) {
         timer?.cancel();
         timer = null;
       }
       timer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
-        logsNotifier.value = globalState.appController.appState.logs;
+        final logs = List<Log>.from(appState.logs);
+        if (!const ListEquality<Log>().equals(
+          logsNotifier.value,
+          logs,
+        )) {
+          logsNotifier.value = logs;
+        }
       });
     });
   }

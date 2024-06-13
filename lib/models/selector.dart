@@ -94,6 +94,7 @@ class ProxiesCardSelectorState with _$ProxiesCardSelectorState {
 class ProxiesSelectorState with _$ProxiesSelectorState {
   const factory ProxiesSelectorState({
     required List<String> groupNames,
+    required String? currentGroupName,
   }) = _ProxiesSelectorState;
 }
 

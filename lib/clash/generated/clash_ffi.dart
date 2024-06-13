@@ -1130,6 +1130,20 @@ class ClashFFI {
       _lookup<ffi.NativeFunction<ffi.Void Function()>>('stopLog');
   late final _stopLog = _stopLogPtr.asFunction<void Function()>();
 
+  void setProcessMap(
+    ffi.Pointer<ffi.Char> s,
+  ) {
+    return _setProcessMap(
+      s,
+    );
+  }
+
+  late final _setProcessMapPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+          'setProcessMap');
+  late final _setProcessMap =
+      _setProcessMapPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+
   void startTUN(
     int fd,
   ) {
@@ -1142,19 +1156,15 @@ class ClashFFI {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('startTUN');
   late final _startTUN = _startTUNPtr.asFunction<void Function(int)>();
 
-  int updateMarkSocketPort(
-    int markSocketPort,
-  ) {
-    return _updateMarkSocketPort(
-      markSocketPort,
-    );
+  ffi.Pointer<ffi.Char> getRunTime() {
+    return _getRunTime();
   }
 
-  late final _updateMarkSocketPortPtr =
-      _lookup<ffi.NativeFunction<GoUint8 Function(ffi.LongLong)>>(
-          'updateMarkSocketPort');
-  late final _updateMarkSocketPort =
-      _updateMarkSocketPortPtr.asFunction<int Function(int)>();
+  late final _getRunTimePtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
+          'getRunTime');
+  late final _getRunTime =
+      _getRunTimePtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
 
   void stopTun() {
     return _stopTun();

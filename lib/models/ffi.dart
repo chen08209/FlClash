@@ -2,6 +2,7 @@
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/clash_config.dart';
+import 'package:fl_clash/models/connection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/ffi.g.dart';
@@ -66,14 +67,23 @@ class Now with _$Now {
 @freezed
 class Process with _$Process {
   const factory Process({
-    required int uid,
-    required String network,
-    required String source,
-    required String target,
+    required int id,
+    required Metadata metadata,
   }) = _Process;
 
   factory Process.fromJson(Map<String, Object?> json) =>
       _$ProcessFromJson(json);
+}
+
+@freezed
+class ProcessMapItem with _$ProcessMapItem {
+  const factory ProcessMapItem({
+    required int id,
+    String? value,
+  }) = _ProcessMapItem;
+
+  factory ProcessMapItem.fromJson(Map<String, Object?> json) =>
+      _$ProcessMapItemFromJson(json);
 }
 
 @freezed

@@ -62,7 +62,7 @@ class UserInfo {
 class Profile {
   String id;
   String? label;
-  String? proxyName;
+  String? currentGroupName;
   String? url;
   DateTime? lastUpdateDate;
   Duration autoUpdateDuration;
@@ -74,8 +74,8 @@ class Profile {
     String? id,
     this.label,
     this.url,
+    this.currentGroupName,
     this.userInfo,
-    this.proxyName,
     this.lastUpdateDate,
     SelectedMap? selectedMap,
     Duration? autoUpdateDuration,
@@ -134,6 +134,7 @@ class Profile {
     return _$ProfileFromJson(json);
   }
 
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -141,34 +142,31 @@ class Profile {
           runtimeType == other.runtimeType &&
           id == other.id &&
           label == other.label &&
-          proxyName == other.proxyName &&
+          currentGroupName == other.currentGroupName &&
           url == other.url &&
           lastUpdateDate == other.lastUpdateDate &&
           autoUpdateDuration == other.autoUpdateDuration &&
           userInfo == other.userInfo &&
-          autoUpdate == other.autoUpdate;
+          autoUpdate == other.autoUpdate &&
+          selectedMap == other.selectedMap;
 
   @override
   int get hashCode =>
       id.hashCode ^
       label.hashCode ^
-      proxyName.hashCode ^
+      currentGroupName.hashCode ^
       url.hashCode ^
       lastUpdateDate.hashCode ^
       autoUpdateDuration.hashCode ^
       userInfo.hashCode ^
-      autoUpdate.hashCode;
-
-  @override
-  String toString() {
-    return 'Profile{id: $id, label: $label, proxyName: $proxyName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, userInfo: $userInfo, autoUpdate: $autoUpdate}';
-  }
+      autoUpdate.hashCode ^
+      selectedMap.hashCode;
 
   Profile copyWith({
     String? label,
     String? url,
     UserInfo? userInfo,
-    String? groupName,
+    String? currentGroupName,
     String? proxyName,
     DateTime? lastUpdateDate,
     Duration? autoUpdateDuration,
@@ -179,7 +177,7 @@ class Profile {
       id: id,
       label: label ?? this.label,
       url: url ?? this.url,
-      proxyName: proxyName ?? this.proxyName,
+      currentGroupName: currentGroupName ?? this.currentGroupName,
       userInfo: userInfo ?? this.userInfo,
       selectedMap: selectedMap ?? this.selectedMap,
       lastUpdateDate: lastUpdateDate ?? this.lastUpdateDate,

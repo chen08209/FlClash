@@ -44,7 +44,7 @@ class FlClashTileService : TileService() {
 
     private fun activityTransfer() {
         val intent = Intent(this, TempActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         val pendingIntent = if (Build.VERSION.SDK_INT >= 31) {
             PendingIntent.getActivity(
                 this,
