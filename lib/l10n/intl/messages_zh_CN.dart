@@ -104,6 +104,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "file": MessageLookupByLibrary.simpleMessage("文件"),
         "fileDesc": MessageLookupByLibrary.simpleMessage("直接上传配置文件"),
         "filterSystemApp": MessageLookupByLibrary.simpleMessage("过滤系统应用"),
+        "findProcessMode": MessageLookupByLibrary.simpleMessage("查找进程"),
+        "findProcessModeDesc":
+            MessageLookupByLibrary.simpleMessage("开启后存在闪退风险"),
         "general": MessageLookupByLibrary.simpleMessage("基础"),
         "geoData": MessageLookupByLibrary.simpleMessage("地理数据"),
         "geodataLoader": MessageLookupByLibrary.simpleMessage("Geo低内存模式"),
@@ -143,6 +146,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "nullLogsDesc": MessageLookupByLibrary.simpleMessage("暂无日志"),
         "nullProfileDesc":
             MessageLookupByLibrary.simpleMessage("没有配置文件,请先添加配置文件"),
+        "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("未开启代理或者没有请求"),
         "other": MessageLookupByLibrary.simpleMessage("其他"),
         "outboundMode": MessageLookupByLibrary.simpleMessage("出站模式"),
         "override": MessageLookupByLibrary.simpleMessage("覆写"),
@@ -180,6 +184,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "recoveryDesc": MessageLookupByLibrary.simpleMessage("从WebDAV恢复数据"),
         "recoveryProfiles": MessageLookupByLibrary.simpleMessage("仅恢复配置文件"),
         "recoverySuccess": MessageLookupByLibrary.simpleMessage("恢复成功"),
+        "requests": MessageLookupByLibrary.simpleMessage("请求"),
+        "requestsDesc": MessageLookupByLibrary.simpleMessage("查看最近请求数据"),
         "resources": MessageLookupByLibrary.simpleMessage("资源"),
         "resourcesDesc": MessageLookupByLibrary.simpleMessage("外部资源相关信息"),
         "rule": MessageLookupByLibrary.simpleMessage("规则"),

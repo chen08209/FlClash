@@ -100,7 +100,7 @@ class ClashCore {
         UsedProxy.GLOBAL.name,
         ...(proxies[UsedProxy.GLOBAL.name]["all"] as List).where((e) {
           final proxy = proxies[e];
-          return GroupTypeExtension.valueList.contains(proxy['type']);
+          return GroupTypeExtension.valueList.contains(proxy['type']) && proxy['hidden'] != true;
         })
       ];
       final groupsRaw = groupNames.map((groupName) {
@@ -210,12 +210,22 @@ class ClashCore {
     clashFFI.startTUN(fd);
   }
 
-  requestGc(){
+  requestGc() {
     clashFFI.forceGc();
   }
 
   void stopTun() {
     clashFFI.stopTun();
+  }
+
+  void setProcessMap(ProcessMapItem processMapItem) {
+    clashFFI.setProcessMap(json.encode(processMapItem).toNativeUtf8().cast());
+  }
+
+  DateTime? getRunTime() {
+    final runTimeString = clashFFI.getRunTime().cast<Utf8>().toDartString();
+    if (runTimeString.isEmpty) return null;
+    return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
   }
 
   List<Connection> getConnections() {

@@ -13,12 +13,12 @@ jobs:
         include:
           - platform: android
             os: ubuntu-latest
-          - platform: windows
-            os: windows-latest
-          - platform: linux
-            os: ubuntu-latest
-          - platform: macos
-            os: macos-13
+#          - platform: windows
+#            os: windows-latest
+#          - platform: linux
+#            os: ubuntu-latest
+#          - platform: macos
+#            os: macos-13
 
     steps:
       - name: Check Matrix

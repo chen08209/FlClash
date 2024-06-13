@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +60,18 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
     });
   }
 
+  _handleTabControllerChange() {
+    final indexIsChanging = _tabController?.indexIsChanging ?? false;
+    if (indexIsChanging) return;
+    final index = _tabController?.index;
+    if(index == null) return;
+    final appController = globalState.appController;
+    final currentGroups = appController.appState.currentGroups;
+    if (currentGroups.length > index) {
+      appController.config.updateCurrentGroupName(currentGroups[index].name);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Selector<AppState, bool>(
@@ -69,26 +82,34 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
         }
         return child!;
       },
-      child: Selector3<AppState, Config, ClashConfig, ProxiesSelectorState>(
-        selector: (_, appState, config, clashConfig) {
+      child: Selector2<AppState, Config, ProxiesSelectorState>(
+        selector: (_, appState, config) {
           final currentGroups = appState.currentGroups;
           final groupNames = currentGroups.map((e) => e.name).toList();
           return ProxiesSelectorState(
             groupNames: groupNames,
+            currentGroupName: config.currentGroupName,
           );
         },
         shouldRebuild: (prev, next) {
-          if (prev.groupNames.length != next.groupNames.length) {
+          if (!const ListEquality<String>()
+              .equals(prev.groupNames, next.groupNames)) {
+            _tabController?.removeListener(_handleTabControllerChange);
             _tabController?.dispose();
             _tabController = null;
+            return true;
           }
-          return prev != next;
+          return false;
         },
         builder: (_, state, __) {
+          final index = state.groupNames.indexWhere(
+            (item) => item == state.currentGroupName,
+          );
           _tabController ??= TabController(
             length: state.groupNames.length,
+            initialIndex: index == -1 ? 0 : index,
             vsync: this,
-          );
+          )..addListener(_handleTabControllerChange);
           return Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +221,8 @@ class ProxiesTabView extends StatelessWidget {
   _delayTest(List<Proxy> proxies) async {
     for (final proxy in proxies) {
       final appController = globalState.appController;
-      final proxyName = appController.appState.getRealProxyName(proxy.name) ?? proxy.name;
+      final proxyName =
+          appController.appState.getRealProxyName(proxy.name) ?? proxy.name;
       globalState.appController.setDelay(
         Delay(
           name: proxyName,

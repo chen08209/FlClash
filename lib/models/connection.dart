@@ -14,6 +14,7 @@ class Metadata with _$Metadata {
     required String destinationIP,
     required String destinationPort,
     required String host,
+    required String process,
     required String remoteDestination,
   }) = _Metadata;
 

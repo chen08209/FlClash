@@ -16,7 +16,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.follow.clash.GlobalState
 import com.follow.clash.RunState
-import com.follow.clash.models.AccessControl
 import com.follow.clash.models.Props
 import com.follow.clash.services.FlClashVpnService
 import com.google.gson.Gson
@@ -26,7 +25,6 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import java.util.Date
 
 
 class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
@@ -95,10 +93,6 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
             }
         }
 
-        "GetRunTimeStamp" -> {
-            result.success(GlobalState.runTime?.time)
-        }
-
         "startForeground" -> {
             title = call.argument<String>("title") as String
             content = call.argument<String>("content") as String
@@ -124,7 +118,6 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
         if (GlobalState.runState.value == RunState.START) return;
         flClashVpnService?.start(port, props)
         GlobalState.runState.value = RunState.START
-        GlobalState.runTime = Date()
         startAfter()
     }
 
@@ -133,7 +126,6 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
         flClashVpnService?.stop()
         unbindService()
         GlobalState.runState.value = RunState.STOP;
-        GlobalState.runTime = null;
     }
 
     @SuppressLint("ForegroundServiceType")

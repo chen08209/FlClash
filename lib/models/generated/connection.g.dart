@@ -15,6 +15,7 @@ _$MetadataImpl _$$MetadataImplFromJson(Map<String, dynamic> json) =>
       destinationIP: json['destinationIP'] as String,
       destinationPort: json['destinationPort'] as String,
       host: json['host'] as String,
+      process: json['process'] as String,
       remoteDestination: json['remoteDestination'] as String,
     );
 
@@ -27,6 +28,7 @@ Map<String, dynamic> _$$MetadataImplToJson(_$MetadataImpl instance) =>
       'destinationIP': instance.destinationIP,
       'destinationPort': instance.destinationPort,
       'host': instance.host,
+      'process': instance.process,
       'remoteDestination': instance.remoteDestination,
     };
 

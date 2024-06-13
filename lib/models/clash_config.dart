@@ -113,39 +113,29 @@ class ClashConfig extends ChangeNotifier {
   LogLevel _logLevel;
   String _externalController;
   Mode _mode;
+  FindProcessMode _findProcessMode;
   bool _unifiedDelay;
   bool _tcpConcurrent;
   Tun _tun;
   Dns _dns;
   List<String> _rules;
 
-  ClashConfig({
-    int? mixedPort,
-    Mode? mode,
-    bool? allowLan,
-    bool? ipv6,
-    LogLevel? logLevel,
-    String? externalController,
-    String? geodataLoader,
-    bool? unifiedDelay,
-    Tun? tun,
-    Dns? dns,
-    bool? tcpConcurrent,
-    List<String>? rules,
-  })  : _mixedPort = mixedPort ?? 7890,
-        _mode = mode ?? Mode.rule,
-        _ipv6 = ipv6 ?? false,
-        _allowLan = allowLan ?? false,
-        _tcpConcurrent = tcpConcurrent ?? false,
-        _logLevel = logLevel ?? LogLevel.info,
-        _tun = tun ?? const Tun(),
-        _unifiedDelay = unifiedDelay ?? false,
-        _geodataLoader = geodataLoader ?? geodataLoaderMemconservative,
-        _externalController = externalController ?? '',
-        _dns = dns ?? Dns(),
-        _rules = rules ?? [];
+  ClashConfig()
+      : _mixedPort = 7890,
+        _mode = Mode.rule,
+        _ipv6 = false,
+        _findProcessMode = FindProcessMode.off,
+        _allowLan = false,
+        _tcpConcurrent = false,
+        _logLevel = LogLevel.info,
+        _tun = const Tun(),
+        _unifiedDelay = false,
+        _geodataLoader = geodataLoaderMemconservative,
+        _externalController = '',
+        _dns = Dns(),
+        _rules = [];
 
-  @JsonKey(name: "mixed-port")
+  @JsonKey(name: "mixed-port", defaultValue: 7890)
   int get mixedPort => _mixedPort;
 
   set mixedPort(int value) {
@@ -155,11 +145,22 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: Mode.rule)
   Mode get mode => _mode;
 
   set mode(Mode value) {
     if (_mode != value) {
       _mode = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(name: "find-process-mode", defaultValue: FindProcessMode.off)
+  FindProcessMode get findProcessMode => _findProcessMode;
+
+  set findProcessMode(FindProcessMode value) {
+    if (_findProcessMode != value) {
+      _findProcessMode = value;
       notifyListeners();
     }
   }
@@ -174,7 +175,7 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
-  @JsonKey(name: "log-level")
+  @JsonKey(name: "log-level", defaultValue: LogLevel.info)
   LogLevel get logLevel => _logLevel;
 
   set logLevel(LogLevel value) {
@@ -280,17 +281,6 @@ class ClashConfig extends ChangeNotifier {
 
   factory ClashConfig.fromJson(Map<String, dynamic> json) {
     return _$ClashConfigFromJson(json);
-  }
-
-  ClashConfig copyWith({Tun? tun}) {
-    return ClashConfig(
-      mixedPort: mixedPort,
-      mode: mode,
-      logLevel: logLevel,
-      tun: tun ?? this.tun,
-      dns: dns,
-      allowLan: allowLan,
-    );
   }
 
   @override

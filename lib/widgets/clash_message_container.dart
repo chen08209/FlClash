@@ -56,9 +56,20 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
   }
 
   @override
-  void onProcess(Metadata metadata) async {
-    var packageName = await app?.getPackageName(metadata);
-    globalState.packageNameMap[metadata.uid] = packageName;
-    super.onProcess(metadata);
+  void onProcess(Process process) async {
+    var packageName = await app?.resolverProcess(process);
+    clashCore.setProcessMap(
+      ProcessMapItem(
+        id: process.id,
+        value: packageName,
+      ),
+    );
+    super.onProcess(process);
+  }
+
+  @override
+  void onRequest(Connection connection) async {
+    globalState.appController.appState.addRequest(connection);
+    super.onRequest(connection);
   }
 }

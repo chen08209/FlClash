@@ -122,6 +122,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
             return floatingActionButton ?? Container();
           },
         ),
+        resizeToAvoidBottomInset: true,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: Stack(

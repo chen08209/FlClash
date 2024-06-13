@@ -30,6 +30,13 @@ class Navigation {
         fragment: ProfilesFragment(),
       ),
       const NavigationItem(
+        icon:  Icon(Icons.ballot),
+        label: "requests",
+        fragment:  RequestFragment(),
+        description: "requestsDesc",
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
+      const NavigationItem(
         icon: Icon(Icons.swap_vert_circle),
         label: "resources",
         description: "resourcesDesc",

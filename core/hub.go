@@ -404,4 +404,10 @@ func init() {
 			Data: delayData,
 		})
 	}
+	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
+		bridge.SendMessage(bridge.Message{
+			Type: bridge.Request,
+			Data: c,
+		})
+	}
 }

@@ -61,21 +61,21 @@ class Build {
           arch: Arch.amd64,
           archName: 'amd64',
         ),
-        BuildLibItem(
-          platform: PlatformType.android,
-          arch: Arch.arm,
-          archName: 'armeabi-v7a',
-        ),
+        // BuildLibItem(
+        //   platform: PlatformType.android,
+        //   arch: Arch.arm,
+        //   archName: 'armeabi-v7a',
+        // ),
         BuildLibItem(
           platform: PlatformType.android,
           arch: Arch.arm64,
           archName: 'arm64-v8a',
         ),
-        BuildLibItem(
-          platform: PlatformType.android,
-          arch: Arch.amd64,
-          archName: 'x86_64',
-        ),
+        // BuildLibItem(
+        //   platform: PlatformType.android,
+        //   arch: Arch.amd64,
+        //   archName: 'x86_64',
+        // ),
         BuildLibItem(
           platform: PlatformType.linux,
           arch: Arch.amd64,

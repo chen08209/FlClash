@@ -145,7 +145,16 @@ class AppController {
       if (isNotNeedUpdate == false || profile.type == ProfileType.file) {
         continue;
       }
-      await updateProfile(profile.id);
+      try {
+        await updateProfile(profile.id);
+      } catch (e) {
+        appState.addLog(
+          Log(
+            logLevel: LogLevel.info,
+            payload: e.toString(),
+          ),
+        );
+      }
     }
   }
 
@@ -222,20 +231,21 @@ class AppController {
       final tagName = data['tag_name'];
       final body = data['body'];
       final submits = other.parseReleaseBody(body);
+      final textTheme = context.textTheme;
       globalState.showMessage(
         title: appLocalizations.discoverNewVersion,
         message: TextSpan(
           text: "$tagName \n",
-          style: context.textTheme.headlineSmall,
+          style: textTheme.headlineSmall,
           children: [
             TextSpan(
               text: "\n",
-              style: context.textTheme.bodyMedium,
+              style: textTheme.bodyMedium,
             ),
             for (final submit in submits)
               TextSpan(
                 text: "- $submit \n",
-                style: context.textTheme.bodyMedium,
+                style: textTheme.bodyMedium,
               ),
           ],
         ),
@@ -261,7 +271,7 @@ class AppController {
       window?.show();
     }
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
-    if(commonScaffoldState?.mounted == true){
+    if (commonScaffoldState?.mounted == true) {
       await commonScaffoldState?.loadingRun(() async {
         await globalState.applyProfile(
           appState: appState,
@@ -269,7 +279,7 @@ class AppController {
           clashConfig: clashConfig,
         );
       });
-    }else{
+    } else {
       await globalState.applyProfile(
         appState: appState,
         config: config,

@@ -176,5 +176,10 @@
   "tcpConcurrent": "TCP并发",
   "tcpConcurrentDesc": "开启后允许tcp并发",
   "geodataLoader": "Geo低内存模式",
-  "geodataLoaderDesc": "开启将使用Geo低内存加载器"
+  "geodataLoaderDesc": "开启将使用Geo低内存加载器",
+  "requests": "请求",
+  "requestsDesc": "查看最近请求数据",
+  "nullRequestsDesc": "未开启代理或者没有请求",
+  "findProcessMode": "查找进程",
+  "findProcessModeDesc": "开启后存在闪退风险"
 }

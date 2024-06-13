@@ -32,8 +32,7 @@ class Props with _$Props {
     bool? systemProxy,
   }) = _Props;
 
-  factory Props.fromJson(Map<String, Object?> json) =>
-      _$PropsFromJson(json);
+  factory Props.fromJson(Map<String, Object?> json) => _$PropsFromJson(json);
 }
 
 @JsonSerializable()
@@ -148,6 +147,15 @@ class Config extends ChangeNotifier {
       return profiles.firstWhere((element) => element.id == _currentProfileId);
     } catch (_) {
       return null;
+    }
+  }
+
+  String? get currentGroupName => currentProfile?.currentGroupName;
+
+  updateCurrentGroupName(String groupName) {
+    if (currentProfile?.currentGroupName != groupName) {
+      currentProfile?.currentGroupName = groupName;
+      notifyListeners();
     }
   }
 
