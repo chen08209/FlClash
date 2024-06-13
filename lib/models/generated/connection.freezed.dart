@@ -27,6 +27,7 @@ mixin _$Metadata {
   String get destinationIP => throw _privateConstructorUsedError;
   String get destinationPort => throw _privateConstructorUsedError;
   String get host => throw _privateConstructorUsedError;
+  String get process => throw _privateConstructorUsedError;
   String get remoteDestination => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -48,6 +49,7 @@ abstract class $MetadataCopyWith<$Res> {
       String destinationIP,
       String destinationPort,
       String host,
+      String process,
       String remoteDestination});
 }
 
@@ -71,6 +73,7 @@ class _$MetadataCopyWithImpl<$Res, $Val extends Metadata>
     Object? destinationIP = null,
     Object? destinationPort = null,
     Object? host = null,
+    Object? process = null,
     Object? remoteDestination = null,
   }) {
     return _then(_value.copyWith(
@@ -102,6 +105,10 @@ class _$MetadataCopyWithImpl<$Res, $Val extends Metadata>
           ? _value.host
           : host // ignore: cast_nullable_to_non_nullable
               as String,
+      process: null == process
+          ? _value.process
+          : process // ignore: cast_nullable_to_non_nullable
+              as String,
       remoteDestination: null == remoteDestination
           ? _value.remoteDestination
           : remoteDestination // ignore: cast_nullable_to_non_nullable
@@ -126,6 +133,7 @@ abstract class _$$MetadataImplCopyWith<$Res>
       String destinationIP,
       String destinationPort,
       String host,
+      String process,
       String remoteDestination});
 }
 
@@ -147,6 +155,7 @@ class __$$MetadataImplCopyWithImpl<$Res>
     Object? destinationIP = null,
     Object? destinationPort = null,
     Object? host = null,
+    Object? process = null,
     Object? remoteDestination = null,
   }) {
     return _then(_$MetadataImpl(
@@ -178,6 +187,10 @@ class __$$MetadataImplCopyWithImpl<$Res>
           ? _value.host
           : host // ignore: cast_nullable_to_non_nullable
               as String,
+      process: null == process
+          ? _value.process
+          : process // ignore: cast_nullable_to_non_nullable
+              as String,
       remoteDestination: null == remoteDestination
           ? _value.remoteDestination
           : remoteDestination // ignore: cast_nullable_to_non_nullable
@@ -197,6 +210,7 @@ class _$MetadataImpl implements _Metadata {
       required this.destinationIP,
       required this.destinationPort,
       required this.host,
+      required this.process,
       required this.remoteDestination});
 
   factory _$MetadataImpl.fromJson(Map<String, dynamic> json) =>
@@ -217,11 +231,13 @@ class _$MetadataImpl implements _Metadata {
   @override
   final String host;
   @override
+  final String process;
+  @override
   final String remoteDestination;
 
   @override
   String toString() {
-    return 'Metadata(uid: $uid, network: $network, sourceIP: $sourceIP, sourcePort: $sourcePort, destinationIP: $destinationIP, destinationPort: $destinationPort, host: $host, remoteDestination: $remoteDestination)';
+    return 'Metadata(uid: $uid, network: $network, sourceIP: $sourceIP, sourcePort: $sourcePort, destinationIP: $destinationIP, destinationPort: $destinationPort, host: $host, process: $process, remoteDestination: $remoteDestination)';
   }
 
   @override
@@ -240,14 +256,24 @@ class _$MetadataImpl implements _Metadata {
             (identical(other.destinationPort, destinationPort) ||
                 other.destinationPort == destinationPort) &&
             (identical(other.host, host) || other.host == host) &&
+            (identical(other.process, process) || other.process == process) &&
             (identical(other.remoteDestination, remoteDestination) ||
                 other.remoteDestination == remoteDestination));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, uid, network, sourceIP,
-      sourcePort, destinationIP, destinationPort, host, remoteDestination);
+  int get hashCode => Object.hash(
+      runtimeType,
+      uid,
+      network,
+      sourceIP,
+      sourcePort,
+      destinationIP,
+      destinationPort,
+      host,
+      process,
+      remoteDestination);
 
   @JsonKey(ignore: true)
   @override
@@ -272,6 +298,7 @@ abstract class _Metadata implements Metadata {
       required final String destinationIP,
       required final String destinationPort,
       required final String host,
+      required final String process,
       required final String remoteDestination}) = _$MetadataImpl;
 
   factory _Metadata.fromJson(Map<String, dynamic> json) =
@@ -291,6 +318,8 @@ abstract class _Metadata implements Metadata {
   String get destinationPort;
   @override
   String get host;
+  @override
+  String get process;
   @override
   String get remoteDestination;
   @override

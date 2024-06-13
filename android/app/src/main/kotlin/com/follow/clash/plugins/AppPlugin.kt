@@ -6,13 +6,16 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import androidx.core.graphics.drawable.toBitmap
 import com.follow.clash.extensions.getBase64
+import com.follow.clash.extensions.getInetSocketAddress
 import com.follow.clash.extensions.getProtocol
-import com.follow.clash.models.Metadata
+import com.follow.clash.models.Process
 import com.follow.clash.models.Package
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -78,21 +81,34 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             "getPackageIcon" -> {
                 scope.launch {
                     val packageName = call.argument<String>("packageName")
-                    if (packageName != null) {
-                        result.success(getPackageIcon(packageName))
-                    } else {
+                    if (packageName == null) {
                         result.success(null)
+                        return@launch
+                    }
+                    val packageIcon = getPackageIcon(packageName)
+                    packageIcon.let {
+                        if (it != null) {
+                            result.success(it)
+                            return@launch
+                        }
+                        if (iconMap["default"] == null) {
+                            iconMap["default"] =
+                                context?.packageManager?.defaultActivityIcon?.getBase64()
+                        }
+                        result.success(iconMap["default"])
+                        return@launch
                     }
                 }
             }
 
-            "getPackageName" -> {
+            "resolverProcess" -> {
                 val data = call.argument<String>("data")
-                val metadata =
+                val process =
                     if (data != null) Gson().fromJson(
                         data,
-                        Metadata::class.java
+                        Process::class.java
                     ) else null
+                val metadata = process?.metadata
                 val protocol = metadata?.getProtocol()
                 if (protocol == null) {
                     result.success(null)
@@ -100,17 +116,27 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 }
                 scope.launch {
                     withContext(Dispatchers.Default) {
-                        if (context == null) result.success(null)
-                        val source = InetSocketAddress(metadata.sourceIP, metadata.sourcePort)
-                        val target = InetSocketAddress(
-                            metadata.host.ifEmpty { metadata.destinationIP },
-                            metadata.destinationPort
-                        )
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+                            result.success(null)
+                            return@withContext
+                        }
+                        if (context == null) {
+                            result.success(null)
+                            return@withContext
+                        }
                         if (connectivity == null) {
                             connectivity = context!!.getSystemService<ConnectivityManager>()
                         }
-                        val uid =
-                            connectivity?.getConnectionOwnerUid(protocol, source, target)
+                        val src = InetSocketAddress(metadata.sourceIP, metadata.sourcePort)
+                        val dst = InetSocketAddress(
+                            metadata.destinationIP.ifEmpty { metadata.host },
+                            metadata.destinationPort
+                        )
+                        val uid = try {
+                            connectivity?.getConnectionOwnerUid(protocol, src, dst)
+                        } catch (_: Exception) {
+                            null
+                        }
                         if (uid == null || uid == -1) {
                             result.success(null)
                             return@withContext
@@ -137,7 +163,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     private suspend fun getPackageIcon(packageName: String): String? {
         val packageManager = context?.packageManager
         if (iconMap[packageName] == null) {
-            iconMap[packageName] = packageManager?.getApplicationIcon(packageName)?.getBase64()
+            iconMap[packageName] = try {
+                packageManager?.getApplicationIcon(packageName)?.getBase64()
+            } catch (_: Exception) {
+                null
+            }
+
         }
         return iconMap[packageName]
     }
@@ -163,7 +194,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     fun requestGc() {
-        channel.invokeMethod("gc",null)
+        channel.invokeMethod("gc", null)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {

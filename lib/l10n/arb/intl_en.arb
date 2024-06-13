@@ -176,5 +176,10 @@
   "tcpConcurrent": "Tcp concurrent",
   "tcpConcurrentDesc": "Enabling it will allow tcp concurrency",
   "geodataLoader": "Geo Low Memory Mode",
-  "geodataLoaderDesc": "Enabling will use the Geo low memory loader"
+  "geodataLoaderDesc": "Enabling will use the Geo low memory loader",
+  "requests": "Requests",
+  "requestsDesc": "View recently requested data",
+  "nullRequestsDesc": "No proxy or no request",
+  "findProcessMode": "Find process",
+  "findProcessModeDesc": "There is a risk of flashback after opening"
 }

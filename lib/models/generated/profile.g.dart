@@ -24,10 +24,10 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) => Profile(
       id: json['id'] as String?,
       label: json['label'] as String?,
       url: json['url'] as String?,
+      currentGroupName: json['currentGroupName'] as String?,
       userInfo: json['userInfo'] == null
           ? null
           : UserInfo.fromJson(json['userInfo'] as Map<String, dynamic>),
-      proxyName: json['proxyName'] as String?,
       lastUpdateDate: json['lastUpdateDate'] == null
           ? null
           : DateTime.parse(json['lastUpdateDate'] as String),
@@ -43,7 +43,7 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) => Profile(
 Map<String, dynamic> _$ProfileToJson(Profile instance) => <String, dynamic>{
       'id': instance.id,
       'label': instance.label,
-      'proxyName': instance.proxyName,
+      'currentGroupName': instance.currentGroupName,
       'url': instance.url,
       'lastUpdateDate': instance.lastUpdateDate?.toIso8601String(),
       'autoUpdateDuration': instance.autoUpdateDuration.inMicroseconds,

@@ -848,10 +848,8 @@ Process _$ProcessFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Process {
-  int get uid => throw _privateConstructorUsedError;
-  String get network => throw _privateConstructorUsedError;
-  String get source => throw _privateConstructorUsedError;
-  String get target => throw _privateConstructorUsedError;
+  int get id => throw _privateConstructorUsedError;
+  Metadata get metadata => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -863,7 +861,9 @@ abstract class $ProcessCopyWith<$Res> {
   factory $ProcessCopyWith(Process value, $Res Function(Process) then) =
       _$ProcessCopyWithImpl<$Res, Process>;
   @useResult
-  $Res call({int uid, String network, String source, String target});
+  $Res call({int id, Metadata metadata});
+
+  $MetadataCopyWith<$Res> get metadata;
 }
 
 /// @nodoc
@@ -879,29 +879,27 @@ class _$ProcessCopyWithImpl<$Res, $Val extends Process>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? uid = null,
-    Object? network = null,
-    Object? source = null,
-    Object? target = null,
+    Object? id = null,
+    Object? metadata = null,
   }) {
     return _then(_value.copyWith(
-      uid: null == uid
-          ? _value.uid
-          : uid // ignore: cast_nullable_to_non_nullable
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
               as int,
-      network: null == network
-          ? _value.network
-          : network // ignore: cast_nullable_to_non_nullable
-              as String,
-      source: null == source
-          ? _value.source
-          : source // ignore: cast_nullable_to_non_nullable
-              as String,
-      target: null == target
-          ? _value.target
-          : target // ignore: cast_nullable_to_non_nullable
-              as String,
+      metadata: null == metadata
+          ? _value.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Metadata,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $MetadataCopyWith<$Res> get metadata {
+    return $MetadataCopyWith<$Res>(_value.metadata, (value) {
+      return _then(_value.copyWith(metadata: value) as $Val);
+    });
   }
 }
 
@@ -912,7 +910,10 @@ abstract class _$$ProcessImplCopyWith<$Res> implements $ProcessCopyWith<$Res> {
       __$$ProcessImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int uid, String network, String source, String target});
+  $Res call({int id, Metadata metadata});
+
+  @override
+  $MetadataCopyWith<$Res> get metadata;
 }
 
 /// @nodoc
@@ -926,28 +927,18 @@ class __$$ProcessImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? uid = null,
-    Object? network = null,
-    Object? source = null,
-    Object? target = null,
+    Object? id = null,
+    Object? metadata = null,
   }) {
     return _then(_$ProcessImpl(
-      uid: null == uid
-          ? _value.uid
-          : uid // ignore: cast_nullable_to_non_nullable
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
               as int,
-      network: null == network
-          ? _value.network
-          : network // ignore: cast_nullable_to_non_nullable
-              as String,
-      source: null == source
-          ? _value.source
-          : source // ignore: cast_nullable_to_non_nullable
-              as String,
-      target: null == target
-          ? _value.target
-          : target // ignore: cast_nullable_to_non_nullable
-              as String,
+      metadata: null == metadata
+          ? _value.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Metadata,
     ));
   }
 }
@@ -955,27 +946,19 @@ class __$$ProcessImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ProcessImpl implements _Process {
-  const _$ProcessImpl(
-      {required this.uid,
-      required this.network,
-      required this.source,
-      required this.target});
+  const _$ProcessImpl({required this.id, required this.metadata});
 
   factory _$ProcessImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProcessImplFromJson(json);
 
   @override
-  final int uid;
+  final int id;
   @override
-  final String network;
-  @override
-  final String source;
-  @override
-  final String target;
+  final Metadata metadata;
 
   @override
   String toString() {
-    return 'Process(uid: $uid, network: $network, source: $source, target: $target)';
+    return 'Process(id: $id, metadata: $metadata)';
   }
 
   @override
@@ -983,15 +966,14 @@ class _$ProcessImpl implements _Process {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ProcessImpl &&
-            (identical(other.uid, uid) || other.uid == uid) &&
-            (identical(other.network, network) || other.network == network) &&
-            (identical(other.source, source) || other.source == source) &&
-            (identical(other.target, target) || other.target == target));
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.metadata, metadata) ||
+                other.metadata == metadata));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, uid, network, source, target);
+  int get hashCode => Object.hash(runtimeType, id, metadata);
 
   @JsonKey(ignore: true)
   @override
@@ -1009,24 +991,172 @@ class _$ProcessImpl implements _Process {
 
 abstract class _Process implements Process {
   const factory _Process(
-      {required final int uid,
-      required final String network,
-      required final String source,
-      required final String target}) = _$ProcessImpl;
+      {required final int id,
+      required final Metadata metadata}) = _$ProcessImpl;
 
   factory _Process.fromJson(Map<String, dynamic> json) = _$ProcessImpl.fromJson;
 
   @override
-  int get uid;
+  int get id;
   @override
-  String get network;
-  @override
-  String get source;
-  @override
-  String get target;
+  Metadata get metadata;
   @override
   @JsonKey(ignore: true)
   _$$ProcessImplCopyWith<_$ProcessImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+ProcessMapItem _$ProcessMapItemFromJson(Map<String, dynamic> json) {
+  return _ProcessMapItem.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ProcessMapItem {
+  int get id => throw _privateConstructorUsedError;
+  String? get value => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ProcessMapItemCopyWith<ProcessMapItem> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProcessMapItemCopyWith<$Res> {
+  factory $ProcessMapItemCopyWith(
+          ProcessMapItem value, $Res Function(ProcessMapItem) then) =
+      _$ProcessMapItemCopyWithImpl<$Res, ProcessMapItem>;
+  @useResult
+  $Res call({int id, String? value});
+}
+
+/// @nodoc
+class _$ProcessMapItemCopyWithImpl<$Res, $Val extends ProcessMapItem>
+    implements $ProcessMapItemCopyWith<$Res> {
+  _$ProcessMapItemCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? value = freezed,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      value: freezed == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProcessMapItemImplCopyWith<$Res>
+    implements $ProcessMapItemCopyWith<$Res> {
+  factory _$$ProcessMapItemImplCopyWith(_$ProcessMapItemImpl value,
+          $Res Function(_$ProcessMapItemImpl) then) =
+      __$$ProcessMapItemImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int id, String? value});
+}
+
+/// @nodoc
+class __$$ProcessMapItemImplCopyWithImpl<$Res>
+    extends _$ProcessMapItemCopyWithImpl<$Res, _$ProcessMapItemImpl>
+    implements _$$ProcessMapItemImplCopyWith<$Res> {
+  __$$ProcessMapItemImplCopyWithImpl(
+      _$ProcessMapItemImpl _value, $Res Function(_$ProcessMapItemImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? value = freezed,
+  }) {
+    return _then(_$ProcessMapItemImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      value: freezed == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ProcessMapItemImpl implements _ProcessMapItem {
+  const _$ProcessMapItemImpl({required this.id, this.value});
+
+  factory _$ProcessMapItemImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ProcessMapItemImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  final String? value;
+
+  @override
+  String toString() {
+    return 'ProcessMapItem(id: $id, value: $value)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProcessMapItemImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.value, value) || other.value == value));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, value);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProcessMapItemImplCopyWith<_$ProcessMapItemImpl> get copyWith =>
+      __$$ProcessMapItemImplCopyWithImpl<_$ProcessMapItemImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ProcessMapItemImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ProcessMapItem implements ProcessMapItem {
+  const factory _ProcessMapItem({required final int id, final String? value}) =
+      _$ProcessMapItemImpl;
+
+  factory _ProcessMapItem.fromJson(Map<String, dynamic> json) =
+      _$ProcessMapItemImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  String? get value;
+  @override
+  @JsonKey(ignore: true)
+  _$$ProcessMapItemImplCopyWith<_$ProcessMapItemImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

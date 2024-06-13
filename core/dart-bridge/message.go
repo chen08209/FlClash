@@ -12,6 +12,7 @@ const (
 	Delay   MessageType = "delay"
 	Now     MessageType = "now"
 	Process MessageType = "process"
+	Request MessageType = "request"
 )
 
 type Message struct {

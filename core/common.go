@@ -2,13 +2,13 @@ package main
 
 import "C"
 import (
+	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
 	ap "github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/component/dialer"
-	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/config"
-	"github.com/metacubex/mihomo/dns"
+	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
@@ -82,10 +82,13 @@ type Delay struct {
 }
 
 type Process struct {
-	Uid     uint32 `json:"uid"`
-	Network string `json:"network"`
-	Source  string `json:"source"`
-	Target  string `json:"target"`
+	Id       int64             `json:"id"`
+	Metadata constant.Metadata `json:"metadata"`
+}
+
+type ProcessMapItem struct {
+	Id    int64   `json:"id"`
+	Value *string `json:"value"`
 }
 
 type Now struct {
@@ -332,7 +335,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Port = 0
 	targetConfig.SocksPort = 0
 	targetConfig.MixedPort = patchConfig.MixedPort
-	targetConfig.FindProcessMode = process.FindProcessAlways
+	targetConfig.FindProcessMode = patchConfig.FindProcessMode
 	targetConfig.AllowLan = patchConfig.AllowLan
 	targetConfig.Mode = patchConfig.Mode
 	targetConfig.Tun.Enable = patchConfig.Tun.Enable
@@ -344,11 +347,11 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	if targetConfig.DNS.Enable == false {
 		targetConfig.DNS = patchConfig.DNS
 	}
-	if runtime.GOOS == "android" {
-		targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, "dhcp://"+dns.SystemDNSPlaceholder)
-	} else if runtime.GOOS == "windows" {
-		targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, dns.SystemDNSPlaceholder)
-	}
+	//if runtime.GOOS == "android" {
+	//	targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, "dhcp://"+dns.SystemDNSPlaceholder)
+	//} else if runtime.GOOS == "windows" {
+	//	targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, dns.SystemDNSPlaceholder)
+	//}
 	if compatible == false {
 		targetConfig.ProxyProvider = make(map[string]map[string]any)
 		targetConfig.RuleProvider = make(map[string]map[string]any)
@@ -365,8 +368,10 @@ func patchConfig(general *config.General) {
 	inbound.SetDisAllowedIPs(general.LanDisAllowedIPs)
 	listener.SetBindAddress(general.BindAddress)
 	tunnel.SetSniffing(general.Sniffing)
+	tunnel.SetFindProcessMode(general.FindProcessMode)
 	dialer.SetTcpConcurrent(general.TCPConcurrent)
 	dialer.DefaultInterface.Store(general.Interface)
+	adapter.UnifiedDelay.Store(general.UnifiedDelay)
 	listener.ReCreateHTTP(general.Port, tunnel.Tunnel)
 	listener.ReCreateSocks(general.SocksPort, tunnel.Tunnel)
 	listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
@@ -391,6 +396,8 @@ func applyConfig(isPatch bool) {
 	if isPatch {
 		patchConfig(cfg.General)
 	} else {
+		runtime.GC()
+		executor.Shutdown()
 		hub.UltraApplyConfig(cfg, true)
 	}
 }

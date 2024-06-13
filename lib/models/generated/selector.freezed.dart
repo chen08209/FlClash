@@ -1583,6 +1583,7 @@ abstract class _ProxiesCardSelectorState implements ProxiesCardSelectorState {
 /// @nodoc
 mixin _$ProxiesSelectorState {
   List<String> get groupNames => throw _privateConstructorUsedError;
+  String? get currentGroupName => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ProxiesSelectorStateCopyWith<ProxiesSelectorState> get copyWith =>
@@ -1595,7 +1596,7 @@ abstract class $ProxiesSelectorStateCopyWith<$Res> {
           $Res Function(ProxiesSelectorState) then) =
       _$ProxiesSelectorStateCopyWithImpl<$Res, ProxiesSelectorState>;
   @useResult
-  $Res call({List<String> groupNames});
+  $Res call({List<String> groupNames, String? currentGroupName});
 }
 
 /// @nodoc
@@ -1613,12 +1614,17 @@ class _$ProxiesSelectorStateCopyWithImpl<$Res,
   @override
   $Res call({
     Object? groupNames = null,
+    Object? currentGroupName = freezed,
   }) {
     return _then(_value.copyWith(
       groupNames: null == groupNames
           ? _value.groupNames
           : groupNames // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      currentGroupName: freezed == currentGroupName
+          ? _value.currentGroupName
+          : currentGroupName // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -1631,7 +1637,7 @@ abstract class _$$ProxiesSelectorStateImplCopyWith<$Res>
       __$$ProxiesSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<String> groupNames});
+  $Res call({List<String> groupNames, String? currentGroupName});
 }
 
 /// @nodoc
@@ -1646,12 +1652,17 @@ class __$$ProxiesSelectorStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? groupNames = null,
+    Object? currentGroupName = freezed,
   }) {
     return _then(_$ProxiesSelectorStateImpl(
       groupNames: null == groupNames
           ? _value._groupNames
           : groupNames // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      currentGroupName: freezed == currentGroupName
+          ? _value.currentGroupName
+          : currentGroupName // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -1659,7 +1670,8 @@ class __$$ProxiesSelectorStateImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$ProxiesSelectorStateImpl implements _ProxiesSelectorState {
-  const _$ProxiesSelectorStateImpl({required final List<String> groupNames})
+  const _$ProxiesSelectorStateImpl(
+      {required final List<String> groupNames, required this.currentGroupName})
       : _groupNames = groupNames;
 
   final List<String> _groupNames;
@@ -1671,8 +1683,11 @@ class _$ProxiesSelectorStateImpl implements _ProxiesSelectorState {
   }
 
   @override
+  final String? currentGroupName;
+
+  @override
   String toString() {
-    return 'ProxiesSelectorState(groupNames: $groupNames)';
+    return 'ProxiesSelectorState(groupNames: $groupNames, currentGroupName: $currentGroupName)';
   }
 
   @override
@@ -1681,12 +1696,14 @@ class _$ProxiesSelectorStateImpl implements _ProxiesSelectorState {
         (other.runtimeType == runtimeType &&
             other is _$ProxiesSelectorStateImpl &&
             const DeepCollectionEquality()
-                .equals(other._groupNames, _groupNames));
+                .equals(other._groupNames, _groupNames) &&
+            (identical(other.currentGroupName, currentGroupName) ||
+                other.currentGroupName == currentGroupName));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, const DeepCollectionEquality().hash(_groupNames));
+  int get hashCode => Object.hash(runtimeType,
+      const DeepCollectionEquality().hash(_groupNames), currentGroupName);
 
   @JsonKey(ignore: true)
   @override
@@ -1699,10 +1716,13 @@ class _$ProxiesSelectorStateImpl implements _ProxiesSelectorState {
 
 abstract class _ProxiesSelectorState implements ProxiesSelectorState {
   const factory _ProxiesSelectorState(
-      {required final List<String> groupNames}) = _$ProxiesSelectorStateImpl;
+      {required final List<String> groupNames,
+      required final String? currentGroupName}) = _$ProxiesSelectorStateImpl;
 
   @override
   List<String> get groupNames;
+  @override
+  String? get currentGroupName;
   @override
   @JsonKey(ignore: true)
   _$$ProxiesSelectorStateImplCopyWith<_$ProxiesSelectorStateImpl>

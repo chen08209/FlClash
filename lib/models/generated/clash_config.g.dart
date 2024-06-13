@@ -35,30 +35,29 @@ Map<String, dynamic> _$DnsToJson(Dns instance) => <String, dynamic>{
       'fake-ip-filter': instance.fakeIpFilter,
     };
 
-ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig(
-      mixedPort: (json['mixed-port'] as num?)?.toInt(),
-      mode: $enumDecodeNullable(_$ModeEnumMap, json['mode']),
-      allowLan: json['allow-lan'] as bool?,
-      ipv6: json['ipv6'] as bool? ?? false,
-      logLevel: $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']),
-      externalController: json['external-controller'] as String? ?? '',
-      geodataLoader: json['geodata-loader'] as String? ?? 'memconservative',
-      unifiedDelay: json['unified-delay'] as bool? ?? false,
-      tun: json['tun'] == null
-          ? null
-          : Tun.fromJson(json['tun'] as Map<String, dynamic>),
-      dns: json['dns'] == null
-          ? null
-          : Dns.fromJson(json['dns'] as Map<String, dynamic>),
-      tcpConcurrent: json['tcp-concurrent'] as bool? ?? false,
-      rules:
-          (json['rules'] as List<dynamic>?)?.map((e) => e as String).toList(),
-    );
+ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig()
+  ..mixedPort = (json['mixed-port'] as num?)?.toInt() ?? 7890
+  ..mode = $enumDecodeNullable(_$ModeEnumMap, json['mode']) ?? Mode.rule
+  ..findProcessMode = $enumDecodeNullable(
+          _$FindProcessModeEnumMap, json['find-process-mode']) ??
+      FindProcessMode.off
+  ..allowLan = json['allow-lan'] as bool
+  ..logLevel =
+      $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']) ?? LogLevel.info
+  ..externalController = json['external-controller'] as String? ?? ''
+  ..ipv6 = json['ipv6'] as bool? ?? false
+  ..geodataLoader = json['geodata-loader'] as String? ?? 'memconservative'
+  ..unifiedDelay = json['unified-delay'] as bool? ?? false
+  ..tcpConcurrent = json['tcp-concurrent'] as bool? ?? false
+  ..tun = Tun.fromJson(json['tun'] as Map<String, dynamic>)
+  ..dns = Dns.fromJson(json['dns'] as Map<String, dynamic>)
+  ..rules = (json['rules'] as List<dynamic>).map((e) => e as String).toList();
 
 Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
     <String, dynamic>{
       'mixed-port': instance.mixedPort,
       'mode': _$ModeEnumMap[instance.mode]!,
+      'find-process-mode': _$FindProcessModeEnumMap[instance.findProcessMode]!,
       'allow-lan': instance.allowLan,
       'log-level': _$LogLevelEnumMap[instance.logLevel]!,
       'external-controller': instance.externalController,
@@ -75,6 +74,11 @@ const _$ModeEnumMap = {
   Mode.rule: 'rule',
   Mode.global: 'global',
   Mode.direct: 'direct',
+};
+
+const _$FindProcessModeEnumMap = {
+  FindProcessMode.always: 'always',
+  FindProcessMode.off: 'off',
 };
 
 const _$LogLevelEnumMap = {

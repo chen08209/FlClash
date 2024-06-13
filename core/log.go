@@ -18,6 +18,9 @@ func startLog() {
 	logSubscriber = log.Subscribe()
 	go func() {
 		for logData := range logSubscriber {
+			if logData.LogLevel < log.Level() {
+				continue
+			}
 			message := &bridge.Message{
 				Type: bridge.Log,
 				Data: logData,

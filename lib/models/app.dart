@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
+import 'connection.dart';
 import 'ffi.dart';
 import 'log.dart';
 import 'navigation.dart';
@@ -29,6 +32,7 @@ class AppState with ChangeNotifier {
   bool _isCompatible;
   List<Group> _groups;
   double _viewWidth;
+  List<Connection> _requests;
 
   AppState({
     required Mode mode,
@@ -42,6 +46,7 @@ class AppState with ChangeNotifier {
         _viewWidth = 0,
         _selectedMap = selectedMap,
         _sortNum = 0,
+        _requests = [],
         _mode = mode,
         _delayMap = {},
         _groups = [],
@@ -157,6 +162,24 @@ class AppState with ChangeNotifier {
     notifyListeners();
   }
 
+  List<Connection> get requests => _requests;
+
+  set requests(List<Connection> value) {
+    if (_requests != value) {
+      _requests = value;
+      notifyListeners();
+    }
+  }
+
+  addRequest(Connection value) {
+    _requests.add(value);
+    final maxLength = Platform.isAndroid ? 1000 : 60;
+    if (_requests.length > maxLength) {
+      _requests = _requests.sublist(_requests.length - maxLength);
+    }
+    notifyListeners();
+  }
+
   List<Log> get logs => _logs;
 
   set logs(List<Log> value) {
@@ -168,8 +191,10 @@ class AppState with ChangeNotifier {
 
   addLog(Log log) {
     _logs.add(log);
-    if (_logs.length > 60) {
-      _logs = _logs.sublist(_logs.length - 60);
+    if (!Platform.isAndroid) {
+      if (_logs.length > 60) {
+        _logs = _logs.sublist(_logs.length - 60);
+      }
     }
     notifyListeners();
   }

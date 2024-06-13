@@ -56,6 +56,7 @@ const _$MessageTypeEnumMap = {
   MessageType.delay: 'delay',
   MessageType.process: 'process',
   MessageType.now: 'now',
+  MessageType.request: 'request',
 };
 
 _$DelayImpl _$$DelayImplFromJson(Map<String, dynamic> json) => _$DelayImpl(
@@ -81,18 +82,27 @@ Map<String, dynamic> _$$NowImplToJson(_$NowImpl instance) => <String, dynamic>{
 
 _$ProcessImpl _$$ProcessImplFromJson(Map<String, dynamic> json) =>
     _$ProcessImpl(
-      uid: (json['uid'] as num).toInt(),
-      network: json['network'] as String,
-      source: json['source'] as String,
-      target: json['target'] as String,
+      id: (json['id'] as num).toInt(),
+      metadata: Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$ProcessImplToJson(_$ProcessImpl instance) =>
     <String, dynamic>{
-      'uid': instance.uid,
-      'network': instance.network,
-      'source': instance.source,
-      'target': instance.target,
+      'id': instance.id,
+      'metadata': instance.metadata,
+    };
+
+_$ProcessMapItemImpl _$$ProcessMapItemImplFromJson(Map<String, dynamic> json) =>
+    _$ProcessMapItemImpl(
+      id: (json['id'] as num).toInt(),
+      value: json['value'] as String?,
+    );
+
+Map<String, dynamic> _$$ProcessMapItemImplToJson(
+        _$ProcessMapItemImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'value': instance.value,
     };
 
 _$ExternalProviderImpl _$$ExternalProviderImplFromJson(

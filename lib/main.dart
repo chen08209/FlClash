@@ -31,7 +31,6 @@ Future<void> main() async {
     config: config,
     clashConfig: clashConfig,
   );
-
   runAppWithPreferences(
     const Application(),
     appState: appState,

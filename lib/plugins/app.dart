@@ -18,6 +18,11 @@ class App {
       methodChannel = const MethodChannel("app");
       methodChannel!.setMethodCallHandler((call) async {
         switch (call.method) {
+          case "exit":
+            if (onExit != null) {
+              await onExit!();
+            }
+            break;
           case "gc":
             clashCore.requestGc();
             break;
@@ -63,9 +68,9 @@ class App {
     });
   }
 
-  Future<String?> getPackageName(Metadata metadata) async {
-    return await methodChannel?.invokeMethod<String>("getPackageName", {
-      "data": json.encode(metadata),
+  Future<String?> resolverProcess(Process process) async {
+    return await methodChannel?.invokeMethod<String>("resolverProcess", {
+      "data": json.encode(process),
     });
   }
 }

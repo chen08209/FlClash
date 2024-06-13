@@ -14,7 +14,9 @@ abstract mixin class ClashMessageListener {
 
   void onDelay(Delay delay) {}
 
-  void onProcess(Metadata metadata) {}
+  void onProcess(Process process) {}
+
+  void onRequest(Connection connection) {}
 
   void onNow(Now now) {}
 }
@@ -41,10 +43,13 @@ class ClashMessage {
             listener.onDelay(Delay.fromJson(m.data));
             break;
           case MessageType.process:
-            listener.onProcess(Metadata.fromJson(m.data));
+            listener.onProcess(Process.fromJson(m.data));
             break;
           case MessageType.now:
             listener.onNow(Now.fromJson(m.data));
+            break;
+          case MessageType.request:
+            listener.onRequest(Connection.fromJson(m.data));
             break;
         }
       }

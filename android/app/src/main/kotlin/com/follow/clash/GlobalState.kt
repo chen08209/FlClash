@@ -15,7 +15,6 @@ enum class RunState {
 class GlobalState {
     companion object {
         val runState: MutableLiveData<RunState> = MutableLiveData<RunState>(RunState.STOP)
-        var runTime: Date? = null
         var flutterEngine: FlutterEngine? = null
         fun getCurrentTilePlugin(): TilePlugin? =
             flutterEngine?.plugins?.get(TilePlugin::class.java) as TilePlugin?

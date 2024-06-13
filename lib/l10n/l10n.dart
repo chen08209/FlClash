@@ -1829,6 +1829,56 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Requests`
+  String get requests {
+    return Intl.message(
+      'Requests',
+      name: 'requests',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `View recently requested data`
+  String get requestsDesc {
+    return Intl.message(
+      'View recently requested data',
+      name: 'requestsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No proxy or no request`
+  String get nullRequestsDesc {
+    return Intl.message(
+      'No proxy or no request',
+      name: 'nullRequestsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Find process`
+  String get findProcessMode {
+    return Intl.message(
+      'Find process',
+      name: 'findProcessMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `There is a risk of flashback after opening`
+  String get findProcessModeDesc {
+    return Intl.message(
+      'There is a risk of flashback after opening',
+      name: 'findProcessModeDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
