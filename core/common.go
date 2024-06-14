@@ -10,14 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
-	"strings"
-	"syscall"
-	"time"
-
 	"github.com/metacubex/mihomo/adapter/inbound"
 	ap "github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/component/dialer"
