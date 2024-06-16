@@ -99,7 +99,7 @@ class ClashCore {
       final groupNames = [
         UsedProxy.GLOBAL.name,
         ...(proxies[UsedProxy.GLOBAL.name]["all"] as List).where((e) {
-          final proxy = proxies[e];
+          final proxy = proxies[e] ?? {};
           return GroupTypeExtension.valueList.contains(proxy['type']) && proxy['hidden'] != true;
         })
       ];
