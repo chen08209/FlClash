@@ -13,6 +13,7 @@ const (
 	Now     MessageType = "now"
 	Process MessageType = "process"
 	Request MessageType = "request"
+	Run     MessageType = "run"
 )
 
 type Message struct {
@@ -20,11 +21,18 @@ type Message struct {
 	Data interface{} `json:"data"`
 }
 
-func (message *Message) Json() string {
-	data, _ := json.Marshal(message)
-	return string(data)
+func (message *Message) Json() (string, error) {
+	data, err := json.Marshal(message)
+	return string(data), err
 }
 
 func SendMessage(message Message) {
-	SendToPort(*Port, message.Json())
+	if Port == nil {
+		return
+	}
+	s, err := message.Json()
+	if err != nil {
+		return
+	}
+	SendToPort(*Port, s)
 }

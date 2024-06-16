@@ -1013,7 +1013,7 @@ ProcessMapItem _$ProcessMapItemFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ProcessMapItem {
   int get id => throw _privateConstructorUsedError;
-  String? get value => throw _privateConstructorUsedError;
+  String get value => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -1027,7 +1027,7 @@ abstract class $ProcessMapItemCopyWith<$Res> {
           ProcessMapItem value, $Res Function(ProcessMapItem) then) =
       _$ProcessMapItemCopyWithImpl<$Res, ProcessMapItem>;
   @useResult
-  $Res call({int id, String? value});
+  $Res call({int id, String value});
 }
 
 /// @nodoc
@@ -1044,17 +1044,17 @@ class _$ProcessMapItemCopyWithImpl<$Res, $Val extends ProcessMapItem>
   @override
   $Res call({
     Object? id = null,
-    Object? value = freezed,
+    Object? value = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      value: freezed == value
+      value: null == value
           ? _value.value
           : value // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as String,
     ) as $Val);
   }
 }
@@ -1067,7 +1067,7 @@ abstract class _$$ProcessMapItemImplCopyWith<$Res>
       __$$ProcessMapItemImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, String? value});
+  $Res call({int id, String value});
 }
 
 /// @nodoc
@@ -1082,17 +1082,17 @@ class __$$ProcessMapItemImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? value = freezed,
+    Object? value = null,
   }) {
     return _then(_$ProcessMapItemImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      value: freezed == value
+      value: null == value
           ? _value.value
           : value // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as String,
     ));
   }
 }
@@ -1100,7 +1100,7 @@ class __$$ProcessMapItemImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ProcessMapItemImpl implements _ProcessMapItem {
-  const _$ProcessMapItemImpl({required this.id, this.value});
+  const _$ProcessMapItemImpl({required this.id, required this.value});
 
   factory _$ProcessMapItemImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProcessMapItemImplFromJson(json);
@@ -1108,7 +1108,7 @@ class _$ProcessMapItemImpl implements _ProcessMapItem {
   @override
   final int id;
   @override
-  final String? value;
+  final String value;
 
   @override
   String toString() {
@@ -1144,8 +1144,9 @@ class _$ProcessMapItemImpl implements _ProcessMapItem {
 }
 
 abstract class _ProcessMapItem implements ProcessMapItem {
-  const factory _ProcessMapItem({required final int id, final String? value}) =
-      _$ProcessMapItemImpl;
+  const factory _ProcessMapItem(
+      {required final int id,
+      required final String value}) = _$ProcessMapItemImpl;
 
   factory _ProcessMapItem.fromJson(Map<String, dynamic> json) =
       _$ProcessMapItemImpl.fromJson;
@@ -1153,7 +1154,7 @@ abstract class _ProcessMapItem implements ProcessMapItem {
   @override
   int get id;
   @override
-  String? get value;
+  String get value;
   @override
   @JsonKey(ignore: true)
   _$$ProcessMapItemImplCopyWith<_$ProcessMapItemImpl> get copyWith =>
