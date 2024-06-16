@@ -79,7 +79,7 @@ class Process with _$Process {
 class ProcessMapItem with _$ProcessMapItem {
   const factory ProcessMapItem({
     required int id,
-    String? value,
+    required String value,
   }) = _ProcessMapItem;
 
   factory ProcessMapItem.fromJson(Map<String, Object?> json) =>

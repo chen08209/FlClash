@@ -56,6 +56,10 @@ class Proxy extends ProxyPlatform {
     return await methodChannel.invokeMethod<bool?>("SetProtect", {'fd': fd});
   }
 
+  Future<int?> getRunTimeStamp() async {
+    return await methodChannel.invokeMethod<int?>("GetRunTimeStamp");
+  }
+
   Future<bool?> startForeground({
     required String title,
     required String content,
@@ -75,8 +79,19 @@ class Proxy extends ProxyPlatform {
     }
   }
 
+  // updateStartTime() async {
+  //   startTime = clashCore.getRunTime();
+  // }
+
   updateStartTime() async {
-    startTime = clashCore.getRunTime();
+    startTime = await getRunTime();
+  }
+
+  Future<DateTime?> getRunTime() async {
+    final runTimeStamp = await getRunTimeStamp();
+    return runTimeStamp != null
+        ? DateTime.fromMillisecondsSinceEpoch(runTimeStamp)
+        : null;
   }
 }
 

@@ -9,16 +9,30 @@ import (
 	"errors"
 	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/log"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
-var (
-	counter int64
-)
+type ProcessMap struct {
+	m sync.Map
+}
 
-var processMap = make(map[int64]*string)
+func (cm *ProcessMap) Store(key int64, value string) {
+	cm.m.Store(key, value)
+}
+
+func (cm *ProcessMap) Load(key int64) (string, bool) {
+	value, ok := cm.m.Load(key)
+	if !ok || value == nil {
+		return "", false
+	}
+	return value.(string), true
+}
+
+var counter int64 = 0
+
+var processMap ProcessMap
 
 func init() {
 	process.DefaultPackageNameResolver = func(metadata *constant.Metadata) (string, error) {
@@ -29,31 +43,24 @@ func init() {
 
 		timeout := time.After(200 * time.Millisecond)
 
-		message := &bridge.Message{
+		bridge.SendMessage(bridge.Message{
 			Type: bridge.Process,
 			Data: Process{
 				Id:       id,
-				Metadata: *metadata,
+				Metadata: metadata,
 			},
-		}
-
-		bridge.SendMessage(*message)
+		})
 
 		for {
 			select {
 			case <-timeout:
 				return "", errors.New("package resolver timeout")
 			default:
-				value, exists := processMap[counter]
+				value, exists := processMap.Load(id)
 				if exists {
-					if value != nil {
-						log.Infoln("[PKG] %s --> %s by [%s]", metadata.SourceAddress(), metadata.RemoteAddress(), *value)
-						return *value, nil
-					} else {
-						return "", process.ErrInvalidNetwork
-					}
+					return value, nil
 				}
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(20 * time.Millisecond)
 			}
 		}
 	}
@@ -61,12 +68,15 @@ func init() {
 
 //export setProcessMap
 func setProcessMap(s *C.char) {
+	if s == nil {
+		return
+	}
 	go func() {
 		paramsString := C.GoString(s)
 		var processMapItem = &ProcessMapItem{}
 		err := json.Unmarshal([]byte(paramsString), processMapItem)
 		if err == nil {
-			processMap[processMapItem.Id] = processMapItem.Value
+			processMap.Store(processMapItem.Id, processMapItem.Value)
 		}
 	}()
 }

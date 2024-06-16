@@ -1,6 +1,7 @@
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/plugins/proxy.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -61,7 +62,7 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
     clashCore.setProcessMap(
       ProcessMapItem(
         id: process.id,
-        value: packageName,
+        value: packageName ?? "",
       ),
     );
     super.onProcess(process);
@@ -71,5 +72,11 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
   void onRequest(Connection connection) async {
     globalState.appController.appState.addRequest(connection);
     super.onRequest(connection);
+  }
+
+  @override
+  void onRun(String runTime) async {
+    // proxy?.updateStartTime();
+    super.onRun(runTime);
   }
 }
