@@ -181,5 +181,6 @@
   "requestsDesc": "View recently requested data",
   "nullRequestsDesc": "No proxy or no request",
   "findProcessMode": "Find process",
-  "findProcessModeDesc": "There is a risk of flashback after opening"
+  "findProcessModeDesc": "There is a risk of flashback after opening",
+  "init": "Init"
 }

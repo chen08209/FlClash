@@ -142,6 +142,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "hours": MessageLookupByLibrary.simpleMessage("Hours"),
         "importFromURL":
             MessageLookupByLibrary.simpleMessage("Import from URL"),
+        "init": MessageLookupByLibrary.simpleMessage("Init"),
         "ipCheckTimeout":
             MessageLookupByLibrary.simpleMessage("Ip check timeout"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage(

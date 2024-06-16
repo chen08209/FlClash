@@ -70,7 +70,7 @@ class Config extends ChangeNotifier {
         _isMinimizeOnExit = true,
         _isAccessControl = false,
         _autoCheckUpdate = true,
-        _systemProxy = false,
+        _systemProxy = true,
         _accessControl = const AccessControl(),
         _isAnimateToPage = true,
         _allowBypass = true;
