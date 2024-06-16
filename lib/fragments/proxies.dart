@@ -64,12 +64,17 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
     final indexIsChanging = _tabController?.indexIsChanging ?? false;
     if (indexIsChanging) return;
     final index = _tabController?.index;
-    if(index == null) return;
+    if (index == null) return;
     final appController = globalState.appController;
     final currentGroups = appController.appState.currentGroups;
     if (currentGroups.length > index) {
       appController.config.updateCurrentGroupName(currentGroups[index].name);
     }
+  }
+  @override
+  void dispose() {
+    super.dispose();
+    _tabController?.dispose();
   }
 
   @override
@@ -120,7 +125,8 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
                 dividerColor: Colors.transparent,
                 isScrollable: true,
                 tabAlignment: TabAlignment.start,
-                overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+                overlayColor:
+                const WidgetStatePropertyAll(Colors.transparent),
                 tabs: [
                   for (final groupName in state.groupNames)
                     Tab(

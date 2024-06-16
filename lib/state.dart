@@ -57,6 +57,7 @@ class GlobalState {
   }
 
   Future<void> startSystemProxy({
+    required AppState appState,
     required Config config,
     required ClashConfig clashConfig,
   }) async {
@@ -73,6 +74,11 @@ class GlobalState {
       args: args,
     );
     startListenUpdate();
+    applyProfile(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
+    );
   }
 
   Future<void> stopSystemProxy() async {
@@ -195,6 +201,7 @@ class GlobalState {
     final traffic = clashCore.getTraffic();
     if (appState != null) {
       appState.addTraffic(traffic);
+      appState.totalTraffic = clashCore.getTotalTraffic();
     }
     if (Platform.isAndroid) {
       final currentProfile = config.currentProfile;

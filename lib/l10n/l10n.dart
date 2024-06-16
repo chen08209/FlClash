@@ -1889,6 +1889,26 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Long term effective`
+  String get infiniteTime {
+    return Intl.message(
+      'Long term effective',
+      name: 'infiniteTime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expiration time`
+  String get expirationTime {
+    return Intl.message(
+      'Expiration time',
+      name: 'expirationTime',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

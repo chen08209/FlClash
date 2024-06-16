@@ -31,6 +31,7 @@ class AppController {
   Future<void> updateSystemProxy(bool isStart) async {
     if (isStart) {
       await globalState.startSystemProxy(
+        appState: appState,
         config: config,
         clashConfig: clashConfig,
       );

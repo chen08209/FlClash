@@ -46,8 +46,8 @@ class ClashCore {
 
   bool init(String homeDir) {
     return clashFFI.initClash(
-          homeDir.toNativeUtf8().cast(),
-        ) ==
+      homeDir.toNativeUtf8().cast(),
+    ) ==
         1;
   }
 
@@ -100,7 +100,8 @@ class ClashCore {
         UsedProxy.GLOBAL.name,
         ...(proxies[UsedProxy.GLOBAL.name]["all"] as List).where((e) {
           final proxy = proxies[e] ?? {};
-          return GroupTypeExtension.valueList.contains(proxy['type']) && proxy['hidden'] != true;
+          return GroupTypeExtension.valueList.contains(proxy['type']) &&
+              proxy['hidden'] != true;
         })
       ];
       final groupsRaw = groupNames.map((groupName) {
@@ -108,7 +109,7 @@ class ClashCore {
         group["all"] = ((group["all"] ?? []) as List)
             .map(
               (name) => proxies[name],
-            )
+        )
             .toList();
         return group;
       }).toList();
@@ -119,14 +120,14 @@ class ClashCore {
   Future<List<ExternalProvider>> getExternalProviders() {
     final externalProvidersRaw = clashFFI.getExternalProviders();
     final externalProvidersRawString =
-        externalProvidersRaw.cast<Utf8>().toDartString();
+    externalProvidersRaw.cast<Utf8>().toDartString();
     return Isolate.run<List<ExternalProvider>>(() {
       final externalProviders =
-          (json.decode(externalProvidersRawString) as List<dynamic>)
-              .map(
-                (item) => ExternalProvider.fromJson(item),
-              )
-              .toList();
+      (json.decode(externalProvidersRawString) as List<dynamic>)
+          .map(
+            (item) => ExternalProvider.fromJson(item),
+      )
+          .toList();
       return externalProviders;
     });
   }
@@ -198,6 +199,13 @@ class ClashCore {
     return Traffic.fromMap(trafficMap);
   }
 
+
+  Traffic getTotalTraffic() {
+    final trafficRaw = clashFFI.getTotalTraffic();
+    final trafficMap = json.decode(trafficRaw.cast<Utf8>().toDartString());
+    return Traffic.fromMap(trafficMap);
+  }
+
   void startLog() {
     clashFFI.startLog();
   }
@@ -222,16 +230,16 @@ class ClashCore {
     clashFFI.setProcessMap(json.encode(processMapItem).toNativeUtf8().cast());
   }
 
-  DateTime? getRunTime() {
-    final runTimeString = clashFFI.getRunTime().cast<Utf8>().toDartString();
-    if (runTimeString.isEmpty) return null;
-    return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
-  }
+  // DateTime? getRunTime() {
+  //   final runTimeString = clashFFI.getRunTime().cast<Utf8>().toDartString();
+  //   if (runTimeString.isEmpty) return null;
+  //   return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
+  // }
 
   List<Connection> getConnections() {
     final connectionsDataRaw = clashFFI.getConnections();
     final connectionsData =
-        json.decode(connectionsDataRaw.cast<Utf8>().toDartString()) as Map;
+    json.decode(connectionsDataRaw.cast<Utf8>().toDartString()) as Map;
     final connectionsRaw = connectionsData['connections'] as List? ?? [];
     return connectionsRaw.map((e) => Connection.fromJson(e)).toList();
   }

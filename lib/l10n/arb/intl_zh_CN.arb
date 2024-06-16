@@ -182,5 +182,7 @@
   "nullRequestsDesc": "未开启代理或者没有请求",
   "findProcessMode": "查找进程",
   "findProcessModeDesc": "开启后存在闪退风险",
-  "init": "初始化"
+  "init": "初始化",
+  "infiniteTime": "长期有效",
+  "expirationTime": "到期时间"
 }

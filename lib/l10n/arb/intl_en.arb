@@ -182,5 +182,7 @@
   "nullRequestsDesc": "No proxy or no request",
   "findProcessMode": "Find process",
   "findProcessModeDesc": "There is a risk of flashback after opening",
-  "init": "Init"
+  "init": "Init",
+  "infiniteTime": "Long term effective",
+  "expirationTime": "Expiration time"
 }

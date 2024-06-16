@@ -111,9 +111,10 @@ class ThemeFragment extends StatelessWidget {
       null,
       defaultPrimaryColor,
       Colors.pinkAccent,
+      Colors.lightBlue,
       Colors.greenAccent,
       Colors.yellowAccent,
-      Colors.purple
+      Colors.purple,
     ];
     return Column(
       children: [

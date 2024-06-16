@@ -117,6 +117,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "edit": MessageLookupByLibrary.simpleMessage("Edit"),
         "en": MessageLookupByLibrary.simpleMessage("English"),
         "exit": MessageLookupByLibrary.simpleMessage("Exit"),
+        "expirationTime":
+            MessageLookupByLibrary.simpleMessage("Expiration time"),
         "externalController":
             MessageLookupByLibrary.simpleMessage("ExternalController"),
         "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
@@ -142,6 +144,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "hours": MessageLookupByLibrary.simpleMessage("Hours"),
         "importFromURL":
             MessageLookupByLibrary.simpleMessage("Import from URL"),
+        "infiniteTime":
+            MessageLookupByLibrary.simpleMessage("Long term effective"),
         "init": MessageLookupByLibrary.simpleMessage("Init"),
         "ipCheckTimeout":
             MessageLookupByLibrary.simpleMessage("Ip check timeout"),

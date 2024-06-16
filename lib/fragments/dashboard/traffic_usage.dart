@@ -55,21 +55,11 @@ class TrafficUsage extends StatelessWidget {
         label: appLocalizations.trafficUsage,
         iconData: Icons.data_saver_off,
       ),
-      child: Selector<AppState, List<Traffic>>(
-        selector: (_, appState) => appState.traffics,
-        builder: (_, traffics, __) {
-          final trafficTotal = traffics.isNotEmpty
-              ? traffics.reduce(
-                  (value, element) {
-                    return Traffic(
-                      up: element.up.value + value.up.value,
-                      down: element.down.value + value.down.value,
-                    );
-                  },
-                )
-              : Traffic();
-          final upTrafficValue = trafficTotal.up;
-          final downTrafficValue = trafficTotal.down;
+      child: Selector<AppState, Traffic>(
+        selector: (_, appState) => appState.totalTraffic,
+        builder: (_, totalTraffic, __) {
+          final upTotalTrafficValue = totalTraffic.up;
+          final downTotalTrafficValue = totalTraffic.down;
           return Padding(
             padding: const EdgeInsets.all(16).copyWith(top: 0),
             child: Column(
@@ -80,7 +70,7 @@ class TrafficUsage extends StatelessWidget {
                   child: getTrafficDataItem(
                     context,
                     Icons.arrow_upward,
-                    upTrafficValue,
+                    upTotalTrafficValue,
                   ),
                 ),
                 const SizedBox(
@@ -91,7 +81,7 @@ class TrafficUsage extends StatelessWidget {
                   child: getTrafficDataItem(
                     context,
                     Icons.arrow_downward,
-                    downTrafficValue,
+                    downTotalTrafficValue,
                   ),
                 ),
               ],

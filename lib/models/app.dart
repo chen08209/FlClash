@@ -22,6 +22,7 @@ class AppState with ChangeNotifier {
   bool _isInit;
   VersionInfo? _versionInfo;
   List<Traffic> _traffics;
+  Traffic _totalTraffic;
   List<Log> _logs;
   String _currentLabel;
   SystemColorSchemes _systemColorSchemes;
@@ -48,6 +49,7 @@ class AppState with ChangeNotifier {
         _sortNum = 0,
         _requests = [],
         _mode = mode,
+        _totalTraffic = Traffic(),
         _delayMap = {},
         _groups = [],
         _isCompatible = isCompatible,
@@ -157,9 +159,22 @@ class AppState with ChangeNotifier {
     }
   }
 
-  addTraffic(Traffic value) {
-    _traffics = List.from(_traffics)..add(value);
+  addTraffic(Traffic traffic) {
+    _traffics = List.from(_traffics)..add(traffic);
+    const maxLength = 60;
+    if (_traffics.length > maxLength) {
+      _traffics = _traffics.sublist(_traffics.length - maxLength);
+    }
     notifyListeners();
+  }
+
+  Traffic get totalTraffic => _totalTraffic;
+
+  set totalTraffic(Traffic value) {
+    if (_totalTraffic != value) {
+      _totalTraffic = value;
+      notifyListeners();
+    }
   }
 
   List<Connection> get requests => _requests;
@@ -191,10 +206,9 @@ class AppState with ChangeNotifier {
 
   addLog(Log log) {
     _logs.add(log);
-    if (!Platform.isAndroid) {
-      if (_logs.length > 60) {
-        _logs = _logs.sublist(_logs.length - 60);
-      }
+    final maxLength = Platform.isAndroid ? 1000 : 60;
+    if (_logs.length > maxLength) {
+      _logs = _logs.sublist(_logs.length - maxLength);
     }
     notifyListeners();
   }

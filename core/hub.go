@@ -188,6 +188,21 @@ func getTraffic() *C.char {
 	return C.CString(string(data))
 }
 
+//export getTotalTraffic
+func getTotalTraffic() *C.char {
+	up, down := statistic.DefaultManager.Total()
+	traffic := map[string]int64{
+		"up":   up,
+		"down": down,
+	}
+	data, err := json.Marshal(traffic)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return C.CString("")
+	}
+	return C.CString(string(data))
+}
+
 //export asyncTestDelay
 func asyncTestDelay(s *C.char, port C.longlong) {
 	i := int64(port)

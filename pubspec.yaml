@@ -17,7 +17,7 @@ dependencies:
   provider: ^6.0.5
   window_manager: ^0.3.8
   ffi: ^2.1.0
-  dynamic_color: ^1.6.0
+  dynamic_color: ^1.7.0
   proxy:
     path: plugins/proxy
   launch_at_startup: ^0.2.2
@@ -39,6 +39,8 @@ dependencies:
   webdav_client: ^1.2.2
   dio: ^5.4.3+1
   country_flags: ^2.2.0
+  re_editor: ^0.3.0
+  re_highlight: ^0.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
