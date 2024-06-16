@@ -97,6 +97,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "edit": MessageLookupByLibrary.simpleMessage("编辑"),
         "en": MessageLookupByLibrary.simpleMessage("英语"),
         "exit": MessageLookupByLibrary.simpleMessage("退出"),
+        "expirationTime": MessageLookupByLibrary.simpleMessage("到期时间"),
         "externalController": MessageLookupByLibrary.simpleMessage("外部控制器"),
         "externalControllerDesc":
             MessageLookupByLibrary.simpleMessage("开启后将可以通过9090端口控制clash内核"),
@@ -116,6 +117,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "goDownload": MessageLookupByLibrary.simpleMessage("前往下载"),
         "hours": MessageLookupByLibrary.simpleMessage("小时"),
         "importFromURL": MessageLookupByLibrary.simpleMessage("从URL导入"),
+        "infiniteTime": MessageLookupByLibrary.simpleMessage("长期有效"),
         "init": MessageLookupByLibrary.simpleMessage("初始化"),
         "ipCheckTimeout": MessageLookupByLibrary.simpleMessage("Ip检测超时"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage("开启后将可以接收ipv6流量"),

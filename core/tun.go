@@ -35,8 +35,6 @@ func startTUN(fd C.int) {
 
 		closer, err := t.Start(f, gateway, portal, dns)
 
-		applyConfig(true)
-
 		if err != nil {
 			log.Errorln("startTUN error: %v", err)
 			tempTun.Close()
@@ -56,7 +54,6 @@ func stopTun() {
 
 		if tun != nil {
 			tun.Close()
-			applyConfig(true)
 			tun = nil
 		}
 	}()

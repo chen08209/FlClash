@@ -1,5 +1,6 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
+import 'package:fl_clash/fragments/profiles/view_profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
@@ -15,6 +16,7 @@ enum ProfileActions {
   edit,
   update,
   delete,
+  view,
 }
 
 class ProfilesFragment extends StatefulWidget {
@@ -198,6 +200,16 @@ class _ProfileItemState extends State<ProfileItem> {
     );
   }
 
+  _handleViewProfile(Profile profile) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ViewProfile(
+          profile: profile.copyWith(),
+        ),
+      ),
+    );
+  }
+
   _buildTitle(Profile profile) {
     final textTheme = context.textTheme;
     final userInfo = profile.userInfo ?? UserInfo();
@@ -207,7 +219,7 @@ class _ProfileItemState extends State<ProfileItem> {
     final totalShow = TrafficValue(value: total).show;
     final progress = total == 0 ? 0.0 : use / total;
     final expireShow = userInfo.expire == 0
-        ? "长期有效"
+        ? appLocalizations.infiniteTime
         : DateTime.fromMillisecondsSinceEpoch(userInfo.expire * 1000).show;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -255,7 +267,7 @@ class _ProfileItemState extends State<ProfileItem> {
               Row(
                 children: [
                   Text(
-                    "到期时间:",
+                    appLocalizations.expirationTime,
                     style: textTheme.labelMedium?.toLighter(),
                   ),
                   const SizedBox(
@@ -316,6 +328,11 @@ class _ProfileItemState extends State<ProfileItem> {
               label: appLocalizations.delete,
               iconData: Icons.delete,
             ),
+            // CommonPopupMenuItem(
+            //   action: ProfileActions.view,
+            //   label: "查看",
+            //   iconData: Icons.visibility,
+            // ),
           ],
           onSelected: (ProfileActions? action) async {
             switch (action) {
@@ -327,6 +344,9 @@ class _ProfileItemState extends State<ProfileItem> {
                 break;
               case ProfileActions.update:
                 _handleUpdateProfile(profile.id);
+                break;
+              case ProfileActions.view:
+                _handleViewProfile(profile);
                 break;
               case null:
                 break;

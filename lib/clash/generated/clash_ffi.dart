@@ -983,6 +983,16 @@ class ClashFFI {
   late final _getTraffic =
       _getTrafficPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
 
+  ffi.Pointer<ffi.Char> getTotalTraffic() {
+    return _getTotalTraffic();
+  }
+
+  late final _getTotalTrafficPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
+          'getTotalTraffic');
+  late final _getTotalTraffic =
+      _getTotalTrafficPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
+
   void asyncTestDelay(
     ffi.Pointer<ffi.Char> s,
     int port,
@@ -1155,16 +1165,6 @@ class ClashFFI {
   late final _startTUNPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('startTUN');
   late final _startTUN = _startTUNPtr.asFunction<void Function(int)>();
-
-  ffi.Pointer<ffi.Char> getRunTime() {
-    return _getRunTime();
-  }
-
-  late final _getRunTimePtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
-          'getRunTime');
-  late final _getRunTime =
-      _getRunTimePtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
 
   void stopTun() {
     return _stopTun();

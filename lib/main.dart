@@ -75,6 +75,7 @@ Future<void> vpnService() async {
   handleStart() async {
     await app?.tip(appLocalizations.startVpn);
     await globalState.startSystemProxy(
+      appState: appState,
       config: config,
       clashConfig: clashConfig,
     );

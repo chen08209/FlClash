@@ -21,26 +21,17 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
         .asMap()
         .map(
           (index, e) => MapEntry(
-        index,
-        Point(
-          (index + initPoints.length).toDouble(),
-          e.speed.toDouble(),
-        ),
-      ),
-    )
+            index,
+            Point(
+              (index + initPoints.length).toDouble(),
+              e.speed.toDouble(),
+            ),
+          ),
+        )
         .values
         .toList();
-    var pointsRaw = [...initPoints, ...trafficPoints];
-    List<Point> points;
-    if (pointsRaw.length > 60) {
-      points = pointsRaw
-          .getRange(pointsRaw.length - 61, pointsRaw.length - 1)
-          .toList();
-    } else {
-      points = pointsRaw;
-    }
 
-    return points;
+    return [...initPoints, ...trafficPoints];
   }
 
   Traffic _getLastTraffic(List<Traffic> traffics) {
@@ -53,11 +44,10 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
     required IconData iconData,
     required TrafficValue value,
   }) {
-
     final showValue = value.showValue;
     final showUnit = "${value.showUnit}/s";
     final titleLargeSoftBold =
-    Theme.of(context).textTheme.titleLarge?.toSoftBold();
+        Theme.of(context).textTheme.titleLarge?.toSoftBold();
     final bodyMedium = Theme.of(context).textTheme.bodySmall?.toLight();
     final valueText = Text(
       showValue,
@@ -121,7 +111,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
-      info:  Info(
+      info: Info(
         label: appLocalizations.networkSpeed,
         iconData: Icons.speed,
       ),
