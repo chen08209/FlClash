@@ -278,7 +278,7 @@ class AppController {
           config: config,
           clashConfig: clashConfig,
         );
-      });
+      },title: appLocalizations.init);
     } else {
       await globalState.applyProfile(
         appState: appState,

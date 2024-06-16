@@ -181,5 +181,6 @@
   "requestsDesc": "查看最近请求数据",
   "nullRequestsDesc": "未开启代理或者没有请求",
   "findProcessMode": "查找进程",
-  "findProcessModeDesc": "开启后存在闪退风险"
+  "findProcessModeDesc": "开启后存在闪退风险",
+  "init": "初始化"
 }
