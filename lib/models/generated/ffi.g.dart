@@ -57,6 +57,7 @@ const _$MessageTypeEnumMap = {
   MessageType.process: 'process',
   MessageType.now: 'now',
   MessageType.request: 'request',
+  MessageType.run: 'run',
 };
 
 _$DelayImpl _$$DelayImplFromJson(Map<String, dynamic> json) => _$DelayImpl(
@@ -95,7 +96,7 @@ Map<String, dynamic> _$$ProcessImplToJson(_$ProcessImpl instance) =>
 _$ProcessMapItemImpl _$$ProcessMapItemImplFromJson(Map<String, dynamic> json) =>
     _$ProcessMapItemImpl(
       id: (json['id'] as num).toInt(),
-      value: json['value'] as String?,
+      value: json['value'] as String,
     );
 
 Map<String, dynamic> _$$ProcessMapItemImplToJson(

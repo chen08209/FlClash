@@ -54,21 +54,18 @@ Future<void> vpnService() async {
       int.parse(fd),
     );
   }));
+
   await globalState.init(
     appState: appState,
     config: config,
     clashConfig: clashConfig,
   );
 
-  if (appState.isInit) {
-    globalState.applyProfile(
-      appState: appState,
-      config: config,
-      clashConfig: clashConfig,
-    );
-  } else {
-    exit(0);
-  }
+  await globalState.applyProfile(
+    appState: appState,
+    config: config,
+    clashConfig: clashConfig,
+  );
 
   final appLocalizations = await AppLocalizations.load(
     other.getLocaleForString(config.locale) ??
@@ -89,19 +86,18 @@ Future<void> vpnService() async {
     ];
   }
 
-  if (appState.isInit) {
-    handleStart();
-    tile?.addListener(
-      TileListenerWithVpn(
-        onStop: () async {
-          await app?.tip(appLocalizations.stopVpn);
-          await globalState.stopSystemProxy();
-          clashCore.shutdown();
-          exit(0);
-        },
-      ),
-    );
-  }
+  handleStart();
+
+  tile?.addListener(
+    TileListenerWithVpn(
+      onStop: () async {
+        await app?.tip(appLocalizations.stopVpn);
+        await globalState.stopSystemProxy();
+        clashCore.shutdown();
+        exit(0);
+      },
+    ),
+  );
 }
 
 class ClashMessageListenerWithVpn with ClashMessageListener {

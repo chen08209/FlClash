@@ -39,7 +39,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     }
   }
 
-  _buildAppSection() {
+  Widget _buildAppSection() {
     final items = [
       if (Platform.isAndroid)
         Selector<Config, bool>(
@@ -150,7 +150,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     );
   }
 
-  _buildGeneralSection() {
+  Widget _buildGeneralSection() {
     final items = [
       Selector<ClashConfig, LogLevel>(
         selector: (_, clashConfig) => clashConfig.logLevel,
@@ -335,14 +335,56 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     );
   }
 
+  Widget _buildMoreSection() {
+    final items = [
+      if (false)
+        Selector<ClashConfig, bool>(
+          selector: (_, clashConfig) => clashConfig.tun.enable,
+          builder: (_, tunEnable, __) {
+            return ListItem.switchItem(
+              leading: const Icon(
+                Icons.important_devices_outlined
+              ),
+              title: Text(appLocalizations.tun),
+              subtitle: Text(appLocalizations.tunDesc),
+              delegate: SwitchDelegate(
+                value: tunEnable,
+                onChanged: (bool value) async {
+                  final clashConfig = context.read<ClashConfig>();
+                  clashConfig.tun = Tun(enable: value);
+                  globalState.appController.updateClashConfigDebounce();
+                },
+              ),
+            );
+          },
+        ),
+    ];
+    if(items.isEmpty) return Container();
+    return Section(
+      title: appLocalizations.general,
+      child: Column(
+        children: [
+          for (final item in items) ...[
+            item,
+            if (items.last != item)
+              const Divider(
+                height: 0,
+              )
+          ]
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [
       _buildAppSection(),
       _buildGeneralSection(),
+      _buildMoreSection(),
     ];
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 32),
       itemBuilder: (_, index) {
         return Container(
           alignment: Alignment.center,

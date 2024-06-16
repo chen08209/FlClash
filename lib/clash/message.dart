@@ -19,6 +19,8 @@ abstract mixin class ClashMessageListener {
   void onRequest(Connection connection) {}
 
   void onNow(Now now) {}
+
+  void onRun(String runTime) {}
 }
 
 class ClashMessage {
@@ -50,6 +52,9 @@ class ClashMessage {
             break;
           case MessageType.request:
             listener.onRequest(Connection.fromJson(m.data));
+            break;
+          case MessageType.run:
+            listener.onRun(m.data);
             break;
         }
       }
