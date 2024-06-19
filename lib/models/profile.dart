@@ -5,39 +5,28 @@ import 'dart:typed_data';
 import 'package:fl_clash/clash/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/profile.g.dart';
 
+part 'generated/profile.freezed.dart';
+
 typedef SelectedMap = Map<String, String>;
 
-@JsonSerializable()
-class UserInfo {
-  int upload;
-  int download;
-  int total;
-  int expire;
+@freezed
+class UserInfo with _$UserInfo {
+  const factory UserInfo({
+    @Default(0) int upload,
+    @Default(0) int download,
+    @Default(0) int total,
+    @Default(0) int expire,
+  }) = _UserInfo;
 
-  UserInfo({
-    int? upload,
-    int? download,
-    int? total,
-    int? expire,
-  })  : upload = upload ?? 0,
-        download = download ?? 0,
-        total = total ?? 0,
-        expire = expire ?? 0;
-
-  Map<String, dynamic> toJson() {
-    return _$UserInfoToJson(this);
-  }
-
-  factory UserInfo.fromJson(Map<String, dynamic> json) {
-    return _$UserInfoFromJson(json);
-  }
+  factory UserInfo.fromJson(Map<String, Object?> json) =>
+      _$UserInfoFromJson(json);
 
   factory UserInfo.formHString(String? info) {
-    if (info == null) return UserInfo();
+    if (info == null) return const UserInfo();
     final list = info.split(";");
     Map<String, int?> map = {};
     for (final i in list) {
@@ -45,65 +34,58 @@ class UserInfo {
       map[keyValue[0]] = int.tryParse(keyValue[1]);
     }
     return UserInfo(
-      upload: map["upload"],
-      download: map["download"],
-      total: map["total"],
-      expire: map["expire"],
+      upload: map["upload"] ?? 0,
+      download: map["download"] ?? 0,
+      total: map["total"] ?? 0,
+      expire: map["expire"] ?? 0,
     );
-  }
-
-  @override
-  String toString() {
-    return 'UserInfo{upload: $upload, download: $download, total: $total, expire: $expire}';
   }
 }
 
-@JsonSerializable()
-class Profile {
-  String id;
-  String? label;
-  String? currentGroupName;
-  String? url;
-  DateTime? lastUpdateDate;
-  Duration autoUpdateDuration;
-  UserInfo? userInfo;
-  bool autoUpdate;
-  SelectedMap selectedMap;
+@freezed
+class Profile with _$Profile {
+  const factory Profile({
+    required String id,
+    String? label,
+    String? currentGroupName,
+    @Default("") String url,
+    DateTime? lastUpdateDate,
+    required Duration autoUpdateDuration,
+    UserInfo? userInfo,
+    @Default(true) bool autoUpdate,
+    @Default({}) SelectedMap selectedMap,
+  }) = _Profile;
 
-  Profile({
-    String? id,
-    this.label,
-    this.url,
-    this.currentGroupName,
-    this.userInfo,
-    this.lastUpdateDate,
-    SelectedMap? selectedMap,
-    Duration? autoUpdateDuration,
-    this.autoUpdate = true,
-  })  : id = id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        autoUpdateDuration = autoUpdateDuration ?? defaultUpdateDuration,
-        selectedMap = selectedMap ?? {};
+  factory Profile.fromJson(Map<String, Object?> json) =>
+      _$ProfileFromJson(json);
 
+  factory Profile.normal({
+    String? label,
+    String url = '',
+}) {
+    return Profile(
+      label: label,
+      url: url,
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      autoUpdateDuration: defaultUpdateDuration,
+    );
+  }
+}
+
+extension ProfileExtension on Profile {
   ProfileType get type =>
-      url == null || url?.isEmpty == true ? ProfileType.file : ProfileType.url;
+      url.isEmpty == true ? ProfileType.file : ProfileType.url;
+
+  bool get realAutoUpdate =>
+      url.isEmpty == true ? false : autoUpdate;
 
   Future<void> checkAndUpdate() async {
     final isExists = await check();
     if (!isExists) {
-      if (url != null) {
-        return await update();
+      if (url.isNotEmpty) {
+        await update();
       }
     }
-  }
-
-  Future<void> update() async {
-    final response = await request.getFileResponseForUrl(url!);
-    final disposition = response.headers.value("content-disposition");
-    label ??= other.getFileNameForDisposition(disposition) ?? id;
-    final userinfo = response.headers.value('subscription-userinfo');
-    userInfo = UserInfo.formHString(userinfo);
-    await saveFile(response.data);
-    lastUpdateDate = DateTime.now();
   }
 
   Future<bool> check() async {
@@ -111,7 +93,17 @@ class Profile {
     return await File(profilePath!).exists();
   }
 
-  Future<void> saveFile(Uint8List bytes) async {
+  Future<Profile> update() async {
+    final response = await request.getFileResponseForUrl(url);
+    final disposition = response.headers.value("content-disposition");
+    final userinfo = response.headers.value('subscription-userinfo');
+    return await copyWith(
+      label: label ?? other.getFileNameForDisposition(disposition) ?? id,
+      userInfo: UserInfo.formHString(userinfo),
+    ).saveFile(response.data);
+  }
+
+  Future<Profile> saveFile(Uint8List bytes) async {
     final message = await clashCore.validateConfig(utf8.decode(bytes));
     if (message.isNotEmpty) {
       throw message;
@@ -123,66 +115,21 @@ class Profile {
       await file.create(recursive: true);
     }
     await file.writeAsBytes(bytes);
-    lastUpdateDate = DateTime.now();
+    return copyWith(lastUpdateDate: DateTime.now());
   }
 
-  Map<String, dynamic> toJson() {
-    return _$ProfileToJson(this);
-  }
-
-  factory Profile.fromJson(Map<String, dynamic> json) {
-    return _$ProfileFromJson(json);
-  }
-
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Profile &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          label == other.label &&
-          currentGroupName == other.currentGroupName &&
-          url == other.url &&
-          lastUpdateDate == other.lastUpdateDate &&
-          autoUpdateDuration == other.autoUpdateDuration &&
-          userInfo == other.userInfo &&
-          autoUpdate == other.autoUpdate &&
-          selectedMap == other.selectedMap;
-
-  @override
-  int get hashCode =>
-      id.hashCode ^
-      label.hashCode ^
-      currentGroupName.hashCode ^
-      url.hashCode ^
-      lastUpdateDate.hashCode ^
-      autoUpdateDuration.hashCode ^
-      userInfo.hashCode ^
-      autoUpdate.hashCode ^
-      selectedMap.hashCode;
-
-  Profile copyWith({
-    String? label,
-    String? url,
-    UserInfo? userInfo,
-    String? currentGroupName,
-    String? proxyName,
-    DateTime? lastUpdateDate,
-    Duration? autoUpdateDuration,
-    bool? autoUpdate,
-    SelectedMap? selectedMap,
-  }) {
-    return Profile(
-      id: id,
-      label: label ?? this.label,
-      url: url ?? this.url,
-      currentGroupName: currentGroupName ?? this.currentGroupName,
-      userInfo: userInfo ?? this.userInfo,
-      selectedMap: selectedMap ?? this.selectedMap,
-      lastUpdateDate: lastUpdateDate ?? this.lastUpdateDate,
-      autoUpdateDuration: autoUpdateDuration ?? this.autoUpdateDuration,
-      autoUpdate: autoUpdate ?? this.autoUpdate,
-    );
+  Future<Profile> saveFileWithString(String value) async {
+    final message = await clashCore.validateConfig(value);
+    if (message.isNotEmpty) {
+      throw message;
+    }
+    final path = await appPath.getProfilePath(id);
+    final file = File(path!);
+    final isExists = await file.exists();
+    if (!isExists) {
+      await file.create(recursive: true);
+    }
+    await file.writeAsString(value);
+    return copyWith(lastUpdateDate: DateTime.now());
   }
 }

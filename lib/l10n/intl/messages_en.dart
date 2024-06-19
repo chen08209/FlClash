@@ -92,11 +92,16 @@ class MessageLookup extends MessageLookupByLibrary {
         "compatibleDesc": MessageLookupByLibrary.simpleMessage(
             "Opening it will lose part of its application ability and gain the support of full amount of Clash."),
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
+        "connections": MessageLookupByLibrary.simpleMessage("Connections"),
+        "connectionsDesc":
+            MessageLookupByLibrary.simpleMessage("View current connection"),
         "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
+        "copy": MessageLookupByLibrary.simpleMessage("Copy"),
         "core": MessageLookupByLibrary.simpleMessage("Core"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
         "country": MessageLookupByLibrary.simpleMessage("Country"),
         "create": MessageLookupByLibrary.simpleMessage("Create"),
+        "cut": MessageLookupByLibrary.simpleMessage("Cut"),
         "dark": MessageLookupByLibrary.simpleMessage("Dark"),
         "dashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
         "days": MessageLookupByLibrary.simpleMessage("Days"),
@@ -147,6 +152,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "infiniteTime":
             MessageLookupByLibrary.simpleMessage("Long term effective"),
         "init": MessageLookupByLibrary.simpleMessage("Init"),
+        "intranetIp": MessageLookupByLibrary.simpleMessage("Intranet IP"),
         "ipCheckTimeout":
             MessageLookupByLibrary.simpleMessage("Ip check timeout"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage(
@@ -179,13 +185,14 @@ class MessageLookup extends MessageLookupByLibrary {
             "Please create a profile or add a valid profile"),
         "notSelectedTip": MessageLookupByLibrary.simpleMessage(
             "The current proxy group cannot be selected."),
+        "nullConnectionsDesc":
+            MessageLookupByLibrary.simpleMessage("No Connections"),
         "nullCoreInfoDesc":
             MessageLookupByLibrary.simpleMessage("Unable to obtain core info"),
         "nullLogsDesc": MessageLookupByLibrary.simpleMessage("No logs"),
         "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
             "No profile, Please add a profile"),
-        "nullRequestsDesc":
-            MessageLookupByLibrary.simpleMessage("No proxy or no request"),
+        "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("No requests"),
         "other": MessageLookupByLibrary.simpleMessage("Other"),
         "outboundMode": MessageLookupByLibrary.simpleMessage("Outbound mode"),
         "override": MessageLookupByLibrary.simpleMessage("Override"),
@@ -194,6 +201,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "password": MessageLookupByLibrary.simpleMessage("Password"),
         "passwordTip":
             MessageLookupByLibrary.simpleMessage("Password cannot be empty"),
+        "paste": MessageLookupByLibrary.simpleMessage("Paste"),
         "pleaseBindWebDAV":
             MessageLookupByLibrary.simpleMessage("Please bind WebDAV"),
         "pleaseUploadFile":
@@ -286,6 +294,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "url": MessageLookupByLibrary.simpleMessage("URL"),
         "urlDesc":
             MessageLookupByLibrary.simpleMessage("Obtain profile through URL"),
+        "view": MessageLookupByLibrary.simpleMessage("View"),
         "webDAVConfiguration":
             MessageLookupByLibrary.simpleMessage("WebDAV configuration"),
         "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),

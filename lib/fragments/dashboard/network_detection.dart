@@ -19,6 +19,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
   final timeoutNotifier = ValueNotifier<bool>(false);
   bool? _preIsStart;
   CancelToken? cancelToken;
+  Function? _checkIpDebounce;
 
   _checkIp(
     bool isInit,
@@ -44,6 +45,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
   }
 
   _checkIpContainer(Widget child) {
+    _checkIpDebounce = debounce(_checkIp);
     return Selector2<AppState, Config, CheckIpSelectorState>(
       selector: (_, appState, config) {
         return CheckIpSelectorState(
@@ -53,11 +55,20 @@ class _NetworkDetectionState extends State<NetworkDetection> {
         );
       },
       builder: (_, state, __) {
-        _checkIp(state.isInit, state.isStart);
+        if (_checkIpDebounce != null) {
+          _checkIpDebounce!([state.isInit, state.isStart]);
+        }
         return child;
       },
       child: child,
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    ipInfoNotifier.dispose();
+    timeoutNotifier.dispose();
   }
 
   @override

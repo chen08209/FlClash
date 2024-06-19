@@ -52,3 +52,23 @@ Map<String, dynamic> _$$ConnectionImplToJson(_$ConnectionImpl instance) =>
       'metadata': instance.metadata,
       'chains': instance.chains,
     };
+
+_$ConnectionsAndKeywordsImpl _$$ConnectionsAndKeywordsImplFromJson(
+        Map<String, dynamic> json) =>
+    _$ConnectionsAndKeywordsImpl(
+      connections: (json['connections'] as List<dynamic>?)
+              ?.map((e) => Connection.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      keywords: (json['keywords'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+    );
+
+Map<String, dynamic> _$$ConnectionsAndKeywordsImplToJson(
+        _$ConnectionsAndKeywordsImpl instance) =>
+    <String, dynamic>{
+      'connections': instance.connections,
+      'keywords': instance.keywords,
+    };

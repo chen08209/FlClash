@@ -993,6 +993,14 @@ class ClashFFI {
   late final _getTotalTraffic =
       _getTotalTrafficPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
 
+  void resetTraffic() {
+    return _resetTraffic();
+  }
+
+  late final _resetTrafficPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('resetTraffic');
+  late final _resetTraffic = _resetTrafficPtr.asFunction<void Function()>();
+
   void asyncTestDelay(
     ffi.Pointer<ffi.Char> s,
     int port,

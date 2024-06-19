@@ -589,3 +589,184 @@ abstract class _Connection implements Connection {
   _$$ConnectionImplCopyWith<_$ConnectionImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+ConnectionsAndKeywords _$ConnectionsAndKeywordsFromJson(
+    Map<String, dynamic> json) {
+  return _ConnectionsAndKeywords.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ConnectionsAndKeywords {
+  List<Connection> get connections => throw _privateConstructorUsedError;
+  List<String> get keywords => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ConnectionsAndKeywordsCopyWith<ConnectionsAndKeywords> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ConnectionsAndKeywordsCopyWith<$Res> {
+  factory $ConnectionsAndKeywordsCopyWith(ConnectionsAndKeywords value,
+          $Res Function(ConnectionsAndKeywords) then) =
+      _$ConnectionsAndKeywordsCopyWithImpl<$Res, ConnectionsAndKeywords>;
+  @useResult
+  $Res call({List<Connection> connections, List<String> keywords});
+}
+
+/// @nodoc
+class _$ConnectionsAndKeywordsCopyWithImpl<$Res,
+        $Val extends ConnectionsAndKeywords>
+    implements $ConnectionsAndKeywordsCopyWith<$Res> {
+  _$ConnectionsAndKeywordsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? connections = null,
+    Object? keywords = null,
+  }) {
+    return _then(_value.copyWith(
+      connections: null == connections
+          ? _value.connections
+          : connections // ignore: cast_nullable_to_non_nullable
+              as List<Connection>,
+      keywords: null == keywords
+          ? _value.keywords
+          : keywords // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ConnectionsAndKeywordsImplCopyWith<$Res>
+    implements $ConnectionsAndKeywordsCopyWith<$Res> {
+  factory _$$ConnectionsAndKeywordsImplCopyWith(
+          _$ConnectionsAndKeywordsImpl value,
+          $Res Function(_$ConnectionsAndKeywordsImpl) then) =
+      __$$ConnectionsAndKeywordsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({List<Connection> connections, List<String> keywords});
+}
+
+/// @nodoc
+class __$$ConnectionsAndKeywordsImplCopyWithImpl<$Res>
+    extends _$ConnectionsAndKeywordsCopyWithImpl<$Res,
+        _$ConnectionsAndKeywordsImpl>
+    implements _$$ConnectionsAndKeywordsImplCopyWith<$Res> {
+  __$$ConnectionsAndKeywordsImplCopyWithImpl(
+      _$ConnectionsAndKeywordsImpl _value,
+      $Res Function(_$ConnectionsAndKeywordsImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? connections = null,
+    Object? keywords = null,
+  }) {
+    return _then(_$ConnectionsAndKeywordsImpl(
+      connections: null == connections
+          ? _value._connections
+          : connections // ignore: cast_nullable_to_non_nullable
+              as List<Connection>,
+      keywords: null == keywords
+          ? _value._keywords
+          : keywords // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ConnectionsAndKeywordsImpl implements _ConnectionsAndKeywords {
+  const _$ConnectionsAndKeywordsImpl(
+      {final List<Connection> connections = const [],
+      final List<String> keywords = const []})
+      : _connections = connections,
+        _keywords = keywords;
+
+  factory _$ConnectionsAndKeywordsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ConnectionsAndKeywordsImplFromJson(json);
+
+  final List<Connection> _connections;
+  @override
+  @JsonKey()
+  List<Connection> get connections {
+    if (_connections is EqualUnmodifiableListView) return _connections;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_connections);
+  }
+
+  final List<String> _keywords;
+  @override
+  @JsonKey()
+  List<String> get keywords {
+    if (_keywords is EqualUnmodifiableListView) return _keywords;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_keywords);
+  }
+
+  @override
+  String toString() {
+    return 'ConnectionsAndKeywords(connections: $connections, keywords: $keywords)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ConnectionsAndKeywordsImpl &&
+            const DeepCollectionEquality()
+                .equals(other._connections, _connections) &&
+            const DeepCollectionEquality().equals(other._keywords, _keywords));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(_connections),
+      const DeepCollectionEquality().hash(_keywords));
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ConnectionsAndKeywordsImplCopyWith<_$ConnectionsAndKeywordsImpl>
+      get copyWith => __$$ConnectionsAndKeywordsImplCopyWithImpl<
+          _$ConnectionsAndKeywordsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ConnectionsAndKeywordsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ConnectionsAndKeywords implements ConnectionsAndKeywords {
+  const factory _ConnectionsAndKeywords(
+      {final List<Connection> connections,
+      final List<String> keywords}) = _$ConnectionsAndKeywordsImpl;
+
+  factory _ConnectionsAndKeywords.fromJson(Map<String, dynamic> json) =
+      _$ConnectionsAndKeywordsImpl.fromJson;
+
+  @override
+  List<Connection> get connections;
+  @override
+  List<String> get keywords;
+  @override
+  @JsonKey(ignore: true)
+  _$$ConnectionsAndKeywordsImplCopyWith<_$ConnectionsAndKeywordsImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}

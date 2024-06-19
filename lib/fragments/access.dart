@@ -35,6 +35,13 @@ class _AccessFragmentState extends State<AccessFragment> {
     });
   }
 
+
+  @override
+  void dispose() {
+    super.dispose();
+    packagesListenable.dispose();
+  }
+
   Widget _buildAppProxyModePopup() {
     final items = [
       CommonPopupMenuItem(

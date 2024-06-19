@@ -203,6 +203,11 @@ func getTotalTraffic() *C.char {
 	return C.CString(string(data))
 }
 
+//export resetTraffic
+func resetTraffic() {
+	statistic.DefaultManager.ResetStatistic()
+}
+
 //export asyncTestDelay
 func asyncTestDelay(s *C.char, port C.longlong) {
 	i := int64(port)

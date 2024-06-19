@@ -64,3 +64,8 @@ enum RecoveryOption {
   all,
   onlyProfiles,
 }
+
+enum ChipType {
+  action,
+  delete,
+}

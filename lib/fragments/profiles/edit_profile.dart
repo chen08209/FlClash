@@ -41,19 +41,26 @@ class _EditProfileState extends State<EditProfile> {
   _handleConfirm() {
     if (!_formKey.currentState!.validate()) return;
     final config = widget.context.read<Config>();
-    final hasUpdate = urlController.text.isNotEmpty && widget.profile.url != urlController.text;
-    widget.profile.url = urlController.text;
-    widget.profile.label = labelController.text;
-    widget.profile.autoUpdate = autoUpdate;
-    widget.profile.autoUpdateDuration =
-        Duration(minutes: int.parse(autoUpdateDurationController.text));
-    config.setProfile(widget.profile);
+    final profile = widget.profile.copyWith(
+      url: urlController.text,
+      label: labelController.text,
+      autoUpdate: autoUpdate,
+      autoUpdateDuration: Duration(
+        minutes: int.parse(
+          autoUpdateDurationController.text,
+        ),
+      ),
+    );
+    final hasUpdate = widget.profile.url != profile.url;
+    config.setProfile(profile);
     if (hasUpdate) {
-      widget.context.findAncestorStateOfType<CommonScaffoldState>()?.loadingRun(
-            () => globalState.appController.updateProfile(
-              widget.profile.id,
-            ),
-          );
+      globalState.homeScaffoldKey.currentState?.loadingRun(
+        () async {
+          if (hasUpdate) {
+            await globalState.appController.updateProfile(profile);
+          }
+        },
+      );
     }
     Navigator.of(context).pop();
   }
@@ -83,12 +90,11 @@ class _EditProfileState extends State<EditProfile> {
           },
         ),
       ),
-      if (widget.profile.type == ProfileType.url)...[
+      if (widget.profile.type == ProfileType.url) ...[
         ListItem(
           title: TextFormField(
             controller: urlController,
-            minLines: 1,
-            maxLines: 2,
+            maxLines: null,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               labelText: appLocalizations.url,

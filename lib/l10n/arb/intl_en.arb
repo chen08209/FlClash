@@ -179,10 +179,18 @@
   "geodataLoaderDesc": "Enabling will use the Geo low memory loader",
   "requests": "Requests",
   "requestsDesc": "View recently requested data",
-  "nullRequestsDesc": "No proxy or no request",
   "findProcessMode": "Find process",
   "findProcessModeDesc": "There is a risk of flashback after opening",
   "init": "Init",
   "infiniteTime": "Long term effective",
-  "expirationTime": "Expiration time"
+  "expirationTime": "Expiration time",
+  "connections": "Connections",
+  "connectionsDesc": "View current connection",
+  "nullRequestsDesc": "No requests",
+  "nullConnectionsDesc": "No Connections",
+  "intranetIp": "Intranet IP",
+  "view": "View",
+  "cut": "Cut",
+  "copy": "Copy",
+  "paste": "Paste"
 }

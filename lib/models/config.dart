@@ -143,18 +143,21 @@ class Config extends ChangeNotifier {
   }
 
   Profile? get currentProfile {
-    try {
-      return profiles.firstWhere((element) => element.id == _currentProfileId);
-    } catch (_) {
-      return null;
-    }
+    final index =
+        profiles.indexWhere((profile) => profile.id == _currentProfileId);
+    return index == -1 ? null : profiles[index];
   }
 
   String? get currentGroupName => currentProfile?.currentGroupName;
 
   updateCurrentGroupName(String groupName) {
-    if (currentProfile?.currentGroupName != groupName) {
-      currentProfile?.currentGroupName = groupName;
+    if (currentProfile != null &&
+        currentProfile!.currentGroupName != groupName) {
+      _setProfile(
+        currentProfile!.copyWith(
+          currentGroupName: groupName,
+        ),
+      );
       notifyListeners();
     }
   }
@@ -164,9 +167,16 @@ class Config extends ChangeNotifier {
   }
 
   updateCurrentSelectedMap(String groupName, String proxyName) {
-    if (currentProfile?.selectedMap[groupName] != proxyName) {
-      currentProfile?.selectedMap = Map.from(currentProfile?.selectedMap ?? {})
-        ..[groupName] = proxyName;
+    if (currentProfile != null &&
+        currentProfile!.selectedMap[groupName] != proxyName) {
+      final SelectedMap selectedMap = Map.from(
+        currentProfile?.selectedMap ?? {},
+      )..[groupName] = proxyName;
+      _setProfile(
+        currentProfile!.copyWith(
+          selectedMap: selectedMap,
+        ),
+      );
       notifyListeners();
     }
   }

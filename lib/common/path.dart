@@ -8,12 +8,30 @@ import 'constant.dart';
 
 class AppPath {
   static AppPath? _instance;
-  Completer<Directory> applicationSupportDirectoryCompleter = Completer();
+  Completer<Directory> cacheDir = Completer();
+
+  // Future<Directory> _createDesktopCacheDir() async {
+  //   final path = join(dirname(Platform.resolvedExecutable), 'cache');
+  //   final dir = Directory(path);
+  //   if (await dir.exists()) {
+  //     await dir.create(recursive: true);
+  //   }
+  //   return dir;
+  // }
 
   AppPath._internal() {
-    getApplicationSupportDirectory().then(
-      (value) => applicationSupportDirectoryCompleter.complete(value),
-    );
+    getApplicationSupportDirectory().then((value) {
+      cacheDir.complete(value);
+    });
+    // if (Platform.isAndroid) {
+    //   getApplicationSupportDirectory().then((value) {
+    //     cacheDir.complete(value);
+    //   });
+    // } else {
+    //   _createDesktopCacheDir().then((value) {
+    //     cacheDir.complete(value);
+    //   });
+    // }
   }
 
   factory AppPath() {
@@ -22,12 +40,12 @@ class AppPath {
   }
 
   Future<String> getHomeDirPath() async {
-    final directory = await applicationSupportDirectoryCompleter.future;
+    final directory = await cacheDir.future;
     return directory.path;
   }
 
   Future<String> getProfilesPath() async {
-    final directory = await applicationSupportDirectoryCompleter.future;
+    final directory = await cacheDir.future;
     return join(directory.path, profilesDirectoryName);
   }
 

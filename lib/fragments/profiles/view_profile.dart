@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
@@ -22,7 +23,9 @@ class ViewProfile extends StatefulWidget {
 
 class _ViewProfileState extends State<ViewProfile> {
   bool readOnly = true;
-  final controller = CodeLineEditingController();
+  CodeLineEditingController? controller;
+  final contentNotifier = ValueNotifier<String>("");
+  final key = GlobalKey<CommonScaffoldState>();
 
   @override
   void initState() {
@@ -34,80 +37,120 @@ class _ViewProfileState extends State<ViewProfile> {
       }
       final file = File(profilePath);
       final text = await file.readAsString();
-      controller.text = text;
-      // _codeController.text = text;
+      contentNotifier.value = text;
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    contentNotifier.dispose();
+    controller?.dispose();
+  }
+
+  Profile get profile => widget.profile;
+
+  _handleChangeReadOnly() async {
+    if (readOnly == true) {
+      setState(() {
+        readOnly = false;
+      });
+    } else {
+      final text = controller?.text;
+      if (text == null || text == contentNotifier.value) {
+        setState(() {
+          readOnly = true;
+        });
+        return;
+      }
+      contentNotifier.value = text;
+      final newProfile = await key.currentState?.loadingRun<Profile>(() async {
+        return await profile.saveFileWithString(text);
+      });
+      if (newProfile == null) return;
+      globalState.appController.config.setProfile(newProfile);
+      setState(() {
+        readOnly = true;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
+      key: key,
       actions: [
         IconButton(
-          onPressed: controller.undo,
+          onPressed: controller?.undo,
           icon: const Icon(Icons.undo),
         ),
         IconButton(
-          onPressed: controller.redo,
+          onPressed: controller?.redo,
           icon: const Icon(Icons.redo),
         ),
+        if (!widget.profile.realAutoUpdate)
+          IconButton(
+            onPressed: _handleChangeReadOnly,
+            icon: readOnly ? const Icon(Icons.edit) : const Icon(Icons.save),
+          ),
         const SizedBox(
           width: 8,
         )
       ],
-      body: CodeEditor(
-        autofocus: false,
-        readOnly: readOnly,
-        scrollbarBuilder: (context, child, details) {
-          return Scrollbar(
-            controller: details.controller,
-            thumbVisibility: true,
-            interactive: true,
-            child: child,
-          );
-        },
-        showCursorWhenReadOnly: false,
-        controller: controller,
-        toolbarController: const ContextMenuControllerImpl(),
-        shortcutsActivatorsBuilder:
-            const DefaultCodeShortcutsActivatorsBuilder(),
-        indicatorBuilder:
-            (context, editingController, chunkController, notifier) {
-          return Row(
-            children: [
-              DefaultCodeLineNumber(
-                controller: editingController,
-                notifier: notifier,
-              ),
-              DefaultCodeChunkIndicator(
-                width: 20,
-                controller: chunkController,
-                notifier: notifier,
-              )
-            ],
-          );
-        },
-        style: CodeEditorStyle(
-          fontSize: 14,
-          codeTheme: CodeHighlightTheme(
-            languages: {
-              'yaml': CodeHighlightThemeMode(
-                mode: langYaml,
-              )
+      body: ValueListenableBuilder(
+        valueListenable: contentNotifier,
+        builder: (_, value, __) {
+          if (value.isEmpty) return Container();
+          controller = CodeLineEditingController.fromText(value);
+          return CodeEditor(
+            autofocus: false,
+            readOnly: readOnly,
+            scrollbarBuilder: (context, child, details) {
+              return Scrollbar(
+                controller: details.controller,
+                thickness: 8,
+                radius: const Radius.circular(2),
+                interactive: true,
+                child: child,
+              );
             },
-            theme: intellijLightTheme,
-          ),
-        ),
-      ),
-      title: "查看",
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            readOnly = !readOnly;
-          });
+            showCursorWhenReadOnly: false,
+            controller: controller,
+            toolbarController:
+                !readOnly ? const ContextMenuControllerImpl() : null,
+            shortcutsActivatorsBuilder:
+                const DefaultCodeShortcutsActivatorsBuilder(),
+            indicatorBuilder:
+                (context, editingController, chunkController, notifier) {
+              return Row(
+                children: [
+                  DefaultCodeLineNumber(
+                    controller: editingController,
+                    notifier: notifier,
+                  ),
+                  DefaultCodeChunkIndicator(
+                    width: 20,
+                    controller: chunkController,
+                    notifier: notifier,
+                  )
+                ],
+              );
+            },
+            style: CodeEditorStyle(
+              fontSize: 14,
+              codeTheme: CodeHighlightTheme(
+                languages: {
+                  'yaml': CodeHighlightThemeMode(
+                    mode: langYaml,
+                  )
+                },
+                theme: intellijLightTheme,
+              ),
+            ),
+          );
         },
-        child: readOnly ? const Icon(Icons.edit) : const Icon(Icons.save),
       ),
+      title: widget.profile.label ?? widget.profile.id,
     );
   }
 }
@@ -140,7 +183,6 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
     }
     showMenu(
       context: context,
-      popUpAnimationStyle: AnimationStyle.noAnimation,
       position: RelativeRect.fromSize(
         (anchors.secondaryAnchor ?? anchors.primaryAnchor) &
             const Size(150, double.infinity),
@@ -148,22 +190,16 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
       ),
       items: [
         ContextMenuItemWidget(
-          text: 'Cut',
-          onTap: () {
-            controller.cut();
-          },
+          text: appLocalizations.cut,
+          onTap: controller.cut,
         ),
         ContextMenuItemWidget(
-          text: 'Copy',
-          onTap: () {
-            controller.copy();
-          },
+          text: appLocalizations.copy,
+          onTap: controller.copy,
         ),
         ContextMenuItemWidget(
-          text: 'Paste',
-          onTap: () {
-            controller.paste();
-          },
+          text: appLocalizations.paste,
+          onTap: controller.paste,
         ),
       ],
     );

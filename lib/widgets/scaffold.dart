@@ -89,6 +89,13 @@ class CommonScaffoldState extends State<CommonScaffold> {
   }
 
   @override
+  void dispose() {
+    _actions.dispose();
+    _floatingActionButton.dispose();
+    super.dispose();
+  }
+
+  @override
   void didUpdateWidget(covariant CommonScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.title != widget.title) {

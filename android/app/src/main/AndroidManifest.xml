@@ -23,7 +23,6 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:extractNativeLibs="true"
-        android:networkSecurityConfig="@xml/network_security_config"
         android:label="FlClash">
         <activity
             android:name="com.follow.clash.MainActivity"
