@@ -23,3 +23,23 @@ const _$LogLevelEnumMap = {
   LogLevel.error: 'error',
   LogLevel.silent: 'silent',
 };
+
+_$LogsAndKeywordsImpl _$$LogsAndKeywordsImplFromJson(
+        Map<String, dynamic> json) =>
+    _$LogsAndKeywordsImpl(
+      logs: (json['logs'] as List<dynamic>?)
+              ?.map((e) => Log.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      keywords: (json['keywords'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+    );
+
+Map<String, dynamic> _$$LogsAndKeywordsImplToJson(
+        _$LogsAndKeywordsImpl instance) =>
+    <String, dynamic>{
+      'logs': instance.logs,
+      'keywords': instance.keywords,
+    };

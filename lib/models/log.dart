@@ -1,7 +1,11 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:fl_clash/enum/enum.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/log.g.dart';
+
+part 'generated/log.freezed.dart';
 
 @JsonSerializable()
 class Log {
@@ -30,4 +34,23 @@ class Log {
   String toString() {
     return 'Log{logLevel: $logLevel, payload: $payload, dateTime: $dateTime}';
   }
+}
+
+@freezed
+class LogsAndKeywords with _$LogsAndKeywords {
+  const factory LogsAndKeywords({
+    @Default([]) List<Log> logs,
+    @Default([]) List<String> keywords,
+  }) = _LogsAndKeywords;
+
+  factory LogsAndKeywords.fromJson(Map<String, Object?> json) =>
+      _$LogsAndKeywordsFromJson(json);
+}
+
+extension LogsAndKeywordsExt on LogsAndKeywords {
+  List<Log> get filteredLogs => logs
+      .where(
+        (log) => {log.logLevel.name}.containsAll(keywords),
+      )
+      .toList();
 }

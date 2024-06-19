@@ -30,10 +30,17 @@ class Navigation {
         fragment: ProfilesFragment(),
       ),
       const NavigationItem(
-        icon:  Icon(Icons.ballot),
+        icon:  Icon(Icons.view_timeline),
         label: "requests",
-        fragment:  RequestFragment(),
+        fragment:  RequestsFragment(),
         description: "requestsDesc",
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
+      const NavigationItem(
+        icon:  Icon(Icons.ballot),
+        label: "connections",
+        fragment:  ConnectionsFragment(),
+        description: "connectionsDesc",
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       const NavigationItem(

@@ -54,6 +54,12 @@ class _CommonPopupMenuState<T> extends State<CommonPopupMenu<T>> {
   }
 
   @override
+  void dispose() {
+    groupValue.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PopupMenuButton<T>(
       icon: widget.icon,

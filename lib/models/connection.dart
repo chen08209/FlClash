@@ -23,7 +23,7 @@ class Metadata with _$Metadata {
 }
 
 @freezed
-class Connection with _$Connection{
+class Connection with _$Connection {
   const factory Connection({
     required String id,
     num? upload,
@@ -35,4 +35,20 @@ class Connection with _$Connection{
 
   factory Connection.fromJson(Map<String, Object?> json) =>
       _$ConnectionFromJson(json);
+}
+
+@freezed
+class ConnectionsAndKeywords with _$ConnectionsAndKeywords {
+  const factory ConnectionsAndKeywords({
+    @Default([]) List<Connection> connections,
+    @Default([]) List<String> keywords,
+  }) = _ConnectionsAndKeywords;
+
+  factory ConnectionsAndKeywords.fromJson(Map<String, Object?> json) =>
+      _$ConnectionsAndKeywordsFromJson(json);
+}
+
+
+extension ConnectionsAndKeywordsExt on ConnectionsAndKeywords{
+  List<Connection> get filteredConnections => connections.where((connection)=> Set.from(connection.chains).containsAll(keywords)).toList();
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -43,7 +44,9 @@ class AppController {
       ];
     } else {
       await globalState.stopSystemProxy();
+      clashCore.resetTraffic();
       appState.traffics = [];
+      appState.totalTraffic = Traffic();
       appState.runTime = null;
     }
   }
@@ -98,13 +101,9 @@ class AppController {
     }
   }
 
-  Future<void> updateProfile(String id) async {
-    final profile = config.getCurrentProfileForId(id);
-    if (profile != null) {
-      final tempProfile = profile.copyWith();
-      await tempProfile.update();
-      config.setProfile(tempProfile);
-    }
+  Future<void> updateProfile(Profile profile) async {
+    await profile.update();
+    config.setProfile(await profile.update());
   }
 
   Future<void> updateClashConfig({bool isPatch = true}) async {
@@ -147,7 +146,7 @@ class AppController {
         continue;
       }
       try {
-        await updateProfile(profile.id);
+        updateProfile(profile);
       } catch (e) {
         appState.addLog(
           Log(
@@ -164,7 +163,7 @@ class AppController {
       if (profile.type == ProfileType.file) {
         continue;
       }
-      await updateProfile(profile.id);
+      await updateProfile(profile);
     }
   }
 
@@ -279,7 +278,7 @@ class AppController {
           config: config,
           clashConfig: clashConfig,
         );
-      },title: appLocalizations.init);
+      }, title: appLocalizations.init);
     } else {
       await globalState.applyProfile(
         appState: appState,
@@ -367,11 +366,9 @@ class AppController {
     if (commonScaffoldState?.mounted != true) return;
     final profile = await commonScaffoldState?.loadingRun<Profile>(
       () async {
-        final profile = Profile(
+        return await Profile.normal(
           url: url,
-        );
-        await profile.update();
-        return profile;
+        ).update();
       },
       title: "${appLocalizations.add}${appLocalizations.profile}",
     );
@@ -394,9 +391,7 @@ class AppController {
         if (bytes == null) {
           return null;
         }
-        final profile = Profile(label: platformFile?.name);
-        await profile.saveFile(bytes);
-        return profile;
+        return await Profile.normal(label: platformFile?.name).saveFile(bytes);
       },
       title: "${appLocalizations.add}${appLocalizations.profile}",
     );

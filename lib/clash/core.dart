@@ -95,7 +95,9 @@ class ClashCore {
     final proxiesRaw = clashFFI.getProxies();
     final proxiesRawString = proxiesRaw.cast<Utf8>().toDartString();
     return Isolate.run<List<Group>>(() {
-      final proxies = json.decode(proxiesRawString);
+      if(proxiesRawString.isEmpty) return [];
+      final proxies = json.decode(proxiesRawString) as Map;
+      if(proxies.isEmpty) return [];
       final groupNames = [
         UsedProxy.GLOBAL.name,
         ...(proxies[UsedProxy.GLOBAL.name]["all"] as List).where((e) {
@@ -176,9 +178,11 @@ class ClashCore {
     );
     Future.delayed(httpTimeoutDuration + moreDuration, () {
       receiver.close();
-      completer.complete(
-        Delay(name: proxyName, value: -1),
-      );
+      if(!completer.isCompleted){
+        completer.complete(
+          Delay(name: proxyName, value: -1),
+        );
+      }
     });
     return completer.future;
   }
@@ -199,11 +203,14 @@ class ClashCore {
     return Traffic.fromMap(trafficMap);
   }
 
-
   Traffic getTotalTraffic() {
     final trafficRaw = clashFFI.getTotalTraffic();
     final trafficMap = json.decode(trafficRaw.cast<Utf8>().toDartString());
     return Traffic.fromMap(trafficMap);
+  }
+
+  void resetTraffic(){
+    clashFFI.resetTraffic();
   }
 
   void startLog() {
@@ -242,6 +249,10 @@ class ClashCore {
     json.decode(connectionsDataRaw.cast<Utf8>().toDartString()) as Map;
     final connectionsRaw = connectionsData['connections'] as List? ?? [];
     return connectionsRaw.map((e) => Connection.fromJson(e)).toList();
+  }
+
+  closeConnections(String id) {
+    clashFFI.closeConnection(id.toNativeUtf8().cast());
   }
 }
 

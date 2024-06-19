@@ -78,9 +78,9 @@ class _ResourcesState extends State<Resources> {
                                 const Padding(
                                   padding: EdgeInsets.only(left: 12,right: 4),
                                   child: VerticalDivider(
-                                    endIndent: 2,
+                                    endIndent: 6,
                                     width: 4,
-                                    indent: 2,
+                                    indent: 6,
                                   ),
                                 ),
                                 externalProvider.vehicleType == "HTTP"

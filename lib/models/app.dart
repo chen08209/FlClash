@@ -187,7 +187,7 @@ class AppState with ChangeNotifier {
   }
 
   addRequest(Connection value) {
-    _requests.add(value);
+    _requests = List.from(_requests)..add(value);
     final maxLength = Platform.isAndroid ? 1000 : 60;
     if (_requests.length > maxLength) {
       _requests = _requests.sublist(_requests.length - maxLength);
@@ -205,7 +205,7 @@ class AppState with ChangeNotifier {
   }
 
   addLog(Log log) {
-    _logs.add(log);
+    _logs = List.from(_logs)..add(log);
     final maxLength = Platform.isAndroid ? 1000 : 60;
     if (_logs.length > maxLength) {
       _logs = _logs.sublist(_logs.length - maxLength);

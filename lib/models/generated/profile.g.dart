@@ -6,41 +6,45 @@ part of '../profile.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-UserInfo _$UserInfoFromJson(Map<String, dynamic> json) => UserInfo(
-      upload: (json['upload'] as num?)?.toInt(),
-      download: (json['download'] as num?)?.toInt(),
-      total: (json['total'] as num?)?.toInt(),
-      expire: (json['expire'] as num?)?.toInt(),
+_$UserInfoImpl _$$UserInfoImplFromJson(Map<String, dynamic> json) =>
+    _$UserInfoImpl(
+      upload: (json['upload'] as num?)?.toInt() ?? 0,
+      download: (json['download'] as num?)?.toInt() ?? 0,
+      total: (json['total'] as num?)?.toInt() ?? 0,
+      expire: (json['expire'] as num?)?.toInt() ?? 0,
     );
 
-Map<String, dynamic> _$UserInfoToJson(UserInfo instance) => <String, dynamic>{
+Map<String, dynamic> _$$UserInfoImplToJson(_$UserInfoImpl instance) =>
+    <String, dynamic>{
       'upload': instance.upload,
       'download': instance.download,
       'total': instance.total,
       'expire': instance.expire,
     };
 
-Profile _$ProfileFromJson(Map<String, dynamic> json) => Profile(
-      id: json['id'] as String?,
+_$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
+    _$ProfileImpl(
+      id: json['id'] as String,
       label: json['label'] as String?,
-      url: json['url'] as String?,
       currentGroupName: json['currentGroupName'] as String?,
-      userInfo: json['userInfo'] == null
-          ? null
-          : UserInfo.fromJson(json['userInfo'] as Map<String, dynamic>),
+      url: json['url'] as String? ?? "",
       lastUpdateDate: json['lastUpdateDate'] == null
           ? null
           : DateTime.parse(json['lastUpdateDate'] as String),
-      selectedMap: (json['selectedMap'] as Map<String, dynamic>?)?.map(
-        (k, e) => MapEntry(k, e as String),
-      ),
-      autoUpdateDuration: json['autoUpdateDuration'] == null
+      autoUpdateDuration:
+          Duration(microseconds: (json['autoUpdateDuration'] as num).toInt()),
+      userInfo: json['userInfo'] == null
           ? null
-          : Duration(microseconds: (json['autoUpdateDuration'] as num).toInt()),
+          : UserInfo.fromJson(json['userInfo'] as Map<String, dynamic>),
       autoUpdate: json['autoUpdate'] as bool? ?? true,
+      selectedMap: (json['selectedMap'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
     );
 
-Map<String, dynamic> _$ProfileToJson(Profile instance) => <String, dynamic>{
+Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
+    <String, dynamic>{
       'id': instance.id,
       'label': instance.label,
       'currentGroupName': instance.currentGroupName,

@@ -1,11 +1,11 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/fragments/dashboard/intranet_ip.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:provider/provider.dart';
 
 import 'network_detection.dart';
-import 'core_info.dart';
 import 'outbound_mode.dart';
 import 'start_button.dart';
 import 'network_speed.dart';
@@ -56,7 +56,7 @@ class _DashboardFragmentState extends State<DashboardFragment> {
                   ),
                   GridItem(
                     crossAxisCellCount: isDesktop ? 4 : 6,
-                    child: const CoreInfo(),
+                    child: const IntranetIp(),
                   ),
                 ],
               );

@@ -228,6 +228,13 @@ class _WebDAVFormDialogState extends State<WebDAVFormDialog> {
     Navigator.pop(context);
   }
 
+
+  @override
+  void dispose() {
+    super.dispose();
+    _obscureController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(

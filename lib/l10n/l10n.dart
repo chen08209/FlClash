@@ -1850,16 +1850,6 @@ class AppLocalizations {
     );
   }
 
-  /// `No proxy or no request`
-  String get nullRequestsDesc {
-    return Intl.message(
-      'No proxy or no request',
-      name: 'nullRequestsDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Find process`
   String get findProcessMode {
     return Intl.message(
@@ -1905,6 +1895,96 @@ class AppLocalizations {
     return Intl.message(
       'Expiration time',
       name: 'expirationTime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connections`
+  String get connections {
+    return Intl.message(
+      'Connections',
+      name: 'connections',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `View current connection`
+  String get connectionsDesc {
+    return Intl.message(
+      'View current connection',
+      name: 'connectionsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No requests`
+  String get nullRequestsDesc {
+    return Intl.message(
+      'No requests',
+      name: 'nullRequestsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No Connections`
+  String get nullConnectionsDesc {
+    return Intl.message(
+      'No Connections',
+      name: 'nullConnectionsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Intranet IP`
+  String get intranetIp {
+    return Intl.message(
+      'Intranet IP',
+      name: 'intranetIp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `View`
+  String get view {
+    return Intl.message(
+      'View',
+      name: 'view',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cut`
+  String get cut {
+    return Intl.message(
+      'Cut',
+      name: 'cut',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy`
+  String get copy {
+    return Intl.message(
+      'Copy',
+      name: 'copy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Paste`
+  String get paste {
+    return Intl.message(
+      'Paste',
+      name: 'paste',
       desc: '',
       args: [],
     );

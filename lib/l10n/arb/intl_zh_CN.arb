@@ -179,10 +179,18 @@
   "geodataLoaderDesc": "开启将使用Geo低内存加载器",
   "requests": "请求",
   "requestsDesc": "查看最近请求数据",
-  "nullRequestsDesc": "未开启代理或者没有请求",
   "findProcessMode": "查找进程",
   "findProcessModeDesc": "开启后存在闪退风险",
   "init": "初始化",
   "infiniteTime": "长期有效",
-  "expirationTime": "到期时间"
+  "expirationTime": "到期时间",
+  "connections": "连接",
+  "connectionsDesc": "查看当前连接",
+  "nullRequestsDesc": "暂无请求",
+  "nullConnectionsDesc": "暂无连接",
+  "intranetIp": "内网 IP",
+  "view": "查看",
+  "cut": "剪切",
+  "copy": "复制",
+  "paste": "粘贴"
 }
