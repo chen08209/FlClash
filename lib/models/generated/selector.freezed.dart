@@ -1730,39 +1730,39 @@ abstract class _ProxiesSelectorState implements ProxiesSelectorState {
 }
 
 /// @nodoc
-mixin _$ProxiesTabViewSelectorState {
+mixin _$ProxyGroupSelectorState {
   ProxiesSortType get proxiesSortType => throw _privateConstructorUsedError;
   num get sortNum => throw _privateConstructorUsedError;
   Group get group => throw _privateConstructorUsedError;
   ViewMode get viewMode => throw _privateConstructorUsedError;
+  String get currentProxyName => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ProxiesTabViewSelectorStateCopyWith<ProxiesTabViewSelectorState>
-      get copyWith => throw _privateConstructorUsedError;
+  $ProxyGroupSelectorStateCopyWith<ProxyGroupSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  factory $ProxiesTabViewSelectorStateCopyWith(
-          ProxiesTabViewSelectorState value,
-          $Res Function(ProxiesTabViewSelectorState) then) =
-      _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-          ProxiesTabViewSelectorState>;
+abstract class $ProxyGroupSelectorStateCopyWith<$Res> {
+  factory $ProxyGroupSelectorStateCopyWith(ProxyGroupSelectorState value,
+          $Res Function(ProxyGroupSelectorState) then) =
+      _$ProxyGroupSelectorStateCopyWithImpl<$Res, ProxyGroupSelectorState>;
   @useResult
   $Res call(
       {ProxiesSortType proxiesSortType,
       num sortNum,
       Group group,
-      ViewMode viewMode});
+      ViewMode viewMode,
+      String currentProxyName});
 
   $GroupCopyWith<$Res> get group;
 }
 
 /// @nodoc
-class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-        $Val extends ProxiesTabViewSelectorState>
-    implements $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  _$ProxiesTabViewSelectorStateCopyWithImpl(this._value, this._then);
+class _$ProxyGroupSelectorStateCopyWithImpl<$Res,
+        $Val extends ProxyGroupSelectorState>
+    implements $ProxyGroupSelectorStateCopyWith<$Res> {
+  _$ProxyGroupSelectorStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -1776,6 +1776,7 @@ class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
     Object? sortNum = null,
     Object? group = null,
     Object? viewMode = null,
+    Object? currentProxyName = null,
   }) {
     return _then(_value.copyWith(
       proxiesSortType: null == proxiesSortType
@@ -1794,6 +1795,10 @@ class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
           ? _value.viewMode
           : viewMode // ignore: cast_nullable_to_non_nullable
               as ViewMode,
+      currentProxyName: null == currentProxyName
+          ? _value.currentProxyName
+          : currentProxyName // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 
@@ -1807,32 +1812,33 @@ class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
 }
 
 /// @nodoc
-abstract class _$$ProxiesTabViewSelectorStateImplCopyWith<$Res>
-    implements $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  factory _$$ProxiesTabViewSelectorStateImplCopyWith(
-          _$ProxiesTabViewSelectorStateImpl value,
-          $Res Function(_$ProxiesTabViewSelectorStateImpl) then) =
-      __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>;
+abstract class _$$ProxyGroupSelectorStateImplCopyWith<$Res>
+    implements $ProxyGroupSelectorStateCopyWith<$Res> {
+  factory _$$ProxyGroupSelectorStateImplCopyWith(
+          _$ProxyGroupSelectorStateImpl value,
+          $Res Function(_$ProxyGroupSelectorStateImpl) then) =
+      __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
       {ProxiesSortType proxiesSortType,
       num sortNum,
       Group group,
-      ViewMode viewMode});
+      ViewMode viewMode,
+      String currentProxyName});
 
   @override
   $GroupCopyWith<$Res> get group;
 }
 
 /// @nodoc
-class __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>
-    extends _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-        _$ProxiesTabViewSelectorStateImpl>
-    implements _$$ProxiesTabViewSelectorStateImplCopyWith<$Res> {
-  __$$ProxiesTabViewSelectorStateImplCopyWithImpl(
-      _$ProxiesTabViewSelectorStateImpl _value,
-      $Res Function(_$ProxiesTabViewSelectorStateImpl) _then)
+class __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>
+    extends _$ProxyGroupSelectorStateCopyWithImpl<$Res,
+        _$ProxyGroupSelectorStateImpl>
+    implements _$$ProxyGroupSelectorStateImplCopyWith<$Res> {
+  __$$ProxyGroupSelectorStateImplCopyWithImpl(
+      _$ProxyGroupSelectorStateImpl _value,
+      $Res Function(_$ProxyGroupSelectorStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1842,8 +1848,9 @@ class __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>
     Object? sortNum = null,
     Object? group = null,
     Object? viewMode = null,
+    Object? currentProxyName = null,
   }) {
-    return _then(_$ProxiesTabViewSelectorStateImpl(
+    return _then(_$ProxyGroupSelectorStateImpl(
       proxiesSortType: null == proxiesSortType
           ? _value.proxiesSortType
           : proxiesSortType // ignore: cast_nullable_to_non_nullable
@@ -1860,19 +1867,23 @@ class __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>
           ? _value.viewMode
           : viewMode // ignore: cast_nullable_to_non_nullable
               as ViewMode,
+      currentProxyName: null == currentProxyName
+          ? _value.currentProxyName
+          : currentProxyName // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
 
 /// @nodoc
 
-class _$ProxiesTabViewSelectorStateImpl
-    implements _ProxiesTabViewSelectorState {
-  const _$ProxiesTabViewSelectorStateImpl(
+class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
+  const _$ProxyGroupSelectorStateImpl(
       {required this.proxiesSortType,
       required this.sortNum,
       required this.group,
-      required this.viewMode});
+      required this.viewMode,
+      required this.currentProxyName});
 
   @override
   final ProxiesSortType proxiesSortType;
@@ -1882,44 +1893,48 @@ class _$ProxiesTabViewSelectorStateImpl
   final Group group;
   @override
   final ViewMode viewMode;
+  @override
+  final String currentProxyName;
 
   @override
   String toString() {
-    return 'ProxiesTabViewSelectorState(proxiesSortType: $proxiesSortType, sortNum: $sortNum, group: $group, viewMode: $viewMode)';
+    return 'ProxyGroupSelectorState(proxiesSortType: $proxiesSortType, sortNum: $sortNum, group: $group, viewMode: $viewMode, currentProxyName: $currentProxyName)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProxiesTabViewSelectorStateImpl &&
+            other is _$ProxyGroupSelectorStateImpl &&
             (identical(other.proxiesSortType, proxiesSortType) ||
                 other.proxiesSortType == proxiesSortType) &&
             (identical(other.sortNum, sortNum) || other.sortNum == sortNum) &&
             (identical(other.group, group) || other.group == group) &&
             (identical(other.viewMode, viewMode) ||
-                other.viewMode == viewMode));
+                other.viewMode == viewMode) &&
+            (identical(other.currentProxyName, currentProxyName) ||
+                other.currentProxyName == currentProxyName));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, proxiesSortType, sortNum, group, viewMode);
+  int get hashCode => Object.hash(
+      runtimeType, proxiesSortType, sortNum, group, viewMode, currentProxyName);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProxiesTabViewSelectorStateImplCopyWith<_$ProxiesTabViewSelectorStateImpl>
-      get copyWith => __$$ProxiesTabViewSelectorStateImplCopyWithImpl<
-          _$ProxiesTabViewSelectorStateImpl>(this, _$identity);
+  _$$ProxyGroupSelectorStateImplCopyWith<_$ProxyGroupSelectorStateImpl>
+      get copyWith => __$$ProxyGroupSelectorStateImplCopyWithImpl<
+          _$ProxyGroupSelectorStateImpl>(this, _$identity);
 }
 
-abstract class _ProxiesTabViewSelectorState
-    implements ProxiesTabViewSelectorState {
-  const factory _ProxiesTabViewSelectorState(
+abstract class _ProxyGroupSelectorState implements ProxyGroupSelectorState {
+  const factory _ProxyGroupSelectorState(
       {required final ProxiesSortType proxiesSortType,
       required final num sortNum,
       required final Group group,
-      required final ViewMode viewMode}) = _$ProxiesTabViewSelectorStateImpl;
+      required final ViewMode viewMode,
+      required final String currentProxyName}) = _$ProxyGroupSelectorStateImpl;
 
   @override
   ProxiesSortType get proxiesSortType;
@@ -1930,8 +1945,10 @@ abstract class _ProxiesTabViewSelectorState
   @override
   ViewMode get viewMode;
   @override
+  String get currentProxyName;
+  @override
   @JsonKey(ignore: true)
-  _$$ProxiesTabViewSelectorStateImplCopyWith<_$ProxiesTabViewSelectorStateImpl>
+  _$$ProxyGroupSelectorStateImplCopyWith<_$ProxyGroupSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
 

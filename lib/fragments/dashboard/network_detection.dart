@@ -78,6 +78,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
         valueListenable: ipInfoNotifier,
         builder: (_, ipInfo, __) {
           return CommonCard(
+            onPressed: () {},
             child: Column(
               children: [
                 Flexible(
@@ -134,8 +135,9 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                   ),
                 ),
                 Container(
-                  height:
-                      globalState.appController.measure.titleLargeHeight + 24 - 1,
+                  height: globalState.appController.measure.titleLargeHeight +
+                      24 -
+                      1,
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.all(16).copyWith(top: 0),
                   child: FadeBox(
@@ -166,7 +168,8 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                                   "timeout",
                                   style: context.textTheme.titleLarge
                                       ?.copyWith(color: Colors.red)
-                                      .toSoftBold.toMinus,
+                                      .toSoftBold
+                                      .toMinus,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 );
