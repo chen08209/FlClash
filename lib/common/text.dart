@@ -2,20 +2,13 @@ import 'package:flutter/material.dart';
 import 'color.dart';
 
 extension TextStyleExtension on TextStyle {
-  toLight() {
-    return copyWith(color: color?.toLight());
-  }
+  TextStyle get toLight => copyWith(color: color?.toLight());
 
-  toLighter() {
-    return copyWith(color: color?.toLighter());
-  }
+  TextStyle get toLighter => copyWith(color: color?.toLighter());
 
+  TextStyle get toSoftBold => copyWith(fontWeight: FontWeight.w500);
 
-  toSoftBold() {
-    return copyWith(fontWeight: FontWeight.w500);
-  }
+  TextStyle get toBold => copyWith(fontWeight: FontWeight.bold);
 
-  toBold() {
-    return copyWith(fontWeight: FontWeight.bold);
-  }
+  TextStyle get toMinus => copyWith(fontSize: fontSize! - 1);
 }

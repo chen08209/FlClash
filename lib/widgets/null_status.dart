@@ -11,7 +11,7 @@ class NullStatus extends StatelessWidget {
     return Center(
       child: Text(
         label,
-        style: Theme.of(context).textTheme.titleMedium?.toBold(),
+        style: Theme.of(context).textTheme.titleMedium?.toBold,
       ),
     );
   }

@@ -47,8 +47,8 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
     final showValue = value.showValue;
     final showUnit = "${value.showUnit}/s";
     final titleLargeSoftBold =
-        Theme.of(context).textTheme.titleLarge?.toSoftBold();
-    final bodyMedium = Theme.of(context).textTheme.bodySmall?.toLight();
+        Theme.of(context).textTheme.titleLarge?.toSoftBold;
+    final bodyMedium = Theme.of(context).textTheme.bodySmall?.toLight;
     final valueText = Text(
       showValue,
       style: titleLargeSoftBold,
@@ -75,7 +75,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
             Flexible(
               child: Text(
                 label,
-                style: Theme.of(context).textTheme.titleSmall?.toSoftBold(),
+                style: Theme.of(context).textTheme.titleSmall?.toSoftBold,
               ),
             ),
           ],

@@ -31,7 +31,7 @@ class CoreInfo extends StatelessWidget {
                     style: context
                         .textTheme
                         .titleMedium
-                        ?.toSoftBold(),
+                        ?.toSoftBold,
                   ),
                 ),
                 const SizedBox(
@@ -44,7 +44,7 @@ class CoreInfo extends StatelessWidget {
                     style: context
                         .textTheme
                         .titleLarge
-                        ?.toSoftBold(),
+                        ?.toSoftBold,
                   ),
                 ),
               ],

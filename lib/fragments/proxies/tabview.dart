@@ -1,64 +1,22 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/clash/clash.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../enum/enum.dart';
-import '../models/models.dart';
-import '../common/common.dart';
-import '../widgets/widgets.dart';
-
-class ProxiesFragment extends StatefulWidget {
-  const ProxiesFragment({super.key});
+class ProxiesTabFragment extends StatefulWidget {
+  const ProxiesTabFragment({super.key});
 
   @override
-  State<ProxiesFragment> createState() => _ProxiesFragmentState();
+  State<ProxiesTabFragment> createState() => _ProxiesTabFragmentState();
 }
 
-class _ProxiesFragmentState extends State<ProxiesFragment>
-    with TickerProviderStateMixin {
+class _ProxiesTabFragmentState extends State<ProxiesTabFragment> with TickerProviderStateMixin {
   TabController? _tabController;
-
-  _initActions() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      final commonScaffoldState =
-          context.findAncestorStateOfType<CommonScaffoldState>();
-      final items = [
-        CommonPopupMenuItem(
-          action: ProxiesSortType.none,
-          label: appLocalizations.defaultSort,
-          iconData: Icons.sort,
-        ),
-        CommonPopupMenuItem(
-            action: ProxiesSortType.delay,
-            label: appLocalizations.delaySort,
-            iconData: Icons.network_ping),
-        CommonPopupMenuItem(
-            action: ProxiesSortType.name,
-            label: appLocalizations.nameSort,
-            iconData: Icons.sort_by_alpha),
-      ];
-      commonScaffoldState?.actions = [
-        Selector<Config, ProxiesSortType>(
-          selector: (_, config) => config.proxiesSortType,
-          builder: (_, proxiesSortType, __) {
-            return CommonPopupMenu<ProxiesSortType>.radio(
-              items: items,
-              onSelected: (value) {
-                final config = context.read<Config>();
-                config.proxiesSortType = value;
-              },
-              selectedValue: proxiesSortType,
-            );
-          },
-        ),
-        const SizedBox(
-          width: 8,
-        )
-      ];
-    });
-  }
 
   _handleTabControllerChange() {
     final indexIsChanging = _tabController?.indexIsChanging ?? false;
@@ -71,6 +29,7 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
       appController.config.updateCurrentGroupName(currentGroups[index].name);
     }
   }
+
   @override
   void dispose() {
     super.dispose();
@@ -79,79 +38,70 @@ class _ProxiesFragmentState extends State<ProxiesFragment>
 
   @override
   Widget build(BuildContext context) {
-    return Selector<AppState, bool>(
-      selector: (_, appState) => appState.currentLabel == 'proxies',
-      builder: (_, isCurrent, child) {
-        if (isCurrent) {
-          _initActions();
-        }
-        return child!;
+    return Selector2<AppState, Config, ProxiesSelectorState>(
+      selector: (_, appState, config) {
+        final currentGroups = appState.currentGroups;
+        final groupNames = currentGroups.map((e) => e.name).toList();
+        return ProxiesSelectorState(
+          groupNames: groupNames,
+          currentGroupName: config.currentGroupName,
+        );
       },
-      child: Selector2<AppState, Config, ProxiesSelectorState>(
-        selector: (_, appState, config) {
-          final currentGroups = appState.currentGroups;
-          final groupNames = currentGroups.map((e) => e.name).toList();
-          return ProxiesSelectorState(
-            groupNames: groupNames,
-            currentGroupName: config.currentGroupName,
-          );
-        },
-        shouldRebuild: (prev, next) {
-          if (!const ListEquality<String>()
-              .equals(prev.groupNames, next.groupNames)) {
-            _tabController?.removeListener(_handleTabControllerChange);
-            _tabController?.dispose();
-            _tabController = null;
-            return true;
-          }
-          return false;
-        },
-        builder: (_, state, __) {
-          final index = state.groupNames.indexWhere(
-            (item) => item == state.currentGroupName,
-          );
-          _tabController ??= TabController(
-            length: state.groupNames.length,
-            initialIndex: index == -1 ? 0 : index,
-            vsync: this,
-          )..addListener(_handleTabControllerChange);
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TabBar(
+      shouldRebuild: (prev, next) {
+        if (!const ListEquality<String>()
+            .equals(prev.groupNames, next.groupNames)) {
+          _tabController?.removeListener(_handleTabControllerChange);
+          _tabController?.dispose();
+          _tabController = null;
+          return true;
+        }
+        return false;
+      },
+      builder: (_, state, __) {
+        final index = state.groupNames.indexWhere(
+              (item) => item == state.currentGroupName,
+        );
+        _tabController ??= TabController(
+          length: state.groupNames.length,
+          initialIndex: index == -1 ? 0 : index,
+          vsync: this,
+        )..addListener(_handleTabControllerChange);
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TabBar(
+              controller: _tabController,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              dividerColor: Colors.transparent,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              overlayColor:
+              const WidgetStatePropertyAll(Colors.transparent),
+              tabs: [
+                for (final groupName in state.groupNames)
+                  Tab(
+                    text: groupName,
+                  ),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
                 controller: _tabController,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                dividerColor: Colors.transparent,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                overlayColor:
-                const WidgetStatePropertyAll(Colors.transparent),
-                tabs: [
+                children: [
                   for (final groupName in state.groupNames)
-                    Tab(
-                      text: groupName,
+                    KeepContainer(
+                      key: ObjectKey(groupName),
+                      child: ProxiesTabView(
+                        groupName: groupName,
+                      ),
                     ),
                 ],
               ),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    for (final groupName in state.groupNames)
-                      KeepContainer(
-                        key: ObjectKey(groupName),
-                        child: ProxiesTabView(
-                          groupName: groupName,
-                        ),
-                      ),
-                  ],
-                ),
-              )
-            ],
-          );
-        },
-      ),
+            )
+          ],
+        );
+      },
     );
   }
 }
@@ -167,7 +117,7 @@ class ProxiesTabView extends StatelessWidget {
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
       ..sort(
-        (a, b) => other.sortByChar(a.name, b.name),
+            (a, b) => other.sortByChar(a.name, b.name),
       );
   }
 
@@ -175,7 +125,7 @@ class ProxiesTabView extends StatelessWidget {
     final appState = context.read<AppState>();
     return proxies = List.of(proxies)
       ..sort(
-        (a, b) {
+            (a, b) {
           final aDelay = appState.getDelay(a.name);
           final bDelay = appState.getDelay(b.name);
           if (aDelay == null && bDelay == null) {
@@ -193,10 +143,10 @@ class ProxiesTabView extends StatelessWidget {
   }
 
   _getProxies(
-    BuildContext context,
-    List<Proxy> proxies,
-    ProxiesSortType proxiesSortType,
-  ) {
+      BuildContext context,
+      List<Proxy> proxies,
+      ProxiesSortType proxiesSortType,
+      ) {
     if (proxiesSortType == ProxiesSortType.delay) {
       return _sortOfDelay(context, proxies);
     }
@@ -379,7 +329,7 @@ class ProxyCard extends StatelessWidget {
                           style: context.textTheme.bodySmall?.copyWith(
                             overflow: TextOverflow.ellipsis,
                             color:
-                                context.textTheme.bodySmall?.color?.toLight(),
+                            context.textTheme.bodySmall?.color?.toLight(),
                           ),
                         ),
                       );

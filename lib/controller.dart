@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -267,6 +266,7 @@ class AppController {
   }
 
   init() async {
+    updateLogStatus();
     if (!config.silentLaunch) {
       window?.show();
     }
@@ -290,14 +290,13 @@ class AppController {
   }
 
   afterInit() async {
-    if (config.autoRun) {
+    await proxyManager.updateStartTime();
+    if (proxyManager.isStart) {
       await updateSystemProxy(true);
     } else {
-      await proxyManager.updateStartTime();
-      await updateSystemProxy(proxyManager.isStart);
+      await updateSystemProxy(config.autoRun);
     }
     autoUpdateProfiles();
-    updateLogStatus();
     autoCheckUpdate();
   }
 

@@ -253,7 +253,7 @@ class _ProfileItemState extends State<ProfileItem> {
               ),
               Text(
                 profile.lastUpdateDate?.lastUpdateTimeDesc ?? '',
-                style: textTheme.labelMedium?.toLight(),
+                style: textTheme.labelMedium?.toLight,
               ),
             ],
           ),
@@ -284,7 +284,7 @@ class _ProfileItemState extends State<ProfileItem> {
                 ),
                 Text(
                   "$useShow / $totalShow",
-                  style: textTheme.labelMedium?.toLight(),
+                  style: textTheme.labelMedium?.toLight,
                 ),
                 const SizedBox(
                   height: 2,
@@ -293,14 +293,14 @@ class _ProfileItemState extends State<ProfileItem> {
                   children: [
                     Text(
                       appLocalizations.expirationTime,
-                      style: textTheme.labelMedium?.toLighter(),
+                      style: textTheme.labelMedium?.toLighter,
                     ),
                     const SizedBox(
                       width: 4,
                     ),
                     Text(
                       expireShow,
-                      style: textTheme.labelMedium?.toLighter(),
+                      style: textTheme.labelMedium?.toLighter,
                     ),
                   ],
                 )

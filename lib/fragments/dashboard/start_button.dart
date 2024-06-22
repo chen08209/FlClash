@@ -13,19 +13,17 @@ class StartButton extends StatefulWidget {
 
 class _StartButtonState extends State<StartButton>
     with SingleTickerProviderStateMixin {
-  bool isStart = false;
-  bool isInit = false;
   late AnimationController _controller;
+  bool isStart = false;
 
   @override
   void initState() {
-    isStart = globalState.appController.appState.isStart;
+    super.initState();
     _controller = AnimationController(
       vsync: this,
-      value: isStart ? 1 : 0,
+      value: 0,
       duration: const Duration(milliseconds: 200),
     );
-    super.initState();
   }
 
   @override
@@ -35,9 +33,12 @@ class _StartButtonState extends State<StartButton>
   }
 
   handleSwitchStart() {
-    isStart = !isStart;
-    updateController();
-    updateSystemProxy();
+    final appController = globalState.appController;
+    if (isStart == appController.appState.isStart) {
+      isStart = !isStart;
+      updateController();
+      appController.updateSystemProxy(isStart);
+    }
   }
 
   updateController() {
@@ -48,11 +49,18 @@ class _StartButtonState extends State<StartButton>
     }
   }
 
-  updateSystemProxy() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final appController = globalState.appController;
-      await appController.updateSystemProxy(isStart);
-    });
+  Widget _updateControllerContainer(Widget child) {
+    return Selector<AppState, bool>(
+      selector: (_, appState) => appState.isStart,
+      builder: (_, isStart, child) {
+        if(isStart != this.isStart){
+          this.isStart = isStart;
+          updateController();
+        }
+        return child!;
+      },
+      child: child,
+    );
   }
 
   @override
@@ -72,8 +80,7 @@ class _StartButtonState extends State<StartButton>
                     other.getTimeDifference(
                       DateTime.now(),
                     ),
-                    style:
-                        Theme.of(context).textTheme.titleMedium?.toSoftBold(),
+                    style: Theme.of(context).textTheme.titleMedium?.toSoftBold,
                   ),
                 )
                 .width +
@@ -119,24 +126,14 @@ class _StartButtonState extends State<StartButton>
           child: child,
         );
       },
-      child: Selector<AppState, bool>(
-        selector: (_, appState) => appState.runTime != null,
-        builder: (_, isRun, child) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (isStart != isRun) {
-              isStart = isRun;
-              updateController();
-            }
-          });
-          return child!;
-        },
-        child: Selector<AppState, int?>(
+      child: _updateControllerContainer(
+        Selector<AppState, int?>(
           selector: (_, appState) => appState.runTime,
           builder: (_, int? value, __) {
             final text = other.getTimeText(value);
             return Text(
               text,
-              style: Theme.of(context).textTheme.titleMedium?.toSoftBold(),
+              style: Theme.of(context).textTheme.titleMedium?.toSoftBold,
             );
           },
         ),

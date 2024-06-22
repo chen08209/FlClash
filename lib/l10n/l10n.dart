@@ -1930,10 +1930,10 @@ class AppLocalizations {
     );
   }
 
-  /// `No Connections`
+  /// `No connections`
   String get nullConnectionsDesc {
     return Intl.message(
-      'No Connections',
+      'No connections',
       name: 'nullConnectionsDesc',
       desc: '',
       args: [],

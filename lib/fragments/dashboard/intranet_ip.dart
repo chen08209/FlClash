@@ -19,7 +19,7 @@ class _IntranetIpState extends State<IntranetIp> {
     List<NetworkInterface> interfaces = await NetworkInterface.list();
     for (final interface in interfaces) {
       for (final address in interface.addresses) {
-        if (address.type == InternetAddressType.IPv4 && !address.isLoopback) {
+        if (!address.isLoopback) {
           return address.address;
         }
       }
@@ -50,7 +50,7 @@ class _IntranetIpState extends State<IntranetIp> {
       ),
       child: Container(
         padding: const EdgeInsets.all(16).copyWith(top: 0),
-        height: globalState.appController.measure.titleLargeHeight + 16,
+        height: globalState.appController.measure.titleLargeHeight + 24 - 1,
         child: ValueListenableBuilder(
           valueListenable: ipNotifier,
           builder: (_, value, __) {
@@ -65,7 +65,7 @@ class _IntranetIpState extends State<IntranetIp> {
                           child: TooltipText(
                             text: Text(
                               value,
-                              style: context.textTheme.titleLarge?.toSoftBold(),
+                              style: context.textTheme.titleLarge?.toSoftBold.toMinus,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -74,8 +74,11 @@ class _IntranetIpState extends State<IntranetIp> {
                       ],
                     )
                   : const Padding(
-                      padding: EdgeInsets.all(4),
-                      child: CircularProgressIndicator(),
+                      padding: EdgeInsets.all(2),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
             );
           },

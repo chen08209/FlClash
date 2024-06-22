@@ -67,7 +67,7 @@ class OutboundMode extends StatelessWidget {
                           .of(context)
                           .textTheme
                           .titleMedium
-                          ?.toSoftBold(),
+                          ?.toSoftBold,
                     ),
                   ),
               ],
