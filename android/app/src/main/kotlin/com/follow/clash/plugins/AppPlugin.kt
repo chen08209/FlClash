@@ -64,7 +64,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         toast!!.show()
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "moveTaskToBack" -> {
@@ -151,7 +150,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 val message = call.argument<String>("message")
                 tip(message)
                 result.success(true)
-
             }
 
             else -> {

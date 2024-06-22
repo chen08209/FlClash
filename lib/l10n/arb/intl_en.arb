@@ -187,7 +187,7 @@
   "connections": "Connections",
   "connectionsDesc": "View current connection",
   "nullRequestsDesc": "No requests",
-  "nullConnectionsDesc": "No Connections",
+  "nullConnectionsDesc": "No connections",
   "intranetIp": "Intranet IP",
   "view": "View",
   "cut": "Cut",

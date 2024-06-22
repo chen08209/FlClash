@@ -186,7 +186,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "notSelectedTip": MessageLookupByLibrary.simpleMessage(
             "The current proxy group cannot be selected."),
         "nullConnectionsDesc":
-            MessageLookupByLibrary.simpleMessage("No Connections"),
+            MessageLookupByLibrary.simpleMessage("No connections"),
         "nullCoreInfoDesc":
             MessageLookupByLibrary.simpleMessage("Unable to obtain core info"),
         "nullLogsDesc": MessageLookupByLibrary.simpleMessage("No logs"),

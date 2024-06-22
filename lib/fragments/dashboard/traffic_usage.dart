@@ -42,7 +42,7 @@ class TrafficUsage extends StatelessWidget {
         ),
         Text(
           trafficValue.showUnit,
-          style: context.textTheme.labelMedium?.toLight(),
+          style: context.textTheme.labelMedium?.toLight,
         ),
       ],
     );

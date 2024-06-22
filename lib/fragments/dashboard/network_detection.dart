@@ -135,7 +135,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                 ),
                 Container(
                   height:
-                      globalState.appController.measure.titleLargeHeight + 24,
+                      globalState.appController.measure.titleLargeHeight + 24 - 1,
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.all(16).copyWith(top: 0),
                   child: FadeBox(
@@ -150,7 +150,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                                   text: Text(
                                     ipInfo.ip,
                                     style: context.textTheme.titleLarge
-                                        ?.toSoftBold(),
+                                        ?.toSoftBold.toMinus,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -164,9 +164,9 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                               if (timeout) {
                                 return Text(
                                   "timeout",
-                                  style: context.textTheme.titleMedium
+                                  style: context.textTheme.titleLarge
                                       ?.copyWith(color: Colors.red)
-                                      .toSoftBold(),
+                                      .toSoftBold.toMinus,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 );
