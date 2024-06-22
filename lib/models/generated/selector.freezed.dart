@@ -1730,39 +1730,37 @@ abstract class _ProxiesSelectorState implements ProxiesSelectorState {
 }
 
 /// @nodoc
-mixin _$ProxiesTabViewSelectorState {
+mixin _$ProxyGroupSelectorState {
   ProxiesSortType get proxiesSortType => throw _privateConstructorUsedError;
+  ProxyCardType get proxyCardType => throw _privateConstructorUsedError;
   num get sortNum => throw _privateConstructorUsedError;
-  Group get group => throw _privateConstructorUsedError;
-  ViewMode get viewMode => throw _privateConstructorUsedError;
+  List<Proxy> get proxies => throw _privateConstructorUsedError;
+  int get columns => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ProxiesTabViewSelectorStateCopyWith<ProxiesTabViewSelectorState>
-      get copyWith => throw _privateConstructorUsedError;
+  $ProxyGroupSelectorStateCopyWith<ProxyGroupSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  factory $ProxiesTabViewSelectorStateCopyWith(
-          ProxiesTabViewSelectorState value,
-          $Res Function(ProxiesTabViewSelectorState) then) =
-      _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-          ProxiesTabViewSelectorState>;
+abstract class $ProxyGroupSelectorStateCopyWith<$Res> {
+  factory $ProxyGroupSelectorStateCopyWith(ProxyGroupSelectorState value,
+          $Res Function(ProxyGroupSelectorState) then) =
+      _$ProxyGroupSelectorStateCopyWithImpl<$Res, ProxyGroupSelectorState>;
   @useResult
   $Res call(
       {ProxiesSortType proxiesSortType,
+      ProxyCardType proxyCardType,
       num sortNum,
-      Group group,
-      ViewMode viewMode});
-
-  $GroupCopyWith<$Res> get group;
+      List<Proxy> proxies,
+      int columns});
 }
 
 /// @nodoc
-class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-        $Val extends ProxiesTabViewSelectorState>
-    implements $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  _$ProxiesTabViewSelectorStateCopyWithImpl(this._value, this._then);
+class _$ProxyGroupSelectorStateCopyWithImpl<$Res,
+        $Val extends ProxyGroupSelectorState>
+    implements $ProxyGroupSelectorStateCopyWith<$Res> {
+  _$ProxyGroupSelectorStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -1773,165 +1771,177 @@ class _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
   @override
   $Res call({
     Object? proxiesSortType = null,
+    Object? proxyCardType = null,
     Object? sortNum = null,
-    Object? group = null,
-    Object? viewMode = null,
+    Object? proxies = null,
+    Object? columns = null,
   }) {
     return _then(_value.copyWith(
       proxiesSortType: null == proxiesSortType
           ? _value.proxiesSortType
           : proxiesSortType // ignore: cast_nullable_to_non_nullable
               as ProxiesSortType,
+      proxyCardType: null == proxyCardType
+          ? _value.proxyCardType
+          : proxyCardType // ignore: cast_nullable_to_non_nullable
+              as ProxyCardType,
       sortNum: null == sortNum
           ? _value.sortNum
           : sortNum // ignore: cast_nullable_to_non_nullable
               as num,
-      group: null == group
-          ? _value.group
-          : group // ignore: cast_nullable_to_non_nullable
-              as Group,
-      viewMode: null == viewMode
-          ? _value.viewMode
-          : viewMode // ignore: cast_nullable_to_non_nullable
-              as ViewMode,
+      proxies: null == proxies
+          ? _value.proxies
+          : proxies // ignore: cast_nullable_to_non_nullable
+              as List<Proxy>,
+      columns: null == columns
+          ? _value.columns
+          : columns // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $GroupCopyWith<$Res> get group {
-    return $GroupCopyWith<$Res>(_value.group, (value) {
-      return _then(_value.copyWith(group: value) as $Val);
-    });
   }
 }
 
 /// @nodoc
-abstract class _$$ProxiesTabViewSelectorStateImplCopyWith<$Res>
-    implements $ProxiesTabViewSelectorStateCopyWith<$Res> {
-  factory _$$ProxiesTabViewSelectorStateImplCopyWith(
-          _$ProxiesTabViewSelectorStateImpl value,
-          $Res Function(_$ProxiesTabViewSelectorStateImpl) then) =
-      __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>;
+abstract class _$$ProxyGroupSelectorStateImplCopyWith<$Res>
+    implements $ProxyGroupSelectorStateCopyWith<$Res> {
+  factory _$$ProxyGroupSelectorStateImplCopyWith(
+          _$ProxyGroupSelectorStateImpl value,
+          $Res Function(_$ProxyGroupSelectorStateImpl) then) =
+      __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
       {ProxiesSortType proxiesSortType,
+      ProxyCardType proxyCardType,
       num sortNum,
-      Group group,
-      ViewMode viewMode});
-
-  @override
-  $GroupCopyWith<$Res> get group;
+      List<Proxy> proxies,
+      int columns});
 }
 
 /// @nodoc
-class __$$ProxiesTabViewSelectorStateImplCopyWithImpl<$Res>
-    extends _$ProxiesTabViewSelectorStateCopyWithImpl<$Res,
-        _$ProxiesTabViewSelectorStateImpl>
-    implements _$$ProxiesTabViewSelectorStateImplCopyWith<$Res> {
-  __$$ProxiesTabViewSelectorStateImplCopyWithImpl(
-      _$ProxiesTabViewSelectorStateImpl _value,
-      $Res Function(_$ProxiesTabViewSelectorStateImpl) _then)
+class __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>
+    extends _$ProxyGroupSelectorStateCopyWithImpl<$Res,
+        _$ProxyGroupSelectorStateImpl>
+    implements _$$ProxyGroupSelectorStateImplCopyWith<$Res> {
+  __$$ProxyGroupSelectorStateImplCopyWithImpl(
+      _$ProxyGroupSelectorStateImpl _value,
+      $Res Function(_$ProxyGroupSelectorStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? proxiesSortType = null,
+    Object? proxyCardType = null,
     Object? sortNum = null,
-    Object? group = null,
-    Object? viewMode = null,
+    Object? proxies = null,
+    Object? columns = null,
   }) {
-    return _then(_$ProxiesTabViewSelectorStateImpl(
+    return _then(_$ProxyGroupSelectorStateImpl(
       proxiesSortType: null == proxiesSortType
           ? _value.proxiesSortType
           : proxiesSortType // ignore: cast_nullable_to_non_nullable
               as ProxiesSortType,
+      proxyCardType: null == proxyCardType
+          ? _value.proxyCardType
+          : proxyCardType // ignore: cast_nullable_to_non_nullable
+              as ProxyCardType,
       sortNum: null == sortNum
           ? _value.sortNum
           : sortNum // ignore: cast_nullable_to_non_nullable
               as num,
-      group: null == group
-          ? _value.group
-          : group // ignore: cast_nullable_to_non_nullable
-              as Group,
-      viewMode: null == viewMode
-          ? _value.viewMode
-          : viewMode // ignore: cast_nullable_to_non_nullable
-              as ViewMode,
+      proxies: null == proxies
+          ? _value._proxies
+          : proxies // ignore: cast_nullable_to_non_nullable
+              as List<Proxy>,
+      columns: null == columns
+          ? _value.columns
+          : columns // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
 
 /// @nodoc
 
-class _$ProxiesTabViewSelectorStateImpl
-    implements _ProxiesTabViewSelectorState {
-  const _$ProxiesTabViewSelectorStateImpl(
+class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
+  const _$ProxyGroupSelectorStateImpl(
       {required this.proxiesSortType,
+      required this.proxyCardType,
       required this.sortNum,
-      required this.group,
-      required this.viewMode});
+      required final List<Proxy> proxies,
+      required this.columns})
+      : _proxies = proxies;
 
   @override
   final ProxiesSortType proxiesSortType;
   @override
+  final ProxyCardType proxyCardType;
+  @override
   final num sortNum;
+  final List<Proxy> _proxies;
   @override
-  final Group group;
+  List<Proxy> get proxies {
+    if (_proxies is EqualUnmodifiableListView) return _proxies;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_proxies);
+  }
+
   @override
-  final ViewMode viewMode;
+  final int columns;
 
   @override
   String toString() {
-    return 'ProxiesTabViewSelectorState(proxiesSortType: $proxiesSortType, sortNum: $sortNum, group: $group, viewMode: $viewMode)';
+    return 'ProxyGroupSelectorState(proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, proxies: $proxies, columns: $columns)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProxiesTabViewSelectorStateImpl &&
+            other is _$ProxyGroupSelectorStateImpl &&
             (identical(other.proxiesSortType, proxiesSortType) ||
                 other.proxiesSortType == proxiesSortType) &&
+            (identical(other.proxyCardType, proxyCardType) ||
+                other.proxyCardType == proxyCardType) &&
             (identical(other.sortNum, sortNum) || other.sortNum == sortNum) &&
-            (identical(other.group, group) || other.group == group) &&
-            (identical(other.viewMode, viewMode) ||
-                other.viewMode == viewMode));
+            const DeepCollectionEquality().equals(other._proxies, _proxies) &&
+            (identical(other.columns, columns) || other.columns == columns));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, proxiesSortType, sortNum, group, viewMode);
+  int get hashCode => Object.hash(runtimeType, proxiesSortType, proxyCardType,
+      sortNum, const DeepCollectionEquality().hash(_proxies), columns);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProxiesTabViewSelectorStateImplCopyWith<_$ProxiesTabViewSelectorStateImpl>
-      get copyWith => __$$ProxiesTabViewSelectorStateImplCopyWithImpl<
-          _$ProxiesTabViewSelectorStateImpl>(this, _$identity);
+  _$$ProxyGroupSelectorStateImplCopyWith<_$ProxyGroupSelectorStateImpl>
+      get copyWith => __$$ProxyGroupSelectorStateImplCopyWithImpl<
+          _$ProxyGroupSelectorStateImpl>(this, _$identity);
 }
 
-abstract class _ProxiesTabViewSelectorState
-    implements ProxiesTabViewSelectorState {
-  const factory _ProxiesTabViewSelectorState(
+abstract class _ProxyGroupSelectorState implements ProxyGroupSelectorState {
+  const factory _ProxyGroupSelectorState(
       {required final ProxiesSortType proxiesSortType,
+      required final ProxyCardType proxyCardType,
       required final num sortNum,
-      required final Group group,
-      required final ViewMode viewMode}) = _$ProxiesTabViewSelectorStateImpl;
+      required final List<Proxy> proxies,
+      required final int columns}) = _$ProxyGroupSelectorStateImpl;
 
   @override
   ProxiesSortType get proxiesSortType;
   @override
+  ProxyCardType get proxyCardType;
+  @override
   num get sortNum;
   @override
-  Group get group;
+  List<Proxy> get proxies;
   @override
-  ViewMode get viewMode;
+  int get columns;
   @override
   @JsonKey(ignore: true)
-  _$$ProxiesTabViewSelectorStateImplCopyWith<_$ProxiesTabViewSelectorStateImpl>
+  _$$ProxyGroupSelectorStateImplCopyWith<_$ProxyGroupSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
 

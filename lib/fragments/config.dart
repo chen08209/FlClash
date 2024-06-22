@@ -191,7 +191,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
         builder: (_, ipv6, __) {
           return ListItem.switchItem(
             leading: const Icon(Icons.water_outlined),
-            title: const Text("Ipv6"),
+            title: const Text("IPv6"),
             subtitle: Text(appLocalizations.ipv6Desc),
             delegate: SwitchDelegate(
               value: ipv6,

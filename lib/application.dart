@@ -130,7 +130,6 @@ class ApplicationState extends State<Application> {
       httpTimeoutDuration,
       (timer) async {
         await globalState.appController.updateGroups();
-        globalState.appController.appState.sortNum++;
       },
     );
   }

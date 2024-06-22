@@ -1,4 +1,4 @@
-export 'proxies/proxies.dart';
+export 'proxies.dart';
 export 'dashboard/dashboard.dart';
 export 'tools.dart';
 export 'profiles/profiles.dart';

@@ -444,7 +444,7 @@ class _ProfileItemState extends State<ProfileItem> {
                             ),
                             CommonPopupMenuItem(
                               action: ProfileActions.view,
-                              label: "查看",
+                              label: appLocalizations.view,
                               iconData: Icons.visibility,
                             ),
                           ],

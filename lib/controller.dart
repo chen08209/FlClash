@@ -405,9 +405,55 @@ class AppController {
     addProfileFormURL(url);
   }
 
+  int get columns =>
+      globalState.getColumns(appState.viewMode, config.proxiesColumns);
+
+  changeColumns() {
+    config.proxiesColumns = globalState.getColumns(
+      appState.viewMode,
+      columns - 1,
+    );
+  }
+
   updateViewWidth(double width) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       appState.viewWidth = width;
     });
+  }
+
+
+  List<Proxy> _sortOfName(List<Proxy> proxies) {
+    return List.of(proxies)
+      ..sort(
+            (a, b) => other.sortByChar(a.name, b.name),
+      );
+  }
+
+  List<Proxy> _sortOfDelay(List<Proxy> proxies) {
+    return proxies = List.of(proxies)
+      ..sort(
+            (a, b) {
+          final aDelay = appState.getDelay(a.name);
+          final bDelay = appState.getDelay(b.name);
+          if (aDelay == null && bDelay == null) {
+            return 0;
+          }
+          if (aDelay == null || aDelay == -1) {
+            return 1;
+          }
+          if (bDelay == null || bDelay == -1) {
+            return -1;
+          }
+          return aDelay.compareTo(bDelay);
+        },
+      );
+  }
+
+  List<Proxy> getSortProxies(List<Proxy> proxies){
+    return switch(config.proxiesSortType){
+      ProxiesSortType.none => proxies,
+      ProxiesSortType.delay => _sortOfDelay(proxies),
+      ProxiesSortType.name =>_sortOfName(proxies),
+    };
   }
 }

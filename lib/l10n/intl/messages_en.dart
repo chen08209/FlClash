@@ -127,7 +127,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "externalController":
             MessageLookupByLibrary.simpleMessage("ExternalController"),
         "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
-            "Once enabled, the clash kernel can be controlled on port 9090"),
+            "Once enabled, the Clash kernel can be controlled on port 9090"),
         "externalResources":
             MessageLookupByLibrary.simpleMessage("External resources"),
         "file": MessageLookupByLibrary.simpleMessage("File"),
@@ -156,7 +156,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "ipCheckTimeout":
             MessageLookupByLibrary.simpleMessage("Ip check timeout"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage(
-            "When turned on it will be able to receive ipv6 traffic"),
+            "When turned on it will be able to receive IPv6 traffic"),
         "just": MessageLookupByLibrary.simpleMessage("Just"),
         "language": MessageLookupByLibrary.simpleMessage("Language"),
         "light": MessageLookupByLibrary.simpleMessage("Light"),
@@ -230,7 +230,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "proxies": MessageLookupByLibrary.simpleMessage("Proxies"),
         "proxyPort": MessageLookupByLibrary.simpleMessage("ProxyPort"),
         "proxyPortDesc": MessageLookupByLibrary.simpleMessage(
-            "Set the clash listening port"),
+            "Set the Clash listening port"),
         "qrcode": MessageLookupByLibrary.simpleMessage("QR code"),
         "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
             "Scan QR code to obtain profile"),

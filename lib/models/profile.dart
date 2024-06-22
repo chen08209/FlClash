@@ -54,6 +54,7 @@ class Profile with _$Profile {
     UserInfo? userInfo,
     @Default(true) bool autoUpdate,
     @Default({}) SelectedMap selectedMap,
+    @Default({}) Set<String> unfoldSet,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, Object?> json) =>

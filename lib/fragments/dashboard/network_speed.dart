@@ -111,6 +111,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
+      onPressed: () {},
       info: Info(
         label: appLocalizations.networkSpeed,
         iconData: Icons.speed,
