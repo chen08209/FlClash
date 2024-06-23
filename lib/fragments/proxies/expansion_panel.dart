@@ -269,7 +269,6 @@ class ProxyCard extends StatelessWidget {
             SizedBox(
               height: measure.bodySmallHeight,
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
