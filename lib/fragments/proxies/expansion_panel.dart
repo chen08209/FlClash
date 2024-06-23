@@ -163,6 +163,9 @@ class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
                           ],
                         ),
                       ),
+                      const SizedBox(
+                        height: 4,
+                      ),
                     ],
                   ),
                 ),
