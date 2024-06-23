@@ -1,3 +1,4 @@
+import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -49,7 +50,7 @@ class _ProxiesExpansionPanelFragmentState
   }
 }
 
-class ProxiesExpansionView extends StatelessWidget {
+class ProxiesExpansionView extends StatefulWidget {
   final String groupName;
 
   const ProxiesExpansionView({
@@ -57,14 +58,12 @@ class ProxiesExpansionView extends StatelessWidget {
     required this.groupName,
   });
 
-  double _getItemHeight(BuildContext context) {
-    final measure = globalState.appController.measure;
-    return 12 * 2 +
-        measure.bodyMediumHeight * 2 +
-        measure.bodySmallHeight +
-        measure.labelSmallHeight +
-        8 * 2;
-  }
+  @override
+  State<ProxiesExpansionView> createState() => _ProxiesExpansionViewState();
+}
+
+class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
+  var isLock = false;
 
   int _getColumns(ViewMode viewMode) {
     switch (viewMode) {
@@ -76,6 +75,29 @@ class ProxiesExpansionView extends StatelessWidget {
         return 4;
     }
   }
+
+  _delayTest(List<Proxy> proxies) async {
+    if (isLock) return;
+    isLock = true;
+    for (final proxy in proxies) {
+      final appController = globalState.appController;
+      final proxyName =
+          appController.appState.getRealProxyName(proxy.name) ?? proxy.name;
+      globalState.appController.setDelay(
+        Delay(
+          name: proxyName,
+          value: 0,
+        ),
+      );
+      clashCore.getDelay(proxyName).then((delay) {
+        globalState.appController.setDelay(delay);
+      });
+    }
+    await Future.delayed(httpTimeoutDuration + moreDuration);
+    isLock = false;
+  }
+
+  get groupName => widget.groupName;
 
   @override
   Widget build(BuildContext context) {
@@ -97,31 +119,63 @@ class ProxiesExpansionView extends StatelessWidget {
         final proxies = state.group.all;
         return CommonCard(
           child: ExpansionTile(
+            iconColor: context.colorScheme.onSurfaceVariant,
             controlAffinity: ListTileControlAffinity.trailing,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(group.name),
-                const SizedBox(
-                  height: 4,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      group.type.name,
-                      style: context.textTheme.labelMedium?.toLight,
-                    ),
-                    if (state.currentProxyName.isNotEmpty) ...[
-                      const Icon(Icons.arrow_right),
-                      Text(
-                        state.currentProxyName,
-                        style: context.textTheme.labelMedium?.toLight,
+                Flexible(
+                  flex: 1,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(group.name),
+                      const SizedBox(
+                        height: 4,
                       ),
-                    ]
-                  ],
-                )
+                      Flexible(
+                        flex: 1,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              group.type.name,
+                              style: context.textTheme.labelMedium?.toLight,
+                            ),
+                            if (state.currentProxyName.isNotEmpty) ...[
+                              Icon(
+                                Icons.arrow_right,
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
+                              Flexible(
+                                flex: 1,
+                                child: Text(
+                                  overflow: TextOverflow.ellipsis,
+                                  state.currentProxyName,
+                                  style: context.textTheme.labelMedium?.toLight,
+                                ),
+                              ),
+                            ]
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.network_ping,
+                    size: 20,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: () {
+                    _delayTest(group.all);
+                  },
+                ),
               ],
             ),
             shape: const RoundedRectangleBorder(
@@ -177,7 +231,7 @@ class ProxyCard extends StatelessWidget {
     return CommonCard(
       type: CommonCardType.filled,
       isSelected: isSelected,
-      onPressed: (){
+      onPressed: () {
         final appController = globalState.appController;
         final group = appController.appState.getGroupWithName(groupName)!;
         if (group.type != GroupType.Selector) {
@@ -215,14 +269,18 @@ class ProxyCard extends StatelessWidget {
             SizedBox(
               height: measure.bodySmallHeight,
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    proxy.type,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      overflow: TextOverflow.ellipsis,
-                      color: context.textTheme.bodySmall?.color?.toLight(),
+                  Flexible(
+                    flex: 1,
+                    child: Text(
+                      proxy.type,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        overflow: TextOverflow.ellipsis,
+                        color: context.textTheme.bodySmall?.color?.toLight(),
+                      ),
                     ),
                   ),
                   Selector<AppState, int?>(
