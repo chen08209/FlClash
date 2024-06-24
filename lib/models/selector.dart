@@ -105,7 +105,7 @@ class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
     required ProxyCardType proxyCardType,
     required num sortNum,
     required Group group,
-    required ViewMode viewMode,
+    required int columns,
     required String currentProxyName,
   }) = _ProxyGroupSelectorState;
 }

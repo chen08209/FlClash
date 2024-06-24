@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:animations/animations.dart';
 import 'package:fl_clash/clash/clash.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 
@@ -260,6 +261,18 @@ class GlobalState {
       );
       return null;
     }
+  }
+
+  int getColumns(ViewMode viewMode,int currentColumns){
+    final targetColumnsArray = switch (viewMode) {
+      ViewMode.mobile => [2, 1],
+      ViewMode.laptop => [3, 2],
+      ViewMode.desktop => [4, 3],
+    };
+    if (targetColumnsArray.contains(currentColumns)) {
+      return currentColumns;
+    }
+    return targetColumnsArray.first;
   }
 }
 

@@ -115,63 +115,12 @@ class ProxiesTabView extends StatelessWidget {
     required this.groupName,
   });
 
-  List<Proxy> _sortOfName(List<Proxy> proxies) {
-    return List.of(proxies)
-      ..sort(
-        (a, b) => other.sortByChar(a.name, b.name),
-      );
-  }
-
-  List<Proxy> _sortOfDelay(BuildContext context, List<Proxy> proxies) {
-    final appState = context.read<AppState>();
-    return proxies = List.of(proxies)
-      ..sort(
-        (a, b) {
-          final aDelay = appState.getDelay(a.name);
-          final bDelay = appState.getDelay(b.name);
-          if (aDelay == null && bDelay == null) {
-            return 0;
-          }
-          if (aDelay == null || aDelay == -1) {
-            return 1;
-          }
-          if (bDelay == null || bDelay == -1) {
-            return -1;
-          }
-          return aDelay.compareTo(bDelay);
-        },
-      );
-  }
-
   double _getItemHeight(ProxyCardType proxyCardType) {
     final isExpand = proxyCardType == ProxyCardType.expand;
     final measure = globalState.appController.measure;
     final baseHeight =
         12 * 2 + measure.bodyMediumHeight * 2 + measure.bodySmallHeight + 8;
     return isExpand ? baseHeight + measure.labelSmallHeight + 8 : baseHeight;
-  }
-
-  _getProxies(
-    BuildContext context,
-    List<Proxy> proxies,
-    ProxiesSortType proxiesSortType,
-  ) {
-    if (proxiesSortType == ProxiesSortType.delay) {
-      return _sortOfDelay(context, proxies);
-    }
-    if (proxiesSortType == ProxiesSortType.name) return _sortOfName(proxies);
-    return proxies;
-  }
-
-  int _getColumns(ViewMode viewMode) {
-    switch (viewMode) {
-      case ViewMode.mobile:
-        return 2;
-      case ViewMode.laptop:
-        return 3;
-      case ViewMode.desktop:
-        return 4;
-    }
   }
 
   _delayTest(List<Proxy> proxies) async {
@@ -202,17 +151,15 @@ class ProxiesTabView extends StatelessWidget {
         return ProxyGroupSelectorState(
           proxyCardType: config.proxyCardType,
           proxiesSortType: config.proxiesSortType,
+          columns: globalState.appController.columns,
           sortNum: appState.sortNum,
           group: group,
-          viewMode: appState.viewMode,
           currentProxyName: currentProxyName ?? '',
         );
       },
       builder: (_, state, __) {
-        final proxies = _getProxies(
-          context,
+        final proxies = globalState.appController.getSortProxies(
           state.group.all,
-          state.proxiesSortType,
         );
         return DelayTestButtonContainer(
           onClick: () async {
@@ -225,7 +172,7 @@ class ProxiesTabView extends StatelessWidget {
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: _getColumns(state.viewMode),
+                crossAxisCount: state.columns,
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
                 mainAxisExtent: _getItemHeight(state.proxyCardType),

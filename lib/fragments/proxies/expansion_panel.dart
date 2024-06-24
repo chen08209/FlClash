@@ -66,17 +66,6 @@ class ProxiesExpansionView extends StatefulWidget {
 class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
   var isLock = false;
 
-  int _getColumns(ViewMode viewMode) {
-    switch (viewMode) {
-      case ViewMode.mobile:
-        return 2;
-      case ViewMode.laptop:
-        return 3;
-      case ViewMode.desktop:
-        return 4;
-    }
-  }
-
   _delayTest(List<Proxy> proxies) async {
     if (isLock) return;
     isLock = true;
@@ -108,17 +97,19 @@ class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
         final currentProxyName =
             config.currentSelectedMap[group.name] ?? group.now;
         return ProxyGroupSelectorState(
-          proxyCardType:config.proxyCardType,
+          proxyCardType: config.proxyCardType,
           proxiesSortType: config.proxiesSortType,
           sortNum: appState.sortNum,
           group: group,
-          viewMode: appState.viewMode,
+          columns: globalState.appController.columns,
           currentProxyName: currentProxyName ?? '',
         );
       },
       builder: (_, state, __) {
         final group = state.group;
-        final proxies = state.group.all;
+        final proxies = globalState.appController.getSortProxies(
+          state.group.all,
+        );
         return CommonCard(
           child: ExpansionTile(
             iconColor: context.colorScheme.onSurfaceVariant,
@@ -190,7 +181,7 @@ class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
               side: BorderSide.none,
             ),
             childrenPadding: const EdgeInsets.only(
-              top: 0,
+              top: 8,
               bottom: 8,
               left: 8,
               right: 8,
@@ -199,7 +190,7 @@ class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
               Grid(
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
-                crossAxisCount: _getColumns(state.viewMode),
+                crossAxisCount: state.columns,
                 children: [
                   for (final proxy in proxies)
                     ProxyCard(

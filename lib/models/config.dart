@@ -59,6 +59,7 @@ class Config extends ChangeNotifier {
   DAV? _dav;
   ProxiesType _proxiesType;
   ProxyCardType _proxyCardType;
+  int _proxiesColumns;
 
   Config()
       : _profiles = [],
@@ -78,7 +79,8 @@ class Config extends ChangeNotifier {
         _isAnimateToPage = true,
         _allowBypass = true,
         _proxyCardType = ProxyCardType.expand,
-        _proxiesType = ProxiesType.tab;
+        _proxiesType = ProxiesType.tab,
+        _proxiesColumns = 2;
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
@@ -385,6 +387,16 @@ class Config extends ChangeNotifier {
   set proxyCardType(ProxyCardType value) {
     if (_proxyCardType != value) {
       _proxyCardType = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(defaultValue: 2)
+  int get proxiesColumns => _proxiesColumns;
+
+  set proxiesColumns(int value) {
+    if (_proxiesColumns != value) {
+      _proxiesColumns = value;
       notifyListeners();
     }
   }

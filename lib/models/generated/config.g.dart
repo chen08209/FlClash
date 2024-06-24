@@ -40,7 +40,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
           ProxiesType.tab
   ..proxyCardType =
       $enumDecodeNullable(_$ProxyCardTypeEnumMap, json['proxyCardType']) ??
-          ProxyCardType.expand;
+          ProxyCardType.expand
+  ..proxiesColumns = (json['proxiesColumns'] as num?)?.toInt() ?? 2;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -64,6 +65,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'systemProxy': instance.systemProxy,
       'proxiesType': _$ProxiesTypeEnumMap[instance.proxiesType]!,
       'proxyCardType': _$ProxyCardTypeEnumMap[instance.proxyCardType]!,
+      'proxiesColumns': instance.proxiesColumns,
     };
 
 const _$ThemeModeEnumMap = {

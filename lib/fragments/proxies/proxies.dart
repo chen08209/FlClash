@@ -24,18 +24,28 @@ class _ProxiesFragmentState extends State<ProxiesFragment> {
         CommonPopupMenuItem(
           action: ProxiesSortType.none,
           label: appLocalizations.defaultSort,
-          iconData: Icons.sort,
+          iconData: Icons.reorder,
         ),
         CommonPopupMenuItem(
-            action: ProxiesSortType.delay,
-            label: appLocalizations.delaySort,
-            iconData: Icons.network_ping),
+          action: ProxiesSortType.delay,
+          label: appLocalizations.delaySort,
+          iconData: Icons.network_ping,
+        ),
         CommonPopupMenuItem(
-            action: ProxiesSortType.name,
-            label: appLocalizations.nameSort,
-            iconData: Icons.sort_by_alpha),
+          action: ProxiesSortType.name,
+          label: appLocalizations.nameSort,
+          iconData: Icons.sort_by_alpha,
+        ),
       ];
       commonScaffoldState?.actions = [
+        IconButton(
+          icon: const Icon(
+            Icons.view_column,
+          ),
+          onPressed: () {
+            globalState.appController.changeColumns();
+          },
+        ),
         Selector<Config, ProxyCardType>(
           selector: (_, config) => config.proxyCardType,
           builder: (_, proxyCardType, __) {
@@ -43,7 +53,7 @@ class _ProxiesFragmentState extends State<ProxiesFragment> {
               icon: Icon(
                 switch (proxyCardType) {
                   ProxyCardType.expand => Icons.compress,
-                  ProxyCardType.shrink => Icons.expand,
+                  ProxyCardType.shrink => Icons.aspect_ratio,
                 },
               ),
               onPressed: () {
