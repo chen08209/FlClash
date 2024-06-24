@@ -3,6 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/proxies/expansion_panel.dart';
 import 'package:fl_clash/fragments/proxies/tabview.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +16,6 @@ class ProxiesFragment extends StatefulWidget {
 }
 
 class _ProxiesFragmentState extends State<ProxiesFragment> {
-
   _initActions() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final commonScaffoldState =
@@ -36,11 +36,51 @@ class _ProxiesFragmentState extends State<ProxiesFragment> {
             iconData: Icons.sort_by_alpha),
       ];
       commonScaffoldState?.actions = [
+        Selector<Config, ProxyCardType>(
+          selector: (_, config) => config.proxyCardType,
+          builder: (_, proxyCardType, __) {
+            return IconButton(
+              icon: Icon(
+                switch (proxyCardType) {
+                  ProxyCardType.expand => Icons.compress,
+                  ProxyCardType.shrink => Icons.expand,
+                },
+              ),
+              onPressed: () {
+                final config = globalState.appController.config;
+                config.proxyCardType =
+                    config.proxyCardType == ProxyCardType.expand
+                        ? ProxyCardType.shrink
+                        : ProxyCardType.expand;
+              },
+            );
+          },
+        ),
+        Selector<Config, ProxiesType>(
+          selector: (_, config) => config.proxiesType,
+          builder: (_, proxiesType, __) {
+            return IconButton(
+              icon: Icon(
+                switch (proxiesType) {
+                  ProxiesType.tab => Icons.view_list,
+                  ProxiesType.expansion => Icons.view_carousel,
+                },
+              ),
+              onPressed: () {
+                final config = globalState.appController.config;
+                config.proxiesType = config.proxiesType == ProxiesType.tab
+                    ? ProxiesType.expansion
+                    : ProxiesType.tab;
+              },
+            );
+          },
+        ),
         Selector<Config, ProxiesSortType>(
           selector: (_, config) => config.proxiesSortType,
           builder: (_, proxiesSortType, __) {
             return CommonPopupMenu<ProxiesSortType>.radio(
               items: items,
+              icon: const Icon(Icons.sort),
               onSelected: (value) {
                 final config = context.read<Config>();
                 config.proxiesSortType = value;
@@ -66,8 +106,15 @@ class _ProxiesFragmentState extends State<ProxiesFragment> {
         }
         return child!;
       },
-      child: const ProxiesExpansionPanelFragment(),
+      child: Selector<Config, ProxiesType>(
+        selector: (_, config) => config.proxiesType,
+        builder: (_, proxiesType, __) {
+          return switch (proxiesType) {
+            ProxiesType.tab => const ProxiesTabFragment(),
+            ProxiesType.expansion => const ProxiesExpansionPanelFragment(),
+          };
+        },
+      ),
     );
   }
 }
-

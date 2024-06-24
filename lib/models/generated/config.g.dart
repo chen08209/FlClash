@@ -34,7 +34,13 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..isCompatible = json['isCompatible'] as bool? ?? true
   ..autoCheckUpdate = json['autoCheckUpdate'] as bool? ?? true
   ..allowBypass = json['allowBypass'] as bool? ?? true
-  ..systemProxy = json['systemProxy'] as bool? ?? true;
+  ..systemProxy = json['systemProxy'] as bool? ?? true
+  ..proxiesType =
+      $enumDecodeNullable(_$ProxiesTypeEnumMap, json['proxiesType']) ??
+          ProxiesType.tab
+  ..proxyCardType =
+      $enumDecodeNullable(_$ProxyCardTypeEnumMap, json['proxyCardType']) ??
+          ProxyCardType.expand;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -56,6 +62,8 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'autoCheckUpdate': instance.autoCheckUpdate,
       'allowBypass': instance.allowBypass,
       'systemProxy': instance.systemProxy,
+      'proxiesType': _$ProxiesTypeEnumMap[instance.proxiesType]!,
+      'proxyCardType': _$ProxyCardTypeEnumMap[instance.proxyCardType]!,
     };
 
 const _$ThemeModeEnumMap = {
@@ -68,6 +76,16 @@ const _$ProxiesSortTypeEnumMap = {
   ProxiesSortType.none: 'none',
   ProxiesSortType.delay: 'delay',
   ProxiesSortType.name: 'name',
+};
+
+const _$ProxiesTypeEnumMap = {
+  ProxiesType.tab: 'tab',
+  ProxiesType.expansion: 'expansion',
+};
+
+const _$ProxyCardTypeEnumMap = {
+  ProxyCardType.expand: 'expand',
+  ProxyCardType.shrink: 'shrink',
 };
 
 _$AccessControlImpl _$$AccessControlImplFromJson(Map<String, dynamic> json) =>

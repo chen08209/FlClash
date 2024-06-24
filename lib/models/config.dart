@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_clash/fragments/proxies/card.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -56,6 +57,8 @@ class Config extends ChangeNotifier {
   bool _allowBypass;
   bool _systemProxy;
   DAV? _dav;
+  ProxiesType _proxiesType;
+  ProxyCardType _proxyCardType;
 
   Config()
       : _profiles = [],
@@ -73,7 +76,9 @@ class Config extends ChangeNotifier {
         _systemProxy = true,
         _accessControl = const AccessControl(),
         _isAnimateToPage = true,
-        _allowBypass = true;
+        _allowBypass = true,
+        _proxyCardType = ProxyCardType.expand,
+        _proxiesType = ProxiesType.tab;
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
@@ -364,6 +369,26 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: ProxiesType.tab)
+  ProxiesType get proxiesType => _proxiesType;
+
+  set proxiesType(ProxiesType value) {
+    if (_proxiesType != value) {
+      _proxiesType = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(defaultValue: ProxyCardType.expand)
+  ProxyCardType get proxyCardType => _proxyCardType;
+
+  set proxyCardType(ProxyCardType value) {
+    if (_proxyCardType != value) {
+      _proxyCardType = value;
+      notifyListeners();
+    }
+  }
+
   update([
     Config? config,
     RecoveryOption recoveryOptions = RecoveryOption.all,
@@ -383,6 +408,7 @@ class Config extends ChangeNotifier {
       _autoLaunch = config._autoLaunch;
       _silentLaunch = config._silentLaunch;
       _autoRun = config._autoRun;
+      _proxiesType = config._proxiesType;
       _openLog = config._openLog;
       _themeMode = config._themeMode;
       _locale = config._locale;

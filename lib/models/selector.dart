@@ -102,6 +102,7 @@ class ProxiesSelectorState with _$ProxiesSelectorState {
 class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
   const factory ProxyGroupSelectorState({
     required ProxiesSortType proxiesSortType,
+    required ProxyCardType proxyCardType,
     required num sortNum,
     required Group group,
     required ViewMode viewMode,

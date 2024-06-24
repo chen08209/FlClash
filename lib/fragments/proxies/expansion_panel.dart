@@ -6,6 +6,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'card.dart';
 
 class ProxiesExpansionPanelFragment extends StatefulWidget {
   const ProxiesExpansionPanelFragment({super.key});
@@ -107,6 +108,7 @@ class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
         final currentProxyName =
             config.currentSelectedMap[group.name] ?? group.now;
         return ProxyGroupSelectorState(
+          proxyCardType:config.proxyCardType,
           proxiesSortType: config.proxiesSortType,
           sortNum: appState.sortNum,
           group: group,
@@ -188,7 +190,7 @@ class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
               side: BorderSide.none,
             ),
             childrenPadding: const EdgeInsets.only(
-              top: 8,
+              top: 0,
               bottom: 8,
               left: 8,
               right: 8,
@@ -201,6 +203,8 @@ class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
                 children: [
                   for (final proxy in proxies)
                     ProxyCard(
+                      style: CommonCardType.filled,
+                      type: state.proxyCardType,
                       isSelected: state.currentProxyName == proxy.name,
                       key: ValueKey('$groupName.${proxy.name}'),
                       proxy: proxy,
@@ -212,119 +216,6 @@ class _ProxiesExpansionViewState extends State<ProxiesExpansionView> {
           ),
         );
       },
-    );
-  }
-}
-
-class ProxyCard extends StatelessWidget {
-  final String groupName;
-  final Proxy proxy;
-  final bool isSelected;
-
-  const ProxyCard({
-    super.key,
-    required this.groupName,
-    required this.proxy,
-    required this.isSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final measure = globalState.appController.measure;
-    return CommonCard(
-      type: CommonCardType.filled,
-      isSelected: isSelected,
-      onPressed: () {
-        final appController = globalState.appController;
-        final group = appController.appState.getGroupWithName(groupName)!;
-        if (group.type != GroupType.Selector) {
-          globalState.showSnackBar(
-            context,
-            message: appLocalizations.notSelectedTip,
-          );
-          return;
-        }
-        globalState.appController.config.updateCurrentSelectedMap(
-          groupName,
-          proxy.name,
-        );
-        globalState.appController.changeProxy();
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: measure.bodyMediumHeight * 2,
-              child: Text(
-                proxy.name,
-                maxLines: 2,
-                style: context.textTheme.bodyMedium?.copyWith(
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
-            SizedBox(
-              height: measure.bodySmallHeight,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Flexible(
-                    flex: 1,
-                    child: Text(
-                      proxy.type,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        overflow: TextOverflow.ellipsis,
-                        color: context.textTheme.bodySmall?.color?.toLight(),
-                      ),
-                    ),
-                  ),
-                  Selector<AppState, int?>(
-                    selector: (context, appState) => appState.getDelay(
-                      proxy.name,
-                    ),
-                    builder: (_, delay, __) {
-                      return FadeBox(
-                        child: Builder(
-                          builder: (_) {
-                            if (delay == null) {
-                              return Container();
-                            }
-                            if (delay == 0) {
-                              return SizedBox(
-                                height: measure.labelSmallHeight,
-                                width: measure.labelSmallHeight,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              );
-                            }
-                            return Text(
-                              delay > 0 ? '$delay ms' : "Timeout",
-                              style: context.textTheme.labelSmall?.copyWith(
-                                overflow: TextOverflow.ellipsis,
-                                color: other.getDelayColor(
-                                  delay,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

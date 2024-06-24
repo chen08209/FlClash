@@ -7,6 +7,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'card.dart';
 
 class ProxiesTabFragment extends StatefulWidget {
   const ProxiesTabFragment({super.key});
@@ -15,7 +16,8 @@ class ProxiesTabFragment extends StatefulWidget {
   State<ProxiesTabFragment> createState() => _ProxiesTabFragmentState();
 }
 
-class _ProxiesTabFragmentState extends State<ProxiesTabFragment> with TickerProviderStateMixin {
+class _ProxiesTabFragmentState extends State<ProxiesTabFragment>
+    with TickerProviderStateMixin {
   TabController? _tabController;
 
   _handleTabControllerChange() {
@@ -59,7 +61,7 @@ class _ProxiesTabFragmentState extends State<ProxiesTabFragment> with TickerProv
       },
       builder: (_, state, __) {
         final index = state.groupNames.indexWhere(
-              (item) => item == state.currentGroupName,
+          (item) => item == state.currentGroupName,
         );
         _tabController ??= TabController(
           length: state.groupNames.length,
@@ -76,8 +78,7 @@ class _ProxiesTabFragmentState extends State<ProxiesTabFragment> with TickerProv
               dividerColor: Colors.transparent,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
-              overlayColor:
-              const WidgetStatePropertyAll(Colors.transparent),
+              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
               tabs: [
                 for (final groupName in state.groupNames)
                   Tab(
@@ -117,7 +118,7 @@ class ProxiesTabView extends StatelessWidget {
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
       ..sort(
-            (a, b) => other.sortByChar(a.name, b.name),
+        (a, b) => other.sortByChar(a.name, b.name),
       );
   }
 
@@ -125,7 +126,7 @@ class ProxiesTabView extends StatelessWidget {
     final appState = context.read<AppState>();
     return proxies = List.of(proxies)
       ..sort(
-            (a, b) {
+        (a, b) {
           final aDelay = appState.getDelay(a.name);
           final bDelay = appState.getDelay(b.name);
           if (aDelay == null && bDelay == null) {
@@ -142,25 +143,24 @@ class ProxiesTabView extends StatelessWidget {
       );
   }
 
+  double _getItemHeight(ProxyCardType proxyCardType) {
+    final isExpand = proxyCardType == ProxyCardType.expand;
+    final measure = globalState.appController.measure;
+    final baseHeight =
+        12 * 2 + measure.bodyMediumHeight * 2 + measure.bodySmallHeight + 8;
+    return isExpand ? baseHeight + measure.labelSmallHeight + 8 : baseHeight;
+  }
+
   _getProxies(
-      BuildContext context,
-      List<Proxy> proxies,
-      ProxiesSortType proxiesSortType,
-      ) {
+    BuildContext context,
+    List<Proxy> proxies,
+    ProxiesSortType proxiesSortType,
+  ) {
     if (proxiesSortType == ProxiesSortType.delay) {
       return _sortOfDelay(context, proxies);
     }
     if (proxiesSortType == ProxiesSortType.name) return _sortOfName(proxies);
     return proxies;
-  }
-
-  double _getItemHeight(BuildContext context) {
-    final measure = globalState.appController.measure;
-    return 12 * 2 +
-        measure.bodyMediumHeight * 2 +
-        measure.bodySmallHeight +
-        measure.labelSmallHeight +
-        8 * 2;
   }
 
   int _getColumns(ViewMode viewMode) {
@@ -200,6 +200,7 @@ class ProxiesTabView extends StatelessWidget {
         final currentProxyName =
             config.currentSelectedMap[group.name] ?? group.now;
         return ProxyGroupSelectorState(
+          proxyCardType: config.proxyCardType,
           proxiesSortType: config.proxiesSortType,
           sortNum: appState.sortNum,
           group: group,
@@ -227,14 +228,15 @@ class ProxiesTabView extends StatelessWidget {
                 crossAxisCount: _getColumns(state.viewMode),
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
-                mainAxisExtent: _getItemHeight(context),
+                mainAxisExtent: _getItemHeight(state.proxyCardType),
               ),
               itemCount: proxies.length,
               itemBuilder: (_, index) {
                 final proxy = proxies[index];
                 return ProxyCard(
-                  isSelected: state.currentProxyName == groupName,
+                  type: state.proxyCardType,
                   key: ValueKey('$groupName.${proxy.name}'),
+                  isSelected: state.currentProxyName == proxy.name,
                   proxy: proxy,
                   groupName: groupName,
                 );
@@ -243,138 +245,6 @@ class ProxiesTabView extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class ProxyCard extends StatelessWidget {
-  final String groupName;
-  final Proxy proxy;
-  final bool isSelected;
-
-  const ProxyCard({
-    super.key,
-    required this.groupName,
-    required this.proxy,
-    required this.isSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final measure = globalState.appController.measure;
-    return CommonCard(
-      isSelected: isSelected,
-      onPressed: () {
-        final appController = globalState.appController;
-        final group = appController.appState.getGroupWithName(groupName)!;
-        if (group.type != GroupType.Selector) {
-          globalState.showSnackBar(
-            context,
-            message: appLocalizations.notSelectedTip,
-          );
-          return;
-        }
-        globalState.appController.config.updateCurrentSelectedMap(
-          groupName,
-          proxy.name,
-        );
-        globalState.appController.changeProxy();
-      },
-      selectWidget: Container(
-        alignment: Alignment.topRight,
-        margin: const EdgeInsets.all(8),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Theme.of(context).colorScheme.secondaryContainer,
-          ),
-          child: const SelectIcon(),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: measure.bodyMediumHeight * 2,
-              child: Text(
-                proxy.name,
-                maxLines: 2,
-                style: context.textTheme.bodyMedium?.copyWith(
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
-            SizedBox(
-              height: measure.bodySmallHeight,
-              child: Selector<AppState, String>(
-                selector: (context, appState) => appState.getDesc(
-                  proxy.type,
-                  proxy.name,
-                ),
-                builder: (_, desc, __) {
-                  return TooltipText(
-                    text: Text(
-                      desc,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        overflow: TextOverflow.ellipsis,
-                        color:
-                        context.textTheme.bodySmall?.color?.toLight(),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
-            SizedBox(
-              height: measure.labelSmallHeight,
-              child: Selector<AppState, int?>(
-                selector: (context, appState) => appState.getDelay(
-                  proxy.name,
-                ),
-                builder: (_, delay, __) {
-                  return FadeBox(
-                    child: Builder(
-                      builder: (_) {
-                        if (delay == null) {
-                          return Container();
-                        }
-                        if (delay == 0) {
-                          return SizedBox(
-                            height: measure.labelSmallHeight,
-                            width: measure.labelSmallHeight,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          );
-                        }
-                        return Text(
-                          delay > 0 ? '$delay ms' : "Timeout",
-                          style: context.textTheme.labelSmall?.copyWith(
-                            overflow: TextOverflow.ellipsis,
-                            color: other.getDelayColor(
-                              delay,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

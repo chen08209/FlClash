@@ -65,12 +65,10 @@ enum RecoveryOption {
   onlyProfiles,
 }
 
-enum ChipType {
-  action,
-  delete,
-}
+enum ChipType { action, delete }
 
-enum CommonCardType{
-  plain,
-  filled,
-}
+enum CommonCardType { plain, filled }
+
+enum ProxiesType { tab, expansion }
+
+enum ProxyCardType { expand, shrink }
