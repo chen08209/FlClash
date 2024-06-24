@@ -17,12 +17,17 @@ class CommonChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if(type == ChipType.delete){
+    if (type == ChipType.delete) {
       return Chip(
         avatar: avatar,
+        padding: const EdgeInsets.symmetric(
+          vertical: 0,
+          horizontal: 4,
+        ),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         onDeleted: onPressed ?? () {},
-        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
+        side:
+            BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
         labelStyle: Theme.of(context).textTheme.bodyMedium,
         label: Text(label),
       );
@@ -30,6 +35,10 @@ class CommonChip extends StatelessWidget {
     return ActionChip(
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       avatar: avatar,
+      padding: const EdgeInsets.symmetric(
+        vertical: 0,
+        horizontal: 4,
+      ),
       onPressed: onPressed ?? () {},
       side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
       labelStyle: Theme.of(context).textTheme.bodyMedium,

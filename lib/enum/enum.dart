@@ -69,3 +69,8 @@ enum ChipType {
   action,
   delete,
 }
+
+enum CommonCardType{
+  plain,
+  filled,
+}

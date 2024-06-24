@@ -99,13 +99,14 @@ class ProxiesSelectorState with _$ProxiesSelectorState {
 }
 
 @freezed
-class ProxiesTabViewSelectorState with _$ProxiesTabViewSelectorState {
-  const factory ProxiesTabViewSelectorState({
+class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
+  const factory ProxyGroupSelectorState({
     required ProxiesSortType proxiesSortType,
     required num sortNum,
     required Group group,
     required ViewMode viewMode,
-  }) = _ProxiesTabViewSelectorState;
+    required String currentProxyName,
+  }) = _ProxyGroupSelectorState;
 }
 
 @freezed

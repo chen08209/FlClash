@@ -33,6 +33,7 @@ class OutboundMode extends StatelessWidget {
       selector: (_, clashConfig) => clashConfig.mode,
       builder: (_, mode, __) {
         return CommonCard(
+          onPressed: () {},
           info: Info(
             label: appLocalizations.outboundMode,
             iconData: Icons.call_split,

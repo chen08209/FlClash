@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
 
 import 'text.dart';
@@ -54,6 +55,7 @@ class CommonCard extends StatelessWidget {
   const CommonCard({
     super.key,
     bool? isSelected,
+    this.type = CommonCardType.plain,
     this.onPressed,
     this.info,
     this.selectWidget,
@@ -65,10 +67,14 @@ class CommonCard extends StatelessWidget {
   final Widget? selectWidget;
   final Widget child;
   final Info? info;
+  final CommonCardType type;
 
   BorderSide getBorderSide(BuildContext context, Set<WidgetState> states) {
+    if(type == CommonCardType.filled){
+      return BorderSide.none;
+    }
     final colorScheme = Theme.of(context).colorScheme;
-    var hoverColor = isSelected
+    final hoverColor = isSelected
         ? colorScheme.primary.toLight()
         : colorScheme.primary.toLighter();
     if (states.contains(WidgetState.hovered) ||
@@ -86,17 +92,28 @@ class CommonCard extends StatelessWidget {
 
   Color? getBackgroundColor(BuildContext context, Set<WidgetState> states) {
     final colorScheme = Theme.of(context).colorScheme;
-    if (isSelected) {
-      return colorScheme.secondaryContainer;
+    switch(type){
+      case CommonCardType.plain:
+        if (isSelected) {
+          return colorScheme.secondaryContainer;
+        }
+        if (states.isEmpty) {
+          return colorScheme.secondaryContainer.toLittle();
+        }
+        return Theme.of(context)
+            .outlinedButtonTheme
+            .style
+            ?.backgroundColor
+            ?.resolve(states);
+      case CommonCardType.filled:
+        if (isSelected) {
+          return colorScheme.secondaryContainer;
+        }
+        if (states.isEmpty) {
+          return colorScheme.surfaceContainerLow;
+        }
+        return colorScheme.surfaceContainer;
     }
-    if (states.isEmpty) {
-      return colorScheme.secondaryContainer.toLittle();
-    }
-    return Theme.of(context)
-        .outlinedButtonTheme
-        .style
-        ?.backgroundColor
-        ?.resolve(states);
   }
 
   @override
@@ -136,11 +153,7 @@ class CommonCard extends StatelessWidget {
           (states) => getBorderSide(context, states),
         ),
       ),
-      onPressed: () {
-        if (onPressed != null) {
-          onPressed!();
-        }
-      },
+      onPressed: onPressed,
       child: Builder(
         builder: (_) {
           List<Widget> children = [];

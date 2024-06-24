@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/fragments/proxies/expansion_panel.dart';
 import 'package:fl_clash/fragments/proxies/tabview.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -65,7 +66,7 @@ class _ProxiesFragmentState extends State<ProxiesFragment> {
         }
         return child!;
       },
-      child: const ProxiesTabFragment(),
+      child: const ProxiesExpansionPanelFragment(),
     );
   }
 }

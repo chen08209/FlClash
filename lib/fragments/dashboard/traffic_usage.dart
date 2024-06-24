@@ -51,6 +51,7 @@ class TrafficUsage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
+      onPressed: () {},
       info: Info(
         label: appLocalizations.trafficUsage,
         iconData: Icons.data_saver_off,

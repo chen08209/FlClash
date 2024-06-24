@@ -48,6 +48,9 @@ class _IntranetIpState extends State<IntranetIp> {
         label: appLocalizations.intranetIp,
         iconData: Icons.devices,
       ),
+      onPressed: (){
+
+      },
       child: Container(
         padding: const EdgeInsets.all(16).copyWith(top: 0),
         height: globalState.appController.measure.titleLargeHeight + 24 - 1,

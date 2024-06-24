@@ -1170,10 +1170,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Set the clash listening port`
+  /// `Set the Clash listening port`
   String get proxyPortDesc {
     return Intl.message(
-      'Set the clash listening port',
+      'Set the Clash listening port',
       name: 'proxyPortDesc',
       desc: '',
       args: [],
@@ -1720,20 +1720,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Once enabled, the clash kernel can be controlled on port 9090`
+  /// `Once enabled, the Clash kernel can be controlled on port 9090`
   String get externalControllerDesc {
     return Intl.message(
-      'Once enabled, the clash kernel can be controlled on port 9090',
+      'Once enabled, the Clash kernel can be controlled on port 9090',
       name: 'externalControllerDesc',
       desc: '',
       args: [],
     );
   }
 
-  /// `When turned on it will be able to receive ipv6 traffic`
+  /// `When turned on it will be able to receive IPv6 traffic`
   String get ipv6Desc {
     return Intl.message(
-      'When turned on it will be able to receive ipv6 traffic',
+      'When turned on it will be able to receive IPv6 traffic',
       name: 'ipv6Desc',
       desc: '',
       args: [],
