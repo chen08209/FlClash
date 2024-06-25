@@ -3,7 +3,6 @@ import 'package:fl_clash/clash/core.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -491,7 +490,7 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
                 crossAxisSpacing: 8,
                 crossAxisCount: columns,
                 children: [
-                  for (final proxy in proxies)
+                  for (final proxy in sortedProxies)
                     _currentProxyNameBuilder(
                       builder: (value) {
                         return ProxyCard(
