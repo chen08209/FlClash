@@ -127,10 +127,9 @@ class ApplicationState extends State<Application> {
       globalState.groupsUpdateTimer = null;
     }
     globalState.groupsUpdateTimer ??= Timer.periodic(
-      updateGroupsTimeoutDuration,
+      httpTimeoutDuration,
       (timer) async {
         await globalState.appController.updateGroups();
-        globalState.appController.appState.sortNum++;
       },
     );
   }

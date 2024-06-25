@@ -293,8 +293,8 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
   _delayTest(List<Proxy> proxies) async {
     if (isLock) return;
     isLock = true;
+    final appController = globalState.appController;
     for (final proxy in proxies) {
-      final appController = globalState.appController;
       final proxyName =
           appController.appState.getRealProxyName(proxy.name) ?? proxy.name;
       globalState.appController.setDelay(
@@ -308,6 +308,7 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
       });
     }
     await Future.delayed(httpTimeoutDuration + moreDuration);
+    appController.appState.sortNum++;
     isLock = false;
   }
 
