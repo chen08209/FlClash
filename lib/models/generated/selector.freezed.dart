@@ -1736,7 +1736,6 @@ mixin _$ProxyGroupSelectorState {
   num get sortNum => throw _privateConstructorUsedError;
   Group get group => throw _privateConstructorUsedError;
   int get columns => throw _privateConstructorUsedError;
-  String get currentProxyName => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ProxyGroupSelectorStateCopyWith<ProxyGroupSelectorState> get copyWith =>
@@ -1754,8 +1753,7 @@ abstract class $ProxyGroupSelectorStateCopyWith<$Res> {
       ProxyCardType proxyCardType,
       num sortNum,
       Group group,
-      int columns,
-      String currentProxyName});
+      int columns});
 
   $GroupCopyWith<$Res> get group;
 }
@@ -1779,7 +1777,6 @@ class _$ProxyGroupSelectorStateCopyWithImpl<$Res,
     Object? sortNum = null,
     Object? group = null,
     Object? columns = null,
-    Object? currentProxyName = null,
   }) {
     return _then(_value.copyWith(
       proxiesSortType: null == proxiesSortType
@@ -1802,10 +1799,6 @@ class _$ProxyGroupSelectorStateCopyWithImpl<$Res,
           ? _value.columns
           : columns // ignore: cast_nullable_to_non_nullable
               as int,
-      currentProxyName: null == currentProxyName
-          ? _value.currentProxyName
-          : currentProxyName // ignore: cast_nullable_to_non_nullable
-              as String,
     ) as $Val);
   }
 
@@ -1832,8 +1825,7 @@ abstract class _$$ProxyGroupSelectorStateImplCopyWith<$Res>
       ProxyCardType proxyCardType,
       num sortNum,
       Group group,
-      int columns,
-      String currentProxyName});
+      int columns});
 
   @override
   $GroupCopyWith<$Res> get group;
@@ -1857,7 +1849,6 @@ class __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>
     Object? sortNum = null,
     Object? group = null,
     Object? columns = null,
-    Object? currentProxyName = null,
   }) {
     return _then(_$ProxyGroupSelectorStateImpl(
       proxiesSortType: null == proxiesSortType
@@ -1880,10 +1871,6 @@ class __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>
           ? _value.columns
           : columns // ignore: cast_nullable_to_non_nullable
               as int,
-      currentProxyName: null == currentProxyName
-          ? _value.currentProxyName
-          : currentProxyName // ignore: cast_nullable_to_non_nullable
-              as String,
     ));
   }
 }
@@ -1896,8 +1883,7 @@ class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
       required this.proxyCardType,
       required this.sortNum,
       required this.group,
-      required this.columns,
-      required this.currentProxyName});
+      required this.columns});
 
   @override
   final ProxiesSortType proxiesSortType;
@@ -1909,12 +1895,10 @@ class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
   final Group group;
   @override
   final int columns;
-  @override
-  final String currentProxyName;
 
   @override
   String toString() {
-    return 'ProxyGroupSelectorState(proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, group: $group, columns: $columns, currentProxyName: $currentProxyName)';
+    return 'ProxyGroupSelectorState(proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, group: $group, columns: $columns)';
   }
 
   @override
@@ -1928,14 +1912,12 @@ class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
                 other.proxyCardType == proxyCardType) &&
             (identical(other.sortNum, sortNum) || other.sortNum == sortNum) &&
             (identical(other.group, group) || other.group == group) &&
-            (identical(other.columns, columns) || other.columns == columns) &&
-            (identical(other.currentProxyName, currentProxyName) ||
-                other.currentProxyName == currentProxyName));
+            (identical(other.columns, columns) || other.columns == columns));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, proxiesSortType, proxyCardType,
-      sortNum, group, columns, currentProxyName);
+  int get hashCode => Object.hash(
+      runtimeType, proxiesSortType, proxyCardType, sortNum, group, columns);
 
   @JsonKey(ignore: true)
   @override
@@ -1951,8 +1933,7 @@ abstract class _ProxyGroupSelectorState implements ProxyGroupSelectorState {
       required final ProxyCardType proxyCardType,
       required final num sortNum,
       required final Group group,
-      required final int columns,
-      required final String currentProxyName}) = _$ProxyGroupSelectorStateImpl;
+      required final int columns}) = _$ProxyGroupSelectorStateImpl;
 
   @override
   ProxiesSortType get proxiesSortType;
@@ -1964,8 +1945,6 @@ abstract class _ProxyGroupSelectorState implements ProxyGroupSelectorState {
   Group get group;
   @override
   int get columns;
-  @override
-  String get currentProxyName;
   @override
   @JsonKey(ignore: true)
   _$$ProxyGroupSelectorStateImplCopyWith<_$ProxyGroupSelectorStateImpl>

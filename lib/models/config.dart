@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:fl_clash/fragments/proxies/card.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
