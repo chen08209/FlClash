@@ -227,7 +227,6 @@ class ProxiesExpansionPanelFragment extends StatefulWidget {
 
 class _ProxiesExpansionPanelFragmentState
     extends State<ProxiesExpansionPanelFragment> {
-
   @override
   Widget build(BuildContext context) {
     return Selector2<AppState, Config, ProxiesSelectorState>(
@@ -377,123 +376,141 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
     final proxies = globalState.appController.getSortProxies(
       group.all,
     );
-    return CommonCard(
-      child: ExpansionTile(
-        iconColor: context.colorScheme.onSurfaceVariant,
-        controlAffinity: ListTileControlAffinity.trailing,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              flex: 1,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(group.name),
-                  const SizedBox(
-                    height: 4,
-                  ),
-                  Flexible(
-                    flex: 1,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          group.type.name,
-                          style: context.textTheme.labelMedium?.toLight,
+    return Selector<Config, Set<String>>(
+      selector: (_, config) => config.currentUnfoldSet,
+      builder: (_, currentUnfoldSet, __) {
+        return CommonCard(
+          child: ExpansionTile(
+            initiallyExpanded: currentUnfoldSet.contains(group.name),
+            iconColor: context.colorScheme.onSurfaceVariant,
+            onExpansionChanged: (value) {
+              final tempUnfoldSet = Set<String>.from(currentUnfoldSet);
+              if (value) {
+                tempUnfoldSet.add(group.name);
+              } else {
+                tempUnfoldSet.remove(group.name);
+              }
+              globalState.appController.config.updateCurrentUnfoldSet(
+                tempUnfoldSet,
+              );
+            },
+            controlAffinity: ListTileControlAffinity.trailing,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(group.name),
+                      const SizedBox(
+                        height: 4,
+                      ),
+                      Flexible(
+                        flex: 1,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              group.type.name,
+                              style: context.textTheme.labelMedium?.toLight,
+                            ),
+                            Flexible(
+                              flex: 1,
+                              child: _currentProxyNameBuilder(
+                                group: group,
+                                builder: (value) {
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      if (value.isNotEmpty) ...[
+                                        Icon(
+                                          Icons.arrow_right,
+                                          color: context
+                                              .colorScheme.onSurfaceVariant,
+                                        ),
+                                        Flexible(
+                                          flex: 1,
+                                          child: Text(
+                                            overflow: TextOverflow.ellipsis,
+                                            value,
+                                            style: context
+                                                .textTheme.labelMedium?.toLight,
+                                          ),
+                                        ),
+                                      ]
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                        Flexible(
-                          flex: 1,
-                          child: _currentProxyNameBuilder(
-                            group: group,
-                            builder: (value) {
-                              return Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  if (value.isNotEmpty) ...[
-                                    Icon(
-                                      Icons.arrow_right,
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                    ),
-                                    Flexible(
-                                      flex: 1,
-                                      child: Text(
-                                        overflow: TextOverflow.ellipsis,
-                                        value,
-                                        style: context
-                                            .textTheme.labelMedium?.toLight,
-                                      ),
-                                    ),
-                                  ]
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(
+                        height: 4,
+                      ),
+                    ],
                   ),
-                  const SizedBox(
-                    height: 4,
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.network_ping,
+                    size: 20,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.network_ping,
-                size: 20,
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-              onPressed: () {
-                _delayTest(group.all);
-              },
-            ),
-          ],
-        ),
-        shape: const RoundedRectangleBorder(
-          side: BorderSide.none,
-        ),
-        collapsedShape: const RoundedRectangleBorder(
-          side: BorderSide.none,
-        ),
-        childrenPadding: const EdgeInsets.only(
-          top: 8,
-          bottom: 8,
-          left: 8,
-          right: 8,
-        ),
-        children: [
-          Grid(
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            crossAxisCount: columns,
-            children: [
-              for (final proxy in proxies)
-                _currentProxyNameBuilder(
-                  group: group,
-                  builder: (value) {
-                    return ProxyCard(
-                      style: CommonCardType.filled,
-                      type: proxyCardType,
-                      isSelected: value == proxy.name,
-                      key: ValueKey('$groupName.${proxy.name}'),
-                      proxy: proxy,
-                      groupName: groupName,
-                    );
+                  onPressed: () {
+                    _delayTest(group.all);
                   },
                 ),
+              ],
+            ),
+            shape: const RoundedRectangleBorder(
+              side: BorderSide.none,
+            ),
+            collapsedShape: const RoundedRectangleBorder(
+              side: BorderSide.none,
+            ),
+            childrenPadding: const EdgeInsets.only(
+              top: 8,
+              bottom: 8,
+              left: 8,
+              right: 8,
+            ),
+            children: [
+              Grid(
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                crossAxisCount: columns,
+                children: [
+                  for (final proxy in proxies)
+                    _currentProxyNameBuilder(
+                      group: group,
+                      builder: (value) {
+                        return ProxyCard(
+                          style: CommonCardType.filled,
+                          type: proxyCardType,
+                          isSelected: value == proxy.name,
+                          key: ValueKey('$groupName.${proxy.name}'),
+                          proxy: proxy,
+                          groupName: groupName,
+                        );
+                      },
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

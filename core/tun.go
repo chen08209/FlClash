@@ -4,7 +4,9 @@ package main
 
 import "C"
 import (
+	"core/platform"
 	t "core/tun"
+	"errors"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/log"
 	"golang.org/x/sync/semaphore"
@@ -59,8 +61,13 @@ func stopTun() {
 	}()
 }
 
+var errBlocked = errors.New("blocked")
+
 func init() {
 	dialer.DefaultSocketHook = func(network, address string, conn syscall.RawConn) error {
+		if platform.ShouldBlockConnection() {
+			return errBlocked
+		}
 		return conn.Control(func(fd uintptr) {
 			if tun != nil {
 				tun.MarkSocket(int(fd))

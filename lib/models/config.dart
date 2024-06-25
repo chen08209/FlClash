@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -155,6 +156,19 @@ class Config extends ChangeNotifier {
   }
 
   String? get currentGroupName => currentProfile?.currentGroupName;
+
+  Set<String> get currentUnfoldSet => currentProfile?.unfoldSet ?? {};
+
+  updateCurrentUnfoldSet(Set<String> value) {
+    if (!const SetEquality<String>().equals(currentUnfoldSet, value)) {
+      _setProfile(
+        currentProfile!.copyWith(
+          unfoldSet: value,
+        ),
+      );
+      notifyListeners();
+    }
+  }
 
   updateCurrentGroupName(String groupName) {
     if (currentProfile != null &&

@@ -41,6 +41,10 @@ _$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
             (k, e) => MapEntry(k, e as String),
           ) ??
           const {},
+      unfoldSet: (json['unfoldSet'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toSet() ??
+          const {},
     );
 
 Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
@@ -54,4 +58,5 @@ Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
       'userInfo': instance.userInfo,
       'autoUpdate': instance.autoUpdate,
       'selectedMap': instance.selectedMap,
+      'unfoldSet': instance.unfoldSet.toList(),
     };
