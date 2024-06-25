@@ -3,6 +3,7 @@ import 'package:fl_clash/clash/core.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -313,12 +314,13 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
   }
 
   Widget _currentProxyNameBuilder({
-    required Group group,
     required Widget Function(String) builder,
   }) {
-    return Selector<Config, String>(
-      selector: (_, config) =>
-          config.currentSelectedMap[group.name] ?? group.now ?? '',
+    return Selector2<AppState, Config, String>(
+      selector: (_, appState, config) {
+        final group = appState.getGroupWithName(groupName)!;
+        return config.currentSelectedMap[groupName] ?? group.now ?? '';
+      },
       builder: (_, value, ___) {
         return builder(value);
       },
@@ -326,12 +328,12 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
   }
 
   Widget _buildTabGroupView({
-    required Group group,
+    required List<Proxy> proxies,
     required int columns,
     required ProxyCardType proxyCardType,
   }) {
-    final proxies = globalState.appController.getSortProxies(
-      group.all,
+    final sortedProxies = globalState.appController.getSortProxies(
+      proxies,
     );
     return DelayTestButtonContainer(
       onClick: () async {
@@ -349,20 +351,18 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
             crossAxisSpacing: 8,
             mainAxisExtent: _getItemHeight(proxyCardType),
           ),
-          itemCount: proxies.length,
+          itemCount: sortedProxies.length,
           itemBuilder: (_, index) {
-            final proxy = proxies[index];
-            return _currentProxyNameBuilder(
-                group: group,
-                builder: (value) {
-                  return ProxyCard(
-                    type: proxyCardType,
-                    key: ValueKey('$groupName.${proxy.name}'),
-                    isSelected: value == proxy.name,
-                    proxy: proxy,
-                    groupName: groupName,
-                  );
-                });
+            final proxy = sortedProxies[index];
+            return _currentProxyNameBuilder(builder: (value) {
+              return ProxyCard(
+                type: proxyCardType,
+                key: ValueKey('$groupName.${proxy.name}'),
+                isSelected: value == proxy.name,
+                proxy: proxy,
+                groupName: groupName,
+              );
+            });
           },
         ),
       ),
@@ -370,26 +370,26 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
   }
 
   Widget _buildExpansionGroupView({
-    required Group group,
+    required List<Proxy> proxies,
     required int columns,
     required ProxyCardType proxyCardType,
   }) {
-    final proxies = globalState.appController.getSortProxies(
-      group.all,
+    final sortedProxies = globalState.appController.getSortProxies(
+      proxies,
     );
     return Selector<Config, Set<String>>(
       selector: (_, config) => config.currentUnfoldSet,
       builder: (_, currentUnfoldSet, __) {
         return CommonCard(
           child: ExpansionTile(
-            initiallyExpanded: currentUnfoldSet.contains(group.name),
+            initiallyExpanded: currentUnfoldSet.contains(groupName),
             iconColor: context.colorScheme.onSurfaceVariant,
             onExpansionChanged: (value) {
               final tempUnfoldSet = Set<String>.from(currentUnfoldSet);
               if (value) {
-                tempUnfoldSet.add(group.name);
+                tempUnfoldSet.add(groupName);
               } else {
-                tempUnfoldSet.remove(group.name);
+                tempUnfoldSet.remove(groupName);
               }
               globalState.appController.config.updateCurrentUnfoldSet(
                 tempUnfoldSet,
@@ -406,7 +406,7 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(group.name),
+                      Text(groupName),
                       const SizedBox(
                         height: 4,
                       ),
@@ -418,13 +418,12 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              group.type.name,
+                              groupName,
                               style: context.textTheme.labelMedium?.toLight,
                             ),
                             Flexible(
                               flex: 1,
                               child: _currentProxyNameBuilder(
-                                group: group,
                                 builder: (value) {
                                   return Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -469,7 +468,7 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
                     color: context.colorScheme.onSurfaceVariant,
                   ),
                   onPressed: () {
-                    _delayTest(group.all);
+                    _delayTest(sortedProxies);
                   },
                 ),
               ],
@@ -494,7 +493,6 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
                 children: [
                   for (final proxy in proxies)
                     _currentProxyNameBuilder(
-                      group: group,
                       builder: (value) {
                         return ProxyCard(
                           style: CommonCardType.filled,
@@ -525,21 +523,21 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
           proxiesSortType: config.proxiesSortType,
           columns: globalState.appController.columns,
           sortNum: appState.sortNum,
-          group: group,
+          proxies: group.all,
         );
       },
       builder: (_, state, __) {
-        final group = state.group;
+        final proxies = state.proxies;
         final columns = state.columns;
         final proxyCardType = state.proxyCardType;
         return switch (type) {
           ProxiesType.tab => _buildTabGroupView(
-              group: group,
+              proxies: proxies,
               columns: columns,
               proxyCardType: proxyCardType,
             ),
           ProxiesType.expansion => _buildExpansionGroupView(
-              group: group,
+              proxies: proxies,
               columns: columns,
               proxyCardType: proxyCardType,
             ),

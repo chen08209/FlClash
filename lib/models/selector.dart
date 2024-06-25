@@ -104,7 +104,7 @@ class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
     required ProxiesSortType proxiesSortType,
     required ProxyCardType proxyCardType,
     required num sortNum,
-    required Group group,
+    required List<Proxy> proxies,
     required int columns,
   }) = _ProxyGroupSelectorState;
 }
