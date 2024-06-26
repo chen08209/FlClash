@@ -193,7 +193,7 @@ class RequestItem extends StatelessWidget {
   }
 
   String _getRequestText(Metadata metadata) {
-    var text = "${metadata.network}:://";
+    var text = "${metadata.network}://";
     final ips = [
       metadata.host,
       metadata.destinationIP,

@@ -152,9 +152,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "infiniteTime":
             MessageLookupByLibrary.simpleMessage("Long term effective"),
         "init": MessageLookupByLibrary.simpleMessage("Init"),
-        "intranetIp": MessageLookupByLibrary.simpleMessage("Intranet IP"),
-        "ipCheckTimeout":
-            MessageLookupByLibrary.simpleMessage("Ip check timeout"),
+        "intranetIP": MessageLookupByLibrary.simpleMessage("Intranet IP"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage(
             "When turned on it will be able to receive IPv6 traffic"),
         "just": MessageLookupByLibrary.simpleMessage("Just"),
@@ -268,9 +266,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "tabAnimation": MessageLookupByLibrary.simpleMessage("Tab animation"),
         "tabAnimationDesc": MessageLookupByLibrary.simpleMessage(
             "When enabled, the home tab will add a toggle animation"),
-        "tcpConcurrent": MessageLookupByLibrary.simpleMessage("Tcp concurrent"),
+        "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP concurrent"),
         "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
-            "Enabling it will allow tcp concurrency"),
+            "Enabling it will allow TCP concurrency"),
         "theme": MessageLookupByLibrary.simpleMessage("Theme"),
         "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),
         "themeDesc": MessageLookupByLibrary.simpleMessage(

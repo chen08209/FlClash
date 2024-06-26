@@ -55,7 +55,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
   _updateProfiles() async {
     final updateProfiles = profileItemKeys.map<Future>(
         (key) async => await key.currentState?.updateProfile(false));
-    final result = await Future.wait(updateProfiles);
+    await Future.wait(updateProfiles);
   }
 
   _initScaffoldState() {

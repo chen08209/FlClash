@@ -150,6 +150,7 @@ class ApplicationState extends State<Application> {
                 builder: (lightDynamic, darkDynamic) {
                   _updateSystemColorSchemes(lightDynamic, darkDynamic);
                   return MaterialApp(
+                    debugShowCheckedModeBanner: false,
                     navigatorKey: globalState.navigatorKey,
                     localizationsDelegates: const [
                       AppLocalizations.delegate,
@@ -164,7 +165,6 @@ class ApplicationState extends State<Application> {
                     themeMode: state.themeMode,
                     theme: ThemeData(
                       useMaterial3: true,
-                      fontFamily: '',
                       pageTransitionsTheme: _pageTransitionsTheme,
                       colorScheme: _getAppColorScheme(
                         brightness: Brightness.light,
@@ -174,7 +174,6 @@ class ApplicationState extends State<Application> {
                     ),
                     darkTheme: ThemeData(
                       useMaterial3: true,
-                      fontFamily: '',
                       pageTransitionsTheme: _pageTransitionsTheme,
                       colorScheme: _getAppColorScheme(
                         brightness: Brightness.dark,

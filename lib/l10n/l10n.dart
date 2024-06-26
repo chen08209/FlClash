@@ -1670,16 +1670,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Ip check timeout`
-  String get ipCheckTimeout {
-    return Intl.message(
-      'Ip check timeout',
-      name: 'ipCheckTimeout',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Search`
   String get search {
     return Intl.message(
@@ -1790,20 +1780,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Tcp concurrent`
+  /// `TCP concurrent`
   String get tcpConcurrent {
     return Intl.message(
-      'Tcp concurrent',
+      'TCP concurrent',
       name: 'tcpConcurrent',
       desc: '',
       args: [],
     );
   }
 
-  /// `Enabling it will allow tcp concurrency`
+  /// `Enabling it will allow TCP concurrency`
   String get tcpConcurrentDesc {
     return Intl.message(
-      'Enabling it will allow tcp concurrency',
+      'Enabling it will allow TCP concurrency',
       name: 'tcpConcurrentDesc',
       desc: '',
       args: [],
@@ -1941,10 +1931,10 @@ class AppLocalizations {
   }
 
   /// `Intranet IP`
-  String get intranetIp {
+  String get intranetIP {
     return Intl.message(
       'Intranet IP',
-      name: 'intranetIp',
+      name: 'intranetIP',
       desc: '',
       args: [],
     );

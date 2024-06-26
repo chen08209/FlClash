@@ -7,8 +7,12 @@ extension BuildContextExtension on BuildContext {
     return findAncestorStateOfType<CommonScaffoldState>();
   }
 
+  Size get appSize{
+    return MediaQuery.of(this).size;
+  }
+
   double get width {
-    return MediaQuery.of(this).size.width;
+    return appSize.width;
   }
 
   ColorScheme get colorScheme => Theme.of(this).colorScheme;

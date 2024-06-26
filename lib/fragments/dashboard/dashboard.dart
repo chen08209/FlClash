@@ -56,7 +56,7 @@ class _DashboardFragmentState extends State<DashboardFragment> {
                   ),
                   GridItem(
                     crossAxisCellCount: isDesktop ? 4 : 6,
-                    child: const IntranetIp(),
+                    child: const IntranetIP(),
                   ),
                 ],
               );

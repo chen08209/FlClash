@@ -96,7 +96,7 @@ class ClashCore {
     final proxiesRawString = proxiesRaw.cast<Utf8>().toDartString();
     return Isolate.run<List<Group>>(() {
       if(proxiesRawString.isEmpty) return [];
-      final proxies = json.decode(proxiesRawString) as Map;
+      final proxies = (json.decode(proxiesRawString) ?? {}) as Map;
       if(proxies.isEmpty) return [];
       final groupNames = [
         UsedProxy.GLOBAL.name,

@@ -123,8 +123,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "importFromURL": MessageLookupByLibrary.simpleMessage("从URL导入"),
         "infiniteTime": MessageLookupByLibrary.simpleMessage("长期有效"),
         "init": MessageLookupByLibrary.simpleMessage("初始化"),
-        "intranetIp": MessageLookupByLibrary.simpleMessage("内网 IP"),
-        "ipCheckTimeout": MessageLookupByLibrary.simpleMessage("Ip检测超时"),
+        "intranetIP": MessageLookupByLibrary.simpleMessage("内网 IP"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage("开启后将可以接收IPv6流量"),
         "just": MessageLookupByLibrary.simpleMessage("刚刚"),
         "language": MessageLookupByLibrary.simpleMessage("语言"),
@@ -217,7 +216,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "tabAnimationDesc":
             MessageLookupByLibrary.simpleMessage("开启后，主页选项卡将添加切换动画"),
         "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP并发"),
-        "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("开启后允许tcp并发"),
+        "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("开启后允许TCP并发"),
         "theme": MessageLookupByLibrary.simpleMessage("主题"),
         "themeColor": MessageLookupByLibrary.simpleMessage("主题色彩"),
         "themeDesc": MessageLookupByLibrary.simpleMessage("设置深色模式，调整色彩"),

@@ -5,14 +5,14 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
-class IntranetIp extends StatefulWidget {
-  const IntranetIp({super.key});
+class IntranetIP extends StatefulWidget {
+  const IntranetIP({super.key});
 
   @override
-  State<IntranetIp> createState() => _IntranetIpState();
+  State<IntranetIP> createState() => _IntranetIPState();
 }
 
-class _IntranetIpState extends State<IntranetIp> {
+class _IntranetIPState extends State<IntranetIP> {
   final ipNotifier = ValueNotifier<String>("");
 
   Future<String?> getLocalIpAddress() async {
@@ -45,7 +45,7 @@ class _IntranetIpState extends State<IntranetIp> {
   Widget build(BuildContext context) {
     return CommonCard(
       info: Info(
-        label: appLocalizations.intranetIp,
+        label: appLocalizations.intranetIP,
         iconData: Icons.devices,
       ),
       onPressed: (){

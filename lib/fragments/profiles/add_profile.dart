@@ -91,7 +91,8 @@ class _URLFormDialogState extends State<URLFormDialog> {
           runSpacing: 16,
           children: [
             TextField(
-              maxLines: null,
+              maxLines: 5,
+              minLines: 1,
               controller: urlController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),

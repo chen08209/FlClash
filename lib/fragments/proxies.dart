@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:fl_clash/clash/core.dart';
 import 'package:fl_clash/common/common.dart';
@@ -227,6 +230,17 @@ class ProxiesExpansionPanelFragment extends StatefulWidget {
 
 class _ProxiesExpansionPanelFragmentState
     extends State<ProxiesExpansionPanelFragment> {
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Selector2<AppState, Config, ProxiesSelectorState>(
@@ -245,7 +259,6 @@ class _ProxiesExpansionPanelFragmentState
           itemBuilder: (_, index) {
             final groupName = state.groupNames[index];
             return ProxyGroupView(
-              key: Key(groupName),
               groupName: groupName,
               type: ProxiesType.expansion,
             );
@@ -277,6 +290,8 @@ class ProxyGroupView extends StatefulWidget {
 
 class _ProxyGroupViewState extends State<ProxyGroupView> {
   var isLock = false;
+  final isBoundaryNotifier = ValueNotifier<bool>(false);
+  var isEnd = false;
 
   String get groupName => widget.groupName;
 
@@ -368,6 +383,32 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
     );
   }
 
+  Widget _androidExpansionHandle(Widget child) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (ScrollNotification notification) {
+        if (notification is ScrollEndNotification) {
+          if (notification.metrics.atEdge) {
+            isEnd = notification.metrics.pixels ==
+                notification.metrics.maxScrollExtent;
+            isBoundaryNotifier.value = true;
+          }
+        }
+        return false;
+      },
+      child: Listener(
+        onPointerMove: (details) {
+          double yOffset = details.delta.dy;
+          if (yOffset > 0 && isEnd) {
+            isBoundaryNotifier.value = false;
+          } else if (yOffset < 0 && !isEnd) {
+            isBoundaryNotifier.value = false;
+          }
+        },
+        child: child,
+      ),
+    );
+  }
+
   Widget _buildExpansionGroupView({
     required List<Proxy> proxies,
     required int columns,
@@ -376,6 +417,14 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
     final sortedProxies = globalState.appController.getSortProxies(
       proxies,
     );
+    final group =
+        globalState.appController.appState.getGroupWithName(groupName)!;
+    final itemHeight = _getItemHeight(proxyCardType);
+    final innerHeight = context.appSize.height - 200;
+    final lines = (sortedProxies.length / columns).ceil();
+    final minLines = innerHeight >= 200 ? (innerHeight / itemHeight).floor() : 3;
+    final hasScrollable = lines > minLines;
+    final height = (itemHeight + 8) * min(lines, minLines) - 8;
     return Selector<Config, Set<String>>(
       selector: (_, config) => config.currentUnfoldSet,
       builder: (_, currentUnfoldSet, __) {
@@ -417,7 +466,7 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              groupName,
+                              group.type.name,
                               style: context.textTheme.labelMedium?.toLight,
                             ),
                             Flexible(
@@ -485,31 +534,81 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
               right: 8,
             ),
             children: [
-              Grid(
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                crossAxisCount: columns,
-                children: [
-                  for (final proxy in sortedProxies)
-                    _currentProxyNameBuilder(
-                      builder: (value) {
-                        return ProxyCard(
-                          style: CommonCardType.filled,
-                          type: proxyCardType,
-                          isSelected: value == proxy.name,
-                          key: ValueKey('$groupName.${proxy.name}'),
-                          proxy: proxy,
-                          groupName: groupName,
-                        );
-                      },
-                    ),
-                ],
+              SizedBox(
+                height: height,
+                child: Platform.isAndroid
+                    ? _androidExpansionHandle(
+                        ValueListenableBuilder(
+                          valueListenable: isBoundaryNotifier,
+                          builder: (_, isBoundary, child) {
+                            return GridView.builder(
+                              physics: isBoundary || !hasScrollable
+                                  ? const NeverScrollableScrollPhysics()
+                                  : const AlwaysScrollableScrollPhysics(),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: columns,
+                                mainAxisSpacing: 8,
+                                crossAxisSpacing: 8,
+                                mainAxisExtent: _getItemHeight(proxyCardType),
+                              ),
+                              itemCount: sortedProxies.length,
+                              itemBuilder: (_, index) {
+                                final proxy = sortedProxies[index];
+                                return _currentProxyNameBuilder(
+                                    builder: (value) {
+                                  return ProxyCard(
+                                    style: CommonCardType.filled,
+                                    type: proxyCardType,
+                                    isSelected: value == proxy.name,
+                                    key: ValueKey('$groupName.${proxy.name}'),
+                                    proxy: proxy,
+                                    groupName: groupName,
+                                  );
+                                });
+                              },
+                            );
+                          },
+                        ),
+                      )
+                    : GridView.builder(
+                  physics: !hasScrollable
+                      ? const NeverScrollableScrollPhysics()
+                      : const AlwaysScrollableScrollPhysics(),
+                  gridDelegate:
+                  SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    mainAxisExtent: _getItemHeight(proxyCardType),
+                  ),
+                  itemCount: sortedProxies.length,
+                  itemBuilder: (_, index) {
+                    final proxy = sortedProxies[index];
+                    return _currentProxyNameBuilder(builder: (value) {
+                      return ProxyCard(
+                        style: CommonCardType.filled,
+                        type: proxyCardType,
+                        isSelected: value == proxy.name,
+                        key: ValueKey('$groupName.${proxy.name}'),
+                        proxy: proxy,
+                        groupName: groupName,
+                      );
+                    });
+                  },
+                ),
               ),
             ],
           ),
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    isBoundaryNotifier.dispose();
   }
 
   @override
