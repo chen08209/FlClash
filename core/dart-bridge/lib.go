@@ -1,6 +1,7 @@
 package dart_bridge
 
 /*
+#include <stdlib.h>
 #include "stdint.h"
 #include "include/dart_api_dl.h"
 #include "include/dart_api_dl.c"
@@ -28,6 +29,7 @@ func SendToPort(port int64, msg string) {
 	var obj C.Dart_CObject
 	obj._type = C.Dart_CObject_kString
 	msgString := C.CString(msg)
+	defer C.free(unsafe.Pointer(msgString))
 	ptr := unsafe.Pointer(&obj.value[0])
 	*(**C.char)(ptr) = msgString
 	isSuccess := C.GoDart_PostCObject(C.Dart_Port_DL(port), &obj)

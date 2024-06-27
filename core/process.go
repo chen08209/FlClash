@@ -71,8 +71,8 @@ func setProcessMap(s *C.char) {
 	if s == nil {
 		return
 	}
+	paramsString := C.GoString(s)
 	go func() {
-		paramsString := C.GoString(s)
 		var processMapItem = &ProcessMapItem{}
 		err := json.Unmarshal([]byte(paramsString), processMapItem)
 		if err == nil {

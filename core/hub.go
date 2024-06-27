@@ -1,5 +1,8 @@
 package main
 
+/*
+#include <stdlib.h>
+*/
 import "C"
 import (
 	bridge "core/dart-bridge"
@@ -71,8 +74,8 @@ func forceGc() {
 //export validateConfig
 func validateConfig(s *C.char, port C.longlong) {
 	i := int64(port)
+	bytes := []byte(C.GoString(s))
 	go func() {
-		bytes := []byte(C.GoString(s))
 		_, err := config.UnmarshalRawConfig(bytes)
 		if err != nil {
 			bridge.SendToPort(i, err.Error())
@@ -85,8 +88,8 @@ func validateConfig(s *C.char, port C.longlong) {
 //export updateConfig
 func updateConfig(s *C.char, port C.longlong) {
 	i := int64(port)
+	paramsString := C.GoString(s)
 	go func() {
-		paramsString := C.GoString(s)
 		var params = &GenerateConfigParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
 		if err != nil {
@@ -148,8 +151,8 @@ func getProxies() *C.char {
 
 //export changeProxy
 func changeProxy(s *C.char) bool {
+	paramsString := C.GoString(s)
 	go func() {
-		paramsString := C.GoString(s)
 		var params = &ChangeProxyParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
 		if err != nil {
@@ -211,8 +214,8 @@ func resetTraffic() {
 //export asyncTestDelay
 func asyncTestDelay(s *C.char, port C.longlong) {
 	i := int64(port)
+	paramsString := C.GoString(s)
 	go func() {
-		paramsString := C.GoString(s)
 		var params = &TestDelayParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
 		if err != nil {
@@ -296,7 +299,6 @@ func closeConnections() bool {
 //export closeConnection
 func closeConnection(id *C.char) bool {
 	connectionId := C.GoString(id)
-
 	err := statistic.DefaultManager.Get(connectionId).Close()
 	if err != nil {
 		return false
@@ -307,10 +309,13 @@ func closeConnection(id *C.char) bool {
 //export getProviders
 func getProviders() *C.char {
 	data, err := json.Marshal(tunnel.Providers())
+	var msg *C.char
 	if err != nil {
-		return C.CString("")
+		msg = C.CString("")
+		return msg
 	}
-	return C.CString(string(data))
+	msg = C.CString(string(data))
+	return msg
 }
 
 //export getProvider
@@ -360,10 +365,9 @@ func getExternalProviders() *C.char {
 //export updateExternalProvider
 func updateExternalProvider(providerName *C.char, providerType *C.char, port C.longlong) {
 	i := int64(port)
+	providerNameString := C.GoString(providerName)
+	providerTypeString := C.GoString(providerType)
 	go func() {
-		providerNameString := C.GoString(providerName)
-		providerTypeString := C.GoString(providerType)
-
 		switch providerTypeString {
 		case "Proxy":
 			providers := tunnel.Providers()
@@ -407,6 +411,11 @@ func initNativeApiBridge(api unsafe.Pointer, port C.longlong) {
 	bridge.InitDartApi(api)
 	i := int64(port)
 	bridge.Port = &i
+}
+
+//export freeCString
+func freeCString(s *C.char) {
+	C.free(unsafe.Pointer(s))
 }
 
 func init() {
