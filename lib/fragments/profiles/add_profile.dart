@@ -25,7 +25,9 @@ class AddProfile extends StatelessWidget {
     final url = await Navigator.of(context)
         .push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
     if (url != null) {
-      _handleAddProfileFormURL(url);
+      WidgetsBinding.instance.addPostFrameCallback((_){
+        _handleAddProfileFormURL(url);
+      });
     }
   }
 

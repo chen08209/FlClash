@@ -438,14 +438,14 @@ class _ProfileItemState extends State<ProfileItem> {
                                 iconData: Icons.sync,
                               ),
                             CommonPopupMenuItem(
-                              action: ProfileActions.delete,
-                              label: appLocalizations.delete,
-                              iconData: Icons.delete,
-                            ),
-                            CommonPopupMenuItem(
                               action: ProfileActions.view,
                               label: appLocalizations.view,
                               iconData: Icons.visibility,
+                            ),
+                            CommonPopupMenuItem(
+                              action: ProfileActions.delete,
+                              label: appLocalizations.delete,
+                              iconData: Icons.delete,
                             ),
                           ],
                           onSelected: (ProfileActions? action) async {

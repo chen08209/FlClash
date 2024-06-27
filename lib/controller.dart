@@ -359,7 +359,9 @@ class AppController {
   }
 
   addProfileFormURL(String url) async {
-    globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    if (globalState.navigatorKey.currentState?.canPop() ?? false) {
+      globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    }
     toProfiles();
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
@@ -421,18 +423,17 @@ class AppController {
     });
   }
 
-
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
       ..sort(
-            (a, b) => other.sortByChar(a.name, b.name),
+        (a, b) => other.sortByChar(a.name, b.name),
       );
   }
 
   List<Proxy> _sortOfDelay(List<Proxy> proxies) {
     return proxies = List.of(proxies)
       ..sort(
-            (a, b) {
+        (a, b) {
           final aDelay = appState.getDelay(a.name);
           final bDelay = appState.getDelay(b.name);
           if (aDelay == null && bDelay == null) {
@@ -449,11 +450,11 @@ class AppController {
       );
   }
 
-  List<Proxy> getSortProxies(List<Proxy> proxies){
-    return switch(config.proxiesSortType){
+  List<Proxy> getSortProxies(List<Proxy> proxies) {
+    return switch (config.proxiesSortType) {
       ProxiesSortType.none => proxies,
       ProxiesSortType.delay => _sortOfDelay(proxies),
-      ProxiesSortType.name =>_sortOfName(proxies),
+      ProxiesSortType.name => _sortOfName(proxies),
     };
   }
 }
