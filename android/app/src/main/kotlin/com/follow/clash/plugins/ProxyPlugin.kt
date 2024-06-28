@@ -44,6 +44,7 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
     private var props: Props? = null
     private lateinit var title: String
     private lateinit var content: String
+    var isBlockNotification: Boolean = false
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -152,13 +153,14 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
             if (permission == PackageManager.PERMISSION_GRANTED) {
                 startForeground()
             } else {
-                activity?.let {
-                    ActivityCompat.requestPermissions(
-                        it,
-                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                        NOTIFICATION_PERMISSION_REQUEST_CODE
-                    )
-                }
+                if (isBlockNotification) return
+                if (activity == null) return
+                ActivityCompat.requestPermissions(
+                    activity!!,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                )
+
             }
         } else {
             startForeground()
@@ -192,11 +194,14 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
         grantResults: IntArray
     ): Boolean {
         if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startForeground()
+            isBlockNotification = true
+            if (grantResults.isNotEmpty()) {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startForeground()
+                }
             }
         }
-        return true;
+        return false;
     }
 
 
