@@ -1,5 +1,7 @@
 // ignore_for_file: invalid_annotation_target
 
+import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:flutter/material.dart';
@@ -235,7 +237,12 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
-  Tun get tun => _tun;
+  Tun get tun {
+    if (Platform.isAndroid) {
+      return _tun.copyWith(enable: false);
+    }
+    return _tun;
+  }
 
   set tun(Tun value) {
     if (_tun != value) {
@@ -281,10 +288,5 @@ class ClashConfig extends ChangeNotifier {
 
   factory ClashConfig.fromJson(Map<String, dynamic> json) {
     return _$ClashConfigFromJson(json);
-  }
-
-  @override
-  String toString() {
-    return 'ClashConfig{_mixedPort: $_mixedPort, _allowLan: $_allowLan, _mode: $_mode, _logLevel: $_logLevel, _tun: $_tun, _dns: $_dns, _rules: $_rules}';
   }
 }

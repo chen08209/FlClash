@@ -117,6 +117,7 @@ class ClashCore {
             .map(
               (name) => proxies[name],
             )
+            .where((proxy) => proxy != null)
             .toList();
         return group;
       }).toList();
@@ -185,7 +186,8 @@ class ClashCore {
         receiver.close();
       }
     });
-    final delayParamsChar = json.encode(delayParams).toNativeUtf8().cast<Char>();
+    final delayParamsChar =
+        json.encode(delayParams).toNativeUtf8().cast<Char>();
     clashFFI.asyncTestDelay(
       delayParamsChar,
       receiver.sendPort.nativePort,
@@ -254,9 +256,14 @@ class ClashCore {
   }
 
   void setProcessMap(ProcessMapItem processMapItem) {
-    final processMapItemChar = json.encode(processMapItem).toNativeUtf8().cast<Char>();
+    final processMapItemChar =
+        json.encode(processMapItem).toNativeUtf8().cast<Char>();
     clashFFI.setProcessMap(processMapItemChar);
     malloc.free(processMapItemChar);
+  }
+
+  void setFdMap(int fd) {
+    clashFFI.setFdMap(fd);
   }
 
   // DateTime? getRunTime() {

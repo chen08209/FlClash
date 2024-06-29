@@ -337,7 +337,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
 
   Widget _buildMoreSection() {
     final items = [
-      if (false)
+      if (system.isDesktop)
         Selector<ClashConfig, bool>(
           selector: (_, clashConfig) => clashConfig.tun.enable,
           builder: (_, tunEnable, __) {
@@ -361,7 +361,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     ];
     if(items.isEmpty) return Container();
     return Section(
-      title: appLocalizations.general,
+      title: appLocalizations.more,
       child: Column(
         children: [
           for (final item in items) ...[

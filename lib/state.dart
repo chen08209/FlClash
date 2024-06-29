@@ -43,13 +43,14 @@ class GlobalState {
   }) async {
     final profilePath = await appPath.getProfilePath(config.currentProfileId);
     await config.currentProfile?.checkAndUpdate();
-    debugPrint("update config");
-    final res = await clashCore.updateConfig(UpdateConfigParams(
-      profilePath: profilePath,
-      config: clashConfig,
-      isPatch: isPatch,
-      isCompatible: config.isCompatible,
-    ));
+    final res = await clashCore.updateConfig(
+      UpdateConfigParams(
+        profilePath: profilePath,
+        config: clashConfig,
+        isPatch: isPatch,
+        isCompatible: config.isCompatible,
+      ),
+    );
     if (res.isNotEmpty) throw res;
   }
 
@@ -263,7 +264,7 @@ class GlobalState {
     }
   }
 
-  int getColumns(ViewMode viewMode,int currentColumns){
+  int getColumns(ViewMode viewMode, int currentColumns) {
     final targetColumnsArray = switch (viewMode) {
       ViewMode.mobile => [2, 1],
       ViewMode.laptop => [3, 2],

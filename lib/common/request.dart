@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/ip.dart';
 import 'package:fl_clash/state.dart';
+
+import 'constant.dart';
+import 'other.dart';
+import 'package.dart';
 
 class Request {
   late final Dio _dio;
@@ -12,11 +15,7 @@ class Request {
   bool _isStart = false;
 
   Request() {
-    _dio = Dio(
-      BaseOptions(
-        headers: {"User-Agent": coreName},
-      ),
-    );
+    _dio = Dio();
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         _syncProxy();
@@ -45,10 +44,14 @@ class Request {
   }
 
   Future<Response> getFileResponseForUrl(String url) async {
+    final ua = await appPackage.getUa();
     final response = await _dio
         .get(
           url,
           options: Options(
+            headers: {
+              "User-Agent": ua,
+            },
             responseType: ResponseType.bytes,
           ),
         )

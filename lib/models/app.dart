@@ -123,9 +123,10 @@ class AppState with ChangeNotifier {
     final index = groups.indexWhere((element) => element.name == proxyName);
     if (index == -1) return proxyName;
     final group = groups[index];
-    return getRealProxyName(selectedMap.containsKey(proxyName)
-        ? selectedMap[proxyName]
-        : group.now);
+    return getRealProxyName((selectedMap.containsKey(proxyName)
+            ? selectedMap[proxyName]
+            : group.now)) ??
+        proxyName;
   }
 
   String? get showProxyName {

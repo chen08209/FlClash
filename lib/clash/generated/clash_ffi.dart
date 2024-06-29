@@ -5484,6 +5484,18 @@ class ClashFFI {
   late final _stopTunPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function()>>('stopTun');
   late final _stopTun = _stopTunPtr.asFunction<void Function()>();
+
+  void setFdMap(
+    int fd,
+  ) {
+    return _setFdMap(
+      fd,
+    );
+  }
+
+  late final _setFdMapPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Long)>>('setFdMap');
+  late final _setFdMap = _setFdMapPtr.asFunction<void Function(int)>();
 }
 
 typedef va_list = ffi.Pointer<ffi.Char>;

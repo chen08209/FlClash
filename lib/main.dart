@@ -49,11 +49,15 @@ Future<void> vpnService() async {
     isCompatible: config.isCompatible,
     selectedMap: config.currentSelectedMap,
   );
-  clashMessage.addListener(ClashMessageListenerWithVpn(onTun: (String fd) {
-    proxyManager.setProtect(
-      int.parse(fd),
-    );
-  }));
+  clashMessage.addListener(
+    ClashMessageListenerWithVpn(
+      onTun: (String fd) async {
+        final fdInt = int.parse(fd);
+        await proxyManager.setProtect(fdInt);
+        clashCore.setFdMap(fdInt);
+      },
+    ),
+  );
 
   await globalState.init(
     appState: appState,

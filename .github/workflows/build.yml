@@ -11,21 +11,35 @@ jobs:
     strategy:
       matrix:
         include:
-          - platform: android
-            os: ubuntu-latest
+#          - platform: android
+#            os: ubuntu-latest
           - platform: windows
             os: windows-latest
-          - platform: linux
-            os: ubuntu-latest
-          - platform: macos
-            os: macos-13
+#          - platform: linux
+#            os: ubuntu-latest
+#          - platform: macos
+#            os: macos-13
 
     steps:
+      - name: Setup Mingw64
+        if: startsWith(matrix.platform,'windows')
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: mingw64
+          install: mingw-w64-x86_64-gcc
+          update: true
+
+
+      - name: Set Mingw64 Env
+        if: startsWith(matrix.platform,'windows')
+        run: |
+          echo "${{ runner.temp }}\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Check Matrix
         run: |
-            echo "Running on ${{ matrix.os }}"
-            echo "Arch: ${{ runner.arch }}"
-            gcc --version
+          echo "Running on ${{ matrix.os }}"
+          echo "Arch: ${{ runner.arch }}"
+          gcc --version
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,10 +66,10 @@ jobs:
         if: startsWith(matrix.platform,'android')
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties    
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
           echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
-          
+
 
       - name: Setup Go
         uses: actions/setup-go@v5

@@ -340,8 +340,8 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Mode = patchConfig.Mode
 	targetConfig.Tun.Enable = patchConfig.Tun.Enable
 	targetConfig.Tun.Device = patchConfig.Tun.Device
-	//targetConfig.Tun.DNSHijack = patchConfig.Tun.DNSHijack
-	//targetConfig.Tun.Stack = patchConfig.Tun.Stack
+	targetConfig.Tun.DNSHijack = patchConfig.Tun.DNSHijack
+	targetConfig.Tun.Stack = patchConfig.Tun.Stack
 	targetConfig.GeodataLoader = patchConfig.GeodataLoader
 	targetConfig.Profile.StoreSelected = false
 	if targetConfig.DNS.Enable == false {
@@ -396,7 +396,6 @@ func applyConfig(isPatch bool) {
 	if isPatch {
 		patchConfig(cfg.General)
 	} else {
-		executor.Shutdown()
 		runtime.GC()
 		hub.UltraApplyConfig(cfg, true)
 	}

@@ -51,8 +51,10 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
   }
 
   @override
-  void onTun(String fd) {
-    proxyManager.setProtect(int.parse(fd));
+  Future<void> onTun(String fd) async {
+    final fdInt = int.parse(fd);
+    await proxyManager.setProtect(fdInt);
+    clashCore.setFdMap(fdInt);
     super.onTun(fd);
   }
 

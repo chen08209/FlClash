@@ -137,7 +137,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                 Container(
                   height: globalState.appController.measure.titleLargeHeight +
                       24 -
-                      1,
+                      2,
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.all(16).copyWith(top: 0),
                   child: FadeBox(

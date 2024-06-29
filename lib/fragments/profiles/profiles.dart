@@ -3,6 +3,7 @@ import 'package:fl_clash/fragments/profiles/edit_profile.dart';
 import 'package:fl_clash/fragments/profiles/view_profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,7 @@ class ProfilesFragment extends StatefulWidget {
 
 class _ProfilesFragmentState extends State<ProfilesFragment> {
   final hasPadding = ValueNotifier<bool>(false);
+  Function? applyConfigDebounce;
 
   List<GlobalObjectKey<_ProfileItemState>> profileItemKeys = [];
 
@@ -87,9 +89,27 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   void dispose() {
     super.dispose();
     hasPadding.dispose();
+  }
+
+  _changeProfile(String? id) async {
+    final appController = globalState.appController;
+    final config = appController.config;
+    if (id == config.currentProfileId) return;
+    config.currentProfileId = id;
+    applyConfigDebounce ??= debounce<Function()>(() async {
+      await appController.applyProfile();
+      appController.appState.delayMap = {};
+      appController.saveConfigPreferences();
+    });
+    applyConfigDebounce!();
   }
 
   @override
@@ -154,8 +174,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
                               key: profileItemKeys[i],
                               profile: state.profiles[i],
                               groupValue: state.currentProfileId,
-                              onChanged:
-                                  globalState.appController.changeProfile,
+                              onChanged: _changeProfile,
                             ),
                           ),
                       ],

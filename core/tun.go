@@ -18,6 +18,24 @@ import (
 var tunLock sync.Mutex
 var tun *t.Tun
 
+type FdMap struct {
+	m sync.Map
+}
+
+func (cm *FdMap) Store(key int) {
+	cm.m.Store(key, nil)
+}
+
+func (cm *FdMap) Load(key int) bool {
+	_, ok := cm.m.Load(key)
+	if !ok {
+		return false
+	}
+	return true
+}
+
+var fdMap FdMap
+
 //export startTUN
 func startTUN(fd C.int) {
 	go func() {
@@ -63,16 +81,38 @@ func stopTun() {
 
 var errBlocked = errors.New("blocked")
 
+//export setFdMap
+func setFdMap(fd C.long) {
+	fdInt := int(fd)
+	go func() {
+		fdMap.Store(fdInt)
+	}()
+}
+
 func init() {
 	dialer.DefaultSocketHook = func(network, address string, conn syscall.RawConn) error {
 		if platform.ShouldBlockConnection() {
 			return errBlocked
 		}
 		return conn.Control(func(fd uintptr) {
+			fdInt := int(fd)
+			timeout := time.After(100 * time.Millisecond)
 			if tun != nil {
-				tun.MarkSocket(int(fd))
-				time.Sleep(time.Millisecond * 100)
+				tun.MarkSocket(fdInt)
 			}
+			for {
+				select {
+				case <-timeout:
+					return
+				default:
+					exists := fdMap.Load(fdInt)
+					if exists {
+						return
+					}
+					time.Sleep(10 * time.Millisecond)
+				}
+			}
+
 		})
 	}
 }

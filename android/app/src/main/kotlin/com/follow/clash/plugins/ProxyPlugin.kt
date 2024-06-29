@@ -136,7 +136,6 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
         GlobalState.runTime = null;
     }
 
-    @SuppressLint("ForegroundServiceType")
     private fun startForeground() {
         if (GlobalState.runState.value != RunState.START) return
         flClashVpnService?.startForeground(title, content)
