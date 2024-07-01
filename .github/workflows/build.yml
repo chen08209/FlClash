@@ -11,14 +11,14 @@ jobs:
     strategy:
       matrix:
         include:
-#          - platform: android
-#            os: ubuntu-latest
+          - platform: android
+            os: ubuntu-latest
           - platform: windows
             os: windows-latest
-#          - platform: linux
-#            os: ubuntu-latest
-#          - platform: macos
-#            os: macos-13
+          - platform: linux
+            os: ubuntu-latest
+          - platform: macos
+            os: macos-13
 
     steps:
       - name: Setup Mingw64
