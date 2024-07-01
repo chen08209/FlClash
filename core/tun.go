@@ -23,15 +23,12 @@ type FdMap struct {
 }
 
 func (cm *FdMap) Store(key int) {
-	cm.m.Store(key, nil)
+	cm.m.Store(key, struct{}{})
 }
 
 func (cm *FdMap) Load(key int) bool {
 	_, ok := cm.m.Load(key)
-	if !ok {
-		return false
-	}
-	return true
+	return ok
 }
 
 var fdMap FdMap
@@ -96,23 +93,23 @@ func init() {
 		}
 		return conn.Control(func(fd uintptr) {
 			fdInt := int(fd)
-			timeout := time.After(100 * time.Millisecond)
+			//timeout := time.After(100 * time.Millisecond)
 			if tun != nil {
 				tun.MarkSocket(fdInt)
+				time.Sleep(100 * time.Millisecond)
 			}
-			for {
-				select {
-				case <-timeout:
-					return
-				default:
-					exists := fdMap.Load(fdInt)
-					if exists {
-						return
-					}
-					time.Sleep(10 * time.Millisecond)
-				}
-			}
-
+			//for {
+			//	select {
+			//	case <-timeout:
+			//		return
+			//	default:
+			//		exists := fdMap.Load(fdInt)
+			//		if exists {
+			//			return
+			//		}
+			//		time.Sleep(20 * time.Millisecond)
+			//	}
+			//}
 		})
 	}
 }

@@ -75,10 +75,4 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
     globalState.appController.appState.addRequest(connection);
     super.onRequest(connection);
   }
-
-  @override
-  void onRun(String runTime) async {
-    // proxy?.updateStartTime();
-    super.onRun(runTime);
-  }
 }
