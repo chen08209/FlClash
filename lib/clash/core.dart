@@ -165,12 +165,11 @@ class ClashCore {
     return completer.future;
   }
 
-  bool changeProxy(ChangeProxyParams changeProxyParams) {
+  changeProxy(ChangeProxyParams changeProxyParams) {
     final params = json.encode(changeProxyParams);
     final paramsChar = params.toNativeUtf8().cast<Char>();
-    final isInit = clashFFI.changeProxy(paramsChar) == 1;
+    clashFFI.changeProxy(paramsChar);
     malloc.free(paramsChar);
-    return isInit;
   }
 
   Future<Delay> getDelay(String proxyName) {

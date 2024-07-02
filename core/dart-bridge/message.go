@@ -14,6 +14,7 @@ const (
 	Process MessageType = "process"
 	Request MessageType = "request"
 	Run     MessageType = "run"
+	Loaded  MessageType = "loaded"
 )
 
 type Message struct {

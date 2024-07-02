@@ -217,6 +217,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("开启后，主页选项卡将添加切换动画"),
         "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP并发"),
         "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("开启后允许TCP并发"),
+        "testUrl": MessageLookupByLibrary.simpleMessage("测速链接"),
         "theme": MessageLookupByLibrary.simpleMessage("主题"),
         "themeColor": MessageLookupByLibrary.simpleMessage("主题色彩"),
         "themeDesc": MessageLookupByLibrary.simpleMessage("设置深色模式，调整色彩"),
@@ -224,7 +225,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "tip": MessageLookupByLibrary.simpleMessage("提示"),
         "tools": MessageLookupByLibrary.simpleMessage("工具"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("流量统计"),
-        "tun": MessageLookupByLibrary.simpleMessage("Tun模式"),
+        "tun": MessageLookupByLibrary.simpleMessage("TUN模式"),
         "tunDesc": MessageLookupByLibrary.simpleMessage("仅在管理员模式生效"),
         "unableToUpdateCurrentProfileDesc":
             MessageLookupByLibrary.simpleMessage("无法更新当前配置文件"),

@@ -14,6 +14,234 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+ConfigExtendedParams _$ConfigExtendedParamsFromJson(Map<String, dynamic> json) {
+  return _ConfigExtendedParams.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ConfigExtendedParams {
+  @JsonKey(name: "is-patch")
+  bool get isPatch => throw _privateConstructorUsedError;
+  @JsonKey(name: "is-compatible")
+  bool get isCompatible => throw _privateConstructorUsedError;
+  @JsonKey(name: "selected-map")
+  Map<String, String> get selectedMap => throw _privateConstructorUsedError;
+  @JsonKey(name: "test-url")
+  String get testUrl => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ConfigExtendedParamsCopyWith<ConfigExtendedParams> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ConfigExtendedParamsCopyWith<$Res> {
+  factory $ConfigExtendedParamsCopyWith(ConfigExtendedParams value,
+          $Res Function(ConfigExtendedParams) then) =
+      _$ConfigExtendedParamsCopyWithImpl<$Res, ConfigExtendedParams>;
+  @useResult
+  $Res call(
+      {@JsonKey(name: "is-patch") bool isPatch,
+      @JsonKey(name: "is-compatible") bool isCompatible,
+      @JsonKey(name: "selected-map") Map<String, String> selectedMap,
+      @JsonKey(name: "test-url") String testUrl});
+}
+
+/// @nodoc
+class _$ConfigExtendedParamsCopyWithImpl<$Res,
+        $Val extends ConfigExtendedParams>
+    implements $ConfigExtendedParamsCopyWith<$Res> {
+  _$ConfigExtendedParamsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? isPatch = null,
+    Object? isCompatible = null,
+    Object? selectedMap = null,
+    Object? testUrl = null,
+  }) {
+    return _then(_value.copyWith(
+      isPatch: null == isPatch
+          ? _value.isPatch
+          : isPatch // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isCompatible: null == isCompatible
+          ? _value.isCompatible
+          : isCompatible // ignore: cast_nullable_to_non_nullable
+              as bool,
+      selectedMap: null == selectedMap
+          ? _value.selectedMap
+          : selectedMap // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
+      testUrl: null == testUrl
+          ? _value.testUrl
+          : testUrl // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ConfigExtendedParamsImplCopyWith<$Res>
+    implements $ConfigExtendedParamsCopyWith<$Res> {
+  factory _$$ConfigExtendedParamsImplCopyWith(_$ConfigExtendedParamsImpl value,
+          $Res Function(_$ConfigExtendedParamsImpl) then) =
+      __$$ConfigExtendedParamsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(name: "is-patch") bool isPatch,
+      @JsonKey(name: "is-compatible") bool isCompatible,
+      @JsonKey(name: "selected-map") Map<String, String> selectedMap,
+      @JsonKey(name: "test-url") String testUrl});
+}
+
+/// @nodoc
+class __$$ConfigExtendedParamsImplCopyWithImpl<$Res>
+    extends _$ConfigExtendedParamsCopyWithImpl<$Res, _$ConfigExtendedParamsImpl>
+    implements _$$ConfigExtendedParamsImplCopyWith<$Res> {
+  __$$ConfigExtendedParamsImplCopyWithImpl(_$ConfigExtendedParamsImpl _value,
+      $Res Function(_$ConfigExtendedParamsImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? isPatch = null,
+    Object? isCompatible = null,
+    Object? selectedMap = null,
+    Object? testUrl = null,
+  }) {
+    return _then(_$ConfigExtendedParamsImpl(
+      isPatch: null == isPatch
+          ? _value.isPatch
+          : isPatch // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isCompatible: null == isCompatible
+          ? _value.isCompatible
+          : isCompatible // ignore: cast_nullable_to_non_nullable
+              as bool,
+      selectedMap: null == selectedMap
+          ? _value._selectedMap
+          : selectedMap // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
+      testUrl: null == testUrl
+          ? _value.testUrl
+          : testUrl // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ConfigExtendedParamsImpl implements _ConfigExtendedParams {
+  const _$ConfigExtendedParamsImpl(
+      {@JsonKey(name: "is-patch") required this.isPatch,
+      @JsonKey(name: "is-compatible") required this.isCompatible,
+      @JsonKey(name: "selected-map")
+      required final Map<String, String> selectedMap,
+      @JsonKey(name: "test-url") required this.testUrl})
+      : _selectedMap = selectedMap;
+
+  factory _$ConfigExtendedParamsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ConfigExtendedParamsImplFromJson(json);
+
+  @override
+  @JsonKey(name: "is-patch")
+  final bool isPatch;
+  @override
+  @JsonKey(name: "is-compatible")
+  final bool isCompatible;
+  final Map<String, String> _selectedMap;
+  @override
+  @JsonKey(name: "selected-map")
+  Map<String, String> get selectedMap {
+    if (_selectedMap is EqualUnmodifiableMapView) return _selectedMap;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_selectedMap);
+  }
+
+  @override
+  @JsonKey(name: "test-url")
+  final String testUrl;
+
+  @override
+  String toString() {
+    return 'ConfigExtendedParams(isPatch: $isPatch, isCompatible: $isCompatible, selectedMap: $selectedMap, testUrl: $testUrl)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ConfigExtendedParamsImpl &&
+            (identical(other.isPatch, isPatch) || other.isPatch == isPatch) &&
+            (identical(other.isCompatible, isCompatible) ||
+                other.isCompatible == isCompatible) &&
+            const DeepCollectionEquality()
+                .equals(other._selectedMap, _selectedMap) &&
+            (identical(other.testUrl, testUrl) || other.testUrl == testUrl));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, isPatch, isCompatible,
+      const DeepCollectionEquality().hash(_selectedMap), testUrl);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ConfigExtendedParamsImplCopyWith<_$ConfigExtendedParamsImpl>
+      get copyWith =>
+          __$$ConfigExtendedParamsImplCopyWithImpl<_$ConfigExtendedParamsImpl>(
+              this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ConfigExtendedParamsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ConfigExtendedParams implements ConfigExtendedParams {
+  const factory _ConfigExtendedParams(
+          {@JsonKey(name: "is-patch") required final bool isPatch,
+          @JsonKey(name: "is-compatible") required final bool isCompatible,
+          @JsonKey(name: "selected-map")
+          required final Map<String, String> selectedMap,
+          @JsonKey(name: "test-url") required final String testUrl}) =
+      _$ConfigExtendedParamsImpl;
+
+  factory _ConfigExtendedParams.fromJson(Map<String, dynamic> json) =
+      _$ConfigExtendedParamsImpl.fromJson;
+
+  @override
+  @JsonKey(name: "is-patch")
+  bool get isPatch;
+  @override
+  @JsonKey(name: "is-compatible")
+  bool get isCompatible;
+  @override
+  @JsonKey(name: "selected-map")
+  Map<String, String> get selectedMap;
+  @override
+  @JsonKey(name: "test-url")
+  String get testUrl;
+  @override
+  @JsonKey(ignore: true)
+  _$$ConfigExtendedParamsImplCopyWith<_$ConfigExtendedParamsImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
 UpdateConfigParams _$UpdateConfigParamsFromJson(Map<String, dynamic> json) {
   return _UpdateConfigParams.fromJson(json);
 }
@@ -23,10 +251,7 @@ mixin _$UpdateConfigParams {
   @JsonKey(name: "profile-path")
   String? get profilePath => throw _privateConstructorUsedError;
   ClashConfig get config => throw _privateConstructorUsedError;
-  @JsonKey(name: "is-patch")
-  bool get isPatch => throw _privateConstructorUsedError;
-  @JsonKey(name: "is-compatible")
-  bool get isCompatible => throw _privateConstructorUsedError;
+  ConfigExtendedParams get params => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -43,8 +268,9 @@ abstract class $UpdateConfigParamsCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: "profile-path") String? profilePath,
       ClashConfig config,
-      @JsonKey(name: "is-patch") bool isPatch,
-      @JsonKey(name: "is-compatible") bool isCompatible});
+      ConfigExtendedParams params});
+
+  $ConfigExtendedParamsCopyWith<$Res> get params;
 }
 
 /// @nodoc
@@ -62,8 +288,7 @@ class _$UpdateConfigParamsCopyWithImpl<$Res, $Val extends UpdateConfigParams>
   $Res call({
     Object? profilePath = freezed,
     Object? config = null,
-    Object? isPatch = null,
-    Object? isCompatible = null,
+    Object? params = null,
   }) {
     return _then(_value.copyWith(
       profilePath: freezed == profilePath
@@ -74,15 +299,19 @@ class _$UpdateConfigParamsCopyWithImpl<$Res, $Val extends UpdateConfigParams>
           ? _value.config
           : config // ignore: cast_nullable_to_non_nullable
               as ClashConfig,
-      isPatch: null == isPatch
-          ? _value.isPatch
-          : isPatch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isCompatible: null == isCompatible
-          ? _value.isCompatible
-          : isCompatible // ignore: cast_nullable_to_non_nullable
-              as bool,
+      params: null == params
+          ? _value.params
+          : params // ignore: cast_nullable_to_non_nullable
+              as ConfigExtendedParams,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $ConfigExtendedParamsCopyWith<$Res> get params {
+    return $ConfigExtendedParamsCopyWith<$Res>(_value.params, (value) {
+      return _then(_value.copyWith(params: value) as $Val);
+    });
   }
 }
 
@@ -97,8 +326,10 @@ abstract class _$$UpdateConfigParamsImplCopyWith<$Res>
   $Res call(
       {@JsonKey(name: "profile-path") String? profilePath,
       ClashConfig config,
-      @JsonKey(name: "is-patch") bool isPatch,
-      @JsonKey(name: "is-compatible") bool isCompatible});
+      ConfigExtendedParams params});
+
+  @override
+  $ConfigExtendedParamsCopyWith<$Res> get params;
 }
 
 /// @nodoc
@@ -114,8 +345,7 @@ class __$$UpdateConfigParamsImplCopyWithImpl<$Res>
   $Res call({
     Object? profilePath = freezed,
     Object? config = null,
-    Object? isPatch = null,
-    Object? isCompatible = null,
+    Object? params = null,
   }) {
     return _then(_$UpdateConfigParamsImpl(
       profilePath: freezed == profilePath
@@ -126,14 +356,10 @@ class __$$UpdateConfigParamsImplCopyWithImpl<$Res>
           ? _value.config
           : config // ignore: cast_nullable_to_non_nullable
               as ClashConfig,
-      isPatch: null == isPatch
-          ? _value.isPatch
-          : isPatch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isCompatible: null == isCompatible
-          ? _value.isCompatible
-          : isCompatible // ignore: cast_nullable_to_non_nullable
-              as bool,
+      params: null == params
+          ? _value.params
+          : params // ignore: cast_nullable_to_non_nullable
+              as ConfigExtendedParams,
     ));
   }
 }
@@ -144,8 +370,7 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
   const _$UpdateConfigParamsImpl(
       {@JsonKey(name: "profile-path") this.profilePath,
       required this.config,
-      @JsonKey(name: "is-patch") required this.isPatch,
-      @JsonKey(name: "is-compatible") required this.isCompatible});
+      required this.params});
 
   factory _$UpdateConfigParamsImpl.fromJson(Map<String, dynamic> json) =>
       _$$UpdateConfigParamsImplFromJson(json);
@@ -156,15 +381,11 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
   @override
   final ClashConfig config;
   @override
-  @JsonKey(name: "is-patch")
-  final bool isPatch;
-  @override
-  @JsonKey(name: "is-compatible")
-  final bool isCompatible;
+  final ConfigExtendedParams params;
 
   @override
   String toString() {
-    return 'UpdateConfigParams(profilePath: $profilePath, config: $config, isPatch: $isPatch, isCompatible: $isCompatible)';
+    return 'UpdateConfigParams(profilePath: $profilePath, config: $config, params: $params)';
   }
 
   @override
@@ -175,15 +396,12 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
             (identical(other.profilePath, profilePath) ||
                 other.profilePath == profilePath) &&
             (identical(other.config, config) || other.config == config) &&
-            (identical(other.isPatch, isPatch) || other.isPatch == isPatch) &&
-            (identical(other.isCompatible, isCompatible) ||
-                other.isCompatible == isCompatible));
+            (identical(other.params, params) || other.params == params));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, profilePath, config, isPatch, isCompatible);
+  int get hashCode => Object.hash(runtimeType, profilePath, config, params);
 
   @JsonKey(ignore: true)
   @override
@@ -202,11 +420,9 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
 
 abstract class _UpdateConfigParams implements UpdateConfigParams {
   const factory _UpdateConfigParams(
-          {@JsonKey(name: "profile-path") final String? profilePath,
-          required final ClashConfig config,
-          @JsonKey(name: "is-patch") required final bool isPatch,
-          @JsonKey(name: "is-compatible") required final bool isCompatible}) =
-      _$UpdateConfigParamsImpl;
+      {@JsonKey(name: "profile-path") final String? profilePath,
+      required final ClashConfig config,
+      required final ConfigExtendedParams params}) = _$UpdateConfigParamsImpl;
 
   factory _UpdateConfigParams.fromJson(Map<String, dynamic> json) =
       _$UpdateConfigParamsImpl.fromJson;
@@ -217,11 +433,7 @@ abstract class _UpdateConfigParams implements UpdateConfigParams {
   @override
   ClashConfig get config;
   @override
-  @JsonKey(name: "is-patch")
-  bool get isPatch;
-  @override
-  @JsonKey(name: "is-compatible")
-  bool get isCompatible;
+  ConfigExtendedParams get params;
   @override
   @JsonKey(ignore: true)
   _$$UpdateConfigParamsImplCopyWith<_$UpdateConfigParamsImpl> get copyWith =>
@@ -1003,6 +1215,151 @@ abstract class _Process implements Process {
   @override
   @JsonKey(ignore: true)
   _$$ProcessImplCopyWith<_$ProcessImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+Fd _$FdFromJson(Map<String, dynamic> json) {
+  return _Fd.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Fd {
+  int get id => throw _privateConstructorUsedError;
+  int get value => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $FdCopyWith<Fd> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $FdCopyWith<$Res> {
+  factory $FdCopyWith(Fd value, $Res Function(Fd) then) =
+      _$FdCopyWithImpl<$Res, Fd>;
+  @useResult
+  $Res call({int id, int value});
+}
+
+/// @nodoc
+class _$FdCopyWithImpl<$Res, $Val extends Fd> implements $FdCopyWith<$Res> {
+  _$FdCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? value = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$FdImplCopyWith<$Res> implements $FdCopyWith<$Res> {
+  factory _$$FdImplCopyWith(_$FdImpl value, $Res Function(_$FdImpl) then) =
+      __$$FdImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int id, int value});
+}
+
+/// @nodoc
+class __$$FdImplCopyWithImpl<$Res> extends _$FdCopyWithImpl<$Res, _$FdImpl>
+    implements _$$FdImplCopyWith<$Res> {
+  __$$FdImplCopyWithImpl(_$FdImpl _value, $Res Function(_$FdImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? value = null,
+  }) {
+    return _then(_$FdImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$FdImpl implements _Fd {
+  const _$FdImpl({required this.id, required this.value});
+
+  factory _$FdImpl.fromJson(Map<String, dynamic> json) =>
+      _$$FdImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  final int value;
+
+  @override
+  String toString() {
+    return 'Fd(id: $id, value: $value)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$FdImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.value, value) || other.value == value));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, value);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$FdImplCopyWith<_$FdImpl> get copyWith =>
+      __$$FdImplCopyWithImpl<_$FdImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$FdImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Fd implements Fd {
+  const factory _Fd({required final int id, required final int value}) =
+      _$FdImpl;
+
+  factory _Fd.fromJson(Map<String, dynamic> json) = _$FdImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  int get value;
+  @override
+  @JsonKey(ignore: true)
+  _$$FdImplCopyWith<_$FdImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

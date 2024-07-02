@@ -51,7 +51,8 @@ ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig()
   ..tcpConcurrent = json['tcp-concurrent'] as bool? ?? false
   ..tun = Tun.fromJson(json['tun'] as Map<String, dynamic>)
   ..dns = Dns.fromJson(json['dns'] as Map<String, dynamic>)
-  ..rules = (json['rules'] as List<dynamic>).map((e) => e as String).toList();
+  ..rules = (json['rules'] as List<dynamic>).map((e) => e as String).toList()
+  ..globalRealUa = json['global-real-ua'] as String?;
 
 Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
     <String, dynamic>{
@@ -68,6 +69,7 @@ Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
       'tun': instance.tun,
       'dns': instance.dns,
       'rules': instance.rules,
+      'global-real-ua': instance.globalRealUa,
     };
 
 const _$ModeEnumMap = {

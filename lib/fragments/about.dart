@@ -1,7 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AboutFragment extends StatelessWidget {
@@ -49,16 +48,9 @@ class AboutFragment extends StatelessWidget {
                         appName,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
-                      FutureBuilder<PackageInfo>(
-                        future: appPackage.packageInfoCompleter.future,
-                        builder: (_, package) {
-                          final version = package.data?.version;
-                          if (version == null) return Container();
-                          return Text(
-                            version,
-                            style: Theme.of(context).textTheme.labelLarge,
-                          );
-                        },
+                      Text(
+                        globalState.packageInfo.version,
+                        style: Theme.of(context).textTheme.labelLarge,
                       )
                     ],
                   )

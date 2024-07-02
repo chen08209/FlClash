@@ -34,6 +34,7 @@ class AppState with ChangeNotifier {
   List<Group> _groups;
   double _viewWidth;
   List<Connection> _requests;
+  num _checkIpNum;
 
   AppState({
     required Mode mode,
@@ -47,6 +48,7 @@ class AppState with ChangeNotifier {
         _viewWidth = 0,
         _selectedMap = selectedMap,
         _sortNum = 0,
+        _checkIpNum = 0,
         _requests = [],
         _mode = mode,
         _totalTraffic = Traffic(),
@@ -237,6 +239,15 @@ class AppState with ChangeNotifier {
   set sortNum(num value) {
     if (_sortNum != value) {
       _sortNum = value;
+      notifyListeners();
+    }
+  }
+
+  num get checkIpNum => _checkIpNum;
+
+  set checkIpNum(num value) {
+    if (_checkIpNum != value) {
+      _checkIpNum = value;
       notifyListeners();
     }
   }

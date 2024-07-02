@@ -430,10 +430,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Tun mode`
+  /// `TUN mode`
   String get tun {
     return Intl.message(
-      'Tun mode',
+      'TUN mode',
       name: 'tun',
       desc: '',
       args: [],
@@ -1975,6 +1975,16 @@ class AppLocalizations {
     return Intl.message(
       'Paste',
       name: 'paste',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Test url`
+  String get testUrl {
+    return Intl.message(
+      'Test url',
+      name: 'testUrl',
       desc: '',
       args: [],
     );

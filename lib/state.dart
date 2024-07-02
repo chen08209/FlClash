@@ -7,6 +7,7 @@ import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'controller.dart';
 import 'models/models.dart';
@@ -15,6 +16,7 @@ import 'common/common.dart';
 class GlobalState {
   Timer? timer;
   Timer? groupsUpdateTimer;
+  late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   PageController? pageController;
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -47,8 +49,12 @@ class GlobalState {
       UpdateConfigParams(
         profilePath: profilePath,
         config: clashConfig,
-        isPatch: isPatch,
-        isCompatible: config.isCompatible,
+        params: ConfigExtendedParams(
+          isPatch: isPatch,
+          isCompatible: config.isCompatible,
+          selectedMap: config.currentSelectedMap,
+          testUrl: config.testUrl,
+        ),
       ),
     );
     if (res.isNotEmpty) throw res;
@@ -80,7 +86,9 @@ class GlobalState {
       appState: appState,
       config: config,
       clashConfig: clashConfig,
-    );
+    ).then((_){
+      appController.appState.checkIpNum++;
+    });
   }
 
   Future<void> stopSystemProxy() async {
@@ -88,7 +96,7 @@ class GlobalState {
     stopListenUpdate();
   }
 
-  Future<void> applyProfile({
+  Future applyProfile({
     required AppState appState,
     required Config config,
     required ClashConfig clashConfig,
@@ -99,11 +107,6 @@ class GlobalState {
       isPatch: false,
     );
     await updateGroups(appState);
-    changeProxy(
-      appState: appState,
-      config: config,
-      clashConfig: clashConfig,
-    );
   }
 
   init({
@@ -119,25 +122,6 @@ class GlobalState {
       );
     }
     updateCoreVersionInfo(appState);
-  }
-
-  changeProxy({
-    required AppState appState,
-    required Config config,
-    required ClashConfig clashConfig,
-  }) {
-    if (config.profiles.isEmpty) {
-      stopSystemProxy();
-      return;
-    }
-    config.currentSelectedMap.forEach((key, value) {
-      clashCore.changeProxy(
-        ChangeProxyParams(
-          groupName: key,
-          proxyName: value,
-        ),
-      );
-    });
   }
 
   Future<void> updateGroups(AppState appState) async {

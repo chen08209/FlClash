@@ -6,13 +6,31 @@ part of '../ffi.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$ConfigExtendedParamsImpl _$$ConfigExtendedParamsImplFromJson(
+        Map<String, dynamic> json) =>
+    _$ConfigExtendedParamsImpl(
+      isPatch: json['is-patch'] as bool,
+      isCompatible: json['is-compatible'] as bool,
+      selectedMap: Map<String, String>.from(json['selected-map'] as Map),
+      testUrl: json['test-url'] as String,
+    );
+
+Map<String, dynamic> _$$ConfigExtendedParamsImplToJson(
+        _$ConfigExtendedParamsImpl instance) =>
+    <String, dynamic>{
+      'is-patch': instance.isPatch,
+      'is-compatible': instance.isCompatible,
+      'selected-map': instance.selectedMap,
+      'test-url': instance.testUrl,
+    };
+
 _$UpdateConfigParamsImpl _$$UpdateConfigParamsImplFromJson(
         Map<String, dynamic> json) =>
     _$UpdateConfigParamsImpl(
       profilePath: json['profile-path'] as String?,
       config: ClashConfig.fromJson(json['config'] as Map<String, dynamic>),
-      isPatch: json['is-patch'] as bool,
-      isCompatible: json['is-compatible'] as bool,
+      params:
+          ConfigExtendedParams.fromJson(json['params'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$UpdateConfigParamsImplToJson(
@@ -20,8 +38,7 @@ Map<String, dynamic> _$$UpdateConfigParamsImplToJson(
     <String, dynamic>{
       'profile-path': instance.profilePath,
       'config': instance.config,
-      'is-patch': instance.isPatch,
-      'is-compatible': instance.isCompatible,
+      'params': instance.params,
     };
 
 _$ChangeProxyParamsImpl _$$ChangeProxyParamsImplFromJson(
@@ -58,6 +75,7 @@ const _$MessageTypeEnumMap = {
   MessageType.now: 'now',
   MessageType.request: 'request',
   MessageType.run: 'run',
+  MessageType.loaded: 'loaded',
 };
 
 _$DelayImpl _$$DelayImplFromJson(Map<String, dynamic> json) => _$DelayImpl(
@@ -91,6 +109,16 @@ Map<String, dynamic> _$$ProcessImplToJson(_$ProcessImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'metadata': instance.metadata,
+    };
+
+_$FdImpl _$$FdImplFromJson(Map<String, dynamic> json) => _$FdImpl(
+      id: (json['id'] as num).toInt(),
+      value: (json['value'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$$FdImplToJson(_$FdImpl instance) => <String, dynamic>{
+      'id': instance.id,
+      'value': instance.value,
     };
 
 _$ProcessMapItemImpl _$$ProcessMapItemImplFromJson(Map<String, dynamic> json) =>

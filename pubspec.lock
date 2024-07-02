@@ -1162,7 +1162,7 @@ packages:
     source: hosted
     version: "1.2.2"
   win32:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: win32
       sha256: a79dbe579cb51ecd6d30b17e0cae4e0ea15e2c0e66f69ad4198f22a6789e94f4

@@ -2,12 +2,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/ip.dart';
 import 'package:fl_clash/state.dart';
-
-import 'constant.dart';
-import 'other.dart';
-import 'package.dart';
 
 class Request {
   late final Dio _dio;
@@ -16,12 +13,17 @@ class Request {
 
   Request() {
     _dio = Dio();
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        _syncProxy();
-        return handler.next(options); // 继续请求
-      },
-    ));
+    _dio.options = BaseOptions(
+      headers: {"User-Agent": globalState.appController.clashConfig.globalUa},
+    );
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          _syncProxy();
+          return handler.next(options); // 继续请求
+        },
+      ),
+    );
   }
 
   _syncProxy() {
@@ -44,14 +46,10 @@ class Request {
   }
 
   Future<Response> getFileResponseForUrl(String url) async {
-    final ua = await appPackage.getUa();
     final response = await _dio
         .get(
           url,
           options: Options(
-            headers: {
-              "User-Agent": ua,
-            },
             responseType: ResponseType.bytes,
           ),
         )
@@ -71,8 +69,7 @@ class Request {
     if (response.statusCode != 200) return null;
     final data = response.data as Map<String, dynamic>;
     final remoteVersion = data['tag_name'];
-    final packageInfo = await appPackage.packageInfoCompleter.future;
-    final version = packageInfo.version;
+    final version = globalState.packageInfo.version;
     final hasUpdate =
         other.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
     if (!hasUpdate) return null;

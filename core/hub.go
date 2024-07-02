@@ -31,6 +31,8 @@ import (
 
 var currentConfig = config.DefaultRawConfig()
 
+var configParams = ConfigExtendedParams{}
+
 var isInit = false
 
 //export initClash
@@ -92,17 +94,14 @@ func updateConfig(s *C.char, port C.longlong) {
 	go func() {
 		var params = &GenerateConfigParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
+		configParams = params.Params
 		if err != nil {
 			bridge.SendToPort(i, err.Error())
 			return
 		}
-		prof := decorationConfig(params.ProfilePath, *params.Config, *params.IsCompatible)
+		prof := decorationConfig(params.ProfilePath, params.Config)
 		currentConfig = prof
-		if *params.IsPatch {
-			applyConfig(true)
-		} else {
-			applyConfig(false)
-		}
+		applyConfig()
 		bridge.SendToPort(i, "")
 	}()
 }
@@ -161,8 +160,8 @@ func changeProxy(s *C.char) {
 		groupName := *params.GroupName
 		proxyName := *params.ProxyName
 		proxies := tunnel.ProxiesWithProviders()
-		group := proxies[groupName]
-		if group == nil {
+		group, ok := proxies[groupName]
+		if !ok {
 			return
 		}
 		adapterProxy := group.(*adapter.Proxy)
@@ -439,6 +438,12 @@ func init() {
 		bridge.SendMessage(bridge.Message{
 			Type: bridge.Request,
 			Data: c,
+		})
+	}
+	executor.DefaultProxyProviderLoadedHook = func(providerName string) {
+		bridge.SendMessage(bridge.Message{
+			Type: bridge.Loaded,
+			Data: providerName,
 		})
 	}
 }

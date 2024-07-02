@@ -269,6 +269,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP concurrent"),
         "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
             "Enabling it will allow TCP concurrency"),
+        "testUrl": MessageLookupByLibrary.simpleMessage("Test url"),
         "theme": MessageLookupByLibrary.simpleMessage("Theme"),
         "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),
         "themeDesc": MessageLookupByLibrary.simpleMessage(
@@ -277,7 +278,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "tip": MessageLookupByLibrary.simpleMessage("tip"),
         "tools": MessageLookupByLibrary.simpleMessage("Tools"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
-        "tun": MessageLookupByLibrary.simpleMessage("Tun mode"),
+        "tun": MessageLookupByLibrary.simpleMessage("TUN mode"),
         "tunDesc": MessageLookupByLibrary.simpleMessage(
             "only effective in administrator mode"),
         "unableToUpdateCurrentProfileDesc":

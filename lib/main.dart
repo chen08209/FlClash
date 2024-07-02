@@ -6,6 +6,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/tile.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'application.dart';
 import 'l10n/l10n.dart';
 import 'models/models.dart';
@@ -15,6 +16,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await android?.init();
   await window?.init();
+  globalState.packageInfo = await PackageInfo.fromPlatform();
   final config = await preferences.getConfig() ?? Config();
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
   final appState = AppState(
@@ -51,10 +53,20 @@ Future<void> vpnService() async {
   );
   clashMessage.addListener(
     ClashMessageListenerWithVpn(
-      onTun: (String fd) async {
-        final fdInt = int.parse(fd);
-        await proxyManager.setProtect(fdInt);
-        clashCore.setFdMap(fdInt);
+      onTun: (Fd fd) async {
+        await proxyManager.setProtect(fd.value);
+        clashCore.setFdMap(fd.id);
+      },
+      onLoaded: (String groupName) {
+        final currentSelectedMap = config.currentSelectedMap;
+        final proxyName = currentSelectedMap[groupName];
+        if (proxyName == null) return;
+        clashCore.changeProxy(
+          ChangeProxyParams(
+            groupName: groupName,
+            proxyName: proxyName,
+          ),
+        );
       },
     ),
   );
@@ -106,15 +118,23 @@ Future<void> vpnService() async {
 }
 
 class ClashMessageListenerWithVpn with ClashMessageListener {
-  final Function(String fd) _onTun;
+  final Function(Fd fd) _onTun;
+  final Function(String) _onLoaded;
 
   ClashMessageListenerWithVpn({
-    required Function(String fd) onTun,
-  }) : _onTun = onTun;
+    required Function(Fd fd) onTun,
+    required Function(String) onLoaded,
+  })  : _onTun = onTun,
+        _onLoaded = onLoaded;
 
   @override
-  void onTun(String fd) {
+  void onTun(Fd fd) {
     _onTun(fd);
+  }
+
+  @override
+  void onLoaded(String groupName) {
+    _onLoaded(groupName);
   }
 }
 

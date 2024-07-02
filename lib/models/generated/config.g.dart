@@ -41,7 +41,9 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..proxyCardType =
       $enumDecodeNullable(_$ProxyCardTypeEnumMap, json['proxyCardType']) ??
           ProxyCardType.expand
-  ..proxiesColumns = (json['proxiesColumns'] as num?)?.toInt() ?? 2;
+  ..proxiesColumns = (json['proxiesColumns'] as num?)?.toInt() ?? 2
+  ..testUrl =
+      json['test-url'] as String? ?? 'https://www.gstatic.com/generate_204';
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -66,6 +68,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'proxiesType': _$ProxiesTypeEnumMap[instance.proxiesType]!,
       'proxyCardType': _$ProxyCardTypeEnumMap[instance.proxyCardType]!,
       'proxiesColumns': instance.proxiesColumns,
+      'test-url': instance.testUrl,
     };
 
 const _$ThemeModeEnumMap = {

@@ -37,7 +37,7 @@
   "overrideDesc": "Override Proxy related config",
   "allowLan": "AllowLan",
   "allowLanDesc": "Allow access proxy through the LAN",
-  "tun": "Tun mode",
+  "tun": "TUN mode",
   "tunDesc": "only effective in administrator mode",
   "minimizeOnExit": "Minimize on exit",
   "minimizeOnExitDesc": "Modify the default system exit event",
@@ -191,5 +191,6 @@
   "view": "View",
   "cut": "Cut",
   "copy": "Copy",
-  "paste": "Paste"
+  "paste": "Paste",
+  "testUrl": "Test url"
 }

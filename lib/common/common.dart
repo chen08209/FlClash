@@ -23,3 +23,4 @@ export 'app_localizations.dart';
 export 'function.dart';
 export 'package.dart';
 export 'measure.dart';
+export 'service.dart';

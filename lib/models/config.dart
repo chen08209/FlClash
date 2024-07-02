@@ -60,6 +60,7 @@ class Config extends ChangeNotifier {
   ProxiesType _proxiesType;
   ProxyCardType _proxyCardType;
   int _proxiesColumns;
+  String _testUrl;
 
   Config()
       : _profiles = [],
@@ -75,6 +76,7 @@ class Config extends ChangeNotifier {
         _isAccessControl = false,
         _autoCheckUpdate = true,
         _systemProxy = true,
+        _testUrl = defaultTestUrl,
         _accessControl = const AccessControl(),
         _isAnimateToPage = true,
         _allowBypass = true,
@@ -414,6 +416,17 @@ class Config extends ChangeNotifier {
     }
   }
 
+
+  @JsonKey(name: "test-url", defaultValue: defaultTestUrl)
+  String get testUrl => _testUrl;
+
+  set testUrl(String value) {
+    if (_testUrl != value) {
+      _testUrl = value;
+      notifyListeners();
+    }
+  }
+
   update([
     Config? config,
     RecoveryOption recoveryOptions = RecoveryOption.all,
@@ -446,6 +459,7 @@ class Config extends ChangeNotifier {
       _isAnimateToPage = config._isAnimateToPage;
       _autoCheckUpdate = config._autoCheckUpdate;
       _dav = config._dav;
+      _testUrl = config.testUrl;
     }
     notifyListeners();
   }

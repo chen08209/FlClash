@@ -1,10 +1,9 @@
 extension StringExtension on String {
   bool get isUrl {
-    try {
-      Uri.parse(this);
-      return true;
-    } catch (e) {
-      return false;
-    }
+    return RegExp(
+      r"^(http(s)?://)?(www\.)?[a-zA-Z0-9]+([\-.][a-zA-Z0-9]+)*\.[a-zA-Z]{2,5}(:[0-9]{1,5})?(/.*)?$",
+      caseSensitive: false,
+      multiLine: false,
+    ).hasMatch(this);
   }
 }

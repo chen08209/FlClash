@@ -39,6 +39,104 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     }
   }
 
+  _showLogLevelDialog(LogLevel value) {
+    globalState.showCommonDialog(
+      child: AlertDialog(
+        title: Text(appLocalizations.logLevel),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 16,
+        ),
+        content: SizedBox(
+          width: 250,
+          child: Wrap(
+            children: [
+              for (final logLevel in LogLevel.values)
+                ListItem.radio(
+                  delegate: RadioDelegate<LogLevel>(
+                    value: logLevel,
+                    groupValue: value,
+                    onChanged: (LogLevel? value) {
+                      if (value == null) {
+                        return;
+                      }
+                      final appController = globalState.appController;
+                      appController.clashConfig.logLevel = value;
+                      appController.updateClashConfigDebounce();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  title: Text(logLevel.name),
+                )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _showUaDialog(String? value) {
+    const uas = [
+      null,
+      "clash-verge/v1.6.6",
+      "ClashforWindows/0.19.23",
+    ];
+    globalState.showCommonDialog(
+      child: AlertDialog(
+        title: const Text("UA"),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 16,
+        ),
+        content: SizedBox(
+          width: 250,
+          child: Wrap(
+            children: [
+              for (final ua in uas)
+                ListItem.radio(
+                  delegate: RadioDelegate<String?>(
+                    value: ua,
+                    groupValue: value,
+                    onChanged: (String? value) {
+                      final appController = globalState.appController;
+                      appController.clashConfig.globalRealUa = value;
+                      appController.updateClashConfigDebounce();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  title: Text(ua ?? appLocalizations.defaultText),
+                )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _modifyTestUrl(String testUrl) async {
+    final newTestUrl = await globalState.showCommonDialog<String>(
+      child: TestUrlFormDialog(
+        testUrl: testUrl,
+      ),
+    );
+    if (newTestUrl != null && newTestUrl != testUrl && mounted) {
+      try {
+        if (!newTestUrl.isUrl) {
+          throw "Invalid url";
+        }
+        globalState.appController.config.testUrl = newTestUrl;
+        globalState.appController.updateClashConfigDebounce();
+      } catch (e) {
+        globalState.showMessage(
+          title: appLocalizations.testUrl,
+          message: TextSpan(
+            text: e.toString(),
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildAppSection() {
     final items = [
       if (Platform.isAndroid)
@@ -89,9 +187,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               onChanged: (bool value) async {
                 final appController = globalState.appController;
                 appController.config.isCompatible = value;
-                await appController.updateClashConfig(isPatch: false);
-                await appController.updateGroups();
-                appController.changeProxy();
+                await appController.applyProfile();
               },
             ),
           );
@@ -114,42 +210,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     );
   }
 
-  _showLogLevelDialog(LogLevel value) {
-    globalState.showCommonDialog(
-      child: AlertDialog(
-        title: Text(appLocalizations.logLevel),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 16,
-        ),
-        content: SizedBox(
-          width: 250,
-          child: Wrap(
-            children: [
-              for (final logLevel in LogLevel.values)
-                ListItem.radio(
-                  delegate: RadioDelegate<LogLevel>(
-                    value: logLevel,
-                    groupValue: value,
-                    onChanged: (LogLevel? value) {
-                      if (value == null) {
-                        return;
-                      }
-                      final appController = globalState.appController;
-                      appController.clashConfig.logLevel = value;
-                      appController.updateClashConfigDebounce();
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  title: Text(logLevel.name),
-                )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildGeneralSection() {
     final items = [
       Selector<ClashConfig, LogLevel>(
@@ -161,6 +221,32 @@ class _ConfigFragmentState extends State<ConfigFragment> {
             subtitle: Text(value.name),
             onTab: () {
               _showLogLevelDialog(value);
+            },
+          );
+        },
+      ),
+      Selector<ClashConfig, String?>(
+        selector: (_, clashConfig) => clashConfig.globalRealUa,
+        builder: (_, value, __) {
+          return ListItem(
+            leading: const Icon(Icons.computer_outlined),
+            title: const Text("UA"),
+            subtitle: Text(value ?? appLocalizations.defaultText),
+            onTab: () {
+              _showUaDialog(value);
+            },
+          );
+        },
+      ),
+      Selector<Config, String>(
+        selector: (_, config) => config.testUrl,
+        builder: (_, value, __) {
+          return ListItem(
+            leading: const Icon(Icons.timeline),
+            title: Text(appLocalizations.testUrl),
+            subtitle: Text(value),
+            onTab: () {
+              _modifyTestUrl(value);
             },
           );
         },
@@ -342,9 +428,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           selector: (_, clashConfig) => clashConfig.tun.enable,
           builder: (_, tunEnable, __) {
             return ListItem.switchItem(
-              leading: const Icon(
-                Icons.important_devices_outlined
-              ),
+              leading: const Icon(Icons.important_devices_outlined),
               title: Text(appLocalizations.tun),
               subtitle: Text(appLocalizations.tunDesc),
               delegate: SwitchDelegate(
@@ -359,7 +443,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           },
         ),
     ];
-    if(items.isEmpty) return Container();
+    if (items.isEmpty) return Container();
     return Section(
       title: appLocalizations.more,
       child: Column(
@@ -414,7 +498,7 @@ class _MixedPortFormDialogState extends State<MixedPortFormDialog> {
     portController = TextEditingController(text: "${widget.mixedPort}");
   }
 
-  _handleAddProfileFormURL() async {
+  _handleUpdate() async {
     final port = portController.value.text;
     if (port.isEmpty) return;
     Navigator.of(context).pop<String>(port);
@@ -440,7 +524,64 @@ class _MixedPortFormDialogState extends State<MixedPortFormDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _handleAddProfileFormURL,
+          onPressed: _handleUpdate,
+          child: Text(appLocalizations.submit),
+        )
+      ],
+    );
+  }
+}
+
+class TestUrlFormDialog extends StatefulWidget {
+  final String testUrl;
+
+  const TestUrlFormDialog({
+    super.key,
+    required this.testUrl,
+  });
+
+  @override
+  State<TestUrlFormDialog> createState() => _TestUrlFormDialogState();
+}
+
+class _TestUrlFormDialogState extends State<TestUrlFormDialog> {
+  late TextEditingController testUrlController;
+
+  @override
+  void initState() {
+    super.initState();
+    testUrlController = TextEditingController(text: widget.testUrl);
+  }
+
+  _handleUpdate() async {
+    final testUrl = testUrlController.value.text;
+    if (testUrl.isEmpty) return;
+    Navigator.of(context).pop<String>(testUrl);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(appLocalizations.testUrl),
+      content: SizedBox(
+        width: 300,
+        child: Wrap(
+          runSpacing: 16,
+          children: [
+            TextField(
+              maxLines: 5,
+              minLines: 1,
+              controller: testUrlController,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _handleUpdate,
           child: Text(appLocalizations.submit),
         )
       ],

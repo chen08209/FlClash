@@ -19,6 +19,7 @@ class CheckIpSelectorState with _$CheckIpSelectorState {
     required bool isInit,
     required bool isStart,
     required SelectedMap selectedMap,
+    required num checkIpNum
   }) = _CheckIpSelectorState;
 }
 

@@ -56,7 +56,16 @@ enum ProfileType { file, url }
 
 enum ResultType { success, error }
 
-enum MessageType { log, tun, delay, process, now, request, run }
+enum MessageType {
+  log,
+  tun,
+  delay,
+  process,
+  now,
+  request,
+  run,
+  loaded,
+}
 
 enum FindProcessMode { always, off }
 

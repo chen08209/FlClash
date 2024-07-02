@@ -19,7 +19,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -187,7 +186,12 @@ func Start(fd int, gateway, portal, dns string) (io.Closer, error) {
 	return stack, nil
 }
 
-func (t *Tun) MarkSocket(fd int) {
+type Fd struct {
+	Id    int64 `json:"id"`
+	Value int64 `json:"value"`
+}
+
+func (t *Tun) MarkSocket(fd Fd) {
 	_ = t.Limit.Acquire(context.Background(), 1)
 	defer t.Limit.Release(1)
 
@@ -197,7 +201,7 @@ func (t *Tun) MarkSocket(fd int) {
 
 	message := &bridge.Message{
 		Type: bridge.Tun,
-		Data: strconv.Itoa(fd),
+		Data: fd,
 	}
 
 	bridge.SendMessage(*message)

@@ -4,6 +4,7 @@ import "C"
 import (
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
+	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	ap "github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/resolver"
@@ -59,11 +60,17 @@ type ruleProviderSchema struct {
 	Interval int    `provider:"interval,omitempty"`
 }
 
+type ConfigExtendedParams struct {
+	IsPatch      bool              `json:"is-patch"`
+	IsCompatible bool              `json:"is-compatible"`
+	SelectedMap  map[string]string `json:"selected-map"`
+	TestURL      *string           `json:"test-url"`
+}
+
 type GenerateConfigParams struct {
-	ProfilePath  *string           `json:"profile-path"`
-	Config       *config.RawConfig `json:"config" `
-	IsPatch      *bool             `json:"is-patch"`
-	IsCompatible *bool             `json:"is-compatible"`
+	ProfilePath *string              `json:"profile-path"`
+	Config      config.RawConfig     `json:"config" `
+	Params      ConfigExtendedParams `json:"params"`
 }
 
 type ChangeProxyParams struct {
@@ -170,9 +177,9 @@ func getRawConfigWithPath(path *string) *config.RawConfig {
 	}
 }
 
-func decorationConfig(profilePath *string, cfg config.RawConfig, compatible bool) *config.RawConfig {
+func decorationConfig(profilePath *string, cfg config.RawConfig) *config.RawConfig {
 	prof := getRawConfigWithPath(profilePath)
-	overwriteConfig(prof, cfg, compatible)
+	overwriteConfig(prof, cfg)
 	return prof
 }
 
@@ -322,7 +329,7 @@ func generateProxyGroupAndRule(proxyGroup *[]map[string]any, rule *[]string) {
 	*rule = computedRule
 }
 
-func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig, compatible bool) {
+func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig) {
 	targetConfig.ExternalController = patchConfig.ExternalController
 	targetConfig.ExternalUI = ""
 	targetConfig.Interface = ""
@@ -352,7 +359,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	//} else if runtime.GOOS == "windows" {
 	//	targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, dns.SystemDNSPlaceholder)
 	//}
-	if compatible == false {
+	if configParams.IsCompatible == false {
 		targetConfig.ProxyProvider = make(map[string]map[string]any)
 		targetConfig.RuleProvider = make(map[string]map[string]any)
 		generateProxyGroupAndRule(&targetConfig.ProxyGroup, &targetConfig.Rule)
@@ -388,15 +395,44 @@ func patchConfig(general *config.General) {
 	resolver.DisableIPv6 = !general.IPv6
 }
 
-func applyConfig(isPatch bool) {
+func patchSelectGroup() {
+	mapping := configParams.SelectedMap
+	if mapping == nil {
+		return
+	}
+	for name, proxy := range tunnel.ProxiesWithProviders() {
+		outbound, ok := proxy.(*adapter.Proxy)
+		if !ok {
+			continue
+		}
+
+		selector, ok := outbound.ProxyAdapter.(outboundgroup.SelectAble)
+		if !ok {
+			continue
+		}
+
+		selected, exist := mapping[name]
+		if !exist {
+			continue
+		}
+
+		selector.ForceSet(selected)
+	}
+}
+
+func applyConfig() {
 	cfg, err := config.ParseRawConfig(currentConfig)
 	if err != nil {
 		cfg, _ = config.ParseRawConfig(config.DefaultRawConfig())
 	}
-	if isPatch {
+	if configParams.TestURL != nil {
+		constant.DefaultTestURL = *configParams.TestURL
+	}
+	if configParams.IsPatch {
 		patchConfig(cfg.General)
 	} else {
 		runtime.GC()
 		hub.UltraApplyConfig(cfg, true)
+		patchSelectGroup()
 	}
 }

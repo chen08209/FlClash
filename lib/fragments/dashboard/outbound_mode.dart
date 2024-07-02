@@ -13,18 +13,9 @@ class OutboundMode extends StatelessWidget {
   _changeMode(BuildContext context, Mode? value) async {
     final appController = globalState.appController;
     final clashConfig = appController.clashConfig;
-    final config = appController.config;
     if (value == null || clashConfig.mode == value) return;
     clashConfig.mode = value;
     await appController.updateClashConfig();
-    if (!config.isCompatible) {
-      final proxySelected = config.currentSelectedMap[GroupName.Proxy.name];
-      final globalSelected = config.currentSelectedMap[GroupName.GLOBAL.name];
-      if (proxySelected != null && globalSelected == null) {
-        config.updateCurrentSelectedMap(GroupName.GLOBAL.name, proxySelected);
-      }
-    }
-    appController.changeProxy();
   }
 
   @override
@@ -64,11 +55,8 @@ class OutboundMode extends StatelessWidget {
                     ),
                     title: Text(
                       Intl.message(item.name),
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.toSoftBold,
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.toSoftBold,
                     ),
                   ),
               ],

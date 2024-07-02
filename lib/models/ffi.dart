@@ -3,6 +3,7 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/models/connection.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/ffi.g.dart';
@@ -10,12 +11,24 @@ part 'generated/ffi.g.dart';
 part 'generated/ffi.freezed.dart';
 
 @freezed
+class ConfigExtendedParams with _$ConfigExtendedParams {
+  const factory ConfigExtendedParams({
+    @JsonKey(name: "is-patch") required bool isPatch,
+    @JsonKey(name: "is-compatible") required bool isCompatible,
+    @JsonKey(name: "selected-map") required SelectedMap selectedMap,
+    @JsonKey(name: "test-url") required String testUrl,
+  }) = _ConfigExtendedParams;
+
+  factory ConfigExtendedParams.fromJson(Map<String, Object?> json) =>
+      _$ConfigExtendedParamsFromJson(json);
+}
+
+@freezed
 class UpdateConfigParams with _$UpdateConfigParams {
   const factory UpdateConfigParams({
     @JsonKey(name: "profile-path") String? profilePath,
     required ClashConfig config,
-    @JsonKey(name: "is-patch") required bool isPatch,
-    @JsonKey(name: "is-compatible") required bool isCompatible,
+    required ConfigExtendedParams params,
   }) = _UpdateConfigParams;
 
   factory UpdateConfigParams.fromJson(Map<String, Object?> json) =>
@@ -73,6 +86,16 @@ class Process with _$Process {
 
   factory Process.fromJson(Map<String, Object?> json) =>
       _$ProcessFromJson(json);
+}
+
+@freezed
+class Fd with _$Fd {
+  const factory Fd({
+    required int id,
+    required int value,
+  }) = _Fd;
+
+  factory Fd.fromJson(Map<String, Object?> json) => _$FdFromJson(json);
 }
 
 @freezed

@@ -51,10 +51,9 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
   }
 
   @override
-  Future<void> onTun(String fd) async {
-    final fdInt = int.parse(fd);
-    await proxyManager.setProtect(fdInt);
-    clashCore.setFdMap(fdInt);
+  Future<void> onTun(Fd fd) async {
+    await proxyManager.setProtect(fd.value);
+    clashCore.setFdMap(fd.id);
     super.onTun(fd);
   }
 
@@ -74,5 +73,21 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
   void onRequest(Connection connection) async {
     globalState.appController.appState.addRequest(connection);
     super.onRequest(connection);
+  }
+
+  @override
+  void onLoaded(String groupName) {
+    final appController = globalState.appController;
+    final currentSelectedMap = appController.config.currentSelectedMap;
+    final proxyName = currentSelectedMap[groupName];
+    if (proxyName == null) return;
+    clashCore.changeProxy(
+      ChangeProxyParams(
+        groupName: groupName,
+        proxyName: proxyName,
+      ),
+    );
+    appController.appState.checkIpNum++;
+    super.onLoaded(proxyName);
   }
 }

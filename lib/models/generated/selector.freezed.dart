@@ -161,6 +161,7 @@ mixin _$CheckIpSelectorState {
   bool get isInit => throw _privateConstructorUsedError;
   bool get isStart => throw _privateConstructorUsedError;
   Map<String, String> get selectedMap => throw _privateConstructorUsedError;
+  num get checkIpNum => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $CheckIpSelectorStateCopyWith<CheckIpSelectorState> get copyWith =>
@@ -173,7 +174,11 @@ abstract class $CheckIpSelectorStateCopyWith<$Res> {
           $Res Function(CheckIpSelectorState) then) =
       _$CheckIpSelectorStateCopyWithImpl<$Res, CheckIpSelectorState>;
   @useResult
-  $Res call({bool isInit, bool isStart, Map<String, String> selectedMap});
+  $Res call(
+      {bool isInit,
+      bool isStart,
+      Map<String, String> selectedMap,
+      num checkIpNum});
 }
 
 /// @nodoc
@@ -193,6 +198,7 @@ class _$CheckIpSelectorStateCopyWithImpl<$Res,
     Object? isInit = null,
     Object? isStart = null,
     Object? selectedMap = null,
+    Object? checkIpNum = null,
   }) {
     return _then(_value.copyWith(
       isInit: null == isInit
@@ -207,6 +213,10 @@ class _$CheckIpSelectorStateCopyWithImpl<$Res,
           ? _value.selectedMap
           : selectedMap // ignore: cast_nullable_to_non_nullable
               as Map<String, String>,
+      checkIpNum: null == checkIpNum
+          ? _value.checkIpNum
+          : checkIpNum // ignore: cast_nullable_to_non_nullable
+              as num,
     ) as $Val);
   }
 }
@@ -219,7 +229,11 @@ abstract class _$$CheckIpSelectorStateImplCopyWith<$Res>
       __$$CheckIpSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool isInit, bool isStart, Map<String, String> selectedMap});
+  $Res call(
+      {bool isInit,
+      bool isStart,
+      Map<String, String> selectedMap,
+      num checkIpNum});
 }
 
 /// @nodoc
@@ -236,6 +250,7 @@ class __$$CheckIpSelectorStateImplCopyWithImpl<$Res>
     Object? isInit = null,
     Object? isStart = null,
     Object? selectedMap = null,
+    Object? checkIpNum = null,
   }) {
     return _then(_$CheckIpSelectorStateImpl(
       isInit: null == isInit
@@ -250,6 +265,10 @@ class __$$CheckIpSelectorStateImplCopyWithImpl<$Res>
           ? _value._selectedMap
           : selectedMap // ignore: cast_nullable_to_non_nullable
               as Map<String, String>,
+      checkIpNum: null == checkIpNum
+          ? _value.checkIpNum
+          : checkIpNum // ignore: cast_nullable_to_non_nullable
+              as num,
     ));
   }
 }
@@ -260,7 +279,8 @@ class _$CheckIpSelectorStateImpl implements _CheckIpSelectorState {
   const _$CheckIpSelectorStateImpl(
       {required this.isInit,
       required this.isStart,
-      required final Map<String, String> selectedMap})
+      required final Map<String, String> selectedMap,
+      required this.checkIpNum})
       : _selectedMap = selectedMap;
 
   @override
@@ -276,8 +296,11 @@ class _$CheckIpSelectorStateImpl implements _CheckIpSelectorState {
   }
 
   @override
+  final num checkIpNum;
+
+  @override
   String toString() {
-    return 'CheckIpSelectorState(isInit: $isInit, isStart: $isStart, selectedMap: $selectedMap)';
+    return 'CheckIpSelectorState(isInit: $isInit, isStart: $isStart, selectedMap: $selectedMap, checkIpNum: $checkIpNum)';
   }
 
   @override
@@ -288,12 +311,14 @@ class _$CheckIpSelectorStateImpl implements _CheckIpSelectorState {
             (identical(other.isInit, isInit) || other.isInit == isInit) &&
             (identical(other.isStart, isStart) || other.isStart == isStart) &&
             const DeepCollectionEquality()
-                .equals(other._selectedMap, _selectedMap));
+                .equals(other._selectedMap, _selectedMap) &&
+            (identical(other.checkIpNum, checkIpNum) ||
+                other.checkIpNum == checkIpNum));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, isInit, isStart,
-      const DeepCollectionEquality().hash(_selectedMap));
+      const DeepCollectionEquality().hash(_selectedMap), checkIpNum);
 
   @JsonKey(ignore: true)
   @override
@@ -306,10 +331,10 @@ class _$CheckIpSelectorStateImpl implements _CheckIpSelectorState {
 
 abstract class _CheckIpSelectorState implements CheckIpSelectorState {
   const factory _CheckIpSelectorState(
-          {required final bool isInit,
-          required final bool isStart,
-          required final Map<String, String> selectedMap}) =
-      _$CheckIpSelectorStateImpl;
+      {required final bool isInit,
+      required final bool isStart,
+      required final Map<String, String> selectedMap,
+      required final num checkIpNum}) = _$CheckIpSelectorStateImpl;
 
   @override
   bool get isInit;
@@ -317,6 +342,8 @@ abstract class _CheckIpSelectorState implements CheckIpSelectorState {
   bool get isStart;
   @override
   Map<String, String> get selectedMap;
+  @override
+  num get checkIpNum;
   @override
   @JsonKey(ignore: true)
   _$$CheckIpSelectorStateImplCopyWith<_$CheckIpSelectorStateImpl>

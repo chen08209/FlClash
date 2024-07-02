@@ -3,7 +3,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -121,6 +121,7 @@ class ClashConfig extends ChangeNotifier {
   Tun _tun;
   Dns _dns;
   List<String> _rules;
+  String? _globalRealUa;
 
   ClashConfig()
       : _mixedPort = 7890,
@@ -269,6 +270,25 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
+  @JsonKey(name: "global-ua", defaultValue: null)
+  String get globalUa {
+    if (_globalRealUa == null) {
+      return globalState.packageInfo.ua;
+    } else {
+      return _globalRealUa!;
+    }
+  }
+
+  @JsonKey(name: "global-real-ua", defaultValue: null)
+  String? get globalRealUa => _globalRealUa;
+
+  set globalRealUa(String? value) {
+    if (_globalRealUa != value) {
+      _globalRealUa = value;
+      notifyListeners();
+    }
+  }
+
   update([ClashConfig? clashConfig]) {
     if (clashConfig != null) {
       _mixedPort = clashConfig._mixedPort;
@@ -278,6 +298,7 @@ class ClashConfig extends ChangeNotifier {
       _tun = clashConfig._tun;
       _dns = clashConfig._dns;
       _rules = clashConfig._rules;
+      _globalRealUa = clashConfig.globalRealUa;
     }
     notifyListeners();
   }

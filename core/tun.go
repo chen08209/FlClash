@@ -11,6 +11,7 @@ import (
 	"github.com/metacubex/mihomo/log"
 	"golang.org/x/sync/semaphore"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -22,11 +23,11 @@ type FdMap struct {
 	m sync.Map
 }
 
-func (cm *FdMap) Store(key int) {
+func (cm *FdMap) Store(key int64) {
 	cm.m.Store(key, struct{}{})
 }
 
-func (cm *FdMap) Load(key int) bool {
+func (cm *FdMap) Load(key int64) bool {
 	_, ok := cm.m.Load(key)
 	return ok
 }
@@ -80,11 +81,13 @@ var errBlocked = errors.New("blocked")
 
 //export setFdMap
 func setFdMap(fd C.long) {
-	fdInt := int(fd)
+	fdInt := int64(fd)
 	go func() {
 		fdMap.Store(fdInt)
 	}()
 }
+
+var fdCounter int64 = 0
 
 func init() {
 	dialer.DefaultSocketHook = func(network, address string, conn syscall.RawConn) error {
@@ -92,24 +95,30 @@ func init() {
 			return errBlocked
 		}
 		return conn.Control(func(fd uintptr) {
-			fdInt := int(fd)
-			//timeout := time.After(100 * time.Millisecond)
-			if tun != nil {
-				tun.MarkSocket(fdInt)
-				time.Sleep(100 * time.Millisecond)
+			if tun == nil {
+				return
 			}
-			//for {
-			//	select {
-			//	case <-timeout:
-			//		return
-			//	default:
-			//		exists := fdMap.Load(fdInt)
-			//		if exists {
-			//			return
-			//		}
-			//		time.Sleep(20 * time.Millisecond)
-			//	}
-			//}
+
+			fdInt := int64(fd)
+			timeout := time.After(100 * time.Millisecond)
+			id := atomic.AddInt64(&fdCounter, 1)
+			tun.MarkSocket(t.Fd{
+				Id:    id,
+				Value: fdInt,
+			})
+
+			for {
+				select {
+				case <-timeout:
+					return
+				default:
+					exists := fdMap.Load(id)
+					if exists {
+						return
+					}
+					time.Sleep(10 * time.Millisecond)
+				}
+			}
 		})
 	}
 }

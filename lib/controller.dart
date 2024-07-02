@@ -71,14 +71,6 @@ class AppController {
     );
   }
 
-  changeProxy() {
-    globalState.changeProxy(
-      appState: appState,
-      config: config,
-      clashConfig: clashConfig,
-    );
-  }
-
   addProfile(Profile profile) async {
     config.setProfile(profile);
     if (config.currentProfileId != null) return;

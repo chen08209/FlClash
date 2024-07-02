@@ -52,6 +52,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
           isInit: appState.isInit,
           selectedMap: appState.selectedMap,
           isStart: appState.isStart,
+          checkIpNum: appState.checkIpNum,
         );
       },
       builder: (_, state, __) {
