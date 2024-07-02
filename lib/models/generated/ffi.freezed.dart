@@ -1006,6 +1006,151 @@ abstract class _Process implements Process {
       throw _privateConstructorUsedError;
 }
 
+Fd _$FdFromJson(Map<String, dynamic> json) {
+  return _Fd.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Fd {
+  int get id => throw _privateConstructorUsedError;
+  int get value => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $FdCopyWith<Fd> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $FdCopyWith<$Res> {
+  factory $FdCopyWith(Fd value, $Res Function(Fd) then) =
+      _$FdCopyWithImpl<$Res, Fd>;
+  @useResult
+  $Res call({int id, int value});
+}
+
+/// @nodoc
+class _$FdCopyWithImpl<$Res, $Val extends Fd> implements $FdCopyWith<$Res> {
+  _$FdCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? value = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$FdImplCopyWith<$Res> implements $FdCopyWith<$Res> {
+  factory _$$FdImplCopyWith(_$FdImpl value, $Res Function(_$FdImpl) then) =
+      __$$FdImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int id, int value});
+}
+
+/// @nodoc
+class __$$FdImplCopyWithImpl<$Res> extends _$FdCopyWithImpl<$Res, _$FdImpl>
+    implements _$$FdImplCopyWith<$Res> {
+  __$$FdImplCopyWithImpl(_$FdImpl _value, $Res Function(_$FdImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? value = null,
+  }) {
+    return _then(_$FdImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$FdImpl implements _Fd {
+  const _$FdImpl({required this.id, required this.value});
+
+  factory _$FdImpl.fromJson(Map<String, dynamic> json) =>
+      _$$FdImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  final int value;
+
+  @override
+  String toString() {
+    return 'Fd(id: $id, value: $value)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$FdImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.value, value) || other.value == value));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, value);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$FdImplCopyWith<_$FdImpl> get copyWith =>
+      __$$FdImplCopyWithImpl<_$FdImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$FdImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Fd implements Fd {
+  const factory _Fd({required final int id, required final int value}) =
+      _$FdImpl;
+
+  factory _Fd.fromJson(Map<String, dynamic> json) = _$FdImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  int get value;
+  @override
+  @JsonKey(ignore: true)
+  _$$FdImplCopyWith<_$FdImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 ProcessMapItem _$ProcessMapItemFromJson(Map<String, dynamic> json) {
   return _ProcessMapItem.fromJson(json);
 }

@@ -10,7 +10,7 @@ import 'core.dart';
 abstract mixin class ClashMessageListener {
   void onLog(Log log) {}
 
-  void onTun(String fd) {}
+  void onTun(Fd fd) {}
 
   void onDelay(Delay delay) {}
 
@@ -39,7 +39,7 @@ class ClashMessage {
             listener.onLog(Log.fromJson(m.data));
             break;
           case MessageType.tun:
-            listener.onTun(m.data);
+            listener.onTun(Fd.fromJson(m.data));
             break;
           case MessageType.delay:
             listener.onDelay(Delay.fromJson(m.data));

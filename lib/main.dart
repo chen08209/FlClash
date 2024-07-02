@@ -51,10 +51,9 @@ Future<void> vpnService() async {
   );
   clashMessage.addListener(
     ClashMessageListenerWithVpn(
-      onTun: (String fd) async {
-        final fdInt = int.parse(fd);
-        await proxyManager.setProtect(fdInt);
-        clashCore.setFdMap(fdInt);
+      onTun: (Fd fd) async {
+        await proxyManager.setProtect(fd.value);
+        clashCore.setFdMap(fd.id);
       },
     ),
   );
@@ -106,14 +105,14 @@ Future<void> vpnService() async {
 }
 
 class ClashMessageListenerWithVpn with ClashMessageListener {
-  final Function(String fd) _onTun;
+  final Function(Fd fd) _onTun;
 
   ClashMessageListenerWithVpn({
-    required Function(String fd) onTun,
+    required Function(Fd fd) onTun,
   }) : _onTun = onTun;
 
   @override
-  void onTun(String fd) {
+  void onTun(Fd fd) {
     _onTun(fd);
   }
 }

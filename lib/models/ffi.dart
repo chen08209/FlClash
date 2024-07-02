@@ -76,6 +76,17 @@ class Process with _$Process {
 }
 
 @freezed
+class Fd with _$Fd {
+  const factory Fd({
+    required int id,
+    required int value,
+  }) = _Fd;
+
+  factory Fd.fromJson(Map<String, Object?> json) =>
+      _$FdFromJson(json);
+}
+
+@freezed
 class ProcessMapItem with _$ProcessMapItem {
   const factory ProcessMapItem({
     required int id,

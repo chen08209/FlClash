@@ -93,6 +93,16 @@ Map<String, dynamic> _$$ProcessImplToJson(_$ProcessImpl instance) =>
       'metadata': instance.metadata,
     };
 
+_$FdImpl _$$FdImplFromJson(Map<String, dynamic> json) => _$FdImpl(
+      id: (json['id'] as num).toInt(),
+      value: (json['value'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$$FdImplToJson(_$FdImpl instance) => <String, dynamic>{
+      'id': instance.id,
+      'value': instance.value,
+    };
+
 _$ProcessMapItemImpl _$$ProcessMapItemImplFromJson(Map<String, dynamic> json) =>
     _$ProcessMapItemImpl(
       id: (json['id'] as num).toInt(),
