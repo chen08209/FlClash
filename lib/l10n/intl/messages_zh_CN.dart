@@ -209,6 +209,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "startVpn": MessageLookupByLibrary.simpleMessage("正在启动VPN..."),
         "stopVpn": MessageLookupByLibrary.simpleMessage("正在停止VPN..."),
         "submit": MessageLookupByLibrary.simpleMessage("提交"),
+        "sync": MessageLookupByLibrary.simpleMessage("同步"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("系统代理"),
         "systemProxyDesc":
             MessageLookupByLibrary.simpleMessage("为VpnService附加HTTP代理"),

@@ -115,7 +115,6 @@ class ApplicationState extends State<Application> {
       lightColorScheme: lightDynamic,
       darkColorScheme: darkDynamic,
     );
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       globalState.appController.updateSystemColorSchemes(systemColorSchemes);
     });

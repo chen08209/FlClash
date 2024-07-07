@@ -6,7 +6,6 @@ import 'package:fl_clash/models/dav.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/list.dart';
-import 'package:fl_clash/widgets/section.dart';
 import 'package:fl_clash/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -34,7 +33,7 @@ class _BackupAndRecoveryState extends State<BackupAndRecovery> {
     final res = await commonScaffoldState?.loadingRun<bool>(() async {
       return await _client?.backup();
     });
-    if(res != true) return;
+    if (res != true) return;
     globalState.showMessage(
       title: appLocalizations.recovery,
       message: TextSpan(text: appLocalizations.backupSuccess),
@@ -46,7 +45,7 @@ class _BackupAndRecoveryState extends State<BackupAndRecovery> {
     final res = await commonScaffoldState?.loadingRun<bool>(() async {
       return await _client?.recovery(recoveryOption: recoveryOption);
     });
-    if(res != true) return;
+    if (res != true) return;
     globalState.showMessage(
       title: appLocalizations.recovery,
       message: TextSpan(text: appLocalizations.recoverySuccess),
@@ -69,26 +68,22 @@ class _BackupAndRecoveryState extends State<BackupAndRecovery> {
         if (dav == null) {
           return ListView(
             children: [
-              Section(
+              ListHeader(
                 title: appLocalizations.account,
-                child: Builder(
-                  builder: (_) {
-                    return ListItem(
-                      leading: const Icon(Icons.account_box),
-                      title: Text(appLocalizations.noInfo),
-                      subtitle: Text(appLocalizations.pleaseBindWebDAV),
-                      trailing: FilledButton.tonal(
-                        onPressed: () {
-                          _showAddWebDAV(dav);
-                        },
-                        child: Text(
-                          appLocalizations.bind,
-                        ),
-                      ),
-                    );
+              ),
+              ListItem(
+                leading: const Icon(Icons.account_box),
+                title: Text(appLocalizations.noInfo),
+                subtitle: Text(appLocalizations.pleaseBindWebDAV),
+                trailing: FilledButton.tonal(
+                  onPressed: () {
+                    _showAddWebDAV(dav);
                   },
+                  child: Text(
+                    appLocalizations.bind,
+                  ),
                 ),
-              )
+              ),
             ],
           );
         }
@@ -96,62 +91,60 @@ class _BackupAndRecoveryState extends State<BackupAndRecovery> {
         final pingFuture = _client!.pingCompleter.future;
         return ListView(
           children: [
-            Section(
-              title: appLocalizations.account,
-              child: ListItem(
-                leading: const Icon(Icons.account_box),
-                title: TooltipText(
-                  text: Text(
-                    dav.user,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+            ListHeader(title: appLocalizations.account),
+            ListItem(
+              leading: const Icon(Icons.account_box),
+              title: TooltipText(
+                text: Text(
+                  dav.user,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(appLocalizations.connectivity),
-                      FutureBuilder<bool>(
-                        future: pingFuture,
-                        builder: (_, snapshot) {
-                          return Center(
-                            child: FadeBox(
-                              key: const Key("fade_box_1"),
-                              child: snapshot.connectionState ==
-                                      ConnectionState.waiting
-                                  ? const SizedBox(
-                                      width: 12,
-                                      height: 12,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 1,
-                                      ),
-                                    )
-                                  : Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: snapshot.data == true
-                                            ? Colors.green
-                                            : Colors.red,
-                                      ),
-                                      width: 12,
-                                      height: 12,
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(appLocalizations.connectivity),
+                    FutureBuilder<bool>(
+                      future: pingFuture,
+                      builder: (_, snapshot) {
+                        return Center(
+                          child: FadeBox(
+                            key: const Key("fade_box_1"),
+                            child: snapshot.connectionState ==
+                                    ConnectionState.waiting
+                                ? const SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1,
                                     ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                                  )
+                                : Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: snapshot.data == true
+                                          ? Colors.green
+                                          : Colors.red,
+                                    ),
+                                    width: 12,
+                                    height: 12,
+                                  ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                trailing: FilledButton.tonal(
-                  onPressed: () {
-                    _showAddWebDAV(dav);
-                  },
-                  child: Text(
-                    appLocalizations.edit,
-                  ),
+              ),
+              trailing: FilledButton.tonal(
+                onPressed: () {
+                  _showAddWebDAV(dav);
+                },
+                child: Text(
+                  appLocalizations.edit,
                 ),
               ),
             ),
@@ -161,22 +154,21 @@ class _BackupAndRecoveryState extends State<BackupAndRecovery> {
                 return FadeBox(
                   key: const Key("fade_box_2"),
                   child: snapshot.data == true
-                      ? Section(
-                          title: appLocalizations.backupAndRecovery,
-                          child: Column(
-                            children: [
-                              ListItem(
-                                onTab: _backup,
-                                title: Text(appLocalizations.backup),
-                                subtitle: Text(appLocalizations.backupDesc),
-                              ),
-                              ListItem(
-                                onTab: _handleRecovery,
-                                title: Text(appLocalizations.recovery),
-                                subtitle: Text(appLocalizations.recoveryDesc),
-                              ),
-                            ],
-                          ),
+                      ? Column(
+                          children: [
+                            ListHeader(
+                                title: appLocalizations.backupAndRecovery),
+                            ListItem(
+                              onTab: _backup,
+                              title: Text(appLocalizations.backup),
+                              subtitle: Text(appLocalizations.backupDesc),
+                            ),
+                            ListItem(
+                              onTab: _handleRecovery,
+                              title: Text(appLocalizations.recovery),
+                              subtitle: Text(appLocalizations.recoveryDesc),
+                            ),
+                          ],
                         )
                       : Container(),
                 );
@@ -227,7 +219,6 @@ class _WebDAVFormDialogState extends State<WebDAVFormDialog> {
     globalState.appController.config.dav = null;
     Navigator.pop(context);
   }
-
 
   @override
   void dispose() {

@@ -94,11 +94,11 @@ func updateConfig(s *C.char, port C.longlong) {
 	go func() {
 		var params = &GenerateConfigParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
-		configParams = params.Params
 		if err != nil {
 			bridge.SendToPort(i, err.Error())
 			return
 		}
+		configParams = params.Params
 		prof := decorationConfig(params.ProfilePath, params.Config)
 		currentConfig = prof
 		applyConfig()

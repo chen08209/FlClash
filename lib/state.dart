@@ -87,7 +87,7 @@ class GlobalState {
       config: config,
       clashConfig: clashConfig,
     ).then((_){
-      appController.appState.checkIpNum++;
+      appController.addCheckIpNumDebounce();
     });
   }
 

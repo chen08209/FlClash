@@ -57,138 +57,120 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
     return Intl.message(locale.toString());
   }
 
-  Widget _getOtherList() {
-    List<Widget> items = [
-      ListItem.open(
-        leading: const Icon(Icons.info),
-        title: Text(appLocalizations.about),
-        delegate: OpenDelegate(
-          title: appLocalizations.about,
-          widget: const AboutFragment(),
+  List<Widget> _getOtherList() {
+    return generateSection(
+      title: appLocalizations.other,
+      items: [
+        ListItem.open(
+          leading: const Icon(Icons.info),
+          title: Text(appLocalizations.about),
+          delegate: OpenDelegate(
+            title: appLocalizations.about,
+            widget: const AboutFragment(),
+          ),
         ),
-      ),
-    ];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final item in items) ...[
-          item,
-          if (item != items.last)
-            const Divider(
-              height: 0,
-            ),
-        ]
       ],
     );
   }
 
-  Widget _getSettingList() {
-    List<Widget> items = [
-      Selector<Config, String?>(
-        selector: (_, config) => config.locale,
-        builder: (_, localeString, __) {
-          final subTitle = localeString ?? appLocalizations.defaultText;
-          final currentLocale = other.getLocaleForString(localeString);
-          return ListTile(
-            leading: const Icon(Icons.language_outlined),
-            title: Text(appLocalizations.language),
-            subtitle: Text(Intl.message(subTitle)),
-            onTap: () {
-              globalState.showCommonDialog(
-                child: AlertDialog(
-                  title: Text(appLocalizations.language),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 16,
-                  ),
-                  content: SizedBox(
-                    width: 250,
-                    child: Wrap(
-                      children: [
-                        for (final locale in [
-                          null,
-                          ...AppLocalizations.delegate.supportedLocales
-                        ])
-                          ListItem.radio(
-                            delegate: RadioDelegate<Locale?>(
-                              value: locale,
-                              groupValue: currentLocale,
-                              onChanged: (Locale? value) {
-                                final config = context.read<Config>();
-                                config.locale = value?.toString();
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            title: Text(_getLocaleString(locale)),
-                          )
-                      ],
+  List<Widget> _getSettingList() {
+    return generateSection(
+      title: appLocalizations.settings,
+      items: [
+        Selector<Config, String?>(
+          selector: (_, config) => config.locale,
+          builder: (_, localeString, __) {
+            final subTitle = localeString ?? appLocalizations.defaultText;
+            final currentLocale = other.getLocaleForString(localeString);
+            return ListTile(
+              leading: const Icon(Icons.language_outlined),
+              title: Text(appLocalizations.language),
+              subtitle: Text(Intl.message(subTitle)),
+              onTap: () {
+                globalState.showCommonDialog(
+                  child: AlertDialog(
+                    title: Text(appLocalizations.language),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 16,
+                    ),
+                    content: SizedBox(
+                      width: 250,
+                      child: Wrap(
+                        children: [
+                          for (final locale in [
+                            null,
+                            ...AppLocalizations.delegate.supportedLocales
+                          ])
+                            ListItem.radio(
+                              delegate: RadioDelegate<Locale?>(
+                                value: locale,
+                                groupValue: currentLocale,
+                                onChanged: (Locale? value) {
+                                  final config = context.read<Config>();
+                                  config.locale = value?.toString();
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              title: Text(_getLocaleString(locale)),
+                            )
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-      ListItem.open(
-        leading: const Icon(Icons.style),
-        title: Text(appLocalizations.theme),
-        subtitle: Text(appLocalizations.themeDesc),
-        delegate: OpenDelegate(
-          title: appLocalizations.theme,
-          widget: const ThemeFragment(),
-          extendPageWidth: 360,
+                );
+              },
+            );
+          },
         ),
-      ),
-      ListItem.open(
-        leading: const Icon(Icons.cloud_sync),
-        title: Text(appLocalizations.backupAndRecovery),
-        subtitle: Text(appLocalizations.backupAndRecoveryDesc),
-        delegate: OpenDelegate(
-          title: appLocalizations.backupAndRecovery,
-          widget: const BackupAndRecovery(),
-        ),
-      ),
-      if (Platform.isAndroid)
         ListItem.open(
-          leading: const Icon(Icons.view_list),
-          title: Text(appLocalizations.accessControl),
-          subtitle: Text(appLocalizations.accessControlDesc),
+          leading: const Icon(Icons.style),
+          title: Text(appLocalizations.theme),
+          subtitle: Text(appLocalizations.themeDesc),
           delegate: OpenDelegate(
-            title: appLocalizations.appAccessControl,
-            widget: const AccessFragment(),
+            title: appLocalizations.theme,
+            widget: const ThemeFragment(),
+            extendPageWidth: 360,
           ),
         ),
-      ListItem.open(
-        leading: const Icon(Icons.edit),
-        title: Text(appLocalizations.override),
-        subtitle: Text(appLocalizations.overrideDesc),
-        delegate: OpenDelegate(
-          title: appLocalizations.override,
-          widget: const ConfigFragment(),
-          extendPageWidth: 360,
+        ListItem.open(
+          leading: const Icon(Icons.cloud_sync),
+          title: Text(appLocalizations.backupAndRecovery),
+          subtitle: Text(appLocalizations.backupAndRecoveryDesc),
+          delegate: OpenDelegate(
+            title: appLocalizations.backupAndRecovery,
+            widget: const BackupAndRecovery(),
+          ),
         ),
-      ),
-      ListItem.open(
-        leading: const Icon(Icons.settings_applications),
-        title: Text(appLocalizations.application),
-        subtitle: Text(appLocalizations.applicationDesc),
-        delegate: OpenDelegate(
-          title: appLocalizations.application,
-          widget: const ApplicationSettingFragment(),
-        ),
-      ),
-    ];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final item in items) ...[
-          item,
-          if (item != items.last)
-            const Divider(
-              height: 0,
+        if (Platform.isAndroid)
+          ListItem.open(
+            leading: const Icon(Icons.view_list),
+            title: Text(appLocalizations.accessControl),
+            subtitle: Text(appLocalizations.accessControlDesc),
+            delegate: OpenDelegate(
+              title: appLocalizations.appAccessControl,
+              widget: const AccessFragment(),
             ),
-        ]
+          ),
+        ListItem.open(
+          leading: const Icon(Icons.edit),
+          title: Text(appLocalizations.override),
+          subtitle: Text(appLocalizations.overrideDesc),
+          delegate: OpenDelegate(
+            title: appLocalizations.override,
+            widget: const ConfigFragment(),
+            extendPageWidth: 360,
+          ),
+        ),
+        ListItem.open(
+          leading: const Icon(Icons.settings_applications),
+          title: Text(appLocalizations.application),
+          subtitle: Text(appLocalizations.applicationDesc),
+          delegate: OpenDelegate(
+            title: appLocalizations.application,
+            widget: const ApplicationSettingFragment(),
+          ),
+        ),
       ],
     );
   }
@@ -216,20 +198,16 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
               if (state.navigationItems.isEmpty) {
                 return Container();
               }
-              return Section(
-                title: appLocalizations.more,
-                child: _buildNavigationMenu(state.navigationItems),
+              return Column(
+                children: [
+                  ListHeader(title: appLocalizations.more),
+                  _buildNavigationMenu(state.navigationItems)
+                ],
               );
             },
           ),
-          Section(
-            title: appLocalizations.settings,
-            child: _getSettingList(),
-          ),
-          Section(
-            title: appLocalizations.other,
-            child: _getOtherList(),
-          ),
+          ..._getSettingList(),
+          ..._getOtherList(),
         ];
         return ListView.builder(
           itemCount: items.length,

@@ -47,10 +47,6 @@ class FlClashVpnService : VpnService() {
         "192.168.*"
     )
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return START_STICKY
-    }
-
     fun start(port: Int, props: Props?) {
         fd = with(Builder()) {
             addAddress("172.16.0.1", 30)

@@ -3,7 +3,6 @@ import 'package:fl_clash/fragments/profiles/edit_profile.dart';
 import 'package:fl_clash/fragments/profiles/view_profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -138,33 +137,30 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
               .map((profile) => GlobalObjectKey<_ProfileItemState>(profile.id))
               .toList();
           final columns = _getColumns(state.viewMode);
-          final isMobile = state.viewMode == ViewMode.mobile;
           return Align(
             alignment: Alignment.topCenter,
             child: NotificationListener<ScrollNotification>(
               onNotification: (scrollNotification) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  hasPadding.value =
-                      scrollNotification.metrics.maxScrollExtent > 0;
-                });
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) {
+                    hasPadding.value =
+                        scrollNotification.metrics.maxScrollExtent > 0;
+                  },
+                );
                 return true;
               },
               child: ValueListenableBuilder(
                 valueListenable: hasPadding,
                 builder: (_, hasPadding, __) {
                   return SingleChildScrollView(
-                    padding: !isMobile
-                        ? EdgeInsets.only(
-                            left: 16,
-                            right: 16,
-                            top: 16,
-                            bottom: 16 + (hasPadding ? 56 : 0),
-                          )
-                        : EdgeInsets.only(
-                            bottom: 0 + (hasPadding ? 56 : 0),
-                          ),
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                      bottom: 16 + (hasPadding ? 56 : 0),
+                    ),
                     child: Grid(
-                      mainAxisSpacing: isMobile ? 8 : 16,
+                      mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
                       crossAxisCount: columns,
                       children: [
@@ -225,6 +221,8 @@ class _ProfileItemState extends State<ProfileItem> {
       isUpdating.value = false;
       if (!isSingle) {
         return e.toString();
+      } else {
+        rethrow;
       }
     }
     isUpdating.value = false;
@@ -412,16 +410,7 @@ class _ProfileItemState extends State<ProfileItem> {
     final profile = widget.profile;
     final groupValue = widget.groupValue;
     final onChanged = widget.onChanged;
-    return Selector<AppState, ViewMode>(
-      selector: (_, appState) => appState.viewMode,
-      builder: (_, viewMode, child) {
-        if (viewMode == ViewMode.mobile) {
-          return child!;
-        }
-        return CommonCard(
-          child: child!,
-        );
-      },
+    return CommonCard(
       child: ListItem.radio(
         key: Key(profile.id),
         horizontalTitleGap: 16,

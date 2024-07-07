@@ -260,6 +260,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "startVpn": MessageLookupByLibrary.simpleMessage("Staring VPN..."),
         "stopVpn": MessageLookupByLibrary.simpleMessage("Stopping VPN..."),
         "submit": MessageLookupByLibrary.simpleMessage("Submit"),
+        "sync": MessageLookupByLibrary.simpleMessage("Sync"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("SystemProxy"),
         "systemProxyDesc": MessageLookupByLibrary.simpleMessage(
             "Attach HTTP proxy to VpnService"),

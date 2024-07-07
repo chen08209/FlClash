@@ -269,8 +269,8 @@ class LogsSearchDelegate extends SearchDelegate {
                   vertical: 16,
                 ),
                 child: Wrap(
-                  runSpacing: 8,
-                  spacing: 8,
+                  runSpacing: 6,
+                  spacing: 6,
                   children: [
                     for (final keyword in state.keywords)
                       CommonChip(
@@ -328,26 +328,23 @@ class _LogItemState extends State<LogItem> {
   @override
   Widget build(BuildContext context) {
     final log = widget.log;
-    return ListTile(
+    return ListItem(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 4,
+      ),
       title: SelectableText(log.payload ?? ''),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(
-              top: 8,
-            ),
-            child: SelectableText(
-              "${log.dateTime}",
-              style: context.textTheme.bodySmall
-                  ?.copyWith(color: context.colorScheme.primary),
-            ),
+          SelectableText(
+            "${log.dateTime}",
+            style: context.textTheme.bodySmall
+                ?.copyWith(color: context.colorScheme.primary),
           ),
+          const SizedBox(height: 8,),
           Container(
             alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(
-              vertical: 8,
-            ),
             child: CommonChip(
               onPressed: () {
                 if (widget.onClick == null) return;

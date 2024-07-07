@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/open_container.dart';
@@ -214,7 +215,8 @@ class ListItem<T> extends StatelessWidget {
       return OpenContainer(
         closedBuilder: (_, action) {
           openAction() {
-            final isMobile = globalState.appController.appState.viewMode == ViewMode.mobile;
+            final isMobile =
+                globalState.appController.appState.viewMode == ViewMode.mobile;
             if (!isMobile) {
               showExtendPage(
                 context,
@@ -243,7 +245,8 @@ class ListItem<T> extends StatelessWidget {
       final nextDelegate = delegate as NextDelegate;
       return _buildListTile(
         onTab: () {
-          final isMobile = globalState.appController.appState.viewMode == ViewMode.mobile;
+          final isMobile =
+              globalState.appController.appState.viewMode == ViewMode.mobile;
           if (!isMobile) {
             showExtendPage(
               context,
@@ -318,4 +321,78 @@ class ListItem<T> extends StatelessWidget {
       onTab: onTab,
     );
   }
+}
+
+class ListHeader extends StatelessWidget {
+  final String title;
+  final List<Widget> actions;
+
+  const ListHeader({
+    super.key,
+    required this.title,
+    List<Widget>? actions,
+  }) : actions = actions ?? const [];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ...actions,
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+List<Widget> generateSection({
+  required String title,
+  required Iterable<Widget> items,
+  List<Widget>? actions,
+  bool separated = true,
+}) {
+  final genItems = separated
+      ? items.separated(
+          const Divider(
+            height: 0,
+          ),
+        )
+      : items;
+  return [
+    if (items.isNotEmpty)
+      ListHeader(
+        title: title,
+        actions: actions,
+      ),
+    ...genItems,
+  ];
+}
+
+Widget generateListView(List<Widget> items) {
+  return ListView.builder(
+    itemCount: items.length,
+    itemBuilder: (_, index) => items[index],
+  );
 }

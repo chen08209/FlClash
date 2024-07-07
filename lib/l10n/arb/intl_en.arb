@@ -192,5 +192,6 @@
   "cut": "Cut",
   "copy": "Copy",
   "paste": "Paste",
-  "testUrl": "Test url"
+  "testUrl": "Test url",
+  "sync": "Sync"
 }

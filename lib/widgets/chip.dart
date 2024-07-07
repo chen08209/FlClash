@@ -20,7 +20,7 @@ class CommonChip extends StatelessWidget {
     if (type == ChipType.delete) {
       return Chip(
         avatar: avatar,
-        padding: const EdgeInsets.symmetric(
+        labelPadding:const EdgeInsets.symmetric(
           vertical: 0,
           horizontal: 4,
         ),
@@ -35,7 +35,7 @@ class CommonChip extends StatelessWidget {
     return ActionChip(
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       avatar: avatar,
-      padding: const EdgeInsets.symmetric(
+      labelPadding:const EdgeInsets.symmetric(
         vertical: 0,
         horizontal: 4,
       ),

@@ -139,8 +139,8 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
                     vertical: 16,
                   ),
                   child: Wrap(
-                    runSpacing: 8,
-                    spacing: 8,
+                    runSpacing: 6,
+                    spacing: 6,
                     children: [
                       for (final keyword in state.keywords)
                         CommonChip(
@@ -219,6 +219,10 @@ class ConnectionItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 4,
+      ),
       tileTitleAlignment: ListTileTitleAlignment.titleHeight,
       leading: Platform.isAndroid
           ? Container(
@@ -249,17 +253,17 @@ class ConnectionItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(
-            height: 12,
+            height: 8,
           ),
           Text(
             _getSourceText(connection),
           ),
           const SizedBox(
-            height: 12,
+            height: 8,
           ),
           Wrap(
-            runSpacing: 8,
-            spacing: 8,
+            runSpacing: 6,
+            spacing: 6,
             children: [
               for (final chain in connection.chains)
                 CommonChip(
@@ -270,9 +274,6 @@ class ConnectionItem extends StatelessWidget {
                   },
                 ),
             ],
-          ),
-          const SizedBox(
-            height: 12,
           ),
         ],
       ),
@@ -394,8 +395,8 @@ class ConnectionsSearchDelegate extends SearchDelegate {
                   vertical: 16,
                 ),
                 child: Wrap(
-                  runSpacing: 8,
-                  spacing: 8,
+                  runSpacing: 6,
+                  spacing: 6,
                   children: [
                     for (final keyword in state.keywords)
                       CommonChip(

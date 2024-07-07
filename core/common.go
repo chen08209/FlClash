@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -420,7 +421,11 @@ func patchSelectGroup() {
 	}
 }
 
+var applyLock sync.Mutex
+
 func applyConfig() {
+	applyLock.Lock()
+	defer applyLock.Unlock()
 	cfg, err := config.ParseRawConfig(currentConfig)
 	if err != nil {
 		cfg, _ = config.ParseRawConfig(config.DefaultRawConfig())
