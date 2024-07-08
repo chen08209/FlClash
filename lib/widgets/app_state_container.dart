@@ -12,17 +12,6 @@ class AppStateContainer extends StatelessWidget {
     required this.child,
   });
 
-  _autoLaunchContainer(Widget child) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.autoLaunch,
-      builder: (_, isAutoLaunch, child) {
-        autoLaunch?.updateStatus(isAutoLaunch);
-        return child!;
-      },
-      child: child,
-    );
-  }
-
   _updateNavigationsContainer(Widget child) {
     return Selector2<AppState, Config, UpdateNavigationsSelector>(
       selector: (_, appState, config) {
@@ -51,10 +40,8 @@ class AppStateContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _autoLaunchContainer(
-      _updateNavigationsContainer(
-        child,
-      ),
+    return _updateNavigationsContainer(
+      child,
     );
   }
 }

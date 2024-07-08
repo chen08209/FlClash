@@ -1,5 +1,8 @@
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 class WindowContainer extends StatefulWidget {
@@ -14,11 +17,22 @@ class WindowContainer extends StatefulWidget {
   State<WindowContainer> createState() => _WindowContainerState();
 }
 
-class _WindowContainerState extends State<WindowContainer>
-    with WindowListener {
+class _WindowContainerState extends State<WindowContainer> with WindowListener {
+
+  _autoLaunchContainer(Widget child) {
+    return Selector<Config, bool>(
+      selector: (_, config) => config.autoLaunch,
+      builder: (_, isAutoLaunch, child) {
+        autoLaunch?.updateStatus(isAutoLaunch);
+        return child!;
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return _autoLaunchContainer(widget.child);
   }
 
   @override
@@ -32,7 +46,6 @@ class _WindowContainerState extends State<WindowContainer>
     await globalState.appController.handleBackOrExit();
     super.onWindowClose();
   }
-
 
   @override
   void onWindowMinimize() async {

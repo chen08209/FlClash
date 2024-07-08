@@ -35,7 +35,7 @@ class _BackupAndRecoveryState extends State<BackupAndRecovery> {
     });
     if (res != true) return;
     globalState.showMessage(
-      title: appLocalizations.recovery,
+      title: appLocalizations.backup,
       message: TextSpan(text: appLocalizations.backupSuccess),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:fl_clash/models/clash_config.dart';
 import 'package:flutter/material.dart';
 
 const appName = "FlClash";
@@ -10,8 +11,15 @@ const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
 const defaultUpdateDuration = Duration(days: 1);
 const mmdbFileName = "geoip.metadb";
-const geoSiteFileName = "GeoSite.dat";
 const asnFileName = "ASN.mmdb";
+const geoIpFileName = "GeoIP.dat";
+const geoSiteFileName = "GeoSite.dat";
+const GeoXMap defaultGeoXMap = {
+  "mmdb":"https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+  "asn":"https://github.com/xishang0128/geoip/releases/download/latest/GeoLite2-ASN.mmdb",
+  "geoip":"https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoIP.dat",
+  "geosite":"https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"
+};
 const profilesDirectoryName = "profiles";
 const localhost = "127.0.0.1";
 const clashConfigKey = "clash_config";

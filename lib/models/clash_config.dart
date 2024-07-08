@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -106,6 +107,8 @@ class Dns {
   }
 }
 
+typedef GeoXMap = Map<String, String>;
+
 @JsonSerializable()
 class ClashConfig extends ChangeNotifier {
   int _mixedPort;
@@ -120,6 +123,7 @@ class ClashConfig extends ChangeNotifier {
   bool _tcpConcurrent;
   Tun _tun;
   Dns _dns;
+  GeoXMap _geoXUrl;
   List<String> _rules;
   String? _globalRealUa;
 
@@ -136,6 +140,7 @@ class ClashConfig extends ChangeNotifier {
         _geodataLoader = geodataLoaderMemconservative,
         _externalController = '',
         _dns = Dns(),
+        _geoXUrl = defaultGeoXMap,
         _rules = [];
 
   @JsonKey(name: "mixed-port", defaultValue: 7890)
@@ -285,6 +290,16 @@ class ClashConfig extends ChangeNotifier {
   set globalRealUa(String? value) {
     if (_globalRealUa != value) {
       _globalRealUa = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(name: "geox-url", defaultValue: defaultGeoXMap)
+  GeoXMap get geoXUrl => _geoXUrl;
+
+  set geoXUrl(GeoXMap value) {
+    if (!const MapEquality<String, String>().equals(value, _geoXUrl)) {
+      _geoXUrl = value;
       notifyListeners();
     }
   }

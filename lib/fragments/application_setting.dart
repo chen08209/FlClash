@@ -91,6 +91,24 @@ class ApplicationSettingFragment extends StatelessWidget {
       ),
       if (Platform.isAndroid)
         Selector<Config, bool>(
+          selector: (_, config) => config.isExclude,
+          builder: (_, isExclude, child) {
+            return ListItem.switchItem(
+              leading: const Icon(Icons.visibility_off),
+              title: Text(appLocalizations.exclude),
+              subtitle: Text(appLocalizations.excludeDesc),
+              delegate: SwitchDelegate(
+                value: isExclude,
+                onChanged: (value) {
+                  final config = context.read<Config>();
+                  config.isExclude = value;
+                },
+              ),
+            );
+          },
+        ),
+      if (Platform.isAndroid)
+        Selector<Config, bool>(
           selector: (_, config) => config.isAnimateToPage,
           builder: (_, isAnimateToPage, child) {
             return ListItem.switchItem(

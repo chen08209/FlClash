@@ -4,6 +4,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/open_container.dart';
 import 'package:flutter/material.dart';
 
+import 'card.dart';
 import 'extend_page.dart';
 import 'scaffold.dart';
 
@@ -389,6 +390,30 @@ List<Widget> generateSection({
     ...genItems,
   ];
 }
+
+List<Widget> generateInfoSection({
+  required Info info,
+  required Iterable<Widget> items,
+  List<Widget>? actions,
+  bool separated = true,
+}) {
+  final genItems = separated
+      ? items.separated(
+    const Divider(
+      height: 0,
+    ),
+  )
+      : items;
+  return [
+    if (items.isNotEmpty)
+      InfoHeader(
+        info: info,
+        actions: actions,
+      ),
+    ...genItems,
+  ];
+}
+
 
 Widget generateListView(List<Widget> items) {
   return ListView.builder(

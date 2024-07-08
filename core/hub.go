@@ -13,6 +13,7 @@ import (
 	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/common/structure"
 	"github.com/metacubex/mihomo/common/utils"
+	"github.com/metacubex/mihomo/component/geodata"
 	"github.com/metacubex/mihomo/component/mmdb"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
@@ -384,20 +385,26 @@ func updateExternalProvider(providerName *C.char, providerType *C.char, port C.l
 				bridge.SendToPort(i, err.Error())
 				return
 			}
-		case "GeoIp":
+		case "MMDB":
 			err := mmdb.DownloadMMDB(constant.Path.Resolve(providerNameString))
-			if err != nil {
-				bridge.SendToPort(i, err.Error())
-				return
-			}
-		case "GeoSite":
-			err := mmdb.DownloadGeoSite(constant.Path.Resolve(providerNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "ASN":
 			err := mmdb.DownloadASN(constant.Path.Resolve(providerNameString))
+			if err != nil {
+				bridge.SendToPort(i, err.Error())
+				return
+			}
+		case "GeoIp":
+			err := geodata.DownloadGeoIP(constant.Path.Resolve(providerNameString))
+			if err != nil {
+				bridge.SendToPort(i, err.Error())
+				return
+			}
+		case "GeoSite":
+			err := geodata.DownloadGeoSite(constant.Path.Resolve(providerNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return

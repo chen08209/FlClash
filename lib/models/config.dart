@@ -56,6 +56,7 @@ class Config extends ChangeNotifier {
   bool _autoCheckUpdate;
   bool _allowBypass;
   bool _systemProxy;
+  bool _isExclude;
   DAV? _dav;
   ProxiesType _proxiesType;
   ProxyCardType _proxyCardType;
@@ -80,6 +81,7 @@ class Config extends ChangeNotifier {
         _accessControl = const AccessControl(),
         _isAnimateToPage = true,
         _allowBypass = true,
+        _isExclude = false,
         _proxyCardType = ProxyCardType.expand,
         _proxiesType = ProxiesType.tab,
         _proxiesColumns = 2;
@@ -416,13 +418,22 @@ class Config extends ChangeNotifier {
     }
   }
 
-
   @JsonKey(name: "test-url", defaultValue: defaultTestUrl)
   String get testUrl => _testUrl;
 
   set testUrl(String value) {
     if (_testUrl != value) {
       _testUrl = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(defaultValue: false)
+  bool get isExclude => _isExclude;
+
+  set isExclude(bool value) {
+    if (_isExclude != value) {
+      _isExclude = value;
       notifyListeners();
     }
   }

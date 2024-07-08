@@ -100,6 +100,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "download": MessageLookupByLibrary.simpleMessage("下载"),
         "edit": MessageLookupByLibrary.simpleMessage("编辑"),
         "en": MessageLookupByLibrary.simpleMessage("英语"),
+        "exclude": MessageLookupByLibrary.simpleMessage("从最近任务中隐藏"),
+        "excludeDesc":
+            MessageLookupByLibrary.simpleMessage("应用在后台时,从最近任务中隐藏应用"),
         "exit": MessageLookupByLibrary.simpleMessage("退出"),
         "expirationTime": MessageLookupByLibrary.simpleMessage("到期时间"),
         "externalController": MessageLookupByLibrary.simpleMessage("外部控制器"),

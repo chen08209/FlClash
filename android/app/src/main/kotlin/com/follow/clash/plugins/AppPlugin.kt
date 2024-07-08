@@ -2,21 +2,19 @@ package com.follow.clash.plugins
 
 import android.Manifest
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
-import android.net.Uri
 import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.getSystemService
-import androidx.core.graphics.drawable.toBitmap
 import com.follow.clash.extensions.getBase64
-import com.follow.clash.extensions.getInetSocketAddress
 import com.follow.clash.extensions.getProtocol
-import com.follow.clash.models.Process
 import com.follow.clash.models.Package
+import com.follow.clash.models.Process
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -29,6 +27,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
+
 
 class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
 
@@ -68,6 +67,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         when (call.method) {
             "moveTaskToBack" -> {
                 activity?.moveTaskToBack(true)
+                result.success(true);
+            }
+
+            "updateExcludeFromRecents" -> {
+                val value = call.argument<Boolean>("value")
+                updateExcludeFromRecents(value)
                 result.success(true);
             }
 
@@ -115,7 +120,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 }
                 scope.launch {
                     withContext(Dispatchers.Default) {
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                             result.success(null)
                             return@withContext
                         }
@@ -155,6 +160,20 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             else -> {
                 result.notImplemented();
             }
+        }
+    }
+
+
+    private fun updateExcludeFromRecents(value: Boolean?) {
+        if (context == null) return
+        val am = getSystemService(context!!, ActivityManager::class.java)
+        val task = am?.appTasks?.firstOrNull { task ->
+            task.taskInfo.baseIntent.component?.packageName == context!!.packageName
+        }
+        when (value) {
+            true -> task?.setExcludeFromRecents(value)
+            false -> task?.setExcludeFromRecents(value)
+            null -> task?.setExcludeFromRecents(false)
         }
     }
 

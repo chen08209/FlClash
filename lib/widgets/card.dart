@@ -6,43 +6,70 @@ import 'text.dart';
 
 class Info {
   final String label;
-  final IconData iconData;
+  final IconData? iconData;
 
   const Info({
     required this.label,
-    required this.iconData,
+    this.iconData,
   });
 }
 
 class InfoHeader extends StatelessWidget {
   final Info info;
+  final List<Widget> actions;
 
   const InfoHeader({
     super.key,
     required this.info,
-  });
+    List<Widget>? actions,
+  }) : actions = actions ?? const [];
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            info.iconData,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(
-            width: 8,
-          ),
-          Flexible(
-            child: TooltipText(
-              text: Text(
-                info.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (info.iconData != null) ...[
+                Icon(
+                  info.iconData,
+                  color: Theme
+                      .of(context)
+                      .colorScheme
+                      .primary,
+                ),
+                const SizedBox(
+                  width: 8,
+                ),
+              ],
+              Flexible(
+                child: TooltipText(
+                  text: Text(
+                    info.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme
+                        .of(context)
+                        .textTheme
+                        .titleMedium,
+                  ),
+                ),
               ),
+            ],
+          ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ...actions,
+              ],
             ),
           ),
         ],
@@ -70,10 +97,12 @@ class CommonCard extends StatelessWidget {
   final CommonCardType type;
 
   BorderSide getBorderSide(BuildContext context, Set<WidgetState> states) {
-    if(type == CommonCardType.filled){
+    if (type == CommonCardType.filled) {
       return BorderSide.none;
     }
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     final hoverColor = isSelected
         ? colorScheme.primary.toLight()
         : colorScheme.primary.toLighter();
@@ -85,14 +114,15 @@ class CommonCard extends StatelessWidget {
       );
     }
     return BorderSide(
-      color:
-          isSelected ? colorScheme.primary : colorScheme.onSurface.toSoft(),
+      color: isSelected ? colorScheme.primary : colorScheme.onSurface.toSoft(),
     );
   }
 
   Color? getBackgroundColor(BuildContext context, Set<WidgetState> states) {
-    final colorScheme = Theme.of(context).colorScheme;
-    switch(type){
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
+    switch (type) {
       case CommonCardType.plain:
         if (isSelected) {
           return colorScheme.secondaryContainer;
@@ -100,7 +130,8 @@ class CommonCard extends StatelessWidget {
         if (states.isEmpty) {
           return colorScheme.secondaryContainer.toLittle();
         }
-        return Theme.of(context)
+        return Theme
+            .of(context)
             .outlinedButtonTheme
             .style
             ?.backgroundColor
@@ -147,10 +178,10 @@ class CommonCard extends StatelessWidget {
           ),
         ),
         backgroundColor: WidgetStateProperty.resolveWith(
-          (states) => getBackgroundColor(context, states),
+              (states) => getBackgroundColor(context, states),
         ),
         side: WidgetStateProperty.resolveWith(
-          (states) => getBorderSide(context, states),
+              (states) => getBorderSide(context, states),
         ),
       ),
       onPressed: onPressed,
@@ -180,7 +211,10 @@ class SelectIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme.of(context).colorScheme.inversePrimary,
+      color: Theme
+          .of(context)
+          .colorScheme
+          .inversePrimary,
       shape: const CircleBorder(),
       child: Container(
         padding: const EdgeInsets.all(4),

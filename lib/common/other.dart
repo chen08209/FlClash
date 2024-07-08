@@ -39,6 +39,9 @@ class Other {
     }
     final diff = timeStamp / 1000;
     final inHours = (diff / 3600).floor();
+    if (inHours > 99) {
+      return "99:59:59";
+    }
     final inMinutes = (diff / 60 % 60).floor();
     final inSeconds = (diff % 60).floor();
 
@@ -171,7 +174,7 @@ class Other {
   }
 
   List<String> parseReleaseBody(String? body) {
-    if(body == null) return [];
+    if (body == null) return [];
     const pattern = r'- (.+?)\. \[.+?\]';
     final regex = RegExp(pattern);
     return regex
@@ -181,7 +184,7 @@ class Other {
         .toList();
   }
 
-  ViewMode getViewMode(double viewWidth){
+  ViewMode getViewMode(double viewWidth) {
     if (viewWidth <= maxMobileWidth) return ViewMode.mobile;
     if (viewWidth <= maxLaptopWidth) return ViewMode.laptop;
     return ViewMode.desktop;

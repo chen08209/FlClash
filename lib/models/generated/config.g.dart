@@ -43,7 +43,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
           ProxyCardType.expand
   ..proxiesColumns = (json['proxiesColumns'] as num?)?.toInt() ?? 2
   ..testUrl =
-      json['test-url'] as String? ?? 'https://www.gstatic.com/generate_204';
+      json['test-url'] as String? ?? 'https://www.gstatic.com/generate_204'
+  ..isExclude = json['isExclude'] as bool? ?? false;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -69,6 +70,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'proxyCardType': _$ProxyCardTypeEnumMap[instance.proxyCardType]!,
       'proxiesColumns': instance.proxiesColumns,
       'test-url': instance.testUrl,
+      'isExclude': instance.isExclude,
     };
 
 const _$ThemeModeEnumMap = {

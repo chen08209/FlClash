@@ -337,7 +337,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.ExternalUIURL = ""
 	targetConfig.TCPConcurrent = patchConfig.TCPConcurrent
 	targetConfig.UnifiedDelay = patchConfig.UnifiedDelay
-	targetConfig.GeodataMode = false
+	//targetConfig.GeodataMode = false
 	targetConfig.IPv6 = patchConfig.IPv6
 	targetConfig.LogLevel = patchConfig.LogLevel
 	targetConfig.Port = 0

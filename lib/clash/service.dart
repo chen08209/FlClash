@@ -17,6 +17,7 @@ class ClashService {
     }
     const geoFileNameList = [
       mmdbFileName,
+      geoIpFileName,
       geoSiteFileName,
       asnFileName,
     ];

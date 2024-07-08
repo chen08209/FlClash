@@ -121,6 +121,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "download": MessageLookupByLibrary.simpleMessage("Download"),
         "edit": MessageLookupByLibrary.simpleMessage("Edit"),
         "en": MessageLookupByLibrary.simpleMessage("English"),
+        "exclude":
+            MessageLookupByLibrary.simpleMessage("Hidden from recent tasks"),
+        "excludeDesc": MessageLookupByLibrary.simpleMessage(
+            "When the app is in the background, the app is hidden from the recent task"),
         "exit": MessageLookupByLibrary.simpleMessage("Exit"),
         "expirationTime":
             MessageLookupByLibrary.simpleMessage("Expiration time"),

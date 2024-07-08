@@ -7,14 +7,17 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' hide context;
+import 'package:provider/provider.dart';
 
 @immutable
 class GeoItem {
   final String label;
+  final String key;
   final String fileName;
 
   const GeoItem({
     required this.label,
+    required this.key,
     required this.fileName,
   });
 }
@@ -52,11 +55,12 @@ class _ResourcesState extends State<Resources> {
 
   _syncExternalProviders() async {
     externalProviders = await clashCore.getExternalProviders();
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   _updateProviders() async {
-    print(providerItemKeys);
     final updateProviders = providerItemKeys.map<Future>(
       (key) async => await key.currentState?.updateProvider(false),
     );
@@ -66,13 +70,18 @@ class _ResourcesState extends State<Resources> {
 
   List<Widget> _buildExternalProviderSection() {
     List<GlobalObjectKey<_ProviderItemState>> keys = [];
-    final res = generateSection(
-      title: appLocalizations.externalResources,
+    final res = generateInfoSection(
+      info: Info(
+        iconData: Icons.source,
+        label: appLocalizations.externalResources,
+      ),
       actions: [
-        IconButton(
+        IconButton.filledTonal(
           onPressed: () {
             _updateProviders();
           },
+          padding: const EdgeInsets.all(4),
+          iconSize: 20,
           icon: const Icon(
             Icons.sync,
           ),
@@ -99,12 +108,25 @@ class _ResourcesState extends State<Resources> {
 
   List<Widget> _buildGeoDataSection() {
     const geoItems = <GeoItem>[
-      GeoItem(label: "GeoIp", fileName: mmdbFileName),
-      GeoItem(label: "GeoSite", fileName: geoSiteFileName),
-      GeoItem(label: "ASN", fileName: asnFileName),
+      GeoItem(
+        label: "GeoIp",
+        fileName: geoIpFileName,
+        key: "geoip",
+      ),
+      GeoItem(label: "GeoSite", fileName: geoSiteFileName, key: "geosite"),
+      GeoItem(
+        label: "MMDB",
+        fileName: mmdbFileName,
+        key: "mmdb",
+      ),
+      GeoItem(label: "ASN", fileName: asnFileName, key: "asn"),
     ];
-    return generateSection(
-      title: appLocalizations.geoData,
+
+    return generateInfoSection(
+      info: Info(
+        iconData: Icons.storage,
+        label: appLocalizations.geoData,
+      ),
       items: geoItems.map(
         (geoItem) => GeoDataListItem(
           geoItem: geoItem,
@@ -141,6 +163,33 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
 
   GeoItem get geoItem => widget.geoItem;
 
+  _updateUrl(String url) async {
+    final newUrl = await globalState.showCommonDialog<String>(
+      child: UpdateGeoUrlFormDialog(
+        title: geoItem.label,
+        url: url,
+      ),
+    );
+    if (newUrl != null && newUrl != url && mounted) {
+      try {
+        if (!newUrl.isUrl) {
+          throw "Invalid url";
+        }
+        final appController = globalState.appController;
+        appController.clashConfig.geoXUrl =
+            Map.from(appController.clashConfig.geoXUrl)..[geoItem.key] = newUrl;
+        appController.updateClashConfigDebounce();
+      } catch (e) {
+        globalState.showMessage(
+          title: geoItem.label,
+          message: TextSpan(
+            text: e.toString(),
+          ),
+        );
+      }
+    }
+  }
+
   Future<FileInfo> _getGeoFileLastModified(String fileName) async {
     final homePath = await appPath.getHomeDirPath();
     final file = File(join(homePath, fileName));
@@ -168,7 +217,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
     return "${fileInfo.size}  ·  ${fileInfo.lastModified.lastUpdateTimeDesc}";
   }
 
-  Widget _buildSubtitle() {
+  Widget _buildSubtitle(String url) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -197,6 +246,13 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
             );
           },
         ),
+        Text(
+          url,
+          style: context.textTheme.bodyMedium?.toLight,
+        ),
+        const SizedBox(
+          height: 8,
+        ),
         const SizedBox(
           height: 8,
         ),
@@ -204,13 +260,13 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
           runSpacing: 6,
           spacing: 12,
           children: [
-            // CommonChip(
-            //   avatar: const Icon(Icons.upload),
-            //   label: "编辑",
-            //   onPressed: () {
-            //     _uploadGeoFile(geoItem.fileName);
-            //   },
-            // ),
+            CommonChip(
+              avatar: const Icon(Icons.edit),
+              label: appLocalizations.edit,
+              onPressed: () {
+                _updateUrl(url);
+              },
+            ),
             CommonChip(
               avatar: const Icon(Icons.sync),
               label: appLocalizations.sync,
@@ -259,7 +315,12 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         vertical: 4,
       ),
       title: Text(geoItem.label),
-      subtitle: _buildSubtitle(),
+      subtitle: Selector<ClashConfig, String>(
+        selector: (_, clashConfig) => clashConfig.geoXUrl[geoItem.key]!,
+        builder: (_, value, __) {
+          return _buildSubtitle(value);
+        },
+      ),
       trailing: SizedBox(
         height: 48,
         width: 48,
@@ -388,6 +449,65 @@ class _ProviderItemState extends State<ProviderItem> {
           },
         ),
       ),
+    );
+  }
+}
+
+class UpdateGeoUrlFormDialog extends StatefulWidget {
+  final String title;
+  final String url;
+
+  const UpdateGeoUrlFormDialog({
+    super.key,
+    required this.title,
+    required this.url,
+  });
+
+  @override
+  State<UpdateGeoUrlFormDialog> createState() => _UpdateGeoUrlFormDialogState();
+}
+
+class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
+  late TextEditingController urlController;
+
+  @override
+  void initState() {
+    super.initState();
+    urlController = TextEditingController(text: widget.url);
+  }
+
+  _handleUpdate() async {
+    final url = urlController.value.text;
+    if (url.isEmpty) return;
+    Navigator.of(context).pop<String>(url);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: 300,
+        child: Wrap(
+          runSpacing: 16,
+          children: [
+            TextField(
+              maxLines: 5,
+              minLines: 1,
+              controller: urlController,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _handleUpdate,
+          child: Text(appLocalizations.submit),
+        )
+      ],
     );
   }
 }

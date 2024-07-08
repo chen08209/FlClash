@@ -1999,6 +1999,26 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Hidden from recent tasks`
+  String get exclude {
+    return Intl.message(
+      'Hidden from recent tasks',
+      name: 'exclude',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `When the app is in the background, the app is hidden from the recent task`
+  String get excludeDesc {
+    return Intl.message(
+      'When the app is in the background, the app is hidden from the recent task',
+      name: 'excludeDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

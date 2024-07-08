@@ -44,10 +44,10 @@ class App {
 
   Future<List<Package>> getPackages() async {
     final packagesString =
-        await methodChannel?.invokeMethod<String>("getPackages");
+    await methodChannel?.invokeMethod<String>("getPackages");
     return Isolate.run<List<Package>>(() {
       final List<dynamic> packagesRaw =
-          packagesString != null ? json.decode(packagesString) : [];
+      packagesString != null ? json.decode(packagesString) : [];
       return packagesRaw.map((e) => Package.fromJson(e)).toList();
     });
   }
@@ -65,6 +65,12 @@ class App {
   Future<bool?> tip(String? message) async {
     return await methodChannel?.invokeMethod<bool>("tip", {
       "message": "$message",
+    });
+  }
+
+  Future<bool?> updateExcludeFromRecents(bool value) async {
+    return await methodChannel?.invokeMethod<bool>("updateExcludeFromRecents", {
+      "value": value,
     });
   }
 

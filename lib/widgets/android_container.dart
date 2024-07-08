@@ -1,6 +1,9 @@
+import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 class AndroidContainer extends StatefulWidget {
   final Widget child;
@@ -16,6 +19,16 @@ class AndroidContainer extends StatefulWidget {
 
 class _AndroidContainerState extends State<AndroidContainer>
     with WidgetsBindingObserver {
+  _excludeContainer(Widget child) {
+    return Selector<Config, bool>(
+      selector: (_, config) => config.isExclude,
+      builder: (_, isExclude, child) {
+        app?.updateExcludeFromRecents(isExclude);
+        return child!;
+      },
+      child: child,
+    );
+  }
 
   @override
   void initState() {
@@ -34,7 +47,9 @@ class _AndroidContainerState extends State<AndroidContainer>
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return _excludeContainer(
+      widget.child,
+    );
   }
 
   @override
@@ -42,5 +57,4 @@ class _AndroidContainerState extends State<AndroidContainer>
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
-
 }

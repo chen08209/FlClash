@@ -387,7 +387,6 @@ class _ProxyGroupViewState extends State<ProxyGroupView> {
     final lines = (sortedProxies.length / columns).ceil();
     final minLines =
         innerHeight >= 200 ? (innerHeight / itemHeight).floor() : 3;
-    final hasScrollable = lines > minLines;
     final height = (itemHeight + 8) * min(lines, minLines) - 8;
     return Selector<Config, Set<String>>(
       selector: (_, config) => config.currentUnfoldSet,
