@@ -7,7 +7,7 @@ import 'common.dart';
 extension PackageInfoExtension on PackageInfo {
   String get ua => [
         "$appName/v$version",
-        "like ClashMeta v2ray sing-box",
+        "like ClashMeta Clash v2ray",
         "Platform/${Platform.operatingSystem}",
       ].join(" ");
 }
