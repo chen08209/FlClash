@@ -216,7 +216,12 @@ class _ProfileItemState extends State<ProfileItem> {
   Future updateProfile([isSingle = true]) async {
     isUpdating.value = true;
     try {
-      await globalState.appController.updateProfile(widget.profile);
+      final appController = globalState.appController;
+      await appController.updateProfile(widget.profile);
+      if (widget.profile.id == appController.config.currentProfile?.id &&
+          !appController.appState.isStart) {
+        globalState.appController.rawApplyProfile();
+      }
     } catch (e) {
       isUpdating.value = false;
       if (!isSingle) {

@@ -16,6 +16,7 @@ class OutboundMode extends StatelessWidget {
     if (value == null || clashConfig.mode == value) return;
     clashConfig.mode = value;
     await appController.updateClashConfig();
+    appController.addCheckIpNumDebounce();
   }
 
   @override

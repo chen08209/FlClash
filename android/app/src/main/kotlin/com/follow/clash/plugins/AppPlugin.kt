@@ -48,13 +48,16 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     private val iconMap = mutableMapOf<String, String?>()
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        scope = CoroutineScope(Dispatchers.Default)
         context = flutterPluginBinding.applicationContext;
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "app")
         channel.setMethodCallHandler(this)
+
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        scope.cancel()
     }
 
     private fun tip(message: String?) {
@@ -224,7 +227,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity;
-        scope = CoroutineScope(Dispatchers.Default)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
@@ -237,7 +239,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     override fun onDetachedFromActivity() {
         channel.invokeMethod("exit", null)
-        scope.cancel()
         activity = null
     }
 }

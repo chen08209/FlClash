@@ -44,6 +44,11 @@ class FlClashVpnService : VpnService() {
         "192.168.*"
     )
 
+    override fun onCreate() {
+        super.onCreate()
+        initServiceEngine()
+    }
+
     fun start(port: Int, props: Props?): Int? {
         return with(Builder()) {
             addAddress("172.16.0.1", 30)

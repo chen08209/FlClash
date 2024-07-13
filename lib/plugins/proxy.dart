@@ -105,16 +105,12 @@ class Proxy extends ProxyPlatform {
     switch (m.type) {
       case ServiceMessageType.protect:
         _serviceMessageHandler?.onProtect(Fd.fromJson(m.data));
-        break;
       case ServiceMessageType.process:
         _serviceMessageHandler?.onProcess(Process.fromJson(m.data));
-        break;
       case ServiceMessageType.started:
         _serviceMessageHandler?.onStarted(m.data);
-        break;
       case ServiceMessageType.loaded:
         _serviceMessageHandler?.onLoaded(m.data);
-        break;
     }
   }
 }
