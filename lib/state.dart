@@ -209,30 +209,30 @@ class GlobalState {
     required String message,
     SnackBarAction? action,
   }) {
-    // final width = context.width;
-    // EdgeInsets margin;
-    // if (width < 600) {
-    //   margin = const EdgeInsets.only(
-    //     bottom: 96,
-    //     right: 16,
-    //     left: 16,
-    //   );
-    // } else {
-    //   margin = EdgeInsets.only(
-    //     bottom: 16,
-    //     left: 16,
-    //     right: width - 316,
-    //   );
-    // }
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   SnackBar(
-    //     action: action,
-    //     content: Text(message),
-    //     behavior: SnackBarBehavior.floating,
-    //     duration: const Duration(milliseconds: 1500),
-    //     margin: margin,
-    //   ),
-    // );
+    final width = context.width;
+    EdgeInsets margin;
+    if (width < 600) {
+      margin = const EdgeInsets.only(
+        bottom: 16,
+        right: 16,
+        left: 16,
+      );
+    } else {
+      margin = EdgeInsets.only(
+        bottom: 16,
+        left: 16,
+        right: width - 316,
+      );
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        action: action,
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(milliseconds: 1500),
+        margin: margin,
+      ),
+    );
   }
 
   Future<T?> safeRun<T>(

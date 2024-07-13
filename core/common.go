@@ -337,6 +337,8 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Tun.Stack = patchConfig.Tun.Stack
 	targetConfig.GeodataLoader = patchConfig.GeodataLoader
 	targetConfig.Profile.StoreSelected = false
+	targetConfig.GeoXUrl = patchConfig.GeoXUrl
+	targetConfig.GlobalUA = patchConfig.GlobalUA
 	if targetConfig.DNS.Enable == false {
 		targetConfig.DNS = patchConfig.DNS
 	}

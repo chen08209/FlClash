@@ -46,6 +46,8 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
             flClashVpnService = binder.getService()
             if (isStart) {
                 startVpn()
+            } else {
+                flClashVpnService?.initServiceEngine()
             }
         }
 

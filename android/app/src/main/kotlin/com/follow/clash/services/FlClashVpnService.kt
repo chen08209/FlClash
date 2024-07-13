@@ -114,7 +114,6 @@ class FlClashVpnService : VpnService() {
                 PendingIntent.FLAG_UPDATE_CURRENT
             )
         }
-
         with(NotificationCompat.Builder(this, CHANNEL)) {
             setSmallIcon(R.drawable.ic_stat_name)
             setContentTitle("FlClash")
@@ -127,7 +126,7 @@ class FlClashVpnService : VpnService() {
             setOngoing(true)
             setShowWhen(false)
             setOnlyAlertOnce(true)
-            setAutoCancel(true);
+            setAutoCancel(true)
         }
     }
 

@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Widget? bottomNavigationBar;
-  final Widget? floatingActionButton;
   final String title;
   final Widget? leading;
   final List<Widget>? actions;
@@ -20,7 +19,6 @@ class CommonScaffold extends StatefulWidget {
     this.leading,
     required this.title,
     this.actions,
-    this.floatingActionButton,
     this.automaticallyImplyLeading = true,
   });
 
@@ -125,13 +123,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget build(BuildContext context) {
     return _platformContainer(
       child: Scaffold(
-        floatingActionButton: widget.floatingActionButton ??
-            ValueListenableBuilder(
-              valueListenable: _floatingActionButton,
-              builder: (_, floatingActionButton, __) {
-                return floatingActionButton ?? Container();
-              },
-            ),
         resizeToAvoidBottomInset: true,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),

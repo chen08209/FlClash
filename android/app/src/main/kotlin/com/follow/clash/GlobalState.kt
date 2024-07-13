@@ -1,6 +1,5 @@
 package com.follow.clash
 
-import android.app.Activity
 import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import com.follow.clash.plugins.AppPlugin
@@ -9,7 +8,8 @@ import com.follow.clash.plugins.TilePlugin
 import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
-import java.util.Date
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 enum class RunState {
     START,
@@ -17,7 +17,11 @@ enum class RunState {
     STOP
 }
 
+
 object GlobalState {
+
+    private val lock = ReentrantLock()
+
     val runState: MutableLiveData<RunState> = MutableLiveData<RunState>(RunState.STOP)
     var flutterEngine: FlutterEngine? = null
     private var serviceEngine: FlutterEngine? = null
@@ -39,19 +43,20 @@ object GlobalState {
 
     fun initServiceEngine(context: Context) {
         if (serviceEngine != null) return
-        val serviceEngine = FlutterEngine(context)
-        serviceEngine.plugins.add(ProxyPlugin())
-        serviceEngine.plugins.add(AppPlugin())
-        serviceEngine.plugins.add(TilePlugin())
-        val vpnService = DartExecutor.DartEntrypoint(
-            FlutterInjector.instance().flutterLoader().findAppBundlePath(),
-            "vpnService"
-        )
-        serviceEngine.dartExecutor.executeDartEntrypoint(
-            vpnService,
-            listOf("${flutterEngine == null}")
-        )
-        GlobalState.serviceEngine = serviceEngine
+        lock.withLock {
+            if (serviceEngine != null) return
+            serviceEngine = FlutterEngine(context)
+            serviceEngine?.plugins?.add(ProxyPlugin())
+            serviceEngine?.plugins?.add(AppPlugin())
+            serviceEngine?.plugins?.add(TilePlugin())
+            val vpnService = DartExecutor.DartEntrypoint(
+                FlutterInjector.instance().flutterLoader().findAppBundlePath(),
+                "vpnService"
+            )
+            serviceEngine?.dartExecutor?.executeDartEntrypoint(
+                vpnService,
+            )
+        }
     }
 }
 
