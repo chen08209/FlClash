@@ -76,13 +76,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
             width: 8,
           )
         ];
-        commonScaffoldState?.floatingActionButton = FloatingActionButton(
-          heroTag: null,
-          onPressed: _handleShowAddExtendPage,
-          child: const Icon(
-            Icons.add,
-          ),
-        );
       },
     );
   }
@@ -113,74 +106,86 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<AppState, bool>(
-      selector: (_, appState) => appState.currentLabel == 'profiles',
-      builder: (_, isCurrent, child) {
-        if (isCurrent) {
-          _initScaffoldState();
-        }
-        return child!;
-      },
-      child: Selector2<AppState, Config, ProfilesSelectorState>(
-        selector: (_, appState, config) => ProfilesSelectorState(
-          profiles: config.profiles,
-          currentProfileId: config.currentProfileId,
-          viewMode: appState.viewMode,
+    return FloatLayout(
+      floatingWidget: FloatWrapper(
+        child: FloatingActionButton(
+          heroTag: null,
+          onPressed: _handleShowAddExtendPage,
+          child: const Icon(
+            Icons.add,
+          ),
         ),
-        builder: (context, state, child) {
-          if (state.profiles.isEmpty) {
-            return NullStatus(
-              label: appLocalizations.nullProfileDesc,
-            );
+      ),
+      child: Selector<AppState, bool>(
+        selector: (_, appState) => appState.currentLabel == 'profiles',
+        builder: (_, isCurrent, child) {
+          if (isCurrent) {
+            _initScaffoldState();
           }
-          profileItemKeys = state.profiles
-              .map((profile) => GlobalObjectKey<_ProfileItemState>(profile.id))
-              .toList();
-          final columns = _getColumns(state.viewMode);
-          return Align(
-            alignment: Alignment.topCenter,
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (scrollNotification) {
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) {
-                    hasPadding.value =
-                        scrollNotification.metrics.maxScrollExtent > 0;
-                  },
-                );
-                return true;
-              },
-              child: ValueListenableBuilder(
-                valueListenable: hasPadding,
-                builder: (_, hasPadding, __) {
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      top: 16,
-                      bottom: 16 + (hasPadding ? 56 : 0),
-                    ),
-                    child: Grid(
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      crossAxisCount: columns,
-                      children: [
-                        for (int i = 0; i < state.profiles.length; i++)
-                          GridItem(
-                            child: ProfileItem(
-                              key: profileItemKeys[i],
-                              profile: state.profiles[i],
-                              groupValue: state.currentProfileId,
-                              onChanged: _changeProfile,
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          );
+          return child!;
         },
+        child: Selector2<AppState, Config, ProfilesSelectorState>(
+          selector: (_, appState, config) => ProfilesSelectorState(
+            profiles: config.profiles,
+            currentProfileId: config.currentProfileId,
+            viewMode: appState.viewMode,
+          ),
+          builder: (context, state, child) {
+            if (state.profiles.isEmpty) {
+              return NullStatus(
+                label: appLocalizations.nullProfileDesc,
+              );
+            }
+            profileItemKeys = state.profiles
+                .map(
+                    (profile) => GlobalObjectKey<_ProfileItemState>(profile.id))
+                .toList();
+            final columns = _getColumns(state.viewMode);
+            return Align(
+              alignment: Alignment.topCenter,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (scrollNotification) {
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) {
+                      hasPadding.value =
+                          scrollNotification.metrics.maxScrollExtent > 0;
+                    },
+                  );
+                  return true;
+                },
+                child: ValueListenableBuilder(
+                  valueListenable: hasPadding,
+                  builder: (_, hasPadding, __) {
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        top: 16,
+                        bottom: 16 + (hasPadding ? 56 : 0),
+                      ),
+                      child: Grid(
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        crossAxisCount: columns,
+                        children: [
+                          for (int i = 0; i < state.profiles.length; i++)
+                            GridItem(
+                              child: ProfileItem(
+                                key: profileItemKeys[i],
+                                profile: state.profiles[i],
+                                groupValue: state.currentProfileId,
+                                onChanged: _changeProfile,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

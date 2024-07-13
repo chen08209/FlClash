@@ -49,19 +49,11 @@ class CommonScaffold extends StatefulWidget {
 
 class CommonScaffoldState extends State<CommonScaffold> {
   final ValueNotifier<List<Widget>> _actions = ValueNotifier([]);
-  final ValueNotifier<Widget?> _floatingActionButton = ValueNotifier(null);
-
   final ValueNotifier<bool> _loading = ValueNotifier(false);
 
   set actions(List<Widget> actions) {
     if (_actions.value != actions) {
       _actions.value = actions;
-    }
-  }
-
-  set floatingActionButton(Widget? actions) {
-    if (_floatingActionButton.value != actions) {
-      _floatingActionButton.value = actions;
     }
   }
 
@@ -89,7 +81,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
   @override
   void dispose() {
     _actions.dispose();
-    _floatingActionButton.dispose();
     super.dispose();
   }
 
@@ -98,7 +89,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.title != widget.title) {
       _actions.value = [];
-      _floatingActionButton.value = null;
     }
   }
 
