@@ -5,17 +5,20 @@ import 'dart:io';
 import 'package:animations/animations.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/plugins/proxy.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'controller.dart';
+
 import 'models/models.dart';
 import 'common/common.dart';
 
 class GlobalState {
   Timer? timer;
   Timer? groupsUpdateTimer;
+  var isVpnService = false;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   PageController? pageController;
@@ -82,12 +85,15 @@ class GlobalState {
       args: args,
     );
     startListenUpdate();
+    if (Platform.isAndroid) {
+      return;
+    }
     applyProfile(
       appState: appState,
       config: config,
       clashConfig: clashConfig,
     ).then((_){
-      appController.addCheckIpNumDebounce();
+      globalState.appController.addCheckIpNumDebounce();
     });
   }
 
@@ -106,6 +112,7 @@ class GlobalState {
       config: config,
       isPatch: false,
     );
+    clashCore.setProfileName(config.currentProfile?.label ?? '');
     await updateGroups(appState);
   }
 
@@ -182,20 +189,18 @@ class GlobalState {
 
   updateTraffic({
     AppState? appState,
-    required Config config,
   }) {
     final traffic = clashCore.getTraffic();
-    if (appState != null) {
-      appState.addTraffic(traffic);
-      appState.totalTraffic = clashCore.getTotalTraffic();
-    }
-    if (Platform.isAndroid) {
-      final currentProfile = config.currentProfile;
-      if (currentProfile == null) return;
-      proxyManager.startForeground(
-        title: currentProfile.label ?? currentProfile.id,
+    if (Platform.isAndroid && isVpnService == true) {
+      proxy?.startForeground(
+        title: clashCore.getProfileName(),
         content: "$traffic",
       );
+    } else {
+      if (appState != null) {
+        appState.addTraffic(traffic);
+        appState.totalTraffic = clashCore.getTotalTraffic();
+      }
     }
   }
 

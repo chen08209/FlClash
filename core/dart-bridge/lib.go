@@ -25,7 +25,7 @@ func InitDartApi(api unsafe.Pointer) {
 	}
 }
 
-func SendToPort(port int64, msg string) {
+func SendToPort(port int64, msg string) bool {
 	var obj C.Dart_CObject
 	obj._type = C.Dart_CObject_kString
 	msgString := C.CString(msg)
@@ -34,6 +34,7 @@ func SendToPort(port int64, msg string) {
 	*(**C.char)(ptr) = msgString
 	isSuccess := C.GoDart_PostCObject(C.Dart_Port_DL(port), &obj)
 	if !isSuccess {
-		fmt.Println("ERROR: post to port ", port, " failed", msg)
+		return false
 	}
+	return true
 }

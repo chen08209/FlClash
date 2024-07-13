@@ -36,6 +36,8 @@ var configParams = ConfigExtendedParams{}
 
 var isInit = false
 
+var currentProfileName = ""
+
 //export initClash
 func initClash(homeDirStr *C.char) bool {
 	if !isInit {
@@ -72,6 +74,16 @@ func forceGc() {
 		log.Infoln("[APP] request force GC")
 		runtime.GC()
 	}()
+}
+
+//export setCurrentProfileName
+func setCurrentProfileName(s *C.char) {
+	currentProfileName = C.GoString(s)
+}
+
+//export getCurrentProfileName
+func getCurrentProfileName() *C.char {
+	return C.CString(currentProfileName)
 }
 
 //export validateConfig
@@ -415,10 +427,14 @@ func updateExternalProvider(providerName *C.char, providerType *C.char, port C.l
 }
 
 //export initNativeApiBridge
-func initNativeApiBridge(api unsafe.Pointer, port C.longlong) {
+func initNativeApiBridge(api unsafe.Pointer) {
 	bridge.InitDartApi(api)
+}
+
+//export initMessage
+func initMessage(port C.longlong) {
 	i := int64(port)
-	bridge.Port = &i
+	Port = i
 }
 
 //export freeCString
@@ -436,20 +452,20 @@ func init() {
 		} else {
 			delayData.Value = int32(delay)
 		}
-		bridge.SendMessage(bridge.Message{
-			Type: bridge.Delay,
+		SendMessage(Message{
+			Type: DelayMessage,
 			Data: delayData,
 		})
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
-		bridge.SendMessage(bridge.Message{
-			Type: bridge.Request,
+		SendMessage(Message{
+			Type: RequestMessage,
 			Data: c,
 		})
 	}
 	executor.DefaultProxyProviderLoadedHook = func(providerName string) {
-		bridge.SendMessage(bridge.Message{
-			Type: bridge.Loaded,
+		SendMessage(Message{
+			Type: LoadedMessage,
 			Data: providerName,
 		})
 	}

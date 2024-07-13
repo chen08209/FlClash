@@ -84,23 +84,8 @@ type TestDelayParams struct {
 	Timeout   int64  `json:"timeout"`
 }
 
-type Delay struct {
-	Name  string `json:"name"`
-	Value int32  `json:"value"`
-}
-
-type Process struct {
-	Id       int64              `json:"id"`
-	Metadata *constant.Metadata `json:"metadata"`
-}
-
 type ProcessMapItem struct {
 	Id    int64  `json:"id"`
-	Value string `json:"value"`
-}
-
-type Now struct {
-	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 

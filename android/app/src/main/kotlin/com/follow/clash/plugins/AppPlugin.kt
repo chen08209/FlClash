@@ -11,6 +11,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.getSystemService
+import com.follow.clash.GlobalState
 import com.follow.clash.extensions.getBase64
 import com.follow.clash.extensions.getProtocol
 import com.follow.clash.models.Package
@@ -21,6 +22,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -56,14 +58,16 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     private fun tip(message: String?) {
-        if (toast != null) {
-            toast!!.cancel()
+        if(GlobalState.flutterEngine == null){
+            if (toast != null) {
+                toast!!.cancel()
+            }
+            toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
+            toast!!.show()
         }
-        toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
-        toast!!.show()
     }
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+    override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "moveTaskToBack" -> {
                 activity?.moveTaskToBack(true)
@@ -163,13 +167,17 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
-
     private fun updateExcludeFromRecents(value: Boolean?) {
         if (context == null) return
         val am = getSystemService(context!!, ActivityManager::class.java)
-        val task = am?.appTasks?.firstOrNull { task ->
-            task.taskInfo.baseIntent.component?.packageName == context!!.packageName
+        val task = am?.appTasks?.firstOrNull {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                it.taskInfo.taskId == activity?.taskId
+            } else {
+                it.taskInfo.id == activity?.taskId
+            }
         }
+
         when (value) {
             true -> task?.setExcludeFromRecents(value)
             false -> task?.setExcludeFromRecents(value)
@@ -220,7 +228,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
-        activity = null;
+        activity = null
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
@@ -230,6 +238,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     override fun onDetachedFromActivity() {
         channel.invokeMethod("exit", null)
         scope.cancel()
-        activity = null;
+        activity = null
     }
 }

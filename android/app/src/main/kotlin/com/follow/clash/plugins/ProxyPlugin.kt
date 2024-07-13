@@ -1,7 +1,6 @@
 package com.follow.clash.plugins
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
@@ -9,8 +8,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.VpnService
-import android.os.Build.VERSION
-import android.os.Build.VERSION_CODES
+import android.os.Build
 import android.os.IBinder
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -25,38 +23,36 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import java.util.Date
 
 
 class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
 
+    private lateinit var flutterMethodChannel: MethodChannel
 
     val VPN_PERMISSION_REQUEST_CODE = 1001
     val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
 
-    private lateinit var flutterMethodChannel: MethodChannel
-
     private var activity: Activity? = null
     private var context: Context? = null
     private var flClashVpnService: FlClashVpnService? = null
-    private var isBound = false
-    private var port: Int? = null
+    private var port: Int = 7890
     private var props: Props? = null
-    private lateinit var title: String
-    private lateinit var content: String
-    var isBlockNotification: Boolean = false
+    private var isBlockNotification: Boolean = false
+    private var isStart: Boolean = false
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             val binder = service as FlClashVpnService.LocalBinder
             flClashVpnService = binder.getService()
-            port?.let { startVpn(it) }
-            isBound = true
+            if (isStart) {
+                startVpn()
+            } else {
+                flClashVpnService?.initServiceEngine()
+            }
         }
 
-        override fun onServiceDisconnected(arg0: ComponentName) {
+        override fun onServiceDisconnected(arg: ComponentName) {
             flClashVpnService = null
-            isBound = false
         }
     }
 
@@ -71,21 +67,29 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) = when (call.method) {
-        "StartProxy" -> {
-            port = call.argument<Int>("port")
-            val args = call.argument<String>("args")
-            props =
-                if (args != null) Gson().fromJson(args, Props::class.java) else null
-            handleStartVpn()
+        "initService" -> {
+            isStart = false
+            initService()
+            requestNotificationsPermission()
             result.success(true)
         }
 
-        "StopProxy" -> {
+        "startProxy" -> {
+            isStart = true
+            port = call.argument<Int>("port")!!
+            val args = call.argument<String>("args")
+            props =
+                if (args != null) Gson().fromJson(args, Props::class.java) else null
+            startVpn()
+            result.success(true)
+        }
+
+        "stopProxy" -> {
             stopVpn()
             result.success(true)
         }
 
-        "SetProtect" -> {
+        "setProtect" -> {
             val fd = call.argument<Int>("fd")
             if (fd != null) {
                 flClashVpnService?.protect(fd)
@@ -95,14 +99,10 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
             }
         }
 
-        "GetRunTimeStamp" -> {
-            result.success(GlobalState.runTime?.time)
-        }
-
         "startForeground" -> {
-            title = call.argument<String>("title") as String
-            content = call.argument<String>("content") as String
-            requestNotificationsPermission()
+            val title = call.argument<String>("title") as String
+            val content = call.argument<String>("content") as String
+            startForeground(title, content)
             result.success(true)
         }
 
@@ -111,63 +111,39 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
         }
     }
 
-    private fun handleStartVpn() {
+    private fun initService() {
         val intent = VpnService.prepare(context)
         if (intent != null) {
             activity?.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
         } else {
-            bindService()
+            if (flClashVpnService != null) {
+                flClashVpnService!!.initServiceEngine()
+            } else {
+                bindService()
+            }
         }
     }
 
-    private fun startVpn(port: Int) {
-        if (GlobalState.runState.value == RunState.START) return;
-        flClashVpnService?.start(port, props)
+    private fun startVpn() {
+        if (flClashVpnService == null) {
+            bindService()
+            return
+        }
+        if (GlobalState.runState.value == RunState.START) return
         GlobalState.runState.value = RunState.START
-        GlobalState.runTime = Date()
-        startAfter()
+        flutterMethodChannel.invokeMethod("started", flClashVpnService?.start(port, props))
     }
 
     private fun stopVpn() {
         if (GlobalState.runState.value == RunState.STOP) return
+        GlobalState.runState.value = RunState.STOP
         flClashVpnService?.stop()
-        unbindService()
-        GlobalState.runState.value = RunState.STOP;
-        GlobalState.runTime = null;
+        GlobalState.destroyServiceEngine()
     }
 
-    private fun startForeground() {
+    private fun startForeground(title: String, content: String) {
         if (GlobalState.runState.value != RunState.START) return
         flClashVpnService?.startForeground(title, content)
-    }
-
-    private fun requestNotificationsPermission() {
-        if (VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
-            val permission = context?.let {
-                ContextCompat.checkSelfPermission(
-                    it,
-                    Manifest.permission.POST_NOTIFICATIONS
-                )
-            }
-            if (permission == PackageManager.PERMISSION_GRANTED) {
-                startForeground()
-            } else {
-                if (isBlockNotification) return
-                if (activity == null) return
-                ActivityCompat.requestPermissions(
-                    activity!!,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    NOTIFICATION_PERMISSION_REQUEST_CODE
-                )
-
-            }
-        } else {
-            startForeground()
-        }
-    }
-
-    private fun startAfter() {
-        flutterMethodChannel.invokeMethod("startAfter", flClashVpnService?.fd)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -184,7 +160,7 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
                 stopVpn()
             }
         }
-        return true;
+        return true
     }
 
     private fun onRequestPermissionsResultListener(
@@ -194,18 +170,32 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
     ): Boolean {
         if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
             isBlockNotification = true
-            if (grantResults.isNotEmpty()) {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startForeground()
-                }
-            }
         }
-        return false;
+        return false
     }
 
+    private fun requestNotificationsPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = context?.let {
+                ContextCompat.checkSelfPermission(
+                    it,
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            }
+            if (permission != PackageManager.PERMISSION_GRANTED) {
+                if (isBlockNotification) return
+                if (activity == null) return
+                ActivityCompat.requestPermissions(
+                    activity!!,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                )
+            }
+        }
+    }
 
     override fun onDetachedFromActivityForConfigChanges() {
-        activity = null;
+        activity = null
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
@@ -213,19 +203,11 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
     }
 
     override fun onDetachedFromActivity() {
-        stopVpn()
         activity = null
     }
 
     private fun bindService() {
         val intent = Intent(context, FlClashVpnService::class.java)
         context?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-    }
-
-    private fun unbindService() {
-        if (isBound) {
-            context?.unbindService(connection)
-            isBound = false
-        }
     }
 }

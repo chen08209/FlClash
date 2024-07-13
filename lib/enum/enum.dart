@@ -56,14 +56,18 @@ enum ProfileType { file, url }
 
 enum ResultType { success, error }
 
-enum MessageType {
+enum AppMessageType {
   log,
-  tun,
   delay,
-  process,
-  now,
   request,
-  run,
+  started,
+  loaded,
+}
+
+enum ServiceMessageType {
+  protect,
+  process,
+  started,
   loaded,
 }
 

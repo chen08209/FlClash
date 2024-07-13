@@ -610,32 +610,34 @@ abstract class _ChangeProxyParams implements ChangeProxyParams {
       throw _privateConstructorUsedError;
 }
 
-Message _$MessageFromJson(Map<String, dynamic> json) {
-  return _Message.fromJson(json);
+AppMessage _$AppMessageFromJson(Map<String, dynamic> json) {
+  return _AppMessage.fromJson(json);
 }
 
 /// @nodoc
-mixin _$Message {
-  MessageType get type => throw _privateConstructorUsedError;
+mixin _$AppMessage {
+  AppMessageType get type => throw _privateConstructorUsedError;
   dynamic get data => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  $MessageCopyWith<Message> get copyWith => throw _privateConstructorUsedError;
+  $AppMessageCopyWith<AppMessage> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $MessageCopyWith<$Res> {
-  factory $MessageCopyWith(Message value, $Res Function(Message) then) =
-      _$MessageCopyWithImpl<$Res, Message>;
+abstract class $AppMessageCopyWith<$Res> {
+  factory $AppMessageCopyWith(
+          AppMessage value, $Res Function(AppMessage) then) =
+      _$AppMessageCopyWithImpl<$Res, AppMessage>;
   @useResult
-  $Res call({MessageType type, dynamic data});
+  $Res call({AppMessageType type, dynamic data});
 }
 
 /// @nodoc
-class _$MessageCopyWithImpl<$Res, $Val extends Message>
-    implements $MessageCopyWith<$Res> {
-  _$MessageCopyWithImpl(this._value, this._then);
+class _$AppMessageCopyWithImpl<$Res, $Val extends AppMessage>
+    implements $AppMessageCopyWith<$Res> {
+  _$AppMessageCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -652,7 +654,7 @@ class _$MessageCopyWithImpl<$Res, $Val extends Message>
       type: null == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
-              as MessageType,
+              as AppMessageType,
       data: freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -662,21 +664,22 @@ class _$MessageCopyWithImpl<$Res, $Val extends Message>
 }
 
 /// @nodoc
-abstract class _$$MessageImplCopyWith<$Res> implements $MessageCopyWith<$Res> {
-  factory _$$MessageImplCopyWith(
-          _$MessageImpl value, $Res Function(_$MessageImpl) then) =
-      __$$MessageImplCopyWithImpl<$Res>;
+abstract class _$$AppMessageImplCopyWith<$Res>
+    implements $AppMessageCopyWith<$Res> {
+  factory _$$AppMessageImplCopyWith(
+          _$AppMessageImpl value, $Res Function(_$AppMessageImpl) then) =
+      __$$AppMessageImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({MessageType type, dynamic data});
+  $Res call({AppMessageType type, dynamic data});
 }
 
 /// @nodoc
-class __$$MessageImplCopyWithImpl<$Res>
-    extends _$MessageCopyWithImpl<$Res, _$MessageImpl>
-    implements _$$MessageImplCopyWith<$Res> {
-  __$$MessageImplCopyWithImpl(
-      _$MessageImpl _value, $Res Function(_$MessageImpl) _then)
+class __$$AppMessageImplCopyWithImpl<$Res>
+    extends _$AppMessageCopyWithImpl<$Res, _$AppMessageImpl>
+    implements _$$AppMessageImplCopyWith<$Res> {
+  __$$AppMessageImplCopyWithImpl(
+      _$AppMessageImpl _value, $Res Function(_$AppMessageImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -685,11 +688,11 @@ class __$$MessageImplCopyWithImpl<$Res>
     Object? type = null,
     Object? data = freezed,
   }) {
-    return _then(_$MessageImpl(
+    return _then(_$AppMessageImpl(
       type: null == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
-              as MessageType,
+              as AppMessageType,
       data: freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -700,27 +703,27 @@ class __$$MessageImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$MessageImpl implements _Message {
-  const _$MessageImpl({required this.type, this.data});
+class _$AppMessageImpl implements _AppMessage {
+  const _$AppMessageImpl({required this.type, this.data});
 
-  factory _$MessageImpl.fromJson(Map<String, dynamic> json) =>
-      _$$MessageImplFromJson(json);
+  factory _$AppMessageImpl.fromJson(Map<String, dynamic> json) =>
+      _$$AppMessageImplFromJson(json);
 
   @override
-  final MessageType type;
+  final AppMessageType type;
   @override
   final dynamic data;
 
   @override
   String toString() {
-    return 'Message(type: $type, data: $data)';
+    return 'AppMessage(type: $type, data: $data)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$MessageImpl &&
+            other is _$AppMessageImpl &&
             (identical(other.type, type) || other.type == type) &&
             const DeepCollectionEquality().equals(other.data, data));
   }
@@ -733,30 +736,188 @@ class _$MessageImpl implements _Message {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$MessageImplCopyWith<_$MessageImpl> get copyWith =>
-      __$$MessageImplCopyWithImpl<_$MessageImpl>(this, _$identity);
+  _$$AppMessageImplCopyWith<_$AppMessageImpl> get copyWith =>
+      __$$AppMessageImplCopyWithImpl<_$AppMessageImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$MessageImplToJson(
+    return _$$AppMessageImplToJson(
       this,
     );
   }
 }
 
-abstract class _Message implements Message {
-  const factory _Message(
-      {required final MessageType type, final dynamic data}) = _$MessageImpl;
+abstract class _AppMessage implements AppMessage {
+  const factory _AppMessage(
+      {required final AppMessageType type,
+      final dynamic data}) = _$AppMessageImpl;
 
-  factory _Message.fromJson(Map<String, dynamic> json) = _$MessageImpl.fromJson;
+  factory _AppMessage.fromJson(Map<String, dynamic> json) =
+      _$AppMessageImpl.fromJson;
 
   @override
-  MessageType get type;
+  AppMessageType get type;
   @override
   dynamic get data;
   @override
   @JsonKey(ignore: true)
-  _$$MessageImplCopyWith<_$MessageImpl> get copyWith =>
+  _$$AppMessageImplCopyWith<_$AppMessageImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+ServiceMessage _$ServiceMessageFromJson(Map<String, dynamic> json) {
+  return _ServiceMessage.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ServiceMessage {
+  ServiceMessageType get type => throw _privateConstructorUsedError;
+  dynamic get data => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ServiceMessageCopyWith<ServiceMessage> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ServiceMessageCopyWith<$Res> {
+  factory $ServiceMessageCopyWith(
+          ServiceMessage value, $Res Function(ServiceMessage) then) =
+      _$ServiceMessageCopyWithImpl<$Res, ServiceMessage>;
+  @useResult
+  $Res call({ServiceMessageType type, dynamic data});
+}
+
+/// @nodoc
+class _$ServiceMessageCopyWithImpl<$Res, $Val extends ServiceMessage>
+    implements $ServiceMessageCopyWith<$Res> {
+  _$ServiceMessageCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? type = null,
+    Object? data = freezed,
+  }) {
+    return _then(_value.copyWith(
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as ServiceMessageType,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ServiceMessageImplCopyWith<$Res>
+    implements $ServiceMessageCopyWith<$Res> {
+  factory _$$ServiceMessageImplCopyWith(_$ServiceMessageImpl value,
+          $Res Function(_$ServiceMessageImpl) then) =
+      __$$ServiceMessageImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({ServiceMessageType type, dynamic data});
+}
+
+/// @nodoc
+class __$$ServiceMessageImplCopyWithImpl<$Res>
+    extends _$ServiceMessageCopyWithImpl<$Res, _$ServiceMessageImpl>
+    implements _$$ServiceMessageImplCopyWith<$Res> {
+  __$$ServiceMessageImplCopyWithImpl(
+      _$ServiceMessageImpl _value, $Res Function(_$ServiceMessageImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? type = null,
+    Object? data = freezed,
+  }) {
+    return _then(_$ServiceMessageImpl(
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as ServiceMessageType,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ServiceMessageImpl implements _ServiceMessage {
+  const _$ServiceMessageImpl({required this.type, this.data});
+
+  factory _$ServiceMessageImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ServiceMessageImplFromJson(json);
+
+  @override
+  final ServiceMessageType type;
+  @override
+  final dynamic data;
+
+  @override
+  String toString() {
+    return 'ServiceMessage(type: $type, data: $data)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ServiceMessageImpl &&
+            (identical(other.type, type) || other.type == type) &&
+            const DeepCollectionEquality().equals(other.data, data));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, type, const DeepCollectionEquality().hash(data));
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ServiceMessageImplCopyWith<_$ServiceMessageImpl> get copyWith =>
+      __$$ServiceMessageImplCopyWithImpl<_$ServiceMessageImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ServiceMessageImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ServiceMessage implements ServiceMessage {
+  const factory _ServiceMessage(
+      {required final ServiceMessageType type,
+      final dynamic data}) = _$ServiceMessageImpl;
+
+  factory _ServiceMessage.fromJson(Map<String, dynamic> json) =
+      _$ServiceMessageImpl.fromJson;
+
+  @override
+  ServiceMessageType get type;
+  @override
+  dynamic get data;
+  @override
+  @JsonKey(ignore: true)
+  _$$ServiceMessageImplCopyWith<_$ServiceMessageImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

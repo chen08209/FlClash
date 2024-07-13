@@ -7,24 +7,6 @@ import 'package:flutter/foundation.dart';
 
 import 'core.dart';
 
-abstract mixin class ClashMessageListener {
-  void onLog(Log log) {}
-
-  void onTun(Fd fd) {}
-
-  void onDelay(Delay delay) {}
-
-  void onProcess(Process process) {}
-
-  void onRequest(Connection connection) {}
-
-  void onNow(Now now) {}
-
-  void onRun(String runTime) {}
-
-  void onLoaded(String groupName) {}
-}
-
 class ClashMessage {
   StreamSubscription? subscription;
 
@@ -34,31 +16,22 @@ class ClashMessage {
       subscription = null;
     }
     subscription = ClashCore.receiver.listen((message) {
-      final m = Message.fromJson(json.decode(message));
-      for (final ClashMessageListener listener in _listeners) {
+      final m = AppMessage.fromJson(json.decode(message));
+      for (final AppMessageListener listener in _listeners) {
         switch (m.type) {
-          case MessageType.log:
+          case AppMessageType.log:
             listener.onLog(Log.fromJson(m.data));
             break;
-          case MessageType.tun:
-            listener.onTun(Fd.fromJson(m.data));
-            break;
-          case MessageType.delay:
+          case AppMessageType.delay:
             listener.onDelay(Delay.fromJson(m.data));
             break;
-          case MessageType.process:
-            listener.onProcess(Process.fromJson(m.data));
-            break;
-          case MessageType.now:
-            listener.onNow(Now.fromJson(m.data));
-            break;
-          case MessageType.request:
+          case AppMessageType.request:
             listener.onRequest(Connection.fromJson(m.data));
             break;
-          case MessageType.run:
-            listener.onRun(m.data);
+          case AppMessageType.started:
+            listener.onStarted(m.data);
             break;
-          case MessageType.loaded:
+          case AppMessageType.loaded:
             listener.onLoaded(m.data);
             break;
         }
@@ -68,18 +41,18 @@ class ClashMessage {
 
   static final ClashMessage instance = ClashMessage._();
 
-  final ObserverList<ClashMessageListener> _listeners =
-      ObserverList<ClashMessageListener>();
+  final ObserverList<AppMessageListener> _listeners =
+      ObserverList<AppMessageListener>();
 
   bool get hasListeners {
     return _listeners.isNotEmpty;
   }
 
-  void addListener(ClashMessageListener listener) {
+  void addListener(AppMessageListener listener) {
     _listeners.add(listener);
   }
 
-  void removeListener(ClashMessageListener listener) {
+  void removeListener(AppMessageListener listener) {
     _listeners.remove(listener);
   }
 }

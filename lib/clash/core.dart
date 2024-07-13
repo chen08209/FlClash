@@ -35,7 +35,6 @@ class ClashCore {
     clashFFI = ClashFFI(lib);
     clashFFI.initNativeApiBridge(
       NativeApi.initializeApiDLData,
-      receiver.sendPort.nativePort,
     );
   }
 
@@ -93,6 +92,28 @@ class ClashCore {
     );
     malloc.free(paramsChar);
     return completer.future;
+  }
+
+  initMessage() {
+    clashFFI.initMessage(
+      receiver.sendPort.nativePort,
+    );
+  }
+
+  setProfileName(String profileName) {
+    final profileNameChar = profileName.toNativeUtf8().cast<Char>();
+    clashFFI.setCurrentProfileName(
+      profileNameChar,
+    );
+    malloc.free(profileNameChar);
+  }
+
+  getProfileName() {
+    final currentProfileNameRaw = clashFFI.getCurrentProfileName();
+    final currentProfileName =
+        currentProfileNameRaw.cast<Utf8>().toDartString();
+    clashFFI.freeCString(currentProfileNameRaw);
+    return currentProfileName;
   }
 
   Future<List<Group>> getProxiesGroups() {
@@ -242,8 +263,9 @@ class ClashCore {
     clashFFI.stopLog();
   }
 
-  startTun(int fd) {
-    clashFFI.startTUN(fd);
+  startTun(int fd, int port) {
+    if (!Platform.isAndroid) return;
+    clashFFI.startTUN(fd, port);
   }
 
   requestGc() {
@@ -265,11 +287,13 @@ class ClashCore {
     clashFFI.setFdMap(fd);
   }
 
-  // DateTime? getRunTime() {
-  //   final runTimeString = clashFFI.getRunTime().cast<Utf8>().toDartString();
-  //   if (runTimeString.isEmpty) return null;
-  //   return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
-  // }
+  DateTime? getRunTime() {
+    final runTimeRaw = clashFFI.getRunTime();
+    final runTimeString = runTimeRaw.cast<Utf8>().toDartString();
+    clashFFI.freeCString(runTimeRaw);
+    if (runTimeString.isEmpty) return null;
+    return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
+  }
 
   List<Connection> getConnections() {
     final connectionsDataRaw = clashFFI.getConnections();

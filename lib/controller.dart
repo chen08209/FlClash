@@ -26,7 +26,7 @@ class AppController {
     updateClashConfigDebounce = debounce<Function()>(() async {
       await updateClashConfig();
     });
-    addCheckIpNumDebounce = debounce((){
+    addCheckIpNumDebounce = debounce(() {
       appState.checkIpNum++;
     });
     measure = Measure.of(context);
@@ -70,7 +70,6 @@ class AppController {
 
   updateTraffic() {
     globalState.updateTraffic(
-      config: config,
       appState: appState,
     );
   }
@@ -119,6 +118,14 @@ class AppController {
         clashConfig: clashConfig,
       );
     });
+  }
+
+  Future rawApplyProfile() async {
+    await globalState.applyProfile(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
+    );
   }
 
   changeProfile(String? value) async {

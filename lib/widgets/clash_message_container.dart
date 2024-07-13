@@ -1,6 +1,6 @@
 import 'package:fl_clash/clash/clash.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/plugins/proxy.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -18,7 +18,7 @@ class ClashMessageContainer extends StatefulWidget {
 }
 
 class _ClashMessageContainerState extends State<ClashMessageContainer>
-    with ClashMessageListener {
+    with AppMessageListener {
   @override
   Widget build(BuildContext context) {
     return widget.child;
@@ -50,25 +50,6 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
   }
 
   @override
-  Future<void> onTun(Fd fd) async {
-    await proxyManager.setProtect(fd.value);
-    clashCore.setFdMap(fd.id);
-    super.onTun(fd);
-  }
-
-  @override
-  void onProcess(Process process) async {
-    var packageName = await app?.resolverProcess(process);
-    clashCore.setProcessMap(
-      ProcessMapItem(
-        id: process.id,
-        value: packageName ?? "",
-      ),
-    );
-    super.onProcess(process);
-  }
-
-  @override
   void onRequest(Connection connection) async {
     globalState.appController.appState.addRequest(connection);
     super.onRequest(connection);
@@ -88,5 +69,15 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
     );
     appController.addCheckIpNumDebounce();
     super.onLoaded(proxyName);
+  }
+
+  @override
+  void onStarted(String runTime) {
+    super.onStarted(runTime);
+    proxy?.updateStartTime();
+    final appController = globalState.appController;
+    appController.rawApplyProfile().then((_) {
+      appController.addCheckIpNumDebounce();
+    });
   }
 }

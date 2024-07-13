@@ -1,9 +1,9 @@
 package com.follow.clash.services
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
+import android.os.IBinder
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.annotation.RequiresApi
@@ -11,14 +11,9 @@ import androidx.lifecycle.Observer
 import com.follow.clash.GlobalState
 import com.follow.clash.RunState
 import com.follow.clash.TempActivity
-import com.follow.clash.plugins.AppPlugin
-import com.follow.clash.plugins.ProxyPlugin
-import com.follow.clash.plugins.TilePlugin
-import io.flutter.FlutterInjector
-import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.engine.dart.DartExecutor
 
 
+@RequiresApi(Build.VERSION_CODES.N)
 class FlClashTileService : TileService() {
 
     private val observer = Observer<RunState> { runState ->
@@ -62,42 +57,25 @@ class FlClashTileService : TileService() {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startActivityAndCollapse(pendingIntent)
-        }else{
+        } else {
             startActivityAndCollapse(intent)
-        }
-    }
-
-    private var flutterEngine: FlutterEngine? = null;
-
-    private fun initFlutterEngine() {
-        flutterEngine = FlutterEngine(this)
-        flutterEngine?.plugins?.add(ProxyPlugin())
-        flutterEngine?.plugins?.add(TilePlugin())
-        flutterEngine?.plugins?.add(AppPlugin())
-        GlobalState.flutterEngine = flutterEngine
-        if (flutterEngine?.dartExecutor?.isExecutingDart != true) {
-            val vpnService = DartExecutor.DartEntrypoint(
-                FlutterInjector.instance().flutterLoader().findAppBundlePath(),
-                "vpnService"
-            )
-            flutterEngine?.dartExecutor?.executeDartEntrypoint(vpnService)
         }
     }
 
     override fun onClick() {
         super.onClick()
         activityTransfer()
-        val currentTilePlugin = GlobalState.getCurrentTilePlugin()
         if (GlobalState.runState.value == RunState.STOP) {
             GlobalState.runState.value = RunState.PENDING
-            if(currentTilePlugin == null){
-                initFlutterEngine()
-            }else{
-                currentTilePlugin.handleStart()
+            val titlePlugin = GlobalState.getCurrentTitlePlugin()
+            if (titlePlugin != null) {
+                titlePlugin.handleStart()
+            } else {
+                GlobalState.initServiceEngine(this)
             }
-        } else if(GlobalState.runState.value == RunState.START){
+        } else if (GlobalState.runState.value == RunState.START) {
             GlobalState.runState.value = RunState.PENDING
-            currentTilePlugin?.handleStop()
+            GlobalState.getCurrentTitlePlugin()?.handleStop()
         }
 
     }

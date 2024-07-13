@@ -20,11 +20,8 @@ import com.follow.clash.models.Props
 
 
 class FlClashVpnService : VpnService() {
-
-
     private val CHANNEL = "FlClash"
 
-    var fd: Int? = null
     private val notificationId: Int = 1
 
     private val passList = listOf(
@@ -47,8 +44,8 @@ class FlClashVpnService : VpnService() {
         "192.168.*"
     )
 
-    fun start(port: Int, props: Props?) {
-        fd = with(Builder()) {
+    fun start(port: Int, props: Props?): Int? {
+        return with(Builder()) {
             addAddress("172.16.0.1", 30)
             setMtu(9000)
             addRoute("0.0.0.0", 0)
@@ -94,7 +91,6 @@ class FlClashVpnService : VpnService() {
         stopForeground()
     }
 
-
     private val notificationBuilder: NotificationCompat.Builder by lazy {
         val intent = Intent(this, MainActivity::class.java)
 
@@ -128,6 +124,10 @@ class FlClashVpnService : VpnService() {
             setOnlyAlertOnce(true)
             setAutoCancel(true);
         }
+    }
+
+    fun initServiceEngine() {
+        GlobalState.initServiceEngine(this)
     }
 
     override fun onTrimMemory(level: Int) {
@@ -171,7 +171,6 @@ class FlClashVpnService : VpnService() {
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
-        GlobalState.getCurrentTilePlugin()?.handleStop();
         return super.onUnbind(intent)
     }
 

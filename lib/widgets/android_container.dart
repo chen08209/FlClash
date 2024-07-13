@@ -19,6 +19,7 @@ class AndroidContainer extends StatefulWidget {
 
 class _AndroidContainerState extends State<AndroidContainer>
     with WidgetsBindingObserver {
+
   _excludeContainer(Widget child) {
     return Selector<Config, bool>(
       selector: (_, config) => config.isExclude,
@@ -47,9 +48,7 @@ class _AndroidContainerState extends State<AndroidContainer>
 
   @override
   Widget build(BuildContext context) {
-    return _excludeContainer(
-      widget.child,
-    );
+    return _excludeContainer(widget.child);
   }
 
   @override

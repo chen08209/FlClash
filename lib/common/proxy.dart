@@ -28,20 +28,6 @@ class ProxyManager {
     return await (_proxy as Proxy).updateStartTime();
   }
 
-  Future<bool?> setProtect(int fd) async {
-    if (_proxy is! Proxy) return null;
-    return await (_proxy as Proxy).setProtect(fd);
-  }
-
-  Future<bool?> startForeground({
-    required String title,
-    required String content,
-  }) async {
-    if (_proxy is! Proxy) return null;
-    return await (_proxy as Proxy)
-        .startForeground(title: title, content: content);
-  }
-
   factory ProxyManager() {
     _instance ??= ProxyManager._internal();
     return _instance!;

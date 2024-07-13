@@ -1,29 +1,29 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
-import 'package:fl_clash/clash/core.dart';
+import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
 import 'package:proxy/proxy_platform_interface.dart';
 
 class Proxy extends ProxyPlatform {
   static Proxy? _instance;
   late MethodChannel methodChannel;
-  late ReceivePort receiver;
+  ReceivePort? receiver;
+  ServiceMessageListener? _serviceMessageHandler;
 
   Proxy._internal() {
     methodChannel = const MethodChannel("proxy");
-    receiver = ReceivePort()
-      ..listen(
-        (message) {
-          setProtect(int.parse(message));
-        },
-      );
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
-        case "startAfter":
-          int fd = call.arguments;
-          startAfterHook(fd);
+        case "started":
+          final fd = call.arguments;
+          onStarted(fd);
           break;
         default:
           throw MissingPluginException();
@@ -36,16 +36,27 @@ class Proxy extends ProxyPlatform {
     return _instance!;
   }
 
+  Future<bool?> _initService() async {
+    return await methodChannel.invokeMethod<bool>("initService");
+  }
+
+  handleStop() {
+    globalState.stopSystemProxy();
+  }
+
   @override
-  Future<bool?> startProxy(int port, String? args) async {
+  Future<bool?> startProxy(port, args) async {
+    if (!globalState.isVpnService) {
+      return await _initService();
+    }
     return await methodChannel
-        .invokeMethod<bool>("StartProxy", {'port': port, 'args': args});
+        .invokeMethod<bool>("startProxy", {'port': port, 'args': args});
   }
 
   @override
   Future<bool?> stopProxy() async {
     clashCore.stopTun();
-    final isStop = await methodChannel.invokeMethod<bool>("StopProxy");
+    final isStop = await methodChannel.invokeMethod<bool>("stopProxy");
     if (isStop == true) {
       startTime = null;
     }
@@ -53,11 +64,7 @@ class Proxy extends ProxyPlatform {
   }
 
   Future<bool?> setProtect(int fd) async {
-    return await methodChannel.invokeMethod<bool?>("SetProtect", {'fd': fd});
-  }
-
-  Future<int?> getRunTimeStamp() async {
-    return await methodChannel.invokeMethod<int?>("GetRunTimeStamp");
+    return await methodChannel.invokeMethod<bool?>("setProtect", {'fd': fd});
   }
 
   Future<bool?> startForeground({
@@ -72,26 +79,43 @@ class Proxy extends ProxyPlatform {
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
-  startAfterHook(int? fd) {
-    if (!isStart && fd != null) {
-      clashCore.startTun(fd);
-      updateStartTime();
+  onStarted(int? fd) {
+    if (fd == null) return;
+    if (receiver != null) {
+      receiver!.close();
+      receiver == null;
     }
+    receiver = ReceivePort();
+    receiver!.listen((message) {
+      _handleServiceMessage(message);
+    });
+    clashCore.startTun(fd, receiver!.sendPort.nativePort);
   }
 
-  // updateStartTime() async {
-  //   startTime = clashCore.getRunTime();
-  // }
-
-  updateStartTime() async {
-    startTime = await getRunTime();
+  updateStartTime() {
+    startTime = clashCore.getRunTime();
   }
 
-  Future<DateTime?> getRunTime() async {
-    final runTimeStamp = await getRunTimeStamp();
-    return runTimeStamp != null
-        ? DateTime.fromMillisecondsSinceEpoch(runTimeStamp)
-        : null;
+  setServiceMessageHandler(ServiceMessageListener serviceMessageListener) {
+    _serviceMessageHandler = serviceMessageListener;
+  }
+
+  _handleServiceMessage(String message) {
+    final m = ServiceMessage.fromJson(json.decode(message));
+    switch (m.type) {
+      case ServiceMessageType.protect:
+        _serviceMessageHandler?.onProtect(Fd.fromJson(m.data));
+        break;
+      case ServiceMessageType.process:
+        _serviceMessageHandler?.onProcess(Process.fromJson(m.data));
+        break;
+      case ServiceMessageType.started:
+        _serviceMessageHandler?.onStarted(m.data);
+        break;
+      case ServiceMessageType.loaded:
+        _serviceMessageHandler?.onLoaded(m.data);
+        break;
+    }
   }
 }
 

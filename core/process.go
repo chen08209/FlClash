@@ -4,7 +4,6 @@ package main
 
 import "C"
 import (
-	bridge "core/dart-bridge"
 	"encoding/json"
 	"errors"
 	"github.com/metacubex/mihomo/component/process"
@@ -43,8 +42,8 @@ func init() {
 
 		timeout := time.After(200 * time.Millisecond)
 
-		bridge.SendMessage(bridge.Message{
-			Type: bridge.Process,
+		SendMessage(Message{
+			Type: ProcessMessage,
 			Data: Process{
 				Id:       id,
 				Metadata: metadata,

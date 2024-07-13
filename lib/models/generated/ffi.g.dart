@@ -55,27 +55,44 @@ Map<String, dynamic> _$$ChangeProxyParamsImplToJson(
       'proxy-name': instance.proxyName,
     };
 
-_$MessageImpl _$$MessageImplFromJson(Map<String, dynamic> json) =>
-    _$MessageImpl(
-      type: $enumDecode(_$MessageTypeEnumMap, json['type']),
+_$AppMessageImpl _$$AppMessageImplFromJson(Map<String, dynamic> json) =>
+    _$AppMessageImpl(
+      type: $enumDecode(_$AppMessageTypeEnumMap, json['type']),
       data: json['data'],
     );
 
-Map<String, dynamic> _$$MessageImplToJson(_$MessageImpl instance) =>
+Map<String, dynamic> _$$AppMessageImplToJson(_$AppMessageImpl instance) =>
     <String, dynamic>{
-      'type': _$MessageTypeEnumMap[instance.type]!,
+      'type': _$AppMessageTypeEnumMap[instance.type]!,
       'data': instance.data,
     };
 
-const _$MessageTypeEnumMap = {
-  MessageType.log: 'log',
-  MessageType.tun: 'tun',
-  MessageType.delay: 'delay',
-  MessageType.process: 'process',
-  MessageType.now: 'now',
-  MessageType.request: 'request',
-  MessageType.run: 'run',
-  MessageType.loaded: 'loaded',
+const _$AppMessageTypeEnumMap = {
+  AppMessageType.log: 'log',
+  AppMessageType.delay: 'delay',
+  AppMessageType.request: 'request',
+  AppMessageType.started: 'started',
+  AppMessageType.loaded: 'loaded',
+};
+
+_$ServiceMessageImpl _$$ServiceMessageImplFromJson(Map<String, dynamic> json) =>
+    _$ServiceMessageImpl(
+      type: $enumDecode(_$ServiceMessageTypeEnumMap, json['type']),
+      data: json['data'],
+    );
+
+Map<String, dynamic> _$$ServiceMessageImplToJson(
+        _$ServiceMessageImpl instance) =>
+    <String, dynamic>{
+      'type': _$ServiceMessageTypeEnumMap[instance.type]!,
+      'data': instance.data,
+    };
+
+const _$ServiceMessageTypeEnumMap = {
+  ServiceMessageType.protect: 'protect',
+  ServiceMessageType.process: 'process',
+  ServiceMessageType.started: 'started',
+  ServiceMessageType.loaded: 'loaded',
 };
 
 _$DelayImpl _$$DelayImplFromJson(Map<String, dynamic> json) => _$DelayImpl(

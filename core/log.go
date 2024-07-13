@@ -2,7 +2,6 @@ package main
 
 import "C"
 import (
-	bridge "core/dart-bridge"
 	"github.com/metacubex/mihomo/common/observable"
 	"github.com/metacubex/mihomo/log"
 )
@@ -21,11 +20,11 @@ func startLog() {
 			if logData.LogLevel < log.Level() {
 				continue
 			}
-			message := &bridge.Message{
-				Type: bridge.Log,
+			message := &Message{
+				Type: LogMessage,
 				Data: logData,
 			}
-			bridge.SendMessage(*message)
+			SendMessage(*message)
 		}
 	}()
 }
