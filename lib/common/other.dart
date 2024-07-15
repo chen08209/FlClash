@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
@@ -188,6 +189,24 @@ class Other {
     if (viewWidth <= maxMobileWidth) return ViewMode.mobile;
     if (viewWidth <= maxLaptopWidth) return ViewMode.laptop;
     return ViewMode.desktop;
+  }
+
+  int getColumns(ViewMode viewMode, int currentColumns) {
+    final targetColumnsArray = viewModeColumnsMap[viewMode]!;
+    if (targetColumnsArray.contains(currentColumns)) {
+      return currentColumns;
+    }
+    return targetColumnsArray.first;
+  }
+
+  String getColumnsTextForInt(int number){
+    return switch(number){
+      1 => appLocalizations.oneColumn,
+      2 => appLocalizations.twoColumns,
+      3 => appLocalizations.threeColumns,
+      4 => appLocalizations.fourColumns,
+      int() => throw UnimplementedError(),
+    };
   }
 }
 

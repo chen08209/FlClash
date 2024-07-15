@@ -5,7 +5,7 @@ import 'package:fl_clash/widgets/open_container.dart';
 import 'package:flutter/material.dart';
 
 import 'card.dart';
-import 'extend_page.dart';
+import 'sheet.dart';
 import 'scaffold.dart';
 
 class Delegate {

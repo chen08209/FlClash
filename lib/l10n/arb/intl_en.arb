@@ -195,5 +195,21 @@
   "testUrl": "Test url",
   "sync": "Sync",
   "exclude": "Hidden from recent tasks",
-  "excludeDesc": "When the app is in the background, the app is hidden from the recent task"
+  "excludeDesc": "When the app is in the background, the app is hidden from the recent task",
+  "oneColumn": "One column",
+  "twoColumns": "Two columns",
+  "threeColumns": "Three columns",
+  "fourColumns": "Four columns",
+  "expand": "Standard",
+  "shrink": "Shrink",
+  "min": "Min",
+  "tab": "Tab",
+  "list": "List",
+  "delay": "Delay",
+  "style": "Style",
+  "size": "Size",
+  "sort": "Sort",
+  "columns": "Columns",
+  "proxiesSetting": "Proxies setting",
+  "proxyGroup": "Proxy group"
 }

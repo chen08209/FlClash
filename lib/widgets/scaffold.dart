@@ -119,14 +119,21 @@ class CommonScaffoldState extends State<CommonScaffold> {
           child: Stack(
             alignment: Alignment.bottomCenter,
             children: [
-              ValueListenableBuilder(
+              ValueListenableBuilder<List<Widget>>(
                 valueListenable: _actions,
                 builder: (_, actions, __) {
+                  final realActions =
+                      actions.isNotEmpty ? actions : widget.actions;
                   return AppBar(
                     automaticallyImplyLeading: widget.automaticallyImplyLeading,
                     leading: widget.leading,
                     title: Text(widget.title),
-                    actions: actions.isNotEmpty ? actions : widget.actions,
+                    actions: [
+                      ...?realActions,
+                      const SizedBox(
+                        width: 8,
+                      )
+                    ],
                   );
                 },
               ),

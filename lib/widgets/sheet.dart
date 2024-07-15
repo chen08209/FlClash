@@ -54,3 +54,34 @@ showExtendPage(
     ),
   );
 }
+
+showSheet({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  required String title,
+  bool isScrollControlled = true,
+  double width = 320,
+}) {
+  final viewMode = globalState.appController.appState.viewMode;
+  final isMobile = viewMode == ViewMode.mobile;
+  if (isMobile) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: isScrollControlled,
+      builder: builder,
+      showDragHandle: true,
+      useSafeArea: true,
+    );
+  } else {
+    showModalSideSheet(
+      useSafeArea: true,
+      isScrollControlled: isScrollControlled,
+      context: context,
+      constraints: BoxConstraints(
+        maxWidth: width,
+      ),
+      body: builder(context),
+      title: title,
+    );
+  }
+}

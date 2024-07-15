@@ -195,5 +195,21 @@
   "testUrl": "测速链接",
   "sync": "同步",
   "exclude": "从最近任务中隐藏",
-  "excludeDesc": "应用在后台时,从最近任务中隐藏应用"
+  "excludeDesc": "应用在后台时,从最近任务中隐藏应用",
+  "oneColumn": "一列",
+  "twoColumns": "两列",
+  "threeColumns": "三列",
+  "fourColumns": "四列",
+  "expand": "标准",
+  "shrink": "紧凑",
+  "min": "最小",
+  "tab": "标签页",
+  "list": "列表",
+  "delay": "延迟",
+  "style": "风格",
+  "size": "尺寸",
+  "sort": "排序",
+  "columns": "列数",
+  "proxiesSetting": "代理设置",
+  "proxyGroup": "代理组"
 }

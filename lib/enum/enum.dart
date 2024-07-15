@@ -82,6 +82,6 @@ enum ChipType { action, delete }
 
 enum CommonCardType { plain, filled }
 
-enum ProxiesType { tab, expansion }
+enum ProxiesType { tab, list }
 
-enum ProxyCardType { expand, shrink }
+enum ProxyCardType { expand, shrink, min }

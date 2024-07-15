@@ -18,7 +18,6 @@ class WindowContainer extends StatefulWidget {
 }
 
 class _WindowContainerState extends State<WindowContainer> with WindowListener {
-
   _autoLaunchContainer(Widget child) {
     return Selector<Config, bool>(
       selector: (_, config) => config.autoLaunch,
@@ -45,6 +44,28 @@ class _WindowContainerState extends State<WindowContainer> with WindowListener {
   void onWindowClose() async {
     await globalState.appController.handleBackOrExit();
     super.onWindowClose();
+  }
+
+  @override
+  Future<void> onWindowMoved() async {
+    super.onWindowMoved();
+    final offset = await windowManager.getPosition();
+    final config = globalState.appController.config;
+    config.windowProps = config.windowProps.copyWith(
+      top: offset.dy,
+      left: offset.dx,
+    );
+  }
+
+  @override
+  Future<void> onWindowResized() async {
+    super.onWindowResized();
+    final size = await windowManager.getSize();
+    final config = globalState.appController.config;
+    config.windowProps = config.windowProps.copyWith(
+      width: size.width,
+      height: size.height,
+    );
   }
 
   @override

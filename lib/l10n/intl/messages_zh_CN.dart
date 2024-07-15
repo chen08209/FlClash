@@ -71,6 +71,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "checkUpdate": MessageLookupByLibrary.simpleMessage("检查更新"),
         "checkUpdateError": MessageLookupByLibrary.simpleMessage("当前应用已经是最新版了"),
         "checking": MessageLookupByLibrary.simpleMessage("检测中..."),
+        "columns": MessageLookupByLibrary.simpleMessage("列数"),
         "compatible": MessageLookupByLibrary.simpleMessage("兼容模式"),
         "compatibleDesc":
             MessageLookupByLibrary.simpleMessage("开启将失去部分应用能力，获得全量的Clash的支持"),
@@ -89,6 +90,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "days": MessageLookupByLibrary.simpleMessage("天"),
         "defaultSort": MessageLookupByLibrary.simpleMessage("按默认排序"),
         "defaultText": MessageLookupByLibrary.simpleMessage("默认"),
+        "delay": MessageLookupByLibrary.simpleMessage("延迟"),
         "delaySort": MessageLookupByLibrary.simpleMessage("按延迟排序"),
         "delete": MessageLookupByLibrary.simpleMessage("删除"),
         "desc": MessageLookupByLibrary.simpleMessage(
@@ -104,6 +106,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "excludeDesc":
             MessageLookupByLibrary.simpleMessage("应用在后台时,从最近任务中隐藏应用"),
         "exit": MessageLookupByLibrary.simpleMessage("退出"),
+        "expand": MessageLookupByLibrary.simpleMessage("标准"),
         "expirationTime": MessageLookupByLibrary.simpleMessage("到期时间"),
         "externalController": MessageLookupByLibrary.simpleMessage("外部控制器"),
         "externalControllerDesc":
@@ -115,6 +118,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "findProcessMode": MessageLookupByLibrary.simpleMessage("查找进程"),
         "findProcessModeDesc":
             MessageLookupByLibrary.simpleMessage("开启后存在闪退风险"),
+        "fourColumns": MessageLookupByLibrary.simpleMessage("四列"),
         "general": MessageLookupByLibrary.simpleMessage("基础"),
         "geoData": MessageLookupByLibrary.simpleMessage("地理数据"),
         "geodataLoader": MessageLookupByLibrary.simpleMessage("Geo低内存模式"),
@@ -131,11 +135,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "just": MessageLookupByLibrary.simpleMessage("刚刚"),
         "language": MessageLookupByLibrary.simpleMessage("语言"),
         "light": MessageLookupByLibrary.simpleMessage("浅色"),
+        "list": MessageLookupByLibrary.simpleMessage("列表"),
         "logLevel": MessageLookupByLibrary.simpleMessage("日志等级"),
         "logcat": MessageLookupByLibrary.simpleMessage("日志捕获"),
         "logcatDesc": MessageLookupByLibrary.simpleMessage("禁用将会隐藏日志入口"),
         "logs": MessageLookupByLibrary.simpleMessage("日志"),
         "logsDesc": MessageLookupByLibrary.simpleMessage("日志捕获记录"),
+        "min": MessageLookupByLibrary.simpleMessage("最小"),
         "minimizeOnExit": MessageLookupByLibrary.simpleMessage("退出时最小化"),
         "minimizeOnExitDesc":
             MessageLookupByLibrary.simpleMessage("修改系统默认退出事件"),
@@ -158,6 +164,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "nullProfileDesc":
             MessageLookupByLibrary.simpleMessage("没有配置文件,请先添加配置文件"),
         "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("暂无请求"),
+        "oneColumn": MessageLookupByLibrary.simpleMessage("一列"),
         "other": MessageLookupByLibrary.simpleMessage("其他"),
         "outboundMode": MessageLookupByLibrary.simpleMessage("出站模式"),
         "override": MessageLookupByLibrary.simpleMessage("覆写"),
@@ -187,6 +194,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "profiles": MessageLookupByLibrary.simpleMessage("配置"),
         "project": MessageLookupByLibrary.simpleMessage("项目"),
         "proxies": MessageLookupByLibrary.simpleMessage("代理"),
+        "proxiesSetting": MessageLookupByLibrary.simpleMessage("代理设置"),
+        "proxyGroup": MessageLookupByLibrary.simpleMessage("代理组"),
         "proxyPort": MessageLookupByLibrary.simpleMessage("代理端口"),
         "proxyPortDesc": MessageLookupByLibrary.simpleMessage("设置Clash监听端口"),
         "qrcode": MessageLookupByLibrary.simpleMessage("二维码"),
@@ -207,15 +216,20 @@ class MessageLookup extends MessageLookupByLibrary {
         "selected": MessageLookupByLibrary.simpleMessage("已选择"),
         "settings": MessageLookupByLibrary.simpleMessage("设置"),
         "show": MessageLookupByLibrary.simpleMessage("显示"),
+        "shrink": MessageLookupByLibrary.simpleMessage("紧凑"),
         "silentLaunch": MessageLookupByLibrary.simpleMessage("静默启动"),
         "silentLaunchDesc": MessageLookupByLibrary.simpleMessage("后台启动"),
+        "size": MessageLookupByLibrary.simpleMessage("尺寸"),
+        "sort": MessageLookupByLibrary.simpleMessage("排序"),
         "startVpn": MessageLookupByLibrary.simpleMessage("正在启动VPN..."),
         "stopVpn": MessageLookupByLibrary.simpleMessage("正在停止VPN..."),
+        "style": MessageLookupByLibrary.simpleMessage("风格"),
         "submit": MessageLookupByLibrary.simpleMessage("提交"),
         "sync": MessageLookupByLibrary.simpleMessage("同步"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("系统代理"),
         "systemProxyDesc":
             MessageLookupByLibrary.simpleMessage("为VpnService附加HTTP代理"),
+        "tab": MessageLookupByLibrary.simpleMessage("标签页"),
         "tabAnimation": MessageLookupByLibrary.simpleMessage("选项卡动画"),
         "tabAnimationDesc":
             MessageLookupByLibrary.simpleMessage("开启后，主页选项卡将添加切换动画"),
@@ -226,11 +240,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeColor": MessageLookupByLibrary.simpleMessage("主题色彩"),
         "themeDesc": MessageLookupByLibrary.simpleMessage("设置深色模式，调整色彩"),
         "themeMode": MessageLookupByLibrary.simpleMessage("主题模式"),
+        "threeColumns": MessageLookupByLibrary.simpleMessage("三列"),
         "tip": MessageLookupByLibrary.simpleMessage("提示"),
         "tools": MessageLookupByLibrary.simpleMessage("工具"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("流量统计"),
         "tun": MessageLookupByLibrary.simpleMessage("TUN模式"),
         "tunDesc": MessageLookupByLibrary.simpleMessage("仅在管理员模式生效"),
+        "twoColumns": MessageLookupByLibrary.simpleMessage("两列"),
         "unableToUpdateCurrentProfileDesc":
             MessageLookupByLibrary.simpleMessage("无法更新当前配置文件"),
         "unifiedDelay": MessageLookupByLibrary.simpleMessage("统一延迟"),

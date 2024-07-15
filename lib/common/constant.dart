@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:flutter/material.dart';
 
@@ -15,10 +16,14 @@ const asnFileName = "ASN.mmdb";
 const geoIpFileName = "GeoIP.dat";
 const geoSiteFileName = "GeoSite.dat";
 const GeoXMap defaultGeoXMap = {
-  "mmdb":"https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
-  "asn":"https://github.com/xishang0128/geoip/releases/download/latest/GeoLite2-ASN.mmdb",
-  "geoip":"https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoIP.dat",
-  "geosite":"https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"
+  "mmdb":
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+  "asn":
+      "https://github.com/xishang0128/geoip/releases/download/latest/GeoLite2-ASN.mmdb",
+  "geoip":
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoIP.dat",
+  "geosite":
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"
 };
 const profilesDirectoryName = "profiles";
 const localhost = "127.0.0.1";
@@ -38,5 +43,11 @@ final filter = ImageFilter.blur(
   sigmaY: 5,
   tileMode: TileMode.mirror,
 );
+
+const viewModeColumnsMap = {
+  ViewMode.mobile: [2, 1],
+  ViewMode.laptop: [3, 2],
+  ViewMode.desktop: [4, 3],
+};
 
 const defaultPrimaryColor = Colors.brown;

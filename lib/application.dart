@@ -149,6 +149,7 @@ class ApplicationState extends State<Application> {
                 builder: (lightDynamic, darkDynamic) {
                   _updateSystemColorSchemes(lightDynamic, darkDynamic);
                   return MaterialApp(
+                    debugShowCheckedModeBanner: false,
                     navigatorKey: globalState.navigatorKey,
                     localizationsDelegates: const [
                       AppLocalizations.delegate,
@@ -156,6 +157,7 @@ class ApplicationState extends State<Application> {
                       GlobalCupertinoLocalizations.delegate,
                       GlobalWidgetsLocalizations.delegate
                     ],
+                    scrollBehavior: BaseScrollBehavior(),
                     title: appName,
                     locale: other.getLocaleForString(state.locale),
                     supportedLocales:

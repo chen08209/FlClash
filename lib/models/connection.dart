@@ -48,7 +48,11 @@ class ConnectionsAndKeywords with _$ConnectionsAndKeywords {
       _$ConnectionsAndKeywordsFromJson(json);
 }
 
-
-extension ConnectionsAndKeywordsExt on ConnectionsAndKeywords{
-  List<Connection> get filteredConnections => connections.where((connection)=> Set.from(connection.chains).containsAll(keywords)).toList();
+extension ConnectionsAndKeywordsExt on ConnectionsAndKeywords {
+  List<Connection> get filteredConnections => connections
+      .where((connection) => {
+            ...connection.chains,
+            connection.metadata.process,
+          }.containsAll(keywords))
+      .toList();
 }

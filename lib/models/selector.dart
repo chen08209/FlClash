@@ -124,3 +124,12 @@ class PackageListSelectorState with _$PackageListSelectorState {
     required bool isAccessControl,
   }) = _PackageListSelectorState;
 }
+
+
+@freezed
+class ColumnsSelectorState with _$ColumnsSelectorState {
+  const factory ColumnsSelectorState({
+    required int columns,
+    required ViewMode viewMode,
+  }) = _ColumnsSelectorState;
+}

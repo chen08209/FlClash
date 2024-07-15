@@ -72,9 +72,6 @@ class _LogsFragmentState extends State<LogsFragment> {
           },
           icon: const Icon(Icons.search),
         ),
-        const SizedBox(
-          width: 8,
-        )
       ];
     });
   }

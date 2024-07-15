@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_clash/models/config.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_single_instance/windows_single_instance.dart';
@@ -8,7 +9,7 @@ import 'protocol.dart';
 import 'system.dart';
 
 class Window {
-  init() async {
+  init(WindowProps props) async {
     if (Platform.isWindows) {
       await WindowsSingleInstance.ensureSingleInstance([], "FlClash");
       protocol.register("clash");
@@ -16,11 +17,17 @@ class Window {
       protocol.register("flclash");
     }
     await windowManager.ensureInitialized();
-    WindowOptions windowOptions = const WindowOptions(
-      size: Size(1000, 600),
-      minimumSize: Size(400, 600),
-      center: true,
+    WindowOptions windowOptions = WindowOptions(
+      size: Size(props.width, props.height),
+      minimumSize: const Size(380, 600),
     );
+    if (props.left != null || props.top != null) {
+      await windowManager.setPosition(
+        Offset(props.left ?? 0, props.top ?? 0),
+      );
+    } else {
+      await windowManager.setAlignment(Alignment.center);
+    }
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.setPreventClose(true);
     });

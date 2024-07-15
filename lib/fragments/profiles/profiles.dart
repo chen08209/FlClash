@@ -72,9 +72,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
             },
             icon: const Icon(Icons.sync),
           ),
-          const SizedBox(
-            width: 8,
-          )
         ];
       },
     );
@@ -145,12 +142,8 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
               alignment: Alignment.topCenter,
               child: NotificationListener<ScrollNotification>(
                 onNotification: (scrollNotification) {
-                  WidgetsBinding.instance.addPostFrameCallback(
-                    (_) {
-                      hasPadding.value =
-                          scrollNotification.metrics.maxScrollExtent > 0;
-                    },
-                  );
+                  hasPadding.value =
+                      scrollNotification.metrics.maxScrollExtent > 0;
                   return true;
                 },
                 child: ValueListenableBuilder(
@@ -161,7 +154,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
                         left: 16,
                         right: 16,
                         top: 16,
-                        bottom: 16 + (hasPadding ? 56 : 0),
+                        bottom: 16 + (hasPadding ? 72 : 0),
                       ),
                       child: Grid(
                         mainAxisSpacing: 16,
@@ -272,11 +265,13 @@ class _ProfileItemState extends State<ProfileItem> {
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                profile.label ?? profile.id,
-                style: textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              Flexible(
+                child: Text(
+                  profile.label ?? profile.id,
+                  style: textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               Text(
                 profile.lastUpdateDate?.lastUpdateTimeDesc ?? '',

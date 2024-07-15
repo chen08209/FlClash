@@ -36,6 +36,21 @@ class Props with _$Props {
   factory Props.fromJson(Map<String, Object?> json) => _$PropsFromJson(json);
 }
 
+@freezed
+class WindowProps with _$WindowProps {
+  const factory WindowProps({
+    @Default(1000) double width,
+    @Default(600) double height,
+    double? top,
+    double? left,
+  }) = _WindowProps;
+
+  factory WindowProps.fromJson(Map<String, Object?>? json) =>
+      json == null ? defaultWindowProps : _$WindowPropsFromJson(json);
+}
+
+const defaultWindowProps = WindowProps();
+
 @JsonSerializable()
 class Config extends ChangeNotifier {
   List<Profile> _profiles;
@@ -62,6 +77,7 @@ class Config extends ChangeNotifier {
   ProxyCardType _proxyCardType;
   int _proxiesColumns;
   String _testUrl;
+  WindowProps _windowProps;
 
   Config()
       : _profiles = [],
@@ -83,6 +99,7 @@ class Config extends ChangeNotifier {
         _allowBypass = true,
         _isExclude = false,
         _proxyCardType = ProxyCardType.expand,
+        _windowProps = defaultWindowProps,
         _proxiesType = ProxiesType.tab,
         _proxiesColumns = 2;
 
@@ -388,7 +405,10 @@ class Config extends ChangeNotifier {
     }
   }
 
-  @JsonKey(defaultValue: ProxiesType.tab)
+  @JsonKey(
+    defaultValue: ProxiesType.tab,
+    unknownEnumValue: ProxiesType.tab,
+  )
   ProxiesType get proxiesType => _proxiesType;
 
   set proxiesType(ProxiesType value) {
@@ -438,6 +458,15 @@ class Config extends ChangeNotifier {
     }
   }
 
+  WindowProps get windowProps => _windowProps;
+
+  set windowProps(WindowProps value) {
+    if (_windowProps != value) {
+      _windowProps = value;
+      notifyListeners();
+    }
+  }
+
   update([
     Config? config,
     RecoveryOption recoveryOptions = RecoveryOption.all,
@@ -470,7 +499,9 @@ class Config extends ChangeNotifier {
       _isAnimateToPage = config._isAnimateToPage;
       _autoCheckUpdate = config._autoCheckUpdate;
       _dav = config._dav;
-      _testUrl = config.testUrl;
+      _testUrl = config._testUrl;
+      _isExclude = config._isExclude;
+      _windowProps = config._windowProps;
     }
     notifyListeners();
   }
@@ -481,10 +512,5 @@ class Config extends ChangeNotifier {
 
   factory Config.fromJson(Map<String, dynamic> json) {
     return _$ConfigFromJson(json);
-  }
-
-  @override
-  String toString() {
-    return 'Config{_profiles: $_profiles, _isCompatible: $_isCompatible, _currentProfileId: $_currentProfileId, _autoLaunch: $_autoLaunch, _silentLaunch: $_silentLaunch, _autoRun: $_autoRun, _openLog: $_openLog, _themeMode: $_themeMode, _locale: $_locale, _primaryColor: $_primaryColor, _proxiesSortType: $_proxiesSortType, _isMinimizeOnExit: $_isMinimizeOnExit, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _isAnimateToPage: $_isAnimateToPage, _dav: $_dav}';
   }
 }

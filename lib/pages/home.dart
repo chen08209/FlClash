@@ -14,6 +14,7 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   _getNavigationBar({
+    required BuildContext context,
     required ViewMode viewMode,
     required List<NavigationItem> navigationItems,
     required int currentIndex,
@@ -34,6 +35,8 @@ class HomePage extends StatelessWidget {
     }
     final extended = viewMode == ViewMode.desktop;
     return NavigationRail(
+      backgroundColor: context.colorScheme.surfaceContainer,
+      groupAlignment: -0.8,
       destinations: navigationItems
           .map(
             (e) => NavigationRailDestination(
@@ -82,32 +85,37 @@ class HomePage extends StatelessWidget {
               );
               final currentIndex = index == -1 ? 0 : index;
               final navigationBar = _getNavigationBar(
+                context: context,
                 viewMode: viewMode,
                 navigationItems: navigationItems,
                 currentIndex: currentIndex,
               );
               final bottomNavigationBar =
                   viewMode == ViewMode.mobile ? navigationBar : null;
-              Widget body;
               if (viewMode != ViewMode.mobile) {
-                body = Row(
+                return Row(
                   children: [
                     navigationBar,
                     Expanded(
                       flex: 1,
-                      child: child!,
+                      child: CommonScaffold(
+                        key: globalState.homeScaffoldKey,
+                        title: Intl.message(
+                          currentLabel,
+                        ),
+                        body: child!,
+                        bottomNavigationBar: bottomNavigationBar,
+                      ),
                     )
                   ],
                 );
-              } else {
-                body = child!;
               }
               return CommonScaffold(
                 key: globalState.homeScaffoldKey,
                 title: Intl.message(
                   currentLabel,
                 ),
-                body: body,
+                body: child!,
                 bottomNavigationBar: bottomNavigationBar,
               );
             },

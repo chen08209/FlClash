@@ -311,6 +311,13 @@ class ClashConfig extends ChangeNotifier {
       _mode = clashConfig._mode;
       _logLevel = clashConfig._logLevel;
       _tun = clashConfig._tun;
+      _findProcessMode = clashConfig._findProcessMode;
+      _geoXUrl = clashConfig._geoXUrl;
+      _unifiedDelay = clashConfig._unifiedDelay;
+      _globalRealUa = clashConfig._globalRealUa;
+      _tcpConcurrent = clashConfig._tcpConcurrent;
+      _externalController = clashConfig._externalController;
+      _geodataLoader = clashConfig._geodataLoader;
       _dns = clashConfig._dns;
       _rules = clashConfig._rules;
       _globalRealUa = clashConfig.globalRealUa;

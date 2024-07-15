@@ -411,14 +411,7 @@ class AppController {
   }
 
   int get columns =>
-      globalState.getColumns(appState.viewMode, config.proxiesColumns);
-
-  changeColumns() {
-    config.proxiesColumns = globalState.getColumns(
-      appState.viewMode,
-      columns - 1,
-    );
-  }
+      other.getColumns(appState.viewMode, config.proxiesColumns);
 
   updateViewWidth(double width) {
     WidgetsBinding.instance.addPostFrameCallback((_) {

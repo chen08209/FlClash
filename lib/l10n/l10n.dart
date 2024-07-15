@@ -2019,6 +2019,166 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `One column`
+  String get oneColumn {
+    return Intl.message(
+      'One column',
+      name: 'oneColumn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Two columns`
+  String get twoColumns {
+    return Intl.message(
+      'Two columns',
+      name: 'twoColumns',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Three columns`
+  String get threeColumns {
+    return Intl.message(
+      'Three columns',
+      name: 'threeColumns',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Four columns`
+  String get fourColumns {
+    return Intl.message(
+      'Four columns',
+      name: 'fourColumns',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Standard`
+  String get expand {
+    return Intl.message(
+      'Standard',
+      name: 'expand',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Shrink`
+  String get shrink {
+    return Intl.message(
+      'Shrink',
+      name: 'shrink',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Min`
+  String get min {
+    return Intl.message(
+      'Min',
+      name: 'min',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tab`
+  String get tab {
+    return Intl.message(
+      'Tab',
+      name: 'tab',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `List`
+  String get list {
+    return Intl.message(
+      'List',
+      name: 'list',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delay`
+  String get delay {
+    return Intl.message(
+      'Delay',
+      name: 'delay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Style`
+  String get style {
+    return Intl.message(
+      'Style',
+      name: 'style',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Size`
+  String get size {
+    return Intl.message(
+      'Size',
+      name: 'size',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sort`
+  String get sort {
+    return Intl.message(
+      'Sort',
+      name: 'sort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Columns`
+  String get columns {
+    return Intl.message(
+      'Columns',
+      name: 'columns',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxies setting`
+  String get proxiesSetting {
+    return Intl.message(
+      'Proxies setting',
+      name: 'proxiesSetting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy group`
+  String get proxyGroup {
+    return Intl.message(
+      'Proxy group',
+      name: 'proxyGroup',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

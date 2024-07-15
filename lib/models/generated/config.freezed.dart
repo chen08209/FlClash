@@ -429,3 +429,194 @@ abstract class _Props implements Props {
   _$$PropsImplCopyWith<_$PropsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+WindowProps _$WindowPropsFromJson(Map<String, dynamic> json) {
+  return _WindowProps.fromJson(json);
+}
+
+/// @nodoc
+mixin _$WindowProps {
+  double get width => throw _privateConstructorUsedError;
+  double get height => throw _privateConstructorUsedError;
+  double? get top => throw _privateConstructorUsedError;
+  double? get left => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $WindowPropsCopyWith<WindowProps> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $WindowPropsCopyWith<$Res> {
+  factory $WindowPropsCopyWith(
+          WindowProps value, $Res Function(WindowProps) then) =
+      _$WindowPropsCopyWithImpl<$Res, WindowProps>;
+  @useResult
+  $Res call({double width, double height, double? top, double? left});
+}
+
+/// @nodoc
+class _$WindowPropsCopyWithImpl<$Res, $Val extends WindowProps>
+    implements $WindowPropsCopyWith<$Res> {
+  _$WindowPropsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? width = null,
+    Object? height = null,
+    Object? top = freezed,
+    Object? left = freezed,
+  }) {
+    return _then(_value.copyWith(
+      width: null == width
+          ? _value.width
+          : width // ignore: cast_nullable_to_non_nullable
+              as double,
+      height: null == height
+          ? _value.height
+          : height // ignore: cast_nullable_to_non_nullable
+              as double,
+      top: freezed == top
+          ? _value.top
+          : top // ignore: cast_nullable_to_non_nullable
+              as double?,
+      left: freezed == left
+          ? _value.left
+          : left // ignore: cast_nullable_to_non_nullable
+              as double?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$WindowPropsImplCopyWith<$Res>
+    implements $WindowPropsCopyWith<$Res> {
+  factory _$$WindowPropsImplCopyWith(
+          _$WindowPropsImpl value, $Res Function(_$WindowPropsImpl) then) =
+      __$$WindowPropsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({double width, double height, double? top, double? left});
+}
+
+/// @nodoc
+class __$$WindowPropsImplCopyWithImpl<$Res>
+    extends _$WindowPropsCopyWithImpl<$Res, _$WindowPropsImpl>
+    implements _$$WindowPropsImplCopyWith<$Res> {
+  __$$WindowPropsImplCopyWithImpl(
+      _$WindowPropsImpl _value, $Res Function(_$WindowPropsImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? width = null,
+    Object? height = null,
+    Object? top = freezed,
+    Object? left = freezed,
+  }) {
+    return _then(_$WindowPropsImpl(
+      width: null == width
+          ? _value.width
+          : width // ignore: cast_nullable_to_non_nullable
+              as double,
+      height: null == height
+          ? _value.height
+          : height // ignore: cast_nullable_to_non_nullable
+              as double,
+      top: freezed == top
+          ? _value.top
+          : top // ignore: cast_nullable_to_non_nullable
+              as double?,
+      left: freezed == left
+          ? _value.left
+          : left // ignore: cast_nullable_to_non_nullable
+              as double?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$WindowPropsImpl implements _WindowProps {
+  const _$WindowPropsImpl(
+      {this.width = 1000, this.height = 600, this.top, this.left});
+
+  factory _$WindowPropsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$WindowPropsImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final double width;
+  @override
+  @JsonKey()
+  final double height;
+  @override
+  final double? top;
+  @override
+  final double? left;
+
+  @override
+  String toString() {
+    return 'WindowProps(width: $width, height: $height, top: $top, left: $left)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$WindowPropsImpl &&
+            (identical(other.width, width) || other.width == width) &&
+            (identical(other.height, height) || other.height == height) &&
+            (identical(other.top, top) || other.top == top) &&
+            (identical(other.left, left) || other.left == left));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, width, height, top, left);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$WindowPropsImplCopyWith<_$WindowPropsImpl> get copyWith =>
+      __$$WindowPropsImplCopyWithImpl<_$WindowPropsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$WindowPropsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _WindowProps implements WindowProps {
+  const factory _WindowProps(
+      {final double width,
+      final double height,
+      final double? top,
+      final double? left}) = _$WindowPropsImpl;
+
+  factory _WindowProps.fromJson(Map<String, dynamic> json) =
+      _$WindowPropsImpl.fromJson;
+
+  @override
+  double get width;
+  @override
+  double get height;
+  @override
+  double? get top;
+  @override
+  double? get left;
+  @override
+  @JsonKey(ignore: true)
+  _$$WindowPropsImplCopyWith<_$WindowPropsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

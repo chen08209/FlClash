@@ -92,7 +92,7 @@ class GlobalState {
       appState: appState,
       config: config,
       clashConfig: clashConfig,
-    ).then((_){
+    ).then((_) {
       globalState.appController.addCheckIpNumDebounce();
     });
   }
@@ -251,18 +251,6 @@ class GlobalState {
       );
       return null;
     }
-  }
-
-  int getColumns(ViewMode viewMode, int currentColumns) {
-    final targetColumnsArray = switch (viewMode) {
-      ViewMode.mobile => [2, 1],
-      ViewMode.laptop => [3, 2],
-      ViewMode.desktop => [4, 3],
-    };
-    if (targetColumnsArray.contains(currentColumns)) {
-      return currentColumns;
-    }
-    return targetColumnsArray.first;
   }
 }
 

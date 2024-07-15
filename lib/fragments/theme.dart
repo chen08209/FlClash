@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -21,8 +23,95 @@ class ThemeModeItem {
 class ThemeFragment extends StatelessWidget {
   const ThemeFragment({super.key});
 
-  Widget _themeModeCheckBox({
+  Widget _itemCard({
     required BuildContext context,
+    required Info info,
+    required Widget child,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 16,
+      ),
+      child: Wrap(
+        runSpacing: 16,
+        children: [
+          InfoHeader(
+            info: info,
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final previewCard = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: CommonCard(
+        onPressed: (){
+
+        },
+        info: Info(
+          label: appLocalizations.preview,
+          iconData: Icons.looks,
+        ),
+        child: Container(
+          height: 200,
+        ),
+      ),
+    );
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          previewCard,
+          const ThemeColorsBox(),
+        ],
+      ),
+    );
+  }
+}
+
+class ItemCard extends StatelessWidget {
+  final Widget child;
+  final Info info;
+
+  const ItemCard({
+    super.key,
+    required this.info,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 16,
+      ),
+      child: Wrap(
+        runSpacing: 16,
+        children: [
+          InfoHeader(
+            info: info,
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class ThemeColorsBox extends StatefulWidget {
+  const ThemeColorsBox({super.key});
+
+  @override
+  State<ThemeColorsBox> createState() => _ThemeColorsBoxState();
+}
+
+class _ThemeColorsBoxState extends State<ThemeColorsBox> {
+
+  Widget _themeModeCheckBox({
     bool? isSelected,
     required ThemeModeItem themeModeItem,
   }) {
@@ -32,7 +121,7 @@ class ThemeFragment extends StatelessWidget {
         globalState.appController.config.themeMode = themeModeItem.themeMode;
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal:16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.start,
@@ -55,7 +144,6 @@ class ThemeFragment extends StatelessWidget {
   }
 
   Widget _primaryColorCheckBox({
-    required BuildContext context,
     bool? isSelected,
     Color? color,
   }) {
@@ -68,28 +156,8 @@ class ThemeFragment extends StatelessWidget {
     );
   }
 
-  Widget _itemCard({
-    required BuildContext context,
-    required Info info,
-    required Widget child,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        top: 16,
-      ),
-      child: Wrap(
-        runSpacing: 16,
-        children: [
-          InfoHeader(
-            info: info,
-          ),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _getThemeCard(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     List<ThemeModeItem> themeModeItems = [
       ThemeModeItem(
         iconData: Icons.auto_mode,
@@ -118,8 +186,7 @@ class ThemeFragment extends StatelessWidget {
     ];
     return Column(
       children: [
-        _itemCard(
-          context: context,
+        ItemCard(
           info: Info(
             label: appLocalizations.themeMode,
             iconData: Icons.brightness_high,
@@ -137,7 +204,6 @@ class ThemeFragment extends StatelessWidget {
                     final themeModeItem = themeModeItems[index];
                     return _themeModeCheckBox(
                       isSelected: themeMode == themeModeItem.themeMode,
-                      context: context,
                       themeModeItem: themeModeItem,
                     );
                   },
@@ -151,8 +217,7 @@ class ThemeFragment extends StatelessWidget {
             },
           ),
         ),
-        _itemCard(
-          context: context,
+        ItemCard(
           info: Info(
             label: appLocalizations.themeColor,
             iconData: Icons.palette,
@@ -172,7 +237,6 @@ class ThemeFragment extends StatelessWidget {
                   itemBuilder: (_, index) {
                     final primaryColor = primaryColors[index];
                     return _primaryColorCheckBox(
-                      context: context,
                       isSelected: currentPrimaryColor == primaryColor?.value,
                       color: primaryColor,
                     );
@@ -189,32 +253,6 @@ class ThemeFragment extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final themeCard = _getThemeCard(context);
-    final previewCard = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: CommonCard(
-        info: Info(
-          label: appLocalizations.preview,
-          iconData: Icons.looks,
-        ),
-        child: Container(
-          height: 200,
-        ),
-      ),
-    );
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          previewCard,
-          themeCard,
-        ],
-      ),
     );
   }
 }

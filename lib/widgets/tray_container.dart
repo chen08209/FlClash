@@ -35,6 +35,9 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
       await trayManager.setIcon(
         other.getTrayIconPath(),
       );
+      await trayManager.setToolTip(
+        appName,
+      );
       isTrayInit = true;
     }
   }
@@ -43,6 +46,9 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
     await trayManager.destroy();
     await trayManager.setIcon(
       other.getTrayIconPath(),
+    );
+    await trayManager.setToolTip(
+      appName,
     );
   }
 
