@@ -44,7 +44,7 @@ object GlobalState {
     fun initServiceEngine(context: Context) {
         if (serviceEngine != null) return
         lock.withLock {
-            if (serviceEngine != null) return
+            destroyServiceEngine()
             serviceEngine = FlutterEngine(context)
             serviceEngine?.plugins?.add(ProxyPlugin())
             serviceEngine?.plugins?.add(AppPlugin())

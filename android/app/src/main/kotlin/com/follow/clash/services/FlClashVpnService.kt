@@ -174,16 +174,19 @@ class FlClashVpnService : VpnService() {
     inner class LocalBinder : Binder() {
         fun getService(): FlClashVpnService = this@FlClashVpnService
 
-        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
-            CoroutineScope(Dispatchers.Main).launch {
-                GlobalState.getCurrentTitlePlugin()?.handleStop()
-            }
-            try {
-                return super.onTransact(code, data, reply, flags)
-            } catch (e: RemoteException) {
-                throw e
-            }
-        }
+//        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
+//            try {
+//                val isSuccess = super.onTransact(code, data, reply, flags)
+//                if (!isSuccess) {
+//                    CoroutineScope(Dispatchers.Main).launch {
+//                        GlobalState.getCurrentTitlePlugin()?.handleStop()
+//                    }
+//                }
+//                return isSuccess
+//            } catch (e: RemoteException) {
+//                throw e
+//            }
+//        }
     }
 
 

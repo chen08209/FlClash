@@ -8,6 +8,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxy/proxy_platform_interface.dart';
 
@@ -80,6 +81,7 @@ class Proxy extends ProxyPlatform {
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
   onStarted(int? fd) {
+    debugPrint("onStarted ==> $fd");
     if (fd == null) return;
     if (receiver != null) {
       receiver!.close();
