@@ -11,12 +11,17 @@ import android.net.VpnService
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.Parcel
+import android.os.RemoteException
 import androidx.core.app.NotificationCompat
 import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
 import com.follow.clash.R
 import com.follow.clash.models.AccessControlMode
 import com.follow.clash.models.Props
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class FlClashVpnService : VpnService() {
@@ -131,7 +136,7 @@ class FlClashVpnService : VpnService() {
     }
 
     fun initServiceEngine() {
-        GlobalState.initServiceEngine(this)
+        GlobalState.initServiceEngine(applicationContext)
     }
 
     override fun onTrimMemory(level: Int) {
@@ -168,13 +173,26 @@ class FlClashVpnService : VpnService() {
 
     inner class LocalBinder : Binder() {
         fun getService(): FlClashVpnService = this@FlClashVpnService
+
+        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
+            CoroutineScope(Dispatchers.Main).launch {
+                GlobalState.getCurrentTitlePlugin()?.handleStop()
+            }
+            try {
+                return super.onTransact(code, data, reply, flags)
+            } catch (e: RemoteException) {
+                throw e
+            }
+        }
     }
+
 
     override fun onBind(intent: Intent): IBinder {
         return binder
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
+        GlobalState.getCurrentTitlePlugin()?.handleStop()
         return super.onUnbind(intent)
     }
 

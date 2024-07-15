@@ -71,7 +71,7 @@ class FlClashTileService : TileService() {
             if (titlePlugin != null) {
                 titlePlugin.handleStart()
             } else {
-                GlobalState.initServiceEngine(this)
+                GlobalState.initServiceEngine(applicationContext)
             }
         } else if (GlobalState.runState.value == RunState.START) {
             GlobalState.runState.value = RunState.PENDING

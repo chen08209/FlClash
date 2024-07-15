@@ -325,8 +325,8 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	//targetConfig.GeodataMode = false
 	targetConfig.IPv6 = patchConfig.IPv6
 	targetConfig.LogLevel = patchConfig.LogLevel
-	//targetConfig.Port = 0
-	//targetConfig.SocksPort = 0
+	targetConfig.Port = 0
+	targetConfig.SocksPort = 0
 	targetConfig.MixedPort = patchConfig.MixedPort
 	targetConfig.FindProcessMode = patchConfig.FindProcessMode
 	targetConfig.AllowLan = patchConfig.AllowLan
