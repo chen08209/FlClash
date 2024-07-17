@@ -67,6 +67,7 @@ class _ProxiesTabFragmentState extends State<ProxiesTabFragment>
               return SizedBox(
                 width: double.infinity,
                 child: Wrap(
+                  alignment: WrapAlignment.center,
                   runSpacing: 8,
                   spacing: 8,
                   children: [

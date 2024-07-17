@@ -87,7 +87,7 @@
 		4121E8CCDC7DC35194714CDE /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		72CBDF47BB69EDEFE644C48D /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		779829C96DE7998FCC810C37 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
-		7AC277A92B90DE1400E026B1 /* libclash.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libclash.dylib; path = ../libclash/macos/amd64/libclash.dylib; sourceTree = "<group>"; };
+		7AC277A92B90DE1400E026B1 /* libclash.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libclash.dylib; path = ../libclash/macos/libclash.dylib; sourceTree = "<group>"; };
 		7AF070893C29500AB9129D89 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		7D929F2AFD80E155D78F3718 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -582,7 +582,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/amd64/";
+				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/";
 				PRODUCT_BUNDLE_IDENTIFIER = com.clash.follow;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
@@ -710,7 +710,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/amd64/";
+				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/";
 				PRODUCT_BUNDLE_IDENTIFIER = com.clash.follow;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -732,7 +732,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/amd64/";
+				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/";
 				PRODUCT_BUNDLE_IDENTIFIER = com.clash.follow;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;

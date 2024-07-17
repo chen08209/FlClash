@@ -132,8 +132,8 @@ _$PropsImpl _$$PropsImplFromJson(Map<String, dynamic> json) => _$PropsImpl(
           ? null
           : AccessControl.fromJson(
               json['accessControl'] as Map<String, dynamic>),
-      allowBypass: json['allowBypass'] as bool?,
-      systemProxy: json['systemProxy'] as bool?,
+      allowBypass: json['allowBypass'] as bool,
+      systemProxy: json['systemProxy'] as bool,
     );
 
 Map<String, dynamic> _$$PropsImplToJson(_$PropsImpl instance) =>

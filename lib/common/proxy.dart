@@ -15,8 +15,8 @@ class ProxyManager {
 
   DateTime? get startTime => _proxy.startTime;
 
-  Future<bool?> startProxy({required int port, String? args}) async {
-    return await _proxy.startProxy(port, args);
+  Future<bool?> startProxy({required int port}) async {
+    return await _proxy.startProxy(port);
   }
 
   Future<bool?> stopProxy() async {

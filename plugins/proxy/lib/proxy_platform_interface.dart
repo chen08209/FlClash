@@ -22,7 +22,7 @@ abstract class ProxyPlatform extends PlatformInterface {
 
   DateTime? startTime;
 
-  Future<bool?> startProxy(int port, String? args) {
+  Future<bool?> startProxy(int port) {
     throw UnimplementedError('startProxy() has not been implemented.');
   }
 

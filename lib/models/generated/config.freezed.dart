@@ -247,8 +247,8 @@ Props _$PropsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Props {
   AccessControl? get accessControl => throw _privateConstructorUsedError;
-  bool? get allowBypass => throw _privateConstructorUsedError;
-  bool? get systemProxy => throw _privateConstructorUsedError;
+  bool get allowBypass => throw _privateConstructorUsedError;
+  bool get systemProxy => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -260,8 +260,7 @@ abstract class $PropsCopyWith<$Res> {
   factory $PropsCopyWith(Props value, $Res Function(Props) then) =
       _$PropsCopyWithImpl<$Res, Props>;
   @useResult
-  $Res call(
-      {AccessControl? accessControl, bool? allowBypass, bool? systemProxy});
+  $Res call({AccessControl? accessControl, bool allowBypass, bool systemProxy});
 
   $AccessControlCopyWith<$Res>? get accessControl;
 }
@@ -280,22 +279,22 @@ class _$PropsCopyWithImpl<$Res, $Val extends Props>
   @override
   $Res call({
     Object? accessControl = freezed,
-    Object? allowBypass = freezed,
-    Object? systemProxy = freezed,
+    Object? allowBypass = null,
+    Object? systemProxy = null,
   }) {
     return _then(_value.copyWith(
       accessControl: freezed == accessControl
           ? _value.accessControl
           : accessControl // ignore: cast_nullable_to_non_nullable
               as AccessControl?,
-      allowBypass: freezed == allowBypass
+      allowBypass: null == allowBypass
           ? _value.allowBypass
           : allowBypass // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      systemProxy: freezed == systemProxy
+              as bool,
+      systemProxy: null == systemProxy
           ? _value.systemProxy
           : systemProxy // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
     ) as $Val);
   }
 
@@ -319,8 +318,7 @@ abstract class _$$PropsImplCopyWith<$Res> implements $PropsCopyWith<$Res> {
       __$$PropsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {AccessControl? accessControl, bool? allowBypass, bool? systemProxy});
+  $Res call({AccessControl? accessControl, bool allowBypass, bool systemProxy});
 
   @override
   $AccessControlCopyWith<$Res>? get accessControl;
@@ -338,22 +336,22 @@ class __$$PropsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? accessControl = freezed,
-    Object? allowBypass = freezed,
-    Object? systemProxy = freezed,
+    Object? allowBypass = null,
+    Object? systemProxy = null,
   }) {
     return _then(_$PropsImpl(
       accessControl: freezed == accessControl
           ? _value.accessControl
           : accessControl // ignore: cast_nullable_to_non_nullable
               as AccessControl?,
-      allowBypass: freezed == allowBypass
+      allowBypass: null == allowBypass
           ? _value.allowBypass
           : allowBypass // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      systemProxy: freezed == systemProxy
+              as bool,
+      systemProxy: null == systemProxy
           ? _value.systemProxy
           : systemProxy // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
     ));
   }
 }
@@ -361,7 +359,10 @@ class __$$PropsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$PropsImpl implements _Props {
-  const _$PropsImpl({this.accessControl, this.allowBypass, this.systemProxy});
+  const _$PropsImpl(
+      {this.accessControl,
+      required this.allowBypass,
+      required this.systemProxy});
 
   factory _$PropsImpl.fromJson(Map<String, dynamic> json) =>
       _$$PropsImplFromJson(json);
@@ -369,9 +370,9 @@ class _$PropsImpl implements _Props {
   @override
   final AccessControl? accessControl;
   @override
-  final bool? allowBypass;
+  final bool allowBypass;
   @override
-  final bool? systemProxy;
+  final bool systemProxy;
 
   @override
   String toString() {
@@ -413,17 +414,17 @@ class _$PropsImpl implements _Props {
 abstract class _Props implements Props {
   const factory _Props(
       {final AccessControl? accessControl,
-      final bool? allowBypass,
-      final bool? systemProxy}) = _$PropsImpl;
+      required final bool allowBypass,
+      required final bool systemProxy}) = _$PropsImpl;
 
   factory _Props.fromJson(Map<String, dynamic> json) = _$PropsImpl.fromJson;
 
   @override
   AccessControl? get accessControl;
   @override
-  bool? get allowBypass;
+  bool get allowBypass;
   @override
-  bool? get systemProxy;
+  bool get systemProxy;
   @override
   @JsonKey(ignore: true)
   _$$PropsImplCopyWith<_$PropsImpl> get copyWith =>

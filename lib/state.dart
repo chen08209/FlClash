@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:animations/animations.dart';
 import 'package:fl_clash/clash/clash.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/proxy.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
@@ -72,18 +70,20 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) async {
-    final args = config.isAccessControl
-        ? json.encode(
-            Props(
-              accessControl: config.accessControl,
-              allowBypass: config.allowBypass,
-            ),
-          )
-        : null;
-    await proxyManager.startProxy(
-      port: clashConfig.mixedPort,
-      args: args,
-    );
+    if (!globalState.isVpnService && Platform.isAndroid) {
+      clashCore.setProps(
+        Props(
+          accessControl: config.isAccessControl ? config.accessControl : null,
+          allowBypass: config.allowBypass,
+          systemProxy: config.systemProxy,
+        ),
+      );
+      await proxy?.initService();
+    } else {
+      await proxyManager.startProxy(
+        port: clashConfig.mixedPort,
+      );
+    }
     startListenUpdate();
     if (Platform.isAndroid) {
       return;
@@ -123,6 +123,13 @@ class GlobalState {
   }) async {
     appState.isInit = clashCore.isInit;
     if (!appState.isInit) {
+      clashCore.setProps(
+        Props(
+          accessControl: config.isAccessControl ? config.accessControl : null,
+          allowBypass: config.allowBypass,
+          systemProxy: config.systemProxy,
+        ),
+      );
       appState.isInit = await clashService.init(
         config: config,
         clashConfig: clashConfig,

@@ -9,7 +9,7 @@ class Proxy extends ProxyPlatform {
   static String url = "127.0.0.1";
 
   @override
-  Future<bool?> startProxy(int port, String? args) async {
+  Future<bool?> startProxy(int port) async {
     bool? isStart = false;
     switch (Platform.operatingSystem) {
       case "macos":
@@ -19,7 +19,7 @@ class Proxy extends ProxyPlatform {
         isStart = await _startProxyWithLinux(port);
         break;
       case "windows":
-        isStart = await ProxyPlatform.instance.startProxy(port, args);
+        isStart = await ProxyPlatform.instance.startProxy(port);
         break;
     }
     if (isStart == true) {

@@ -37,7 +37,7 @@ class Proxy extends ProxyPlatform {
     return _instance!;
   }
 
-  Future<bool?> _initService() async {
+  Future<bool?> initService() async {
     return await methodChannel.invokeMethod<bool>("initService");
   }
 
@@ -46,12 +46,11 @@ class Proxy extends ProxyPlatform {
   }
 
   @override
-  Future<bool?> startProxy(port, args) async {
-    if (!globalState.isVpnService) {
-      return await _initService();
-    }
-    return await methodChannel
-        .invokeMethod<bool>("startProxy", {'port': port, 'args': args});
+  Future<bool?> startProxy(port) async {
+    return await methodChannel.invokeMethod<bool>("startProxy", {
+      'port': port,
+      'args': json.encode(clashCore.getProps()),
+    });
   }
 
   @override

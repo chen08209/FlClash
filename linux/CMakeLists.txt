@@ -118,7 +118,7 @@ install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
 # libclash.so
-set(CLASH_DIR "../libclash/linux/amd64")
+set(CLASH_DIR "../libclash/linux")
 install(FILES "${CLASH_DIR}/libclash.so" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 

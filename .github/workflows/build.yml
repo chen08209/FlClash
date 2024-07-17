@@ -15,10 +15,16 @@ jobs:
             os: ubuntu-latest
           - platform: windows
             os: windows-latest
+            arch: amd64
           - platform: linux
             os: ubuntu-latest
+            arch: amd64
           - platform: macos
             os: macos-13
+            arch: amd64
+          - platform: macos
+            os: macos-latest
+            arch: arm64
 
     steps:
       - name: Setup Mingw64
@@ -89,13 +95,12 @@ jobs:
         run: flutter pub get
 
       - name: Setup
-        run: |
-          dart setup.dart ${{ matrix.platform }}
+        run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: artifact-${{ matrix.platform }}
+          name: artifact-${{ matrix.platform }}-${{ matrix.arch && format('--arch {0}', matrix.arch) }}
           path: ./dist
           retention-days: 1
           overwrite: true

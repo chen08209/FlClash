@@ -29,8 +29,8 @@ class AccessControl with _$AccessControl {
 class Props with _$Props {
   const factory Props({
     AccessControl? accessControl,
-    bool? allowBypass,
-    bool? systemProxy,
+    required bool allowBypass,
+    required bool systemProxy,
   }) = _Props;
 
   factory Props.fromJson(Map<String, Object?> json) => _$PropsFromJson(json);

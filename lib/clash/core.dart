@@ -237,6 +237,21 @@ class ClashCore {
     return VersionInfo.fromJson(versionInfo);
   }
 
+  setProps(Props props) {
+    final propsChar = json.encode(props).toNativeUtf8().cast<Char>();
+    clashFFI.setAndroidProps(propsChar);
+    malloc.free(propsChar);
+  }
+
+  Props getProps() {
+    final androidPropsRaw = clashFFI.getAndroidProps();
+    final androidProps = json.decode(
+      androidPropsRaw.cast<Utf8>().toDartString(),
+    );
+    clashFFI.freeCString(androidPropsRaw);
+    return Props.fromJson(androidProps);
+  }
+
   Traffic getTraffic() {
     final trafficRaw = clashFFI.getTraffic();
     final trafficMap = json.decode(trafficRaw.cast<Utf8>().toDartString());

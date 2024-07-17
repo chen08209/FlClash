@@ -47,6 +47,11 @@ class BuildLibItem {
     }
     return platform.name;
   }
+
+  @override
+  String toString() {
+    return 'BuildLibItem{platform: $platform, arch: $arch, archName: $archName}';
+  }
 }
 
 class Build {
@@ -54,12 +59,22 @@ class Build {
         BuildLibItem(
           platform: PlatformType.macos,
           arch: Arch.amd64,
-          archName: 'amd64',
+          archName: '',
+        ),
+        BuildLibItem(
+          platform: PlatformType.macos,
+          arch: Arch.arm64,
+          archName: '',
         ),
         BuildLibItem(
           platform: PlatformType.windows,
           arch: Arch.amd64,
-          archName: 'amd64',
+          archName: '',
+        ),
+        BuildLibItem(
+          platform: PlatformType.windows,
+          arch: Arch.arm64,
+          archName: '',
         ),
         BuildLibItem(
           platform: PlatformType.android,
@@ -79,7 +94,7 @@ class Build {
         BuildLibItem(
           platform: PlatformType.linux,
           arch: Arch.amd64,
-          archName: 'amd64',
+          archName: '',
         ),
       ];
 
@@ -149,9 +164,8 @@ class Build {
   }) async {
     final items = buildItems.where(
       (element) {
-        return element.platform == platform && arch == null
-            ? true
-            : element.arch == arch;
+        return element.platform == platform &&
+            (arch == null ? true : element.arch == arch);
       },
     ).toList();
     for (final item in items) {
@@ -173,10 +187,6 @@ class Build {
       env["GOARCH"] = item.arch.name;
       env["CGO_ENABLED"] = "1";
       env["CC"] = _getCc(item);
-      if (item.platform == PlatformType.macos) {
-        env["CGO_CFLAGS"] = "-mmacosx-version-min=10.11";
-        env["CGO_LDFLAGS"] = "-mmacosx-version-min=10.11";
-      }
 
       await exec(
         [
@@ -337,6 +347,9 @@ class BuildCommand extends Command {
     final currentArches =
         arches.where((element) => element.name == archName).toList();
     final arch = currentArches.isEmpty ? null : currentArches.first;
+    if (arch == null && !Platform.isAndroid) {
+      throw "Invalid arch";
+    }
     await _buildLib(arch);
     if (build != "all") {
       return;
@@ -346,17 +359,15 @@ class BuildCommand extends Command {
         _buildDistributor(
           platform: platform,
           targets: "exe,zip",
-          args: "--description amd64",
+          args: "--description ${arch!.name}",
         );
-        break;
       case PlatformType.linux:
         await _getLinuxDependencies();
         _buildDistributor(
           platform: platform,
           targets: "appimage,deb,rpm",
-          args: "--description amd64",
+          args: "--description ${arch!.name}",
         );
-        break;
       case PlatformType.android:
         final targetMap = {
           Arch.arm: "android-arm",
@@ -374,15 +385,13 @@ class BuildCommand extends Command {
           args:
               "--flutter-build-args split-per-abi --build-target-platform ${defaultTargets.join(",")}",
         );
-        break;
       case PlatformType.macos:
         await _getMacosDependencies();
         _buildDistributor(
           platform: platform,
           targets: "dmg",
-          args: "--description amd64",
+          args: "--description ${arch!.name}",
         );
-        break;
     }
   }
 }
@@ -398,9 +407,6 @@ main(args) async {
   }
   if (Platform.isMacOS) {
     runner.addCommand(BuildCommand(platform: PlatformType.macos));
-  }
-  if (args.isEmpty) {
-    args = [Platform.operatingSystem];
   }
   runner.run(args);
 }

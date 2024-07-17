@@ -5499,6 +5499,30 @@ class ClashFFI {
   late final _setProcessMap =
       _setProcessMapPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 
+  ffi.Pointer<ffi.Char> getAndroidProps() {
+    return _getAndroidProps();
+  }
+
+  late final _getAndroidPropsPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
+          'getAndroidProps');
+  late final _getAndroidProps =
+      _getAndroidPropsPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
+
+  void setAndroidProps(
+    ffi.Pointer<ffi.Char> s,
+  ) {
+    return _setAndroidProps(
+      s,
+    );
+  }
+
+  late final _setAndroidPropsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+          'setAndroidProps');
+  late final _setAndroidProps =
+      _setAndroidPropsPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+
   void startTUN(
     int fd,
     int port,
