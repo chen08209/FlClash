@@ -94,8 +94,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "Opening it will lose part of its application ability and gain the support of full amount of Clash."),
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
         "connections": MessageLookupByLibrary.simpleMessage("Connections"),
-        "connectionsDesc":
-            MessageLookupByLibrary.simpleMessage("View current connection"),
+        "connectionsDesc": MessageLookupByLibrary.simpleMessage(
+            "View current connections data"),
         "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
         "copy": MessageLookupByLibrary.simpleMessage("Copy"),
         "core": MessageLookupByLibrary.simpleMessage("Core"),
@@ -257,7 +257,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Recovery success"),
         "requests": MessageLookupByLibrary.simpleMessage("Requests"),
         "requestsDesc": MessageLookupByLibrary.simpleMessage(
-            "View recently requested data"),
+            "View recently request records"),
         "resources": MessageLookupByLibrary.simpleMessage("Resources"),
         "resourcesDesc": MessageLookupByLibrary.simpleMessage(
             "External resource related info"),

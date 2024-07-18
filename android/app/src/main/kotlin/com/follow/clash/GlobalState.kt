@@ -1,6 +1,7 @@
 package com.follow.clash
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.follow.clash.plugins.AppPlugin
 import com.follow.clash.plugins.ProxyPlugin
@@ -56,6 +57,8 @@ object GlobalState {
             serviceEngine?.dartExecutor?.executeDartEntrypoint(
                 vpnService,
             )
+
+            Log.e("FlClashVpnService", "initServiceEngine ===>")
         }
     }
 }

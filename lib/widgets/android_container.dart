@@ -19,14 +19,27 @@ class AndroidContainer extends StatefulWidget {
 
 class _AndroidContainerState extends State<AndroidContainer>
     with WidgetsBindingObserver {
-
-  _excludeContainer(Widget child) {
+  Widget _excludeContainer(Widget child) {
     return Selector<Config, bool>(
       selector: (_, config) => config.isExclude,
       builder: (_, isExclude, child) {
         app?.updateExcludeFromRecents(isExclude);
         return child!;
       },
+      child: child,
+    );
+  }
+
+  Widget _systemUiOverlayContainer(Widget child) {
+    return AnnotatedRegion(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Theme.of(context).brightness == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
       child: child,
     );
   }
@@ -48,7 +61,9 @@ class _AndroidContainerState extends State<AndroidContainer>
 
   @override
   Widget build(BuildContext context) {
-    return _excludeContainer(widget.child);
+    return _systemUiOverlayContainer(
+      _excludeContainer(widget.child),
+    );
   }
 
   @override

@@ -92,7 +92,7 @@ class Config extends ChangeNotifier {
         _isMinimizeOnExit = true,
         _isAccessControl = false,
         _autoCheckUpdate = true,
-        _systemProxy = true,
+        _systemProxy = false,
         _testUrl = defaultTestUrl,
         _accessControl = const AccessControl(),
         _isAnimateToPage = true,
@@ -393,7 +393,7 @@ class Config extends ChangeNotifier {
     }
   }
 
-  @JsonKey(defaultValue: true)
+  @JsonKey(defaultValue: false)
   bool get systemProxy {
     return _systemProxy;
   }
@@ -498,7 +498,6 @@ class Config extends ChangeNotifier {
       _accessControl = config._accessControl;
       _isAnimateToPage = config._isAnimateToPage;
       _autoCheckUpdate = config._autoCheckUpdate;
-      _dav = config._dav;
       _testUrl = config._testUrl;
       _isExclude = config._isExclude;
       _windowProps = config._windowProps;

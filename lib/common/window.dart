@@ -20,6 +20,7 @@ class Window {
     WindowOptions windowOptions = WindowOptions(
       size: Size(props.width, props.height),
       minimumSize: const Size(380, 600),
+      titleBarStyle: TitleBarStyle.hidden,
     );
     if (props.left != null || props.top != null) {
       await windowManager.setPosition(
@@ -28,6 +29,9 @@ class Window {
     } else {
       await windowManager.setAlignment(Alignment.center);
     }
+    // if(Platform.isWindows){
+    //   await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
+    // }
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.setPreventClose(true);
     });

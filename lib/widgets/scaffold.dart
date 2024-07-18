@@ -1,5 +1,4 @@
-import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/common/system.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +6,7 @@ import 'package:flutter/services.dart';
 class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Widget? bottomNavigationBar;
+  final Widget? sideNavigationBar;
   final String title;
   final Widget? leading;
   final List<Widget>? actions;
@@ -15,6 +15,7 @@ class CommonScaffold extends StatefulWidget {
   const CommonScaffold({
     super.key,
     required this.body,
+    this.sideNavigationBar,
     this.bottomNavigationBar,
     this.leading,
     required this.title,
@@ -92,85 +93,66 @@ class CommonScaffoldState extends State<CommonScaffold> {
     }
   }
 
-  _platformContainer({required Widget child}) {
-    if (system.isDesktop) {
-      return child;
-    }
-    return AnnotatedRegion(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Theme.of(context).brightness == Brightness.dark
-            ? Brightness.light
-            : Brightness.dark,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarDividerColor: Colors.transparent,
-      ),
-      child: child,
-    );
-  }
+  Widget? get _sideNavigationBar => widget.sideNavigationBar;
 
   @override
   Widget build(BuildContext context) {
-    return _platformContainer(
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: Stack(
-            alignment: Alignment.bottomCenter,
+    final scaffold = Scaffold(
+      resizeToAvoidBottomInset: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            ValueListenableBuilder<List<Widget>>(
+              valueListenable: _actions,
+              builder: (_, actions, __) {
+                final realActions =
+                    actions.isNotEmpty ? actions : widget.actions;
+                return AppBar(
+                  centerTitle: false,
+                  automaticallyImplyLeading: widget.automaticallyImplyLeading,
+                  leading: widget.leading,
+                  title: Text(widget.title),
+                  actions: [
+                    ...?realActions,
+                    const SizedBox(
+                      width: 8,
+                    )
+                  ],
+                );
+              },
+            ),
+            ValueListenableBuilder(
+              valueListenable: _loading,
+              builder: (_, value, __) {
+                return value == true
+                    ? const LinearProgressIndicator()
+                    : Container();
+              },
+            ),
+          ],
+        ),
+      ),
+      body: widget.body,
+      bottomNavigationBar: widget.bottomNavigationBar,
+    );
+    return _sideNavigationBar != null
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              ValueListenableBuilder<List<Widget>>(
-                valueListenable: _actions,
-                builder: (_, actions, __) {
-                  final realActions =
-                      actions.isNotEmpty ? actions : widget.actions;
-                  return AppBar(
-                    automaticallyImplyLeading: widget.automaticallyImplyLeading,
-                    leading: widget.leading,
-                    title: Text(widget.title),
-                    actions: [
-                      ...?realActions,
-                      const SizedBox(
-                        width: 8,
-                      )
-                    ],
-                  );
-                },
-              ),
-              ValueListenableBuilder(
-                valueListenable: _loading,
-                builder: (_, value, __) {
-                  return value == true
-                      ? const LinearProgressIndicator()
-                      : Container();
-                },
+              _sideNavigationBar!,
+              Expanded(
+                flex: 1,
+                child: Material(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: scaffold,
+                  ),
+                ),
               ),
             ],
-          ),
-        ),
-        body: widget.body,
-        bottomNavigationBar: widget.bottomNavigationBar,
-      ),
-    );
-  }
-}
-
-class AppIcon extends StatelessWidget {
-  const AppIcon({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
-      width: 30,
-      height: 30,
-      child: const CircleAvatar(
-        foregroundImage: AssetImage("assets/images/launch_icon.png"),
-        backgroundColor: Colors.transparent,
-      ),
-    );
+          )
+        : scaffold;
   }
 }

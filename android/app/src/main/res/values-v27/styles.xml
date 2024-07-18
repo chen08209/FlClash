@@ -6,7 +6,7 @@
         <item name="android:windowDrawsSystemBarBackgrounds">false</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/ic_launcher_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@mipmap/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/ic_launcher_foreground</item>
         <item name="postSplashScreenTheme">@style/NormalTheme</item>
     </style>
 </resources>
