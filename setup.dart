@@ -81,6 +81,11 @@ class Build {
           arch: Arch.amd64,
           archName: 'amd64',
         ),
+        BuildLibItem(
+          platform: PlatformType.macos,
+          arch: Arch.arm64,
+          archName: 'arm64',
+        ),
       ];
 
   static String get appName => "FlClash";
@@ -170,14 +175,16 @@ class Build {
       );
       final Map<String, String> env = {};
       env["GOOS"] = item.os;
-      env["GOARCH"] = item.arch.name;
+      env["GOARCH"] = Platform.isMacOS
+          ? (Platform.environment['TARGET_ARCH'] == 'arm64' ? 'arm64' : 'amd64')
+          : item.arch.name;
       env["CGO_ENABLED"] = "1";
       env["CC"] = _getCc(item);
       if (item.platform == PlatformType.macos) {
         env["CGO_CFLAGS"] = "-mmacosx-version-min=10.11";
         env["CGO_LDFLAGS"] = "-mmacosx-version-min=10.11";
       }
-
+      print(env.toString());
       await exec(
         [
           "go",
@@ -377,10 +384,14 @@ class BuildCommand extends Command {
         break;
       case PlatformType.macos:
         await _getMacosDependencies();
+        final archString =
+            Platform.isMacOS && Platform.environment['TARGET_ARCH'] == 'arm64'
+                ? 'arm64'
+                : 'amd64';
         _buildDistributor(
           platform: platform,
           targets: "dmg",
-          args: "--description amd64",
+          args: "--description $archString",
         );
         break;
     }
