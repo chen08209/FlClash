@@ -19,14 +19,14 @@ class Request {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          _syncProxy();
+          _updateAdapter();
           return handler.next(options); // 继续请求
         },
       ),
     );
   }
 
-  _syncProxy() {
+  _updateAdapter() {
     final port = globalState.appController.clashConfig.mixedPort;
     final isStart = globalState.appController.appState.isStart;
     if (_port != port || isStart != _isStart) {
@@ -41,6 +41,7 @@ class Request {
           };
           return client;
         },
+        validateCertificate: (_, __, ___) => true,
       );
     }
   }

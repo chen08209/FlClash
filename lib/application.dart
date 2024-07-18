@@ -149,7 +149,6 @@ class ApplicationState extends State<Application> {
                 builder: (lightDynamic, darkDynamic) {
                   _updateSystemColorSchemes(lightDynamic, darkDynamic);
                   return MaterialApp(
-                    debugShowCheckedModeBanner: false,
                     navigatorKey: globalState.navigatorKey,
                     localizationsDelegates: const [
                       AppLocalizations.delegate,
