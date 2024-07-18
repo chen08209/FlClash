@@ -1,10 +1,10 @@
-import 'package:fl_clash/enum/enum.dart';
+import 'dart:math';
+
 import 'package:fl_clash/fragments/dashboard/intranet_ip.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:provider/provider.dart';
-
 import 'network_detection.dart';
 import 'outbound_mode.dart';
 import 'start_button.dart';
@@ -29,34 +29,35 @@ class _DashboardFragmentState extends State<DashboardFragment> {
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Selector<AppState, ViewMode>(
-            selector: (_, appState) => appState.viewMode,
-            builder: (_, viewMode, ___) {
-              final isDesktop = viewMode == ViewMode.desktop;
+          child: Selector<AppState, double>(
+            selector: (_, appState) => appState.viewWidth,
+            builder: (_, viewWidth, ___) {
+              // final viewMode = other.getViewMode(viewWidth);
+              // final isDesktop = viewMode == ViewMode.desktop;
               return Grid(
-                crossAxisCount: 12,
+                crossAxisCount: max(4 * ((viewWidth / 320).ceil()), 8),
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                children: [
+                children: const [
                   GridItem(
-                    crossAxisCellCount: isDesktop ? 8 : 12,
-                    child: const NetworkSpeed(),
+                    crossAxisCellCount: 8,
+                    child: NetworkSpeed(),
                   ),
                   GridItem(
-                    crossAxisCellCount: isDesktop ? 4 : 6,
-                    child: const OutboundMode(),
+                    crossAxisCellCount: 4,
+                    child: OutboundMode(),
                   ),
                   GridItem(
-                    crossAxisCellCount: isDesktop ? 4 : 6,
-                    child: const NetworkDetection(),
+                    crossAxisCellCount: 4,
+                    child: NetworkDetection(),
                   ),
                   GridItem(
-                    crossAxisCellCount: isDesktop ? 4 : 6,
-                    child: const TrafficUsage(),
+                    crossAxisCellCount: 4,
+                    child: TrafficUsage(),
                   ),
                   GridItem(
-                    crossAxisCellCount: isDesktop ? 4 : 6,
-                    child: const IntranetIP(),
+                    crossAxisCellCount: 4,
+                    child: IntranetIP(),
                   ),
                 ],
               );

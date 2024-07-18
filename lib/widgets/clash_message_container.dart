@@ -3,7 +3,6 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/proxy.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:fl_clash/plugins/app.dart';
 
 class ClashMessageContainer extends StatefulWidget {
   final Widget child;

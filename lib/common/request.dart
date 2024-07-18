@@ -36,6 +36,7 @@ class Request {
         createHttpClient: () {
           final client = HttpClient();
           if (!_isStart) return client;
+          client.userAgent = globalState.appController.clashConfig.globalUa;
           client.findProxy = (url) {
             return "PROXY localhost:$_port;DIRECT";
           };

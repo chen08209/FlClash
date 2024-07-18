@@ -34,97 +34,110 @@ class HomePage extends StatelessWidget {
       );
     }
     final extended = viewMode == ViewMode.desktop;
-    return NavigationRail(
-      backgroundColor: context.colorScheme.surfaceContainer,
-      groupAlignment: -0.8,
-      destinations: navigationItems
-          .map(
-            (e) => NavigationRailDestination(
-              icon: e.icon,
-              label: Text(
-                Intl.message(e.label),
-              ),
-            ),
-          )
-          .toList(),
-      onDestinationSelected: globalState.appController.toPage,
-      extended: extended,
-      minExtendedWidth: 172,
-      selectedIndex: currentIndex,
-      labelType: extended
-          ? NavigationRailLabelType.none
-          : NavigationRailLabelType.selected,
+    // return  NavigationRail(
+    //   backgroundColor: context.colorScheme.surfaceContainer,
+    //   groupAlignment: -0.8,
+    //   destinations: navigationItems
+    //       .map(
+    //         (e) => NavigationRailDestination(
+    //       icon: e.icon,
+    //       label: Text(
+    //         Intl.message(e.label),
+    //       ),
+    //     ),
+    //   )
+    //       .toList(),
+    //   onDestinationSelected: globalState.appController.toPage,
+    //   extended: extended,
+    //   minExtendedWidth: 172,
+    //   selectedIndex: currentIndex,
+    //   labelType: extended
+    //       ? NavigationRailLabelType.none
+    //       : NavigationRailLabelType.selected,
+    // );
+    return Container(
+      padding: const EdgeInsets.all(16).copyWith(
+        right: 0,
+      ),
+      color: context.colorScheme.surface,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: NavigationRail(
+          backgroundColor: context.colorScheme.surfaceContainer,
+          groupAlignment: -0.8,
+          destinations: navigationItems
+              .map(
+                (e) => NavigationRailDestination(
+                  icon: e.icon,
+                  label: Text(
+                    Intl.message(e.label),
+                  ),
+                ),
+              )
+              .toList(),
+          onDestinationSelected: globalState.appController.toPage,
+          extended: extended,
+          minExtendedWidth: 172,
+          selectedIndex: currentIndex,
+          labelType: extended
+              ? NavigationRailLabelType.none
+              : NavigationRailLabelType.selected,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopContainer(
-      child: LayoutBuilder(
-        builder: (_, container) {
-          final appController = globalState.appController;
-          final maxWidth = container.maxWidth;
-          if (appController.appState.viewWidth != maxWidth) {
-            globalState.appController.updateViewWidth(maxWidth);
-          }
-          return Selector2<AppState, Config, HomeSelectorState>(
-            selector: (_, appState, config) {
-              return HomeSelectorState(
-                currentLabel: appState.currentLabel,
-                navigationItems: appState.currentNavigationItems,
-                viewMode: other.getViewMode(maxWidth),
-                locale: config.locale,
-              );
-            },
-            builder: (_, state, child) {
-              final viewMode = state.viewMode;
-              final navigationItems = state.navigationItems;
-              final currentLabel = state.currentLabel;
-              final index = navigationItems.lastIndexWhere(
-                (element) => element.label == currentLabel,
-              );
-              final currentIndex = index == -1 ? 0 : index;
-              final navigationBar = _getNavigationBar(
-                context: context,
-                viewMode: viewMode,
-                navigationItems: navigationItems,
-                currentIndex: currentIndex,
-              );
-              final bottomNavigationBar =
-                  viewMode == ViewMode.mobile ? navigationBar : null;
-              if (viewMode != ViewMode.mobile) {
-                return Row(
-                  children: [
-                    navigationBar,
-                    Expanded(
-                      flex: 1,
-                      child: CommonScaffold(
-                        key: globalState.homeScaffoldKey,
-                        title: Intl.message(
-                          currentLabel,
-                        ),
-                        body: child!,
-                        bottomNavigationBar: bottomNavigationBar,
-                      ),
-                    )
-                  ],
-                );
-              }
-              return CommonScaffold(
-                key: globalState.homeScaffoldKey,
-                title: Intl.message(
-                  currentLabel,
-                ),
-                body: child!,
-                bottomNavigationBar: bottomNavigationBar,
-              );
-            },
-            child: const HomeBody(
-              key: Key("home_boy"),
-            ),
-          );
-        },
-      ),
+    return LayoutBuilder(
+      builder: (_, container) {
+        final appController = globalState.appController;
+        final maxWidth = container.maxWidth;
+        if (appController.appState.viewWidth != maxWidth) {
+          globalState.appController.updateViewWidth(maxWidth);
+        }
+        return Selector2<AppState, Config, HomeSelectorState>(
+          selector: (_, appState, config) {
+            return HomeSelectorState(
+              currentLabel: appState.currentLabel,
+              navigationItems: appState.currentNavigationItems,
+              viewMode: other.getViewMode(maxWidth),
+              locale: config.locale,
+            );
+          },
+          builder: (_, state, child) {
+            final viewMode = state.viewMode;
+            final navigationItems = state.navigationItems;
+            final currentLabel = state.currentLabel;
+            final index = navigationItems.lastIndexWhere(
+                  (element) => element.label == currentLabel,
+            );
+            final currentIndex = index == -1 ? 0 : index;
+            final navigationBar = _getNavigationBar(
+              context: context,
+              viewMode: viewMode,
+              navigationItems: navigationItems,
+              currentIndex: currentIndex,
+            );
+            final bottomNavigationBar =
+            viewMode == ViewMode.mobile ? navigationBar : null;
+            final sideNavigationBar =
+            viewMode != ViewMode.mobile ? navigationBar : null;
+            return CommonScaffold(
+              key: globalState.homeScaffoldKey,
+              title: Intl.message(
+                currentLabel,
+              ),
+              sideNavigationBar: sideNavigationBar,
+              body: child!,
+              bottomNavigationBar: bottomNavigationBar,
+            );
+          },
+          child: const HomeBody(
+            key: Key("home_boy"),
+          ),
+        );
+      },
     );
   }
 }

@@ -1830,10 +1830,10 @@ class AppLocalizations {
     );
   }
 
-  /// `View recently requested data`
+  /// `View recently request records`
   String get requestsDesc {
     return Intl.message(
-      'View recently requested data',
+      'View recently request records',
       name: 'requestsDesc',
       desc: '',
       args: [],
@@ -1900,10 +1900,10 @@ class AppLocalizations {
     );
   }
 
-  /// `View current connection`
+  /// `View current connections data`
   String get connectionsDesc {
     return Intl.message(
-      'View current connection',
+      'View current connections data',
       name: 'connectionsDesc',
       desc: '',
       args: [],

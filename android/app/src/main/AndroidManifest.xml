@@ -24,8 +24,9 @@
         android:icon="@mipmap/ic_launcher"
         android:networkSecurityConfig="@xml/network_security_config"
         android:extractNativeLibs="true"
+        android:enableOnBackInvokedCallback="true"
         android:label="FlClash"
-        tools:targetApi="n">
+        tools:targetApi="tiramisu">
         <activity
             android:name="com.follow.clash.MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -74,7 +75,7 @@
         <service
             android:name=".services.FlClashTileService"
             android:exported="true"
-            android:icon="@drawable/icon"
+            android:icon="@drawable/ic_stat_name"
             android:foregroundServiceType="specialUse"
             android:label="FlClash"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">

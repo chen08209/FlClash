@@ -28,20 +28,39 @@ showExtendPage(
         builder: (_, viewWidth, __) {
           final isMobile =
               globalState.appController.appState.viewMode == ViewMode.mobile;
-          final commonScaffold = CommonScaffold(
-            automaticallyImplyLeading: isMobile ? true : false,
-            actions: isMobile
-                ? null
-                : [
-                    const SizedBox(
-                      height: kToolbarHeight,
-                      width: kToolbarHeight,
-                      child: CloseButton(),
+          final commonScaffold = isMobile
+              ? CommonScaffold(
+                  actions: isMobile
+                      ? null
+                      : [
+                          const SizedBox(
+                            height: kToolbarHeight,
+                            width: kToolbarHeight,
+                            child: CloseButton(),
+                          ),
+                        ],
+                  title: title,
+                  body: uniqueBody,
+                )
+              : Column(
+                  children: [
+                    AppBar(
+                      automaticallyImplyLeading: false,
+                      title: Text(title),
+                      actions: const [
+                        SizedBox(
+                          height: kToolbarHeight,
+                          width: kToolbarHeight,
+                          child: CloseButton(),
+                        )
+                      ],
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: uniqueBody,
                     ),
                   ],
-            title: title,
-            body: uniqueBody,
-          );
+                );
           return AnimatedContainer(
             duration: kThemeAnimationDuration,
             width: isMobile ? viewWidth : extendPageWidth ?? 300,

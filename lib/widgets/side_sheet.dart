@@ -85,10 +85,7 @@ class _SideSheetState extends State<SideSheet> {
         );
 
     final BoxConstraints constraints = widget.constraints ??
-        const BoxConstraints(
-          maxWidth: 320,
-          minWidth: 320
-        );
+        const BoxConstraints(maxWidth: 320, minWidth: 320);
 
     final Clip clipBehavior = widget.clipBehavior ?? Clip.none;
 
@@ -594,31 +591,16 @@ Future<T?> showModalSideSheet<T>({
     builder: (context) {
       return Column(
         children: [
-          Flexible(
-            flex: 0,
-            child: Row(
-              children: [
-                const SizedBox(
-                  height: kToolbarHeight,
-                  width: kToolbarHeight,
-                  child: BackButton(),
-                ),
-                const SizedBox(
-                  width: 8,
-                ),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                const SizedBox(
-                  height: kToolbarHeight,
-                  width: kToolbarHeight,
-                  child: CloseButton(),
-                ),
-              ],
-            ),
+          AppBar(
+            automaticallyImplyLeading: false,
+            title: Text(title),
+            actions: const [
+              SizedBox(
+                height: kToolbarHeight,
+                width: kToolbarHeight,
+                child: CloseButton(),
+              )
+            ],
           ),
           Expanded(
             flex: 1,

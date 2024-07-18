@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.follow.clash.GlobalState
@@ -131,7 +132,13 @@ class ProxyPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwar
         }
         if (GlobalState.runState.value == RunState.START) return
         GlobalState.runState.value = RunState.START
-        flutterMethodChannel.invokeMethod("started", flClashVpnService?.start(port, props))
+        val intent = VpnService.prepare(context)
+        if (intent != null) {
+            stopVpn()
+            return
+        }
+        val fd = flClashVpnService?.start(port, props)
+        flutterMethodChannel.invokeMethod("started", fd)
     }
 
     private fun stopVpn() {
