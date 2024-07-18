@@ -347,7 +347,7 @@ class BuildCommand extends Command {
     final currentArches =
         arches.where((element) => element.name == archName).toList();
     final arch = currentArches.isEmpty ? null : currentArches.first;
-    if (arch == null && !Platform.isAndroid) {
+    if (arch == null && platform == PlatformType.windows) {
       throw "Invalid arch";
     }
     await _buildLib(arch);
