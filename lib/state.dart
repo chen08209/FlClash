@@ -123,13 +123,15 @@ class GlobalState {
   }) async {
     appState.isInit = clashCore.isInit;
     if (!appState.isInit) {
-      clashCore.setProps(
-        Props(
-          accessControl: config.isAccessControl ? config.accessControl : null,
-          allowBypass: config.allowBypass,
-          systemProxy: config.systemProxy,
-        ),
-      );
+      if(Platform.isAndroid){
+        clashCore.setProps(
+          Props(
+            accessControl: config.isAccessControl ? config.accessControl : null,
+            allowBypass: config.allowBypass,
+            systemProxy: config.systemProxy,
+          ),
+        );
+      }
       appState.isInit = await clashService.init(
         config: config,
         clashConfig: clashConfig,

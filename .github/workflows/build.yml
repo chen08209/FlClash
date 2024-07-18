@@ -100,7 +100,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: artifact-${{ matrix.platform }}-${{ matrix.arch && format('--arch {0}', matrix.arch) }}
+          name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
           retention-days: 1
           overwrite: true
