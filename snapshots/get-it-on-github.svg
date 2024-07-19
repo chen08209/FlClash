@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="646" height="250" id="svg8502" version="1.1" inkscape:version="0.91 r13725" sodipodi:docname="get-it-on-github.svg" inkscape:export-filename="/home/nixdorf/Lokaler Speicher/Build/andOTP/assets/badges/get-it-on-github.png" inkscape:export-xdpi="90" inkscape:export-ydpi="90">
+  <defs id="defs8504" />
+  <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="0.50000001" inkscape:cx="-223.13537" inkscape:cy="546.37524" inkscape:document-units="px" inkscape:current-layer="layer1" showgrid="true" fit-margin-top="0" fit-margin-left="0" fit-margin-right="0" fit-margin-bottom="0" inkscape:window-width="1920" inkscape:window-height="1021" inkscape:window-x="0" inkscape:window-y="31" inkscape:window-maximized="1" />
+  <metadata id="metadata8507">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Andrew Nayenko</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>https://f-droid.org</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/by-sa/3.0/" />
+        <dc:contributor>
+          <cc:Agent>
+            <dc:title />
+          </cc:Agent>
+        </dc:contributor>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/by-sa/3.0/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1" transform="translate(-289,-312.36218)">
+    <rect style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#a6a6a6;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker:none;enable-background:accumulate" id="rect3007" width="560" height="164" x="332" y="355.36218" rx="20" ry="20" />
+    <text sodipodi:linespacing="100%" id="text3013" y="402.36697" x="508.95129" style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.39519119px;line-height:100%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;overflow:visible;visibility:visible;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;enable-background:accumulate" xml:space="preserve"><tspan y="402.36697" x="508.95129" id="tspan3015" sodipodi:role="line" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:34.125px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans'">GET IT ON</tspan></text>
+    <text xml:space="preserve" style="color:black;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:29.70882034px;line-height:100%;font-family:Rokkitt;-inkscape-font-specification:'Rokkitt Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;overflow:visible;visibility:visible;fill:white;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;enable-background:accumulate" x="508.21259" y="489.36108" id="text5902" sodipodi:linespacing="100%"><tspan sodipodi:role="line" id="tspan5904" x="508.21259" y="489.36108" style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:87.5px;line-height:100%;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab Bold';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:white;fill-opacity:1">GitHub</tspan></text>
+    <g transform="matrix(1.0017681,0,0,1.0017681,68.770756,92.660249)" id="g5136">
+      <path style="fill:white;fill-opacity:1;fill-rule:evenodd;stroke:none" d="m 350.60937,282.4375 c -33.34765,0 -60.38671,27.03516 -60.38671,60.38672 0,26.67969 17.30078,49.3164 41.29687,57.30078 3.01563,0.55859 4.125,-1.30859 4.125,-2.90625 0,-1.4375 -0.0547,-6.19531 -0.082,-11.24219 -16.80078,3.65235 -20.34375,-7.125 -20.34375,-7.125 -2.75,-6.98047 -6.70703,-8.83594 -6.70703,-8.83594 -5.48047,-3.74609 0.41406,-3.67187 0.41406,-3.67187 6.0625,0.42578 9.25781,6.22266 9.25781,6.22266 5.38282,9.23437 14.125,6.5664 17.57032,5.02343 0.54296,-3.90234 2.10937,-6.57031 3.83593,-8.07812 -13.41406,-1.52735 -27.51562,-6.70313 -27.51562,-29.84375 0,-6.59375 2.35937,-11.98047 6.22265,-16.20703 -0.625,-1.52344 -2.6914,-7.66407 0.58594,-15.98047 0,0 5.07031,-1.625 16.60938,6.1875 4.82031,-1.33594 9.98437,-2.00781 15.11718,-2.03125 5.13282,0.0234 10.30079,0.69531 15.12891,2.03125 11.52344,-7.8125 16.58984,-6.1875 16.58984,-6.1875 3.28516,8.3164 1.21875,14.45703 0.58985,15.98047 3.87109,4.22656 6.21484,9.61328 6.21484,16.20703 0,23.19531 -14.125,28.30078 -27.57422,29.79687 2.16797,1.875 4.09766,5.55078 4.09766,11.1836 0,8.07812 -0.0703,14.58203 -0.0703,16.57031 0,1.60937 1.08593,3.49219 4.14843,2.89844 23.98047,-7.9961 41.26172,-30.6211 41.26172,-57.29297 0,-33.35156 -27.03515,-60.38672 -60.38672,-60.38672" id="path4937" inkscape:connector-curvature="0" />
+      <path style="fill:white;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 313.09375,369.14062 c -0.13281,0.30079 -0.60547,0.38672 -1.03516,0.1836 -0.4375,-0.19922 -0.68359,-0.60547 -0.54297,-0.91016 0.12891,-0.30859 0.60157,-0.39062 1.03907,-0.1875 0.4414,0.19922 0.6914,0.61328 0.53906,0.91406" id="path4939" inkscape:connector-curvature="0" />
+      <path style="fill:white;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 315.53906,371.86719 c -0.28906,0.26562 -0.85156,0.14453 -1.23437,-0.27735 -0.39453,-0.42187 -0.46875,-0.98437 -0.17578,-1.25781 0.29687,-0.26562 0.84375,-0.14062 1.23828,0.28125 0.39453,0.42578 0.47265,0.98438 0.17187,1.25391" id="path4941" inkscape:connector-curvature="0" />
+      <path style="fill:white;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 317.92187,375.34375 c -0.37109,0.25781 -0.97656,0.0156 -1.35156,-0.51953 -0.37109,-0.53906 -0.37109,-1.17969 0.008,-1.4375 0.375,-0.25781 0.97266,-0.0274 1.35157,0.5039 0.36718,0.54688 0.36718,1.19141 -0.008,1.45313" id="path4943" inkscape:connector-curvature="0" />
+      <path style="fill:white;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 321.18359,378.70312 c -0.33203,0.36719 -1.03906,0.26954 -1.55468,-0.23046 -0.52735,-0.48438 -0.67579,-1.17579 -0.34375,-1.54297 0.33593,-0.36328 1.04687,-0.26172 1.5664,0.23047 0.52344,0.48828 0.6836,1.18359 0.33203,1.54296" id="path4945-3" inkscape:connector-curvature="0" />
+      <path style="fill:white;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 325.68359,380.65625 c -0.14843,0.47266 -0.82812,0.6875 -1.51172,0.48828 -0.68359,-0.20703 -1.1289,-0.76172 -0.99218,-1.24219 0.14453,-0.47265 0.82422,-0.69922 1.51562,-0.48437 0.67969,0.20703 1.12891,0.75781 0.98828,1.23828" id="path4947-6" inkscape:connector-curvature="0" />
+      <path style="fill:white;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 330.625,381.01953 c 0.0156,0.49609 -0.5625,0.91016 -1.28125,0.91797 -0.72266,0.0156 -1.30859,-0.38672 -1.31641,-0.875 0,-0.50391 0.57032,-0.91406 1.28907,-0.92578 0.71875,-0.0156 1.30859,0.38672 1.30859,0.88281" id="path4949" inkscape:connector-curvature="0" />
+      <path style="fill:white;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 335.22266,380.23437 c 0.0859,0.48829 -0.41407,0.98438 -1.125,1.11719 -0.70313,0.12891 -1.35157,-0.17187 -1.44141,-0.65234 -0.0859,-0.5 0.42187,-0.9961 1.12109,-1.125 0.71485,-0.125 1.35547,0.16797 1.44532,0.66015" id="path4951-7" inkscape:connector-curvature="0" />
+    </g>
+  </g>
+</svg>
