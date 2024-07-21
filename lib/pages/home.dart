@@ -13,6 +13,20 @@ typedef OnSelected = void Function(int index);
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  _navigationBarContainer({
+    required BuildContext context,
+    required Widget child,
+  }) {
+    // if (!system.isDesktop) return child;
+    return Container(
+      padding: const EdgeInsets.all(16).copyWith(
+        right: 0,
+      ),
+      color: context.colorScheme.surface,
+      child: child,
+    );
+  }
+
   _getNavigationBar({
     required BuildContext context,
     required ViewMode viewMode,
@@ -34,56 +48,48 @@ class HomePage extends StatelessWidget {
       );
     }
     final extended = viewMode == ViewMode.desktop;
-    // return  NavigationRail(
-    //   backgroundColor: context.colorScheme.surfaceContainer,
-    //   groupAlignment: -0.8,
-    //   destinations: navigationItems
-    //       .map(
-    //         (e) => NavigationRailDestination(
-    //       icon: e.icon,
-    //       label: Text(
-    //         Intl.message(e.label),
-    //       ),
-    //     ),
-    //   )
-    //       .toList(),
-    //   onDestinationSelected: globalState.appController.toPage,
-    //   extended: extended,
-    //   minExtendedWidth: 172,
-    //   selectedIndex: currentIndex,
-    //   labelType: extended
-    //       ? NavigationRailLabelType.none
-    //       : NavigationRailLabelType.selected,
-    // );
-    return Container(
-      padding: const EdgeInsets.all(16).copyWith(
-        right: 0,
-      ),
-      color: context.colorScheme.surface,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: NavigationRail(
-          backgroundColor: context.colorScheme.surfaceContainer,
-          groupAlignment: -0.8,
-          destinations: navigationItems
-              .map(
-                (e) => NavigationRailDestination(
-                  icon: e.icon,
-                  label: Text(
-                    Intl.message(e.label),
-                  ),
+    return _navigationBarContainer(
+      context: context,
+      child: NavigationRail(
+        groupAlignment: -0.8,
+        destinations: navigationItems
+            .map(
+              (e) => NavigationRailDestination(
+                icon: e.icon,
+                label: Text(
+                  Intl.message(e.label),
                 ),
-              )
-              .toList(),
-          onDestinationSelected: globalState.appController.toPage,
-          extended: extended,
-          minExtendedWidth: 172,
-          selectedIndex: currentIndex,
-          labelType: extended
-              ? NavigationRailLabelType.none
-              : NavigationRailLabelType.selected,
-        ),
+              ),
+            )
+            .toList(),
+        onDestinationSelected: globalState.appController.toPage,
+        extended: extended,
+        minExtendedWidth: 172,
+        selectedIndex: currentIndex,
+        labelType: extended
+            ? NavigationRailLabelType.none
+            : NavigationRailLabelType.selected,
       ),
+    );
+    return NavigationRail(
+      groupAlignment: -0.95,
+      destinations: navigationItems
+          .map(
+            (e) => NavigationRailDestination(
+              icon: e.icon,
+              label: Text(
+                Intl.message(e.label),
+              ),
+            ),
+          )
+          .toList(),
+      onDestinationSelected: globalState.appController.toPage,
+      extended: extended,
+      minExtendedWidth: 172,
+      selectedIndex: currentIndex,
+      labelType: extended
+          ? NavigationRailLabelType.none
+          : NavigationRailLabelType.selected,
     );
   }
 
@@ -110,7 +116,7 @@ class HomePage extends StatelessWidget {
             final navigationItems = state.navigationItems;
             final currentLabel = state.currentLabel;
             final index = navigationItems.lastIndexWhere(
-                  (element) => element.label == currentLabel,
+              (element) => element.label == currentLabel,
             );
             final currentIndex = index == -1 ? 0 : index;
             final navigationBar = _getNavigationBar(
@@ -120,9 +126,9 @@ class HomePage extends StatelessWidget {
               currentIndex: currentIndex,
             );
             final bottomNavigationBar =
-            viewMode == ViewMode.mobile ? navigationBar : null;
+                viewMode == ViewMode.mobile ? navigationBar : null;
             final sideNavigationBar =
-            viewMode != ViewMode.mobile ? navigationBar : null;
+                viewMode != ViewMode.mobile ? navigationBar : null;
             return CommonScaffold(
               key: globalState.homeScaffoldKey,
               title: Intl.message(

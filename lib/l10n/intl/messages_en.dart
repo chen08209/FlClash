@@ -97,6 +97,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "connectionsDesc": MessageLookupByLibrary.simpleMessage(
             "View current connections data"),
         "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
+        "contributors": MessageLookupByLibrary.simpleMessage("Contributors"),
         "copy": MessageLookupByLibrary.simpleMessage("Copy"),
         "core": MessageLookupByLibrary.simpleMessage("Core"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
@@ -135,6 +136,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("ExternalController"),
         "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
             "Once enabled, the Clash kernel can be controlled on port 9090"),
+        "externalLink": MessageLookupByLibrary.simpleMessage("External link"),
         "externalResources":
             MessageLookupByLibrary.simpleMessage("External resources"),
         "file": MessageLookupByLibrary.simpleMessage("File"),
@@ -153,6 +155,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "geodataLoaderDesc": MessageLookupByLibrary.simpleMessage(
             "Enabling will use the Geo low memory loader"),
         "global": MessageLookupByLibrary.simpleMessage("Global"),
+        "go": MessageLookupByLibrary.simpleMessage("Go"),
         "goDownload": MessageLookupByLibrary.simpleMessage("Go to download"),
         "hours": MessageLookupByLibrary.simpleMessage("Hours"),
         "importFromURL":

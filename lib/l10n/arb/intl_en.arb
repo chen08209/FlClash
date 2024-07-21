@@ -211,5 +211,8 @@
   "sort": "Sort",
   "columns": "Columns",
   "proxiesSetting": "Proxies setting",
-  "proxyGroup": "Proxy group"
+  "proxyGroup": "Proxy group",
+  "go": "Go",
+  "externalLink": "External link",
+  "contributors": "Contributors"
 }

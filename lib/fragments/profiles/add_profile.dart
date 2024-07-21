@@ -48,19 +48,19 @@ class AddProfile extends StatelessWidget {
             leading: const Icon(Icons.qr_code),
             title: Text(appLocalizations.qrcode),
             subtitle: Text(appLocalizations.qrcodeDesc),
-            onTab: _toScan,
+            onTap: _toScan,
           ),
         ListItem(
           leading: const Icon(Icons.upload_file),
           title: Text(appLocalizations.file),
           subtitle: Text(appLocalizations.fileDesc),
-          onTab: _handleAddProfileFormFile,
+          onTap: _handleAddProfileFormFile,
         ),
         ListItem(
           leading: const Icon(Icons.cloud_download),
           title: Text(appLocalizations.url),
           subtitle: Text(appLocalizations.urlDesc),
-          onTab: _toAdd,
+          onTap: _toAdd,
         )
       ],
     );

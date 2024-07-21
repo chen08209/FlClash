@@ -113,8 +113,7 @@ class _BackupAndRecoveryState extends State<BackupAndRecovery> {
                         return Center(
                           child: FadeBox(
                             key: const Key("fade_box_1"),
-                            child: snapshot.connectionState ==
-                                    ConnectionState.waiting
+                            child: snapshot.connectionState == ConnectionState.waiting
                                 ? const SizedBox(
                                     width: 12,
                                     height: 12,
@@ -159,12 +158,12 @@ class _BackupAndRecoveryState extends State<BackupAndRecovery> {
                             ListHeader(
                                 title: appLocalizations.backupAndRecovery),
                             ListItem(
-                              onTab: _backup,
+                              onTap: _backup,
                               title: Text(appLocalizations.backup),
                               subtitle: Text(appLocalizations.backupDesc),
                             ),
                             ListItem(
-                              onTab: _handleRecovery,
+                              onTap: _handleRecovery,
                               title: Text(appLocalizations.recovery),
                               subtitle: Text(appLocalizations.recoveryDesc),
                             ),
@@ -341,13 +340,13 @@ class _RecoveryOptionsDialogState extends State<RecoveryOptionsDialog> {
         child: Wrap(
           children: [
             ListItem(
-              onTab: () {
+              onTap: () {
                 _handleOnTab(RecoveryOption.onlyProfiles);
               },
               title: Text(appLocalizations.recoveryProfiles),
             ),
             ListItem(
-              onTab: () {
+              onTap: () {
                 _handleOnTab(RecoveryOption.all);
               },
               title: Text(appLocalizations.recoveryAll),

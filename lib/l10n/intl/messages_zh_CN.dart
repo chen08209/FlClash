@@ -79,6 +79,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "connections": MessageLookupByLibrary.simpleMessage("连接"),
         "connectionsDesc": MessageLookupByLibrary.simpleMessage("查看当前连接数据"),
         "connectivity": MessageLookupByLibrary.simpleMessage("连通性："),
+        "contributors": MessageLookupByLibrary.simpleMessage("贡献者"),
         "copy": MessageLookupByLibrary.simpleMessage("复制"),
         "core": MessageLookupByLibrary.simpleMessage("内核"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("内核信息"),
@@ -111,6 +112,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "externalController": MessageLookupByLibrary.simpleMessage("外部控制器"),
         "externalControllerDesc":
             MessageLookupByLibrary.simpleMessage("开启后将可以通过9090端口控制Clash内核"),
+        "externalLink": MessageLookupByLibrary.simpleMessage("外部链接"),
         "externalResources": MessageLookupByLibrary.simpleMessage("外部资源"),
         "file": MessageLookupByLibrary.simpleMessage("文件"),
         "fileDesc": MessageLookupByLibrary.simpleMessage("直接上传配置文件"),
@@ -125,6 +127,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "geodataLoaderDesc":
             MessageLookupByLibrary.simpleMessage("开启将使用Geo低内存加载器"),
         "global": MessageLookupByLibrary.simpleMessage("全局"),
+        "go": MessageLookupByLibrary.simpleMessage("前往"),
         "goDownload": MessageLookupByLibrary.simpleMessage("前往下载"),
         "hours": MessageLookupByLibrary.simpleMessage("小时"),
         "importFromURL": MessageLookupByLibrary.simpleMessage("从URL导入"),

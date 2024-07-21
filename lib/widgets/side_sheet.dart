@@ -594,6 +594,7 @@ Future<T?> showModalSideSheet<T>({
           AppBar(
             automaticallyImplyLeading: false,
             title: Text(title),
+            centerTitle: false,
             actions: const [
               SizedBox(
                 height: kToolbarHeight,

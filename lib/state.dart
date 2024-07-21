@@ -7,6 +7,7 @@ import 'package:fl_clash/plugins/proxy.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'controller.dart';
 
@@ -123,7 +124,7 @@ class GlobalState {
   }) async {
     appState.isInit = clashCore.isInit;
     if (!appState.isInit) {
-      if(Platform.isAndroid){
+      if (Platform.isAndroid) {
         clashCore.setProps(
           Props(
             accessControl: config.isAccessControl ? config.accessControl : null,
@@ -260,6 +261,17 @@ class GlobalState {
       );
       return null;
     }
+  }
+
+  openUrl(String url) {
+    showMessage(
+      message: TextSpan(text: url),
+      title: appLocalizations.externalLink,
+      confirmText: appLocalizations.go,
+      onTab: () {
+        launchUrl(Uri.parse(url));
+      },
+    );
   }
 }
 

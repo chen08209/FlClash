@@ -207,7 +207,6 @@ class _WindowHeaderState extends State<WindowHeader> {
         children: [
           Positioned(
             child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
               onPanStart: (_) {
                 windowManager.startDragging();
               },
@@ -215,7 +214,7 @@ class _WindowHeaderState extends State<WindowHeader> {
                 _updateMaximized();
               },
               child: Container(
-                color: context.colorScheme.surfaceContainerHigh,
+                color: context.colorScheme.surface,
                 alignment: Alignment.centerLeft,
                 height: kHeaderHeight,
               ),
@@ -247,10 +246,10 @@ class AppIcon extends StatelessWidget {
       child: const Row(
         children: [
           SizedBox(
-            width: 28,
-            height: 28,
+            width: 24,
+            height: 24,
             child: CircleAvatar(
-              foregroundImage: AssetImage("assets/images/launch_icon.png"),
+              foregroundImage: AssetImage("assets/images/icon.png"),
               backgroundColor: Colors.transparent,
             ),
           ),

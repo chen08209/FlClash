@@ -2179,6 +2179,36 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Go`
+  String get go {
+    return Intl.message(
+      'Go',
+      name: 'go',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `External link`
+  String get externalLink {
+    return Intl.message(
+      'External link',
+      name: 'externalLink',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Contributors`
+  String get contributors {
+    return Intl.message(
+      'Contributors',
+      name: 'contributors',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

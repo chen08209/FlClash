@@ -101,9 +101,9 @@ class Other {
 
   String getTrayIconPath() {
     if (Platform.isWindows) {
-      return "assets/images/app_icon.ico";
+      return "assets/images/icon.ico";
     } else {
-      return "assets/images/launch_icon.png";
+      return "assets/images/icon_monochrome.png";
     }
   }
 

@@ -8,7 +8,7 @@ priority: optional
 section: x11
 installed_size: 6604
 essential: false
-icon: ./assets/images/launch_icon.png
+icon: ./assets/images/icon.png
 
 keywords:
   - FlClash

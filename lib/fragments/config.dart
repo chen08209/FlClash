@@ -210,7 +210,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               leading: const Icon(Icons.info_outline),
               title: Text(appLocalizations.logLevel),
               subtitle: Text(value.name),
-              onTab: () {
+              onTap: () {
                 _showLogLevelDialog(value);
               },
             );
@@ -223,7 +223,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               leading: const Icon(Icons.computer_outlined),
               title: const Text("UA"),
               subtitle: Text(value ?? appLocalizations.defaultText),
-              onTab: () {
+              onTap: () {
                 _showUaDialog(value);
               },
             );
@@ -236,7 +236,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               leading: const Icon(Icons.timeline),
               title: Text(appLocalizations.testUrl),
               subtitle: Text(value),
-              onTab: () {
+              onTap: () {
                 _modifyTestUrl(value);
               },
             );
@@ -246,7 +246,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           selector: (_, clashConfig) => clashConfig.mixedPort,
           builder: (_, mixedPort, __) {
             return ListItem(
-              onTab: () {
+              onTap: () {
                 _modifyMixedPort(mixedPort);
               },
               leading: const Icon(Icons.adjust_outlined),
