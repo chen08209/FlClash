@@ -423,6 +423,7 @@ func applyConfig() {
 	if configParams.IsPatch {
 		patchConfig(cfg.General)
 	} else {
+		closeConnections()
 		runtime.GC()
 		hub.UltraApplyConfig(cfg, true)
 		patchSelectGroup()

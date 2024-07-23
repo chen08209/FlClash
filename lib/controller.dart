@@ -90,7 +90,7 @@ class AppController {
         final updateId = config.profiles.first.id;
         changeProfile(updateId);
       } else {
-        changeProfile(null);
+        updateSystemProxy(false);
       }
     }
   }
@@ -193,6 +193,7 @@ class AppController {
   }
 
   handleBackOrExit() async {
+    print(config.isMinimizeOnExit);
     if (config.isMinimizeOnExit) {
       if (system.isDesktop) {
         await savePreferences();
@@ -410,8 +411,7 @@ class AppController {
     addProfileFormURL(url);
   }
 
-  int get columns =>
-      other.getColumns(appState.viewMode, config.proxiesColumns);
+  int get columns => other.getColumns(appState.viewMode, config.proxiesColumns);
 
   updateViewWidth(double width) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -452,5 +452,10 @@ class AppController {
       ProxiesSortType.delay => _sortOfDelay(proxies),
       ProxiesSortType.name => _sortOfName(proxies),
     };
+  }
+
+  String getCurrentSelectedName(String groupName) {
+    final group = appState.getGroupWithName(groupName);
+    return config.currentSelectedMap[groupName] ?? group?.now ?? '';
   }
 }

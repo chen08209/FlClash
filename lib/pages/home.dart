@@ -95,55 +95,57 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (_, container) {
-        final appController = globalState.appController;
-        final maxWidth = container.maxWidth;
-        if (appController.appState.viewWidth != maxWidth) {
-          globalState.appController.updateViewWidth(maxWidth);
-        }
-        return Selector2<AppState, Config, HomeSelectorState>(
-          selector: (_, appState, config) {
-            return HomeSelectorState(
-              currentLabel: appState.currentLabel,
-              navigationItems: appState.currentNavigationItems,
-              viewMode: other.getViewMode(maxWidth),
-              locale: config.locale,
-            );
-          },
-          builder: (_, state, child) {
-            final viewMode = state.viewMode;
-            final navigationItems = state.navigationItems;
-            final currentLabel = state.currentLabel;
-            final index = navigationItems.lastIndexWhere(
-              (element) => element.label == currentLabel,
-            );
-            final currentIndex = index == -1 ? 0 : index;
-            final navigationBar = _getNavigationBar(
-              context: context,
-              viewMode: viewMode,
-              navigationItems: navigationItems,
-              currentIndex: currentIndex,
-            );
-            final bottomNavigationBar =
-                viewMode == ViewMode.mobile ? navigationBar : null;
-            final sideNavigationBar =
-                viewMode != ViewMode.mobile ? navigationBar : null;
-            return CommonScaffold(
-              key: globalState.homeScaffoldKey,
-              title: Intl.message(
-                currentLabel,
-              ),
-              sideNavigationBar: sideNavigationBar,
-              body: child!,
-              bottomNavigationBar: bottomNavigationBar,
-            );
-          },
-          child: const HomeBody(
-            key: Key("home_boy"),
-          ),
-        );
-      },
+    return PopContainer(
+      child: LayoutBuilder(
+        builder: (_, container) {
+          final appController = globalState.appController;
+          final maxWidth = container.maxWidth;
+          if (appController.appState.viewWidth != maxWidth) {
+            globalState.appController.updateViewWidth(maxWidth);
+          }
+          return Selector2<AppState, Config, HomeSelectorState>(
+            selector: (_, appState, config) {
+              return HomeSelectorState(
+                currentLabel: appState.currentLabel,
+                navigationItems: appState.currentNavigationItems,
+                viewMode: other.getViewMode(maxWidth),
+                locale: config.locale,
+              );
+            },
+            builder: (_, state, child) {
+              final viewMode = state.viewMode;
+              final navigationItems = state.navigationItems;
+              final currentLabel = state.currentLabel;
+              final index = navigationItems.lastIndexWhere(
+                (element) => element.label == currentLabel,
+              );
+              final currentIndex = index == -1 ? 0 : index;
+              final navigationBar = _getNavigationBar(
+                context: context,
+                viewMode: viewMode,
+                navigationItems: navigationItems,
+                currentIndex: currentIndex,
+              );
+              final bottomNavigationBar =
+                  viewMode == ViewMode.mobile ? navigationBar : null;
+              final sideNavigationBar =
+                  viewMode != ViewMode.mobile ? navigationBar : null;
+              return CommonScaffold(
+                key: globalState.homeScaffoldKey,
+                title: Intl.message(
+                  currentLabel,
+                ),
+                sideNavigationBar: sideNavigationBar,
+                body: child!,
+                bottomNavigationBar: bottomNavigationBar,
+              );
+            },
+            child: const HomeBody(
+              key: Key("home_boy"),
+            ),
+          );
+        },
+      ),
     );
   }
 }

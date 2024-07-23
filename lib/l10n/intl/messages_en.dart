@@ -58,6 +58,10 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Auto check updates"),
         "autoCheckUpdateDesc": MessageLookupByLibrary.simpleMessage(
             "Auto check for updates when the app starts"),
+        "autoCloseConnections":
+            MessageLookupByLibrary.simpleMessage("Auto lose connections"),
+        "autoCloseConnectionsDesc": MessageLookupByLibrary.simpleMessage(
+            "Auto close connections after change node"),
         "autoLaunch": MessageLookupByLibrary.simpleMessage("AutoLaunch"),
         "autoLaunchDesc": MessageLookupByLibrary.simpleMessage(
             "Follow the system self startup"),
@@ -97,7 +101,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "connectionsDesc": MessageLookupByLibrary.simpleMessage(
             "View current connections data"),
         "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
-        "contributors": MessageLookupByLibrary.simpleMessage("Contributors"),
         "copy": MessageLookupByLibrary.simpleMessage("Copy"),
         "core": MessageLookupByLibrary.simpleMessage("Core"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
@@ -206,6 +209,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("No requests"),
         "oneColumn": MessageLookupByLibrary.simpleMessage("One column"),
         "other": MessageLookupByLibrary.simpleMessage("Other"),
+        "otherContributors":
+            MessageLookupByLibrary.simpleMessage("Other contributors"),
         "outboundMode": MessageLookupByLibrary.simpleMessage("Outbound mode"),
         "override": MessageLookupByLibrary.simpleMessage("Override"),
         "overrideDesc": MessageLookupByLibrary.simpleMessage(

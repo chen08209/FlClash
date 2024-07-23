@@ -2,7 +2,6 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 @immutable
 class Contributor {
@@ -90,7 +89,7 @@ class AboutFragment extends StatelessWidget {
     ];
     return generateSection(
       separated: false,
-      title: appLocalizations.contributors,
+      title: appLocalizations.otherContributors,
       items: [
         ListItem(
           title: SingleChildScrollView(

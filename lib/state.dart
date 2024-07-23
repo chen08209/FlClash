@@ -53,7 +53,7 @@ class GlobalState {
         config: clashConfig,
         params: ConfigExtendedParams(
           isPatch: isPatch,
-          isCompatible: config.isCompatible,
+          isCompatible: true,
           selectedMap: config.currentSelectedMap,
           testUrl: config.testUrl,
         ),
@@ -182,6 +182,22 @@ class GlobalState {
         },
       ),
     );
+  }
+
+  changeProxy({
+    required Config config,
+    required String groupName,
+    required String proxyName,
+  }) {
+    clashCore.changeProxy(
+      ChangeProxyParams(
+        groupName: groupName,
+        proxyName: proxyName,
+      ),
+    );
+    if(config.isCloseConnections){
+      clashCore.closeConnections();
+    }
   }
 
   Future<T?> showCommonDialog<T>({

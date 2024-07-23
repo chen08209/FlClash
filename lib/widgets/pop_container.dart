@@ -19,7 +19,7 @@ class _PopContainerState extends State<PopContainer> {
     if (Platform.isAndroid) {
       return PopScope(
         canPop: false,
-        onPopInvoked: (didPop) async {
+        onPopInvoked: (_) async {
           final canPop = Navigator.canPop(context);
           if (canPop) {
             Navigator.pop(context);

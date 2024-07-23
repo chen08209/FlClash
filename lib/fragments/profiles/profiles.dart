@@ -314,13 +314,6 @@ class _ProfileItemState extends State<ProfileItem> {
                 Row(
                   children: [
                     Text(
-                      appLocalizations.expirationTime,
-                      style: textTheme.labelMedium?.toLighter,
-                    ),
-                    const SizedBox(
-                      width: 4,
-                    ),
-                    Text(
                       expireShow,
                       style: textTheme.labelMedium?.toLighter,
                     ),

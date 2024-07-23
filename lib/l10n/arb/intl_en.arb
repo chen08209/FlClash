@@ -214,5 +214,7 @@
   "proxyGroup": "Proxy group",
   "go": "Go",
   "externalLink": "External link",
-  "contributors": "Contributors"
+  "otherContributors": "Other contributors",
+  "autoCloseConnections": "Auto lose connections",
+  "autoCloseConnectionsDesc": "Auto close connections after change node"
 }

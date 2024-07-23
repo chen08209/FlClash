@@ -299,7 +299,7 @@ func getConnections() *C.char {
 }
 
 //export closeConnections
-func closeConnections() bool {
+func closeConnections() {
 	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
 		err := c.Close()
 		if err != nil {
@@ -307,17 +307,16 @@ func closeConnections() bool {
 		}
 		return true
 	})
-	return true
 }
 
 //export closeConnection
-func closeConnection(id *C.char) bool {
+func closeConnection(id *C.char) {
 	connectionId := C.GoString(id)
-	err := statistic.DefaultManager.Get(connectionId).Close()
-	if err != nil {
-		return false
+	c := statistic.DefaultManager.Get(connectionId)
+	if c == nil {
+		return
 	}
-	return true
+	_ = c.Close()
 }
 
 //export getProviders

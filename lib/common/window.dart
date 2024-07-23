@@ -19,7 +19,7 @@ class Window {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = WindowOptions(
       size: Size(props.width, props.height),
-      minimumSize: const Size(380, 600),
+      minimumSize: const Size(380, 500),
       titleBarStyle: TitleBarStyle.hidden,
     );
     if (props.left != null || props.top != null) {

@@ -105,11 +105,10 @@ class ProxyCard extends StatelessWidget {
       groupName,
       proxy.name,
     );
-    clashCore.changeProxy(
-      ChangeProxyParams(
-        groupName: groupName,
-        proxyName: proxy.name,
-      ),
+    globalState.changeProxy(
+      config: appController.config,
+      groupName: groupName,
+      proxyName: proxy.name,
     );
   }
 

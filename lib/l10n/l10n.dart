@@ -2200,11 +2200,31 @@ class AppLocalizations {
     );
   }
 
-  /// `Contributors`
-  String get contributors {
+  /// `Other contributors`
+  String get otherContributors {
     return Intl.message(
-      'Contributors',
-      name: 'contributors',
+      'Other contributors',
+      name: 'otherContributors',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auto lose connections`
+  String get autoCloseConnections {
+    return Intl.message(
+      'Auto lose connections',
+      name: 'autoCloseConnections',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auto close connections after change node`
+  String get autoCloseConnectionsDesc {
+    return Intl.message(
+      'Auto close connections after change node',
+      name: 'autoCloseConnectionsDesc',
       desc: '',
       args: [],
     );

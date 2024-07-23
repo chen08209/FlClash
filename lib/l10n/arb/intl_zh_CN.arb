@@ -214,5 +214,7 @@
   "proxyGroup": "代理组",
   "go": "前往",
   "externalLink": "外部链接",
-  "contributors": "贡献者"
+  "otherContributors": "其他贡献者",
+  "autoCloseConnections": "自动关闭连接",
+  "autoCloseConnectionsDesc": "切换节点后自动关闭连接"
 }

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -22,27 +20,6 @@ class ThemeModeItem {
 
 class ThemeFragment extends StatelessWidget {
   const ThemeFragment({super.key});
-
-  Widget _itemCard({
-    required BuildContext context,
-    required Info info,
-    required Widget child,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        top: 16,
-      ),
-      child: Wrap(
-        runSpacing: 16,
-        children: [
-          InfoHeader(
-            info: info,
-          ),
-          child,
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

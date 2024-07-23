@@ -35,7 +35,7 @@ class _DashboardFragmentState extends State<DashboardFragment> {
               // final viewMode = other.getViewMode(viewWidth);
               // final isDesktop = viewMode == ViewMode.desktop;
               return Grid(
-                crossAxisCount: max(4 * ((viewWidth / 320).ceil()), 8),
+                crossAxisCount: max(4 * ((viewWidth / 350).ceil()), 8),
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 children: const [

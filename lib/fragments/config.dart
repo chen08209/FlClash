@@ -141,7 +141,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     return generateSection(
       title: appLocalizations.app,
       items: [
-        if (Platform.isAndroid)
+        if (Platform.isAndroid)...[
           Selector<Config, bool>(
             selector: (_, config) => config.allowBypass,
             builder: (_, allowBypass, __) {
@@ -159,7 +159,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               );
             },
           ),
-        if (Platform.isAndroid)
           Selector<Config, bool>(
             selector: (_, config) => config.systemProxy,
             builder: (_, systemProxy, __) {
@@ -177,6 +176,24 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               );
             },
           ),
+        ],
+        Selector<Config, bool>(
+          selector: (_, config) => config.isCloseConnections,
+          builder: (_, isCloseConnections, __) {
+            return ListItem.switchItem(
+              leading: const Icon(Icons.auto_delete_outlined),
+              title: Text(appLocalizations.autoCloseConnections),
+              subtitle: Text(appLocalizations.autoCloseConnectionsDesc),
+              delegate: SwitchDelegate(
+                value: isCloseConnections,
+                onChanged: (bool value) async {
+                  final appController = globalState.appController;
+                  appController.config.isCloseConnections = value;
+                },
+              ),
+            );
+          },
+        ),
         Selector<Config, bool>(
           selector: (_, config) => config.isCompatible,
           builder: (_, isCompatible, __) {

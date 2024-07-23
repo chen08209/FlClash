@@ -157,9 +157,7 @@ class ApplicationState extends State<Application> {
                     GlobalWidgetsLocalizations.delegate
                   ],
                   builder: (_, child) {
-                    return PopContainer(
-                      child: _buildApp(child!),
-                    );
+                    return _buildApp(child!);
                   },
                   scrollBehavior: BaseScrollBehavior(),
                   title: appName,

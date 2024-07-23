@@ -49,6 +49,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "autoCheckUpdate": MessageLookupByLibrary.simpleMessage("自动检查更新"),
         "autoCheckUpdateDesc":
             MessageLookupByLibrary.simpleMessage("应用启动时自动检查更新"),
+        "autoCloseConnections": MessageLookupByLibrary.simpleMessage("自动关闭连接"),
+        "autoCloseConnectionsDesc":
+            MessageLookupByLibrary.simpleMessage("切换节点后自动关闭连接"),
         "autoLaunch": MessageLookupByLibrary.simpleMessage("自启动"),
         "autoLaunchDesc": MessageLookupByLibrary.simpleMessage("跟随系统自启动"),
         "autoRun": MessageLookupByLibrary.simpleMessage("自动运行"),
@@ -79,7 +82,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "connections": MessageLookupByLibrary.simpleMessage("连接"),
         "connectionsDesc": MessageLookupByLibrary.simpleMessage("查看当前连接数据"),
         "connectivity": MessageLookupByLibrary.simpleMessage("连通性："),
-        "contributors": MessageLookupByLibrary.simpleMessage("贡献者"),
         "copy": MessageLookupByLibrary.simpleMessage("复制"),
         "core": MessageLookupByLibrary.simpleMessage("内核"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("内核信息"),
@@ -169,6 +171,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("暂无请求"),
         "oneColumn": MessageLookupByLibrary.simpleMessage("一列"),
         "other": MessageLookupByLibrary.simpleMessage("其他"),
+        "otherContributors": MessageLookupByLibrary.simpleMessage("其他贡献者"),
         "outboundMode": MessageLookupByLibrary.simpleMessage("出站模式"),
         "override": MessageLookupByLibrary.simpleMessage("覆写"),
         "overrideDesc": MessageLookupByLibrary.simpleMessage("覆写代理相关配置"),

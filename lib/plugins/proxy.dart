@@ -103,6 +103,7 @@ class Proxy extends ProxyPlatform {
 
   _handleServiceMessage(String message) {
     final m = ServiceMessage.fromJson(json.decode(message));
+    debugPrint(m.toString());
     switch (m.type) {
       case ServiceMessageType.protect:
         _serviceMessageHandler?.onProtect(Fd.fromJson(m.data));

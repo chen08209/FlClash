@@ -60,11 +60,10 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
     final currentSelectedMap = appController.config.currentSelectedMap;
     final proxyName = currentSelectedMap[groupName];
     if (proxyName == null) return;
-    clashCore.changeProxy(
-      ChangeProxyParams(
-        groupName: groupName,
-        proxyName: proxyName,
-      ),
+    globalState.changeProxy(
+      config: appController.config,
+      groupName: groupName,
+      proxyName: proxyName,
     );
     appController.addCheckIpNumDebounce();
     super.onLoaded(proxyName);

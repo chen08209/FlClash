@@ -37,8 +37,9 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
       timer = Timer.periodic(
         const Duration(seconds: 1),
         (timer) {
-          connectionsNotifier.value = connectionsNotifier.value
-              .copyWith(connections: clashCore.getConnections());
+          connectionsNotifier.value = connectionsNotifier.value.copyWith(
+            connections: clashCore.getConnections(),
+          );
         },
       );
     });
@@ -50,6 +51,18 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
         final commonScaffoldState =
             context.findAncestorStateOfType<CommonScaffoldState>();
         commonScaffoldState?.actions = [
+          IconButton(
+            onPressed: () {
+              clashCore.closeConnections();
+              connectionsNotifier.value = connectionsNotifier.value.copyWith(
+                connections: clashCore.getConnections(),
+              );
+            },
+            icon: const Icon(Icons.delete_sweep_outlined),
+          ),
+          const SizedBox(
+            width: 8,
+          ),
           IconButton(
             onPressed: () {
               showSearch(
@@ -87,7 +100,7 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
   }
 
   _handleBlockConnection(String id) {
-    clashCore.closeConnections(id);
+    clashCore.closeConnection(id);
     connectionsNotifier.value = connectionsNotifier.value
         .copyWith(connections: clashCore.getConnections());
   }
@@ -227,7 +240,7 @@ class ConnectionsSearchDelegate extends SearchDelegate {
   }
 
   _handleBlockConnection(String id) {
-    clashCore.closeConnections(id);
+    clashCore.closeConnection(id);
     connectionsNotifier.value = connectionsNotifier.value.copyWith(
       connections: clashCore.getConnections(),
     );

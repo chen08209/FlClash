@@ -1757,6 +1757,257 @@ abstract class _ProxiesSelectorState implements ProxiesSelectorState {
 }
 
 /// @nodoc
+mixin _$ProxiesListSelectorState {
+  List<String> get groupNames => throw _privateConstructorUsedError;
+  Set<String> get currentUnfoldSet => throw _privateConstructorUsedError;
+  ProxiesSortType get proxiesSortType => throw _privateConstructorUsedError;
+  ProxyCardType get proxyCardType => throw _privateConstructorUsedError;
+  num get sortNum => throw _privateConstructorUsedError;
+  int get columns => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $ProxiesListSelectorStateCopyWith<ProxiesListSelectorState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxiesListSelectorStateCopyWith<$Res> {
+  factory $ProxiesListSelectorStateCopyWith(ProxiesListSelectorState value,
+          $Res Function(ProxiesListSelectorState) then) =
+      _$ProxiesListSelectorStateCopyWithImpl<$Res, ProxiesListSelectorState>;
+  @useResult
+  $Res call(
+      {List<String> groupNames,
+      Set<String> currentUnfoldSet,
+      ProxiesSortType proxiesSortType,
+      ProxyCardType proxyCardType,
+      num sortNum,
+      int columns});
+}
+
+/// @nodoc
+class _$ProxiesListSelectorStateCopyWithImpl<$Res,
+        $Val extends ProxiesListSelectorState>
+    implements $ProxiesListSelectorStateCopyWith<$Res> {
+  _$ProxiesListSelectorStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? groupNames = null,
+    Object? currentUnfoldSet = null,
+    Object? proxiesSortType = null,
+    Object? proxyCardType = null,
+    Object? sortNum = null,
+    Object? columns = null,
+  }) {
+    return _then(_value.copyWith(
+      groupNames: null == groupNames
+          ? _value.groupNames
+          : groupNames // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      currentUnfoldSet: null == currentUnfoldSet
+          ? _value.currentUnfoldSet
+          : currentUnfoldSet // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
+      proxiesSortType: null == proxiesSortType
+          ? _value.proxiesSortType
+          : proxiesSortType // ignore: cast_nullable_to_non_nullable
+              as ProxiesSortType,
+      proxyCardType: null == proxyCardType
+          ? _value.proxyCardType
+          : proxyCardType // ignore: cast_nullable_to_non_nullable
+              as ProxyCardType,
+      sortNum: null == sortNum
+          ? _value.sortNum
+          : sortNum // ignore: cast_nullable_to_non_nullable
+              as num,
+      columns: null == columns
+          ? _value.columns
+          : columns // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxiesListSelectorStateImplCopyWith<$Res>
+    implements $ProxiesListSelectorStateCopyWith<$Res> {
+  factory _$$ProxiesListSelectorStateImplCopyWith(
+          _$ProxiesListSelectorStateImpl value,
+          $Res Function(_$ProxiesListSelectorStateImpl) then) =
+      __$$ProxiesListSelectorStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {List<String> groupNames,
+      Set<String> currentUnfoldSet,
+      ProxiesSortType proxiesSortType,
+      ProxyCardType proxyCardType,
+      num sortNum,
+      int columns});
+}
+
+/// @nodoc
+class __$$ProxiesListSelectorStateImplCopyWithImpl<$Res>
+    extends _$ProxiesListSelectorStateCopyWithImpl<$Res,
+        _$ProxiesListSelectorStateImpl>
+    implements _$$ProxiesListSelectorStateImplCopyWith<$Res> {
+  __$$ProxiesListSelectorStateImplCopyWithImpl(
+      _$ProxiesListSelectorStateImpl _value,
+      $Res Function(_$ProxiesListSelectorStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? groupNames = null,
+    Object? currentUnfoldSet = null,
+    Object? proxiesSortType = null,
+    Object? proxyCardType = null,
+    Object? sortNum = null,
+    Object? columns = null,
+  }) {
+    return _then(_$ProxiesListSelectorStateImpl(
+      groupNames: null == groupNames
+          ? _value._groupNames
+          : groupNames // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      currentUnfoldSet: null == currentUnfoldSet
+          ? _value._currentUnfoldSet
+          : currentUnfoldSet // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
+      proxiesSortType: null == proxiesSortType
+          ? _value.proxiesSortType
+          : proxiesSortType // ignore: cast_nullable_to_non_nullable
+              as ProxiesSortType,
+      proxyCardType: null == proxyCardType
+          ? _value.proxyCardType
+          : proxyCardType // ignore: cast_nullable_to_non_nullable
+              as ProxyCardType,
+      sortNum: null == sortNum
+          ? _value.sortNum
+          : sortNum // ignore: cast_nullable_to_non_nullable
+              as num,
+      columns: null == columns
+          ? _value.columns
+          : columns // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
+  const _$ProxiesListSelectorStateImpl(
+      {required final List<String> groupNames,
+      required final Set<String> currentUnfoldSet,
+      required this.proxiesSortType,
+      required this.proxyCardType,
+      required this.sortNum,
+      required this.columns})
+      : _groupNames = groupNames,
+        _currentUnfoldSet = currentUnfoldSet;
+
+  final List<String> _groupNames;
+  @override
+  List<String> get groupNames {
+    if (_groupNames is EqualUnmodifiableListView) return _groupNames;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_groupNames);
+  }
+
+  final Set<String> _currentUnfoldSet;
+  @override
+  Set<String> get currentUnfoldSet {
+    if (_currentUnfoldSet is EqualUnmodifiableSetView) return _currentUnfoldSet;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableSetView(_currentUnfoldSet);
+  }
+
+  @override
+  final ProxiesSortType proxiesSortType;
+  @override
+  final ProxyCardType proxyCardType;
+  @override
+  final num sortNum;
+  @override
+  final int columns;
+
+  @override
+  String toString() {
+    return 'ProxiesListSelectorState(groupNames: $groupNames, currentUnfoldSet: $currentUnfoldSet, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, columns: $columns)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxiesListSelectorStateImpl &&
+            const DeepCollectionEquality()
+                .equals(other._groupNames, _groupNames) &&
+            const DeepCollectionEquality()
+                .equals(other._currentUnfoldSet, _currentUnfoldSet) &&
+            (identical(other.proxiesSortType, proxiesSortType) ||
+                other.proxiesSortType == proxiesSortType) &&
+            (identical(other.proxyCardType, proxyCardType) ||
+                other.proxyCardType == proxyCardType) &&
+            (identical(other.sortNum, sortNum) || other.sortNum == sortNum) &&
+            (identical(other.columns, columns) || other.columns == columns));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(_groupNames),
+      const DeepCollectionEquality().hash(_currentUnfoldSet),
+      proxiesSortType,
+      proxyCardType,
+      sortNum,
+      columns);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxiesListSelectorStateImplCopyWith<_$ProxiesListSelectorStateImpl>
+      get copyWith => __$$ProxiesListSelectorStateImplCopyWithImpl<
+          _$ProxiesListSelectorStateImpl>(this, _$identity);
+}
+
+abstract class _ProxiesListSelectorState implements ProxiesListSelectorState {
+  const factory _ProxiesListSelectorState(
+      {required final List<String> groupNames,
+      required final Set<String> currentUnfoldSet,
+      required final ProxiesSortType proxiesSortType,
+      required final ProxyCardType proxyCardType,
+      required final num sortNum,
+      required final int columns}) = _$ProxiesListSelectorStateImpl;
+
+  @override
+  List<String> get groupNames;
+  @override
+  Set<String> get currentUnfoldSet;
+  @override
+  ProxiesSortType get proxiesSortType;
+  @override
+  ProxyCardType get proxyCardType;
+  @override
+  num get sortNum;
+  @override
+  int get columns;
+  @override
+  @JsonKey(ignore: true)
+  _$$ProxiesListSelectorStateImplCopyWith<_$ProxiesListSelectorStateImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$ProxyGroupSelectorState {
   ProxiesSortType get proxiesSortType => throw _privateConstructorUsedError;
   ProxyCardType get proxyCardType => throw _privateConstructorUsedError;
@@ -2399,5 +2650,153 @@ abstract class _ColumnsSelectorState implements ColumnsSelectorState {
   @override
   @JsonKey(ignore: true)
   _$$ColumnsSelectorStateImplCopyWith<_$ColumnsSelectorStateImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$ProxiesListHeaderSelectorState {
+  double get offset => throw _privateConstructorUsedError;
+  int get currentIndex => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $ProxiesListHeaderSelectorStateCopyWith<ProxiesListHeaderSelectorState>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxiesListHeaderSelectorStateCopyWith<$Res> {
+  factory $ProxiesListHeaderSelectorStateCopyWith(
+          ProxiesListHeaderSelectorState value,
+          $Res Function(ProxiesListHeaderSelectorState) then) =
+      _$ProxiesListHeaderSelectorStateCopyWithImpl<$Res,
+          ProxiesListHeaderSelectorState>;
+  @useResult
+  $Res call({double offset, int currentIndex});
+}
+
+/// @nodoc
+class _$ProxiesListHeaderSelectorStateCopyWithImpl<$Res,
+        $Val extends ProxiesListHeaderSelectorState>
+    implements $ProxiesListHeaderSelectorStateCopyWith<$Res> {
+  _$ProxiesListHeaderSelectorStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? offset = null,
+    Object? currentIndex = null,
+  }) {
+    return _then(_value.copyWith(
+      offset: null == offset
+          ? _value.offset
+          : offset // ignore: cast_nullable_to_non_nullable
+              as double,
+      currentIndex: null == currentIndex
+          ? _value.currentIndex
+          : currentIndex // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxiesListHeaderSelectorStateImplCopyWith<$Res>
+    implements $ProxiesListHeaderSelectorStateCopyWith<$Res> {
+  factory _$$ProxiesListHeaderSelectorStateImplCopyWith(
+          _$ProxiesListHeaderSelectorStateImpl value,
+          $Res Function(_$ProxiesListHeaderSelectorStateImpl) then) =
+      __$$ProxiesListHeaderSelectorStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({double offset, int currentIndex});
+}
+
+/// @nodoc
+class __$$ProxiesListHeaderSelectorStateImplCopyWithImpl<$Res>
+    extends _$ProxiesListHeaderSelectorStateCopyWithImpl<$Res,
+        _$ProxiesListHeaderSelectorStateImpl>
+    implements _$$ProxiesListHeaderSelectorStateImplCopyWith<$Res> {
+  __$$ProxiesListHeaderSelectorStateImplCopyWithImpl(
+      _$ProxiesListHeaderSelectorStateImpl _value,
+      $Res Function(_$ProxiesListHeaderSelectorStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? offset = null,
+    Object? currentIndex = null,
+  }) {
+    return _then(_$ProxiesListHeaderSelectorStateImpl(
+      offset: null == offset
+          ? _value.offset
+          : offset // ignore: cast_nullable_to_non_nullable
+              as double,
+      currentIndex: null == currentIndex
+          ? _value.currentIndex
+          : currentIndex // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ProxiesListHeaderSelectorStateImpl
+    implements _ProxiesListHeaderSelectorState {
+  const _$ProxiesListHeaderSelectorStateImpl(
+      {required this.offset, required this.currentIndex});
+
+  @override
+  final double offset;
+  @override
+  final int currentIndex;
+
+  @override
+  String toString() {
+    return 'ProxiesListHeaderSelectorState(offset: $offset, currentIndex: $currentIndex)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxiesListHeaderSelectorStateImpl &&
+            (identical(other.offset, offset) || other.offset == offset) &&
+            (identical(other.currentIndex, currentIndex) ||
+                other.currentIndex == currentIndex));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, offset, currentIndex);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxiesListHeaderSelectorStateImplCopyWith<
+          _$ProxiesListHeaderSelectorStateImpl>
+      get copyWith => __$$ProxiesListHeaderSelectorStateImplCopyWithImpl<
+          _$ProxiesListHeaderSelectorStateImpl>(this, _$identity);
+}
+
+abstract class _ProxiesListHeaderSelectorState
+    implements ProxiesListHeaderSelectorState {
+  const factory _ProxiesListHeaderSelectorState(
+      {required final double offset,
+      required final int currentIndex}) = _$ProxiesListHeaderSelectorStateImpl;
+
+  @override
+  double get offset;
+  @override
+  int get currentIndex;
+  @override
+  @JsonKey(ignore: true)
+  _$$ProxiesListHeaderSelectorStateImplCopyWith<
+          _$ProxiesListHeaderSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

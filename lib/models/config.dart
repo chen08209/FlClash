@@ -73,6 +73,7 @@ class Config extends ChangeNotifier {
   bool _systemProxy;
   bool _isExclude;
   DAV? _dav;
+  bool _isCloseConnections;
   ProxiesType _proxiesType;
   ProxyCardType _proxyCardType;
   int _proxiesColumns;
@@ -84,6 +85,7 @@ class Config extends ChangeNotifier {
         _autoLaunch = false,
         _silentLaunch = false,
         _autoRun = false,
+        _isCloseConnections = false,
         _themeMode = ThemeMode.system,
         _openLog = false,
         _isCompatible = true,
@@ -405,6 +407,18 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: false)
+  bool get isCloseConnections {
+    return _isCloseConnections;
+  }
+
+  set isCloseConnections(bool value) {
+    if (_isCloseConnections != value) {
+      _isCloseConnections = value;
+      notifyListeners();
+    }
+  }
+
   @JsonKey(
     defaultValue: ProxiesType.tab,
     unknownEnumValue: ProxiesType.tab,
@@ -482,6 +496,7 @@ class Config extends ChangeNotifier {
       }
       if (onlyProfiles) return;
       _currentProfileId = config._currentProfileId;
+      _isCloseConnections = config._isCloseConnections;
       _isCompatible = config._isCompatible;
       _autoLaunch = config._autoLaunch;
       _silentLaunch = config._silentLaunch;

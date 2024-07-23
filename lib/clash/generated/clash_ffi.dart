@@ -5351,16 +5351,16 @@ class ClashFFI {
   late final _getConnections =
       _getConnectionsPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
 
-  int closeConnections() {
+  void closeConnections() {
     return _closeConnections();
   }
 
   late final _closeConnectionsPtr =
-      _lookup<ffi.NativeFunction<GoUint8 Function()>>('closeConnections');
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('closeConnections');
   late final _closeConnections =
-      _closeConnectionsPtr.asFunction<int Function()>();
+      _closeConnectionsPtr.asFunction<void Function()>();
 
-  int closeConnection(
+  void closeConnection(
     ffi.Pointer<ffi.Char> id,
   ) {
     return _closeConnection(
@@ -5369,10 +5369,10 @@ class ClashFFI {
   }
 
   late final _closeConnectionPtr =
-      _lookup<ffi.NativeFunction<GoUint8 Function(ffi.Pointer<ffi.Char>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
           'closeConnection');
   late final _closeConnection =
-      _closeConnectionPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+      _closeConnectionPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> getProviders() {
     return _getProviders();

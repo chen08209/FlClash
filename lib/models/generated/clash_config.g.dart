@@ -82,6 +82,7 @@ Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
       'tun': instance.tun,
       'dns': instance.dns,
       'rules': instance.rules,
+      'global-ua': instance.globalUa,
       'global-real-ua': instance.globalRealUa,
       'geox-url': instance.geoXUrl,
     };

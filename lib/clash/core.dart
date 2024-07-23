@@ -319,10 +319,14 @@ class ClashCore {
     return connectionsRaw.map((e) => Connection.fromJson(e)).toList();
   }
 
-  closeConnections(String id) {
+  closeConnection(String id) {
     final idChar = id.toNativeUtf8().cast<Char>();
     clashFFI.closeConnection(idChar);
     malloc.free(idChar);
+  }
+
+  closeConnections() {
+    clashFFI.closeConnections();
   }
 }
 

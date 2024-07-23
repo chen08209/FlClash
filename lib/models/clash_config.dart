@@ -275,7 +275,7 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
-  @JsonKey(name: "global-ua", defaultValue: null)
+  @JsonKey(name: "global-ua", includeFromJson: false, includeToJson: true)
   String get globalUa {
     if (_globalRealUa == null) {
       return globalState.packageInfo.ua;
@@ -320,7 +320,6 @@ class ClashConfig extends ChangeNotifier {
       _geodataLoader = clashConfig._geodataLoader;
       _dns = clashConfig._dns;
       _rules = clashConfig._rules;
-      _globalRealUa = clashConfig.globalRealUa;
     }
     notifyListeners();
   }
