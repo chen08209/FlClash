@@ -13,6 +13,7 @@ _$GroupImpl _$$GroupImplFromJson(Map<String, dynamic> json) => _$GroupImpl(
               .toList() ??
           const [],
       now: json['now'] as String?,
+      hidden: json['hidden'] as bool?,
       name: json['name'] as String,
     );
 
@@ -21,6 +22,7 @@ Map<String, dynamic> _$$GroupImplToJson(_$GroupImpl instance) =>
       'type': _$GroupTypeEnumMap[instance.type]!,
       'all': instance.all,
       'now': instance.now,
+      'hidden': instance.hidden,
       'name': instance.name,
     };
 

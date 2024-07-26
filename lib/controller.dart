@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
@@ -17,6 +18,7 @@ class AppController {
   late ClashConfig clashConfig;
   late Measure measure;
   late Function updateClashConfigDebounce;
+  late Function updateGroupDebounce;
   late Function addCheckIpNumDebounce;
 
   AppController(this.context) {
@@ -28,6 +30,9 @@ class AppController {
     });
     addCheckIpNumDebounce = debounce(() {
       appState.checkIpNum++;
+    });
+    updateGroupDebounce = debounce(() async {
+      await updateGroups();
     });
     measure = Measure.of(context);
   }
@@ -45,12 +50,15 @@ class AppController {
         updateRunTime,
         updateTraffic,
       ];
+      if (Platform.isAndroid) return;
+      await applyProfile(isPrue: true);
     } else {
       await globalState.stopSystemProxy();
       clashCore.resetTraffic();
       appState.traffics = [];
       appState.totalTraffic = Traffic();
       appState.runTime = null;
+      addCheckIpNumDebounce();
     }
   }
 
@@ -108,24 +116,25 @@ class AppController {
     );
   }
 
-  Future applyProfile() async {
-    final commonScaffoldState = globalState.homeScaffoldKey.currentState;
-    if (commonScaffoldState?.mounted != true) return;
-    commonScaffoldState?.loadingRun(() async {
+  Future applyProfile({bool isPrue = false}) async {
+    if (isPrue) {
       await globalState.applyProfile(
         appState: appState,
         config: config,
         clashConfig: clashConfig,
       );
-    });
-  }
-
-  Future rawApplyProfile() async {
-    await globalState.applyProfile(
-      appState: appState,
-      config: config,
-      clashConfig: clashConfig,
-    );
+    } else {
+      final commonScaffoldState = globalState.homeScaffoldKey.currentState;
+      if (commonScaffoldState?.mounted != true) return;
+      await commonScaffoldState?.loadingRun(() async {
+        await globalState.applyProfile(
+          appState: appState,
+          config: config,
+          clashConfig: clashConfig,
+        );
+      });
+    }
+    addCheckIpNumDebounce();
   }
 
   changeProfile(String? value) async {
@@ -192,8 +201,19 @@ class AppController {
     await preferences.saveClashConfig(clashConfig);
   }
 
+  changeProxy({
+    required String groupName,
+    required String proxyName,
+  }) {
+    globalState.changeProxy(
+      config: config,
+      groupName: groupName,
+      proxyName: proxyName,
+    );
+    addCheckIpNumDebounce();
+  }
+
   handleBackOrExit() async {
-    print(config.isMinimizeOnExit);
     if (config.isMinimizeOnExit) {
       if (system.isDesktop) {
         await savePreferences();
@@ -384,6 +404,10 @@ class AppController {
 
   addProfileFormFile() async {
     final platformFile = await globalState.safeRun(picker.pickerConfigFile);
+    final bytes = platformFile?.bytes;
+    if (bytes == null) {
+      return null;
+    }
     if (!context.mounted) return;
     globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     toProfiles();
@@ -392,10 +416,6 @@ class AppController {
     final profile = await commonScaffoldState?.loadingRun<Profile?>(
       () async {
         await Future.delayed(const Duration(milliseconds: 300));
-        final bytes = platformFile?.bytes;
-        if (bytes == null) {
-          return null;
-        }
         return await Profile.normal(label: platformFile?.name).saveFile(bytes);
       },
       title: "${appLocalizations.add}${appLocalizations.profile}",
@@ -456,6 +476,8 @@ class AppController {
 
   String getCurrentSelectedName(String groupName) {
     final group = appState.getGroupWithName(groupName);
-    return config.currentSelectedMap[groupName] ?? group?.now ?? '';
+    return group?.getCurrentSelectedName(
+            config.currentSelectedMap[groupName] ?? '') ??
+        '';
   }
 }

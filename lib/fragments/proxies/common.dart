@@ -8,17 +8,18 @@ import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-Widget currentProxyNameBuilder({
+Widget currentGroupProxyNameBuilder({
   required String groupName,
-  required Widget Function(String) builder,
+  required Widget Function(String currentGroupName) builder,
 }) {
   return Selector2<AppState, Config, String>(
     selector: (_, appState, config) {
       final group = appState.getGroupWithName(groupName);
-      return config.currentSelectedMap[groupName] ?? group?.now ?? '';
+      final selectedProxyName = config.currentSelectedMap[groupName];
+      return group?.getCurrentSelectedName(selectedProxyName ?? "") ?? "";
     },
-    builder: (_, value, ___) {
-      return builder(value);
+    builder: (_, currentGroupName, ___) {
+      return builder(currentGroupName);
     },
   );
 }
@@ -42,8 +43,7 @@ double getItemHeight(ProxyCardType proxyCardType) {
 delayTest(List<Proxy> proxies) async {
   final appController = globalState.appController;
   for (final proxy in proxies) {
-    final proxyName =
-        appController.appState.getRealProxyName(proxy.name) ?? proxy.name;
+    final proxyName = appController.appState.getRealProxyName(proxy.name);
     globalState.appController.setDelay(
       Delay(
         name: proxyName,
@@ -70,6 +70,6 @@ double getScrollToSelectedOffset({
     (proxy) => proxy.name == selectedName,
   );
   final selectedIndex = findSelectedIndex != -1 ? findSelectedIndex : 0;
-  final rows = ((selectedIndex - 1) / columns).ceil();
+  final rows = (selectedIndex / columns).floor();
   return max(rows * (getItemHeight(proxyCardType) + 8) - 8, 0);
 }

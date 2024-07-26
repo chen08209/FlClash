@@ -1,5 +1,3 @@
-//go:build android
-
 package main
 
 import "C"
@@ -21,11 +19,17 @@ type AndroidProps struct {
 	SystemProxy   bool           `json:"systemProxy"`
 }
 
-var androidProps AndroidProps
+type State struct {
+	AndroidProps
+	MixedPort int  `json:"mixedPort"`
+	OnlyProxy bool `json:"onlyProxy"`
+}
 
-//export getAndroidProps
-func getAndroidProps() *C.char {
-	data, err := json.Marshal(androidProps)
+var state State
+
+//export getState
+func getState() *C.char {
+	data, err := json.Marshal(state)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return C.CString("")
@@ -33,10 +37,10 @@ func getAndroidProps() *C.char {
 	return C.CString(string(data))
 }
 
-//export setAndroidProps
-func setAndroidProps(s *C.char) {
+//export setState
+func setState(s *C.char) {
 	paramsString := C.GoString(s)
-	err := json.Unmarshal([]byte(paramsString), &androidProps)
+	err := json.Unmarshal([]byte(paramsString), &state)
 	if err != nil {
 		return
 	}

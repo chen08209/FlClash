@@ -53,18 +53,6 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
         commonScaffoldState?.actions = [
           IconButton(
             onPressed: () {
-              clashCore.closeConnections();
-              connectionsNotifier.value = connectionsNotifier.value.copyWith(
-                connections: clashCore.getConnections(),
-              );
-            },
-            icon: const Icon(Icons.delete_sweep_outlined),
-          ),
-          const SizedBox(
-            width: 8,
-          ),
-          IconButton(
-            onPressed: () {
               showSearch(
                 context: context,
                 delegate: ConnectionsSearchDelegate(
@@ -73,6 +61,18 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
               );
             },
             icon: const Icon(Icons.search),
+          ),
+          const SizedBox(
+            width: 8,
+          ),
+          IconButton(
+            onPressed: () {
+              clashCore.closeConnections();
+              connectionsNotifier.value = connectionsNotifier.value.copyWith(
+                connections: clashCore.getConnections(),
+              );
+            },
+            icon: const Icon(Icons.delete_sweep_outlined),
           ),
         ];
       },

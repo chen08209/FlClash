@@ -240,35 +240,43 @@ abstract class _AccessControl implements AccessControl {
       throw _privateConstructorUsedError;
 }
 
-Props _$PropsFromJson(Map<String, dynamic> json) {
-  return _Props.fromJson(json);
+CoreState _$CoreStateFromJson(Map<String, dynamic> json) {
+  return _CoreState.fromJson(json);
 }
 
 /// @nodoc
-mixin _$Props {
+mixin _$CoreState {
   AccessControl? get accessControl => throw _privateConstructorUsedError;
   bool get allowBypass => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
+  int get mixedPort => throw _privateConstructorUsedError;
+  bool get onlyProxy => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  $PropsCopyWith<Props> get copyWith => throw _privateConstructorUsedError;
+  $CoreStateCopyWith<CoreState> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $PropsCopyWith<$Res> {
-  factory $PropsCopyWith(Props value, $Res Function(Props) then) =
-      _$PropsCopyWithImpl<$Res, Props>;
+abstract class $CoreStateCopyWith<$Res> {
+  factory $CoreStateCopyWith(CoreState value, $Res Function(CoreState) then) =
+      _$CoreStateCopyWithImpl<$Res, CoreState>;
   @useResult
-  $Res call({AccessControl? accessControl, bool allowBypass, bool systemProxy});
+  $Res call(
+      {AccessControl? accessControl,
+      bool allowBypass,
+      bool systemProxy,
+      int mixedPort,
+      bool onlyProxy});
 
   $AccessControlCopyWith<$Res>? get accessControl;
 }
 
 /// @nodoc
-class _$PropsCopyWithImpl<$Res, $Val extends Props>
-    implements $PropsCopyWith<$Res> {
-  _$PropsCopyWithImpl(this._value, this._then);
+class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
+    implements $CoreStateCopyWith<$Res> {
+  _$CoreStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -281,6 +289,8 @@ class _$PropsCopyWithImpl<$Res, $Val extends Props>
     Object? accessControl = freezed,
     Object? allowBypass = null,
     Object? systemProxy = null,
+    Object? mixedPort = null,
+    Object? onlyProxy = null,
   }) {
     return _then(_value.copyWith(
       accessControl: freezed == accessControl
@@ -294,6 +304,14 @@ class _$PropsCopyWithImpl<$Res, $Val extends Props>
       systemProxy: null == systemProxy
           ? _value.systemProxy
           : systemProxy // ignore: cast_nullable_to_non_nullable
+              as bool,
+      mixedPort: null == mixedPort
+          ? _value.mixedPort
+          : mixedPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      onlyProxy: null == onlyProxy
+          ? _value.onlyProxy
+          : onlyProxy // ignore: cast_nullable_to_non_nullable
               as bool,
     ) as $Val);
   }
@@ -312,24 +330,30 @@ class _$PropsCopyWithImpl<$Res, $Val extends Props>
 }
 
 /// @nodoc
-abstract class _$$PropsImplCopyWith<$Res> implements $PropsCopyWith<$Res> {
-  factory _$$PropsImplCopyWith(
-          _$PropsImpl value, $Res Function(_$PropsImpl) then) =
-      __$$PropsImplCopyWithImpl<$Res>;
+abstract class _$$CoreStateImplCopyWith<$Res>
+    implements $CoreStateCopyWith<$Res> {
+  factory _$$CoreStateImplCopyWith(
+          _$CoreStateImpl value, $Res Function(_$CoreStateImpl) then) =
+      __$$CoreStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({AccessControl? accessControl, bool allowBypass, bool systemProxy});
+  $Res call(
+      {AccessControl? accessControl,
+      bool allowBypass,
+      bool systemProxy,
+      int mixedPort,
+      bool onlyProxy});
 
   @override
   $AccessControlCopyWith<$Res>? get accessControl;
 }
 
 /// @nodoc
-class __$$PropsImplCopyWithImpl<$Res>
-    extends _$PropsCopyWithImpl<$Res, _$PropsImpl>
-    implements _$$PropsImplCopyWith<$Res> {
-  __$$PropsImplCopyWithImpl(
-      _$PropsImpl _value, $Res Function(_$PropsImpl) _then)
+class __$$CoreStateImplCopyWithImpl<$Res>
+    extends _$CoreStateCopyWithImpl<$Res, _$CoreStateImpl>
+    implements _$$CoreStateImplCopyWith<$Res> {
+  __$$CoreStateImplCopyWithImpl(
+      _$CoreStateImpl _value, $Res Function(_$CoreStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -338,8 +362,10 @@ class __$$PropsImplCopyWithImpl<$Res>
     Object? accessControl = freezed,
     Object? allowBypass = null,
     Object? systemProxy = null,
+    Object? mixedPort = null,
+    Object? onlyProxy = null,
   }) {
-    return _then(_$PropsImpl(
+    return _then(_$CoreStateImpl(
       accessControl: freezed == accessControl
           ? _value.accessControl
           : accessControl // ignore: cast_nullable_to_non_nullable
@@ -352,20 +378,30 @@ class __$$PropsImplCopyWithImpl<$Res>
           ? _value.systemProxy
           : systemProxy // ignore: cast_nullable_to_non_nullable
               as bool,
+      mixedPort: null == mixedPort
+          ? _value.mixedPort
+          : mixedPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      onlyProxy: null == onlyProxy
+          ? _value.onlyProxy
+          : onlyProxy // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$PropsImpl implements _Props {
-  const _$PropsImpl(
+class _$CoreStateImpl implements _CoreState {
+  const _$CoreStateImpl(
       {this.accessControl,
       required this.allowBypass,
-      required this.systemProxy});
+      required this.systemProxy,
+      required this.mixedPort,
+      required this.onlyProxy});
 
-  factory _$PropsImpl.fromJson(Map<String, dynamic> json) =>
-      _$$PropsImplFromJson(json);
+  factory _$CoreStateImpl.fromJson(Map<String, dynamic> json) =>
+      _$$CoreStateImplFromJson(json);
 
   @override
   final AccessControl? accessControl;
@@ -373,51 +409,62 @@ class _$PropsImpl implements _Props {
   final bool allowBypass;
   @override
   final bool systemProxy;
+  @override
+  final int mixedPort;
+  @override
+  final bool onlyProxy;
 
   @override
   String toString() {
-    return 'Props(accessControl: $accessControl, allowBypass: $allowBypass, systemProxy: $systemProxy)';
+    return 'CoreState(accessControl: $accessControl, allowBypass: $allowBypass, systemProxy: $systemProxy, mixedPort: $mixedPort, onlyProxy: $onlyProxy)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$PropsImpl &&
+            other is _$CoreStateImpl &&
             (identical(other.accessControl, accessControl) ||
                 other.accessControl == accessControl) &&
             (identical(other.allowBypass, allowBypass) ||
                 other.allowBypass == allowBypass) &&
             (identical(other.systemProxy, systemProxy) ||
-                other.systemProxy == systemProxy));
+                other.systemProxy == systemProxy) &&
+            (identical(other.mixedPort, mixedPort) ||
+                other.mixedPort == mixedPort) &&
+            (identical(other.onlyProxy, onlyProxy) ||
+                other.onlyProxy == onlyProxy));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, accessControl, allowBypass, systemProxy);
+  int get hashCode => Object.hash(runtimeType, accessControl, allowBypass,
+      systemProxy, mixedPort, onlyProxy);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$PropsImplCopyWith<_$PropsImpl> get copyWith =>
-      __$$PropsImplCopyWithImpl<_$PropsImpl>(this, _$identity);
+  _$$CoreStateImplCopyWith<_$CoreStateImpl> get copyWith =>
+      __$$CoreStateImplCopyWithImpl<_$CoreStateImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$PropsImplToJson(
+    return _$$CoreStateImplToJson(
       this,
     );
   }
 }
 
-abstract class _Props implements Props {
-  const factory _Props(
+abstract class _CoreState implements CoreState {
+  const factory _CoreState(
       {final AccessControl? accessControl,
       required final bool allowBypass,
-      required final bool systemProxy}) = _$PropsImpl;
+      required final bool systemProxy,
+      required final int mixedPort,
+      required final bool onlyProxy}) = _$CoreStateImpl;
 
-  factory _Props.fromJson(Map<String, dynamic> json) = _$PropsImpl.fromJson;
+  factory _CoreState.fromJson(Map<String, dynamic> json) =
+      _$CoreStateImpl.fromJson;
 
   @override
   AccessControl? get accessControl;
@@ -426,8 +473,12 @@ abstract class _Props implements Props {
   @override
   bool get systemProxy;
   @override
+  int get mixedPort;
+  @override
+  bool get onlyProxy;
+  @override
   @JsonKey(ignore: true)
-  _$$PropsImplCopyWith<_$PropsImpl> get copyWith =>
+  _$$CoreStateImplCopyWith<_$CoreStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

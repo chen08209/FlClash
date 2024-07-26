@@ -140,17 +140,13 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
           final children = proxies
               .map<Widget>(
                 (proxy) => Flexible(
-                  child: currentProxyNameBuilder(
-                      groupName: group.name,
-                      builder: (currentProxyName) {
-                        return ProxyCard(
-                          type: type,
-                          isSelected: currentProxyName == proxy.name,
-                          key: ValueKey('$groupName.${proxy.name}'),
-                          proxy: proxy,
-                          groupName: groupName,
-                        );
-                      }),
+                  child: ProxyCard(
+                    type: type,
+                    groupType: group.type,
+                    key: ValueKey('$groupName.${proxy.name}'),
+                    proxy: proxy,
+                    groupName: groupName,
+                  ),
                 ),
               )
               .fill(
@@ -209,6 +205,9 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
   }
 
   _scrollToGroupSelected(String groupName) {
+    if (_controller.position.maxScrollExtent == 0) {
+      return;
+    }
     final appController = globalState.appController;
     final currentGroups = appController.appState.currentGroups;
     final groupNames = currentGroups.map((e) => e.name).toList();
@@ -394,6 +393,18 @@ class _ListHeaderState extends State<ListHeader>
   }
 
   @override
+  void didUpdateWidget(ListHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isExpand != widget.isExpand) {
+      if (isExpand) {
+        _animationController.value = 1.0;
+      } else {
+        _animationController.value = 0.0;
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return CommonCard(
       key: widget.key,
@@ -410,9 +421,7 @@ class _ListHeaderState extends State<ListHeader>
                 children: [
                   Text(
                     groupName,
-                    style: context.textTheme.titleMedium?.copyWith(
-                      color: context.colorScheme.primary,
-                    ),
+                    style: context.textTheme.titleMedium,
                   ),
                   const SizedBox(
                     height: 4,
@@ -430,20 +439,20 @@ class _ListHeaderState extends State<ListHeader>
                         ),
                         Flexible(
                           flex: 1,
-                          child: currentProxyNameBuilder(
+                          child: currentGroupProxyNameBuilder(
                             groupName: groupName,
-                            builder: (value) {
+                            builder: (currentGroupName) {
                               return Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  if (value.isNotEmpty) ...[
+                                  if (currentGroupName.isNotEmpty) ...[
                                     Flexible(
                                       flex: 1,
                                       child: Text(
                                         overflow: TextOverflow.ellipsis,
-                                        " · $value",
+                                        " · $currentGroupName",
                                         style: context
                                             .textTheme.labelMedium?.toLight,
                                       ),

@@ -410,7 +410,7 @@ func patchSelectGroup() {
 
 var applyLock sync.Mutex
 
-func applyConfig() {
+func applyConfig() error {
 	applyLock.Lock()
 	defer applyLock.Unlock()
 	cfg, err := config.ParseRawConfig(currentConfig)
@@ -428,4 +428,5 @@ func applyConfig() {
 		hub.UltraApplyConfig(cfg, true)
 		patchSelectGroup()
 	}
+	return err
 }

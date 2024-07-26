@@ -8,7 +8,7 @@ import 'system.dart';
 
 const appName = "FlClash";
 const coreName = "clash.meta";
-const packageName = "FlClash";
+const packageName = "com.follow.clash";
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);

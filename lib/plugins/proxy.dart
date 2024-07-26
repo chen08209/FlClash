@@ -47,9 +47,10 @@ class Proxy extends ProxyPlatform {
 
   @override
   Future<bool?> startProxy(port) async {
+    final state = clashCore.getState();
     return await methodChannel.invokeMethod<bool>("startProxy", {
-      'port': port,
-      'args': json.encode(clashCore.getProps()),
+      'port': state.mixedPort,
+      'args': json.encode(state),
     });
   }
 

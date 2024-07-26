@@ -52,6 +52,19 @@ class HomePage extends StatelessWidget {
       context: context,
       child: NavigationRail(
         groupAlignment: -0.8,
+        selectedIconTheme: IconThemeData(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+        unselectedIconTheme: IconThemeData(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+        selectedLabelTextStyle: context.textTheme.labelLarge!.copyWith(
+          color: context.colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelTextStyle: context.textTheme.labelLarge!.copyWith(
+          color: context.colorScheme.onSurface,
+        ),
         destinations: navigationItems
             .map(
               (e) => NavigationRailDestination(
@@ -64,7 +77,7 @@ class HomePage extends StatelessWidget {
             .toList(),
         onDestinationSelected: globalState.appController.toPage,
         extended: extended,
-        minExtendedWidth: 172,
+        minExtendedWidth: 200,
         selectedIndex: currentIndex,
         labelType: extended
             ? NavigationRailLabelType.none

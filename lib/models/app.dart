@@ -55,7 +55,7 @@ class AppState with ChangeNotifier {
         _delayMap = {},
         _groups = [],
         _isCompatible = isCompatible,
-        _systemColorSchemes = SystemColorSchemes();
+        _systemColorSchemes = const SystemColorSchemes();
 
   String get currentLabel => _currentLabel;
 
@@ -109,7 +109,7 @@ class AppState with ChangeNotifier {
     }
   }
 
-  String getDesc(String type, String? proxyName) {
+  String getDesc(String type, String proxyName) {
     final groupTypeNamesList = GroupType.values.map((e) => e.name).toList();
     if (!groupTypeNamesList.contains(type)) {
       return type;
@@ -120,15 +120,17 @@ class AppState with ChangeNotifier {
     }
   }
 
-  String? getRealProxyName(String? proxyName) {
-    if (proxyName == null) return null;
+  String getRealProxyName(String proxyName) {
+    if (proxyName.isEmpty) return proxyName;
     final index = groups.indexWhere((element) => element.name == proxyName);
     if (index == -1) return proxyName;
     final group = groups[index];
-    return getRealProxyName((selectedMap.containsKey(proxyName)
-            ? selectedMap[proxyName]
-            : group.now)) ??
-        proxyName;
+    final currentSelectedName =
+        group.getCurrentSelectedName(selectedMap[proxyName] ?? '');
+    if (currentSelectedName.isEmpty) return proxyName;
+    return getRealProxyName(
+      currentSelectedName,
+    );
   }
 
   String? get showProxyName {
@@ -140,7 +142,7 @@ class AppState with ChangeNotifier {
     return selectedMap[firstGroupName] ?? firstGroup.now;
   }
 
-  int? getDelay(String? proxyName) {
+  int? getDelay(String proxyName) {
     return _delayMap[getRealProxyName(proxyName)];
   }
 
@@ -293,6 +295,7 @@ class AppState with ChangeNotifier {
             .toList();
       case Mode.rule:
         return groups
+            .where((item) => item.hidden == false)
             .where((element) => element.name != GroupName.GLOBAL.name)
             .toList();
     }

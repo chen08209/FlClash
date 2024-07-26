@@ -35,6 +35,7 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..autoCheckUpdate = json['autoCheckUpdate'] as bool? ?? true
   ..allowBypass = json['allowBypass'] as bool? ?? true
   ..systemProxy = json['systemProxy'] as bool? ?? false
+  ..onlyProxy = json['onlyProxy'] as bool? ?? false
   ..isCloseConnections = json['isCloseConnections'] as bool? ?? false
   ..proxiesType = $enumDecodeNullable(_$ProxiesTypeEnumMap, json['proxiesType'],
           unknownValue: ProxiesType.tab) ??
@@ -69,6 +70,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'autoCheckUpdate': instance.autoCheckUpdate,
       'allowBypass': instance.allowBypass,
       'systemProxy': instance.systemProxy,
+      'onlyProxy': instance.onlyProxy,
       'isCloseConnections': instance.isCloseConnections,
       'proxiesType': _$ProxiesTypeEnumMap[instance.proxiesType]!,
       'proxyCardType': _$ProxyCardTypeEnumMap[instance.proxyCardType]!,
@@ -129,20 +131,25 @@ const _$AccessControlModeEnumMap = {
   AccessControlMode.rejectSelected: 'rejectSelected',
 };
 
-_$PropsImpl _$$PropsImplFromJson(Map<String, dynamic> json) => _$PropsImpl(
+_$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
+    _$CoreStateImpl(
       accessControl: json['accessControl'] == null
           ? null
           : AccessControl.fromJson(
               json['accessControl'] as Map<String, dynamic>),
       allowBypass: json['allowBypass'] as bool,
       systemProxy: json['systemProxy'] as bool,
+      mixedPort: (json['mixedPort'] as num).toInt(),
+      onlyProxy: json['onlyProxy'] as bool,
     );
 
-Map<String, dynamic> _$$PropsImplToJson(_$PropsImpl instance) =>
+Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
     <String, dynamic>{
       'accessControl': instance.accessControl,
       'allowBypass': instance.allowBypass,
       'systemProxy': instance.systemProxy,
+      'mixedPort': instance.mixedPort,
+      'onlyProxy': instance.onlyProxy,
     };
 
 _$WindowPropsImpl _$$WindowPropsImplFromJson(Map<String, dynamic> json) =>

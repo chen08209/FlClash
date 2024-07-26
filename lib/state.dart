@@ -72,13 +72,6 @@ class GlobalState {
     required ClashConfig clashConfig,
   }) async {
     if (!globalState.isVpnService && Platform.isAndroid) {
-      clashCore.setProps(
-        Props(
-          accessControl: config.isAccessControl ? config.accessControl : null,
-          allowBypass: config.allowBypass,
-          systemProxy: config.systemProxy,
-        ),
-      );
       await proxy?.initService();
     } else {
       await proxyManager.startProxy(
@@ -86,16 +79,6 @@ class GlobalState {
       );
     }
     startListenUpdate();
-    if (Platform.isAndroid) {
-      return;
-    }
-    applyProfile(
-      appState: appState,
-      config: config,
-      clashConfig: clashConfig,
-    ).then((_) {
-      globalState.appController.addCheckIpNumDebounce();
-    });
   }
 
   Future<void> stopSystemProxy() async {
@@ -124,15 +107,6 @@ class GlobalState {
   }) async {
     appState.isInit = clashCore.isInit;
     if (!appState.isInit) {
-      if (Platform.isAndroid) {
-        clashCore.setProps(
-          Props(
-            accessControl: config.isAccessControl ? config.accessControl : null,
-            allowBypass: config.allowBypass,
-            systemProxy: config.systemProxy,
-          ),
-        );
-      }
       appState.isInit = await clashService.init(
         config: config,
         clashConfig: clashConfig,
@@ -160,11 +134,13 @@ class GlobalState {
               width: 300,
               constraints: const BoxConstraints(maxHeight: 200),
               child: SingleChildScrollView(
-                child: RichText(
-                  overflow: TextOverflow.visible,
-                  text: TextSpan(
+                child: SelectableText.rich(
+                  TextSpan(
                     style: Theme.of(context).textTheme.labelLarge,
                     children: [message],
+                  ),
+                  style: const TextStyle(
+                    overflow: TextOverflow.visible,
                   ),
                 ),
               ),
@@ -195,7 +171,7 @@ class GlobalState {
         proxyName: proxyName,
       ),
     );
-    if(config.isCloseConnections){
+    if (config.isCloseConnections) {
       clashCore.closeConnections();
     }
   }
