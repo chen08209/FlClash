@@ -5,10 +5,8 @@ import 'dart:isolate';
 
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
 class App {
   static App? _instance;
@@ -48,6 +46,13 @@ class App {
           packagesString != null ? json.decode(packagesString) : [];
       return packagesRaw.map((e) => Package.fromJson(e)).toList();
     });
+  }
+
+  Future<bool> openFile(String path) async {
+    return await methodChannel.invokeMethod<bool>("openFile", {
+          "path": path,
+        }) ??
+        false;
   }
 
   Future<ImageProvider?> getPackageIcon(String packageName) async {

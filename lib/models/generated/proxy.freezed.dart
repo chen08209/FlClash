@@ -23,6 +23,7 @@ mixin _$Group {
   GroupType get type => throw _privateConstructorUsedError;
   List<Proxy> get all => throw _privateConstructorUsedError;
   String? get now => throw _privateConstructorUsedError;
+  bool? get hidden => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -35,7 +36,12 @@ abstract class $GroupCopyWith<$Res> {
   factory $GroupCopyWith(Group value, $Res Function(Group) then) =
       _$GroupCopyWithImpl<$Res, Group>;
   @useResult
-  $Res call({GroupType type, List<Proxy> all, String? now, String name});
+  $Res call(
+      {GroupType type,
+      List<Proxy> all,
+      String? now,
+      bool? hidden,
+      String name});
 }
 
 /// @nodoc
@@ -54,6 +60,7 @@ class _$GroupCopyWithImpl<$Res, $Val extends Group>
     Object? type = null,
     Object? all = null,
     Object? now = freezed,
+    Object? hidden = freezed,
     Object? name = null,
   }) {
     return _then(_value.copyWith(
@@ -69,6 +76,10 @@ class _$GroupCopyWithImpl<$Res, $Val extends Group>
           ? _value.now
           : now // ignore: cast_nullable_to_non_nullable
               as String?,
+      hidden: freezed == hidden
+          ? _value.hidden
+          : hidden // ignore: cast_nullable_to_non_nullable
+              as bool?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -84,7 +95,12 @@ abstract class _$$GroupImplCopyWith<$Res> implements $GroupCopyWith<$Res> {
       __$$GroupImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({GroupType type, List<Proxy> all, String? now, String name});
+  $Res call(
+      {GroupType type,
+      List<Proxy> all,
+      String? now,
+      bool? hidden,
+      String name});
 }
 
 /// @nodoc
@@ -101,6 +117,7 @@ class __$$GroupImplCopyWithImpl<$Res>
     Object? type = null,
     Object? all = null,
     Object? now = freezed,
+    Object? hidden = freezed,
     Object? name = null,
   }) {
     return _then(_$GroupImpl(
@@ -116,6 +133,10 @@ class __$$GroupImplCopyWithImpl<$Res>
           ? _value.now
           : now // ignore: cast_nullable_to_non_nullable
               as String?,
+      hidden: freezed == hidden
+          ? _value.hidden
+          : hidden // ignore: cast_nullable_to_non_nullable
+              as bool?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -131,6 +152,7 @@ class _$GroupImpl implements _Group {
       {required this.type,
       final List<Proxy> all = const [],
       this.now,
+      this.hidden,
       required this.name})
       : _all = all;
 
@@ -151,11 +173,13 @@ class _$GroupImpl implements _Group {
   @override
   final String? now;
   @override
+  final bool? hidden;
+  @override
   final String name;
 
   @override
   String toString() {
-    return 'Group(type: $type, all: $all, now: $now, name: $name)';
+    return 'Group(type: $type, all: $all, now: $now, hidden: $hidden, name: $name)';
   }
 
   @override
@@ -166,13 +190,14 @@ class _$GroupImpl implements _Group {
             (identical(other.type, type) || other.type == type) &&
             const DeepCollectionEquality().equals(other._all, _all) &&
             (identical(other.now, now) || other.now == now) &&
+            (identical(other.hidden, hidden) || other.hidden == hidden) &&
             (identical(other.name, name) || other.name == name));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, type, const DeepCollectionEquality().hash(_all), now, name);
+  int get hashCode => Object.hash(runtimeType, type,
+      const DeepCollectionEquality().hash(_all), now, hidden, name);
 
   @JsonKey(ignore: true)
   @override
@@ -193,6 +218,7 @@ abstract class _Group implements Group {
       {required final GroupType type,
       final List<Proxy> all,
       final String? now,
+      final bool? hidden,
       required final String name}) = _$GroupImpl;
 
   factory _Group.fromJson(Map<String, dynamic> json) = _$GroupImpl.fromJson;
@@ -203,6 +229,8 @@ abstract class _Group implements Group {
   List<Proxy> get all;
   @override
   String? get now;
+  @override
+  bool? get hidden;
   @override
   String get name;
   @override

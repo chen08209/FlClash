@@ -216,5 +216,8 @@
   "externalLink": "External link",
   "otherContributors": "Other contributors",
   "autoCloseConnections": "Auto lose connections",
-  "autoCloseConnectionsDesc": "Auto close connections after change node"
+  "autoCloseConnectionsDesc": "Auto close connections after change node",
+  "onlyStatisticsProxy": "Only statistics proxy",
+  "onlyStatisticsProxyDesc": "When turned on, only statistics proxy traffic",
+  "deleteProfileTip": "Sure you want to delete the current profile?"
 }

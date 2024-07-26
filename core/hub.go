@@ -13,8 +13,7 @@ import (
 	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/common/structure"
 	"github.com/metacubex/mihomo/common/utils"
-	"github.com/metacubex/mihomo/component/geodata"
-	"github.com/metacubex/mihomo/component/mmdb"
+	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	cp "github.com/metacubex/mihomo/constant/provider"
@@ -114,7 +113,11 @@ func updateConfig(s *C.char, port C.longlong) {
 		configParams = params.Params
 		prof := decorationConfig(params.ProfilePath, params.Config)
 		currentConfig = prof
-		applyConfig()
+		err = applyConfig()
+		if err != nil {
+			bridge.SendToPort(i, err.Error())
+			return
+		}
 		bridge.SendToPort(i, "")
 	}()
 }
@@ -164,35 +167,33 @@ func getProxies() *C.char {
 //export changeProxy
 func changeProxy(s *C.char) {
 	paramsString := C.GoString(s)
-	go func() {
-		var params = &ChangeProxyParams{}
-		err := json.Unmarshal([]byte(paramsString), params)
-		if err != nil {
-			log.Infoln("Unmarshal ChangeProxyParams %v", err)
-		}
-		groupName := *params.GroupName
-		proxyName := *params.ProxyName
-		proxies := tunnel.ProxiesWithProviders()
-		group, ok := proxies[groupName]
-		if !ok {
-			return
-		}
-		adapterProxy := group.(*adapter.Proxy)
-		selector, ok := adapterProxy.ProxyAdapter.(*outboundgroup.Selector)
-		if !ok {
-			return
-		}
+	var params = &ChangeProxyParams{}
+	err := json.Unmarshal([]byte(paramsString), params)
+	if err != nil {
+		log.Infoln("Unmarshal ChangeProxyParams %v", err)
+	}
+	groupName := *params.GroupName
+	proxyName := *params.ProxyName
+	proxies := tunnel.ProxiesWithProviders()
+	group, ok := proxies[groupName]
+	if !ok {
+		return
+	}
+	adapterProxy := group.(*adapter.Proxy)
+	selector, ok := adapterProxy.ProxyAdapter.(outboundgroup.SelectAble)
+	if !ok {
+		return
+	}
 
-		err = selector.Set(proxyName)
-		if err == nil {
-			log.Infoln("[Selector] %s selected %s", groupName, proxyName)
-		}
-	}()
+	err = selector.Set(proxyName)
+	if err == nil {
+		log.Infoln("[Selector] %s selected %s", groupName, proxyName)
+	}
 }
 
 //export getTraffic
 func getTraffic() *C.char {
-	up, down := statistic.DefaultManager.Now()
+	up, down := statistic.DefaultManager.Current(state.OnlyProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -207,7 +208,7 @@ func getTraffic() *C.char {
 
 //export getTotalTraffic
 func getTotalTraffic() *C.char {
-	up, down := statistic.DefaultManager.Total()
+	up, down := statistic.DefaultManager.Total(state.OnlyProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -397,25 +398,25 @@ func updateExternalProvider(providerName *C.char, providerType *C.char, port C.l
 				return
 			}
 		case "MMDB":
-			err := mmdb.DownloadMMDB(constant.Path.Resolve(providerNameString))
+			err := updater.UpdateMMDB(constant.Path.Resolve(providerNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "ASN":
-			err := mmdb.DownloadASN(constant.Path.Resolve(providerNameString))
+			err := updater.UpdateASN(constant.Path.Resolve(providerNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "GeoIp":
-			err := geodata.DownloadGeoIP(constant.Path.Resolve(providerNameString))
+			err := updater.UpdateGeoIp(constant.Path.Resolve(providerNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "GeoSite":
-			err := geodata.DownloadGeoSite(constant.Path.Resolve(providerNameString))
+			err := updater.UpdateGeoSite(constant.Path.Resolve(providerNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return

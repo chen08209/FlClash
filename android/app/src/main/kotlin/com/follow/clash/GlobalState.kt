@@ -57,8 +57,6 @@ object GlobalState {
             serviceEngine?.dartExecutor?.executeDartEntrypoint(
                 vpnService,
             )
-
-            Log.e("FlClashVpnService", "initServiceEngine ===>")
         }
     }
 }

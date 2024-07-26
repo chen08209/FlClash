@@ -115,6 +115,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "delay": MessageLookupByLibrary.simpleMessage("Delay"),
         "delaySort": MessageLookupByLibrary.simpleMessage("Sort by delay"),
         "delete": MessageLookupByLibrary.simpleMessage("Delete"),
+        "deleteProfileTip": MessageLookupByLibrary.simpleMessage(
+            "Sure you want to delete the current profile?"),
         "desc": MessageLookupByLibrary.simpleMessage(
             "A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free."),
         "direct": MessageLookupByLibrary.simpleMessage("Direct"),
@@ -208,6 +210,10 @@ class MessageLookup extends MessageLookupByLibrary {
             "No profile, Please add a profile"),
         "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("No requests"),
         "oneColumn": MessageLookupByLibrary.simpleMessage("One column"),
+        "onlyStatisticsProxy":
+            MessageLookupByLibrary.simpleMessage("Only statistics proxy"),
+        "onlyStatisticsProxyDesc": MessageLookupByLibrary.simpleMessage(
+            "When turned on, only statistics proxy traffic"),
         "other": MessageLookupByLibrary.simpleMessage("Other"),
         "otherContributors":
             MessageLookupByLibrary.simpleMessage("Other contributors"),

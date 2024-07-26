@@ -38,10 +38,7 @@ class InfoHeader extends StatelessWidget {
               if (info.iconData != null) ...[
                 Icon(
                   info.iconData,
-                  color: Theme
-                      .of(context)
-                      .colorScheme
-                      .primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(
                   width: 8,
@@ -53,10 +50,7 @@ class InfoHeader extends StatelessWidget {
                     info.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
               ),
@@ -86,6 +80,7 @@ class CommonCard extends StatelessWidget {
     this.onPressed,
     this.info,
     this.selectWidget,
+    this.radius = 12,
     required this.child,
   }) : isSelected = isSelected ?? false;
 
@@ -95,14 +90,13 @@ class CommonCard extends StatelessWidget {
   final Widget child;
   final Info? info;
   final CommonCardType type;
+  final double radius;
 
   BorderSide getBorderSide(BuildContext context, Set<WidgetState> states) {
     if (type == CommonCardType.filled) {
       return BorderSide.none;
     }
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final hoverColor = isSelected
         ? colorScheme.primary.toLight()
         : colorScheme.primary.toLighter();
@@ -119,9 +113,7 @@ class CommonCard extends StatelessWidget {
   }
 
   Color? getBackgroundColor(BuildContext context, Set<WidgetState> states) {
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     switch (type) {
       case CommonCardType.plain:
         if (isSelected) {
@@ -130,8 +122,7 @@ class CommonCard extends StatelessWidget {
         if (states.isEmpty) {
           return colorScheme.secondaryContainer.toLittle();
         }
-        return Theme
-            .of(context)
+        return Theme.of(context)
             .outlinedButtonTheme
             .style
             ?.backgroundColor
@@ -167,29 +158,31 @@ class CommonCard extends StatelessWidget {
         ],
       );
     }
-
     return OutlinedButton(
       clipBehavior: Clip.antiAlias,
       style: ButtonStyle(
         padding: const WidgetStatePropertyAll(EdgeInsets.zero),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(radius),
           ),
         ),
         backgroundColor: WidgetStateProperty.resolveWith(
-              (states) => getBackgroundColor(context, states),
+          (states) => getBackgroundColor(context, states),
         ),
         side: WidgetStateProperty.resolveWith(
-              (states) => getBorderSide(context, states),
+          (states) => getBorderSide(context, states),
         ),
       ),
       onPressed: onPressed,
       child: Builder(
         builder: (_) {
+          if (selectWidget == null) {
+            return childWidget;
+          }
           List<Widget> children = [];
           children.add(childWidget);
-          if (selectWidget != null && isSelected) {
+          if (isSelected) {
             children.add(
               Positioned.fill(
                 child: selectWidget!,
@@ -211,10 +204,7 @@ class SelectIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme
-          .of(context)
-          .colorScheme
-          .inversePrimary,
+      color: Theme.of(context).colorScheme.inversePrimary,
       shape: const CircleBorder(),
       child: Container(
         padding: const EdgeInsets.all(4),

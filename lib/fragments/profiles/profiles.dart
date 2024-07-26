@@ -1,6 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
-import 'package:fl_clash/fragments/profiles/view_profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
@@ -16,7 +15,6 @@ enum ProfileActions {
   edit,
   update,
   delete,
-  view,
 }
 
 class ProfilesFragment extends StatefulWidget {
@@ -27,7 +25,6 @@ class ProfilesFragment extends StatefulWidget {
 }
 
 class _ProfilesFragmentState extends State<ProfilesFragment> {
-  final hasPadding = ValueNotifier<bool>(false);
   Function? applyConfigDebounce;
 
   List<GlobalObjectKey<_ProfileItemState>> profileItemKeys = [];
@@ -75,17 +72,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
         ];
       },
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    hasPadding.dispose();
   }
 
   _changeProfile(String? id) async {
@@ -140,41 +126,33 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
             final columns = _getColumns(state.viewMode);
             return Align(
               alignment: Alignment.topCenter,
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (scrollNotification) {
-                  hasPadding.value =
-                      scrollNotification.metrics.maxScrollExtent > 0;
-                  return true;
-                },
-                child: ValueListenableBuilder(
-                  valueListenable: hasPadding,
-                  builder: (_, hasPadding, __) {
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        top: 16,
-                        bottom: 16 + (hasPadding ? 72 : 0),
-                      ),
-                      child: Grid(
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        crossAxisCount: columns,
-                        children: [
-                          for (int i = 0; i < state.profiles.length; i++)
-                            GridItem(
-                              child: ProfileItem(
-                                key: profileItemKeys[i],
-                                profile: state.profiles[i],
-                                groupValue: state.currentProfileId,
-                                onChanged: _changeProfile,
-                              ),
+              child: ScrollOverBuilder(
+                builder: (isOver) {
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                      bottom: 16 + (isOver ? 72 : 0),
+                    ),
+                    child: Grid(
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      crossAxisCount: columns,
+                      children: [
+                        for (int i = 0; i < state.profiles.length; i++)
+                          GridItem(
+                            child: ProfileItem(
+                              key: profileItemKeys[i],
+                              profile: state.profiles[i],
+                              groupValue: state.currentProfileId,
+                              onChanged: _changeProfile,
                             ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
             );
           },
@@ -204,7 +182,18 @@ class _ProfileItemState extends State<ProfileItem> {
   final isUpdating = ValueNotifier<bool>(false);
 
   _handleDeleteProfile() async {
-    globalState.appController.deleteProfile(widget.profile.id);
+    globalState.showMessage(
+      title: appLocalizations.tip,
+      message: TextSpan(
+        text: appLocalizations.deleteProfileTip,
+      ),
+      onTab: () async {
+        await globalState.appController.deleteProfile(widget.profile.id);
+        if(mounted){
+          Navigator.of(context).pop();
+        }
+      },
+    );
   }
 
   _handleUpdateProfile() async {
@@ -216,9 +205,8 @@ class _ProfileItemState extends State<ProfileItem> {
     try {
       final appController = globalState.appController;
       await appController.updateProfile(widget.profile);
-      if (widget.profile.id == appController.config.currentProfile?.id &&
-          !appController.appState.isStart) {
-        globalState.appController.rawApplyProfile();
+      if (widget.profile.id == appController.config.currentProfile?.id) {
+        globalState.appController.applyProfile(isPrue: true);
       }
     } catch (e) {
       isUpdating.value = false;
@@ -240,16 +228,6 @@ class _ProfileItemState extends State<ProfileItem> {
         context: context,
       ),
       title: "${appLocalizations.edit}${appLocalizations.profile}",
-    );
-  }
-
-  _handleViewProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ViewProfile(
-          profile: widget.profile,
-        ),
-      ),
     );
   }
 
@@ -315,82 +293,12 @@ class _ProfileItemState extends State<ProfileItem> {
                   children: [
                     Text(
                       expireShow,
-                      style: textTheme.labelMedium?.toLighter,
+                      style: textTheme.labelMedium?.toLight,
                     ),
                   ],
                 )
               ],
             );
-            // final child = switch (userInfo != null) {
-            //   true => () {
-            //       final use = userInfo!.upload + userInfo.download;
-            //       final total = userInfo.total;
-            //       final useShow = TrafficValue(value: use).show;
-            //       final totalShow = TrafficValue(value: total).show;
-            //       final progress = total == 0 ? 0.0 : use / total;
-            //       final expireShow = userInfo.expire == 0
-            //           ? appLocalizations.infiniteTime
-            //           : DateTime.fromMillisecondsSinceEpoch(
-            //                   userInfo.expire * 1000)
-            //               .show;
-            //       return Column(
-            //         mainAxisSize: MainAxisSize.min,
-            //         crossAxisAlignment: CrossAxisAlignment.start,
-            //         mainAxisAlignment: MainAxisAlignment.center,
-            //         children: [
-            //           Container(
-            //             margin: const EdgeInsets.symmetric(
-            //               vertical: 8,
-            //             ),
-            //             child: LinearProgressIndicator(
-            //               minHeight: 6,
-            //               value: progress,
-            //             ),
-            //           ),
-            //           Text(
-            //             "$useShow / $totalShow",
-            //             style: textTheme.labelMedium?.toLight(),
-            //           ),
-            //           const SizedBox(
-            //             height: 2,
-            //           ),
-            //           Row(
-            //             children: [
-            //               Text(
-            //                 appLocalizations.expirationTime,
-            //                 style: textTheme.labelMedium?.toLighter(),
-            //               ),
-            //               const SizedBox(
-            //                 width: 4,
-            //               ),
-            //               Text(
-            //                 expireShow,
-            //                 style: textTheme.labelMedium?.toLighter(),
-            //               ),
-            //             ],
-            //           )
-            //         ],
-            //       );
-            //     }(),
-            //   false => Column(
-            //       children: [
-            //         Padding(
-            //           padding: const EdgeInsets.only(top: 8),
-            //           child: CommonChip(
-            //             onPressed: _handleViewProfile,
-            //             avatar: const Icon(Icons.remove_red_eye),
-            //             label: appLocalizations.view,
-            //           ),
-            //         ),
-            //       ],
-            //     ),
-            // };
-            // final measure = globalState.appController.measure;
-            // final height = 6 + 8 * 2 + 2 + measure.labelMediumHeight * 2;
-            // return SizedBox(
-            //   height: height,
-            //   child: child,
-            // );
           }),
         ],
       ),
@@ -409,70 +317,62 @@ class _ProfileItemState extends State<ProfileItem> {
     final groupValue = widget.groupValue;
     final onChanged = widget.onChanged;
     return CommonCard(
-      child: ListItem.radio(
+      isSelected: profile.id == groupValue,
+      onPressed: () {
+        onChanged(profile.id);
+      },
+      child: ListItem(
         key: Key(profile.id),
         horizontalTitleGap: 16,
-        delegate: RadioDelegate<String?>(
-          value: profile.id,
-          groupValue: groupValue,
-          onChanged: onChanged,
-        ),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         trailing: SizedBox(
-          height: 48,
-          width: 48,
+          height: 40,
+          width: 40,
           child: ValueListenableBuilder(
             valueListenable: isUpdating,
             builder: (_, isUpdating, ___) {
               return FadeBox(
-                  child: isUpdating
-                      ? const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: CircularProgressIndicator(),
-                        )
-                      : CommonPopupMenu<ProfileActions>(
-                          items: [
+                child: isUpdating
+                    ? const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: CircularProgressIndicator(),
+                      )
+                    : CommonPopupMenu<ProfileActions>(
+                        items: [
+                          CommonPopupMenuItem(
+                            action: ProfileActions.edit,
+                            label: appLocalizations.edit,
+                            iconData: Icons.edit,
+                          ),
+                          if (profile.type == ProfileType.url)
                             CommonPopupMenuItem(
-                              action: ProfileActions.edit,
-                              label: appLocalizations.edit,
-                              iconData: Icons.edit,
+                              action: ProfileActions.update,
+                              label: appLocalizations.update,
+                              iconData: Icons.sync,
                             ),
-                            if (profile.type == ProfileType.url)
-                              CommonPopupMenuItem(
-                                action: ProfileActions.update,
-                                label: appLocalizations.update,
-                                iconData: Icons.sync,
-                              ),
-                            CommonPopupMenuItem(
-                              action: ProfileActions.view,
-                              label: appLocalizations.view,
-                              iconData: Icons.visibility,
-                            ),
-                            CommonPopupMenuItem(
-                              action: ProfileActions.delete,
-                              label: appLocalizations.delete,
-                              iconData: Icons.delete,
-                            ),
-                          ],
-                          onSelected: (ProfileActions? action) async {
-                            switch (action) {
-                              case ProfileActions.edit:
-                                _handleShowEditExtendPage();
-                                break;
-                              case ProfileActions.delete:
-                                _handleDeleteProfile();
-                                break;
-                              case ProfileActions.update:
-                                _handleUpdateProfile();
-                                break;
-                              case ProfileActions.view:
-                                _handleViewProfile();
-                                break;
-                              case null:
-                                break;
-                            }
-                          },
-                        ));
+                          CommonPopupMenuItem(
+                            action: ProfileActions.delete,
+                            label: appLocalizations.delete,
+                            iconData: Icons.delete,
+                          ),
+                        ],
+                        onSelected: (ProfileActions? action) async {
+                          switch (action) {
+                            case ProfileActions.edit:
+                              _handleShowEditExtendPage();
+                              break;
+                            case ProfileActions.delete:
+                              _handleDeleteProfile();
+                              break;
+                            case ProfileActions.update:
+                              _handleUpdateProfile();
+                              break;
+                            case null:
+                              break;
+                          }
+                        },
+                      ),
+              );
             },
           ),
         ),

@@ -195,23 +195,40 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           },
         ),
         Selector<Config, bool>(
-          selector: (_, config) => config.isCompatible,
-          builder: (_, isCompatible, __) {
+          selector: (_, config) => config.onlyProxy,
+          builder: (_, onlyProxy, __) {
             return ListItem.switchItem(
-              leading: const Icon(Icons.expand_outlined),
-              title: Text(appLocalizations.compatible),
-              subtitle: Text(appLocalizations.compatibleDesc),
+              leading: const Icon(Icons.data_usage_outlined),
+              title: Text(appLocalizations.onlyStatisticsProxy),
+              subtitle: Text(appLocalizations.onlyStatisticsProxyDesc),
               delegate: SwitchDelegate(
-                value: isCompatible,
+                value: onlyProxy,
                 onChanged: (bool value) async {
                   final appController = globalState.appController;
-                  appController.config.isCompatible = value;
-                  await appController.applyProfile();
+                  appController.config.onlyProxy = value;
                 },
               ),
             );
           },
         ),
+        // Selector<Config, bool>(
+        //   selector: (_, config) => config.isCompatible,
+        //   builder: (_, isCompatible, __) {
+        //     return ListItem.switchItem(
+        //       leading: const Icon(Icons.expand_outlined),
+        //       title: Text(appLocalizations.compatible),
+        //       subtitle: Text(appLocalizations.compatibleDesc),
+        //       delegate: SwitchDelegate(
+        //         value: isCompatible,
+        //         onChanged: (bool value) async {
+        //           final appController = globalState.appController;
+        //           appController.config.isCompatible = value;
+        //           await appController.applyProfile();
+        //         },
+        //       ),
+        //     );
+        //   },
+        // ),
       ],
     );
   }

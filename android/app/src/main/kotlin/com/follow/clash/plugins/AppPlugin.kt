@@ -4,12 +4,14 @@ import android.Manifest
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
 import com.follow.clash.GlobalState
 import com.follow.clash.extensions.getBase64
@@ -28,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.net.InetSocketAddress
 
 
@@ -61,7 +64,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     private fun tip(message: String?) {
-        if(GlobalState.flutterEngine == null){
+        if (GlobalState.flutterEngine == null) {
             if (toast != null) {
                 toast!!.cancel()
             }
@@ -164,8 +167,52 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 result.success(true)
             }
 
+            "openFile" -> {
+                val path = call.argument<String>("path")!!
+                openFile(path)
+                result.success(true)
+            }
+
             else -> {
                 result.notImplemented();
+            }
+        }
+    }
+
+    private fun openFile(path: String) {
+        context?.let {
+            val file = File(path)
+            val uri = FileProvider.getUriForFile(
+                it,
+                "${it.packageName}.fileProvider",
+                file
+            )
+
+            val intent = Intent(Intent.ACTION_VIEW).setDataAndType(
+                uri,
+                "text/plain"
+            )
+
+            val flags =
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
+
+            val resInfoList = it.packageManager.queryIntentActivities(
+                intent, PackageManager.MATCH_DEFAULT_ONLY
+            )
+
+            for (resolveInfo in resInfoList) {
+                val packageName = resolveInfo.activityInfo.packageName
+                it.grantUriPermission(
+                    packageName,
+                    uri,
+                    flags
+                )
+            }
+
+            try {
+                activity?.startActivity(intent)
+            } catch (e: Exception) {
+                println(e)
             }
         }
     }

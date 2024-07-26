@@ -85,7 +85,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
   }
 
   @override
-  void didUpdateWidget(covariant CommonScaffold oldWidget) {
+  void didUpdateWidget(CommonScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.title != widget.title) {
       _actions.value = [];
@@ -93,6 +93,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
   }
 
   Widget? get _sideNavigationBar => widget.sideNavigationBar;
+
+  Widget get body => SafeArea(child: widget.body);
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +109,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
               valueListenable: _actions,
               builder: (_, actions, __) {
                 final realActions =
-                    actions.isNotEmpty ? actions : widget.actions;
+                actions.isNotEmpty ? actions : widget.actions;
                 return AppBar(
                   centerTitle: false,
                   automaticallyImplyLeading: widget.automaticallyImplyLeading,
@@ -133,7 +135,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
           ],
         ),
       ),
-      body: widget.body,
+      body: body,
       bottomNavigationBar: widget.bottomNavigationBar,
     );
     return _sideNavigationBar != null

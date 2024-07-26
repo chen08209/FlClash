@@ -22,17 +22,6 @@ class GeoItem {
   });
 }
 
-@immutable
-class FileInfo {
-  final String size;
-  final DateTime lastModified;
-
-  const FileInfo({
-    required this.size,
-    required this.lastModified,
-  });
-}
-
 class Resources extends StatefulWidget {
   const Resources({super.key});
 
@@ -196,25 +185,9 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
     final lastModified = await file.lastModified();
     final size = await file.length();
     return FileInfo(
-      size: TrafficValue(value: size).show,
+      size: size,
       lastModified: lastModified,
     );
-  }
-
-  // _uploadGeoFile(String fileName) async {
-  //   final res = await picker.pickerGeoDataFile();
-  //   if (res == null || res.bytes == null) return;
-  //   final homePath = await appPath.getHomeDirPath();
-  //   final file = File(join(homePath, fileName));
-  //   await file.writeAsBytes(
-  //     res.bytes!,
-  //     flush: true,
-  //   );
-  //   setState(() {});
-  // }
-
-  String _buildFileInfoDesc(FileInfo fileInfo) {
-    return "${fileInfo.size}  ·  ${fileInfo.lastModified.lastUpdateTimeDesc}";
   }
 
   Widget _buildSubtitle(String url) {
@@ -240,7 +213,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
                         ),
                       )
                     : Text(
-                        _buildFileInfoDesc(snapshot.data!),
+                        snapshot.data!.desc,
                       ),
               ),
             );

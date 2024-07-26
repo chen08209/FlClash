@@ -68,7 +68,13 @@ showSheet({
     showModalBottomSheet(
       context: context,
       isScrollControlled: isScrollControlled,
-      builder: builder,
+      builder: (context) {
+        return SafeArea(
+          child: builder(
+            context,
+          ),
+        );
+      },
       showDragHandle: true,
       useSafeArea: true,
     );
@@ -80,7 +86,9 @@ showSheet({
       constraints: BoxConstraints(
         maxWidth: width,
       ),
-      body: builder(context),
+      body: SafeArea(
+        child: builder(context),
+      ),
       title: title,
     );
   }

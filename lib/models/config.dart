@@ -26,14 +26,16 @@ class AccessControl with _$AccessControl {
 }
 
 @freezed
-class Props with _$Props {
-  const factory Props({
+class CoreState with _$CoreState {
+  const factory CoreState({
     AccessControl? accessControl,
     required bool allowBypass,
     required bool systemProxy,
-  }) = _Props;
+    required int mixedPort,
+    required bool onlyProxy,
+  }) = _CoreState;
 
-  factory Props.fromJson(Map<String, Object?> json) => _$PropsFromJson(json);
+  factory CoreState.fromJson(Map<String, Object?> json) => _$CoreStateFromJson(json);
 }
 
 @freezed
@@ -79,6 +81,7 @@ class Config extends ChangeNotifier {
   int _proxiesColumns;
   String _testUrl;
   WindowProps _windowProps;
+  bool _onlyProxy;
 
   Config()
       : _profiles = [],
@@ -103,7 +106,8 @@ class Config extends ChangeNotifier {
         _proxyCardType = ProxyCardType.expand,
         _windowProps = defaultWindowProps,
         _proxiesType = ProxiesType.tab,
-        _proxiesColumns = 2;
+        _proxiesColumns = 2,
+        _onlyProxy = false;
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
@@ -406,6 +410,19 @@ class Config extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  @JsonKey(defaultValue: false)
+  bool get onlyProxy {
+    return _onlyProxy;
+  }
+
+  set onlyProxy(bool value) {
+    if (_onlyProxy != value) {
+      _onlyProxy = value;
+      notifyListeners();
+    }
+  }
+
 
   @JsonKey(defaultValue: false)
   bool get isCloseConnections {

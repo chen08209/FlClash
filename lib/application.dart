@@ -128,7 +128,7 @@ class ApplicationState extends State<Application> {
     globalState.groupsUpdateTimer ??= Timer.periodic(
       httpTimeoutDuration,
       (timer) async {
-        await globalState.appController.updateGroups();
+        await globalState.appController.updateGroupDebounce();
       },
     );
   }
@@ -136,7 +136,7 @@ class ApplicationState extends State<Application> {
   @override
   Widget build(context) {
     return AppStateContainer(
-      child: ClashMessageContainer(
+      child: ClashContainer(
         child: Selector2<AppState, Config, ApplicationSelectorState>(
           selector: (_, appState, config) => ApplicationSelectorState(
             locale: config.locale,

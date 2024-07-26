@@ -213,6 +213,9 @@ class ListItem<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     if (delegate is OpenDelegate) {
       final openDelegate = delegate as OpenDelegate;
+      final child = SafeArea(
+        child: openDelegate.widget,
+      );
       return OpenContainer(
         closedBuilder: (_, action) {
           openAction() {
@@ -221,7 +224,7 @@ class ListItem<T> extends StatelessWidget {
             if (!isMobile) {
               showExtendPage(
                 context,
-                body: openDelegate.widget,
+                body: child,
                 title: openDelegate.title,
                 extendPageWidth: openDelegate.extendPageWidth,
               );
@@ -230,14 +233,16 @@ class ListItem<T> extends StatelessWidget {
             action();
           }
 
-          return _buildListTile(onTap: openAction);
+          return _buildListTile(
+            onTap: openAction,
+          );
         },
         openBuilder: (_, action) {
           return CommonScaffold.open(
             key: Key(openDelegate.title),
             onBack: action,
             title: openDelegate.title,
-            body: openDelegate.widget,
+            body: child,
           );
         },
       );
@@ -399,10 +404,10 @@ List<Widget> generateInfoSection({
 }) {
   final genItems = separated
       ? items.separated(
-    const Divider(
-      height: 0,
-    ),
-  )
+          const Divider(
+            height: 0,
+          ),
+        )
       : items;
   return [
     if (items.isNotEmpty)
@@ -413,7 +418,6 @@ List<Widget> generateInfoSection({
     ...genItems,
   ];
 }
-
 
 Widget generateListView(List<Widget> items) {
   return ListView.builder(

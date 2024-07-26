@@ -589,25 +589,27 @@ Future<T?> showModalSideSheet<T>({
   final MaterialLocalizations localizations = MaterialLocalizations.of(context);
   return navigator.push(ModalSideSheetRoute<T>(
     builder: (context) {
-      return Column(
-        children: [
-          AppBar(
-            automaticallyImplyLeading: false,
-            title: Text(title),
-            centerTitle: false,
-            actions: const [
-              SizedBox(
-                height: kToolbarHeight,
-                width: kToolbarHeight,
-                child: CloseButton(),
-              )
-            ],
-          ),
-          Expanded(
-            flex: 1,
-            child: body,
-          ),
-        ],
+      return SafeArea(
+        child: Column(
+          children: [
+            AppBar(
+              automaticallyImplyLeading: false,
+              title: Text(title),
+              centerTitle: false,
+              actions: const [
+                SizedBox(
+                  height: kToolbarHeight,
+                  width: kToolbarHeight,
+                  child: CloseButton(),
+                )
+              ],
+            ),
+            Expanded(
+              flex: 1,
+              child: body,
+            ),
+          ],
+        ),
       );
     },
     capturedThemes:

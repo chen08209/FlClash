@@ -3,24 +3,42 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/proxy.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class ClashMessageContainer extends StatefulWidget {
+class ClashContainer extends StatefulWidget {
   final Widget child;
 
-  const ClashMessageContainer({
+  const ClashContainer({
     super.key,
     required this.child,
   });
 
   @override
-  State<ClashMessageContainer> createState() => _ClashMessageContainerState();
+  State<ClashContainer> createState() => _ClashContainerState();
 }
 
-class _ClashMessageContainerState extends State<ClashMessageContainer>
+class _ClashContainerState extends State<ClashContainer>
     with AppMessageListener {
+  Widget _updateCoreState(Widget child) {
+    return Selector2<Config, ClashConfig, CoreState>(
+      selector: (_, config, clashConfig) => CoreState(
+        accessControl: config.isAccessControl ? config.accessControl : null,
+        allowBypass: config.allowBypass,
+        systemProxy: config.systemProxy,
+        mixedPort: clashConfig.mixedPort,
+        onlyProxy: config.onlyProxy,
+      ),
+      builder: (__, state, child) {
+        clashCore.setState(state);
+        return child!;
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return _updateCoreState(widget.child);
   }
 
   @override
@@ -60,22 +78,19 @@ class _ClashMessageContainerState extends State<ClashMessageContainer>
     final currentSelectedMap = appController.config.currentSelectedMap;
     final proxyName = currentSelectedMap[groupName];
     if (proxyName == null) return;
-    globalState.changeProxy(
-      config: appController.config,
+    appController.changeProxy(
       groupName: groupName,
       proxyName: proxyName,
     );
-    appController.addCheckIpNumDebounce();
     super.onLoaded(proxyName);
   }
 
   @override
-  void onStarted(String runTime) {
+  Future<void> onStarted(String runTime) async {
     super.onStarted(runTime);
     proxy?.updateStartTime();
     final appController = globalState.appController;
-    appController.rawApplyProfile().then((_) {
-      appController.addCheckIpNumDebounce();
-    });
+    await appController.applyProfile(isPrue: true);
+    appController.addCheckIpNumDebounce();
   }
 }

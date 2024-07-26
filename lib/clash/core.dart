@@ -128,8 +128,7 @@ class ClashCore {
         UsedProxy.GLOBAL.name,
         ...(proxies[UsedProxy.GLOBAL.name]["all"] as List).where((e) {
           final proxy = proxies[e] ?? {};
-          return GroupTypeExtension.valueList.contains(proxy['type']) &&
-              proxy['hidden'] != true;
+          return GroupTypeExtension.valueList.contains(proxy['type']);
         })
       ];
       final groupsRaw = groupNames.map((groupName) {
@@ -142,7 +141,11 @@ class ClashCore {
             .toList();
         return group;
       }).toList();
-      return groupsRaw.map((e) => Group.fromJson(e)).toList();
+      return groupsRaw
+          .map(
+            (e) => Group.fromJson(e),
+          )
+          .toList();
     });
   }
 
@@ -237,19 +240,19 @@ class ClashCore {
     return VersionInfo.fromJson(versionInfo);
   }
 
-  setProps(Props props) {
-    final propsChar = json.encode(props).toNativeUtf8().cast<Char>();
-    clashFFI.setAndroidProps(propsChar);
-    malloc.free(propsChar);
+  setState(CoreState state) {
+    final stateChar = json.encode(state).toNativeUtf8().cast<Char>();
+    clashFFI.setState(stateChar);
+    malloc.free(stateChar);
   }
 
-  Props getProps() {
-    final androidPropsRaw = clashFFI.getAndroidProps();
-    final androidProps = json.decode(
-      androidPropsRaw.cast<Utf8>().toDartString(),
+  CoreState getState() {
+    final stateRaw = clashFFI.getState();
+    final state = json.decode(
+      stateRaw.cast<Utf8>().toDartString(),
     );
-    clashFFI.freeCString(androidPropsRaw);
-    return Props.fromJson(androidProps);
+    clashFFI.freeCString(stateRaw);
+    return CoreState.fromJson(state);
   }
 
   Traffic getTraffic() {
