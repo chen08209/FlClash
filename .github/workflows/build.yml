@@ -141,3 +141,17 @@ jobs:
         with:
           files: ./dist/*
           body_path: './release.md'
+
+      - name: Push to fdroid repo
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+        with:
+          source-directory: ./dist/
+          destination-github-username: chen08209
+          destination-repository-name: FlClash-fdroid-repo
+          user-name: 'github-actions[bot]'
+          user-email: 'github-actions[bot]@users.noreply.github.com'
+          target-branch: action-pr
+          commit-message: Update from ${{ github.ref_name }}
+          target-directory: /tmp/
