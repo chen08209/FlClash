@@ -149,7 +149,7 @@ jobs:
         with:
           source-directory: ./dist/
           destination-github-username: chen08209
-          destination-repository-name: flclash-fdroid-repo
+          destination-repository-name: FlClash-fdroid-repo
           user-name: 'github-actions[bot]'
           user-email: 'github-actions[bot]@users.noreply.github.com'
           target-branch: action-pr
