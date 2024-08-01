@@ -111,6 +111,15 @@ class GlobalState {
         config: config,
         clashConfig: clashConfig,
       );
+      clashCore.setState(
+        CoreState(
+          accessControl: config.isAccessControl ? config.accessControl : null,
+          allowBypass: config.allowBypass,
+          systemProxy: config.systemProxy,
+          mixedPort: clashConfig.mixedPort,
+          onlyProxy: config.onlyProxy,
+        ),
+      );
     }
     updateCoreVersionInfo(appState);
   }

@@ -142,6 +142,7 @@ class ApplicationState extends State<Application> {
             locale: config.locale,
             themeMode: config.themeMode,
             primaryColor: config.primaryColor,
+            prueBlack: config.prueBlack,
           ),
           builder: (_, state, child) {
             return DynamicColorBuilder(
@@ -180,7 +181,7 @@ class ApplicationState extends State<Application> {
                       brightness: Brightness.dark,
                       systemColorSchemes: systemColorSchemes,
                       primaryColor: state.primaryColor,
-                    ),
+                    ).toPrueBlack(state.prueBlack),
                   ),
                   home: child,
                 );

@@ -89,8 +89,11 @@ class _EditProfileState extends State<EditProfile> {
     });
   }
 
-  Future<FileInfo> _getFileInfo(path) async {
+  Future<FileInfo?> _getFileInfo(path) async {
     final file = File(path);
+    if (!await file.exists()) {
+      return null;
+    }
     final lastModified = await file.lastModified();
     final size = await file.length();
     return FileInfo(
@@ -124,59 +127,6 @@ class _EditProfileState extends State<EditProfile> {
     fileInfoNotifier.value = fileInfoNotifier.value?.copyWith(
       size: fileData?.length ?? 0,
       lastModified: DateTime.now(),
-    );
-  }
-
-  Widget _buildSubtitle() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(
-          height: 4,
-        ),
-        ValueListenableBuilder<FileInfo?>(
-          valueListenable: fileInfoNotifier,
-          builder: (_, fileInfo, __) {
-            final height =
-                globalState.appController.measure.bodyMediumHeight + 4;
-            return SizedBox(
-              height: height,
-              child: FadeBox(
-                child: fileInfo == null
-                    ? SizedBox(
-                        width: height,
-                        height: height,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        fileInfo.desc,
-                      ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(
-          height: 8,
-        ),
-        Wrap(
-          runSpacing: 6,
-          spacing: 12,
-          children: [
-            CommonChip(
-              avatar: const Icon(Icons.edit),
-              label: appLocalizations.edit,
-              onPressed: _editProfileFile,
-            ),
-            CommonChip(
-              avatar: const Icon(Icons.upload),
-              label: appLocalizations.upload,
-              onPressed: _uploadProfileFile,
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -250,9 +200,49 @@ class _EditProfileState extends State<EditProfile> {
             ),
           ),
       ],
-      ListItem(
-        title: Text(appLocalizations.profile),
-        subtitle: _buildSubtitle(),
+      ValueListenableBuilder<FileInfo?>(
+        valueListenable: fileInfoNotifier,
+        builder: (_, fileInfo, __) {
+          return FadeBox(
+            child: fileInfo == null
+                ? Container()
+                : ListItem(
+                    title: Text(
+                      appLocalizations.profile,
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        Text(
+                          fileInfo.desc,
+                        ),
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        Wrap(
+                          runSpacing: 6,
+                          spacing: 12,
+                          children: [
+                            CommonChip(
+                              avatar: const Icon(Icons.edit),
+                              label: appLocalizations.edit,
+                              onPressed: _editProfileFile,
+                            ),
+                            CommonChip(
+                              avatar: const Icon(Icons.upload),
+                              label: appLocalizations.upload,
+                              onPressed: _uploadProfileFile,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+          );
+        },
       ),
     ];
     return FloatLayout(

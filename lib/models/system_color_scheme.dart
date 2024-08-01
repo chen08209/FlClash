@@ -12,15 +12,15 @@ class SystemColorSchemes {
   });
 
   getSystemColorSchemeForBrightness(Brightness? brightness) {
-    if (brightness != null && brightness == Brightness.dark) {
+    if (brightness == Brightness.dark) {
       return darkColorScheme != null
           ? ColorScheme.fromSeed(
               seedColor: darkColorScheme!.primary,
-              brightness: brightness,
+              brightness: Brightness.dark,
             )
           : ColorScheme.fromSeed(
               seedColor: defaultPrimaryColor,
-              brightness: brightness,
+              brightness: Brightness.dark,
             );
     }
     return lightColorScheme != null
