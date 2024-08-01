@@ -189,7 +189,7 @@ class _ProfileItemState extends State<ProfileItem> {
       ),
       onTab: () async {
         await globalState.appController.deleteProfile(widget.profile.id);
-        if(mounted){
+        if (mounted) {
           Navigator.of(context).pop();
         }
       },
@@ -231,75 +231,90 @@ class _ProfileItemState extends State<ProfileItem> {
     );
   }
 
+  List<Widget> _buildUserInfo(UserInfo userInfo) {
+    final use = userInfo.upload + userInfo.download;
+    final total = userInfo.total;
+    if(total == 0){
+      return [];
+    }
+    final useShow = TrafficValue(value: use).show;
+    final totalShow = TrafficValue(value: total).show;
+    final progress = total == 0 ? 0.0 : use / total;
+    final expireShow = userInfo.expire == 0
+        ? appLocalizations.infiniteTime
+        : DateTime.fromMillisecondsSinceEpoch(userInfo.expire * 1000).show;
+    return [
+      LinearProgressIndicator(
+        minHeight: 6,
+        value: progress,
+      ),
+      const SizedBox(
+        height: 8,
+      ),
+      Text(
+        "$useShow / $totalShow · $expireShow",
+        style: context.textTheme.labelMedium?.toLight,
+      ),
+      const SizedBox(
+        height: 4,
+      ),
+    ];
+  }
+
+  List<Widget> _buildUrlProfileInfo(Profile profile) {
+    final userInfo = profile.userInfo;
+    return [
+      const SizedBox(
+        height: 8,
+      ),
+      if (userInfo != null) ..._buildUserInfo(userInfo),
+      Text(
+        profile.lastUpdateDate?.lastUpdateTimeDesc ?? "",
+        style: context.textTheme.labelMedium?.toLight,
+      ),
+    ];
+  }
+
+  List<Widget> _buildFileProfileInfo(Profile profile) {
+    return [
+      const SizedBox(
+        height: 8,
+      ),
+      Text(
+        profile.lastUpdateDate?.lastUpdateTimeDesc ?? "",
+        style: context.textTheme.labelMedium?.toLight,
+      ),
+    ];
+  }
+
   _buildTitle(Profile profile) {
-    final textTheme = context.textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Text(
+            profile.label ?? profile.id,
+            style: context.textTheme.titleMedium,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Flexible(
-                child: Text(
-                  profile.label ?? profile.id,
-                  style: textTheme.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Text(
-                profile.lastUpdateDate?.lastUpdateTimeDesc ?? '',
-                style: textTheme.labelMedium?.toLight,
-              ),
+              ...switch (profile.type) {
+                ProfileType.file => _buildFileProfileInfo(
+                    profile,
+                  ),
+                ProfileType.url => _buildUrlProfileInfo(
+                    profile,
+                  ),
+              },
             ],
           ),
-          Builder(builder: (context) {
-            final userInfo = profile.userInfo ?? const UserInfo();
-            final use = userInfo.upload + userInfo.download;
-            final total = userInfo.total;
-            final useShow = TrafficValue(value: use).show;
-            final totalShow = TrafficValue(value: total).show;
-            final progress = total == 0 ? 0.0 : use / total;
-            final expireShow = userInfo.expire == 0
-                ? appLocalizations.infiniteTime
-                : DateTime.fromMillisecondsSinceEpoch(userInfo.expire * 1000)
-                    .show;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 8,
-                  ),
-                  child: LinearProgressIndicator(
-                    minHeight: 6,
-                    value: progress,
-                  ),
-                ),
-                Text(
-                  "$useShow / $totalShow",
-                  style: textTheme.labelMedium?.toLight,
-                ),
-                const SizedBox(
-                  height: 2,
-                ),
-                Row(
-                  children: [
-                    Text(
-                      expireShow,
-                      style: textTheme.labelMedium?.toLight,
-                    ),
-                  ],
-                )
-              ],
-            );
-          }),
         ],
       ),
     );

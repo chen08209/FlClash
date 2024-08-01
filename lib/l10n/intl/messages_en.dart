@@ -257,6 +257,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "proxyPort": MessageLookupByLibrary.simpleMessage("ProxyPort"),
         "proxyPortDesc": MessageLookupByLibrary.simpleMessage(
             "Set the Clash listening port"),
+        "prueBlackMode":
+            MessageLookupByLibrary.simpleMessage("Prue black mode"),
         "qrcode": MessageLookupByLibrary.simpleMessage("QR code"),
         "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
             "Scan QR code to obtain profile"),

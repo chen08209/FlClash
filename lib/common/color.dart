@@ -17,3 +17,12 @@ extension ColorExtension on Color {
     return withOpacity(0.03);
   }
 }
+
+extension ColorSchemeExtension on ColorScheme {
+  ColorScheme toPrueBlack(bool isPrueBlack) => isPrueBlack
+      ? copyWith(
+          surface: Colors.black,
+          background: Colors.black,
+        )
+      : this;
+}

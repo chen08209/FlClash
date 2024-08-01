@@ -1,14 +1,11 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'side_sheet.dart';
 
-showExtendPage(
-  BuildContext context, {
+showExtendPage(BuildContext context, {
   required Widget body,
   required String title,
   double? extendPageWidth,
@@ -20,35 +17,31 @@ showExtendPage(
     key: globalKey,
     child: body,
   );
+  final isMobile = globalState.appController.appState.viewMode ==
+      ViewMode.mobile;
   navigator.push(
     ModalSideSheetRoute(
       modalBarrierColor: Colors.black38,
-      builder: (context) => Selector<AppState, double>(
-        selector: (_, appState) => appState.viewWidth,
-        builder: (_, viewWidth, __) {
-          final isMobile =
-              globalState.appController.appState.viewMode == ViewMode.mobile;
-          final commonScaffold = CommonScaffold(
-            automaticallyImplyLeading: isMobile ? true : false,
-            actions: isMobile
-                ? null
-                : [
-                    const SizedBox(
-                      height: kToolbarHeight,
-                      width: kToolbarHeight,
-                      child: CloseButton(),
-                    ),
-                  ],
-            title: title,
-            body: uniqueBody,
-          );
-          return AnimatedContainer(
-            duration: kThemeAnimationDuration,
-            width: isMobile ? viewWidth : extendPageWidth ?? 300,
-            child: commonScaffold,
-          );
-        },
-      ),
+      builder: (context) {
+        final commonScaffold = CommonScaffold(
+          automaticallyImplyLeading: isMobile ? true : false,
+          actions: isMobile
+              ? null
+              : [
+            const SizedBox(
+              height: kToolbarHeight,
+              width: kToolbarHeight,
+              child: CloseButton(),
+            ),
+          ],
+          title: title,
+          body: uniqueBody,
+        );
+        return SizedBox(
+          width: isMobile ? context.width : extendPageWidth ?? 300,
+          child: commonScaffold,
+        );
+      },
       constraints: const BoxConstraints(),
       filter: filter,
     ),
