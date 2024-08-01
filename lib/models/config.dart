@@ -82,6 +82,7 @@ class Config extends ChangeNotifier {
   String _testUrl;
   WindowProps _windowProps;
   bool _onlyProxy;
+  bool _prueBlack;
 
   Config()
       : _profiles = [],
@@ -107,6 +108,7 @@ class Config extends ChangeNotifier {
         _windowProps = defaultWindowProps,
         _proxiesType = ProxiesType.tab,
         _proxiesColumns = 2,
+        _prueBlack = false,
         _onlyProxy = false;
 
   deleteProfileById(String id) {
@@ -423,6 +425,17 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: false)
+  bool get prueBlack {
+    return _prueBlack;
+  }
+
+  set prueBlack(bool value) {
+    if (_prueBlack != value) {
+      _prueBlack = value;
+      notifyListeners();
+    }
+  }
 
   @JsonKey(defaultValue: false)
   bool get isCloseConnections {
@@ -530,6 +543,7 @@ class Config extends ChangeNotifier {
       _accessControl = config._accessControl;
       _isAnimateToPage = config._isAnimateToPage;
       _autoCheckUpdate = config._autoCheckUpdate;
+      _prueBlack = config._prueBlack;
       _testUrl = config._testUrl;
       _isExclude = config._isExclude;
       _windowProps = config._windowProps;

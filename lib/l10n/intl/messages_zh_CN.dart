@@ -208,6 +208,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "proxyGroup": MessageLookupByLibrary.simpleMessage("代理组"),
         "proxyPort": MessageLookupByLibrary.simpleMessage("代理端口"),
         "proxyPortDesc": MessageLookupByLibrary.simpleMessage("设置Clash监听端口"),
+        "prueBlackMode": MessageLookupByLibrary.simpleMessage("纯黑模式"),
         "qrcode": MessageLookupByLibrary.simpleMessage("二维码"),
         "qrcodeDesc": MessageLookupByLibrary.simpleMessage("扫描二维码获取配置文件"),
         "recovery": MessageLookupByLibrary.simpleMessage("恢复"),

@@ -41,9 +41,10 @@ class ProfilesSelectorState with _$ProfilesSelectorState {
 @freezed
 class ApplicationSelectorState with _$ApplicationSelectorState {
   const factory ApplicationSelectorState({
-    String? locale,
-    ThemeMode? themeMode,
-    int? primaryColor,
+    required String? locale,
+    required ThemeMode? themeMode,
+    required int? primaryColor,
+    required bool prueBlack,
   }) = _ApplicationSelectorState;
 }
 

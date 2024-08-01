@@ -2259,6 +2259,16 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Prue black mode`
+  String get prueBlackMode {
+    return Intl.message(
+      'Prue black mode',
+      name: 'prueBlackMode',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

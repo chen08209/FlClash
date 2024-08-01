@@ -26,9 +26,7 @@ class ThemeFragment extends StatelessWidget {
     final previewCard = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: CommonCard(
-        onPressed: (){
-
-        },
+        onPressed: () {},
         info: Info(
           label: appLocalizations.preview,
           iconData: Icons.looks,
@@ -87,7 +85,6 @@ class ThemeColorsBox extends StatefulWidget {
 }
 
 class _ThemeColorsBoxState extends State<ThemeColorsBox> {
-
   Widget _themeModeCheckBox({
     bool? isSelected,
     required ThemeModeItem themeModeItem,
@@ -229,6 +226,27 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
             ),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Selector<Config, bool>(
+            selector: (_, config) => config.prueBlack,
+            builder: (_, value, ___) {
+              return ListItem.switchItem(
+                leading: Icon(
+                  Icons.contrast,
+                  color: context.colorScheme.primary,
+                ),
+                title: Text(appLocalizations.prueBlackMode),
+                delegate: SwitchDelegate(
+                  value: value,
+                  onChanged: (value){
+                    globalState.appController.config.prueBlack = value;
+                  }
+                ),
+              );
+            },
+          ),
+        )
       ],
     );
   }

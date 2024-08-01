@@ -219,5 +219,6 @@
   "autoCloseConnectionsDesc": "切换节点后自动关闭连接",
   "onlyStatisticsProxy": "仅统计代理",
   "onlyStatisticsProxyDesc": "开启后，将只统计代理流量",
-  "deleteProfileTip": "确定要删除当前配置吗?"
+  "deleteProfileTip": "确定要删除当前配置吗?",
+  "prueBlackMode": "纯黑模式"
 }
