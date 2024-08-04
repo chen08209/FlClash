@@ -100,22 +100,6 @@ class ClashCore {
     );
   }
 
-  setProfileName(String profileName) {
-    final profileNameChar = profileName.toNativeUtf8().cast<Char>();
-    clashFFI.setCurrentProfileName(
-      profileNameChar,
-    );
-    malloc.free(profileNameChar);
-  }
-
-  getProfileName() {
-    final currentProfileNameRaw = clashFFI.getCurrentProfileName();
-    final currentProfileName =
-        currentProfileNameRaw.cast<Utf8>().toDartString();
-    clashFFI.freeCString(currentProfileNameRaw);
-    return currentProfileName;
-  }
-
   Future<List<Group>> getProxiesGroups() {
     final proxiesRaw = clashFFI.getProxies();
     final proxiesRawString = proxiesRaw.cast<Utf8>().toDartString();
@@ -156,13 +140,26 @@ class ClashCore {
     clashFFI.freeCString(externalProvidersRaw);
     return Isolate.run<List<ExternalProvider>>(() {
       final externalProviders =
-          (json.decode(externalProvidersRawString) as List<dynamic>)
+          (json.decode(externalProvidersRawString) as Map<String, dynamic>)
+              .values
               .map(
                 (item) => ExternalProvider.fromJson(item),
               )
               .toList();
       return externalProviders;
     });
+  }
+
+  ExternalProvider getExternalProvider(String externalProviderName) {
+    final externalProviderNameChar =
+        externalProviderName.toNativeUtf8().cast<Char>();
+    final externalProviderRaw =
+        clashFFI.getExternalProvider(externalProviderNameChar);
+    malloc.free(externalProviderNameChar);
+    final externalProviderRawString =
+        externalProviderRaw.cast<Utf8>().toDartString();
+    clashFFI.freeCString(externalProviderRaw);
+    return ExternalProvider.fromJson(json.decode(externalProviderRawString));
   }
 
   Future<String> updateExternalProvider({
@@ -216,21 +213,13 @@ class ClashCore {
       receiver.sendPort.nativePort,
     );
     malloc.free(delayParamsChar);
-    Future.delayed(httpTimeoutDuration + moreDuration, () {
-      receiver.close();
-      if (!completer.isCompleted) {
-        completer.complete(
-          Delay(name: proxyName, value: -1),
-        );
-      }
-    });
     return completer.future;
   }
 
-  clearEffect(String path) {
-    final pathChar = path.toNativeUtf8().cast<Char>();
-    clashFFI.clearEffect(pathChar);
-    malloc.free(pathChar);
+  clearEffect(String profileId) {
+    final profileIdChar = profileId.toNativeUtf8().cast<Char>();
+    clashFFI.clearEffect(profileIdChar);
+    malloc.free(profileIdChar);
   }
 
   VersionInfo getVersionInfo() {

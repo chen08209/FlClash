@@ -1,22 +1,26 @@
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:image_picker/image_picker.dart';
 
 class Picker {
-  Future<PlatformFile?> pickerConfigFile() async {
+  Future<PlatformFile?> pickerFile() async {
     final filePickerResult = await FilePicker.platform.pickFiles(
       withData: true,
       allowMultiple: false,
+      initialDirectory: await appPath.getDownloadDirPath(),
     );
     return filePickerResult?.files.first;
   }
 
-  Future<PlatformFile?> pickerGeoDataFile() async {
-    final filePickerResult = await FilePicker.platform.pickFiles(
-      withData: true,
-      allowMultiple: false,
+  Future<String?> saveFile(String fileName,Uint8List bytes) async {
+    final path = await FilePicker.platform.saveFile(
+      fileName: fileName,
+      initialDirectory: await appPath.getDownloadDirPath(),
+      bytes: bytes,
     );
-    return filePickerResult?.files.first;
+    return path;
   }
 
   Future<String?> pickerConfigQRCode() async {

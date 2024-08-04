@@ -44,7 +44,7 @@ class Navigation {
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       const NavigationItem(
-        icon: Icon(Icons.swap_vert_circle),
+        icon: Icon(Icons.storage),
         label: "resources",
         description: "resourcesDesc",
         keep: false,

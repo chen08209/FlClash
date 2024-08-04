@@ -21,8 +21,9 @@ type AndroidProps struct {
 
 type State struct {
 	AndroidProps
-	MixedPort int  `json:"mixedPort"`
-	OnlyProxy bool `json:"onlyProxy"`
+	CurrentProfileName string `json:"currentProfileName"`
+	MixedPort          int    `json:"mixedPort"`
+	OnlyProxy          bool   `json:"onlyProxy"`
 }
 
 var state State

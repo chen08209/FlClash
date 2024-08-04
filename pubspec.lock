@@ -34,7 +34,7 @@ packages:
     source: hosted
     version: "3.5.1"
   archive:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: archive
       sha256: cb6a278ef2dbb298455e1a713bda08524a175630ec643a242c399c932a0a1f7d
@@ -525,6 +525,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+  isolate_contactor:
+    dependency: transitive
+    description:
+      name: isolate_contactor
+      sha256: f1be0a90f91e4309ef37cc45280b2a84e769e848aae378318dd3dd263cfc482a
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2.0"
+  isolate_manager:
+    dependency: transitive
+    description:
+      name: isolate_manager
+      sha256: "8fb916c4444fd408f089448f904f083ac3e169ea1789fd4d987b25809af92188"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.3.1"
   jovial_misc:
     dependency: transitive
     description:
@@ -828,6 +844,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.1"
+  re_editor:
+    dependency: "direct main"
+    description:
+      name: re_editor
+      sha256: abae2b015799c936b9f9b68888e2c55007dd159b4654a85da22ce1af84efbd17
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.1"
+  re_highlight:
+    dependency: "direct main"
+    description:
+      name: re_highlight
+      sha256: "6c4ac3f76f939fb7ca9df013df98526634e17d8f7460e028bd23a035870024f2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   screen_retriever:
     dependency: transitive
     description:

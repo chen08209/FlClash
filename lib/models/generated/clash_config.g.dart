@@ -45,6 +45,7 @@ ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig()
   ..logLevel =
       $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']) ?? LogLevel.info
   ..externalController = json['external-controller'] as String? ?? ''
+  ..keepAliveInterval = (json['keep-alive-interval'] as num?)?.toInt() ?? 30
   ..ipv6 = json['ipv6'] as bool? ?? false
   ..geodataLoader = json['geodata-loader'] as String? ?? 'memconservative'
   ..unifiedDelay = json['unified-delay'] as bool? ?? false
@@ -75,6 +76,7 @@ Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
       'allow-lan': instance.allowLan,
       'log-level': _$LogLevelEnumMap[instance.logLevel]!,
       'external-controller': instance.externalController,
+      'keep-alive-interval': instance.keepAliveInterval,
       'ipv6': instance.ipv6,
       'geodata-loader': instance.geodataLoader,
       'unified-delay': instance.unifiedDelay,

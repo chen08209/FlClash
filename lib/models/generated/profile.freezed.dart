@@ -223,6 +223,8 @@ mixin _$Profile {
   bool get autoUpdate => throw _privateConstructorUsedError;
   Map<String, String> get selectedMap => throw _privateConstructorUsedError;
   Set<String> get unfoldSet => throw _privateConstructorUsedError;
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  bool get isUpdating => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -244,7 +246,8 @@ abstract class $ProfileCopyWith<$Res> {
       UserInfo? userInfo,
       bool autoUpdate,
       Map<String, String> selectedMap,
-      Set<String> unfoldSet});
+      Set<String> unfoldSet,
+      @JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating});
 
   $UserInfoCopyWith<$Res>? get userInfo;
 }
@@ -272,6 +275,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? autoUpdate = null,
     Object? selectedMap = null,
     Object? unfoldSet = null,
+    Object? isUpdating = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -314,6 +318,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
           ? _value.unfoldSet
           : unfoldSet // ignore: cast_nullable_to_non_nullable
               as Set<String>,
+      isUpdating: null == isUpdating
+          ? _value.isUpdating
+          : isUpdating // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -347,7 +355,8 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
       UserInfo? userInfo,
       bool autoUpdate,
       Map<String, String> selectedMap,
-      Set<String> unfoldSet});
+      Set<String> unfoldSet,
+      @JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating});
 
   @override
   $UserInfoCopyWith<$Res>? get userInfo;
@@ -374,6 +383,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? autoUpdate = null,
     Object? selectedMap = null,
     Object? unfoldSet = null,
+    Object? isUpdating = null,
   }) {
     return _then(_$ProfileImpl(
       id: null == id
@@ -416,6 +426,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
           ? _value._unfoldSet
           : unfoldSet // ignore: cast_nullable_to_non_nullable
               as Set<String>,
+      isUpdating: null == isUpdating
+          ? _value.isUpdating
+          : isUpdating // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -433,7 +447,9 @@ class _$ProfileImpl implements _Profile {
       this.userInfo,
       this.autoUpdate = true,
       final Map<String, String> selectedMap = const {},
-      final Set<String> unfoldSet = const {}})
+      final Set<String> unfoldSet = const {},
+      @JsonKey(includeToJson: false, includeFromJson: false)
+      this.isUpdating = false})
       : _selectedMap = selectedMap,
         _unfoldSet = unfoldSet;
 
@@ -477,8 +493,12 @@ class _$ProfileImpl implements _Profile {
   }
 
   @override
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  final bool isUpdating;
+
+  @override
   String toString() {
-    return 'Profile(id: $id, label: $label, currentGroupName: $currentGroupName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, userInfo: $userInfo, autoUpdate: $autoUpdate, selectedMap: $selectedMap, unfoldSet: $unfoldSet)';
+    return 'Profile(id: $id, label: $label, currentGroupName: $currentGroupName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, userInfo: $userInfo, autoUpdate: $autoUpdate, selectedMap: $selectedMap, unfoldSet: $unfoldSet, isUpdating: $isUpdating)';
   }
 
   @override
@@ -502,7 +522,9 @@ class _$ProfileImpl implements _Profile {
             const DeepCollectionEquality()
                 .equals(other._selectedMap, _selectedMap) &&
             const DeepCollectionEquality()
-                .equals(other._unfoldSet, _unfoldSet));
+                .equals(other._unfoldSet, _unfoldSet) &&
+            (identical(other.isUpdating, isUpdating) ||
+                other.isUpdating == isUpdating));
   }
 
   @JsonKey(ignore: true)
@@ -518,7 +540,8 @@ class _$ProfileImpl implements _Profile {
       userInfo,
       autoUpdate,
       const DeepCollectionEquality().hash(_selectedMap),
-      const DeepCollectionEquality().hash(_unfoldSet));
+      const DeepCollectionEquality().hash(_unfoldSet),
+      isUpdating);
 
   @JsonKey(ignore: true)
   @override
@@ -545,7 +568,9 @@ abstract class _Profile implements Profile {
       final UserInfo? userInfo,
       final bool autoUpdate,
       final Map<String, String> selectedMap,
-      final Set<String> unfoldSet}) = _$ProfileImpl;
+      final Set<String> unfoldSet,
+      @JsonKey(includeToJson: false, includeFromJson: false)
+      final bool isUpdating}) = _$ProfileImpl;
 
   factory _Profile.fromJson(Map<String, dynamic> json) = _$ProfileImpl.fromJson;
 
@@ -569,6 +594,9 @@ abstract class _Profile implements Profile {
   Map<String, String> get selectedMap;
   @override
   Set<String> get unfoldSet;
+  @override
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  bool get isUpdating;
   @override
   @JsonKey(ignore: true)
   _$$ProfileImplCopyWith<_$ProfileImpl> get copyWith =>

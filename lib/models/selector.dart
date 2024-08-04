@@ -137,7 +137,6 @@ class PackageListSelectorState with _$PackageListSelectorState {
   }) = _PackageListSelectorState;
 }
 
-
 @freezed
 class ColumnsSelectorState with _$ColumnsSelectorState {
   const factory ColumnsSelectorState({
@@ -154,10 +153,11 @@ class ProxiesListHeaderSelectorState with _$ProxiesListHeaderSelectorState {
   }) = _ProxiesListHeaderSelectorState;
 }
 
+
 @freezed
-class CurrentGroupProxyNameSelectorState with _$CurrentGroupProxyNameSelectorState {
-  const factory CurrentGroupProxyNameSelectorState({
-    required String? proxyName,
-    required String? proxyName2,
-  }) = _CurrentGroupProxyNameSelectorState;
+class ProxiesActionsState with _$ProxiesActionsState {
+  const factory ProxiesActionsState({
+    required bool isCurrent,
+    required bool hasProvider,
+  }) = _ProxiesActionsState;
 }

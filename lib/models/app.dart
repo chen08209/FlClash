@@ -8,6 +8,7 @@ import 'connection.dart';
 import 'ffi.dart';
 import 'log.dart';
 import 'navigation.dart';
+import 'package.dart';
 import 'profile.dart';
 import 'proxy.dart';
 import 'system_color_scheme.dart';
@@ -35,6 +36,8 @@ class AppState with ChangeNotifier {
   double _viewWidth;
   List<Connection> _requests;
   num _checkIpNum;
+  List<ExternalProvider> _providers;
+  List<Package> _packages;
 
   AppState({
     required Mode mode,
@@ -54,6 +57,8 @@ class AppState with ChangeNotifier {
         _totalTraffic = Traffic(),
         _delayMap = {},
         _groups = [],
+        _providers = [],
+        _packages = [],
         _isCompatible = isCompatible,
         _systemColorSchemes = const SystemColorSchemes();
 
@@ -328,6 +333,31 @@ class AppState with ChangeNotifier {
       _delayMap = Map.from(_delayMap)..[delay.name] = delay.value;
       notifyListeners();
     }
+  }
+
+  List<Package> get packages => _packages;
+
+  set packages(List<Package> value) {
+    if (!const ListEquality<Package>().equals(_packages, value)) {
+      _packages = value;
+      notifyListeners();
+    }
+  }
+
+  List<ExternalProvider> get providers => _providers;
+
+  set providers(List<ExternalProvider> value) {
+    if (!const ListEquality<ExternalProvider>().equals(_providers, value)) {
+      _providers = value;
+      notifyListeners();
+    }
+  }
+
+  setProvider(ExternalProvider provider) {
+    final index = _providers.indexWhere((item) => item.name == provider.name);
+    if (index == -1) return;
+    _providers = List.from(_providers)..[index] = provider;
+    notifyListeners();
   }
 
   Group? getGroupWithName(String groupName) {

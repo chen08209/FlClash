@@ -27,7 +27,7 @@ Map<String, dynamic> _$$ConfigExtendedParamsImplToJson(
 _$UpdateConfigParamsImpl _$$UpdateConfigParamsImplFromJson(
         Map<String, dynamic> json) =>
     _$UpdateConfigParamsImpl(
-      profilePath: json['profile-path'] as String?,
+      profileId: json['profile-id'] as String,
       config: ClashConfig.fromJson(json['config'] as Map<String, dynamic>),
       params:
           ConfigExtendedParams.fromJson(json['params'] as Map<String, dynamic>),
@@ -36,7 +36,7 @@ _$UpdateConfigParamsImpl _$$UpdateConfigParamsImplFromJson(
 Map<String, dynamic> _$$UpdateConfigParamsImplToJson(
         _$UpdateConfigParamsImpl instance) =>
     <String, dynamic>{
-      'profile-path': instance.profilePath,
+      'profile-id': instance.profileId,
       'config': instance.config,
       'params': instance.params,
     };
@@ -156,6 +156,9 @@ _$ExternalProviderImpl _$$ExternalProviderImplFromJson(
     _$ExternalProviderImpl(
       name: json['name'] as String,
       type: json['type'] as String,
+      path: json['path'] as String,
+      count: (json['count'] as num).toInt(),
+      isUpdating: json['isUpdating'] as bool? ?? false,
       vehicleType: json['vehicle-type'] as String,
       updateAt: DateTime.parse(json['update-at'] as String),
     );
@@ -165,6 +168,9 @@ Map<String, dynamic> _$$ExternalProviderImplToJson(
     <String, dynamic>{
       'name': instance.name,
       'type': instance.type,
+      'path': instance.path,
+      'count': instance.count,
+      'isUpdating': instance.isUpdating,
       'vehicle-type': instance.vehicleType,
       'update-at': instance.updateAt.toIso8601String(),
     };
