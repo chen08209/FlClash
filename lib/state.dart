@@ -45,11 +45,10 @@ class GlobalState {
     required Config config,
     bool isPatch = true,
   }) async {
-    final profilePath = await appPath.getProfilePath(config.currentProfileId);
     await config.currentProfile?.checkAndUpdate();
     final res = await clashCore.updateConfig(
       UpdateConfigParams(
-        profilePath: profilePath,
+        profileId: config.currentProfileId ?? "",
         config: clashConfig,
         params: ConfigExtendedParams(
           isPatch: isPatch,
@@ -96,8 +95,12 @@ class GlobalState {
       config: config,
       isPatch: false,
     );
-    clashCore.setProfileName(config.currentProfile?.label ?? '');
     await updateGroups(appState);
+    await updateProviders(appState);
+  }
+
+  updateProviders(AppState appState) async {
+    appState.providers = await clashCore.getExternalProviders();
   }
 
   init({
@@ -118,6 +121,7 @@ class GlobalState {
           systemProxy: config.systemProxy,
           mixedPort: clashConfig.mixedPort,
           onlyProxy: config.onlyProxy,
+          currentProfileName: config.currentProfile?.label ?? config.currentProfileId ?? "",
         ),
       );
     }
@@ -204,7 +208,7 @@ class GlobalState {
     final traffic = clashCore.getTraffic();
     if (Platform.isAndroid && isVpnService == true) {
       proxy?.startForeground(
-        title: clashCore.getProfileName(),
+        title: clashCore.getState().currentProfileName,
         content: "$traffic",
       );
     } else {

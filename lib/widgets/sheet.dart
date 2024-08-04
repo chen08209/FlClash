@@ -5,10 +5,12 @@ import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'side_sheet.dart';
 
-showExtendPage(BuildContext context, {
+showExtendPage(
+  BuildContext context, {
   required Widget body,
   required String title,
   double? extendPageWidth,
+  bool forceNotSide = false,
   Widget? action,
 }) {
   final NavigatorState navigator = Navigator.of(context);
@@ -17,23 +19,24 @@ showExtendPage(BuildContext context, {
     key: globalKey,
     child: body,
   );
-  final isMobile = globalState.appController.appState.viewMode ==
-      ViewMode.mobile;
+  final isMobile =
+      globalState.appController.appState.viewMode == ViewMode.mobile;
+  final isNotSide = isMobile || forceNotSide;
   navigator.push(
     ModalSideSheetRoute(
       modalBarrierColor: Colors.black38,
       builder: (context) {
         final commonScaffold = CommonScaffold(
-          automaticallyImplyLeading: isMobile ? true : false,
-          actions: isMobile
+          automaticallyImplyLeading: isNotSide,
+          actions: isNotSide
               ? null
               : [
-            const SizedBox(
-              height: kToolbarHeight,
-              width: kToolbarHeight,
-              child: CloseButton(),
-            ),
-          ],
+                  const SizedBox(
+                    height: kToolbarHeight,
+                    width: kToolbarHeight,
+                    child: CloseButton(),
+                  ),
+                ],
           title: title,
           body: uniqueBody,
         );

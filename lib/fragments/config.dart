@@ -137,11 +137,40 @@ class _ConfigFragmentState extends State<ConfigFragment> {
     }
   }
 
+  _updateKeepAliveInterval(int keepAliveInterval) async {
+    final newKeepAliveIntervalString =
+        await globalState.showCommonDialog<String>(
+      child: KeepAliveIntervalFormDialog(
+        keepAliveInterval: keepAliveInterval,
+      ),
+    );
+    if (newKeepAliveIntervalString != null &&
+        newKeepAliveIntervalString != "$keepAliveInterval" &&
+        mounted) {
+      try {
+        final newKeepAliveInterval = int.parse(newKeepAliveIntervalString);
+        if (newKeepAliveInterval <= 0) {
+          throw "Invalid keepAliveInterval";
+        }
+        globalState.appController.clashConfig.keepAliveInterval =
+            newKeepAliveInterval;
+        globalState.appController.updateClashConfigDebounce();
+      } catch (e) {
+        globalState.showMessage(
+          title: appLocalizations.testUrl,
+          message: TextSpan(
+            text: e.toString(),
+          ),
+        );
+      }
+    }
+  }
+
   List<Widget> _buildAppSection() {
     return generateSection(
       title: appLocalizations.app,
       items: [
-        if (Platform.isAndroid)...[
+        if (Platform.isAndroid) ...[
           Selector<Config, bool>(
             selector: (_, config) => config.allowBypass,
             builder: (_, allowBypass, __) {
@@ -259,6 +288,19 @@ class _ConfigFragmentState extends State<ConfigFragment> {
               subtitle: Text(value ?? appLocalizations.defaultText),
               onTap: () {
                 _showUaDialog(value);
+              },
+            );
+          },
+        ),
+        Selector<ClashConfig, int>(
+          selector: (_, config) => config.keepAliveInterval,
+          builder: (_, value, __) {
+            return ListItem(
+              leading: const Icon(Icons.timer_outlined),
+              title: Text(appLocalizations.keepAliveIntervalDesc),
+              subtitle: Text("$value ${appLocalizations.seconds}"),
+              onTap: () {
+                _updateKeepAliveInterval(value);
               },
             );
           },
@@ -575,6 +617,67 @@ class _TestUrlFormDialogState extends State<TestUrlFormDialog> {
               controller: testUrlController,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _handleUpdate,
+          child: Text(appLocalizations.submit),
+        )
+      ],
+    );
+  }
+}
+
+class KeepAliveIntervalFormDialog extends StatefulWidget {
+  final int keepAliveInterval;
+
+  const KeepAliveIntervalFormDialog({
+    super.key,
+    required this.keepAliveInterval,
+  });
+
+  @override
+  State<KeepAliveIntervalFormDialog> createState() =>
+      _KeepAliveIntervalFormDialogState();
+}
+
+class _KeepAliveIntervalFormDialogState
+    extends State<KeepAliveIntervalFormDialog> {
+  late TextEditingController keepAliveIntervalController;
+
+  @override
+  void initState() {
+    super.initState();
+    keepAliveIntervalController =
+        TextEditingController(text: "${widget.keepAliveInterval}");
+  }
+
+  _handleUpdate() async {
+    final keepAliveInterval = keepAliveIntervalController.value.text;
+    if (keepAliveInterval.isEmpty) return;
+    Navigator.of(context).pop<String>(keepAliveInterval);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(appLocalizations.keepAliveIntervalDesc),
+      content: SizedBox(
+        width: 300,
+        child: Wrap(
+          runSpacing: 16,
+          children: [
+            TextField(
+              maxLines: 1,
+              minLines: 1,
+              controller: keepAliveIntervalController,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                suffixText: appLocalizations.seconds,
               ),
             ),
           ],

@@ -2,19 +2,23 @@ package main
 
 import "C"
 import (
+	"context"
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
-	ap "github.com/metacubex/mihomo/adapter/provider"
+	"github.com/metacubex/mihomo/adapter/provider"
+	"github.com/metacubex/mihomo/common/batch"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
+	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
+	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
 	"os"
 	"os/exec"
@@ -26,40 +30,40 @@ import (
 	"time"
 )
 
-type healthCheckSchema struct {
-	Enable         bool   `provider:"enable"`
-	URL            string `provider:"url"`
-	Interval       int    `provider:"interval"`
-	TestTimeout    int    `provider:"timeout,omitempty"`
-	Lazy           bool   `provider:"lazy,omitempty"`
-	ExpectedStatus string `provider:"expected-status,omitempty"`
-}
+//type healthCheckSchema struct {
+//	Enable         bool   `provider:"enable"`
+//	URL            string `provider:"url"`
+//	Interval       int    `provider:"interval"`
+//	TestTimeout    int    `provider:"timeout,omitempty"`
+//	Lazy           bool   `provider:"lazy,omitempty"`
+//	ExpectedStatus string `provider:"expected-status,omitempty"`
+//}
 
-type proxyProviderSchema struct {
-	Type          string `provider:"type"`
-	Path          string `provider:"path,omitempty"`
-	URL           string `provider:"url,omitempty"`
-	Proxy         string `provider:"proxy,omitempty"`
-	Interval      int    `provider:"interval,omitempty"`
-	Filter        string `provider:"filter,omitempty"`
-	ExcludeFilter string `provider:"exclude-filter,omitempty"`
-	ExcludeType   string `provider:"exclude-type,omitempty"`
-	DialerProxy   string `provider:"dialer-proxy,omitempty"`
-
-	HealthCheck healthCheckSchema   `provider:"health-check,omitempty"`
-	Override    ap.OverrideSchema   `provider:"override,omitempty"`
-	Header      map[string][]string `provider:"header,omitempty"`
-}
-
-type ruleProviderSchema struct {
-	Type     string `provider:"type"`
-	Behavior string `provider:"behavior"`
-	Path     string `provider:"path,omitempty"`
-	URL      string `provider:"url,omitempty"`
-	Proxy    string `provider:"proxy,omitempty"`
-	Format   string `provider:"format,omitempty"`
-	Interval int    `provider:"interval,omitempty"`
-}
+//type proxyProviderSchema struct {
+//	Type          string `provider:"type"`
+//	Path          string `provider:"path,omitempty"`
+//	URL           string `provider:"url,omitempty"`
+//	Proxy         string `provider:"proxy,omitempty"`
+//	Interval      int    `provider:"interval,omitempty"`
+//	Filter        string `provider:"filter,omitempty"`
+//	ExcludeFilter string `provider:"exclude-filter,omitempty"`
+//	ExcludeType   string `provider:"exclude-type,omitempty"`
+//	DialerProxy   string `provider:"dialer-proxy,omitempty"`
+//
+//	HealthCheck healthCheckSchema   `provider:"health-check,omitempty"`
+//	Override    ap.OverrideSchema   `provider:"override,omitempty"`
+//	Header      map[string][]string `provider:"header,omitempty"`
+//}
+//
+//type ruleProviderSchema struct {
+//	Type     string `provider:"type"`
+//	Behavior string `provider:"behavior"`
+//	Path     string `provider:"path,omitempty"`
+//	URL      string `provider:"url,omitempty"`
+//	Proxy    string `provider:"proxy,omitempty"`
+//	Format   string `provider:"format,omitempty"`
+//	Interval int    `provider:"interval,omitempty"`
+//}
 
 type ConfigExtendedParams struct {
 	IsPatch      bool              `json:"is-patch"`
@@ -69,9 +73,9 @@ type ConfigExtendedParams struct {
 }
 
 type GenerateConfigParams struct {
-	ProfilePath *string              `json:"profile-path"`
-	Config      config.RawConfig     `json:"config" `
-	Params      ConfigExtendedParams `json:"params"`
+	ProfileId string               `json:"profile-id"`
+	Config    config.RawConfig     `json:"config" `
+	Params    ConfigExtendedParams `json:"params"`
 }
 
 type ChangeProxyParams struct {
@@ -93,8 +97,12 @@ type ExternalProvider struct {
 	Name        string    `json:"name"`
 	Type        string    `json:"type"`
 	VehicleType string    `json:"vehicle-type"`
+	Count       int       `json:"count"`
+	Path        string    `json:"path"`
 	UpdateAt    time.Time `json:"update-at"`
 }
+
+var b, _ = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 
 func restartExecutable(execPath string) {
 	var err error
@@ -145,26 +153,76 @@ func removeFile(path string) error {
 	return nil
 }
 
-func getRawConfigWithPath(path *string) *config.RawConfig {
-	if path == nil {
-		return config.DefaultRawConfig()
-	} else {
-		bytes, err := readFile(*path)
-		if err != nil {
-			log.Errorln("getProfile readFile error %v", err)
-			return config.DefaultRawConfig()
-		}
-		prof, err := config.UnmarshalRawConfig(bytes)
-		if err != nil {
-			log.Errorln("getProfile UnmarshalRawConfig error %v", err)
-			return config.DefaultRawConfig()
-		}
-		return prof
-	}
+func getProfilePath(id string) string {
+	return filepath.Join(constant.Path.HomeDir(), "profiles", id+".yaml")
 }
 
-func decorationConfig(profilePath *string, cfg config.RawConfig) *config.RawConfig {
-	prof := getRawConfigWithPath(profilePath)
+func getProfileProvidersPath(id string) string {
+	return filepath.Join(constant.Path.HomeDir(), "providers", id)
+}
+
+func getRawConfigWithId(id string) *config.RawConfig {
+	path := getProfilePath(id)
+	bytes, err := readFile(path)
+	if err != nil {
+		log.Errorln("profile is not exist")
+		return config.DefaultRawConfig()
+	}
+	prof, err := config.UnmarshalRawConfig(bytes)
+	if err != nil {
+		log.Errorln("unmarshalRawConfig error %v", err)
+		return config.DefaultRawConfig()
+	}
+	for _, mapping := range prof.ProxyProvider {
+		value, exist := mapping["path"].(string)
+		if !exist {
+			continue
+		}
+		mapping["path"] = filepath.Join(getProfileProvidersPath(id), value)
+	}
+	for _, mapping := range prof.RuleProvider {
+		value, exist := mapping["path"].(string)
+		if !exist {
+			continue
+		}
+		mapping["path"] = filepath.Join(getProfileProvidersPath(id), value)
+	}
+	return prof
+}
+
+func getExternalProvidersRaw() map[string]ExternalProvider {
+	externalProviders := make(map[string]ExternalProvider)
+	for n, p := range tunnel.Providers() {
+		if p.VehicleType() != cp.Compatible {
+			p := p.(*provider.ProxySetProvider)
+			externalProviders[n] = ExternalProvider{
+				Name:        n,
+				Type:        p.Type().String(),
+				VehicleType: p.VehicleType().String(),
+				Count:       p.Count(),
+				Path:        p.Vehicle().Path(),
+				UpdateAt:    p.UpdatedAt,
+			}
+		}
+	}
+	for n, p := range tunnel.RuleProviders() {
+		if p.VehicleType() != cp.Compatible {
+			p := p.(*rp.RuleSetProvider)
+			externalProviders[n] = ExternalProvider{
+				Name:        n,
+				Type:        p.Type().String(),
+				VehicleType: p.VehicleType().String(),
+				Count:       p.Count(),
+				Path:        p.Vehicle().Path(),
+				UpdateAt:    p.UpdatedAt,
+			}
+		}
+	}
+	return externalProviders
+}
+
+func decorationConfig(profileId string, cfg config.RawConfig) *config.RawConfig {
+	prof := getRawConfigWithId(profileId)
 	overwriteConfig(prof, cfg)
 	return prof
 }
@@ -327,6 +385,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.LogLevel = patchConfig.LogLevel
 	targetConfig.Port = 0
 	targetConfig.SocksPort = 0
+	targetConfig.KeepAliveInterval = patchConfig.KeepAliveInterval
 	targetConfig.MixedPort = patchConfig.MixedPort
 	targetConfig.FindProcessMode = patchConfig.FindProcessMode
 	targetConfig.AllowLan = patchConfig.AllowLan

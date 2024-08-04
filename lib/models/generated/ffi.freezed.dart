@@ -248,8 +248,8 @@ UpdateConfigParams _$UpdateConfigParamsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UpdateConfigParams {
-  @JsonKey(name: "profile-path")
-  String? get profilePath => throw _privateConstructorUsedError;
+  @JsonKey(name: "profile-id")
+  String get profileId => throw _privateConstructorUsedError;
   ClashConfig get config => throw _privateConstructorUsedError;
   ConfigExtendedParams get params => throw _privateConstructorUsedError;
 
@@ -266,7 +266,7 @@ abstract class $UpdateConfigParamsCopyWith<$Res> {
       _$UpdateConfigParamsCopyWithImpl<$Res, UpdateConfigParams>;
   @useResult
   $Res call(
-      {@JsonKey(name: "profile-path") String? profilePath,
+      {@JsonKey(name: "profile-id") String profileId,
       ClashConfig config,
       ConfigExtendedParams params});
 
@@ -286,15 +286,15 @@ class _$UpdateConfigParamsCopyWithImpl<$Res, $Val extends UpdateConfigParams>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? profilePath = freezed,
+    Object? profileId = null,
     Object? config = null,
     Object? params = null,
   }) {
     return _then(_value.copyWith(
-      profilePath: freezed == profilePath
-          ? _value.profilePath
-          : profilePath // ignore: cast_nullable_to_non_nullable
-              as String?,
+      profileId: null == profileId
+          ? _value.profileId
+          : profileId // ignore: cast_nullable_to_non_nullable
+              as String,
       config: null == config
           ? _value.config
           : config // ignore: cast_nullable_to_non_nullable
@@ -324,7 +324,7 @@ abstract class _$$UpdateConfigParamsImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "profile-path") String? profilePath,
+      {@JsonKey(name: "profile-id") String profileId,
       ClashConfig config,
       ConfigExtendedParams params});
 
@@ -343,15 +343,15 @@ class __$$UpdateConfigParamsImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? profilePath = freezed,
+    Object? profileId = null,
     Object? config = null,
     Object? params = null,
   }) {
     return _then(_$UpdateConfigParamsImpl(
-      profilePath: freezed == profilePath
-          ? _value.profilePath
-          : profilePath // ignore: cast_nullable_to_non_nullable
-              as String?,
+      profileId: null == profileId
+          ? _value.profileId
+          : profileId // ignore: cast_nullable_to_non_nullable
+              as String,
       config: null == config
           ? _value.config
           : config // ignore: cast_nullable_to_non_nullable
@@ -368,7 +368,7 @@ class __$$UpdateConfigParamsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
   const _$UpdateConfigParamsImpl(
-      {@JsonKey(name: "profile-path") this.profilePath,
+      {@JsonKey(name: "profile-id") required this.profileId,
       required this.config,
       required this.params});
 
@@ -376,8 +376,8 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
       _$$UpdateConfigParamsImplFromJson(json);
 
   @override
-  @JsonKey(name: "profile-path")
-  final String? profilePath;
+  @JsonKey(name: "profile-id")
+  final String profileId;
   @override
   final ClashConfig config;
   @override
@@ -385,7 +385,7 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
 
   @override
   String toString() {
-    return 'UpdateConfigParams(profilePath: $profilePath, config: $config, params: $params)';
+    return 'UpdateConfigParams(profileId: $profileId, config: $config, params: $params)';
   }
 
   @override
@@ -393,15 +393,15 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$UpdateConfigParamsImpl &&
-            (identical(other.profilePath, profilePath) ||
-                other.profilePath == profilePath) &&
+            (identical(other.profileId, profileId) ||
+                other.profileId == profileId) &&
             (identical(other.config, config) || other.config == config) &&
             (identical(other.params, params) || other.params == params));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, profilePath, config, params);
+  int get hashCode => Object.hash(runtimeType, profileId, config, params);
 
   @JsonKey(ignore: true)
   @override
@@ -420,7 +420,7 @@ class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
 
 abstract class _UpdateConfigParams implements UpdateConfigParams {
   const factory _UpdateConfigParams(
-      {@JsonKey(name: "profile-path") final String? profilePath,
+      {@JsonKey(name: "profile-id") required final String profileId,
       required final ClashConfig config,
       required final ConfigExtendedParams params}) = _$UpdateConfigParamsImpl;
 
@@ -428,8 +428,8 @@ abstract class _UpdateConfigParams implements UpdateConfigParams {
       _$UpdateConfigParamsImpl.fromJson;
 
   @override
-  @JsonKey(name: "profile-path")
-  String? get profilePath;
+  @JsonKey(name: "profile-id")
+  String get profileId;
   @override
   ClashConfig get config;
   @override
@@ -1687,6 +1687,9 @@ ExternalProvider _$ExternalProviderFromJson(Map<String, dynamic> json) {
 mixin _$ExternalProvider {
   String get name => throw _privateConstructorUsedError;
   String get type => throw _privateConstructorUsedError;
+  String get path => throw _privateConstructorUsedError;
+  int get count => throw _privateConstructorUsedError;
+  bool get isUpdating => throw _privateConstructorUsedError;
   @JsonKey(name: "vehicle-type")
   String get vehicleType => throw _privateConstructorUsedError;
   @JsonKey(name: "update-at")
@@ -1707,6 +1710,9 @@ abstract class $ExternalProviderCopyWith<$Res> {
   $Res call(
       {String name,
       String type,
+      String path,
+      int count,
+      bool isUpdating,
       @JsonKey(name: "vehicle-type") String vehicleType,
       @JsonKey(name: "update-at") DateTime updateAt});
 }
@@ -1726,6 +1732,9 @@ class _$ExternalProviderCopyWithImpl<$Res, $Val extends ExternalProvider>
   $Res call({
     Object? name = null,
     Object? type = null,
+    Object? path = null,
+    Object? count = null,
+    Object? isUpdating = null,
     Object? vehicleType = null,
     Object? updateAt = null,
   }) {
@@ -1738,6 +1747,18 @@ class _$ExternalProviderCopyWithImpl<$Res, $Val extends ExternalProvider>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as String,
+      path: null == path
+          ? _value.path
+          : path // ignore: cast_nullable_to_non_nullable
+              as String,
+      count: null == count
+          ? _value.count
+          : count // ignore: cast_nullable_to_non_nullable
+              as int,
+      isUpdating: null == isUpdating
+          ? _value.isUpdating
+          : isUpdating // ignore: cast_nullable_to_non_nullable
+              as bool,
       vehicleType: null == vehicleType
           ? _value.vehicleType
           : vehicleType // ignore: cast_nullable_to_non_nullable
@@ -1761,6 +1782,9 @@ abstract class _$$ExternalProviderImplCopyWith<$Res>
   $Res call(
       {String name,
       String type,
+      String path,
+      int count,
+      bool isUpdating,
       @JsonKey(name: "vehicle-type") String vehicleType,
       @JsonKey(name: "update-at") DateTime updateAt});
 }
@@ -1778,6 +1802,9 @@ class __$$ExternalProviderImplCopyWithImpl<$Res>
   $Res call({
     Object? name = null,
     Object? type = null,
+    Object? path = null,
+    Object? count = null,
+    Object? isUpdating = null,
     Object? vehicleType = null,
     Object? updateAt = null,
   }) {
@@ -1790,6 +1817,18 @@ class __$$ExternalProviderImplCopyWithImpl<$Res>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as String,
+      path: null == path
+          ? _value.path
+          : path // ignore: cast_nullable_to_non_nullable
+              as String,
+      count: null == count
+          ? _value.count
+          : count // ignore: cast_nullable_to_non_nullable
+              as int,
+      isUpdating: null == isUpdating
+          ? _value.isUpdating
+          : isUpdating // ignore: cast_nullable_to_non_nullable
+              as bool,
       vehicleType: null == vehicleType
           ? _value.vehicleType
           : vehicleType // ignore: cast_nullable_to_non_nullable
@@ -1808,6 +1847,9 @@ class _$ExternalProviderImpl implements _ExternalProvider {
   const _$ExternalProviderImpl(
       {required this.name,
       required this.type,
+      required this.path,
+      required this.count,
+      this.isUpdating = false,
       @JsonKey(name: "vehicle-type") required this.vehicleType,
       @JsonKey(name: "update-at") required this.updateAt});
 
@@ -1819,6 +1861,13 @@ class _$ExternalProviderImpl implements _ExternalProvider {
   @override
   final String type;
   @override
+  final String path;
+  @override
+  final int count;
+  @override
+  @JsonKey()
+  final bool isUpdating;
+  @override
   @JsonKey(name: "vehicle-type")
   final String vehicleType;
   @override
@@ -1827,7 +1876,7 @@ class _$ExternalProviderImpl implements _ExternalProvider {
 
   @override
   String toString() {
-    return 'ExternalProvider(name: $name, type: $type, vehicleType: $vehicleType, updateAt: $updateAt)';
+    return 'ExternalProvider(name: $name, type: $type, path: $path, count: $count, isUpdating: $isUpdating, vehicleType: $vehicleType, updateAt: $updateAt)';
   }
 
   @override
@@ -1837,6 +1886,10 @@ class _$ExternalProviderImpl implements _ExternalProvider {
             other is _$ExternalProviderImpl &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.type, type) || other.type == type) &&
+            (identical(other.path, path) || other.path == path) &&
+            (identical(other.count, count) || other.count == count) &&
+            (identical(other.isUpdating, isUpdating) ||
+                other.isUpdating == isUpdating) &&
             (identical(other.vehicleType, vehicleType) ||
                 other.vehicleType == vehicleType) &&
             (identical(other.updateAt, updateAt) ||
@@ -1845,8 +1898,8 @@ class _$ExternalProviderImpl implements _ExternalProvider {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, name, type, vehicleType, updateAt);
+  int get hashCode => Object.hash(
+      runtimeType, name, type, path, count, isUpdating, vehicleType, updateAt);
 
   @JsonKey(ignore: true)
   @override
@@ -1867,6 +1920,9 @@ abstract class _ExternalProvider implements ExternalProvider {
   const factory _ExternalProvider(
           {required final String name,
           required final String type,
+          required final String path,
+          required final int count,
+          final bool isUpdating,
           @JsonKey(name: "vehicle-type") required final String vehicleType,
           @JsonKey(name: "update-at") required final DateTime updateAt}) =
       _$ExternalProviderImpl;
@@ -1878,6 +1934,12 @@ abstract class _ExternalProvider implements ExternalProvider {
   String get name;
   @override
   String get type;
+  @override
+  String get path;
+  @override
+  int get count;
+  @override
+  bool get isUpdating;
   @override
   @JsonKey(name: "vehicle-type")
   String get vehicleType;

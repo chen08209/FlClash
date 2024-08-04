@@ -3,6 +3,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
@@ -207,6 +208,10 @@ class Other {
       4 => appLocalizations.fourColumns,
       int() => throw UnimplementedError(),
     };
+  }
+
+  String getBackupFileName(){
+    return "${appName}_backup_${DateTime.now().show}.zip";
   }
 }
 

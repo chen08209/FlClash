@@ -220,16 +220,14 @@ class _WindowHeaderState extends State<WindowHeader> {
               ),
             ),
           ),
-          if (!Platform.isMacOS) ...[
-            const Positioned(
-              left: 0,
-              child: AppIcon(),
-            ),
-            Positioned(
-              right: 0,
-              child: _buildActions(),
-            ),
-          ]
+          const Positioned(
+            left: 0,
+            child: AppIcon(),
+          ),
+          Positioned(
+            right: 0,
+            child: _buildActions(),
+          ),
         ],
       ),
     );

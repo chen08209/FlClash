@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'view_profile.dart';
+
 class EditProfile extends StatefulWidget {
   final Profile profile;
   final BuildContext context;
@@ -121,7 +123,7 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   _uploadProfileFile() async {
-    final platformFile = await globalState.safeRun(picker.pickerConfigFile);
+    final platformFile = await globalState.safeRun(picker.pickerFile);
     if (platformFile?.bytes == null) return;
     fileData = platformFile?.bytes;
     fileInfoNotifier.value = fileInfoNotifier.value?.copyWith(
@@ -260,23 +262,19 @@ class _EditProfileState extends State<EditProfile> {
           padding: const EdgeInsets.symmetric(
             vertical: 16,
           ),
-          child: ScrollOverBuilder(
-            builder: (isOver) {
-              return ListView.separated(
-                padding: kMaterialListPadding.copyWith(
-                  bottom: isOver ? 72 : 36,
-                ),
-                itemBuilder: (_, index) {
-                  return items[index];
-                },
-                separatorBuilder: (_, __) {
-                  return const SizedBox(
-                    height: 24,
-                  );
-                },
-                itemCount: items.length,
+          child: ListView.separated(
+            padding: kMaterialListPadding.copyWith(
+              bottom: 72,
+            ),
+            itemBuilder: (_, index) {
+              return items[index];
+            },
+            separatorBuilder: (_, __) {
+              return const SizedBox(
+                height: 24,
               );
             },
+            itemCount: items.length,
           ),
         ),
       ),

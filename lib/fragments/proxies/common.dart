@@ -42,7 +42,7 @@ double getItemHeight(ProxyCardType proxyCardType) {
 
 delayTest(List<Proxy> proxies) async {
   final appController = globalState.appController;
-  for (final proxy in proxies) {
+  final delayProxies = proxies.map<Future>((proxy) async {
     final proxyName = appController.appState.getRealProxyName(proxy.name);
     globalState.appController.setDelay(
       Delay(
@@ -50,11 +50,9 @@ delayTest(List<Proxy> proxies) async {
         value: 0,
       ),
     );
-    clashCore.getDelay(proxyName).then((delay) {
-      globalState.appController.setDelay(delay);
-    });
-  }
-  await Future.delayed(httpTimeoutDuration + moreDuration);
+    globalState.appController.setDelay(await clashCore.getDelay(proxyName));
+  });
+  await Future.wait(delayProxies);
   appController.appState.sortNum++;
 }
 

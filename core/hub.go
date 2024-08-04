@@ -11,7 +11,6 @@ import (
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
-	"github.com/metacubex/mihomo/common/structure"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
@@ -34,8 +33,6 @@ var currentConfig = config.DefaultRawConfig()
 var configParams = ConfigExtendedParams{}
 
 var isInit = false
-
-var currentProfileName = ""
 
 //export initClash
 func initClash(homeDirStr *C.char) bool {
@@ -75,16 +72,6 @@ func forceGc() {
 	}()
 }
 
-//export setCurrentProfileName
-func setCurrentProfileName(s *C.char) {
-	currentProfileName = C.GoString(s)
-}
-
-//export getCurrentProfileName
-func getCurrentProfileName() *C.char {
-	return C.CString(currentProfileName)
-}
-
 //export validateConfig
 func validateConfig(s *C.char, port C.longlong) {
 	i := int64(port)
@@ -111,7 +98,7 @@ func updateConfig(s *C.char, port C.longlong) {
 			return
 		}
 		configParams = params.Params
-		prof := decorationConfig(params.ProfilePath, params.Config)
+		prof := decorationConfig(params.ProfileId, params.Config)
 		currentConfig = prof
 		err = applyConfig()
 		if err != nil {
@@ -124,34 +111,10 @@ func updateConfig(s *C.char, port C.longlong) {
 
 //export clearEffect
 func clearEffect(s *C.char) {
-	path := C.GoString(s)
+	id := C.GoString(s)
 	go func() {
-		rawCfg := getRawConfigWithPath(&path)
-		for _, mapping := range rawCfg.RuleProvider {
-			schema := &ruleProviderSchema{}
-			decoder := structure.NewDecoder(structure.Option{TagName: "provider", WeaklyTypedInput: true})
-			if err := decoder.Decode(mapping, schema); err != nil {
-				return
-			}
-			if schema.Type == "http" {
-				_ = removeFile(constant.Path.Resolve(schema.Path))
-			}
-		}
-		for _, mapping := range rawCfg.ProxyProvider {
-			schema := &proxyProviderSchema{
-				HealthCheck: healthCheckSchema{
-					Lazy: true,
-				},
-			}
-			decoder := structure.NewDecoder(structure.Option{TagName: "provider", WeaklyTypedInput: true})
-			if err := decoder.Decode(mapping, schema); err != nil {
-				return
-			}
-			if schema.Type == "http" {
-				_ = removeFile(constant.Path.Resolve(schema.Path))
-			}
-		}
-		_ = removeFile(path)
+		_ = removeFile(getProfilePath(id))
+		_ = removeFile(getProfileProvidersPath(id))
 	}()
 }
 
@@ -184,10 +147,13 @@ func changeProxy(s *C.char) {
 	if !ok {
 		return
 	}
-
-	err = selector.Set(proxyName)
+	if proxyName == "" {
+		selector.ForceSet(proxyName)
+	} else {
+		err = selector.Set(proxyName)
+	}
 	if err == nil {
-		log.Infoln("[Selector] %s selected %s", groupName, proxyName)
+		log.Infoln("[SelectAble] %s selected %s", groupName, proxyName)
 	}
 }
 
@@ -230,16 +196,16 @@ func resetTraffic() {
 func asyncTestDelay(s *C.char, port C.longlong) {
 	i := int64(port)
 	paramsString := C.GoString(s)
-	go func() {
+	b.Go(paramsString, func() (bool, error) {
 		var params = &TestDelayParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
 		if err != nil {
-			return
+			return false, nil
 		}
 
 		expectedStatus, err := utils.NewUnsignedRanges[uint16]("")
 		if err != nil {
-			return
+			return false, nil
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
@@ -256,7 +222,7 @@ func asyncTestDelay(s *C.char, port C.longlong) {
 			delayData.Value = -1
 			data, _ := json.Marshal(delayData)
 			bridge.SendToPort(i, string(data))
-			return
+			return false, nil
 		}
 
 		delay, err := proxy.URLTest(ctx, constant.DefaultTestURL, expectedStatus)
@@ -264,14 +230,14 @@ func asyncTestDelay(s *C.char, port C.longlong) {
 			delayData.Value = -1
 			data, _ := json.Marshal(delayData)
 			bridge.SendToPort(i, string(data))
-			return
+			return false, nil
 		}
 
 		delayData.Value = int32(delay)
 		data, _ := json.Marshal(delayData)
 		bridge.SendToPort(i, string(data))
-		return
-	}()
+		return false, nil
+	})
 }
 
 //export getVersionInfo
@@ -345,31 +311,49 @@ func getProvider(name *C.char) *C.char {
 
 //export getExternalProviders
 func getExternalProviders() *C.char {
-	externalProviders := make([]ExternalProvider, 0)
-	providers := tunnel.Providers()
-	for n, p := range providers {
+	externalProviders := make(map[string]ExternalProvider)
+	for n, p := range tunnel.Providers() {
 		if p.VehicleType() != cp.Compatible {
 			p := p.(*provider.ProxySetProvider)
-			externalProviders = append(externalProviders, ExternalProvider{
+			externalProviders[n] = ExternalProvider{
 				Name:        n,
 				Type:        p.Type().String(),
 				VehicleType: p.VehicleType().String(),
+				Count:       p.Count(),
+				Path:        p.Vehicle().Path(),
 				UpdateAt:    p.UpdatedAt,
-			})
+			}
 		}
 	}
 	for n, p := range tunnel.RuleProviders() {
 		if p.VehicleType() != cp.Compatible {
 			p := p.(*rp.RuleSetProvider)
-			externalProviders = append(externalProviders, ExternalProvider{
+			externalProviders[n] = ExternalProvider{
 				Name:        n,
 				Type:        p.Type().String(),
 				VehicleType: p.VehicleType().String(),
+				Count:       p.Count(),
+				Path:        p.Vehicle().Path(),
 				UpdateAt:    p.UpdatedAt,
-			})
+			}
 		}
 	}
 	data, err := json.Marshal(externalProviders)
+	if err != nil {
+		return C.CString("")
+	}
+	return C.CString(string(data))
+}
+
+//export getExternalProvider
+func getExternalProvider(name *C.char) *C.char {
+	externalProviderName := C.GoString(name)
+	externalProviders := getExternalProvidersRaw()
+	externalProvider, exist := externalProviders[externalProviderName]
+	if !exist {
+		return C.CString("")
+	}
+	data, err := json.Marshal(externalProvider)
 	if err != nil {
 		return C.CString("")
 	}
@@ -385,14 +369,24 @@ func updateExternalProvider(providerName *C.char, providerType *C.char, port C.l
 		switch providerTypeString {
 		case "Proxy":
 			providers := tunnel.Providers()
-			err := providers[providerNameString].Update()
+			proxyProvider, exist := providers[providerNameString].(*provider.ProxySetProvider)
+			if !exist {
+				bridge.SendToPort(i, "proxy provider is not exist")
+				return
+			}
+			err := proxyProvider.Update()
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "Rule":
 			providers := tunnel.RuleProviders()
-			err := providers[providerNameString].Update()
+			ruleProvider, exist := providers[providerNameString].(*rp.RuleSetProvider)
+			if !exist {
+				bridge.SendToPort(i, "rule provider is not exist")
+				return
+			}
+			err := ruleProvider.Update()
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
@@ -425,6 +419,66 @@ func updateExternalProvider(providerName *C.char, providerType *C.char, port C.l
 		bridge.SendToPort(i, "")
 	}()
 }
+
+//func sideLoadExternalProvider(providerName *C.char, providerType *C.char, data *C.char, port C.longlong) {
+//	i := int64(port)
+//	bytes := []byte(C.GoString(data))
+//	providerNameString := C.GoString(providerName)
+//	providerTypeString := C.GoString(providerType)
+//	go func() {
+//		switch providerTypeString {
+//		case "Proxy":
+//			providers := tunnel.Providers()
+//			proxyProvider, exist := providers[providerNameString].(*provider.ProxySetProvider)
+//			if exist {
+//				bridge.SendToPort(i, "proxy provider is not exist")
+//				return
+//			}
+//			err := proxyProvider.Update()
+//			if err != nil {
+//				bridge.SendToPort(i, err.Error())
+//				return
+//			}
+//		case "Rule":
+//			providers := tunnel.RuleProviders()
+//			ruleProvider, exist := providers[providerNameString].(*rp.RuleSetProvider)
+//			if exist {
+//				bridge.SendToPort(i, "proxy provider is not exist")
+//				return
+//			}
+//			err := ruleProvider.Update()
+//			if err != nil {
+//				bridge.SendToPort(i, err.Error())
+//				return
+//			}
+//		case "MMDB":
+//			err := updater.UpdateMMDB(constant.Path.Resolve(providerNameString))
+//			if err != nil {
+//				bridge.SendToPort(i, err.Error())
+//				return
+//			}
+//		case "ASN":
+//			err := updater.UpdateASN(constant.Path.Resolve(providerNameString))
+//			if err != nil {
+//				bridge.SendToPort(i, err.Error())
+//				return
+//			}
+//		case "GeoIp":
+//			err := updater.UpdateGeoIp(constant.Path.Resolve(providerNameString))
+//			if err != nil {
+//				bridge.SendToPort(i, err.Error())
+//				return
+//			}
+//		case "GeoSite":
+//			err := updater.UpdateGeoSite(constant.Path.Resolve(providerNameString))
+//			if err != nil {
+//				bridge.SendToPort(i, err.Error())
+//				return
+//			}
+//		}
+//		bridge.SendToPort(i, "")
+//	}()
+//}
 
 //export initNativeApiBridge
 func initNativeApiBridge(api unsafe.Pointer) {
@@ -463,7 +517,7 @@ func init() {
 			Data: c,
 		})
 	}
-	executor.DefaultProxyProviderLoadedHook = func(providerName string) {
+	executor.DefaultProviderLoadedHook = func(providerName string) {
 		SendMessage(Message{
 			Type: LoadedMessage,
 			Data: providerName,

@@ -9,6 +9,7 @@ import 'constant.dart';
 class AppPath {
   static AppPath? _instance;
   Completer<Directory> cacheDir = Completer();
+  Completer<Directory> downloadDir = Completer();
 
   // Future<Directory> _createDesktopCacheDir() async {
   //   final path = join(dirname(Platform.resolvedExecutable), 'cache');
@@ -22,6 +23,9 @@ class AppPath {
   AppPath._internal() {
     getApplicationSupportDirectory().then((value) {
       cacheDir.complete(value);
+    });
+    getDownloadsDirectory().then((value) {
+      downloadDir.complete(value);
     });
     // if (Platform.isAndroid) {
     //   getApplicationSupportDirectory().then((value) {
@@ -37,6 +41,11 @@ class AppPath {
   factory AppPath() {
     _instance ??= AppPath._internal();
     return _instance!;
+  }
+
+  Future<String> getDownloadDirPath() async {
+    final directory = await downloadDir.future;
+    return directory.path;
   }
 
   Future<String> getHomeDirPath() async {

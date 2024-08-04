@@ -20,6 +20,7 @@ class Window {
     WindowOptions windowOptions = WindowOptions(
       size: Size(props.width, props.height),
       minimumSize: const Size(380, 500),
+      windowButtonVisibility: false,
       titleBarStyle: TitleBarStyle.hidden,
     );
     if (props.left != null || props.top != null) {

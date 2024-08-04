@@ -27,6 +27,8 @@ class _ClashContainerState extends State<ClashContainer>
         systemProxy: config.systemProxy,
         mixedPort: clashConfig.mixedPort,
         onlyProxy: config.onlyProxy,
+        currentProfileName:
+            config.currentProfile?.label ?? config.currentProfileId ?? "",
       ),
       builder: (__, state, child) {
         clashCore.setState(state);
@@ -36,9 +38,32 @@ class _ClashContainerState extends State<ClashContainer>
     );
   }
 
+  _changeProfileHandle() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final appController = globalState.appController;
+      appController.appState.delayMap = {};
+      await appController.applyProfile();
+    });
+  }
+
+  Widget _changeProfileContainer(Widget child) {
+    return Selector<Config, String?>(
+      selector: (_, config) => config.currentProfileId,
+      builder: (__, state, child) {
+        _changeProfileHandle();
+        return child!;
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _updateCoreState(widget.child);
+    return _changeProfileContainer(
+      _updateCoreState(
+        widget.child,
+      ),
+    );
   }
 
   @override
@@ -73,16 +98,15 @@ class _ClashContainerState extends State<ClashContainer>
   }
 
   @override
-  void onLoaded(String groupName) {
+  void onLoaded(String providerName) {
     final appController = globalState.appController;
-    final currentSelectedMap = appController.config.currentSelectedMap;
-    final proxyName = currentSelectedMap[groupName];
-    if (proxyName == null) return;
-    appController.changeProxy(
-      groupName: groupName,
-      proxyName: proxyName,
+    appController.appState.setProvider(
+      clashCore.getExternalProvider(
+        providerName,
+      ),
     );
-    super.onLoaded(proxyName);
+    appController.addCheckIpNumDebounce();
+    super.onLoaded(providerName);
   }
 
   @override
