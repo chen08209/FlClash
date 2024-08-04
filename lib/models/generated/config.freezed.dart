@@ -247,6 +247,7 @@ CoreState _$CoreStateFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$CoreState {
   AccessControl? get accessControl => throw _privateConstructorUsedError;
+  String get currentProfileName => throw _privateConstructorUsedError;
   bool get allowBypass => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
   int get mixedPort => throw _privateConstructorUsedError;
@@ -265,6 +266,7 @@ abstract class $CoreStateCopyWith<$Res> {
   @useResult
   $Res call(
       {AccessControl? accessControl,
+      String currentProfileName,
       bool allowBypass,
       bool systemProxy,
       int mixedPort,
@@ -287,6 +289,7 @@ class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
   @override
   $Res call({
     Object? accessControl = freezed,
+    Object? currentProfileName = null,
     Object? allowBypass = null,
     Object? systemProxy = null,
     Object? mixedPort = null,
@@ -297,6 +300,10 @@ class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
           ? _value.accessControl
           : accessControl // ignore: cast_nullable_to_non_nullable
               as AccessControl?,
+      currentProfileName: null == currentProfileName
+          ? _value.currentProfileName
+          : currentProfileName // ignore: cast_nullable_to_non_nullable
+              as String,
       allowBypass: null == allowBypass
           ? _value.allowBypass
           : allowBypass // ignore: cast_nullable_to_non_nullable
@@ -339,6 +346,7 @@ abstract class _$$CoreStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {AccessControl? accessControl,
+      String currentProfileName,
       bool allowBypass,
       bool systemProxy,
       int mixedPort,
@@ -360,6 +368,7 @@ class __$$CoreStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? accessControl = freezed,
+    Object? currentProfileName = null,
     Object? allowBypass = null,
     Object? systemProxy = null,
     Object? mixedPort = null,
@@ -370,6 +379,10 @@ class __$$CoreStateImplCopyWithImpl<$Res>
           ? _value.accessControl
           : accessControl // ignore: cast_nullable_to_non_nullable
               as AccessControl?,
+      currentProfileName: null == currentProfileName
+          ? _value.currentProfileName
+          : currentProfileName // ignore: cast_nullable_to_non_nullable
+              as String,
       allowBypass: null == allowBypass
           ? _value.allowBypass
           : allowBypass // ignore: cast_nullable_to_non_nullable
@@ -395,6 +408,7 @@ class __$$CoreStateImplCopyWithImpl<$Res>
 class _$CoreStateImpl implements _CoreState {
   const _$CoreStateImpl(
       {this.accessControl,
+      required this.currentProfileName,
       required this.allowBypass,
       required this.systemProxy,
       required this.mixedPort,
@@ -406,6 +420,8 @@ class _$CoreStateImpl implements _CoreState {
   @override
   final AccessControl? accessControl;
   @override
+  final String currentProfileName;
+  @override
   final bool allowBypass;
   @override
   final bool systemProxy;
@@ -416,7 +432,7 @@ class _$CoreStateImpl implements _CoreState {
 
   @override
   String toString() {
-    return 'CoreState(accessControl: $accessControl, allowBypass: $allowBypass, systemProxy: $systemProxy, mixedPort: $mixedPort, onlyProxy: $onlyProxy)';
+    return 'CoreState(accessControl: $accessControl, currentProfileName: $currentProfileName, allowBypass: $allowBypass, systemProxy: $systemProxy, mixedPort: $mixedPort, onlyProxy: $onlyProxy)';
   }
 
   @override
@@ -426,6 +442,8 @@ class _$CoreStateImpl implements _CoreState {
             other is _$CoreStateImpl &&
             (identical(other.accessControl, accessControl) ||
                 other.accessControl == accessControl) &&
+            (identical(other.currentProfileName, currentProfileName) ||
+                other.currentProfileName == currentProfileName) &&
             (identical(other.allowBypass, allowBypass) ||
                 other.allowBypass == allowBypass) &&
             (identical(other.systemProxy, systemProxy) ||
@@ -438,8 +456,8 @@ class _$CoreStateImpl implements _CoreState {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, accessControl, allowBypass,
-      systemProxy, mixedPort, onlyProxy);
+  int get hashCode => Object.hash(runtimeType, accessControl,
+      currentProfileName, allowBypass, systemProxy, mixedPort, onlyProxy);
 
   @JsonKey(ignore: true)
   @override
@@ -458,6 +476,7 @@ class _$CoreStateImpl implements _CoreState {
 abstract class _CoreState implements CoreState {
   const factory _CoreState(
       {final AccessControl? accessControl,
+      required final String currentProfileName,
       required final bool allowBypass,
       required final bool systemProxy,
       required final int mixedPort,
@@ -468,6 +487,8 @@ abstract class _CoreState implements CoreState {
 
   @override
   AccessControl? get accessControl;
+  @override
+  String get currentProfileName;
   @override
   bool get allowBypass;
   @override

@@ -720,6 +720,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Seconds`
+  String get seconds {
+    return Intl.message(
+      'Seconds',
+      name: 'seconds',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// ` Ago`
   String get ago {
     return Intl.message(
@@ -1360,10 +1370,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Sync data by WebDAV`
+  /// `Sync data via WebDAV or file`
   String get backupAndRecoveryDesc {
     return Intl.message(
-      'Sync data by WebDAV',
+      'Sync data via WebDAV or file',
       name: 'backupAndRecoveryDesc',
       desc: '',
       args: [],
@@ -1390,31 +1400,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Backup local data to WebDAV`
-  String get backupDesc {
-    return Intl.message(
-      'Backup local data to WebDAV',
-      name: 'backupDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Recovery`
   String get recovery {
     return Intl.message(
       'Recovery',
       name: 'recovery',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Recovery data from WebDAV`
-  String get recoveryDesc {
-    return Intl.message(
-      'Recovery data from WebDAV',
-      name: 'recoveryDesc',
       desc: '',
       args: [],
     );
@@ -2265,6 +2255,86 @@ class AppLocalizations {
     return Intl.message(
       'Prue black mode',
       name: 'prueBlackMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tcp keep alive interval`
+  String get keepAliveIntervalDesc {
+    return Intl.message(
+      'Tcp keep alive interval',
+      name: 'keepAliveIntervalDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// ` entries`
+  String get entries {
+    return Intl.message(
+      ' entries',
+      name: 'entries',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local`
+  String get local {
+    return Intl.message(
+      'Local',
+      name: 'local',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remote`
+  String get remote {
+    return Intl.message(
+      'Remote',
+      name: 'remote',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup local data to WebDAV`
+  String get remoteBackupDesc {
+    return Intl.message(
+      'Backup local data to WebDAV',
+      name: 'remoteBackupDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recovery data from WebDAV`
+  String get remoteRecoveryDesc {
+    return Intl.message(
+      'Recovery data from WebDAV',
+      name: 'remoteRecoveryDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup local data to local`
+  String get localBackupDesc {
+    return Intl.message(
+      'Backup local data to local',
+      name: 'localBackupDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recovery data from file`
+  String get localRecoveryDesc {
+    return Intl.message(
+      'Recovery data from file',
+      name: 'localRecoveryDesc',
       desc: '',
       args: [],
     );

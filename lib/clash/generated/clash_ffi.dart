@@ -5190,30 +5190,6 @@ class ClashFFI {
       _lookup<ffi.NativeFunction<ffi.Void Function()>>('forceGc');
   late final _forceGc = _forceGcPtr.asFunction<void Function()>();
 
-  void setCurrentProfileName(
-    ffi.Pointer<ffi.Char> s,
-  ) {
-    return _setCurrentProfileName(
-      s,
-    );
-  }
-
-  late final _setCurrentProfileNamePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
-          'setCurrentProfileName');
-  late final _setCurrentProfileName = _setCurrentProfileNamePtr
-      .asFunction<void Function(ffi.Pointer<ffi.Char>)>();
-
-  ffi.Pointer<ffi.Char> getCurrentProfileName() {
-    return _getCurrentProfileName();
-  }
-
-  late final _getCurrentProfileNamePtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
-          'getCurrentProfileName');
-  late final _getCurrentProfileName =
-      _getCurrentProfileNamePtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
-
   void validateConfig(
     ffi.Pointer<ffi.Char> s,
     int port,
@@ -5408,6 +5384,21 @@ class ClashFFI {
           'getExternalProviders');
   late final _getExternalProviders =
       _getExternalProvidersPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
+
+  ffi.Pointer<ffi.Char> getExternalProvider(
+    ffi.Pointer<ffi.Char> name,
+  ) {
+    return _getExternalProvider(
+      name,
+    );
+  }
+
+  late final _getExternalProviderPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+              ffi.Pointer<ffi.Char>)>>('getExternalProvider');
+  late final _getExternalProvider = _getExternalProviderPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   void updateExternalProvider(
     ffi.Pointer<ffi.Char> providerName,

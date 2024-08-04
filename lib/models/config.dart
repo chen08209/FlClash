@@ -29,6 +29,7 @@ class AccessControl with _$AccessControl {
 class CoreState with _$CoreState {
   const factory CoreState({
     AccessControl? accessControl,
+    required String currentProfileName,
     required bool allowBypass,
     required bool systemProxy,
     required int mixedPort,

@@ -22,80 +22,11 @@ class GeoItem {
   });
 }
 
-class Resources extends StatefulWidget {
+class Resources extends StatelessWidget {
   const Resources({super.key});
 
   @override
-  State<Resources> createState() => _ResourcesState();
-}
-
-class _ResourcesState extends State<Resources> {
-  List<ExternalProvider> externalProviders = [];
-
-  List<GlobalObjectKey<_ProviderItemState>> providerItemKeys = [];
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncExternalProviders();
-    });
-  }
-
-  _syncExternalProviders() async {
-    externalProviders = await clashCore.getExternalProviders();
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  _updateProviders() async {
-    final updateProviders = providerItemKeys.map<Future>(
-      (key) async => await key.currentState?.updateProvider(false),
-    );
-    await Future.wait(updateProviders);
-    _syncExternalProviders();
-  }
-
-  List<Widget> _buildExternalProviderSection() {
-    List<GlobalObjectKey<_ProviderItemState>> keys = [];
-    final res = generateInfoSection(
-      info: Info(
-        iconData: Icons.source,
-        label: appLocalizations.externalResources,
-      ),
-      actions: [
-        IconButton.filledTonal(
-          onPressed: () {
-            _updateProviders();
-          },
-          padding: const EdgeInsets.all(4),
-          iconSize: 20,
-          icon: const Icon(
-            Icons.sync,
-          ),
-        )
-      ],
-      items: externalProviders.map(
-        (externalProvider) {
-          final key =
-              GlobalObjectKey<_ProviderItemState>(externalProvider.name);
-          keys.add(key);
-          return ProviderItem(
-            key: key,
-            provider: externalProvider,
-            onUpdated: () {
-              _syncExternalProviders();
-            },
-          );
-        },
-      ),
-    );
-    providerItemKeys = keys;
-    return res;
-  }
-
-  List<Widget> _buildGeoDataSection() {
+  Widget build(BuildContext context) {
     const geoItems = <GeoItem>[
       GeoItem(
         label: "GeoIp",
@@ -111,26 +42,19 @@ class _ResourcesState extends State<Resources> {
       GeoItem(label: "ASN", fileName: asnFileName, key: "asn"),
     ];
 
-    return generateInfoSection(
-      info: Info(
-        iconData: Icons.storage,
-        label: appLocalizations.geoData,
-      ),
-      items: geoItems.map(
-        (geoItem) => GeoDataListItem(
+    return ListView.separated(
+      itemBuilder: (_, index) {
+        final geoItem = geoItems[index];
+        return GeoDataListItem(
           geoItem: geoItem,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return generateListView(
-      [
-        ..._buildGeoDataSection(),
-        ..._buildExternalProviderSection(),
-      ],
+        );
+      },
+      separatorBuilder: (BuildContext context, int index) {
+        return const Divider(
+          height: 0,
+        );
+      },
+      itemCount: geoItems.length,
     );
   }
 }
@@ -226,9 +150,6 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         const SizedBox(
           height: 8,
         ),
-        const SizedBox(
-          height: 8,
-        ),
         Wrap(
           runSpacing: 6,
           spacing: 12,
@@ -294,117 +215,6 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
           return _buildSubtitle(value);
         },
       ),
-      trailing: SizedBox(
-        height: 48,
-        width: 48,
-        child: ValueListenableBuilder(
-          valueListenable: isUpdating,
-          builder: (_, isUpdating, ___) {
-            return FadeBox(
-              child: isUpdating
-                  ? const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: CircularProgressIndicator(),
-                    )
-                  : const SizedBox(),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class ProviderItem extends StatefulWidget {
-  final ExternalProvider provider;
-  final Function onUpdated;
-
-  const ProviderItem({
-    super.key,
-    required this.provider,
-    required this.onUpdated,
-  });
-
-  @override
-  State<ProviderItem> createState() => _ProviderItemState();
-}
-
-class _ProviderItemState extends State<ProviderItem> {
-  final isUpdating = ValueNotifier<bool>(false);
-
-  ExternalProvider get provider => widget.provider;
-
-  _handleUpdateProfile() async {
-    await globalState.safeRun<void>(updateProvider);
-    widget.onUpdated();
-  }
-
-  updateProvider([isSingle = true]) async {
-    if (provider.vehicleType != "HTTP") return;
-    isUpdating.value = true;
-    try {
-      final message = await clashCore.updateExternalProvider(
-        providerName: provider.name,
-        providerType: provider.type,
-      );
-      if (message.isNotEmpty) throw message;
-    } catch (e) {
-      isUpdating.value = false;
-      if (!isSingle) {
-        return e.toString();
-      } else {
-        rethrow;
-      }
-    }
-    isUpdating.value = false;
-    return null;
-  }
-
-  String _buildProviderDesc() {
-    return "${provider.type} (${provider.vehicleType})  ·  ${provider.updateAt.lastUpdateTimeDesc}";
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    isUpdating.dispose();
-  }
-
-  Widget _buildSubtitle() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(
-          height: 4,
-        ),
-        Text(
-          _buildProviderDesc(),
-        ),
-        if (provider.vehicleType == "HTTP") ...[
-          const SizedBox(
-            height: 8,
-          ),
-          CommonChip(
-            avatar: const Icon(Icons.sync),
-            label: appLocalizations.sync,
-            onPressed: () {
-              _handleUpdateProfile();
-            },
-          ),
-        ],
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 4,
-      ),
-      title: Text(provider.name),
-      subtitle: _buildSubtitle(),
       trailing: SizedBox(
         height: 48,
         width: 48,

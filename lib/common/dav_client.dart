@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -43,65 +44,16 @@ class DAVClient {
 
   get root => "/$appName";
 
-  get remoteConfig => "$root/$configKey.json";
+  get backupFile => "$root/backup.zip";
 
-  get remoteClashConfig => "$root/$clashConfigKey.json";
-
-  get remoteProfiles => "$root/$profilesDirectoryName";
-
-  backup() async {
-    final appController = globalState.appController;
-    final config = appController.config;
-    final clashConfig = appController.clashConfig;
+  backup(Uint8List data) async {
     await client.mkdir("$root");
-    client.write(
-      remoteConfig,
-      utf8.encode(
-        json.encode(config.toJson()),
-      ),
-    );
-    client.write(
-      remoteClashConfig,
-      utf8.encode(
-        json.encode(clashConfig.toJson()),
-      ),
-    );
-    await client.remove(remoteProfiles);
-    for (final profile in config.profiles) {
-      final path = await appPath.getProfilePath(profile.id);
-      if (path == null) continue;
-      await client.writeFromFile(
-        path,
-        "$remoteProfiles/${basename(path)}",
-      );
-    }
+    await client.write("$backupFile", data);
     return true;
   }
 
-  recovery({required RecoveryOption recoveryOption}) async {
-    final profiles = await client.readDir(remoteProfiles);
-    final profilesPath = await appPath.getProfilesPath();
-    for (final file in profiles) {
-      await client.read2File(
-        "$remoteProfiles/${file.name}",
-        join(
-          profilesPath,
-          file.name,
-        ),
-      );
-    }
-    final configRaw = utf8.decode((await client.read(remoteConfig)));
-    final clashConfigRaw = utf8.decode(await client.read(remoteClashConfig));
-    final config = Config.fromJson(json.decode(configRaw));
-    final clashConfig = ClashConfig.fromJson(json.decode(clashConfigRaw));
-    if(recoveryOption == RecoveryOption.onlyProfiles){
-      globalState.appController.config.update(config, RecoveryOption.onlyProfiles);
-    }else{
-      globalState.appController.config.update(config, RecoveryOption.all);
-      globalState.appController.clashConfig.update(clashConfig);
-    }
-    await globalState.appController.applyProfile();
-    globalState.appController.savePreferences();
-    return true;
+  Future<List<int>> recovery() async {
+    final data = await client.read(backupFile);
+    return data;
   }
 }

@@ -16,6 +16,13 @@ extension ColorExtension on Color {
   toLittle() {
     return withOpacity(0.03);
   }
+
+  Color darken([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(this);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return hslDark.toColor();
+  }
 }
 
 extension ColorSchemeExtension on ColorScheme {
@@ -23,6 +30,7 @@ extension ColorSchemeExtension on ColorScheme {
       ? copyWith(
           surface: Colors.black,
           background: Colors.black,
+          surfaceContainer: surfaceContainer.darken(0.05),
         )
       : this;
 }

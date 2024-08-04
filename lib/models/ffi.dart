@@ -24,7 +24,7 @@ class ConfigExtendedParams with _$ConfigExtendedParams {
 @freezed
 class UpdateConfigParams with _$UpdateConfigParams {
   const factory UpdateConfigParams({
-    @JsonKey(name: "profile-path") String? profilePath,
+    @JsonKey(name: "profile-id") required String profileId,
     required ClashConfig config,
     required ConfigExtendedParams params,
   }) = _UpdateConfigParams;
@@ -123,6 +123,9 @@ class ExternalProvider with _$ExternalProvider {
   const factory ExternalProvider({
     required String name,
     required String type,
+    required String path,
+    required int count,
+    @Default(false) bool isUpdating,
     @JsonKey(name: "vehicle-type") required String vehicleType,
     @JsonKey(name: "update-at") required DateTime updateAt,
   }) = _ExternalProvider;
@@ -140,7 +143,7 @@ abstract mixin class AppMessageListener {
 
   void onStarted(String runTime) {}
 
-  void onLoaded(String groupName) {}
+  void onLoaded(String providerName) {}
 }
 
 abstract mixin class ServiceMessageListener {
@@ -150,7 +153,5 @@ abstract mixin class ServiceMessageListener {
 
   onStarted(String runTime) {}
 
-  onLoaded(String groupName) {}
+  onLoaded(String providerName) {}
 }
-
-

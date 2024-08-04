@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -55,6 +56,9 @@ class Profile with _$Profile {
     @Default(true) bool autoUpdate,
     @Default({}) SelectedMap selectedMap,
     @Default({}) Set<String> unfoldSet,
+    @JsonKey(includeToJson: false, includeFromJson: false)
+    @Default(false)
+    bool isUpdating,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, Object?> json) =>
@@ -63,7 +67,7 @@ class Profile with _$Profile {
   factory Profile.normal({
     String? label,
     String url = '',
-}) {
+  }) {
     return Profile(
       label: label,
       url: url,
@@ -77,8 +81,7 @@ extension ProfileExtension on Profile {
   ProfileType get type =>
       url.isEmpty == true ? ProfileType.file : ProfileType.url;
 
-  bool get realAutoUpdate =>
-      url.isEmpty == true ? false : autoUpdate;
+  bool get realAutoUpdate => url.isEmpty == true ? false : autoUpdate;
 
   Future<void> checkAndUpdate() async {
     final isExists = await check();

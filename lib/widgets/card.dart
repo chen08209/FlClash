@@ -32,39 +32,38 @@ class InfoHeader extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (info.iconData != null) ...[
-                Icon(
-                  info.iconData,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(
-                  width: 8,
-                ),
-              ],
-              Flexible(
-                child: TooltipText(
-                  text: Text(
-                    info.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-              ),
-            ],
-          ),
           Expanded(
-            flex: 1,
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ...actions,
+                if (info.iconData != null) ...[
+                  Icon(
+                    info.iconData,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                ],
+                Flexible(
+                  child: TooltipText(
+                    text: Text(
+                      info.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ),
               ],
             ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ...actions,
+            ],
           ),
         ],
       ),
@@ -146,13 +145,11 @@ class CommonCard extends StatelessWidget {
       childWidget = Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Flexible(
-            flex: 0,
-            child: InfoHeader(
-              info: info!,
-            ),
+          InfoHeader(
+            info: info!,
           ),
           Flexible(
+            flex: 1,
             child: child,
           ),
         ],

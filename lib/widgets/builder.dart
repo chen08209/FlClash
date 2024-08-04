@@ -1,4 +1,6 @@
+import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ScrollOverBuilder extends StatefulWidget {
   final Widget Function(bool isOver) builder;
@@ -14,7 +16,6 @@ class ScrollOverBuilder extends StatefulWidget {
 
 class _ScrollOverBuilderState extends State<ScrollOverBuilder> {
   final isOverNotifier = ValueNotifier<bool>(false);
-
 
   @override
   void dispose() {
@@ -35,6 +36,32 @@ class _ScrollOverBuilderState extends State<ScrollOverBuilder> {
           return widget.builder(isOver);
         },
       ),
+    );
+  }
+}
+
+class ProxiesActionsBuilder extends StatelessWidget {
+  final Widget? child;
+  final Widget Function(
+    ProxiesActionsState state,
+    Widget? child,
+  ) builder;
+
+  const ProxiesActionsBuilder({
+    super.key,
+    required this.child,
+    required this.builder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<AppState, ProxiesActionsState>(
+      selector: (_, appState) => ProxiesActionsState(
+        isCurrent: appState.currentLabel == "proxies",
+        hasProvider: appState.providers.isNotEmpty,
+      ),
+      builder: (_, state, child) => builder(state, child),
+      child: child,
     );
   }
 }

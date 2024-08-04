@@ -2815,32 +2815,28 @@ abstract class _ProxiesListHeaderSelectorState
 }
 
 /// @nodoc
-mixin _$CurrentGroupProxyNameSelectorState {
-  String? get proxyName => throw _privateConstructorUsedError;
-  String? get proxyName2 => throw _privateConstructorUsedError;
+mixin _$ProxiesActionsState {
+  bool get isCurrent => throw _privateConstructorUsedError;
+  bool get hasProvider => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $CurrentGroupProxyNameSelectorStateCopyWith<
-          CurrentGroupProxyNameSelectorState>
-      get copyWith => throw _privateConstructorUsedError;
+  $ProxiesActionsStateCopyWith<ProxiesActionsState> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $CurrentGroupProxyNameSelectorStateCopyWith<$Res> {
-  factory $CurrentGroupProxyNameSelectorStateCopyWith(
-          CurrentGroupProxyNameSelectorState value,
-          $Res Function(CurrentGroupProxyNameSelectorState) then) =
-      _$CurrentGroupProxyNameSelectorStateCopyWithImpl<$Res,
-          CurrentGroupProxyNameSelectorState>;
+abstract class $ProxiesActionsStateCopyWith<$Res> {
+  factory $ProxiesActionsStateCopyWith(
+          ProxiesActionsState value, $Res Function(ProxiesActionsState) then) =
+      _$ProxiesActionsStateCopyWithImpl<$Res, ProxiesActionsState>;
   @useResult
-  $Res call({String? proxyName, String? proxyName2});
+  $Res call({bool isCurrent, bool hasProvider});
 }
 
 /// @nodoc
-class _$CurrentGroupProxyNameSelectorStateCopyWithImpl<$Res,
-        $Val extends CurrentGroupProxyNameSelectorState>
-    implements $CurrentGroupProxyNameSelectorStateCopyWith<$Res> {
-  _$CurrentGroupProxyNameSelectorStateCopyWithImpl(this._value, this._then);
+class _$ProxiesActionsStateCopyWithImpl<$Res, $Val extends ProxiesActionsState>
+    implements $ProxiesActionsStateCopyWith<$Res> {
+  _$ProxiesActionsStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -2850,117 +2846,109 @@ class _$CurrentGroupProxyNameSelectorStateCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? proxyName = freezed,
-    Object? proxyName2 = freezed,
+    Object? isCurrent = null,
+    Object? hasProvider = null,
   }) {
     return _then(_value.copyWith(
-      proxyName: freezed == proxyName
-          ? _value.proxyName
-          : proxyName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      proxyName2: freezed == proxyName2
-          ? _value.proxyName2
-          : proxyName2 // ignore: cast_nullable_to_non_nullable
-              as String?,
+      isCurrent: null == isCurrent
+          ? _value.isCurrent
+          : isCurrent // ignore: cast_nullable_to_non_nullable
+              as bool,
+      hasProvider: null == hasProvider
+          ? _value.hasProvider
+          : hasProvider // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$CurrentGroupProxyNameSelectorStateImplCopyWith<$Res>
-    implements $CurrentGroupProxyNameSelectorStateCopyWith<$Res> {
-  factory _$$CurrentGroupProxyNameSelectorStateImplCopyWith(
-          _$CurrentGroupProxyNameSelectorStateImpl value,
-          $Res Function(_$CurrentGroupProxyNameSelectorStateImpl) then) =
-      __$$CurrentGroupProxyNameSelectorStateImplCopyWithImpl<$Res>;
+abstract class _$$ProxiesActionsStateImplCopyWith<$Res>
+    implements $ProxiesActionsStateCopyWith<$Res> {
+  factory _$$ProxiesActionsStateImplCopyWith(_$ProxiesActionsStateImpl value,
+          $Res Function(_$ProxiesActionsStateImpl) then) =
+      __$$ProxiesActionsStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? proxyName, String? proxyName2});
+  $Res call({bool isCurrent, bool hasProvider});
 }
 
 /// @nodoc
-class __$$CurrentGroupProxyNameSelectorStateImplCopyWithImpl<$Res>
-    extends _$CurrentGroupProxyNameSelectorStateCopyWithImpl<$Res,
-        _$CurrentGroupProxyNameSelectorStateImpl>
-    implements _$$CurrentGroupProxyNameSelectorStateImplCopyWith<$Res> {
-  __$$CurrentGroupProxyNameSelectorStateImplCopyWithImpl(
-      _$CurrentGroupProxyNameSelectorStateImpl _value,
-      $Res Function(_$CurrentGroupProxyNameSelectorStateImpl) _then)
+class __$$ProxiesActionsStateImplCopyWithImpl<$Res>
+    extends _$ProxiesActionsStateCopyWithImpl<$Res, _$ProxiesActionsStateImpl>
+    implements _$$ProxiesActionsStateImplCopyWith<$Res> {
+  __$$ProxiesActionsStateImplCopyWithImpl(_$ProxiesActionsStateImpl _value,
+      $Res Function(_$ProxiesActionsStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? proxyName = freezed,
-    Object? proxyName2 = freezed,
+    Object? isCurrent = null,
+    Object? hasProvider = null,
   }) {
-    return _then(_$CurrentGroupProxyNameSelectorStateImpl(
-      proxyName: freezed == proxyName
-          ? _value.proxyName
-          : proxyName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      proxyName2: freezed == proxyName2
-          ? _value.proxyName2
-          : proxyName2 // ignore: cast_nullable_to_non_nullable
-              as String?,
+    return _then(_$ProxiesActionsStateImpl(
+      isCurrent: null == isCurrent
+          ? _value.isCurrent
+          : isCurrent // ignore: cast_nullable_to_non_nullable
+              as bool,
+      hasProvider: null == hasProvider
+          ? _value.hasProvider
+          : hasProvider // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
 
 /// @nodoc
 
-class _$CurrentGroupProxyNameSelectorStateImpl
-    implements _CurrentGroupProxyNameSelectorState {
-  const _$CurrentGroupProxyNameSelectorStateImpl(
-      {required this.proxyName, required this.proxyName2});
+class _$ProxiesActionsStateImpl implements _ProxiesActionsState {
+  const _$ProxiesActionsStateImpl(
+      {required this.isCurrent, required this.hasProvider});
 
   @override
-  final String? proxyName;
+  final bool isCurrent;
   @override
-  final String? proxyName2;
+  final bool hasProvider;
 
   @override
   String toString() {
-    return 'CurrentGroupProxyNameSelectorState(proxyName: $proxyName, proxyName2: $proxyName2)';
+    return 'ProxiesActionsState(isCurrent: $isCurrent, hasProvider: $hasProvider)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$CurrentGroupProxyNameSelectorStateImpl &&
-            (identical(other.proxyName, proxyName) ||
-                other.proxyName == proxyName) &&
-            (identical(other.proxyName2, proxyName2) ||
-                other.proxyName2 == proxyName2));
+            other is _$ProxiesActionsStateImpl &&
+            (identical(other.isCurrent, isCurrent) ||
+                other.isCurrent == isCurrent) &&
+            (identical(other.hasProvider, hasProvider) ||
+                other.hasProvider == hasProvider));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, proxyName, proxyName2);
+  int get hashCode => Object.hash(runtimeType, isCurrent, hasProvider);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$CurrentGroupProxyNameSelectorStateImplCopyWith<
-          _$CurrentGroupProxyNameSelectorStateImpl>
-      get copyWith => __$$CurrentGroupProxyNameSelectorStateImplCopyWithImpl<
-          _$CurrentGroupProxyNameSelectorStateImpl>(this, _$identity);
+  _$$ProxiesActionsStateImplCopyWith<_$ProxiesActionsStateImpl> get copyWith =>
+      __$$ProxiesActionsStateImplCopyWithImpl<_$ProxiesActionsStateImpl>(
+          this, _$identity);
 }
 
-abstract class _CurrentGroupProxyNameSelectorState
-    implements CurrentGroupProxyNameSelectorState {
-  const factory _CurrentGroupProxyNameSelectorState(
-          {required final String? proxyName,
-          required final String? proxyName2}) =
-      _$CurrentGroupProxyNameSelectorStateImpl;
+abstract class _ProxiesActionsState implements ProxiesActionsState {
+  const factory _ProxiesActionsState(
+      {required final bool isCurrent,
+      required final bool hasProvider}) = _$ProxiesActionsStateImpl;
 
   @override
-  String? get proxyName;
+  bool get isCurrent;
   @override
-  String? get proxyName2;
+  bool get hasProvider;
   @override
   @JsonKey(ignore: true)
-  _$$CurrentGroupProxyNameSelectorStateImplCopyWith<
-          _$CurrentGroupProxyNameSelectorStateImpl>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$ProxiesActionsStateImplCopyWith<_$ProxiesActionsStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

@@ -139,6 +139,7 @@ _$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
           ? null
           : AccessControl.fromJson(
               json['accessControl'] as Map<String, dynamic>),
+      currentProfileName: json['currentProfileName'] as String,
       allowBypass: json['allowBypass'] as bool,
       systemProxy: json['systemProxy'] as bool,
       mixedPort: (json['mixedPort'] as num).toInt(),
@@ -148,6 +149,7 @@ _$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
     <String, dynamic>{
       'accessControl': instance.accessControl,
+      'currentProfileName': instance.currentProfileName,
       'allowBypass': instance.allowBypass,
       'systemProxy': instance.systemProxy,
       'mixedPort': instance.mixedPort,
