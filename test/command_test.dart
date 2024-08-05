@@ -2,7 +2,18 @@
 
 import 'dart:io';
 
-void main() async {
+import 'package:fl_clash/common/other.dart';
+import 'package:lpinyin/lpinyin.dart';
+
+void main() {
+  print(PinyinHelper.getPinyin("ABC"));
+  print(PinyinHelper.getPinyin("阿里巴巴"));
+
+  print('a'.compareTo('B'));
+  print('A'.compareTo('B'));
+}
+
+startService() async {
   // 定义服务器将要监听的地址和端口
   final host = InternetAddress.anyIPv4; // 监听所有网络接口
   const port = 8080; // 使用 8080 端口

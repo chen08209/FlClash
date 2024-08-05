@@ -2339,6 +2339,96 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Mode`
+  String get mode {
+    return Intl.message(
+      'Mode',
+      name: 'mode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Time`
+  String get time {
+    return Intl.message(
+      'Time',
+      name: 'time',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Source`
+  String get source {
+    return Intl.message(
+      'Source',
+      name: 'source',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All apps`
+  String get allApps {
+    return Intl.message(
+      'All apps',
+      name: 'allApps',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only third-party apps`
+  String get onlyOtherApps {
+    return Intl.message(
+      'Only third-party apps',
+      name: 'onlyOtherApps',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Action`
+  String get action {
+    return Intl.message(
+      'Action',
+      name: 'action',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Intelligent selection`
+  String get intelligentSelected {
+    return Intl.message(
+      'Intelligent selection',
+      name: 'intelligentSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clipboard import`
+  String get clipboardImport {
+    return Intl.message(
+      'Clipboard import',
+      name: 'clipboardImport',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export clipboard`
+  String get clipboardExport {
+    return Intl.message(
+      'Export clipboard',
+      name: 'clipboardExport',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

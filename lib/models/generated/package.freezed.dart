@@ -23,6 +23,7 @@ mixin _$Package {
   String get packageName => throw _privateConstructorUsedError;
   String get label => throw _privateConstructorUsedError;
   bool get isSystem => throw _privateConstructorUsedError;
+  int get firstInstallTime => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -34,7 +35,8 @@ abstract class $PackageCopyWith<$Res> {
   factory $PackageCopyWith(Package value, $Res Function(Package) then) =
       _$PackageCopyWithImpl<$Res, Package>;
   @useResult
-  $Res call({String packageName, String label, bool isSystem});
+  $Res call(
+      {String packageName, String label, bool isSystem, int firstInstallTime});
 }
 
 /// @nodoc
@@ -53,6 +55,7 @@ class _$PackageCopyWithImpl<$Res, $Val extends Package>
     Object? packageName = null,
     Object? label = null,
     Object? isSystem = null,
+    Object? firstInstallTime = null,
   }) {
     return _then(_value.copyWith(
       packageName: null == packageName
@@ -67,6 +70,10 @@ class _$PackageCopyWithImpl<$Res, $Val extends Package>
           ? _value.isSystem
           : isSystem // ignore: cast_nullable_to_non_nullable
               as bool,
+      firstInstallTime: null == firstInstallTime
+          ? _value.firstInstallTime
+          : firstInstallTime // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -78,7 +85,8 @@ abstract class _$$PackageImplCopyWith<$Res> implements $PackageCopyWith<$Res> {
       __$$PackageImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String packageName, String label, bool isSystem});
+  $Res call(
+      {String packageName, String label, bool isSystem, int firstInstallTime});
 }
 
 /// @nodoc
@@ -95,6 +103,7 @@ class __$$PackageImplCopyWithImpl<$Res>
     Object? packageName = null,
     Object? label = null,
     Object? isSystem = null,
+    Object? firstInstallTime = null,
   }) {
     return _then(_$PackageImpl(
       packageName: null == packageName
@@ -109,6 +118,10 @@ class __$$PackageImplCopyWithImpl<$Res>
           ? _value.isSystem
           : isSystem // ignore: cast_nullable_to_non_nullable
               as bool,
+      firstInstallTime: null == firstInstallTime
+          ? _value.firstInstallTime
+          : firstInstallTime // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -117,7 +130,10 @@ class __$$PackageImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$PackageImpl implements _Package {
   const _$PackageImpl(
-      {required this.packageName, required this.label, required this.isSystem});
+      {required this.packageName,
+      required this.label,
+      required this.isSystem,
+      required this.firstInstallTime});
 
   factory _$PackageImpl.fromJson(Map<String, dynamic> json) =>
       _$$PackageImplFromJson(json);
@@ -128,10 +144,12 @@ class _$PackageImpl implements _Package {
   final String label;
   @override
   final bool isSystem;
+  @override
+  final int firstInstallTime;
 
   @override
   String toString() {
-    return 'Package(packageName: $packageName, label: $label, isSystem: $isSystem)';
+    return 'Package(packageName: $packageName, label: $label, isSystem: $isSystem, firstInstallTime: $firstInstallTime)';
   }
 
   @override
@@ -143,12 +161,15 @@ class _$PackageImpl implements _Package {
                 other.packageName == packageName) &&
             (identical(other.label, label) || other.label == label) &&
             (identical(other.isSystem, isSystem) ||
-                other.isSystem == isSystem));
+                other.isSystem == isSystem) &&
+            (identical(other.firstInstallTime, firstInstallTime) ||
+                other.firstInstallTime == firstInstallTime));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, packageName, label, isSystem);
+  int get hashCode =>
+      Object.hash(runtimeType, packageName, label, isSystem, firstInstallTime);
 
   @JsonKey(ignore: true)
   @override
@@ -168,7 +189,8 @@ abstract class _Package implements Package {
   const factory _Package(
       {required final String packageName,
       required final String label,
-      required final bool isSystem}) = _$PackageImpl;
+      required final bool isSystem,
+      required final int firstInstallTime}) = _$PackageImpl;
 
   factory _Package.fromJson(Map<String, dynamic> json) = _$PackageImpl.fromJson;
 
@@ -178,6 +200,8 @@ abstract class _Package implements Package {
   String get label;
   @override
   bool get isSystem;
+  @override
+  int get firstInstallTime;
   @override
   @JsonKey(ignore: true)
   _$$PackageImplCopyWith<_$PackageImpl> get copyWith =>

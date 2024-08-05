@@ -23,6 +23,7 @@ mixin _$AccessControl {
   AccessControlMode get mode => throw _privateConstructorUsedError;
   List<String> get acceptList => throw _privateConstructorUsedError;
   List<String> get rejectList => throw _privateConstructorUsedError;
+  AccessSortType get sort => throw _privateConstructorUsedError;
   bool get isFilterSystemApp => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -41,6 +42,7 @@ abstract class $AccessControlCopyWith<$Res> {
       {AccessControlMode mode,
       List<String> acceptList,
       List<String> rejectList,
+      AccessSortType sort,
       bool isFilterSystemApp});
 }
 
@@ -60,6 +62,7 @@ class _$AccessControlCopyWithImpl<$Res, $Val extends AccessControl>
     Object? mode = null,
     Object? acceptList = null,
     Object? rejectList = null,
+    Object? sort = null,
     Object? isFilterSystemApp = null,
   }) {
     return _then(_value.copyWith(
@@ -75,6 +78,10 @@ class _$AccessControlCopyWithImpl<$Res, $Val extends AccessControl>
           ? _value.rejectList
           : rejectList // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      sort: null == sort
+          ? _value.sort
+          : sort // ignore: cast_nullable_to_non_nullable
+              as AccessSortType,
       isFilterSystemApp: null == isFilterSystemApp
           ? _value.isFilterSystemApp
           : isFilterSystemApp // ignore: cast_nullable_to_non_nullable
@@ -95,6 +102,7 @@ abstract class _$$AccessControlImplCopyWith<$Res>
       {AccessControlMode mode,
       List<String> acceptList,
       List<String> rejectList,
+      AccessSortType sort,
       bool isFilterSystemApp});
 }
 
@@ -112,6 +120,7 @@ class __$$AccessControlImplCopyWithImpl<$Res>
     Object? mode = null,
     Object? acceptList = null,
     Object? rejectList = null,
+    Object? sort = null,
     Object? isFilterSystemApp = null,
   }) {
     return _then(_$AccessControlImpl(
@@ -127,6 +136,10 @@ class __$$AccessControlImplCopyWithImpl<$Res>
           ? _value._rejectList
           : rejectList // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      sort: null == sort
+          ? _value.sort
+          : sort // ignore: cast_nullable_to_non_nullable
+              as AccessSortType,
       isFilterSystemApp: null == isFilterSystemApp
           ? _value.isFilterSystemApp
           : isFilterSystemApp // ignore: cast_nullable_to_non_nullable
@@ -142,6 +155,7 @@ class _$AccessControlImpl implements _AccessControl {
       {this.mode = AccessControlMode.rejectSelected,
       final List<String> acceptList = const [],
       final List<String> rejectList = const [],
+      this.sort = AccessSortType.none,
       this.isFilterSystemApp = true})
       : _acceptList = acceptList,
         _rejectList = rejectList;
@@ -172,11 +186,14 @@ class _$AccessControlImpl implements _AccessControl {
 
   @override
   @JsonKey()
+  final AccessSortType sort;
+  @override
+  @JsonKey()
   final bool isFilterSystemApp;
 
   @override
   String toString() {
-    return 'AccessControl(mode: $mode, acceptList: $acceptList, rejectList: $rejectList, isFilterSystemApp: $isFilterSystemApp)';
+    return 'AccessControl(mode: $mode, acceptList: $acceptList, rejectList: $rejectList, sort: $sort, isFilterSystemApp: $isFilterSystemApp)';
   }
 
   @override
@@ -189,6 +206,7 @@ class _$AccessControlImpl implements _AccessControl {
                 .equals(other._acceptList, _acceptList) &&
             const DeepCollectionEquality()
                 .equals(other._rejectList, _rejectList) &&
+            (identical(other.sort, sort) || other.sort == sort) &&
             (identical(other.isFilterSystemApp, isFilterSystemApp) ||
                 other.isFilterSystemApp == isFilterSystemApp));
   }
@@ -200,6 +218,7 @@ class _$AccessControlImpl implements _AccessControl {
       mode,
       const DeepCollectionEquality().hash(_acceptList),
       const DeepCollectionEquality().hash(_rejectList),
+      sort,
       isFilterSystemApp);
 
   @JsonKey(ignore: true)
@@ -221,6 +240,7 @@ abstract class _AccessControl implements AccessControl {
       {final AccessControlMode mode,
       final List<String> acceptList,
       final List<String> rejectList,
+      final AccessSortType sort,
       final bool isFilterSystemApp}) = _$AccessControlImpl;
 
   factory _AccessControl.fromJson(Map<String, dynamic> json) =
@@ -232,6 +252,8 @@ abstract class _AccessControl implements AccessControl {
   List<String> get acceptList;
   @override
   List<String> get rejectList;
+  @override
+  AccessSortType get sort;
   @override
   bool get isFilterSystemApp;
   @override

@@ -353,7 +353,8 @@ class AppState with ChangeNotifier {
     }
   }
 
-  setProvider(ExternalProvider provider) {
+  setProvider(ExternalProvider? provider) {
+    if(provider == null) return;
     final index = _providers.indexWhere((item) => item.name == provider.name);
     if (index == -1) return;
     _providers = List.from(_providers)..[index] = provider;

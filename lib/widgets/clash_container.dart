@@ -79,10 +79,11 @@ class _ClashContainerState extends State<ClashContainer>
   }
 
   @override
-  void onDelay(Delay delay) {
+  Future<void> onDelay(Delay delay) async {
     final appController = globalState.appController;
     appController.setDelay(delay);
     super.onDelay(delay);
+    await globalState.appController.updateGroupDebounce();
   }
 
   @override

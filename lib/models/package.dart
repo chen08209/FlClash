@@ -9,6 +9,7 @@ class Package with _$Package {
     required String packageName,
     required String label,
     required bool isSystem,
+    required int firstInstallTime,
   }) = _Package;
 
   factory Package.fromJson(Map<String, Object?> json) =>

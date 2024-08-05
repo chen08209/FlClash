@@ -3,6 +3,7 @@ package main
 import "C"
 import (
 	"context"
+	"errors"
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
@@ -102,6 +103,12 @@ type ExternalProvider struct {
 	UpdateAt    time.Time `json:"update-at"`
 }
 
+type ExternalProviders []ExternalProvider
+
+func (a ExternalProviders) Len() int           { return len(a) }
+func (a ExternalProviders) Less(i, j int) bool { return a[i].Name < a[j].Name }
+func (a ExternalProviders) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+
 var b, _ = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 
 func restartExecutable(execPath string) {
@@ -190,35 +197,67 @@ func getRawConfigWithId(id string) *config.RawConfig {
 	return prof
 }
 
-func getExternalProvidersRaw() map[string]ExternalProvider {
-	externalProviders := make(map[string]ExternalProvider)
+func getExternalProvidersRaw() map[string]cp.Provider {
+	eps := make(map[string]cp.Provider)
 	for n, p := range tunnel.Providers() {
 		if p.VehicleType() != cp.Compatible {
-			p := p.(*provider.ProxySetProvider)
-			externalProviders[n] = ExternalProvider{
-				Name:        n,
-				Type:        p.Type().String(),
-				VehicleType: p.VehicleType().String(),
-				Count:       p.Count(),
-				Path:        p.Vehicle().Path(),
-				UpdateAt:    p.UpdatedAt,
-			}
+			eps[n] = p
 		}
 	}
 	for n, p := range tunnel.RuleProviders() {
 		if p.VehicleType() != cp.Compatible {
-			p := p.(*rp.RuleSetProvider)
-			externalProviders[n] = ExternalProvider{
-				Name:        n,
-				Type:        p.Type().String(),
-				VehicleType: p.VehicleType().String(),
-				Count:       p.Count(),
-				Path:        p.Vehicle().Path(),
-				UpdateAt:    p.UpdatedAt,
-			}
+			eps[n] = p
 		}
 	}
-	return externalProviders
+	return eps
+}
+
+func toExternalProvider(p cp.Provider) (*ExternalProvider, error) {
+	switch p.(type) {
+	case *provider.ProxySetProvider:
+		psp := p.(*provider.ProxySetProvider)
+		return &ExternalProvider{
+			Name:        psp.Name(),
+			Type:        psp.Type().String(),
+			VehicleType: psp.VehicleType().String(),
+			Count:       psp.Count(),
+			Path:        psp.Vehicle().Path(),
+			UpdateAt:    psp.UpdatedAt,
+		}, nil
+	case *rp.RuleSetProvider:
+		rsp := p.(*rp.RuleSetProvider)
+		return &ExternalProvider{
+			Name:        rsp.Name(),
+			Type:        rsp.Type().String(),
+			VehicleType: rsp.VehicleType().String(),
+			Count:       rsp.Count(),
+			Path:        rsp.Vehicle().Path(),
+			UpdateAt:    rsp.UpdatedAt,
+		}, nil
+	default:
+		return nil, errors.New("not external provider")
+	}
+}
+
+func sideUpdateExternalProvider(p cp.Provider, bytes []byte) error {
+	switch p.(type) {
+	case *provider.ProxySetProvider:
+		psp := p.(*provider.ProxySetProvider)
+		elm, same, err := psp.SideUpdate(bytes)
+		if err == nil && !same {
+			psp.OnUpdate(elm)
+		}
+		return nil
+	case rp.RuleSetProvider:
+		rsp := p.(*rp.RuleSetProvider)
+		elm, same, err := rsp.SideUpdate(bytes)
+		if err == nil && !same {
+			rsp.OnUpdate(elm)
+		}
+		return nil
+	default:
+		return errors.New("not external provider")
+	}
 }
 
 func decorationConfig(profileId string, cfg config.RawConfig) *config.RawConfig {
@@ -487,5 +526,6 @@ func applyConfig() error {
 		hub.UltraApplyConfig(cfg, true)
 		patchSelectGroup()
 	}
+	externalProviders = getExternalProvidersRaw()
 	return err
 }

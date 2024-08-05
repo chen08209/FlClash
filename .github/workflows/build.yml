@@ -136,18 +136,25 @@ jobs:
             gitchangelog "${pre}.." >> release.md 2>&1 || echo "Error in gitchangelog"
             echo -e "\n\n</details>" >> release.md
           fi
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/*
           body_path: './release.md'
 
+      - name: Create Fdroid Source Dir
+        run: |
+          mkdir -p ./tmp
+          cp ./dist/*android-arm64-v8a* ./tmp/ || true
+          echo "Files copied successfully"
+
       - name: Push to fdroid repo
         uses: cpina/github-action-push-to-another-repository@v1.7.2
         env:
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
         with:
-          source-directory: ./dist/
+          source-directory: ./tmp/
           destination-github-username: chen08209
           destination-repository-name: FlClash-fdroid-repo
           user-name: 'github-actions[bot]'

@@ -18,11 +18,19 @@ class AccessControl with _$AccessControl {
     @Default(AccessControlMode.rejectSelected) AccessControlMode mode,
     @Default([]) List<String> acceptList,
     @Default([]) List<String> rejectList,
+    @Default(AccessSortType.none) AccessSortType sort,
     @Default(true) bool isFilterSystemApp,
   }) = _AccessControl;
 
   factory AccessControl.fromJson(Map<String, Object?> json) =>
       _$AccessControlFromJson(json);
+}
+
+extension AccessControlExt on AccessControl {
+  List<String> get currentList => switch (mode) {
+    AccessControlMode.acceptSelected => acceptList,
+    AccessControlMode.rejectSelected => rejectList,
+  };
 }
 
 @freezed

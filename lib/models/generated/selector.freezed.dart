@@ -2372,6 +2372,7 @@ abstract class _MoreToolsSelectorState implements MoreToolsSelectorState {
 
 /// @nodoc
 mixin _$PackageListSelectorState {
+  List<Package> get packages => throw _privateConstructorUsedError;
   AccessControl get accessControl => throw _privateConstructorUsedError;
   bool get isAccessControl => throw _privateConstructorUsedError;
 
@@ -2386,7 +2387,10 @@ abstract class $PackageListSelectorStateCopyWith<$Res> {
           $Res Function(PackageListSelectorState) then) =
       _$PackageListSelectorStateCopyWithImpl<$Res, PackageListSelectorState>;
   @useResult
-  $Res call({AccessControl accessControl, bool isAccessControl});
+  $Res call(
+      {List<Package> packages,
+      AccessControl accessControl,
+      bool isAccessControl});
 
   $AccessControlCopyWith<$Res> get accessControl;
 }
@@ -2405,10 +2409,15 @@ class _$PackageListSelectorStateCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? packages = null,
     Object? accessControl = null,
     Object? isAccessControl = null,
   }) {
     return _then(_value.copyWith(
+      packages: null == packages
+          ? _value.packages
+          : packages // ignore: cast_nullable_to_non_nullable
+              as List<Package>,
       accessControl: null == accessControl
           ? _value.accessControl
           : accessControl // ignore: cast_nullable_to_non_nullable
@@ -2438,7 +2447,10 @@ abstract class _$$PackageListSelectorStateImplCopyWith<$Res>
       __$$PackageListSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({AccessControl accessControl, bool isAccessControl});
+  $Res call(
+      {List<Package> packages,
+      AccessControl accessControl,
+      bool isAccessControl});
 
   @override
   $AccessControlCopyWith<$Res> get accessControl;
@@ -2457,10 +2469,15 @@ class __$$PackageListSelectorStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? packages = null,
     Object? accessControl = null,
     Object? isAccessControl = null,
   }) {
     return _then(_$PackageListSelectorStateImpl(
+      packages: null == packages
+          ? _value._packages
+          : packages // ignore: cast_nullable_to_non_nullable
+              as List<Package>,
       accessControl: null == accessControl
           ? _value.accessControl
           : accessControl // ignore: cast_nullable_to_non_nullable
@@ -2477,7 +2494,18 @@ class __$$PackageListSelectorStateImplCopyWithImpl<$Res>
 
 class _$PackageListSelectorStateImpl implements _PackageListSelectorState {
   const _$PackageListSelectorStateImpl(
-      {required this.accessControl, required this.isAccessControl});
+      {required final List<Package> packages,
+      required this.accessControl,
+      required this.isAccessControl})
+      : _packages = packages;
+
+  final List<Package> _packages;
+  @override
+  List<Package> get packages {
+    if (_packages is EqualUnmodifiableListView) return _packages;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_packages);
+  }
 
   @override
   final AccessControl accessControl;
@@ -2486,7 +2514,7 @@ class _$PackageListSelectorStateImpl implements _PackageListSelectorState {
 
   @override
   String toString() {
-    return 'PackageListSelectorState(accessControl: $accessControl, isAccessControl: $isAccessControl)';
+    return 'PackageListSelectorState(packages: $packages, accessControl: $accessControl, isAccessControl: $isAccessControl)';
   }
 
   @override
@@ -2494,6 +2522,7 @@ class _$PackageListSelectorStateImpl implements _PackageListSelectorState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$PackageListSelectorStateImpl &&
+            const DeepCollectionEquality().equals(other._packages, _packages) &&
             (identical(other.accessControl, accessControl) ||
                 other.accessControl == accessControl) &&
             (identical(other.isAccessControl, isAccessControl) ||
@@ -2501,7 +2530,11 @@ class _$PackageListSelectorStateImpl implements _PackageListSelectorState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, accessControl, isAccessControl);
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(_packages),
+      accessControl,
+      isAccessControl);
 
   @JsonKey(ignore: true)
   @override
@@ -2513,9 +2546,12 @@ class _$PackageListSelectorStateImpl implements _PackageListSelectorState {
 
 abstract class _PackageListSelectorState implements PackageListSelectorState {
   const factory _PackageListSelectorState(
-      {required final AccessControl accessControl,
+      {required final List<Package> packages,
+      required final AccessControl accessControl,
       required final bool isAccessControl}) = _$PackageListSelectorStateImpl;
 
+  @override
+  List<Package> get packages;
   @override
   AccessControl get accessControl;
   @override

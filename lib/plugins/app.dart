@@ -48,6 +48,16 @@ class App {
     });
   }
 
+  Future<List<String>> getChinaPackageNames() async {
+    final packageNamesString =
+        await methodChannel.invokeMethod<String>("getChinaPackageNames");
+    return Isolate.run<List<String>>(() {
+      final List<dynamic> packageNamesRaw =
+          packageNamesString != null ? json.decode(packageNamesString) : [];
+      return packageNamesRaw.map((e) => e.toString()).toList();
+    });
+  }
+
   Future<bool> openFile(String path) async {
     return await methodChannel.invokeMethod<bool>("openFile", {
           "path": path,

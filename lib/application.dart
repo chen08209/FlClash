@@ -88,7 +88,6 @@ class ApplicationState extends State<Application> {
       }
       await globalState.appController.init();
       globalState.appController.initLink();
-      _updateGroups();
     });
   }
 
@@ -118,19 +117,6 @@ class ApplicationState extends State<Application> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       globalState.appController.updateSystemColorSchemes(systemColorSchemes);
     });
-  }
-
-  _updateGroups() {
-    if (globalState.groupsUpdateTimer != null) {
-      globalState.groupsUpdateTimer?.cancel();
-      globalState.groupsUpdateTimer = null;
-    }
-    globalState.groupsUpdateTimer ??= Timer.periodic(
-      httpTimeoutDuration,
-      (timer) async {
-        await globalState.appController.updateGroupDebounce();
-      },
-    );
   }
 
   @override
