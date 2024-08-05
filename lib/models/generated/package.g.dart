@@ -11,6 +11,7 @@ _$PackageImpl _$$PackageImplFromJson(Map<String, dynamic> json) =>
       packageName: json['packageName'] as String,
       label: json['label'] as String,
       isSystem: json['isSystem'] as bool,
+      firstInstallTime: (json['firstInstallTime'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$PackageImplToJson(_$PackageImpl instance) =>
@@ -18,4 +19,5 @@ Map<String, dynamic> _$$PackageImplToJson(_$PackageImpl instance) =>
       'packageName': instance.packageName,
       'label': instance.label,
       'isSystem': instance.isSystem,
+      'firstInstallTime': instance.firstInstallTime,
     };

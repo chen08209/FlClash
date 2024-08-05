@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/app.dart';
@@ -50,7 +53,6 @@ class _ProvidersState extends State<Providers> {
         );
         await clashCore.updateExternalProvider(
           providerName: provider.name,
-          providerType: provider.type,
         );
         appState.setProvider(
           clashCore.getExternalProvider(provider.name),
@@ -58,6 +60,7 @@ class _ProvidersState extends State<Providers> {
       },
     );
     await Future.wait(updateProviders);
+    await globalState.appController.updateGroupDebounce();
   }
 
   @override
@@ -91,28 +94,48 @@ class ProviderItem extends StatelessWidget {
     required this.provider,
   });
 
-  _handleUpdateProfile() async {
-    await globalState.safeRun<void>(updateProvider);
+  _handleUpdateProvider() async {
+    await globalState.safeRun<void>(() async {
+      final appState = globalState.appController.appState;
+      if (provider.vehicleType != "HTTP") return;
+      await globalState.safeRun(() async {
+        appState.setProvider(
+          provider.copyWith(
+            isUpdating: true,
+          ),
+        );
+        final message = await clashCore.updateExternalProvider(
+          providerName: provider.name,
+        );
+        if (message.isNotEmpty) throw message;
+      });
+      appState.setProvider(
+        clashCore.getExternalProvider(provider.name),
+      );
+    });
+    await globalState.appController.updateGroupDebounce();
   }
 
-  updateProvider() async {
-    final appState = globalState.appController.appState;
-    if (provider.vehicleType != "HTTP") return;
-    await globalState.safeRun(() async {
-      appState.setProvider(
-        provider.copyWith(
-          isUpdating: true,
-        ),
+  _handleSideLoadProvider() async {
+    await globalState.safeRun<void>(() async {
+      final platformFile = await picker.pickerFile();
+      final appState = globalState.appController.appState;
+      final bytes = platformFile?.bytes;
+      if (bytes == null) return;
+      final file = await File(provider.path).create(recursive: true);
+      await file.writeAsBytes(bytes);
+      final providerName = provider.name;
+      var message = await clashCore.sideLoadExternalProvider(
+        providerName: providerName,
+        data: utf8.decode(bytes),
       );
-      final message = await clashCore.updateExternalProvider(
-        providerName: provider.name,
-        providerType: provider.type,
+      if (message.isNotEmpty) throw message;
+      appState.setProvider(
+        clashCore.getExternalProvider(provider.name),
       );
       if (message.isNotEmpty) throw message;
     });
-    appState.setProvider(
-      clashCore.getExternalProvider(provider.name),
-    );
+    await globalState.appController.updateGroupDebounce();
   }
 
   String _buildProviderDesc() {
@@ -153,18 +176,16 @@ class ProviderItem extends StatelessWidget {
             runSpacing: 6,
             spacing: 12,
             children: [
-              // CommonChip(
-              //   avatar: const Icon(Icons.upload),
-              //   label: appLocalizations.upload,
-              //   onPressed: () {},
-              // ),
+              CommonChip(
+                avatar: const Icon(Icons.upload),
+                label: appLocalizations.upload,
+                onPressed: _handleSideLoadProvider,
+              ),
               if (provider.vehicleType == "HTTP")
                 CommonChip(
                   avatar: const Icon(Icons.sync),
                   label: appLocalizations.sync,
-                  onPressed: () {
-                    _handleUpdateProfile();
-                  },
+                  onPressed: _handleUpdateProvider,
                 ),
             ],
           ),

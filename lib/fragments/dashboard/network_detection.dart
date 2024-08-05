@@ -1,5 +1,4 @@
 import 'package:country_flags/country_flags.dart';
-import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';

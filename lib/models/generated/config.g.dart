@@ -117,6 +117,8 @@ _$AccessControlImpl _$$AccessControlImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      sort: $enumDecodeNullable(_$AccessSortTypeEnumMap, json['sort']) ??
+          AccessSortType.none,
       isFilterSystemApp: json['isFilterSystemApp'] as bool? ?? true,
     );
 
@@ -125,12 +127,19 @@ Map<String, dynamic> _$$AccessControlImplToJson(_$AccessControlImpl instance) =>
       'mode': _$AccessControlModeEnumMap[instance.mode]!,
       'acceptList': instance.acceptList,
       'rejectList': instance.rejectList,
+      'sort': _$AccessSortTypeEnumMap[instance.sort]!,
       'isFilterSystemApp': instance.isFilterSystemApp,
     };
 
 const _$AccessControlModeEnumMap = {
   AccessControlMode.acceptSelected: 'acceptSelected',
   AccessControlMode.rejectSelected: 'rejectSelected',
+};
+
+const _$AccessSortTypeEnumMap = {
+  AccessSortType.none: 'none',
+  AccessSortType.name: 'name',
+  AccessSortType.time: 'time',
 };
 
 _$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>

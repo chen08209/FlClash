@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
-import 'package:path/path.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 class DAVClient {
@@ -34,8 +30,6 @@ class DAVClient {
   Future<bool> _ping() async {
     try {
       await client.ping();
-      await client.mkdir("/$appName");
-      await client.mkdir("/$appName/$profilesDirectoryName");
       return true;
     } catch (_) {
       return false;

@@ -1,7 +1,10 @@
+import 'package:collection/collection.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lpinyin/lpinyin.dart';
 
 part 'generated/selector.freezed.dart';
 
@@ -132,9 +135,41 @@ class MoreToolsSelectorState with _$MoreToolsSelectorState {
 @freezed
 class PackageListSelectorState with _$PackageListSelectorState {
   const factory PackageListSelectorState({
+    required List<Package> packages,
     required AccessControl accessControl,
     required bool isAccessControl,
   }) = _PackageListSelectorState;
+}
+
+extension PackageListSelectorStateExt on PackageListSelectorState {
+  List<Package> getList(List<String> selectedList) {
+    final isFilterSystemApp = accessControl.isFilterSystemApp;
+    final sort = accessControl.sort;
+    return packages
+        .where((item) => isFilterSystemApp ? item.isSystem == false : true)
+        .sorted(
+          (a, b) {
+        return switch (sort) {
+          AccessSortType.none => 0,
+          AccessSortType.name =>
+              other.sortByChar(
+                PinyinHelper.getPinyin(a.label),
+                PinyinHelper.getPinyin(b.label),
+              ),
+          AccessSortType.time => a.firstInstallTime.compareTo(b.firstInstallTime),
+        };
+      },
+    ).sorted(
+          (a, b) {
+        final isSelectA = selectedList.contains(a.packageName);
+        final isSelectB = selectedList.contains(b.packageName);
+        if (isSelectA && isSelectB) return 0;
+        if (isSelectA) return -1;
+        if (isSelectB) return 1;
+        return 0;
+      },
+    );
+  }
 }
 
 @freezed
@@ -152,7 +187,6 @@ class ProxiesListHeaderSelectorState with _$ProxiesListHeaderSelectorState {
     required int currentIndex,
   }) = _ProxiesListHeaderSelectorState;
 }
-
 
 @freezed
 class ProxiesActionsState with _$ProxiesActionsState {

@@ -8,6 +8,7 @@ import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:lpinyin/lpinyin.dart';
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -424,7 +425,10 @@ class AppController {
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
       ..sort(
-        (a, b) => other.sortByChar(a.name, b.name),
+        (a, b) => other.sortByChar(
+          PinyinHelper.getPinyin(a.name),
+          PinyinHelper.getPinyin(b.name),
+        ),
       );
   }
 

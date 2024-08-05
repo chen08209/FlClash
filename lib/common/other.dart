@@ -2,11 +2,10 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
+import 'package:lpinyin/lpinyin.dart';
 import 'package:zxing2/qrcode.dart';
 import 'package:image/image.dart' as img;
 
@@ -84,7 +83,7 @@ class Other {
     if (charA == charB) {
       return sortByChar(a.substring(1), b.substring(1));
     } else {
-      return charA.compareTo(charB);
+      return charA.compareToLower(charB);
     }
   }
 
@@ -200,8 +199,8 @@ class Other {
     return targetColumnsArray.first;
   }
 
-  String getColumnsTextForInt(int number){
-    return switch(number){
+  String getColumnsTextForInt(int number) {
+    return switch (number) {
       1 => appLocalizations.oneColumn,
       2 => appLocalizations.twoColumns,
       3 => appLocalizations.threeColumns,
@@ -210,7 +209,7 @@ class Other {
     };
   }
 
-  String getBackupFileName(){
+  String getBackupFileName() {
     return "${appName}_backup_${DateTime.now().show}.zip";
   }
 }

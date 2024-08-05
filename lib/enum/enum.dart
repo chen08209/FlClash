@@ -52,6 +52,8 @@ enum TunStack { gvisor, system, mixed }
 
 enum AccessControlMode { acceptSelected, rejectSelected }
 
+enum AccessSortType { none, name, time }
+
 enum ProfileType { file, url }
 
 enum ResultType { success, error }

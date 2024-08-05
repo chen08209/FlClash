@@ -227,5 +227,14 @@
   "remoteBackupDesc": "备份数据到WebDAV",
   "remoteRecoveryDesc": "通过WebDAV恢复数据",
   "localBackupDesc": "备份数据到本地",
-  "localRecoveryDesc": "通过文件恢复数据"
+  "localRecoveryDesc": "通过文件恢复数据",
+  "mode": "模式",
+  "time": "时间",
+  "source": "来源",
+  "allApps": "所有应用",
+  "onlyOtherApps": "仅第三方应用",
+  "action": "操作",
+  "intelligentSelected": "智能选择",
+  "clipboardImport": "剪贴板导入",
+  "clipboardExport": "导出剪贴板"
 }

@@ -182,9 +182,9 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   updateGeoDateItem() async {
     isUpdating.value = true;
     try {
-      final message = await clashCore.updateExternalProvider(
-        providerName: geoItem.fileName,
-        providerType: geoItem.label,
+      final message = await clashCore.updateGeoData(
+        geoName: geoItem.fileName,
+        geoType: geoItem.label,
       );
       if (message.isNotEmpty) throw message;
     } catch (e) {

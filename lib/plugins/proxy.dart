@@ -81,7 +81,6 @@ class Proxy extends ProxyPlatform {
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
   onStarted(int? fd) {
-    debugPrint("onStarted ==> $fd");
     if (fd == null) return;
     if (receiver != null) {
       receiver!.close();

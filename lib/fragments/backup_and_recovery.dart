@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
@@ -7,7 +6,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/models/dav.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/card.dart';
 import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/text.dart';
@@ -75,10 +73,11 @@ class BackupAndRecovery extends StatelessWidget {
     final res = await commonScaffoldState?.loadingRun<bool>(
       () async {
         final backupData = await globalState.appController.backupData();
-        await picker.saveFile(
+        final value =  await picker.saveFile(
           other.getBackupFileName(),
           Uint8List.fromList(backupData),
         );
+        if(value == null) return false;
         return true;
       },
       title: appLocalizations.backup,

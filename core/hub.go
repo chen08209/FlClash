@@ -18,12 +18,12 @@ import (
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/log"
-	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 	"golang.org/x/net/context"
 	"os"
 	"runtime"
+	"sort"
 	"time"
 	"unsafe"
 )
@@ -31,6 +31,8 @@ import (
 var currentConfig = config.DefaultRawConfig()
 
 var configParams = ConfigExtendedParams{}
+
+var externalProviders = map[string]cp.Provider{}
 
 var isInit = false
 
@@ -311,34 +313,16 @@ func getProvider(name *C.char) *C.char {
 
 //export getExternalProviders
 func getExternalProviders() *C.char {
-	externalProviders := make(map[string]ExternalProvider)
-	for n, p := range tunnel.Providers() {
-		if p.VehicleType() != cp.Compatible {
-			p := p.(*provider.ProxySetProvider)
-			externalProviders[n] = ExternalProvider{
-				Name:        n,
-				Type:        p.Type().String(),
-				VehicleType: p.VehicleType().String(),
-				Count:       p.Count(),
-				Path:        p.Vehicle().Path(),
-				UpdateAt:    p.UpdatedAt,
-			}
+	eps := make([]ExternalProvider, 0)
+	for _, p := range externalProviders {
+		externalProvider, err := toExternalProvider(p)
+		if err != nil {
+			continue
 		}
+		eps = append(eps, *externalProvider)
 	}
-	for n, p := range tunnel.RuleProviders() {
-		if p.VehicleType() != cp.Compatible {
-			p := p.(*rp.RuleSetProvider)
-			externalProviders[n] = ExternalProvider{
-				Name:        n,
-				Type:        p.Type().String(),
-				VehicleType: p.VehicleType().String(),
-				Count:       p.Count(),
-				Path:        p.Vehicle().Path(),
-				UpdateAt:    p.UpdatedAt,
-			}
-		}
-	}
-	data, err := json.Marshal(externalProviders)
+	sort.Sort(ExternalProviders(eps))
+	data, err := json.Marshal(eps)
 	if err != nil {
 		return C.CString("")
 	}
@@ -348,69 +332,48 @@ func getExternalProviders() *C.char {
 //export getExternalProvider
 func getExternalProvider(name *C.char) *C.char {
 	externalProviderName := C.GoString(name)
-	externalProviders := getExternalProvidersRaw()
 	externalProvider, exist := externalProviders[externalProviderName]
 	if !exist {
 		return C.CString("")
 	}
-	data, err := json.Marshal(externalProvider)
+	e, err := toExternalProvider(externalProvider)
+	if err != nil {
+		return C.CString("")
+	}
+	data, err := json.Marshal(e)
 	if err != nil {
 		return C.CString("")
 	}
 	return C.CString(string(data))
 }
 
-//export updateExternalProvider
-func updateExternalProvider(providerName *C.char, providerType *C.char, port C.longlong) {
+//export updateGeoData
+func updateGeoData(geoType *C.char, geoName *C.char, port C.longlong) {
 	i := int64(port)
-	providerNameString := C.GoString(providerName)
-	providerTypeString := C.GoString(providerType)
+	geoTypeString := C.GoString(geoType)
+	geoNameString := C.GoString(geoName)
 	go func() {
-		switch providerTypeString {
-		case "Proxy":
-			providers := tunnel.Providers()
-			proxyProvider, exist := providers[providerNameString].(*provider.ProxySetProvider)
-			if !exist {
-				bridge.SendToPort(i, "proxy provider is not exist")
-				return
-			}
-			err := proxyProvider.Update()
-			if err != nil {
-				bridge.SendToPort(i, err.Error())
-				return
-			}
-		case "Rule":
-			providers := tunnel.RuleProviders()
-			ruleProvider, exist := providers[providerNameString].(*rp.RuleSetProvider)
-			if !exist {
-				bridge.SendToPort(i, "rule provider is not exist")
-				return
-			}
-			err := ruleProvider.Update()
-			if err != nil {
-				bridge.SendToPort(i, err.Error())
-				return
-			}
+		switch geoTypeString {
 		case "MMDB":
-			err := updater.UpdateMMDB(constant.Path.Resolve(providerNameString))
+			err := updater.UpdateMMDB(constant.Path.Resolve(geoNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "ASN":
-			err := updater.UpdateASN(constant.Path.Resolve(providerNameString))
+			err := updater.UpdateASN(constant.Path.Resolve(geoNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "GeoIp":
-			err := updater.UpdateGeoIp(constant.Path.Resolve(providerNameString))
+			err := updater.UpdateGeoIp(constant.Path.Resolve(geoNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "GeoSite":
-			err := updater.UpdateGeoSite(constant.Path.Resolve(providerNameString))
+			err := updater.UpdateGeoSite(constant.Path.Resolve(geoNameString))
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
@@ -420,65 +383,44 @@ func updateExternalProvider(providerName *C.char, providerType *C.char, port C.l
 	}()
 }
 
-//func sideLoadExternalProvider(providerName *C.char, providerType *C.char, data *C.char, port C.longlong) {
-//	i := int64(port)
-//	bytes := []byte(C.GoString(data))
-//	providerNameString := C.GoString(providerName)
-//	providerTypeString := C.GoString(providerType)
-//	go func() {
-//		switch providerTypeString {
-//		case "Proxy":
-//			providers := tunnel.Providers()
-//			proxyProvider, exist := providers[providerNameString].(*provider.ProxySetProvider)
-//			if exist {
-//				bridge.SendToPort(i, "proxy provider is not exist")
-//				return
-//			}
-//			err := proxyProvider.Update()
-//			if err != nil {
-//				bridge.SendToPort(i, err.Error())
-//				return
-//			}
-//		case "Rule":
-//			providers := tunnel.RuleProviders()
-//			ruleProvider, exist := providers[providerNameString].(*rp.RuleSetProvider)
-//			if exist {
-//				bridge.SendToPort(i, "proxy provider is not exist")
-//				return
-//			}
-//			err := ruleProvider.Update()
-//			if err != nil {
-//				bridge.SendToPort(i, err.Error())
-//				return
-//			}
-//		case "MMDB":
-//			err := updater.UpdateMMDB(constant.Path.Resolve(providerNameString))
-//			if err != nil {
-//				bridge.SendToPort(i, err.Error())
-//				return
-//			}
-//		case "ASN":
-//			err := updater.UpdateASN(constant.Path.Resolve(providerNameString))
-//			if err != nil {
-//				bridge.SendToPort(i, err.Error())
-//				return
-//			}
-//		case "GeoIp":
-//			err := updater.UpdateGeoIp(constant.Path.Resolve(providerNameString))
-//			if err != nil {
-//				bridge.SendToPort(i, err.Error())
-//				return
-//			}
-//		case "GeoSite":
-//			err := updater.UpdateGeoSite(constant.Path.Resolve(providerNameString))
-//			if err != nil {
-//				bridge.SendToPort(i, err.Error())
-//				return
-//			}
-//		}
-//		bridge.SendToPort(i, "")
-//	}()
-//}
+//export updateExternalProvider
+func updateExternalProvider(providerName *C.char, port C.longlong) {
+	i := int64(port)
+	providerNameString := C.GoString(providerName)
+	go func() {
+		externalProvider, exist := externalProviders[providerNameString]
+		if !exist {
+			bridge.SendToPort(i, "external provider is not exist")
+			return
+		}
+		err := externalProvider.Update()
+		if err != nil {
+			bridge.SendToPort(i, err.Error())
+			return
+		}
+		bridge.SendToPort(i, "")
+	}()
+}
+
+//export sideLoadExternalProvider
+func sideLoadExternalProvider(providerName *C.char, data *C.char, port C.longlong) {
+	i := int64(port)
+	bytes := []byte(C.GoString(data))
+	providerNameString := C.GoString(providerName)
+	go func() {
+		externalProvider, exist := externalProviders[providerNameString]
+		if !exist {
+			bridge.SendToPort(i, "external provider is not exist")
+			return
+		}
+		err := sideUpdateExternalProvider(externalProvider, bytes)
+		if err != nil {
+			bridge.SendToPort(i, err.Error())
+			return
+		}
+		bridge.SendToPort(i, "")
+	}()
+}
 
 //export initNativeApiBridge
 func initNativeApiBridge(api unsafe.Pointer) {

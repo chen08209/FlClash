@@ -33,6 +33,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "account": MessageLookupByLibrary.simpleMessage("Account"),
         "accountTip":
             MessageLookupByLibrary.simpleMessage("Account cannot be empty"),
+        "action": MessageLookupByLibrary.simpleMessage("Action"),
         "add": MessageLookupByLibrary.simpleMessage("Add"),
         "address": MessageLookupByLibrary.simpleMessage("Address"),
         "addressHelp":
@@ -40,6 +41,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "addressTip": MessageLookupByLibrary.simpleMessage(
             "Please enter a valid WebDAV address"),
         "ago": MessageLookupByLibrary.simpleMessage(" Ago"),
+        "allApps": MessageLookupByLibrary.simpleMessage("All apps"),
         "allowBypass": MessageLookupByLibrary.simpleMessage(
             "Allow applications to bypass VPN"),
         "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
@@ -89,6 +91,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "checkUpdateError": MessageLookupByLibrary.simpleMessage(
             "The current application is already the latest version"),
         "checking": MessageLookupByLibrary.simpleMessage("Checking..."),
+        "clipboardExport":
+            MessageLookupByLibrary.simpleMessage("Export clipboard"),
+        "clipboardImport":
+            MessageLookupByLibrary.simpleMessage("Clipboard import"),
         "columns": MessageLookupByLibrary.simpleMessage("Columns"),
         "compatible":
             MessageLookupByLibrary.simpleMessage("Compatibility mode"),
@@ -167,6 +173,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "infiniteTime":
             MessageLookupByLibrary.simpleMessage("Long term effective"),
         "init": MessageLookupByLibrary.simpleMessage("Init"),
+        "intelligentSelected":
+            MessageLookupByLibrary.simpleMessage("Intelligent selection"),
         "intranetIP": MessageLookupByLibrary.simpleMessage("Intranet IP"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage(
             "When turned on it will be able to receive IPv6 traffic"),
@@ -193,6 +201,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
             "Modify the default system exit event"),
         "minutes": MessageLookupByLibrary.simpleMessage("Minutes"),
+        "mode": MessageLookupByLibrary.simpleMessage("Mode"),
         "months": MessageLookupByLibrary.simpleMessage("Months"),
         "more": MessageLookupByLibrary.simpleMessage("More"),
         "name": MessageLookupByLibrary.simpleMessage("Name"),
@@ -216,6 +225,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "No profile, Please add a profile"),
         "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("No requests"),
         "oneColumn": MessageLookupByLibrary.simpleMessage("One column"),
+        "onlyOtherApps":
+            MessageLookupByLibrary.simpleMessage("Only third-party apps"),
         "onlyStatisticsProxy":
             MessageLookupByLibrary.simpleMessage("Only statistics proxy"),
         "onlyStatisticsProxyDesc": MessageLookupByLibrary.simpleMessage(
@@ -300,6 +311,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Start in the background"),
         "size": MessageLookupByLibrary.simpleMessage("Size"),
         "sort": MessageLookupByLibrary.simpleMessage("Sort"),
+        "source": MessageLookupByLibrary.simpleMessage("Source"),
         "startVpn": MessageLookupByLibrary.simpleMessage("Staring VPN..."),
         "stopVpn": MessageLookupByLibrary.simpleMessage("Stopping VPN..."),
         "style": MessageLookupByLibrary.simpleMessage("Style"),
@@ -322,6 +334,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "Set dark mode,adjust the color"),
         "themeMode": MessageLookupByLibrary.simpleMessage("Theme mode"),
         "threeColumns": MessageLookupByLibrary.simpleMessage("Three columns"),
+        "time": MessageLookupByLibrary.simpleMessage("Time"),
         "tip": MessageLookupByLibrary.simpleMessage("tip"),
         "tools": MessageLookupByLibrary.simpleMessage("Tools"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
