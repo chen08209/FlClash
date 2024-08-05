@@ -5400,24 +5400,61 @@ class ClashFFI {
   late final _getExternalProvider = _getExternalProviderPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
+  void updateGeoData(
+    ffi.Pointer<ffi.Char> geoType,
+    ffi.Pointer<ffi.Char> geoName,
+    int port,
+  ) {
+    return _updateGeoData(
+      geoType,
+      geoName,
+      port,
+    );
+  }
+
+  late final _updateGeoDataPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+              ffi.LongLong)>>('updateGeoData');
+  late final _updateGeoData = _updateGeoDataPtr.asFunction<
+      void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+
   void updateExternalProvider(
     ffi.Pointer<ffi.Char> providerName,
-    ffi.Pointer<ffi.Char> providerType,
     int port,
   ) {
     return _updateExternalProvider(
       providerName,
-      providerType,
       port,
     );
   }
 
   late final _updateExternalProviderPtr = _lookup<
       ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<ffi.Char>, ffi.LongLong)>>('updateExternalProvider');
+  late final _updateExternalProvider = _updateExternalProviderPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Char>, int)>();
+
+  void sideLoadExternalProvider(
+    ffi.Pointer<ffi.Char> providerName,
+    ffi.Pointer<ffi.Char> data,
+    int port,
+  ) {
+    return _sideLoadExternalProvider(
+      providerName,
+      data,
+      port,
+    );
+  }
+
+  late final _sideLoadExternalProviderPtr = _lookup<
+      ffi.NativeFunction<
           ffi.Void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.LongLong)>>('updateExternalProvider');
-  late final _updateExternalProvider = _updateExternalProviderPtr.asFunction<
-      void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+              ffi.LongLong)>>('sideLoadExternalProvider');
+  late final _sideLoadExternalProvider =
+      _sideLoadExternalProviderPtr.asFunction<
+          void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   void initNativeApiBridge(
     ffi.Pointer<ffi.Void> api,

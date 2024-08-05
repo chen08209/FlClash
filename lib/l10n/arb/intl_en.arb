@@ -227,5 +227,14 @@
   "remoteBackupDesc": "Backup local data to WebDAV",
   "remoteRecoveryDesc": "Recovery data from WebDAV",
   "localBackupDesc": "Backup local data to local",
-  "localRecoveryDesc": "Recovery data from file"
+  "localRecoveryDesc": "Recovery data from file",
+  "mode": "Mode",
+  "time": "Time",
+  "source": "Source",
+  "allApps": "All apps",
+  "onlyOtherApps": "Only third-party apps",
+  "action": "Action",
+  "intelligentSelected": "Intelligent selection",
+  "clipboardImport": "Clipboard import",
+  "clipboardExport": "Export clipboard"
 }

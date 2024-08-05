@@ -77,9 +77,9 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
   _initScaffoldState() {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
+        if (!context.mounted) return;
         final commonScaffoldState =
             context.findAncestorStateOfType<CommonScaffoldState>();
-        if (!context.mounted) return;
         commonScaffoldState?.actions = [
           IconButton(
             onPressed: () {

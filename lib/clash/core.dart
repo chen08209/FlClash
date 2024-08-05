@@ -140,8 +140,7 @@ class ClashCore {
     clashFFI.freeCString(externalProvidersRaw);
     return Isolate.run<List<ExternalProvider>>(() {
       final externalProviders =
-          (json.decode(externalProvidersRawString) as Map<String, dynamic>)
-              .values
+          (json.decode(externalProvidersRawString) as List<dynamic>)
               .map(
                 (item) => ExternalProvider.fromJson(item),
               )
@@ -150,7 +149,7 @@ class ClashCore {
     });
   }
 
-  ExternalProvider getExternalProvider(String externalProviderName) {
+  ExternalProvider? getExternalProvider(String externalProviderName) {
     final externalProviderNameChar =
         externalProviderName.toNativeUtf8().cast<Char>();
     final externalProviderRaw =
@@ -159,12 +158,37 @@ class ClashCore {
     final externalProviderRawString =
         externalProviderRaw.cast<Utf8>().toDartString();
     clashFFI.freeCString(externalProviderRaw);
+    if(externalProviderRawString.isEmpty) return null;
     return ExternalProvider.fromJson(json.decode(externalProviderRawString));
   }
 
-  Future<String> updateExternalProvider({
+  Future<String> updateGeoData({
+    required String geoType,
+    required String geoName,
+  }) {
+    final completer = Completer<String>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if (!completer.isCompleted) {
+        completer.complete(message);
+        receiver.close();
+      }
+    });
+    final geoTypeChar = geoType.toNativeUtf8().cast<Char>();
+    final geoNameChar = geoName.toNativeUtf8().cast<Char>();
+    clashFFI.updateGeoData(
+      geoTypeChar,
+      geoNameChar,
+      receiver.sendPort.nativePort,
+    );
+    malloc.free(geoTypeChar);
+    malloc.free(geoNameChar);
+    return completer.future;
+  }
+
+  Future<String> sideLoadExternalProvider({
     required String providerName,
-    required String providerType,
+    required String data,
   }) {
     final completer = Completer<String>();
     final receiver = ReceivePort();
@@ -175,14 +199,34 @@ class ClashCore {
       }
     });
     final providerNameChar = providerName.toNativeUtf8().cast<Char>();
-    final providerTypeChar = providerType.toNativeUtf8().cast<Char>();
-    clashFFI.updateExternalProvider(
+    final dataChar = data.toNativeUtf8().cast<Char>();
+    clashFFI.sideLoadExternalProvider(
       providerNameChar,
-      providerTypeChar,
+      dataChar,
       receiver.sendPort.nativePort,
     );
     malloc.free(providerNameChar);
-    malloc.free(providerTypeChar);
+    malloc.free(dataChar);
+    return completer.future;
+  }
+
+  Future<String> updateExternalProvider({
+    required String providerName,
+  }) {
+    final completer = Completer<String>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if (!completer.isCompleted) {
+        completer.complete(message);
+        receiver.close();
+      }
+    });
+    final providerNameChar = providerName.toNativeUtf8().cast<Char>();
+    clashFFI.updateExternalProvider(
+      providerNameChar,
+      receiver.sendPort.nativePort,
+    );
+    malloc.free(providerNameChar);
     return completer.future;
   }
 
