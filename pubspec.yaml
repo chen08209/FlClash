@@ -40,7 +40,6 @@ dependencies:
   country_flags: ^2.2.0
   win32: ^5.5.1
   ffi: ^2.1.2
-  material_color_utilities: ^0.8.0
   re_editor: ^0.3.1
   re_highlight: ^0.0.3
   archive: ^3.6.1
