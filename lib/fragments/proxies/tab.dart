@@ -284,7 +284,10 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
         return ProxyGroupSelectorState(
           proxyCardType: config.proxyCardType,
           proxiesSortType: config.proxiesSortType,
-          columns: globalState.appController.columns,
+          columns: other.getProxiesColumns(
+            appState.viewWidth,
+            config.proxiesLayout,
+          ),
           sortNum: appState.sortNum,
           proxies: group.all,
           groupType: group.type,

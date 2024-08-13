@@ -4,6 +4,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/card.dart';
+import 'package:fl_clash/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -237,7 +238,10 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
           currentUnfoldSet: config.currentUnfoldSet,
           proxyCardType: config.proxyCardType,
           proxiesSortType: config.proxiesSortType,
-          columns: globalState.appController.columns,
+          columns: other.getProxiesColumns(
+            appState.viewWidth,
+            config.proxiesLayout,
+          ),
           sortNum: appState.sortNum,
         );
       },
@@ -450,7 +454,7 @@ class _ListHeaderState extends State<ListHeader>
                                   if (currentGroupName.isNotEmpty) ...[
                                     Flexible(
                                       flex: 1,
-                                      child: Text(
+                                      child: EmojiText(
                                         overflow: TextOverflow.ellipsis,
                                         " · $currentGroupName",
                                         style: context

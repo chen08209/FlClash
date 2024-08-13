@@ -86,4 +86,6 @@ enum CommonCardType { plain, filled }
 
 enum ProxiesType { tab, list }
 
+enum ProxiesLayout{ loose, standard, tight }
+
 enum ProxyCardType { expand, shrink, min }

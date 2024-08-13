@@ -236,5 +236,10 @@
   "action": "Action",
   "intelligentSelected": "Intelligent selection",
   "clipboardImport": "Clipboard import",
-  "clipboardExport": "Export clipboard"
+  "clipboardExport": "Export clipboard",
+  "layout": "Layout",
+  "tight": "Tight",
+  "standard": "Standard",
+  "loose": "Loose",
+  "profilesSort": "Profiles sort"
 }
