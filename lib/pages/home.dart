@@ -60,7 +60,6 @@ class HomePage extends StatelessWidget {
         ),
         selectedLabelTextStyle: context.textTheme.labelLarge!.copyWith(
           color: context.colorScheme.onSurface,
-          fontWeight: FontWeight.w600,
         ),
         unselectedLabelTextStyle: context.textTheme.labelLarge!.copyWith(
           color: context.colorScheme.onSurface,

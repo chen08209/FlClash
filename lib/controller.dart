@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:archive/archive.dart';
 import 'package:fl_clash/common/archive.dart';
@@ -414,7 +415,6 @@ class AppController {
     addProfileFormURL(url);
   }
 
-  int get columns => other.getColumns(appState.viewMode, config.proxiesColumns);
 
   updateViewWidth(double width) {
     WidgetsBinding.instance.addPostFrameCallback((_) {

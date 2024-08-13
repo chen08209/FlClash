@@ -23,6 +23,9 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..proxiesSortType =
       $enumDecodeNullable(_$ProxiesSortTypeEnumMap, json['proxiesSortType']) ??
           ProxiesSortType.none
+  ..proxiesLayout =
+      $enumDecodeNullable(_$ProxiesLayoutEnumMap, json['proxiesLayout']) ??
+          ProxiesLayout.standard
   ..isMinimizeOnExit = json['isMinimizeOnExit'] as bool? ?? true
   ..isAccessControl = json['isAccessControl'] as bool? ?? false
   ..accessControl =
@@ -44,7 +47,6 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..proxyCardType =
       $enumDecodeNullable(_$ProxyCardTypeEnumMap, json['proxyCardType']) ??
           ProxyCardType.expand
-  ..proxiesColumns = (json['proxiesColumns'] as num?)?.toInt() ?? 2
   ..testUrl =
       json['test-url'] as String? ?? 'https://www.gstatic.com/generate_204'
   ..isExclude = json['isExclude'] as bool? ?? false
@@ -62,6 +64,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'locale': instance.locale,
       'primaryColor': instance.primaryColor,
       'proxiesSortType': _$ProxiesSortTypeEnumMap[instance.proxiesSortType]!,
+      'proxiesLayout': _$ProxiesLayoutEnumMap[instance.proxiesLayout]!,
       'isMinimizeOnExit': instance.isMinimizeOnExit,
       'isAccessControl': instance.isAccessControl,
       'accessControl': instance.accessControl,
@@ -76,7 +79,6 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'isCloseConnections': instance.isCloseConnections,
       'proxiesType': _$ProxiesTypeEnumMap[instance.proxiesType]!,
       'proxyCardType': _$ProxyCardTypeEnumMap[instance.proxyCardType]!,
-      'proxiesColumns': instance.proxiesColumns,
       'test-url': instance.testUrl,
       'isExclude': instance.isExclude,
       'windowProps': instance.windowProps,
@@ -92,6 +94,12 @@ const _$ProxiesSortTypeEnumMap = {
   ProxiesSortType.none: 'none',
   ProxiesSortType.delay: 'delay',
   ProxiesSortType.name: 'name',
+};
+
+const _$ProxiesLayoutEnumMap = {
+  ProxiesLayout.loose: 'loose',
+  ProxiesLayout.standard: 'standard',
+  ProxiesLayout.tight: 'tight',
 };
 
 const _$ProxiesTypeEnumMap = {

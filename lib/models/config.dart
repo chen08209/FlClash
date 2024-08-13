@@ -28,9 +28,9 @@ class AccessControl with _$AccessControl {
 
 extension AccessControlExt on AccessControl {
   List<String> get currentList => switch (mode) {
-    AccessControlMode.acceptSelected => acceptList,
-    AccessControlMode.rejectSelected => rejectList,
-  };
+        AccessControlMode.acceptSelected => acceptList,
+        AccessControlMode.rejectSelected => rejectList,
+      };
 }
 
 @freezed
@@ -44,7 +44,8 @@ class CoreState with _$CoreState {
     required bool onlyProxy,
   }) = _CoreState;
 
-  factory CoreState.fromJson(Map<String, Object?> json) => _$CoreStateFromJson(json);
+  factory CoreState.fromJson(Map<String, Object?> json) =>
+      _$CoreStateFromJson(json);
 }
 
 @freezed
@@ -87,7 +88,7 @@ class Config extends ChangeNotifier {
   bool _isCloseConnections;
   ProxiesType _proxiesType;
   ProxyCardType _proxyCardType;
-  int _proxiesColumns;
+  ProxiesLayout _proxiesLayout;
   String _testUrl;
   WindowProps _windowProps;
   bool _onlyProxy;
@@ -116,9 +117,9 @@ class Config extends ChangeNotifier {
         _proxyCardType = ProxyCardType.expand,
         _windowProps = defaultWindowProps,
         _proxiesType = ProxiesType.tab,
-        _proxiesColumns = 2,
         _prueBlack = false,
-        _onlyProxy = false;
+        _onlyProxy = false,
+        _proxiesLayout = ProxiesLayout.standard;
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
@@ -320,6 +321,16 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: ProxiesLayout.standard)
+  ProxiesLayout get proxiesLayout => _proxiesLayout;
+
+  set proxiesLayout(ProxiesLayout value) {
+    if (_proxiesLayout != value) {
+      _proxiesLayout = value;
+      notifyListeners();
+    }
+  }
+
   @JsonKey(defaultValue: true)
   bool get isMinimizeOnExit => _isMinimizeOnExit;
 
@@ -477,16 +488,6 @@ class Config extends ChangeNotifier {
   set proxyCardType(ProxyCardType value) {
     if (_proxyCardType != value) {
       _proxyCardType = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(defaultValue: 2)
-  int get proxiesColumns => _proxiesColumns;
-
-  set proxiesColumns(int value) {
-    if (_proxiesColumns != value) {
-      _proxiesColumns = value;
       notifyListeners();
     }
   }

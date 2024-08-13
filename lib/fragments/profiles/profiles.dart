@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
 import 'package:fl_clash/models/models.dart';
@@ -37,21 +39,11 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
     );
   }
 
-  _getColumns(ViewMode viewMode) {
-    switch (viewMode) {
-      case ViewMode.mobile:
-        return 1;
-      case ViewMode.laptop:
-        return 1;
-      case ViewMode.desktop:
-        return 2;
-    }
-  }
-
   _updateProfiles() async {
     final appController = globalState.appController;
     final config = appController.config;
     final profiles = appController.config.profiles;
+    final messages = [];
     final updateProfiles = profiles.map<Future>(
       (profile) async {
         config.setProfile(
@@ -62,7 +54,8 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
           if (profile.id == appController.config.currentProfile?.id) {
             appController.applyProfile(isPrue: true);
           }
-        } catch (_) {
+        } catch (e) {
+          messages.add("${profile.label ?? profile.id}: $e \n");
           config.setProfile(
             profile.copyWith(
               isUpdating: false,
@@ -71,13 +64,25 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
         }
       },
     );
+    final titleMedium = context.textTheme.titleMedium;
     await Future.wait(updateProfiles);
+    if (messages.isNotEmpty) {
+      globalState.showMessage(
+        title: appLocalizations.tip,
+        message: TextSpan(
+          children: [
+            for (final message in messages)
+              TextSpan(text: message, style: titleMedium)
+          ],
+        ),
+      );
+    }
   }
 
   _initScaffoldState() {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
-        if (!context.mounted) return;
+        if (!mounted) return;
         final commonScaffoldState =
             context.findAncestorStateOfType<CommonScaffoldState>();
         commonScaffoldState?.actions = [
@@ -86,6 +91,24 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
               _updateProfiles();
             },
             icon: const Icon(Icons.sync),
+          ),
+          const SizedBox(
+            width: 8,
+          ),
+          IconButton(
+            onPressed: () {
+              final profiles = globalState.appController.config.profiles;
+              showSheet(
+                title: appLocalizations.profilesSort,
+                context: context,
+                builder: (_) => SizedBox(
+                  height: 400,
+                  child: ReorderableProfiles(profiles: profiles),
+                ),
+              );
+            },
+            icon: const Icon(Icons.sort),
+            iconSize: 26,
           ),
         ];
       },
@@ -116,7 +139,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
           selector: (_, appState, config) => ProfilesSelectorState(
             profiles: config.profiles,
             currentProfileId: config.currentProfileId,
-            viewMode: appState.viewMode,
+            columns: other.getProfilesColumns(appState.viewWidth),
           ),
           builder: (context, state, child) {
             if (state.profiles.isEmpty) {
@@ -124,7 +147,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
                 label: appLocalizations.nullProfileDesc,
               );
             }
-            final columns = _getColumns(state.viewMode);
             return Align(
               alignment: Alignment.topCenter,
               child: SingleChildScrollView(
@@ -137,7 +159,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
                 child: Grid(
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  crossAxisCount: columns,
+                  crossAxisCount: state.columns,
                   children: [
                     for (int i = 0; i < state.profiles.length; i++)
                       GridItem(
@@ -145,8 +167,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
                           key: Key(state.profiles[i].id),
                           profile: state.profiles[i],
                           groupValue: state.currentProfileId,
-                          onChanged:
-                          globalState.appController.changeProfile,
+                          onChanged: globalState.appController.changeProfile,
                         ),
                       ),
                   ],
@@ -244,6 +265,7 @@ class ProfileItem extends StatelessWidget {
       LinearProgressIndicator(
         minHeight: 6,
         value: progress,
+        backgroundColor: context.colorScheme.primary.toSoft(),
       ),
       const SizedBox(
         height: 8,
@@ -369,6 +391,132 @@ class ProfileItem extends StatelessWidget {
         ),
         tileTitleAlignment: ListTileTitleAlignment.titleHeight,
       ),
+    );
+  }
+}
+
+class ReorderableProfiles extends StatefulWidget {
+  final List<Profile> profiles;
+
+  const ReorderableProfiles({
+    super.key,
+    required this.profiles,
+  });
+
+  @override
+  State<ReorderableProfiles> createState() => _ReorderableProfilesState();
+}
+
+class _ReorderableProfilesState extends State<ReorderableProfiles> {
+  late List<Profile> profiles;
+
+  @override
+  void initState() {
+    super.initState();
+    profiles = List.from(widget.profiles);
+  }
+
+  Widget proxyDecorator(
+    Widget child,
+    int index,
+    Animation<double> animation,
+  ) {
+    final profile = profiles[index];
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (_, Widget? child) {
+        final double animValue = Curves.easeInOut.transform(animation.value);
+        final double scale = lerpDouble(1, 1.02, animValue)!;
+        return Transform.scale(
+          scale: scale,
+          child: child,
+        );
+      },
+      child: Container(
+        key: Key(profile.id),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: CommonCard(
+          type: CommonCardType.filled,
+          child: ListTile(
+            contentPadding: const EdgeInsets.only(
+              right: 44,
+              left: 16,
+            ),
+            title: Text(profile.label ?? profile.id),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Expanded(
+          flex: 1,
+          child: ReorderableListView.builder(
+            buildDefaultDragHandles: false,
+            padding: const EdgeInsets.all(12),
+            proxyDecorator: proxyDecorator,
+            onReorder: (int oldIndex, int newIndex) {
+              if (oldIndex == newIndex) return;
+              setState(() {
+                if (oldIndex < newIndex) {
+                  newIndex -= 1;
+                }
+                final profile = profiles.removeAt(oldIndex);
+                profiles.insert(newIndex, profile);
+              });
+            },
+            itemBuilder: (_, index) {
+              final profile = profiles[index];
+              return Container(
+                key: Key(profile.id),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: CommonCard(
+                  type: CommonCardType.filled,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.only(
+                      right: 16,
+                      left: 16,
+                    ),
+                    title: Text(profile.label ?? profile.id),
+                    trailing: ReorderableDragStartListener(
+                      index: index,
+                      child: const Icon(Icons.drag_handle),
+                    ),
+                  ),
+                ),
+              );
+            },
+            itemCount: profiles.length,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 12,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  globalState.appController.config.profiles = profiles;
+                },
+                icon: const Icon(
+                  Icons.check,
+                ),
+                iconSize: 32,
+                padding: const EdgeInsets.all(8),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

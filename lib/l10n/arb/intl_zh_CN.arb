@@ -236,5 +236,10 @@
   "action": "操作",
   "intelligentSelected": "智能选择",
   "clipboardImport": "剪贴板导入",
-  "clipboardExport": "导出剪贴板"
+  "clipboardExport": "导出剪贴板",
+  "layout": "布局",
+  "tight": "宽松",
+  "standard": "标准",
+  "loose": "紧凑",
+  "profilesSort": "配置排序"
 }

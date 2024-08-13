@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:fl_clash/clash/clash.dart';
+import 'package:fl_clash/common/other.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -60,7 +61,10 @@ double getScrollToSelectedOffset({
   required List<Proxy> proxies,
 }) {
   final appController = globalState.appController;
-  final columns = appController.columns;
+  final columns = other.getProxiesColumns(
+    appController.appState.viewWidth,
+    appController.config.proxiesLayout,
+  );
   final proxyCardType = appController.config.proxyCardType;
   final selectedName = appController.getCurrentSelectedName(groupName);
   final findSelectedIndex = proxies.indexWhere(

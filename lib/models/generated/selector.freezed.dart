@@ -458,7 +458,7 @@ abstract class _NetworkDetectionSelectorState
 mixin _$ProfilesSelectorState {
   List<Profile> get profiles => throw _privateConstructorUsedError;
   String? get currentProfileId => throw _privateConstructorUsedError;
-  ViewMode get viewMode => throw _privateConstructorUsedError;
+  int get columns => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ProfilesSelectorStateCopyWith<ProfilesSelectorState> get copyWith =>
@@ -471,8 +471,7 @@ abstract class $ProfilesSelectorStateCopyWith<$Res> {
           $Res Function(ProfilesSelectorState) then) =
       _$ProfilesSelectorStateCopyWithImpl<$Res, ProfilesSelectorState>;
   @useResult
-  $Res call(
-      {List<Profile> profiles, String? currentProfileId, ViewMode viewMode});
+  $Res call({List<Profile> profiles, String? currentProfileId, int columns});
 }
 
 /// @nodoc
@@ -491,7 +490,7 @@ class _$ProfilesSelectorStateCopyWithImpl<$Res,
   $Res call({
     Object? profiles = null,
     Object? currentProfileId = freezed,
-    Object? viewMode = null,
+    Object? columns = null,
   }) {
     return _then(_value.copyWith(
       profiles: null == profiles
@@ -502,10 +501,10 @@ class _$ProfilesSelectorStateCopyWithImpl<$Res,
           ? _value.currentProfileId
           : currentProfileId // ignore: cast_nullable_to_non_nullable
               as String?,
-      viewMode: null == viewMode
-          ? _value.viewMode
-          : viewMode // ignore: cast_nullable_to_non_nullable
-              as ViewMode,
+      columns: null == columns
+          ? _value.columns
+          : columns // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -519,8 +518,7 @@ abstract class _$$ProfilesSelectorStateImplCopyWith<$Res>
       __$$ProfilesSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {List<Profile> profiles, String? currentProfileId, ViewMode viewMode});
+  $Res call({List<Profile> profiles, String? currentProfileId, int columns});
 }
 
 /// @nodoc
@@ -537,7 +535,7 @@ class __$$ProfilesSelectorStateImplCopyWithImpl<$Res>
   $Res call({
     Object? profiles = null,
     Object? currentProfileId = freezed,
-    Object? viewMode = null,
+    Object? columns = null,
   }) {
     return _then(_$ProfilesSelectorStateImpl(
       profiles: null == profiles
@@ -548,10 +546,10 @@ class __$$ProfilesSelectorStateImplCopyWithImpl<$Res>
           ? _value.currentProfileId
           : currentProfileId // ignore: cast_nullable_to_non_nullable
               as String?,
-      viewMode: null == viewMode
-          ? _value.viewMode
-          : viewMode // ignore: cast_nullable_to_non_nullable
-              as ViewMode,
+      columns: null == columns
+          ? _value.columns
+          : columns // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -562,7 +560,7 @@ class _$ProfilesSelectorStateImpl implements _ProfilesSelectorState {
   const _$ProfilesSelectorStateImpl(
       {required final List<Profile> profiles,
       required this.currentProfileId,
-      required this.viewMode})
+      required this.columns})
       : _profiles = profiles;
 
   final List<Profile> _profiles;
@@ -576,11 +574,11 @@ class _$ProfilesSelectorStateImpl implements _ProfilesSelectorState {
   @override
   final String? currentProfileId;
   @override
-  final ViewMode viewMode;
+  final int columns;
 
   @override
   String toString() {
-    return 'ProfilesSelectorState(profiles: $profiles, currentProfileId: $currentProfileId, viewMode: $viewMode)';
+    return 'ProfilesSelectorState(profiles: $profiles, currentProfileId: $currentProfileId, columns: $columns)';
   }
 
   @override
@@ -591,8 +589,7 @@ class _$ProfilesSelectorStateImpl implements _ProfilesSelectorState {
             const DeepCollectionEquality().equals(other._profiles, _profiles) &&
             (identical(other.currentProfileId, currentProfileId) ||
                 other.currentProfileId == currentProfileId) &&
-            (identical(other.viewMode, viewMode) ||
-                other.viewMode == viewMode));
+            (identical(other.columns, columns) || other.columns == columns));
   }
 
   @override
@@ -600,7 +597,7 @@ class _$ProfilesSelectorStateImpl implements _ProfilesSelectorState {
       runtimeType,
       const DeepCollectionEquality().hash(_profiles),
       currentProfileId,
-      viewMode);
+      columns);
 
   @JsonKey(ignore: true)
   @override
@@ -614,14 +611,14 @@ abstract class _ProfilesSelectorState implements ProfilesSelectorState {
   const factory _ProfilesSelectorState(
       {required final List<Profile> profiles,
       required final String? currentProfileId,
-      required final ViewMode viewMode}) = _$ProfilesSelectorStateImpl;
+      required final int columns}) = _$ProfilesSelectorStateImpl;
 
   @override
   List<Profile> get profiles;
   @override
   String? get currentProfileId;
   @override
-  ViewMode get viewMode;
+  int get columns;
   @override
   @JsonKey(ignore: true)
   _$$ProfilesSelectorStateImplCopyWith<_$ProfilesSelectorStateImpl>
@@ -2559,146 +2556,6 @@ abstract class _PackageListSelectorState implements PackageListSelectorState {
   @override
   @JsonKey(ignore: true)
   _$$PackageListSelectorStateImplCopyWith<_$PackageListSelectorStateImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$ColumnsSelectorState {
-  int get columns => throw _privateConstructorUsedError;
-  ViewMode get viewMode => throw _privateConstructorUsedError;
-
-  @JsonKey(ignore: true)
-  $ColumnsSelectorStateCopyWith<ColumnsSelectorState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ColumnsSelectorStateCopyWith<$Res> {
-  factory $ColumnsSelectorStateCopyWith(ColumnsSelectorState value,
-          $Res Function(ColumnsSelectorState) then) =
-      _$ColumnsSelectorStateCopyWithImpl<$Res, ColumnsSelectorState>;
-  @useResult
-  $Res call({int columns, ViewMode viewMode});
-}
-
-/// @nodoc
-class _$ColumnsSelectorStateCopyWithImpl<$Res,
-        $Val extends ColumnsSelectorState>
-    implements $ColumnsSelectorStateCopyWith<$Res> {
-  _$ColumnsSelectorStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? columns = null,
-    Object? viewMode = null,
-  }) {
-    return _then(_value.copyWith(
-      columns: null == columns
-          ? _value.columns
-          : columns // ignore: cast_nullable_to_non_nullable
-              as int,
-      viewMode: null == viewMode
-          ? _value.viewMode
-          : viewMode // ignore: cast_nullable_to_non_nullable
-              as ViewMode,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$ColumnsSelectorStateImplCopyWith<$Res>
-    implements $ColumnsSelectorStateCopyWith<$Res> {
-  factory _$$ColumnsSelectorStateImplCopyWith(_$ColumnsSelectorStateImpl value,
-          $Res Function(_$ColumnsSelectorStateImpl) then) =
-      __$$ColumnsSelectorStateImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({int columns, ViewMode viewMode});
-}
-
-/// @nodoc
-class __$$ColumnsSelectorStateImplCopyWithImpl<$Res>
-    extends _$ColumnsSelectorStateCopyWithImpl<$Res, _$ColumnsSelectorStateImpl>
-    implements _$$ColumnsSelectorStateImplCopyWith<$Res> {
-  __$$ColumnsSelectorStateImplCopyWithImpl(_$ColumnsSelectorStateImpl _value,
-      $Res Function(_$ColumnsSelectorStateImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? columns = null,
-    Object? viewMode = null,
-  }) {
-    return _then(_$ColumnsSelectorStateImpl(
-      columns: null == columns
-          ? _value.columns
-          : columns // ignore: cast_nullable_to_non_nullable
-              as int,
-      viewMode: null == viewMode
-          ? _value.viewMode
-          : viewMode // ignore: cast_nullable_to_non_nullable
-              as ViewMode,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$ColumnsSelectorStateImpl implements _ColumnsSelectorState {
-  const _$ColumnsSelectorStateImpl(
-      {required this.columns, required this.viewMode});
-
-  @override
-  final int columns;
-  @override
-  final ViewMode viewMode;
-
-  @override
-  String toString() {
-    return 'ColumnsSelectorState(columns: $columns, viewMode: $viewMode)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ColumnsSelectorStateImpl &&
-            (identical(other.columns, columns) || other.columns == columns) &&
-            (identical(other.viewMode, viewMode) ||
-                other.viewMode == viewMode));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, columns, viewMode);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ColumnsSelectorStateImplCopyWith<_$ColumnsSelectorStateImpl>
-      get copyWith =>
-          __$$ColumnsSelectorStateImplCopyWithImpl<_$ColumnsSelectorStateImpl>(
-              this, _$identity);
-}
-
-abstract class _ColumnsSelectorState implements ColumnsSelectorState {
-  const factory _ColumnsSelectorState(
-      {required final int columns,
-      required final ViewMode viewMode}) = _$ColumnsSelectorStateImpl;
-
-  @override
-  int get columns;
-  @override
-  ViewMode get viewMode;
-  @override
-  @JsonKey(ignore: true)
-  _$$ColumnsSelectorStateImplCopyWith<_$ColumnsSelectorStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
 

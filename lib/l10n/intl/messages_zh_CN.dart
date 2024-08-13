@@ -147,6 +147,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "keepAliveIntervalDesc":
             MessageLookupByLibrary.simpleMessage("TCP保持活动间隔"),
         "language": MessageLookupByLibrary.simpleMessage("语言"),
+        "layout": MessageLookupByLibrary.simpleMessage("布局"),
         "light": MessageLookupByLibrary.simpleMessage("浅色"),
         "list": MessageLookupByLibrary.simpleMessage("列表"),
         "local": MessageLookupByLibrary.simpleMessage("本地"),
@@ -157,6 +158,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "logcatDesc": MessageLookupByLibrary.simpleMessage("禁用将会隐藏日志入口"),
         "logs": MessageLookupByLibrary.simpleMessage("日志"),
         "logsDesc": MessageLookupByLibrary.simpleMessage("日志捕获记录"),
+        "loose": MessageLookupByLibrary.simpleMessage("紧凑"),
         "min": MessageLookupByLibrary.simpleMessage("最小"),
         "minimizeOnExit": MessageLookupByLibrary.simpleMessage("退出时最小化"),
         "minimizeOnExitDesc":
@@ -214,6 +216,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "profileUrlNullValidationDesc":
             MessageLookupByLibrary.simpleMessage("请输入配置URL"),
         "profiles": MessageLookupByLibrary.simpleMessage("配置"),
+        "profilesSort": MessageLookupByLibrary.simpleMessage("配置排序"),
         "project": MessageLookupByLibrary.simpleMessage("项目"),
         "proxies": MessageLookupByLibrary.simpleMessage("代理"),
         "proxiesSetting": MessageLookupByLibrary.simpleMessage("代理设置"),
@@ -249,6 +252,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "size": MessageLookupByLibrary.simpleMessage("尺寸"),
         "sort": MessageLookupByLibrary.simpleMessage("排序"),
         "source": MessageLookupByLibrary.simpleMessage("来源"),
+        "standard": MessageLookupByLibrary.simpleMessage("标准"),
         "startVpn": MessageLookupByLibrary.simpleMessage("正在启动VPN..."),
         "stopVpn": MessageLookupByLibrary.simpleMessage("正在停止VPN..."),
         "style": MessageLookupByLibrary.simpleMessage("风格"),
@@ -269,6 +273,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeDesc": MessageLookupByLibrary.simpleMessage("设置深色模式，调整色彩"),
         "themeMode": MessageLookupByLibrary.simpleMessage("主题模式"),
         "threeColumns": MessageLookupByLibrary.simpleMessage("三列"),
+        "tight": MessageLookupByLibrary.simpleMessage("宽松"),
         "time": MessageLookupByLibrary.simpleMessage("时间"),
         "tip": MessageLookupByLibrary.simpleMessage("提示"),
         "tools": MessageLookupByLibrary.simpleMessage("工具"),
