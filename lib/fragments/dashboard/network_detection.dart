@@ -1,4 +1,4 @@
-import 'package:country_flags/country_flags.dart';
+import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -18,6 +18,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
   final timeoutNotifier = ValueNotifier<bool>(false);
   bool? _preIsStart;
   Function? _checkIpDebounce;
+  CancelToken? cancelToken;
 
   _checkIp() async {
     final appState = globalState.appController.appState;
@@ -28,13 +29,19 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     if (_preIsStart == false && _preIsStart == isStart) return;
     _preIsStart = isStart;
     ipInfoNotifier.value = null;
-    final ipInfo = await request.checkIp();
+    if (cancelToken != null) {
+      cancelToken!.cancel();
+      _preIsStart = null;
+      timeoutNotifier.value == false;
+      cancelToken = null;
+    }
+    cancelToken = CancelToken();
+    final ipInfo = await request.checkIp(cancelToken: cancelToken);
     if (ipInfo == null) {
       timeoutNotifier.value = true;
       return;
-    } else {
-      timeoutNotifier.value = false;
     }
+    timeoutNotifier.value = false;
     ipInfoNotifier.value = ipInfo;
   }
 
@@ -60,9 +67,19 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     timeoutNotifier.dispose();
   }
 
+  String countryCodeToEmoji(String countryCode) {
+    final String code = countryCode.toUpperCase();
+    if (code.length != 2) {
+      return countryCode;
+    }
+    final int firstLetter = code.codeUnitAt(0) - 0x41 + 0x1F1E6;
+    final int secondLetter = code.codeUnitAt(1) - 0x41 + 0x1F1E6;
+    return String.fromCharCode(firstLetter) + String.fromCharCode(secondLetter);
+  }
+
   @override
   Widget build(BuildContext context) {
-    _checkIpDebounce = debounce(_checkIp);
+    _checkIpDebounce ??= debounce(_checkIp);
     return _checkIpContainer(
       ValueListenableBuilder<IpInfo?>(
         valueListenable: ipInfoNotifier,
@@ -88,10 +105,19 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                           flex: 1,
                           child: FadeBox(
                             child: ipInfo != null
-                                ? CountryFlag.fromCountryCode(
-                                    ipInfo.countryCode,
-                                    width: 24,
-                                    height: 24,
+                                ? Container(
+                                    alignment: Alignment.centerLeft,
+                                    height: globalState.appController.measure
+                                        .titleMediumHeight,
+                                    child: Text(
+                                      countryCodeToEmoji(ipInfo.countryCode),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontFamily: "Twemoji",
+                                          ),
+                                    ),
                                   )
                                 : ValueListenableBuilder(
                                     valueListenable: timeoutNotifier,

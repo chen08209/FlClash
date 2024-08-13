@@ -37,7 +37,7 @@ class ProfilesSelectorState with _$ProfilesSelectorState {
   const factory ProfilesSelectorState({
     required List<Profile> profiles,
     required String? currentProfileId,
-    required ViewMode viewMode,
+    required int columns,
   }) = _ProfilesSelectorState;
 }
 
@@ -170,14 +170,6 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
       },
     );
   }
-}
-
-@freezed
-class ColumnsSelectorState with _$ColumnsSelectorState {
-  const factory ColumnsSelectorState({
-    required int columns,
-    required ViewMode viewMode,
-  }) = _ColumnsSelectorState;
 }
 
 @freezed

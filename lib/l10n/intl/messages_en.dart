@@ -182,6 +182,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "keepAliveIntervalDesc":
             MessageLookupByLibrary.simpleMessage("Tcp keep alive interval"),
         "language": MessageLookupByLibrary.simpleMessage("Language"),
+        "layout": MessageLookupByLibrary.simpleMessage("Layout"),
         "light": MessageLookupByLibrary.simpleMessage("Light"),
         "list": MessageLookupByLibrary.simpleMessage("List"),
         "local": MessageLookupByLibrary.simpleMessage("Local"),
@@ -195,6 +196,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "Disabling will hide the log entry"),
         "logs": MessageLookupByLibrary.simpleMessage("Logs"),
         "logsDesc": MessageLookupByLibrary.simpleMessage("Log capture records"),
+        "loose": MessageLookupByLibrary.simpleMessage("Loose"),
         "min": MessageLookupByLibrary.simpleMessage("Min"),
         "minimizeOnExit":
             MessageLookupByLibrary.simpleMessage("Minimize on exit"),
@@ -266,6 +268,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "profileUrlNullValidationDesc": MessageLookupByLibrary.simpleMessage(
             "Please input the profile URL"),
         "profiles": MessageLookupByLibrary.simpleMessage("Profiles"),
+        "profilesSort": MessageLookupByLibrary.simpleMessage("Profiles sort"),
         "project": MessageLookupByLibrary.simpleMessage("Project"),
         "proxies": MessageLookupByLibrary.simpleMessage("Proxies"),
         "proxiesSetting":
@@ -312,6 +315,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "size": MessageLookupByLibrary.simpleMessage("Size"),
         "sort": MessageLookupByLibrary.simpleMessage("Sort"),
         "source": MessageLookupByLibrary.simpleMessage("Source"),
+        "standard": MessageLookupByLibrary.simpleMessage("Standard"),
         "startVpn": MessageLookupByLibrary.simpleMessage("Staring VPN..."),
         "stopVpn": MessageLookupByLibrary.simpleMessage("Stopping VPN..."),
         "style": MessageLookupByLibrary.simpleMessage("Style"),
@@ -334,6 +338,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "Set dark mode,adjust the color"),
         "themeMode": MessageLookupByLibrary.simpleMessage("Theme mode"),
         "threeColumns": MessageLookupByLibrary.simpleMessage("Three columns"),
+        "tight": MessageLookupByLibrary.simpleMessage("Tight"),
         "time": MessageLookupByLibrary.simpleMessage("Time"),
         "tip": MessageLookupByLibrary.simpleMessage("tip"),
         "tools": MessageLookupByLibrary.simpleMessage("Tools"),

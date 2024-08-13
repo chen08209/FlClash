@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
@@ -49,7 +50,9 @@ class Request {
         .get(
           url,
           options: Options(
-            headers: {"User-Agent": globalState.appController.clashConfig.globalUa},
+            headers: {
+              "User-Agent": globalState.appController.clashConfig.globalUa
+            },
             responseType: ResponseType.bytes,
           ),
         )
@@ -84,10 +87,13 @@ class Request {
   };
 
   Future<IpInfo?> checkIp({CancelToken? cancelToken}) async {
-    for (final source in _ipInfoSources.entries) {
+    for (final source in _ipInfoSources.entries.toList()..shuffle(Random())) {
       try {
         final response = await _dio
-            .get<Map<String, dynamic>>(source.key, cancelToken: cancelToken)
+            .get<Map<String, dynamic>>(
+              source.key,
+              cancelToken: cancelToken,
+            )
             .timeout(
               httpTimeoutDuration,
             );

@@ -47,6 +47,7 @@ class DAVClient {
   }
 
   Future<List<int>> recovery() async {
+    await client.mkdir("$root");
     final data = await client.read(backupFile);
     return data;
   }

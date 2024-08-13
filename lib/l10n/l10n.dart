@@ -2429,6 +2429,56 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Layout`
+  String get layout {
+    return Intl.message(
+      'Layout',
+      name: 'layout',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tight`
+  String get tight {
+    return Intl.message(
+      'Tight',
+      name: 'tight',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Standard`
+  String get standard {
+    return Intl.message(
+      'Standard',
+      name: 'standard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Loose`
+  String get loose {
+    return Intl.message(
+      'Loose',
+      name: 'loose',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profiles sort`
+  String get profilesSort {
+    return Intl.message(
+      'Profiles sort',
+      name: 'profilesSort',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
