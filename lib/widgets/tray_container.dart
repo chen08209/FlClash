@@ -32,11 +32,11 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
 
   _updateOtherTray() async {
     if (isTrayInit == false) {
-      await trayManager.setIcon(
-        other.getTrayIconPath(),
-      );
       await trayManager.setToolTip(
         appName,
+      );
+      await trayManager.setIcon(
+        other.getTrayIconPath(),
       );
       isTrayInit = true;
     }
@@ -110,7 +110,7 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
     final proxyMenuItem = MenuItem.checkbox(
       label: appLocalizations.systemProxy,
       onClick: (_) async {
-        globalState.appController.updateSystemProxy(!state.isRun);
+        globalState.appController.updateStatus(!state.isRun);
       },
       checked: state.isRun,
     );

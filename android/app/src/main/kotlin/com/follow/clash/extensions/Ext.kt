@@ -1,18 +1,28 @@
 package com.follow.clash.extensions
 
+import android.annotation.SuppressLint
+import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.system.OsConstants.IPPROTO_TCP
 import android.system.OsConstants.IPPROTO_UDP
 import android.util.Base64
-import java.net.URL
+import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.toBitmap
+import com.follow.clash.MainActivity
+import com.follow.clash.R
 import com.follow.clash.models.Metadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.net.InetAddress
-import java.net.InetSocketAddress
 
 
 suspend fun Drawable.getBase64(): String {
@@ -31,7 +41,6 @@ fun Metadata.getProtocol(): Int? {
     return null
 }
 
-fun String.getInetSocketAddress(): InetSocketAddress {
-    val url = URL("https://$this")
-    return InetSocketAddress(InetAddress.getByName(url.host), url.port)
-}
+private val CHANNEL = "FlClash"
+
+private val notificationId: Int = 1

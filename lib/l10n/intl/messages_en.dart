@@ -321,7 +321,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "style": MessageLookupByLibrary.simpleMessage("Style"),
         "submit": MessageLookupByLibrary.simpleMessage("Submit"),
         "sync": MessageLookupByLibrary.simpleMessage("Sync"),
-        "systemProxy": MessageLookupByLibrary.simpleMessage("SystemProxy"),
+        "systemProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
         "systemProxyDesc": MessageLookupByLibrary.simpleMessage(
             "Attach HTTP proxy to VpnService"),
         "tab": MessageLookupByLibrary.simpleMessage("Tab"),
@@ -343,7 +343,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "tip": MessageLookupByLibrary.simpleMessage("tip"),
         "tools": MessageLookupByLibrary.simpleMessage("Tools"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
-        "tun": MessageLookupByLibrary.simpleMessage("TUN mode"),
+        "tun": MessageLookupByLibrary.simpleMessage("TUN"),
         "tunDesc": MessageLookupByLibrary.simpleMessage(
             "only effective in administrator mode"),
         "twoColumns": MessageLookupByLibrary.simpleMessage("Two columns"),

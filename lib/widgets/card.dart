@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 
 import 'text.dart';
@@ -29,12 +30,13 @@ class InfoHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
+          Flexible(
+            flex: 1,
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 if (info.iconData != null) ...[
                   Icon(
@@ -46,6 +48,7 @@ class InfoHeader extends StatelessWidget {
                   ),
                 ],
                 Flexible(
+                  flex: 1,
                   child: TooltipText(
                     text: Text(
                       info.label,
@@ -57,6 +60,9 @@ class InfoHeader extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(
+            width: 8,
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -155,6 +161,18 @@ class CommonCard extends StatelessWidget {
         ],
       );
     }
+    if (selectWidget != null && isSelected) {
+      final List<Widget> children = [];
+      children.add(childWidget);
+      children.add(
+        Positioned.fill(
+          child: selectWidget!,
+        ),
+      );
+      childWidget = Stack(
+        children: children,
+      );
+    }
     return OutlinedButton(
       clipBehavior: Clip.antiAlias,
       style: ButtonStyle(
@@ -172,25 +190,7 @@ class CommonCard extends StatelessWidget {
         ),
       ),
       onPressed: onPressed,
-      child: Builder(
-        builder: (_) {
-          if (selectWidget == null) {
-            return childWidget;
-          }
-          List<Widget> children = [];
-          children.add(childWidget);
-          if (isSelected) {
-            children.add(
-              Positioned.fill(
-                child: selectWidget!,
-              ),
-            );
-          }
-          return Stack(
-            children: children,
-          );
-        },
-      ),
+      child: childWidget,
     );
   }
 }

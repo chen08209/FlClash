@@ -37,7 +37,7 @@ class _StartButtonState extends State<StartButton>
     if (isStart == appController.appState.isStart) {
       isStart = !isStart;
       updateController();
-      appController.updateSystemProxy(isStart);
+      appController.updateStatus(isStart);
     }
   }
 
@@ -53,7 +53,7 @@ class _StartButtonState extends State<StartButton>
     return Selector<AppState, bool>(
       selector: (_, appState) => appState.isStart,
       builder: (_, isStart, child) {
-        if(isStart != this.isStart){
+        if (isStart != this.isStart) {
           this.isStart = isStart;
           updateController();
         }

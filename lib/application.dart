@@ -4,6 +4,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/proxy_container.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -95,7 +96,9 @@ class ApplicationState extends State<Application> {
     if (system.isDesktop) {
       return WindowContainer(
         child: TrayContainer(
-          child: app,
+          child: ProxyContainer(
+            child: app,
+          ),
         ),
       );
     }
@@ -121,59 +124,65 @@ class ApplicationState extends State<Application> {
 
   @override
   Widget build(context) {
-    return AppStateContainer(
-      child: ClashContainer(
-        child: Selector2<AppState, Config, ApplicationSelectorState>(
-          selector: (_, appState, config) => ApplicationSelectorState(
-            locale: config.locale,
-            themeMode: config.themeMode,
-            primaryColor: config.primaryColor,
-            prueBlack: config.prueBlack,
-          ),
-          builder: (_, state, child) {
-            return DynamicColorBuilder(
-              builder: (lightDynamic, darkDynamic) {
-                _updateSystemColorSchemes(lightDynamic, darkDynamic);
-                return MaterialApp(
-                  navigatorKey: globalState.navigatorKey,
-                  localizationsDelegates: const [
-                    AppLocalizations.delegate,
-                    GlobalMaterialLocalizations.delegate,
-                    GlobalCupertinoLocalizations.delegate,
-                    GlobalWidgetsLocalizations.delegate
-                  ],
-                  builder: (_, child) {
-                    return _buildApp(child!);
-                  },
-                  scrollBehavior: BaseScrollBehavior(),
-                  title: appName,
-                  locale: other.getLocaleForString(state.locale),
-                  supportedLocales: AppLocalizations.delegate.supportedLocales,
-                  themeMode: state.themeMode,
-                  theme: ThemeData(
-                    useMaterial3: true,
-                    pageTransitionsTheme: _pageTransitionsTheme,
-                    colorScheme: _getAppColorScheme(
-                      brightness: Brightness.light,
-                      systemColorSchemes: systemColorSchemes,
-                      primaryColor: state.primaryColor,
+    return _buildApp(
+      AppStateContainer(
+        child: ClashContainer(
+          child: Selector2<AppState, Config, ApplicationSelectorState>(
+            selector: (_, appState, config) => ApplicationSelectorState(
+              locale: config.locale,
+              themeMode: config.themeMode,
+              primaryColor: config.primaryColor,
+              prueBlack: config.prueBlack,
+            ),
+            builder: (_, state, child) {
+              return DynamicColorBuilder(
+                builder: (lightDynamic, darkDynamic) {
+                  _updateSystemColorSchemes(lightDynamic, darkDynamic);
+                  return MaterialApp(
+                    navigatorKey: globalState.navigatorKey,
+                    localizationsDelegates: const [
+                      AppLocalizations.delegate,
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate
+                    ],
+                    builder: (_, child) {
+                      if (system.isDesktop) {
+                        return WindowHeaderContainer(child: child!);
+                      }
+                      return child!;
+                    },
+                    scrollBehavior: BaseScrollBehavior(),
+                    title: appName,
+                    locale: other.getLocaleForString(state.locale),
+                    supportedLocales:
+                        AppLocalizations.delegate.supportedLocales,
+                    themeMode: state.themeMode,
+                    theme: ThemeData(
+                      useMaterial3: true,
+                      pageTransitionsTheme: _pageTransitionsTheme,
+                      colorScheme: _getAppColorScheme(
+                        brightness: Brightness.light,
+                        systemColorSchemes: systemColorSchemes,
+                        primaryColor: state.primaryColor,
+                      ),
                     ),
-                  ),
-                  darkTheme: ThemeData(
-                    useMaterial3: true,
-                    pageTransitionsTheme: _pageTransitionsTheme,
-                    colorScheme: _getAppColorScheme(
-                      brightness: Brightness.dark,
-                      systemColorSchemes: systemColorSchemes,
-                      primaryColor: state.primaryColor,
-                    ).toPrueBlack(state.prueBlack),
-                  ),
-                  home: child,
-                );
-              },
-            );
-          },
-          child: const HomePage(),
+                    darkTheme: ThemeData(
+                      useMaterial3: true,
+                      pageTransitionsTheme: _pageTransitionsTheme,
+                      colorScheme: _getAppColorScheme(
+                        brightness: Brightness.dark,
+                        systemColorSchemes: systemColorSchemes,
+                        primaryColor: state.primaryColor,
+                      ).toPrueBlack(state.prueBlack),
+                    ),
+                    home: child,
+                  );
+                },
+              );
+            },
+            child: const HomePage(),
+          ),
         ),
       ),
     );

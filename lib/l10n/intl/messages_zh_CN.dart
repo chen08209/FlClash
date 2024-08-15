@@ -278,7 +278,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "tip": MessageLookupByLibrary.simpleMessage("提示"),
         "tools": MessageLookupByLibrary.simpleMessage("工具"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("流量统计"),
-        "tun": MessageLookupByLibrary.simpleMessage("TUN模式"),
+        "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
         "tunDesc": MessageLookupByLibrary.simpleMessage("仅在管理员模式生效"),
         "twoColumns": MessageLookupByLibrary.simpleMessage("两列"),
         "unableToUpdateCurrentProfileDesc":

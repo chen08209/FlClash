@@ -18,6 +18,8 @@ add_executable(${BINARY_NAME} WIN32
   "runner.exe.manifest"
 )
 
+SET_TARGET_PROPERTIES(${BINARY_NAME} PROPERTIES LINK_FLAGS    "/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\" /SUBSYSTEM:WINDOWS")
+
 # add_executable(service
 #   "service.cpp"
 # )

@@ -5144,6 +5144,22 @@ class ClashFFI {
   late final __FCmulcr =
       __FCmulcrPtr.asFunction<_Fcomplex Function(_Fcomplex, double)>();
 
+  void start() {
+    return _start();
+  }
+
+  late final _startPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('start');
+  late final _start = _startPtr.asFunction<void Function()>();
+
+  void stop() {
+    return _stop();
+  }
+
+  late final _stopPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('stop');
+  late final _stop = _stopPtr.asFunction<void Function()>();
+
   int initClash(
     ffi.Pointer<ffi.Char> homeDirStr,
   ) {

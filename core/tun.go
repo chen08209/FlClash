@@ -7,14 +7,15 @@ import (
 	"core/platform"
 	t "core/tun"
 	"errors"
-	"github.com/metacubex/mihomo/component/dialer"
-	"github.com/metacubex/mihomo/log"
-	"golang.org/x/sync/semaphore"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/metacubex/mihomo/component/dialer"
+	"github.com/metacubex/mihomo/log"
+	"golang.org/x/sync/semaphore"
 )
 
 var tunLock sync.Mutex
@@ -40,6 +41,18 @@ var fdMap FdMap
 func startTUN(fd C.int, port C.longlong) {
 	i := int64(port)
 	ServicePort = i
+	if fd == 0 {
+		tunLock.Lock()
+		defer tunLock.Unlock()
+		now := time.Now()
+		runTime = &now
+		SendMessage(Message{
+			Type: StartedMessage,
+			Data: strconv.FormatInt(runTime.UnixMilli(), 10),
+		})
+		return
+	}
+	initSocketHook()
 	go func() {
 		tunLock.Lock()
 		defer tunLock.Unlock()
@@ -88,6 +101,7 @@ func getRunTime() *C.char {
 
 //export stopTun
 func stopTun() {
+	removeSocketHook()
 	go func() {
 		tunLock.Lock()
 		defer tunLock.Unlock()
@@ -95,6 +109,7 @@ func stopTun() {
 		runTime = nil
 
 		if tun != nil {
+			log.Errorln("[Tun] stopTun")
 			tun.Close()
 			tun = nil
 		}
@@ -125,7 +140,7 @@ func markSocket(fd Fd) {
 
 var fdCounter int64 = 0
 
-func init() {
+func initSocketHook() {
 	dialer.DefaultSocketHook = func(network, address string, conn syscall.RawConn) error {
 		if platform.ShouldBlockConnection() {
 			return errBlocked
@@ -158,4 +173,8 @@ func init() {
 			}
 		})
 	}
+}
+
+func removeSocketHook() {
+	dialer.DefaultSocketHook = nil
 }

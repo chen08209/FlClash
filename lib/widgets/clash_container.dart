@@ -1,9 +1,10 @@
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/plugins/proxy.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../common/function.dart';
 
 class ClashContainer extends StatefulWidget {
   final Widget child;
@@ -19,12 +20,49 @@ class ClashContainer extends StatefulWidget {
 
 class _ClashContainerState extends State<ClashContainer>
     with AppMessageListener {
+  Function? updateClashConfigDebounce;
+
+  Widget _updateContainer(Widget child) {
+    return Selector<ClashConfig, ClashConfigState>(
+      selector: (_, clashConfig) => ClashConfigState(
+        mixedPort: clashConfig.mixedPort,
+        allowLan: clashConfig.allowLan,
+        ipv6: clashConfig.ipv6,
+        logLevel: clashConfig.logLevel,
+        geodataLoader: clashConfig.geodataLoader,
+        externalController: clashConfig.externalController,
+        mode: clashConfig.mode,
+        findProcessMode: clashConfig.findProcessMode,
+        keepAliveInterval: clashConfig.keepAliveInterval,
+        unifiedDelay: clashConfig.unifiedDelay,
+        tcpConcurrent: clashConfig.tcpConcurrent,
+        tun: clashConfig.tun,
+        dns: clashConfig.dns,
+        geoXUrl: clashConfig.geoXUrl,
+        rules: clashConfig.rules,
+        globalRealUa: clashConfig.globalRealUa,
+      ),
+      builder: (__, state, child) {
+        if (updateClashConfigDebounce == null) {
+          updateClashConfigDebounce = debounce<Function()>(() async {
+            await globalState.appController.updateClashConfig();
+          });
+        } else {
+          updateClashConfigDebounce!();
+        }
+        return child!;
+      },
+      child: child,
+    );
+  }
+
   Widget _updateCoreState(Widget child) {
     return Selector2<Config, ClashConfig, CoreState>(
       selector: (_, config, clashConfig) => CoreState(
         accessControl: config.isAccessControl ? config.accessControl : null,
-        allowBypass: config.allowBypass,
-        systemProxy: config.systemProxy,
+        enable: config.vpnProps.enable,
+        allowBypass: config.vpnProps.allowBypass,
+        systemProxy: config.vpnProps.systemProxy,
         mixedPort: clashConfig.mixedPort,
         onlyProxy: config.onlyProxy,
         currentProfileName:
@@ -61,7 +99,9 @@ class _ClashContainerState extends State<ClashContainer>
   Widget build(BuildContext context) {
     return _changeProfileContainer(
       _updateCoreState(
-        widget.child,
+        _updateContainer(
+          widget.child,
+        ),
       ),
     );
   }
@@ -89,6 +129,7 @@ class _ClashContainerState extends State<ClashContainer>
   @override
   void onLog(Log log) {
     globalState.appController.appState.addLog(log);
+    debugPrint("$log");
     super.onLog(log);
   }
 
@@ -113,9 +154,7 @@ class _ClashContainerState extends State<ClashContainer>
   @override
   Future<void> onStarted(String runTime) async {
     super.onStarted(runTime);
-    proxy?.updateStartTime();
     final appController = globalState.appController;
     await appController.applyProfile(isPrue: true);
-    appController.addCheckIpNumDebounce();
   }
 }

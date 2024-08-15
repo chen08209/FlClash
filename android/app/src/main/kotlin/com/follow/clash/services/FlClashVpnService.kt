@@ -1,5 +1,6 @@
 package com.follow.clash.services
 
+import android.annotation.SuppressLint
 import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -15,6 +16,7 @@ import android.os.Parcel
 import android.os.RemoteException
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.follow.clash.BaseServiceInterface
 import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
 import com.follow.clash.R
@@ -25,10 +27,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
-class FlClashVpnService : VpnService() {
-    private val CHANNEL = "FlClash"
-
-    private val notificationId: Int = 1
+@SuppressLint("WrongConstant")
+class FlClashVpnService : VpnService(), BaseServiceInterface {
 
     private val passList = listOf(
         "*zhihu.com",
@@ -52,10 +52,10 @@ class FlClashVpnService : VpnService() {
 
     override fun onCreate() {
         super.onCreate()
-        initServiceEngine()
+        GlobalState.initServiceEngine(applicationContext)
     }
 
-    fun start(port: Int, props: Props?): Int? {
+    override fun start(port: Int, props: Props?): Int? {
         return with(Builder()) {
             addAddress("172.16.0.1", 30)
             setMtu(9000)
@@ -97,10 +97,17 @@ class FlClashVpnService : VpnService() {
         }
     }
 
-    fun stop() {
+
+    override fun stop() {
         stopSelf()
-        stopForeground()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        }
     }
+
+    private val CHANNEL = "FlClash"
+
+    private val notificationId: Int = 1
 
     private val notificationBuilder: NotificationCompat.Builder by lazy {
         val intent = Intent(this, MainActivity::class.java)
@@ -136,16 +143,8 @@ class FlClashVpnService : VpnService() {
         }
     }
 
-    fun initServiceEngine() {
-        GlobalState.initServiceEngine(applicationContext)
-    }
-
-    override fun onTrimMemory(level: Int) {
-        super.onTrimMemory(level)
-        GlobalState.getCurrentAppPlugin()?.requestGc()
-    }
-
-    fun startForeground(title: String, content: String) {
+    @SuppressLint("ForegroundServiceType", "WrongConstant")
+    override fun startForeground(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
             var channel = manager?.getNotificationChannel(CHANNEL)
@@ -157,17 +156,16 @@ class FlClashVpnService : VpnService() {
         }
         val notification =
             notificationBuilder.setContentTitle(title).setContentText(content).build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
             startForeground(notificationId, notification)
         }
     }
 
-    private fun stopForeground() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        }
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        GlobalState.getCurrentAppPlugin()?.requestGc()
     }
 
     private val binder = LocalBinder()
@@ -189,7 +187,6 @@ class FlClashVpnService : VpnService() {
             }
         }
     }
-
 
     override fun onBind(intent: Intent): IBinder {
         return binder

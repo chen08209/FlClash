@@ -237,6 +237,14 @@ class ClashCore {
     malloc.free(paramsChar);
   }
 
+  start() {
+    clashFFI.start();
+  }
+
+  stop() {
+    clashFFI.stop();
+  }
+
   Future<Delay> getDelay(String proxyName) {
     final delayParams = {
       "proxy-name": proxyName,

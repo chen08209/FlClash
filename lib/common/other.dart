@@ -6,7 +6,6 @@ import 'dart:typed_data';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
-import 'package:lpinyin/lpinyin.dart';
 import 'package:zxing2/qrcode.dart';
 import 'package:image/image.dart' as img;
 
@@ -191,7 +190,6 @@ class Other {
     if (viewWidth <= maxLaptopWidth) return ViewMode.laptop;
     return ViewMode.desktop;
   }
-
 
   int getProxiesColumns(double viewWidth, ProxiesLayout proxiesLayout) {
     final columns = max((viewWidth / 300).ceil(), 2);

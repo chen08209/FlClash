@@ -14,6 +14,7 @@ type AccessControl struct {
 }
 
 type AndroidProps struct {
+	Enable        bool           `json:"enable"`
 	AccessControl *AccessControl `json:"accessControl"`
 	AllowBypass   bool           `json:"allowBypass"`
 	SystemProxy   bool           `json:"systemProxy"`

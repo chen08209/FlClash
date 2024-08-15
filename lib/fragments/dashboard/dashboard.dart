@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'dart:math';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/fragments/dashboard/intranet_ip.dart';
+import 'package:fl_clash/fragments/dashboard/status_switch.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -28,34 +31,51 @@ class _DashboardFragmentState extends State<DashboardFragment> {
       child: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16).copyWith(
+            bottom: 88,
+          ),
           child: Selector<AppState, double>(
             selector: (_, appState) => appState.viewWidth,
             builder: (_, viewWidth, ___) {
-              // final viewMode = other.getViewMode(viewWidth);
-              // final isDesktop = viewMode == ViewMode.desktop;
+              final columns = max(4 * ((viewWidth / 350).ceil()), 8);
+              final int switchCount = (4 / columns) * viewWidth < 200 ? 8 : 4;
               return Grid(
-                crossAxisCount: max(4 * ((viewWidth / 350).ceil()), 8),
+                crossAxisCount: columns,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                children: const [
-                  GridItem(
+                children: [
+                  const GridItem(
                     crossAxisCellCount: 8,
                     child: NetworkSpeed(),
                   ),
-                  GridItem(
+                  if (Platform.isAndroid)
+                    GridItem(
+                      crossAxisCellCount: switchCount,
+                      child: const VPNSwitch(),
+                    ),
+                  if (system.isDesktop) ...[
+                    GridItem(
+                      crossAxisCellCount: switchCount,
+                      child: const TUNSwitch(),
+                    ),
+                    GridItem(
+                      crossAxisCellCount: switchCount,
+                      child: const ProxySwitch(),
+                    ),
+                  ],
+                  const GridItem(
                     crossAxisCellCount: 4,
                     child: OutboundMode(),
                   ),
-                  GridItem(
+                  const GridItem(
                     crossAxisCellCount: 4,
                     child: NetworkDetection(),
                   ),
-                  GridItem(
+                  const GridItem(
                     crossAxisCellCount: 4,
                     child: TrafficUsage(),
                   ),
-                  GridItem(
+                  const GridItem(
                     crossAxisCellCount: 4,
                     child: IntranetIP(),
                   ),
