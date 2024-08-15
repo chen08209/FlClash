@@ -3,7 +3,8 @@ import 'dart:io';
 
 import 'package:animations/animations.dart';
 import 'package:fl_clash/clash/clash.dart';
-import 'package:fl_clash/plugins/proxy.dart';
+import 'package:fl_clash/plugins/service.dart';
+import 'package:fl_clash/plugins/vpn.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -21,10 +22,13 @@ class GlobalState {
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   PageController? pageController;
+  DateTime? startTime;
   final navigatorKey = GlobalKey<NavigatorState>();
   late AppController appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
   List<Function> updateFunctionLists = [];
+
+  bool get isStart => startTime != null && startTime!.isBeforeNow;
 
   startListenUpdate() {
     if (timer != null && timer!.isActive == true) return;
@@ -65,23 +69,32 @@ class GlobalState {
     appState.versionInfo = clashCore.getVersionInfo();
   }
 
-  Future<void> startSystemProxy({
-    required AppState appState,
+  handleStart({
     required Config config,
     required ClashConfig clashConfig,
   }) async {
-    if (!globalState.isVpnService && Platform.isAndroid) {
-      await proxy?.initService();
-    } else {
-      await proxyManager.startProxy(
-        port: clashConfig.mixedPort,
-      );
+    clashCore.start();
+    if (globalState.isVpnService) {
+      await vpn?.startVpn(clashConfig.mixedPort);
+      startListenUpdate();
+      return;
     }
+    startTime ??= DateTime.now();
+    await service?.init();
     startListenUpdate();
   }
 
-  Future<void> stopSystemProxy() async {
-    await proxyManager.stopProxy();
+  updateStartTime() {
+    startTime = clashCore.getRunTime();
+  }
+
+  handleStop() async {
+    clashCore.stop();
+    if (Platform.isAndroid) {
+      clashCore.stopTun();
+    }
+    await service?.destroy();
+    startTime = null;
     stopListenUpdate();
   }
 
@@ -116,12 +129,14 @@ class GlobalState {
       );
       clashCore.setState(
         CoreState(
+          enable: config.vpnProps.enable,
           accessControl: config.isAccessControl ? config.accessControl : null,
-          allowBypass: config.allowBypass,
-          systemProxy: config.systemProxy,
+          allowBypass: config.vpnProps.allowBypass,
+          systemProxy: config.vpnProps.systemProxy,
           mixedPort: clashConfig.mixedPort,
           onlyProxy: config.onlyProxy,
-          currentProfileName: config.currentProfile?.label ?? config.currentProfileId ?? "",
+          currentProfileName:
+              config.currentProfile?.label ?? config.currentProfileId ?? "",
         ),
       );
     }
@@ -207,7 +222,7 @@ class GlobalState {
   }) {
     final traffic = clashCore.getTraffic();
     if (Platform.isAndroid && isVpnService == true) {
-      proxy?.startForeground(
+      vpn?.startForeground(
         title: clashCore.getState().currentProfileName,
         content: "$traffic",
       );

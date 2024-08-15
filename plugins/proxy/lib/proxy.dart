@@ -10,50 +10,22 @@ class Proxy extends ProxyPlatform {
 
   @override
   Future<bool?> startProxy(int port) async {
-    bool? isStart = false;
-    switch (Platform.operatingSystem) {
-      case "macos":
-        isStart = await _startProxyWithMacos(port);
-        break;
-      case "linux":
-        isStart = await _startProxyWithLinux(port);
-        break;
-      case "windows":
-        isStart = await ProxyPlatform.instance.startProxy(port);
-        break;
-    }
-    if (isStart == true) {
-      startTime = DateTime.now();
-    }
-    return isStart;
+    return switch (Platform.operatingSystem) {
+      "macos" => await _startProxyWithMacos(port),
+      "linux" => await _startProxyWithLinux(port),
+      "windows" => await ProxyPlatform.instance.startProxy(port),
+      String() => false,
+    };
   }
 
   @override
   Future<bool?> stopProxy() async {
-    bool? isStop = false;
-    switch (Platform.operatingSystem) {
-      case "macos":
-        isStop = await _stopProxyWithMacos();
-        break;
-      case "linux":
-        isStop = await _stopProxyWithLinux();
-        break;
-      case "windows":
-        isStop = await ProxyPlatform.instance.stopProxy();
-        break;
-    }
-    if (isStop == true) {
-      startTime = null;
-    }
-    return isStop;
-  }
-
-  @override
-  get startTime => ProxyPlatform.instance.startTime;
-
-  @override
-  set startTime(DateTime? dateTime) {
-    ProxyPlatform.instance.startTime = dateTime;
+    return switch (Platform.operatingSystem) {
+      "macos" => await _stopProxyWithMacos(),
+      "linux" => await _stopProxyWithLinux(),
+      "windows" => await ProxyPlatform.instance.stopProxy(),
+      String() => false,
+    };
   }
 
   Future<bool> _startProxyWithLinux(int port) async {
@@ -205,4 +177,3 @@ class Proxy extends ProxyPlatform {
     return lines;
   }
 }
-

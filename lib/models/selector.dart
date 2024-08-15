@@ -42,6 +42,14 @@ class ProfilesSelectorState with _$ProfilesSelectorState {
 }
 
 @freezed
+class NetworkDetectionState with _$NetworkDetectionState {
+  const factory NetworkDetectionState({
+    required bool isTesting,
+    required IpInfo? ipInfo,
+  }) = _NetworkDetectionState;
+}
+
+@freezed
 class ApplicationSelectorState with _$ApplicationSelectorState {
   const factory ApplicationSelectorState({
     required String? locale,
@@ -148,19 +156,19 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
     return packages
         .where((item) => isFilterSystemApp ? item.isSystem == false : true)
         .sorted(
-          (a, b) {
+      (a, b) {
         return switch (sort) {
           AccessSortType.none => 0,
-          AccessSortType.name =>
-              other.sortByChar(
-                PinyinHelper.getPinyin(a.label),
-                PinyinHelper.getPinyin(b.label),
-              ),
-          AccessSortType.time => a.firstInstallTime.compareTo(b.firstInstallTime),
+          AccessSortType.name => other.sortByChar(
+              PinyinHelper.getPinyin(a.label),
+              PinyinHelper.getPinyin(b.label),
+            ),
+          AccessSortType.time =>
+            a.firstInstallTime.compareTo(b.firstInstallTime),
         };
       },
     ).sorted(
-          (a, b) {
+      (a, b) {
         final isSelectA = selectedList.contains(a.packageName);
         final isSelectB = selectedList.contains(b.packageName);
         if (isSelectA && isSelectB) return 0;
@@ -186,4 +194,43 @@ class ProxiesActionsState with _$ProxiesActionsState {
     required bool isCurrent,
     required bool hasProvider,
   }) = _ProxiesActionsState;
+}
+
+@freezed
+class AutoLaunchState with _$AutoLaunchState {
+  const factory AutoLaunchState({
+    required bool isAutoLaunch,
+    required bool isOpenTun,
+  }) = _AutoLaunchState;
+}
+
+@freezed
+class ProxyState with _$ProxyState {
+  const factory ProxyState({
+    required bool isStart,
+    required bool systemProxy,
+    required int port,
+  }) = _ProxyState;
+}
+
+@freezed
+class ClashConfigState with _$ClashConfigState {
+  const factory ClashConfigState({
+    required int mixedPort,
+    required bool allowLan,
+    required bool ipv6,
+    required String geodataLoader,
+    required LogLevel logLevel,
+    required String externalController,
+    required Mode mode,
+    required FindProcessMode findProcessMode,
+    required int keepAliveInterval,
+    required bool unifiedDelay,
+    required bool tcpConcurrent,
+    required Tun tun,
+    required Dns dns,
+    required GeoXMap geoXUrl,
+    required List<String> rules,
+    required String? globalRealUa,
+  }) = _ClashConfigState;
 }

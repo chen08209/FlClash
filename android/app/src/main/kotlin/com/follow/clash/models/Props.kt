@@ -12,6 +12,7 @@ data class AccessControl(
 )
 
 data class Props(
+    val enable: Boolean?,
     val accessControl: AccessControl?,
     val allowBypass: Boolean?,
     val systemProxy: Boolean?,

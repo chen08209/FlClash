@@ -430,10 +430,10 @@ class AppLocalizations {
     );
   }
 
-  /// `TUN mode`
+  /// `TUN`
   String get tun {
     return Intl.message(
-      'TUN mode',
+      'TUN',
       name: 'tun',
       desc: '',
       args: [],
@@ -1230,10 +1230,10 @@ class AppLocalizations {
     );
   }
 
-  /// `SystemProxy`
+  /// `System proxy`
   String get systemProxy {
     return Intl.message(
-      'SystemProxy',
+      'System proxy',
       name: 'systemProxy',
       desc: '',
       args: [],

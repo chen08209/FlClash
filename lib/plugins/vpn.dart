@@ -4,22 +4,18 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:fl_clash/clash/clash.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:proxy/proxy_platform_interface.dart';
 
-class Proxy extends ProxyPlatform {
-  static Proxy? _instance;
+class Vpn {
+  static Vpn? _instance;
   late MethodChannel methodChannel;
   ReceivePort? receiver;
   ServiceMessageListener? _serviceMessageHandler;
 
-  Proxy._internal() {
-    methodChannel = const MethodChannel("proxy");
+  Vpn._internal() {
+    methodChannel = const MethodChannel("vpn");
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case "started":
@@ -32,36 +28,21 @@ class Proxy extends ProxyPlatform {
     });
   }
 
-  factory Proxy() {
-    _instance ??= Proxy._internal();
+  factory Vpn() {
+    _instance ??= Vpn._internal();
     return _instance!;
   }
 
-  Future<bool?> initService() async {
-    return await methodChannel.invokeMethod<bool>("initService");
-  }
-
-  handleStop() {
-    globalState.stopSystemProxy();
-  }
-
-  @override
-  Future<bool?> startProxy(port) async {
+  Future<bool?> startVpn(port) async {
     final state = clashCore.getState();
-    return await methodChannel.invokeMethod<bool>("startProxy", {
+    return await methodChannel.invokeMethod<bool>("start", {
       'port': state.mixedPort,
       'args': json.encode(state),
     });
   }
 
-  @override
-  Future<bool?> stopProxy() async {
-    clashCore.stopTun();
-    final isStop = await methodChannel.invokeMethod<bool>("stopProxy");
-    if (isStop == true) {
-      startTime = null;
-    }
-    return isStop;
+  Future<bool?> stopVpn() async {
+    return await methodChannel.invokeMethod<bool>("stop");
   }
 
   Future<bool?> setProtect(int fd) async {
@@ -78,10 +59,7 @@ class Proxy extends ProxyPlatform {
     });
   }
 
-  bool get isStart => startTime != null && startTime!.isBeforeNow;
-
   onStarted(int? fd) {
-    if (fd == null) return;
     if (receiver != null) {
       receiver!.close();
       receiver == null;
@@ -90,11 +68,7 @@ class Proxy extends ProxyPlatform {
     receiver!.listen((message) {
       _handleServiceMessage(message);
     });
-    clashCore.startTun(fd, receiver!.sendPort.nativePort);
-  }
-
-  updateStartTime() {
-    startTime = clashCore.getRunTime();
+    clashCore.startTun(fd ?? 0, receiver!.sendPort.nativePort);
   }
 
   setServiceMessageHandler(ServiceMessageListener serviceMessageListener) {
@@ -103,7 +77,6 @@ class Proxy extends ProxyPlatform {
 
   _handleServiceMessage(String message) {
     final m = ServiceMessage.fromJson(json.decode(message));
-    debugPrint(m.toString());
     switch (m.type) {
       case ServiceMessageType.protect:
         _serviceMessageHandler?.onProtect(Fd.fromJson(m.data));
@@ -117,4 +90,4 @@ class Proxy extends ProxyPlatform {
   }
 }
 
-final proxy = Platform.isAndroid ? Proxy() : null;
+final vpn = Platform.isAndroid ? Vpn() : null;
