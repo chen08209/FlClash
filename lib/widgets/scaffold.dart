@@ -109,7 +109,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
               valueListenable: _actions,
               builder: (_, actions, __) {
                 final realActions =
-                actions.isNotEmpty ? actions : widget.actions;
+                    actions.isNotEmpty ? actions : widget.actions;
                 return AppBar(
                   centerTitle: false,
                   automaticallyImplyLeading: widget.automaticallyImplyLeading,

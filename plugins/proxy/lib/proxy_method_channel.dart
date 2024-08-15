@@ -18,10 +18,6 @@ class MethodChannelProxy extends ProxyPlatform {
 
   @override
   Future<bool?> stopProxy() async {
-    final isStop = await methodChannel.invokeMethod<bool>("StopProxy");
-    if (isStop == true) {
-      startTime = null;
-    }
-    return isStop;
+    return  await methodChannel.invokeMethod<bool>("StopProxy");
   }
 }

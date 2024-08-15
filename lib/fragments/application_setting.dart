@@ -76,7 +76,7 @@ class ApplicationSettingFragment extends StatelessWidget {
         selector: (_, config) => config.autoRun,
         builder: (_, autoRun, child) {
           return ListItem.switchItem(
-            leading: const Icon(Icons.start),
+            leading: const Icon(Icons.not_started),
             title: Text(appLocalizations.autoRun),
             subtitle: Text(appLocalizations.autoRunDesc),
             delegate: SwitchDelegate(

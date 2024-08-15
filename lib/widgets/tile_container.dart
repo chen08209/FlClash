@@ -24,13 +24,13 @@ class _TileContainerState extends State<TileContainer> with TileListener {
 
   @override
   void onStart() {
-    globalState.appController.updateSystemProxy(true);
+    globalState.appController.updateStatus(true);
     super.onStart();
   }
 
   @override
   void onStop() {
-    globalState.appController.updateSystemProxy(false);
+    globalState.appController.updateStatus(false);
     super.onStop();
   }
 

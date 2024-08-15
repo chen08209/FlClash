@@ -91,7 +91,6 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         final appController = globalState.appController;
         appController.clashConfig.geoXUrl =
             Map.from(appController.clashConfig.geoXUrl)..[geoItem.key] = newUrl;
-        appController.updateClashConfigDebounce();
       } catch (e) {
         globalState.showMessage(
           title: geoItem.label,

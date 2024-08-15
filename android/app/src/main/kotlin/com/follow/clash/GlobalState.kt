@@ -1,10 +1,10 @@
 package com.follow.clash
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.follow.clash.plugins.AppPlugin
-import com.follow.clash.plugins.ProxyPlugin
+import com.follow.clash.plugins.ServicePlugin
+import com.follow.clash.plugins.VpnPlugin
 import com.follow.clash.plugins.TilePlugin
 import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
@@ -22,6 +22,7 @@ enum class RunState {
 object GlobalState {
 
     private val lock = ReentrantLock()
+    val runLock = ReentrantLock()
 
     val runState: MutableLiveData<RunState> = MutableLiveData<RunState>(RunState.STOP)
     var flutterEngine: FlutterEngine? = null
@@ -37,6 +38,11 @@ object GlobalState {
         return currentEngine?.plugins?.get(TilePlugin::class.java) as TilePlugin?
     }
 
+    fun getCurrentVPNPlugin(): VpnPlugin? {
+        val currentEngine = if (serviceEngine != null) serviceEngine else flutterEngine
+        return currentEngine?.plugins?.get(VpnPlugin::class.java) as VpnPlugin?
+    }
+
     fun destroyServiceEngine() {
         serviceEngine?.destroy()
         serviceEngine = null
@@ -47,9 +53,10 @@ object GlobalState {
         lock.withLock {
             destroyServiceEngine()
             serviceEngine = FlutterEngine(context)
-            serviceEngine?.plugins?.add(ProxyPlugin())
+            serviceEngine?.plugins?.add(VpnPlugin())
             serviceEngine?.plugins?.add(AppPlugin())
             serviceEngine?.plugins?.add(TilePlugin())
+            serviceEngine?.plugins?.add(ServicePlugin())
             val vpnService = DartExecutor.DartEntrypoint(
                 FlutterInjector.instance().flutterLoader().findAppBundlePath(),
                 "vpnService"

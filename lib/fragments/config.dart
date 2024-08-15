@@ -27,7 +27,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
         final mixedPort = int.parse(port);
         if (mixedPort < 1024 || mixedPort > 49151) throw "Invalid port";
         globalState.appController.clashConfig.mixedPort = mixedPort;
-        globalState.appController.updateClashConfigDebounce();
       } catch (e) {
         globalState.showMessage(
           title: appLocalizations.proxyPort,
@@ -62,7 +61,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                       }
                       final appController = globalState.appController;
                       appController.clashConfig.logLevel = value;
-                      appController.updateClashConfigDebounce();
                       Navigator.of(context).pop();
                     },
                   ),
@@ -100,7 +98,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                     onChanged: (String? value) {
                       final appController = globalState.appController;
                       appController.clashConfig.globalRealUa = value;
-                      appController.updateClashConfigDebounce();
                       Navigator.of(context).pop();
                     },
                   ),
@@ -125,7 +122,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           throw "Invalid url";
         }
         globalState.appController.config.testUrl = newTestUrl;
-        globalState.appController.updateClashConfigDebounce();
       } catch (e) {
         globalState.showMessage(
           title: appLocalizations.testUrl,
@@ -172,7 +168,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
       items: [
         if (Platform.isAndroid) ...[
           Selector<Config, bool>(
-            selector: (_, config) => config.allowBypass,
+            selector: (_, config) => config.vpnProps.allowBypass,
             builder: (_, allowBypass, __) {
               return ListItem.switchItem(
                 leading: const Icon(Icons.arrow_forward_outlined),
@@ -181,15 +177,18 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 delegate: SwitchDelegate(
                   value: allowBypass,
                   onChanged: (bool value) async {
-                    final appController = globalState.appController;
-                    appController.config.allowBypass = value;
+                    final config = globalState.appController.config;
+                    final vpnProps = config.vpnProps;
+                    config.vpnProps = vpnProps.copyWith(
+                      allowBypass: value,
+                    );
                   },
                 ),
               );
             },
           ),
           Selector<Config, bool>(
-            selector: (_, config) => config.systemProxy,
+            selector: (_, config) => config.vpnProps.systemProxy,
             builder: (_, systemProxy, __) {
               return ListItem.switchItem(
                 leading: const Icon(Icons.settings_ethernet),
@@ -198,8 +197,11 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 delegate: SwitchDelegate(
                   value: systemProxy,
                   onChanged: (bool value) async {
-                    final appController = globalState.appController;
-                    appController.config.systemProxy = value;
+                    final config = globalState.appController.config;
+                    final vpnProps = config.vpnProps;
+                    config.vpnProps = vpnProps.copyWith(
+                      systemProxy: value,
+                    );
                   },
                 ),
               );
@@ -351,7 +353,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 onChanged: (bool value) async {
                   final appController = globalState.appController;
                   appController.clashConfig.ipv6 = value;
-                  appController.updateClashConfigDebounce();
                 },
               ),
             );
@@ -369,7 +370,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 onChanged: (bool value) async {
                   final clashConfig = context.read<ClashConfig>();
                   clashConfig.allowLan = value;
-                  globalState.appController.updateClashConfigDebounce();
                 },
               ),
             );
@@ -387,7 +387,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 onChanged: (bool value) async {
                   final appController = globalState.appController;
                   appController.clashConfig.unifiedDelay = value;
-                  appController.updateClashConfigDebounce();
                 },
               ),
             );
@@ -407,7 +406,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                   final appController = globalState.appController;
                   appController.clashConfig.findProcessMode =
                       value ? FindProcessMode.always : FindProcessMode.off;
-                  appController.updateClashConfigDebounce();
                 },
               ),
             );
@@ -425,7 +423,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 onChanged: (bool value) async {
                   final appController = globalState.appController;
                   appController.clashConfig.tcpConcurrent = value;
-                  appController.updateClashConfigDebounce();
                 },
               ),
             );
@@ -446,7 +443,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                   appController.clashConfig.geodataLoader = value
                       ? geodataLoaderMemconservative
                       : geodataLoaderStandard;
-                  appController.updateClashConfigDebounce();
                 },
               ),
             );
@@ -466,7 +462,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                   final appController = globalState.appController;
                   appController.clashConfig.externalController =
                       value ? defaultExternalController : '';
-                  appController.updateClashConfigDebounce();
                 },
               ),
             );
@@ -493,7 +488,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                   onChanged: (bool value) async {
                     final clashConfig = context.read<ClashConfig>();
                     clashConfig.tun = Tun(enable: value);
-                    globalState.appController.updateClashConfigDebounce();
                   },
                 ),
               );
@@ -652,8 +646,9 @@ class _KeepAliveIntervalFormDialogState
   @override
   void initState() {
     super.initState();
-    keepAliveIntervalController =
-        TextEditingController(text: "${widget.keepAliveInterval}");
+    keepAliveIntervalController = TextEditingController(
+      text: "${widget.keepAliveInterval}",
+    );
   }
 
   _handleUpdate() async {

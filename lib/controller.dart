@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:math';
 
 import 'package:archive/archive.dart';
 import 'package:fl_clash/common/archive.dart';
@@ -44,10 +43,9 @@ class AppController {
     measure = Measure.of(context);
   }
 
-  Future<void> updateSystemProxy(bool isStart) async {
+  updateStatus(bool isStart) async {
     if (isStart) {
-      await globalState.startSystemProxy(
-        appState: appState,
+      await globalState.handleStart(
         config: config,
         clashConfig: clashConfig,
       );
@@ -60,7 +58,7 @@ class AppController {
       if (Platform.isAndroid) return;
       await applyProfile(isPrue: true);
     } else {
-      await globalState.stopSystemProxy();
+      await globalState.handleStop();
       clashCore.resetTraffic();
       appState.traffics = [];
       appState.totalTraffic = Traffic();
@@ -74,8 +72,9 @@ class AppController {
   }
 
   updateRunTime() {
-    if (proxyManager.startTime != null) {
-      final startTimeStamp = proxyManager.startTime!.millisecondsSinceEpoch;
+    final startTime = globalState.startTime;
+    if (startTime != null) {
+      final startTimeStamp = startTime.millisecondsSinceEpoch;
       final nowTimeStamp = DateTime.now().millisecondsSinceEpoch;
       appState.runTime = nowTimeStamp - startTimeStamp;
     } else {
@@ -103,7 +102,7 @@ class AppController {
         final updateId = config.profiles.first.id;
         changeProfile(updateId);
       } else {
-        updateSystemProxy(false);
+        updateStatus(false);
       }
     }
   }
@@ -229,7 +228,7 @@ class AppController {
   }
 
   handleExit() async {
-    await updateSystemProxy(false);
+    await updateStatus(false);
     await savePreferences();
     clashCore.shutdown();
     system.exit();
@@ -298,11 +297,13 @@ class AppController {
     if (!config.silentLaunch) {
       window?.show();
     }
-    await proxyManager.updateStartTime();
-    if (proxyManager.isStart) {
-      await updateSystemProxy(true);
+    if (Platform.isAndroid) {
+      globalState.updateStartTime();
+    }
+    if (globalState.isStart) {
+      await updateStatus(true);
     } else {
-      await updateSystemProxy(config.autoRun);
+      await updateStatus(config.autoRun);
     }
     autoUpdateProfiles();
     autoCheckUpdate();
@@ -414,7 +415,6 @@ class AppController {
     if (url == null) return;
     addProfileFormURL(url);
   }
-
 
   updateViewWidth(double width) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
