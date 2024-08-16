@@ -1,6 +1,6 @@
 <div>
 
-[**简体中文**](README_zh_CN.md) | [**日本語**](README_ja.md)
+[**English**](README.md) | [**简体中文**](README_zh_CN.md)
 
 </div>
 
@@ -14,56 +14,56 @@
     </a>
 </p>
 
-A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
+ClashMetaに基づくマルチプラットフォームプロキシクライアントで、シンプルで使いやすく、オープンソースで広告なし。
 
-on Desktop:
+デスクトップで:
 <p style="text-align: center;">
     <img alt="desktop" src="snapshots/desktop.gif">
 </p>
 
-on Mobile:
+モバイルで:
 <p style="text-align: center;">
     <img alt="mobile" src="snapshots/mobile.gif">
 </p>
 
-## Features
+## 特徴
 
-✈️ Multi-platform: Android, Windows, macOS and Linux
+✈️ マルチプラットフォーム: Android, Windows, macOS, Linux
 
-💻 Adaptive multiple screen sizes, Multiple color themes available
+💻 複数の画面サイズに対応、複数のカラーテーマが利用可能
 
-💡 Based on Material You Design, [Surfboard](https://github.com/getsurfboard/surfboard)-like UI
+💡 基本的なMaterial Youデザイン、[Surfboard](https://github.com/getsurfboard/surfboard)のようなUI
 
-☁️ Supports data sync via WebDAV
+☁️ WebDAVを介したデータ同期をサポート
 
-✨ Support subscription link, Dark mode
+✨ サブスクリプションリンク、ダークモードをサポート
 
-## Download
+## ダウンロード
 
 <a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" width="200px"/></a> <a href="https://github.com/chen08209/FlClash/releases"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" width="200px"/></a>
 
-## Contact
+## 連絡先
 
 [Telegram](https://t.me/+G-veVtwBOl4wODc1)
 
-## Build
+## ビルド
 
-1. Update submodules
+1. サブモジュールを更新
    ```bash
    git submodule update --init --recursive
    ```
 
-2. Install `Flutter` and `Golang` environment
+2. `Flutter`と`Golang`環境をインストール
 
-3. Build Application
+3. アプリケーションをビルド
 
     - android
 
-        1. Install  `Android SDK` ,  `Android NDK`
+        1. `Android SDK`と`Android NDK`をインストール
 
-        2. Set `ANDROID_NDK` environment variables
+        2. `ANDROID_NDK`環境変数を設定
 
-        3. Run Build script
+        3. ビルドスクリプトを実行
 
            ```bash
            dart .\setup.dart android
@@ -71,11 +71,11 @@ on Mobile:
 
     - windows
 
-        1. You need a windows client
+        1. Windowsクライアントが必要
 
-        2. Install  `Gcc`，`Inno Setup`
+        2. `Gcc`と`Inno Setup`をインストール
 
-        3. Run build script
+        3. ビルドスクリプトを実行
 
            ```bash
            dart .\setup.dart	
@@ -83,9 +83,9 @@ on Mobile:
 
     - linux
 
-        1. You need a linux client
+        1. Linuxクライアントが必要
 
-        2. Run build script
+        2. ビルドスクリプトを実行
 
            ```bash
            dart .\setup.dart	
@@ -93,20 +93,17 @@ on Mobile:
 
     - macOS
 
-        1. You need a macOS client
+        1. macOSクライアントが必要
 
-        2. Run build script
+        2. ビルドスクリプトを実行
 
            ```bash
-           dart .\setup.dart	
+             dart .\setup.dart	
            ```
-           
 
-    
+## スター
 
-## Star
-
-The easiest way to support developers is to click on the star (⭐) at the top of the page.
+開発者をサポートする最も簡単な方法は、ページの上部にある星（⭐）をクリックすることです。
 
 <p style="text-align: center;">
     <a href="https://api.star-history.com/svg?repos=chen08209/FlClash&Date">
