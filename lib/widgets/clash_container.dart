@@ -1,4 +1,5 @@
 import 'package:fl_clash/clash/clash.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -76,8 +77,12 @@ class _ClashContainerState extends State<ClashContainer>
     );
   }
 
-  _changeProfileHandle() {
+  _changeProfile() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (globalState.autoRun) {
+        globalState.autoRun = false;
+        return;
+      }
       final appController = globalState.appController;
       appController.appState.delayMap = {};
       await appController.applyProfile();
@@ -88,7 +93,7 @@ class _ClashContainerState extends State<ClashContainer>
     return Selector<Config, String?>(
       selector: (_, config) => config.currentProfileId,
       builder: (__, state, child) {
-        _changeProfileHandle();
+        _changeProfile();
         return child!;
       },
       child: child,
@@ -129,6 +134,9 @@ class _ClashContainerState extends State<ClashContainer>
   @override
   void onLog(Log log) {
     globalState.appController.appState.addLog(log);
+    if (log.logLevel == LogLevel.error) {
+      globalState.appController.showSnackBar(log.payload ?? '');
+    }
     debugPrint("$log");
     super.onLog(log);
   }
@@ -149,12 +157,5 @@ class _ClashContainerState extends State<ClashContainer>
     );
     appController.addCheckIpNumDebounce();
     super.onLoaded(providerName);
-  }
-
-  @override
-  Future<void> onStarted(String runTime) async {
-    super.onStarted(runTime);
-    final appController = globalState.appController;
-    await appController.applyProfile(isPrue: true);
   }
 }

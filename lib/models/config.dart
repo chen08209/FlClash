@@ -538,6 +538,7 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: false)
   bool get showLabel => _showLabel;
 
   set showLabel(bool value) {

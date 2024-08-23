@@ -18,6 +18,7 @@ Future<void> main() async {
   clashCore.initMessage();
   globalState.packageInfo = await PackageInfo.fromPlatform();
   final config = await preferences.getConfig() ?? Config();
+  globalState.autoRun = config.autoRun;
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
   await android?.init();
   await window?.init(config.windowProps);

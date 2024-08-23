@@ -64,7 +64,9 @@ class TrayContainerSelectorState with _$TrayContainerSelectorState {
   const factory TrayContainerSelectorState({
     required Mode mode,
     required bool autoLaunch,
-    required bool isRun,
+    required bool systemProxy,
+    required bool tunEnable,
+    required bool isStart,
     required String? locale,
   }) = _TrayContainerSelectorState;
 }

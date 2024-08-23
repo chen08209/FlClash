@@ -241,5 +241,7 @@
   "tight": "宽松",
   "standard": "标准",
   "loose": "紧凑",
-  "profilesSort": "配置排序"
+  "profilesSort": "配置排序",
+  "start": "启动",
+  "stop": "暂停"
 }

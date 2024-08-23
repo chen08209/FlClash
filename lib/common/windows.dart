@@ -15,7 +15,7 @@ class Windows {
     return _instance!;
   }
 
-  void runAsAdministrator(String command, String arguments) async {
+  bool runas(String command, String arguments) {
     final commandPtr = command.toNativeUtf16();
     final argumentsPtr = arguments.toNativeUtf16();
     final operationPtr = 'runas'.toNativeUtf16();
@@ -50,8 +50,9 @@ class Windows {
     calloc.free(operationPtr);
 
     if (result <= 32) {
-      throw Exception('Failed to launch $command  with UAC');
+      return false;
     }
+    return true;
   }
 }
 

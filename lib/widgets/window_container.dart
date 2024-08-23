@@ -20,11 +20,17 @@ class WindowContainer extends StatefulWidget {
 }
 
 class _WindowContainerState extends State<WindowContainer> with WindowListener {
+  Function? updateLaunchDebounce;
+
   _autoLaunchContainer(Widget child) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.autoLaunch,
+    return Selector2<Config, ClashConfig, AutoLaunchState>(
+      selector: (_, config, clashConfig) => AutoLaunchState(
+          isAutoLaunch: config.autoLaunch, isOpenTun: clashConfig.tun.enable),
       builder: (_, state, child) {
-        autoLaunch?.updateStatus(state);
+        updateLaunchDebounce ??= debounce((AutoLaunchState state) {
+          autoLaunch?.updateStatus(state);
+        });
+        updateLaunchDebounce!([state]);
         return child!;
       },
       child: child,
