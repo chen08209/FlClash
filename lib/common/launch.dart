@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:fl_clash/models/models.dart' hide Process;
 import 'package:launch_at_startup/launch_at_startup.dart';
 
 import 'constant.dart';
 import 'system.dart';
+import 'windows.dart';
 
 class AutoLaunch {
   static AutoLaunch? _instance;
@@ -34,6 +36,9 @@ class AutoLaunch {
   }
 
   Future<bool> enable() async {
+    if (Platform.isWindows) {
+      await windowsDisable();
+    }
     return await launchAtStartup.enable();
   }
 
@@ -51,45 +56,47 @@ class AutoLaunch {
     return res.exitCode == 0;
   }
 
-  windowsEnable() async {
-    await Process.run(
-      'schtasks',
-      [
-        '/Create',
-        '/SC',
-        'ONLOGON',
-        '/TN',
-        appName,
-        '/TR',
-        Platform.resolvedExecutable,
-        '/RL',
-        'HIGHEST',
-        '/F'
-      ],
-      runInShell: true,
-    );
+  Future<bool> windowsEnable() async {
+    await disable();
+    return windows?.runas(
+          'schtasks',
+          [
+            '/Create',
+            '/SC',
+            'ONLOGON',
+            '/TN',
+            appName,
+            '/TR',
+            Platform.resolvedExecutable,
+            '/RL',
+            'HIGHEST',
+            '/F'
+          ].join(" "),
+        ) ??
+        false;
   }
 
   Future<bool> disable() async {
     return await launchAtStartup.disable();
   }
 
-  updateStatus(bool value) async {
-    final currentEnable =
-        Platform.isWindows ? await windowsIsEnable : await isEnable;
-    if (value == currentEnable) {
-      return;
-    }
-    if (Platform.isWindows) {
-      if (value) {
-        enable();
-        windowsEnable();
+  updateStatus(AutoLaunchState state) async {
+    final isOpenTun = state.isOpenTun;
+    final isAutoLaunch = state.isAutoLaunch;
+    if (Platform.isWindows && isOpenTun) {
+      if (await windowsIsEnable == isAutoLaunch) return;
+      if (isAutoLaunch) {
+        final isEnable = await windowsEnable();
+        if (!isEnable) {
+          enable();
+        }
       } else {
         windowsDisable();
       }
       return;
     }
-    if (value == true) {
+    if (await isEnable == isAutoLaunch) return;
+    if (isAutoLaunch == true) {
       enable();
     } else {
       disable();

@@ -52,7 +52,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
       WindowProps.fromJson(json['windowProps'] as Map<String, dynamic>?)
   ..vpnProps = VpnProps.fromJson(json['vpnProps'] as Map<String, dynamic>?)
   ..desktopProps =
-      DesktopProps.fromJson(json['desktopProps'] as Map<String, dynamic>?);
+      DesktopProps.fromJson(json['desktopProps'] as Map<String, dynamic>?)
+  ..showLabel = json['showLabel'] as bool? ?? false;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -83,6 +84,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'windowProps': instance.windowProps,
       'vpnProps': instance.vpnProps,
       'desktopProps': instance.desktopProps,
+      'showLabel': instance.showLabel,
     };
 
 const _$ThemeModeEnumMap = {

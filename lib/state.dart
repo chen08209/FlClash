@@ -19,6 +19,7 @@ class GlobalState {
   Timer? timer;
   Timer? groupsUpdateTimer;
   var isVpnService = false;
+  var autoRun = false;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   PageController? pageController;

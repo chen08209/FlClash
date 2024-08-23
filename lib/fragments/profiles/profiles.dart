@@ -52,7 +52,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
         try {
           await appController.updateProfile(profile);
           if (profile.id == appController.config.currentProfile?.id) {
-            appController.applyProfile(isPrue: true);
+            appController.applyProfileDebounce();
           }
         } catch (e) {
           messages.add("${profile.label ?? profile.id}: $e \n");
@@ -225,7 +225,7 @@ class ProfileItem extends StatelessWidget {
         );
         await appController.updateProfile(profile);
         if (profile.id == appController.config.currentProfile?.id) {
-          appController.applyProfile(isPrue: true);
+          appController.applyProfileDebounce();
         }
       } catch (e) {
         config.setProfile(

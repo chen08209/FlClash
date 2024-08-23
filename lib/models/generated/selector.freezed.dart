@@ -960,7 +960,9 @@ abstract class _ApplicationSelectorState implements ApplicationSelectorState {
 mixin _$TrayContainerSelectorState {
   Mode get mode => throw _privateConstructorUsedError;
   bool get autoLaunch => throw _privateConstructorUsedError;
-  bool get isRun => throw _privateConstructorUsedError;
+  bool get systemProxy => throw _privateConstructorUsedError;
+  bool get tunEnable => throw _privateConstructorUsedError;
+  bool get isStart => throw _privateConstructorUsedError;
   String? get locale => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -975,7 +977,13 @@ abstract class $TrayContainerSelectorStateCopyWith<$Res> {
       _$TrayContainerSelectorStateCopyWithImpl<$Res,
           TrayContainerSelectorState>;
   @useResult
-  $Res call({Mode mode, bool autoLaunch, bool isRun, String? locale});
+  $Res call(
+      {Mode mode,
+      bool autoLaunch,
+      bool systemProxy,
+      bool tunEnable,
+      bool isStart,
+      String? locale});
 }
 
 /// @nodoc
@@ -994,7 +1002,9 @@ class _$TrayContainerSelectorStateCopyWithImpl<$Res,
   $Res call({
     Object? mode = null,
     Object? autoLaunch = null,
-    Object? isRun = null,
+    Object? systemProxy = null,
+    Object? tunEnable = null,
+    Object? isStart = null,
     Object? locale = freezed,
   }) {
     return _then(_value.copyWith(
@@ -1006,9 +1016,17 @@ class _$TrayContainerSelectorStateCopyWithImpl<$Res,
           ? _value.autoLaunch
           : autoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
-      isRun: null == isRun
-          ? _value.isRun
-          : isRun // ignore: cast_nullable_to_non_nullable
+      systemProxy: null == systemProxy
+          ? _value.systemProxy
+          : systemProxy // ignore: cast_nullable_to_non_nullable
+              as bool,
+      tunEnable: null == tunEnable
+          ? _value.tunEnable
+          : tunEnable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isStart: null == isStart
+          ? _value.isStart
+          : isStart // ignore: cast_nullable_to_non_nullable
               as bool,
       locale: freezed == locale
           ? _value.locale
@@ -1027,7 +1045,13 @@ abstract class _$$TrayContainerSelectorStateImplCopyWith<$Res>
       __$$TrayContainerSelectorStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({Mode mode, bool autoLaunch, bool isRun, String? locale});
+  $Res call(
+      {Mode mode,
+      bool autoLaunch,
+      bool systemProxy,
+      bool tunEnable,
+      bool isStart,
+      String? locale});
 }
 
 /// @nodoc
@@ -1045,7 +1069,9 @@ class __$$TrayContainerSelectorStateImplCopyWithImpl<$Res>
   $Res call({
     Object? mode = null,
     Object? autoLaunch = null,
-    Object? isRun = null,
+    Object? systemProxy = null,
+    Object? tunEnable = null,
+    Object? isStart = null,
     Object? locale = freezed,
   }) {
     return _then(_$TrayContainerSelectorStateImpl(
@@ -1057,9 +1083,17 @@ class __$$TrayContainerSelectorStateImplCopyWithImpl<$Res>
           ? _value.autoLaunch
           : autoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
-      isRun: null == isRun
-          ? _value.isRun
-          : isRun // ignore: cast_nullable_to_non_nullable
+      systemProxy: null == systemProxy
+          ? _value.systemProxy
+          : systemProxy // ignore: cast_nullable_to_non_nullable
+              as bool,
+      tunEnable: null == tunEnable
+          ? _value.tunEnable
+          : tunEnable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isStart: null == isStart
+          ? _value.isStart
+          : isStart // ignore: cast_nullable_to_non_nullable
               as bool,
       locale: freezed == locale
           ? _value.locale
@@ -1075,7 +1109,9 @@ class _$TrayContainerSelectorStateImpl implements _TrayContainerSelectorState {
   const _$TrayContainerSelectorStateImpl(
       {required this.mode,
       required this.autoLaunch,
-      required this.isRun,
+      required this.systemProxy,
+      required this.tunEnable,
+      required this.isStart,
       required this.locale});
 
   @override
@@ -1083,13 +1119,17 @@ class _$TrayContainerSelectorStateImpl implements _TrayContainerSelectorState {
   @override
   final bool autoLaunch;
   @override
-  final bool isRun;
+  final bool systemProxy;
+  @override
+  final bool tunEnable;
+  @override
+  final bool isStart;
   @override
   final String? locale;
 
   @override
   String toString() {
-    return 'TrayContainerSelectorState(mode: $mode, autoLaunch: $autoLaunch, isRun: $isRun, locale: $locale)';
+    return 'TrayContainerSelectorState(mode: $mode, autoLaunch: $autoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale)';
   }
 
   @override
@@ -1100,12 +1140,17 @@ class _$TrayContainerSelectorStateImpl implements _TrayContainerSelectorState {
             (identical(other.mode, mode) || other.mode == mode) &&
             (identical(other.autoLaunch, autoLaunch) ||
                 other.autoLaunch == autoLaunch) &&
-            (identical(other.isRun, isRun) || other.isRun == isRun) &&
+            (identical(other.systemProxy, systemProxy) ||
+                other.systemProxy == systemProxy) &&
+            (identical(other.tunEnable, tunEnable) ||
+                other.tunEnable == tunEnable) &&
+            (identical(other.isStart, isStart) || other.isStart == isStart) &&
             (identical(other.locale, locale) || other.locale == locale));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, mode, autoLaunch, isRun, locale);
+  int get hashCode => Object.hash(
+      runtimeType, mode, autoLaunch, systemProxy, tunEnable, isStart, locale);
 
   @JsonKey(ignore: true)
   @override
@@ -1120,7 +1165,9 @@ abstract class _TrayContainerSelectorState
   const factory _TrayContainerSelectorState(
       {required final Mode mode,
       required final bool autoLaunch,
-      required final bool isRun,
+      required final bool systemProxy,
+      required final bool tunEnable,
+      required final bool isStart,
       required final String? locale}) = _$TrayContainerSelectorStateImpl;
 
   @override
@@ -1128,7 +1175,11 @@ abstract class _TrayContainerSelectorState
   @override
   bool get autoLaunch;
   @override
-  bool get isRun;
+  bool get systemProxy;
+  @override
+  bool get tunEnable;
+  @override
+  bool get isStart;
   @override
   String? get locale;
   @override

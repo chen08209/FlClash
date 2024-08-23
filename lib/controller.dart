@@ -26,6 +26,7 @@ class AppController {
   late Function updateClashConfigDebounce;
   late Function updateGroupDebounce;
   late Function addCheckIpNumDebounce;
+  late Function applyProfileDebounce;
 
   AppController(this.context) {
     appState = context.read<AppState>();
@@ -33,6 +34,9 @@ class AppController {
     clashConfig = context.read<ClashConfig>();
     updateClashConfigDebounce = debounce<Function()>(() async {
       await updateClashConfig();
+    });
+    applyProfileDebounce = debounce<Function()>(() async {
+      await applyProfile(isPrue: true);
     });
     addCheckIpNumDebounce = debounce(() {
       appState.checkIpNum++;
@@ -55,8 +59,7 @@ class AppController {
         updateRunTime,
         updateTraffic,
       ];
-      if (Platform.isAndroid) return;
-      await applyProfile(isPrue: true);
+      applyProfileDebounce();
     } else {
       await globalState.handleStop();
       clashCore.resetTraffic();
@@ -365,6 +368,10 @@ class AppController {
         );
       },
     );
+  }
+
+  showSnackBar(String message) {
+    globalState.showSnackBar(context, message: message);
   }
 
   addProfileFormURL(String url) async {
