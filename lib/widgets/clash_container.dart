@@ -22,7 +22,6 @@ class ClashContainer extends StatefulWidget {
 class _ClashContainerState extends State<ClashContainer>
     with AppMessageListener {
   Function? updateClashConfigDebounce;
-  Function? applyProfileDebounce;
 
   Widget _updateContainer(Widget child) {
     return Selector<ClashConfig, ClashConfigState>(
@@ -78,19 +77,21 @@ class _ClashContainerState extends State<ClashContainer>
     );
   }
 
+  _changeProfile() async {
+    if (globalState.autoRun) {
+      globalState.autoRun = false;
+      return;
+    }
+    final appController = globalState.appController;
+    appController.appState.delayMap = {};
+    await appController.applyProfile();
+  }
+
   Widget _changeProfileContainer(Widget child) {
     return Selector<Config, String?>(
       selector: (_, config) => config.currentProfileId,
       builder: (__, state, child) {
-        if (applyProfileDebounce == null) {
-          applyProfileDebounce = debounce<Function()>(() async {
-            final appController = globalState.appController;
-            appController.appState.delayMap = {};
-            await appController.applyProfile();
-          });
-        } else {
-          applyProfileDebounce!();
-        }
+        _changeProfile();
         return child!;
       },
       child: child,
@@ -154,12 +155,5 @@ class _ClashContainerState extends State<ClashContainer>
     );
     appController.addCheckIpNumDebounce();
     super.onLoaded(providerName);
-  }
-
-  @override
-  Future<void> onStarted(String runTime) async {
-    super.onStarted(runTime);
-    final appController = globalState.appController;
-    await appController.applyProfile(isPrue: true);
   }
 }
