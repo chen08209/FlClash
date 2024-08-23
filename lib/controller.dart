@@ -367,6 +367,10 @@ class AppController {
     );
   }
 
+  showSnackBar(String message) {
+    globalState.showSnackBar(context, message: message);
+  }
+
   addProfileFormURL(String url) async {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);

@@ -18,6 +18,12 @@ class System {
   bool get isDesktop =>
       Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
+  get isAdmin async {
+    if (!Platform.isWindows) return false;
+    final result = await Process.run('net', ['session'], runInShell: true);
+    return result.exitCode == 0;
+  }
+
   back() async {
     await app?.moveTaskToBack();
     await window?.hide();

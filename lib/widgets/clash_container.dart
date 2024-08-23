@@ -1,4 +1,5 @@
 import 'package:fl_clash/clash/clash.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class ClashContainer extends StatefulWidget {
 class _ClashContainerState extends State<ClashContainer>
     with AppMessageListener {
   Function? updateClashConfigDebounce;
+  Function? applyProfileDebounce;
 
   Widget _updateContainer(Widget child) {
     return Selector<ClashConfig, ClashConfigState>(
@@ -76,19 +78,19 @@ class _ClashContainerState extends State<ClashContainer>
     );
   }
 
-  _changeProfileHandle() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final appController = globalState.appController;
-      appController.appState.delayMap = {};
-      await appController.applyProfile();
-    });
-  }
-
   Widget _changeProfileContainer(Widget child) {
     return Selector<Config, String?>(
       selector: (_, config) => config.currentProfileId,
       builder: (__, state, child) {
-        _changeProfileHandle();
+        if (applyProfileDebounce == null) {
+          applyProfileDebounce = debounce<Function()>(() async {
+            final appController = globalState.appController;
+            appController.appState.delayMap = {};
+            await appController.applyProfile();
+          });
+        } else {
+          applyProfileDebounce!();
+        }
         return child!;
       },
       child: child,
@@ -129,6 +131,9 @@ class _ClashContainerState extends State<ClashContainer>
   @override
   void onLog(Log log) {
     globalState.appController.appState.addLog(log);
+    if (log.logLevel == LogLevel.error) {
+      globalState.appController.showSnackBar(log.payload ?? '');
+    }
     debugPrint("$log");
     super.onLog(log);
   }

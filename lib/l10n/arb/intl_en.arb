@@ -241,5 +241,7 @@
   "tight": "Tight",
   "standard": "Standard",
   "loose": "Loose",
-  "profilesSort": "Profiles sort"
+  "profilesSort": "Profiles sort",
+  "start": "Start",
+  "stop": "Stop"
 }

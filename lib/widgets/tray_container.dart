@@ -107,14 +107,33 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
       );
     }
     menuItems.add(MenuItem.separator());
-    final proxyMenuItem = MenuItem.checkbox(
-      label: appLocalizations.systemProxy,
-      onClick: (_) async {
-        globalState.appController.updateStatus(!state.isRun);
-      },
-      checked: state.isRun,
-    );
-    menuItems.add(proxyMenuItem);
+
+    if (state.isStart) {
+      menuItems.add(
+        MenuItem.checkbox(
+          label: appLocalizations.tun,
+          onClick: (_) {
+            final clashConfig = globalState.appController.clashConfig;
+            clashConfig.tun =
+                clashConfig.tun.copyWith(enable: !state.tunEnable);
+          },
+          checked: state.tunEnable,
+        ),
+      );
+      menuItems.add(
+        MenuItem.checkbox(
+          label: appLocalizations.systemProxy,
+          onClick: (_) {
+            final config = globalState.appController.config;
+            config.desktopProps =
+                config.desktopProps.copyWith(systemProxy: !state.systemProxy);
+          },
+          checked: state.systemProxy,
+        ),
+      );
+      menuItems.add(MenuItem.separator());
+    }
+
     final autoStartMenuItem = MenuItem.checkbox(
       label: appLocalizations.autoLaunch,
       onClick: (_) async {
@@ -125,6 +144,17 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
     );
     menuItems.add(autoStartMenuItem);
     menuItems.add(MenuItem.separator());
+
+    final startMenuItem = MenuItem.checkbox(
+      label: state.isStart ? appLocalizations.stop : appLocalizations.start,
+      onClick: (_) async {
+        globalState.appController.updateStatus(!state.isStart);
+      },
+      checked: state.isStart,
+    );
+    menuItems.add(startMenuItem);
+    menuItems.add(MenuItem.separator());
+
     final exitMenuItem = MenuItem(
       label: appLocalizations.exit,
       onClick: (_) async {
@@ -147,8 +177,10 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
           TrayContainerSelectorState(
         mode: clashConfig.mode,
         autoLaunch: config.autoLaunch,
-        isRun: appState.runTime != null,
+        isStart: appState.isStart,
         locale: config.locale,
+        systemProxy: config.desktopProps.systemProxy,
+        tunEnable: clashConfig.tun.enable,
       ),
       builder: (_, state, child) {
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
