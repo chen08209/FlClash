@@ -78,13 +78,15 @@ class _ClashContainerState extends State<ClashContainer>
   }
 
   _changeProfile() async {
-    if (globalState.autoRun) {
-      globalState.autoRun = false;
-      return;
-    }
-    final appController = globalState.appController;
-    appController.appState.delayMap = {};
-    await appController.applyProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (globalState.autoRun) {
+        globalState.autoRun = false;
+        return;
+      }
+      final appController = globalState.appController;
+      appController.appState.delayMap = {};
+      await appController.applyProfile();
+    });
   }
 
   Widget _changeProfileContainer(Widget child) {

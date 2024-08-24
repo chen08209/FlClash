@@ -21,6 +21,7 @@ import (
 	"github.com/metacubex/mihomo/common/batch"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/resolver"
+	"github.com/metacubex/mihomo/component/sniffer"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	cp "github.com/metacubex/mihomo/constant/provider"
@@ -422,7 +423,9 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 func patchConfig(general *config.General) {
 	log.Infoln("[Apply] patch")
 	route.ReStartServer(general.ExternalController)
-	tunnel.SetSniffing(general.Sniffing)
+	if sniffer.Dispatcher != nil {
+		tunnel.SetSniffing(general.Sniffing)
+	}
 	tunnel.SetFindProcessMode(general.FindProcessMode)
 	dialer.SetTcpConcurrent(general.TCPConcurrent)
 	dialer.DefaultInterface.Store(general.Interface)

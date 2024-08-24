@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -14,12 +15,16 @@ class Picker {
     return filePickerResult?.files.first;
   }
 
-  Future<String?> saveFile(String fileName,Uint8List bytes) async {
+  Future<String?> saveFile(String fileName, Uint8List bytes) async {
     final path = await FilePicker.platform.saveFile(
       fileName: fileName,
       initialDirectory: await appPath.getDownloadDirPath(),
-      bytes: bytes,
+      bytes: Platform.isAndroid ? bytes : null,
     );
+    if (!Platform.isAndroid && path != null) {
+      final file = await File(path).create(recursive: true);
+      await file.writeAsBytes(bytes);
+    }
     return path;
   }
 
