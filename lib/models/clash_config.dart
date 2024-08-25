@@ -109,6 +109,8 @@ class Dns {
 
 typedef GeoXMap = Map<String, String>;
 
+typedef HostsMap = Map<String, String>;
+
 @JsonSerializable()
 class ClashConfig extends ChangeNotifier {
   int _mixedPort;
@@ -127,6 +129,7 @@ class ClashConfig extends ChangeNotifier {
   GeoXMap _geoXUrl;
   List<String> _rules;
   String? _globalRealUa;
+  HostsMap _hosts;
 
   ClashConfig()
       : _mixedPort = 7890,
@@ -143,7 +146,8 @@ class ClashConfig extends ChangeNotifier {
         _keepAliveInterval = 30,
         _dns = Dns(),
         _geoXUrl = defaultGeoXMap,
-        _rules = [];
+        _rules = [],
+        _hosts = {};
 
   @JsonKey(name: "mixed-port", defaultValue: 7890)
   int get mixedPort => _mixedPort;
@@ -316,10 +320,21 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: {})
+  HostsMap get hosts => _hosts;
+
+  set hosts(HostsMap value) {
+    if (!const MapEquality<String, String>().equals(value, _hosts)) {
+      _hosts = value;
+      notifyListeners();
+    }
+  }
+
   update([ClashConfig? clashConfig]) {
     if (clashConfig != null) {
       _mixedPort = clashConfig._mixedPort;
       _allowLan = clashConfig._allowLan;
+      _hosts = clashConfig._hosts;
       _mode = clashConfig._mode;
       _logLevel = clashConfig._logLevel;
       _tun = clashConfig._tun;

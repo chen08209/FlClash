@@ -2499,6 +2499,86 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Processing app related settings`
+  String get appDesc {
+    return Intl.message(
+      'Processing app related settings',
+      name: 'appDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Modify VPN related settings`
+  String get vpnDesc {
+    return Intl.message(
+      'Modify VPN related settings',
+      name: 'vpnDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Overwrite general settings`
+  String get generalDesc {
+    return Intl.message(
+      'Overwrite general settings',
+      name: 'generalDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update DNS related settings`
+  String get dnsDesc {
+    return Intl.message(
+      'Update DNS related settings',
+      name: 'dnsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Key`
+  String get key {
+    return Intl.message(
+      'Key',
+      name: 'key',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Value`
+  String get value {
+    return Intl.message(
+      'Value',
+      name: 'value',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The key cannot be empty`
+  String get keyNotEmpty {
+    return Intl.message(
+      'The key cannot be empty',
+      name: 'keyNotEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The value cannot be empty`
+  String get valueNotEmpty {
+    return Intl.message(
+      'The value cannot be empty',
+      name: 'valueNotEmpty',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
