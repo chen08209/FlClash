@@ -4,7 +4,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/about.dart';
 import 'package:fl_clash/fragments/access.dart';
 import 'package:fl_clash/fragments/application_setting.dart';
-import 'package:fl_clash/fragments/config.dart';
+import 'package:fl_clash/fragments/config/config.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -159,11 +159,10 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
           delegate: OpenDelegate(
             title: appLocalizations.override,
             widget: const ConfigFragment(),
-            extendPageWidth: 360,
           ),
         ),
         ListItem.open(
-          leading: const Icon(Icons.settings_applications),
+          leading: const Icon(Icons.settings),
           title: Text(appLocalizations.application),
           subtitle: Text(appLocalizations.applicationDesc),
           delegate: OpenDelegate(

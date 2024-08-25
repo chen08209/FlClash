@@ -66,7 +66,11 @@ ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig()
             'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoIP.dat',
         'geosite':
             'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat'
-      };
+      }
+  ..hosts = (json['hosts'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ) ??
+      {};
 
 Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
     <String, dynamic>{
@@ -87,6 +91,7 @@ Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
       'global-ua': instance.globalUa,
       'global-real-ua': instance.globalRealUa,
       'geox-url': instance.geoXUrl,
+      'hosts': instance.hosts,
     };
 
 const _$ModeEnumMap = {

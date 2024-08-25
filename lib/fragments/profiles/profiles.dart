@@ -46,6 +46,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
     final messages = [];
     final updateProfiles = profiles.map<Future>(
       (profile) async {
+        if (profile.type == ProfileType.file) return;
         config.setProfile(
           profile.copyWith(isUpdating: true),
         );

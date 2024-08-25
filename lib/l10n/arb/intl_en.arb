@@ -243,5 +243,13 @@
   "loose": "Loose",
   "profilesSort": "Profiles sort",
   "start": "Start",
-  "stop": "Stop"
+  "stop": "Stop",
+  "appDesc": "Processing app related settings",
+  "vpnDesc": "Modify VPN related settings",
+  "generalDesc": "Overwrite general settings",
+  "dnsDesc": "Update DNS related settings",
+  "key": "Key",
+  "value": "Value",
+  "keyNotEmpty": "The key cannot be empty",
+  "valueNotEmpty": "The value cannot be empty"
 }

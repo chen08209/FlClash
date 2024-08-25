@@ -52,6 +52,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "app": MessageLookupByLibrary.simpleMessage("App"),
         "appAccessControl":
             MessageLookupByLibrary.simpleMessage("App access control"),
+        "appDesc": MessageLookupByLibrary.simpleMessage(
+            "Processing app related settings"),
         "application": MessageLookupByLibrary.simpleMessage("Application"),
         "applicationDesc": MessageLookupByLibrary.simpleMessage(
             "Modify application related settings"),
@@ -128,6 +130,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Discover the new version"),
         "discovery":
             MessageLookupByLibrary.simpleMessage("Discovery a new version"),
+        "dnsDesc":
+            MessageLookupByLibrary.simpleMessage("Update DNS related settings"),
         "doYouWantToPass":
             MessageLookupByLibrary.simpleMessage("Do you want to pass"),
         "download": MessageLookupByLibrary.simpleMessage("Download"),
@@ -159,6 +163,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "There is a risk of flashback after opening"),
         "fourColumns": MessageLookupByLibrary.simpleMessage("Four columns"),
         "general": MessageLookupByLibrary.simpleMessage("General"),
+        "generalDesc":
+            MessageLookupByLibrary.simpleMessage("Overwrite general settings"),
         "geoData": MessageLookupByLibrary.simpleMessage("GeoData"),
         "geodataLoader":
             MessageLookupByLibrary.simpleMessage("Geo Low Memory Mode"),
@@ -181,6 +187,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "just": MessageLookupByLibrary.simpleMessage("Just"),
         "keepAliveIntervalDesc":
             MessageLookupByLibrary.simpleMessage("Tcp keep alive interval"),
+        "key": MessageLookupByLibrary.simpleMessage("Key"),
+        "keyNotEmpty":
+            MessageLookupByLibrary.simpleMessage("The key cannot be empty"),
         "language": MessageLookupByLibrary.simpleMessage("Language"),
         "layout": MessageLookupByLibrary.simpleMessage("Layout"),
         "light": MessageLookupByLibrary.simpleMessage("Light"),
@@ -361,7 +370,12 @@ class MessageLookup extends MessageLookupByLibrary {
         "url": MessageLookupByLibrary.simpleMessage("URL"),
         "urlDesc":
             MessageLookupByLibrary.simpleMessage("Obtain profile through URL"),
+        "value": MessageLookupByLibrary.simpleMessage("Value"),
+        "valueNotEmpty":
+            MessageLookupByLibrary.simpleMessage("The value cannot be empty"),
         "view": MessageLookupByLibrary.simpleMessage("View"),
+        "vpnDesc":
+            MessageLookupByLibrary.simpleMessage("Modify VPN related settings"),
         "webDAVConfiguration":
             MessageLookupByLibrary.simpleMessage("WebDAV configuration"),
         "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),

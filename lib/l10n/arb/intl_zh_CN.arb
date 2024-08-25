@@ -243,5 +243,13 @@
   "loose": "紧凑",
   "profilesSort": "配置排序",
   "start": "启动",
-  "stop": "暂停"
+  "stop": "暂停",
+  "appDesc": "处理应用相关设置",
+  "vpnDesc": "修改VPN相关设置",
+  "generalDesc": "覆写基础设置",
+  "dnsDesc": "更新DNS相关设置",
+  "key": "键",
+  "value": "值",
+  "keyNotEmpty": "键不能为空",
+  "valueNotEmpty": "值不能为空"
 }
