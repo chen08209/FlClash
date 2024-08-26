@@ -67,7 +67,6 @@ func Start(fd int, gateway, portal, dns string) (io.Closer, error) {
 		for stack.TCP().SetDeadline(time.Time{}) == nil {
 			conn, err := stack.TCP().Accept()
 			if err != nil {
-				log.Errorln("Accept connection: %v", err)
 				continue
 			}
 			lAddr := conn.LocalAddr().(*net.TCPAddr)

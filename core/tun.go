@@ -109,7 +109,6 @@ func stopTun() {
 		runTime = nil
 
 		if tun != nil {
-			log.Errorln("[Tun] stopTun")
 			tun.Close()
 			tun = nil
 		}
