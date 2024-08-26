@@ -74,36 +74,6 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
       );
       menuItems.add(startMenuItem);
       menuItems.add(MenuItem.separator());
-      // for (final group in state.groups) {
-      //   List<MenuItem> subMenuItems = [];
-      //   final isCurrentGroup = group.name == state.currentGroupName;
-      //   for (final proxy in group.all) {
-      //     final isCurrentProxy = proxy.name == state.currentProxyName;
-      //     subMenuItems.add(
-      //       MenuItem.checkbox(
-      //           label: proxy.name,
-      //           checked: isCurrentGroup && isCurrentProxy,
-      //           onClick: (_) {
-      //             final config = globalState.appController.config;
-      //             config.currentProfile?.groupName = group.name;
-      //             config.currentProfile?.proxyName = proxy.name;
-      //             config.update();
-      //             globalState.appController.changeProxy();
-      //           }),
-      //     );
-      //   }
-      //   menuItems.add(
-      //     MenuItem.submenu(
-      //       label: group.name,
-      //       submenu: Menu(
-      //         items: subMenuItems,
-      //       ),
-      //     ),
-      //   );
-      // }
-      // if (state.groups.isNotEmpty) {
-      //   menuItems.add(MenuItem.separator());
-      // }
       for (final mode in Mode.values) {
         menuItems.add(
           MenuItem.checkbox(
@@ -116,7 +86,6 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
         );
       }
       menuItems.add(MenuItem.separator());
-
       if (state.isStart) {
         menuItems.add(
           MenuItem.checkbox(
@@ -142,7 +111,6 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
         );
         menuItems.add(MenuItem.separator());
       }
-
       final autoStartMenuItem = MenuItem.checkbox(
         label: appLocalizations.autoLaunch,
         onClick: (_) async {

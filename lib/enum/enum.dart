@@ -1,5 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 enum GroupType { Selector, URLTest, Fallback, LoadBalance, Relay }
 
 enum GroupName { GLOBAL, Proxy, Auto, Fallback }
@@ -86,6 +88,17 @@ enum CommonCardType { plain, filled }
 
 enum ProxiesType { tab, list }
 
-enum ProxiesLayout{ loose, standard, tight }
+enum ProxiesLayout { loose, standard, tight }
 
 enum ProxyCardType { expand, shrink, min }
+
+
+enum DnsMode {
+  normal,
+  @JsonValue("fake-ip")
+  fakeIp,
+  @JsonValue("redir-host")
+  redirHost,
+  hosts
+}
+

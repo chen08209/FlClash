@@ -39,6 +39,7 @@ type ConfigExtendedParams struct {
 	IsCompatible bool              `json:"is-compatible"`
 	SelectedMap  map[string]string `json:"selected-map"`
 	TestURL      *string           `json:"test-url"`
+	OverrideDns  bool              `json:"override-dns"`
 }
 
 type GenerateConfigParams struct {
@@ -380,6 +381,12 @@ func generateProxyGroupAndRule(proxyGroup *[]map[string]any, rule *[]string) {
 	*rule = computedRule
 }
 
+func genHosts(hosts, patchHosts map[string]any) {
+	for k, v := range patchHosts {
+		hosts[k] = v
+	}
+}
+
 func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig) {
 	targetConfig.ExternalController = patchConfig.ExternalController
 	targetConfig.ExternalUI = ""
@@ -387,7 +394,6 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.ExternalUIURL = ""
 	targetConfig.TCPConcurrent = patchConfig.TCPConcurrent
 	targetConfig.UnifiedDelay = patchConfig.UnifiedDelay
-	//targetConfig.GeodataMode = false
 	targetConfig.IPv6 = patchConfig.IPv6
 	targetConfig.LogLevel = patchConfig.LogLevel
 	targetConfig.Port = 0
@@ -405,7 +411,11 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Profile.StoreSelected = false
 	targetConfig.GeoXUrl = patchConfig.GeoXUrl
 	targetConfig.GlobalUA = patchConfig.GlobalUA
-	if targetConfig.DNS.Enable == false {
+	//if targetConfig.DNS.Enable == false {
+	//	targetConfig.DNS = patchConfig.DNS
+	//}
+	genHosts(targetConfig.Hosts, patchConfig.Hosts)
+	if configParams.OverrideDns {
 		targetConfig.DNS = patchConfig.DNS
 	}
 	//if runtime.GOOS == "android" {
@@ -413,11 +423,11 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	//} else if runtime.GOOS == "windows" {
 	//	targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, dns.SystemDNSPlaceholder)
 	//}
-	if configParams.IsCompatible == false {
-		targetConfig.ProxyProvider = make(map[string]map[string]any)
-		targetConfig.RuleProvider = make(map[string]map[string]any)
-		generateProxyGroupAndRule(&targetConfig.ProxyGroup, &targetConfig.Rule)
-	}
+	//if configParams.IsCompatible == false {
+	//	targetConfig.ProxyProvider = make(map[string]map[string]any)
+	//	targetConfig.RuleProvider = make(map[string]map[string]any)
+	//	generateProxyGroupAndRule(&targetConfig.ProxyGroup, &targetConfig.Rule)
+	//}
 }
 
 func patchConfig(general *config.General) {
@@ -440,6 +450,11 @@ var isRunning = false
 var runLock sync.Mutex
 
 func updateListeners(general *config.General, listeners map[string]constant.InboundListener) {
+	if !isRunning {
+		return
+	}
+	runLock.Lock()
+	defer runLock.Unlock()
 	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
 	listener.SetAllowLan(general.AllowLan)
 	inbound.SetSkipAuthPrefixes(general.SkipAuthPrefixes)
@@ -525,10 +540,8 @@ func applyConfig() error {
 		hub.UltraApplyConfig(cfg)
 		patchSelectGroup()
 	}
-	if isRunning {
-		updateListeners(cfg.General, cfg.Listeners)
-		hcCompatibleProvider(cfg.Providers)
-	}
+	updateListeners(cfg.General, cfg.Listeners)
+	hcCompatibleProvider(cfg.Providers)
 	externalProviders = getExternalProvidersRaw()
 	return err
 }

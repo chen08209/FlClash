@@ -12,6 +12,7 @@ _$ConfigExtendedParamsImpl _$$ConfigExtendedParamsImplFromJson(
       isPatch: json['is-patch'] as bool,
       isCompatible: json['is-compatible'] as bool,
       selectedMap: Map<String, String>.from(json['selected-map'] as Map),
+      overrideDns: json['override-dns'] as bool,
       testUrl: json['test-url'] as String,
     );
 
@@ -21,6 +22,7 @@ Map<String, dynamic> _$$ConfigExtendedParamsImplToJson(
       'is-patch': instance.isPatch,
       'is-compatible': instance.isCompatible,
       'selected-map': instance.selectedMap,
+      'override-dns': instance.overrideDns,
       'test-url': instance.testUrl,
     };
 

@@ -24,6 +24,7 @@ mixin _$Group {
   List<Proxy> get all => throw _privateConstructorUsedError;
   String? get now => throw _privateConstructorUsedError;
   bool? get hidden => throw _privateConstructorUsedError;
+  String get icon => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -41,6 +42,7 @@ abstract class $GroupCopyWith<$Res> {
       List<Proxy> all,
       String? now,
       bool? hidden,
+      String icon,
       String name});
 }
 
@@ -61,6 +63,7 @@ class _$GroupCopyWithImpl<$Res, $Val extends Group>
     Object? all = null,
     Object? now = freezed,
     Object? hidden = freezed,
+    Object? icon = null,
     Object? name = null,
   }) {
     return _then(_value.copyWith(
@@ -80,6 +83,10 @@ class _$GroupCopyWithImpl<$Res, $Val extends Group>
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
               as bool?,
+      icon: null == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
+              as String,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -100,6 +107,7 @@ abstract class _$$GroupImplCopyWith<$Res> implements $GroupCopyWith<$Res> {
       List<Proxy> all,
       String? now,
       bool? hidden,
+      String icon,
       String name});
 }
 
@@ -118,6 +126,7 @@ class __$$GroupImplCopyWithImpl<$Res>
     Object? all = null,
     Object? now = freezed,
     Object? hidden = freezed,
+    Object? icon = null,
     Object? name = null,
   }) {
     return _then(_$GroupImpl(
@@ -137,6 +146,10 @@ class __$$GroupImplCopyWithImpl<$Res>
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
               as bool?,
+      icon: null == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
+              as String,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -153,6 +166,7 @@ class _$GroupImpl implements _Group {
       final List<Proxy> all = const [],
       this.now,
       this.hidden,
+      this.icon = "",
       required this.name})
       : _all = all;
 
@@ -175,11 +189,14 @@ class _$GroupImpl implements _Group {
   @override
   final bool? hidden;
   @override
+  @JsonKey()
+  final String icon;
+  @override
   final String name;
 
   @override
   String toString() {
-    return 'Group(type: $type, all: $all, now: $now, hidden: $hidden, name: $name)';
+    return 'Group(type: $type, all: $all, now: $now, hidden: $hidden, icon: $icon, name: $name)';
   }
 
   @override
@@ -191,13 +208,14 @@ class _$GroupImpl implements _Group {
             const DeepCollectionEquality().equals(other._all, _all) &&
             (identical(other.now, now) || other.now == now) &&
             (identical(other.hidden, hidden) || other.hidden == hidden) &&
+            (identical(other.icon, icon) || other.icon == icon) &&
             (identical(other.name, name) || other.name == name));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, type,
-      const DeepCollectionEquality().hash(_all), now, hidden, name);
+      const DeepCollectionEquality().hash(_all), now, hidden, icon, name);
 
   @JsonKey(ignore: true)
   @override
@@ -219,6 +237,7 @@ abstract class _Group implements Group {
       final List<Proxy> all,
       final String? now,
       final bool? hidden,
+      final String icon,
       required final String name}) = _$GroupImpl;
 
   factory _Group.fromJson(Map<String, dynamic> json) = _$GroupImpl.fromJson;
@@ -231,6 +250,8 @@ abstract class _Group implements Group {
   String? get now;
   @override
   bool? get hidden;
+  @override
+  String get icon;
   @override
   String get name;
   @override

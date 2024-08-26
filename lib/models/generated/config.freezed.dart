@@ -552,6 +552,189 @@ abstract class _CoreState implements CoreState {
       throw _privateConstructorUsedError;
 }
 
+VPNState _$VPNStateFromJson(Map<String, dynamic> json) {
+  return _VPNState.fromJson(json);
+}
+
+/// @nodoc
+mixin _$VPNState {
+  AccessControl? get accessControl => throw _privateConstructorUsedError;
+  VpnProps get vpnProps => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $VPNStateCopyWith<VPNState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $VPNStateCopyWith<$Res> {
+  factory $VPNStateCopyWith(VPNState value, $Res Function(VPNState) then) =
+      _$VPNStateCopyWithImpl<$Res, VPNState>;
+  @useResult
+  $Res call({AccessControl? accessControl, VpnProps vpnProps});
+
+  $AccessControlCopyWith<$Res>? get accessControl;
+  $VpnPropsCopyWith<$Res> get vpnProps;
+}
+
+/// @nodoc
+class _$VPNStateCopyWithImpl<$Res, $Val extends VPNState>
+    implements $VPNStateCopyWith<$Res> {
+  _$VPNStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? accessControl = freezed,
+    Object? vpnProps = null,
+  }) {
+    return _then(_value.copyWith(
+      accessControl: freezed == accessControl
+          ? _value.accessControl
+          : accessControl // ignore: cast_nullable_to_non_nullable
+              as AccessControl?,
+      vpnProps: null == vpnProps
+          ? _value.vpnProps
+          : vpnProps // ignore: cast_nullable_to_non_nullable
+              as VpnProps,
+    ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $AccessControlCopyWith<$Res>? get accessControl {
+    if (_value.accessControl == null) {
+      return null;
+    }
+
+    return $AccessControlCopyWith<$Res>(_value.accessControl!, (value) {
+      return _then(_value.copyWith(accessControl: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $VpnPropsCopyWith<$Res> get vpnProps {
+    return $VpnPropsCopyWith<$Res>(_value.vpnProps, (value) {
+      return _then(_value.copyWith(vpnProps: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$VPNStateImplCopyWith<$Res>
+    implements $VPNStateCopyWith<$Res> {
+  factory _$$VPNStateImplCopyWith(
+          _$VPNStateImpl value, $Res Function(_$VPNStateImpl) then) =
+      __$$VPNStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({AccessControl? accessControl, VpnProps vpnProps});
+
+  @override
+  $AccessControlCopyWith<$Res>? get accessControl;
+  @override
+  $VpnPropsCopyWith<$Res> get vpnProps;
+}
+
+/// @nodoc
+class __$$VPNStateImplCopyWithImpl<$Res>
+    extends _$VPNStateCopyWithImpl<$Res, _$VPNStateImpl>
+    implements _$$VPNStateImplCopyWith<$Res> {
+  __$$VPNStateImplCopyWithImpl(
+      _$VPNStateImpl _value, $Res Function(_$VPNStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? accessControl = freezed,
+    Object? vpnProps = null,
+  }) {
+    return _then(_$VPNStateImpl(
+      accessControl: freezed == accessControl
+          ? _value.accessControl
+          : accessControl // ignore: cast_nullable_to_non_nullable
+              as AccessControl?,
+      vpnProps: null == vpnProps
+          ? _value.vpnProps
+          : vpnProps // ignore: cast_nullable_to_non_nullable
+              as VpnProps,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$VPNStateImpl implements _VPNState {
+  const _$VPNStateImpl({required this.accessControl, required this.vpnProps});
+
+  factory _$VPNStateImpl.fromJson(Map<String, dynamic> json) =>
+      _$$VPNStateImplFromJson(json);
+
+  @override
+  final AccessControl? accessControl;
+  @override
+  final VpnProps vpnProps;
+
+  @override
+  String toString() {
+    return 'VPNState(accessControl: $accessControl, vpnProps: $vpnProps)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$VPNStateImpl &&
+            (identical(other.accessControl, accessControl) ||
+                other.accessControl == accessControl) &&
+            (identical(other.vpnProps, vpnProps) ||
+                other.vpnProps == vpnProps));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, accessControl, vpnProps);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$VPNStateImplCopyWith<_$VPNStateImpl> get copyWith =>
+      __$$VPNStateImplCopyWithImpl<_$VPNStateImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$VPNStateImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _VPNState implements VPNState {
+  const factory _VPNState(
+      {required final AccessControl? accessControl,
+      required final VpnProps vpnProps}) = _$VPNStateImpl;
+
+  factory _VPNState.fromJson(Map<String, dynamic> json) =
+      _$VPNStateImpl.fromJson;
+
+  @override
+  AccessControl? get accessControl;
+  @override
+  VpnProps get vpnProps;
+  @override
+  @JsonKey(ignore: true)
+  _$$VPNStateImplCopyWith<_$VPNStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 WindowProps _$WindowPropsFromJson(Map<String, dynamic> json) {
   return _WindowProps.fromJson(json);
 }

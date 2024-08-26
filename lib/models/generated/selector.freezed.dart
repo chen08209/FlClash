@@ -3332,6 +3332,142 @@ abstract class _ProxyState implements ProxyState {
 }
 
 /// @nodoc
+mixin _$HttpOverridesState {
+  bool get isStart => throw _privateConstructorUsedError;
+  int get port => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $HttpOverridesStateCopyWith<HttpOverridesState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $HttpOverridesStateCopyWith<$Res> {
+  factory $HttpOverridesStateCopyWith(
+          HttpOverridesState value, $Res Function(HttpOverridesState) then) =
+      _$HttpOverridesStateCopyWithImpl<$Res, HttpOverridesState>;
+  @useResult
+  $Res call({bool isStart, int port});
+}
+
+/// @nodoc
+class _$HttpOverridesStateCopyWithImpl<$Res, $Val extends HttpOverridesState>
+    implements $HttpOverridesStateCopyWith<$Res> {
+  _$HttpOverridesStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? isStart = null,
+    Object? port = null,
+  }) {
+    return _then(_value.copyWith(
+      isStart: null == isStart
+          ? _value.isStart
+          : isStart // ignore: cast_nullable_to_non_nullable
+              as bool,
+      port: null == port
+          ? _value.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$HttpOverridesStateImplCopyWith<$Res>
+    implements $HttpOverridesStateCopyWith<$Res> {
+  factory _$$HttpOverridesStateImplCopyWith(_$HttpOverridesStateImpl value,
+          $Res Function(_$HttpOverridesStateImpl) then) =
+      __$$HttpOverridesStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({bool isStart, int port});
+}
+
+/// @nodoc
+class __$$HttpOverridesStateImplCopyWithImpl<$Res>
+    extends _$HttpOverridesStateCopyWithImpl<$Res, _$HttpOverridesStateImpl>
+    implements _$$HttpOverridesStateImplCopyWith<$Res> {
+  __$$HttpOverridesStateImplCopyWithImpl(_$HttpOverridesStateImpl _value,
+      $Res Function(_$HttpOverridesStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? isStart = null,
+    Object? port = null,
+  }) {
+    return _then(_$HttpOverridesStateImpl(
+      isStart: null == isStart
+          ? _value.isStart
+          : isStart // ignore: cast_nullable_to_non_nullable
+              as bool,
+      port: null == port
+          ? _value.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$HttpOverridesStateImpl implements _HttpOverridesState {
+  const _$HttpOverridesStateImpl({required this.isStart, required this.port});
+
+  @override
+  final bool isStart;
+  @override
+  final int port;
+
+  @override
+  String toString() {
+    return 'HttpOverridesState(isStart: $isStart, port: $port)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$HttpOverridesStateImpl &&
+            (identical(other.isStart, isStart) || other.isStart == isStart) &&
+            (identical(other.port, port) || other.port == port));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, isStart, port);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$HttpOverridesStateImplCopyWith<_$HttpOverridesStateImpl> get copyWith =>
+      __$$HttpOverridesStateImplCopyWithImpl<_$HttpOverridesStateImpl>(
+          this, _$identity);
+}
+
+abstract class _HttpOverridesState implements HttpOverridesState {
+  const factory _HttpOverridesState(
+      {required final bool isStart,
+      required final int port}) = _$HttpOverridesStateImpl;
+
+  @override
+  bool get isStart;
+  @override
+  int get port;
+  @override
+  @JsonKey(ignore: true)
+  _$$HttpOverridesStateImplCopyWith<_$HttpOverridesStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$ClashConfigState {
   int get mixedPort => throw _privateConstructorUsedError;
   bool get allowLan => throw _privateConstructorUsedError;
@@ -3344,6 +3480,7 @@ mixin _$ClashConfigState {
   int get keepAliveInterval => throw _privateConstructorUsedError;
   bool get unifiedDelay => throw _privateConstructorUsedError;
   bool get tcpConcurrent => throw _privateConstructorUsedError;
+  Map<String, String> get hosts => throw _privateConstructorUsedError;
   Tun get tun => throw _privateConstructorUsedError;
   Dns get dns => throw _privateConstructorUsedError;
   Map<String, String> get geoXUrl => throw _privateConstructorUsedError;
@@ -3373,6 +3510,7 @@ abstract class $ClashConfigStateCopyWith<$Res> {
       int keepAliveInterval,
       bool unifiedDelay,
       bool tcpConcurrent,
+      Map<String, String> hosts,
       Tun tun,
       Dns dns,
       Map<String, String> geoXUrl,
@@ -3380,6 +3518,7 @@ abstract class $ClashConfigStateCopyWith<$Res> {
       String? globalRealUa});
 
   $TunCopyWith<$Res> get tun;
+  $DnsCopyWith<$Res> get dns;
 }
 
 /// @nodoc
@@ -3406,6 +3545,7 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
     Object? keepAliveInterval = null,
     Object? unifiedDelay = null,
     Object? tcpConcurrent = null,
+    Object? hosts = null,
     Object? tun = null,
     Object? dns = null,
     Object? geoXUrl = null,
@@ -3457,6 +3597,10 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
           ? _value.tcpConcurrent
           : tcpConcurrent // ignore: cast_nullable_to_non_nullable
               as bool,
+      hosts: null == hosts
+          ? _value.hosts
+          : hosts // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
       tun: null == tun
           ? _value.tun
           : tun // ignore: cast_nullable_to_non_nullable
@@ -3487,6 +3631,14 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
       return _then(_value.copyWith(tun: value) as $Val);
     });
   }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $DnsCopyWith<$Res> get dns {
+    return $DnsCopyWith<$Res>(_value.dns, (value) {
+      return _then(_value.copyWith(dns: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -3509,6 +3661,7 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
       int keepAliveInterval,
       bool unifiedDelay,
       bool tcpConcurrent,
+      Map<String, String> hosts,
       Tun tun,
       Dns dns,
       Map<String, String> geoXUrl,
@@ -3517,6 +3670,8 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
 
   @override
   $TunCopyWith<$Res> get tun;
+  @override
+  $DnsCopyWith<$Res> get dns;
 }
 
 /// @nodoc
@@ -3541,6 +3696,7 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
     Object? keepAliveInterval = null,
     Object? unifiedDelay = null,
     Object? tcpConcurrent = null,
+    Object? hosts = null,
     Object? tun = null,
     Object? dns = null,
     Object? geoXUrl = null,
@@ -3592,6 +3748,10 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
           ? _value.tcpConcurrent
           : tcpConcurrent // ignore: cast_nullable_to_non_nullable
               as bool,
+      hosts: null == hosts
+          ? _value._hosts
+          : hosts // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
       tun: null == tun
           ? _value.tun
           : tun // ignore: cast_nullable_to_non_nullable
@@ -3631,12 +3791,14 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
       required this.keepAliveInterval,
       required this.unifiedDelay,
       required this.tcpConcurrent,
+      required final Map<String, String> hosts,
       required this.tun,
       required this.dns,
       required final Map<String, String> geoXUrl,
       required final List<String> rules,
       required this.globalRealUa})
-      : _geoXUrl = geoXUrl,
+      : _hosts = hosts,
+        _geoXUrl = geoXUrl,
         _rules = rules;
 
   @override
@@ -3661,6 +3823,14 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   final bool unifiedDelay;
   @override
   final bool tcpConcurrent;
+  final Map<String, String> _hosts;
+  @override
+  Map<String, String> get hosts {
+    if (_hosts is EqualUnmodifiableMapView) return _hosts;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_hosts);
+  }
+
   @override
   final Tun tun;
   @override
@@ -3686,7 +3856,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
 
   @override
   String toString() {
-    return 'ClashConfigState(mixedPort: $mixedPort, allowLan: $allowLan, ipv6: $ipv6, geodataLoader: $geodataLoader, logLevel: $logLevel, externalController: $externalController, mode: $mode, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, rules: $rules, globalRealUa: $globalRealUa)';
+    return 'ClashConfigState(mixedPort: $mixedPort, allowLan: $allowLan, ipv6: $ipv6, geodataLoader: $geodataLoader, logLevel: $logLevel, externalController: $externalController, mode: $mode, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, hosts: $hosts, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, rules: $rules, globalRealUa: $globalRealUa)';
   }
 
   @override
@@ -3714,6 +3884,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
                 other.unifiedDelay == unifiedDelay) &&
             (identical(other.tcpConcurrent, tcpConcurrent) ||
                 other.tcpConcurrent == tcpConcurrent) &&
+            const DeepCollectionEquality().equals(other._hosts, _hosts) &&
             (identical(other.tun, tun) || other.tun == tun) &&
             (identical(other.dns, dns) || other.dns == dns) &&
             const DeepCollectionEquality().equals(other._geoXUrl, _geoXUrl) &&
@@ -3736,6 +3907,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
       keepAliveInterval,
       unifiedDelay,
       tcpConcurrent,
+      const DeepCollectionEquality().hash(_hosts),
       tun,
       dns,
       const DeepCollectionEquality().hash(_geoXUrl),
@@ -3763,6 +3935,7 @@ abstract class _ClashConfigState implements ClashConfigState {
       required final int keepAliveInterval,
       required final bool unifiedDelay,
       required final bool tcpConcurrent,
+      required final Map<String, String> hosts,
       required final Tun tun,
       required final Dns dns,
       required final Map<String, String> geoXUrl,
@@ -3791,6 +3964,8 @@ abstract class _ClashConfigState implements ClashConfigState {
   bool get unifiedDelay;
   @override
   bool get tcpConcurrent;
+  @override
+  Map<String, String> get hosts;
   @override
   Tun get tun;
   @override

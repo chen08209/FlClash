@@ -125,6 +125,10 @@ class AppController {
     );
   }
 
+  updateTray(){
+
+  }
+
   Future applyProfile({bool isPrue = false}) async {
     if (isPrue) {
       await globalState.applyProfile(
@@ -232,6 +236,7 @@ class AppController {
 
   handleExit() async {
     await updateStatus(false);
+    await proxy?.stopProxy();
     await savePreferences();
     clashCore.shutdown();
     system.exit();
@@ -433,8 +438,8 @@ class AppController {
     return List.of(proxies)
       ..sort(
         (a, b) => other.sortByChar(
-          PinyinHelper.getPinyin(a.name),
-          PinyinHelper.getPinyin(b.name),
+          other.getPinyin(a.name),
+          other.getPinyin(b.name),
         ),
       );
   }

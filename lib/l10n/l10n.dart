@@ -2579,6 +2579,356 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Add Hosts`
+  String get hostsDesc {
+    return Intl.message(
+      'Add Hosts',
+      name: 'hostsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Changes take effect after restarting the VPN`
+  String get vpnTip {
+    return Intl.message(
+      'Changes take effect after restarting the VPN',
+      name: 'vpnTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auto routes all system traffic through VpnService`
+  String get vpnEnableDesc {
+    return Intl.message(
+      'Auto routes all system traffic through VpnService',
+      name: 'vpnEnableDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Options`
+  String get options {
+    return Intl.message(
+      'Options',
+      name: 'options',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Loopback unlock tool`
+  String get loopback {
+    return Intl.message(
+      'Loopback unlock tool',
+      name: 'loopback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Used for UWP loopback unlocking`
+  String get loopbackDesc {
+    return Intl.message(
+      'Used for UWP loopback unlocking',
+      name: 'loopbackDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Providers`
+  String get providers {
+    return Intl.message(
+      'Providers',
+      name: 'providers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy providers`
+  String get proxyProviders {
+    return Intl.message(
+      'Proxy providers',
+      name: 'proxyProviders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rule providers`
+  String get ruleProviders {
+    return Intl.message(
+      'Rule providers',
+      name: 'ruleProviders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Override Dns`
+  String get overrideDns {
+    return Intl.message(
+      'Override Dns',
+      name: 'overrideDns',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Turning it on will override the DNS options in the profile`
+  String get overrideDnsDesc {
+    return Intl.message(
+      'Turning it on will override the DNS options in the profile',
+      name: 'overrideDnsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Status`
+  String get status {
+    return Intl.message(
+      'Status',
+      name: 'status',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System DNS will be used when turned off`
+  String get statusDesc {
+    return Intl.message(
+      'System DNS will be used when turned off',
+      name: 'statusDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Prioritize the use of DOH's http/3`
+  String get preferH3Desc {
+    return Intl.message(
+      'Prioritize the use of DOH\'s http/3',
+      name: 'preferH3Desc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Respect rules`
+  String get respectRules {
+    return Intl.message(
+      'Respect rules',
+      name: 'respectRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS connection following rules, need to configure proxy-server-nameserver`
+  String get respectRulesDesc {
+    return Intl.message(
+      'DNS connection following rules, need to configure proxy-server-nameserver',
+      name: 'respectRulesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS mode`
+  String get dnsMode {
+    return Intl.message(
+      'DNS mode',
+      name: 'dnsMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fakeip range`
+  String get fakeipRange {
+    return Intl.message(
+      'Fakeip range',
+      name: 'fakeipRange',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fakeip filter`
+  String get fakeipFilter {
+    return Intl.message(
+      'Fakeip filter',
+      name: 'fakeipFilter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default nameserver`
+  String get defaultNameserver {
+    return Intl.message(
+      'Default nameserver',
+      name: 'defaultNameserver',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `For resolving DNS server`
+  String get defaultNameserverDesc {
+    return Intl.message(
+      'For resolving DNS server',
+      name: 'defaultNameserverDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nameserver`
+  String get nameserver {
+    return Intl.message(
+      'Nameserver',
+      name: 'nameserver',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `For resolving domain`
+  String get nameserverDesc {
+    return Intl.message(
+      'For resolving domain',
+      name: 'nameserverDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use hosts`
+  String get useHosts {
+    return Intl.message(
+      'Use hosts',
+      name: 'useHosts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use system hosts`
+  String get useSystemHosts {
+    return Intl.message(
+      'Use system hosts',
+      name: 'useSystemHosts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nameserver policy`
+  String get nameserverPolicy {
+    return Intl.message(
+      'Nameserver policy',
+      name: 'nameserverPolicy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Specify the corresponding nameserver policy`
+  String get nameserverPolicyDesc {
+    return Intl.message(
+      'Specify the corresponding nameserver policy',
+      name: 'nameserverPolicyDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy nameserver`
+  String get proxyNameserver {
+    return Intl.message(
+      'Proxy nameserver',
+      name: 'proxyNameserver',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain for resolving proxy nodes`
+  String get proxyNameserverDesc {
+    return Intl.message(
+      'Domain for resolving proxy nodes',
+      name: 'proxyNameserverDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fallback`
+  String get fallback {
+    return Intl.message(
+      'Fallback',
+      name: 'fallback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Generally use offshore DNS`
+  String get fallbackDesc {
+    return Intl.message(
+      'Generally use offshore DNS',
+      name: 'fallbackDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fallback filter`
+  String get fallbackFilter {
+    return Intl.message(
+      'Fallback filter',
+      name: 'fallbackFilter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Geoip code`
+  String get geoipCode {
+    return Intl.message(
+      'Geoip code',
+      name: 'geoipCode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ipcidr`
+  String get ipcidr {
+    return Intl.message(
+      'Ipcidr',
+      name: 'ipcidr',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain`
+  String get domain {
+    return Intl.message(
+      'Domain',
+      name: 'domain',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

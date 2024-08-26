@@ -5,6 +5,7 @@ import 'package:fl_clash/widgets/open_container.dart';
 import 'package:flutter/material.dart';
 
 import 'card.dart';
+import 'input.dart';
 import 'sheet.dart';
 import 'scaffold.dart';
 
@@ -48,11 +49,13 @@ class OpenDelegate extends Delegate {
   final Widget widget;
   final String title;
   final double? extendPageWidth;
+  final bool isBlur;
 
   const OpenDelegate({
     required this.title,
     required this.widget,
     this.extendPageWidth,
+    this.isBlur = true,
   });
 }
 
@@ -65,6 +68,36 @@ class NextDelegate extends Delegate {
     required this.title,
     required this.widget,
     this.extendPageWidth,
+  });
+}
+
+class OptionsDelegate<T> extends Delegate {
+  final List<T> options;
+  final String title;
+  final T value;
+  final String Function(T value) textBuilder;
+  final Function(T? value) onChanged;
+
+  const OptionsDelegate({
+    required this.title,
+    required this.options,
+    required this.textBuilder,
+    required this.value,
+    required this.onChanged,
+  });
+}
+
+class InputDelegate extends Delegate {
+  final String title;
+  final String value;
+  final String? suffixText;
+  final Function(String? value) onChanged;
+
+  const InputDelegate({
+    required this.title,
+    required this.value,
+    this.suffixText,
+    required this.onChanged,
   });
 }
 
@@ -106,6 +139,32 @@ class ListItem<T> extends StatelessWidget {
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
 
+  const ListItem.options({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.trailing,
+    required OptionsDelegate<T> this.delegate,
+    this.horizontalTitleGap,
+    this.prue,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
+  }) : onTap = null;
+
+  const ListItem.input({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.trailing,
+    required InputDelegate this.delegate,
+    this.horizontalTitleGap,
+    this.prue,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
+  }) : onTap = null;
+
   const ListItem.next({
     super.key,
     required this.title,
@@ -125,7 +184,7 @@ class ListItem<T> extends StatelessWidget {
     this.subtitle,
     this.leading,
     this.padding = const EdgeInsets.only(left: 16, right: 8),
-    required CheckboxDelegate this.delegate,
+    required CheckboxDelegate<T> this.delegate,
     this.horizontalTitleGap,
     this.prue,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
@@ -138,7 +197,7 @@ class ListItem<T> extends StatelessWidget {
     this.subtitle,
     this.leading,
     this.padding = const EdgeInsets.only(left: 16, right: 8),
-    required SwitchDelegate this.delegate,
+    required SwitchDelegate<T> this.delegate,
     this.horizontalTitleGap,
     this.prue,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
@@ -227,6 +286,7 @@ class ListItem<T> extends StatelessWidget {
                 body: child,
                 title: openDelegate.title,
                 extendPageWidth: openDelegate.extendPageWidth,
+                isBlur: openDelegate.isBlur,
               );
               return;
             }
@@ -244,6 +304,37 @@ class ListItem<T> extends StatelessWidget {
             title: openDelegate.title,
             body: child,
           );
+        },
+      );
+    }
+    if (delegate is OptionsDelegate) {
+      final optionsDelegate = delegate as OptionsDelegate<T>;
+      return _buildListTile(
+        onTap: () async {
+          final value = await globalState.showCommonDialog<T>(
+            child: OptionsDialog<T>(
+              title: optionsDelegate.title,
+              options: optionsDelegate.options,
+              textBuilder: optionsDelegate.textBuilder,
+              value: optionsDelegate.value,
+            ),
+          );
+          optionsDelegate.onChanged(value);
+        },
+      );
+    }
+    if (delegate is InputDelegate) {
+      final inputDelegate = delegate as InputDelegate;
+      return _buildListTile(
+        onTap: () async {
+          final value = await globalState.showCommonDialog<String>(
+            child: InputDialog(
+              title: inputDelegate.title,
+              value: inputDelegate.value,
+              suffixText: inputDelegate.suffixText,
+            ),
+          );
+          inputDelegate.onChanged(value);
         },
       );
     }
@@ -423,5 +514,8 @@ Widget generateListView(List<Widget> items) {
   return ListView.builder(
     itemCount: items.length,
     itemBuilder: (_, index) => items[index],
+    padding: const EdgeInsets.only(
+      bottom: 16,
+    ),
   );
 }

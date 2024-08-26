@@ -4,7 +4,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lpinyin/lpinyin.dart';
 
 part 'generated/selector.freezed.dart';
 
@@ -162,8 +161,8 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
         return switch (sort) {
           AccessSortType.none => 0,
           AccessSortType.name => other.sortByChar(
-              PinyinHelper.getPinyin(a.label),
-              PinyinHelper.getPinyin(b.label),
+              other.getPinyin(a.label),
+              other.getPinyin(b.label),
             ),
           AccessSortType.time =>
             a.firstInstallTime.compareTo(b.firstInstallTime),
@@ -216,6 +215,14 @@ class ProxyState with _$ProxyState {
 }
 
 @freezed
+class HttpOverridesState with _$HttpOverridesState {
+  const factory HttpOverridesState({
+    required bool isStart,
+    required int port,
+  }) = _HttpOverridesState;
+}
+
+@freezed
 class ClashConfigState with _$ClashConfigState {
   const factory ClashConfigState({
     required int mixedPort,
@@ -229,6 +236,7 @@ class ClashConfigState with _$ClashConfigState {
     required int keepAliveInterval,
     required bool unifiedDelay,
     required bool tcpConcurrent,
+    required HostsMap hosts,
     required Tun tun,
     required Dns dns,
     required GeoXMap geoXUrl,

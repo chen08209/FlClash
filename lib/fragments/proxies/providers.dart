@@ -68,19 +68,30 @@ class _ProvidersState extends State<Providers> {
     return Selector<AppState, List<ExternalProvider>>(
       selector: (_, appState) => appState.providers,
       builder: (_, providers, ___) {
-        return ListView.separated(
-          itemBuilder: (_, index) {
-            return ProviderItem(
-              provider: providers[index],
-            );
-          },
-          separatorBuilder: (_, index) {
-            return const Divider(
-              height: 0,
-            );
-          },
-          itemCount: providers.length,
+        final proxyProviders =
+            providers.where((item) => item.type == "Proxy").map(
+                  (item) => ProviderItem(
+                    provider: item,
+                  ),
+                );
+        final ruleProviders =
+            providers.where((item) => item.type == "Rule").map(
+                  (item) => ProviderItem(
+                    provider: item,
+                  ),
+                );
+        final proxySection = generateSection(
+          title: appLocalizations.proxyProviders,
+          items: proxyProviders,
         );
+        final ruleSection = generateSection(
+          title: appLocalizations.ruleProviders,
+          items: ruleProviders,
+        );
+        return generateListView([
+          ...proxySection,
+          ...ruleSection,
+        ]);
       },
     );
   }

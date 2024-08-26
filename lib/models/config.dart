@@ -50,6 +50,17 @@ class CoreState with _$CoreState {
 }
 
 @freezed
+class VPNState with _$VPNState {
+  const factory VPNState({
+    required AccessControl? accessControl,
+    required VpnProps vpnProps,
+  }) = _VPNState;
+
+  factory VPNState.fromJson(Map<String, Object?> json) =>
+      _$VPNStateFromJson(json);
+}
+
+@freezed
 class WindowProps with _$WindowProps {
   const factory WindowProps({
     @Default(1000) double width,
@@ -115,6 +126,7 @@ class Config extends ChangeNotifier {
   VpnProps _vpnProps;
   DesktopProps _desktopProps;
   bool _showLabel;
+  bool _overrideDns;
 
   Config()
       : _profiles = [],
@@ -142,7 +154,8 @@ class Config extends ChangeNotifier {
         _proxiesLayout = ProxiesLayout.standard,
         _vpnProps = const VpnProps(),
         _desktopProps = const DesktopProps(),
-        _showLabel = false;
+        _showLabel = false,
+        _overrideDns = false;
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
@@ -548,6 +561,16 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: false)
+  bool get overrideDns => _overrideDns;
+
+  set overrideDns(bool value) {
+    if (_overrideDns != value) {
+      _overrideDns = value;
+      notifyListeners();
+    }
+  }
+
   update([
     Config? config,
     RecoveryOption recoveryOptions = RecoveryOption.all,
@@ -584,6 +607,7 @@ class Config extends ChangeNotifier {
       _isExclude = config._isExclude;
       _windowProps = config._windowProps;
       _vpnProps = config._vpnProps;
+      _overrideDns = config._overrideDns;
       _desktopProps = config._desktopProps;
     }
     notifyListeners();

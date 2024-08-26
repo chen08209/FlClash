@@ -5,34 +5,34 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class VPNSwitch extends StatelessWidget {
-  const VPNSwitch({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchContainer(
-      info: const Info(
-        label: "VPN",
-        iconData: Icons.stacked_line_chart,
-      ),
-      child: Selector<Config, bool>(
-        selector: (_, config) => config.vpnProps.enable,
-        builder: (_, enable, __) {
-          return Switch(
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            value: enable,
-            onChanged: (value) {
-              final config = globalState.appController.config;
-              config.vpnProps = config.vpnProps.copyWith(
-                enable: value,
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
+// class VPNSwitch extends StatelessWidget {
+//   const VPNSwitch({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return SwitchContainer(
+//       info: const Info(
+//         label: "VPN",
+//         iconData: Icons.stacked_line_chart,
+//       ),
+//       child: Selector<Config, bool>(
+//         selector: (_, config) => config.vpnProps.enable,
+//         builder: (_, enable, __) {
+//           return Switch(
+//             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+//             value: enable,
+//             onChanged: (value) {
+//               final config = globalState.appController.config;
+//               config.vpnProps = config.vpnProps.copyWith(
+//                 enable: value,
+//               );
+//             },
+//           );
+//         },
+//       ),
+//     );
+//   }
+// }
 
 class TUNSwitch extends StatelessWidget {
   const TUNSwitch({super.key});

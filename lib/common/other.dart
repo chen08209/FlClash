@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
+import 'package:lpinyin/lpinyin.dart';
 import 'package:zxing2/qrcode.dart';
 import 'package:image/image.dart' as img;
 
@@ -128,6 +129,12 @@ class Other {
     int build1 = version1.contains('+') ? int.parse(version1.split('+')[1]) : 0;
     int build2 = version2.contains('+') ? int.parse(version2.split('+')[1]) : 0;
     return build1.compareTo(build2);
+  }
+
+  String getPinyin(String value) {
+    return value.isNotEmpty
+        ? PinyinHelper.getFirstWordPinyin(value.substring(0, 1))
+        : "";
   }
 
   Future<String?> parseQRCode(Uint8List? bytes) {
