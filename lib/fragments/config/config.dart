@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/fragments/config/app.dart';
+import 'package:fl_clash/fragments/config/dns.dart';
 import 'package:fl_clash/fragments/config/general.dart';
 import 'package:fl_clash/fragments/config/vpn.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -24,6 +25,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
         leading: const Icon(Icons.settings_applications),
         delegate: OpenDelegate(
           title: appLocalizations.app,
+          isBlur: false,
           widget: generateListView(
             appItems
                 .separated(
@@ -42,14 +44,9 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           leading: const Icon(Icons.vpn_key),
           delegate: OpenDelegate(
             title: "VPN",
+            isBlur: false,
             widget: generateListView(
-              vpnItems
-                  .separated(
-                    const Divider(
-                      height: 0,
-                    ),
-                  )
-                  .toList(),
+              vpnItems,
             ),
           ),
         ),
@@ -60,21 +57,24 @@ class _ConfigFragmentState extends State<ConfigFragment> {
         delegate: OpenDelegate(
           title: appLocalizations.general,
           widget: generateListView(
-            generalItems
-                .separated(
-                  const Divider(
-                    height: 0,
-                  ),
-                )
-                .toList(),
+            generalItems,
           ),
+          isBlur: false,
           extendPageWidth: 360,
         ),
       ),
-      ListItem(
+      ListItem.open(
         title: const Text("DNS"),
         subtitle: Text(appLocalizations.dnsDesc),
         leading: const Icon(Icons.dns),
+        delegate: OpenDelegate(
+          title: "DNS",
+          widget: generateListView(
+            dnsItems,
+          ),
+          isBlur: false,
+          extendPageWidth: 360,
+        ),
       )
     ];
     return generateListView(

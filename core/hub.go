@@ -48,9 +48,11 @@ func start() {
 //export stop
 func stop() {
 	runLock.Lock()
-	defer runLock.Unlock()
-	isRunning = false
-	stopListeners()
+	go func() {
+		defer runLock.Unlock()
+		isRunning = false
+		stopListeners()
+	}()
 }
 
 //export initClash
@@ -236,6 +238,7 @@ func asyncTestDelay(s *C.char, port C.longlong) {
 
 		proxies := tunnel.ProxiesWithProviders()
 		proxy := proxies[params.ProxyName]
+		proxy.Name()
 
 		delayData := &Delay{
 			Name: params.ProxyName,

@@ -48,11 +48,11 @@ class _DashboardFragmentState extends State<DashboardFragment> {
                     crossAxisCellCount: 8,
                     child: NetworkSpeed(),
                   ),
-                  if (Platform.isAndroid)
-                    GridItem(
-                      crossAxisCellCount: switchCount,
-                      child: const VPNSwitch(),
-                    ),
+                  // if (Platform.isAndroid)
+                  //   GridItem(
+                  //     crossAxisCellCount: switchCount,
+                  //     child: const VPNSwitch(),
+                  //   ),
                   if (system.isDesktop) ...[
                     GridItem(
                       crossAxisCellCount: switchCount,

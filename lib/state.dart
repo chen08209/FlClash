@@ -59,6 +59,7 @@ class GlobalState {
           isPatch: isPatch,
           isCompatible: true,
           selectedMap: config.currentSelectedMap,
+          overrideDns: config.overrideDns,
           testUrl: config.testUrl,
         ),
       ),

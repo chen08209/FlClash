@@ -11,6 +11,7 @@ showExtendPage(
   required String title,
   double? extendPageWidth,
   bool forceNotSide = false,
+  bool isBlur = true,
   Widget? action,
 }) {
   final NavigatorState navigator = Navigator.of(context);
@@ -21,6 +22,17 @@ showExtendPage(
   );
   final isMobile =
       globalState.appController.appState.viewMode == ViewMode.mobile;
+  if (isMobile) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CommonScaffold(
+          title: title,
+          body: uniqueBody,
+        ),
+      ),
+    );
+    return;
+  }
   final isNotSide = isMobile || forceNotSide;
   navigator.push(
     ModalSideSheetRoute(
@@ -46,7 +58,7 @@ showExtendPage(
         );
       },
       constraints: const BoxConstraints(),
-      filter: filter,
+      filter: isBlur ? filter : null,
     ),
   );
 }

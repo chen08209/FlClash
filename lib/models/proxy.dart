@@ -15,6 +15,7 @@ class Group with _$Group {
     @Default([]) List<Proxy> all,
     String? now,
     bool? hidden,
+    @Default("") String icon,
     required String name,
   }) = _Group;
 

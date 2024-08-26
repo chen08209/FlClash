@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/card.dart';
+import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -353,6 +355,8 @@ class _ListHeaderState extends State<ListHeader>
   late Animation<double> _iconTurns;
   var isLock = false;
 
+  String get icon => widget.group.icon;
+
   String get groupName => widget.group.name;
 
   String get groupType => widget.group.type.name;
@@ -412,6 +416,7 @@ class _ListHeaderState extends State<ListHeader>
   Widget build(BuildContext context) {
     return CommonCard(
       key: widget.key,
+      radius: 24,
       type: CommonCardType.filled,
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -419,57 +424,96 @@ class _ListHeaderState extends State<ListHeader>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Flexible(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    groupName,
-                    style: context.textTheme.titleMedium,
+                  const SizedBox(
+                    width: 4,
+                  ),
+                  Container(
+                    height: 48,
+                    width: 48,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: icon.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: icon,
+                            errorWidget: (_, __, ___) => const Icon(
+                              IconsExt.target,
+                              size: 32,
+                            ),
+                          )
+                        : const Icon(
+                            IconsExt.target,
+                            size: 32,
+                          ),
                   ),
                   const SizedBox(
-                    height: 4,
+                    width: 16,
                   ),
                   Flexible(
-                    flex: 1,
-                    child: Row(
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          groupType,
-                          style: context.textTheme.labelMedium?.toLight,
+                          groupName,
+                          style: context.textTheme.titleMedium,
+                        ),
+                        const SizedBox(
+                          height: 4,
                         ),
                         Flexible(
                           flex: 1,
-                          child: currentGroupProxyNameBuilder(
-                            groupName: groupName,
-                            builder: (currentGroupName) {
-                              return Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  if (currentGroupName.isNotEmpty) ...[
-                                    Flexible(
-                                      flex: 1,
-                                      child: EmojiText(
-                                        overflow: TextOverflow.ellipsis,
-                                        " · $currentGroupName",
-                                        style: context
-                                            .textTheme.labelMedium?.toLight,
-                                      ),
-                                    ),
-                                  ]
-                                ],
-                              );
-                            },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                groupType,
+                                style: context.textTheme.labelMedium?.toLight,
+                              ),
+                              Flexible(
+                                flex: 1,
+                                child: currentGroupProxyNameBuilder(
+                                  groupName: groupName,
+                                  builder: (currentGroupName) {
+                                    return Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        if (currentGroupName.isNotEmpty) ...[
+                                          Flexible(
+                                            flex: 1,
+                                            child: EmojiText(
+                                              overflow: TextOverflow.ellipsis,
+                                              " · $currentGroupName",
+                                              style: context.textTheme
+                                                  .labelMedium?.toLight,
+                                            ),
+                                          ),
+                                        ]
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                        const SizedBox(
+                          width: 4,
                         ),
                       ],
                     ),
-                  ),
+                  )
                 ],
               ),
             ),

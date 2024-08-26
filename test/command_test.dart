@@ -6,11 +6,12 @@ import 'package:fl_clash/common/other.dart';
 import 'package:lpinyin/lpinyin.dart';
 
 void main() {
-  print(PinyinHelper.getPinyin("ABC"));
-  print(PinyinHelper.getPinyin("阿里巴巴"));
+  final res = const [
+    "https://doh.pub/dns-query",
+    "https://dns.alidns.com/dns-query"
+  ];
 
-  print('a'.compareTo('B'));
-  print('A'.compareTo('B'));
+  List.from(res)..remove("https://doh.pub/dns-query");
 }
 
 startService() async {

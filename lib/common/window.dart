@@ -34,7 +34,7 @@ class Window {
     //   await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
     // }
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
-      // await windowManager.setPreventClose(true);
+      await windowManager.setPreventClose(true);
     });
   }
 

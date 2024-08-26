@@ -39,6 +39,7 @@ class _ClashContainerState extends State<ClashContainer>
         tcpConcurrent: clashConfig.tcpConcurrent,
         tun: clashConfig.tun,
         dns: clashConfig.dns,
+        hosts: clashConfig.hosts,
         geoXUrl: clashConfig.geoXUrl,
         rules: clashConfig.rules,
         globalRealUa: clashConfig.globalRealUa,
@@ -137,7 +138,7 @@ class _ClashContainerState extends State<ClashContainer>
     if (log.logLevel == LogLevel.error) {
       globalState.appController.showSnackBar(log.payload ?? '');
     }
-    debugPrint("$log");
+    // debugPrint("$log");
     super.onLog(log);
   }
 

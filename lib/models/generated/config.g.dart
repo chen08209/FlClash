@@ -53,7 +53,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..vpnProps = VpnProps.fromJson(json['vpnProps'] as Map<String, dynamic>?)
   ..desktopProps =
       DesktopProps.fromJson(json['desktopProps'] as Map<String, dynamic>?)
-  ..showLabel = json['showLabel'] as bool? ?? false;
+  ..showLabel = json['showLabel'] as bool? ?? false
+  ..overrideDns = json['overrideDns'] as bool? ?? false;
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'profiles': instance.profiles,
@@ -85,6 +86,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'vpnProps': instance.vpnProps,
       'desktopProps': instance.desktopProps,
       'showLabel': instance.showLabel,
+      'overrideDns': instance.overrideDns,
     };
 
 const _$ThemeModeEnumMap = {
@@ -176,6 +178,21 @@ Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
       'systemProxy': instance.systemProxy,
       'mixedPort': instance.mixedPort,
       'onlyProxy': instance.onlyProxy,
+    };
+
+_$VPNStateImpl _$$VPNStateImplFromJson(Map<String, dynamic> json) =>
+    _$VPNStateImpl(
+      accessControl: json['accessControl'] == null
+          ? null
+          : AccessControl.fromJson(
+              json['accessControl'] as Map<String, dynamic>),
+      vpnProps: VpnProps.fromJson(json['vpnProps'] as Map<String, dynamic>?),
+    );
+
+Map<String, dynamic> _$$VPNStateImplToJson(_$VPNStateImpl instance) =>
+    <String, dynamic>{
+      'accessControl': instance.accessControl,
+      'vpnProps': instance.vpnProps,
     };
 
 _$WindowPropsImpl _$$WindowPropsImplFromJson(Map<String, dynamic> json) =>

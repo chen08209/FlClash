@@ -26,3 +26,5 @@ export 'measure.dart';
 export 'windows.dart';
 export 'iterable.dart';
 export 'scroll.dart';
+export 'icons.dart';
+export 'http.dart';
