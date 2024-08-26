@@ -67,7 +67,7 @@ class AutoLaunch {
             '/TN',
             appName,
             '/TR',
-            Platform.resolvedExecutable,
+            '"${Platform.resolvedExecutable}"',
             '/RL',
             'HIGHEST',
             '/F'
