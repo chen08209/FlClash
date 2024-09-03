@@ -178,7 +178,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "logsDesc": MessageLookupByLibrary.simpleMessage("日志捕获记录"),
         "loopback": MessageLookupByLibrary.simpleMessage("回环解锁工具"),
         "loopbackDesc": MessageLookupByLibrary.simpleMessage("用于UWP回环解锁"),
-        "loose": MessageLookupByLibrary.simpleMessage("紧凑"),
+        "loose": MessageLookupByLibrary.simpleMessage("宽松"),
         "min": MessageLookupByLibrary.simpleMessage("最小"),
         "minimizeOnExit": MessageLookupByLibrary.simpleMessage("退出时最小化"),
         "minimizeOnExitDesc":
@@ -318,7 +318,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeDesc": MessageLookupByLibrary.simpleMessage("设置深色模式，调整色彩"),
         "themeMode": MessageLookupByLibrary.simpleMessage("主题模式"),
         "threeColumns": MessageLookupByLibrary.simpleMessage("三列"),
-        "tight": MessageLookupByLibrary.simpleMessage("宽松"),
+        "tight": MessageLookupByLibrary.simpleMessage("紧凑"),
         "time": MessageLookupByLibrary.simpleMessage("时间"),
         "tip": MessageLookupByLibrary.simpleMessage("提示"),
         "tools": MessageLookupByLibrary.simpleMessage("工具"),

@@ -88,7 +88,7 @@ enum CommonCardType { plain, filled }
 
 enum ProxiesType { tab, list }
 
-enum ProxiesLayout { loose, standard, tight }
+enum ProxiesLayout { standard, loose, tight }
 
 enum ProxyCardType { expand, shrink, min }
 
@@ -101,4 +101,3 @@ enum DnsMode {
   redirHost,
   hosts
 }
-
