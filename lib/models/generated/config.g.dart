@@ -105,8 +105,8 @@ const _$ProxiesSortTypeEnumMap = {
 };
 
 const _$ProxiesLayoutEnumMap = {
-  ProxiesLayout.loose: 'loose',
   ProxiesLayout.standard: 'standard',
+  ProxiesLayout.loose: 'loose',
   ProxiesLayout.tight: 'tight',
 };
 

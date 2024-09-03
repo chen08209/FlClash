@@ -35,9 +35,9 @@ class ProxiesSettingWidget extends StatelessWidget {
 
   String getTextForProxiesLayout(ProxiesLayout proxiesLayout) {
     return switch (proxiesLayout) {
-      ProxiesLayout.tight => appLocalizations.tight,
       ProxiesLayout.standard => appLocalizations.standard,
       ProxiesLayout.loose => appLocalizations.loose,
+      ProxiesLayout.tight => appLocalizations.tight,
     };
   }
 
