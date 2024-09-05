@@ -111,6 +111,9 @@ typedef GeoXMap = Map<String, String>;
 
 typedef HostsMap = Map<String, String>;
 
+const defaultMixedPort = 7890;
+const defaultKeepAliveInterval = 30;
+
 @JsonSerializable()
 class ClashConfig extends ChangeNotifier {
   int _mixedPort;
@@ -132,7 +135,7 @@ class ClashConfig extends ChangeNotifier {
   HostsMap _hosts;
 
   ClashConfig()
-      : _mixedPort = 7890,
+      : _mixedPort = defaultMixedPort,
         _mode = Mode.rule,
         _ipv6 = false,
         _findProcessMode = FindProcessMode.off,
@@ -143,13 +146,13 @@ class ClashConfig extends ChangeNotifier {
         _unifiedDelay = false,
         _geodataLoader = geodataLoaderMemconservative,
         _externalController = '',
-        _keepAliveInterval = 30,
+        _keepAliveInterval = defaultKeepAliveInterval,
         _dns = const Dns(),
         _geoXUrl = defaultGeoXMap,
         _rules = [],
         _hosts = {};
 
-  @JsonKey(name: "mixed-port", defaultValue: 7890)
+  @JsonKey(name: "mixed-port", defaultValue: defaultMixedPort)
   int get mixedPort => _mixedPort;
 
   set mixedPort(int value) {
@@ -209,7 +212,7 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
-  @JsonKey(name: "keep-alive-interval", defaultValue: 30)
+  @JsonKey(name: "keep-alive-interval", defaultValue: defaultKeepAliveInterval)
   int get keepAliveInterval => _keepAliveInterval;
 
   set keepAliveInterval(int value) {

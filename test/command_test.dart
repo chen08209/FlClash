@@ -2,16 +2,14 @@
 
 import 'dart:io';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/other.dart';
 import 'package:lpinyin/lpinyin.dart';
 
 void main() {
-  final res = const [
-    "https://doh.pub/dns-query",
-    "https://dns.alidns.com/dns-query"
-  ];
+  final res = [1, 2, 3, 4, 5, 6,7,8,9,10,11];
 
-  List.from(res)..remove("https://doh.pub/dns-query");
+  print(res.batch(5));
 }
 
 startService() async {

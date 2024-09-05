@@ -74,7 +74,7 @@ class _StartButtonState extends State<StartButton>
         if (!state.isInit || !state.hasProfile) {
           return Container();
         }
-        final textWidth = globalState.appController.measure
+        final textWidth = globalState.measure
                 .computeTextSize(
                   Text(
                     other.getTimeDifference(

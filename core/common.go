@@ -4,6 +4,7 @@ import "C"
 import (
 	"context"
 	"errors"
+	route "github.com/metacubex/mihomo/hub/route"
 	"math"
 	"os"
 	"os/exec"
@@ -21,13 +22,11 @@ import (
 	"github.com/metacubex/mihomo/common/batch"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/resolver"
-	"github.com/metacubex/mihomo/component/sniffer"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
-	"github.com/metacubex/mihomo/hub/route"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
 	rp "github.com/metacubex/mihomo/rules/provider"
@@ -191,7 +190,7 @@ func toExternalProvider(p cp.Provider) (*ExternalProvider, error) {
 			VehicleType: psp.VehicleType().String(),
 			Count:       psp.Count(),
 			Path:        psp.Vehicle().Path(),
-			UpdateAt:    psp.UpdatedAt,
+			UpdateAt:    psp.UpdatedAt(),
 		}, nil
 	case *rp.RuleSetProvider:
 		rsp := p.(*rp.RuleSetProvider)
@@ -201,7 +200,7 @@ func toExternalProvider(p cp.Provider) (*ExternalProvider, error) {
 			VehicleType: rsp.VehicleType().String(),
 			Count:       rsp.Count(),
 			Path:        rsp.Vehicle().Path(),
-			UpdateAt:    rsp.UpdatedAt,
+			UpdateAt:    rsp.UpdatedAt(),
 		}, nil
 	default:
 		return nil, errors.New("not external provider")
@@ -411,12 +410,13 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Profile.StoreSelected = false
 	targetConfig.GeoXUrl = patchConfig.GeoXUrl
 	targetConfig.GlobalUA = patchConfig.GlobalUA
-	//if targetConfig.DNS.Enable == false {
-	//	targetConfig.DNS = patchConfig.DNS
-	//}
 	genHosts(targetConfig.Hosts, patchConfig.Hosts)
 	if configParams.OverrideDns {
 		targetConfig.DNS = patchConfig.DNS
+	} else {
+		if targetConfig.DNS.Enable == false {
+			targetConfig.DNS.Enable = true
+		}
 	}
 	//if runtime.GOOS == "android" {
 	//	targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, "dhcp://"+dns.SystemDNSPlaceholder)
@@ -430,12 +430,10 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	//}
 }
 
-func patchConfig(general *config.General) {
+func patchConfig(general *config.General, controller *config.Controller) {
 	log.Infoln("[Apply] patch")
-	route.ReStartServer(general.ExternalController)
-	if sniffer.Dispatcher != nil {
-		tunnel.SetSniffing(general.Sniffing)
-	}
+	route.ReStartServer(controller.ExternalController)
+	tunnel.SetSniffing(general.Sniffing)
 	tunnel.SetFindProcessMode(general.FindProcessMode)
 	dialer.SetTcpConcurrent(general.TCPConcurrent)
 	dialer.DefaultInterface.Store(general.Interface)
@@ -455,6 +453,7 @@ func updateListeners(general *config.General, listeners map[string]constant.Inbo
 	}
 	runLock.Lock()
 	defer runLock.Unlock()
+
 	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
 	listener.SetAllowLan(general.AllowLan)
 	inbound.SetSkipAuthPrefixes(general.SkipAuthPrefixes)
@@ -464,14 +463,12 @@ func updateListeners(general *config.General, listeners map[string]constant.Inbo
 	listener.ReCreateHTTP(general.Port, tunnel.Tunnel)
 	listener.ReCreateSocks(general.SocksPort, tunnel.Tunnel)
 	listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
-	listener.ReCreateAutoRedir(general.EBpf.AutoRedir, tunnel.Tunnel)
 	listener.ReCreateTProxy(general.TProxyPort, tunnel.Tunnel)
 	listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel)
 	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
 	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
 	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
 	listener.ReCreateTun(general.Tun, tunnel.Tunnel)
-	listener.ReCreateRedirToTun(general.EBpf.RedirectToTun)
 }
 
 func stopListeners() {
@@ -533,7 +530,7 @@ func applyConfig() error {
 		constant.DefaultTestURL = *configParams.TestURL
 	}
 	if configParams.IsPatch {
-		patchConfig(cfg.General)
+		patchConfig(cfg.General, cfg.Controller)
 	} else {
 		closeConnections()
 		runtime.GC()
@@ -541,7 +538,9 @@ func applyConfig() error {
 		patchSelectGroup()
 	}
 	updateListeners(cfg.General, cfg.Listeners)
-	hcCompatibleProvider(cfg.Providers)
+	if isRunning {
+		hcCompatibleProvider(cfg.Providers)
+	}
 	externalProviders = getExternalProvidersRaw()
 	return err
 }

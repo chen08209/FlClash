@@ -22,119 +22,11 @@ class TrayContainer extends StatefulWidget {
 }
 
 class _TrayContainerState extends State<TrayContainer> with TrayListener {
-  var isTrayInit = false;
 
   @override
   void initState() {
     super.initState();
     trayManager.addListener(this);
-  }
-
-  _updateOtherTray() async {
-    if (isTrayInit == false) {
-      await trayManager.setIcon(
-        other.getTrayIconPath(),
-      );
-      await trayManager.setToolTip(
-        appName,
-      );
-      isTrayInit = true;
-    }
-  }
-
-  _updateLinuxTray() async {
-    await trayManager.destroy();
-    await trayManager.setIcon(
-      other.getTrayIconPath(),
-    );
-    await trayManager.setToolTip(
-      appName,
-    );
-  }
-
-  updateMenu(TrayContainerSelectorState state) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!Platform.isLinux) {
-        _updateOtherTray();
-      }
-      List<MenuItem> menuItems = [];
-      final showMenuItem = MenuItem(
-        label: appLocalizations.show,
-        onClick: (_) {
-          window?.show();
-        },
-      );
-      menuItems.add(showMenuItem);
-      final startMenuItem = MenuItem.checkbox(
-        label: state.isStart ? appLocalizations.stop : appLocalizations.start,
-        onClick: (_) async {
-          globalState.appController.updateStatus(!state.isStart);
-        },
-        checked: false,
-      );
-      menuItems.add(startMenuItem);
-      menuItems.add(MenuItem.separator());
-      for (final mode in Mode.values) {
-        menuItems.add(
-          MenuItem.checkbox(
-            label: Intl.message(mode.name),
-            onClick: (_) {
-              globalState.appController.clashConfig.mode = mode;
-            },
-            checked: mode == state.mode,
-          ),
-        );
-      }
-      menuItems.add(MenuItem.separator());
-      if (state.isStart) {
-        menuItems.add(
-          MenuItem.checkbox(
-            label: appLocalizations.tun,
-            onClick: (_) {
-              final clashConfig = globalState.appController.clashConfig;
-              clashConfig.tun =
-                  clashConfig.tun.copyWith(enable: !state.tunEnable);
-            },
-            checked: state.tunEnable,
-          ),
-        );
-        menuItems.add(
-          MenuItem.checkbox(
-            label: appLocalizations.systemProxy,
-            onClick: (_) {
-              final config = globalState.appController.config;
-              config.desktopProps =
-                  config.desktopProps.copyWith(systemProxy: !state.systemProxy);
-            },
-            checked: state.systemProxy,
-          ),
-        );
-        menuItems.add(MenuItem.separator());
-      }
-      final autoStartMenuItem = MenuItem.checkbox(
-        label: appLocalizations.autoLaunch,
-        onClick: (_) async {
-          globalState.appController.config.autoLaunch =
-              !globalState.appController.config.autoLaunch;
-        },
-        checked: state.autoLaunch,
-      );
-      menuItems.add(autoStartMenuItem);
-      menuItems.add(MenuItem.separator());
-      final exitMenuItem = MenuItem(
-        label: appLocalizations.exit,
-        onClick: (_) async {
-          await globalState.appController.handleExit();
-        },
-      );
-      menuItems.add(exitMenuItem);
-      final menu = Menu();
-      menu.items = menuItems;
-      trayManager.setContextMenu(menu);
-      if (Platform.isLinux) {
-        _updateLinuxTray();
-      }
-    });
   }
 
   @override
@@ -149,8 +41,13 @@ class _TrayContainerState extends State<TrayContainer> with TrayListener {
         systemProxy: config.desktopProps.systemProxy,
         tunEnable: clashConfig.tun.enable,
       ),
+      shouldRebuild: (prev,next){
+        if(prev != next){
+          globalState.appController.updateTray();
+        }
+        return prev != next;
+      },
       builder: (_, state, child) {
-        updateMenu(state);
         return child!;
       },
       child: widget.child,

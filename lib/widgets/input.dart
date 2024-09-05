@@ -57,12 +57,14 @@ class InputDialog extends StatefulWidget {
   final String title;
   final String value;
   final String? suffixText;
+  final String? resetValue;
 
   const InputDialog({
     super.key,
     required this.title,
     required this.value,
     this.suffixText,
+    this.resetValue,
   });
 
   @override
@@ -92,6 +94,13 @@ class _InputDialogState extends State<InputDialog> {
     Navigator.of(context).pop<String>(text);
   }
 
+  _handleReset() async {
+    if (widget.resetValue == null) {
+      return;
+    }
+    Navigator.of(context).pop<String>(widget.resetValue);
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -114,6 +123,16 @@ class _InputDialogState extends State<InputDialog> {
         ),
       ),
       actions: [
+        if (widget.resetValue != null &&
+            textController.value.text != widget.resetValue) ...[
+          TextButton(
+            onPressed: _handleReset,
+            child: Text(appLocalizations.reset),
+          ),
+          const SizedBox(
+            width: 4,
+          ),
+        ],
         TextButton(
           onPressed: _handleUpdate,
           child: Text(appLocalizations.submit),

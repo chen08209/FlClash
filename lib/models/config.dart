@@ -95,6 +95,21 @@ class DesktopProps with _$DesktopProps {
       json == null ? const DesktopProps() : _$DesktopPropsFromJson(json);
 }
 
+const defaultCustomFontSizeScale = 1.0;
+
+const defaultScaleProps = ScaleProps();
+
+@freezed
+class ScaleProps with _$ScaleProps {
+  const factory ScaleProps({
+    @Default(false) bool custom,
+    @Default(defaultCustomFontSizeScale) double scale,
+  }) = _ScaleProps;
+
+  factory ScaleProps.fromJson(Map<String, Object?>? json) =>
+      json == null ? defaultScaleProps : _$ScalePropsFromJson(json);
+}
+
 @JsonSerializable()
 class Config extends ChangeNotifier {
   List<Profile> _profiles;
@@ -124,6 +139,7 @@ class Config extends ChangeNotifier {
   bool _onlyProxy;
   bool _prueBlack;
   VpnProps _vpnProps;
+  ScaleProps _scaleProps;
   DesktopProps _desktopProps;
   bool _showLabel;
   bool _overrideDns;
@@ -155,7 +171,8 @@ class Config extends ChangeNotifier {
         _vpnProps = const VpnProps(),
         _desktopProps = const DesktopProps(),
         _showLabel = false,
-        _overrideDns = false;
+        _overrideDns = false,
+        _scaleProps = const ScaleProps();
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
@@ -551,6 +568,15 @@ class Config extends ChangeNotifier {
     }
   }
 
+  ScaleProps get scaleProps => _scaleProps;
+
+  set scaleProps(ScaleProps value) {
+    if (_scaleProps != value) {
+      _scaleProps = value;
+      notifyListeners();
+    }
+  }
+
   @JsonKey(defaultValue: false)
   bool get showLabel => _showLabel;
 
@@ -589,6 +615,7 @@ class Config extends ChangeNotifier {
       _isCloseConnections = config._isCloseConnections;
       _isCompatible = config._isCompatible;
       _autoLaunch = config._autoLaunch;
+      _dav = config._dav;
       _silentLaunch = config._silentLaunch;
       _autoRun = config._autoRun;
       _proxiesType = config._proxiesType;

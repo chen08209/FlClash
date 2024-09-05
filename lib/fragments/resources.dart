@@ -33,13 +33,21 @@ class Resources extends StatelessWidget {
         fileName: geoIpFileName,
         key: "geoip",
       ),
-      GeoItem(label: "GeoSite", fileName: geoSiteFileName, key: "geosite"),
+      GeoItem(
+        label: "GeoSite",
+        fileName: geoSiteFileName,
+        key: "geosite",
+      ),
       GeoItem(
         label: "MMDB",
         fileName: mmdbFileName,
         key: "mmdb",
       ),
-      GeoItem(label: "ASN", fileName: asnFileName, key: "asn"),
+      GeoItem(
+        label: "ASN",
+        fileName: asnFileName,
+        key: "asn",
+      ),
     ];
 
     return ListView.separated(
@@ -81,6 +89,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
       child: UpdateGeoUrlFormDialog(
         title: geoItem.label,
         url: url,
+        defaultValue: defaultGeoXMap[geoItem.key],
       ),
     );
     if (newUrl != null && newUrl != url && mounted) {
@@ -238,11 +247,13 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
 class UpdateGeoUrlFormDialog extends StatefulWidget {
   final String title;
   final String url;
+  final String? defaultValue;
 
   const UpdateGeoUrlFormDialog({
     super.key,
     required this.title,
     required this.url,
+    this.defaultValue
   });
 
   @override
@@ -256,6 +267,13 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
   void initState() {
     super.initState();
     urlController = TextEditingController(text: widget.url);
+  }
+
+  _handleReset() async {
+    if (widget.defaultValue == null) {
+      return;
+    }
+    Navigator.of(context).pop<String>(widget.defaultValue);
   }
 
   _handleUpdate() async {
@@ -285,6 +303,16 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
         ),
       ),
       actions: [
+        if (widget.defaultValue != null &&
+            urlController.value.text != widget.defaultValue) ...[
+          TextButton(
+            onPressed: _handleReset,
+            child: Text(appLocalizations.reset),
+          ),
+          const SizedBox(
+            width: 4,
+          ),
+        ],
         TextButton(
           onPressed: _handleUpdate,
           child: Text(appLocalizations.submit),

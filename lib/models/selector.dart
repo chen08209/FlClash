@@ -228,6 +228,7 @@ class ClashConfigState with _$ClashConfigState {
     required int mixedPort,
     required bool allowLan,
     required bool ipv6,
+    required bool overrideDns,
     required String geodataLoader,
     required LogLevel logLevel,
     required String externalController,

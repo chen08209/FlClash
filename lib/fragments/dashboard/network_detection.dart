@@ -46,9 +46,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
         isTesting: false,
         ipInfo: ipInfo,
       );
-    } catch (_) {
-
-    }
+    } catch (_) {}
   }
 
   _checkIpContainer(Widget child) {
@@ -122,7 +120,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                                 : ipInfo != null
                                     ? Container(
                                         alignment: Alignment.centerLeft,
-                                        height: globalState.appController
+                                        height: globalState
                                             .measure.titleMediumHeight,
                                         child: Text(
                                           countryCodeToEmoji(
@@ -150,9 +148,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                   ),
                 ),
                 Container(
-                  height: globalState.appController.measure.titleLargeHeight +
-                      24 -
-                      2,
+                  height: globalState.measure.titleLargeHeight + 24 - 2,
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.all(16).copyWith(top: 0),
                   child: FadeBox(

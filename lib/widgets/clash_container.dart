@@ -24,8 +24,9 @@ class _ClashContainerState extends State<ClashContainer>
   Function? updateClashConfigDebounce;
 
   Widget _updateContainer(Widget child) {
-    return Selector<ClashConfig, ClashConfigState>(
-      selector: (_, clashConfig) => ClashConfigState(
+    return Selector2<Config,ClashConfig, ClashConfigState>(
+      selector: (_,config, clashConfig) => ClashConfigState(
+        overrideDns: config.overrideDns,
         mixedPort: clashConfig.mixedPort,
         allowLan: clashConfig.allowLan,
         ipv6: clashConfig.ipv6,

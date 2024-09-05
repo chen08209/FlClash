@@ -1240,3 +1240,159 @@ abstract class _DesktopProps implements DesktopProps {
   _$$DesktopPropsImplCopyWith<_$DesktopPropsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+ScaleProps _$ScalePropsFromJson(Map<String, dynamic> json) {
+  return _ScaleProps.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ScaleProps {
+  bool get custom => throw _privateConstructorUsedError;
+  double get scale => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ScalePropsCopyWith<ScaleProps> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ScalePropsCopyWith<$Res> {
+  factory $ScalePropsCopyWith(
+          ScaleProps value, $Res Function(ScaleProps) then) =
+      _$ScalePropsCopyWithImpl<$Res, ScaleProps>;
+  @useResult
+  $Res call({bool custom, double scale});
+}
+
+/// @nodoc
+class _$ScalePropsCopyWithImpl<$Res, $Val extends ScaleProps>
+    implements $ScalePropsCopyWith<$Res> {
+  _$ScalePropsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? custom = null,
+    Object? scale = null,
+  }) {
+    return _then(_value.copyWith(
+      custom: null == custom
+          ? _value.custom
+          : custom // ignore: cast_nullable_to_non_nullable
+              as bool,
+      scale: null == scale
+          ? _value.scale
+          : scale // ignore: cast_nullable_to_non_nullable
+              as double,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ScalePropsImplCopyWith<$Res>
+    implements $ScalePropsCopyWith<$Res> {
+  factory _$$ScalePropsImplCopyWith(
+          _$ScalePropsImpl value, $Res Function(_$ScalePropsImpl) then) =
+      __$$ScalePropsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({bool custom, double scale});
+}
+
+/// @nodoc
+class __$$ScalePropsImplCopyWithImpl<$Res>
+    extends _$ScalePropsCopyWithImpl<$Res, _$ScalePropsImpl>
+    implements _$$ScalePropsImplCopyWith<$Res> {
+  __$$ScalePropsImplCopyWithImpl(
+      _$ScalePropsImpl _value, $Res Function(_$ScalePropsImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? custom = null,
+    Object? scale = null,
+  }) {
+    return _then(_$ScalePropsImpl(
+      custom: null == custom
+          ? _value.custom
+          : custom // ignore: cast_nullable_to_non_nullable
+              as bool,
+      scale: null == scale
+          ? _value.scale
+          : scale // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ScalePropsImpl implements _ScaleProps {
+  const _$ScalePropsImpl(
+      {this.custom = false, this.scale = defaultCustomFontSizeScale});
+
+  factory _$ScalePropsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ScalePropsImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final bool custom;
+  @override
+  @JsonKey()
+  final double scale;
+
+  @override
+  String toString() {
+    return 'ScaleProps(custom: $custom, scale: $scale)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ScalePropsImpl &&
+            (identical(other.custom, custom) || other.custom == custom) &&
+            (identical(other.scale, scale) || other.scale == scale));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, custom, scale);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ScalePropsImplCopyWith<_$ScalePropsImpl> get copyWith =>
+      __$$ScalePropsImplCopyWithImpl<_$ScalePropsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ScalePropsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ScaleProps implements ScaleProps {
+  const factory _ScaleProps({final bool custom, final double scale}) =
+      _$ScalePropsImpl;
+
+  factory _ScaleProps.fromJson(Map<String, dynamic> json) =
+      _$ScalePropsImpl.fromJson;
+
+  @override
+  bool get custom;
+  @override
+  double get scale;
+  @override
+  @JsonKey(ignore: true)
+  _$$ScalePropsImplCopyWith<_$ScalePropsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

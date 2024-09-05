@@ -32,6 +32,11 @@ Future<void> main() async {
     openLogs: config.openLogs,
     hasProxies: false,
   );
+  globalState.updateTray(
+    appState: appState,
+    config: config,
+    clashConfig: clashConfig,
+  );
   await globalState.init(
     appState: appState,
     config: config,
