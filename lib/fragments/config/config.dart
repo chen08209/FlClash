@@ -72,6 +72,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           widget: generateListView(
             dnsItems,
           ),
+          isScaffold: true,
           isBlur: false,
           extendPageWidth: 360,
         ),

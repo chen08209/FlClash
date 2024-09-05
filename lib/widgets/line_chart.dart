@@ -120,9 +120,19 @@ class _LineChartState extends State<LineChart>
   Path getPath(List<Point> points, Size size) {
     final path = Path()
       ..moveTo(points[0].x * size.width, (1 - points[0].y) * size.height);
-    for (var i = 1; i < points.length; i++) {
-      path.lineTo(points[i].x * size.width, (1 - points[i].y) * size.height);
+
+    for (var i = 1; i < points.length - 1; i++) {
+      final nextPoint = points[i + 1];
+      final currentPoint = points[i];
+      final midX = (currentPoint.x + nextPoint.x) / 2;
+      final midY = (currentPoint.y + nextPoint.y) / 2;
+      path.quadraticBezierTo(
+        currentPoint.x * size.width, (1 - currentPoint.y) * size.height,
+        midX * size.width, (1 - midY) * size.height,
+      );
     }
+    path.lineTo(points.last.x * size.width, (1 - points.last.y) * size.height);
+
     return path;
   }
 
@@ -132,7 +142,7 @@ class _LineChartState extends State<LineChart>
     required progress,
   }) {
     nextPoints = getInterpolatePoints(prevPoints, points, progress);
-    Path setSize(Size size) {
+    return (size) {
       final prevPath = getPath(prevPoints, size);
       final nextPath = getPath(nextPoints, size);
       final prevMetric = prevPath.computeMetrics().first;
@@ -143,9 +153,7 @@ class _LineChartState extends State<LineChart>
         0,
         prevLength + (nextLength - prevLength) * progress,
       );
-    }
-
-    return setSize;
+    };
   }
 
   @override

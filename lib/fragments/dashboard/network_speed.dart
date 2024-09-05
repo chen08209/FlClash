@@ -59,7 +59,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
       style: bodyMedium,
       maxLines: 1,
     );
-    final size = globalState.appController.measure.computeTextSize(valueText);
+    final size = globalState.measure.computeTextSize(valueText);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,

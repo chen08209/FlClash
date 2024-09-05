@@ -73,11 +73,11 @@ class BackupAndRecovery extends StatelessWidget {
     final res = await commonScaffoldState?.loadingRun<bool>(
       () async {
         final backupData = await globalState.appController.backupData();
-        final value =  await picker.saveFile(
+        final value = await picker.saveFile(
           other.getBackupFileName(),
           Uint8List.fromList(backupData),
         );
-        if(value == null) return false;
+        if (value == null) return false;
         return true;
       },
       title: appLocalizations.backup,
@@ -203,6 +203,24 @@ class BackupAndRecovery extends StatelessWidget {
               ),
               const SizedBox(
                 height: 4,
+              ),
+              ListItem.input(
+                title: Text(appLocalizations.file),
+                subtitle: Text(dav.fileName),
+                delegate: InputDelegate(
+                  title: appLocalizations.file,
+                  value: dav.fileName,
+                  resetValue: defaultDavFileName,
+                  onChanged: (String? value) {
+                    if (value == null) {
+                      return;
+                    }
+                    globalState.appController.config.dav =
+                        globalState.appController.config.dav?.copyWith(
+                      fileName: value,
+                    );
+                  },
+                ),
               ),
               ListItem(
                 onTap: () {

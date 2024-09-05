@@ -53,7 +53,7 @@ class _IntranetIPState extends State<IntranetIP> {
       },
       child: Container(
         padding: const EdgeInsets.all(16).copyWith(top: 0),
-        height: globalState.appController.measure.titleLargeHeight + 24 - 2,
+        height: globalState.measure.titleLargeHeight + 24 - 2,
         child: ValueListenableBuilder(
           valueListenable: ipNotifier,
           builder: (_, value, __) {

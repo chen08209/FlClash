@@ -23,7 +23,7 @@ class ProxyCard extends StatelessWidget {
     required this.type,
   });
 
-  Measure get measure => globalState.appController.measure;
+  Measure get measure => globalState.measure;
 
   Widget _buildDelayText() {
     return SizedBox(
@@ -119,7 +119,7 @@ class ProxyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final measure = globalState.appController.measure;
+    final measure = globalState.measure;
     final delayText = _buildDelayText();
     final proxyNameText = _buildProxyNameText(context);
     return currentGroupProxyNameBuilder(

@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:fl_clash/clash/clash.dart';
-import 'package:fl_clash/common/other.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -25,12 +25,12 @@ Widget currentGroupProxyNameBuilder({
 }
 
 double get listHeaderHeight {
-  final measure = globalState.appController.measure;
+  final measure = globalState.measure;
   return 24 + measure.titleMediumHeight + 4 + measure.bodyMediumHeight;
 }
 
 double getItemHeight(ProxyCardType proxyCardType) {
-  final measure = globalState.appController.measure;
+  final measure = globalState.measure;
   final baseHeight =
       12 * 2 + measure.bodyMediumHeight * 2 + measure.bodySmallHeight + 8;
   return switch (proxyCardType) {
@@ -51,8 +51,12 @@ delayTest(List<Proxy> proxies) async {
       ),
     );
     globalState.appController.setDelay(await clashCore.getDelay(proxyName));
-  });
-  await Future.wait(delayProxies);
+  }).toList();
+
+  final batchesDelayProxies = delayProxies.batch(100);
+  for (final batchDelayProxies in batchesDelayProxies) {
+    await Future.wait(batchDelayProxies);
+  }
   appController.appState.sortNum++;
 }
 

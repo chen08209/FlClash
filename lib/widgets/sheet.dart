@@ -10,7 +10,7 @@ showExtendPage(
   required Widget body,
   required String title,
   double? extendPageWidth,
-  bool forceNotSide = false,
+  bool isScaffold = false,
   bool isBlur = true,
   Widget? action,
 }) {
@@ -33,7 +33,7 @@ showExtendPage(
     );
     return;
   }
-  final isNotSide = isMobile || forceNotSide;
+  final isNotSide = isMobile || isScaffold;
   navigator.push(
     ModalSideSheetRoute(
       modalBarrierColor: Colors.black38,

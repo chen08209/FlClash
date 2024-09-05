@@ -23,6 +23,7 @@ mixin _$DAV {
   String get uri => throw _privateConstructorUsedError;
   String get user => throw _privateConstructorUsedError;
   String get password => throw _privateConstructorUsedError;
+  String get fileName => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -34,7 +35,7 @@ abstract class $DAVCopyWith<$Res> {
   factory $DAVCopyWith(DAV value, $Res Function(DAV) then) =
       _$DAVCopyWithImpl<$Res, DAV>;
   @useResult
-  $Res call({String uri, String user, String password});
+  $Res call({String uri, String user, String password, String fileName});
 }
 
 /// @nodoc
@@ -52,6 +53,7 @@ class _$DAVCopyWithImpl<$Res, $Val extends DAV> implements $DAVCopyWith<$Res> {
     Object? uri = null,
     Object? user = null,
     Object? password = null,
+    Object? fileName = null,
   }) {
     return _then(_value.copyWith(
       uri: null == uri
@@ -66,6 +68,10 @@ class _$DAVCopyWithImpl<$Res, $Val extends DAV> implements $DAVCopyWith<$Res> {
           ? _value.password
           : password // ignore: cast_nullable_to_non_nullable
               as String,
+      fileName: null == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 }
@@ -76,7 +82,7 @@ abstract class _$$DAVImplCopyWith<$Res> implements $DAVCopyWith<$Res> {
       __$$DAVImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String uri, String user, String password});
+  $Res call({String uri, String user, String password, String fileName});
 }
 
 /// @nodoc
@@ -91,6 +97,7 @@ class __$$DAVImplCopyWithImpl<$Res> extends _$DAVCopyWithImpl<$Res, _$DAVImpl>
     Object? uri = null,
     Object? user = null,
     Object? password = null,
+    Object? fileName = null,
   }) {
     return _then(_$DAVImpl(
       uri: null == uri
@@ -105,6 +112,10 @@ class __$$DAVImplCopyWithImpl<$Res> extends _$DAVCopyWithImpl<$Res, _$DAVImpl>
           ? _value.password
           : password // ignore: cast_nullable_to_non_nullable
               as String,
+      fileName: null == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -113,7 +124,10 @@ class __$$DAVImplCopyWithImpl<$Res> extends _$DAVCopyWithImpl<$Res, _$DAVImpl>
 @JsonSerializable()
 class _$DAVImpl implements _DAV {
   const _$DAVImpl(
-      {required this.uri, required this.user, required this.password});
+      {required this.uri,
+      required this.user,
+      required this.password,
+      this.fileName = defaultDavFileName});
 
   factory _$DAVImpl.fromJson(Map<String, dynamic> json) =>
       _$$DAVImplFromJson(json);
@@ -124,10 +138,13 @@ class _$DAVImpl implements _DAV {
   final String user;
   @override
   final String password;
+  @override
+  @JsonKey()
+  final String fileName;
 
   @override
   String toString() {
-    return 'DAV(uri: $uri, user: $user, password: $password)';
+    return 'DAV(uri: $uri, user: $user, password: $password, fileName: $fileName)';
   }
 
   @override
@@ -138,12 +155,14 @@ class _$DAVImpl implements _DAV {
             (identical(other.uri, uri) || other.uri == uri) &&
             (identical(other.user, user) || other.user == user) &&
             (identical(other.password, password) ||
-                other.password == password));
+                other.password == password) &&
+            (identical(other.fileName, fileName) ||
+                other.fileName == fileName));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, uri, user, password);
+  int get hashCode => Object.hash(runtimeType, uri, user, password, fileName);
 
   @JsonKey(ignore: true)
   @override
@@ -163,7 +182,8 @@ abstract class _DAV implements DAV {
   const factory _DAV(
       {required final String uri,
       required final String user,
-      required final String password}) = _$DAVImpl;
+      required final String password,
+      final String fileName}) = _$DAVImpl;
 
   factory _DAV.fromJson(Map<String, dynamic> json) = _$DAVImpl.fromJson;
 
@@ -173,6 +193,8 @@ abstract class _DAV implements DAV {
   String get user;
   @override
   String get password;
+  @override
+  String get fileName;
   @override
   @JsonKey(ignore: true)
   _$$DAVImplCopyWith<_$DAVImpl> get copyWith =>

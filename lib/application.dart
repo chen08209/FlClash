@@ -158,7 +158,9 @@ class ApplicationState extends State<Application> {
                       GlobalWidgetsLocalizations.delegate
                     ],
                     builder: (_, child) {
-                      return _buildPage(child!);
+                      return MediaContainer(
+                        child: _buildPage(child!),
+                      );
                     },
                     scrollBehavior: BaseScrollBehavior(),
                     title: appName,

@@ -286,5 +286,7 @@
   "fallbackFilter": "Fallback filter",
   "geoipCode": "Geoip code",
   "ipcidr": "Ipcidr",
-  "domain": "Domain"
+  "domain": "Domain",
+  "resetDns": "Reset Dns",
+  "reset": "Reset"
 }

@@ -85,7 +85,8 @@ class KeepAliveIntervalItem extends StatelessWidget {
           delegate: InputDelegate(
             title: appLocalizations.keepAliveIntervalDesc,
             suffixText: appLocalizations.seconds,
-            value: value.toString(),
+            resetValue: "$defaultKeepAliveInterval",
+            value: "$value",
             onChanged: (String? value) {
               if (value != null) {
                 try {
@@ -125,6 +126,7 @@ class TestUrlItem extends StatelessWidget {
           title: Text(appLocalizations.testUrl),
           subtitle: Text(value),
           delegate: InputDelegate(
+            resetValue: defaultTestUrl,
             title: appLocalizations.testUrl,
             value: value,
             onChanged: (String? value) {
@@ -165,7 +167,7 @@ class MixedPortItem extends StatelessWidget {
           subtitle: Text("$value"),
           delegate: InputDelegate(
             title: appLocalizations.proxyPort,
-            value: value.toString(),
+            value: "$value",
             onChanged: (String? value) {
               if (value != null) {
                 try {
@@ -184,6 +186,7 @@ class MixedPortItem extends StatelessWidget {
                 }
               }
             },
+            resetValue: "$defaultMixedPort",
           ),
         );
       },

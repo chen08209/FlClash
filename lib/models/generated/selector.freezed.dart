@@ -3472,6 +3472,7 @@ mixin _$ClashConfigState {
   int get mixedPort => throw _privateConstructorUsedError;
   bool get allowLan => throw _privateConstructorUsedError;
   bool get ipv6 => throw _privateConstructorUsedError;
+  bool get overrideDns => throw _privateConstructorUsedError;
   String get geodataLoader => throw _privateConstructorUsedError;
   LogLevel get logLevel => throw _privateConstructorUsedError;
   String get externalController => throw _privateConstructorUsedError;
@@ -3502,6 +3503,7 @@ abstract class $ClashConfigStateCopyWith<$Res> {
       {int mixedPort,
       bool allowLan,
       bool ipv6,
+      bool overrideDns,
       String geodataLoader,
       LogLevel logLevel,
       String externalController,
@@ -3537,6 +3539,7 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
     Object? mixedPort = null,
     Object? allowLan = null,
     Object? ipv6 = null,
+    Object? overrideDns = null,
     Object? geodataLoader = null,
     Object? logLevel = null,
     Object? externalController = null,
@@ -3564,6 +3567,10 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
       ipv6: null == ipv6
           ? _value.ipv6
           : ipv6 // ignore: cast_nullable_to_non_nullable
+              as bool,
+      overrideDns: null == overrideDns
+          ? _value.overrideDns
+          : overrideDns // ignore: cast_nullable_to_non_nullable
               as bool,
       geodataLoader: null == geodataLoader
           ? _value.geodataLoader
@@ -3653,6 +3660,7 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
       {int mixedPort,
       bool allowLan,
       bool ipv6,
+      bool overrideDns,
       String geodataLoader,
       LogLevel logLevel,
       String externalController,
@@ -3688,6 +3696,7 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
     Object? mixedPort = null,
     Object? allowLan = null,
     Object? ipv6 = null,
+    Object? overrideDns = null,
     Object? geodataLoader = null,
     Object? logLevel = null,
     Object? externalController = null,
@@ -3715,6 +3724,10 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
       ipv6: null == ipv6
           ? _value.ipv6
           : ipv6 // ignore: cast_nullable_to_non_nullable
+              as bool,
+      overrideDns: null == overrideDns
+          ? _value.overrideDns
+          : overrideDns // ignore: cast_nullable_to_non_nullable
               as bool,
       geodataLoader: null == geodataLoader
           ? _value.geodataLoader
@@ -3783,6 +3796,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
       {required this.mixedPort,
       required this.allowLan,
       required this.ipv6,
+      required this.overrideDns,
       required this.geodataLoader,
       required this.logLevel,
       required this.externalController,
@@ -3807,6 +3821,8 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   final bool allowLan;
   @override
   final bool ipv6;
+  @override
+  final bool overrideDns;
   @override
   final String geodataLoader;
   @override
@@ -3856,7 +3872,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
 
   @override
   String toString() {
-    return 'ClashConfigState(mixedPort: $mixedPort, allowLan: $allowLan, ipv6: $ipv6, geodataLoader: $geodataLoader, logLevel: $logLevel, externalController: $externalController, mode: $mode, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, hosts: $hosts, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, rules: $rules, globalRealUa: $globalRealUa)';
+    return 'ClashConfigState(mixedPort: $mixedPort, allowLan: $allowLan, ipv6: $ipv6, overrideDns: $overrideDns, geodataLoader: $geodataLoader, logLevel: $logLevel, externalController: $externalController, mode: $mode, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, hosts: $hosts, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, rules: $rules, globalRealUa: $globalRealUa)';
   }
 
   @override
@@ -3869,6 +3885,8 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
             (identical(other.allowLan, allowLan) ||
                 other.allowLan == allowLan) &&
             (identical(other.ipv6, ipv6) || other.ipv6 == ipv6) &&
+            (identical(other.overrideDns, overrideDns) ||
+                other.overrideDns == overrideDns) &&
             (identical(other.geodataLoader, geodataLoader) ||
                 other.geodataLoader == geodataLoader) &&
             (identical(other.logLevel, logLevel) ||
@@ -3899,6 +3917,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
       mixedPort,
       allowLan,
       ipv6,
+      overrideDns,
       geodataLoader,
       logLevel,
       externalController,
@@ -3927,6 +3946,7 @@ abstract class _ClashConfigState implements ClashConfigState {
       {required final int mixedPort,
       required final bool allowLan,
       required final bool ipv6,
+      required final bool overrideDns,
       required final String geodataLoader,
       required final LogLevel logLevel,
       required final String externalController,
@@ -3948,6 +3968,8 @@ abstract class _ClashConfigState implements ClashConfigState {
   bool get allowLan;
   @override
   bool get ipv6;
+  @override
+  bool get overrideDns;
   @override
   String get geodataLoader;
   @override

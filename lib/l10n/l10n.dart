@@ -2929,6 +2929,26 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Reset Dns`
+  String get resetDns {
+    return Intl.message(
+      'Reset Dns',
+      name: 'resetDns',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset`
+  String get reset {
+    return Intl.message(
+      'Reset',
+      name: 'reset',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -3,22 +3,20 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Measure {
-  Measure.of(this.context);
+  final TextScaler _textScale;
+  late BuildContext context;
 
-  final _textScaleFactor =
-      WidgetsBinding.instance.platformDispatcher.textScaleFactor;
+  Measure.of(this.context) : _textScale = MediaQuery.of(context).textScaler;
 
   Size computeTextSize(Text text) {
     final textPainter = TextPainter(
       text: TextSpan(text: text.data, style: text.style),
       maxLines: text.maxLines,
-      textScaler: TextScaler.linear(_textScaleFactor),
+      textScaler: _textScale,
       textDirection: text.textDirection ?? TextDirection.ltr,
     )..layout();
     return textPainter.size;
   }
-
-  late BuildContext context;
 
   double? _bodyMediumHeight;
   double? _bodySmallHeight;

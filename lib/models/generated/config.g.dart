@@ -53,6 +53,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..vpnProps = VpnProps.fromJson(json['vpnProps'] as Map<String, dynamic>?)
   ..desktopProps =
       DesktopProps.fromJson(json['desktopProps'] as Map<String, dynamic>?)
+  ..scaleProps =
+      ScaleProps.fromJson(json['scaleProps'] as Map<String, dynamic>?)
   ..showLabel = json['showLabel'] as bool? ?? false
   ..overrideDns = json['overrideDns'] as bool? ?? false;
 
@@ -85,6 +87,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'windowProps': instance.windowProps,
       'vpnProps': instance.vpnProps,
       'desktopProps': instance.desktopProps,
+      'scaleProps': instance.scaleProps,
       'showLabel': instance.showLabel,
       'overrideDns': instance.overrideDns,
     };
@@ -233,4 +236,16 @@ _$DesktopPropsImpl _$$DesktopPropsImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$DesktopPropsImplToJson(_$DesktopPropsImpl instance) =>
     <String, dynamic>{
       'systemProxy': instance.systemProxy,
+    };
+
+_$ScalePropsImpl _$$ScalePropsImplFromJson(Map<String, dynamic> json) =>
+    _$ScalePropsImpl(
+      custom: json['custom'] as bool? ?? false,
+      scale: (json['scale'] as num?)?.toDouble() ?? defaultCustomFontSizeScale,
+    );
+
+Map<String, dynamic> _$$ScalePropsImplToJson(_$ScalePropsImpl instance) =>
+    <String, dynamic>{
+      'custom': instance.custom,
+      'scale': instance.scale,
     };

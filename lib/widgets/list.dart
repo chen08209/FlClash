@@ -50,12 +50,14 @@ class OpenDelegate extends Delegate {
   final String title;
   final double? extendPageWidth;
   final bool isBlur;
+  final bool isScaffold;
 
   const OpenDelegate({
     required this.title,
     required this.widget,
     this.extendPageWidth,
     this.isBlur = true,
+    this.isScaffold = false,
   });
 }
 
@@ -92,12 +94,14 @@ class InputDelegate extends Delegate {
   final String value;
   final String? suffixText;
   final Function(String? value) onChanged;
+  final String? resetValue;
 
   const InputDelegate({
     required this.title,
     required this.value,
     this.suffixText,
     required this.onChanged,
+    this.resetValue,
   });
 }
 
@@ -287,6 +291,7 @@ class ListItem<T> extends StatelessWidget {
                 title: openDelegate.title,
                 extendPageWidth: openDelegate.extendPageWidth,
                 isBlur: openDelegate.isBlur,
+                isScaffold: openDelegate.isScaffold,
               );
               return;
             }
@@ -332,6 +337,7 @@ class ListItem<T> extends StatelessWidget {
               title: inputDelegate.title,
               value: inputDelegate.value,
               suffixText: inputDelegate.suffixText,
+              resetValue: inputDelegate.resetValue,
             ),
           );
           inputDelegate.onChanged(value);

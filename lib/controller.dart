@@ -8,7 +8,6 @@ import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:lpinyin/lpinyin.dart';
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -22,7 +21,6 @@ class AppController {
   late AppState appState;
   late Config config;
   late ClashConfig clashConfig;
-  late Measure measure;
   late Function updateClashConfigDebounce;
   late Function updateGroupDebounce;
   late Function addCheckIpNumDebounce;
@@ -44,7 +42,6 @@ class AppController {
     updateGroupDebounce = debounce(() async {
       await updateGroups();
     });
-    measure = Measure.of(context);
   }
 
   updateStatus(bool isStart) async {
@@ -123,10 +120,6 @@ class AppController {
       config: config,
       isPatch: isPatch,
     );
-  }
-
-  updateTray(){
-
   }
 
   Future applyProfile({bool isPrue = false}) async {
@@ -315,6 +308,14 @@ class AppController {
     }
     autoUpdateProfiles();
     autoCheckUpdate();
+  }
+
+  updateTray() {
+    globalState.updateTray(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
+    );
   }
 
   setDelay(Delay delay) {

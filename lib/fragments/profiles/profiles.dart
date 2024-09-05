@@ -495,26 +495,29 @@ class _ReorderableProfilesState extends State<ReorderableProfiles> {
             itemCount: profiles.length,
           ),
         ),
-        Padding(
+        Container(
           padding: const EdgeInsets.symmetric(
             vertical: 8,
-            horizontal: 12,
+            horizontal: 24,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  globalState.appController.config.profiles = profiles;
-                },
-                icon: const Icon(
-                  Icons.check,
-                ),
-                iconSize: 32,
-                padding: const EdgeInsets.all(8),
+          child: FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              globalState.appController.config.profiles = profiles;
+            },
+            style: ButtonStyle(
+              padding: WidgetStateProperty.all(
+                const EdgeInsets.symmetric(vertical: 16),
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  appLocalizations.confirm,
+                ),
+              ],
+            ),
           ),
         ),
       ],
