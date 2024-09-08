@@ -47,14 +47,16 @@ class TUNSwitch extends StatelessWidget {
       child: Selector<ClashConfig, bool>(
         selector: (_, clashConfig) => clashConfig.tun.enable,
         builder: (_, enable, __) {
-          return Switch(
-            value: enable,
-            onChanged: (value) {
-              final clashConfig = globalState.appController.clashConfig;
-              clashConfig.tun = clashConfig.tun.copyWith(
-                enable: value,
-              );
-            },
+          return LocaleBuilder(
+            builder: (_) => Switch(
+              value: enable,
+              onChanged: (value) {
+                final clashConfig = globalState.appController.clashConfig;
+                clashConfig.tun = clashConfig.tun.copyWith(
+                  enable: value,
+                );
+              },
+            ),
           );
         },
       ),
@@ -75,14 +77,16 @@ class ProxySwitch extends StatelessWidget {
       child: Selector<Config, bool>(
         selector: (_, config) => config.desktopProps.systemProxy,
         builder: (_, systemProxy, __) {
-          return Switch(
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            value: systemProxy,
-            onChanged: (value) {
-              final config = globalState.appController.config;
-              config.desktopProps =
-                  config.desktopProps.copyWith(systemProxy: value);
-            },
+          return LocaleBuilder(
+            builder: (_) => Switch(
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              value: systemProxy,
+              onChanged: (value) {
+                final config = globalState.appController.config;
+                config.desktopProps =
+                    config.desktopProps.copyWith(systemProxy: value);
+              },
+            ),
           );
         },
       ),

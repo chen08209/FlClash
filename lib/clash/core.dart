@@ -158,7 +158,7 @@ class ClashCore {
     final externalProviderRawString =
         externalProviderRaw.cast<Utf8>().toDartString();
     clashFFI.freeCString(externalProviderRaw);
-    if(externalProviderRawString.isEmpty) return null;
+    if (externalProviderRawString.isEmpty) return null;
     return ExternalProvider.fromJson(json.decode(externalProviderRawString));
   }
 
@@ -322,9 +322,18 @@ class ClashCore {
     clashFFI.stopLog();
   }
 
-  startTun(int fd, int port) {
+  startTun(TunProps? tunProps, int port) {
     if (!Platform.isAndroid) return;
-    clashFFI.startTUN(fd, port);
+    final tunPropsChar = json.encode(tunProps).toNativeUtf8().cast<Char>();
+    clashFFI.startTUN(tunPropsChar, port);
+    malloc.free(tunPropsChar);
+  }
+
+  updateDns(String dns) {
+    if (!Platform.isAndroid) return;
+    final dnsChar = dns.toNativeUtf8().cast<Char>();
+    clashFFI.updateDns(dnsChar);
+    malloc.free(dnsChar);
   }
 
   requestGc() {

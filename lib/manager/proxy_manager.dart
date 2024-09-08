@@ -3,10 +3,10 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ProxyContainer extends StatelessWidget {
+class ProxyManager extends StatelessWidget {
   final Widget child;
 
-  const ProxyContainer({super.key, required this.child});
+  const ProxyManager({super.key, required this.child});
 
   _updateProxy(ProxyState proxyState) {
     final isStart = proxyState.isStart;

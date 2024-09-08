@@ -1,28 +1,20 @@
 package com.follow.clash.extensions
 
-import android.annotation.SuppressLint
-import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.app.Service
-import android.content.Context
-import android.content.Intent
-import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
-import android.os.Build
+import android.net.ConnectivityManager
+import android.net.Network
 import android.system.OsConstants.IPPROTO_TCP
 import android.system.OsConstants.IPPROTO_UDP
 import android.util.Base64
-import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.follow.clash.MainActivity
-import com.follow.clash.R
 import com.follow.clash.models.Metadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.net.Inet4Address
+import java.net.Inet6Address
+import java.net.InetAddress
 
 
 suspend fun Drawable.getBase64(): String {
@@ -41,6 +33,37 @@ fun Metadata.getProtocol(): Int? {
     return null
 }
 
-private val CHANNEL = "FlClash"
 
-private val notificationId: Int = 1
+fun ConnectivityManager.resolvePrimaryDns(network: Network?): String? {
+    val properties = getLinkProperties(network) ?: return null
+    return properties.dnsServers.firstOrNull()?.asSocketAddressText(53)
+}
+
+fun InetAddress.asSocketAddressText(port: Int): String {
+    return when (this) {
+        is Inet6Address ->
+            "[${numericToTextFormat(this.address)}]:$port"
+
+        is Inet4Address ->
+            "${this.hostAddress}:$port"
+
+        else -> throw IllegalArgumentException("Unsupported Inet type ${this.javaClass}")
+    }
+}
+
+
+private fun numericToTextFormat(src: ByteArray): String {
+    val sb = StringBuilder(39)
+    for (i in 0 until 8) {
+        sb.append(
+            Integer.toHexString(
+                src[i shl 1].toInt() shl 8 and 0xff00
+                        or (src[(i shl 1) + 1].toInt() and 0xff)
+            )
+        )
+        if (i < 7) {
+            sb.append(":")
+        }
+    }
+    return sb.toString()
+}

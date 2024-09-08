@@ -7,19 +7,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
-class WindowContainer extends StatefulWidget {
+class WindowManager extends StatefulWidget {
   final Widget child;
 
-  const WindowContainer({
+  const WindowManager({
     super.key,
     required this.child,
   });
 
   @override
-  State<WindowContainer> createState() => _WindowContainerState();
+  State<WindowManager> createState() => _WindowContainerState();
 }
 
-class _WindowContainerState extends State<WindowContainer> with WindowListener {
+class _WindowContainerState extends State<WindowManager> with WindowListener {
   Function? updateLaunchDebounce;
 
   _autoLaunchContainer(Widget child) {
@@ -99,21 +99,30 @@ class WindowHeaderContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
+    return Selector<AppState, int>(
+      selector: (_, appState) => appState.version,
+      builder: (_, version, child) {
+        if (version <= 10 && Platform.isMacOS) {
+          return child!;
+        }
+        return Stack(
           children: [
-            SizedBox(
-              height: kHeaderHeight,
+            Column(
+              children: [
+                SizedBox(
+                  height: kHeaderHeight,
+                ),
+                Expanded(
+                  flex: 1,
+                  child: child!,
+                ),
+              ],
             ),
-            Expanded(
-              flex: 1,
-              child: child,
-            ),
+            const WindowHeader(),
           ],
-        ),
-        const WindowHeader(),
-      ],
+        );
+      },
+      child: child,
     );
   }
 }
@@ -240,14 +249,20 @@ class _WindowHeaderState extends State<WindowHeader> {
               ),
             ),
           ),
-          const Positioned(
-            left: 0,
-            child: AppIcon(),
-          ),
-          Positioned(
-            right: 0,
-            child: _buildActions(),
-          ),
+          if (Platform.isMacOS)
+            const Text(
+              appName,
+            )
+          else ...[
+            const Positioned(
+              left: 0,
+              child: AppIcon(),
+            ),
+            Positioned(
+              right: 0,
+              child: _buildActions(),
+            ),
+          ]
         ],
       ),
     );

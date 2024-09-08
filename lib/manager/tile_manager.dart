@@ -2,19 +2,19 @@ import 'package:fl_clash/plugins/tile.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 
-class TileContainer extends StatefulWidget {
+class TileManager extends StatefulWidget {
   final Widget child;
 
-  const TileContainer({
+  const TileManager({
     super.key,
     required this.child,
   });
 
   @override
-  State<TileContainer> createState() => _TileContainerState();
+  State<TileManager> createState() => _TileContainerState();
 }
 
-class _TileContainerState extends State<TileContainer> with TileListener {
+class _TileContainerState extends State<TileManager> with TileListener {
 
 
   @override

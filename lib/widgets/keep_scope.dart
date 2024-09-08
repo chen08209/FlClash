@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
-class KeepContainer extends StatefulWidget {
+class KeepScope extends StatefulWidget {
   final Widget child;
   final bool keep;
 
-  const KeepContainer({
+  const KeepScope({
     super.key,
     required this.child,
     this.keep = true,
   });
 
   @override
-  State<KeepContainer> createState() => _KeepContainerState();
+  State<KeepScope> createState() => _KeepContainerState();
 }
 
-class _KeepContainerState extends State<KeepContainer>
+class _KeepContainerState extends State<KeepScope>
     with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {

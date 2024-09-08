@@ -298,6 +298,9 @@ class BuildCommand extends Command {
       Build.getExecutable("sudo apt install -y rpm patchelf"),
     );
     await Build.exec(
+      Build.getExecutable("sudo apt install -y rpm keybinder-3.0"),
+    );
+    await Build.exec(
       Build.getExecutable("sudo apt install -y locate"),
     );
     await Build.exec(

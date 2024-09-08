@@ -59,15 +59,16 @@ class ApplicationSelectorState with _$ApplicationSelectorState {
 }
 
 @freezed
-class TrayContainerSelectorState with _$TrayContainerSelectorState {
-  const factory TrayContainerSelectorState({
+class TrayState with _$TrayState {
+  const factory TrayState({
     required Mode mode,
     required bool autoLaunch,
     required bool systemProxy,
     required bool tunEnable,
     required bool isStart,
     required String? locale,
-  }) = _TrayContainerSelectorState;
+    required Brightness? brightness,
+  }) = _TrayState;
 }
 
 @freezed
@@ -79,21 +80,15 @@ class UpdateNavigationsSelector with _$UpdateNavigationsSelector {
 }
 
 @freezed
-class HomeSelectorState with _$HomeSelectorState {
-  const factory HomeSelectorState({
+class HomeState with _$HomeState {
+  const factory HomeState({
     required String currentLabel,
     required List<NavigationItem> navigationItems,
     required ViewMode viewMode,
     required String? locale,
-  }) = _HomeSelectorState;
+  }) = _HomeState;
 }
 
-@freezed
-class HomeBodySelectorState with _$HomeBodySelectorState {
-  const factory HomeBodySelectorState({
-    required List<NavigationItem> navigationItems,
-  }) = _HomeBodySelectorState;
-}
 
 @freezed
 class ProxiesCardSelectorState with _$ProxiesCardSelectorState {
@@ -245,3 +240,12 @@ class ClashConfigState with _$ClashConfigState {
     required String? globalRealUa,
   }) = _ClashConfigState;
 }
+
+@freezed
+class ThemeState with _$ThemeState {
+  const factory ThemeState({
+    required String? locale,
+    required ScaleProps scaleProps,
+  }) = _ThemeState;
+}
+

@@ -4,16 +4,9 @@ import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
-import 'connection.dart';
+import 'common.dart';
 import 'ffi.dart';
-import 'log.dart';
-import 'navigation.dart';
-import 'package.dart';
 import 'profile.dart';
-import 'proxy.dart';
-import 'system_color_scheme.dart';
-import 'traffic.dart';
-import 'version.dart';
 
 typedef DelayMap = Map<String, int?>;
 
@@ -38,11 +31,14 @@ class AppState with ChangeNotifier {
   num _checkIpNum;
   List<ExternalProvider> _providers;
   List<Package> _packages;
+  Brightness? _brightness;
+  int _version;
 
   AppState({
     required Mode mode,
     required bool isCompatible,
     required SelectedMap selectedMap,
+    required int version,
   })  : _navigationItems = [],
         _isInit = false,
         _currentLabel = "dashboard",
@@ -54,13 +50,15 @@ class AppState with ChangeNotifier {
         _checkIpNum = 0,
         _requests = [],
         _mode = mode,
+        _brightness = null,
         _totalTraffic = Traffic(),
         _delayMap = {},
         _groups = [],
         _providers = [],
         _packages = [],
         _isCompatible = isCompatible,
-        _systemColorSchemes = const SystemColorSchemes();
+        _systemColorSchemes = const SystemColorSchemes(),
+        _version = version;
 
   String get currentLabel => _currentLabel;
 
@@ -354,7 +352,7 @@ class AppState with ChangeNotifier {
   }
 
   setProvider(ExternalProvider? provider) {
-    if(provider == null) return;
+    if (provider == null) return;
     final index = _providers.indexWhere((item) => item.name == provider.name);
     if (index == -1) return;
     _providers = List.from(_providers)..[index] = provider;
@@ -365,5 +363,23 @@ class AppState with ChangeNotifier {
     final index =
         currentGroups.indexWhere((element) => element.name == groupName);
     return index != -1 ? currentGroups[index] : null;
+  }
+
+  Brightness? get brightness => _brightness;
+
+  set brightness(Brightness? value) {
+    if (_brightness != value) {
+      _brightness = value;
+      notifyListeners();
+    }
+  }
+
+  int get version => _version;
+
+  set version(int value) {
+    if (_version != value) {
+      _version = value;
+      notifyListeners();
+    }
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -40,10 +38,26 @@ double getItemHeight(ProxyCardType proxyCardType) {
   };
 }
 
+proxyDelayTest(Proxy proxy) async {
+  final appController = globalState.appController;
+  final proxyName = appController.appState.getRealProxyName(proxy.name);
+  globalState.appController.setDelay(
+    Delay(
+      name: proxyName,
+      value: 0,
+    ),
+  );
+  globalState.appController.setDelay(await clashCore.getDelay(proxyName));
+}
+
 delayTest(List<Proxy> proxies) async {
   final appController = globalState.appController;
-  final delayProxies = proxies.map<Future>((proxy) async {
-    final proxyName = appController.appState.getRealProxyName(proxy.name);
+  final proxyNames = proxies
+      .map((proxy) => appController.appState.getRealProxyName(proxy.name))
+      .toSet()
+      .toList();
+
+  final delayProxies = proxyNames.map<Future>((proxyName) async {
     globalState.appController.setDelay(
       Delay(
         name: proxyName,
@@ -76,5 +90,5 @@ double getScrollToSelectedOffset({
   );
   final selectedIndex = findSelectedIndex != -1 ? findSelectedIndex : 0;
   final rows = (selectedIndex / columns).floor();
-  return max(rows * (getItemHeight(proxyCardType) + 8) - 8, 0);
+  return rows * getItemHeight(proxyCardType) + (rows - 1) * 8;
 }

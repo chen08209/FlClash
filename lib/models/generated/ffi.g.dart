@@ -176,3 +176,25 @@ Map<String, dynamic> _$$ExternalProviderImplToJson(
       'vehicle-type': instance.vehicleType,
       'update-at': instance.updateAt.toIso8601String(),
     };
+
+_$TunPropsImpl _$$TunPropsImplFromJson(Map<String, dynamic> json) =>
+    _$TunPropsImpl(
+      fd: (json['fd'] as num).toInt(),
+      gateway: json['gateway'] as String,
+      gateway6: json['gateway6'] as String,
+      portal: json['portal'] as String,
+      portal6: json['portal6'] as String,
+      dns: json['dns'] as String,
+      dns6: json['dns6'] as String,
+    );
+
+Map<String, dynamic> _$$TunPropsImplToJson(_$TunPropsImpl instance) =>
+    <String, dynamic>{
+      'fd': instance.fd,
+      'gateway': instance.gateway,
+      'gateway6': instance.gateway6,
+      'portal': instance.portal,
+      'portal6': instance.portal6,
+      'dns': instance.dns,
+      'dns6': instance.dns6,
+    };

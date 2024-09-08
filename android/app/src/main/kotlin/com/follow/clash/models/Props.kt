@@ -17,3 +17,13 @@ data class Props(
     val allowBypass: Boolean?,
     val systemProxy: Boolean?,
 )
+
+data class TunProps(
+    val fd: Int,
+    val gateway: String,
+    val gateway6: String,
+    val portal: String,
+    val portal6: String,
+    val dns: String,
+    val dns6: String
+)

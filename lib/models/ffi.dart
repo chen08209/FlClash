@@ -135,6 +135,22 @@ class ExternalProvider with _$ExternalProvider {
       _$ExternalProviderFromJson(json);
 }
 
+@freezed
+class TunProps with _$TunProps {
+  const factory TunProps({
+    required int fd,
+    required String gateway,
+    required String gateway6,
+    required String portal,
+    required String portal6,
+    required String dns,
+    required String dns6,
+  }) = _TunProps;
+
+  factory TunProps.fromJson(Map<String, Object?> json) =>
+      _$TunPropsFromJson(json);
+}
+
 abstract mixin class AppMessageListener {
   void onLog(Log log) {}
 

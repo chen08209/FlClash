@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+import android.net.Network
 import android.net.ProxyInfo
 import android.net.VpnService
 import android.os.Binder
@@ -22,6 +23,7 @@ import com.follow.clash.MainActivity
 import com.follow.clash.R
 import com.follow.clash.models.AccessControlMode
 import com.follow.clash.models.Props
+import com.follow.clash.models.TunProps
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,36 +32,53 @@ import kotlinx.coroutines.launch
 @SuppressLint("WrongConstant")
 class FlClashVpnService : VpnService(), BaseServiceInterface {
 
-    private val passList = listOf(
-        "*zhihu.com",
-        "*zhimg.com",
-        "*jd.com",
-        "100ime-iat-api.xfyun.cn",
-        "*360buyimg.com",
-        "localhost",
-        "*.local",
-        "127.*",
-        "10.*",
-        "172.16.*",
-        "172.17.*",
-        "172.18.*",
-        "172.19.*",
-        "172.2*",
-        "172.30.*",
-        "172.31.*",
-        "192.168.*"
-    )
+    companion object {
+        private val passList = listOf(
+            "*zhihu.com",
+            "*zhimg.com",
+            "*jd.com",
+            "100ime-iat-api.xfyun.cn",
+            "*360buyimg.com",
+            "localhost",
+            "*.local",
+            "127.*",
+            "10.*",
+            "172.16.*",
+            "172.17.*",
+            "172.18.*",
+            "172.19.*",
+            "172.2*",
+            "172.30.*",
+            "172.31.*",
+            "192.168.*"
+        )
+        private const val TUN_MTU = 9000
+        private const val TUN_SUBNET_PREFIX = 30
+        private const val TUN_GATEWAY = "172.19.0.1"
+        private const val TUN_SUBNET_PREFIX6 = 126
+        private const val TUN_GATEWAY6 = "fdfe:dcba:9876::1"
+        private const val TUN_PORTAL = "172.19.0.2"
+        private const val TUN_PORTAL6 = "fdfe:dcba:9876::2"
+        private const val TUN_DNS = TUN_PORTAL
+        private const val TUN_DNS6 = TUN_PORTAL6
+        private const val NET_ANY = "0.0.0.0"
+        private const val NET_ANY6 = "::"
+    }
 
     override fun onCreate() {
         super.onCreate()
         GlobalState.initServiceEngine(applicationContext)
     }
 
-    override fun start(port: Int, props: Props?): Int? {
+    override fun start(port: Int, props: Props?): TunProps {
         return with(Builder()) {
-            addAddress("172.16.0.1", 30)
-            setMtu(9000)
-            addRoute("0.0.0.0", 0)
+            addAddress(TUN_GATEWAY, TUN_SUBNET_PREFIX)
+            addAddress(TUN_GATEWAY6, TUN_SUBNET_PREFIX6)
+            addRoute(NET_ANY, 0)
+            addRoute(NET_ANY6, 0)
+            addDnsServer(TUN_DNS)
+            addDnsServer(TUN_DNS6)
+            setMtu(TUN_MTU)
             props?.accessControl?.let { accessControl ->
                 when (accessControl.mode) {
                     AccessControlMode.acceptSelected -> {
@@ -75,7 +94,6 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                     }
                 }
             }
-            addDnsServer("172.16.0.2")
             setSession("FlClash")
             setBlocking(false)
             if (Build.VERSION.SDK_INT >= 29) {
@@ -93,10 +111,24 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                     )
                 )
             }
-            establish()?.detachFd()
+            TunProps(
+                fd = establish()?.detachFd()
+                    ?: throw NullPointerException("Establish VPN rejected by system"),
+                gateway = "$TUN_GATEWAY/$TUN_SUBNET_PREFIX",
+                gateway6 = "$TUN_GATEWAY6/$TUN_SUBNET_PREFIX6",
+                portal = TUN_PORTAL,
+                portal6 = TUN_PORTAL6,
+                dns = TUN_DNS,
+                dns6 = TUN_DNS6
+            )
         }
     }
 
+    fun updateUnderlyingNetworks( networks: Array<Network>){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            this.setUnderlyingNetworks(networks)
+        }
+    }
 
     override fun stop() {
         stopSelf()
@@ -165,7 +197,7 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        GlobalState.getCurrentAppPlugin()?.requestGc()
+        GlobalState.getCurrentVPNPlugin()?.requestGc()
     }
 
     private val binder = LocalBinder()

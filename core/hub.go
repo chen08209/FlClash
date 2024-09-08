@@ -378,27 +378,28 @@ func updateGeoData(geoType *C.char, geoName *C.char, port C.longlong) {
 	geoTypeString := C.GoString(geoType)
 	geoNameString := C.GoString(geoName)
 	go func() {
+		path := constant.Path.Resolve(geoNameString)
 		switch geoTypeString {
 		case "MMDB":
-			err := updater.UpdateMMDB(constant.Path.Resolve(geoNameString))
+			err := updater.UpdateMMDBWithPath(path)
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "ASN":
-			err := updater.UpdateASN(constant.Path.Resolve(geoNameString))
+			err := updater.UpdateASNWithPath(path)
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "GeoIp":
-			err := updater.UpdateGeoIp(constant.Path.Resolve(geoNameString))
+			err := updater.UpdateGeoIpWithPath(path)
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return
 			}
 		case "GeoSite":
-			err := updater.UpdateGeoSite(constant.Path.Resolve(geoNameString))
+			err := updater.UpdateGeoSiteWithPath(path)
 			if err != nil {
 				bridge.SendToPort(i, err.Error())
 				return

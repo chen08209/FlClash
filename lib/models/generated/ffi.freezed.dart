@@ -1975,3 +1975,264 @@ abstract class _ExternalProvider implements ExternalProvider {
   _$$ExternalProviderImplCopyWith<_$ExternalProviderImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+TunProps _$TunPropsFromJson(Map<String, dynamic> json) {
+  return _TunProps.fromJson(json);
+}
+
+/// @nodoc
+mixin _$TunProps {
+  int get fd => throw _privateConstructorUsedError;
+  String get gateway => throw _privateConstructorUsedError;
+  String get gateway6 => throw _privateConstructorUsedError;
+  String get portal => throw _privateConstructorUsedError;
+  String get portal6 => throw _privateConstructorUsedError;
+  String get dns => throw _privateConstructorUsedError;
+  String get dns6 => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $TunPropsCopyWith<TunProps> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TunPropsCopyWith<$Res> {
+  factory $TunPropsCopyWith(TunProps value, $Res Function(TunProps) then) =
+      _$TunPropsCopyWithImpl<$Res, TunProps>;
+  @useResult
+  $Res call(
+      {int fd,
+      String gateway,
+      String gateway6,
+      String portal,
+      String portal6,
+      String dns,
+      String dns6});
+}
+
+/// @nodoc
+class _$TunPropsCopyWithImpl<$Res, $Val extends TunProps>
+    implements $TunPropsCopyWith<$Res> {
+  _$TunPropsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? fd = null,
+    Object? gateway = null,
+    Object? gateway6 = null,
+    Object? portal = null,
+    Object? portal6 = null,
+    Object? dns = null,
+    Object? dns6 = null,
+  }) {
+    return _then(_value.copyWith(
+      fd: null == fd
+          ? _value.fd
+          : fd // ignore: cast_nullable_to_non_nullable
+              as int,
+      gateway: null == gateway
+          ? _value.gateway
+          : gateway // ignore: cast_nullable_to_non_nullable
+              as String,
+      gateway6: null == gateway6
+          ? _value.gateway6
+          : gateway6 // ignore: cast_nullable_to_non_nullable
+              as String,
+      portal: null == portal
+          ? _value.portal
+          : portal // ignore: cast_nullable_to_non_nullable
+              as String,
+      portal6: null == portal6
+          ? _value.portal6
+          : portal6 // ignore: cast_nullable_to_non_nullable
+              as String,
+      dns: null == dns
+          ? _value.dns
+          : dns // ignore: cast_nullable_to_non_nullable
+              as String,
+      dns6: null == dns6
+          ? _value.dns6
+          : dns6 // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$TunPropsImplCopyWith<$Res>
+    implements $TunPropsCopyWith<$Res> {
+  factory _$$TunPropsImplCopyWith(
+          _$TunPropsImpl value, $Res Function(_$TunPropsImpl) then) =
+      __$$TunPropsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {int fd,
+      String gateway,
+      String gateway6,
+      String portal,
+      String portal6,
+      String dns,
+      String dns6});
+}
+
+/// @nodoc
+class __$$TunPropsImplCopyWithImpl<$Res>
+    extends _$TunPropsCopyWithImpl<$Res, _$TunPropsImpl>
+    implements _$$TunPropsImplCopyWith<$Res> {
+  __$$TunPropsImplCopyWithImpl(
+      _$TunPropsImpl _value, $Res Function(_$TunPropsImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? fd = null,
+    Object? gateway = null,
+    Object? gateway6 = null,
+    Object? portal = null,
+    Object? portal6 = null,
+    Object? dns = null,
+    Object? dns6 = null,
+  }) {
+    return _then(_$TunPropsImpl(
+      fd: null == fd
+          ? _value.fd
+          : fd // ignore: cast_nullable_to_non_nullable
+              as int,
+      gateway: null == gateway
+          ? _value.gateway
+          : gateway // ignore: cast_nullable_to_non_nullable
+              as String,
+      gateway6: null == gateway6
+          ? _value.gateway6
+          : gateway6 // ignore: cast_nullable_to_non_nullable
+              as String,
+      portal: null == portal
+          ? _value.portal
+          : portal // ignore: cast_nullable_to_non_nullable
+              as String,
+      portal6: null == portal6
+          ? _value.portal6
+          : portal6 // ignore: cast_nullable_to_non_nullable
+              as String,
+      dns: null == dns
+          ? _value.dns
+          : dns // ignore: cast_nullable_to_non_nullable
+              as String,
+      dns6: null == dns6
+          ? _value.dns6
+          : dns6 // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$TunPropsImpl implements _TunProps {
+  const _$TunPropsImpl(
+      {required this.fd,
+      required this.gateway,
+      required this.gateway6,
+      required this.portal,
+      required this.portal6,
+      required this.dns,
+      required this.dns6});
+
+  factory _$TunPropsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$TunPropsImplFromJson(json);
+
+  @override
+  final int fd;
+  @override
+  final String gateway;
+  @override
+  final String gateway6;
+  @override
+  final String portal;
+  @override
+  final String portal6;
+  @override
+  final String dns;
+  @override
+  final String dns6;
+
+  @override
+  String toString() {
+    return 'TunProps(fd: $fd, gateway: $gateway, gateway6: $gateway6, portal: $portal, portal6: $portal6, dns: $dns, dns6: $dns6)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TunPropsImpl &&
+            (identical(other.fd, fd) || other.fd == fd) &&
+            (identical(other.gateway, gateway) || other.gateway == gateway) &&
+            (identical(other.gateway6, gateway6) ||
+                other.gateway6 == gateway6) &&
+            (identical(other.portal, portal) || other.portal == portal) &&
+            (identical(other.portal6, portal6) || other.portal6 == portal6) &&
+            (identical(other.dns, dns) || other.dns == dns) &&
+            (identical(other.dns6, dns6) || other.dns6 == dns6));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, fd, gateway, gateway6, portal, portal6, dns, dns6);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TunPropsImplCopyWith<_$TunPropsImpl> get copyWith =>
+      __$$TunPropsImplCopyWithImpl<_$TunPropsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$TunPropsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _TunProps implements TunProps {
+  const factory _TunProps(
+      {required final int fd,
+      required final String gateway,
+      required final String gateway6,
+      required final String portal,
+      required final String portal6,
+      required final String dns,
+      required final String dns6}) = _$TunPropsImpl;
+
+  factory _TunProps.fromJson(Map<String, dynamic> json) =
+      _$TunPropsImpl.fromJson;
+
+  @override
+  int get fd;
+  @override
+  String get gateway;
+  @override
+  String get gateway6;
+  @override
+  String get portal;
+  @override
+  String get portal6;
+  @override
+  String get dns;
+  @override
+  String get dns6;
+  @override
+  @JsonKey(ignore: true)
+  _$$TunPropsImplCopyWith<_$TunPropsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

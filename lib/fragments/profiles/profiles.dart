@@ -497,17 +497,17 @@ class _ReorderableProfilesState extends State<ReorderableProfiles> {
         ),
         Container(
           padding: const EdgeInsets.symmetric(
-            vertical: 8,
+            vertical: 16,
             horizontal: 24,
           ),
-          child: FilledButton(
+          child: FilledButton.tonal(
             onPressed: () {
               Navigator.of(context).pop();
               globalState.appController.config.profiles = profiles;
             },
             style: ButtonStyle(
               padding: WidgetStateProperty.all(
-                const EdgeInsets.symmetric(vertical: 16),
+                const EdgeInsets.symmetric(vertical: 8),
               ),
             ),
             child: Row(
