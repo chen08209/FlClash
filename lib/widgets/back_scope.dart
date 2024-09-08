@@ -4,16 +4,16 @@ import 'dart:io';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
 
-class PopContainer extends StatefulWidget {
+class BackScope extends StatefulWidget {
   final Widget child;
 
-  const PopContainer({super.key, required this.child});
+  const BackScope({super.key, required this.child});
 
   @override
-  State<PopContainer> createState() => _PopContainerState();
+  State<BackScope> createState() => _PopContainerState();
 }
 
-class _PopContainerState extends State<PopContainer> {
+class _PopContainerState extends State<BackScope> {
   @override
   Widget build(BuildContext context) {
     if (Platform.isAndroid) {

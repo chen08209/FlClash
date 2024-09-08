@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/manager/hotkey_manager.dart';
+import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/proxy_container.dart';
-import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -53,6 +54,7 @@ class Application extends StatefulWidget {
 
 class ApplicationState extends State<Application> {
   late SystemColorSchemes systemColorSchemes;
+  Timer? timer;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -81,6 +83,7 @@ class ApplicationState extends State<Application> {
   @override
   void initState() {
     super.initState();
+    _initTimer();
     globalState.appController = AppController(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final currentContext = globalState.navigatorKey.currentContext;
@@ -92,18 +95,36 @@ class ApplicationState extends State<Application> {
     });
   }
 
+  _initTimer() {
+    _cancelTimer();
+    timer = Timer.periodic(const Duration(milliseconds: 20000), (_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        globalState.appController.updateGroupDebounce();
+      });
+    });
+  }
+
+  _cancelTimer() {
+    if (timer != null) {
+      timer?.cancel();
+      timer = null;
+    }
+  }
+
   _buildApp(Widget app) {
     if (system.isDesktop) {
-      return WindowContainer(
-        child: TrayContainer(
-          child: ProxyContainer(
-            child: app,
+      return WindowManager(
+        child: TrayManager(
+          child: HotKeyManager(
+            child: ProxyManager(
+              child: app,
+            ),
           ),
         ),
       );
     }
-    return AndroidContainer(
-      child: TileContainer(
+    return AndroidManager(
+      child: TileManager(
         child: app,
       ),
     );
@@ -115,7 +136,7 @@ class ApplicationState extends State<Application> {
         child: page,
       );
     }
-    return VpnContainer(
+    return VpnManager(
       child: page,
     );
   }
@@ -136,8 +157,8 @@ class ApplicationState extends State<Application> {
   @override
   Widget build(context) {
     return _buildApp(
-      AppStateContainer(
-        child: ClashContainer(
+      AppStateManager(
+        child: ClashManager(
           child: Selector2<AppState, Config, ApplicationSelectorState>(
             selector: (_, appState, config) => ApplicationSelectorState(
               locale: config.locale,
@@ -158,7 +179,7 @@ class ApplicationState extends State<Application> {
                       GlobalWidgetsLocalizations.delegate
                     ],
                     builder: (_, child) {
-                      return MediaContainer(
+                      return MediaManager(
                         child: _buildPage(child!),
                       );
                     },
@@ -203,5 +224,6 @@ class ApplicationState extends State<Application> {
     linkManager.destroy();
     await globalState.appController.savePreferences();
     super.dispose();
+    _cancelTimer();
   }
 }

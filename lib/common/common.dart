@@ -28,3 +28,4 @@ export 'iterable.dart';
 export 'scroll.dart';
 export 'icons.dart';
 export 'http.dart';
+export 'keyboard.dart';

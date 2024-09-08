@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:fl_clash/enum/enum.dart';
@@ -16,7 +17,11 @@ const mmdbFileName = "geoip.metadb";
 const asnFileName = "ASN.mmdb";
 const geoIpFileName = "GeoIP.dat";
 const geoSiteFileName = "GeoSite.dat";
-final double kHeaderHeight = system.isDesktop ? 40 : 0;
+final double kHeaderHeight = system.isDesktop
+    ? !Platform.isMacOS
+        ? 40
+        : 26
+    : 0;
 const GeoXMap defaultGeoXMap = {
   "mmdb":
       "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -52,7 +53,7 @@ class HomePage extends StatelessWidget {
                         builder: (_, showLabel, __) {
                           return NavigationRail(
                             backgroundColor:
-                            context.colorScheme.surfaceContainer,
+                                context.colorScheme.surfaceContainer,
                             selectedIconTheme: IconThemeData(
                               color: context.colorScheme.onSurfaceVariant,
                             ),
@@ -60,25 +61,25 @@ class HomePage extends StatelessWidget {
                               color: context.colorScheme.onSurfaceVariant,
                             ),
                             selectedLabelTextStyle:
-                            context.textTheme.labelLarge!.copyWith(
+                                context.textTheme.labelLarge!.copyWith(
                               color: context.colorScheme.onSurface,
                             ),
                             unselectedLabelTextStyle:
-                            context.textTheme.labelLarge!.copyWith(
+                                context.textTheme.labelLarge!.copyWith(
                               color: context.colorScheme.onSurface,
                             ),
                             destinations: navigationItems
                                 .map(
                                   (e) => NavigationRailDestination(
-                                icon: e.icon,
-                                label: Text(
-                                  Intl.message(e.label),
-                                ),
-                              ),
-                            )
+                                    icon: e.icon,
+                                    label: Text(
+                                      Intl.message(e.label),
+                                    ),
+                                  ),
+                                )
                                 .toList(),
                             onDestinationSelected:
-                            globalState.appController.toPage,
+                                globalState.appController.toPage,
                             extended: false,
                             selectedIndex: currentIndex,
                             labelType: showLabel
@@ -108,9 +109,52 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  _updatePageController(List<NavigationItem> navigationItems) {
+    final currentLabel = globalState.appController.appState.currentLabel;
+    final index = navigationItems.lastIndexWhere(
+      (element) => element.label == currentLabel,
+    );
+    final currentIndex = index == -1 ? 0 : index;
+    if (globalState.pageController != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        globalState.appController.toPage(currentIndex, hasAnimate: true);
+      });
+    } else {
+      globalState.pageController = PageController(
+        initialPage: currentIndex,
+        keepPage: true,
+      );
+    }
+  }
+
+  Widget _buildPageView() {
+    return Selector<AppState, List<NavigationItem>>(
+      selector: (_, appState) => appState.currentNavigationItems,
+      shouldRebuild: (prev, next) {
+        return prev.length != next.length;
+      },
+      builder: (_, navigationItems, __) {
+        _updatePageController(navigationItems);
+        return PageView.builder(
+          controller: globalState.pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: navigationItems.length,
+          itemBuilder: (_, index) {
+            final navigationItem = navigationItems[index];
+            return KeepScope(
+              keep: navigationItem.keep,
+              key: Key(navigationItem.label),
+              child: navigationItem.fragment,
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return PopContainer(
+    return BackScope(
       child: LayoutBuilder(
         builder: (_, container) {
           final appController = globalState.appController;
@@ -118,14 +162,17 @@ class HomePage extends StatelessWidget {
           if (appController.appState.viewWidth != maxWidth) {
             globalState.appController.updateViewWidth(maxWidth);
           }
-          return Selector2<AppState, Config, HomeSelectorState>(
+          return Selector2<AppState, Config, HomeState>(
             selector: (_, appState, config) {
-              return HomeSelectorState(
+              return HomeState(
                 currentLabel: appState.currentLabel,
                 navigationItems: appState.currentNavigationItems,
                 viewMode: other.getViewMode(maxWidth),
                 locale: config.locale,
               );
+            },
+            shouldRebuild: (prev, next) {
+              return prev != next;
             },
             builder: (_, state, child) {
               final viewMode = state.viewMode;
@@ -155,60 +202,10 @@ class HomePage extends StatelessWidget {
                 bottomNavigationBar: bottomNavigationBar,
               );
             },
-            child: const HomeBody(
-              key: Key("home_boy"),
-            ),
+            child: _buildPageView(),
           );
         },
       ),
-    );
-  }
-}
-
-class HomeBody extends StatelessWidget {
-  const HomeBody({super.key});
-
-  _updatePageIndex(List<NavigationItem> navigationItems) {
-    final currentLabel = globalState.appController.appState.currentLabel;
-    final index = navigationItems.lastIndexWhere(
-      (element) => element.label == currentLabel,
-    );
-    final currentIndex = index == -1 ? 0 : index;
-    if (globalState.pageController != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        globalState.appController.toPage(currentIndex, hasAnimate: true);
-      });
-    } else {
-      globalState.pageController = PageController(
-        initialPage: currentIndex,
-        keepPage: true,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Selector<AppState, HomeBodySelectorState>(
-      selector: (_, appState) => HomeBodySelectorState(
-        navigationItems: appState.currentNavigationItems,
-      ),
-      builder: (_, state, __) {
-        final navigationItems = state.navigationItems;
-        _updatePageIndex(navigationItems);
-        return PageView.builder(
-          controller: globalState.pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: navigationItems.length,
-          itemBuilder: (_, index) {
-            final navigationItem = navigationItems[index];
-            return KeepContainer(
-              keep: navigationItem.keep,
-              key: Key(navigationItem.label),
-              child: navigationItem.fragment,
-            );
-          },
-        );
-      },
     );
   }
 }

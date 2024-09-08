@@ -143,6 +143,8 @@ class Config extends ChangeNotifier {
   DesktopProps _desktopProps;
   bool _showLabel;
   bool _overrideDns;
+  List<HotKeyAction> _hotKeyActions;
+  bool _isDisclaimerAccepted;
 
   Config()
       : _profiles = [],
@@ -172,7 +174,9 @@ class Config extends ChangeNotifier {
         _desktopProps = const DesktopProps(),
         _showLabel = false,
         _overrideDns = false,
-        _scaleProps = const ScaleProps();
+        _scaleProps = const ScaleProps(),
+        _isDisclaimerAccepted = false,
+        _hotKeyActions = [];
 
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
@@ -597,6 +601,37 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: false)
+  bool get isDisclaimerAccepted => _isDisclaimerAccepted;
+
+  set isDisclaimerAccepted(bool value) {
+    if (_isDisclaimerAccepted != value) {
+      _isDisclaimerAccepted = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(defaultValue: [])
+  List<HotKeyAction> get hotKeyActions => _hotKeyActions;
+
+  set hotKeyActions(List<HotKeyAction> value) {
+    if (_hotKeyActions != value) {
+      _hotKeyActions = value;
+      notifyListeners();
+    }
+  }
+
+  updateOrAddHotKeyAction(HotKeyAction hotKeyAction) {
+    final index =
+        _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
+    if (index == -1) {
+      _hotKeyActions = List.from(_hotKeyActions)..add(hotKeyAction);
+    } else {
+      _hotKeyActions = List.from(_hotKeyActions)..[index] = hotKeyAction;
+    }
+    notifyListeners();
+  }
+
   update([
     Config? config,
     RecoveryOption recoveryOptions = RecoveryOption.all,
@@ -636,6 +671,7 @@ class Config extends ChangeNotifier {
       _vpnProps = config._vpnProps;
       _overrideDns = config._overrideDns;
       _desktopProps = config._desktopProps;
+      _hotKeyActions = config._hotKeyActions;
     }
     notifyListeners();
   }

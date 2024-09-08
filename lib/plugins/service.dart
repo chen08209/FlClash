@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
 
 class Service {
@@ -26,4 +27,5 @@ class Service {
   }
 }
 
-final service = Platform.isAndroid ? Service() : null;
+final service =
+    Platform.isAndroid && !globalState.isVpnService ? Service() : null;

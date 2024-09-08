@@ -957,25 +957,24 @@ abstract class _ApplicationSelectorState implements ApplicationSelectorState {
 }
 
 /// @nodoc
-mixin _$TrayContainerSelectorState {
+mixin _$TrayState {
   Mode get mode => throw _privateConstructorUsedError;
   bool get autoLaunch => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
   bool get tunEnable => throw _privateConstructorUsedError;
   bool get isStart => throw _privateConstructorUsedError;
   String? get locale => throw _privateConstructorUsedError;
+  Brightness? get brightness => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $TrayContainerSelectorStateCopyWith<TrayContainerSelectorState>
-      get copyWith => throw _privateConstructorUsedError;
+  $TrayStateCopyWith<TrayState> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $TrayContainerSelectorStateCopyWith<$Res> {
-  factory $TrayContainerSelectorStateCopyWith(TrayContainerSelectorState value,
-          $Res Function(TrayContainerSelectorState) then) =
-      _$TrayContainerSelectorStateCopyWithImpl<$Res,
-          TrayContainerSelectorState>;
+abstract class $TrayStateCopyWith<$Res> {
+  factory $TrayStateCopyWith(TrayState value, $Res Function(TrayState) then) =
+      _$TrayStateCopyWithImpl<$Res, TrayState>;
   @useResult
   $Res call(
       {Mode mode,
@@ -983,14 +982,14 @@ abstract class $TrayContainerSelectorStateCopyWith<$Res> {
       bool systemProxy,
       bool tunEnable,
       bool isStart,
-      String? locale});
+      String? locale,
+      Brightness? brightness});
 }
 
 /// @nodoc
-class _$TrayContainerSelectorStateCopyWithImpl<$Res,
-        $Val extends TrayContainerSelectorState>
-    implements $TrayContainerSelectorStateCopyWith<$Res> {
-  _$TrayContainerSelectorStateCopyWithImpl(this._value, this._then);
+class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
+    implements $TrayStateCopyWith<$Res> {
+  _$TrayStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -1006,6 +1005,7 @@ class _$TrayContainerSelectorStateCopyWithImpl<$Res,
     Object? tunEnable = null,
     Object? isStart = null,
     Object? locale = freezed,
+    Object? brightness = freezed,
   }) {
     return _then(_value.copyWith(
       mode: null == mode
@@ -1032,17 +1032,20 @@ class _$TrayContainerSelectorStateCopyWithImpl<$Res,
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String?,
+      brightness: freezed == brightness
+          ? _value.brightness
+          : brightness // ignore: cast_nullable_to_non_nullable
+              as Brightness?,
     ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$TrayContainerSelectorStateImplCopyWith<$Res>
-    implements $TrayContainerSelectorStateCopyWith<$Res> {
-  factory _$$TrayContainerSelectorStateImplCopyWith(
-          _$TrayContainerSelectorStateImpl value,
-          $Res Function(_$TrayContainerSelectorStateImpl) then) =
-      __$$TrayContainerSelectorStateImplCopyWithImpl<$Res>;
+abstract class _$$TrayStateImplCopyWith<$Res>
+    implements $TrayStateCopyWith<$Res> {
+  factory _$$TrayStateImplCopyWith(
+          _$TrayStateImpl value, $Res Function(_$TrayStateImpl) then) =
+      __$$TrayStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -1051,17 +1054,16 @@ abstract class _$$TrayContainerSelectorStateImplCopyWith<$Res>
       bool systemProxy,
       bool tunEnable,
       bool isStart,
-      String? locale});
+      String? locale,
+      Brightness? brightness});
 }
 
 /// @nodoc
-class __$$TrayContainerSelectorStateImplCopyWithImpl<$Res>
-    extends _$TrayContainerSelectorStateCopyWithImpl<$Res,
-        _$TrayContainerSelectorStateImpl>
-    implements _$$TrayContainerSelectorStateImplCopyWith<$Res> {
-  __$$TrayContainerSelectorStateImplCopyWithImpl(
-      _$TrayContainerSelectorStateImpl _value,
-      $Res Function(_$TrayContainerSelectorStateImpl) _then)
+class __$$TrayStateImplCopyWithImpl<$Res>
+    extends _$TrayStateCopyWithImpl<$Res, _$TrayStateImpl>
+    implements _$$TrayStateImplCopyWith<$Res> {
+  __$$TrayStateImplCopyWithImpl(
+      _$TrayStateImpl _value, $Res Function(_$TrayStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1073,8 +1075,9 @@ class __$$TrayContainerSelectorStateImplCopyWithImpl<$Res>
     Object? tunEnable = null,
     Object? isStart = null,
     Object? locale = freezed,
+    Object? brightness = freezed,
   }) {
-    return _then(_$TrayContainerSelectorStateImpl(
+    return _then(_$TrayStateImpl(
       mode: null == mode
           ? _value.mode
           : mode // ignore: cast_nullable_to_non_nullable
@@ -1099,20 +1102,25 @@ class __$$TrayContainerSelectorStateImplCopyWithImpl<$Res>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String?,
+      brightness: freezed == brightness
+          ? _value.brightness
+          : brightness // ignore: cast_nullable_to_non_nullable
+              as Brightness?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$TrayContainerSelectorStateImpl implements _TrayContainerSelectorState {
-  const _$TrayContainerSelectorStateImpl(
+class _$TrayStateImpl implements _TrayState {
+  const _$TrayStateImpl(
       {required this.mode,
       required this.autoLaunch,
       required this.systemProxy,
       required this.tunEnable,
       required this.isStart,
-      required this.locale});
+      required this.locale,
+      required this.brightness});
 
   @override
   final Mode mode;
@@ -1126,17 +1134,19 @@ class _$TrayContainerSelectorStateImpl implements _TrayContainerSelectorState {
   final bool isStart;
   @override
   final String? locale;
+  @override
+  final Brightness? brightness;
 
   @override
   String toString() {
-    return 'TrayContainerSelectorState(mode: $mode, autoLaunch: $autoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale)';
+    return 'TrayState(mode: $mode, autoLaunch: $autoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$TrayContainerSelectorStateImpl &&
+            other is _$TrayStateImpl &&
             (identical(other.mode, mode) || other.mode == mode) &&
             (identical(other.autoLaunch, autoLaunch) ||
                 other.autoLaunch == autoLaunch) &&
@@ -1145,30 +1155,31 @@ class _$TrayContainerSelectorStateImpl implements _TrayContainerSelectorState {
             (identical(other.tunEnable, tunEnable) ||
                 other.tunEnable == tunEnable) &&
             (identical(other.isStart, isStart) || other.isStart == isStart) &&
-            (identical(other.locale, locale) || other.locale == locale));
+            (identical(other.locale, locale) || other.locale == locale) &&
+            (identical(other.brightness, brightness) ||
+                other.brightness == brightness));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, mode, autoLaunch, systemProxy, tunEnable, isStart, locale);
+  int get hashCode => Object.hash(runtimeType, mode, autoLaunch, systemProxy,
+      tunEnable, isStart, locale, brightness);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$TrayContainerSelectorStateImplCopyWith<_$TrayContainerSelectorStateImpl>
-      get copyWith => __$$TrayContainerSelectorStateImplCopyWithImpl<
-          _$TrayContainerSelectorStateImpl>(this, _$identity);
+  _$$TrayStateImplCopyWith<_$TrayStateImpl> get copyWith =>
+      __$$TrayStateImplCopyWithImpl<_$TrayStateImpl>(this, _$identity);
 }
 
-abstract class _TrayContainerSelectorState
-    implements TrayContainerSelectorState {
-  const factory _TrayContainerSelectorState(
+abstract class _TrayState implements TrayState {
+  const factory _TrayState(
       {required final Mode mode,
       required final bool autoLaunch,
       required final bool systemProxy,
       required final bool tunEnable,
       required final bool isStart,
-      required final String? locale}) = _$TrayContainerSelectorStateImpl;
+      required final String? locale,
+      required final Brightness? brightness}) = _$TrayStateImpl;
 
   @override
   Mode get mode;
@@ -1183,9 +1194,11 @@ abstract class _TrayContainerSelectorState
   @override
   String? get locale;
   @override
+  Brightness? get brightness;
+  @override
   @JsonKey(ignore: true)
-  _$$TrayContainerSelectorStateImplCopyWith<_$TrayContainerSelectorStateImpl>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$TrayStateImplCopyWith<_$TrayStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -1332,7 +1345,7 @@ abstract class _UpdateNavigationsSelector implements UpdateNavigationsSelector {
 }
 
 /// @nodoc
-mixin _$HomeSelectorState {
+mixin _$HomeState {
   String get currentLabel => throw _privateConstructorUsedError;
   List<NavigationItem> get navigationItems =>
       throw _privateConstructorUsedError;
@@ -1340,15 +1353,14 @@ mixin _$HomeSelectorState {
   String? get locale => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $HomeSelectorStateCopyWith<HomeSelectorState> get copyWith =>
+  $HomeStateCopyWith<HomeState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $HomeSelectorStateCopyWith<$Res> {
-  factory $HomeSelectorStateCopyWith(
-          HomeSelectorState value, $Res Function(HomeSelectorState) then) =
-      _$HomeSelectorStateCopyWithImpl<$Res, HomeSelectorState>;
+abstract class $HomeStateCopyWith<$Res> {
+  factory $HomeStateCopyWith(HomeState value, $Res Function(HomeState) then) =
+      _$HomeStateCopyWithImpl<$Res, HomeState>;
   @useResult
   $Res call(
       {String currentLabel,
@@ -1358,9 +1370,9 @@ abstract class $HomeSelectorStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$HomeSelectorStateCopyWithImpl<$Res, $Val extends HomeSelectorState>
-    implements $HomeSelectorStateCopyWith<$Res> {
-  _$HomeSelectorStateCopyWithImpl(this._value, this._then);
+class _$HomeStateCopyWithImpl<$Res, $Val extends HomeState>
+    implements $HomeStateCopyWith<$Res> {
+  _$HomeStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -1397,11 +1409,11 @@ class _$HomeSelectorStateCopyWithImpl<$Res, $Val extends HomeSelectorState>
 }
 
 /// @nodoc
-abstract class _$$HomeSelectorStateImplCopyWith<$Res>
-    implements $HomeSelectorStateCopyWith<$Res> {
-  factory _$$HomeSelectorStateImplCopyWith(_$HomeSelectorStateImpl value,
-          $Res Function(_$HomeSelectorStateImpl) then) =
-      __$$HomeSelectorStateImplCopyWithImpl<$Res>;
+abstract class _$$HomeStateImplCopyWith<$Res>
+    implements $HomeStateCopyWith<$Res> {
+  factory _$$HomeStateImplCopyWith(
+          _$HomeStateImpl value, $Res Function(_$HomeStateImpl) then) =
+      __$$HomeStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -1412,11 +1424,11 @@ abstract class _$$HomeSelectorStateImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$HomeSelectorStateImplCopyWithImpl<$Res>
-    extends _$HomeSelectorStateCopyWithImpl<$Res, _$HomeSelectorStateImpl>
-    implements _$$HomeSelectorStateImplCopyWith<$Res> {
-  __$$HomeSelectorStateImplCopyWithImpl(_$HomeSelectorStateImpl _value,
-      $Res Function(_$HomeSelectorStateImpl) _then)
+class __$$HomeStateImplCopyWithImpl<$Res>
+    extends _$HomeStateCopyWithImpl<$Res, _$HomeStateImpl>
+    implements _$$HomeStateImplCopyWith<$Res> {
+  __$$HomeStateImplCopyWithImpl(
+      _$HomeStateImpl _value, $Res Function(_$HomeStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1427,7 +1439,7 @@ class __$$HomeSelectorStateImplCopyWithImpl<$Res>
     Object? viewMode = null,
     Object? locale = freezed,
   }) {
-    return _then(_$HomeSelectorStateImpl(
+    return _then(_$HomeStateImpl(
       currentLabel: null == currentLabel
           ? _value.currentLabel
           : currentLabel // ignore: cast_nullable_to_non_nullable
@@ -1450,8 +1462,8 @@ class __$$HomeSelectorStateImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$HomeSelectorStateImpl implements _HomeSelectorState {
-  const _$HomeSelectorStateImpl(
+class _$HomeStateImpl implements _HomeState {
+  const _$HomeStateImpl(
       {required this.currentLabel,
       required final List<NavigationItem> navigationItems,
       required this.viewMode,
@@ -1475,14 +1487,14 @@ class _$HomeSelectorStateImpl implements _HomeSelectorState {
 
   @override
   String toString() {
-    return 'HomeSelectorState(currentLabel: $currentLabel, navigationItems: $navigationItems, viewMode: $viewMode, locale: $locale)';
+    return 'HomeState(currentLabel: $currentLabel, navigationItems: $navigationItems, viewMode: $viewMode, locale: $locale)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$HomeSelectorStateImpl &&
+            other is _$HomeStateImpl &&
             (identical(other.currentLabel, currentLabel) ||
                 other.currentLabel == currentLabel) &&
             const DeepCollectionEquality()
@@ -1499,17 +1511,16 @@ class _$HomeSelectorStateImpl implements _HomeSelectorState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$HomeSelectorStateImplCopyWith<_$HomeSelectorStateImpl> get copyWith =>
-      __$$HomeSelectorStateImplCopyWithImpl<_$HomeSelectorStateImpl>(
-          this, _$identity);
+  _$$HomeStateImplCopyWith<_$HomeStateImpl> get copyWith =>
+      __$$HomeStateImplCopyWithImpl<_$HomeStateImpl>(this, _$identity);
 }
 
-abstract class _HomeSelectorState implements HomeSelectorState {
-  const factory _HomeSelectorState(
+abstract class _HomeState implements HomeState {
+  const factory _HomeState(
       {required final String currentLabel,
       required final List<NavigationItem> navigationItems,
       required final ViewMode viewMode,
-      required final String? locale}) = _$HomeSelectorStateImpl;
+      required final String? locale}) = _$HomeStateImpl;
 
   @override
   String get currentLabel;
@@ -1521,141 +1532,8 @@ abstract class _HomeSelectorState implements HomeSelectorState {
   String? get locale;
   @override
   @JsonKey(ignore: true)
-  _$$HomeSelectorStateImplCopyWith<_$HomeSelectorStateImpl> get copyWith =>
+  _$$HomeStateImplCopyWith<_$HomeStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$HomeBodySelectorState {
-  List<NavigationItem> get navigationItems =>
-      throw _privateConstructorUsedError;
-
-  @JsonKey(ignore: true)
-  $HomeBodySelectorStateCopyWith<HomeBodySelectorState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $HomeBodySelectorStateCopyWith<$Res> {
-  factory $HomeBodySelectorStateCopyWith(HomeBodySelectorState value,
-          $Res Function(HomeBodySelectorState) then) =
-      _$HomeBodySelectorStateCopyWithImpl<$Res, HomeBodySelectorState>;
-  @useResult
-  $Res call({List<NavigationItem> navigationItems});
-}
-
-/// @nodoc
-class _$HomeBodySelectorStateCopyWithImpl<$Res,
-        $Val extends HomeBodySelectorState>
-    implements $HomeBodySelectorStateCopyWith<$Res> {
-  _$HomeBodySelectorStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? navigationItems = null,
-  }) {
-    return _then(_value.copyWith(
-      navigationItems: null == navigationItems
-          ? _value.navigationItems
-          : navigationItems // ignore: cast_nullable_to_non_nullable
-              as List<NavigationItem>,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$HomeBodySelectorStateImplCopyWith<$Res>
-    implements $HomeBodySelectorStateCopyWith<$Res> {
-  factory _$$HomeBodySelectorStateImplCopyWith(
-          _$HomeBodySelectorStateImpl value,
-          $Res Function(_$HomeBodySelectorStateImpl) then) =
-      __$$HomeBodySelectorStateImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({List<NavigationItem> navigationItems});
-}
-
-/// @nodoc
-class __$$HomeBodySelectorStateImplCopyWithImpl<$Res>
-    extends _$HomeBodySelectorStateCopyWithImpl<$Res,
-        _$HomeBodySelectorStateImpl>
-    implements _$$HomeBodySelectorStateImplCopyWith<$Res> {
-  __$$HomeBodySelectorStateImplCopyWithImpl(_$HomeBodySelectorStateImpl _value,
-      $Res Function(_$HomeBodySelectorStateImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? navigationItems = null,
-  }) {
-    return _then(_$HomeBodySelectorStateImpl(
-      navigationItems: null == navigationItems
-          ? _value._navigationItems
-          : navigationItems // ignore: cast_nullable_to_non_nullable
-              as List<NavigationItem>,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$HomeBodySelectorStateImpl implements _HomeBodySelectorState {
-  const _$HomeBodySelectorStateImpl(
-      {required final List<NavigationItem> navigationItems})
-      : _navigationItems = navigationItems;
-
-  final List<NavigationItem> _navigationItems;
-  @override
-  List<NavigationItem> get navigationItems {
-    if (_navigationItems is EqualUnmodifiableListView) return _navigationItems;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_navigationItems);
-  }
-
-  @override
-  String toString() {
-    return 'HomeBodySelectorState(navigationItems: $navigationItems)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$HomeBodySelectorStateImpl &&
-            const DeepCollectionEquality()
-                .equals(other._navigationItems, _navigationItems));
-  }
-
-  @override
-  int get hashCode => Object.hash(
-      runtimeType, const DeepCollectionEquality().hash(_navigationItems));
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$HomeBodySelectorStateImplCopyWith<_$HomeBodySelectorStateImpl>
-      get copyWith => __$$HomeBodySelectorStateImplCopyWithImpl<
-          _$HomeBodySelectorStateImpl>(this, _$identity);
-}
-
-abstract class _HomeBodySelectorState implements HomeBodySelectorState {
-  const factory _HomeBodySelectorState(
-          {required final List<NavigationItem> navigationItems}) =
-      _$HomeBodySelectorStateImpl;
-
-  @override
-  List<NavigationItem> get navigationItems;
-  @override
-  @JsonKey(ignore: true)
-  _$$HomeBodySelectorStateImplCopyWith<_$HomeBodySelectorStateImpl>
-      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -4001,5 +3879,154 @@ abstract class _ClashConfigState implements ClashConfigState {
   @override
   @JsonKey(ignore: true)
   _$$ClashConfigStateImplCopyWith<_$ClashConfigStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$ThemeState {
+  String? get locale => throw _privateConstructorUsedError;
+  ScaleProps get scaleProps => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $ThemeStateCopyWith<ThemeState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ThemeStateCopyWith<$Res> {
+  factory $ThemeStateCopyWith(
+          ThemeState value, $Res Function(ThemeState) then) =
+      _$ThemeStateCopyWithImpl<$Res, ThemeState>;
+  @useResult
+  $Res call({String? locale, ScaleProps scaleProps});
+
+  $ScalePropsCopyWith<$Res> get scaleProps;
+}
+
+/// @nodoc
+class _$ThemeStateCopyWithImpl<$Res, $Val extends ThemeState>
+    implements $ThemeStateCopyWith<$Res> {
+  _$ThemeStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? locale = freezed,
+    Object? scaleProps = null,
+  }) {
+    return _then(_value.copyWith(
+      locale: freezed == locale
+          ? _value.locale
+          : locale // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scaleProps: null == scaleProps
+          ? _value.scaleProps
+          : scaleProps // ignore: cast_nullable_to_non_nullable
+              as ScaleProps,
+    ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $ScalePropsCopyWith<$Res> get scaleProps {
+    return $ScalePropsCopyWith<$Res>(_value.scaleProps, (value) {
+      return _then(_value.copyWith(scaleProps: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$ThemeStateImplCopyWith<$Res>
+    implements $ThemeStateCopyWith<$Res> {
+  factory _$$ThemeStateImplCopyWith(
+          _$ThemeStateImpl value, $Res Function(_$ThemeStateImpl) then) =
+      __$$ThemeStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String? locale, ScaleProps scaleProps});
+
+  @override
+  $ScalePropsCopyWith<$Res> get scaleProps;
+}
+
+/// @nodoc
+class __$$ThemeStateImplCopyWithImpl<$Res>
+    extends _$ThemeStateCopyWithImpl<$Res, _$ThemeStateImpl>
+    implements _$$ThemeStateImplCopyWith<$Res> {
+  __$$ThemeStateImplCopyWithImpl(
+      _$ThemeStateImpl _value, $Res Function(_$ThemeStateImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? locale = freezed,
+    Object? scaleProps = null,
+  }) {
+    return _then(_$ThemeStateImpl(
+      locale: freezed == locale
+          ? _value.locale
+          : locale // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scaleProps: null == scaleProps
+          ? _value.scaleProps
+          : scaleProps // ignore: cast_nullable_to_non_nullable
+              as ScaleProps,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ThemeStateImpl implements _ThemeState {
+  const _$ThemeStateImpl({required this.locale, required this.scaleProps});
+
+  @override
+  final String? locale;
+  @override
+  final ScaleProps scaleProps;
+
+  @override
+  String toString() {
+    return 'ThemeState(locale: $locale, scaleProps: $scaleProps)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ThemeStateImpl &&
+            (identical(other.locale, locale) || other.locale == locale) &&
+            (identical(other.scaleProps, scaleProps) ||
+                other.scaleProps == scaleProps));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, locale, scaleProps);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ThemeStateImplCopyWith<_$ThemeStateImpl> get copyWith =>
+      __$$ThemeStateImplCopyWithImpl<_$ThemeStateImpl>(this, _$identity);
+}
+
+abstract class _ThemeState implements ThemeState {
+  const factory _ThemeState(
+      {required final String? locale,
+      required final ScaleProps scaleProps}) = _$ThemeStateImpl;
+
+  @override
+  String? get locale;
+  @override
+  ScaleProps get scaleProps;
+  @override
+  @JsonKey(ignore: true)
+  _$$ThemeStateImplCopyWith<_$ThemeStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

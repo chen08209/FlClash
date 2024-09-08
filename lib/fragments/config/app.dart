@@ -5,7 +5,6 @@ import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' show dirname, join;
 import 'package:provider/provider.dart';
 
 class CloseConnectionsSwitch extends StatelessWidget {
@@ -58,32 +57,7 @@ class UsageSwitch extends StatelessWidget {
   }
 }
 
-class UWPLoopbackUtil extends StatelessWidget {
-  const UWPLoopbackUtil({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.onlyProxy,
-      builder: (_, onlyProxy, __) {
-        return ListItem(
-          leading: const Icon(Icons.lock_open),
-          title: Text(appLocalizations.loopback),
-          subtitle: Text(appLocalizations.loopbackDesc),
-          onTap: () {
-            windows?.runas(
-              '"${join(dirname(Platform.resolvedExecutable), "EnableLoopback.exe")}"',
-              "",
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
 final appItems = [
-  if (Platform.isWindows) const UWPLoopbackUtil(),
   const CloseConnectionsSwitch(),
   const UsageSwitch(),
 ];

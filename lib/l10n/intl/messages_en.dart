@@ -34,6 +34,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "accountTip":
             MessageLookupByLibrary.simpleMessage("Account cannot be empty"),
         "action": MessageLookupByLibrary.simpleMessage("Action"),
+        "action_mode": MessageLookupByLibrary.simpleMessage("Switch mode"),
+        "action_proxy": MessageLookupByLibrary.simpleMessage("System proxy"),
+        "action_start": MessageLookupByLibrary.simpleMessage("Start/Stop"),
+        "action_tun": MessageLookupByLibrary.simpleMessage("TUN"),
+        "action_view": MessageLookupByLibrary.simpleMessage("Show/Hide"),
         "add": MessageLookupByLibrary.simpleMessage("Add"),
         "address": MessageLookupByLibrary.simpleMessage("Address"),
         "addressHelp":
@@ -41,6 +46,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "addressTip": MessageLookupByLibrary.simpleMessage(
             "Please enter a valid WebDAV address"),
         "ago": MessageLookupByLibrary.simpleMessage(" Ago"),
+        "agree": MessageLookupByLibrary.simpleMessage("Agree"),
         "allApps": MessageLookupByLibrary.simpleMessage("All apps"),
         "allowBypass": MessageLookupByLibrary.simpleMessage(
             "Allow applications to bypass VPN"),
@@ -130,6 +136,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "desc": MessageLookupByLibrary.simpleMessage(
             "A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free."),
         "direct": MessageLookupByLibrary.simpleMessage("Direct"),
+        "disclaimer": MessageLookupByLibrary.simpleMessage("Disclaimer"),
+        "disclaimerDesc": MessageLookupByLibrary.simpleMessage(
+            "This software is only used for non-commercial purposes such as learning exchanges and scientific research. It is strictly prohibited to use this software for commercial purposes. Any commercial activity, if any, has nothing to do with this software."),
         "discoverNewVersion":
             MessageLookupByLibrary.simpleMessage("Discover the new version"),
         "discovery":
@@ -188,12 +197,20 @@ class MessageLookup extends MessageLookupByLibrary {
         "go": MessageLookupByLibrary.simpleMessage("Go"),
         "goDownload": MessageLookupByLibrary.simpleMessage("Go to download"),
         "hostsDesc": MessageLookupByLibrary.simpleMessage("Add Hosts"),
+        "hotkeyConflict":
+            MessageLookupByLibrary.simpleMessage("Hotkey conflict"),
+        "hotkeyManagement":
+            MessageLookupByLibrary.simpleMessage("Hotkey Management"),
+        "hotkeyManagementDesc": MessageLookupByLibrary.simpleMessage(
+            "Use keyboard to control applications"),
         "hours": MessageLookupByLibrary.simpleMessage("Hours"),
         "importFromURL":
             MessageLookupByLibrary.simpleMessage("Import from URL"),
         "infiniteTime":
             MessageLookupByLibrary.simpleMessage("Long term effective"),
         "init": MessageLookupByLibrary.simpleMessage("Init"),
+        "inputCorrectHotkey": MessageLookupByLibrary.simpleMessage(
+            "Please enter the correct hotkey"),
         "intelligentSelected":
             MessageLookupByLibrary.simpleMessage("Intelligent selection"),
         "intranetIP": MessageLookupByLibrary.simpleMessage("Intranet IP"),
@@ -247,6 +264,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "networkDetection":
             MessageLookupByLibrary.simpleMessage("Network detection"),
         "networkSpeed": MessageLookupByLibrary.simpleMessage("Network speed"),
+        "noHotKey": MessageLookupByLibrary.simpleMessage("No HotKey"),
         "noInfo": MessageLookupByLibrary.simpleMessage("No info"),
         "noMoreInfoDesc": MessageLookupByLibrary.simpleMessage("No more info"),
         "noProxy": MessageLookupByLibrary.simpleMessage("No proxy"),
@@ -293,6 +311,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "port": MessageLookupByLibrary.simpleMessage("Port"),
         "preferH3Desc": MessageLookupByLibrary.simpleMessage(
             "Prioritize the use of DOH\'s http/3"),
+        "pressKeyboard":
+            MessageLookupByLibrary.simpleMessage("Please press the keyboard."),
         "preview": MessageLookupByLibrary.simpleMessage("Preview"),
         "profile": MessageLookupByLibrary.simpleMessage("Profile"),
         "profileAutoUpdateIntervalInvalidValidationDesc":
@@ -343,6 +363,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Backup local data to WebDAV"),
         "remoteRecoveryDesc":
             MessageLookupByLibrary.simpleMessage("Recovery data from WebDAV"),
+        "remove": MessageLookupByLibrary.simpleMessage("Remove"),
         "requests": MessageLookupByLibrary.simpleMessage("Requests"),
         "requestsDesc": MessageLookupByLibrary.simpleMessage(
             "View recently request records"),

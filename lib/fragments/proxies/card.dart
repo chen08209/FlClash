@@ -25,6 +25,10 @@ class ProxyCard extends StatelessWidget {
 
   Measure get measure => globalState.measure;
 
+  _handleTestCurrentDelay() {
+    proxyDelayTest(proxy);
+  }
+
   Widget _buildDelayText() {
     return SizedBox(
       height: measure.labelSmallHeight,
@@ -36,24 +40,31 @@ class ProxyCard extends StatelessWidget {
           return FadeBox(
             child: Builder(
               builder: (_) {
-                if (delay == null) {
-                  return Container();
-                }
-                if (delay == 0) {
+                if (delay == 0 || delay == null) {
                   return SizedBox(
                     height: measure.labelSmallHeight,
                     width: measure.labelSmallHeight,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
+                    child: delay == 0
+                        ? const CircularProgressIndicator(
+                            strokeWidth: 2,
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.bolt),
+                            iconSize: globalState.measure.labelSmallHeight,
+                            padding: EdgeInsets.zero,
+                            onPressed: _handleTestCurrentDelay,
+                          ),
                   );
                 }
-                return Text(
-                  delay > 0 ? '$delay ms' : "Timeout",
-                  style: context.textTheme.labelSmall?.copyWith(
-                    overflow: TextOverflow.ellipsis,
-                    color: other.getDelayColor(
-                      delay,
+                return GestureDetector(
+                  onTap: _handleTestCurrentDelay,
+                  child: Text(
+                    delay > 0 ? '$delay ms' : "Timeout",
+                    style: context.textTheme.labelSmall?.copyWith(
+                      overflow: TextOverflow.ellipsis,
+                      color: other.getDelayColor(
+                        delay,
+                      ),
                     ),
                   ),
                 );

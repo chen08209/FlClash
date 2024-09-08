@@ -7,15 +7,10 @@ import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/plugins/vpn.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:tray_manager/tray_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'controller.dart';
-
-import 'enum/enum.dart';
-import 'l10n/l10n.dart';
 import 'models/models.dart';
 import 'common/common.dart';
 
@@ -33,7 +28,6 @@ class GlobalState {
   late AppController appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
   List<Function> updateFunctionLists = [];
-  var isTrayInit = false;
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
@@ -82,7 +76,7 @@ class GlobalState {
     required ClashConfig clashConfig,
   }) async {
     clashCore.start();
-    if (globalState.isVpnService) {
+    if (vpn != null) {
       await vpn?.startVpn(clashConfig.mixedPort);
       startListenUpdate();
       return;
@@ -196,121 +190,6 @@ class GlobalState {
     );
   }
 
-  _updateOtherTray() async {
-    if (isTrayInit == false) {
-      await trayManager.setIcon(
-        other.getTrayIconPath(),
-      );
-      await trayManager.setToolTip(
-        appName,
-      );
-      isTrayInit = true;
-    }
-  }
-
-  _updateLinuxTray() async {
-    await trayManager.destroy();
-    await trayManager.setIcon(
-      other.getTrayIconPath(),
-    );
-    await trayManager.setToolTip(
-      appName,
-    );
-  }
-
-  updateTray({
-    required AppState appState,
-    required Config config,
-    required ClashConfig clashConfig,
-  }) async {
-    final appLocalizations = await AppLocalizations.load(
-      other.getLocaleForString(config.locale) ??
-          WidgetsBinding.instance.platformDispatcher.locale,
-    );
-    if (!Platform.isLinux) {
-      _updateOtherTray();
-    }
-    List<MenuItem> menuItems = [];
-    final showMenuItem = MenuItem(
-      label: appLocalizations.show,
-      onClick: (_) {
-        window?.show();
-      },
-    );
-    menuItems.add(showMenuItem);
-    final startMenuItem = MenuItem.checkbox(
-      label: appState.isStart ? appLocalizations.stop : appLocalizations.start,
-      onClick: (_) async {
-        globalState.appController.updateStatus(!appState.isStart);
-      },
-      checked: false,
-    );
-    menuItems.add(startMenuItem);
-    menuItems.add(MenuItem.separator());
-    for (final mode in Mode.values) {
-      menuItems.add(
-        MenuItem.checkbox(
-          label: Intl.message(mode.name),
-          onClick: (_) {
-            globalState.appController.clashConfig.mode = mode;
-          },
-          checked: mode == appState.mode,
-        ),
-      );
-    }
-    menuItems.add(MenuItem.separator());
-    if (appState.isStart) {
-      menuItems.add(
-        MenuItem.checkbox(
-          label: appLocalizations.tun,
-          onClick: (_) {
-            final clashConfig = globalState.appController.clashConfig;
-            clashConfig.tun = clashConfig.tun.copyWith(
-              enable: !clashConfig.tun.enable,
-            );
-          },
-          checked: clashConfig.tun.enable,
-        ),
-      );
-      menuItems.add(
-        MenuItem.checkbox(
-          label: appLocalizations.systemProxy,
-          onClick: (_) {
-            final config = globalState.appController.config;
-            config.desktopProps = config.desktopProps.copyWith(
-              systemProxy: !config.desktopProps.systemProxy,
-            );
-          },
-          checked: config.desktopProps.systemProxy,
-        ),
-      );
-      menuItems.add(MenuItem.separator());
-    }
-    final autoStartMenuItem = MenuItem.checkbox(
-      label: appLocalizations.autoLaunch,
-      onClick: (_) async {
-        globalState.appController.config.autoLaunch =
-            !globalState.appController.config.autoLaunch;
-      },
-      checked: config.autoLaunch,
-    );
-    menuItems.add(autoStartMenuItem);
-    menuItems.add(MenuItem.separator());
-    final exitMenuItem = MenuItem(
-      label: appLocalizations.exit,
-      onClick: (_) async {
-        await globalState.appController.handleExit();
-      },
-    );
-    menuItems.add(exitMenuItem);
-    final menu = Menu();
-    menu.items = menuItems;
-    trayManager.setContextMenu(menu);
-    if (Platform.isLinux) {
-      _updateLinuxTray();
-    }
-  }
-
   changeProxy({
     required Config config,
     required String groupName,
@@ -329,11 +208,13 @@ class GlobalState {
 
   Future<T?> showCommonDialog<T>({
     required Widget child,
+    bool dismissible = true,
   }) async {
     return await showModal<T>(
       context: navigatorKey.currentState!.context,
-      configuration: const FadeScaleTransitionConfiguration(
+      configuration: FadeScaleTransitionConfiguration(
         barrierColor: Colors.black38,
+        barrierDismissible: dismissible,
       ),
       builder: (_) => child,
       filter: filter,

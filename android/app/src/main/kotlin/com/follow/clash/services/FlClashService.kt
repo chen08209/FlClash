@@ -73,7 +73,7 @@ class FlClashService : Service(), BaseServiceInterface {
         }
     }
 
-    override fun start(port: Int, props: Props?): Int? = null
+    override fun start(port: Int, props: Props?) = null
 
     override fun stop() {
         stopSelf()

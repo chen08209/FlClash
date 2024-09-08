@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 0.8.59+202409091
 environment:
   sdk: '>=3.1.0 <4.0.0'
-  flutter: 3.22.3
+  flutter: 3.22.0
 
 dependencies:
   flutter:
@@ -47,6 +47,9 @@ dependencies:
   emoji_regex: ^0.0.5
   process_run: ^1.1.0
   cached_network_image: ^3.4.0
+  hotkey_manager: ^0.2.3
+  uni_platform: ^0.1.3
+  device_info_plus: ^10.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

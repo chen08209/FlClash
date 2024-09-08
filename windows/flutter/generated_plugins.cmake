@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   dynamic_color
   file_selector_windows
+  hotkey_manager_windows
   proxy
   screen_retriever
   tray_manager

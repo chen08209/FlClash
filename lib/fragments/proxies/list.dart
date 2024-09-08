@@ -1,11 +1,13 @@
+import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/builder.dart';
 import 'package:fl_clash/widgets/card.dart';
-import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -219,11 +221,15 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
     final currentInitOffset = _headerOffset[index];
     final proxies = _lastGroupNameProxiesMap[groupName];
     _controller.animateTo(
-      currentInitOffset +
-          getScrollToSelectedOffset(
-            groupName: groupName,
-            proxies: proxies ?? [],
-          ),
+      min(
+        currentInitOffset +
+            8 +
+            getScrollToSelectedOffset(
+              groupName: groupName,
+              proxies: proxies ?? [],
+            ),
+        _controller.position.maxScrollExtent,
+      ),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeIn,
     );
@@ -258,73 +264,75 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
         return prev != next;
       },
       builder: (_, state, __) {
-        final items = _buildItems(
-          groupNames: state.groupNames,
-          currentUnfoldSet: state.currentUnfoldSet,
-          columns: state.columns,
-          type: state.proxyCardType,
-        );
-        final itemsOffset = _getItemHeightList(items, state.proxyCardType);
-        return Scrollbar(
-          controller: _controller,
-          thumbVisibility: true,
-          trackVisibility: true,
-          thickness: 8,
-          radius: const Radius.circular(8),
-          interactive: true,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: ScrollConfiguration(
-                  behavior: HiddenBarScrollBehavior(),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    controller: _controller,
-                    itemExtentBuilder: (index, __) {
-                      return itemsOffset[index];
-                    },
-                    itemCount: items.length,
-                    itemBuilder: (_, index) {
-                      return items[index];
-                    },
+        return ScaleBuilder(builder: (_) {
+          final items = _buildItems(
+            groupNames: state.groupNames,
+            currentUnfoldSet: state.currentUnfoldSet,
+            columns: state.columns,
+            type: state.proxyCardType,
+          );
+          final itemsOffset = _getItemHeightList(items, state.proxyCardType);
+          return Scrollbar(
+            controller: _controller,
+            thumbVisibility: true,
+            trackVisibility: true,
+            thickness: 8,
+            radius: const Radius.circular(8),
+            interactive: true,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ScrollConfiguration(
+                    behavior: HiddenBarScrollBehavior(),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      controller: _controller,
+                      itemExtentBuilder: (index, __) {
+                        return itemsOffset[index];
+                      },
+                      itemCount: items.length,
+                      itemBuilder: (_, index) {
+                        return items[index];
+                      },
+                    ),
                   ),
                 ),
-              ),
-              LayoutBuilder(builder: (_, container) {
-                return ValueListenableBuilder(
-                  valueListenable: _headerStateNotifier,
-                  builder: (_, headerState, ___) {
-                    final index =
-                        headerState.currentIndex > state.groupNames.length - 1
-                            ? 0
-                            : headerState.currentIndex;
-                    return Stack(
-                      children: [
-                        Positioned(
-                          top: -headerState.offset,
-                          child: Container(
-                            width: container.maxWidth,
-                            color: context.colorScheme.surface,
-                            padding: const EdgeInsets.only(
-                              top: 16,
-                              left: 16,
-                              right: 16,
-                              bottom: 8,
-                            ),
-                            child: _buildHeader(
-                              groupName: state.groupNames[index],
-                              currentUnfoldSet: state.currentUnfoldSet,
+                LayoutBuilder(builder: (_, container) {
+                  return ValueListenableBuilder(
+                    valueListenable: _headerStateNotifier,
+                    builder: (_, headerState, ___) {
+                      final index =
+                          headerState.currentIndex > state.groupNames.length - 1
+                              ? 0
+                              : headerState.currentIndex;
+                      return Stack(
+                        children: [
+                          Positioned(
+                            top: -headerState.offset,
+                            child: Container(
+                              width: container.maxWidth,
+                              color: context.colorScheme.surface,
+                              padding: const EdgeInsets.only(
+                                top: 16,
+                                left: 16,
+                                right: 16,
+                                bottom: 8,
+                              ),
+                              child: _buildHeader(
+                                groupName: state.groupNames[index],
+                                currentUnfoldSet: state.currentUnfoldSet,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }),
-            ],
-          ),
-        );
+                        ],
+                      );
+                    },
+                  );
+                }),
+              ],
+            ),
+          );
+        });
       },
     );
   }

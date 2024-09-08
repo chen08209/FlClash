@@ -295,6 +295,10 @@ class AppController {
   }
 
   init() async {
+    final isDisclaimerAccepted = await handlerDisclaimer();
+    if (!isDisclaimerAccepted) {
+      system.exit();
+    }
     updateLogStatus();
     if (!config.silentLaunch) {
       window?.show();
@@ -309,14 +313,6 @@ class AppController {
     }
     autoUpdateProfiles();
     autoCheckUpdate();
-  }
-
-  updateTray() {
-    globalState.updateTray(
-      appState: appState,
-      config: config,
-      clashConfig: clashConfig,
-    );
   }
 
   setDelay(Delay delay) {
@@ -379,6 +375,47 @@ class AppController {
 
   showSnackBar(String message) {
     globalState.showSnackBar(context, message: message);
+  }
+
+  Future<bool> showDisclaimer() async {
+    return await globalState.showCommonDialog<bool>(
+          dismissible: false,
+          child: AlertDialog(
+            title: Text(appLocalizations.disclaimer),
+            content: Container(
+              width: dialogCommonWidth,
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  appLocalizations.disclaimerDesc,
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop<bool>(false);
+                },
+                child: Text(appLocalizations.exit),
+              ),
+              TextButton(
+                onPressed: () {
+                  config.isDisclaimerAccepted = true;
+                  Navigator.of(context).pop<bool>(true);
+                },
+                child: Text(appLocalizations.agree),
+              )
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<bool> handlerDisclaimer() async {
+    if (config.isDisclaimerAccepted) {
+      return true;
+    }
+    return showDisclaimer();
   }
 
   addProfileFormURL(String url) async {
@@ -494,6 +531,44 @@ class AppController {
       final zipEncoder = ZipEncoder();
       return zipEncoder.encode(archive) ?? [];
     });
+  }
+
+  updateTun() {
+    clashConfig.tun = clashConfig.tun.copyWith(
+      enable: !clashConfig.tun.enable,
+    );
+  }
+
+  updateSystemProxy() {
+    config.desktopProps = config.desktopProps.copyWith(
+      systemProxy: !config.desktopProps.systemProxy,
+    );
+  }
+
+  updateStart() {
+    updateStatus(!appState.isStart);
+  }
+
+  updateAutoLaunch() {
+    config.autoLaunch = !config.autoLaunch;
+  }
+
+  updateVisible() async {
+    final visible = await window?.isVisible();
+    if (visible != null && !visible) {
+      window?.show();
+    } else {
+      window?.hide();
+    }
+  }
+
+  updateMode() {
+    final index = Mode.values.indexWhere((item) => item == clashConfig.mode);
+    if (index == -1) {
+      return;
+    }
+    final nextIndex = index + 1 > Mode.values.length - 1 ? 0 : index + 1;
+    clashConfig.mode = Mode.values[nextIndex];
   }
 
   recoveryData(

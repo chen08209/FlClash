@@ -5,6 +5,7 @@ import 'dart:isolate';
 
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -21,8 +22,6 @@ class App {
           if (onExit != null) {
             await onExit!();
           }
-        case "gc":
-          clashCore.requestGc();
         default:
           throw MissingPluginException();
       }
@@ -84,12 +83,6 @@ class App {
   Future<bool?> updateExcludeFromRecents(bool value) async {
     return await methodChannel.invokeMethod<bool>("updateExcludeFromRecents", {
       "value": value,
-    });
-  }
-
-  Future<String?> resolverProcess(Process process) async {
-    return await methodChannel.invokeMethod<String>("resolverProcess", {
-      "data": json.encode(process),
     });
   }
 }

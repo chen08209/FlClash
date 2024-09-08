@@ -9,7 +9,7 @@ import 'protocol.dart';
 import 'system.dart';
 
 class Window {
-  init(WindowProps props) async {
+  init(WindowProps props, int version) async {
     if (Platform.isWindows) {
       await WindowsSingleInstance.ensureSingleInstance([], "FlClash");
       protocol.register("clash");
@@ -20,8 +20,6 @@ class Window {
     WindowOptions windowOptions = WindowOptions(
       size: Size(props.width, props.height),
       minimumSize: const Size(380, 500),
-      windowButtonVisibility: false,
-      titleBarStyle: TitleBarStyle.hidden,
     );
     if (props.left != null || props.top != null) {
       await windowManager.setPosition(
@@ -30,9 +28,9 @@ class Window {
     } else {
       await windowManager.setAlignment(Alignment.center);
     }
-    // if(Platform.isWindows){
-    //   await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
-    // }
+    if(!Platform.isMacOS || version > 10){
+      await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
+    }
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.setPreventClose(true);
     });
@@ -41,6 +39,11 @@ class Window {
   show() async {
     await windowManager.show();
     await windowManager.focus();
+    await windowManager.setSkipTaskbar(false);
+  }
+
+  Future<bool> isVisible() async {
+    return await windowManager.isVisible();
   }
 
   close() async {
@@ -49,6 +52,7 @@ class Window {
 
   hide() async {
     await windowManager.hide();
+    await windowManager.setSkipTaskbar(true);
   }
 }
 

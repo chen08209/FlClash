@@ -6,6 +6,8 @@ import 'dart:isolate';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
 class Vpn {
@@ -19,9 +21,16 @@ class Vpn {
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case "started":
-          final fd = call.arguments;
-          onStarted(fd);
+          final tunProps = call.arguments != null
+              ? TunProps.fromJson(json.decode((call.arguments)))
+              : null;
+          onStarted(tunProps);
           break;
+        case "gc":
+          clashCore.requestGc();
+        case "dnsChanged":
+          final dns = call.arguments as String;
+          clashCore.updateDns(dns);
         default:
           throw MissingPluginException();
       }
@@ -49,6 +58,12 @@ class Vpn {
     return await methodChannel.invokeMethod<bool?>("setProtect", {'fd': fd});
   }
 
+  Future<String?> resolverProcess(Process process) async {
+    return await methodChannel.invokeMethod<String>("resolverProcess", {
+      "data": json.encode(process),
+    });
+  }
+
   Future<bool?> startForeground({
     required String title,
     required String content,
@@ -59,7 +74,7 @@ class Vpn {
     });
   }
 
-  onStarted(int? fd) {
+  onStarted(TunProps? tunProps) {
     if (receiver != null) {
       receiver!.close();
       receiver == null;
@@ -68,7 +83,7 @@ class Vpn {
     receiver!.listen((message) {
       _handleServiceMessage(message);
     });
-    clashCore.startTun(fd ?? 0, receiver!.sendPort.nativePort);
+    clashCore.startTun(tunProps, receiver!.sendPort.nativePort);
   }
 
   setServiceMessageHandler(ServiceMessageListener serviceMessageListener) {
@@ -90,4 +105,4 @@ class Vpn {
   }
 }
 
-final vpn = Platform.isAndroid ? Vpn() : null;
+final vpn = Platform.isAndroid && globalState.isVpnService ? Vpn() : null;

@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.ComponentInfo
 import android.content.pm.PackageManager
-import android.net.ConnectivityManager
 import android.net.VpnService
 import android.os.Build
 import android.widget.Toast
@@ -17,12 +16,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
 import androidx.core.content.FileProvider
-import androidx.core.content.getSystemService
 import com.follow.clash.GlobalState
 import com.follow.clash.extensions.getBase64
-import com.follow.clash.extensions.getProtocol
 import com.follow.clash.models.Package
-import com.follow.clash.models.Process
 import com.google.gson.Gson
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -37,7 +33,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.net.InetSocketAddress
 import java.util.zip.ZipFile
 
 class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
@@ -52,11 +47,10 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private lateinit var scope: CoroutineScope
 
-    private var connectivity: ConnectivityManager? = null
-
     private var vpnCallBack: (() -> Unit)? = null
 
     private val iconMap = mutableMapOf<String, String?>()
+
     private val packages = mutableListOf<Package>()
 
     private val skipPrefixList = listOf(
@@ -113,7 +107,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     private val chinaAppRegex by lazy {
         ("(" + chinaAppPrefixList.joinToString("|").replace(".", "\\.") + ").*").toRegex()
     }
-
 
     val VPN_PERMISSION_REQUEST_CODE = 1001
 
@@ -187,48 +180,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                         }
                         result.success(iconMap["default"])
                         return@launch
-                    }
-                }
-            }
-
-            "resolverProcess" -> {
-                val data = call.argument<String>("data")
-                val process =
-                    if (data != null) Gson().fromJson(
-                        data,
-                        Process::class.java
-                    ) else null
-                val metadata = process?.metadata
-                val protocol = metadata?.getProtocol()
-                if (protocol == null) {
-                    result.success(null)
-                    return
-                }
-                scope.launch {
-                    withContext(Dispatchers.Default) {
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                            result.success(null)
-                            return@withContext
-                        }
-                        if (connectivity == null) {
-                            connectivity = context.getSystemService<ConnectivityManager>()
-                        }
-                        val src = InetSocketAddress(metadata.sourceIP, metadata.sourcePort)
-                        val dst = InetSocketAddress(
-                            metadata.destinationIP.ifEmpty { metadata.host },
-                            metadata.destinationPort
-                        )
-                        val uid = try {
-                            connectivity?.getConnectionOwnerUid(protocol, src, dst)
-                        } catch (_: Exception) {
-                            null
-                        }
-                        if (uid == null || uid == -1) {
-                            result.success(null)
-                            return@withContext
-                        }
-                        val packages = context.packageManager?.getPackagesForUid(uid)
-                        result.success(packages?.first())
                     }
                 }
             }
@@ -379,7 +330,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
-
     private fun isChinaPackage(packageName: String): Boolean {
         val packageManager = context.packageManager ?: return false
         skipPrefixList.forEach {
@@ -445,10 +395,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             return false
         }
         return false
-    }
-
-    fun requestGc() {
-        channel.invokeMethod("gc", null)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {

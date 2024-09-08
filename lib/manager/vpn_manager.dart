@@ -4,21 +4,21 @@ import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../common/function.dart';
+import '../../common/function.dart';
 
-class VpnContainer extends StatefulWidget {
+class VpnManager extends StatefulWidget {
   final Widget child;
 
-  const VpnContainer({
+  const VpnManager({
     super.key,
     required this.child,
   });
 
   @override
-  State<VpnContainer> createState() => _VpnContainerState();
+  State<VpnManager> createState() => _VpnContainerState();
 }
 
-class _VpnContainerState extends State<VpnContainer> {
+class _VpnContainerState extends State<VpnManager> {
   Function? vpnTipDebounce;
 
   showTip() {

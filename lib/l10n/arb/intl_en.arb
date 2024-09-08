@@ -288,5 +288,20 @@
   "ipcidr": "Ipcidr",
   "domain": "Domain",
   "resetDns": "Reset Dns",
-  "reset": "Reset"
+  "reset": "Reset",
+  "action_view": "Show/Hide",
+  "action_start": "Start/Stop",
+  "action_mode": "Switch mode",
+  "action_proxy": "System proxy",
+  "action_tun": "TUN",
+  "disclaimer": "Disclaimer",
+  "disclaimerDesc": "This software is only used for non-commercial purposes such as learning exchanges and scientific research. It is strictly prohibited to use this software for commercial purposes. Any commercial activity, if any, has nothing to do with this software.",
+  "agree": "Agree",
+  "hotkeyManagement": "Hotkey Management",
+  "hotkeyManagementDesc": "Use keyboard to control applications",
+  "pressKeyboard": "Please press the keyboard.",
+  "inputCorrectHotkey": "Please enter the correct hotkey",
+  "hotkeyConflict": "Hotkey conflict",
+  "remove": "Remove",
+  "noHotKey": "No HotKey"
 }

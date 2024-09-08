@@ -39,8 +39,7 @@ object GlobalState {
     }
 
     fun getCurrentVPNPlugin(): VpnPlugin? {
-        val currentEngine = if (serviceEngine != null) serviceEngine else flutterEngine
-        return currentEngine?.plugins?.get(VpnPlugin::class.java) as VpnPlugin?
+        return serviceEngine?.plugins?.get(VpnPlugin::class.java) as VpnPlugin?
     }
 
     fun destroyServiceEngine() {
