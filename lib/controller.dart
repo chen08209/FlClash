@@ -102,6 +102,7 @@ class AppController {
         final updateId = config.profiles.first.id;
         changeProfile(updateId);
       } else {
+        changeProfile(null);
         updateStatus(false);
       }
     }
