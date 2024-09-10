@@ -780,6 +780,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Profile Name(optional)`
+  String get urlName {
+    return Intl.message(
+      'Profile Name(optional)',
+      name: 'urlName',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Obtain profile through URL`
   String get urlDesc {
     return Intl.message(

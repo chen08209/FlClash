@@ -381,16 +381,21 @@ class AppController {
     globalState.showSnackBar(context, message: message);
   }
 
-  addProfileFormURL(String url) async {
+  addProfileFormURL(String url, {String? label}) async {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     }
+    if (label != null) {
+      label = label.isValidFileName() ? label : null;
+    }
+
     toProfiles();
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
     final profile = await commonScaffoldState?.loadingRun<Profile>(
       () async {
         return await Profile.normal(
+          label: label,
           url: url,
         ).update();
       },

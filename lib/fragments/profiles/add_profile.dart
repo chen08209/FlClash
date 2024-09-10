@@ -13,8 +13,8 @@ class AddProfile extends StatelessWidget {
     globalState.appController.addProfileFormFile();
   }
 
-  _handleAddProfileFormURL(String url) async {
-    globalState.appController.addProfileFormURL(url);
+  _handleAddProfileFormURL(String url, {String? label}) async {
+    globalState.appController.addProfileFormURL(url, label: label);
   }
 
   _toScan() async {
@@ -32,11 +32,16 @@ class AddProfile extends StatelessWidget {
   }
 
   _toAdd() async {
-    final url = await globalState.showCommonDialog<String>(
+    // final url = await globalState.showCommonDialog<String>(
+    //   child: const URLFormDialog(),
+    // );
+    final urlAndName = await globalState.showCommonDialog<Map<String, String>>(
       child: const URLFormDialog(),
     );
+    final url = urlAndName?['url'];
+    final name = urlAndName?['name'];
     if (url != null) {
-      _handleAddProfileFormURL(url);
+      _handleAddProfileFormURL(url, label: name);
     }
   }
 
@@ -74,14 +79,21 @@ class URLFormDialog extends StatefulWidget {
   State<URLFormDialog> createState() => _URLFormDialogState();
 }
 
+
 class _URLFormDialogState extends State<URLFormDialog> {
   final urlController = TextEditingController();
+  final nameController = TextEditingController();
 
   _handleAddProfileFormURL() async {
     final url = urlController.value.text;
+    final name = nameController.value.text;
     if (url.isEmpty) return;
-    Navigator.of(context).pop<String>(url);
+    Navigator.of(context).pop<Map<String, String>>({
+      'url': url,
+      'name': name,
+    });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +111,15 @@ class _URLFormDialogState extends State<URLFormDialog> {
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: appLocalizations.url,
+              ),
+            ),
+            TextField(
+              maxLines: 1,
+              minLines: 1,
+              controller: nameController,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: appLocalizations.urlName,
               ),
             ),
           ],

@@ -335,6 +335,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "upload": MessageLookupByLibrary.simpleMessage("上传"),
         "url": MessageLookupByLibrary.simpleMessage("URL"),
         "urlDesc": MessageLookupByLibrary.simpleMessage("通过URL获取配置文件"),
+        "urlName": MessageLookupByLibrary.simpleMessage("配置名称（可选）"),
         "useHosts": MessageLookupByLibrary.simpleMessage("使用Hosts"),
         "useSystemHosts": MessageLookupByLibrary.simpleMessage("使用系统Hosts"),
         "value": MessageLookupByLibrary.simpleMessage("值"),

@@ -419,6 +419,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "url": MessageLookupByLibrary.simpleMessage("URL"),
         "urlDesc":
             MessageLookupByLibrary.simpleMessage("Obtain profile through URL"),
+        "urlName": MessageLookupByLibrary.simpleMessage("Name(optional)"),
         "useHosts": MessageLookupByLibrary.simpleMessage("Use hosts"),
         "useSystemHosts":
             MessageLookupByLibrary.simpleMessage("Use system hosts"),
