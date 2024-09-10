@@ -28,11 +28,13 @@ class UserInfo with _$UserInfo {
 
   factory UserInfo.formHString(String? info) {
     if (info == null) return const UserInfo();
-    final list = info.split(";");
+    final list = info.split(";").where((s) => s.isNotEmpty).toList();
     Map<String, int?> map = {};
     for (final i in list) {
       final keyValue = i.trim().split("=");
-      map[keyValue[0]] = int.tryParse(keyValue[1]);
+      if (keyValue.length == 2) {
+        map[keyValue[0]] = int.tryParse(keyValue[1]);
+      }
     }
     return UserInfo(
       upload: map["upload"] ?? 0,
