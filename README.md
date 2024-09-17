@@ -6,13 +6,9 @@
 
 ## FlClash
 
-<p style="text-align: left;">
-    <img alt="stars" src="https://img.shields.io/github/stars/chen08209/FlClash?style=flat-square&logo=github"/>
-    <img alt="downloads" src="https://img.shields.io/github/downloads/chen08209/FlClash/total"/>
-    <a href="LICENSE">
-        <img alt="license" src="https://img.shields.io/github/license/chen08209/FlClash"/>
-    </a>
-</p>
+[![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
+
+[![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/FlClash)
 
 A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 
@@ -41,10 +37,6 @@ on Mobile:
 ## Download
 
 <a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" width="200px"/></a> <a href="https://github.com/chen08209/FlClash/releases"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" width="200px"/></a>
-
-## Contact
-
-[Telegram](https://t.me/+G-veVtwBOl4wODc1)
 
 ## Build
 
@@ -100,9 +92,6 @@ on Mobile:
            ```bash
            dart .\setup.dart	
            ```
-           
-
-    
 
 ## Star
 
