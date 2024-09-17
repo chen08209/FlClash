@@ -8,10 +8,10 @@
 
 <p style="text-align: left;">
     <a href="https://github.com/chen08209/FlClash/releases/latest">
-        <img alt="downloads" src="https://img.shields.io/github/v/release/chen08209/FlClash?style=flat-square&logo=github"/>
+        <img alt="release" src="https://img.shields.io/github/v/release/chen08209/FlClash?logo=github"/>
     </a>
     <a href="https://t.me/FlClash">
-        <img alt="downloads" src="https://img.shields.io/badge/Telegram-Channel-blue?logo=telegram"/>
+        <img alt="channel" src="https://img.shields.io/badge/Telegram-Channel-blue?logo=telegram"/>
     </a>
     <img alt="downloads" src="https://img.shields.io/github/downloads/chen08209/FlClash/total"/>
     <a href="LICENSE">
