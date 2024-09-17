@@ -7,7 +7,12 @@
 ## FlClash
 
 <p style="text-align: left;">
-    <img alt="stars" src="https://img.shields.io/github/stars/chen08209/FlClash?style=flat-square&logo=github"/>
+    <a href="https://github.com/chen08209/FlClash/releases/latest">
+        <img alt="downloads" src="https://img.shields.io/github/v/release/chen08209/FlClash?style=flat-square&logo=github"/>
+    </a>
+    <a href="https://t.me/FlClash">
+        <img alt="downloads" src="https://img.shields.io/badge/Telegram-Channel-blue?logo=telegram"/>
+    </a>
     <img alt="downloads" src="https://img.shields.io/github/downloads/chen08209/FlClash/total"/>
     <a href="LICENSE">
         <img alt="license" src="https://img.shields.io/github/license/chen08209/FlClash"/>
@@ -41,10 +46,6 @@ on Mobile:
 ## Download
 
 <a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" width="200px"/></a> <a href="https://github.com/chen08209/FlClash/releases"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" width="200px"/></a>
-
-## Contact
-
-[Telegram](https://t.me/+G-veVtwBOl4wODc1)
 
 ## Build
 
@@ -100,9 +101,6 @@ on Mobile:
            ```bash
            dart .\setup.dart	
            ```
-           
-
-    
 
 ## Star
 
