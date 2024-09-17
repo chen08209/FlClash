@@ -6,18 +6,10 @@
 
 ## FlClash
 
-<p style="text-align: left;">
-    <a href="https://github.com/chen08209/FlClash/releases/latest">
-        <img alt="release" src="https://img.shields.io/github/v/release/chen08209/FlClash?logo=github"/>
-    </a>
-    <a href="https://t.me/FlClash">
-        <img alt="channel" src="https://img.shields.io/badge/Telegram-Channel-blue?logo=telegram"/>
-    </a>
-    <img alt="downloads" src="https://img.shields.io/github/downloads/chen08209/FlClash/total"/>
-    <a href="LICENSE">
-        <img alt="license" src="https://img.shields.io/github/license/chen08209/FlClash"/>
-    </a>
-</p>
+[![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
+
+[![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/FlClash)
+
 
 基于ClashMeta的多平台代理客户端，简单易用，开源无广告。
 
