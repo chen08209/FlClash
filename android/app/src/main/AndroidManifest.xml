@@ -64,6 +64,14 @@
 
                 <data android:host="install-config" />
             </intent-filter>
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="com.follow.clash.action.START" />
+            </intent-filter>
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="com.follow.clash.action.STOP" />
+            </intent-filter>
         </activity>
 
         <!--        <meta-data-->

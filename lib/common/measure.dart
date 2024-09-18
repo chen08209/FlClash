@@ -6,7 +6,9 @@ class Measure {
   final TextScaler _textScale;
   late BuildContext context;
 
-  Measure.of(this.context) : _textScale = MediaQuery.of(context).textScaler;
+  Measure.of(this.context)
+      : _textScale = TextScaler.linear(
+            WidgetsBinding.instance.platformDispatcher.textScaleFactor);
 
   Size computeTextSize(Text text) {
     final textPainter = TextPainter(

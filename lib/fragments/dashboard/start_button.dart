@@ -34,7 +34,7 @@ class _StartButtonState extends State<StartButton>
 
   handleSwitchStart() {
     final appController = globalState.appController;
-    if (isStart == appController.appState.isStart) {
+    if (isStart == appController.appFlowingState.isStart) {
       isStart = !isStart;
       updateController();
       appController.updateStatus(isStart);
@@ -50,8 +50,8 @@ class _StartButtonState extends State<StartButton>
   }
 
   Widget _updateControllerContainer(Widget child) {
-    return Selector<AppState, bool>(
-      selector: (_, appState) => appState.isStart,
+    return Selector<AppFlowingState, bool>(
+      selector: (_, appFlowingState) => appFlowingState.isStart,
       builder: (_, isStart, child) {
         if (isStart != this.isStart) {
           this.isStart = isStart;
@@ -127,8 +127,8 @@ class _StartButtonState extends State<StartButton>
         );
       },
       child: _updateControllerContainer(
-        Selector<AppState, int?>(
-          selector: (_, appState) => appState.runTime,
+        Selector<AppFlowingState, int?>(
+          selector: (_, appFlowingState) => appFlowingState.runTime,
           builder: (_, int? value, __) {
             final text = other.getTimeText(value);
             return Text(

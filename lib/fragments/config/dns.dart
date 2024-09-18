@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -18,7 +17,15 @@ class OverrideItem extends StatelessWidget {
       commonScaffoldState?.actions = [
         IconButton(
           onPressed: () {
-            globalState.appController.clashConfig.dns = const Dns();
+            globalState.showMessage(
+                title: appLocalizations.resetDns,
+                message: TextSpan(
+                  text: appLocalizations.dnsResetTip,
+                ),
+                onTab: () {
+                  globalState.appController.clashConfig.dns = const Dns();
+                  Navigator.of(context).pop();
+                });
           },
           tooltip: appLocalizations.resetDns,
           icon: const Icon(

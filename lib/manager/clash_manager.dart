@@ -137,7 +137,7 @@ class _ClashContainerState extends State<ClashManager>
 
   @override
   void onLog(Log log) {
-    globalState.appController.appState.addLog(log);
+    globalState.appController.appFlowingState.addLog(log);
     if (log.logLevel == LogLevel.error) {
       globalState.appController.showSnackBar(log.payload ?? '');
     }

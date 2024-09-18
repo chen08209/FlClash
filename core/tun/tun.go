@@ -47,7 +47,7 @@ func Start(tunProps Props) (*sing_tun.Listener, error) {
 	options := LC.Tun{
 		Enable:              true,
 		Device:              sing_tun.InterfaceName,
-		Stack:               constant.TunSystem,
+		Stack:               constant.TunMixed,
 		DNSHijack:           dnsHijack,
 		AutoRoute:           false,
 		AutoDetectInterface: false,

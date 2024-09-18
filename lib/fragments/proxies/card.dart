@@ -133,7 +133,7 @@ class ProxyCard extends StatelessWidget {
     final measure = globalState.measure;
     final delayText = _buildDelayText();
     final proxyNameText = _buildProxyNameText(context);
-    return currentGroupProxyNameBuilder(
+    return currentSelectedProxyNameBuilder(
       groupName: groupName,
       builder: (currentGroupName) {
         return Stack(
@@ -214,23 +214,9 @@ class ProxyCard extends StatelessWidget {
                       config.currentSelectedMap[groupName];
                   return selectedProxyName ?? '';
                 },
-                builder: (_, value, __) {
+                builder: (_, value, child) {
                   if (value != proxy.name) return Container();
-                  return Positioned.fill(
-                    child: Container(
-                      alignment: Alignment.topRight,
-                      margin: const EdgeInsets.all(8),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color:
-                              Theme.of(context).colorScheme.secondaryContainer,
-                        ),
-                        child: const SelectIcon(),
-                      ),
-                    ),
-                  );
+                  return child!;
                 },
                 child: Positioned.fill(
                   child: Container(

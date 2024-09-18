@@ -53,7 +53,7 @@ showExtendPage(
           body: uniqueBody,
         );
         return SizedBox(
-          width: isMobile ? context.width : extendPageWidth ?? 300,
+          width: isMobile ? context.viewWidth : extendPageWidth ?? 300,
           child: commonScaffold,
         );
       },

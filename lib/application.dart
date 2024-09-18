@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/common/common.dart';
@@ -28,6 +26,9 @@ runAppWithPreferences(
       ),
       ChangeNotifierProvider<Config>(
         create: (_) => config,
+      ),
+      ChangeNotifierProvider<AppFlowingState>(
+        create: (_) => AppFlowingState(),
       ),
       ChangeNotifierProxyProvider2<Config, ClashConfig, AppState>(
         create: (_) => appState,
@@ -85,6 +86,7 @@ class ApplicationState extends State<Application> {
     super.initState();
     _initTimer();
     globalState.appController = AppController(context);
+    globalState.measure = Measure.of(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final currentContext = globalState.navigatorKey.currentContext;
       if (currentContext != null) {
@@ -179,8 +181,15 @@ class ApplicationState extends State<Application> {
                       GlobalWidgetsLocalizations.delegate
                     ],
                     builder: (_, child) {
-                      return MediaManager(
-                        child: _buildPage(child!),
+                      return LayoutBuilder(
+                        builder: (_, container) {
+                          final appController = globalState.appController;
+                          final maxWidth = container.maxWidth;
+                          if (appController.appState.viewWidth != maxWidth) {
+                            globalState.appController.updateViewWidth(maxWidth);
+                          }
+                          return _buildPage(child!);
+                        },
                       );
                     },
                     scrollBehavior: BaseScrollBehavior(),

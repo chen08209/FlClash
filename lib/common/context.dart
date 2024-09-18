@@ -11,7 +11,7 @@ extension BuildContextExtension on BuildContext {
     return MediaQuery.of(this).size;
   }
 
-  double get width {
+  double get viewWidth {
     return appSize.width;
   }
 

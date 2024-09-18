@@ -62,6 +62,6 @@ extension DoubleListExt on List<double> {
       }
     }
 
-    return -1; // 这行理论上不会执行到，但为了完整性保留
+    return -1;
   }
 }

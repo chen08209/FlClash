@@ -67,15 +67,15 @@ class FlClashTileService : TileService() {
         activityTransfer()
         if (GlobalState.runState.value == RunState.STOP) {
             GlobalState.runState.value = RunState.PENDING
-            val titlePlugin = GlobalState.getCurrentTitlePlugin()
-            if (titlePlugin != null) {
-                titlePlugin.handleStart()
+            val tilePlugin = GlobalState.getCurrentTilePlugin()
+            if (tilePlugin != null) {
+                tilePlugin.handleStart()
             } else {
                 GlobalState.initServiceEngine(applicationContext)
             }
         } else if (GlobalState.runState.value == RunState.START) {
             GlobalState.runState.value = RunState.PENDING
-            GlobalState.getCurrentTitlePlugin()?.handleStop()
+            GlobalState.getCurrentTilePlugin()?.handleStop()
         }
 
     }

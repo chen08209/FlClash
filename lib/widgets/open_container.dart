@@ -462,7 +462,6 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
               );
               TweenSequence<Color?>? colorTween;
               TweenSequence<double>? closedOpacityTween, openOpacityTween;
-              Animatable<Color?>? scrimTween;
               switch (animation.status) {
                 case AnimationStatus.dismissed:
                 case AnimationStatus.forward:

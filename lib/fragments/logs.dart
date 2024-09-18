@@ -29,14 +29,14 @@ class _LogsFragmentState extends State<LogsFragment> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final appState = globalState.appController.appState;
-      logsNotifier.value = logsNotifier.value.copyWith(logs: appState.logs);
+      final appFlowingState = globalState.appController.appFlowingState;
+      logsNotifier.value = logsNotifier.value.copyWith(logs: appFlowingState.logs);
       if (timer != null) {
         timer?.cancel();
         timer = null;
       }
       timer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
-        final logs = appState.logs;
+        final logs = appFlowingState.logs;
         if (!const ListEquality<Log>().equals(
           logsNotifier.value.logs,
           logs,

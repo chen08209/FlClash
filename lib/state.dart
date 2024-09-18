@@ -76,7 +76,7 @@ class GlobalState {
     required ClashConfig clashConfig,
   }) async {
     clashCore.start();
-    if (vpn != null) {
+    if (globalState.isVpnService) {
       await vpn?.startVpn(clashConfig.mixedPort);
       startListenUpdate();
       return;
@@ -222,7 +222,7 @@ class GlobalState {
   }
 
   updateTraffic({
-    AppState? appState,
+    AppFlowingState? appFlowingState,
   }) {
     final traffic = clashCore.getTraffic();
     if (Platform.isAndroid && isVpnService == true) {
@@ -231,9 +231,9 @@ class GlobalState {
         content: "$traffic",
       );
     } else {
-      if (appState != null) {
-        appState.addTraffic(traffic);
-        appState.totalTraffic = clashCore.getTotalTraffic();
+      if (appFlowingState != null) {
+        appFlowingState.addTraffic(traffic);
+        appFlowingState.totalTraffic = clashCore.getTotalTraffic();
       }
     }
   }
@@ -243,7 +243,7 @@ class GlobalState {
     required String message,
     SnackBarAction? action,
   }) {
-    final width = context.width;
+    final width = context.viewWidth;
     EdgeInsets margin;
     if (width < 600) {
       margin = const EdgeInsets.only(
