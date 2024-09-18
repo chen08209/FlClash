@@ -52,7 +52,7 @@ class Dns with _$Dns {
     @Default(false) @JsonKey(name: "prefer-h3") bool preferH3,
     @Default(true) @JsonKey(name: "use-hosts") bool useHosts,
     @Default(true) @JsonKey(name: "use-system-hosts") bool useSystemHosts,
-    @Default(true) @JsonKey(name: "respect-rules") bool respectRules,
+    @Default(false) @JsonKey(name: "respect-rules") bool respectRules,
     @Default(false) bool ipv6,
     @Default(["223.5.5.5"])
     @JsonKey(name: "default-nameserver")

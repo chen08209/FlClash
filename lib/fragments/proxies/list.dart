@@ -487,7 +487,7 @@ class _ListHeaderState extends State<ListHeader>
                               ),
                               Flexible(
                                 flex: 1,
-                                child: currentGroupProxyNameBuilder(
+                                child: currentSelectedProxyNameBuilder(
                                   groupName: groupName,
                                   builder: (currentGroupName) {
                                     return Row(

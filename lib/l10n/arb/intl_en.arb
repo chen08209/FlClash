@@ -303,5 +303,6 @@
   "inputCorrectHotkey": "Please enter the correct hotkey",
   "hotkeyConflict": "Hotkey conflict",
   "remove": "Remove",
-  "noHotKey": "No HotKey"
+  "noHotKey": "No HotKey",
+  "dnsResetTip": "Make sure to reset the DNS"
 }

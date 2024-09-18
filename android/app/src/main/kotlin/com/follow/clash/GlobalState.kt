@@ -33,7 +33,7 @@ object GlobalState {
         return currentEngine?.plugins?.get(AppPlugin::class.java) as AppPlugin?
     }
 
-    fun getCurrentTitlePlugin(): TilePlugin? {
+    fun getCurrentTilePlugin(): TilePlugin? {
         val currentEngine = if (flutterEngine != null) flutterEngine else serviceEngine
         return currentEngine?.plugins?.get(TilePlugin::class.java) as TilePlugin?
     }

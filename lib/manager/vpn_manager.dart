@@ -24,8 +24,8 @@ class _VpnContainerState extends State<VpnManager> {
   showTip() {
     vpnTipDebounce ??= debounce<Function()>(() async {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final appState = globalState.appController.appState;
-        if (appState.isStart) {
+        final appFlowingState = globalState.appController.appFlowingState;
+        if (appFlowingState.isStart) {
           globalState.showSnackBar(
             context,
             message: appLocalizations.vpnTip,

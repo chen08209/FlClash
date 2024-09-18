@@ -220,6 +220,12 @@ class Other {
   String getBackupFileName() {
     return "${appName}_backup_${DateTime.now().show}.zip";
   }
+
+  Size getScreenSize() {
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    return view.physicalSize / view.devicePixelRatio;
+  }
+
 }
 
 final other = Other();

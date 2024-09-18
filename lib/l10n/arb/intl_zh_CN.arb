@@ -303,5 +303,6 @@
   "inputCorrectHotkey": "请输入正确的快捷键",
   "hotkeyConflict": "快捷键冲突",
   "remove": "移除",
-  "noHotKey": "暂无快捷键"
+  "noHotKey": "暂无快捷键",
+  "dnsResetTip": "确定重置DNS"
 }

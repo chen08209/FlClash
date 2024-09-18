@@ -159,6 +159,22 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 PendingIntent.FLAG_UPDATE_CURRENT
             )
         }
+
+        val stopPendingIntent = if (Build.VERSION.SDK_INT >= 31) {
+            PendingIntent.getActivity(
+                this,
+                0,
+                Intent("com.follow.clash.action.STOP"),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        } else {
+            PendingIntent.getActivity(
+                this,
+                0,
+                Intent("com.follow.clash.action.STOP"),
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
         with(NotificationCompat.Builder(this, CHANNEL)) {
             setSmallIcon(R.drawable.ic_stat_name)
             setContentTitle("FlClash")
@@ -172,6 +188,7 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
             setShowWhen(false)
             setOnlyAlertOnce(true)
             setAutoCancel(true)
+            addAction(0, "Stop", stopPendingIntent);
         }
     }
 
@@ -210,7 +227,7 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 val isSuccess = super.onTransact(code, data, reply, flags)
                 if (!isSuccess) {
                     CoroutineScope(Dispatchers.Main).launch {
-                        GlobalState.getCurrentTitlePlugin()?.handleStop()
+                        GlobalState.getCurrentTilePlugin()?.handleStop()
                     }
                 }
                 return isSuccess
