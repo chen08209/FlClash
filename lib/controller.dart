@@ -19,6 +19,7 @@ import 'common/common.dart';
 class AppController {
   final BuildContext context;
   late AppState appState;
+  late AppFlowingState appFlowingState;
   late Config config;
   late ClashConfig clashConfig;
   late Function updateClashConfigDebounce;
@@ -30,6 +31,7 @@ class AppController {
     appState = context.read<AppState>();
     config = context.read<Config>();
     clashConfig = context.read<ClashConfig>();
+    appFlowingState = context.read<AppFlowingState>();
     updateClashConfigDebounce = debounce<Function()>(() async {
       await updateClashConfig();
     });
@@ -60,9 +62,9 @@ class AppController {
     } else {
       await globalState.handleStop();
       clashCore.resetTraffic();
-      appState.traffics = [];
-      appState.totalTraffic = Traffic();
-      appState.runTime = null;
+      appFlowingState.traffics = [];
+      appFlowingState.totalTraffic = Traffic();
+      appFlowingState.runTime = null;
       addCheckIpNumDebounce();
     }
   }
@@ -76,15 +78,15 @@ class AppController {
     if (startTime != null) {
       final startTimeStamp = startTime.millisecondsSinceEpoch;
       final nowTimeStamp = DateTime.now().millisecondsSinceEpoch;
-      appState.runTime = nowTimeStamp - startTimeStamp;
+      appFlowingState.runTime = nowTimeStamp - startTimeStamp;
     } else {
-      appState.runTime = null;
+      appFlowingState.runTime = null;
     }
   }
 
   updateTraffic() {
     globalState.updateTraffic(
-      appState: appState,
+      appFlowingState: appFlowingState,
     );
   }
 
@@ -163,7 +165,7 @@ class AppController {
       try {
         updateProfile(profile);
       } catch (e) {
-        appState.addLog(
+        appFlowingState.addLog(
           Log(
             logLevel: LogLevel.info,
             payload: e.toString(),
@@ -241,7 +243,7 @@ class AppController {
       clashCore.startLog();
     } else {
       clashCore.stopLog();
-      appState.logs = [];
+      appFlowingState.logs = [];
     }
   }
 
@@ -546,7 +548,7 @@ class AppController {
   }
 
   updateStart() {
-    updateStatus(!appState.isStart);
+    updateStatus(!appFlowingState.isStart);
   }
 
   updateAutoLaunch() {

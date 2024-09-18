@@ -3099,6 +3099,16 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Make sure to reset the DNS`
+  String get dnsResetTip {
+    return Intl.message(
+      'Make sure to reset the DNS',
+      name: 'dnsResetTip',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

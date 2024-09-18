@@ -56,8 +56,8 @@ class TrafficUsage extends StatelessWidget {
         label: appLocalizations.trafficUsage,
         iconData: Icons.data_saver_off,
       ),
-      child: Selector<AppState, Traffic>(
-        selector: (_, appState) => appState.totalTraffic,
+      child: Selector<AppFlowingState, Traffic>(
+        selector: (_, appFlowingState) => appFlowingState.totalTraffic,
         builder: (_, totalTraffic, __) {
           final upTotalTrafficValue = totalTraffic.up;
           final downTotalTrafficValue = totalTraffic.down;

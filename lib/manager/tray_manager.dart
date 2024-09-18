@@ -42,7 +42,7 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
             WidgetsBinding.instance.platformDispatcher.platformBrightness,
       ),
     );
-    if(!Platform.isLinux){
+    if (!Platform.isLinux) {
       await trayManager.setToolTip(
         appName,
       );
@@ -138,11 +138,12 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
 
   @override
   Widget build(BuildContext context) {
-    return Selector3<AppState, Config, ClashConfig, TrayState>(
-      selector: (_, appState, config, clashConfig) => TrayState(
+    return Selector4<AppState, AppFlowingState, Config, ClashConfig, TrayState>(
+      selector: (_, appState, appFlowingState, config, clashConfig) =>
+          TrayState(
         mode: clashConfig.mode,
         autoLaunch: config.autoLaunch,
-        isStart: appState.isStart,
+        isStart: appFlowingState.isStart,
         locale: config.locale,
         systemProxy: config.desktopProps.systemProxy,
         tunEnable: clashConfig.tun.enable,

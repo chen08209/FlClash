@@ -321,7 +321,7 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
                   top: 16,
                   left: 16,
                   right: 16,
-                  bottom: 80,
+                  bottom: 96,
                 ),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: columns,

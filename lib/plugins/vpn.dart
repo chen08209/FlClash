@@ -6,8 +6,6 @@ import 'dart:isolate';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
 class Vpn {
@@ -105,4 +103,4 @@ class Vpn {
   }
 }
 
-final vpn = Platform.isAndroid && globalState.isVpnService ? Vpn() : null;
+final vpn = Platform.isAndroid ? Vpn() : null;

@@ -120,6 +120,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "discovery": MessageLookupByLibrary.simpleMessage("发现新版本"),
         "dnsDesc": MessageLookupByLibrary.simpleMessage("更新DNS相关设置"),
         "dnsMode": MessageLookupByLibrary.simpleMessage("DNS模式"),
+        "dnsResetTip": MessageLookupByLibrary.simpleMessage("确定重置DNS"),
         "doYouWantToPass": MessageLookupByLibrary.simpleMessage("是否要通过"),
         "domain": MessageLookupByLibrary.simpleMessage("域名"),
         "download": MessageLookupByLibrary.simpleMessage("下载"),

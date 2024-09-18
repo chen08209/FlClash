@@ -16,7 +16,7 @@ import com.follow.clash.BaseServiceInterface
 import com.follow.clash.GlobalState
 import com.follow.clash.RunState
 import com.follow.clash.extensions.getProtocol
-import com.follow.clash.extensions.resolvePrimaryDns
+import com.follow.clash.extensions.resolveDns
 import com.follow.clash.models.Props
 import com.follow.clash.models.TunProps
 import com.follow.clash.services.FlClashService
@@ -177,9 +177,11 @@ class VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     val networks = mutableSetOf<Network>()
 
     fun onUpdateNetwork() {
-        val dns = networks.mapNotNull {
-            connectivity?.resolvePrimaryDns(it)
-        }.joinToString(separator = ",")
+        val dns = networks.flatMap { network ->
+            connectivity?.resolveDns(network) ?: emptyList()
+        }
+            .toSet()
+            .joinToString(",")
         scope.launch {
             withContext(Dispatchers.Main) {
                 flutterMethodChannel.invokeMethod("dnsChanged", dns)

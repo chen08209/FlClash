@@ -26,9 +26,10 @@ class _NetworkDetectionState extends State<NetworkDetection> {
 
   _checkIp() async {
     final appState = globalState.appController.appState;
+    final appFlowingState = globalState.appController.appFlowingState;
     final isInit = appState.isInit;
     if (!isInit) return;
-    final isStart = appState.isStart;
+    final isStart = appFlowingState.isStart;
     if (_preIsStart == false && _preIsStart == isStart) return;
     networkDetectionState.value = networkDetectionState.value.copyWith(
       isTesting: true,
