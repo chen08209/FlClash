@@ -146,6 +146,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "dnsDesc":
             MessageLookupByLibrary.simpleMessage("Update DNS related settings"),
         "dnsMode": MessageLookupByLibrary.simpleMessage("DNS mode"),
+        "dnsResetTip":
+            MessageLookupByLibrary.simpleMessage("Make sure to reset the DNS"),
         "doYouWantToPass":
             MessageLookupByLibrary.simpleMessage("Do you want to pass"),
         "domain": MessageLookupByLibrary.simpleMessage("Domain"),

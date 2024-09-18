@@ -12,12 +12,8 @@ typedef DelayMap = Map<String, int?>;
 
 class AppState with ChangeNotifier {
   List<NavigationItem> _navigationItems;
-  int? _runTime;
   bool _isInit;
   VersionInfo? _versionInfo;
-  List<Traffic> _traffics;
-  Traffic _totalTraffic;
-  List<Log> _logs;
   String _currentLabel;
   SystemColorSchemes _systemColorSchemes;
   num _sortNum;
@@ -42,16 +38,13 @@ class AppState with ChangeNotifier {
   })  : _navigationItems = [],
         _isInit = false,
         _currentLabel = "dashboard",
-        _traffics = [],
-        _logs = [],
-        _viewWidth = 0,
+        _viewWidth = other.getScreenSize().width,
         _selectedMap = selectedMap,
         _sortNum = 0,
         _checkIpNum = 0,
         _requests = [],
         _mode = mode,
         _brightness = null,
-        _totalTraffic = Traffic(),
         _delayMap = {},
         _groups = [],
         _providers = [],
@@ -97,17 +90,6 @@ class AppState with ChangeNotifier {
   set isInit(bool value) {
     if (_isInit != value) {
       _isInit = value;
-      notifyListeners();
-    }
-  }
-
-  bool get isStart => _runTime != null;
-
-  int? get runTime => _runTime;
-
-  set runTime(int? value) {
-    if (_runTime != value) {
-      _runTime = value;
       notifyListeners();
     }
   }
@@ -158,33 +140,6 @@ class AppState with ChangeNotifier {
     }
   }
 
-  List<Traffic> get traffics => _traffics;
-
-  set traffics(List<Traffic> value) {
-    if (_traffics != value) {
-      _traffics = value;
-      notifyListeners();
-    }
-  }
-
-  addTraffic(Traffic traffic) {
-    _traffics = List.from(_traffics)..add(traffic);
-    const maxLength = 60;
-    if (_traffics.length > maxLength) {
-      _traffics = _traffics.sublist(_traffics.length - maxLength);
-    }
-    notifyListeners();
-  }
-
-  Traffic get totalTraffic => _totalTraffic;
-
-  set totalTraffic(Traffic value) {
-    if (_totalTraffic != value) {
-      _totalTraffic = value;
-      notifyListeners();
-    }
-  }
-
   List<Connection> get requests => _requests;
 
   set requests(List<Connection> value) {
@@ -199,24 +154,6 @@ class AppState with ChangeNotifier {
     final maxLength = Platform.isAndroid ? 1000 : 60;
     if (_requests.length > maxLength) {
       _requests = _requests.sublist(_requests.length - maxLength);
-    }
-    notifyListeners();
-  }
-
-  List<Log> get logs => _logs;
-
-  set logs(List<Log> value) {
-    if (_logs != value) {
-      _logs = value;
-      notifyListeners();
-    }
-  }
-
-  addLog(Log log) {
-    _logs = List.from(_logs)..add(log);
-    final maxLength = Platform.isAndroid ? 1000 : 60;
-    if (_logs.length > maxLength) {
-      _logs = _logs.sublist(_logs.length - maxLength);
     }
     notifyListeners();
   }
@@ -379,6 +316,74 @@ class AppState with ChangeNotifier {
   set version(int value) {
     if (_version != value) {
       _version = value;
+      notifyListeners();
+    }
+  }
+}
+
+class AppFlowingState with ChangeNotifier {
+  int? _runTime;
+  List<Log> _logs;
+  List<Traffic> _traffics;
+  Traffic _totalTraffic;
+
+  AppFlowingState()
+      : _logs = [],
+        _traffics = [],
+        _totalTraffic = Traffic();
+
+  bool get isStart => _runTime != null;
+
+  int? get runTime => _runTime;
+
+  set runTime(int? value) {
+    if (_runTime != value) {
+      _runTime = value;
+      notifyListeners();
+    }
+  }
+
+  List<Log> get logs => _logs;
+
+  set logs(List<Log> value) {
+    if (_logs != value) {
+      _logs = value;
+      notifyListeners();
+    }
+  }
+
+  addLog(Log log) {
+    _logs = List.from(_logs)..add(log);
+    final maxLength = Platform.isAndroid ? 1000 : 60;
+    if (_logs.length > maxLength) {
+      _logs = _logs.sublist(_logs.length - maxLength);
+    }
+    notifyListeners();
+  }
+
+  List<Traffic> get traffics => _traffics;
+
+  set traffics(List<Traffic> value) {
+    if (_traffics != value) {
+      _traffics = value;
+      notifyListeners();
+    }
+  }
+
+  addTraffic(Traffic traffic) {
+    _traffics = List.from(_traffics)..add(traffic);
+    const maxLength = 60;
+    if (_traffics.length > maxLength) {
+      _traffics = _traffics.sublist(_traffics.length - maxLength);
+    }
+    notifyListeners();
+  }
+
+  Traffic get totalTraffic => _totalTraffic;
+
+  set totalTraffic(Traffic value) {
+    if (_totalTraffic != value) {
+      _totalTraffic = value;
       notifyListeners();
     }
   }

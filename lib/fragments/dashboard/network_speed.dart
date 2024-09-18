@@ -116,8 +116,8 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
         label: appLocalizations.networkSpeed,
         iconData: Icons.speed_sharp,
       ),
-      child: Selector<AppState, List<Traffic>>(
-        selector: (_, appState) => appState.traffics,
+      child: Selector<AppFlowingState, List<Traffic>>(
+        selector: (_, appFlowingState) => appFlowingState.traffics,
         builder: (_, traffics, __) {
           return Container(
             padding: const EdgeInsets.all(16),

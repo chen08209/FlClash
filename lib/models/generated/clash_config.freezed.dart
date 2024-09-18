@@ -772,7 +772,7 @@ class _$DnsImpl implements _Dns {
       @JsonKey(name: "prefer-h3") this.preferH3 = false,
       @JsonKey(name: "use-hosts") this.useHosts = true,
       @JsonKey(name: "use-system-hosts") this.useSystemHosts = true,
-      @JsonKey(name: "respect-rules") this.respectRules = true,
+      @JsonKey(name: "respect-rules") this.respectRules = false,
       this.ipv6 = false,
       @JsonKey(name: "default-nameserver")
       final List<String> defaultNameserver = const ["223.5.5.5"],
