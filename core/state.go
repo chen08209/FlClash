@@ -18,6 +18,7 @@ type AndroidProps struct {
 	AccessControl *AccessControl `json:"accessControl"`
 	AllowBypass   bool           `json:"allowBypass"`
 	SystemProxy   bool           `json:"systemProxy"`
+	Ipv6          bool           `json:"ipv6"`
 }
 
 type State struct {

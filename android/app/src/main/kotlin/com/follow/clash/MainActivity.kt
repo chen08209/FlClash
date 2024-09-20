@@ -11,19 +11,6 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
 class MainActivity : FlutterActivity() {
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        when (intent.action) {
-            "com.follow.clash.action.START" -> {
-                GlobalState.getCurrentTilePlugin()?.handleStart()
-            }
-
-            "com.follow.clash.action.STOP" -> {
-                GlobalState.getCurrentTilePlugin()?.handleStop()
-            }
-        }
-    }
-
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         flutterEngine.plugins.add(AppPlugin())

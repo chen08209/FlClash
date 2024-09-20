@@ -70,7 +70,7 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
             final isDisclaimerAccepted =
                 await globalState.appController.showDisclaimer();
             if (!isDisclaimerAccepted) {
-              system.exit();
+              globalState.appController.handleExit();
             }
           },
         ),

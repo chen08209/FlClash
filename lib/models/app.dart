@@ -151,10 +151,8 @@ class AppState with ChangeNotifier {
 
   addRequest(Connection value) {
     _requests = List.from(_requests)..add(value);
-    final maxLength = Platform.isAndroid ? 1000 : 60;
-    if (_requests.length > maxLength) {
-      _requests = _requests.sublist(_requests.length - maxLength);
-    }
+    const maxLength = 1000;
+    _requests = _requests.safeSublist(_requests.length - maxLength);
     notifyListeners();
   }
 
@@ -354,10 +352,8 @@ class AppFlowingState with ChangeNotifier {
 
   addLog(Log log) {
     _logs = List.from(_logs)..add(log);
-    final maxLength = Platform.isAndroid ? 1000 : 60;
-    if (_logs.length > maxLength) {
-      _logs = _logs.sublist(_logs.length - maxLength);
-    }
+    const maxLength = 1000;
+    _logs = _logs.safeSublist(_logs.length - maxLength);
     notifyListeners();
   }
 
@@ -373,9 +369,7 @@ class AppFlowingState with ChangeNotifier {
   addTraffic(Traffic traffic) {
     _traffics = List.from(_traffics)..add(traffic);
     const maxLength = 60;
-    if (_traffics.length > maxLength) {
-      _traffics = _traffics.sublist(_traffics.length - maxLength);
-    }
+    _traffics = _traffics.safeSublist(_traffics.length - maxLength);
     notifyListeners();
   }
 

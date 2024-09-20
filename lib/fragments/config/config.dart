@@ -67,11 +67,9 @@ class _ConfigFragmentState extends State<ConfigFragment> {
         title: const Text("DNS"),
         subtitle: Text(appLocalizations.dnsDesc),
         leading: const Icon(Icons.dns),
-        delegate: OpenDelegate(
+        delegate: const OpenDelegate(
           title: "DNS",
-          widget: generateListView(
-            dnsItems,
-          ),
+          widget: DnsListView(),
           isScaffold: true,
           isBlur: false,
           extendPageWidth: 360,

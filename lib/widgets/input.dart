@@ -149,7 +149,6 @@ class UpdatePage<T> extends StatelessWidget {
   final Widget Function(T item)? subtitleBuilder;
   final Function(T item) onAdd;
   final Function(T item) onRemove;
-  final bool isMap;
 
   const UpdatePage({
     super.key,
@@ -158,9 +157,36 @@ class UpdatePage<T> extends StatelessWidget {
     required this.titleBuilder,
     required this.onRemove,
     required this.onAdd,
-    this.isMap = false,
     this.subtitleBuilder,
   });
+
+  bool get isMap => items is Iterable<MapEntry>;
+
+  _handleEdit(T item) async {
+    if (isMap) {
+      item as MapEntry<String, String>;
+      final value = await globalState.showCommonDialog<T>(
+        child: AddDialog(
+          defaultKey: item.key,
+          defaultValue: item.value,
+          title: title,
+        ),
+      );
+      if (value == null) return;
+      onAdd(value);
+    } else {
+      item as String;
+      final value = await globalState.showCommonDialog<T>(
+        child: AddDialog(
+          defaultKey: null,
+          defaultValue: item,
+          title: title,
+        ),
+      );
+      if (value == null) return;
+      onAdd(value);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +196,8 @@ class UpdatePage<T> extends StatelessWidget {
           onPressed: () async {
             final value = await globalState.showCommonDialog<T>(
               child: AddDialog(
-                isMap: isMap,
+                defaultKey: isMap ? "" : null,
+                defaultValue: "",
                 title: title,
               ),
             );
@@ -202,7 +229,9 @@ class UpdatePage<T> extends StatelessWidget {
                   },
                 ),
               ),
-              onPressed: () {},
+              onPressed: () {
+                _handleEdit(e);
+              },
             ),
           );
         },
@@ -213,12 +242,14 @@ class UpdatePage<T> extends StatelessWidget {
 
 class AddDialog extends StatefulWidget {
   final String title;
-  final bool isMap;
+  final String? defaultKey;
+  final String defaultValue;
 
   const AddDialog({
     super.key,
     required this.title,
-    required this.isMap,
+    this.defaultKey,
+    required this.defaultValue,
   });
 
   @override
@@ -233,13 +264,19 @@ class _AddDialogState extends State<AddDialog> {
   @override
   void initState() {
     super.initState();
-    keyController = TextEditingController();
-    valueController = TextEditingController();
+    keyController = TextEditingController(
+      text: widget.defaultKey,
+    );
+    valueController = TextEditingController(
+      text: widget.defaultValue,
+    );
   }
+
+  bool get hasKey => widget.defaultKey != null;
 
   _submit() {
     if (!_formKey.currentState!.validate()) return;
-    if (widget.isMap) {
+    if (hasKey) {
       Navigator.of(context).pop<MapEntry<String, String>>(
         MapEntry(
           keyController.text,
@@ -264,7 +301,7 @@ class _AddDialogState extends State<AddDialog> {
           child: Wrap(
             runSpacing: 16,
             children: [
-              if (widget.isMap)
+              if (hasKey)
                 TextFormField(
                   maxLines: 2,
                   minLines: 1,

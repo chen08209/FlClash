@@ -10,35 +10,8 @@ import 'package:provider/provider.dart';
 class OverrideItem extends StatelessWidget {
   const OverrideItem({super.key});
 
-  _initActions(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      final commonScaffoldState =
-          context.findAncestorStateOfType<CommonScaffoldState>();
-      commonScaffoldState?.actions = [
-        IconButton(
-          onPressed: () {
-            globalState.showMessage(
-                title: appLocalizations.resetDns,
-                message: TextSpan(
-                  text: appLocalizations.dnsResetTip,
-                ),
-                onTab: () {
-                  globalState.appController.clashConfig.dns = const Dns();
-                  Navigator.of(context).pop();
-                });
-          },
-          tooltip: appLocalizations.resetDns,
-          icon: const Icon(
-            Icons.replay,
-          ),
-        )
-      ];
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    _initActions(context);
     return Selector<Config, bool>(
       selector: (_, config) => config.overrideDns,
       builder: (_, override, __) {
@@ -54,35 +27,6 @@ class OverrideItem extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class DnsDisabledContainer extends StatelessWidget {
-  final Widget child;
-
-  const DnsDisabledContainer(
-    this.child, {
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.overrideDns,
-      builder: (_, enable, child) {
-        return AbsorbPointer(
-          absorbing: !enable,
-          child: DisabledMask(
-            status: !enable,
-            child: Container(
-              color: context.colorScheme.surface,
-              child: child!,
-            ),
-          ),
-        );
-      },
-      child: child,
     );
   }
 }
@@ -469,7 +413,6 @@ class NameserverPolicyItem extends StatelessWidget {
               items: nameserverPolicy.entries,
               titleBuilder: (item) => Text(item.key),
               subtitleBuilder: (item) => Text(item.value),
-              isMap: true,
               onRemove: (value) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
@@ -795,27 +738,25 @@ class DnsOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DnsDisabledContainer(
-      Column(
-        children: generateSection(
-          title: appLocalizations.options,
-          items: [
-            const StatusItem(),
-            const UseHostsItem(),
-            const UseSystemHostsItem(),
-            const IPv6Item(),
-            const RespectRulesItem(),
-            const PreferH3Item(),
-            const DnsModeItem(),
-            const FakeIpRangeItem(),
-            const FakeIpFilterItem(),
-            const DefaultNameserverItem(),
-            const NameserverPolicyItem(),
-            const NameserverItem(),
-            const FallbackItem(),
-            const ProxyServerNameserverItem(),
-          ],
-        ),
+    return Column(
+      children: generateSection(
+        title: appLocalizations.options,
+        items: [
+          const StatusItem(),
+          const UseHostsItem(),
+          const UseSystemHostsItem(),
+          const IPv6Item(),
+          const RespectRulesItem(),
+          const PreferH3Item(),
+          const DnsModeItem(),
+          const FakeIpRangeItem(),
+          const FakeIpFilterItem(),
+          const DefaultNameserverItem(),
+          const NameserverPolicyItem(),
+          const NameserverItem(),
+          const FallbackItem(),
+          const ProxyServerNameserverItem(),
+        ],
       ),
     );
   }
@@ -826,18 +767,16 @@ class FallbackFilterOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DnsDisabledContainer(
-      Column(
-        children: generateSection(
-          title: appLocalizations.fallbackFilter,
-          items: [
-            const GeoipItem(),
-            const GeoipCodeItem(),
-            const GeositeItem(),
-            const IpcidrItem(),
-            const DomainItem(),
-          ],
-        ),
+    return Column(
+      children: generateSection(
+        title: appLocalizations.fallbackFilter,
+        items: [
+          const GeoipItem(),
+          const GeoipCodeItem(),
+          const GeositeItem(),
+          const IpcidrItem(),
+          const DomainItem(),
+        ],
       ),
     );
   }
@@ -848,3 +787,41 @@ const dnsItems = <Widget>[
   DnsOptions(),
   FallbackFilterOptions(),
 ];
+
+class DnsListView extends StatelessWidget {
+  const DnsListView({super.key});
+
+  _initActions(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      final commonScaffoldState =
+          context.findAncestorStateOfType<CommonScaffoldState>();
+      commonScaffoldState?.actions = [
+        IconButton(
+          onPressed: () {
+            globalState.showMessage(
+                title: appLocalizations.resetDns,
+                message: TextSpan(
+                  text: appLocalizations.dnsResetTip,
+                ),
+                onTab: () {
+                  globalState.appController.clashConfig.dns = const Dns();
+                  Navigator.of(context).pop();
+                });
+          },
+          tooltip: appLocalizations.resetDns,
+          icon: const Icon(
+            Icons.replay,
+          ),
+        )
+      ];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _initActions(context);
+    return generateListView(
+      dnsItems,
+    );
+  }
+}

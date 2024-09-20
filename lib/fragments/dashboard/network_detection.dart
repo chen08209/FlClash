@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
@@ -22,6 +24,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
   );
   bool? _preIsStart;
   Function? _checkIpDebounce;
+  Timer? _setTimeoutTimer;
   CancelToken? cancelToken;
 
   _checkIp() async {
@@ -31,6 +34,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     if (!isInit) return;
     final isStart = appFlowingState.isStart;
     if (_preIsStart == false && _preIsStart == isStart) return;
+    _clearSetTimeoutTimer();
     networkDetectionState.value = networkDetectionState.value.copyWith(
       isTesting: true,
       ipInfo: null,
@@ -43,11 +47,32 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     cancelToken = CancelToken();
     try {
       final ipInfo = await request.checkIp(cancelToken: cancelToken);
+      if (ipInfo != null) {
+        networkDetectionState.value = networkDetectionState.value.copyWith(
+          isTesting: false,
+          ipInfo: ipInfo,
+        );
+        return;
+      }
+      _setTimeoutTimer = Timer(const Duration(milliseconds: 2000), () {
+        networkDetectionState.value = networkDetectionState.value.copyWith(
+          isTesting: false,
+          ipInfo: null,
+        );
+      });
+    } catch (_) {
       networkDetectionState.value = networkDetectionState.value.copyWith(
-        isTesting: false,
-        ipInfo: ipInfo,
+        isTesting: true,
+        ipInfo: null,
       );
-    } catch (_) {}
+    }
+  }
+
+  _clearSetTimeoutTimer() {
+    if(_setTimeoutTimer != null){
+      _setTimeoutTimer?.cancel();
+      _setTimeoutTimer = null;
+    }
   }
 
   _checkIpContainer(Widget child) {
