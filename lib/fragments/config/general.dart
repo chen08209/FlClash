@@ -226,7 +226,6 @@ class HostsItem extends StatelessWidget {
                 clashConfig.hosts = Map.from(clashConfig.hosts)
                   ..addEntries([value]);
               },
-              isMap: true,
             );
           },
         ),

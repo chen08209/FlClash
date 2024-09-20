@@ -34,22 +34,22 @@ def isRelease = defStoreFile.exists() && defStorePassword != null && defKeyAlias
 android {
     namespace "com.follow.clash"
     compileSdkVersion 34
-    ndkVersion "25.1.8937393"
+    ndkVersion "27.1.12297006"
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
     signingConfigs {
-        if (isRelease){
+        if (isRelease) {
             release {
                 storeFile defStoreFile
                 storePassword defStorePassword
@@ -74,10 +74,9 @@ android {
             applicationIdSuffix '.debug'
         }
         release {
-            minifyEnabled true
-            if(isRelease){
+            if (isRelease) {
                 signingConfig signingConfigs.release
-            }else{
+            } else {
                 signingConfig signingConfigs.debug
             }
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"

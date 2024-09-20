@@ -304,5 +304,9 @@
   "hotkeyConflict": "快捷键冲突",
   "remove": "移除",
   "noHotKey": "暂无快捷键",
-  "dnsResetTip": "确定重置DNS"
+  "dnsResetTip": "确定重置DNS",
+  "noNetwork": "无网络",
+  "ipv6InboundDesc": "允许IPv6入站",
+  "exportLogs": "导出日志",
+  "exportSuccess": "导出成功"
 }

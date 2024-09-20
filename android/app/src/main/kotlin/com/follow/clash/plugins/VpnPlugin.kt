@@ -1,6 +1,5 @@
 package com.follow.clash.plugins
 
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -163,8 +162,7 @@ class VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         }
     }
 
-    @SuppressLint("ForegroundServiceType")
-    fun handleStartVpn() {
+    private fun handleStartVpn() {
         GlobalState.getCurrentAppPlugin()?.requestVpnPermission(context) {
             start()
         }
@@ -228,7 +226,6 @@ class VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         onUpdateNetwork()
     }
 
-    @SuppressLint("ForegroundServiceType")
     private fun startForeground(title: String, content: String) {
         GlobalState.runLock.withLock {
             if (GlobalState.runState.value != RunState.START) return

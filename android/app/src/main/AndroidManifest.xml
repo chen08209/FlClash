@@ -10,25 +10,22 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
+        tools:ignore="SystemPermissionTypo" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
-        tools:ignore="SystemPermissionTypo" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
     <application
         android:name="${applicationName}"
-        android:enableOnBackInvokedCallback="true"
-        android:extractNativeLibs="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="FlClash"
-        android:networkSecurityConfig="@xml/network_security_config"
-        tools:targetApi="tiramisu">
+        android:hardwareAccelerated="true"
+        android:label="FlClash">
         <activity
             android:name="com.follow.clash.MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -64,6 +61,16 @@
 
                 <data android:host="install-config" />
             </intent-filter>
+        </activity>
+
+        <!--        <meta-data-->
+        <!--                android:name="io.flutter.embedding.android.EnableImpeller"-->
+        <!--                android:value="true" />-->
+
+        <activity
+            android:name=".TempActivity"
+            android:exported="true"
+            android:theme="@style/TransparentTheme">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="com.follow.clash.action.START" />
@@ -73,14 +80,6 @@
                 <action android:name="com.follow.clash.action.STOP" />
             </intent-filter>
         </activity>
-
-        <!--        <meta-data-->
-        <!--                android:name="io.flutter.embedding.android.EnableImpeller"-->
-        <!--                android:value="true" />-->
-
-        <activity
-            android:name=".TempActivity"
-            android:theme="@style/TransparentTheme" />
 
         <service
             android:name=".services.FlClashTileService"
@@ -127,12 +126,19 @@
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="vpn" />
         </service>
 
         <service
             android:name=".services.FlClashService"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="service" />
+        </service>
 
         <meta-data
             android:name="flutterEmbedding"

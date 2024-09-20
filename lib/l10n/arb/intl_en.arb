@@ -123,7 +123,7 @@
   "tabAnimation": "Tab animation",
   "tabAnimationDesc": "When enabled, the home tab will add a toggle animation",
   "desc": "A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.",
-  "startVpn": "Staring VPN...",
+  "startVpn": "Starting VPN...",
   "stopVpn": "Stopping VPN...",
   "discovery": "Discovery a new version",
   "compatible": "Compatibility mode",
@@ -304,5 +304,9 @@
   "hotkeyConflict": "Hotkey conflict",
   "remove": "Remove",
   "noHotKey": "No HotKey",
-  "dnsResetTip": "Make sure to reset the DNS"
+  "dnsResetTip": "Make sure to reset the DNS",
+  "noNetwork": "No network",
+  "ipv6InboundDesc": "Allow IPv6 inbound",
+  "exportLogs": "Export logs",
+  "exportSuccess": "Export Success"
 }

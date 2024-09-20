@@ -15,4 +15,10 @@ extension ListExtension<T> on List<T> {
     }
     return res;
   }
+
+  List<T> safeSublist(int start) {
+    if(start <= 0) return this;
+    if(start > length) return [];
+    return sublist(start);
+  }
 }

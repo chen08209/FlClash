@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
@@ -30,18 +31,24 @@ class _LogsFragmentState extends State<LogsFragment> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appFlowingState = globalState.appController.appFlowingState;
-      logsNotifier.value = logsNotifier.value.copyWith(logs: appFlowingState.logs);
+      logsNotifier.value =
+          logsNotifier.value.copyWith(logs: appFlowingState.logs);
       if (timer != null) {
         timer?.cancel();
         timer = null;
       }
       timer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
-        final logs = appFlowingState.logs;
+        final maxLength = Platform.isAndroid ? 1000 : 60;
+        final logs = appFlowingState.logs.safeSublist(
+          appFlowingState.logs.length - maxLength,
+        );
         if (!const ListEquality<Log>().equals(
           logsNotifier.value.logs,
           logs,
         )) {
-          logsNotifier.value = logsNotifier.value.copyWith(logs: logs);
+          logsNotifier.value = logsNotifier.value.copyWith(
+            logs: logs,
+          );
         }
       });
     });
@@ -54,6 +61,21 @@ class _LogsFragmentState extends State<LogsFragment> {
     logsNotifier.dispose();
     scrollController.dispose();
     timer = null;
+  }
+
+  _handleExport() async {
+    final commonScaffoldState = context.commonScaffoldState;
+    final res = await commonScaffoldState?.loadingRun<bool>(
+      () async {
+        return await globalState.appController.exportLogs();
+      },
+      title: appLocalizations.exportLogs,
+    );
+    if (res != true) return;
+    globalState.showMessage(
+      title: appLocalizations.tip,
+      message: TextSpan(text: appLocalizations.exportSuccess),
+    );
   }
 
   _initActions() {
@@ -71,6 +93,17 @@ class _LogsFragmentState extends State<LogsFragment> {
             );
           },
           icon: const Icon(Icons.search),
+        ),
+        const SizedBox(
+          width: 8,
+        ),
+        IconButton(
+          onPressed: () {
+            _handleExport();
+          },
+          icon: const Icon(
+            Icons.file_download_outlined,
+          ),
         ),
       ];
     });
@@ -236,7 +269,8 @@ class LogsSearchDelegate extends SearchDelegate {
   _addKeyword(String keyword) {
     final isContains = logsNotifier.value.keywords.contains(keyword);
     if (isContains) return;
-    final keywords = List<String>.from(logsNotifier.value.keywords)..add(keyword);
+    final keywords = List<String>.from(logsNotifier.value.keywords)
+      ..add(keyword);
     logsNotifier.value = logsNotifier.value.copyWith(
       keywords: keywords,
     );
@@ -245,7 +279,8 @@ class LogsSearchDelegate extends SearchDelegate {
   _deleteKeyword(String keyword) {
     final isContains = logsNotifier.value.keywords.contains(keyword);
     if (!isContains) return;
-    final keywords = List<String>.from(logsNotifier.value.keywords)..remove(keyword);
+    final keywords = List<String>.from(logsNotifier.value.keywords)
+      ..remove(keyword);
     logsNotifier.value = logsNotifier.value.copyWith(
       keywords: keywords,
     );
@@ -339,7 +374,9 @@ class _LogItemState extends State<LogItem> {
             style: context.textTheme.bodySmall
                 ?.copyWith(color: context.colorScheme.primary),
           ),
-          const SizedBox(height: 8,),
+          const SizedBox(
+            height: 8,
+          ),
           Container(
             alignment: Alignment.centerLeft,
             child: CommonChip(

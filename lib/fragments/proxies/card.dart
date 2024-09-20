@@ -102,12 +102,12 @@ class ProxyCard extends StatelessWidget {
 
   _changeProxy(BuildContext context) async {
     final appController = globalState.appController;
-    final isUrlTest = groupType == GroupType.URLTest;
+    final isURLTestOrFallback = groupType.isURLTestOrFallback;
     final isSelector = groupType == GroupType.Selector;
-    if (isUrlTest || isSelector) {
+    if (isURLTestOrFallback || isSelector) {
       final currentProxyName =
           appController.config.currentSelectedMap[groupName];
-      final nextProxyName = switch (isUrlTest) {
+      final nextProxyName = switch (isURLTestOrFallback) {
         true => currentProxyName == proxy.name ? "" : proxy.name,
         false => proxy.name,
       };
@@ -207,7 +207,7 @@ class ProxyCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (groupType == GroupType.URLTest)
+            if (groupType.isURLTestOrFallback)
               Selector<Config, String>(
                 selector: (_, config) {
                   final selectedProxyName =
