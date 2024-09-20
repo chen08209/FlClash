@@ -274,6 +274,7 @@ mixin _$CoreState {
   bool get allowBypass => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
   int get mixedPort => throw _privateConstructorUsedError;
+  bool get ipv6 => throw _privateConstructorUsedError;
   bool get onlyProxy => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -294,6 +295,7 @@ abstract class $CoreStateCopyWith<$Res> {
       bool allowBypass,
       bool systemProxy,
       int mixedPort,
+      bool ipv6,
       bool onlyProxy});
 
   $AccessControlCopyWith<$Res>? get accessControl;
@@ -318,6 +320,7 @@ class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
     Object? allowBypass = null,
     Object? systemProxy = null,
     Object? mixedPort = null,
+    Object? ipv6 = null,
     Object? onlyProxy = null,
   }) {
     return _then(_value.copyWith(
@@ -345,6 +348,10 @@ class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
           ? _value.mixedPort
           : mixedPort // ignore: cast_nullable_to_non_nullable
               as int,
+      ipv6: null == ipv6
+          ? _value.ipv6
+          : ipv6 // ignore: cast_nullable_to_non_nullable
+              as bool,
       onlyProxy: null == onlyProxy
           ? _value.onlyProxy
           : onlyProxy // ignore: cast_nullable_to_non_nullable
@@ -380,6 +387,7 @@ abstract class _$$CoreStateImplCopyWith<$Res>
       bool allowBypass,
       bool systemProxy,
       int mixedPort,
+      bool ipv6,
       bool onlyProxy});
 
   @override
@@ -403,6 +411,7 @@ class __$$CoreStateImplCopyWithImpl<$Res>
     Object? allowBypass = null,
     Object? systemProxy = null,
     Object? mixedPort = null,
+    Object? ipv6 = null,
     Object? onlyProxy = null,
   }) {
     return _then(_$CoreStateImpl(
@@ -430,6 +439,10 @@ class __$$CoreStateImplCopyWithImpl<$Res>
           ? _value.mixedPort
           : mixedPort // ignore: cast_nullable_to_non_nullable
               as int,
+      ipv6: null == ipv6
+          ? _value.ipv6
+          : ipv6 // ignore: cast_nullable_to_non_nullable
+              as bool,
       onlyProxy: null == onlyProxy
           ? _value.onlyProxy
           : onlyProxy // ignore: cast_nullable_to_non_nullable
@@ -448,6 +461,7 @@ class _$CoreStateImpl implements _CoreState {
       required this.allowBypass,
       required this.systemProxy,
       required this.mixedPort,
+      required this.ipv6,
       required this.onlyProxy});
 
   factory _$CoreStateImpl.fromJson(Map<String, dynamic> json) =>
@@ -466,11 +480,13 @@ class _$CoreStateImpl implements _CoreState {
   @override
   final int mixedPort;
   @override
+  final bool ipv6;
+  @override
   final bool onlyProxy;
 
   @override
   String toString() {
-    return 'CoreState(accessControl: $accessControl, currentProfileName: $currentProfileName, enable: $enable, allowBypass: $allowBypass, systemProxy: $systemProxy, mixedPort: $mixedPort, onlyProxy: $onlyProxy)';
+    return 'CoreState(accessControl: $accessControl, currentProfileName: $currentProfileName, enable: $enable, allowBypass: $allowBypass, systemProxy: $systemProxy, mixedPort: $mixedPort, ipv6: $ipv6, onlyProxy: $onlyProxy)';
   }
 
   @override
@@ -489,6 +505,7 @@ class _$CoreStateImpl implements _CoreState {
                 other.systemProxy == systemProxy) &&
             (identical(other.mixedPort, mixedPort) ||
                 other.mixedPort == mixedPort) &&
+            (identical(other.ipv6, ipv6) || other.ipv6 == ipv6) &&
             (identical(other.onlyProxy, onlyProxy) ||
                 other.onlyProxy == onlyProxy));
   }
@@ -503,6 +520,7 @@ class _$CoreStateImpl implements _CoreState {
       allowBypass,
       systemProxy,
       mixedPort,
+      ipv6,
       onlyProxy);
 
   @JsonKey(ignore: true)
@@ -527,6 +545,7 @@ abstract class _CoreState implements CoreState {
       required final bool allowBypass,
       required final bool systemProxy,
       required final int mixedPort,
+      required final bool ipv6,
       required final bool onlyProxy}) = _$CoreStateImpl;
 
   factory _CoreState.fromJson(Map<String, dynamic> json) =
@@ -544,6 +563,8 @@ abstract class _CoreState implements CoreState {
   bool get systemProxy;
   @override
   int get mixedPort;
+  @override
+  bool get ipv6;
   @override
   bool get onlyProxy;
   @override
@@ -934,6 +955,7 @@ VpnProps _$VpnPropsFromJson(Map<String, dynamic> json) {
 mixin _$VpnProps {
   bool get enable => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
+  bool get ipv6 => throw _privateConstructorUsedError;
   bool get allowBypass => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -947,7 +969,7 @@ abstract class $VpnPropsCopyWith<$Res> {
   factory $VpnPropsCopyWith(VpnProps value, $Res Function(VpnProps) then) =
       _$VpnPropsCopyWithImpl<$Res, VpnProps>;
   @useResult
-  $Res call({bool enable, bool systemProxy, bool allowBypass});
+  $Res call({bool enable, bool systemProxy, bool ipv6, bool allowBypass});
 }
 
 /// @nodoc
@@ -965,6 +987,7 @@ class _$VpnPropsCopyWithImpl<$Res, $Val extends VpnProps>
   $Res call({
     Object? enable = null,
     Object? systemProxy = null,
+    Object? ipv6 = null,
     Object? allowBypass = null,
   }) {
     return _then(_value.copyWith(
@@ -975,6 +998,10 @@ class _$VpnPropsCopyWithImpl<$Res, $Val extends VpnProps>
       systemProxy: null == systemProxy
           ? _value.systemProxy
           : systemProxy // ignore: cast_nullable_to_non_nullable
+              as bool,
+      ipv6: null == ipv6
+          ? _value.ipv6
+          : ipv6 // ignore: cast_nullable_to_non_nullable
               as bool,
       allowBypass: null == allowBypass
           ? _value.allowBypass
@@ -992,7 +1019,7 @@ abstract class _$$VpnPropsImplCopyWith<$Res>
       __$$VpnPropsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool enable, bool systemProxy, bool allowBypass});
+  $Res call({bool enable, bool systemProxy, bool ipv6, bool allowBypass});
 }
 
 /// @nodoc
@@ -1008,6 +1035,7 @@ class __$$VpnPropsImplCopyWithImpl<$Res>
   $Res call({
     Object? enable = null,
     Object? systemProxy = null,
+    Object? ipv6 = null,
     Object? allowBypass = null,
   }) {
     return _then(_$VpnPropsImpl(
@@ -1018,6 +1046,10 @@ class __$$VpnPropsImplCopyWithImpl<$Res>
       systemProxy: null == systemProxy
           ? _value.systemProxy
           : systemProxy // ignore: cast_nullable_to_non_nullable
+              as bool,
+      ipv6: null == ipv6
+          ? _value.ipv6
+          : ipv6 // ignore: cast_nullable_to_non_nullable
               as bool,
       allowBypass: null == allowBypass
           ? _value.allowBypass
@@ -1031,7 +1063,10 @@ class __$$VpnPropsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$VpnPropsImpl implements _VpnProps {
   const _$VpnPropsImpl(
-      {this.enable = true, this.systemProxy = false, this.allowBypass = true});
+      {this.enable = true,
+      this.systemProxy = true,
+      this.ipv6 = false,
+      this.allowBypass = true});
 
   factory _$VpnPropsImpl.fromJson(Map<String, dynamic> json) =>
       _$$VpnPropsImplFromJson(json);
@@ -1044,11 +1079,14 @@ class _$VpnPropsImpl implements _VpnProps {
   final bool systemProxy;
   @override
   @JsonKey()
+  final bool ipv6;
+  @override
+  @JsonKey()
   final bool allowBypass;
 
   @override
   String toString() {
-    return 'VpnProps(enable: $enable, systemProxy: $systemProxy, allowBypass: $allowBypass)';
+    return 'VpnProps(enable: $enable, systemProxy: $systemProxy, ipv6: $ipv6, allowBypass: $allowBypass)';
   }
 
   @override
@@ -1059,6 +1097,7 @@ class _$VpnPropsImpl implements _VpnProps {
             (identical(other.enable, enable) || other.enable == enable) &&
             (identical(other.systemProxy, systemProxy) ||
                 other.systemProxy == systemProxy) &&
+            (identical(other.ipv6, ipv6) || other.ipv6 == ipv6) &&
             (identical(other.allowBypass, allowBypass) ||
                 other.allowBypass == allowBypass));
   }
@@ -1066,7 +1105,7 @@ class _$VpnPropsImpl implements _VpnProps {
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, enable, systemProxy, allowBypass);
+      Object.hash(runtimeType, enable, systemProxy, ipv6, allowBypass);
 
   @JsonKey(ignore: true)
   @override
@@ -1086,6 +1125,7 @@ abstract class _VpnProps implements VpnProps {
   const factory _VpnProps(
       {final bool enable,
       final bool systemProxy,
+      final bool ipv6,
       final bool allowBypass}) = _$VpnPropsImpl;
 
   factory _VpnProps.fromJson(Map<String, dynamic> json) =
@@ -1095,6 +1135,8 @@ abstract class _VpnProps implements VpnProps {
   bool get enable;
   @override
   bool get systemProxy;
+  @override
+  bool get ipv6;
   @override
   bool get allowBypass;
   @override

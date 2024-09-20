@@ -115,6 +115,34 @@ class SystemProxySwitch extends StatelessWidget {
   }
 }
 
+class Ipv6Switch extends StatelessWidget {
+  const Ipv6Switch({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<Config, bool>(
+      selector: (_, config) => config.vpnProps.ipv6,
+      builder: (_, ipv6, __) {
+        return ListItem.switchItem(
+          leading: const Icon(Icons.water_outlined),
+          title: const Text("IPv6"),
+          subtitle: Text(appLocalizations.ipv6InboundDesc),
+          delegate: SwitchDelegate(
+            value: ipv6,
+            onChanged: (bool value) async {
+              final config = globalState.appController.config;
+              final vpnProps = config.vpnProps;
+              config.vpnProps = vpnProps.copyWith(
+                ipv6: value,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
 class VpnOptions extends StatelessWidget {
   const VpnOptions({super.key});
 
@@ -127,6 +155,7 @@ class VpnOptions extends StatelessWidget {
           items: [
             const SystemProxySwitch(),
             const AllowBypassSwitch(),
+            const Ipv6Switch(),
           ],
         ),
       ),

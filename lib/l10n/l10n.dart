@@ -1290,10 +1290,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Staring VPN...`
+  /// `Starting VPN...`
   String get startVpn {
     return Intl.message(
-      'Staring VPN...',
+      'Starting VPN...',
       name: 'startVpn',
       desc: '',
       args: [],
@@ -3105,6 +3105,46 @@ class AppLocalizations {
     return Intl.message(
       'Make sure to reset the DNS',
       name: 'dnsResetTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No network`
+  String get noNetwork {
+    return Intl.message(
+      'No network',
+      name: 'noNetwork',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allow IPv6 inbound`
+  String get ipv6InboundDesc {
+    return Intl.message(
+      'Allow IPv6 inbound',
+      name: 'ipv6InboundDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export logs`
+  String get exportLogs {
+    return Intl.message(
+      'Export logs',
+      name: 'exportLogs',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export Success`
+  String get exportSuccess {
+    return Intl.message(
+      'Export Success',
+      name: 'exportSuccess',
       desc: '',
       args: [],
     );

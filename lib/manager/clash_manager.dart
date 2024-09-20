@@ -19,9 +19,9 @@ class ClashManager extends StatefulWidget {
   State<ClashManager> createState() => _ClashContainerState();
 }
 
-class _ClashContainerState extends State<ClashManager>
-    with AppMessageListener {
+class _ClashContainerState extends State<ClashManager> with AppMessageListener {
   Function? updateClashConfigDebounce;
+  Function? updateDelayDebounce;
 
   Widget _updateContainer(Widget child) {
     return Selector2<Config, ClashConfig, ClashConfigState>(
@@ -66,6 +66,7 @@ class _ClashContainerState extends State<ClashManager>
       selector: (_, config, clashConfig) => CoreState(
         accessControl: config.isAccessControl ? config.accessControl : null,
         enable: config.vpnProps.enable,
+        ipv6: config.vpnProps.ipv6,
         allowBypass: config.vpnProps.allowBypass,
         systemProxy: config.vpnProps.systemProxy,
         mixedPort: clashConfig.mixedPort,
@@ -132,7 +133,11 @@ class _ClashContainerState extends State<ClashManager>
     final appController = globalState.appController;
     appController.setDelay(delay);
     super.onDelay(delay);
-    await globalState.appController.updateGroupDebounce();
+    updateDelayDebounce ??= debounce(() async {
+      await appController.updateGroupDebounce();
+      await appController.addCheckIpNumDebounce();
+    });
+    updateDelayDebounce!();
   }
 
   @override
@@ -143,6 +148,12 @@ class _ClashContainerState extends State<ClashManager>
     }
     debugPrint("$log");
     super.onLog(log);
+  }
+
+  @override
+  void onStarted(String runTime) {
+    super.onStarted(runTime);
+    globalState.appController.applyProfileDebounce();
   }
 
   @override
@@ -159,7 +170,7 @@ class _ClashContainerState extends State<ClashManager>
         providerName,
       ),
     );
-    appController.addCheckIpNumDebounce();
+    // appController.addCheckIpNumDebounce();
     super.onLoaded(providerName);
   }
 }

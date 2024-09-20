@@ -18,6 +18,7 @@ class AppStateManager extends StatefulWidget {
 
 class _AppStateManagerState extends State<AppStateManager>
     with WidgetsBindingObserver {
+
   _updateNavigationsContainer(Widget child) {
     return Selector2<AppState, Config, UpdateNavigationsSelector>(
       selector: (_, appState, config) {

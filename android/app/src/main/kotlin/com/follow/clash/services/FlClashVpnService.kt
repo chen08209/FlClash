@@ -15,12 +15,12 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Parcel
 import android.os.RemoteException
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.follow.clash.BaseServiceInterface
 import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
 import com.follow.clash.R
+import com.follow.clash.TempActivity
 import com.follow.clash.models.AccessControlMode
 import com.follow.clash.models.Props
 import com.follow.clash.models.TunProps
@@ -29,7 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
-@SuppressLint("WrongConstant")
 class FlClashVpnService : VpnService(), BaseServiceInterface {
 
     companion object {
@@ -73,11 +72,19 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
     override fun start(port: Int, props: Props?): TunProps {
         return with(Builder()) {
             addAddress(TUN_GATEWAY, TUN_SUBNET_PREFIX)
-            addAddress(TUN_GATEWAY6, TUN_SUBNET_PREFIX6)
             addRoute(NET_ANY, 0)
-            addRoute(NET_ANY6, 0)
             addDnsServer(TUN_DNS)
-            addDnsServer(TUN_DNS6)
+
+
+            if (props?.ipv6 == true) {
+                try {
+                    addAddress(TUN_GATEWAY6, TUN_SUBNET_PREFIX6)
+                    addRoute(NET_ANY6, 0)
+                    addDnsServer(TUN_DNS6)
+                } catch (_: Exception) {
+
+                }
+            }
             setMtu(TUN_MTU)
             props?.accessControl?.let { accessControl ->
                 when (accessControl.mode) {
@@ -115,16 +122,16 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 fd = establish()?.detachFd()
                     ?: throw NullPointerException("Establish VPN rejected by system"),
                 gateway = "$TUN_GATEWAY/$TUN_SUBNET_PREFIX",
-                gateway6 = "$TUN_GATEWAY6/$TUN_SUBNET_PREFIX6",
+                gateway6 = if (props?.ipv6 == true) "$TUN_GATEWAY6/$TUN_SUBNET_PREFIX6" else "",
                 portal = TUN_PORTAL,
-                portal6 = TUN_PORTAL6,
+                portal6 = if (props?.ipv6 == true) TUN_PORTAL6 else "",
                 dns = TUN_DNS,
-                dns6 = TUN_DNS6
+                dns6 = if (props?.ipv6 == true) TUN_DNS6 else ""
             )
         }
     }
 
-    fun updateUnderlyingNetworks( networks: Array<Network>){
+    fun updateUnderlyingNetworks(networks: Array<Network>) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             this.setUnderlyingNetworks(networks)
         }
@@ -160,18 +167,23 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
             )
         }
 
+        val stopIntent = Intent(this, TempActivity::class.java)
+        stopIntent.action = "com.follow.clash.action.STOP"
+        stopIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+
         val stopPendingIntent = if (Build.VERSION.SDK_INT >= 31) {
             PendingIntent.getActivity(
                 this,
                 0,
-                Intent("com.follow.clash.action.STOP"),
+                stopIntent,
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
         } else {
             PendingIntent.getActivity(
                 this,
                 0,
-                Intent("com.follow.clash.action.STOP"),
+                stopIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT
             )
         }

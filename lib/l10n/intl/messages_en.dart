@@ -163,6 +163,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "expand": MessageLookupByLibrary.simpleMessage("Standard"),
         "expirationTime":
             MessageLookupByLibrary.simpleMessage("Expiration time"),
+        "exportLogs": MessageLookupByLibrary.simpleMessage("Export logs"),
+        "exportSuccess": MessageLookupByLibrary.simpleMessage("Export Success"),
         "externalController":
             MessageLookupByLibrary.simpleMessage("ExternalController"),
         "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
@@ -219,6 +221,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "ipcidr": MessageLookupByLibrary.simpleMessage("Ipcidr"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage(
             "When turned on it will be able to receive IPv6 traffic"),
+        "ipv6InboundDesc":
+            MessageLookupByLibrary.simpleMessage("Allow IPv6 inbound"),
         "just": MessageLookupByLibrary.simpleMessage("Just"),
         "keepAliveIntervalDesc":
             MessageLookupByLibrary.simpleMessage("Tcp keep alive interval"),
@@ -269,6 +273,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "noHotKey": MessageLookupByLibrary.simpleMessage("No HotKey"),
         "noInfo": MessageLookupByLibrary.simpleMessage("No info"),
         "noMoreInfoDesc": MessageLookupByLibrary.simpleMessage("No more info"),
+        "noNetwork": MessageLookupByLibrary.simpleMessage("No network"),
         "noProxy": MessageLookupByLibrary.simpleMessage("No proxy"),
         "noProxyDesc": MessageLookupByLibrary.simpleMessage(
             "Please create a profile or add a valid profile"),
@@ -395,7 +400,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "source": MessageLookupByLibrary.simpleMessage("Source"),
         "standard": MessageLookupByLibrary.simpleMessage("Standard"),
         "start": MessageLookupByLibrary.simpleMessage("Start"),
-        "startVpn": MessageLookupByLibrary.simpleMessage("Staring VPN..."),
+        "startVpn": MessageLookupByLibrary.simpleMessage("Starting VPN..."),
         "status": MessageLookupByLibrary.simpleMessage("Status"),
         "statusDesc": MessageLookupByLibrary.simpleMessage(
             "System DNS will be used when turned off"),

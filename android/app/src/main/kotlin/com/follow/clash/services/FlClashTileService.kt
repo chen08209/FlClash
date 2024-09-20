@@ -1,5 +1,6 @@
 package com.follow.clash.services
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
@@ -37,6 +38,7 @@ class FlClashTileService : TileService() {
         GlobalState.runState.observeForever(observer)
     }
 
+    @SuppressLint("StartActivityAndCollapseDeprecated")
     private fun activityTransfer() {
         val intent = Intent(this, TempActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)

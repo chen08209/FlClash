@@ -16,6 +16,7 @@ data class Props(
     val accessControl: AccessControl?,
     val allowBypass: Boolean?,
     val systemProxy: Boolean?,
+    val ipv6: Boolean?,
 )
 
 data class TunProps(

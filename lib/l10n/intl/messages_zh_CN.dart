@@ -133,6 +133,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "exit": MessageLookupByLibrary.simpleMessage("退出"),
         "expand": MessageLookupByLibrary.simpleMessage("标准"),
         "expirationTime": MessageLookupByLibrary.simpleMessage("到期时间"),
+        "exportLogs": MessageLookupByLibrary.simpleMessage("导出日志"),
+        "exportSuccess": MessageLookupByLibrary.simpleMessage("导出成功"),
         "externalController": MessageLookupByLibrary.simpleMessage("外部控制器"),
         "externalControllerDesc":
             MessageLookupByLibrary.simpleMessage("开启后将可以通过9090端口控制Clash内核"),
@@ -174,6 +176,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "intranetIP": MessageLookupByLibrary.simpleMessage("内网 IP"),
         "ipcidr": MessageLookupByLibrary.simpleMessage("IP/掩码"),
         "ipv6Desc": MessageLookupByLibrary.simpleMessage("开启后将可以接收IPv6流量"),
+        "ipv6InboundDesc": MessageLookupByLibrary.simpleMessage("允许IPv6入站"),
         "just": MessageLookupByLibrary.simpleMessage("刚刚"),
         "keepAliveIntervalDesc":
             MessageLookupByLibrary.simpleMessage("TCP保持活动间隔"),
@@ -214,6 +217,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "noHotKey": MessageLookupByLibrary.simpleMessage("暂无快捷键"),
         "noInfo": MessageLookupByLibrary.simpleMessage("暂无信息"),
         "noMoreInfoDesc": MessageLookupByLibrary.simpleMessage("暂无更多信息"),
+        "noNetwork": MessageLookupByLibrary.simpleMessage("无网络"),
         "noProxy": MessageLookupByLibrary.simpleMessage("暂无代理"),
         "noProxyDesc":
             MessageLookupByLibrary.simpleMessage("请创建配置文件或者添加有效配置文件"),

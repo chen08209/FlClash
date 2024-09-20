@@ -90,7 +90,7 @@ class GlobalState {
     startTime = clashCore.getRunTime();
   }
 
-  handleStop() async {
+  Future handleStop() async {
     clashCore.stop();
     if (Platform.isAndroid) {
       clashCore.stopTun();
@@ -133,6 +133,7 @@ class GlobalState {
         CoreState(
           enable: config.vpnProps.enable,
           accessControl: config.isAccessControl ? config.accessControl : null,
+          ipv6: config.vpnProps.ipv6,
           allowBypass: config.vpnProps.allowBypass,
           systemProxy: config.vpnProps.systemProxy,
           mixedPort: clashConfig.mixedPort,
