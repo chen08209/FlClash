@@ -26,9 +26,9 @@ const GeoXMap defaultGeoXMap = {
   "mmdb":
       "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
   "asn":
-      "https://github.com/xishang0128/geoip/releases/download/latest/GeoLite2-ASN.mmdb",
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
   "geoip":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoIP.dat",
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
   "geosite":
       "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"
 };

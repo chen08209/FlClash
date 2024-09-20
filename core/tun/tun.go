@@ -31,18 +31,21 @@ func Start(tunProps Props) (*sing_tun.Listener, error) {
 		return nil, err
 	}
 	prefix4 = append(prefix4, tempPrefix4)
-
 	var prefix6 []netip.Prefix
-	tempPrefix6, err := netip.ParsePrefix(tunProps.Gateway6)
-	if err != nil {
-		log.Errorln("startTUN error:", err)
-		return nil, err
+	if tunProps.Gateway6 != "" {
+		tempPrefix6, err := netip.ParsePrefix(tunProps.Gateway6)
+		if err != nil {
+			log.Errorln("startTUN error:", err)
+			return nil, err
+		}
+		prefix6 = append(prefix6, tempPrefix6)
 	}
-	prefix6 = append(prefix6, tempPrefix6)
 
 	var dnsHijack []string
 	dnsHijack = append(dnsHijack, net.JoinHostPort(tunProps.Dns, "53"))
-	dnsHijack = append(dnsHijack, net.JoinHostPort(tunProps.Dns6, "53"))
+	if tunProps.Dns6 != "" {
+		dnsHijack = append(dnsHijack, net.JoinHostPort(tunProps.Dns6, "53"))
+	}
 
 	options := LC.Tun{
 		Enable:              true,

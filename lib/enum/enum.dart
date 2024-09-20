@@ -15,6 +15,10 @@ extension GroupTypeExtension on GroupType {
       )
       .toList();
 
+  bool get isURLTestOrFallback  {
+    return [GroupType.URLTest, GroupType.Fallback].contains(this);
+  }
+
   static GroupType? getGroupType(String value) {
     final index = GroupTypeExtension.valueList.indexOf(value);
     if (index == -1) return null;

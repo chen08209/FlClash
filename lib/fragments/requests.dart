@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
@@ -37,7 +38,10 @@ class _RequestsFragmentState extends State<RequestsFragment> {
         timer = null;
       }
       timer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
-        final requests = appState.requests;
+        final maxLength = Platform.isAndroid ? 1000 : 60;
+        final requests = appState.requests.safeSublist(
+          appState.requests.length - maxLength,
+        );
         if (!const ListEquality<Connection>().equals(
           requestsNotifier.value.connections,
           requests,

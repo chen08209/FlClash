@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
@@ -58,7 +60,9 @@ class AppController {
         updateRunTime,
         updateTraffic,
       ];
-      applyProfileDebounce();
+      if (!Platform.isAndroid) {
+        applyProfileDebounce();
+      }
     } else {
       await globalState.handleStop();
       clashCore.resetTraffic();
@@ -118,11 +122,15 @@ class AppController {
   }
 
   Future<void> updateClashConfig({bool isPatch = true}) async {
-    await globalState.updateClashConfig(
-      clashConfig: clashConfig,
-      config: config,
-      isPatch: isPatch,
-    );
+    final commonScaffoldState = globalState.homeScaffoldKey.currentState;
+    if (commonScaffoldState?.mounted != true) return;
+    await commonScaffoldState?.loadingRun(() async {
+      await globalState.updateClashConfig(
+        clashConfig: clashConfig,
+        config: config,
+        isPatch: isPatch,
+      );
+    });
   }
 
   Future applyProfile({bool isPrue = false}) async {
@@ -299,7 +307,7 @@ class AppController {
   init() async {
     final isDisclaimerAccepted = await handlerDisclaimer();
     if (!isDisclaimerAccepted) {
-      system.exit();
+      handleExit();
     }
     updateLogStatus();
     if (!config.silentLaunch) {
@@ -520,21 +528,6 @@ class AppController {
         '';
   }
 
-  Future<List<int>> backupData() async {
-    final homeDirPath = await appPath.getHomeDirPath();
-    final profilesPath = await appPath.getProfilesPath();
-    final configJson = config.toJson();
-    final clashConfigJson = clashConfig.toJson();
-    return Isolate.run<List<int>>(() async {
-      final archive = Archive();
-      archive.add("config.json", configJson);
-      archive.add("clashConfig.json", clashConfigJson);
-      await archive.addDirectoryToArchive(profilesPath, homeDirPath);
-      final zipEncoder = ZipEncoder();
-      return zipEncoder.encode(archive) ?? [];
-    });
-  }
-
   updateTun() {
     clashConfig.tun = clashConfig.tun.copyWith(
       enable: !clashConfig.tun.enable,
@@ -571,6 +564,36 @@ class AppController {
     }
     final nextIndex = index + 1 > Mode.values.length - 1 ? 0 : index + 1;
     clashConfig.mode = Mode.values[nextIndex];
+  }
+
+  Future<bool> exportLogs() async {
+    final logsRaw = appFlowingState.logs.map(
+      (item) => item.toString(),
+    );
+    final data = await Isolate.run<List<int>>(() async {
+      final logsRawString = logsRaw.join("\n");
+      return utf8.encode(logsRawString);
+    });
+    return await picker.saveFile(
+          other.logFile,
+          Uint8List.fromList(data),
+        ) !=
+        null;
+  }
+
+  Future<List<int>> backupData() async {
+    final homeDirPath = await appPath.getHomeDirPath();
+    final profilesPath = await appPath.getProfilesPath();
+    final configJson = config.toJson();
+    final clashConfigJson = clashConfig.toJson();
+    return Isolate.run<List<int>>(() async {
+      final archive = Archive();
+      archive.add("config.json", configJson);
+      archive.add("clashConfig.json", clashConfigJson);
+      await archive.addDirectoryToArchive(profilesPath, homeDirPath);
+      final zipEncoder = ZipEncoder();
+      return zipEncoder.encode(archive) ?? [];
+    });
   }
 
   recoveryData(

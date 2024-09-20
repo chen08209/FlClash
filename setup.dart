@@ -55,7 +55,8 @@ class BuildLibItem {
 }
 
 class Build {
-  static List<BuildLibItem> get buildItems => [
+  static List<BuildLibItem> get buildItems =>
+      [
         BuildLibItem(
           platform: PlatformType.macos,
           arch: Arch.amd64,
@@ -114,7 +115,7 @@ class Build {
       final ndk = environment["ANDROID_NDK"];
       assert(ndk != null);
       final prebuiltDir =
-          Directory(join(ndk!, "toolchains", "llvm", "prebuilt"));
+      Directory(join(ndk!, "toolchains", "llvm", "prebuilt"));
       final prebuiltDirList = prebuiltDir.listSync();
       final map = {
         "armeabi-v7a": "armv7a-linux-androideabi21-clang",
@@ -133,8 +134,7 @@ class Build {
 
   static get tags => "with_gvisor";
 
-  static Future<void> exec(
-    List<String> executable, {
+  static Future<void> exec(List<String> executable, {
     String? name,
     Map<String, String>? environment,
     String? workingDirectory,
@@ -163,7 +163,7 @@ class Build {
     Arch? arch,
   }) async {
     final items = buildItems.where(
-      (element) {
+          (element) {
         return element.platform == platform &&
             (arch == null ? true : element.arch == arch);
       },
@@ -187,6 +187,7 @@ class Build {
       env["GOARCH"] = item.arch.name;
       env["CGO_ENABLED"] = "1";
       env["CC"] = _getCc(item);
+      env["CFLAGS"] = "-O3 -Werror";
 
       await exec(
         [
@@ -275,10 +276,11 @@ class BuildCommand extends Command {
   @override
   String get name => platform.name;
 
-  List<Arch> get arches => Build.buildItems
-      .where((element) => element.platform == platform)
-      .map((e) => e.arch)
-      .toList();
+  List<Arch> get arches =>
+      Build.buildItems
+          .where((element) => element.platform == platform)
+          .map((e) => e.arch)
+          .toList();
 
   Future<void> _buildLib(Arch? arch) async {
     await Build.buildLib(platform: platform, arch: arch);
@@ -338,7 +340,8 @@ class BuildCommand extends Command {
     await Build.exec(
       name: name,
       Build.getExecutable(
-        "flutter_distributor package --skip-clean --platform ${platform.name} --targets $targets --flutter-build-args=verbose $args",
+        "flutter_distributor package --skip-clean --platform ${platform
+            .name} --targets $targets --flutter-build-args=verbose $args",
       ),
     );
   }
@@ -348,7 +351,7 @@ class BuildCommand extends Command {
     final String build = argResults?['build'] ?? 'all';
     final archName = argResults?['arch'];
     final currentArches =
-        arches.where((element) => element.name == archName).toList();
+    arches.where((element) => element.name == archName).toList();
     final arch = currentArches.isEmpty ? null : currentArches.first;
     if (arch == null && platform == PlatformType.windows) {
       throw "Invalid arch";
@@ -386,7 +389,8 @@ class BuildCommand extends Command {
           platform: platform,
           targets: "apk",
           args:
-              "--flutter-build-args split-per-abi --build-target-platform ${defaultTargets.join(",")}",
+          "--flutter-build-args split-per-abi --build-target-platform ${defaultTargets
+              .join(",")}",
         );
       case PlatformType.macos:
         await _getMacosDependencies();

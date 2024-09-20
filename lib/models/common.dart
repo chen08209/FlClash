@@ -303,7 +303,7 @@ extension GroupExt on Group {
   String get realNow => now ?? "";
 
   String getCurrentSelectedName(String proxyName) {
-    if (type == GroupType.URLTest) {
+    if (type.isURLTestOrFallback) {
       return realNow.isNotEmpty ? realNow : proxyName;
     }
     return proxyName.isNotEmpty ? proxyName : realNow;

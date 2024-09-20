@@ -15,9 +15,6 @@ class FlClashHttpOverrides extends HttpOverrides {
       final port = appController.clashConfig.mixedPort;
       final isStart = appController.appFlowingState.isStart;
       if (!isStart) return "DIRECT";
-      if (appController.appState.groups.isEmpty) {
-        return "DIRECT";
-      }
       return "PROXY localhost:$port";
     };
     return client;

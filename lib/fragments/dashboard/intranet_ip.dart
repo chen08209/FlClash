@@ -13,16 +13,55 @@ class IntranetIP extends StatefulWidget {
 }
 
 class _IntranetIPState extends State<IntranetIP> {
-  final ipNotifier = ValueNotifier<String>("");
+  final ipNotifier = ValueNotifier<String?>("");
 
-  Future<String?> getLocalIpAddress() async {
-    List<NetworkInterface> interfaces = await NetworkInterface.list();
-    for (final interface in interfaces) {
-      for (final address in interface.addresses) {
-        if (!address.isLoopback) {
-          return address.address;
+  Future<String> getNetworkType() async {
+    try {
+      List<NetworkInterface> interfaces = await NetworkInterface.list(
+        includeLoopback: false,
+        type: InternetAddressType.any,
+      );
+
+      for (var interface in interfaces) {
+        if (interface.name.toLowerCase().contains('wlan') ||
+            interface.name.toLowerCase().contains('wi-fi')) {
+          return 'WiFi';
+        }
+        if (interface.name.toLowerCase().contains('rmnet') ||
+            interface.name.toLowerCase().contains('ccmni') ||
+            interface.name.toLowerCase().contains('cellular')) {
+          return 'Mobile Data';
         }
       }
+
+      return 'Unknown';
+    } catch (e) {
+      return 'Error';
+    }
+  }
+
+  Future<String?> getLocalIpAddress() async {
+    List<NetworkInterface> interfaces = await NetworkInterface.list(
+      includeLoopback: false,
+    )
+      ..sort((a, b) {
+        if (a.isWifi && !b.isWifi) return -1;
+        if (!a.isWifi && b.isWifi) return 1;
+        if (a.includesIPv4 && !b.includesIPv4) return -1;
+        if (!a.includesIPv4 && b.includesIPv4) return 1;
+        return 0;
+      });
+    for (final interface in interfaces) {
+      final addresses = interface.addresses;
+      if (addresses.isEmpty) {
+        continue;
+      }
+      addresses.sort((a, b) {
+        if (a.isIPv4 && !b.isIPv4) return -1;
+        if (!a.isIPv4 && b.isIPv4) return 1;
+        return 0;
+      });
+      return addresses.first.address;
     }
     return null;
   }
@@ -48,17 +87,15 @@ class _IntranetIPState extends State<IntranetIP> {
         label: appLocalizations.intranetIP,
         iconData: Icons.devices,
       ),
-      onPressed: (){
-
-      },
+      onPressed: () {},
       child: Container(
         padding: const EdgeInsets.all(16).copyWith(top: 0),
-        height: globalState.measure.titleLargeHeight + 24 - 2,
+        height: globalState.measure.titleMediumHeight + 24 - 2,
         child: ValueListenableBuilder(
           valueListenable: ipNotifier,
           builder: (_, value, __) {
             return FadeBox(
-              child: value.isNotEmpty
+              child: value != null
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -67,8 +104,9 @@ class _IntranetIPState extends State<IntranetIP> {
                           flex: 1,
                           child: TooltipText(
                             text: Text(
-                              value,
-                              style: context.textTheme.titleLarge?.toSoftBold.toMinus,
+                              value.isNotEmpty ? value : appLocalizations.noNetwork,
+                              style: context
+                                  .textTheme.titleLarge?.toSoftBold.toMinus,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
