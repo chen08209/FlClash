@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/config.dart';
@@ -63,7 +64,7 @@ class HotKeyManager extends StatelessWidget {
     return Selector<Config, List<HotKeyAction>>(
       selector: (_, config) => config.hotKeyActions,
       shouldRebuild: (prev, next) {
-        return !hotKeyActionsEquality.equals(prev, next);
+        return !hotKeyActionListEquality.equals(prev, next);
       },
       builder: (_, hotKeyActions, __) {
         _updateHotKeys(hotKeyActions: hotKeyActions);

@@ -1,14 +1,10 @@
 import 'dart:math';
 
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/builder.dart';
-import 'package:fl_clash/widgets/card.dart';
-import 'package:fl_clash/widgets/text.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -244,18 +240,17 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
         return ProxiesListSelectorState(
           groupNames: groupNames,
           currentUnfoldSet: config.currentUnfoldSet,
-          proxyCardType: config.proxyCardType,
-          proxiesSortType: config.proxiesSortType,
+          proxyCardType: config.proxiesStyle.cardType,
+          proxiesSortType: config.proxiesStyle.sortType,
           columns: other.getProxiesColumns(
             appState.viewWidth,
-            config.proxiesLayout,
+            config.proxiesStyle.layout,
           ),
           sortNum: appState.sortNum,
         );
       },
       shouldRebuild: (prev, next) {
-        if (!const ListEquality<String>()
-            .equals(prev.groupNames, next.groupNames)) {
+        if (!stringListEquality.equals(prev.groupNames, next.groupNames)) {
           _headerStateNotifier.value = const ProxiesListHeaderSelectorState(
             offset: 0,
             currentIndex: 0,
@@ -264,75 +259,73 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
         return prev != next;
       },
       builder: (_, state, __) {
-        return ScaleBuilder(builder: (_) {
-          final items = _buildItems(
-            groupNames: state.groupNames,
-            currentUnfoldSet: state.currentUnfoldSet,
-            columns: state.columns,
-            type: state.proxyCardType,
-          );
-          final itemsOffset = _getItemHeightList(items, state.proxyCardType);
-          return Scrollbar(
-            controller: _controller,
-            thumbVisibility: true,
-            trackVisibility: true,
-            thickness: 8,
-            radius: const Radius.circular(8),
-            interactive: true,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: ScrollConfiguration(
-                    behavior: HiddenBarScrollBehavior(),
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      controller: _controller,
-                      itemExtentBuilder: (index, __) {
-                        return itemsOffset[index];
-                      },
-                      itemCount: items.length,
-                      itemBuilder: (_, index) {
-                        return items[index];
-                      },
-                    ),
+        final items = _buildItems(
+          groupNames: state.groupNames,
+          currentUnfoldSet: state.currentUnfoldSet,
+          columns: state.columns,
+          type: state.proxyCardType,
+        );
+        final itemsOffset = _getItemHeightList(items, state.proxyCardType);
+        return Scrollbar(
+          controller: _controller,
+          thumbVisibility: true,
+          trackVisibility: true,
+          thickness: 8,
+          radius: const Radius.circular(8),
+          interactive: true,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ScrollConfiguration(
+                  behavior: HiddenBarScrollBehavior(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    controller: _controller,
+                    itemExtentBuilder: (index, __) {
+                      return itemsOffset[index];
+                    },
+                    itemCount: items.length,
+                    itemBuilder: (_, index) {
+                      return items[index];
+                    },
                   ),
                 ),
-                LayoutBuilder(builder: (_, container) {
-                  return ValueListenableBuilder(
-                    valueListenable: _headerStateNotifier,
-                    builder: (_, headerState, ___) {
-                      final index =
-                          headerState.currentIndex > state.groupNames.length - 1
-                              ? 0
-                              : headerState.currentIndex;
-                      return Stack(
-                        children: [
-                          Positioned(
-                            top: -headerState.offset,
-                            child: Container(
-                              width: container.maxWidth,
-                              color: context.colorScheme.surface,
-                              padding: const EdgeInsets.only(
-                                top: 16,
-                                left: 16,
-                                right: 16,
-                                bottom: 8,
-                              ),
-                              child: _buildHeader(
-                                groupName: state.groupNames[index],
-                                currentUnfoldSet: state.currentUnfoldSet,
-                              ),
+              ),
+              LayoutBuilder(builder: (_, container) {
+                return ValueListenableBuilder(
+                  valueListenable: _headerStateNotifier,
+                  builder: (_, headerState, ___) {
+                    final index =
+                        headerState.currentIndex > state.groupNames.length - 1
+                            ? 0
+                            : headerState.currentIndex;
+                    return Stack(
+                      children: [
+                        Positioned(
+                          top: -headerState.offset,
+                          child: Container(
+                            width: container.maxWidth,
+                            color: context.colorScheme.surface,
+                            padding: const EdgeInsets.only(
+                              top: 16,
+                              left: 16,
+                              right: 16,
+                              bottom: 8,
+                            ),
+                            child: _buildHeader(
+                              groupName: state.groupNames[index],
+                              currentUnfoldSet: state.currentUnfoldSet,
                             ),
                           ),
-                        ],
-                      );
-                    },
-                  );
-                }),
-              ],
-            ),
-          );
-        });
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }),
+            ],
+          ),
+        );
       },
     );
   }
@@ -379,11 +372,6 @@ class _ListHeaderState extends State<ListHeader>
   }
 
   _handleChange(String groupName) {
-    if (isExpand) {
-      _animationController.reverse();
-    } else {
-      _animationController.forward();
-    }
     widget.onChange(groupName);
   }
 
@@ -413,11 +401,67 @@ class _ListHeaderState extends State<ListHeader>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isExpand != widget.isExpand) {
       if (isExpand) {
-        _animationController.value = 1.0;
+        _animationController.forward();
       } else {
-        _animationController.value = 0.0;
+        _animationController.reverse();
       }
     }
+  }
+
+  Widget _buildIcon() {
+    return Selector<Config, ProxiesIconStyle>(
+      selector: (_, config) => config.proxiesStyle.iconStyle,
+      builder: (_, iconStyle, child) {
+        return Selector<Config, String>(
+          selector: (_, config) {
+            final iconMapEntryList =
+                config.proxiesStyle.iconMap.entries.toList();
+            final index = iconMapEntryList.indexWhere((item) {
+              try{
+                return RegExp(item.key).hasMatch(groupName);
+              }catch(_){
+                return false;
+              }
+            });
+            if (index != -1) {
+              return iconMapEntryList[index].value;
+            }
+            return icon;
+          },
+          builder: (_, icon, __) {
+            return switch (iconStyle) {
+              ProxiesIconStyle.standard => Container(
+                  height: 48,
+                  width: 48,
+                  margin: const EdgeInsets.only(
+                    right: 16,
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: CommonIcon(
+                    src: icon,
+                    size: 32,
+                  ),
+                ),
+              ProxiesIconStyle.icon => Container(
+                  margin: const EdgeInsets.only(
+                    right: 16,
+                  ),
+                  child: CommonIcon(
+                    src: icon,
+                    size: 42,
+                  ),
+                ),
+              ProxiesIconStyle.none => Container(),
+            };
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -427,41 +471,17 @@ class _ListHeaderState extends State<ListHeader>
       radius: 24,
       type: CommonCardType.filled,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Flexible(
               child: Row(
                 children: [
-                  const SizedBox(
-                    width: 4,
-                  ),
-                  Container(
-                    height: 48,
-                    width: 48,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: icon.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: icon,
-                            errorWidget: (_, __, ___) => const Icon(
-                              IconsExt.target,
-                              size: 32,
-                            ),
-                          )
-                        : const Icon(
-                            IconsExt.target,
-                            size: 32,
-                          ),
-                  ),
-                  const SizedBox(
-                    width: 16,
-                  ),
+                  _buildIcon(),
                   Flexible(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,

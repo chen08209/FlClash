@@ -8,6 +8,7 @@ import android.system.OsConstants.IPPROTO_TCP
 import android.system.OsConstants.IPPROTO_UDP
 import android.util.Base64
 import androidx.core.graphics.drawable.toBitmap
+import com.follow.clash.models.CIDR
 import com.follow.clash.models.Metadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,6 +32,25 @@ fun Metadata.getProtocol(): Int? {
     if (network.startsWith("tcp")) return IPPROTO_TCP
     if (network.startsWith("udp")) return IPPROTO_UDP
     return null
+}
+
+fun String.toCIDR(): CIDR {
+    val parts = split("/")
+    if (parts.size != 2) {
+        throw IllegalArgumentException("Invalid CIDR format")
+    }
+    val ipAddress = parts[0]
+    val prefixLength = parts[1].toIntOrNull()
+        ?: throw IllegalArgumentException("Invalid prefix length")
+
+    val address = InetAddress.getByName(ipAddress)
+
+    val maxPrefix = if (address.address.size == 4) 32 else 128
+    if (prefixLength < 0 || prefixLength > maxPrefix) {
+        throw IllegalArgumentException("Invalid prefix length for IP version")
+    }
+
+    return CIDR(address, prefixLength)
 }
 
 

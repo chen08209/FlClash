@@ -81,9 +81,9 @@ double getScrollToSelectedOffset({
   final appController = globalState.appController;
   final columns = other.getProxiesColumns(
     appController.appState.viewWidth,
-    appController.config.proxiesLayout,
+    appController.config.proxiesStyle.layout,
   );
-  final proxyCardType = appController.config.proxyCardType;
+  final proxyCardType = appController.config.proxiesStyle.cardType;
   final selectedName = appController.getCurrentSelectedName(groupName);
   final findSelectedIndex = proxies.indexWhere(
     (proxy) => proxy.name == selectedName,

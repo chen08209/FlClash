@@ -58,22 +58,7 @@ class AutoLaunch {
 
   Future<bool> windowsEnable() async {
     await disable();
-    return windows?.runas(
-          'schtasks',
-          [
-            '/Create',
-            '/SC',
-            'ONLOGON',
-            '/TN',
-            appName,
-            '/TR',
-            '"${Platform.resolvedExecutable}"',
-            '/RL',
-            'HIGHEST',
-            '/F'
-          ].join(" "),
-        ) ??
-        false;
+    return await windows?.registerTask(appName) ?? false;
   }
 
   Future<bool> disable() async {
@@ -81,9 +66,9 @@ class AutoLaunch {
   }
 
   updateStatus(AutoLaunchState state) async {
-    final isOpenTun = state.isOpenTun;
+    final isAdminAutoLaunch = state.isAdminAutoLaunch;
     final isAutoLaunch = state.isAutoLaunch;
-    if (Platform.isWindows && isOpenTun) {
+    if (Platform.isWindows && isAdminAutoLaunch) {
       if (await windowsIsEnable == isAutoLaunch) return;
       if (isAutoLaunch) {
         final isEnable = await windowsEnable();

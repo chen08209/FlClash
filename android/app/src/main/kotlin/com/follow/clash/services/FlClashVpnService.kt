@@ -21,72 +21,35 @@ import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
 import com.follow.clash.R
 import com.follow.clash.TempActivity
+import com.follow.clash.extensions.toCIDR
 import com.follow.clash.models.AccessControlMode
-import com.follow.clash.models.Props
-import com.follow.clash.models.TunProps
+import com.follow.clash.models.VpnOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
 class FlClashVpnService : VpnService(), BaseServiceInterface {
-
-    companion object {
-        private val passList = listOf(
-            "*zhihu.com",
-            "*zhimg.com",
-            "*jd.com",
-            "100ime-iat-api.xfyun.cn",
-            "*360buyimg.com",
-            "localhost",
-            "*.local",
-            "127.*",
-            "10.*",
-            "172.16.*",
-            "172.17.*",
-            "172.18.*",
-            "172.19.*",
-            "172.2*",
-            "172.30.*",
-            "172.31.*",
-            "192.168.*"
-        )
-        private const val TUN_MTU = 9000
-        private const val TUN_SUBNET_PREFIX = 30
-        private const val TUN_GATEWAY = "172.19.0.1"
-        private const val TUN_SUBNET_PREFIX6 = 126
-        private const val TUN_GATEWAY6 = "fdfe:dcba:9876::1"
-        private const val TUN_PORTAL = "172.19.0.2"
-        private const val TUN_PORTAL6 = "fdfe:dcba:9876::2"
-        private const val TUN_DNS = TUN_PORTAL
-        private const val TUN_DNS6 = TUN_PORTAL6
-        private const val NET_ANY = "0.0.0.0"
-        private const val NET_ANY6 = "::"
-    }
-
     override fun onCreate() {
         super.onCreate()
         GlobalState.initServiceEngine(applicationContext)
     }
 
-    override fun start(port: Int, props: Props?): TunProps {
+    override fun start(options: VpnOptions): Int {
         return with(Builder()) {
-            addAddress(TUN_GATEWAY, TUN_SUBNET_PREFIX)
-            addRoute(NET_ANY, 0)
-            addDnsServer(TUN_DNS)
-
-
-            if (props?.ipv6 == true) {
-                try {
-                    addAddress(TUN_GATEWAY6, TUN_SUBNET_PREFIX6)
-                    addRoute(NET_ANY6, 0)
-                    addDnsServer(TUN_DNS6)
-                } catch (_: Exception) {
-
-                }
+            if (options.ipv4Address.isNotEmpty()) {
+                val cidr = options.ipv4Address.toCIDR()
+                addAddress(cidr.address, cidr.prefixLength)
+                addRoute("0.0.0.0", 0)
             }
-            setMtu(TUN_MTU)
-            props?.accessControl?.let { accessControl ->
+            if (options.ipv6Address.isNotEmpty()) {
+                val cidr = options.ipv6Address.toCIDR()
+                addAddress(cidr.address, cidr.prefixLength)
+                addRoute("::", 0)
+            }
+            addDnsServer(options.dnsServerAddress)
+            setMtu(9000)
+            options.accessControl?.let { accessControl ->
                 when (accessControl.mode) {
                     AccessControlMode.acceptSelected -> {
                         (accessControl.acceptList + packageName).forEach {
@@ -106,28 +69,20 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
             if (Build.VERSION.SDK_INT >= 29) {
                 setMetered(false)
             }
-            if (props?.allowBypass == true) {
+            if (options.allowBypass) {
                 allowBypass()
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && props?.systemProxy == true) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && options.systemProxy) {
                 setHttpProxy(
                     ProxyInfo.buildDirectProxy(
                         "127.0.0.1",
-                        port,
-                        passList
+                        options.port,
+                        options.bypassDomain
                     )
                 )
             }
-            TunProps(
-                fd = establish()?.detachFd()
-                    ?: throw NullPointerException("Establish VPN rejected by system"),
-                gateway = "$TUN_GATEWAY/$TUN_SUBNET_PREFIX",
-                gateway6 = if (props?.ipv6 == true) "$TUN_GATEWAY6/$TUN_SUBNET_PREFIX6" else "",
-                portal = TUN_PORTAL,
-                portal6 = if (props?.ipv6 == true) TUN_PORTAL6 else "",
-                dns = TUN_DNS,
-                dns6 = if (props?.ipv6 == true) TUN_DNS6 else ""
-            )
+            establish()?.detachFd()
+                ?: throw NullPointerException("Establish VPN rejected by system")
         }
     }
 

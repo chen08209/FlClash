@@ -1,8 +1,9 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/null_status.dart';
 import 'package:flutter/material.dart';
-
-import '../common/app_localizations.dart';
 import 'card.dart';
 import 'float_layout.dart';
 import 'list.dart';
@@ -142,49 +143,174 @@ class _InputDialogState extends State<InputDialog> {
   }
 }
 
-class UpdatePage<T> extends StatelessWidget {
+class ListPage<T> extends StatelessWidget {
   final String title;
   final Iterable<T> items;
+  final Key Function(T item)? keyBuilder;
   final Widget Function(T item) titleBuilder;
   final Widget Function(T item)? subtitleBuilder;
-  final Function(T item) onAdd;
-  final Function(T item) onRemove;
+  final Widget Function(T item)? leadingBuilder;
+  final String? keyLabel;
+  final String? valueLabel;
+  final Function(Iterable<T> items) onChange;
 
-  const UpdatePage({
+  const ListPage({
     super.key,
     required this.title,
     required this.items,
+    this.keyBuilder,
     required this.titleBuilder,
-    required this.onRemove,
-    required this.onAdd,
+    required this.onChange,
+    this.leadingBuilder,
+    this.keyLabel,
+    this.valueLabel,
     this.subtitleBuilder,
   });
 
   bool get isMap => items is Iterable<MapEntry>;
 
-  _handleEdit(T item) async {
-    if (isMap) {
-      item as MapEntry<String, String>;
-      final value = await globalState.showCommonDialog<T>(
-        child: AddDialog(
-          defaultKey: item.key,
-          defaultValue: item.value,
-          title: title,
+  _handleAddOrEdit([T? item]) async {
+    final value = await globalState.showCommonDialog<T>(
+      child: AddDialog(
+        keyField: isMap
+            ? Field(
+                label: this.keyLabel ?? appLocalizations.key,
+                value:
+                    item == null ? "" : (item as MapEntry<String, String>).key,
+              )
+            : null,
+        valueField: Field(
+          label: this.valueLabel ?? appLocalizations.value,
+          value: item == null
+              ? ""
+              : isMap
+                  ? (item as MapEntry<String, String>).value
+                  : item as String,
         ),
+        title: title,
+      ),
+    );
+    if (value == null) return;
+    final entries = List<T>.from(
+      items,
+    );
+    if (item != null) {
+      final index = entries.indexWhere(
+        (entry) {
+          if (isMap) {
+            return (entry as MapEntry<String, String>).key ==
+                (item as MapEntry<String, String>).key;
+          }
+          return entry == item;
+        },
       );
-      if (value == null) return;
-      onAdd(value);
+      if (index != -1) {
+        entries[index] = value;
+      }
     } else {
-      item as String;
-      final value = await globalState.showCommonDialog<T>(
-        child: AddDialog(
-          defaultKey: null,
-          defaultValue: item,
-          title: title,
+      entries.add(value);
+    }
+    onChange(entries);
+  }
+
+  _handleDelete(T item) {
+    final entries = List<T>.from(
+      items,
+    );
+    final index = entries.indexWhere(
+      (entry) {
+        if (isMap) {
+          return (entry as MapEntry<String, String>).key ==
+              (item as MapEntry<String, String>).key;
+        }
+        return entry == item;
+      },
+    );
+    if (index != -1) {
+      entries.removeAt(index);
+    }
+    onChange(entries);
+  }
+
+  Widget _buildList() {
+    final items = this.items.toList();
+    if (this.keyBuilder != null) {
+      return ReorderableListView.builder(
+        padding: const EdgeInsets.only(
+          bottom: 16 + 64,
+          left: 16,
+          right: 16,
         ),
+        buildDefaultDragHandles: false,
+        itemCount: items.length,
+        itemBuilder: (_, index) {
+          final e = items[index];
+          return Padding(
+            key: keyBuilder!(e),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ReorderableDragStartListener(
+              index: index,
+              child: CommonCard(
+                child: ListItem(
+                  leading: leadingBuilder != null ? leadingBuilder!(e) : null,
+                  title: titleBuilder(e),
+                  subtitle: subtitleBuilder != null ? subtitleBuilder!(e) : null,
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () {
+                      _handleDelete(e);
+                    },
+                  ),
+                ),
+                onPressed: () {
+                  _handleAddOrEdit(e);
+                },
+              ),
+            ),
+          );
+        },
+        onReorder: (oldIndex, newIndex) {
+          if (oldIndex < newIndex) {
+            newIndex -= 1;
+          }
+          final nextItems = List<T>.from(items);
+          final item = nextItems.removeAt(oldIndex);
+          nextItems.insert(newIndex, item);
+          onChange(nextItems);
+        },
       );
-      if (value == null) return;
-      onAdd(value);
+    } else {
+      return ListView.builder(
+        padding: const EdgeInsets.only(
+          bottom: 16 + 64,
+          left: 16,
+          right: 16,
+        ),
+        itemCount: items.length,
+        itemBuilder: (_, index) {
+          final e = items[index];
+          return Padding(
+            key: ObjectKey(e.toString()),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: CommonCard(
+              child: ListItem(
+                leading: leadingBuilder != null ? leadingBuilder!(e) : null,
+                title: titleBuilder(e),
+                subtitle: subtitleBuilder != null ? subtitleBuilder!(e) : null,
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () {
+                    _handleDelete(e);
+                  },
+                ),
+              ),
+              onPressed: () {
+                _handleAddOrEdit(e);
+              },
+            ),
+          );
+        },
+      );
     }
   }
 
@@ -194,62 +320,28 @@ class UpdatePage<T> extends StatelessWidget {
       floatingWidget: FloatWrapper(
         child: FloatingActionButton(
           onPressed: () async {
-            final value = await globalState.showCommonDialog<T>(
-              child: AddDialog(
-                defaultKey: isMap ? "" : null,
-                defaultValue: "",
-                title: title,
-              ),
-            );
-            if (value == null) return;
-            onAdd(value);
+            _handleAddOrEdit();
           },
           child: const Icon(Icons.add),
         ),
       ),
-      child: ListView.builder(
-        padding: const EdgeInsets.only(
-          bottom: 16 + 64,
-          left: 16,
-          right: 16,
-        ),
-        itemCount: items.length,
-        itemBuilder: (_, index) {
-          final e = items.toList()[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: CommonCard(
-              child: ListItem(
-                title: titleBuilder(e),
-                subtitle: subtitleBuilder != null ? subtitleBuilder!(e) : null,
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: () {
-                    onRemove(e);
-                  },
-                ),
-              ),
-              onPressed: () {
-                _handleEdit(e);
-              },
-            ),
-          );
-        },
-      ),
+      child: items.isEmpty
+          ? NullStatus(label: appLocalizations.noData)
+          : _buildList(),
     );
   }
 }
 
 class AddDialog extends StatefulWidget {
   final String title;
-  final String? defaultKey;
-  final String defaultValue;
+  final Field? keyField;
+  final Field valueField;
 
   const AddDialog({
     super.key,
     required this.title,
-    this.defaultKey,
-    required this.defaultValue,
+    this.keyField,
+    required this.valueField,
   });
 
   @override
@@ -257,29 +349,33 @@ class AddDialog extends StatefulWidget {
 }
 
 class _AddDialogState extends State<AddDialog> {
-  late TextEditingController keyController;
+  TextEditingController? keyController;
   late TextEditingController valueController;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  Field? get keyField => widget.keyField;
+
+  Field get valueField => widget.valueField;
 
   @override
   void initState() {
     super.initState();
-    keyController = TextEditingController(
-      text: widget.defaultKey,
-    );
+    if (keyField != null) {
+      keyController = TextEditingController(
+        text: keyField!.value,
+      );
+    }
     valueController = TextEditingController(
-      text: widget.defaultValue,
+      text: valueField.value,
     );
   }
 
-  bool get hasKey => widget.defaultKey != null;
-
   _submit() {
     if (!_formKey.currentState!.validate()) return;
-    if (hasKey) {
+    if (keyField != null) {
       Navigator.of(context).pop<MapEntry<String, String>>(
         MapEntry(
-          keyController.text,
+          keyController!.text,
           valueController.text,
         ),
       );
@@ -301,19 +397,21 @@ class _AddDialogState extends State<AddDialog> {
           child: Wrap(
             runSpacing: 16,
             children: [
-              if (hasKey)
+              if (keyField != null)
                 TextFormField(
                   maxLines: 2,
                   minLines: 1,
                   controller: keyController,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.key),
                     border: const OutlineInputBorder(),
-                    labelText: appLocalizations.key,
+                    labelText: keyField!.label,
                   ),
                   validator: (String? value) {
+                    if (keyField!.validator != null) {
+                      return keyField!.validator!(value);
+                    }
                     if (value == null || value.isEmpty) {
-                      return appLocalizations.keyNotEmpty;
+                      return appLocalizations.notEmpty;
                     }
                     return null;
                   },
@@ -323,13 +421,15 @@ class _AddDialogState extends State<AddDialog> {
                 minLines: 1,
                 controller: valueController,
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.label),
                   border: const OutlineInputBorder(),
-                  labelText: appLocalizations.value,
+                  labelText: valueField.label,
                 ),
                 validator: (String? value) {
+                  if (valueField.validator != null) {
+                    return valueField.validator!(value);
+                  }
                   if (value == null || value.isEmpty) {
-                    return appLocalizations.valueNotEmpty;
+                    return appLocalizations.notEmpty;
                   }
                   return null;
                 },

@@ -7,96 +7,52 @@ part of '../config.dart';
 // **************************************************************************
 
 Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
+  ..appSetting =
+      AppSetting.realFromJson(json['appSetting'] as Map<String, Object?>?)
   ..profiles = (json['profiles'] as List<dynamic>?)
           ?.map((e) => Profile.fromJson(e as Map<String, dynamic>))
           .toList() ??
       []
   ..currentProfileId = json['currentProfileId'] as String?
-  ..autoLaunch = json['autoLaunch'] as bool? ?? false
-  ..silentLaunch = json['silentLaunch'] as bool? ?? false
-  ..autoRun = json['autoRun'] as bool? ?? false
   ..themeMode = $enumDecodeNullable(_$ThemeModeEnumMap, json['themeMode']) ??
       ThemeMode.system
-  ..openLogs = json['openLogs'] as bool? ?? false
-  ..locale = json['locale'] as String?
   ..primaryColor = (json['primaryColor'] as num?)?.toInt()
-  ..proxiesSortType =
-      $enumDecodeNullable(_$ProxiesSortTypeEnumMap, json['proxiesSortType']) ??
-          ProxiesSortType.none
-  ..proxiesLayout =
-      $enumDecodeNullable(_$ProxiesLayoutEnumMap, json['proxiesLayout']) ??
-          ProxiesLayout.standard
-  ..isMinimizeOnExit = json['isMinimizeOnExit'] as bool? ?? true
   ..isAccessControl = json['isAccessControl'] as bool? ?? false
   ..accessControl =
       AccessControl.fromJson(json['accessControl'] as Map<String, dynamic>)
   ..dav = json['dav'] == null
       ? null
       : DAV.fromJson(json['dav'] as Map<String, dynamic>)
-  ..isAnimateToPage = json['isAnimateToPage'] as bool? ?? true
-  ..isCompatible = json['isCompatible'] as bool? ?? true
-  ..autoCheckUpdate = json['autoCheckUpdate'] as bool? ?? true
-  ..onlyProxy = json['onlyProxy'] as bool? ?? false
   ..prueBlack = json['prueBlack'] as bool? ?? false
-  ..isCloseConnections = json['isCloseConnections'] as bool? ?? false
-  ..proxiesType = $enumDecodeNullable(_$ProxiesTypeEnumMap, json['proxiesType'],
-          unknownValue: ProxiesType.tab) ??
-      ProxiesType.tab
-  ..proxyCardType =
-      $enumDecodeNullable(_$ProxyCardTypeEnumMap, json['proxyCardType']) ??
-          ProxyCardType.expand
-  ..testUrl =
-      json['test-url'] as String? ?? 'https://www.gstatic.com/generate_204'
-  ..isExclude = json['isExclude'] as bool? ?? false
   ..windowProps =
       WindowProps.fromJson(json['windowProps'] as Map<String, dynamic>?)
   ..vpnProps = VpnProps.fromJson(json['vpnProps'] as Map<String, dynamic>?)
   ..desktopProps =
       DesktopProps.fromJson(json['desktopProps'] as Map<String, dynamic>?)
-  ..scaleProps =
-      ScaleProps.fromJson(json['scaleProps'] as Map<String, dynamic>?)
-  ..showLabel = json['showLabel'] as bool? ?? false
   ..overrideDns = json['overrideDns'] as bool? ?? false
-  ..isDisclaimerAccepted = json['isDisclaimerAccepted'] as bool? ?? false
   ..hotKeyActions = (json['hotKeyActions'] as List<dynamic>?)
           ?.map((e) => HotKeyAction.fromJson(e as Map<String, dynamic>))
           .toList() ??
-      [];
+      []
+  ..proxiesStyle =
+      ProxiesStyle.fromJson(json['proxiesStyle'] as Map<String, dynamic>?);
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
+      'appSetting': instance.appSetting,
       'profiles': instance.profiles,
       'currentProfileId': instance.currentProfileId,
-      'autoLaunch': instance.autoLaunch,
-      'silentLaunch': instance.silentLaunch,
-      'autoRun': instance.autoRun,
       'themeMode': _$ThemeModeEnumMap[instance.themeMode]!,
-      'openLogs': instance.openLogs,
-      'locale': instance.locale,
       'primaryColor': instance.primaryColor,
-      'proxiesSortType': _$ProxiesSortTypeEnumMap[instance.proxiesSortType]!,
-      'proxiesLayout': _$ProxiesLayoutEnumMap[instance.proxiesLayout]!,
-      'isMinimizeOnExit': instance.isMinimizeOnExit,
       'isAccessControl': instance.isAccessControl,
       'accessControl': instance.accessControl,
       'dav': instance.dav,
-      'isAnimateToPage': instance.isAnimateToPage,
-      'isCompatible': instance.isCompatible,
-      'autoCheckUpdate': instance.autoCheckUpdate,
-      'onlyProxy': instance.onlyProxy,
       'prueBlack': instance.prueBlack,
-      'isCloseConnections': instance.isCloseConnections,
-      'proxiesType': _$ProxiesTypeEnumMap[instance.proxiesType]!,
-      'proxyCardType': _$ProxyCardTypeEnumMap[instance.proxyCardType]!,
-      'test-url': instance.testUrl,
-      'isExclude': instance.isExclude,
       'windowProps': instance.windowProps,
       'vpnProps': instance.vpnProps,
       'desktopProps': instance.desktopProps,
-      'scaleProps': instance.scaleProps,
-      'showLabel': instance.showLabel,
       'overrideDns': instance.overrideDns,
-      'isDisclaimerAccepted': instance.isDisclaimerAccepted,
       'hotKeyActions': instance.hotKeyActions,
+      'proxiesStyle': instance.proxiesStyle,
     };
 
 const _$ThemeModeEnumMap = {
@@ -105,28 +61,43 @@ const _$ThemeModeEnumMap = {
   ThemeMode.dark: 'dark',
 };
 
-const _$ProxiesSortTypeEnumMap = {
-  ProxiesSortType.none: 'none',
-  ProxiesSortType.delay: 'delay',
-  ProxiesSortType.name: 'name',
-};
+_$AppSettingImpl _$$AppSettingImplFromJson(Map<String, dynamic> json) =>
+    _$AppSettingImpl(
+      locale: json['locale'] as String?,
+      onlyProxy: json['onlyProxy'] as bool? ?? false,
+      autoLaunch: json['autoLaunch'] as bool? ?? false,
+      adminAutoLaunch: json['adminAutoLaunch'] as bool? ?? false,
+      silentLaunch: json['silentLaunch'] as bool? ?? false,
+      autoRun: json['autoRun'] as bool? ?? false,
+      openLogs: json['openLogs'] as bool? ?? false,
+      closeConnections: json['closeConnections'] as bool? ?? true,
+      testUrl: json['testUrl'] as String? ?? defaultTestUrl,
+      isAnimateToPage: json['isAnimateToPage'] as bool? ?? true,
+      autoCheckUpdate: json['autoCheckUpdate'] as bool? ?? true,
+      showLabel: json['showLabel'] as bool? ?? false,
+      disclaimerAccepted: json['disclaimerAccepted'] as bool? ?? false,
+      minimizeOnExit: json['minimizeOnExit'] as bool? ?? true,
+      hidden: json['hidden'] as bool? ?? false,
+    );
 
-const _$ProxiesLayoutEnumMap = {
-  ProxiesLayout.loose: 'loose',
-  ProxiesLayout.standard: 'standard',
-  ProxiesLayout.tight: 'tight',
-};
-
-const _$ProxiesTypeEnumMap = {
-  ProxiesType.tab: 'tab',
-  ProxiesType.list: 'list',
-};
-
-const _$ProxyCardTypeEnumMap = {
-  ProxyCardType.expand: 'expand',
-  ProxyCardType.shrink: 'shrink',
-  ProxyCardType.min: 'min',
-};
+Map<String, dynamic> _$$AppSettingImplToJson(_$AppSettingImpl instance) =>
+    <String, dynamic>{
+      'locale': instance.locale,
+      'onlyProxy': instance.onlyProxy,
+      'autoLaunch': instance.autoLaunch,
+      'adminAutoLaunch': instance.adminAutoLaunch,
+      'silentLaunch': instance.silentLaunch,
+      'autoRun': instance.autoRun,
+      'openLogs': instance.openLogs,
+      'closeConnections': instance.closeConnections,
+      'testUrl': instance.testUrl,
+      'isAnimateToPage': instance.isAnimateToPage,
+      'autoCheckUpdate': instance.autoCheckUpdate,
+      'showLabel': instance.showLabel,
+      'disclaimerAccepted': instance.disclaimerAccepted,
+      'minimizeOnExit': instance.minimizeOnExit,
+      'hidden': instance.hidden,
+    };
 
 _$AccessControlImpl _$$AccessControlImplFromJson(Map<String, dynamic> json) =>
     _$AccessControlImpl(
@@ -165,48 +136,6 @@ const _$AccessSortTypeEnumMap = {
   AccessSortType.time: 'time',
 };
 
-_$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
-    _$CoreStateImpl(
-      accessControl: json['accessControl'] == null
-          ? null
-          : AccessControl.fromJson(
-              json['accessControl'] as Map<String, dynamic>),
-      currentProfileName: json['currentProfileName'] as String,
-      enable: json['enable'] as bool,
-      allowBypass: json['allowBypass'] as bool,
-      systemProxy: json['systemProxy'] as bool,
-      mixedPort: (json['mixedPort'] as num).toInt(),
-      ipv6: json['ipv6'] as bool,
-      onlyProxy: json['onlyProxy'] as bool,
-    );
-
-Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
-    <String, dynamic>{
-      'accessControl': instance.accessControl,
-      'currentProfileName': instance.currentProfileName,
-      'enable': instance.enable,
-      'allowBypass': instance.allowBypass,
-      'systemProxy': instance.systemProxy,
-      'mixedPort': instance.mixedPort,
-      'ipv6': instance.ipv6,
-      'onlyProxy': instance.onlyProxy,
-    };
-
-_$VPNStateImpl _$$VPNStateImplFromJson(Map<String, dynamic> json) =>
-    _$VPNStateImpl(
-      accessControl: json['accessControl'] == null
-          ? null
-          : AccessControl.fromJson(
-              json['accessControl'] as Map<String, dynamic>),
-      vpnProps: VpnProps.fromJson(json['vpnProps'] as Map<String, dynamic>?),
-    );
-
-Map<String, dynamic> _$$VPNStateImplToJson(_$VPNStateImpl instance) =>
-    <String, dynamic>{
-      'accessControl': instance.accessControl,
-      'vpnProps': instance.vpnProps,
-    };
-
 _$WindowPropsImpl _$$WindowPropsImplFromJson(Map<String, dynamic> json) =>
     _$WindowPropsImpl(
       width: (json['width'] as num?)?.toDouble() ?? 1000,
@@ -229,6 +158,10 @@ _$VpnPropsImpl _$$VpnPropsImplFromJson(Map<String, dynamic> json) =>
       systemProxy: json['systemProxy'] as bool? ?? true,
       ipv6: json['ipv6'] as bool? ?? false,
       allowBypass: json['allowBypass'] as bool? ?? true,
+      bypassDomain: (json['bypassDomain'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          defaultBypassDomain,
     );
 
 Map<String, dynamic> _$$VpnPropsImplToJson(_$VpnPropsImpl instance) =>
@@ -237,6 +170,7 @@ Map<String, dynamic> _$$VpnPropsImplToJson(_$VpnPropsImpl instance) =>
       'systemProxy': instance.systemProxy,
       'ipv6': instance.ipv6,
       'allowBypass': instance.allowBypass,
+      'bypassDomain': instance.bypassDomain,
     };
 
 _$DesktopPropsImpl _$$DesktopPropsImplFromJson(Map<String, dynamic> json) =>
@@ -249,14 +183,61 @@ Map<String, dynamic> _$$DesktopPropsImplToJson(_$DesktopPropsImpl instance) =>
       'systemProxy': instance.systemProxy,
     };
 
-_$ScalePropsImpl _$$ScalePropsImplFromJson(Map<String, dynamic> json) =>
-    _$ScalePropsImpl(
-      custom: json['custom'] as bool? ?? false,
-      scale: (json['scale'] as num?)?.toDouble() ?? defaultCustomFontSizeScale,
+_$ProxiesStyleImpl _$$ProxiesStyleImplFromJson(Map<String, dynamic> json) =>
+    _$ProxiesStyleImpl(
+      type: $enumDecodeNullable(_$ProxiesTypeEnumMap, json['type']) ??
+          ProxiesType.tab,
+      sortType:
+          $enumDecodeNullable(_$ProxiesSortTypeEnumMap, json['sortType']) ??
+              ProxiesSortType.none,
+      layout: $enumDecodeNullable(_$ProxiesLayoutEnumMap, json['layout']) ??
+          ProxiesLayout.standard,
+      iconStyle:
+          $enumDecodeNullable(_$ProxiesIconStyleEnumMap, json['iconStyle']) ??
+              ProxiesIconStyle.standard,
+      cardType: $enumDecodeNullable(_$ProxyCardTypeEnumMap, json['cardType']) ??
+          ProxyCardType.expand,
+      iconMap: (json['iconMap'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
     );
 
-Map<String, dynamic> _$$ScalePropsImplToJson(_$ScalePropsImpl instance) =>
+Map<String, dynamic> _$$ProxiesStyleImplToJson(_$ProxiesStyleImpl instance) =>
     <String, dynamic>{
-      'custom': instance.custom,
-      'scale': instance.scale,
+      'type': _$ProxiesTypeEnumMap[instance.type]!,
+      'sortType': _$ProxiesSortTypeEnumMap[instance.sortType]!,
+      'layout': _$ProxiesLayoutEnumMap[instance.layout]!,
+      'iconStyle': _$ProxiesIconStyleEnumMap[instance.iconStyle]!,
+      'cardType': _$ProxyCardTypeEnumMap[instance.cardType]!,
+      'iconMap': instance.iconMap,
     };
+
+const _$ProxiesTypeEnumMap = {
+  ProxiesType.tab: 'tab',
+  ProxiesType.list: 'list',
+};
+
+const _$ProxiesSortTypeEnumMap = {
+  ProxiesSortType.none: 'none',
+  ProxiesSortType.delay: 'delay',
+  ProxiesSortType.name: 'name',
+};
+
+const _$ProxiesLayoutEnumMap = {
+  ProxiesLayout.loose: 'loose',
+  ProxiesLayout.standard: 'standard',
+  ProxiesLayout.tight: 'tight',
+};
+
+const _$ProxiesIconStyleEnumMap = {
+  ProxiesIconStyle.standard: 'standard',
+  ProxiesIconStyle.none: 'none',
+  ProxiesIconStyle.icon: 'icon',
+};
+
+const _$ProxyCardTypeEnumMap = {
+  ProxyCardType.expand: 'expand',
+  ProxyCardType.shrink: 'shrink',
+  ProxyCardType.min: 'min',
+};

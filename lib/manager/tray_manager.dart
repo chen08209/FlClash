@@ -115,7 +115,15 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
         },
         checked: trayState.autoLaunch,
       );
+      final adminAutoStartMenuItem = MenuItem.checkbox(
+        label: appLocalizations.adminAutoLaunch,
+        onClick: (_) async {
+          globalState.appController.updateAdminAutoLaunch();
+        },
+        checked: trayState.adminAutoLaunch,
+      );
       menuItems.add(autoStartMenuItem);
+      menuItems.add(adminAutoStartMenuItem);
       menuItems.add(MenuItem.separator());
       final exitMenuItem = MenuItem(
         label: appLocalizations.exit,
@@ -142,9 +150,10 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
       selector: (_, appState, appFlowingState, config, clashConfig) =>
           TrayState(
         mode: clashConfig.mode,
-        autoLaunch: config.autoLaunch,
+        adminAutoLaunch: config.appSetting.adminAutoLaunch,
+        autoLaunch: config.appSetting.autoLaunch,
         isStart: appFlowingState.isStart,
-        locale: config.locale,
+        locale: config.appSetting.locale,
         systemProxy: config.desktopProps.systemProxy,
         tunEnable: clashConfig.tun.enable,
         brightness: appState.brightness,

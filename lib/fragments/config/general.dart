@@ -119,7 +119,7 @@ class TestUrlItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Selector<Config, String>(
-      selector: (_, config) => config.testUrl,
+      selector: (_, config) => config.appSetting.testUrl,
       builder: (_, value, __) {
         return ListItem.input(
           leading: const Icon(Icons.timeline),
@@ -135,7 +135,10 @@ class TestUrlItem extends StatelessWidget {
                   if (!value.isUrl) {
                     throw "Invalid url";
                   }
-                  globalState.appController.config.testUrl = value;
+                  final config = globalState.appController.config;
+                  config.appSetting = config.appSetting.copyWith(
+                    testUrl: value,
+                  );
                 } catch (e) {
                   globalState.showMessage(
                     title: appLocalizations.testUrl,
@@ -212,19 +215,14 @@ class HostsItem extends StatelessWidget {
               !const MapEquality<String, String>().equals(prev, next),
           builder: (_, hosts, ___) {
             final entries = hosts.entries;
-            return UpdatePage(
+            return ListPage(
               title: "Hosts",
               items: entries,
               titleBuilder: (item) => Text(item.key),
               subtitleBuilder: (item) => Text(item.value),
-              onRemove: (value) {
+              onChange: (items){
                 final clashConfig = globalState.appController.clashConfig;
-                clashConfig.hosts = Map.from(hosts)..remove(value.key);
-              },
-              onAdd: (value) {
-                final clashConfig = globalState.appController.clashConfig;
-                clashConfig.hosts = Map.from(clashConfig.hosts)
-                  ..addEntries([value]);
+                clashConfig.hosts = Map.fromEntries(items);
               },
             );
           },

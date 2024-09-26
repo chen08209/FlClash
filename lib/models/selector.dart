@@ -63,6 +63,7 @@ class TrayState with _$TrayState {
   const factory TrayState({
     required Mode mode,
     required bool autoLaunch,
+    required bool adminAutoLaunch,
     required bool systemProxy,
     required bool tunEnable,
     required bool isStart,
@@ -88,7 +89,6 @@ class HomeState with _$HomeState {
     required String? locale,
   }) = _HomeState;
 }
-
 
 @freezed
 class ProxiesCardSelectorState with _$ProxiesCardSelectorState {
@@ -196,7 +196,7 @@ class ProxiesActionsState with _$ProxiesActionsState {
 class AutoLaunchState with _$AutoLaunchState {
   const factory AutoLaunchState({
     required bool isAutoLaunch,
-    required bool isOpenTun,
+    required bool isAdminAutoLaunch,
   }) = _AutoLaunchState;
 }
 
@@ -216,6 +216,8 @@ class HttpOverridesState with _$HttpOverridesState {
     required int port,
   }) = _HttpOverridesState;
 }
+
+
 
 @freezed
 class ClashConfigState with _$ClashConfigState {
@@ -242,10 +244,10 @@ class ClashConfigState with _$ClashConfigState {
 }
 
 @freezed
-class ThemeState with _$ThemeState {
-  const factory ThemeState({
-    required String? locale,
-    required ScaleProps scaleProps,
-  }) = _ThemeState;
+class VPNState with _$VPNState {
+  const factory VPNState({
+    required AccessControl? accessControl,
+    required TunStack stack,
+    required VpnProps vpnProps,
+  }) = _VPNState;
 }
-

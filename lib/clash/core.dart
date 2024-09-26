@@ -287,13 +287,18 @@ class ClashCore {
     malloc.free(stateChar);
   }
 
-  CoreState getState() {
-    final stateRaw = clashFFI.getState();
-    final state = json.decode(
-      stateRaw.cast<Utf8>().toDartString(),
-    );
-    clashFFI.freeCString(stateRaw);
-    return CoreState.fromJson(state);
+  String getCurrentProfileName() {
+    final currentProfileRaw = clashFFI.getCurrentProfileName();
+    final currentProfile = currentProfileRaw.cast<Utf8>().toDartString();
+    clashFFI.freeCString(currentProfileRaw);
+    return currentProfile;
+  }
+
+  AndroidVpnOptions getAndroidVpnOptions() {
+    final vpnOptionsRaw = clashFFI.getAndroidVpnOptions();
+    final vpnOptions = json.decode(vpnOptionsRaw.cast<Utf8>().toDartString());
+    clashFFI.freeCString(vpnOptionsRaw);
+    return AndroidVpnOptions.fromJson(vpnOptions);
   }
 
   Traffic getTraffic() {
@@ -322,11 +327,9 @@ class ClashCore {
     clashFFI.stopLog();
   }
 
-  startTun(TunProps? tunProps, int port) {
+  startTun(int fd, int port) {
     if (!Platform.isAndroid) return;
-    final tunPropsChar = json.encode(tunProps).toNativeUtf8().cast<Char>();
-    clashFFI.startTUN(tunPropsChar, port);
-    malloc.free(tunPropsChar);
+    clashFFI.startTUN(fd, port);
   }
 
   updateDns(String dns) {

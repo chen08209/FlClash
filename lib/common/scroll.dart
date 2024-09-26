@@ -25,3 +25,18 @@ class HiddenBarScrollBehavior extends BaseScrollBehavior {
     return child;
   }
 }
+
+class ShowBarScrollBehavior extends BaseScrollBehavior {
+  @override
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return Scrollbar(
+      interactive: true,
+      controller: details.controller,
+      child: child,
+    );
+  }
+}

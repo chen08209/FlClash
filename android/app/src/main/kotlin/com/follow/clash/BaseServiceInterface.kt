@@ -1,10 +1,10 @@
 package com.follow.clash
 
-import com.follow.clash.models.Props
-import com.follow.clash.models.TunProps
+
+import com.follow.clash.models.VpnOptions
 
 interface BaseServiceInterface {
-    fun start(port: Int, props: Props?): TunProps?
+    fun start(options: VpnOptions): Int
     fun stop()
     fun startForeground(title: String, content: String)
 }
