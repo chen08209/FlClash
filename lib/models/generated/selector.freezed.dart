@@ -960,6 +960,7 @@ abstract class _ApplicationSelectorState implements ApplicationSelectorState {
 mixin _$TrayState {
   Mode get mode => throw _privateConstructorUsedError;
   bool get autoLaunch => throw _privateConstructorUsedError;
+  bool get adminAutoLaunch => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
   bool get tunEnable => throw _privateConstructorUsedError;
   bool get isStart => throw _privateConstructorUsedError;
@@ -979,6 +980,7 @@ abstract class $TrayStateCopyWith<$Res> {
   $Res call(
       {Mode mode,
       bool autoLaunch,
+      bool adminAutoLaunch,
       bool systemProxy,
       bool tunEnable,
       bool isStart,
@@ -1001,6 +1003,7 @@ class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
   $Res call({
     Object? mode = null,
     Object? autoLaunch = null,
+    Object? adminAutoLaunch = null,
     Object? systemProxy = null,
     Object? tunEnable = null,
     Object? isStart = null,
@@ -1015,6 +1018,10 @@ class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
       autoLaunch: null == autoLaunch
           ? _value.autoLaunch
           : autoLaunch // ignore: cast_nullable_to_non_nullable
+              as bool,
+      adminAutoLaunch: null == adminAutoLaunch
+          ? _value.adminAutoLaunch
+          : adminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
       systemProxy: null == systemProxy
           ? _value.systemProxy
@@ -1051,6 +1058,7 @@ abstract class _$$TrayStateImplCopyWith<$Res>
   $Res call(
       {Mode mode,
       bool autoLaunch,
+      bool adminAutoLaunch,
       bool systemProxy,
       bool tunEnable,
       bool isStart,
@@ -1071,6 +1079,7 @@ class __$$TrayStateImplCopyWithImpl<$Res>
   $Res call({
     Object? mode = null,
     Object? autoLaunch = null,
+    Object? adminAutoLaunch = null,
     Object? systemProxy = null,
     Object? tunEnable = null,
     Object? isStart = null,
@@ -1085,6 +1094,10 @@ class __$$TrayStateImplCopyWithImpl<$Res>
       autoLaunch: null == autoLaunch
           ? _value.autoLaunch
           : autoLaunch // ignore: cast_nullable_to_non_nullable
+              as bool,
+      adminAutoLaunch: null == adminAutoLaunch
+          ? _value.adminAutoLaunch
+          : adminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
       systemProxy: null == systemProxy
           ? _value.systemProxy
@@ -1116,6 +1129,7 @@ class _$TrayStateImpl implements _TrayState {
   const _$TrayStateImpl(
       {required this.mode,
       required this.autoLaunch,
+      required this.adminAutoLaunch,
       required this.systemProxy,
       required this.tunEnable,
       required this.isStart,
@@ -1126,6 +1140,8 @@ class _$TrayStateImpl implements _TrayState {
   final Mode mode;
   @override
   final bool autoLaunch;
+  @override
+  final bool adminAutoLaunch;
   @override
   final bool systemProxy;
   @override
@@ -1139,7 +1155,7 @@ class _$TrayStateImpl implements _TrayState {
 
   @override
   String toString() {
-    return 'TrayState(mode: $mode, autoLaunch: $autoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness)';
+    return 'TrayState(mode: $mode, autoLaunch: $autoLaunch, adminAutoLaunch: $adminAutoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness)';
   }
 
   @override
@@ -1150,6 +1166,8 @@ class _$TrayStateImpl implements _TrayState {
             (identical(other.mode, mode) || other.mode == mode) &&
             (identical(other.autoLaunch, autoLaunch) ||
                 other.autoLaunch == autoLaunch) &&
+            (identical(other.adminAutoLaunch, adminAutoLaunch) ||
+                other.adminAutoLaunch == adminAutoLaunch) &&
             (identical(other.systemProxy, systemProxy) ||
                 other.systemProxy == systemProxy) &&
             (identical(other.tunEnable, tunEnable) ||
@@ -1161,8 +1179,8 @@ class _$TrayStateImpl implements _TrayState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, mode, autoLaunch, systemProxy,
-      tunEnable, isStart, locale, brightness);
+  int get hashCode => Object.hash(runtimeType, mode, autoLaunch,
+      adminAutoLaunch, systemProxy, tunEnable, isStart, locale, brightness);
 
   @JsonKey(ignore: true)
   @override
@@ -1175,6 +1193,7 @@ abstract class _TrayState implements TrayState {
   const factory _TrayState(
       {required final Mode mode,
       required final bool autoLaunch,
+      required final bool adminAutoLaunch,
       required final bool systemProxy,
       required final bool tunEnable,
       required final bool isStart,
@@ -1185,6 +1204,8 @@ abstract class _TrayState implements TrayState {
   Mode get mode;
   @override
   bool get autoLaunch;
+  @override
+  bool get adminAutoLaunch;
   @override
   bool get systemProxy;
   @override
@@ -2919,7 +2940,7 @@ abstract class _ProxiesActionsState implements ProxiesActionsState {
 /// @nodoc
 mixin _$AutoLaunchState {
   bool get isAutoLaunch => throw _privateConstructorUsedError;
-  bool get isOpenTun => throw _privateConstructorUsedError;
+  bool get isAdminAutoLaunch => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $AutoLaunchStateCopyWith<AutoLaunchState> get copyWith =>
@@ -2932,7 +2953,7 @@ abstract class $AutoLaunchStateCopyWith<$Res> {
           AutoLaunchState value, $Res Function(AutoLaunchState) then) =
       _$AutoLaunchStateCopyWithImpl<$Res, AutoLaunchState>;
   @useResult
-  $Res call({bool isAutoLaunch, bool isOpenTun});
+  $Res call({bool isAutoLaunch, bool isAdminAutoLaunch});
 }
 
 /// @nodoc
@@ -2949,16 +2970,16 @@ class _$AutoLaunchStateCopyWithImpl<$Res, $Val extends AutoLaunchState>
   @override
   $Res call({
     Object? isAutoLaunch = null,
-    Object? isOpenTun = null,
+    Object? isAdminAutoLaunch = null,
   }) {
     return _then(_value.copyWith(
       isAutoLaunch: null == isAutoLaunch
           ? _value.isAutoLaunch
           : isAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
-      isOpenTun: null == isOpenTun
-          ? _value.isOpenTun
-          : isOpenTun // ignore: cast_nullable_to_non_nullable
+      isAdminAutoLaunch: null == isAdminAutoLaunch
+          ? _value.isAdminAutoLaunch
+          : isAdminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
     ) as $Val);
   }
@@ -2972,7 +2993,7 @@ abstract class _$$AutoLaunchStateImplCopyWith<$Res>
       __$$AutoLaunchStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool isAutoLaunch, bool isOpenTun});
+  $Res call({bool isAutoLaunch, bool isAdminAutoLaunch});
 }
 
 /// @nodoc
@@ -2987,16 +3008,16 @@ class __$$AutoLaunchStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? isAutoLaunch = null,
-    Object? isOpenTun = null,
+    Object? isAdminAutoLaunch = null,
   }) {
     return _then(_$AutoLaunchStateImpl(
       isAutoLaunch: null == isAutoLaunch
           ? _value.isAutoLaunch
           : isAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
-      isOpenTun: null == isOpenTun
-          ? _value.isOpenTun
-          : isOpenTun // ignore: cast_nullable_to_non_nullable
+      isAdminAutoLaunch: null == isAdminAutoLaunch
+          ? _value.isAdminAutoLaunch
+          : isAdminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }
@@ -3006,16 +3027,16 @@ class __$$AutoLaunchStateImplCopyWithImpl<$Res>
 
 class _$AutoLaunchStateImpl implements _AutoLaunchState {
   const _$AutoLaunchStateImpl(
-      {required this.isAutoLaunch, required this.isOpenTun});
+      {required this.isAutoLaunch, required this.isAdminAutoLaunch});
 
   @override
   final bool isAutoLaunch;
   @override
-  final bool isOpenTun;
+  final bool isAdminAutoLaunch;
 
   @override
   String toString() {
-    return 'AutoLaunchState(isAutoLaunch: $isAutoLaunch, isOpenTun: $isOpenTun)';
+    return 'AutoLaunchState(isAutoLaunch: $isAutoLaunch, isAdminAutoLaunch: $isAdminAutoLaunch)';
   }
 
   @override
@@ -3025,12 +3046,12 @@ class _$AutoLaunchStateImpl implements _AutoLaunchState {
             other is _$AutoLaunchStateImpl &&
             (identical(other.isAutoLaunch, isAutoLaunch) ||
                 other.isAutoLaunch == isAutoLaunch) &&
-            (identical(other.isOpenTun, isOpenTun) ||
-                other.isOpenTun == isOpenTun));
+            (identical(other.isAdminAutoLaunch, isAdminAutoLaunch) ||
+                other.isAdminAutoLaunch == isAdminAutoLaunch));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isAutoLaunch, isOpenTun);
+  int get hashCode => Object.hash(runtimeType, isAutoLaunch, isAdminAutoLaunch);
 
   @JsonKey(ignore: true)
   @override
@@ -3043,12 +3064,12 @@ class _$AutoLaunchStateImpl implements _AutoLaunchState {
 abstract class _AutoLaunchState implements AutoLaunchState {
   const factory _AutoLaunchState(
       {required final bool isAutoLaunch,
-      required final bool isOpenTun}) = _$AutoLaunchStateImpl;
+      required final bool isAdminAutoLaunch}) = _$AutoLaunchStateImpl;
 
   @override
   bool get isAutoLaunch;
   @override
-  bool get isOpenTun;
+  bool get isAdminAutoLaunch;
   @override
   @JsonKey(ignore: true)
   _$$AutoLaunchStateImplCopyWith<_$AutoLaunchStateImpl> get copyWith =>
@@ -3883,30 +3904,31 @@ abstract class _ClashConfigState implements ClashConfigState {
 }
 
 /// @nodoc
-mixin _$ThemeState {
-  String? get locale => throw _privateConstructorUsedError;
-  ScaleProps get scaleProps => throw _privateConstructorUsedError;
+mixin _$VPNState {
+  AccessControl? get accessControl => throw _privateConstructorUsedError;
+  TunStack get stack => throw _privateConstructorUsedError;
+  VpnProps get vpnProps => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ThemeStateCopyWith<ThemeState> get copyWith =>
+  $VPNStateCopyWith<VPNState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ThemeStateCopyWith<$Res> {
-  factory $ThemeStateCopyWith(
-          ThemeState value, $Res Function(ThemeState) then) =
-      _$ThemeStateCopyWithImpl<$Res, ThemeState>;
+abstract class $VPNStateCopyWith<$Res> {
+  factory $VPNStateCopyWith(VPNState value, $Res Function(VPNState) then) =
+      _$VPNStateCopyWithImpl<$Res, VPNState>;
   @useResult
-  $Res call({String? locale, ScaleProps scaleProps});
+  $Res call({AccessControl? accessControl, TunStack stack, VpnProps vpnProps});
 
-  $ScalePropsCopyWith<$Res> get scaleProps;
+  $AccessControlCopyWith<$Res>? get accessControl;
+  $VpnPropsCopyWith<$Res> get vpnProps;
 }
 
 /// @nodoc
-class _$ThemeStateCopyWithImpl<$Res, $Val extends ThemeState>
-    implements $ThemeStateCopyWith<$Res> {
-  _$ThemeStateCopyWithImpl(this._value, this._then);
+class _$VPNStateCopyWithImpl<$Res, $Val extends VPNState>
+    implements $VPNStateCopyWith<$Res> {
+  _$VPNStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -3916,117 +3938,151 @@ class _$ThemeStateCopyWithImpl<$Res, $Val extends ThemeState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? locale = freezed,
-    Object? scaleProps = null,
+    Object? accessControl = freezed,
+    Object? stack = null,
+    Object? vpnProps = null,
   }) {
     return _then(_value.copyWith(
-      locale: freezed == locale
-          ? _value.locale
-          : locale // ignore: cast_nullable_to_non_nullable
-              as String?,
-      scaleProps: null == scaleProps
-          ? _value.scaleProps
-          : scaleProps // ignore: cast_nullable_to_non_nullable
-              as ScaleProps,
+      accessControl: freezed == accessControl
+          ? _value.accessControl
+          : accessControl // ignore: cast_nullable_to_non_nullable
+              as AccessControl?,
+      stack: null == stack
+          ? _value.stack
+          : stack // ignore: cast_nullable_to_non_nullable
+              as TunStack,
+      vpnProps: null == vpnProps
+          ? _value.vpnProps
+          : vpnProps // ignore: cast_nullable_to_non_nullable
+              as VpnProps,
     ) as $Val);
   }
 
   @override
   @pragma('vm:prefer-inline')
-  $ScalePropsCopyWith<$Res> get scaleProps {
-    return $ScalePropsCopyWith<$Res>(_value.scaleProps, (value) {
-      return _then(_value.copyWith(scaleProps: value) as $Val);
+  $AccessControlCopyWith<$Res>? get accessControl {
+    if (_value.accessControl == null) {
+      return null;
+    }
+
+    return $AccessControlCopyWith<$Res>(_value.accessControl!, (value) {
+      return _then(_value.copyWith(accessControl: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $VpnPropsCopyWith<$Res> get vpnProps {
+    return $VpnPropsCopyWith<$Res>(_value.vpnProps, (value) {
+      return _then(_value.copyWith(vpnProps: value) as $Val);
     });
   }
 }
 
 /// @nodoc
-abstract class _$$ThemeStateImplCopyWith<$Res>
-    implements $ThemeStateCopyWith<$Res> {
-  factory _$$ThemeStateImplCopyWith(
-          _$ThemeStateImpl value, $Res Function(_$ThemeStateImpl) then) =
-      __$$ThemeStateImplCopyWithImpl<$Res>;
+abstract class _$$VPNStateImplCopyWith<$Res>
+    implements $VPNStateCopyWith<$Res> {
+  factory _$$VPNStateImplCopyWith(
+          _$VPNStateImpl value, $Res Function(_$VPNStateImpl) then) =
+      __$$VPNStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? locale, ScaleProps scaleProps});
+  $Res call({AccessControl? accessControl, TunStack stack, VpnProps vpnProps});
 
   @override
-  $ScalePropsCopyWith<$Res> get scaleProps;
+  $AccessControlCopyWith<$Res>? get accessControl;
+  @override
+  $VpnPropsCopyWith<$Res> get vpnProps;
 }
 
 /// @nodoc
-class __$$ThemeStateImplCopyWithImpl<$Res>
-    extends _$ThemeStateCopyWithImpl<$Res, _$ThemeStateImpl>
-    implements _$$ThemeStateImplCopyWith<$Res> {
-  __$$ThemeStateImplCopyWithImpl(
-      _$ThemeStateImpl _value, $Res Function(_$ThemeStateImpl) _then)
+class __$$VPNStateImplCopyWithImpl<$Res>
+    extends _$VPNStateCopyWithImpl<$Res, _$VPNStateImpl>
+    implements _$$VPNStateImplCopyWith<$Res> {
+  __$$VPNStateImplCopyWithImpl(
+      _$VPNStateImpl _value, $Res Function(_$VPNStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? locale = freezed,
-    Object? scaleProps = null,
+    Object? accessControl = freezed,
+    Object? stack = null,
+    Object? vpnProps = null,
   }) {
-    return _then(_$ThemeStateImpl(
-      locale: freezed == locale
-          ? _value.locale
-          : locale // ignore: cast_nullable_to_non_nullable
-              as String?,
-      scaleProps: null == scaleProps
-          ? _value.scaleProps
-          : scaleProps // ignore: cast_nullable_to_non_nullable
-              as ScaleProps,
+    return _then(_$VPNStateImpl(
+      accessControl: freezed == accessControl
+          ? _value.accessControl
+          : accessControl // ignore: cast_nullable_to_non_nullable
+              as AccessControl?,
+      stack: null == stack
+          ? _value.stack
+          : stack // ignore: cast_nullable_to_non_nullable
+              as TunStack,
+      vpnProps: null == vpnProps
+          ? _value.vpnProps
+          : vpnProps // ignore: cast_nullable_to_non_nullable
+              as VpnProps,
     ));
   }
 }
 
 /// @nodoc
 
-class _$ThemeStateImpl implements _ThemeState {
-  const _$ThemeStateImpl({required this.locale, required this.scaleProps});
+class _$VPNStateImpl implements _VPNState {
+  const _$VPNStateImpl(
+      {required this.accessControl,
+      required this.stack,
+      required this.vpnProps});
 
   @override
-  final String? locale;
+  final AccessControl? accessControl;
   @override
-  final ScaleProps scaleProps;
+  final TunStack stack;
+  @override
+  final VpnProps vpnProps;
 
   @override
   String toString() {
-    return 'ThemeState(locale: $locale, scaleProps: $scaleProps)';
+    return 'VPNState(accessControl: $accessControl, stack: $stack, vpnProps: $vpnProps)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ThemeStateImpl &&
-            (identical(other.locale, locale) || other.locale == locale) &&
-            (identical(other.scaleProps, scaleProps) ||
-                other.scaleProps == scaleProps));
+            other is _$VPNStateImpl &&
+            (identical(other.accessControl, accessControl) ||
+                other.accessControl == accessControl) &&
+            (identical(other.stack, stack) || other.stack == stack) &&
+            (identical(other.vpnProps, vpnProps) ||
+                other.vpnProps == vpnProps));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, locale, scaleProps);
+  int get hashCode => Object.hash(runtimeType, accessControl, stack, vpnProps);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$ThemeStateImplCopyWith<_$ThemeStateImpl> get copyWith =>
-      __$$ThemeStateImplCopyWithImpl<_$ThemeStateImpl>(this, _$identity);
+  _$$VPNStateImplCopyWith<_$VPNStateImpl> get copyWith =>
+      __$$VPNStateImplCopyWithImpl<_$VPNStateImpl>(this, _$identity);
 }
 
-abstract class _ThemeState implements ThemeState {
-  const factory _ThemeState(
-      {required final String? locale,
-      required final ScaleProps scaleProps}) = _$ThemeStateImpl;
+abstract class _VPNState implements VPNState {
+  const factory _VPNState(
+      {required final AccessControl? accessControl,
+      required final TunStack stack,
+      required final VpnProps vpnProps}) = _$VPNStateImpl;
 
   @override
-  String? get locale;
+  AccessControl? get accessControl;
   @override
-  ScaleProps get scaleProps;
+  TunStack get stack;
+  @override
+  VpnProps get vpnProps;
   @override
   @JsonKey(ignore: true)
-  _$$ThemeStateImplCopyWith<_$ThemeStateImpl> get copyWith =>
+  _$$VPNStateImplCopyWith<_$VPNStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

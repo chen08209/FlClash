@@ -7,6 +7,7 @@ import "C"
 import (
 	"context"
 	bridge "core/dart-bridge"
+	"core/state"
 	"encoding/json"
 	"fmt"
 	"github.com/metacubex/mihomo/common/utils"
@@ -29,8 +30,6 @@ import (
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
-
-var currentRawConfig = config.DefaultRawConfig()
 
 var configParams = ConfigExtendedParams{}
 
@@ -124,7 +123,7 @@ func updateConfig(s *C.char, port C.longlong) {
 		}
 		configParams = params.Params
 		prof := decorationConfig(params.ProfileId, params.Config)
-		currentRawConfig = prof
+		state.CurrentRawConfig = prof
 		err = applyConfig()
 		if err != nil {
 			bridge.SendToPort(i, err.Error())
@@ -184,7 +183,7 @@ func changeProxy(s *C.char) {
 
 //export getTraffic
 func getTraffic() *C.char {
-	up, down := statistic.DefaultManager.Current(state.OnlyProxy)
+	up, down := statistic.DefaultManager.Current(state.CurrentState.OnlyProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -199,7 +198,7 @@ func getTraffic() *C.char {
 
 //export getTotalTraffic
 func getTotalTraffic() *C.char {
-	up, down := statistic.DefaultManager.Total(state.OnlyProxy)
+	up, down := statistic.DefaultManager.Total(state.CurrentState.OnlyProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,

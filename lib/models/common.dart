@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
@@ -432,6 +431,14 @@ class HotKeyAction with _$HotKeyAction {
       _$HotKeyActionFromJson(json);
 }
 
-const keyboardModifiersEquality = SetEquality<KeyboardModifier>();
-const hotKeyActionsEquality = ListEquality<HotKeyAction>();
 
+typedef Validator = String? Function(String? value);
+
+@freezed
+class Field with _$Field {
+  const factory Field({
+    required String label,
+    required String value,
+    Validator? validator,
+  }) = _Field;
+}

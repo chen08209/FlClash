@@ -15,7 +15,7 @@ extension GroupTypeExtension on GroupType {
       )
       .toList();
 
-  bool get isURLTestOrFallback  {
+  bool get isURLTestOrFallback {
     return [GroupType.URLTest, GroupType.Fallback].contains(this);
   }
 
@@ -155,4 +155,10 @@ enum HotAction {
   mode,
   proxy,
   tun,
+}
+
+enum ProxiesIconStyle {
+  standard,
+  none,
+  icon,
 }

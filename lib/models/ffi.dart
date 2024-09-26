@@ -9,6 +9,41 @@ part 'generated/ffi.g.dart';
 part 'generated/ffi.freezed.dart';
 
 @freezed
+class CoreState with _$CoreState {
+  const factory CoreState({
+    required bool enable,
+    AccessControl? accessControl,
+    required String currentProfileName,
+    required bool allowBypass,
+    required bool systemProxy,
+    required List<String> bypassDomain,
+    required bool ipv6,
+    required bool onlyProxy,
+  }) = _CoreState;
+
+  factory CoreState.fromJson(Map<String, Object?> json) =>
+      _$CoreStateFromJson(json);
+}
+
+@freezed
+class AndroidVpnOptions with _$AndroidVpnOptions {
+  const factory AndroidVpnOptions({
+    required bool enable,
+    required int port,
+    required AccessControl? accessControl,
+    required bool allowBypass,
+    required bool systemProxy,
+    required List<String> bypassDomain,
+    required String ipv4Address,
+    required String ipv6Address,
+    required String dnsServerAddress,
+  }) = _AndroidVpnOptions;
+
+  factory AndroidVpnOptions.fromJson(Map<String, Object?> json) =>
+      _$AndroidVpnOptionsFromJson(json);
+}
+
+@freezed
 class ConfigExtendedParams with _$ConfigExtendedParams {
   const factory ConfigExtendedParams({
     @JsonKey(name: "is-patch") required bool isPatch,

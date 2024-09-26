@@ -146,7 +146,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
     final index = hotKeyActions.indexWhere(
       (item) =>
           item.key == currentHotkeyAction.key &&
-          keyboardModifiersEquality.equals(
+          keyboardModifierListEquality.equals(
             item.modifiers,
             currentHotkeyAction.modifiers,
           ),

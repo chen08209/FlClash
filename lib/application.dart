@@ -34,7 +34,6 @@ runAppWithPreferences(
         create: (_) => appState,
         update: (_, config, clashConfig, appState) {
           appState?.mode = clashConfig.mode;
-          appState?.isCompatible = config.isCompatible;
           appState?.selectedMap = config.currentSelectedMap;
           return appState!;
         },
@@ -163,7 +162,7 @@ class ApplicationState extends State<Application> {
         child: ClashManager(
           child: Selector2<AppState, Config, ApplicationSelectorState>(
             selector: (_, appState, config) => ApplicationSelectorState(
-              locale: config.locale,
+              locale: config.appSetting.locale,
               themeMode: config.themeMode,
               primaryColor: config.primaryColor,
               prueBlack: config.prueBlack,

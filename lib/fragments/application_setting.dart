@@ -8,6 +8,84 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+class CloseConnectionsSwitch extends StatelessWidget {
+  const CloseConnectionsSwitch({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<Config, bool>(
+      selector: (_, config) => config.appSetting.closeConnections,
+      builder: (_, closeConnections, __) {
+        return ListItem.switchItem(
+          title: Text(appLocalizations.autoCloseConnections),
+          subtitle: Text(appLocalizations.autoCloseConnectionsDesc),
+          delegate: SwitchDelegate(
+            value: closeConnections,
+            onChanged: (value) async {
+              final config = globalState.appController.config;
+              config.appSetting = config.appSetting.copyWith(
+                closeConnections: value,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class UsageSwitch extends StatelessWidget {
+  const UsageSwitch({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<Config, bool>(
+      selector: (_, config) => config.appSetting.onlyProxy,
+      builder: (_, onlyProxy, __) {
+        return ListItem.switchItem(
+          title: Text(appLocalizations.onlyStatisticsProxy),
+          subtitle: Text(appLocalizations.onlyStatisticsProxyDesc),
+          delegate: SwitchDelegate(
+            value: onlyProxy,
+            onChanged: (bool value) async {
+              final config = globalState.appController.config;
+              config.appSetting = config.appSetting.copyWith(
+                onlyProxy: value,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class AdminAutoLaunchItem extends StatelessWidget {
+  const AdminAutoLaunchItem({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<Config, bool>(
+      selector: (_, config) => config.appSetting.adminAutoLaunch,
+      builder: (_, adminAutoLaunch, __) {
+        return ListItem.switchItem(
+          title: Text(appLocalizations.adminAutoLaunch),
+          subtitle: Text(appLocalizations.adminAutoLaunchDesc),
+          delegate: SwitchDelegate(
+            value: adminAutoLaunch,
+            onChanged: (bool value) async {
+              final config = globalState.appController.config;
+              config.appSetting = config.appSetting.copyWith(
+                adminAutoLaunch: value,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
 class ApplicationSettingFragment extends StatelessWidget {
   const ApplicationSettingFragment({super.key});
 
@@ -20,17 +98,18 @@ class ApplicationSettingFragment extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> items = [
       Selector<Config, bool>(
-        selector: (_, config) => config.isMinimizeOnExit,
+        selector: (_, config) => config.appSetting.minimizeOnExit,
         builder: (_, isMinimizeOnExit, child) {
           return ListItem.switchItem(
-            leading: const Icon(Icons.back_hand),
             title: Text(appLocalizations.minimizeOnExit),
             subtitle: Text(appLocalizations.minimizeOnExitDesc),
             delegate: SwitchDelegate(
               value: isMinimizeOnExit,
               onChanged: (bool value) {
                 final config = context.read<Config>();
-                config.isMinimizeOnExit = value;
+                config.appSetting = config.appSetting.copyWith(
+                  minimizeOnExit: value,
+                );
               },
             ),
           );
@@ -38,52 +117,57 @@ class ApplicationSettingFragment extends StatelessWidget {
       ),
       if (system.isDesktop)
         Selector<Config, bool>(
-          selector: (_, config) => config.autoLaunch,
+          selector: (_, config) => config.appSetting.autoLaunch,
           builder: (_, autoLaunch, child) {
             return ListItem.switchItem(
-              leading: const Icon(Icons.rocket_launch),
               title: Text(appLocalizations.autoLaunch),
               subtitle: Text(appLocalizations.autoLaunchDesc),
               delegate: SwitchDelegate(
                 value: autoLaunch,
                 onChanged: (bool value) {
-                  final config = context.read<Config>();
-                  config.autoLaunch = value;
+                  final config = globalState.appController.config;
+                  config.appSetting = config.appSetting.copyWith(
+                    autoLaunch: value,
+                  );
                 },
               ),
             );
           },
         ),
+      if(Platform.isWindows)
+        const AdminAutoLaunchItem(),
       if (system.isDesktop)
         Selector<Config, bool>(
-          selector: (_, config) => config.silentLaunch,
+          selector: (_, config) => config.appSetting.silentLaunch,
           builder: (_, silentLaunch, child) {
             return ListItem.switchItem(
-              leading: const Icon(Icons.expand_circle_down),
               title: Text(appLocalizations.silentLaunch),
               subtitle: Text(appLocalizations.silentLaunchDesc),
               delegate: SwitchDelegate(
                 value: silentLaunch,
                 onChanged: (bool value) {
-                  final config = context.read<Config>();
-                  config.silentLaunch = value;
+                  final config = globalState.appController.config;
+                  config.appSetting = config.appSetting.copyWith(
+                    silentLaunch: value,
+                  );
                 },
               ),
             );
           },
         ),
       Selector<Config, bool>(
-        selector: (_, config) => config.autoRun,
+        selector: (_, config) => config.appSetting.autoRun,
         builder: (_, autoRun, child) {
           return ListItem.switchItem(
-            leading: const Icon(Icons.not_started),
             title: Text(appLocalizations.autoRun),
             subtitle: Text(appLocalizations.autoRunDesc),
             delegate: SwitchDelegate(
               value: autoRun,
               onChanged: (bool value) {
-                final config = context.read<Config>();
-                config.autoRun = value;
+                final config = globalState.appController.config;
+                config.appSetting = config.appSetting.copyWith(
+                  autoRun: value,
+                );
               },
             ),
           );
@@ -91,17 +175,18 @@ class ApplicationSettingFragment extends StatelessWidget {
       ),
       if (Platform.isAndroid)
         Selector<Config, bool>(
-          selector: (_, config) => config.isExclude,
+          selector: (_, config) => config.appSetting.hidden,
           builder: (_, isExclude, child) {
             return ListItem.switchItem(
-              leading: const Icon(Icons.visibility_off),
               title: Text(appLocalizations.exclude),
               subtitle: Text(appLocalizations.excludeDesc),
               delegate: SwitchDelegate(
                 value: isExclude,
                 onChanged: (value) {
-                  final config = context.read<Config>();
-                  config.isExclude = value;
+                  final config = globalState.appController.config;
+                  config.appSetting = config.appSetting.copyWith(
+                    hidden: value,
+                  );
                 },
               ),
             );
@@ -109,52 +194,56 @@ class ApplicationSettingFragment extends StatelessWidget {
         ),
       if (Platform.isAndroid)
         Selector<Config, bool>(
-          selector: (_, config) => config.isAnimateToPage,
+          selector: (_, config) => config.appSetting.isAnimateToPage,
           builder: (_, isAnimateToPage, child) {
             return ListItem.switchItem(
-              leading: const Icon(Icons.animation),
               title: Text(appLocalizations.tabAnimation),
               subtitle: Text(appLocalizations.tabAnimationDesc),
               delegate: SwitchDelegate(
                 value: isAnimateToPage,
                 onChanged: (value) {
-                  final config = context.read<Config>();
-                  config.isAnimateToPage = value;
+                  final config = globalState.appController.config;
+                  config.appSetting = config.appSetting.copyWith(
+                    isAnimateToPage: value,
+                  );
                 },
               ),
             );
           },
         ),
       Selector<Config, bool>(
-        selector: (_, config) => config.openLogs,
+        selector: (_, config) => config.appSetting.openLogs,
         builder: (_, openLogs, child) {
           return ListItem.switchItem(
-            leading: const Icon(Icons.bug_report),
             title: Text(appLocalizations.logcat),
             subtitle: Text(appLocalizations.logcatDesc),
             delegate: SwitchDelegate(
               value: openLogs,
               onChanged: (bool value) {
-                final config = context.read<Config>();
-                config.openLogs = value;
-                globalState.appController.updateLogStatus();
+                final config = globalState.appController.config;
+                config.appSetting = config.appSetting.copyWith(
+                  openLogs: value,
+                );
               },
             ),
           );
         },
       ),
+      const CloseConnectionsSwitch(),
+      const UsageSwitch(),
       Selector<Config, bool>(
-        selector: (_, config) => config.autoCheckUpdate,
+        selector: (_, config) => config.appSetting.autoCheckUpdate,
         builder: (_, autoCheckUpdate, child) {
           return ListItem.switchItem(
-            leading: const Icon(Icons.system_update),
             title: Text(appLocalizations.autoCheckUpdate),
             subtitle: Text(appLocalizations.autoCheckUpdateDesc),
             delegate: SwitchDelegate(
               value: autoCheckUpdate,
               onChanged: (bool value) {
-                final config = context.read<Config>();
-                config.autoCheckUpdate = value;
+                final config = globalState.appController.config;
+                config.appSetting = config.appSetting.copyWith(
+                  autoCheckUpdate: value,
+                );
               },
             ),
           );

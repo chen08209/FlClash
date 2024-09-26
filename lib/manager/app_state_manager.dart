@@ -25,7 +25,7 @@ class _AppStateManagerState extends State<AppStateManager>
         final group = appState.currentGroups;
         final hasProfile = config.profiles.isNotEmpty;
         return UpdateNavigationsSelector(
-          openLogs: config.openLogs,
+          openLogs: config.appSetting.openLogs,
           hasProxies: group.isNotEmpty && hasProfile,
         );
       },

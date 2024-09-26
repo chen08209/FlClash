@@ -6,7 +6,6 @@ import "C"
 import (
 	"core/platform"
 	t "core/tun"
-	"encoding/json"
 	"errors"
 	"github.com/metacubex/mihomo/listener/sing_tun"
 	"strconv"
@@ -42,11 +41,10 @@ var (
 )
 
 //export startTUN
-func startTUN(s *C.char, port C.longlong) {
+func startTUN(fd C.int, port C.longlong) {
 	i := int64(port)
 	ServicePort = i
-	paramsString := C.GoString(s)
-	if paramsString == "" {
+	if fd == 0 {
 		tunLock.Lock()
 		defer tunLock.Unlock()
 		now := time.Now()
@@ -61,20 +59,8 @@ func startTUN(s *C.char, port C.longlong) {
 	go func() {
 		tunLock.Lock()
 		defer tunLock.Unlock()
-
-		var tunProps = &t.Props{}
-		err := json.Unmarshal([]byte(paramsString), tunProps)
-		if err != nil {
-			log.Errorln("startTUN error: %v", err)
-			return
-		}
-
-		tunListener, err = t.Start(*tunProps)
-
-		if err != nil {
-			return
-		}
-
+		f := int(fd)
+		tunListener, _ = t.Start(f)
 		if tunListener != nil {
 			log.Infoln("TUN address: %v", tunListener.Address())
 		}

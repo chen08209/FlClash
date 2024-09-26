@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/models/config.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -38,13 +38,14 @@ class _VpnContainerState extends State<VpnManager> {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<Config, VPNState>(
-      selector: (_, config) => VPNState(
+    return Selector2<Config, ClashConfig, VPNState>(
+      selector: (_, config, clashConfig) => VPNState(
         accessControl: config.accessControl,
         vpnProps: config.vpnProps,
+        stack: clashConfig.tun.stack,
       ),
-      shouldRebuild: (prev,next){
-        if(prev != next){
+      shouldRebuild: (prev, next) {
+        if (prev != next) {
           showTip();
         }
         return prev != next;

@@ -4,7 +4,7 @@ package tun
 
 import "C"
 import (
-	"github.com/metacubex/mihomo/constant"
+	"core/state"
 	LC "github.com/metacubex/mihomo/listener/config"
 	"github.com/metacubex/mihomo/listener/sing_tun"
 	"github.com/metacubex/mihomo/log"
@@ -23,17 +23,17 @@ type Props struct {
 	Dns6     string `json:"dns6"`
 }
 
-func Start(tunProps Props) (*sing_tun.Listener, error) {
+func Start(fd int) (*sing_tun.Listener, error) {
 	var prefix4 []netip.Prefix
-	tempPrefix4, err := netip.ParsePrefix(tunProps.Gateway)
+	tempPrefix4, err := netip.ParsePrefix(state.DefaultIpv4Address)
 	if err != nil {
 		log.Errorln("startTUN error:", err)
 		return nil, err
 	}
 	prefix4 = append(prefix4, tempPrefix4)
 	var prefix6 []netip.Prefix
-	if tunProps.Gateway6 != "" {
-		tempPrefix6, err := netip.ParsePrefix(tunProps.Gateway6)
+	if state.CurrentState.Ipv6 {
+		tempPrefix6, err := netip.ParsePrefix(state.DefaultIpv6Address)
 		if err != nil {
 			log.Errorln("startTUN error:", err)
 			return nil, err
@@ -42,22 +42,19 @@ func Start(tunProps Props) (*sing_tun.Listener, error) {
 	}
 
 	var dnsHijack []string
-	dnsHijack = append(dnsHijack, net.JoinHostPort(tunProps.Dns, "53"))
-	if tunProps.Dns6 != "" {
-		dnsHijack = append(dnsHijack, net.JoinHostPort(tunProps.Dns6, "53"))
-	}
+	dnsHijack = append(dnsHijack, net.JoinHostPort(state.GetDnsServerAddress(), "53"))
 
 	options := LC.Tun{
 		Enable:              true,
-		Device:              sing_tun.InterfaceName,
-		Stack:               constant.TunMixed,
+		Device:              state.CurrentRawConfig.Tun.Device,
+		Stack:               state.CurrentRawConfig.Tun.Stack,
 		DNSHijack:           dnsHijack,
 		AutoRoute:           false,
 		AutoDetectInterface: false,
 		Inet4Address:        prefix4,
 		Inet6Address:        prefix6,
 		MTU:                 9000,
-		FileDescriptor:      tunProps.Fd,
+		FileDescriptor:      fd,
 	}
 
 	listener, err := sing_tun.New(options, tunnel.Tunnel)

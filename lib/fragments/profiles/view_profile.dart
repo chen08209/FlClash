@@ -166,20 +166,20 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
     // _removeOverLayEntry();
   }
 
-  _handleCut(CodeLineEditingController controller) {
-    controller.cut();
-    _removeOverLayEntry();
-  }
-
-  _handleCopy(CodeLineEditingController controller) async {
-    await controller.copy();
-    _removeOverLayEntry();
-  }
-
-  _handlePaste(CodeLineEditingController controller) {
-    controller.paste();
-    _removeOverLayEntry();
-  }
+  // _handleCut(CodeLineEditingController controller) {
+  //   controller.cut();
+  //   _removeOverLayEntry();
+  // }
+  //
+  // _handleCopy(CodeLineEditingController controller) async {
+  //   await controller.copy();
+  //   _removeOverLayEntry();
+  // }
+  //
+  // _handlePaste(CodeLineEditingController controller) {
+  //   controller.paste();
+  //   _removeOverLayEntry();
+  // }
 
   @override
   void show({

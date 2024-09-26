@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
 
 import 'window.dart';

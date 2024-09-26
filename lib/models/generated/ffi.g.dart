@@ -6,6 +6,68 @@ part of '../ffi.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
+    _$CoreStateImpl(
+      enable: json['enable'] as bool,
+      accessControl: json['accessControl'] == null
+          ? null
+          : AccessControl.fromJson(
+              json['accessControl'] as Map<String, dynamic>),
+      currentProfileName: json['currentProfileName'] as String,
+      allowBypass: json['allowBypass'] as bool,
+      systemProxy: json['systemProxy'] as bool,
+      bypassDomain: (json['bypassDomain'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      ipv6: json['ipv6'] as bool,
+      onlyProxy: json['onlyProxy'] as bool,
+    );
+
+Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
+    <String, dynamic>{
+      'enable': instance.enable,
+      'accessControl': instance.accessControl,
+      'currentProfileName': instance.currentProfileName,
+      'allowBypass': instance.allowBypass,
+      'systemProxy': instance.systemProxy,
+      'bypassDomain': instance.bypassDomain,
+      'ipv6': instance.ipv6,
+      'onlyProxy': instance.onlyProxy,
+    };
+
+_$AndroidVpnOptionsImpl _$$AndroidVpnOptionsImplFromJson(
+        Map<String, dynamic> json) =>
+    _$AndroidVpnOptionsImpl(
+      enable: json['enable'] as bool,
+      port: (json['port'] as num).toInt(),
+      accessControl: json['accessControl'] == null
+          ? null
+          : AccessControl.fromJson(
+              json['accessControl'] as Map<String, dynamic>),
+      allowBypass: json['allowBypass'] as bool,
+      systemProxy: json['systemProxy'] as bool,
+      bypassDomain: (json['bypassDomain'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      ipv4Address: json['ipv4Address'] as String,
+      ipv6Address: json['ipv6Address'] as String,
+      dnsServerAddress: json['dnsServerAddress'] as String,
+    );
+
+Map<String, dynamic> _$$AndroidVpnOptionsImplToJson(
+        _$AndroidVpnOptionsImpl instance) =>
+    <String, dynamic>{
+      'enable': instance.enable,
+      'port': instance.port,
+      'accessControl': instance.accessControl,
+      'allowBypass': instance.allowBypass,
+      'systemProxy': instance.systemProxy,
+      'bypassDomain': instance.bypassDomain,
+      'ipv4Address': instance.ipv4Address,
+      'ipv6Address': instance.ipv6Address,
+      'dnsServerAddress': instance.dnsServerAddress,
+    };
+
 _$ConfigExtendedParamsImpl _$$ConfigExtendedParamsImplFromJson(
         Map<String, dynamic> json) =>
     _$ConfigExtendedParamsImpl(

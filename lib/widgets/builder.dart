@@ -68,29 +68,6 @@ class ProxiesActionsBuilder extends StatelessWidget {
 
 typedef StateWidgetBuilder<T> = Widget Function(T state);
 
-class ScaleBuilder extends StatelessWidget {
-  final StateWidgetBuilder<double> builder;
-
-  const ScaleBuilder({
-    super.key,
-    required this.builder,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Selector<Config, double>(
-      selector: (_, config) {
-        return config.scaleProps.custom
-            ? config.scaleProps.scale
-            : 1;
-      },
-      builder: (_, state, __) {
-        return builder(state);
-      },
-    );
-  }
-}
-
 class LocaleBuilder extends StatelessWidget {
   final StateWidgetBuilder<String?> builder;
 
@@ -102,7 +79,7 @@ class LocaleBuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Selector<Config, String?>(
-      selector: (_, config) => config.locale,
+      selector: (_, config) => config.appSetting.locale,
       builder: (_, state, __) {
         return builder(state);
       },
