@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-class ProxiesSettingWidget extends StatelessWidget {
-  const ProxiesSettingWidget({super.key});
+class ProxiesSetting extends StatelessWidget {
+  const ProxiesSetting({super.key});
 
   IconData _getIconWithProxiesType(ProxiesType type) {
     return switch (type) {
@@ -41,6 +41,14 @@ class ProxiesSettingWidget extends StatelessWidget {
     };
   }
 
+  String _getTextWithProxiesIconStyle(ProxiesIconStyle style) {
+    return switch (style) {
+      ProxiesIconStyle.standard => appLocalizations.standard,
+      ProxiesIconStyle.none => appLocalizations.noIcon,
+      ProxiesIconStyle.icon => appLocalizations.onlyIcon,
+    };
+  }
+
   List<Widget> _buildStyleSetting() {
     return generateSection(
       title: appLocalizations.style,
@@ -49,7 +57,7 @@ class ProxiesSettingWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
           child: Selector<Config, ProxiesType>(
-            selector: (_, config) => config.proxiesType,
+            selector: (_, config) => config.proxiesStyle.type,
             builder: (_, proxiesType, __) {
               final config = globalState.appController.config;
               return Wrap(
@@ -63,7 +71,9 @@ class ProxiesSettingWidget extends StatelessWidget {
                       ),
                       isSelected: proxiesType == item,
                       onPressed: () {
-                        config.proxiesType = item;
+                        config.proxiesStyle = config.proxiesStyle.copyWith(
+                          type: item,
+                        );
                       },
                     )
                 ],
@@ -83,7 +93,7 @@ class ProxiesSettingWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
           child: Selector<Config, ProxiesSortType>(
-            selector: (_, config) => config.proxiesSortType,
+            selector: (_, config) => config.proxiesStyle.sortType,
             builder: (_, proxiesSortType, __) {
               final config = globalState.appController.config;
               return Wrap(
@@ -97,7 +107,9 @@ class ProxiesSettingWidget extends StatelessWidget {
                       ),
                       isSelected: proxiesSortType == item,
                       onPressed: () {
-                        config.proxiesSortType = item;
+                        config.proxiesStyle = config.proxiesStyle.copyWith(
+                          sortType: item,
+                        );
                       },
                     ),
                 ],
@@ -117,7 +129,7 @@ class ProxiesSettingWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
           child: Selector<Config, ProxyCardType>(
-            selector: (_, config) => config.proxyCardType,
+            selector: (_, config) => config.proxiesStyle.cardType,
             builder: (_, proxyCardType, __) {
               final config = globalState.appController.config;
               return Wrap(
@@ -128,7 +140,9 @@ class ProxiesSettingWidget extends StatelessWidget {
                       Intl.message(item.name),
                       isSelected: item == proxyCardType,
                       onPressed: () {
-                        config.proxyCardType = item;
+                        config.proxiesStyle = config.proxiesStyle.copyWith(
+                          cardType: item,
+                        );
                       },
                     )
                 ],
@@ -149,8 +163,8 @@ class ProxiesSettingWidget extends StatelessWidget {
             horizontal: 16,
           ),
           scrollDirection: Axis.horizontal,
-          child: Selector< Config, ProxiesLayout>(
-            selector: (_, config) => config.proxiesLayout,
+          child: Selector<Config, ProxiesLayout>(
+            selector: (_, config) => config.proxiesStyle.layout,
             builder: (_, proxiesLayout, __) {
               final config = globalState.appController.config;
               return Wrap(
@@ -161,9 +175,44 @@ class ProxiesSettingWidget extends StatelessWidget {
                       getTextForProxiesLayout(item),
                       isSelected: item == proxiesLayout,
                       onPressed: () {
-                        config.proxiesLayout = item;
+                        config.proxiesStyle = config.proxiesStyle.copyWith(
+                          layout: item,
+                        );
                       },
                     )
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  _buildGroupStyleSetting() {
+    return generateSection(
+      title: "图标样式",
+      items: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          child: Selector<Config, ProxiesIconStyle>(
+            selector: (_, config) => config.proxiesStyle.iconStyle,
+            builder: (_, iconStyle, __) {
+              return Wrap(
+                spacing: 16,
+                children: [
+                  for (final item in ProxiesIconStyle.values)
+                    SettingTextCard(
+                      _getTextWithProxiesIconStyle(item),
+                      isSelected: iconStyle == item,
+                      onPressed: () {
+                        final config = globalState.appController.config;
+                        config.proxiesStyle = config.proxiesStyle.copyWith(
+                          iconStyle: item,
+                        );
+                      },
+                    ),
                 ],
               );
             },
@@ -185,6 +234,22 @@ class ProxiesSettingWidget extends StatelessWidget {
           ..._buildSortSetting(),
           ..._buildLayoutSetting(),
           ..._buildSizeSetting(),
+          Selector<Config, bool>(
+            selector: (_, config) =>
+                config.proxiesStyle.type == ProxiesType.list,
+            builder: (_, value, child) {
+              if (value) {
+                return child!;
+              }
+              return Container();
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ..._buildGroupStyleSetting(),
+              ],
+            ),
+          ),
         ],
       ),
     );

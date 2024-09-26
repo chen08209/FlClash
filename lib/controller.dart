@@ -7,7 +7,6 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
@@ -228,7 +227,7 @@ class AppController {
   }
 
   handleBackOrExit() async {
-    if (config.isMinimizeOnExit) {
+    if (config.appSetting.minimizeOnExit) {
       if (system.isDesktop) {
         await savePreferences();
       }
@@ -247,7 +246,7 @@ class AppController {
   }
 
   updateLogStatus() {
-    if (config.openLogs) {
+    if (config.appSetting.openLogs) {
       clashCore.startLog();
     } else {
       clashCore.stopLog();
@@ -256,7 +255,7 @@ class AppController {
   }
 
   autoCheckUpdate() async {
-    if (!config.autoCheckUpdate) return;
+    if (!config.appSetting.autoCheckUpdate) return;
     final res = await request.checkForUpdate();
     checkUpdateResultHandle(data: res);
   }
@@ -310,7 +309,7 @@ class AppController {
       handleExit();
     }
     updateLogStatus();
-    if (!config.silentLaunch) {
+    if (!config.appSetting.silentLaunch) {
       window?.show();
     }
     if (Platform.isAndroid) {
@@ -319,7 +318,7 @@ class AppController {
     if (globalState.isStart) {
       await updateStatus(true);
     } else {
-      await updateStatus(config.autoRun);
+      await updateStatus(config.appSetting.autoRun);
     }
     autoUpdateProfiles();
     autoCheckUpdate();
@@ -334,7 +333,7 @@ class AppController {
       return;
     }
     appState.currentLabel = appState.currentNavigationItems[index].label;
-    if ((config.isAnimateToPage || hasAnimate)) {
+    if ((config.appSetting.isAnimateToPage || hasAnimate)) {
       globalState.pageController?.animateToPage(
         index,
         duration: kTabScrollDuration,
@@ -410,7 +409,9 @@ class AppController {
               ),
               TextButton(
                 onPressed: () {
-                  config.isDisclaimerAccepted = true;
+                  config.appSetting = config.appSetting.copyWith(
+                    disclaimerAccepted: true,
+                  );
                   Navigator.of(context).pop<bool>(true);
                 },
                 child: Text(appLocalizations.agree),
@@ -422,7 +423,7 @@ class AppController {
   }
 
   Future<bool> handlerDisclaimer() async {
-    if (config.isDisclaimerAccepted) {
+    if (config.appSetting.disclaimerAccepted) {
       return true;
     }
     return showDisclaimer();
@@ -514,7 +515,7 @@ class AppController {
   }
 
   List<Proxy> getSortProxies(List<Proxy> proxies) {
-    return switch (config.proxiesSortType) {
+    return switch (config.proxiesStyle.sortType) {
       ProxiesSortType.none => proxies,
       ProxiesSortType.delay => _sortOfDelay(proxies),
       ProxiesSortType.name => _sortOfName(proxies),
@@ -545,7 +546,15 @@ class AppController {
   }
 
   updateAutoLaunch() {
-    config.autoLaunch = !config.autoLaunch;
+    config.appSetting = config.appSetting.copyWith(
+      autoLaunch: !config.appSetting.autoLaunch,
+    );
+  }
+
+  updateAdminAutoLaunch() {
+    config.appSetting = config.appSetting.copyWith(
+      adminAutoLaunch: !config.appSetting.adminAutoLaunch,
+    );
   }
 
   updateVisible() async {

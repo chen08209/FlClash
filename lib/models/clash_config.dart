@@ -1,8 +1,5 @@
 // ignore_for_file: invalid_annotation_target
 
-import 'dart:io';
-
-import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +11,8 @@ part 'generated/clash_config.g.dart';
 
 part 'generated/clash_config.freezed.dart';
 
+const defaultTun = Tun();
+
 @freezed
 class Tun with _$Tun {
   const factory Tun({
@@ -24,6 +23,17 @@ class Tun with _$Tun {
   }) = _Tun;
 
   factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
+
+  factory Tun.realFromJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return defaultTun;
+    }
+    try {
+      return Tun.fromJson(json);
+    } catch (_) {
+      return defaultTun;
+    }
+  }
 }
 
 @freezed
@@ -44,6 +54,8 @@ class FallbackFilter with _$FallbackFilter {
   factory FallbackFilter.fromJson(Map<String, Object?> json) =>
       _$FallbackFilterFromJson(json);
 }
+
+const defaultDns = Dns();
 
 @freezed
 class Dns with _$Dns {
@@ -147,7 +159,7 @@ class ClashConfig extends ChangeNotifier {
         _geodataLoader = geodataLoaderMemconservative,
         _externalController = '',
         _keepAliveInterval = defaultKeepAliveInterval,
-        _dns = const Dns(),
+        _dns = defaultDns,
         _geoXUrl = defaultGeoXMap,
         _rules = [],
         _hosts = {};
@@ -263,9 +275,6 @@ class ClashConfig extends ChangeNotifier {
   }
 
   Tun get tun {
-    if (Platform.isAndroid) {
-      return _tun.copyWith(enable: false);
-    }
     return _tun;
   }
 
@@ -318,7 +327,7 @@ class ClashConfig extends ChangeNotifier {
   GeoXMap get geoXUrl => _geoXUrl;
 
   set geoXUrl(GeoXMap value) {
-    if (!const MapEquality<String, String>().equals(value, _geoXUrl)) {
+    if (!stringAndStringMapEquality.equals(value, _geoXUrl)) {
       _geoXUrl = value;
       notifyListeners();
     }
@@ -328,7 +337,7 @@ class ClashConfig extends ChangeNotifier {
   HostsMap get hosts => _hosts;
 
   set hosts(HostsMap value) {
-    if (!const MapEquality<String, String>().equals(value, _hosts)) {
+    if (!stringAndStringMapEquality.equals(value, _hosts)) {
       _hosts = value;
       notifyListeners();
     }

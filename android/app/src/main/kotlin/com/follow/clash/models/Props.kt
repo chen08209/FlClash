@@ -1,5 +1,7 @@
 package com.follow.clash.models
 
+import java.net.InetAddress
+
 enum class AccessControlMode {
     acceptSelected,
     rejectSelected,
@@ -11,20 +13,16 @@ data class AccessControl(
     val rejectList: List<String>,
 )
 
-data class Props(
-    val enable: Boolean?,
-    val accessControl: AccessControl?,
-    val allowBypass: Boolean?,
-    val systemProxy: Boolean?,
-    val ipv6: Boolean?,
-)
+data class CIDR(val address: InetAddress, val prefixLength: Int)
 
-data class TunProps(
-    val fd: Int,
-    val gateway: String,
-    val gateway6: String,
-    val portal: String,
-    val portal6: String,
-    val dns: String,
-    val dns6: String
+data class VpnOptions(
+    val enable: Boolean,
+    val port: Int,
+    val accessControl: AccessControl?,
+    val allowBypass: Boolean,
+    val systemProxy: Boolean,
+    val bypassDomain: List<String>,
+    val ipv4Address: String,
+    val ipv6Address: String,
+    val dnsServerAddress: String,
 )

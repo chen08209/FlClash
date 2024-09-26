@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -20,18 +19,16 @@ Future<void> main() async {
   globalState.packageInfo = await PackageInfo.fromPlatform();
   final version = await system.version;
   final config = await preferences.getConfig() ?? Config();
-  globalState.autoRun = config.autoRun;
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
   await android?.init();
   await window?.init(config.windowProps, version);
   final appState = AppState(
     mode: clashConfig.mode,
     version: version,
-    isCompatible: config.isCompatible,
     selectedMap: config.currentSelectedMap,
   );
   appState.navigationItems = navigation.getItems(
-    openLogs: config.openLogs,
+    openLogs: config.appSetting.openLogs,
     hasProxies: false,
   );
   await globalState.init(
@@ -58,7 +55,6 @@ Future<void> vpnService() async {
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
   final appState = AppState(
     mode: clashConfig.mode,
-    isCompatible: config.isCompatible,
     selectedMap: config.currentSelectedMap,
     version: version,
   );
@@ -103,7 +99,7 @@ Future<void> vpnService() async {
     ),
   );
   final appLocalizations = await AppLocalizations.load(
-    other.getLocaleForString(config.locale) ??
+    other.getLocaleForString(config.appSetting.locale) ??
         WidgetsBinding.instance.platformDispatcher.locale,
   );
   await app?.tip(appLocalizations.startVpn);

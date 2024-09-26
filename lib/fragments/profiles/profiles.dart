@@ -459,10 +459,9 @@ class _ReorderableProfilesState extends State<ReorderableProfiles> {
           flex: 1,
           child: ReorderableListView.builder(
             buildDefaultDragHandles: false,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             proxyDecorator: proxyDecorator,
-            onReorder: (int oldIndex, int newIndex) {
-              if (oldIndex == newIndex) return;
+            onReorder: (oldIndex, newIndex) {
               setState(() {
                 if (oldIndex < newIndex) {
                   newIndex -= 1;

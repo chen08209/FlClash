@@ -19,10 +19,8 @@ class Vpn {
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case "started":
-          final tunProps = call.arguments != null
-              ? TunProps.fromJson(json.decode((call.arguments)))
-              : null;
-          onStarted(tunProps);
+          final fd = call.arguments as int;
+          onStarted(fd);
           break;
         case "gc":
           clashCore.requestGc();
@@ -40,11 +38,10 @@ class Vpn {
     return _instance!;
   }
 
-  Future<bool?> startVpn(port) async {
-    final state = clashCore.getState();
+  Future<bool?> startVpn() async {
+    final options = clashCore.getAndroidVpnOptions();
     return await methodChannel.invokeMethod<bool>("start", {
-      'port': state.mixedPort,
-      'args': json.encode(state),
+      'data': json.encode(options),
     });
   }
 
@@ -72,7 +69,7 @@ class Vpn {
     });
   }
 
-  onStarted(TunProps? tunProps) {
+  onStarted(int fd) {
     if (receiver != null) {
       receiver!.close();
       receiver == null;
@@ -81,7 +78,7 @@ class Vpn {
     receiver!.listen((message) {
       _handleServiceMessage(message);
     });
-    clashCore.startTun(tunProps, receiver!.sendPort.nativePort);
+    clashCore.startTun(fd, receiver!.sendPort.nativePort);
   }
 
   setServiceMessageHandler(ServiceMessageListener serviceMessageListener) {

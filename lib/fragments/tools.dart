@@ -91,7 +91,7 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
       title: appLocalizations.settings,
       items: [
         Selector<Config, String?>(
-          selector: (_, config) => config.locale,
+          selector: (_, config) => config.appSetting.locale,
           builder: (_, localeString, __) {
             final subTitle = localeString ?? appLocalizations.defaultText;
             final currentLocale = other.getLocaleForString(localeString);
@@ -103,8 +103,10 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
                 title: appLocalizations.language,
                 options: [null, ...AppLocalizations.delegate.supportedLocales],
                 onChanged: (Locale? value) {
-                  final config = context.read<Config>();
-                  config.locale = value?.toString();
+                  final config = globalState.appController.config;
+                  config.appSetting = config.appSetting.copyWith(
+                    locale: value?.toString(),
+                  );
                 },
                 textBuilder: (locale) => _getLocaleString(locale),
                 value: currentLocale,

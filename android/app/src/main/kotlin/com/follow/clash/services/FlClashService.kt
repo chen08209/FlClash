@@ -14,8 +14,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.follow.clash.BaseServiceInterface
 import com.follow.clash.MainActivity
-import com.follow.clash.models.Props
-
+import com.follow.clash.models.VpnOptions
 
 
 class FlClashService : Service(), BaseServiceInterface {
@@ -72,7 +71,7 @@ class FlClashService : Service(), BaseServiceInterface {
         }
     }
 
-    override fun start(port: Int, props: Props?) = null
+    override fun start(options: VpnOptions) = 0
 
     override fun stop() {
         stopSelf()

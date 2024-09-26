@@ -2468,3 +2468,153 @@ abstract class _HotKeyAction implements HotKeyAction {
   _$$HotKeyActionImplCopyWith<_$HotKeyActionImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+/// @nodoc
+mixin _$Field {
+  String get label => throw _privateConstructorUsedError;
+  String get value => throw _privateConstructorUsedError;
+  Validator? get validator => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $FieldCopyWith<Field> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $FieldCopyWith<$Res> {
+  factory $FieldCopyWith(Field value, $Res Function(Field) then) =
+      _$FieldCopyWithImpl<$Res, Field>;
+  @useResult
+  $Res call({String label, String value, Validator? validator});
+}
+
+/// @nodoc
+class _$FieldCopyWithImpl<$Res, $Val extends Field>
+    implements $FieldCopyWith<$Res> {
+  _$FieldCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? label = null,
+    Object? value = null,
+    Object? validator = freezed,
+  }) {
+    return _then(_value.copyWith(
+      label: null == label
+          ? _value.label
+          : label // ignore: cast_nullable_to_non_nullable
+              as String,
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as String,
+      validator: freezed == validator
+          ? _value.validator
+          : validator // ignore: cast_nullable_to_non_nullable
+              as Validator?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$FieldImplCopyWith<$Res> implements $FieldCopyWith<$Res> {
+  factory _$$FieldImplCopyWith(
+          _$FieldImpl value, $Res Function(_$FieldImpl) then) =
+      __$$FieldImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String label, String value, Validator? validator});
+}
+
+/// @nodoc
+class __$$FieldImplCopyWithImpl<$Res>
+    extends _$FieldCopyWithImpl<$Res, _$FieldImpl>
+    implements _$$FieldImplCopyWith<$Res> {
+  __$$FieldImplCopyWithImpl(
+      _$FieldImpl _value, $Res Function(_$FieldImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? label = null,
+    Object? value = null,
+    Object? validator = freezed,
+  }) {
+    return _then(_$FieldImpl(
+      label: null == label
+          ? _value.label
+          : label // ignore: cast_nullable_to_non_nullable
+              as String,
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as String,
+      validator: freezed == validator
+          ? _value.validator
+          : validator // ignore: cast_nullable_to_non_nullable
+              as Validator?,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$FieldImpl implements _Field {
+  const _$FieldImpl({required this.label, required this.value, this.validator});
+
+  @override
+  final String label;
+  @override
+  final String value;
+  @override
+  final Validator? validator;
+
+  @override
+  String toString() {
+    return 'Field(label: $label, value: $value, validator: $validator)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$FieldImpl &&
+            (identical(other.label, label) || other.label == label) &&
+            (identical(other.value, value) || other.value == value) &&
+            (identical(other.validator, validator) ||
+                other.validator == validator));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, label, value, validator);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$FieldImplCopyWith<_$FieldImpl> get copyWith =>
+      __$$FieldImplCopyWithImpl<_$FieldImpl>(this, _$identity);
+}
+
+abstract class _Field implements Field {
+  const factory _Field(
+      {required final String label,
+      required final String value,
+      final Validator? validator}) = _$FieldImpl;
+
+  @override
+  String get label;
+  @override
+  String get value;
+  @override
+  Validator? get validator;
+  @override
+  @JsonKey(ignore: true)
+  _$$FieldImplCopyWith<_$FieldImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

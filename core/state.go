@@ -2,37 +2,33 @@ package main
 
 import "C"
 import (
+	"core/state"
 	"encoding/json"
 	"fmt"
 )
 
-type AccessControl struct {
-	Mode              string   `json:"mode"`
-	AcceptList        []string `json:"acceptList"`
-	RejectList        []string `json:"rejectList"`
-	IsFilterSystemApp bool     `json:"isFilterSystemApp"`
+//export getCurrentProfileName
+func getCurrentProfileName() *C.char {
+	if state.CurrentState == nil {
+		return C.CString("")
+	}
+	return C.CString(state.CurrentState.CurrentProfileName)
 }
 
-type AndroidProps struct {
-	Enable        bool           `json:"enable"`
-	AccessControl *AccessControl `json:"accessControl"`
-	AllowBypass   bool           `json:"allowBypass"`
-	SystemProxy   bool           `json:"systemProxy"`
-	Ipv6          bool           `json:"ipv6"`
-}
-
-type State struct {
-	AndroidProps
-	CurrentProfileName string `json:"currentProfileName"`
-	MixedPort          int    `json:"mixedPort"`
-	OnlyProxy          bool   `json:"onlyProxy"`
-}
-
-var state State
-
-//export getState
-func getState() *C.char {
-	data, err := json.Marshal(state)
+//export getAndroidVpnOptions
+func getAndroidVpnOptions() *C.char {
+	options := state.AndroidVpnOptions{
+		Enable:           state.CurrentState.Enable,
+		Port:             state.CurrentRawConfig.MixedPort,
+		Ipv4Address:      state.DefaultIpv4Address,
+		Ipv6Address:      state.GetIpv6Address(),
+		AccessControl:    state.CurrentState.AccessControl,
+		SystemProxy:      state.CurrentState.SystemProxy,
+		AllowBypass:      state.CurrentState.AllowBypass,
+		BypassDomain:     state.CurrentState.BypassDomain,
+		DnsServerAddress: state.GetDnsServerAddress(),
+	}
+	data, err := json.Marshal(options)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return C.CString("")
@@ -43,7 +39,7 @@ func getState() *C.char {
 //export setState
 func setState(s *C.char) {
 	paramsString := C.GoString(s)
-	err := json.Unmarshal([]byte(paramsString), &state)
+	err := json.Unmarshal([]byte(paramsString), state.CurrentState)
 	if err != nil {
 		return
 	}
