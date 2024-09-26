@@ -8,11 +8,12 @@ import 'constant.dart';
 
 class AppPath {
   static AppPath? _instance;
-  Completer<Directory> cacheDir = Completer();
+  Completer<Directory> dataDir = Completer();
   Completer<Directory> downloadDir = Completer();
+  Completer<Directory> tempDir = Completer();
+  late String appDirPath;
 
   // Future<Directory> _createDesktopCacheDir() async {
-  //   final path = join(dirname(Platform.resolvedExecutable), 'cache');
   //   final dir = Directory(path);
   //   if (await dir.exists()) {
   //     await dir.create(recursive: true);
@@ -21,8 +22,12 @@ class AppPath {
   // }
 
   AppPath._internal() {
+    appDirPath = join(dirname(Platform.resolvedExecutable));
     getApplicationSupportDirectory().then((value) {
-      cacheDir.complete(value);
+      dataDir.complete(value);
+    });
+    getTemporaryDirectory().then((value){
+     tempDir.complete(value);
     });
     getDownloadsDirectory().then((value) {
       downloadDir.complete(value);
@@ -49,12 +54,12 @@ class AppPath {
   }
 
   Future<String> getHomeDirPath() async {
-    final directory = await cacheDir.future;
+    final directory = await dataDir.future;
     return directory.path;
   }
 
   Future<String> getProfilesPath() async {
-    final directory = await cacheDir.future;
+    final directory = await dataDir.future;
     return join(directory.path, profilesDirectoryName);
   }
 
@@ -62,6 +67,11 @@ class AppPath {
     if (id == null) return null;
     final directory = await getProfilesPath();
     return join(directory, "$id.yaml");
+  }
+
+  Future<String> get tempPath async {
+    final directory = await tempDir.future;
+    return directory.path;
   }
 }
 

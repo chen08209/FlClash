@@ -470,10 +470,10 @@ class AppLocalizations {
     );
   }
 
-  /// `AutoLaunch`
+  /// `Auto launch`
   String get autoLaunch {
     return Intl.message(
-      'AutoLaunch',
+      'Auto launch',
       name: 'autoLaunch',
       desc: '',
       args: [],
@@ -2560,21 +2560,11 @@ class AppLocalizations {
     );
   }
 
-  /// `The key cannot be empty`
-  String get keyNotEmpty {
+  /// `Cannot be empty`
+  String get notEmpty {
     return Intl.message(
-      'The key cannot be empty',
-      name: 'keyNotEmpty',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `The value cannot be empty`
-  String get valueNotEmpty {
-    return Intl.message(
-      'The value cannot be empty',
-      name: 'valueNotEmpty',
+      'Cannot be empty',
+      name: 'notEmpty',
       desc: '',
       args: [],
     );
@@ -2930,16 +2920,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Reset Dns`
-  String get resetDns {
-    return Intl.message(
-      'Reset Dns',
-      name: 'resetDns',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Reset`
   String get reset {
     return Intl.message(
@@ -3100,16 +3080,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Make sure to reset the DNS`
-  String get dnsResetTip {
-    return Intl.message(
-      'Make sure to reset the DNS',
-      name: 'dnsResetTip',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `No network`
   String get noNetwork {
     return Intl.message(
@@ -3145,6 +3115,156 @@ class AppLocalizations {
     return Intl.message(
       'Export Success',
       name: 'exportSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Icon style`
+  String get iconStyle {
+    return Intl.message(
+      'Icon style',
+      name: 'iconStyle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Icon`
+  String get onlyIcon {
+    return Intl.message(
+      'Icon',
+      name: 'onlyIcon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `None`
+  String get noIcon {
+    return Intl.message(
+      'None',
+      name: 'noIcon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stack mode`
+  String get stackMode {
+    return Intl.message(
+      'Stack mode',
+      name: 'stackMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Network`
+  String get network {
+    return Intl.message(
+      'Network',
+      name: 'network',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Modify network-related settings`
+  String get networkDesc {
+    return Intl.message(
+      'Modify network-related settings',
+      name: 'networkDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Bypass domain`
+  String get bypassDomain {
+    return Intl.message(
+      'Bypass domain',
+      name: 'bypassDomain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only takes effect when the system proxy is enabled`
+  String get bypassDomainDesc {
+    return Intl.message(
+      'Only takes effect when the system proxy is enabled',
+      name: 'bypassDomainDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Make sure to reset`
+  String get resetTip {
+    return Intl.message(
+      'Make sure to reset',
+      name: 'resetTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `RegExp`
+  String get regExp {
+    return Intl.message(
+      'RegExp',
+      name: 'regExp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Icon`
+  String get icon {
+    return Intl.message(
+      'Icon',
+      name: 'icon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Icon configuration`
+  String get iconConfiguration {
+    return Intl.message(
+      'Icon configuration',
+      name: 'iconConfiguration',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No data`
+  String get noData {
+    return Intl.message(
+      'No data',
+      name: 'noData',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Admin auto launch`
+  String get adminAutoLaunch {
+    return Intl.message(
+      'Admin auto launch',
+      name: 'adminAutoLaunch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Boot up by using admin mode`
+  String get adminAutoLaunchDesc {
+    return Intl.message(
+      'Boot up by using admin mode',
+      name: 'adminAutoLaunchDesc',
       desc: '',
       args: [],
     );

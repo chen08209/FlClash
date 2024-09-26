@@ -64,13 +64,13 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
   Widget _updateCoreState(Widget child) {
     return Selector2<Config, ClashConfig, CoreState>(
       selector: (_, config, clashConfig) => CoreState(
-        accessControl: config.isAccessControl ? config.accessControl : null,
         enable: config.vpnProps.enable,
+        accessControl: config.isAccessControl ? config.accessControl : null,
         ipv6: config.vpnProps.ipv6,
         allowBypass: config.vpnProps.allowBypass,
+        bypassDomain: config.vpnProps.bypassDomain,
         systemProxy: config.vpnProps.systemProxy,
-        mixedPort: clashConfig.mixedPort,
-        onlyProxy: config.onlyProxy,
+        onlyProxy: config.appSetting.onlyProxy,
         currentProfileName:
             config.currentProfile?.label ?? config.currentProfileId ?? "",
       ),
@@ -84,10 +84,6 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
 
   _changeProfile() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (globalState.autoRun) {
-        globalState.autoRun = false;
-        return;
-      }
       final appController = globalState.appController;
       appController.appState.delayMap = {};
       await appController.applyProfile();
@@ -136,7 +132,7 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
     updateDelayDebounce ??= debounce(() async {
       await appController.updateGroupDebounce();
       await appController.addCheckIpNumDebounce();
-    });
+    }, milliseconds: 5000);
     updateDelayDebounce!();
   }
 
@@ -146,7 +142,7 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
     if (log.logLevel == LogLevel.error) {
       globalState.appController.showSnackBar(log.payload ?? '');
     }
-    debugPrint("$log");
+    // debugPrint("$log");
     super.onLog(log);
   }
 

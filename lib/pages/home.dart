@@ -48,7 +48,7 @@ class HomePage extends StatelessWidget {
                   child: SingleChildScrollView(
                     child: IntrinsicHeight(
                       child: Selector<Config, bool>(
-                        selector: (_, config) => config.showLabel,
+                        selector: (_, config) => config.appSetting.showLabel,
                         builder: (_, showLabel, __) {
                           return NavigationRail(
                             backgroundColor:
@@ -96,7 +96,10 @@ class HomePage extends StatelessWidget {
                 IconButton(
                   onPressed: () {
                     final config = globalState.appController.config;
-                    config.showLabel = !config.showLabel;
+                    final appSetting = config.appSetting;
+                    config.appSetting = appSetting.copyWith(
+                      showLabel: !appSetting.showLabel,
+                    );
                   },
                   icon: const Icon(Icons.menu),
                 )
@@ -160,7 +163,7 @@ class HomePage extends StatelessWidget {
             currentLabel: appState.currentLabel,
             navigationItems: appState.currentNavigationItems,
             viewMode: appState.viewMode,
-            locale: config.locale,
+            locale: config.appSetting.locale,
           );
         },
         shouldRebuild: (prev, next) {
@@ -171,7 +174,7 @@ class HomePage extends StatelessWidget {
           final navigationItems = state.navigationItems;
           final currentLabel = state.currentLabel;
           final index = navigationItems.lastIndexWhere(
-                (element) => element.label == currentLabel,
+            (element) => element.label == currentLabel,
           );
           final currentIndex = index == -1 ? 0 : index;
           final navigationBar = _getNavigationBar(
@@ -181,9 +184,9 @@ class HomePage extends StatelessWidget {
             currentIndex: currentIndex,
           );
           final bottomNavigationBar =
-          viewMode == ViewMode.mobile ? navigationBar : null;
+              viewMode == ViewMode.mobile ? navigationBar : null;
           final sideNavigationBar =
-          viewMode != ViewMode.mobile ? navigationBar : null;
+              viewMode != ViewMode.mobile ? navigationBar : null;
           return CommonScaffold(
             key: globalState.homeScaffoldKey,
             title: Intl.message(

@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-
-import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -42,7 +40,7 @@ class _RequestsFragmentState extends State<RequestsFragment> {
         final requests = appState.requests.safeSublist(
           appState.requests.length - maxLength,
         );
-        if (!const ListEquality<Connection>().equals(
+        if (!connectionListEquality.equals(
           requestsNotifier.value.connections,
           requests,
         )) {

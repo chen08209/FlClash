@@ -21,3 +21,4 @@ export 'setting.dart';
 export 'input.dart';
 export 'keep_scope.dart';
 export 'back_scope.dart';
+export 'icon.dart';

@@ -18,7 +18,6 @@ class GlobalState {
   Timer? timer;
   Timer? groupsUpdateTimer;
   var isVpnService = false;
-  var autoRun = false;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   PageController? pageController;
@@ -60,7 +59,7 @@ class GlobalState {
           isCompatible: true,
           selectedMap: config.currentSelectedMap,
           overrideDns: config.overrideDns,
-          testUrl: config.testUrl,
+          testUrl: config.appSetting.testUrl,
         ),
       ),
     );
@@ -77,11 +76,13 @@ class GlobalState {
   }) async {
     clashCore.start();
     if (globalState.isVpnService) {
-      await vpn?.startVpn(clashConfig.mixedPort);
+      await vpn?.startVpn();
       startListenUpdate();
       return;
     }
     startTime ??= DateTime.now();
+    await preferences.saveClashConfig(clashConfig);
+    await preferences.saveConfig(config);
     await service?.init();
     startListenUpdate();
   }
@@ -129,20 +130,20 @@ class GlobalState {
         config: config,
         clashConfig: clashConfig,
       );
-      clashCore.setState(
-        CoreState(
-          enable: config.vpnProps.enable,
-          accessControl: config.isAccessControl ? config.accessControl : null,
-          ipv6: config.vpnProps.ipv6,
-          allowBypass: config.vpnProps.allowBypass,
-          systemProxy: config.vpnProps.systemProxy,
-          mixedPort: clashConfig.mixedPort,
-          onlyProxy: config.onlyProxy,
-          currentProfileName:
-              config.currentProfile?.label ?? config.currentProfileId ?? "",
-        ),
-      );
     }
+    clashCore.setState(
+      CoreState(
+        enable: config.vpnProps.enable,
+        accessControl: config.isAccessControl ? config.accessControl : null,
+        ipv6: config.vpnProps.ipv6,
+        allowBypass: config.vpnProps.allowBypass,
+        systemProxy: config.vpnProps.systemProxy,
+        onlyProxy: config.appSetting.onlyProxy,
+        bypassDomain: config.vpnProps.bypassDomain,
+        currentProfileName:
+        config.currentProfile?.label ?? config.currentProfileId ?? "",
+      ),
+    );
     updateCoreVersionInfo(appState);
   }
 
@@ -202,7 +203,7 @@ class GlobalState {
         proxyName: proxyName,
       ),
     );
-    if (config.isCloseConnections) {
+    if (config.appSetting.closeConnections) {
       clashCore.closeConnections();
     }
   }
@@ -228,7 +229,7 @@ class GlobalState {
     final traffic = clashCore.getTraffic();
     if (Platform.isAndroid && isVpnService == true) {
       vpn?.startForeground(
-        title: clashCore.getState().currentProfileName,
+        title: clashCore.getCurrentProfileName(),
         content: "$traffic",
       );
     } else {

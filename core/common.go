@@ -3,14 +3,15 @@ package main
 import "C"
 import (
 	"context"
+	"core/state"
 	"errors"
-	route "github.com/metacubex/mihomo/hub/route"
+	"github.com/metacubex/mihomo/constant/features"
+	"github.com/metacubex/mihomo/hub/route"
 	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -234,151 +235,151 @@ func decorationConfig(profileId string, cfg config.RawConfig) *config.RawConfig 
 	return prof
 }
 
-func Reduce[T any, U any](s []T, initVal U, f func(U, T) U) U {
-	for _, v := range s {
-		initVal = f(initVal, v)
-	}
-	return initVal
-}
+//func Reduce[T any, U any](s []T, initVal U, f func(U, T) U) U {
+//	for _, v := range s {
+//		initVal = f(initVal, v)
+//	}
+//	return initVal
+//}
+//
+//func Map[T, U any](slice []T, fn func(T) U) []U {
+//	result := make([]U, len(slice))
+//	for i, v := range slice {
+//		result[i] = fn(v)
+//	}
+//	return result
+//}
+//
+//func replaceFromMap(s string, m map[string]string) string {
+//	for k, v := range m {
+//		s = strings.ReplaceAll(s, k, v)
+//	}
+//	return s
+//}
+//
+//func removeDuplicateFromSlice[T any](slice []T) []T {
+//	result := make([]T, 0)
+//	seen := make(map[any]struct{})
+//	for _, value := range slice {
+//		if _, ok := seen[value]; !ok {
+//			result = append(result, value)
+//			seen[value] = struct{}{}
+//		}
+//	}
+//	return result
+//}
 
-func Map[T, U any](slice []T, fn func(T) U) []U {
-	result := make([]U, len(slice))
-	for i, v := range slice {
-		result[i] = fn(v)
-	}
-	return result
-}
-
-func replaceFromMap(s string, m map[string]string) string {
-	for k, v := range m {
-		s = strings.ReplaceAll(s, k, v)
-	}
-	return s
-}
-
-func removeDuplicateFromSlice[T any](slice []T) []T {
-	result := make([]T, 0)
-	seen := make(map[any]struct{})
-	for _, value := range slice {
-		if _, ok := seen[value]; !ok {
-			result = append(result, value)
-			seen[value] = struct{}{}
-		}
-	}
-	return result
-}
-
-func generateProxyGroupAndRule(proxyGroup *[]map[string]any, rule *[]string) {
-	var replacements = map[string]string{}
-	var selectArr []map[string]any
-	var urlTestArr []map[string]any
-	var fallbackArr []map[string]any
-	for _, group := range *proxyGroup {
-		switch group["type"] {
-		case "select":
-			selectArr = append(selectArr, group)
-			replacements[group["name"].(string)] = "Proxy"
-			break
-		case "url-test":
-			urlTestArr = append(urlTestArr, group)
-			replacements[group["name"].(string)] = "Auto"
-			break
-		case "fallback":
-			fallbackArr = append(fallbackArr, group)
-			replacements[group["name"].(string)] = "Fallback"
-			break
-		default:
-			break
-		}
-	}
-
-	ProxyProxies := Reduce(selectArr, []string{}, func(res []string, cur map[string]any) []string {
-		if cur["proxies"] == nil {
-			return res
-		}
-		for _, proxyName := range cur["proxies"].([]interface{}) {
-			if str, ok := proxyName.(string); ok {
-				str = replaceFromMap(str, replacements)
-				if str != "Proxy" {
-					res = append(res, str)
-				}
-			}
-		}
-		return res
-	})
-
-	ProxyProxies = removeDuplicateFromSlice(ProxyProxies)
-
-	AutoProxies := Reduce(urlTestArr, []string{}, func(res []string, cur map[string]any) []string {
-		if cur["proxies"] == nil {
-			return res
-		}
-		for _, proxyName := range cur["proxies"].([]interface{}) {
-			if str, ok := proxyName.(string); ok {
-				str = replaceFromMap(str, replacements)
-				if str != "Auto" {
-					res = append(res, str)
-				}
-			}
-		}
-		return res
-	})
-
-	AutoProxies = removeDuplicateFromSlice(AutoProxies)
-
-	FallbackProxies := Reduce(fallbackArr, []string{}, func(res []string, cur map[string]any) []string {
-		if cur["proxies"] == nil {
-			return res
-		}
-		for _, proxyName := range cur["proxies"].([]interface{}) {
-			if str, ok := proxyName.(string); ok {
-				str = replaceFromMap(str, replacements)
-				if str != "Fallback" {
-					res = append(res, str)
-				}
-			}
-		}
-		return res
-	})
-
-	FallbackProxies = removeDuplicateFromSlice(FallbackProxies)
-
-	var computedProxyGroup []map[string]any
-
-	if len(ProxyProxies) > 0 {
-		computedProxyGroup = append(computedProxyGroup,
-			map[string]any{
-				"name":    "Proxy",
-				"type":    "select",
-				"proxies": ProxyProxies,
-			})
-	}
-
-	if len(AutoProxies) > 0 {
-		computedProxyGroup = append(computedProxyGroup,
-			map[string]any{
-				"name":    "Auto",
-				"type":    "url-test",
-				"proxies": AutoProxies,
-			})
-	}
-
-	if len(FallbackProxies) > 0 {
-		computedProxyGroup = append(computedProxyGroup,
-			map[string]any{
-				"name":    "Fallback",
-				"type":    "fallback",
-				"proxies": FallbackProxies,
-			})
-	}
-
-	computedRule := Map(*rule, func(value string) string {
-		return replaceFromMap(value, replacements)
-	})
-
-	*proxyGroup = computedProxyGroup
-	*rule = computedRule
-}
+//func generateProxyGroupAndRule(proxyGroup *[]map[string]any, rule *[]string) {
+//	var replacements = map[string]string{}
+//	var selectArr []map[string]any
+//	var urlTestArr []map[string]any
+//	var fallbackArr []map[string]any
+//	for _, group := range *proxyGroup {
+//		switch group["type"] {
+//		case "select":
+//			selectArr = append(selectArr, group)
+//			replacements[group["name"].(string)] = "Proxy"
+//			break
+//		case "url-test":
+//			urlTestArr = append(urlTestArr, group)
+//			replacements[group["name"].(string)] = "Auto"
+//			break
+//		case "fallback":
+//			fallbackArr = append(fallbackArr, group)
+//			replacements[group["name"].(string)] = "Fallback"
+//			break
+//		default:
+//			break
+//		}
+//	}
+//
+//	ProxyProxies := Reduce(selectArr, []string{}, func(res []string, cur map[string]any) []string {
+//		if cur["proxies"] == nil {
+//			return res
+//		}
+//		for _, proxyName := range cur["proxies"].([]interface{}) {
+//			if str, ok := proxyName.(string); ok {
+//				str = replaceFromMap(str, replacements)
+//				if str != "Proxy" {
+//					res = append(res, str)
+//				}
+//			}
+//		}
+//		return res
+//	})
+//
+//	ProxyProxies = removeDuplicateFromSlice(ProxyProxies)
+//
+//	AutoProxies := Reduce(urlTestArr, []string{}, func(res []string, cur map[string]any) []string {
+//		if cur["proxies"] == nil {
+//			return res
+//		}
+//		for _, proxyName := range cur["proxies"].([]interface{}) {
+//			if str, ok := proxyName.(string); ok {
+//				str = replaceFromMap(str, replacements)
+//				if str != "Auto" {
+//					res = append(res, str)
+//				}
+//			}
+//		}
+//		return res
+//	})
+//
+//	AutoProxies = removeDuplicateFromSlice(AutoProxies)
+//
+//	FallbackProxies := Reduce(fallbackArr, []string{}, func(res []string, cur map[string]any) []string {
+//		if cur["proxies"] == nil {
+//			return res
+//		}
+//		for _, proxyName := range cur["proxies"].([]interface{}) {
+//			if str, ok := proxyName.(string); ok {
+//				str = replaceFromMap(str, replacements)
+//				if str != "Fallback" {
+//					res = append(res, str)
+//				}
+//			}
+//		}
+//		return res
+//	})
+//
+//	FallbackProxies = removeDuplicateFromSlice(FallbackProxies)
+//
+//	var computedProxyGroup []map[string]any
+//
+//	if len(ProxyProxies) > 0 {
+//		computedProxyGroup = append(computedProxyGroup,
+//			map[string]any{
+//				"name":    "Proxy",
+//				"type":    "select",
+//				"proxies": ProxyProxies,
+//			})
+//	}
+//
+//	if len(AutoProxies) > 0 {
+//		computedProxyGroup = append(computedProxyGroup,
+//			map[string]any{
+//				"name":    "Auto",
+//				"type":    "url-test",
+//				"proxies": AutoProxies,
+//			})
+//	}
+//
+//	if len(FallbackProxies) > 0 {
+//		computedProxyGroup = append(computedProxyGroup,
+//			map[string]any{
+//				"name":    "Fallback",
+//				"type":    "fallback",
+//				"proxies": FallbackProxies,
+//			})
+//	}
+//
+//	computedRule := Map(*rule, func(value string) string {
+//		return replaceFromMap(value, replacements)
+//	})
+//
+//	*proxyGroup = computedProxyGroup
+//	*rule = computedRule
+//}
 
 func genHosts(hosts, patchHosts map[string]any) {
 	for k, v := range patchHosts {
@@ -468,7 +469,9 @@ func updateListeners(general *config.General, listeners map[string]constant.Inbo
 	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
 	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
 	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
-	listener.ReCreateTun(general.Tun, tunnel.Tunnel)
+	if !features.Android {
+		listener.ReCreateTun(general.Tun, tunnel.Tunnel)
+	}
 }
 
 func stopListeners() {
@@ -522,7 +525,7 @@ func patchSelectGroup() {
 }
 
 func applyConfig() error {
-	cfg, err := config.ParseRawConfig(currentRawConfig)
+	cfg, err := config.ParseRawConfig(state.CurrentRawConfig)
 	if err != nil {
 		cfg, _ = config.ParseRawConfig(config.DefaultRawConfig())
 	}
