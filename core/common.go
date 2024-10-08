@@ -411,6 +411,12 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Profile.StoreSelected = false
 	targetConfig.GeoXUrl = patchConfig.GeoXUrl
 	targetConfig.GlobalUA = patchConfig.GlobalUA
+	if configParams.TestURL != nil {
+		constant.DefaultTestURL = *configParams.TestURL
+	}
+	for idx := range targetConfig.ProxyGroup {
+		targetConfig.ProxyGroup[idx]["url"] = ""
+	}
 	genHosts(targetConfig.Hosts, patchConfig.Hosts)
 	if configParams.OverrideDns {
 		targetConfig.DNS = patchConfig.DNS
@@ -454,7 +460,6 @@ func updateListeners(general *config.General, listeners map[string]constant.Inbo
 	}
 	runLock.Lock()
 	defer runLock.Unlock()
-
 	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
 	listener.SetAllowLan(general.AllowLan)
 	inbound.SetSkipAuthPrefixes(general.SkipAuthPrefixes)
@@ -528,9 +533,6 @@ func applyConfig() error {
 	cfg, err := config.ParseRawConfig(state.CurrentRawConfig)
 	if err != nil {
 		cfg, _ = config.ParseRawConfig(config.DefaultRawConfig())
-	}
-	if configParams.TestURL != nil {
-		constant.DefaultTestURL = *configParams.TestURL
 	}
 	if configParams.IsPatch {
 		patchConfig(cfg.General, cfg.Controller)

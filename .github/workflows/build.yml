@@ -102,7 +102,6 @@ jobs:
         with:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
-          retention-days: 1
           overwrite: true
 
 
@@ -162,3 +161,30 @@ jobs:
           target-branch: action-pr
           commit-message: Update from ${{ github.ref_name }}
           target-directory: /tmp/
+
+
+  upload-test:
+    if: ${{ contains(github.ref, '+') }}
+    permissions: write-all
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist/
+          pattern: artifact-*
+          merge-multiple: true
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact
+          path: ./dist
+          retention-days: 7
+          overwrite: true
