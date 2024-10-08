@@ -5,6 +5,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:window_ext/window_ext.dart';
 import 'package:window_manager/window_manager.dart';
 
 class WindowManager extends StatefulWidget {
@@ -19,7 +20,7 @@ class WindowManager extends StatefulWidget {
   State<WindowManager> createState() => _WindowContainerState();
 }
 
-class _WindowContainerState extends State<WindowManager> with WindowListener {
+class _WindowContainerState extends State<WindowManager> with WindowListener, WindowExtListener {
   Function? updateLaunchDebounce;
 
   _autoLaunchContainer(Widget child) {
@@ -47,6 +48,7 @@ class _WindowContainerState extends State<WindowManager> with WindowListener {
   @override
   void initState() {
     super.initState();
+    windowExtManager.addListener(this);
     windowManager.addListener(this);
   }
 
@@ -85,8 +87,15 @@ class _WindowContainerState extends State<WindowManager> with WindowListener {
   }
 
   @override
+  void onTaskbarCreated() {
+    globalState.appController.updateTray();
+    super.onTaskbarCreated();
+  }
+
+  @override
   Future<void> dispose() async {
     windowManager.removeListener(this);
+    windowExtManager.removeListener(this);
     super.dispose();
   }
 }

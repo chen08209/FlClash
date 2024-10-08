@@ -9,8 +9,10 @@ import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
+import 'package:tray_manager/tray_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'clash/core.dart';
@@ -603,6 +605,117 @@ class AppController {
       final zipEncoder = ZipEncoder();
       return zipEncoder.encode(archive) ?? [];
     });
+  }
+
+  Future _updateSystemTray({
+    required bool isStart,
+    required Brightness? brightness,
+  }) async {
+    await trayManager.destroy();
+    await trayManager.setIcon(
+      other.getTrayIconPath(
+        isStart: isStart,
+        brightness: brightness ??
+            WidgetsBinding.instance.platformDispatcher.platformBrightness,
+      ),
+    );
+    if (!Platform.isLinux) {
+      await trayManager.setToolTip(
+        appName,
+      );
+    }
+  }
+
+  updateTray() async {
+    if (!Platform.isLinux) {
+      await _updateSystemTray(
+        isStart: appFlowingState.isStart,
+        brightness: appState.brightness,
+      );
+    }
+    List<MenuItem> menuItems = [];
+    final showMenuItem = MenuItem(
+      label: appLocalizations.show,
+      onClick: (_) {
+        window?.show();
+      },
+    );
+    menuItems.add(showMenuItem);
+    final startMenuItem = MenuItem.checkbox(
+      label:
+      appFlowingState.isStart ? appLocalizations.stop : appLocalizations.start,
+      onClick: (_) async {
+        globalState.appController.updateStart();
+      },
+      checked: false,
+    );
+    menuItems.add(startMenuItem);
+    menuItems.add(MenuItem.separator());
+    for (final mode in Mode.values) {
+      menuItems.add(
+        MenuItem.checkbox(
+          label: Intl.message(mode.name),
+          onClick: (_) {
+            globalState.appController.clashConfig.mode = mode;
+          },
+          checked: mode == clashConfig.mode,
+        ),
+      );
+    }
+    menuItems.add(MenuItem.separator());
+    if (appFlowingState.isStart) {
+      menuItems.add(
+        MenuItem.checkbox(
+          label: appLocalizations.tun,
+          onClick: (_) {
+            globalState.appController.updateTun();
+          },
+          checked: clashConfig.tun.enable,
+        ),
+      );
+      menuItems.add(
+        MenuItem.checkbox(
+          label: appLocalizations.systemProxy,
+          onClick: (_) {
+            globalState.appController.updateSystemProxy();
+          },
+          checked: config.desktopProps.systemProxy,
+        ),
+      );
+      menuItems.add(MenuItem.separator());
+    }
+    final autoStartMenuItem = MenuItem.checkbox(
+      label: appLocalizations.autoLaunch,
+      onClick: (_) async {
+        globalState.appController.updateAutoLaunch();
+      },
+      checked: config.appSetting.autoLaunch,
+    );
+    final adminAutoStartMenuItem = MenuItem.checkbox(
+      label: appLocalizations.adminAutoLaunch,
+      onClick: (_) async {
+        globalState.appController.updateAdminAutoLaunch();
+      },
+      checked: config.appSetting.adminAutoLaunch,
+    );
+    menuItems.add(autoStartMenuItem);
+    menuItems.add(adminAutoStartMenuItem);
+    menuItems.add(MenuItem.separator());
+    final exitMenuItem = MenuItem(
+      label: appLocalizations.exit,
+      onClick: (_) async {
+        await globalState.appController.handleExit();
+      },
+    );
+    menuItems.add(exitMenuItem);
+    final menu = Menu(items: menuItems);
+    await trayManager.setContextMenu(menu);
+    if (Platform.isLinux) {
+      await _updateSystemTray(
+        isStart: appFlowingState.isStart,
+        brightness: appState.brightness,
+      );
+    }
   }
 
   recoveryData(

@@ -19,6 +19,8 @@ dependencies:
   dynamic_color: ^1.7.0
   proxy:
     path: plugins/proxy
+  window_ext:
+    path: plugins/window_ext
   launch_at_startup: ^0.2.2
   windows_single_instance: ^1.0.1
   json_annotation: ^4.9.0

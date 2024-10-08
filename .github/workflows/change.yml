@@ -1,0 +1,45 @@
+name: change
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate
+        run: |
+          tags=$(git tag --sort=creatordate)
+          previous=""
+          if [ ! -f CHANGELOG.md ]; then
+            echo "" > CHANGELOG.md
+          else
+            previous=$(grep -oP '^## \K.*' CHANGELOG.md | tail -n 1)
+          fi
+          for tag in $tags; do
+            if [ -n "$previous" ]; then
+              echo "## $tag" >> CHANGELOG.md
+              git log --pretty=format:"* %s (%h)" "$previous..$tag" >> CHANGELOG.md
+              echo -e "\n" >> CHANGELOG.md
+            fi
+            previous=$tag
+          done
+
+      - name: Commit
+        run: |
+          if ！git diff --cached --quiet; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add CHANGELOG.md
+            git commit -m "Update Changelog"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
