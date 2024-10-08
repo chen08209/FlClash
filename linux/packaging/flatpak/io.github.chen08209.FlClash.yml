@@ -1,0 +1,44 @@
+id: io.github.chen08209.FlClash
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+separate-locales: false
+command: AppRun
+
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --socket=session-bus
+  - --device=dri
+
+modules:
+  - name: FlClash
+    buildsystem: simple
+    build-commands:
+      - install -Dm644 io.github.chen08209.FlClash.desktop ${FLATPAK_DEST}/share/applications/io.github.chen08209.FlClash.desktop
+      - install -Dm644 io.github.chen08209.FlClash.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/io.github.chen08209.FlClash.png
+      - install -Dm644 io.github.chen08209.FlClash.metainfo.xml ${FLATPAK_DEST}/share/metainfo/io.github.chen08209.FlClash.metainfo.xml
+
+      - chmod +x ./FlClash.AppImage
+      - ./FlClash.AppImage --appimage-extract
+      - install -Dm755 squashfs-root/AppRun ${FLATPAK_DEST}/bin/AppRun
+      - mv squashfs-root/* ${FLATPAK_DEST}/bin/
+    sources:
+      - type: file
+        dest-filename: FlClash.AppImage
+        url: https://github.com/chen08209/FlClash/releases/download/v0.8.62/FlClash-0.8.62-linux-amd64.AppImage
+        sha256: 3d85afdb73401bc274f214faa463648a85e08858f8512a2cf34f29a751d474e8
+        only-arches:
+          - x86_64
+
+      - type: file
+        path: io.github.chen08209.FlClash.desktop
+
+      - type: file
+        path: io.github.chen08209.FlClash.png
+
+      - type: file
+        path: io.github.chen08209.FlClash.metainfo.xml
+

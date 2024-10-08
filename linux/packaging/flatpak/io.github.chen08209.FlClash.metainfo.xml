@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.chen08209.FlClash</id>
+  <developer_name>chen08209</developer_name>
+  <launchable type="desktop-id">io.github.chen08209.FlClash.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0</project_license>
+  <name>FlClash</name>
+  <summary>A multi-platform proxy client based on ClashMeta</summary>
+  <description>
+    <p>
+      A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
+    </p>
+    <ul>
+      <li> ✈️ Multi-platform: Android, Windows, macOS and Linux </li>
+      <li> 💻 Adaptive multiple screen sizes, Multiple color themes available </li>
+      <li> 💡 Based on Material You Design, Surfboard-like UI </li>
+      <li> ☁️ Supports data sync via WebDAV </li>
+      <li> ✨ Support subscription link, Dark mode </li>
+    </ul>
+    <p>
+      Known issues:
+    </p>
+    <p>
+      Due to the well-established restrictions of sandbox, some features are not available for now. Such as TUN Mode...
+    </p>
+  </description>
+  <categories>
+    <category>Network</category>
+  </categories>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/chen08209/FlClash/refs/heads/main/snapshots/desktop.gif</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://github.com/chen08209/FlClash</url>
+  <url type="bugtracker">https://github.com/chen08209/FlClash/issues</url>
+  <releases>
+    <release version="v0.8.62" date="2024-09-26"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>
