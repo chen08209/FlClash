@@ -16,7 +16,7 @@ jobs:
 
       - name: Generate
         run: |
-          tags=$(git tag --merged $(git rev-parse HEAD) --sort=-creatordate)
+          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
           lastTag=""
           previous=""
           if [ -f CHANGELOG.md ]; then
@@ -33,6 +33,12 @@ jobs:
               break
             fi
             echo "## $tag" >> NEW_CHANGELOG.md
+            echo "" >> NEW_CHANGELOG.md
+            if [ -n "$previous" ]; then
+              git log --pretty=format:"%B" "$previous..$tag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+            fi
+            echo "" >> NEW_CHANGELOG.md
+            previous=$tag
           done
           if [ -f CHANGELOG.md ]; then
             cat CHANGELOG.md >> NEW_CHANGELOG.md
