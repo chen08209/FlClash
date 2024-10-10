@@ -34,8 +34,8 @@ jobs:
             fi
             if [ -n "$previous" ]; then
               echo "## $previous" >> NEW_CHANGELOG.md
-              if [ -n "$tag" ]; then
               echo "" >> NEW_CHANGELOG.md
+              if [ -n "$tag" ]; then
                 git log --pretty=format:"%B" "$tag..$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
               else
                 git log --pretty=format:"%B" "$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
