@@ -25,11 +25,12 @@ jobs:
             if [ "$tag" == "$previous" ]; then
               break
             fi
-            if [ -n "$previous" ]; then
-              echo "## $tag" >> NEW_CHANGELOG.md
-              echo "" >> NEW_CHANGELOG.md
-              git log --pretty=format:"%B" "$tag..$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
-              echo "" >> NEW_CHANGELOG.md
+            echo "## $tag" >> NEW_CHANGELOG.md
+            echo "" >> NEW_CHANGELOG.md
+            git log --pretty=format:"%B" "$tag..$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+            echo "" >> NEW_CHANGELOG.md
+            if [ -z "$previous" ]; then
+              break;
             fi
             previous=$tag
           done
@@ -39,11 +40,11 @@ jobs:
           mv NEW_CHANGELOG.md CHANGELOG.md
 
       - name: Commit
-        run: |  
+        run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add CHANGELOG.md
-        
+          
           if ! git diff --cached --quiet; then
             git commit -m "Update Changelog"
             git push
