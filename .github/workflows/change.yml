@@ -33,7 +33,9 @@ jobs:
             fi
             previous=$tag
           done
-          cat CHANGELOG.md >> NEW_CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            cat CHANGELOG.md >> NEW_CHANGELOG.md
+          fi
           mv NEW_CHANGELOG.md CHANGELOG.md
 
       - name: Commit
