@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=FlClash
+GenericName=Clash
+Icon=io.github.chen08209.FlClash
+Exec=AppRun %U
+Categories=Network;
+Keywords=FlClash;Clash;ClashMeta;Proxy;Surfboard;
+StartupNotify=true
+Terminal=false
