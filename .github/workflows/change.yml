@@ -33,11 +33,15 @@ jobs:
               break
             fi
             echo "## $previous" >> NEW_CHANGELOG.md
-            echo "" >> NEW_CHANGELOG.md
             if [ -n "$previous" ]; then
-              git log --pretty=format:"%B" "$tag..$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+              echo "" >> NEW_CHANGELOG.md
+              if [ -n "$tag" ]; then
+                git log --pretty=format:"%B" "$tag..$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+              else
+                git log --pretty=format:"%B" "$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+              fi
+              echo "" >> NEW_CHANGELOG.md
             fi
-            echo "" >> NEW_CHANGELOG.md
             previous=$tag
           done
           if [ -f CHANGELOG.md ]; then
