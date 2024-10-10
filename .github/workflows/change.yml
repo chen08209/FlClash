@@ -20,8 +20,8 @@ jobs:
           lastTag = ""
           previous = ""
           if [ -f CHANGELOG.md ]; then
-            lastTag=$(grep -oP '^## \K.*' CHANGELOG.md | head -n 1)
-            previous = lastTag
+            lastTag = $(grep -oP '^## \K.*' CHANGELOG.md | head -n 1)
+            previous = $lastTag
           fi
           for tag in $tags; do
             if [ -n "$lastTag" ] && [ "$(echo -e "$tag\n$lastTag" | sort -V | head -n 1)" == "$tag" ]; then
