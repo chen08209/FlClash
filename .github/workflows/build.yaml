@@ -35,7 +35,6 @@ jobs:
           install: mingw-w64-x86_64-gcc
           update: true
 
-
       - name: Set Mingw64 Env
         if: startsWith(matrix.platform,'windows')
         run: |
@@ -105,8 +104,7 @@ jobs:
           overwrite: true
 
 
-  upload-release:
-    if: ${{ !contains(github.ref, '+') }}
+  upload:
     permissions: write-all
     needs: [ build ]
     runs-on: ubuntu-latest
@@ -123,32 +121,62 @@ jobs:
           pattern: artifact-*
           merge-multiple: true
 
-      - name: Pre Release
+      - name: Generate release
         run: |
-          pip install gitchangelog pystache mustache markdown
-          pre=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
-          if [ -z "pre" ]; then
-            echo "init" > release.md
-          else
-            current="${{ github.ref_name }}"
-            echo -e "\n\n<details markdown=1><summary>All changes from $current to the latest commit:</summary>\n\n" >> release.md
-            gitchangelog "${pre}.." >> release.md 2>&1 || echo "Error in gitchangelog"
-            echo -e "\n\n</details>" >> release.md
-          fi
+          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
+          preTag=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          sed "s|VERSION|$version|g" ./.github/release_template.md > release.md
+          currentTag=""
+          for ((i = 0; i <= ${#tags[@]}; i++)); do
+            if (( i < ${#tags[@]} )); then
+              tag=${tags[$i]}
+            else
+              tag=""
+            fi
+            if [ -n "$currentTag" ]; then
+              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
+                break
+              fi
+            fi
+            if [ -n "$currentTag" ]; then
+              echo "## $currentTag" >> release.md
+              echo "" >> release.md
+              if [ -n "$tag" ]; then
+                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
+              else
+                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
+              fi
+              echo "" >> release.md
+            fi
+            currentTag=$tag
+          done
+
+      - name: Upload
+        if: ${{ contains(github.ref, '+') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact
+          path: ./dist
+          retention-days: 7
+          overwrite: true
 
       - name: Release
+        if: ${{ !contains(github.ref, '+') }}
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/*
           body_path: './release.md'
 
       - name: Create Fdroid Source Dir
+        if: ${{ !contains(github.ref, '+') }}
         run: |
           mkdir -p ./tmp
           cp ./dist/*android-arm64-v8a* ./tmp/ || true
           echo "Files copied successfully"
 
       - name: Push to fdroid repo
+        if: ${{ !contains(github.ref, '+') }}
         uses: cpina/github-action-push-to-another-repository@v1.7.2
         env:
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
@@ -161,30 +189,3 @@ jobs:
           target-branch: action-pr
           commit-message: Update from ${{ github.ref_name }}
           target-directory: /tmp/
-
-
-  upload-test:
-    if: ${{ contains(github.ref, '+') }}
-    permissions: write-all
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download
-        uses: actions/download-artifact@v4
-        with:
-          path: ./dist/
-          pattern: artifact-*
-          merge-multiple: true
-
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifact
-          path: ./dist
-          retention-days: 7
-          overwrite: true
