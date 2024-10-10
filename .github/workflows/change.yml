@@ -17,22 +17,22 @@ jobs:
       - name: Generate
         run: |
           tags=$(git tag --merged $(git rev-parse HEAD) --sort=-creatordate)
+          tags+=("")
           lastTag=""
           previous=""
           if [ -f CHANGELOG.md ]; then
             lastTag=$(grep -oP '^## \K.*' CHANGELOG.md | head -n 1)
             previous=$lastTag
           fi
-          for tag in $tags; do
+          for ((i = 0; i < ${#tags[@]}; i++)); do
+            tag=${tags[$i]}
             if [ -n "$lastTag" ] && [ "$(echo -e "$tag\n$lastTag" | sort -V | head -n 1)" == "$tag" ]; then
               break
             fi
             echo "## $tag" >> NEW_CHANGELOG.md
             echo "" >> NEW_CHANGELOG.md
-            if [ -z "$previous" ]; then
-              git log --pretty=format:"%B" "$tag.." | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
-            else
-              git log --pretty=format:"%B" "$tag..$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+            if [ -n "$previous" ]; then
+              git log --pretty=format:"%B" "$previous..$tag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
             fi
             echo "" >> NEW_CHANGELOG.md
             previous=$tag
