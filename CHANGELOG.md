@@ -1,9 +1,5 @@
 ## v0.8.60
 
-- Fix android system dns issues
-
-- Optimize dns default option
-
 - Fix some issues
 
 - Update readme
