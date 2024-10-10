@@ -23,15 +23,16 @@ jobs:
             lastTag=$(grep -oP '^## \K.*' CHANGELOG.md | head -n 1)
             previous=$lastTag
           fi
-          for ((i = 0; i < ${#tags[@]}; i++)); do
-            tag=${tags[$i]}
-            echo "## $tag" >> NEW_CHANGELOG.md
-            echo "" >> NEW_CHANGELOG.md
-            if [ -n "$previous" ]; then
-              git log --pretty=format:"%B" "$previous..$tag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+          for ((i = 0; i <= ${#tags[@]}; i++)); do
+            if (( i < ${#tags[@]} )); then
+              tag=${tags[$i]}
+            else
+              tag=""
             fi
-            echo "" >> NEW_CHANGELOG.md
-            previous=$tag
+            if [ -n "$lastTag" ] && [ "$(echo -e "$tag\n$lastTag" | sort -V | head -n 1)" == "$tag" ]; then
+              break
+            fi
+            echo "## $tag" >> NEW_CHANGELOG.md
           done
           if [ -f CHANGELOG.md ]; then
             cat CHANGELOG.md >> NEW_CHANGELOG.md
