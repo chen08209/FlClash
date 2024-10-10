@@ -26,9 +26,6 @@ jobs:
           fi
           for ((i = 0; i < ${#tags[@]}; i++)); do
             tag=${tags[$i]}
-#            if [ -n "$lastTag" ] && [ "$(echo -e "$tag\n$lastTag" | sort -V | head -n 1)" == "$tag" ]; then
-#              break
-#            fi
             echo "## $tag" >> NEW_CHANGELOG.md
             echo "" >> NEW_CHANGELOG.md
             if [ -n "$previous" ]; then
