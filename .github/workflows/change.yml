@@ -32,7 +32,7 @@ jobs:
             if [ -n "$lastTag" ] && [ "$(echo -e "$tag\n$lastTag" | sort -V | head -n 1)" == "$tag" ]; then
               break
             fi
-            echo "## $tag" >> NEW_CHANGELOG.md
+            echo "## $previous" >> NEW_CHANGELOG.md
             echo "" >> NEW_CHANGELOG.md
             if [ -n "$previous" ]; then
               git log --pretty=format:"%B" "$tag..$previous" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
