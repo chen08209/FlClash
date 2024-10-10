@@ -17,7 +17,6 @@ jobs:
       - name: Generate
         run: |
           tags=$(git tag --merged $(git rev-parse HEAD) --sort=-creatordate)
-          tags+=("")
           lastTag=""
           previous=""
           if [ -f CHANGELOG.md ]; then
@@ -26,6 +25,9 @@ jobs:
           fi
           for ((i = 0; i < ${#tags[@]}; i++)); do
             tag=${tags[$i]}
+            if [ -n "$lastTag" ] && [ "$(echo -e "$tag\n$lastTag" | sort -V | head -n 1)" == "$tag" ]; then
+              break
+            fi
             echo "## $tag" >> NEW_CHANGELOG.md
             echo "" >> NEW_CHANGELOG.md
             if [ -n "$previous" ]; then
@@ -39,15 +41,15 @@ jobs:
           fi
           mv NEW_CHANGELOG.md CHANGELOG.md
 
-      - name: Commit
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add CHANGELOG.md
-          
-          if ! git diff --cached --quiet; then
-            git commit -m "Update Changelog"
-            git push
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Commit
+#        run: |
+#          git config --local user.email "action@github.com"
+#          git config --local user.name "GitHub Action"
+#          git add CHANGELOG.md
+#
+#          if ! git diff --cached --quiet; then
+#            git commit -m "Update Changelog"
+#            git push
+#          fi
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
