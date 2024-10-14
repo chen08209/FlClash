@@ -86,7 +86,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.22.x
+          flutter-version: '3.x'
           channel: 'stable'
           cache: true
 
@@ -108,6 +108,14 @@ jobs:
     permissions: write-all
     needs: [ build ]
     runs-on: ubuntu-latest
+    services:
+      telegram-bot-api:
+        image: aiogram/telegram-bot-api:latest
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        ports:
+          - 8081:8081
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -121,12 +129,10 @@ jobs:
           pattern: artifact-*
           merge-multiple: true
 
-      - name: Generate release
+      - name: Generate release.md
         run: |
           tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
           preTag=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
-          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          sed "s|VERSION|$version|g" ./.github/release_template.md > release.md
           currentTag=""
           for ((i = 0; i <= ${#tags[@]}; i++)); do
             if (( i < ${#tags[@]} )); then
@@ -140,8 +146,6 @@ jobs:
               fi
             fi
             if [ -n "$currentTag" ]; then
-              echo "## $currentTag" >> release.md
-              echo "" >> release.md
               if [ -n "$tag" ]; then
                 git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
               else
@@ -152,14 +156,19 @@ jobs:
             currentTag=$tag
           done
 
-      - name: Upload
-        if: ${{ contains(github.ref, '+') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifact
-          path: ./dist
-          retention-days: 7
-          overwrite: true
+      - name: Push to telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+          python release.py
+
+      - name: Patch release.md
+        run: |
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
 
       - name: Release
         if: ${{ !contains(github.ref, '+') }}

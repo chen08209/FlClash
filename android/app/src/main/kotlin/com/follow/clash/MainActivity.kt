@@ -1,8 +1,6 @@
 package com.follow.clash
 
 
-import android.content.Intent
-import android.os.Bundle
 import com.follow.clash.plugins.AppPlugin
 import com.follow.clash.plugins.ServicePlugin
 import com.follow.clash.plugins.VpnPlugin

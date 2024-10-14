@@ -88,7 +88,7 @@ class _WindowContainerState extends State<WindowManager> with WindowListener, Wi
 
   @override
   void onTaskbarCreated() {
-    globalState.appController.updateTray();
+    globalState.appController.updateTray(true);
     super.onTaskbarCreated();
   }
 

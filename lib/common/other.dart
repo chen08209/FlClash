@@ -104,14 +104,17 @@ class Other {
     required bool isStart,
     required Brightness brightness,
   }) {
-    final suffix = Platform.isWindows ? "ico" : "png";
-    if (!isStart && Platform.isWindows) {
-      return switch (brightness) {
-        Brightness.dark => "assets/images/icon_white.$suffix",
-        Brightness.light => "assets/images/icon_black.$suffix",
-      };
+    if(Platform.isMacOS){
+      return "assets/images/icon_white.png";
     }
-    return "assets/images/icon.$suffix";
+    final suffix = Platform.isWindows ? "ico" : "png";
+    if (isStart && Platform.isWindows) {
+      return "assets/images/icon.$suffix";
+    }
+    return switch (brightness) {
+      Brightness.dark => "assets/images/icon_white.$suffix",
+      Brightness.light => "assets/images/icon_black.$suffix",
+    };
   }
 
   int compareVersions(String version1, String version2) {
@@ -193,7 +196,7 @@ class Other {
 
   List<String> parseReleaseBody(String? body) {
     if (body == null) return [];
-    const pattern = r'- (.+?)\. \[.+?\]';
+    const pattern = r'- \s*(.*)';
     final regex = RegExp(pattern);
     return regex
         .allMatches(body)

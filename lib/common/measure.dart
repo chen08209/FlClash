@@ -8,7 +8,8 @@ class Measure {
 
   Measure.of(this.context)
       : _textScale = TextScaler.linear(
-            WidgetsBinding.instance.platformDispatcher.textScaleFactor);
+          WidgetsBinding.instance.platformDispatcher.textScaleFactor,
+        );
 
   Size computeTextSize(Text text) {
     final textPainter = TextPainter(
@@ -37,7 +38,6 @@ class Measure {
     ).height;
     return _bodyMediumHeight!;
   }
-
 
   Size get bodyLargeSize {
     _bodyLargeSize ??= computeTextSize(

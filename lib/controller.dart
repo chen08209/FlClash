@@ -610,14 +610,18 @@ class AppController {
   Future _updateSystemTray({
     required bool isStart,
     required Brightness? brightness,
+    bool force = false,
   }) async {
-    await trayManager.destroy();
+    if (Platform.isLinux || force) {
+      await trayManager.destroy();
+    }
     await trayManager.setIcon(
       other.getTrayIconPath(
         isStart: isStart,
         brightness: brightness ??
             WidgetsBinding.instance.platformDispatcher.platformBrightness,
       ),
+      isTemplate: true,
     );
     if (!Platform.isLinux) {
       await trayManager.setToolTip(
@@ -626,11 +630,12 @@ class AppController {
     }
   }
 
-  updateTray() async {
+  updateTray([bool focus = false]) async {
     if (!Platform.isLinux) {
       await _updateSystemTray(
         isStart: appFlowingState.isStart,
         brightness: appState.brightness,
+        force: focus,
       );
     }
     List<MenuItem> menuItems = [];
@@ -642,8 +647,9 @@ class AppController {
     );
     menuItems.add(showMenuItem);
     final startMenuItem = MenuItem.checkbox(
-      label:
-      appFlowingState.isStart ? appLocalizations.stop : appLocalizations.start,
+      label: appFlowingState.isStart
+          ? appLocalizations.stop
+          : appLocalizations.start,
       onClick: (_) async {
         globalState.appController.updateStart();
       },
@@ -714,6 +720,7 @@ class AppController {
       await _updateSystemTray(
         isStart: appFlowingState.isStart,
         brightness: appState.brightness,
+        force: focus,
       );
     }
   }
