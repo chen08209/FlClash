@@ -155,7 +155,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                                               .textTheme
                                               .titleLarge
                                               ?.copyWith(
-                                                fontFamily: "Twemoji",
+                                                fontFamily: Fonts.twEmoji,
                                               ),
                                         ),
                                       )

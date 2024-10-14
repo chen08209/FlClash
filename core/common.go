@@ -5,13 +5,15 @@ import (
 	"context"
 	"core/state"
 	"errors"
+	"fmt"
 	"github.com/metacubex/mihomo/constant/features"
 	"github.com/metacubex/mihomo/hub/route"
-	"math"
+	"github.com/samber/lo"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -155,6 +157,14 @@ func getRawConfigWithId(id string) *config.RawConfig {
 			continue
 		}
 		mapping["path"] = filepath.Join(getProfileProvidersPath(id), value)
+		if configParams.TestURL != nil {
+			hc := mapping["health-check"].(map[string]any)
+			if hc != nil {
+				if hc["url"] != nil {
+					hc["url"] = *configParams.TestURL
+				}
+			}
+		}
 	}
 	for _, mapping := range prof.RuleProvider {
 		value, exist := mapping["path"].(string)
@@ -212,16 +222,16 @@ func sideUpdateExternalProvider(p cp.Provider, bytes []byte) error {
 	switch p.(type) {
 	case *provider.ProxySetProvider:
 		psp := p.(*provider.ProxySetProvider)
-		elm, same, err := psp.SideUpdate(bytes)
-		if err == nil && !same {
-			psp.OnUpdate(elm)
+		_, _, err := psp.SideUpdate(bytes)
+		if err == nil {
+			return err
 		}
 		return nil
 	case rp.RuleSetProvider:
 		rsp := p.(*rp.RuleSetProvider)
-		elm, same, err := rsp.SideUpdate(bytes)
-		if err == nil && !same {
-			rsp.OnUpdate(elm)
+		_, _, err := rsp.SideUpdate(bytes)
+		if err == nil {
+			return err
 		}
 		return nil
 	default:
@@ -387,6 +397,37 @@ func genHosts(hosts, patchHosts map[string]any) {
 	}
 }
 
+func trimArr(arr []string) (r []string) {
+	for _, e := range arr {
+		r = append(r, strings.Trim(e, " "))
+	}
+	return
+}
+
+var ips = []string{"ipinfo.io", "ipapi.co", "api.ip.sb", "ipwho.is"}
+
+func overrideRules(rules *[]string) {
+	var target = ""
+	for _, line := range *rules {
+		rule := trimArr(strings.Split(line, ","))
+		l := len(rule)
+		if l != 2 {
+			return
+		}
+		if strings.ToUpper(rule[0]) == "MATCH" {
+			target = rule[1]
+			break
+		}
+	}
+	if target == "" {
+		return
+	}
+	var rulesExt = lo.Map(ips, func(ip string, index int) string {
+		return fmt.Sprintf("DOMAIN %s %s", ip, target)
+	})
+	*rules = append(rulesExt, *rules...)
+}
+
 func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig) {
 	targetConfig.ExternalController = patchConfig.ExternalController
 	targetConfig.ExternalUI = ""
@@ -425,6 +466,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 			targetConfig.DNS.Enable = true
 		}
 	}
+	overrideRules(&targetConfig.Rule)
 	//if runtime.GOOS == "android" {
 	//	targetConfig.DNS.NameServer = append(targetConfig.DNS.NameServer, "dhcp://"+dns.SystemDNSPlaceholder)
 	//} else if runtime.GOOS == "windows" {
@@ -437,9 +479,8 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	//}
 }
 
-func patchConfig(general *config.General, controller *config.Controller) {
+func patchConfig(general *config.General, controller *config.Controller, tls *config.TLS) {
 	log.Infoln("[Apply] patch")
-	route.ReStartServer(controller.ExternalController)
 	tunnel.SetSniffing(general.Sniffing)
 	tunnel.SetFindProcessMode(general.FindProcessMode)
 	dialer.SetTcpConcurrent(general.TCPConcurrent)
@@ -448,6 +489,22 @@ func patchConfig(general *config.General, controller *config.Controller) {
 	tunnel.SetMode(general.Mode)
 	log.SetLevel(general.LogLevel)
 	resolver.DisableIPv6 = !general.IPv6
+
+	route.ReCreateServer(&route.Config{
+		Addr:        controller.ExternalController,
+		TLSAddr:     controller.ExternalControllerTLS,
+		UnixAddr:    controller.ExternalControllerUnix,
+		PipeAddr:    controller.ExternalControllerPipe,
+		Secret:      controller.Secret,
+		Certificate: tls.Certificate,
+		PrivateKey:  tls.PrivateKey,
+		DohServer:   controller.ExternalDohServer,
+		IsDebug:     false,
+		Cors: route.Cors{
+			AllowOrigins:        controller.Cors.AllowOrigins,
+			AllowPrivateNetwork: controller.Cors.AllowPrivateNetwork,
+		},
+	})
 }
 
 var isRunning = false
@@ -460,6 +517,7 @@ func updateListeners(general *config.General, listeners map[string]constant.Inbo
 	}
 	runLock.Lock()
 	defer runLock.Unlock()
+	stopListeners()
 	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
 	listener.SetAllowLan(general.AllowLan)
 	inbound.SetSkipAuthPrefixes(general.SkipAuthPrefixes)
@@ -481,27 +539,6 @@ func updateListeners(general *config.General, listeners map[string]constant.Inbo
 
 func stopListeners() {
 	listener.StopListener()
-}
-
-func hcCompatibleProvider(proxyProviders map[string]cp.ProxyProvider) {
-	wg := sync.WaitGroup{}
-	ch := make(chan struct{}, math.MaxInt)
-	for _, proxyProvider := range proxyProviders {
-		proxyProvider := proxyProvider
-		if proxyProvider.VehicleType() == cp.Compatible {
-			log.Infoln("Start initial Compatible provider %s", proxyProvider.Name())
-			wg.Add(1)
-			ch <- struct{}{}
-			go func() {
-				defer func() { <-ch; wg.Done() }()
-				if err := proxyProvider.Initial(); err != nil {
-					log.Errorln("initial Compatible provider %s error: %v", proxyProvider.Name(), err)
-				}
-			}()
-		}
-
-	}
-
 }
 
 func patchSelectGroup() {
@@ -535,17 +572,14 @@ func applyConfig() error {
 		cfg, _ = config.ParseRawConfig(config.DefaultRawConfig())
 	}
 	if configParams.IsPatch {
-		patchConfig(cfg.General, cfg.Controller)
+		patchConfig(cfg.General, cfg.Controller, cfg.TLS)
 	} else {
 		closeConnections()
 		runtime.GC()
-		hub.UltraApplyConfig(cfg)
+		hub.ApplyConfig(cfg)
 		patchSelectGroup()
 	}
 	updateListeners(cfg.General, cfg.Listeners)
-	if isRunning {
-		hcCompatibleProvider(cfg.Providers)
-	}
 	externalProviders = getExternalProvidersRaw()
 	return err
 }

@@ -30,3 +30,4 @@ export 'icons.dart';
 export 'http.dart';
 export 'keyboard.dart';
 export 'network.dart';
+export 'font.dart';
