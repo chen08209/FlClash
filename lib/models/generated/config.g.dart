@@ -14,16 +14,12 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
           .toList() ??
       []
   ..currentProfileId = json['currentProfileId'] as String?
-  ..themeMode = $enumDecodeNullable(_$ThemeModeEnumMap, json['themeMode']) ??
-      ThemeMode.system
-  ..primaryColor = (json['primaryColor'] as num?)?.toInt()
   ..isAccessControl = json['isAccessControl'] as bool? ?? false
   ..accessControl =
       AccessControl.fromJson(json['accessControl'] as Map<String, dynamic>)
   ..dav = json['dav'] == null
       ? null
       : DAV.fromJson(json['dav'] as Map<String, dynamic>)
-  ..prueBlack = json['prueBlack'] as bool? ?? false
   ..windowProps =
       WindowProps.fromJson(json['windowProps'] as Map<String, dynamic>?)
   ..vpnProps = VpnProps.fromJson(json['vpnProps'] as Map<String, dynamic>?)
@@ -35,31 +31,25 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
           .toList() ??
       []
   ..proxiesStyle =
-      ProxiesStyle.fromJson(json['proxiesStyle'] as Map<String, dynamic>?);
+      ProxiesStyle.fromJson(json['proxiesStyle'] as Map<String, dynamic>?)
+  ..themeProps =
+      ThemeProps.realFromJson(json['themeProps'] as Map<String, Object?>?);
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'appSetting': instance.appSetting,
       'profiles': instance.profiles,
       'currentProfileId': instance.currentProfileId,
-      'themeMode': _$ThemeModeEnumMap[instance.themeMode]!,
-      'primaryColor': instance.primaryColor,
       'isAccessControl': instance.isAccessControl,
       'accessControl': instance.accessControl,
       'dav': instance.dav,
-      'prueBlack': instance.prueBlack,
       'windowProps': instance.windowProps,
       'vpnProps': instance.vpnProps,
       'desktopProps': instance.desktopProps,
       'overrideDns': instance.overrideDns,
       'hotKeyActions': instance.hotKeyActions,
       'proxiesStyle': instance.proxiesStyle,
+      'themeProps': instance.themeProps,
     };
-
-const _$ThemeModeEnumMap = {
-  ThemeMode.system: 'system',
-  ThemeMode.light: 'light',
-  ThemeMode.dark: 'dark',
-};
 
 _$AppSettingImpl _$$AppSettingImplFromJson(Map<String, dynamic> json) =>
     _$AppSettingImpl(
@@ -240,4 +230,36 @@ const _$ProxyCardTypeEnumMap = {
   ProxyCardType.expand: 'expand',
   ProxyCardType.shrink: 'shrink',
   ProxyCardType.min: 'min',
+};
+
+_$ThemePropsImpl _$$ThemePropsImplFromJson(Map<String, dynamic> json) =>
+    _$ThemePropsImpl(
+      primaryColor: (json['primaryColor'] as num?)?.toInt() ?? 0xFF795548,
+      themeMode: $enumDecodeNullable(_$ThemeModeEnumMap, json['themeMode']) ??
+          ThemeMode.system,
+      prueBlack: json['prueBlack'] as bool? ?? false,
+      fontFamily:
+          $enumDecodeNullable(_$FontFamilyEnumMap, json['fontFamily']) ??
+              FontFamily.system,
+    );
+
+Map<String, dynamic> _$$ThemePropsImplToJson(_$ThemePropsImpl instance) =>
+    <String, dynamic>{
+      'primaryColor': instance.primaryColor,
+      'themeMode': _$ThemeModeEnumMap[instance.themeMode]!,
+      'prueBlack': instance.prueBlack,
+      'fontFamily': _$FontFamilyEnumMap[instance.fontFamily]!,
+    };
+
+const _$ThemeModeEnumMap = {
+  ThemeMode.system: 'system',
+  ThemeMode.light: 'light',
+  ThemeMode.dark: 'dark',
+};
+
+const _$FontFamilyEnumMap = {
+  FontFamily.system: 'system',
+  FontFamily.miSans: 'miSans',
+  FontFamily.twEmoji: 'twEmoji',
+  FontFamily.icon: 'icon',
 };

@@ -772,6 +772,7 @@ mixin _$ApplicationSelectorState {
   ThemeMode? get themeMode => throw _privateConstructorUsedError;
   int? get primaryColor => throw _privateConstructorUsedError;
   bool get prueBlack => throw _privateConstructorUsedError;
+  FontFamily get fontFamily => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ApplicationSelectorStateCopyWith<ApplicationSelectorState> get copyWith =>
@@ -788,7 +789,8 @@ abstract class $ApplicationSelectorStateCopyWith<$Res> {
       {String? locale,
       ThemeMode? themeMode,
       int? primaryColor,
-      bool prueBlack});
+      bool prueBlack,
+      FontFamily fontFamily});
 }
 
 /// @nodoc
@@ -809,6 +811,7 @@ class _$ApplicationSelectorStateCopyWithImpl<$Res,
     Object? themeMode = freezed,
     Object? primaryColor = freezed,
     Object? prueBlack = null,
+    Object? fontFamily = null,
   }) {
     return _then(_value.copyWith(
       locale: freezed == locale
@@ -827,6 +830,10 @@ class _$ApplicationSelectorStateCopyWithImpl<$Res,
           ? _value.prueBlack
           : prueBlack // ignore: cast_nullable_to_non_nullable
               as bool,
+      fontFamily: null == fontFamily
+          ? _value.fontFamily
+          : fontFamily // ignore: cast_nullable_to_non_nullable
+              as FontFamily,
     ) as $Val);
   }
 }
@@ -844,7 +851,8 @@ abstract class _$$ApplicationSelectorStateImplCopyWith<$Res>
       {String? locale,
       ThemeMode? themeMode,
       int? primaryColor,
-      bool prueBlack});
+      bool prueBlack,
+      FontFamily fontFamily});
 }
 
 /// @nodoc
@@ -864,6 +872,7 @@ class __$$ApplicationSelectorStateImplCopyWithImpl<$Res>
     Object? themeMode = freezed,
     Object? primaryColor = freezed,
     Object? prueBlack = null,
+    Object? fontFamily = null,
   }) {
     return _then(_$ApplicationSelectorStateImpl(
       locale: freezed == locale
@@ -882,6 +891,10 @@ class __$$ApplicationSelectorStateImplCopyWithImpl<$Res>
           ? _value.prueBlack
           : prueBlack // ignore: cast_nullable_to_non_nullable
               as bool,
+      fontFamily: null == fontFamily
+          ? _value.fontFamily
+          : fontFamily // ignore: cast_nullable_to_non_nullable
+              as FontFamily,
     ));
   }
 }
@@ -893,7 +906,8 @@ class _$ApplicationSelectorStateImpl implements _ApplicationSelectorState {
       {required this.locale,
       required this.themeMode,
       required this.primaryColor,
-      required this.prueBlack});
+      required this.prueBlack,
+      required this.fontFamily});
 
   @override
   final String? locale;
@@ -903,10 +917,12 @@ class _$ApplicationSelectorStateImpl implements _ApplicationSelectorState {
   final int? primaryColor;
   @override
   final bool prueBlack;
+  @override
+  final FontFamily fontFamily;
 
   @override
   String toString() {
-    return 'ApplicationSelectorState(locale: $locale, themeMode: $themeMode, primaryColor: $primaryColor, prueBlack: $prueBlack)';
+    return 'ApplicationSelectorState(locale: $locale, themeMode: $themeMode, primaryColor: $primaryColor, prueBlack: $prueBlack, fontFamily: $fontFamily)';
   }
 
   @override
@@ -920,12 +936,14 @@ class _$ApplicationSelectorStateImpl implements _ApplicationSelectorState {
             (identical(other.primaryColor, primaryColor) ||
                 other.primaryColor == primaryColor) &&
             (identical(other.prueBlack, prueBlack) ||
-                other.prueBlack == prueBlack));
+                other.prueBlack == prueBlack) &&
+            (identical(other.fontFamily, fontFamily) ||
+                other.fontFamily == fontFamily));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, locale, themeMode, primaryColor, prueBlack);
+  int get hashCode => Object.hash(
+      runtimeType, locale, themeMode, primaryColor, prueBlack, fontFamily);
 
   @JsonKey(ignore: true)
   @override
@@ -940,7 +958,8 @@ abstract class _ApplicationSelectorState implements ApplicationSelectorState {
       {required final String? locale,
       required final ThemeMode? themeMode,
       required final int? primaryColor,
-      required final bool prueBlack}) = _$ApplicationSelectorStateImpl;
+      required final bool prueBlack,
+      required final FontFamily fontFamily}) = _$ApplicationSelectorStateImpl;
 
   @override
   String? get locale;
@@ -950,6 +969,8 @@ abstract class _ApplicationSelectorState implements ApplicationSelectorState {
   int? get primaryColor;
   @override
   bool get prueBlack;
+  @override
+  FontFamily get fontFamily;
   @override
   @JsonKey(ignore: true)
   _$$ApplicationSelectorStateImplCopyWith<_$ApplicationSelectorStateImpl>

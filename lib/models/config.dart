@@ -141,6 +141,35 @@ class ProxiesStyle with _$ProxiesStyle {
       json == null ? defaultProxiesStyle : _$ProxiesStyleFromJson(json);
 }
 
+const defaultThemeProps = ThemeProps();
+
+@freezed
+class ThemeProps with _$ThemeProps {
+  const factory ThemeProps({
+    @Default(0xFF795548) int? primaryColor,
+    @Default(ThemeMode.system) ThemeMode themeMode,
+    @Default(false) bool prueBlack,
+    @Default(FontFamily.system) FontFamily fontFamily,
+  }) = _ThemeProps;
+
+  factory ThemeProps.fromJson(Map<String, Object?> json) => _$ThemePropsFromJson(json);
+
+  factory ThemeProps.realFromJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return Platform.isWindows
+          ? defaultThemeProps.copyWith(fontFamily: FontFamily.miSans)
+          : defaultThemeProps;
+    }
+    try {
+      return ThemeProps.fromJson(json);
+    } catch (_) {
+      return Platform.isWindows
+          ? defaultThemeProps.copyWith(fontFamily: FontFamily.miSans)
+          : defaultThemeProps;
+    }
+  }
+}
+
 const defaultCustomFontSizeScale = 1.0;
 
 @JsonSerializable()
@@ -148,13 +177,11 @@ class Config extends ChangeNotifier {
   AppSetting _appSetting;
   List<Profile> _profiles;
   String? _currentProfileId;
-  ThemeMode _themeMode;
-  int? _primaryColor;
   bool _isAccessControl;
   AccessControl _accessControl;
   DAV? _dav;
   WindowProps _windowProps;
-  bool _prueBlack;
+  ThemeProps _themeProps;
   VpnProps _vpnProps;
   DesktopProps _desktopProps;
   bool _overrideDns;
@@ -163,18 +190,16 @@ class Config extends ChangeNotifier {
 
   Config()
       : _profiles = [],
-        _themeMode = ThemeMode.system,
-        _primaryColor = defaultPrimaryColor.value,
         _isAccessControl = false,
         _accessControl = const AccessControl(),
         _windowProps = const WindowProps(),
-        _prueBlack = false,
         _vpnProps = defaultVpnProps,
         _desktopProps = const DesktopProps(),
         _overrideDns = false,
         _appSetting = defaultAppSetting,
         _hotKeyActions = [],
-        _proxiesStyle = defaultProxiesStyle;
+        _proxiesStyle = defaultProxiesStyle,
+        _themeProps = defaultThemeProps;
 
   @JsonKey(fromJson: AppSetting.realFromJson)
   AppSetting get appSetting => _appSetting;
@@ -305,25 +330,6 @@ class Config extends ChangeNotifier {
     }
   }
 
-  @JsonKey(defaultValue: ThemeMode.system)
-  ThemeMode get themeMode => _themeMode;
-
-  set themeMode(ThemeMode value) {
-    if (_themeMode != value) {
-      _themeMode = value;
-      notifyListeners();
-    }
-  }
-
-  int? get primaryColor => _primaryColor;
-
-  set primaryColor(int? value) {
-    if (_primaryColor != value) {
-      _primaryColor = value;
-      notifyListeners();
-    }
-  }
-
   @JsonKey(defaultValue: false)
   bool get isAccessControl {
     if (!Platform.isAndroid) return false;
@@ -351,18 +357,6 @@ class Config extends ChangeNotifier {
   set dav(DAV? value) {
     if (_dav != value) {
       _dav = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(defaultValue: false)
-  bool get prueBlack {
-    return _prueBlack;
-  }
-
-  set prueBlack(bool value) {
-    if (_prueBlack != value) {
-      _prueBlack = value;
       notifyListeners();
     }
   }
@@ -427,6 +421,16 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(fromJson: ThemeProps.realFromJson)
+  ThemeProps get themeProps => _themeProps;
+
+  set themeProps(ThemeProps value) {
+    if (_themeProps != value) {
+      _themeProps = value;
+      notifyListeners();
+    }
+  }
+
   updateOrAddHotKeyAction(HotKeyAction hotKeyAction) {
     final index =
         _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
@@ -455,11 +459,9 @@ class Config extends ChangeNotifier {
       _appSetting = config._appSetting;
       _currentProfileId = config._currentProfileId;
       _dav = config._dav;
-      _themeMode = config._themeMode;
-      _primaryColor = config._primaryColor;
       _isAccessControl = config._isAccessControl;
       _accessControl = config._accessControl;
-      _prueBlack = config._prueBlack;
+      _themeProps = config._themeProps;
       _windowProps = config._windowProps;
       _proxiesStyle = config._proxiesStyle;
       _vpnProps = config._vpnProps;

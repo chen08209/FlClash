@@ -158,10 +158,12 @@ func getRawConfigWithId(id string) *config.RawConfig {
 		}
 		mapping["path"] = filepath.Join(getProfileProvidersPath(id), value)
 		if configParams.TestURL != nil {
-			hc := mapping["health-check"].(map[string]any)
-			if hc != nil {
-				if hc["url"] != nil {
-					hc["url"] = *configParams.TestURL
+			if mapping["health-check"] != nil {
+				hc := mapping["health-check"].(map[string]any)
+				if hc != nil {
+					if hc["url"] != nil {
+						hc["url"] = *configParams.TestURL
+					}
 				}
 			}
 		}

@@ -162,3 +162,14 @@ enum ProxiesIconStyle {
   none,
   icon,
 }
+
+enum FontFamily {
+  system(),
+  miSans("MiSans"),
+  twEmoji("Twemoji"),
+  icon("Icons");
+
+  final String? value;
+
+  const FontFamily([this.value]);
+}

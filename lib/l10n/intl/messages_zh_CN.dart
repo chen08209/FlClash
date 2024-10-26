@@ -155,6 +155,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "findProcessMode": MessageLookupByLibrary.simpleMessage("查找进程"),
         "findProcessModeDesc":
             MessageLookupByLibrary.simpleMessage("开启后存在闪退风险"),
+        "fontFamily": MessageLookupByLibrary.simpleMessage("字体"),
         "fourColumns": MessageLookupByLibrary.simpleMessage("四列"),
         "general": MessageLookupByLibrary.simpleMessage("基础"),
         "generalDesc": MessageLookupByLibrary.simpleMessage("覆写基础设置"),
@@ -339,6 +340,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "style": MessageLookupByLibrary.simpleMessage("风格"),
         "submit": MessageLookupByLibrary.simpleMessage("提交"),
         "sync": MessageLookupByLibrary.simpleMessage("同步"),
+        "systemFont": MessageLookupByLibrary.simpleMessage("系统字体"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("系统代理"),
         "systemProxyDesc":
             MessageLookupByLibrary.simpleMessage("为VpnService附加HTTP代理"),

@@ -163,9 +163,10 @@ class ApplicationState extends State<Application> {
           child: Selector2<AppState, Config, ApplicationSelectorState>(
             selector: (_, appState, config) => ApplicationSelectorState(
               locale: config.appSetting.locale,
-              themeMode: config.themeMode,
-              primaryColor: config.primaryColor,
-              prueBlack: config.prueBlack,
+              themeMode: config.themeProps.themeMode,
+              primaryColor: config.themeProps.primaryColor,
+              prueBlack: config.themeProps.prueBlack,
+              fontFamily: config.themeProps.fontFamily,
             ),
             builder: (_, state, child) {
               return DynamicColorBuilder(
@@ -199,6 +200,7 @@ class ApplicationState extends State<Application> {
                     themeMode: state.themeMode,
                     theme: ThemeData(
                       useMaterial3: true,
+                      fontFamily: state.fontFamily.value,
                       pageTransitionsTheme: _pageTransitionsTheme,
                       colorScheme: _getAppColorScheme(
                         brightness: Brightness.light,
@@ -208,6 +210,7 @@ class ApplicationState extends State<Application> {
                     ),
                     darkTheme: ThemeData(
                       useMaterial3: true,
+                      fontFamily: state.fontFamily.value,
                       pageTransitionsTheme: _pageTransitionsTheme,
                       colorScheme: _getAppColorScheme(
                         brightness: Brightness.dark,

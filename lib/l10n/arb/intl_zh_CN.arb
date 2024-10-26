@@ -320,5 +320,7 @@
   "iconConfiguration": "图片配置",
   "noData": "暂无数据",
   "adminAutoLaunch": "管理员自启动",
-  "adminAutoLaunchDesc": "使用管理员模式开机自启动"
+  "adminAutoLaunchDesc": "使用管理员模式开机自启动",
+  "fontFamily": "字体",
+  "systemFont": "系统字体"
 }

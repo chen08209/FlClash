@@ -192,6 +192,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "findProcessMode": MessageLookupByLibrary.simpleMessage("Find process"),
         "findProcessModeDesc": MessageLookupByLibrary.simpleMessage(
             "There is a risk of flashback after opening"),
+        "fontFamily": MessageLookupByLibrary.simpleMessage("FontFamily"),
         "fourColumns": MessageLookupByLibrary.simpleMessage("Four columns"),
         "general": MessageLookupByLibrary.simpleMessage("General"),
         "generalDesc":
@@ -425,6 +426,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "style": MessageLookupByLibrary.simpleMessage("Style"),
         "submit": MessageLookupByLibrary.simpleMessage("Submit"),
         "sync": MessageLookupByLibrary.simpleMessage("Sync"),
+        "systemFont": MessageLookupByLibrary.simpleMessage("System font"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
         "systemProxyDesc": MessageLookupByLibrary.simpleMessage(
             "Attach HTTP proxy to VpnService"),
