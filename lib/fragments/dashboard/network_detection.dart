@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -69,7 +70,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
   }
 
   _clearSetTimeoutTimer() {
-    if(_setTimeoutTimer != null){
+    if (_setTimeoutTimer != null) {
       _setTimeoutTimer?.cancel();
       _setTimeoutTimer = null;
     }
@@ -155,7 +156,7 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                                               .textTheme
                                               .titleLarge
                                               ?.copyWith(
-                                                fontFamily: Fonts.twEmoji,
+                                                fontFamily: FontFamily.twEmoji.value,
                                               ),
                                         ),
                                       )

@@ -1541,3 +1541,212 @@ abstract class _ProxiesStyle implements ProxiesStyle {
   _$$ProxiesStyleImplCopyWith<_$ProxiesStyleImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+ThemeProps _$ThemePropsFromJson(Map<String, dynamic> json) {
+  return _ThemeProps.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ThemeProps {
+  int? get primaryColor => throw _privateConstructorUsedError;
+  ThemeMode get themeMode => throw _privateConstructorUsedError;
+  bool get prueBlack => throw _privateConstructorUsedError;
+  FontFamily get fontFamily => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ThemePropsCopyWith<ThemeProps> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ThemePropsCopyWith<$Res> {
+  factory $ThemePropsCopyWith(
+          ThemeProps value, $Res Function(ThemeProps) then) =
+      _$ThemePropsCopyWithImpl<$Res, ThemeProps>;
+  @useResult
+  $Res call(
+      {int? primaryColor,
+      ThemeMode themeMode,
+      bool prueBlack,
+      FontFamily fontFamily});
+}
+
+/// @nodoc
+class _$ThemePropsCopyWithImpl<$Res, $Val extends ThemeProps>
+    implements $ThemePropsCopyWith<$Res> {
+  _$ThemePropsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? primaryColor = freezed,
+    Object? themeMode = null,
+    Object? prueBlack = null,
+    Object? fontFamily = null,
+  }) {
+    return _then(_value.copyWith(
+      primaryColor: freezed == primaryColor
+          ? _value.primaryColor
+          : primaryColor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      themeMode: null == themeMode
+          ? _value.themeMode
+          : themeMode // ignore: cast_nullable_to_non_nullable
+              as ThemeMode,
+      prueBlack: null == prueBlack
+          ? _value.prueBlack
+          : prueBlack // ignore: cast_nullable_to_non_nullable
+              as bool,
+      fontFamily: null == fontFamily
+          ? _value.fontFamily
+          : fontFamily // ignore: cast_nullable_to_non_nullable
+              as FontFamily,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ThemePropsImplCopyWith<$Res>
+    implements $ThemePropsCopyWith<$Res> {
+  factory _$$ThemePropsImplCopyWith(
+          _$ThemePropsImpl value, $Res Function(_$ThemePropsImpl) then) =
+      __$$ThemePropsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {int? primaryColor,
+      ThemeMode themeMode,
+      bool prueBlack,
+      FontFamily fontFamily});
+}
+
+/// @nodoc
+class __$$ThemePropsImplCopyWithImpl<$Res>
+    extends _$ThemePropsCopyWithImpl<$Res, _$ThemePropsImpl>
+    implements _$$ThemePropsImplCopyWith<$Res> {
+  __$$ThemePropsImplCopyWithImpl(
+      _$ThemePropsImpl _value, $Res Function(_$ThemePropsImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? primaryColor = freezed,
+    Object? themeMode = null,
+    Object? prueBlack = null,
+    Object? fontFamily = null,
+  }) {
+    return _then(_$ThemePropsImpl(
+      primaryColor: freezed == primaryColor
+          ? _value.primaryColor
+          : primaryColor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      themeMode: null == themeMode
+          ? _value.themeMode
+          : themeMode // ignore: cast_nullable_to_non_nullable
+              as ThemeMode,
+      prueBlack: null == prueBlack
+          ? _value.prueBlack
+          : prueBlack // ignore: cast_nullable_to_non_nullable
+              as bool,
+      fontFamily: null == fontFamily
+          ? _value.fontFamily
+          : fontFamily // ignore: cast_nullable_to_non_nullable
+              as FontFamily,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ThemePropsImpl implements _ThemeProps {
+  const _$ThemePropsImpl(
+      {this.primaryColor = 0xFF795548,
+      this.themeMode = ThemeMode.system,
+      this.prueBlack = false,
+      this.fontFamily = FontFamily.system});
+
+  factory _$ThemePropsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ThemePropsImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final int? primaryColor;
+  @override
+  @JsonKey()
+  final ThemeMode themeMode;
+  @override
+  @JsonKey()
+  final bool prueBlack;
+  @override
+  @JsonKey()
+  final FontFamily fontFamily;
+
+  @override
+  String toString() {
+    return 'ThemeProps(primaryColor: $primaryColor, themeMode: $themeMode, prueBlack: $prueBlack, fontFamily: $fontFamily)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ThemePropsImpl &&
+            (identical(other.primaryColor, primaryColor) ||
+                other.primaryColor == primaryColor) &&
+            (identical(other.themeMode, themeMode) ||
+                other.themeMode == themeMode) &&
+            (identical(other.prueBlack, prueBlack) ||
+                other.prueBlack == prueBlack) &&
+            (identical(other.fontFamily, fontFamily) ||
+                other.fontFamily == fontFamily));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, primaryColor, themeMode, prueBlack, fontFamily);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ThemePropsImplCopyWith<_$ThemePropsImpl> get copyWith =>
+      __$$ThemePropsImplCopyWithImpl<_$ThemePropsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ThemePropsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ThemeProps implements ThemeProps {
+  const factory _ThemeProps(
+      {final int? primaryColor,
+      final ThemeMode themeMode,
+      final bool prueBlack,
+      final FontFamily fontFamily}) = _$ThemePropsImpl;
+
+  factory _ThemeProps.fromJson(Map<String, dynamic> json) =
+      _$ThemePropsImpl.fromJson;
+
+  @override
+  int? get primaryColor;
+  @override
+  ThemeMode get themeMode;
+  @override
+  bool get prueBlack;
+  @override
+  FontFamily get fontFamily;
+  @override
+  @JsonKey(ignore: true)
+  _$$ThemePropsImplCopyWith<_$ThemePropsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

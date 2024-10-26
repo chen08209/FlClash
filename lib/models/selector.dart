@@ -55,6 +55,7 @@ class ApplicationSelectorState with _$ApplicationSelectorState {
     required ThemeMode? themeMode,
     required int? primaryColor,
     required bool prueBlack,
+    required FontFamily fontFamily,
   }) = _ApplicationSelectorState;
 }
 

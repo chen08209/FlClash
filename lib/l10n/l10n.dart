@@ -3269,6 +3269,26 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `FontFamily`
+  String get fontFamily {
+    return Intl.message(
+      'FontFamily',
+      name: 'fontFamily',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System font`
+  String get systemFont {
+    return Intl.message(
+      'System font',
+      name: 'systemFont',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

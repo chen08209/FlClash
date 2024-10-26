@@ -320,5 +320,7 @@
   "iconConfiguration": "Icon configuration",
   "noData": "No data",
   "adminAutoLaunch": "Admin auto launch",
-  "adminAutoLaunchDesc": "Boot up by using admin mode"
+  "adminAutoLaunchDesc": "Boot up by using admin mode",
+  "fontFamily": "FontFamily",
+  "systemFont": "System font"
 }

@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,16 @@ class ThemeModeItem {
   const ThemeModeItem({
     required this.themeMode,
     required this.iconData,
+    required this.label,
+  });
+}
+
+class FontFamilyItem {
+  final FontFamily fontFamily;
+  final String label;
+
+  const FontFamilyItem({
+    required this.fontFamily,
     required this.label,
   });
 }
@@ -92,7 +103,11 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
     return CommonCard(
       isSelected: isSelected,
       onPressed: () {
-        globalState.appController.config.themeMode = themeModeItem.themeMode;
+        final appController = globalState.appController;
+        appController.config.themeProps =
+            appController.config.themeProps.copyWith(
+          themeMode: themeModeItem.themeMode,
+        );
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -125,8 +140,42 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
       isSelected: isSelected,
       primaryColor: color,
       onPressed: () {
-        globalState.appController.config.primaryColor = color?.value;
+        final appController = globalState.appController;
+        appController.config.themeProps =
+            appController.config.themeProps.copyWith(
+          primaryColor: color?.value,
+        );
       },
+    );
+  }
+
+  Widget _fontFamilyCheckBox({
+    bool? isSelected,
+    required FontFamilyItem fontFamilyItem,
+  }) {
+    return CommonCard(
+      isSelected: isSelected,
+      onPressed: () {
+        final appController = globalState.appController;
+        appController.config.themeProps =
+            appController.config.themeProps.copyWith(
+          fontFamily: fontFamilyItem.fontFamily,
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Flexible(
+              child: Text(
+                fontFamilyItem.label,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -158,15 +207,59 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
       Colors.yellowAccent,
       Colors.purple,
     ];
+    List<FontFamilyItem> fontFamilyItems = [
+      FontFamilyItem(
+        label: appLocalizations.systemFont,
+        fontFamily: FontFamily.system,
+      ),
+      const FontFamilyItem(
+        label: "MiSans",
+        fontFamily: FontFamily.miSans,
+      ),
+    ];
     return Column(
       children: [
+        ItemCard(
+          info: Info(
+            label: appLocalizations.fontFamily,
+            iconData: Icons.text_fields,
+          ),
+          child: Container(
+            margin: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+            ),
+            height: 48,
+            child: Selector<Config, FontFamily>(
+              selector: (_, config) => config.themeProps.fontFamily,
+              builder: (_, fontFamily, __) {
+                return ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemBuilder: (_, index) {
+                    final fontFamilyItem = fontFamilyItems[index];
+                    return _fontFamilyCheckBox(
+                      isSelected: fontFamily == fontFamilyItem.fontFamily,
+                      fontFamilyItem: fontFamilyItem,
+                    );
+                  },
+                  separatorBuilder: (_, __) {
+                    return const SizedBox(
+                      width: 16,
+                    );
+                  },
+                  itemCount: fontFamilyItems.length,
+                );
+              },
+            ),
+          ),
+        ),
         ItemCard(
           info: Info(
             label: appLocalizations.themeMode,
             iconData: Icons.brightness_high,
           ),
           child: Selector<Config, ThemeMode>(
-            selector: (_, config) => config.themeMode,
+            selector: (_, config) => config.themeProps.themeMode,
             builder: (_, themeMode, __) {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -204,7 +297,7 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
             ),
             height: 88,
             child: Selector<Config, int?>(
-              selector: (_, config) => config.primaryColor,
+              selector: (_, config) => config.themeProps.primaryColor,
               builder: (_, currentPrimaryColor, __) {
                 return ListView.separated(
                   scrollDirection: Axis.horizontal,
@@ -229,7 +322,7 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Selector<Config, bool>(
-            selector: (_, config) => config.prueBlack,
+            selector: (_, config) => config.themeProps.prueBlack,
             builder: (_, value, ___) {
               return ListItem.switchItem(
                 leading: Icon(
@@ -238,63 +331,19 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
                 ),
                 title: Text(appLocalizations.prueBlackMode),
                 delegate: SwitchDelegate(
-                    value: value,
-                    onChanged: (value) {
-                      globalState.appController.config.prueBlack = value;
-                    }),
+                  value: value,
+                  onChanged: (value) {
+                    final appController = globalState.appController;
+                    appController.config.themeProps =
+                        appController.config.themeProps.copyWith(
+                      prueBlack: value,
+                    );
+                  },
+                ),
               );
             },
           ),
         ),
-        // Padding(
-        //   padding: const EdgeInsets.symmetric(vertical: 16),
-        //   child: Selector<Config, bool>(
-        //     selector: (_, config) => config.scaleProps.custom,
-        //     builder: (_, value, ___) {
-        //       return ListItem.switchItem(
-        //         leading: Icon(
-        //           Icons.format_size_sharp,
-        //           color: context.colorScheme.primary,
-        //         ),
-        //         title: const Text("自定义字体大小"),
-        //         delegate: SwitchDelegate(
-        //           value: value,
-        //           onChanged: (value) {
-        //             globalState.appController.config.scaleProps =
-        //                 globalState.appController.config.scaleProps.copyWith(
-        //               custom: value,
-        //             );
-        //           },
-        //         ),
-        //       );
-        //     },
-        //   ),
-        // ),
-        // SizedBox(
-        //   height: 20,
-        //   child: Selector<Config, ScaleProps>(
-        //     selector: (_, config) => config.scaleProps,
-        //     builder: (_, props, ___) {
-        //       return AbsorbPointer(
-        //         absorbing: !props.custom,
-        //         child: DisabledMask(
-        //           status: !props.custom,
-        //           child: Slider(
-        //             value: props.scale,
-        //             min: 0.8,
-        //             max: 1.2,
-        //             onChanged: (value) {
-        //               globalState.appController.config.scaleProps =
-        //                   globalState.appController.config.scaleProps.copyWith(
-        //                 scale: value,
-        //               );
-        //             },
-        //           ),
-        //         ),
-        //       );
-        //     },
-        //   ),
-        // ),
         const SizedBox(
           height: 64,
         ),
