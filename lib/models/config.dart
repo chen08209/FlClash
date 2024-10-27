@@ -10,7 +10,9 @@ part 'generated/config.g.dart';
 
 part 'generated/config.freezed.dart';
 
-const defaultAppSetting = AppSetting();
+final defaultAppSetting = const AppSetting().copyWith(
+  isAnimateToPage: system.isDesktop ? false : true,
+);
 
 @freezed
 class AppSetting with _$AppSetting {
@@ -36,10 +38,11 @@ class AppSetting with _$AppSetting {
       _$AppSettingFromJson(json);
 
   factory AppSetting.realFromJson(Map<String, Object?>? json) {
-    final appSetting =
-        json == null ? defaultAppSetting : AppSetting.fromJson(json);
+    final appSetting = json == null
+        ? defaultAppSetting
+        : AppSetting.fromJson(json);
     return appSetting.copyWith(
-      isAnimateToPage: system.isDesktop ? false : true,
+      isAnimateToPage: system.isDesktop ? false : appSetting.isAnimateToPage,
     );
   }
 }
@@ -68,7 +71,7 @@ extension AccessControlExt on AccessControl {
 @freezed
 class WindowProps with _$WindowProps {
   const factory WindowProps({
-    @Default(1000) double width,
+    @Default(900) double width,
     @Default(600) double height,
     double? top,
     double? left,
@@ -141,36 +144,38 @@ class ProxiesStyle with _$ProxiesStyle {
       json == null ? defaultProxiesStyle : _$ProxiesStyleFromJson(json);
 }
 
-const defaultThemeProps = ThemeProps();
+final defaultThemeProps = Platform.isWindows
+    ? const ThemeProps().copyWith(
+        fontFamily: FontFamily.miSans,
+        primaryColor: defaultPrimaryColor.value,
+      )
+    : const ThemeProps().copyWith(
+        primaryColor: defaultPrimaryColor.value,
+      );
 
 @freezed
 class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
-    @Default(0xFF795548) int? primaryColor,
+    int? primaryColor,
     @Default(ThemeMode.system) ThemeMode themeMode,
     @Default(false) bool prueBlack,
     @Default(FontFamily.system) FontFamily fontFamily,
   }) = _ThemeProps;
 
-  factory ThemeProps.fromJson(Map<String, Object?> json) => _$ThemePropsFromJson(json);
+  factory ThemeProps.fromJson(Map<String, Object?> json) =>
+      _$ThemePropsFromJson(json);
 
   factory ThemeProps.realFromJson(Map<String, Object?>? json) {
     if (json == null) {
-      return Platform.isWindows
-          ? defaultThemeProps.copyWith(fontFamily: FontFamily.miSans)
-          : defaultThemeProps;
+      return defaultThemeProps;
     }
     try {
       return ThemeProps.fromJson(json);
     } catch (_) {
-      return Platform.isWindows
-          ? defaultThemeProps.copyWith(fontFamily: FontFamily.miSans)
-          : defaultThemeProps;
+      return defaultThemeProps;
     }
   }
 }
-
-const defaultCustomFontSizeScale = 1.0;
 
 @JsonSerializable()
 class Config extends ChangeNotifier {
@@ -478,5 +483,10 @@ class Config extends ChangeNotifier {
 
   factory Config.fromJson(Map<String, dynamic> json) {
     return _$ConfigFromJson(json);
+  }
+
+  @override
+  String toString() {
+    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _desktopProps: $_desktopProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle}';
   }
 }

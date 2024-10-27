@@ -278,6 +278,23 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
     );
   }
 
+  initFab(bool isCurrent, List<Proxy> proxies) {
+    if (!isCurrent) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final commonScaffoldState =
+          context.findAncestorStateOfType<CommonScaffoldState>();
+      commonScaffoldState?.floatingActionButton = DelayTestButton(
+        onClick: () async {
+          await _delayTest(
+            proxies,
+          );
+        },
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Selector2<AppState, Config, ProxyGroupSelectorState>(
@@ -303,11 +320,11 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
           proxies,
         );
         _lastProxies = sortedProxies;
-        return DelayTestButtonContainer(
-          onClick: () async {
-            await _delayTest(
-              proxies,
-            );
+        return ActiveBuilder(
+          label: "proxies",
+          builder: (isCurrent, child) {
+            initFab(isCurrent, proxies);
+            return child!;
           },
           child: Align(
             alignment: Alignment.topCenter,
@@ -344,22 +361,19 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
   }
 }
 
-class DelayTestButtonContainer extends StatefulWidget {
-  final Widget child;
+class DelayTestButton extends StatefulWidget {
   final Future Function() onClick;
 
-  const DelayTestButtonContainer({
+  const DelayTestButton({
     super.key,
-    required this.child,
     required this.onClick,
   });
 
   @override
-  State<DelayTestButtonContainer> createState() =>
-      _DelayTestButtonContainerState();
+  State<DelayTestButton> createState() => _DelayTestButtonState();
 }
 
-class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
+class _DelayTestButtonState extends State<DelayTestButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scale;
@@ -401,29 +415,23 @@ class _DelayTestButtonContainerState extends State<DelayTestButtonContainer>
 
   @override
   Widget build(BuildContext context) {
-    _controller.reverse();
-    return FloatLayout(
-      floatingWidget: FloatWrapper(
-        child: AnimatedBuilder(
-          animation: _controller.view,
-          builder: (_, child) {
-            return SizedBox(
-              width: 56,
-              height: 56,
-              child: Transform.scale(
-                scale: _scale.value,
-                child: child,
-              ),
-            );
-          },
-          child: FloatingActionButton(
-            heroTag: null,
-            onPressed: _healthcheck,
-            child: const Icon(Icons.network_ping),
+    return AnimatedBuilder(
+      animation: _controller.view,
+      builder: (_, child) {
+        return SizedBox(
+          width: 56,
+          height: 56,
+          child: Transform.scale(
+            scale: _scale.value,
+            child: child,
           ),
-        ),
+        );
+      },
+      child: FloatingActionButton(
+        heroTag: null,
+        onPressed: _healthcheck,
+        child: const Icon(Icons.network_ping),
       ),
-      child: widget.child,
     );
   }
 }

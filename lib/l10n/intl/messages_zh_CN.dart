@@ -359,6 +359,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "tight": MessageLookupByLibrary.simpleMessage("紧凑"),
         "time": MessageLookupByLibrary.simpleMessage("时间"),
         "tip": MessageLookupByLibrary.simpleMessage("提示"),
+        "toggle": MessageLookupByLibrary.simpleMessage("切换"),
         "tools": MessageLookupByLibrary.simpleMessage("工具"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("流量统计"),
         "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),

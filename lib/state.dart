@@ -70,10 +70,7 @@ class GlobalState {
     appState.versionInfo = clashCore.getVersionInfo();
   }
 
-  handleStart({
-    required Config config,
-    required ClashConfig clashConfig,
-  }) async {
+  handleStart() async {
     clashCore.start();
     if (globalState.isVpnService) {
       await vpn?.startVpn();
@@ -81,8 +78,6 @@ class GlobalState {
       return;
     }
     startTime ??= DateTime.now();
-    await preferences.saveClashConfig(clashConfig);
-    await preferences.saveConfig(config);
     await service?.init();
     startListenUpdate();
   }

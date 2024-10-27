@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class App {
   static App? _instance;
@@ -19,6 +21,12 @@ class App {
         case "exit":
           if (onExit != null) {
             await onExit!();
+          }
+        case "getText":
+          try {
+            return Intl.message(call.arguments as String);
+          } catch (_) {
+            return "";
           }
         default:
           throw MissingPluginException();
@@ -76,6 +84,13 @@ class App {
     return await methodChannel.invokeMethod<bool>("tip", {
       "message": "$message",
     });
+  }
+
+  Future<bool?> initShortcuts() async {
+    return await methodChannel.invokeMethod<bool>(
+      "initShortcuts",
+      appLocalizations.toggle,
+    );
   }
 
   Future<bool?> updateExcludeFromRecents(bool value) async {

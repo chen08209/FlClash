@@ -21,12 +21,14 @@ import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
 import com.follow.clash.R
 import com.follow.clash.TempActivity
+import com.follow.clash.extensions.getActionPendingIntent
 import com.follow.clash.extensions.toCIDR
 import com.follow.clash.models.AccessControlMode
 import com.follow.clash.models.VpnOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
 class FlClashVpnService : VpnService(), BaseServiceInterface {
@@ -122,26 +124,6 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
             )
         }
 
-        val stopIntent = Intent(this, TempActivity::class.java)
-        stopIntent.action = "com.follow.clash.action.STOP"
-        stopIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-
-
-        val stopPendingIntent = if (Build.VERSION.SDK_INT >= 31) {
-            PendingIntent.getActivity(
-                this,
-                0,
-                stopIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-        } else {
-            PendingIntent.getActivity(
-                this,
-                0,
-                stopIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT
-            )
-        }
         with(NotificationCompat.Builder(this, CHANNEL)) {
             setSmallIcon(R.drawable.ic_stat_name)
             setContentTitle("FlClash")
@@ -152,30 +134,39 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
             }
             setOngoing(true)
+            addAction(
+                0,
+                GlobalState.getText("stop"),
+                getActionPendingIntent("STOP")
+            )
             setShowWhen(false)
             setOnlyAlertOnce(true)
             setAutoCancel(true)
-            addAction(0, "Stop", stopPendingIntent);
         }
     }
 
     @SuppressLint("ForegroundServiceType", "WrongConstant")
     override fun startForeground(title: String, content: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = getSystemService(NotificationManager::class.java)
-            var channel = manager?.getNotificationChannel(CHANNEL)
-            if (channel == null) {
-                channel =
-                    NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
-                manager?.createNotificationChannel(channel)
+        CoroutineScope(Dispatchers.Default).launch {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val manager = getSystemService(NotificationManager::class.java)
+                var channel = manager?.getNotificationChannel(CHANNEL)
+                if (channel == null) {
+                    channel =
+                        NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
+                    manager?.createNotificationChannel(channel)
+                }
             }
-        }
-        val notification =
-            notificationBuilder.setContentTitle(title).setContentText(content).build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(notificationId, notification)
+            val notification =
+                notificationBuilder
+                    .setContentTitle(title)
+                    .setContentText(content)
+                    .build()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(notificationId, notification)
+            }
         }
     }
 

@@ -19,9 +19,10 @@ class _StartButtonState extends State<StartButton>
   @override
   void initState() {
     super.initState();
+    isStart = globalState.appController.appFlowingState.isStart;
     _controller = AnimationController(
       vsync: this,
-      value: 0,
+      value: isStart ? 1 : 0,
       duration: const Duration(milliseconds: 200),
     );
   }
@@ -85,58 +86,58 @@ class _StartButtonState extends State<StartButton>
                 )
                 .width +
             16;
-        return AnimatedBuilder(
-          animation: _controller.view,
-          builder: (_, child) {
-            return SizedBox(
-              width: 56 + textWidth * _controller.value,
-              height: 56,
-              child: FloatingActionButton(
-                heroTag: null,
-                onPressed: () {
-                  handleSwitchStart();
-                },
-                child: Row(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      alignment: Alignment.center,
-                      child: AnimatedIcon(
-                        icon: AnimatedIcons.play_pause,
-                        progress: _controller,
+        return _updateControllerContainer(
+          AnimatedBuilder(
+            animation: _controller.view,
+            builder: (_, child) {
+              return SizedBox(
+                width: 56 + textWidth * _controller.value,
+                height: 56,
+                child: FloatingActionButton(
+                  heroTag: null,
+                  onPressed: () {
+                    handleSwitchStart();
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        alignment: Alignment.center,
+                        child: AnimatedIcon(
+                          icon: AnimatedIcons.play_pause,
+                          progress: _controller,
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: ClipRect(
-                        child: OverflowBox(
-                          maxWidth: textWidth,
-                          child: Container(
-                            alignment: Alignment.centerLeft,
-                            child: child!,
+                      Expanded(
+                        child: ClipRect(
+                          child: OverflowBox(
+                            maxWidth: textWidth,
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              child: child!,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-          child: child,
+              );
+            },
+            child: child,
+          ),
         );
       },
-      child: _updateControllerContainer(
-        Selector<AppFlowingState, int?>(
-          selector: (_, appFlowingState) => appFlowingState.runTime,
-          builder: (_, int? value, __) {
-            final text = other.getTimeText(value);
-            return Text(
-              text,
-              style: Theme.of(context).textTheme.titleMedium?.toSoftBold,
-            );
-          },
-        ),
+      child: Selector<AppFlowingState, int?>(
+        selector: (_, appFlowingState) => appFlowingState.runTime,
+        builder: (_, int? value, __) {
+          final text = other.getTimeText(value);
+          return Text(
+            text,
+            style: Theme.of(context).textTheme.titleMedium?.toSoftBold,
+          );
+        },
       ),
     );
   }

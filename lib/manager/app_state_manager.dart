@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -18,7 +20,6 @@ class AppStateManager extends StatefulWidget {
 
 class _AppStateManagerState extends State<AppStateManager>
     with WidgetsBindingObserver {
-
   _updateNavigationsContainer(Widget child) {
     return Selector2<AppState, Config, UpdateNavigationsSelector>(
       selector: (_, appState, config) {
@@ -45,6 +46,22 @@ class _AppStateManagerState extends State<AppStateManager>
     );
   }
 
+  _cacheStateChange(Widget child) {
+    return Selector2<Config, ClashConfig, String>(
+      selector: (_, config, clashConfig) => "$clashConfig $config",
+      shouldRebuild: (prev, next) {
+        if (prev != next) {
+          globalState.appController.savePreferencesDebounce();
+        }
+        return prev != next;
+      },
+      builder: (context, state, child) {
+        return child!;
+      },
+      child: child,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -61,7 +78,7 @@ class _AppStateManagerState extends State<AppStateManager>
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     final isPaused = state == AppLifecycleState.paused;
     if (isPaused) {
-      await globalState.appController.savePreferences();
+      globalState.appController.savePreferencesDebounce();
     }
   }
 
@@ -73,8 +90,10 @@ class _AppStateManagerState extends State<AppStateManager>
 
   @override
   Widget build(BuildContext context) {
-    return _updateNavigationsContainer(
-      widget.child,
+    return _cacheStateChange(
+      _updateNavigationsContainer(
+        widget.child,
+      ),
     );
   }
 }

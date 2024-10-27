@@ -50,11 +50,18 @@ class CommonScaffold extends StatefulWidget {
 
 class CommonScaffoldState extends State<CommonScaffold> {
   final ValueNotifier<List<Widget>> _actions = ValueNotifier([]);
+  final ValueNotifier<dynamic> _floatingActionButton = ValueNotifier(null);
   final ValueNotifier<bool> _loading = ValueNotifier(false);
 
   set actions(List<Widget> actions) {
     if (_actions.value != actions) {
       _actions.value = actions;
+    }
+  }
+
+  set floatingActionButton(Widget floatingActionButton) {
+    if (_floatingActionButton.value != floatingActionButton) {
+      _floatingActionButton.value = floatingActionButton;
     }
   }
 
@@ -82,6 +89,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
   @override
   void dispose() {
     _actions.dispose();
+    _floatingActionButton.dispose();
     super.dispose();
   }
 
@@ -90,6 +98,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.title != widget.title) {
       _actions.value = [];
+      _floatingActionButton.value = null;
     }
   }
 
@@ -99,60 +108,66 @@ class CommonScaffoldState extends State<CommonScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    final scaffold = Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            ValueListenableBuilder<List<Widget>>(
-              valueListenable: _actions,
-              builder: (_, actions, __) {
-                final realActions =
+    final scaffold = ValueListenableBuilder(
+      valueListenable: _floatingActionButton,
+      builder: (_, value, __) {
+        return Scaffold(
+          resizeToAvoidBottomInset: true,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                ValueListenableBuilder<List<Widget>>(
+                  valueListenable: _actions,
+                  builder: (_, actions, __) {
+                    final realActions =
                     actions.isNotEmpty ? actions : widget.actions;
-                return AppBar(
-                  centerTitle: false,
-                  systemOverlayStyle: SystemUiOverlayStyle(
-                    statusBarColor: Colors.transparent,
-                    statusBarIconBrightness:
+                    return AppBar(
+                      centerTitle: false,
+                      systemOverlayStyle: SystemUiOverlayStyle(
+                        statusBarColor: Colors.transparent,
+                        statusBarIconBrightness:
                         Theme.of(context).brightness == Brightness.dark
                             ? Brightness.light
                             : Brightness.dark,
-                    systemNavigationBarIconBrightness:
+                        systemNavigationBarIconBrightness:
                         Theme.of(context).brightness == Brightness.dark
                             ? Brightness.light
                             : Brightness.dark,
-                    systemNavigationBarColor: widget.bottomNavigationBar != null
-                        ? context.colorScheme.surfaceContainer
-                        : context.colorScheme.surface,
-                    systemNavigationBarDividerColor: Colors.transparent,
-                  ),
-                  automaticallyImplyLeading: widget.automaticallyImplyLeading,
-                  leading: widget.leading,
-                  title: Text(widget.title),
-                  actions: [
-                    ...?realActions,
-                    const SizedBox(
-                      width: 8,
-                    )
-                  ],
-                );
-              },
+                        systemNavigationBarColor: widget.bottomNavigationBar != null
+                            ? context.colorScheme.surfaceContainer
+                            : context.colorScheme.surface,
+                        systemNavigationBarDividerColor: Colors.transparent,
+                      ),
+                      automaticallyImplyLeading: widget.automaticallyImplyLeading,
+                      leading: widget.leading,
+                      title: Text(widget.title),
+                      actions: [
+                        ...?realActions,
+                        const SizedBox(
+                          width: 8,
+                        )
+                      ],
+                    );
+                  },
+                ),
+                ValueListenableBuilder(
+                  valueListenable: _loading,
+                  builder: (_, value, __) {
+                    return value == true
+                        ? const LinearProgressIndicator()
+                        : Container();
+                  },
+                ),
+              ],
             ),
-            ValueListenableBuilder(
-              valueListenable: _loading,
-              builder: (_, value, __) {
-                return value == true
-                    ? const LinearProgressIndicator()
-                    : Container();
-              },
-            ),
-          ],
-        ),
-      ),
-      body: body,
-      bottomNavigationBar: widget.bottomNavigationBar,
+          ),
+          body: body,
+          floatingActionButton: value,
+          bottomNavigationBar: widget.bottomNavigationBar,
+        );
+      },
     );
     return _sideNavigationBar != null
         ? Row(

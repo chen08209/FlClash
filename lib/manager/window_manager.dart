@@ -20,7 +20,8 @@ class WindowManager extends StatefulWidget {
   State<WindowManager> createState() => _WindowContainerState();
 }
 
-class _WindowContainerState extends State<WindowManager> with WindowListener, WindowExtListener {
+class _WindowContainerState extends State<WindowManager>
+    with WindowListener, WindowExtListener {
   Function? updateLaunchDebounce;
 
   _autoLaunchContainer(Widget child) {
@@ -82,7 +83,7 @@ class _WindowContainerState extends State<WindowManager> with WindowListener, Wi
 
   @override
   void onWindowMinimize() async {
-    await globalState.appController.savePreferences();
+    globalState.appController.savePreferencesDebounce();
     super.onWindowMinimize();
   }
 

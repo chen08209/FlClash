@@ -583,7 +583,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/";
-				PRODUCT_BUNDLE_IDENTIFIER = com.clash.follow;
+				PRODUCT_BUNDLE_IDENTIFIER = com.follow.clash;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
@@ -711,7 +711,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/";
-				PRODUCT_BUNDLE_IDENTIFIER = com.clash.follow;
+				PRODUCT_BUNDLE_IDENTIFIER = com.follow.clash;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -733,7 +733,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "${SRCROOT}/../libclash/macos/";
-				PRODUCT_BUNDLE_IDENTIFIER = com.clash.follow;
+				PRODUCT_BUNDLE_IDENTIFIER = com.follow.clash;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};

@@ -21,12 +21,25 @@ class DashboardFragment extends StatefulWidget {
 }
 
 class _DashboardFragmentState extends State<DashboardFragment> {
+  _initFab(bool isCurrent) {
+    if(!isCurrent){
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final commonScaffoldState =
+          context.findAncestorStateOfType<CommonScaffoldState>();
+      commonScaffoldState?.floatingActionButton = const StartButton();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FloatLayout(
-      floatingWidget: const FloatWrapper(
-        child: StartButton(),
-      ),
+    return ActiveBuilder(
+      label: "dashboard",
+      builder: (isCurrent, child) {
+        _initFab(isCurrent);
+        return child!;
+      },
       child: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(

@@ -322,5 +322,6 @@
   "adminAutoLaunch": "Admin auto launch",
   "adminAutoLaunchDesc": "Boot up by using admin mode",
   "fontFamily": "FontFamily",
-  "systemFont": "System font"
+  "systemFont": "System font",
+  "toggle": "Toggle"
 }

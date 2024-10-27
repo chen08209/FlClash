@@ -191,7 +191,7 @@ class ProxiesSetting extends StatelessWidget {
 
   _buildGroupStyleSetting() {
     return generateSection(
-      title: "图标样式",
+      title: appLocalizations.iconStyle,
       items: [
         SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),

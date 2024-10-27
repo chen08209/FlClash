@@ -447,6 +447,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "tight": MessageLookupByLibrary.simpleMessage("Tight"),
         "time": MessageLookupByLibrary.simpleMessage("Time"),
         "tip": MessageLookupByLibrary.simpleMessage("tip"),
+        "toggle": MessageLookupByLibrary.simpleMessage("Toggle"),
         "tools": MessageLookupByLibrary.simpleMessage("Tools"),
         "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
         "tun": MessageLookupByLibrary.simpleMessage("TUN"),

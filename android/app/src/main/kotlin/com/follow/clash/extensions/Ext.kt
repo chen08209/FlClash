@@ -1,21 +1,29 @@
 package com.follow.clash.extensions
 
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.ConnectivityManager
 import android.net.Network
+import android.os.Build
 import android.system.OsConstants.IPPROTO_TCP
 import android.system.OsConstants.IPPROTO_UDP
 import android.util.Base64
 import androidx.core.graphics.drawable.toBitmap
+import com.follow.clash.TempActivity
 import com.follow.clash.models.CIDR
 import com.follow.clash.models.Metadata
+import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 
 suspend fun Drawable.getBase64(): String {
@@ -71,6 +79,34 @@ fun InetAddress.asSocketAddressText(port: Int): String {
     }
 }
 
+fun Context.wrapAction(action: String):String{
+    return "${this.packageName}.action.$action"
+}
+
+fun Context.getActionIntent(action: String): Intent {
+    val actionIntent = Intent(this, TempActivity::class.java)
+    actionIntent.action = wrapAction(action)
+    return actionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+}
+
+fun Context.getActionPendingIntent(action: String): PendingIntent {
+    return if (Build.VERSION.SDK_INT >= 31) {
+        PendingIntent.getActivity(
+            this,
+            0,
+            getActionIntent(action),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+    } else {
+        PendingIntent.getActivity(
+            this,
+            0,
+            getActionIntent(action),
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
+    }
+}
+
 
 private fun numericToTextFormat(src: ByteArray): String {
     val sb = StringBuilder(39)
@@ -86,4 +122,26 @@ private fun numericToTextFormat(src: ByteArray): String {
         }
     }
     return sb.toString()
+}
+
+suspend fun <T> MethodChannel.awaitResult(
+    method: String,
+    arguments: Any? = null
+): T? = withContext(Dispatchers.Main) { // 切换到主线程
+    suspendCoroutine { continuation ->
+        invokeMethod(method, arguments, object : MethodChannel.Result {
+            override fun success(result: Any?) {
+                @Suppress("UNCHECKED_CAST")
+                continuation.resume(result as T)
+            }
+
+            override fun error(code: String, message: String?, details: Any?) {
+                continuation.resume(null)
+            }
+
+            override fun notImplemented() {
+                continuation.resume(null)
+            }
+        })
+    }
 }

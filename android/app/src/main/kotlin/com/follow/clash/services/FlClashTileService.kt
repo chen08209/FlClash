@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
-import android.os.IBinder
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.annotation.RequiresApi
@@ -67,19 +66,7 @@ class FlClashTileService : TileService() {
     override fun onClick() {
         super.onClick()
         activityTransfer()
-        if (GlobalState.runState.value == RunState.STOP) {
-            GlobalState.runState.value = RunState.PENDING
-            val tilePlugin = GlobalState.getCurrentTilePlugin()
-            if (tilePlugin != null) {
-                tilePlugin.handleStart()
-            } else {
-                GlobalState.initServiceEngine(applicationContext)
-            }
-        } else if (GlobalState.runState.value == RunState.START) {
-            GlobalState.runState.value = RunState.PENDING
-            GlobalState.getCurrentTilePlugin()?.handleStop()
-        }
-
+        GlobalState.handleToggle(applicationContext)
     }
 
     override fun onDestroy() {

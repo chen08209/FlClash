@@ -128,7 +128,7 @@ func initSocketHook() {
 		}
 		return conn.Control(func(fd uintptr) {
 			fdInt := int64(fd)
-			timeout := time.After(100 * time.Millisecond)
+			timeout := time.After(500 * time.Millisecond)
 			id := atomic.AddInt64(&fdCounter, 1)
 
 			markSocket(Fd{
@@ -145,7 +145,7 @@ func initSocketHook() {
 					if exists {
 						return
 					}
-					time.Sleep(10 * time.Millisecond)
+					time.Sleep(20 * time.Millisecond)
 				}
 			}
 		})

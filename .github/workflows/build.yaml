@@ -79,7 +79,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'core/go.mod'
+          go-version: 'stable'
           cache-dependency-path: |
             core/go.sum
 

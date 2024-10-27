@@ -163,7 +163,7 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.start,

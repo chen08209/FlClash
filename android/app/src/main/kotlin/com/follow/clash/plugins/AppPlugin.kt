@@ -14,9 +14,15 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
-import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
 import androidx.core.content.FileProvider
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
+import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
 import com.follow.clash.GlobalState
+import com.follow.clash.R
+import com.follow.clash.extensions.awaitResult
+import com.follow.clash.extensions.getActionIntent
 import com.follow.clash.extensions.getBase64
 import com.follow.clash.models.Package
 import com.google.gson.Gson
@@ -31,6 +37,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.zip.ZipFile
@@ -116,10 +123,20 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         scope = CoroutineScope(Dispatchers.Default)
-        context = flutterPluginBinding.applicationContext;
+        context = flutterPluginBinding.applicationContext
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "app")
         channel.setMethodCallHandler(this)
     }
+
+    private fun initShortcuts(label: String) {
+        val shortcut = ShortcutInfoCompat.Builder(context, "toggle")
+            .setShortLabel(label)
+            .setIcon(IconCompat.createWithResource(context, R.mipmap.ic_launcher_round))
+            .setIntent(context.getActionIntent("CHANGE"))
+            .build()
+        ShortcutManagerCompat.setDynamicShortcuts(context, listOf(shortcut))
+    }
+
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
@@ -128,11 +145,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private fun tip(message: String?) {
         if (GlobalState.flutterEngine == null) {
-            if (toast != null) {
-                toast!!.cancel()
-            }
-            toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
-            toast!!.show()
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -140,13 +153,18 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         when (call.method) {
             "moveTaskToBack" -> {
                 activity?.moveTaskToBack(true)
-                result.success(true);
+                result.success(true)
             }
 
             "updateExcludeFromRecents" -> {
                 val value = call.argument<Boolean>("value")
                 updateExcludeFromRecents(value)
-                result.success(true);
+                result.success(true)
+            }
+
+            "initShortcuts" -> {
+                initShortcuts(call.arguments as String)
+                result.success(true)
             }
 
             "getPackages" -> {
@@ -197,7 +215,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             }
 
             else -> {
-                result.notImplemented();
+                result.notImplemented()
             }
         }
     }
@@ -270,7 +288,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private fun getPackages(): List<Package> {
         val packageManager = context.packageManager
-        if (packages.isNotEmpty()) return packages;
+        if (packages.isNotEmpty()) return packages
         packageManager?.getInstalledPackages(PackageManager.GET_META_DATA)?.filter {
             it.packageName != context.packageName
                     || it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
@@ -284,7 +302,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 firstInstallTime = it.firstInstallTime
             )
         }?.let { packages.addAll(it) }
-        return packages;
+        return packages
     }
 
     private suspend fun getPackagesToJson(): String {
@@ -306,7 +324,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         val intent = VpnService.prepare(context)
         if (intent != null) {
             activity?.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
-            return;
+            return
         }
         vpnCallBack?.invoke()
     }
@@ -327,6 +345,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 )
                 return
             }
+        }
+    }
+
+    fun getText(text: String): String? {
+        return runBlocking {
+            channel.awaitResult<String>("getText", text)
         }
     }
 
@@ -398,7 +422,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        activity = binding.activity;
+        activity = binding.activity
         binding.addActivityResultListener(::onActivityResult)
         binding.addRequestPermissionsResultListener(::onRequestPermissionsResultListener)
     }
@@ -408,7 +432,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-        activity = binding.activity;
+        activity = binding.activity
     }
 
     override fun onDetachedFromActivity() {

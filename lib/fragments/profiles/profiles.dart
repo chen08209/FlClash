@@ -80,7 +80,7 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
     }
   }
 
-  _initScaffoldState() {
+  _initScaffold() {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
         if (!mounted) return;
@@ -112,71 +112,67 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
             iconSize: 26,
           ),
         ];
+        commonScaffoldState?.floatingActionButton = FloatingActionButton(
+          heroTag: null,
+          onPressed: _handleShowAddExtendPage,
+          child: const Icon(
+            Icons.add,
+          ),
+        );
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return FloatLayout(
-      floatingWidget: FloatWrapper(
-        child: FloatingActionButton(
-          heroTag: null,
-          onPressed: _handleShowAddExtendPage,
-          child: const Icon(
-            Icons.add,
-          ),
+    return ActiveBuilder(
+      label: "profiles",
+      builder: (isCurrent,child){
+        if(isCurrent){
+          _initScaffold();
+        }
+        return child!;
+      },
+      child: Selector2<AppState, Config, ProfilesSelectorState>(
+        selector: (_, appState, config) => ProfilesSelectorState(
+          profiles: config.profiles,
+          currentProfileId: config.currentProfileId,
+          columns: other.getProfilesColumns(appState.viewWidth),
         ),
-      ),
-      child: Selector<AppState, bool>(
-        selector: (_, appState) => appState.currentLabel == 'profiles',
-        builder: (_, isCurrent, child) {
-          if (isCurrent) {
-            _initScaffoldState();
-          }
-          return child!;
-        },
-        child: Selector2<AppState, Config, ProfilesSelectorState>(
-          selector: (_, appState, config) => ProfilesSelectorState(
-            profiles: config.profiles,
-            currentProfileId: config.currentProfileId,
-            columns: other.getProfilesColumns(appState.viewWidth),
-          ),
-          builder: (context, state, child) {
-            if (state.profiles.isEmpty) {
-              return NullStatus(
-                label: appLocalizations.nullProfileDesc,
-              );
-            }
-            return Align(
-              alignment: Alignment.topCenter,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 16,
-                  bottom: 88,
-                ),
-                child: Grid(
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  crossAxisCount: state.columns,
-                  children: [
-                    for (int i = 0; i < state.profiles.length; i++)
-                      GridItem(
-                        child: ProfileItem(
-                          key: Key(state.profiles[i].id),
-                          profile: state.profiles[i],
-                          groupValue: state.currentProfileId,
-                          onChanged: globalState.appController.changeProfile,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+        builder: (context, state, child) {
+          if (state.profiles.isEmpty) {
+            return NullStatus(
+              label: appLocalizations.nullProfileDesc,
             );
-          },
-        ),
+          }
+          return Align(
+            alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 88,
+              ),
+              child: Grid(
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                crossAxisCount: state.columns,
+                children: [
+                  for (int i = 0; i < state.profiles.length; i++)
+                    GridItem(
+                      child: ProfileItem(
+                        key: Key(state.profiles[i].id),
+                        profile: state.profiles[i],
+                        groupValue: state.currentProfileId,
+                        onChanged: globalState.appController.changeProfile,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

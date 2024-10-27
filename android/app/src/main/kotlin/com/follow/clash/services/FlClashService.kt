@@ -13,7 +13,9 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.follow.clash.BaseServiceInterface
+import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
+import com.follow.clash.extensions.getActionPendingIntent
 import com.follow.clash.models.VpnOptions
 
 
@@ -64,6 +66,11 @@ class FlClashService : Service(), BaseServiceInterface {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
             }
+            addAction(
+                0,
+                GlobalState.getText("stop"),
+                getActionPendingIntent("CHANGE")
+            )
             setOngoing(true)
             setShowWhen(false)
             setOnlyAlertOnce(true)

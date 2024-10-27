@@ -359,15 +359,12 @@ class ListItem<T> extends StatelessWidget {
             );
             return;
           }
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => CommonScaffold(
-                key: Key(nextDelegate.title),
-                body: nextDelegate.widget,
-                title: nextDelegate.title,
-              ),
-            ),
-          );
+
+          BaseNavigator.push(context, CommonScaffold(
+            key: Key(nextDelegate.title),
+            body: nextDelegate.widget,
+            title: nextDelegate.title,
+          ));
         },
       );
     }

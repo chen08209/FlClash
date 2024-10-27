@@ -128,7 +128,7 @@ const _$AccessSortTypeEnumMap = {
 
 _$WindowPropsImpl _$$WindowPropsImplFromJson(Map<String, dynamic> json) =>
     _$WindowPropsImpl(
-      width: (json['width'] as num?)?.toDouble() ?? 1000,
+      width: (json['width'] as num?)?.toDouble() ?? 900,
       height: (json['height'] as num?)?.toDouble() ?? 600,
       top: (json['top'] as num?)?.toDouble(),
       left: (json['left'] as num?)?.toDouble(),
@@ -234,7 +234,7 @@ const _$ProxyCardTypeEnumMap = {
 
 _$ThemePropsImpl _$$ThemePropsImplFromJson(Map<String, dynamic> json) =>
     _$ThemePropsImpl(
-      primaryColor: (json['primaryColor'] as num?)?.toInt() ?? 0xFF795548,
+      primaryColor: (json['primaryColor'] as num?)?.toInt(),
       themeMode: $enumDecodeNullable(_$ThemeModeEnumMap, json['themeMode']) ??
           ThemeMode.system,
       prueBlack: json['prueBlack'] as bool? ?? false,
