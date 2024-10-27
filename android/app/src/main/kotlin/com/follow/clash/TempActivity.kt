@@ -2,17 +2,18 @@ package com.follow.clash
 
 import android.app.Activity
 import android.os.Bundle
+import com.follow.clash.extensions.wrapAction
 
 class TempActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         when (intent.action) {
-            "com.follow.clash.action.START" -> {
-                GlobalState.getCurrentTilePlugin()?.handleStart()
+            wrapAction("STOP") -> {
+                GlobalState.handleStop()
             }
 
-            "com.follow.clash.action.STOP" -> {
-                GlobalState.getCurrentTilePlugin()?.handleStop()
+            wrapAction("CHANGE") -> {
+                GlobalState.handleToggle(applicationContext)
             }
         }
         finishAndRemoveTask()

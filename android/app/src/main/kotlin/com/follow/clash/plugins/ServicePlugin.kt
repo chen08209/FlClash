@@ -1,8 +1,6 @@
 package com.follow.clash.plugins
 
 import android.content.Context
-import android.net.ConnectivityManager
-import androidx.core.content.getSystemService
 import com.follow.clash.GlobalState
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall

@@ -68,6 +68,8 @@ class ProxiesActionsBuilder extends StatelessWidget {
 
 typedef StateWidgetBuilder<T> = Widget Function(T state);
 
+typedef StateAndChildWidgetBuilder<T> = Widget Function(T state, Widget? child);
+
 class LocaleBuilder extends StatelessWidget {
   final StateWidgetBuilder<String?> builder;
 
@@ -83,6 +85,33 @@ class LocaleBuilder extends StatelessWidget {
       builder: (_, state, __) {
         return builder(state);
       },
+    );
+  }
+}
+
+class ActiveBuilder extends StatelessWidget {
+  final String label;
+  final StateAndChildWidgetBuilder<bool> builder;
+  final Widget? child;
+
+  const ActiveBuilder({
+    super.key,
+    required this.label,
+    required this.builder,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<AppState, bool>(
+      selector: (_, appState) => appState.currentLabel == label,
+      builder: (_, state, child) {
+        return builder(
+          state,
+          child,
+        );
+      },
+      child: child,
     );
   }
 }

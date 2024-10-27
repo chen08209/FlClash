@@ -3289,6 +3289,16 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Toggle`
+  String get toggle {
+    return Intl.message(
+      'Toggle',
+      name: 'toggle',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

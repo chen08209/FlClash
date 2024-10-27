@@ -53,6 +53,10 @@ Future<void> vpnService() async {
   final version = await system.version;
   final config = await preferences.getConfig() ?? Config();
   final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
+  await AppLocalizations.load(
+    other.getLocaleForString(config.appSetting.locale) ??
+        WidgetsBinding.instance.platformDispatcher.locale,
+  );
   final appState = AppState(
     mode: clashConfig.mode,
     selectedMap: config.currentSelectedMap,
@@ -98,15 +102,8 @@ Future<void> vpnService() async {
       },
     ),
   );
-  final appLocalizations = await AppLocalizations.load(
-    other.getLocaleForString(config.appSetting.locale) ??
-        WidgetsBinding.instance.platformDispatcher.locale,
-  );
   await app?.tip(appLocalizations.startVpn);
-  await globalState.handleStart(
-    config: config,
-    clashConfig: clashConfig,
-  );
+  await globalState.handleStart();
 
   tile?.addListener(
     TileListenerWithVpn(

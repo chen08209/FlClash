@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -101,14 +102,13 @@ class Other {
   }
 
   String getTrayIconPath({
-    required bool isStart,
     required Brightness brightness,
   }) {
     if(Platform.isMacOS){
       return "assets/images/icon_white.png";
     }
     final suffix = Platform.isWindows ? "ico" : "png";
-    if (isStart && Platform.isWindows) {
+    if (Platform.isWindows) {
       return "assets/images/icon.$suffix";
     }
     return switch (brightness) {
@@ -188,10 +188,8 @@ class Other {
     return parameters[fileNameKey];
   }
 
-  double getViewWidth() {
-    final view = WidgetsBinding.instance.platformDispatcher.views.first;
-    final size = view.physicalSize / view.devicePixelRatio;
-    return size.width;
+  FlutterView getScreen() {
+    return WidgetsBinding.instance.platformDispatcher.views.first;
   }
 
   List<String> parseReleaseBody(String? body) {

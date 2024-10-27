@@ -840,7 +840,7 @@ class __$$WindowPropsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$WindowPropsImpl implements _WindowProps {
   const _$WindowPropsImpl(
-      {this.width = 1000, this.height = 600, this.top, this.left});
+      {this.width = 900, this.height = 600, this.top, this.left});
 
   factory _$WindowPropsImpl.fromJson(Map<String, dynamic> json) =>
       _$$WindowPropsImplFromJson(json);
@@ -1667,7 +1667,7 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ThemePropsImpl implements _ThemeProps {
   const _$ThemePropsImpl(
-      {this.primaryColor = 0xFF795548,
+      {this.primaryColor,
       this.themeMode = ThemeMode.system,
       this.prueBlack = false,
       this.fontFamily = FontFamily.system});
@@ -1676,7 +1676,6 @@ class _$ThemePropsImpl implements _ThemeProps {
       _$$ThemePropsImplFromJson(json);
 
   @override
-  @JsonKey()
   final int? primaryColor;
   @override
   @JsonKey()

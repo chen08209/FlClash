@@ -2,6 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'side_sheet.dart';
 
@@ -23,12 +24,11 @@ showExtendPage(
   final isMobile =
       globalState.appController.appState.viewMode == ViewMode.mobile;
   if (isMobile) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => CommonScaffold(
-          title: title,
-          body: uniqueBody,
-        ),
+    BaseNavigator.push(
+      context,
+      CommonScaffold(
+        title: title,
+        body: uniqueBody,
       ),
     );
     return;

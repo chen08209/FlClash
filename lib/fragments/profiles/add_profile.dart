@@ -7,7 +7,10 @@ import 'package:flutter/material.dart';
 class AddProfile extends StatelessWidget {
   final BuildContext context;
 
-  const AddProfile({super.key, required this.context,});
+  const AddProfile({
+    super.key,
+    required this.context,
+  });
 
   _handleAddProfileFormFile() async {
     globalState.appController.addProfileFormFile();
@@ -18,14 +21,16 @@ class AddProfile extends StatelessWidget {
   }
 
   _toScan() async {
-    if(system.isDesktop){
+    if (system.isDesktop) {
       globalState.appController.addProfileFormQrCode();
       return;
     }
-    final url = await Navigator.of(context)
-        .push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
+    final url = await BaseNavigator.push(
+      context,
+      const ScanPage(),
+    );
     if (url != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_){
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         _handleAddProfileFormURL(url);
       });
     }
@@ -44,12 +49,12 @@ class AddProfile extends StatelessWidget {
   Widget build(context) {
     return ListView(
       children: [
-          ListItem(
-            leading: const Icon(Icons.qr_code),
-            title: Text(appLocalizations.qrcode),
-            subtitle: Text(appLocalizations.qrcodeDesc),
-            onTap: _toScan,
-          ),
+        ListItem(
+          leading: const Icon(Icons.qr_code),
+          title: Text(appLocalizations.qrcode),
+          subtitle: Text(appLocalizations.qrcodeDesc),
+          onTap: _toScan,
+        ),
         ListItem(
           leading: const Icon(Icons.upload_file),
           title: Text(appLocalizations.file),
