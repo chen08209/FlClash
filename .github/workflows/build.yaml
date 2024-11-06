@@ -2,6 +2,7 @@ name: build
 
 on:
   push:
+  pull_request:
     tags:
       - 'v*'
 
