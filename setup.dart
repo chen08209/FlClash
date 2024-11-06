@@ -316,6 +316,9 @@ class BuildCommand extends Command {
       Build.getExecutable("sudo apt install -y libfuse2"),
     );
     await Build.exec(
+      Build.getExecutable("sudo apt install -y gcc-aarch64-linux-gnu"),
+    );
+    await Build.exec(
       Build.getExecutable(
         "wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage",
       ),
@@ -378,11 +381,21 @@ class BuildCommand extends Command {
         );
       case PlatformType.linux:
         await _getLinuxDependencies();
+        final targetMap = {
+          Arch.arm64: "linux-arm64",
+          Arch.amd64: "linux-x64",
+        };
+        final defaultArches = [Arch.arm64, Arch.amd64];
+        final defaultTargets = defaultArches
+            .where((element) => arch == null ? true : element == arch)
+            .map((e) => targetMap[e])
+            .toList();
         _buildDistributor(
           platform: platform,
           targets: "appimage,deb,rpm",
-          args: "--description ${arch!.name}",
+          args: "--description ${arch!.name} --build-target-platform ${defaultTargets.join(",")}",
         );
+
       case PlatformType.android:
         final targetMap = {
           Arch.arm: "android-arm",
