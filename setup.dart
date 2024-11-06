@@ -115,6 +115,9 @@ class Build {
 
   static String _getCc(BuildLibItem buildItem) {
     final environment = Platform.environment;
+    if (buildItem.platform == PlatformType.linux && buildItem.arch == Arch.arm64) {
+      return "aarch64-linux-gnu-gcc";
+    }
     if (buildItem.platform == PlatformType.android) {
       final ndk = environment["ANDROID_NDK"];
       assert(ndk != null);
