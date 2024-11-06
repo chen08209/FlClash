@@ -47,7 +47,7 @@ jobs:
       - name: Set arm64-gcc
         if: startsWith(matrix.platform,'linux')
         run: |
-          apt-get install gcc-aarch64-linux-gnu -y
+          sudo apt-get install gcc-aarch64-linux-gnu -y
 
       - name: Check Matrix
         run: |
