@@ -44,6 +44,11 @@ jobs:
         run: |
           echo "${{ runner.temp }}\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Set arm64-gcc
+        if: startsWith(matrix.platform,'linux')
+        run: |
+          apt-get install gcc-aarch64-linux-gnu -y
+
       - name: Check Matrix
         run: |
           echo "Running on ${{ matrix.os }}"
