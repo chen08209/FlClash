@@ -96,6 +96,11 @@ class Build {
           arch: Arch.amd64,
           archName: '',
         ),
+        BuildLibItem(
+          platform: PlatformType.linux,
+          arch: Arch.arm64,
+          archName: '',
+        ),
       ];
 
   static String get appName => "FlClash";
