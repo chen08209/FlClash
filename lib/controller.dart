@@ -9,15 +9,13 @@ import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
-import 'package:tray_manager/tray_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'clash/core.dart';
-import 'models/models.dart';
 import 'common/common.dart';
+import 'models/models.dart';
 
 class AppController {
   final BuildContext context;
@@ -114,6 +112,10 @@ class AppController {
         updateStatus(false);
       }
     }
+  }
+
+  updateProviders() {
+    globalState.updateProviders(appState);
   }
 
   Future<void> updateProfile(Profile profile) async {
@@ -530,8 +532,8 @@ class AppController {
   }
 
   updateSystemProxy() {
-    config.desktopProps = config.desktopProps.copyWith(
-      systemProxy: !config.desktopProps.systemProxy,
+    config.networkProps = config.networkProps.copyWith(
+      systemProxy: !config.networkProps.systemProxy,
     );
   }
 
@@ -599,121 +601,14 @@ class AppController {
     });
   }
 
-  Future _updateSystemTray({
-    required Brightness? brightness,
-    bool force = false,
-  }) async {
-    if (Platform.isLinux || force) {
-      await trayManager.destroy();
-    }
-    await trayManager.setIcon(
-      other.getTrayIconPath(
-        brightness: brightness ??
-            WidgetsBinding.instance.platformDispatcher.platformBrightness,
-      ),
-      isTemplate: true,
-    );
-    if (!Platform.isLinux) {
-      await trayManager.setToolTip(
-        appName,
-      );
-    }
-  }
-
   updateTray([bool focus = false]) async {
-    if (!Platform.isLinux) {
-      await _updateSystemTray(
-        brightness: appState.brightness,
-        force: focus,
-      );
-    }
-    List<MenuItem> menuItems = [];
-    final showMenuItem = MenuItem(
-      label: appLocalizations.show,
-      onClick: (_) {
-        window?.show();
-      },
+    globalState.updateTray(
+      appState: appState,
+      appFlowingState: appFlowingState,
+      config: config,
+      clashConfig: clashConfig,
+      focus: focus,
     );
-    menuItems.add(showMenuItem);
-    final startMenuItem = MenuItem.checkbox(
-      label: appFlowingState.isStart
-          ? appLocalizations.stop
-          : appLocalizations.start,
-      onClick: (_) async {
-        globalState.appController.updateStart();
-      },
-      checked: false,
-    );
-    menuItems.add(startMenuItem);
-    menuItems.add(MenuItem.separator());
-    for (final mode in Mode.values) {
-      menuItems.add(
-        MenuItem.checkbox(
-          label: Intl.message(mode.name),
-          onClick: (_) {
-            globalState.appController.clashConfig.mode = mode;
-          },
-          checked: mode == clashConfig.mode,
-        ),
-      );
-    }
-    menuItems.add(MenuItem.separator());
-    if (appFlowingState.isStart) {
-      menuItems.add(
-        MenuItem.checkbox(
-          label: appLocalizations.tun,
-          onClick: (_) {
-            globalState.appController.updateTun();
-          },
-          checked: clashConfig.tun.enable,
-        ),
-      );
-      menuItems.add(
-        MenuItem.checkbox(
-          label: appLocalizations.systemProxy,
-          onClick: (_) {
-            globalState.appController.updateSystemProxy();
-          },
-          checked: config.desktopProps.systemProxy,
-        ),
-      );
-      menuItems.add(MenuItem.separator());
-    }
-    final autoStartMenuItem = MenuItem.checkbox(
-      label: appLocalizations.autoLaunch,
-      onClick: (_) async {
-        globalState.appController.updateAutoLaunch();
-      },
-      checked: config.appSetting.autoLaunch,
-    );
-    menuItems.add(autoStartMenuItem);
-
-    if(Platform.isWindows){
-      final adminAutoStartMenuItem = MenuItem.checkbox(
-        label: appLocalizations.adminAutoLaunch,
-        onClick: (_) async {
-          globalState.appController.updateAdminAutoLaunch();
-        },
-        checked: config.appSetting.adminAutoLaunch,
-      );
-      menuItems.add(adminAutoStartMenuItem);
-    }
-    menuItems.add(MenuItem.separator());
-    final exitMenuItem = MenuItem(
-      label: appLocalizations.exit,
-      onClick: (_) async {
-        await globalState.appController.handleExit();
-      },
-    );
-    menuItems.add(exitMenuItem);
-    final menu = Menu(items: menuItems);
-    await trayManager.setContextMenu(menu);
-    if (Platform.isLinux) {
-      await _updateSystemTray(
-        brightness: appState.brightness,
-        force: focus,
-      );
-    }
   }
 
   recoveryData(

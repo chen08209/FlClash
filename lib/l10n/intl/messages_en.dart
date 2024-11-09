@@ -398,6 +398,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "respectRules": MessageLookupByLibrary.simpleMessage("Respect rules"),
         "respectRulesDesc": MessageLookupByLibrary.simpleMessage(
             "DNS connection following rules, need to configure proxy-server-nameserver"),
+        "routeAddress": MessageLookupByLibrary.simpleMessage("Route address"),
+        "routeAddressDesc":
+            MessageLookupByLibrary.simpleMessage("Config listen route address"),
+        "routeMode": MessageLookupByLibrary.simpleMessage("Route mode"),
+        "routeMode_bypassPrivate": MessageLookupByLibrary.simpleMessage(
+            "Bypass private route address"),
+        "routeMode_config": MessageLookupByLibrary.simpleMessage("Use config"),
         "rule": MessageLookupByLibrary.simpleMessage("Rule"),
         "ruleProviders": MessageLookupByLibrary.simpleMessage("Rule providers"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -426,6 +433,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "style": MessageLookupByLibrary.simpleMessage("Style"),
         "submit": MessageLookupByLibrary.simpleMessage("Submit"),
         "sync": MessageLookupByLibrary.simpleMessage("Sync"),
+        "system": MessageLookupByLibrary.simpleMessage("System"),
         "systemFont": MessageLookupByLibrary.simpleMessage("System font"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
         "systemProxyDesc": MessageLookupByLibrary.simpleMessage(
@@ -475,6 +483,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Modify VPN related settings"),
         "vpnEnableDesc": MessageLookupByLibrary.simpleMessage(
             "Auto routes all system traffic through VpnService"),
+        "vpnSystemProxyDesc": MessageLookupByLibrary.simpleMessage(
+            "Attach HTTP proxy to VpnService"),
         "vpnTip": MessageLookupByLibrary.simpleMessage(
             "Changes take effect after restarting the VPN"),
         "webDAVConfiguration":

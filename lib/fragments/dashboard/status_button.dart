@@ -1,45 +1,33 @@
 import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// class VPNSwitch extends StatelessWidget {
-//   const VPNSwitch({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return SwitchContainer(
-//       info: const Info(
-//         label: "VPN",
-//         iconData: Icons.stacked_line_chart,
-//       ),
-//       child: Selector<Config, bool>(
-//         selector: (_, config) => config.vpnProps.enable,
-//         builder: (_, enable, __) {
-//           return Switch(
-//             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-//             value: enable,
-//             onChanged: (value) {
-//               final config = globalState.appController.config;
-//               config.vpnProps = config.vpnProps.copyWith(
-//                 enable: value,
-//               );
-//             },
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
+import '../config/network.dart';
 
-class TUNSwitch extends StatelessWidget {
-  const TUNSwitch({super.key});
+class TUNButton extends StatelessWidget {
+  const TUNButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SwitchContainer(
+    return ButtonContainer(
+      onPressed: () {
+        showSheet(
+          context: context,
+          builder: (_) {
+            return generateListView(generateSection(
+              items: [
+                if (system.isDesktop) const TUNItem(),
+                const TunStackItem(),
+              ],
+            ));
+          },
+          title: appLocalizations.tun,
+        );
+      },
       info: Info(
         label: appLocalizations.tun,
         iconData: Icons.stacked_line_chart,
@@ -64,18 +52,34 @@ class TUNSwitch extends StatelessWidget {
   }
 }
 
-class ProxySwitch extends StatelessWidget {
-  const ProxySwitch({super.key});
+class SystemProxyButton extends StatelessWidget {
+  const SystemProxyButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SwitchContainer(
+    return ButtonContainer(
+      onPressed: () {
+        showSheet(
+          context: context,
+          builder: (_) {
+            return generateListView(
+              generateSection(
+                items: [
+                  SystemProxyItem(),
+                  BypassDomainItem(),
+                ],
+              ),
+            );
+          },
+          title: appLocalizations.systemProxy,
+        );
+      },
       info: Info(
         label: appLocalizations.systemProxy,
         iconData: Icons.shuffle,
       ),
       child: Selector<Config, bool>(
-        selector: (_, config) => config.desktopProps.systemProxy,
+        selector: (_, config) => config.networkProps.systemProxy,
         builder: (_, systemProxy, __) {
           return LocaleBuilder(
             builder: (_) => Switch(
@@ -83,8 +87,8 @@ class ProxySwitch extends StatelessWidget {
               value: systemProxy,
               onChanged: (value) {
                 final config = globalState.appController.config;
-                config.desktopProps =
-                    config.desktopProps.copyWith(systemProxy: value);
+                config.networkProps =
+                    config.networkProps.copyWith(systemProxy: value);
               },
             ),
           );
@@ -94,20 +98,22 @@ class ProxySwitch extends StatelessWidget {
   }
 }
 
-class SwitchContainer extends StatelessWidget {
+class ButtonContainer extends StatelessWidget {
   final Info info;
   final Widget child;
+  final VoidCallback onPressed;
 
-  const SwitchContainer({
+  const ButtonContainer({
     super.key,
     required this.info,
     required this.child,
+    required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return CommonCard(
-      onPressed: () {},
+      onPressed: onPressed,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

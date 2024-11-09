@@ -4,9 +4,8 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'generated/ffi.g.dart';
-
 part 'generated/ffi.freezed.dart';
+part 'generated/ffi.g.dart';
 
 @freezed
 class CoreState with _$CoreState {
@@ -17,6 +16,7 @@ class CoreState with _$CoreState {
     required bool allowBypass,
     required bool systemProxy,
     required List<String> bypassDomain,
+    required List<String> routeAddress,
     required bool ipv6,
     required bool onlyProxy,
   }) = _CoreState;
@@ -36,6 +36,7 @@ class AndroidVpnOptions with _$AndroidVpnOptions {
     required List<String> bypassDomain,
     required String ipv4Address,
     required String ipv6Address,
+    required List<String> routeAddress,
     required String dnsServerAddress,
   }) = _AndroidVpnOptions;
 
@@ -155,12 +156,37 @@ class ProcessMapItem with _$ProcessMapItem {
 }
 
 @freezed
+class ProviderSubscriptionInfo with _$ProviderSubscriptionInfo {
+  const factory ProviderSubscriptionInfo({
+    @JsonKey(name: "UPLOAD") @Default(0) int upload,
+    @JsonKey(name: "DOWNLOAD") @Default(0) int download,
+    @JsonKey(name: "TOTAL") @Default(0) int total,
+    @JsonKey(name: "EXPIRE") @Default(0) int expire,
+  }) = _ProviderSubscriptionInfo;
+
+  factory ProviderSubscriptionInfo.fromJson(Map<String, Object?> json) =>
+      _$ProviderSubscriptionInfoFromJson(json);
+}
+
+SubscriptionInfo? subscriptionInfoFormCore(Map<String, Object?>? json) {
+  if (json == null) return null;
+  return SubscriptionInfo(
+    upload: (json['Upload'] as num?)?.toInt() ?? 0,
+    download: (json['Download'] as num?)?.toInt() ?? 0,
+    total: (json['Total'] as num?)?.toInt() ?? 0,
+    expire: (json['Expire'] as num?)?.toInt() ?? 0,
+  );
+}
+
+@freezed
 class ExternalProvider with _$ExternalProvider {
   const factory ExternalProvider({
     required String name,
     required String type,
-    required String path,
+    String? path,
     required int count,
+    @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+    SubscriptionInfo? subscriptionInfo,
     @Default(false) bool isUpdating,
     @JsonKey(name: "vehicle-type") required String vehicleType,
     @JsonKey(name: "update-at") required DateTime updateAt,

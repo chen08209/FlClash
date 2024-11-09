@@ -27,6 +27,7 @@ class _ProvidersState extends State<Providers> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
+        globalState.appController.updateProviders();
         final commonScaffoldState =
             context.findAncestorStateOfType<CommonScaffoldState>();
         commonScaffoldState?.actions = [
@@ -132,8 +133,8 @@ class ProviderItem extends StatelessWidget {
       final platformFile = await picker.pickerFile();
       final appState = globalState.appController.appState;
       final bytes = platformFile?.bytes;
-      if (bytes == null) return;
-      final file = await File(provider.path).create(recursive: true);
+      if (bytes == null || provider.path == null) return;
+      final file = await File(provider.path!).create(recursive: true);
       await file.writeAsBytes(bytes);
       final providerName = provider.name;
       var message = await clashCore.sideLoadExternalProvider(
@@ -150,8 +151,7 @@ class ProviderItem extends StatelessWidget {
   }
 
   String _buildProviderDesc() {
-    final baseInfo =
-        "${provider.type}(${provider.vehicleType}) ·  ${provider.updateAt.lastUpdateTimeDesc}";
+    final baseInfo = provider.updateAt.lastUpdateTimeDesc;
     final count = provider.count;
     return switch (count == 0) {
       true => baseInfo,
@@ -176,10 +176,13 @@ class ProviderItem extends StatelessWidget {
           Text(
             _buildProviderDesc(),
           ),
-          Text(
-            provider.path,
-            style: context.textTheme.bodyMedium?.toLight,
+          const SizedBox(
+            height: 4,
           ),
+          if (provider.subscriptionInfo != null)
+            SubscriptionInfoView(
+              subscriptionInfo: provider.subscriptionInfo,
+            ),
           const SizedBox(
             height: 8,
           ),
@@ -199,6 +202,9 @@ class ProviderItem extends StatelessWidget {
                   onPressed: _handleUpdateProvider,
                 ),
             ],
+          ),
+          const SizedBox(
+            height: 4,
           ),
         ],
       ),

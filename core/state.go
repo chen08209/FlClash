@@ -25,6 +25,7 @@ func getAndroidVpnOptions() *C.char {
 		AccessControl:    state.CurrentState.AccessControl,
 		SystemProxy:      state.CurrentState.SystemProxy,
 		AllowBypass:      state.CurrentState.AllowBypass,
+		RouteAddress:     state.CurrentState.RouteAddress,
 		BypassDomain:     state.CurrentState.BypassDomain,
 		DnsServerAddress: state.GetDnsServerAddress(),
 	}

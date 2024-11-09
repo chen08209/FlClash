@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 typedef InstallConfigCallBack = void Function(String url);
 
@@ -17,7 +17,7 @@ class LinkManager {
   initAppLinksListen(installConfigCallBack) async {
     debugPrint("initAppLinksListen");
     destroy();
-    subscription = _appLinks.allUriLinkStream.listen(
+    subscription = _appLinks.uriLinkStream.listen(
       (uri) {
         debugPrint('onAppLink: $uri');
         if (uri.host == 'install-config') {
@@ -31,8 +31,7 @@ class LinkManager {
     );
   }
 
-
-  destroy(){
+  destroy() {
     if (subscription != null) {
       subscription?.cancel();
       subscription = null;

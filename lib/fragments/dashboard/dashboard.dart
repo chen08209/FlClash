@@ -1,16 +1,18 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/fragments/dashboard/intranet_ip.dart';
-import 'package:fl_clash/fragments/dashboard/status_switch.dart';
+import 'package:fl_clash/fragments/dashboard/status_button.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:flutter/material.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'network_detection.dart';
+import 'network_speed.dart';
 import 'outbound_mode.dart';
 import 'start_button.dart';
-import 'network_speed.dart';
 import 'traffic_usage.dart';
 
 class DashboardFragment extends StatefulWidget {
@@ -22,7 +24,7 @@ class DashboardFragment extends StatefulWidget {
 
 class _DashboardFragmentState extends State<DashboardFragment> {
   _initFab(bool isCurrent) {
-    if(!isCurrent){
+    if (!isCurrent) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -66,13 +68,14 @@ class _DashboardFragmentState extends State<DashboardFragment> {
                   //     child: const VPNSwitch(),
                   //   ),
                   if (system.isDesktop) ...[
+                    if (Platform.isWindows)
+                      GridItem(
+                        crossAxisCellCount: switchCount,
+                        child: const TUNButton(),
+                      ),
                     GridItem(
                       crossAxisCellCount: switchCount,
-                      child: const TUNSwitch(),
-                    ),
-                    GridItem(
-                      crossAxisCellCount: switchCount,
-                      child: const ProxySwitch(),
+                      child: const SystemProxyButton(),
                     ),
                   ],
                   const GridItem(

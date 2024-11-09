@@ -6,15 +6,17 @@ part of '../profile.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$UserInfoImpl _$$UserInfoImplFromJson(Map<String, dynamic> json) =>
-    _$UserInfoImpl(
+_$SubscriptionInfoImpl _$$SubscriptionInfoImplFromJson(
+        Map<String, dynamic> json) =>
+    _$SubscriptionInfoImpl(
       upload: (json['upload'] as num?)?.toInt() ?? 0,
       download: (json['download'] as num?)?.toInt() ?? 0,
       total: (json['total'] as num?)?.toInt() ?? 0,
       expire: (json['expire'] as num?)?.toInt() ?? 0,
     );
 
-Map<String, dynamic> _$$UserInfoImplToJson(_$UserInfoImpl instance) =>
+Map<String, dynamic> _$$SubscriptionInfoImplToJson(
+        _$SubscriptionInfoImpl instance) =>
     <String, dynamic>{
       'upload': instance.upload,
       'download': instance.download,
@@ -33,9 +35,10 @@ _$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['lastUpdateDate'] as String),
       autoUpdateDuration:
           Duration(microseconds: (json['autoUpdateDuration'] as num).toInt()),
-      userInfo: json['userInfo'] == null
+      subscriptionInfo: json['subscriptionInfo'] == null
           ? null
-          : UserInfo.fromJson(json['userInfo'] as Map<String, dynamic>),
+          : SubscriptionInfo.fromJson(
+              json['subscriptionInfo'] as Map<String, dynamic>),
       autoUpdate: json['autoUpdate'] as bool? ?? true,
       selectedMap: (json['selectedMap'] as Map<String, dynamic>?)?.map(
             (k, e) => MapEntry(k, e as String),
@@ -55,7 +58,7 @@ Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
       'url': instance.url,
       'lastUpdateDate': instance.lastUpdateDate?.toIso8601String(),
       'autoUpdateDuration': instance.autoUpdateDuration.inMicroseconds,
-      'userInfo': instance.userInfo,
+      'subscriptionInfo': instance.subscriptionInfo,
       'autoUpdate': instance.autoUpdate,
       'selectedMap': instance.selectedMap,
       'unfoldSet': instance.unfoldSet.toList(),

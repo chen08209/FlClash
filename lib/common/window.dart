@@ -1,14 +1,10 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_single_instance/windows_single_instance.dart';
-
-import 'protocol.dart';
-import 'system.dart';
 
 class Window {
   init(WindowProps props, int version) async {

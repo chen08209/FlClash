@@ -8,13 +8,13 @@ class ProxyManager extends StatelessWidget {
 
   const ProxyManager({super.key, required this.child});
 
-  _updateProxy(ProxyState proxyState) {
+  _updateProxy(ProxyState proxyState) async {
     final isStart = proxyState.isStart;
     final systemProxy = proxyState.systemProxy;
     final port = proxyState.port;
     if (isStart && systemProxy) {
-      proxy?.startProxy(port);
-    }else{
+      proxy?.startProxy(port, proxyState.bassDomain);
+    } else {
       proxy?.stopProxy();
     }
   }
@@ -24,8 +24,9 @@ class ProxyManager extends StatelessWidget {
     return Selector3<AppFlowingState, Config, ClashConfig, ProxyState>(
       selector: (_, appFlowingState, config, clashConfig) => ProxyState(
         isStart: appFlowingState.isStart,
-        systemProxy: config.desktopProps.systemProxy,
+        systemProxy: config.networkProps.systemProxy,
         port: clashConfig.mixedPort,
+        bassDomain: config.networkProps.bypassDomain,
       ),
       builder: (_, state, child) {
         _updateProxy(state);

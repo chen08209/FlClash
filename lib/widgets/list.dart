@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 
 import 'card.dart';
 import 'input.dart';
-import 'sheet.dart';
 import 'scaffold.dart';
+import 'sheet.dart';
 
 class Delegate {
   const Delegate();
@@ -360,11 +360,13 @@ class ListItem<T> extends StatelessWidget {
             return;
           }
 
-          BaseNavigator.push(context, CommonScaffold(
-            key: Key(nextDelegate.title),
-            body: nextDelegate.widget,
-            title: nextDelegate.title,
-          ));
+          BaseNavigator.push(
+              context,
+              CommonScaffold(
+                key: Key(nextDelegate.title),
+                body: nextDelegate.widget,
+                title: nextDelegate.title,
+              ));
         },
       );
     }
@@ -468,7 +470,7 @@ class ListHeader extends StatelessWidget {
 }
 
 List<Widget> generateSection({
-  required String title,
+  String? title,
   required Iterable<Widget> items,
   List<Widget>? actions,
   bool separated = true,
@@ -481,7 +483,7 @@ List<Widget> generateSection({
         )
       : items;
   return [
-    if (items.isNotEmpty)
+    if (items.isNotEmpty && title != null)
       ListHeader(
         title: title,
         actions: actions,

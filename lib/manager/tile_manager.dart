@@ -1,4 +1,3 @@
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/tile.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -16,8 +15,6 @@ class TileManager extends StatefulWidget {
 }
 
 class _TileContainerState extends State<TileManager> with TileListener {
-
-
   @override
   Widget build(BuildContext context) {
     return widget.child;

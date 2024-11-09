@@ -41,7 +41,13 @@ ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig()
   ..hosts = (json['hosts'] as Map<String, dynamic>?)?.map(
         (k, e) => MapEntry(k, e as String),
       ) ??
-      {};
+      {}
+  ..includeRouteAddress = (json['include-route-address'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      []
+  ..routeMode = $enumDecodeNullable(_$RouteModeEnumMap, json['route-mode']) ??
+      RouteMode.config;
 
 Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
     <String, dynamic>{
@@ -63,6 +69,9 @@ Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
       'global-real-ua': instance.globalRealUa,
       'geox-url': instance.geoXUrl,
       'hosts': instance.hosts,
+      'route-address': instance.routeAddress,
+      'include-route-address': instance.includeRouteAddress,
+      'route-mode': _$RouteModeEnumMap[instance.routeMode]!,
     };
 
 const _$ModeEnumMap = {
@@ -82,6 +91,11 @@ const _$LogLevelEnumMap = {
   LogLevel.warning: 'warning',
   LogLevel.error: 'error',
   LogLevel.silent: 'silent',
+};
+
+const _$RouteModeEnumMap = {
+  RouteMode.bypassPrivate: 'bypassPrivate',
+  RouteMode.config: 'config',
 };
 
 _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(

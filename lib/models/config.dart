@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
@@ -6,9 +7,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'models.dart';
 
-part 'generated/config.g.dart';
-
 part 'generated/config.freezed.dart';
+part 'generated/config.g.dart';
 
 final defaultAppSetting = const AppSetting().copyWith(
   isAnimateToPage: system.isDesktop ? false : true,
@@ -38,9 +38,8 @@ class AppSetting with _$AppSetting {
       _$AppSettingFromJson(json);
 
   factory AppSetting.realFromJson(Map<String, Object?>? json) {
-    final appSetting = json == null
-        ? defaultAppSetting
-        : AppSetting.fromJson(json);
+    final appSetting =
+        json == null ? defaultAppSetting : AppSetting.fromJson(json);
     return appSetting.copyWith(
       isAnimateToPage: system.isDesktop ? false : appSetting.isAnimateToPage,
     );
@@ -110,7 +109,6 @@ class VpnProps with _$VpnProps {
     @Default(true) bool systemProxy,
     @Default(false) bool ipv6,
     @Default(true) bool allowBypass,
-    @Default(defaultBypassDomain) List<String> bypassDomain,
   }) = _VpnProps;
 
   factory VpnProps.fromJson(Map<String, Object?>? json) =>
@@ -118,13 +116,14 @@ class VpnProps with _$VpnProps {
 }
 
 @freezed
-class DesktopProps with _$DesktopProps {
-  const factory DesktopProps({
+class NetworkProps with _$NetworkProps {
+  const factory NetworkProps({
     @Default(true) bool systemProxy,
-  }) = _DesktopProps;
+    @Default(defaultBypassDomain) List<String> bypassDomain,
+  }) = _NetworkProps;
 
-  factory DesktopProps.fromJson(Map<String, Object?>? json) =>
-      json == null ? const DesktopProps() : _$DesktopPropsFromJson(json);
+  factory NetworkProps.fromJson(Map<String, Object?>? json) =>
+      json == null ? const NetworkProps() : _$NetworkPropsFromJson(json);
 }
 
 const defaultProxiesStyle = ProxiesStyle();
@@ -188,7 +187,7 @@ class Config extends ChangeNotifier {
   WindowProps _windowProps;
   ThemeProps _themeProps;
   VpnProps _vpnProps;
-  DesktopProps _desktopProps;
+  NetworkProps _networkProps;
   bool _overrideDns;
   List<HotKeyAction> _hotKeyActions;
   ProxiesStyle _proxiesStyle;
@@ -199,7 +198,7 @@ class Config extends ChangeNotifier {
         _accessControl = const AccessControl(),
         _windowProps = const WindowProps(),
         _vpnProps = defaultVpnProps,
-        _desktopProps = const DesktopProps(),
+        _networkProps = const NetworkProps(),
         _overrideDns = false,
         _appSetting = defaultAppSetting,
         _hotKeyActions = [],
@@ -384,11 +383,11 @@ class Config extends ChangeNotifier {
     }
   }
 
-  DesktopProps get desktopProps => _desktopProps;
+  NetworkProps get networkProps => _networkProps;
 
-  set desktopProps(DesktopProps value) {
-    if (_desktopProps != value) {
-      _desktopProps = value;
+  set networkProps(NetworkProps value) {
+    if (_networkProps != value) {
+      _networkProps = value;
       notifyListeners();
     }
   }
@@ -471,7 +470,7 @@ class Config extends ChangeNotifier {
       _proxiesStyle = config._proxiesStyle;
       _vpnProps = config._vpnProps;
       _overrideDns = config._overrideDns;
-      _desktopProps = config._desktopProps;
+      _networkProps = config._networkProps;
       _hotKeyActions = config._hotKeyActions;
     }
     notifyListeners();
@@ -487,6 +486,6 @@ class Config extends ChangeNotifier {
 
   @override
   String toString() {
-    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _desktopProps: $_desktopProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle}';
+    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle}';
   }
 }

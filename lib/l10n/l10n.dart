@@ -1741,6 +1741,16 @@ class AppLocalizations {
   }
 
   /// `Attach HTTP proxy to VpnService`
+  String get vpnSystemProxyDesc {
+    return Intl.message(
+      'Attach HTTP proxy to VpnService',
+      name: 'vpnSystemProxyDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Attach HTTP proxy to VpnService`
   String get systemProxyDesc {
     return Intl.message(
       'Attach HTTP proxy to VpnService',
@@ -3295,6 +3305,66 @@ class AppLocalizations {
     return Intl.message(
       'Toggle',
       name: 'toggle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System`
+  String get system {
+    return Intl.message(
+      'System',
+      name: 'system',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Route mode`
+  String get routeMode {
+    return Intl.message(
+      'Route mode',
+      name: 'routeMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Bypass private route address`
+  String get routeMode_bypassPrivate {
+    return Intl.message(
+      'Bypass private route address',
+      name: 'routeMode_bypassPrivate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use config`
+  String get routeMode_config {
+    return Intl.message(
+      'Use config',
+      name: 'routeMode_config',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Route address`
+  String get routeAddress {
+    return Intl.message(
+      'Route address',
+      name: 'routeAddress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Config listen route address`
+  String get routeAddressDesc {
+    return Intl.message(
+      'Config listen route address',
+      name: 'routeAddressDesc',
       desc: '',
       args: [],
     );

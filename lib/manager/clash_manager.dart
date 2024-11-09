@@ -20,7 +20,6 @@ class ClashManager extends StatefulWidget {
 }
 
 class _ClashContainerState extends State<ClashManager> with AppMessageListener {
-  Function? updateClashConfigDebounce;
   Function? updateDelayDebounce;
 
   Widget _updateContainer(Widget child) {
@@ -47,10 +46,7 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
       ),
       shouldRebuild: (prev, next) {
         if (prev != next) {
-          updateClashConfigDebounce ??= debounce<Function()>(() async {
-            await globalState.appController.updateClashConfig();
-          });
-          updateClashConfigDebounce!();
+          globalState.appController.updateClashConfigDebounce();
         }
         return prev != next;
       },
@@ -68,11 +64,12 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
         accessControl: config.isAccessControl ? config.accessControl : null,
         ipv6: config.vpnProps.ipv6,
         allowBypass: config.vpnProps.allowBypass,
-        bypassDomain: config.vpnProps.bypassDomain,
+        bypassDomain: config.networkProps.bypassDomain,
         systemProxy: config.vpnProps.systemProxy,
         onlyProxy: config.appSetting.onlyProxy,
         currentProfileName:
             config.currentProfile?.label ?? config.currentProfileId ?? "",
+        routeAddress: clashConfig.routeAddress,
       ),
       builder: (__, state, child) {
         clashCore.setState(state);

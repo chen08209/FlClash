@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';

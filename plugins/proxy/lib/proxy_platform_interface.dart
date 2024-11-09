@@ -20,7 +20,7 @@ abstract class ProxyPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<bool?> startProxy(int port) {
+  Future<bool?> startProxy(int port, List<String> bypassDomain) {
     throw UnimplementedError('startProxy() has not been implemented.');
   }
 

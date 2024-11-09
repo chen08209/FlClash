@@ -6,10 +6,11 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-class VPNSwitch extends StatelessWidget {
-  const VPNSwitch({super.key});
+class VPNItem extends StatelessWidget {
+  const VPNItem({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +40,8 @@ class TUNItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.vpnProps.enable,
+    return Selector<ClashConfig, bool>(
+      selector: (_, clashConfig) => clashConfig.tun.enable,
       builder: (_, enable, __) {
         return ListItem.switchItem(
           title: Text(appLocalizations.tun),
@@ -60,8 +61,8 @@ class TUNItem extends StatelessWidget {
   }
 }
 
-class AllowBypassSwitch extends StatelessWidget {
-  const AllowBypassSwitch({super.key});
+class AllowBypassItem extends StatelessWidget {
+  const AllowBypassItem({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -87,8 +88,8 @@ class AllowBypassSwitch extends StatelessWidget {
   }
 }
 
-class SystemProxySwitch extends StatelessWidget {
-  const SystemProxySwitch({super.key});
+class VpnSystemProxyItem extends StatelessWidget {
+  const VpnSystemProxyItem({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -114,8 +115,35 @@ class SystemProxySwitch extends StatelessWidget {
   }
 }
 
-class Ipv6Switch extends StatelessWidget {
-  const Ipv6Switch({super.key});
+class SystemProxyItem extends StatelessWidget {
+  const SystemProxyItem({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<Config, bool>(
+      selector: (_, config) => config.networkProps.systemProxy,
+      builder: (_, systemProxy, __) {
+        return ListItem.switchItem(
+          title: Text(appLocalizations.systemProxy),
+          subtitle: Text(appLocalizations.systemProxyDesc),
+          delegate: SwitchDelegate(
+            value: systemProxy,
+            onChanged: (bool value) async {
+              final config = globalState.appController.config;
+              final networkProps = config.networkProps;
+              config.networkProps = networkProps.copyWith(
+                systemProxy: value,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class Ipv6Item extends StatelessWidget {
+  const Ipv6Item({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -176,6 +204,36 @@ class TunStackItem extends StatelessWidget {
 class BypassDomainItem extends StatelessWidget {
   const BypassDomainItem({super.key});
 
+  _initActions(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      final commonScaffoldState =
+          context.findAncestorStateOfType<CommonScaffoldState>();
+      commonScaffoldState?.actions = [
+        IconButton(
+          onPressed: () {
+            globalState.showMessage(
+              title: appLocalizations.reset,
+              message: TextSpan(
+                text: appLocalizations.resetTip,
+              ),
+              onTab: () {
+                final config = globalState.appController.config;
+                config.networkProps = config.networkProps.copyWith(
+                  bypassDomain: defaultBypassDomain,
+                );
+                Navigator.of(context).pop();
+              },
+            );
+          },
+          tooltip: appLocalizations.reset,
+          icon: const Icon(
+            Icons.replay,
+          ),
+        )
+      ];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
@@ -183,19 +241,20 @@ class BypassDomainItem extends StatelessWidget {
       subtitle: Text(appLocalizations.bypassDomainDesc),
       delegate: OpenDelegate(
         isBlur: false,
+        isScaffold: true,
         title: appLocalizations.bypassDomain,
         widget: Selector<Config, List<String>>(
-          selector: (_, config) => config.vpnProps.bypassDomain,
-          shouldRebuild: (prev, next) =>
-              !stringListEquality.equals(prev, next),
-          builder: (_, bypassDomain, __) {
+          selector: (_, config) => config.networkProps.bypassDomain,
+          shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
+          builder: (context, bypassDomain, __) {
+            _initActions(context);
             return ListPage(
               title: appLocalizations.bypassDomain,
               items: bypassDomain,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final config = globalState.appController.config;
-                config.vpnProps = config.vpnProps.copyWith(
+                config.networkProps = config.networkProps.copyWith(
                   bypassDomain: List.from(items),
                 );
               },
@@ -208,22 +267,108 @@ class BypassDomainItem extends StatelessWidget {
   }
 }
 
+class RouteModeItem extends StatelessWidget {
+  const RouteModeItem({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<ClashConfig, RouteMode>(
+      selector: (_, clashConfig) => clashConfig.routeMode,
+      builder: (_, value, __) {
+        return ListItem<RouteMode>.options(
+          title: Text(appLocalizations.routeMode),
+          subtitle: Text(Intl.message("routeMode_${value.name}")),
+          delegate: OptionsDelegate<RouteMode>(
+            title: appLocalizations.routeMode,
+            options: RouteMode.values,
+            onChanged: (RouteMode? value) {
+              if (value == null) {
+                return;
+              }
+              final appController = globalState.appController;
+              appController.clashConfig.routeMode = value;
+            },
+            textBuilder: (routeMode) => Intl.message(
+              "routeMode_${routeMode.name}",
+            ),
+            value: value,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class RouteAddressItem extends StatelessWidget {
+  const RouteAddressItem({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<ClashConfig, bool>(
+      selector: (_, clashConfig) => clashConfig.routeMode == RouteMode.config,
+      builder: (_, value, child) {
+        if (value) {
+          return child!;
+        }
+        return Container();
+      },
+      child: ListItem.open(
+        title: Text(appLocalizations.routeAddress),
+        subtitle: Text(appLocalizations.routeAddressDesc),
+        delegate: OpenDelegate(
+          isBlur: false,
+          isScaffold: true,
+          title: appLocalizations.routeAddress,
+          widget: Selector<ClashConfig, List<String>>(
+            selector: (_, clashConfig) => clashConfig.includeRouteAddress,
+            shouldRebuild: (prev, next) =>
+                !stringListEquality.equals(prev, next),
+            builder: (context, routeAddress, __) {
+              return ListPage(
+                title: appLocalizations.routeAddress,
+                items: routeAddress,
+                titleBuilder: (item) => Text(item),
+                onChange: (items) {
+                  final clashConfig = globalState.appController.clashConfig;
+                  clashConfig.includeRouteAddress =
+                      Set<String>.from(items).toList();
+                },
+              );
+            },
+          ),
+          extendPageWidth: 360,
+        ),
+      ),
+    );
+  }
+}
+
 final networkItems = [
-  Platform.isAndroid ? const VPNSwitch() : const TUNItem(),
+  if (Platform.isAndroid) const VPNItem(),
   if (Platform.isAndroid)
     ...generateSection(
       title: "VPN",
       items: [
-        const SystemProxySwitch(),
-        const AllowBypassSwitch(),
-        const Ipv6Switch(),
-        const BypassDomainItem(),
+        const SystemProxyItem(),
+        const AllowBypassItem(),
+        const Ipv6Item(),
+      ],
+    ),
+  if (system.isDesktop)
+    ...generateSection(
+      title: appLocalizations.system,
+      items: [
+        SystemProxyItem(),
+        BypassDomainItem(),
       ],
     ),
   ...generateSection(
     title: appLocalizations.options,
     items: [
+      if (system.isDesktop) const TUNItem(),
       const TunStackItem(),
+      const RouteModeItem(),
+      const RouteAddressItem(),
     ],
   ),
 ];

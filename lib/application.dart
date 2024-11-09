@@ -19,6 +19,7 @@ runAppWithPreferences(
   Widget child, {
   required AppState appState,
   required Config config,
+  required AppFlowingState appFlowingState,
   required ClashConfig clashConfig,
 }) {
   runApp(MultiProvider(
@@ -30,7 +31,7 @@ runAppWithPreferences(
         create: (_) => config,
       ),
       ChangeNotifierProvider<AppFlowingState>(
-        create: (_) => AppFlowingState(),
+        create: (_) => appFlowingState,
       ),
       ChangeNotifierProxyProvider2<Config, ClashConfig, AppState>(
         create: (_) => appState,

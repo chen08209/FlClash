@@ -51,7 +51,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
     }
     _headerStateNotifier.value = _headerStateNotifier.value.copyWith(
       currentIndex: currentIndex,
-      offset: headerOffset,
+      offset: max(headerOffset, 0),
     );
   }
 
@@ -299,6 +299,9 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
                         headerState.currentIndex > state.groupNames.length - 1
                             ? 0
                             : headerState.currentIndex;
+                    if (index < 0) {
+                      return Container();
+                    }
                     return Stack(
                       children: [
                         Positioned(
@@ -417,9 +420,9 @@ class _ListHeaderState extends State<ListHeader>
             final iconMapEntryList =
                 config.proxiesStyle.iconMap.entries.toList();
             final index = iconMapEntryList.indexWhere((item) {
-              try{
+              try {
                 return RegExp(item.key).hasMatch(groupName);
-              }catch(_){
+              } catch (_) {
                 return false;
               }
             });
@@ -468,7 +471,7 @@ class _ListHeaderState extends State<ListHeader>
   Widget build(BuildContext context) {
     return CommonCard(
       key: widget.key,
-      radius: 24,
+      radius: 18,
       type: CommonCardType.filled,
       child: Container(
         padding: const EdgeInsets.symmetric(

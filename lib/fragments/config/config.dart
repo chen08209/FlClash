@@ -24,6 +24,7 @@ class _ConfigFragmentState extends State<ConfigFragment> {
           title: appLocalizations.network,
           isScaffold: true,
           isBlur: false,
+          extendPageWidth: 360,
           widget: const NetworkListView(),
         ),
       ),

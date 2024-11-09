@@ -23,8 +23,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..windowProps =
       WindowProps.fromJson(json['windowProps'] as Map<String, dynamic>?)
   ..vpnProps = VpnProps.fromJson(json['vpnProps'] as Map<String, dynamic>?)
-  ..desktopProps =
-      DesktopProps.fromJson(json['desktopProps'] as Map<String, dynamic>?)
+  ..networkProps =
+      NetworkProps.fromJson(json['networkProps'] as Map<String, dynamic>?)
   ..overrideDns = json['overrideDns'] as bool? ?? false
   ..hotKeyActions = (json['hotKeyActions'] as List<dynamic>?)
           ?.map((e) => HotKeyAction.fromJson(e as Map<String, dynamic>))
@@ -44,7 +44,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'dav': instance.dav,
       'windowProps': instance.windowProps,
       'vpnProps': instance.vpnProps,
-      'desktopProps': instance.desktopProps,
+      'networkProps': instance.networkProps,
       'overrideDns': instance.overrideDns,
       'hotKeyActions': instance.hotKeyActions,
       'proxiesStyle': instance.proxiesStyle,
@@ -148,10 +148,6 @@ _$VpnPropsImpl _$$VpnPropsImplFromJson(Map<String, dynamic> json) =>
       systemProxy: json['systemProxy'] as bool? ?? true,
       ipv6: json['ipv6'] as bool? ?? false,
       allowBypass: json['allowBypass'] as bool? ?? true,
-      bypassDomain: (json['bypassDomain'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          defaultBypassDomain,
     );
 
 Map<String, dynamic> _$$VpnPropsImplToJson(_$VpnPropsImpl instance) =>
@@ -160,17 +156,21 @@ Map<String, dynamic> _$$VpnPropsImplToJson(_$VpnPropsImpl instance) =>
       'systemProxy': instance.systemProxy,
       'ipv6': instance.ipv6,
       'allowBypass': instance.allowBypass,
-      'bypassDomain': instance.bypassDomain,
     };
 
-_$DesktopPropsImpl _$$DesktopPropsImplFromJson(Map<String, dynamic> json) =>
-    _$DesktopPropsImpl(
+_$NetworkPropsImpl _$$NetworkPropsImplFromJson(Map<String, dynamic> json) =>
+    _$NetworkPropsImpl(
       systemProxy: json['systemProxy'] as bool? ?? true,
+      bypassDomain: (json['bypassDomain'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          defaultBypassDomain,
     );
 
-Map<String, dynamic> _$$DesktopPropsImplToJson(_$DesktopPropsImpl instance) =>
+Map<String, dynamic> _$$NetworkPropsImplToJson(_$NetworkPropsImpl instance) =>
     <String, dynamic>{
       'systemProxy': instance.systemProxy,
+      'bypassDomain': instance.bypassDomain,
     };
 
 _$ProxiesStyleImpl _$$ProxiesStyleImplFromJson(Map<String, dynamic> json) =>
