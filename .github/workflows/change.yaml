@@ -16,30 +16,49 @@ jobs:
 
       - name: Generate
         run: |
-          tags=$(git tag --sort=creatordate)
-          previous=""
-          if [ ! -f CHANGELOG.md ]; then
-            echo "" > CHANGELOG.md
-          else
-            previous=$(grep -oP '^## \K.*' CHANGELOG.md | tail -n 1)
-          fi
-          for tag in $tags; do
-            if [ -n "$previous" ]; then
-              echo "## $tag" >> CHANGELOG.md
-              git log --pretty=format:"* %s (%h)" "$previous..$tag" >> CHANGELOG.md
-              echo -e "\n" >> CHANGELOG.md
+          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
+          preTag=$(grep -oP '^## \K.*' CHANGELOG.md | head -n 1)
+          currentTag=""
+          for ((i = 0; i <= ${#tags[@]}; i++)); do
+            if (( i < ${#tags[@]} )); then
+              tag=${tags[$i]}
+            else
+              tag=""
             fi
-            previous=$tag
+            if [ -n "$currentTag" ]; then
+              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
+                break
+              fi
+            fi
+            if [ -n "$currentTag" ]; then
+              echo "## $currentTag" >> CHANGELOG.md
+              echo "" >> CHANGELOG.md
+              if [ -n "$tag" ]; then
+                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> CHANGELOG.md
+              else
+                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> CHANGELOG.md
+              fi
+              echo "" >> CHANGELOG.md
+            fi
+            currentTag=$tag
           done
 
       - name: Commit
         run: |
-          if ！git diff --cached --quiet; then
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add CHANGELOG.md
-            git commit -m "Update Changelog"
+          git add CHANGELOG.md
+          if ! git diff --cached --quiet; then
+            echo "Commit pushing"
+            git config --local user.email "chen08209@gmail.com"
+            git config --local user.name "chen08209"
+            git commit -m "Update changelog"
             git push
+            if [ $? -eq 0 ]; then
+              echo "Push succeeded"
+            else
+              echo "Push failed"
+              exit 1
+            fi
           fi
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
