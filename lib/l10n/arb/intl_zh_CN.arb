@@ -168,7 +168,8 @@
   "ipv6Desc": "开启后将可以接收IPv6流量",
   "app": "应用",
   "general": "基础",
-  "systemProxyDesc": "为VpnService附加HTTP代理",
+  "vpnSystemProxyDesc": "为VpnService附加HTTP代理",
+  "systemProxyDesc": "设置系统代理",
   "unifiedDelay": "统一延迟",
   "unifiedDelayDesc": "去除握手等额外延迟",
   "tcpConcurrent": "TCP并发",
@@ -323,5 +324,11 @@
   "adminAutoLaunchDesc": "使用管理员模式开机自启动",
   "fontFamily": "字体",
   "systemFont": "系统字体",
-  "toggle": "切换"
+  "toggle": "切换",
+  "system": "系统",
+  "routeMode": "路由模式",
+  "routeMode_bypassPrivate": "绕过私有路由地址",
+  "routeMode_config": "使用配置",
+  "routeAddress": "路由地址",
+  "routeAddressDesc": "配置监听路由地址"
 }

@@ -4,37 +4,36 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/clash/core.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'generated/profile.g.dart';
-
 part 'generated/profile.freezed.dart';
+part 'generated/profile.g.dart';
 
 typedef SelectedMap = Map<String, String>;
 
 @freezed
-class UserInfo with _$UserInfo {
-  const factory UserInfo({
+class SubscriptionInfo with _$SubscriptionInfo {
+  const factory SubscriptionInfo({
     @Default(0) int upload,
     @Default(0) int download,
     @Default(0) int total,
     @Default(0) int expire,
-  }) = _UserInfo;
+  }) = _SubscriptionInfo;
 
-  factory UserInfo.fromJson(Map<String, Object?> json) =>
-      _$UserInfoFromJson(json);
+  factory SubscriptionInfo.fromJson(Map<String, Object?> json) =>
+      _$SubscriptionInfoFromJson(json);
 
-  factory UserInfo.formHString(String? info) {
-    if (info == null) return const UserInfo();
+  factory SubscriptionInfo.formHString(String? info) {
+    if (info == null) return const SubscriptionInfo();
     final list = info.split(";");
     Map<String, int?> map = {};
     for (final i in list) {
       final keyValue = i.trim().split("=");
       map[keyValue[0]] = int.tryParse(keyValue[1]);
     }
-    return UserInfo(
+    return SubscriptionInfo(
       upload: map["upload"] ?? 0,
       download: map["download"] ?? 0,
       total: map["total"] ?? 0,
@@ -52,7 +51,7 @@ class Profile with _$Profile {
     @Default("") String url,
     DateTime? lastUpdateDate,
     required Duration autoUpdateDuration,
-    UserInfo? userInfo,
+    SubscriptionInfo? subscriptionInfo,
     @Default(true) bool autoUpdate,
     @Default({}) SelectedMap selectedMap,
     @Default({}) Set<String> unfoldSet,
@@ -103,7 +102,7 @@ extension ProfileExtension on Profile {
     final userinfo = response.headers.value('subscription-userinfo');
     return await copyWith(
       label: label ?? other.getFileNameForDisposition(disposition) ?? id,
-      userInfo: UserInfo.formHString(userinfo),
+      subscriptionInfo: SubscriptionInfo.formHString(userinfo),
     ).saveFile(response.data);
   }
 

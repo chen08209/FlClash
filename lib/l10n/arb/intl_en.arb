@@ -168,6 +168,7 @@
   "ipv6Desc": "When turned on it will be able to receive IPv6 traffic",
   "app": "App",
   "general": "General",
+  "vpnSystemProxyDesc": "Attach HTTP proxy to VpnService",
   "systemProxyDesc": "Attach HTTP proxy to VpnService",
   "unifiedDelay": "Unified delay",
   "unifiedDelayDesc": "Remove extra delays such as handshaking",
@@ -323,5 +324,11 @@
   "adminAutoLaunchDesc": "Boot up by using admin mode",
   "fontFamily": "FontFamily",
   "systemFont": "System font",
-  "toggle": "Toggle"
+  "toggle": "Toggle",
+  "system": "System",
+  "routeMode": "Route mode",
+  "routeMode_bypassPrivate": "Bypass private route address",
+  "routeMode_config": "Use config",
+  "routeAddress": "Route address",
+  "routeAddressDesc": "Config listen route address"
 }

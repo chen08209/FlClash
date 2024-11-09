@@ -14,41 +14,48 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-UserInfo _$UserInfoFromJson(Map<String, dynamic> json) {
-  return _UserInfo.fromJson(json);
+SubscriptionInfo _$SubscriptionInfoFromJson(Map<String, dynamic> json) {
+  return _SubscriptionInfo.fromJson(json);
 }
 
 /// @nodoc
-mixin _$UserInfo {
+mixin _$SubscriptionInfo {
   int get upload => throw _privateConstructorUsedError;
   int get download => throw _privateConstructorUsedError;
   int get total => throw _privateConstructorUsedError;
   int get expire => throw _privateConstructorUsedError;
 
+  /// Serializes this SubscriptionInfo to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $UserInfoCopyWith<UserInfo> get copyWith =>
+
+  /// Create a copy of SubscriptionInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $SubscriptionInfoCopyWith<SubscriptionInfo> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $UserInfoCopyWith<$Res> {
-  factory $UserInfoCopyWith(UserInfo value, $Res Function(UserInfo) then) =
-      _$UserInfoCopyWithImpl<$Res, UserInfo>;
+abstract class $SubscriptionInfoCopyWith<$Res> {
+  factory $SubscriptionInfoCopyWith(
+          SubscriptionInfo value, $Res Function(SubscriptionInfo) then) =
+      _$SubscriptionInfoCopyWithImpl<$Res, SubscriptionInfo>;
   @useResult
   $Res call({int upload, int download, int total, int expire});
 }
 
 /// @nodoc
-class _$UserInfoCopyWithImpl<$Res, $Val extends UserInfo>
-    implements $UserInfoCopyWith<$Res> {
-  _$UserInfoCopyWithImpl(this._value, this._then);
+class _$SubscriptionInfoCopyWithImpl<$Res, $Val extends SubscriptionInfo>
+    implements $SubscriptionInfoCopyWith<$Res> {
+  _$SubscriptionInfoCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of SubscriptionInfo
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -79,24 +86,26 @@ class _$UserInfoCopyWithImpl<$Res, $Val extends UserInfo>
 }
 
 /// @nodoc
-abstract class _$$UserInfoImplCopyWith<$Res>
-    implements $UserInfoCopyWith<$Res> {
-  factory _$$UserInfoImplCopyWith(
-          _$UserInfoImpl value, $Res Function(_$UserInfoImpl) then) =
-      __$$UserInfoImplCopyWithImpl<$Res>;
+abstract class _$$SubscriptionInfoImplCopyWith<$Res>
+    implements $SubscriptionInfoCopyWith<$Res> {
+  factory _$$SubscriptionInfoImplCopyWith(_$SubscriptionInfoImpl value,
+          $Res Function(_$SubscriptionInfoImpl) then) =
+      __$$SubscriptionInfoImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({int upload, int download, int total, int expire});
 }
 
 /// @nodoc
-class __$$UserInfoImplCopyWithImpl<$Res>
-    extends _$UserInfoCopyWithImpl<$Res, _$UserInfoImpl>
-    implements _$$UserInfoImplCopyWith<$Res> {
-  __$$UserInfoImplCopyWithImpl(
-      _$UserInfoImpl _value, $Res Function(_$UserInfoImpl) _then)
+class __$$SubscriptionInfoImplCopyWithImpl<$Res>
+    extends _$SubscriptionInfoCopyWithImpl<$Res, _$SubscriptionInfoImpl>
+    implements _$$SubscriptionInfoImplCopyWith<$Res> {
+  __$$SubscriptionInfoImplCopyWithImpl(_$SubscriptionInfoImpl _value,
+      $Res Function(_$SubscriptionInfoImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of SubscriptionInfo
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -105,7 +114,7 @@ class __$$UserInfoImplCopyWithImpl<$Res>
     Object? total = null,
     Object? expire = null,
   }) {
-    return _then(_$UserInfoImpl(
+    return _then(_$SubscriptionInfoImpl(
       upload: null == upload
           ? _value.upload
           : upload // ignore: cast_nullable_to_non_nullable
@@ -128,12 +137,12 @@ class __$$UserInfoImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$UserInfoImpl implements _UserInfo {
-  const _$UserInfoImpl(
+class _$SubscriptionInfoImpl implements _SubscriptionInfo {
+  const _$SubscriptionInfoImpl(
       {this.upload = 0, this.download = 0, this.total = 0, this.expire = 0});
 
-  factory _$UserInfoImpl.fromJson(Map<String, dynamic> json) =>
-      _$$UserInfoImplFromJson(json);
+  factory _$SubscriptionInfoImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SubscriptionInfoImplFromJson(json);
 
   @override
   @JsonKey()
@@ -150,14 +159,14 @@ class _$UserInfoImpl implements _UserInfo {
 
   @override
   String toString() {
-    return 'UserInfo(upload: $upload, download: $download, total: $total, expire: $expire)';
+    return 'SubscriptionInfo(upload: $upload, download: $download, total: $total, expire: $expire)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$UserInfoImpl &&
+            other is _$SubscriptionInfoImpl &&
             (identical(other.upload, upload) || other.upload == upload) &&
             (identical(other.download, download) ||
                 other.download == download) &&
@@ -165,33 +174,36 @@ class _$UserInfoImpl implements _UserInfo {
             (identical(other.expire, expire) || other.expire == expire));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, upload, download, total, expire);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of SubscriptionInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$UserInfoImplCopyWith<_$UserInfoImpl> get copyWith =>
-      __$$UserInfoImplCopyWithImpl<_$UserInfoImpl>(this, _$identity);
+  _$$SubscriptionInfoImplCopyWith<_$SubscriptionInfoImpl> get copyWith =>
+      __$$SubscriptionInfoImplCopyWithImpl<_$SubscriptionInfoImpl>(
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$UserInfoImplToJson(
+    return _$$SubscriptionInfoImplToJson(
       this,
     );
   }
 }
 
-abstract class _UserInfo implements UserInfo {
-  const factory _UserInfo(
+abstract class _SubscriptionInfo implements SubscriptionInfo {
+  const factory _SubscriptionInfo(
       {final int upload,
       final int download,
       final int total,
-      final int expire}) = _$UserInfoImpl;
+      final int expire}) = _$SubscriptionInfoImpl;
 
-  factory _UserInfo.fromJson(Map<String, dynamic> json) =
-      _$UserInfoImpl.fromJson;
+  factory _SubscriptionInfo.fromJson(Map<String, dynamic> json) =
+      _$SubscriptionInfoImpl.fromJson;
 
   @override
   int get upload;
@@ -201,9 +213,12 @@ abstract class _UserInfo implements UserInfo {
   int get total;
   @override
   int get expire;
+
+  /// Create a copy of SubscriptionInfo
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
-  _$$UserInfoImplCopyWith<_$UserInfoImpl> get copyWith =>
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$SubscriptionInfoImplCopyWith<_$SubscriptionInfoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -219,15 +234,19 @@ mixin _$Profile {
   String get url => throw _privateConstructorUsedError;
   DateTime? get lastUpdateDate => throw _privateConstructorUsedError;
   Duration get autoUpdateDuration => throw _privateConstructorUsedError;
-  UserInfo? get userInfo => throw _privateConstructorUsedError;
+  SubscriptionInfo? get subscriptionInfo => throw _privateConstructorUsedError;
   bool get autoUpdate => throw _privateConstructorUsedError;
   Map<String, String> get selectedMap => throw _privateConstructorUsedError;
   Set<String> get unfoldSet => throw _privateConstructorUsedError;
   @JsonKey(includeToJson: false, includeFromJson: false)
   bool get isUpdating => throw _privateConstructorUsedError;
 
+  /// Serializes this Profile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ProfileCopyWith<Profile> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -243,13 +262,13 @@ abstract class $ProfileCopyWith<$Res> {
       String url,
       DateTime? lastUpdateDate,
       Duration autoUpdateDuration,
-      UserInfo? userInfo,
+      SubscriptionInfo? subscriptionInfo,
       bool autoUpdate,
       Map<String, String> selectedMap,
       Set<String> unfoldSet,
       @JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating});
 
-  $UserInfoCopyWith<$Res>? get userInfo;
+  $SubscriptionInfoCopyWith<$Res>? get subscriptionInfo;
 }
 
 /// @nodoc
@@ -262,6 +281,8 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -271,7 +292,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? url = null,
     Object? lastUpdateDate = freezed,
     Object? autoUpdateDuration = null,
-    Object? userInfo = freezed,
+    Object? subscriptionInfo = freezed,
     Object? autoUpdate = null,
     Object? selectedMap = null,
     Object? unfoldSet = null,
@@ -302,10 +323,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
           ? _value.autoUpdateDuration
           : autoUpdateDuration // ignore: cast_nullable_to_non_nullable
               as Duration,
-      userInfo: freezed == userInfo
-          ? _value.userInfo
-          : userInfo // ignore: cast_nullable_to_non_nullable
-              as UserInfo?,
+      subscriptionInfo: freezed == subscriptionInfo
+          ? _value.subscriptionInfo
+          : subscriptionInfo // ignore: cast_nullable_to_non_nullable
+              as SubscriptionInfo?,
       autoUpdate: null == autoUpdate
           ? _value.autoUpdate
           : autoUpdate // ignore: cast_nullable_to_non_nullable
@@ -325,15 +346,17 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     ) as $Val);
   }
 
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $UserInfoCopyWith<$Res>? get userInfo {
-    if (_value.userInfo == null) {
+  $SubscriptionInfoCopyWith<$Res>? get subscriptionInfo {
+    if (_value.subscriptionInfo == null) {
       return null;
     }
 
-    return $UserInfoCopyWith<$Res>(_value.userInfo!, (value) {
-      return _then(_value.copyWith(userInfo: value) as $Val);
+    return $SubscriptionInfoCopyWith<$Res>(_value.subscriptionInfo!, (value) {
+      return _then(_value.copyWith(subscriptionInfo: value) as $Val);
     });
   }
 }
@@ -352,14 +375,14 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
       String url,
       DateTime? lastUpdateDate,
       Duration autoUpdateDuration,
-      UserInfo? userInfo,
+      SubscriptionInfo? subscriptionInfo,
       bool autoUpdate,
       Map<String, String> selectedMap,
       Set<String> unfoldSet,
       @JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating});
 
   @override
-  $UserInfoCopyWith<$Res>? get userInfo;
+  $SubscriptionInfoCopyWith<$Res>? get subscriptionInfo;
 }
 
 /// @nodoc
@@ -370,6 +393,8 @@ class __$$ProfileImplCopyWithImpl<$Res>
       _$ProfileImpl _value, $Res Function(_$ProfileImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -379,7 +404,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? url = null,
     Object? lastUpdateDate = freezed,
     Object? autoUpdateDuration = null,
-    Object? userInfo = freezed,
+    Object? subscriptionInfo = freezed,
     Object? autoUpdate = null,
     Object? selectedMap = null,
     Object? unfoldSet = null,
@@ -410,10 +435,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
           ? _value.autoUpdateDuration
           : autoUpdateDuration // ignore: cast_nullable_to_non_nullable
               as Duration,
-      userInfo: freezed == userInfo
-          ? _value.userInfo
-          : userInfo // ignore: cast_nullable_to_non_nullable
-              as UserInfo?,
+      subscriptionInfo: freezed == subscriptionInfo
+          ? _value.subscriptionInfo
+          : subscriptionInfo // ignore: cast_nullable_to_non_nullable
+              as SubscriptionInfo?,
       autoUpdate: null == autoUpdate
           ? _value.autoUpdate
           : autoUpdate // ignore: cast_nullable_to_non_nullable
@@ -444,7 +469,7 @@ class _$ProfileImpl implements _Profile {
       this.url = "",
       this.lastUpdateDate,
       required this.autoUpdateDuration,
-      this.userInfo,
+      this.subscriptionInfo,
       this.autoUpdate = true,
       final Map<String, String> selectedMap = const {},
       final Set<String> unfoldSet = const {},
@@ -470,7 +495,7 @@ class _$ProfileImpl implements _Profile {
   @override
   final Duration autoUpdateDuration;
   @override
-  final UserInfo? userInfo;
+  final SubscriptionInfo? subscriptionInfo;
   @override
   @JsonKey()
   final bool autoUpdate;
@@ -498,7 +523,7 @@ class _$ProfileImpl implements _Profile {
 
   @override
   String toString() {
-    return 'Profile(id: $id, label: $label, currentGroupName: $currentGroupName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, userInfo: $userInfo, autoUpdate: $autoUpdate, selectedMap: $selectedMap, unfoldSet: $unfoldSet, isUpdating: $isUpdating)';
+    return 'Profile(id: $id, label: $label, currentGroupName: $currentGroupName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, subscriptionInfo: $subscriptionInfo, autoUpdate: $autoUpdate, selectedMap: $selectedMap, unfoldSet: $unfoldSet, isUpdating: $isUpdating)';
   }
 
   @override
@@ -515,8 +540,8 @@ class _$ProfileImpl implements _Profile {
                 other.lastUpdateDate == lastUpdateDate) &&
             (identical(other.autoUpdateDuration, autoUpdateDuration) ||
                 other.autoUpdateDuration == autoUpdateDuration) &&
-            (identical(other.userInfo, userInfo) ||
-                other.userInfo == userInfo) &&
+            (identical(other.subscriptionInfo, subscriptionInfo) ||
+                other.subscriptionInfo == subscriptionInfo) &&
             (identical(other.autoUpdate, autoUpdate) ||
                 other.autoUpdate == autoUpdate) &&
             const DeepCollectionEquality()
@@ -527,7 +552,7 @@ class _$ProfileImpl implements _Profile {
                 other.isUpdating == isUpdating));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -537,13 +562,15 @@ class _$ProfileImpl implements _Profile {
       url,
       lastUpdateDate,
       autoUpdateDuration,
-      userInfo,
+      subscriptionInfo,
       autoUpdate,
       const DeepCollectionEquality().hash(_selectedMap),
       const DeepCollectionEquality().hash(_unfoldSet),
       isUpdating);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ProfileImplCopyWith<_$ProfileImpl> get copyWith =>
@@ -565,7 +592,7 @@ abstract class _Profile implements Profile {
       final String url,
       final DateTime? lastUpdateDate,
       required final Duration autoUpdateDuration,
-      final UserInfo? userInfo,
+      final SubscriptionInfo? subscriptionInfo,
       final bool autoUpdate,
       final Map<String, String> selectedMap,
       final Set<String> unfoldSet,
@@ -587,7 +614,7 @@ abstract class _Profile implements Profile {
   @override
   Duration get autoUpdateDuration;
   @override
-  UserInfo? get userInfo;
+  SubscriptionInfo? get subscriptionInfo;
   @override
   bool get autoUpdate;
   @override
@@ -597,8 +624,11 @@ abstract class _Profile implements Profile {
   @override
   @JsonKey(includeToJson: false, includeFromJson: false)
   bool get isUpdating;
+
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ProfileImplCopyWith<_$ProfileImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

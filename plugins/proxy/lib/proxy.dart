@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'proxy_platform_interface.dart';
 import "package:path/path.dart";
+
+import 'proxy_platform_interface.dart';
 
 enum ProxyTypes { http, https, socks }
 
@@ -9,11 +10,14 @@ class Proxy extends ProxyPlatform {
   static String url = "127.0.0.1";
 
   @override
-  Future<bool?> startProxy(int port) async {
+  Future<bool?> startProxy(
+    int port, [
+    List<String> bypassDomain = const [],
+  ]) async {
     return switch (Platform.operatingSystem) {
-      "macos" => await _startProxyWithMacos(port),
-      "linux" => await _startProxyWithLinux(port),
-      "windows" => await ProxyPlatform.instance.startProxy(port),
+      "macos" => await _startProxyWithMacos(port, bypassDomain),
+      "linux" => await _startProxyWithLinux(port, bypassDomain),
+      "windows" => await ProxyPlatform.instance.startProxy(port, bypassDomain),
       String() => false,
     };
   }
@@ -28,48 +32,93 @@ class Proxy extends ProxyPlatform {
     };
   }
 
-  Future<bool> _startProxyWithLinux(int port) async {
+  Future<bool> _startProxyWithLinux(int port, List<String> bypassDomain) async {
     try {
       final homeDir = Platform.environment['HOME']!;
       final configDir = join(homeDir, ".config");
       final cmdList = List<List<String>>.empty(growable: true);
       final desktop = Platform.environment['XDG_CURRENT_DESKTOP'];
       final isKDE = desktop == "KDE";
-      for (final type in ProxyTypes.values) {
+      if (isKDE) {
+        cmdList.add(
+          [
+            "kwriteconfig5",
+            "--file",
+            "$configDir/kioslaverc",
+            "--group",
+            "Proxy Settings",
+            "--key",
+            "ProxyType",
+            "1"
+          ],
+        );
+        cmdList.add(
+          [
+            "kwriteconfig5",
+            "--file",
+            "$configDir/kioslaverc",
+            "--group",
+            "Proxy Settings",
+            "--key",
+            "NoProxyFor",
+            bypassDomain.join(",")
+          ],
+        );
+      } else {
         cmdList.add(
           ["gsettings", "set", "org.gnome.system.proxy", "mode", "manual"],
         );
+        final ignoreHosts = "\"['${bypassDomain.join("', '")}']\"";
         cmdList.add(
           [
             "gsettings",
             "set",
-            "org.gnome.system.proxy.${type.name}",
-            "host",
-            url
+            "org.gnome.system.proxy",
+            "ignore-hosts",
+            ignoreHosts
           ],
         );
-        cmdList.add(
-          [
-            "gsettings",
-            "set",
-            "org.gnome.system.proxy.${type.name}",
-            "port",
-            "$port"
-          ],
-        );
-        if (isKDE) {
+      }
+      for (final type in ProxyTypes.values) {
+        if (!isKDE) {
           cmdList.add(
             [
-              "kwriteconfig5",
-              "--file",
-              "$configDir/kioslaverc",
-              "--group",
-              "Proxy Settings",
-              "--key",
-              "ProxyType",
-              "1"
+              "gsettings",
+              "set",
+              "org.gnome.system.proxy.${type.name}",
+              "host",
+              url
             ],
           );
+          cmdList.add(
+            [
+              "gsettings",
+              "set",
+              "org.gnome.system.proxy.${type.name}",
+              "port",
+              "$port"
+            ],
+          );
+          cmdList.add(
+            [
+              "gsettings",
+              "set",
+              "org.gnome.system.proxy.${type.name}",
+              "port",
+              "$port"
+            ],
+          );
+          cmdList.add(
+            [
+              "gsettings",
+              "set",
+              "org.gnome.system.proxy.${type.name}",
+              "port",
+              "$port"
+            ],
+          );
+        }
+        if (isKDE) {
           cmdList.add(
             [
               "kwriteconfig5",
@@ -100,19 +149,23 @@ class Proxy extends ProxyPlatform {
       final cmdList = List<List<String>>.empty(growable: true);
       final desktop = Platform.environment['XDG_CURRENT_DESKTOP'];
       final isKDE = desktop == "KDE";
-      cmdList
-          .add(["gsettings", "set", "org.gnome.system.proxy", "mode", "none"]);
       if (isKDE) {
-        cmdList.add([
-          "kwriteconfig5",
-          "--file",
-          "$configDir/kioslaverc",
-          "--group",
-          "Proxy Settings",
-          "--key",
-          "ProxyType",
-          "0"
-        ]);
+        cmdList.add(
+          [
+            "kwriteconfig5",
+            "--file",
+            "$configDir/kioslaverc",
+            "--group",
+            "Proxy Settings",
+            "--key",
+            "ProxyType",
+            "0"
+          ],
+        );
+      } else {
+        cmdList.add(
+          ["gsettings", "set", "org.gnome.system.proxy", "mode", "none"],
+        );
       }
       for (final cmd in cmdList) {
         await Process.run(cmd[0], cmd.sublist(1));
@@ -123,23 +176,43 @@ class Proxy extends ProxyPlatform {
     }
   }
 
-  Future<bool> _startProxyWithMacos(int port) async {
+  Future<bool> _startProxyWithMacos(int port, List<String> bypassDomain) async {
     try {
       final devices = await _getNetworkDeviceListWithMacos();
       for (final dev in devices) {
         await Future.wait([
           Process.run(
-              "/usr/sbin/networksetup", ["-setwebproxystate", dev, "on"]),
+            "/usr/sbin/networksetup",
+            ["-setwebproxystate", dev, "on"],
+          ),
           Process.run(
-              "/usr/sbin/networksetup", ["-setwebproxy", dev, url, "$port"]),
+            "/usr/sbin/networksetup",
+            ["-setwebproxy", dev, url, "$port"],
+          ),
           Process.run(
-              "/usr/sbin/networksetup", ["-setsecurewebproxystate", dev, "on"]),
-          Process.run("/usr/sbin/networksetup",
-              ["-setsecurewebproxy", dev, url, "$port"]),
-          Process.run("/usr/sbin/networksetup",
-              ["-setsocksfirewallproxystate", dev, "on"]),
-          Process.run("/usr/sbin/networksetup",
-              ["-setsocksfirewallproxy", dev, url, "$port"]),
+            "/usr/sbin/networksetup",
+            ["-setsecurewebproxystate", dev, "on"],
+          ),
+          Process.run(
+            "/usr/sbin/networksetup",
+            ["-setsecurewebproxy", dev, url, "$port"],
+          ),
+          Process.run(
+            "/usr/sbin/networksetup",
+            ["-setsocksfirewallproxystate", dev, "on"],
+          ),
+          Process.run(
+            "/usr/sbin/networksetup",
+            ["-setsocksfirewallproxy", dev, url, "$port"],
+          ),
+          Process.run(
+            "/usr/sbin/networksetup",
+            [
+              "-setproxybypassdomains",
+              dev,
+              bypassDomain.join(" "),
+            ],
+          ),
         ]);
       }
       return true;
@@ -154,13 +227,25 @@ class Proxy extends ProxyPlatform {
       for (final dev in devices) {
         await Future.wait([
           Process.run(
-              "/usr/sbin/networksetup", ["-setautoproxystate", dev, "off"]),
+            "/usr/sbin/networksetup",
+            ["-setautoproxystate", dev, "off"],
+          ),
           Process.run(
-              "/usr/sbin/networksetup", ["-setwebproxystate", dev, "off"]),
-          Process.run("/usr/sbin/networksetup",
-              ["-setsecurewebproxystate", dev, "off"]),
-          Process.run("/usr/sbin/networksetup",
-              ["-setsocksfirewallproxystate", dev, "off"]),
+            "/usr/sbin/networksetup",
+            ["-setwebproxystate", dev, "off"],
+          ),
+          Process.run(
+            "/usr/sbin/networksetup",
+            ["-setsecurewebproxystate", dev, "off"],
+          ),
+          Process.run(
+            "/usr/sbin/networksetup",
+            ["-setsocksfirewallproxystate", dev, "off"],
+          ),
+          Process.run(
+            "/usr/sbin/networksetup",
+            ["-setproxybypassdomains", dev, ""],
+          ),
         ]);
       }
       return true;

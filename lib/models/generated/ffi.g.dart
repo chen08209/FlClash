@@ -19,6 +19,9 @@ _$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
       bypassDomain: (json['bypassDomain'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      routeAddress: (json['routeAddress'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
       ipv6: json['ipv6'] as bool,
       onlyProxy: json['onlyProxy'] as bool,
     );
@@ -31,6 +34,7 @@ Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
       'allowBypass': instance.allowBypass,
       'systemProxy': instance.systemProxy,
       'bypassDomain': instance.bypassDomain,
+      'routeAddress': instance.routeAddress,
       'ipv6': instance.ipv6,
       'onlyProxy': instance.onlyProxy,
     };
@@ -51,6 +55,9 @@ _$AndroidVpnOptionsImpl _$$AndroidVpnOptionsImplFromJson(
           .toList(),
       ipv4Address: json['ipv4Address'] as String,
       ipv6Address: json['ipv6Address'] as String,
+      routeAddress: (json['routeAddress'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
       dnsServerAddress: json['dnsServerAddress'] as String,
     );
 
@@ -65,6 +72,7 @@ Map<String, dynamic> _$$AndroidVpnOptionsImplToJson(
       'bypassDomain': instance.bypassDomain,
       'ipv4Address': instance.ipv4Address,
       'ipv6Address': instance.ipv6Address,
+      'routeAddress': instance.routeAddress,
       'dnsServerAddress': instance.dnsServerAddress,
     };
 
@@ -215,13 +223,33 @@ Map<String, dynamic> _$$ProcessMapItemImplToJson(
       'value': instance.value,
     };
 
+_$ProviderSubscriptionInfoImpl _$$ProviderSubscriptionInfoImplFromJson(
+        Map<String, dynamic> json) =>
+    _$ProviderSubscriptionInfoImpl(
+      upload: (json['UPLOAD'] as num?)?.toInt() ?? 0,
+      download: (json['DOWNLOAD'] as num?)?.toInt() ?? 0,
+      total: (json['TOTAL'] as num?)?.toInt() ?? 0,
+      expire: (json['EXPIRE'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$$ProviderSubscriptionInfoImplToJson(
+        _$ProviderSubscriptionInfoImpl instance) =>
+    <String, dynamic>{
+      'UPLOAD': instance.upload,
+      'DOWNLOAD': instance.download,
+      'TOTAL': instance.total,
+      'EXPIRE': instance.expire,
+    };
+
 _$ExternalProviderImpl _$$ExternalProviderImplFromJson(
         Map<String, dynamic> json) =>
     _$ExternalProviderImpl(
       name: json['name'] as String,
       type: json['type'] as String,
-      path: json['path'] as String,
+      path: json['path'] as String?,
       count: (json['count'] as num).toInt(),
+      subscriptionInfo: subscriptionInfoFormCore(
+          json['subscription-info'] as Map<String, Object?>?),
       isUpdating: json['isUpdating'] as bool? ?? false,
       vehicleType: json['vehicle-type'] as String,
       updateAt: DateTime.parse(json['update-at'] as String),
@@ -234,6 +262,7 @@ Map<String, dynamic> _$$ExternalProviderImplToJson(
       'type': instance.type,
       'path': instance.path,
       'count': instance.count,
+      'subscription-info': instance.subscriptionInfo,
       'isUpdating': instance.isUpdating,
       'vehicle-type': instance.vehicleType,
       'update-at': instance.updateAt.toIso8601String(),

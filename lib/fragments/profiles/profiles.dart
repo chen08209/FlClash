@@ -1,9 +1,9 @@
 import 'dart:ui';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -127,8 +127,8 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
   Widget build(BuildContext context) {
     return ActiveBuilder(
       label: "profiles",
-      builder: (isCurrent,child){
-        if(isCurrent){
+      builder: (isCurrent, child) {
+        if (isCurrent) {
           _initScaffold();
         }
         return child!;
@@ -246,44 +246,16 @@ class ProfileItem extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildUserInfo(BuildContext context, UserInfo userInfo) {
-    final use = userInfo.upload + userInfo.download;
-    final total = userInfo.total;
-    if (total == 0) {
-      return [];
-    }
-    final useShow = TrafficValue(value: use).show;
-    final totalShow = TrafficValue(value: total).show;
-    final progress = total == 0 ? 0.0 : use / total;
-    final expireShow = userInfo.expire == 0
-        ? appLocalizations.infiniteTime
-        : DateTime.fromMillisecondsSinceEpoch(userInfo.expire * 1000).show;
-    return [
-      LinearProgressIndicator(
-        minHeight: 6,
-        value: progress,
-        backgroundColor: context.colorScheme.primary.toSoft(),
-      ),
-      const SizedBox(
-        height: 8,
-      ),
-      Text(
-        "$useShow / $totalShow · $expireShow",
-        style: context.textTheme.labelMedium?.toLight,
-      ),
-      const SizedBox(
-        height: 4,
-      ),
-    ];
-  }
-
   List<Widget> _buildUrlProfileInfo(BuildContext context) {
-    final userInfo = profile.userInfo;
+    final subscriptionInfo = profile.subscriptionInfo;
     return [
       const SizedBox(
         height: 8,
       ),
-      if (userInfo != null) ..._buildUserInfo(context, userInfo),
+      if (subscriptionInfo != null)
+        SubscriptionInfoView(
+          subscriptionInfo: subscriptionInfo,
+        ),
       Text(
         profile.lastUpdateDate?.lastUpdateTimeDesc ?? "",
         style: context.textTheme.labelMedium?.toLight,

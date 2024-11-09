@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -14,14 +16,14 @@ class IntranetIP extends StatefulWidget {
 
 class _IntranetIPState extends State<IntranetIP> {
   final ipNotifier = ValueNotifier<String?>("");
+  late StreamSubscription subscription;
 
   Future<String> getNetworkType() async {
     try {
-      List<NetworkInterface> interfaces = await NetworkInterface.list(
+      final interfaces = await NetworkInterface.list(
         includeLoopback: false,
         type: InternetAddressType.any,
       );
-
       for (var interface in interfaces) {
         if (interface.name.toLowerCase().contains('wlan') ||
             interface.name.toLowerCase().contains('wi-fi')) {
@@ -33,7 +35,6 @@ class _IntranetIPState extends State<IntranetIP> {
           return 'Mobile Data';
         }
       }
-
       return 'Unknown';
     } catch (e) {
       return 'Error';
@@ -41,6 +42,7 @@ class _IntranetIPState extends State<IntranetIP> {
   }
 
   Future<String?> getLocalIpAddress() async {
+    await Future.delayed(animateDuration);
     List<NetworkInterface> interfaces = await NetworkInterface.list(
       includeLoopback: false,
     )
@@ -67,14 +69,13 @@ class _IntranetIPState extends State<IntranetIP> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    ipNotifier.dispose();
-  }
-
-  @override
   void initState() {
     super.initState();
+    subscription = Connectivity().onConnectivityChanged.listen((_) async {
+      ipNotifier.value = null;
+      debugPrint("[App] Connection change");
+      ipNotifier.value = await getLocalIpAddress() ?? "";
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ipNotifier.value = await getLocalIpAddress() ?? "";
     });
@@ -104,7 +105,9 @@ class _IntranetIPState extends State<IntranetIP> {
                           flex: 1,
                           child: TooltipText(
                             text: Text(
-                              value.isNotEmpty ? value : appLocalizations.noNetwork,
+                              value.isNotEmpty
+                                  ? value
+                                  : appLocalizations.noNetwork,
                               style: context
                                   .textTheme.titleLarge?.toSoftBold.toMinus,
                               maxLines: 1,
@@ -126,5 +129,12 @@ class _IntranetIPState extends State<IntranetIP> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    subscription.cancel();
+    ipNotifier.dispose();
   }
 }

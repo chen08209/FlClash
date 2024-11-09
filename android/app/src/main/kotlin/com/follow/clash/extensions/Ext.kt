@@ -15,6 +15,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.follow.clash.TempActivity
 import com.follow.clash.models.CIDR
 import com.follow.clash.models.Metadata
+import com.follow.clash.models.VpnOptions
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,6 +41,40 @@ fun Metadata.getProtocol(): Int? {
     if (network.startsWith("tcp")) return IPPROTO_TCP
     if (network.startsWith("udp")) return IPPROTO_UDP
     return null
+}
+
+fun VpnOptions.getIpv4RouteAddress(): List<CIDR> {
+    return routeAddress.filter {
+        it.isIpv4()
+    }.map {
+        it.toCIDR()
+    }
+}
+
+fun VpnOptions.getIpv6RouteAddress(): List<CIDR> {
+    return routeAddress.filter {
+        it.isIpv6()
+    }.map {
+        it.toCIDR()
+    }
+}
+
+fun String.isIpv4(): Boolean {
+    val parts = split("/")
+    if (parts.size != 2) {
+        throw IllegalArgumentException("Invalid CIDR format")
+    }
+    val address = InetAddress.getByName(parts[0])
+    return address.address.size == 4
+}
+
+fun String.isIpv6(): Boolean {
+    val parts = split("/")
+    if (parts.size != 2) {
+        throw IllegalArgumentException("Invalid CIDR format")
+    }
+    val address = InetAddress.getByName(parts[0])
+    return address.address.size == 16
 }
 
 fun String.toCIDR(): CIDR {
@@ -79,7 +114,7 @@ fun InetAddress.asSocketAddressText(port: Int): String {
     }
 }
 
-fun Context.wrapAction(action: String):String{
+fun Context.wrapAction(action: String): String {
     return "${this.packageName}.action.$action"
 }
 

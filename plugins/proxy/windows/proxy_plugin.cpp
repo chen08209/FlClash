@@ -22,18 +22,32 @@
 #include <memory>
 #include <sstream>
 
-void startProxy(const int port)
+void startProxy(const int port, const flutter::EncodableList& bypassDomain)
 {
   INTERNET_PER_CONN_OPTION_LIST list;
   DWORD dwBufSize = sizeof(list);
   list.dwSize = sizeof(list);
   list.pszConnection = nullptr;
+
   auto url = "127.0.0.1:" + std::to_string(port);
   auto wUrl = std::wstring(url.begin(), url.end());
   auto fullAddr = new WCHAR[url.length() + 1];
   wcscpy_s(fullAddr, url.length() + 1, wUrl.c_str());
-  list.dwOptionCount = 2;
-  list.pOptions = new INTERNET_PER_CONN_OPTION[2];
+
+  std::wstring wBypassList;
+
+  for (const auto& domain : bypassDomain) {
+    if (!wBypassList.empty()) {
+       wBypassList += L";";
+    }
+    wBypassList += std::wstring(std::get<std::string>(domain).begin(), std::get<std::string>(domain).end());
+  }
+
+  auto bypassAddr = new WCHAR[wBypassList.length() + 1];
+  wcscpy_s(bypassAddr, wBypassList.length() + 1, wBypassList.c_str());
+
+  list.dwOptionCount = 3;
+  list.pOptions = new INTERNET_PER_CONN_OPTION[3];
 
   if (!list.pOptions)
   {
@@ -45,6 +59,9 @@ void startProxy(const int port)
 
   list.pOptions[1].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
   list.pOptions[1].Value.pszValue = fullAddr;
+
+  list.pOptions[2].dwOption = INTERNET_PER_CONN_PROXY_BYPASS;
+  list.pOptions[2].Value.pszValue = bypassAddr;
 
   InternetSetOption(nullptr, INTERNET_OPTION_PER_CONNECTION_OPTION, &list, dwBufSize);
 
@@ -70,7 +87,11 @@ void startProxy(const int port)
     list.pszConnection = entryAddr[i].szEntryName;
     InternetSetOption(nullptr, INTERNET_OPTION_PER_CONNECTION_OPTION, &list, dwBufSize);
   }
+
+  delete[] fullAddr;
+  delete[] bypassAddr;
   delete[] list.pOptions;
+
   InternetSetOption(nullptr, INTERNET_OPTION_SETTINGS_CHANGED, nullptr, 0);
   InternetSetOption(nullptr, INTERNET_OPTION_REFRESH, nullptr, 0);
 }
@@ -160,7 +181,8 @@ namespace proxy
     {
       auto *arguments = std::get_if<flutter::EncodableMap>(method_call.arguments());
       auto port = std::get<int>(arguments->at(flutter::EncodableValue("port")));
-      startProxy(port);
+      auto bypassDomain = std::get<flutter::EncodableList>(arguments->at(flutter::EncodableValue("bypassDomain")));
+      startProxy(port, bypassDomain);
       result->Success(true);
     }
     else

@@ -1,6 +1,4 @@
 import 'dart:io';
-
-
 import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
 
@@ -19,7 +17,7 @@ class _PopContainerState extends State<BackScope> {
     if (Platform.isAndroid) {
       return PopScope(
         canPop: false,
-        onPopInvoked: (_) async {
+        onPopInvokedWithResult: (_, __) async {
           final canPop = Navigator.canPop(context);
           if (canPop) {
             Navigator.pop(context);

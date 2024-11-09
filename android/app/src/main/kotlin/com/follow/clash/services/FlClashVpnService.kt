@@ -15,20 +15,21 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Parcel
 import android.os.RemoteException
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.follow.clash.BaseServiceInterface
 import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
 import com.follow.clash.R
-import com.follow.clash.TempActivity
 import com.follow.clash.extensions.getActionPendingIntent
+import com.follow.clash.extensions.getIpv4RouteAddress
+import com.follow.clash.extensions.getIpv6RouteAddress
 import com.follow.clash.extensions.toCIDR
 import com.follow.clash.models.AccessControlMode
 import com.follow.clash.models.VpnOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 
 class FlClashVpnService : VpnService(), BaseServiceInterface {
@@ -42,12 +43,28 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
             if (options.ipv4Address.isNotEmpty()) {
                 val cidr = options.ipv4Address.toCIDR()
                 addAddress(cidr.address, cidr.prefixLength)
-                addRoute("0.0.0.0", 0)
+                val routeAddress = options.getIpv4RouteAddress()
+                if (routeAddress.isNotEmpty()) {
+                    routeAddress.forEach { i ->
+                        Log.d("addRoute4", "address: ${i.address} prefixLength:${i.prefixLength}")
+                        addRoute(i.address, i.prefixLength)
+                    }
+                } else {
+                    addRoute("0.0.0.0", 0)
+                }
             }
             if (options.ipv6Address.isNotEmpty()) {
                 val cidr = options.ipv6Address.toCIDR()
                 addAddress(cidr.address, cidr.prefixLength)
-                addRoute("::", 0)
+                val routeAddress = options.getIpv6RouteAddress()
+                if (routeAddress.isNotEmpty()) {
+                    routeAddress.forEach { i ->
+                        Log.d("addRoute6", "address: ${i.address} prefixLength:${i.prefixLength}")
+                        addRoute(i.address, i.prefixLength)
+                    }
+                } else {
+                    addRoute("::", 0)
+                }
             }
             addDnsServer(options.dnsServerAddress)
             setMtu(9000)

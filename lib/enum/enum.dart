@@ -173,3 +173,8 @@ enum FontFamily {
 
   const FontFamily([this.value]);
 }
+
+enum RouteMode {
+  bypassPrivate,
+  config,
+}

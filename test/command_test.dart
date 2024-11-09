@@ -3,11 +3,15 @@
 import 'dart:io';
 
 void main() {
-  startService();
+  final cmdList = [];
+  final ignoreHosts = "\"ass\"";
+  cmdList.add(
+    ["gsettings", "set", "org.gnome.system.proxy", "port", ignoreHosts],
+  );
+  print(cmdList.first);
 }
 
 startService() async {
-
   try {
     // 创建服务器
     final server = await HttpServer.bind("127.0.0.1", 10001);

@@ -206,6 +206,7 @@ class ProxyState with _$ProxyState {
   const factory ProxyState({
     required bool isStart,
     required bool systemProxy,
+    required List<String> bassDomain,
     required int port,
   }) = _ProxyState;
 }
@@ -217,8 +218,6 @@ class HttpOverridesState with _$HttpOverridesState {
     required int port,
   }) = _HttpOverridesState;
 }
-
-
 
 @freezed
 class ClashConfigState with _$ClashConfigState {

@@ -17,6 +17,9 @@ import com.follow.clash.GlobalState
 import com.follow.clash.MainActivity
 import com.follow.clash.extensions.getActionPendingIntent
 import com.follow.clash.models.VpnOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class FlClashService : Service(), BaseServiceInterface {
@@ -69,7 +72,7 @@ class FlClashService : Service(), BaseServiceInterface {
             addAction(
                 0,
                 GlobalState.getText("stop"),
-                getActionPendingIntent("CHANGE")
+                getActionPendingIntent("STOP")
             )
             setOngoing(true)
             setShowWhen(false)
@@ -89,21 +92,23 @@ class FlClashService : Service(), BaseServiceInterface {
 
     @SuppressLint("ForegroundServiceType", "WrongConstant")
     override fun startForeground(title: String, content: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = getSystemService(NotificationManager::class.java)
-            var channel = manager?.getNotificationChannel(CHANNEL)
-            if (channel == null) {
-                channel =
-                    NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
-                manager?.createNotificationChannel(channel)
+        CoroutineScope(Dispatchers.Default).launch {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val manager = getSystemService(NotificationManager::class.java)
+                var channel = manager?.getNotificationChannel(CHANNEL)
+                if (channel == null) {
+                    channel =
+                        NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
+                    manager?.createNotificationChannel(channel)
+                }
             }
-        }
-        val notification =
-            notificationBuilder.setContentTitle(title).setContentText(content).build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(notificationId, notification)
+            val notification =
+                notificationBuilder.setContentTitle(title).setContentText(content).build()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(notificationId, notification)
+            }
         }
     }
 }
