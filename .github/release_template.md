@@ -33,8 +33,8 @@
         <tr>
             <td>macOS (v10.15+)</td>
             <td>
-                <a href="https://github.com/chen08209/FlClash/releases/download/vVERSION/FlClash-VERSION-macos-amd64.dmg"><img src="https://img.shields.io/badge/DMG-x64-ea005e.svg?logo=apple"></a><br>
-                <a href="https://github.com/chen08209/FlClash/releases/download/vVERSION/FlClash-VERSION-macos-arm64.dmg"><img src="https://img.shields.io/badge/DMG-ARM-e8528e.svg?logo=apple"></a><br>
+                <a href="https://github.com/chen08209/FlClash/releases/download/vVERSION/FlClash-VERSION-macos-arm64.dmg"><img src="https://img.shields.io/badge/DMG-ARM-ea005e.svg?logo=apple"></a><br>
+                <a href="https://github.com/chen08209/FlClash/releases/download/vVERSION/FlClash-VERSION-macos-amd64.dmg"><img src="https://img.shields.io/badge/DMG-x64-e8528e.svg?logo=apple"></a><br>
             </td>
         </tr>
         <tr>
