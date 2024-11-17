@@ -31,17 +31,19 @@ jobs:
               fi
             fi
             if [ -n "$currentTag" ]; then
-              echo "## $currentTag" >> CHANGELOG.md
-              echo "" >> CHANGELOG.md
+              echo "## $currentTag" >> NEW_CHANGELOG.md
+              echo "" >> NEW_CHANGELOG.md
               if [ -n "$tag" ]; then
-                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> CHANGELOG.md
+                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
               else
-                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> CHANGELOG.md
+                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
               fi
-              echo "" >> CHANGELOG.md
+              echo "" >> NEW_CHANGELOG.md
             fi
             currentTag=$tag
           done
+          cat CHANGELOG.md >> NEW_CHANGELOG.md
+          cat NEW_CHANGELOG.md > CHANGELOG.md
 
       - name: Commit
         run: |
