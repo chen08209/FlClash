@@ -495,7 +495,8 @@
 
 ## v0.8.12
 
-- Fix the problem that the download of remote resources failed after GeodataMode was turned on, which caused the application to flash back.
+- Fix the problem that the download of remote resources failed after GeodataMode was turned on, which caused the
+  application to flash back.
 
 - Fix edit profile error
 
@@ -661,4 +662,3 @@
 - update mobile_scanner
 
 - Initial commit
-
