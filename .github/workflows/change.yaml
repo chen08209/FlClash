@@ -2,8 +2,8 @@ name: change
 
 on:
   push:
-    branches:
-      - 'main'
+    tags:
+      - 'v*'
 
 jobs:
   changelog:

@@ -8,10 +8,11 @@ import 'package:fl_clash/plugins/vpn.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
 import 'application.dart';
+import 'common/common.dart';
 import 'l10n/l10n.dart';
 import 'models/models.dart';
-import 'common/common.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -96,10 +97,10 @@ Future<void> vpnService() async {
         );
       },
       onStarted: (String runTime) async {
-        await globalState.applyProfile(
-          appState: appState,
-          config: config,
+        await globalState.updateClashConfig(
           clashConfig: clashConfig,
+          config: config,
+          isPatch: false,
         );
       },
       onLoaded: (String groupName) {
@@ -115,25 +116,34 @@ Future<void> vpnService() async {
     ),
   );
   await app?.tip(appLocalizations.startVpn);
-  await globalState.handleStart();
 
-  tile?.addListener(
-    TileListenerWithVpn(
-      onStop: () async {
-        await app?.tip(appLocalizations.stopVpn);
-        await globalState.handleStop();
-        clashCore.shutdown();
-        exit(0);
-      },
-    ),
-  );
+  globalState
+      .updateClashConfig(
+    clashConfig: clashConfig,
+    config: config,
+    isPatch: false,
+  )
+      .then((_) async {
+    await globalState.handleStart();
 
-  globalState.updateTraffic();
-  globalState.updateFunctionLists = [
-    () {
-      globalState.updateTraffic();
-    }
-  ];
+    tile?.addListener(
+      TileListenerWithVpn(
+        onStop: () async {
+          await app?.tip(appLocalizations.stopVpn);
+          await globalState.handleStop();
+          clashCore.shutdown();
+          exit(0);
+        },
+      ),
+    );
+
+    globalState.updateTraffic();
+    globalState.updateFunctionLists = [
+      () {
+        globalState.updateTraffic();
+      }
+    ];
+  });
 }
 
 @immutable

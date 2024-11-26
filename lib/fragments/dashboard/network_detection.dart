@@ -55,7 +55,8 @@ class _NetworkDetectionState extends State<NetworkDetection> {
         );
         return;
       }
-      _setTimeoutTimer = Timer(const Duration(milliseconds: 2000), () {
+      _clearSetTimeoutTimer();
+      _setTimeoutTimer = Timer(const Duration(milliseconds: 300), () {
         networkDetectionState.value = networkDetectionState.value.copyWith(
           isTesting: false,
           ipInfo: null,
@@ -156,7 +157,8 @@ class _NetworkDetectionState extends State<NetworkDetection> {
                                               .textTheme
                                               .titleLarge
                                               ?.copyWith(
-                                                fontFamily: FontFamily.twEmoji.value,
+                                                fontFamily:
+                                                    FontFamily.twEmoji.value,
                                               ),
                                         ),
                                       )
