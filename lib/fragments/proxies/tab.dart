@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -9,6 +10,8 @@ import 'package:provider/provider.dart';
 
 import 'card.dart';
 import 'common.dart';
+
+List<Proxy> currentProxies = [];
 
 typedef GroupNameKeyMap = Map<String, GlobalObjectKey<ProxyGroupViewState>>;
 
@@ -28,7 +31,7 @@ class ProxiesTabFragmentState extends State<ProxiesTabFragment>
   @override
   void dispose() {
     super.dispose();
-    _tabController?.dispose();
+    _destroyTabController();
   }
 
   scrollToGroupSelected() {
@@ -106,6 +109,36 @@ class ProxiesTabFragmentState extends State<ProxiesTabFragment>
     );
   }
 
+  _tabControllerListener([int? index]) {
+    final appController = globalState.appController;
+    final currentGroups = appController.appState.currentGroups;
+    if (_tabController?.index == null) {
+      return;
+    }
+    final currentGroup = currentGroups[index ?? _tabController!.index];
+    currentProxies = currentGroup.all;
+    appController.config.updateCurrentGroupName(
+      currentGroup.name,
+    );
+  }
+
+  _destroyTabController() {
+    _tabController?.removeListener(_tabControllerListener);
+    _tabController?.dispose();
+    _tabController = null;
+  }
+
+  _updateTabController(int length, int index) {
+    final realIndex = index == -1 ? 0 : index;
+    _tabController ??= TabController(
+      length: length,
+      initialIndex: realIndex,
+      vsync: this,
+    );
+    _tabControllerListener(realIndex);
+    _tabController?.addListener(_tabControllerListener);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Selector2<AppState, Config, ProxiesSelectorState>(
@@ -119,8 +152,7 @@ class ProxiesTabFragmentState extends State<ProxiesTabFragment>
       },
       shouldRebuild: (prev, next) {
         if (!stringListEquality.equals(prev.groupNames, next.groupNames)) {
-          _tabController?.dispose();
-          _tabController = null;
+          _destroyTabController();
           return true;
         }
         return false;
@@ -129,12 +161,8 @@ class ProxiesTabFragmentState extends State<ProxiesTabFragment>
         final index = state.groupNames.indexWhere(
           (item) => item == state.currentGroupName,
         );
-        _tabController ??= TabController(
-          length: state.groupNames.length,
-          initialIndex: index == -1 ? 0 : index,
-          vsync: this,
-        );
-        GroupNameKeyMap keyMap = {};
+        _updateTabController(state.groupNames.length, index);
+        final GroupNameKeyMap keyMap = {};
         final children = state.groupNames.map((groupName) {
           keyMap[groupName] = GlobalObjectKey(groupName);
           return KeepScope(
@@ -167,16 +195,6 @@ class ProxiesTabFragmentState extends State<ProxiesTabFragment>
                           left: 16,
                           right: 16 + (value ? 16 : 0),
                         ),
-                        onTap: (index) {
-                          final appController = globalState.appController;
-                          final currentGroups =
-                              appController.appState.currentGroups;
-                          if (currentGroups.length > index) {
-                            appController.config.updateCurrentGroupName(
-                              currentGroups[index].name,
-                            );
-                          }
-                        },
                         dividerColor: Colors.transparent,
                         isScrollable: true,
                         tabAlignment: TabAlignment.start,
@@ -243,14 +261,13 @@ class ProxyGroupView extends StatefulWidget {
 class ProxyGroupViewState extends State<ProxyGroupView> {
   var isLock = false;
   final _controller = ScrollController();
-  List<Proxy> _lastProxies = [];
 
   String get groupName => widget.groupName;
 
-  _delayTest(List<Proxy> proxies) async {
+  _delayTest() async {
     if (isLock) return;
     isLock = true;
-    await delayTest(proxies);
+    await delayTest(currentProxies);
     isLock = false;
   }
 
@@ -269,7 +286,7 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
         16 +
             getScrollToSelectedOffset(
               groupName: groupName,
-              proxies: _lastProxies,
+              proxies: currentProxies,
             ),
         _controller.position.maxScrollExtent,
       ),
@@ -278,7 +295,7 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
     );
   }
 
-  initFab(bool isCurrent, List<Proxy> proxies) {
+  initFab(bool isCurrent) {
     if (!isCurrent) {
       return;
     }
@@ -287,9 +304,7 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
           context.findAncestorStateOfType<CommonScaffoldState>();
       commonScaffoldState?.floatingActionButton = DelayTestButton(
         onClick: () async {
-          await _delayTest(
-            proxies,
-          );
+          await _delayTest();
         },
       );
     });
@@ -319,11 +334,10 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
         final sortedProxies = globalState.appController.getSortProxies(
           proxies,
         );
-        _lastProxies = sortedProxies;
         return ActiveBuilder(
           label: "proxies",
           builder: (isCurrent, child) {
-            initFab(isCurrent, proxies);
+            initFab(isCurrent);
             return child!;
           },
           child: Align(
@@ -381,7 +395,9 @@ class _DelayTestButtonState extends State<DelayTestButton>
   _healthcheck() async {
     _controller.forward();
     await widget.onClick();
-    _controller.reverse();
+    if (mounted) {
+      _controller.reverse();
+    }
   }
 
   @override

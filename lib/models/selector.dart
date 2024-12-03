@@ -63,13 +63,15 @@ class ApplicationSelectorState with _$ApplicationSelectorState {
 class TrayState with _$TrayState {
   const factory TrayState({
     required Mode mode,
+    required int port,
     required bool autoLaunch,
-    required bool adminAutoLaunch,
     required bool systemProxy,
     required bool tunEnable,
     required bool isStart,
     required String? locale,
     required Brightness? brightness,
+    required List<Group> groups,
+    required SelectedMap map,
   }) = _TrayState;
 }
 
@@ -197,7 +199,6 @@ class ProxiesActionsState with _$ProxiesActionsState {
 class AutoLaunchState with _$AutoLaunchState {
   const factory AutoLaunchState({
     required bool isAutoLaunch,
-    required bool isAdminAutoLaunch,
   }) = _AutoLaunchState;
 }
 

@@ -330,5 +330,7 @@
   "routeMode_bypassPrivate": "绕过私有路由地址",
   "routeMode_config": "使用配置",
   "routeAddress": "路由地址",
-  "routeAddressDesc": "配置监听路由地址"
+  "routeAddressDesc": "配置监听路由地址",
+  "pleaseInputAdminPassword": "请输入管理员密码",
+  "copyEnvVar": "复制环境变量"
 }

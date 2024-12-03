@@ -4,12 +4,14 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:windows_single_instance/windows_single_instance.dart';
 
 class Window {
   init(WindowProps props, int version) async {
+    final acquire = await singleInstanceLock.acquire();
+    if (!acquire) {
+      exit(0);
+    }
     if (Platform.isWindows) {
-      await WindowsSingleInstance.ensureSingleInstance([], "FlClash");
       protocol.register("clash");
       protocol.register("clashmeta");
       protocol.register("flclash");

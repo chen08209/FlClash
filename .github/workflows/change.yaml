@@ -1,12 +1,13 @@
-name: change
+name: changelog
 
 on:
   push:
-    branches:
-      - 'main'
+    tags:
+      - 'v*'
 
 jobs:
   changelog:
+    if: ${{ !contains(github.ref, '+') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -61,6 +62,5 @@ jobs:
               exit 1
             fi
           fi
-
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

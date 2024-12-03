@@ -8,14 +8,15 @@ import 'package:fl_clash/plugins/vpn.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
 import 'application.dart';
+import 'common/common.dart';
 import 'l10n/l10n.dart';
 import 'models/models.dart';
-import 'common/common.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  clashCore.initMessage();
+  clashLib?.initMessage();
   globalState.packageInfo = await PackageInfo.fromPlatform();
   final version = await system.version;
   final config = await preferences.getConfig() ?? Config();
@@ -36,14 +37,9 @@ Future<void> main() async {
     openLogs: config.appSetting.openLogs,
     hasProxies: false,
   );
-  globalState.updateTray(
+  tray.update(
     appState: appState,
     appFlowingState: appFlowingState,
-    config: config,
-    clashConfig: clashConfig,
-  );
-  await globalState.init(
-    appState: appState,
     config: config,
     clashConfig: clashConfig,
   );
@@ -69,37 +65,64 @@ Future<void> vpnService() async {
     other.getLocaleForString(config.appSetting.locale) ??
         WidgetsBinding.instance.platformDispatcher.locale,
   );
+
   final appState = AppState(
     mode: clashConfig.mode,
     selectedMap: config.currentSelectedMap,
     version: version,
   );
+
   await globalState.init(
     appState: appState,
     config: config,
     clashConfig: clashConfig,
   );
 
+  await app?.tip(appLocalizations.startVpn);
+
+  globalState
+      .updateClashConfig(
+    appState: appState,
+    clashConfig: clashConfig,
+    config: config,
+    isPatch: false,
+  )
+      .then(
+    (_) async {
+      await globalState.handleStart();
+
+      tile?.addListener(
+        TileListenerWithVpn(
+          onStop: () async {
+            await app?.tip(appLocalizations.stopVpn);
+            await globalState.handleStop();
+            clashCore.shutdown();
+            exit(0);
+          },
+        ),
+      );
+      globalState.updateTraffic(config: config);
+      globalState.updateFunctionLists = [
+        () {
+          globalState.updateTraffic(config: config);
+        }
+      ];
+    },
+  );
+
   vpn?.setServiceMessageHandler(
     ServiceMessageHandler(
       onProtect: (Fd fd) async {
         await vpn?.setProtect(fd.value);
-        clashCore.setFdMap(fd.id);
+        clashLib?.setFdMap(fd.id);
       },
-      onProcess: (Process process) async {
+      onProcess: (ProcessData process) async {
         final packageName = await vpn?.resolverProcess(process);
-        clashCore.setProcessMap(
+        clashLib?.setProcessMap(
           ProcessMapItem(
             id: process.id,
             value: packageName ?? "",
           ),
-        );
-      },
-      onStarted: (String runTime) async {
-        await globalState.applyProfile(
-          appState: appState,
-          config: config,
-          clashConfig: clashConfig,
         );
       },
       onLoaded: (String groupName) {
@@ -114,43 +137,20 @@ Future<void> vpnService() async {
       },
     ),
   );
-  await app?.tip(appLocalizations.startVpn);
-  await globalState.handleStart();
-
-  tile?.addListener(
-    TileListenerWithVpn(
-      onStop: () async {
-        await app?.tip(appLocalizations.stopVpn);
-        await globalState.handleStop();
-        clashCore.shutdown();
-        exit(0);
-      },
-    ),
-  );
-
-  globalState.updateTraffic();
-  globalState.updateFunctionLists = [
-    () {
-      globalState.updateTraffic();
-    }
-  ];
 }
 
 @immutable
 class ServiceMessageHandler with ServiceMessageListener {
   final Function(Fd fd) _onProtect;
-  final Function(Process process) _onProcess;
-  final Function(String runTime) _onStarted;
+  final Function(ProcessData process) _onProcess;
   final Function(String providerName) _onLoaded;
 
   const ServiceMessageHandler({
     required Function(Fd fd) onProtect,
-    required Function(Process process) onProcess,
-    required Function(String runTime) onStarted,
+    required Function(ProcessData process) onProcess,
     required Function(String providerName) onLoaded,
   })  : _onProtect = onProtect,
         _onProcess = onProcess,
-        _onStarted = onStarted,
         _onLoaded = onLoaded;
 
   @override
@@ -159,13 +159,8 @@ class ServiceMessageHandler with ServiceMessageListener {
   }
 
   @override
-  onProcess(Process process) {
+  onProcess(ProcessData process) {
     _onProcess(process);
-  }
-
-  @override
-  onStarted(String runTime) {
-    _onStarted(runTime);
   }
 
   @override

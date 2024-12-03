@@ -1,11 +1,35 @@
 // ignore_for_file: invalid_annotation_target
 
+import 'dart:convert';
+
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'generated/ffi.freezed.dart';
-part 'generated/ffi.g.dart';
+part 'generated/core.freezed.dart';
+part 'generated/core.g.dart';
+
+abstract mixin class AppMessageListener {
+  void onLog(Log log) {}
+
+  void onDelay(Delay delay) {}
+
+  void onRequest(Connection connection) {}
+
+  void onStarted(String runTime) {}
+
+  void onLoaded(String providerName) {}
+}
+
+abstract mixin class ServiceMessageListener {
+  onProtect(Fd fd) {}
+
+  onProcess(ProcessData process) {}
+
+  onStarted(String runTime) {}
+
+  onLoaded(String providerName) {}
+}
 
 @freezed
 class CoreState with _$CoreState {
@@ -124,14 +148,14 @@ class Now with _$Now {
 }
 
 @freezed
-class Process with _$Process {
-  const factory Process({
+class ProcessData with _$ProcessData {
+  const factory ProcessData({
     required int id,
     required Metadata metadata,
-  }) = _Process;
+  }) = _ProcessData;
 
-  factory Process.fromJson(Map<String, Object?> json) =>
-      _$ProcessFromJson(json);
+  factory ProcessData.fromJson(Map<String, Object?> json) =>
+      _$ProcessDataFromJson(json);
 }
 
 @freezed
@@ -212,24 +236,19 @@ class TunProps with _$TunProps {
       _$TunPropsFromJson(json);
 }
 
-abstract mixin class AppMessageListener {
-  void onLog(Log log) {}
+@freezed
+class Action with _$Action {
+  const factory Action({
+    required ActionMethod method,
+    required dynamic data,
+    required String id,
+  }) = _Action;
 
-  void onDelay(Delay delay) {}
-
-  void onRequest(Connection connection) {}
-
-  void onStarted(String runTime) {}
-
-  void onLoaded(String providerName) {}
+  factory Action.fromJson(Map<String, Object?> json) => _$ActionFromJson(json);
 }
 
-abstract mixin class ServiceMessageListener {
-  onProtect(Fd fd) {}
-
-  onProcess(Process process) {}
-
-  onStarted(String runTime) {}
-
-  onLoaded(String providerName) {}
+extension ActionExt on Action {
+  String get toJson {
+    return json.encode(this);
+  }
 }

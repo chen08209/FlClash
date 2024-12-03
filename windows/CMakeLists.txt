@@ -90,7 +90,10 @@ set(CLASH_DIR "../libclash/windows")
 #   set(CLASH_DIR "../libclash/windows/x86")
 # endif()
 
-install(FILES "${CLASH_DIR}/libclash.dll" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+install(PROGRAMS "${CLASH_DIR}/FlClashCore.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
+
+install(PROGRAMS "${CLASH_DIR}/FlClashHelperService.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
 install(FILES "EnableLoopback.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
@@ -68,11 +67,10 @@ class _DashboardFragmentState extends State<DashboardFragment> {
                   //     child: const VPNSwitch(),
                   //   ),
                   if (system.isDesktop) ...[
-                    if (Platform.isWindows)
-                      GridItem(
-                        crossAxisCellCount: switchCount,
-                        child: const TUNButton(),
-                      ),
+                    GridItem(
+                      crossAxisCellCount: switchCount,
+                      child: const TUNButton(),
+                    ),
                     GridItem(
                       crossAxisCellCount: switchCount,
                       child: const SystemProxyButton(),

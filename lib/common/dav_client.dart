@@ -24,8 +24,8 @@ class DAVClient {
       },
     );
     client.setConnectTimeout(8000);
-    client.setSendTimeout(8000);
-    client.setReceiveTimeout(8000);
+    client.setSendTimeout(60000);
+    client.setReceiveTimeout(60000);
     pingCompleter.complete(_ping());
   }
 

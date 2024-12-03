@@ -96,6 +96,21 @@ extension ProfileExtension on Profile {
     return await File(profilePath!).exists();
   }
 
+  Future<File> getFile() async {
+    final path = await appPath.getProfilePath(id);
+    final file = File(path!);
+    final isExists = await file.exists();
+    if (!isExists) {
+      await file.create(recursive: true);
+    }
+    return file;
+  }
+
+  Future<int> get profileLastModified async {
+    final file = await getFile();
+    return (await file.lastModified()).microsecondsSinceEpoch;
+  }
+
   Future<Profile> update() async {
     final response = await request.getFileResponseForUrl(url);
     final disposition = response.headers.value("content-disposition");
@@ -111,12 +126,7 @@ extension ProfileExtension on Profile {
     if (message.isNotEmpty) {
       throw message;
     }
-    final path = await appPath.getProfilePath(id);
-    final file = File(path!);
-    final isExists = await file.exists();
-    if (!isExists) {
-      await file.create(recursive: true);
-    }
+    final file = await getFile();
     await file.writeAsBytes(bytes);
     return copyWith(lastUpdateDate: DateTime.now());
   }
@@ -126,12 +136,7 @@ extension ProfileExtension on Profile {
     if (message.isNotEmpty) {
       throw message;
     }
-    final path = await appPath.getProfilePath(id);
-    final file = File(path!);
-    final isExists = await file.exists();
-    if (!isExists) {
-      await file.create(recursive: true);
-    }
+    final file = await getFile();
     await file.writeAsString(value);
     return copyWith(lastUpdateDate: DateTime.now());
   }

@@ -8,9 +8,7 @@ import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/plugins/vpn.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:tray_manager/tray_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
@@ -30,6 +28,8 @@ class GlobalState {
   late AppController appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
   List<Function> updateFunctionLists = [];
+  bool lastTunEnable = false;
+  int? lastProfileModified;
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
@@ -47,16 +47,61 @@ class GlobalState {
     timer?.cancel();
   }
 
+  Future<void> initCore({
+    required AppState appState,
+    required ClashConfig clashConfig,
+    required Config config,
+  }) async {
+    await globalState.init(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
+    );
+    await applyProfile(
+      appState: appState,
+      config: config,
+      clashConfig: clashConfig,
+    );
+  }
+
   Future<void> updateClashConfig({
+    required AppState appState,
     required ClashConfig clashConfig,
     required Config config,
     bool isPatch = true,
   }) async {
     await config.currentProfile?.checkAndUpdate();
+    final useClashConfig = clashConfig.copyWith();
+    if (clashConfig.tun.enable != lastTunEnable &&
+        lastTunEnable == false &&
+        !Platform.isAndroid) {
+      final code = await system.authorizeCore();
+      switch (code) {
+        case AuthorizeCode.none:
+          break;
+        case AuthorizeCode.success:
+          lastTunEnable = useClashConfig.tun.enable;
+          await restartCore(
+            appState: appState,
+            clashConfig: clashConfig,
+            config: config,
+          );
+          return;
+        case AuthorizeCode.error:
+          useClashConfig.tun = useClashConfig.tun.copyWith(
+            enable: false,
+          );
+      }
+    }
+    if (config.appSetting.openLogs) {
+      clashCore.startLog();
+    } else {
+      clashCore.stopLog();
+    }
     final res = await clashCore.updateConfig(
       UpdateConfigParams(
         profileId: config.currentProfileId ?? "",
-        config: clashConfig,
+        config: useClashConfig,
         params: ConfigExtendedParams(
           isPatch: isPatch,
           isCompatible: true,
@@ -67,14 +112,12 @@ class GlobalState {
       ),
     );
     if (res.isNotEmpty) throw res;
-  }
-
-  updateCoreVersionInfo(AppState appState) {
-    appState.versionInfo = clashCore.getVersionInfo();
+    lastTunEnable = useClashConfig.tun.enable;
+    lastProfileModified = await config.getCurrentProfile()?.profileLastModified;
   }
 
   handleStart() async {
-    clashCore.start();
+    await clashCore.startListener();
     if (globalState.isVpnService) {
       await vpn?.startVpn();
       startListenUpdate();
@@ -85,17 +128,32 @@ class GlobalState {
     startListenUpdate();
   }
 
+  restartCore({
+    required AppState appState,
+    required ClashConfig clashConfig,
+    required Config config,
+    bool isPatch = true,
+  }) async {
+    await clashService?.startCore();
+    await initCore(
+      appState: appState,
+      clashConfig: clashConfig,
+      config: config,
+    );
+    if (isStart) {
+      await handleStart();
+    }
+  }
+
   updateStartTime() {
-    startTime = clashCore.getRunTime();
+    startTime = clashLib?.getRunTime();
   }
 
   Future handleStop() async {
-    clashCore.stop();
-    if (Platform.isAndroid) {
-      clashCore.stopTun();
-    }
-    await service?.destroy();
     startTime = null;
+    await clashCore.stopListener();
+    clashLib?.stopTun();
+    await service?.destroy();
     stopListenUpdate();
   }
 
@@ -106,6 +164,7 @@ class GlobalState {
   }) async {
     clashCore.requestGc();
     await updateClashConfig(
+      appState: appState,
       clashConfig: clashConfig,
       config: config,
       isPatch: false,
@@ -123,30 +182,27 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) async {
-    appState.isInit = clashCore.isInit;
+    appState.isInit = await clashCore.isInit;
     if (!appState.isInit) {
-      appState.isInit = await clashService.init(
+      appState.isInit = await clashCore.init(
         config: config,
         clashConfig: clashConfig,
       );
-      if (Platform.isAndroid) {
-        clashCore.setState(
-          CoreState(
-            enable: config.vpnProps.enable,
-            accessControl: config.isAccessControl ? config.accessControl : null,
-            ipv6: config.vpnProps.ipv6,
-            allowBypass: config.vpnProps.allowBypass,
-            systemProxy: config.vpnProps.systemProxy,
-            onlyProxy: config.appSetting.onlyProxy,
-            bypassDomain: config.networkProps.bypassDomain,
-            routeAddress: clashConfig.routeAddress,
-            currentProfileName:
-                config.currentProfile?.label ?? config.currentProfileId ?? "",
-          ),
-        );
-      }
+      clashLib?.setState(
+        CoreState(
+          enable: config.vpnProps.enable,
+          accessControl: config.isAccessControl ? config.accessControl : null,
+          ipv6: config.vpnProps.ipv6,
+          allowBypass: config.vpnProps.allowBypass,
+          systemProxy: config.vpnProps.systemProxy,
+          onlyProxy: config.appSetting.onlyProxy,
+          bypassDomain: config.networkProps.bypassDomain,
+          routeAddress: clashConfig.routeAddress,
+          currentProfileName:
+              config.currentProfile?.label ?? config.currentProfileId ?? "",
+        ),
+      );
     }
-    updateCoreVersionInfo(appState);
   }
 
   Future<void> updateGroups(AppState appState) async {
@@ -198,8 +254,8 @@ class GlobalState {
     required Config config,
     required String groupName,
     required String proxyName,
-  }) {
-    clashCore.changeProxy(
+  }) async {
+    await clashCore.changeProxy(
       ChangeProxyParams(
         groupName: groupName,
         proxyName: proxyName,
@@ -226,18 +282,21 @@ class GlobalState {
   }
 
   updateTraffic({
+    required Config config,
     AppFlowingState? appFlowingState,
-  }) {
-    final traffic = clashCore.getTraffic();
+  }) async {
+    final onlyProxy = config.appSetting.onlyProxy;
+    final traffic = await clashCore.getTraffic(onlyProxy);
     if (Platform.isAndroid && isVpnService == true) {
       vpn?.startForeground(
-        title: clashCore.getCurrentProfileName(),
+        title: clashLib?.getCurrentProfileName() ?? "",
         content: "$traffic",
       );
     } else {
       if (appFlowingState != null) {
         appFlowingState.addTraffic(traffic);
-        appFlowingState.totalTraffic = clashCore.getTotalTraffic();
+        appFlowingState.totalTraffic =
+            await clashCore.getTotalTraffic(onlyProxy);
       }
     }
   }
@@ -300,132 +359,6 @@ class GlobalState {
         launchUrl(Uri.parse(url));
       },
     );
-  }
-
-  Future _updateSystemTray({
-    required Brightness? brightness,
-    bool force = false,
-  }) async {
-    if (Platform.isAndroid) {
-      return;
-    }
-    if (Platform.isLinux || force) {
-      await trayManager.destroy();
-    }
-    await trayManager.setIcon(
-      other.getTrayIconPath(
-        brightness: brightness ??
-            WidgetsBinding.instance.platformDispatcher.platformBrightness,
-      ),
-      isTemplate: true,
-    );
-    if (!Platform.isLinux) {
-      await trayManager.setToolTip(
-        appName,
-      );
-    }
-  }
-
-  updateTray({
-    required AppState appState,
-    required AppFlowingState appFlowingState,
-    required Config config,
-    required ClashConfig clashConfig,
-    bool focus = false,
-  }) async {
-    if (!Platform.isLinux) {
-      await _updateSystemTray(
-        brightness: appState.brightness,
-        force: focus,
-      );
-    }
-    List<MenuItem> menuItems = [];
-    final showMenuItem = MenuItem(
-      label: appLocalizations.show,
-      onClick: (_) {
-        window?.show();
-      },
-    );
-    menuItems.add(showMenuItem);
-    final startMenuItem = MenuItem.checkbox(
-      label: appFlowingState.isStart
-          ? appLocalizations.stop
-          : appLocalizations.start,
-      onClick: (_) async {
-        globalState.appController.updateStart();
-      },
-      checked: false,
-    );
-    menuItems.add(startMenuItem);
-    menuItems.add(MenuItem.separator());
-    for (final mode in Mode.values) {
-      menuItems.add(
-        MenuItem.checkbox(
-          label: Intl.message(mode.name),
-          onClick: (_) {
-            globalState.appController.clashConfig.mode = mode;
-          },
-          checked: mode == clashConfig.mode,
-        ),
-      );
-    }
-    menuItems.add(MenuItem.separator());
-    if (appFlowingState.isStart) {
-      menuItems.add(
-        MenuItem.checkbox(
-          label: appLocalizations.tun,
-          onClick: (_) {
-            globalState.appController.updateTun();
-          },
-          checked: clashConfig.tun.enable,
-        ),
-      );
-      menuItems.add(
-        MenuItem.checkbox(
-          label: appLocalizations.systemProxy,
-          onClick: (_) {
-            globalState.appController.updateSystemProxy();
-          },
-          checked: config.networkProps.systemProxy,
-        ),
-      );
-      menuItems.add(MenuItem.separator());
-    }
-    final autoStartMenuItem = MenuItem.checkbox(
-      label: appLocalizations.autoLaunch,
-      onClick: (_) async {
-        globalState.appController.updateAutoLaunch();
-      },
-      checked: config.appSetting.autoLaunch,
-    );
-    menuItems.add(autoStartMenuItem);
-
-    if (Platform.isWindows) {
-      final adminAutoStartMenuItem = MenuItem.checkbox(
-        label: appLocalizations.adminAutoLaunch,
-        onClick: (_) async {
-          globalState.appController.updateAdminAutoLaunch();
-        },
-        checked: config.appSetting.adminAutoLaunch,
-      );
-      menuItems.add(adminAutoStartMenuItem);
-    }
-    menuItems.add(MenuItem.separator());
-    final exitMenuItem = MenuItem(
-      label: appLocalizations.exit,
-      onClick: (_) async {
-        await globalState.appController.handleExit();
-      },
-    );
-    menuItems.add(exitMenuItem);
-    final menu = Menu(items: menuItems);
-    await trayManager.setContextMenu(menu);
-    if (Platform.isLinux) {
-      await _updateSystemTray(
-        brightness: appState.brightness,
-        force: focus,
-      );
-    }
   }
 }
 

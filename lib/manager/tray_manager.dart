@@ -30,13 +30,15 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
       selector: (_, appState, appFlowingState, config, clashConfig) =>
           TrayState(
         mode: clashConfig.mode,
-        adminAutoLaunch: config.appSetting.adminAutoLaunch,
         autoLaunch: config.appSetting.autoLaunch,
         isStart: appFlowingState.isStart,
         locale: config.appSetting.locale,
         systemProxy: config.networkProps.systemProxy,
         tunEnable: clashConfig.tun.enable,
         brightness: appState.brightness,
+        port: clashConfig.mixedPort,
+        groups: appState.groups,
+        map: appState.selectedMap,
       ),
       shouldRebuild: (prev, next) {
         if (prev != next) {

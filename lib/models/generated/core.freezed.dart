@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of '../ffi.dart';
+part of '../core.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -2080,28 +2080,30 @@ abstract class _Now implements Now {
       throw _privateConstructorUsedError;
 }
 
-Process _$ProcessFromJson(Map<String, dynamic> json) {
-  return _Process.fromJson(json);
+ProcessData _$ProcessDataFromJson(Map<String, dynamic> json) {
+  return _ProcessData.fromJson(json);
 }
 
 /// @nodoc
-mixin _$Process {
+mixin _$ProcessData {
   int get id => throw _privateConstructorUsedError;
   Metadata get metadata => throw _privateConstructorUsedError;
 
-  /// Serializes this Process to a JSON map.
+  /// Serializes this ProcessData to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
-  /// Create a copy of Process
+  /// Create a copy of ProcessData
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ProcessCopyWith<Process> get copyWith => throw _privateConstructorUsedError;
+  $ProcessDataCopyWith<ProcessData> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ProcessCopyWith<$Res> {
-  factory $ProcessCopyWith(Process value, $Res Function(Process) then) =
-      _$ProcessCopyWithImpl<$Res, Process>;
+abstract class $ProcessDataCopyWith<$Res> {
+  factory $ProcessDataCopyWith(
+          ProcessData value, $Res Function(ProcessData) then) =
+      _$ProcessDataCopyWithImpl<$Res, ProcessData>;
   @useResult
   $Res call({int id, Metadata metadata});
 
@@ -2109,16 +2111,16 @@ abstract class $ProcessCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ProcessCopyWithImpl<$Res, $Val extends Process>
-    implements $ProcessCopyWith<$Res> {
-  _$ProcessCopyWithImpl(this._value, this._then);
+class _$ProcessDataCopyWithImpl<$Res, $Val extends ProcessData>
+    implements $ProcessDataCopyWith<$Res> {
+  _$ProcessDataCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Process
+  /// Create a copy of ProcessData
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -2138,7 +2140,7 @@ class _$ProcessCopyWithImpl<$Res, $Val extends Process>
     ) as $Val);
   }
 
-  /// Create a copy of Process
+  /// Create a copy of ProcessData
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
@@ -2150,10 +2152,11 @@ class _$ProcessCopyWithImpl<$Res, $Val extends Process>
 }
 
 /// @nodoc
-abstract class _$$ProcessImplCopyWith<$Res> implements $ProcessCopyWith<$Res> {
-  factory _$$ProcessImplCopyWith(
-          _$ProcessImpl value, $Res Function(_$ProcessImpl) then) =
-      __$$ProcessImplCopyWithImpl<$Res>;
+abstract class _$$ProcessDataImplCopyWith<$Res>
+    implements $ProcessDataCopyWith<$Res> {
+  factory _$$ProcessDataImplCopyWith(
+          _$ProcessDataImpl value, $Res Function(_$ProcessDataImpl) then) =
+      __$$ProcessDataImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({int id, Metadata metadata});
@@ -2163,14 +2166,14 @@ abstract class _$$ProcessImplCopyWith<$Res> implements $ProcessCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$ProcessImplCopyWithImpl<$Res>
-    extends _$ProcessCopyWithImpl<$Res, _$ProcessImpl>
-    implements _$$ProcessImplCopyWith<$Res> {
-  __$$ProcessImplCopyWithImpl(
-      _$ProcessImpl _value, $Res Function(_$ProcessImpl) _then)
+class __$$ProcessDataImplCopyWithImpl<$Res>
+    extends _$ProcessDataCopyWithImpl<$Res, _$ProcessDataImpl>
+    implements _$$ProcessDataImplCopyWith<$Res> {
+  __$$ProcessDataImplCopyWithImpl(
+      _$ProcessDataImpl _value, $Res Function(_$ProcessDataImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Process
+  /// Create a copy of ProcessData
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -2178,7 +2181,7 @@ class __$$ProcessImplCopyWithImpl<$Res>
     Object? id = null,
     Object? metadata = null,
   }) {
-    return _then(_$ProcessImpl(
+    return _then(_$ProcessDataImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -2193,11 +2196,11 @@ class __$$ProcessImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$ProcessImpl implements _Process {
-  const _$ProcessImpl({required this.id, required this.metadata});
+class _$ProcessDataImpl implements _ProcessData {
+  const _$ProcessDataImpl({required this.id, required this.metadata});
 
-  factory _$ProcessImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProcessImplFromJson(json);
+  factory _$ProcessDataImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ProcessDataImplFromJson(json);
 
   @override
   final int id;
@@ -2206,14 +2209,14 @@ class _$ProcessImpl implements _Process {
 
   @override
   String toString() {
-    return 'Process(id: $id, metadata: $metadata)';
+    return 'ProcessData(id: $id, metadata: $metadata)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProcessImpl &&
+            other is _$ProcessDataImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.metadata, metadata) ||
                 other.metadata == metadata));
@@ -2223,39 +2226,40 @@ class _$ProcessImpl implements _Process {
   @override
   int get hashCode => Object.hash(runtimeType, id, metadata);
 
-  /// Create a copy of Process
+  /// Create a copy of ProcessData
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProcessImplCopyWith<_$ProcessImpl> get copyWith =>
-      __$$ProcessImplCopyWithImpl<_$ProcessImpl>(this, _$identity);
+  _$$ProcessDataImplCopyWith<_$ProcessDataImpl> get copyWith =>
+      __$$ProcessDataImplCopyWithImpl<_$ProcessDataImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$ProcessImplToJson(
+    return _$$ProcessDataImplToJson(
       this,
     );
   }
 }
 
-abstract class _Process implements Process {
-  const factory _Process(
+abstract class _ProcessData implements ProcessData {
+  const factory _ProcessData(
       {required final int id,
-      required final Metadata metadata}) = _$ProcessImpl;
+      required final Metadata metadata}) = _$ProcessDataImpl;
 
-  factory _Process.fromJson(Map<String, dynamic> json) = _$ProcessImpl.fromJson;
+  factory _ProcessData.fromJson(Map<String, dynamic> json) =
+      _$ProcessDataImpl.fromJson;
 
   @override
   int get id;
   @override
   Metadata get metadata;
 
-  /// Create a copy of Process
+  /// Create a copy of ProcessData
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProcessImplCopyWith<_$ProcessImpl> get copyWith =>
+  _$$ProcessDataImplCopyWith<_$ProcessDataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -3422,5 +3426,187 @@ abstract class _TunProps implements TunProps {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$TunPropsImplCopyWith<_$TunPropsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+Action _$ActionFromJson(Map<String, dynamic> json) {
+  return _Action.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Action {
+  ActionMethod get method => throw _privateConstructorUsedError;
+  dynamic get data => throw _privateConstructorUsedError;
+  String get id => throw _privateConstructorUsedError;
+
+  /// Serializes this Action to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Action
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ActionCopyWith<Action> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ActionCopyWith<$Res> {
+  factory $ActionCopyWith(Action value, $Res Function(Action) then) =
+      _$ActionCopyWithImpl<$Res, Action>;
+  @useResult
+  $Res call({ActionMethod method, dynamic data, String id});
+}
+
+/// @nodoc
+class _$ActionCopyWithImpl<$Res, $Val extends Action>
+    implements $ActionCopyWith<$Res> {
+  _$ActionCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Action
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? method = null,
+    Object? data = freezed,
+    Object? id = null,
+  }) {
+    return _then(_value.copyWith(
+      method: null == method
+          ? _value.method
+          : method // ignore: cast_nullable_to_non_nullable
+              as ActionMethod,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ActionImplCopyWith<$Res> implements $ActionCopyWith<$Res> {
+  factory _$$ActionImplCopyWith(
+          _$ActionImpl value, $Res Function(_$ActionImpl) then) =
+      __$$ActionImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({ActionMethod method, dynamic data, String id});
+}
+
+/// @nodoc
+class __$$ActionImplCopyWithImpl<$Res>
+    extends _$ActionCopyWithImpl<$Res, _$ActionImpl>
+    implements _$$ActionImplCopyWith<$Res> {
+  __$$ActionImplCopyWithImpl(
+      _$ActionImpl _value, $Res Function(_$ActionImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Action
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? method = null,
+    Object? data = freezed,
+    Object? id = null,
+  }) {
+    return _then(_$ActionImpl(
+      method: null == method
+          ? _value.method
+          : method // ignore: cast_nullable_to_non_nullable
+              as ActionMethod,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ActionImpl implements _Action {
+  const _$ActionImpl(
+      {required this.method, required this.data, required this.id});
+
+  factory _$ActionImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ActionImplFromJson(json);
+
+  @override
+  final ActionMethod method;
+  @override
+  final dynamic data;
+  @override
+  final String id;
+
+  @override
+  String toString() {
+    return 'Action(method: $method, data: $data, id: $id)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ActionImpl &&
+            (identical(other.method, method) || other.method == method) &&
+            const DeepCollectionEquality().equals(other.data, data) &&
+            (identical(other.id, id) || other.id == id));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, method, const DeepCollectionEquality().hash(data), id);
+
+  /// Create a copy of Action
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ActionImplCopyWith<_$ActionImpl> get copyWith =>
+      __$$ActionImplCopyWithImpl<_$ActionImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ActionImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Action implements Action {
+  const factory _Action(
+      {required final ActionMethod method,
+      required final dynamic data,
+      required final String id}) = _$ActionImpl;
+
+  factory _Action.fromJson(Map<String, dynamic> json) = _$ActionImpl.fromJson;
+
+  @override
+  ActionMethod get method;
+  @override
+  dynamic get data;
+  @override
+  String get id;
+
+  /// Create a copy of Action
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ActionImplCopyWith<_$ActionImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

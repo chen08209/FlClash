@@ -27,7 +27,7 @@ class Vpn {
           clashCore.requestGc();
         case "dnsChanged":
           final dns = call.arguments as String;
-          clashCore.updateDns(dns);
+          clashLib?.updateDns(dns);
         default:
           throw MissingPluginException();
       }
@@ -40,7 +40,7 @@ class Vpn {
   }
 
   Future<bool?> startVpn() async {
-    final options = clashCore.getAndroidVpnOptions();
+    final options = clashLib?.getAndroidVpnOptions();
     return await methodChannel.invokeMethod<bool>("start", {
       'data': json.encode(options),
     });
@@ -54,7 +54,7 @@ class Vpn {
     return await methodChannel.invokeMethod<bool?>("setProtect", {'fd': fd});
   }
 
-  Future<String?> resolverProcess(Process process) async {
+  Future<String?> resolverProcess(ProcessData process) async {
     return await methodChannel.invokeMethod<String>("resolverProcess", {
       "data": json.encode(process),
     });
@@ -79,7 +79,7 @@ class Vpn {
     receiver!.listen((message) {
       _handleServiceMessage(message);
     });
-    clashCore.startTun(fd, receiver!.sendPort.nativePort);
+    clashLib?.startTun(fd, receiver!.sendPort.nativePort);
   }
 
   setServiceMessageHandler(ServiceMessageListener serviceMessageListener) {
@@ -92,7 +92,7 @@ class Vpn {
       case ServiceMessageType.protect:
         _serviceMessageHandler?.onProtect(Fd.fromJson(m.data));
       case ServiceMessageType.process:
-        _serviceMessageHandler?.onProcess(Process.fromJson(m.data));
+        _serviceMessageHandler?.onProcess(ProcessData.fromJson(m.data));
       case ServiceMessageType.started:
         _serviceMessageHandler?.onStarted(m.data);
       case ServiceMessageType.loaded:

@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
@@ -13,7 +14,6 @@ import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'clash/core.dart';
 import 'common/common.dart';
 import 'models/models.dart';
 
@@ -28,6 +28,7 @@ class AppController {
   late Function addCheckIpNumDebounce;
   late Function applyProfileDebounce;
   late Function savePreferencesDebounce;
+  late Function changeProxyDebounce;
 
   AppController(this.context) {
     appState = context.read<AppState>();
@@ -43,12 +44,27 @@ class AppController {
     applyProfileDebounce = debounce<Function()>(() async {
       await applyProfile(isPrue: true);
     });
+    changeProxyDebounce = debounce((String groupName, String proxyName) async {
+      await changeProxy(
+        groupName: groupName,
+        proxyName: proxyName,
+      );
+      await updateGroups();
+    });
     addCheckIpNumDebounce = debounce(() {
       appState.checkIpNum++;
     });
     updateGroupDebounce = debounce(() async {
       await updateGroups();
     });
+  }
+
+  restartCore() async {
+    await globalState.restartCore(
+      appState: appState,
+      clashConfig: clashConfig,
+      config: config,
+    );
   }
 
   updateStatus(bool isStart) async {
@@ -60,21 +76,29 @@ class AppController {
         updateRunTime,
         updateTraffic,
       ];
-      if (!Platform.isAndroid) {
-        applyProfileDebounce();
+      final currentLastModified =
+          await config.getCurrentProfile()?.profileLastModified;
+      if (currentLastModified == null ||
+          globalState.lastProfileModified == null) {
+        addCheckIpNumDebounce();
+        return;
       }
+      if (currentLastModified <= (globalState.lastProfileModified ?? 0)) {
+        addCheckIpNumDebounce();
+        return;
+      }
+      applyProfileDebounce();
     } else {
       await globalState.handleStop();
-      clashCore.resetTraffic();
+      await clashCore.resetTraffic();
       appFlowingState.traffics = [];
       appFlowingState.totalTraffic = Traffic();
       appFlowingState.runTime = null;
+      await Future.delayed(
+        Duration(milliseconds: 300),
+      );
       addCheckIpNumDebounce();
     }
-  }
-
-  updateCoreVersionInfo() {
-    globalState.updateCoreVersionInfo(appState);
   }
 
   updateRunTime() {
@@ -90,6 +114,7 @@ class AppController {
 
   updateTraffic() {
     globalState.updateTraffic(
+      config: config,
       appFlowingState: appFlowingState,
     );
   }
@@ -102,7 +127,7 @@ class AppController {
 
   deleteProfile(String id) async {
     config.deleteProfileById(id);
-    clashCore.clearEffect(id);
+    clearEffect(id);
     if (config.currentProfileId == id) {
       if (config.profiles.isNotEmpty) {
         final updateId = config.profiles.first.id;
@@ -130,6 +155,7 @@ class AppController {
     if (commonScaffoldState?.mounted != true) return;
     await commonScaffoldState?.loadingRun(() async {
       await globalState.updateClashConfig(
+        appState: appState,
         clashConfig: clashConfig,
         config: config,
         isPatch: isPatch,
@@ -213,8 +239,8 @@ class AppController {
   changeProxy({
     required String groupName,
     required String proxyName,
-  }) {
-    globalState.changeProxy(
+  }) async {
+    await globalState.changeProxy(
       config: config,
       groupName: groupName,
       proxyName: proxyName,
@@ -234,20 +260,14 @@ class AppController {
   }
 
   handleExit() async {
-    await updateStatus(false);
-    await proxy?.stopProxy();
-    await savePreferences();
-    clashCore.shutdown();
+    try {
+      await updateStatus(false);
+      await clashCore.shutdown();
+      await clashService?.destroy();
+      await proxy?.stopProxy();
+      await savePreferences();
+    } catch (_) {}
     system.exit();
-  }
-
-  updateLogStatus() {
-    if (config.appSetting.openLogs) {
-      clashCore.startLog();
-    } else {
-      clashCore.stopLog();
-      appFlowingState.logs = [];
-    }
   }
 
   autoCheckUpdate() async {
@@ -304,10 +324,20 @@ class AppController {
     if (!isDisclaimerAccepted) {
       handleExit();
     }
-    updateLogStatus();
     if (!config.appSetting.silentLaunch) {
       window?.show();
     }
+    await globalState.initCore(
+      appState: appState,
+      clashConfig: clashConfig,
+      config: config,
+    );
+    await _initStatus();
+    autoUpdateProfiles();
+    autoCheckUpdate();
+  }
+
+  _initStatus() async {
     if (Platform.isAndroid) {
       globalState.updateStartTime();
     }
@@ -316,8 +346,6 @@ class AppController {
     } else {
       await updateStatus(config.appSetting.autoRun);
     }
-    autoUpdateProfiles();
-    autoCheckUpdate();
   }
 
   setDelay(Delay delay) {
@@ -525,6 +553,19 @@ class AppController {
         '';
   }
 
+  clearEffect(String profileId) async {
+    final profilePath = await appPath.getProfilePath(profileId);
+    final providersPath = await appPath.getProvidersPath(profileId);
+    return await Isolate.run(() async {
+      if (profilePath != null) {
+        await File(profilePath).delete(recursive: true);
+      }
+      if (providersPath != null) {
+        await File(providersPath).delete(recursive: true);
+      }
+    });
+  }
+
   updateTun() {
     clashConfig.tun = clashConfig.tun.copyWith(
       enable: !clashConfig.tun.enable,
@@ -544,12 +585,6 @@ class AppController {
   updateAutoLaunch() {
     config.appSetting = config.appSetting.copyWith(
       autoLaunch: !config.appSetting.autoLaunch,
-    );
-  }
-
-  updateAdminAutoLaunch() {
-    config.appSetting = config.appSetting.copyWith(
-      adminAutoLaunch: !config.appSetting.adminAutoLaunch,
     );
   }
 
@@ -602,7 +637,7 @@ class AppController {
   }
 
   updateTray([bool focus = false]) async {
-    globalState.updateTray(
+    tray.update(
       appState: appState,
       appFlowingState: appFlowingState,
       config: config,

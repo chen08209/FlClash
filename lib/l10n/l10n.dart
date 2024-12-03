@@ -3369,6 +3369,26 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Please enter the admin password`
+  String get pleaseInputAdminPassword {
+    return Intl.message(
+      'Please enter the admin password',
+      name: 'pleaseInputAdminPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copying environment variables`
+  String get copyEnvVar {
+    return Intl.message(
+      'Copying environment variables',
+      name: 'copyEnvVar',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

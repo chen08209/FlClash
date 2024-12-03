@@ -13,39 +13,39 @@ class AppPath {
   Completer<Directory> tempDir = Completer();
   late String appDirPath;
 
-  // Future<Directory> _createDesktopCacheDir() async {
-  //   final dir = Directory(path);
-  //   if (await dir.exists()) {
-  //     await dir.create(recursive: true);
-  //   }
-  //   return dir;
-  // }
-
   AppPath._internal() {
     appDirPath = join(dirname(Platform.resolvedExecutable));
     getApplicationSupportDirectory().then((value) {
       dataDir.complete(value);
     });
-    getTemporaryDirectory().then((value){
-     tempDir.complete(value);
+    getTemporaryDirectory().then((value) {
+      tempDir.complete(value);
     });
     getDownloadsDirectory().then((value) {
       downloadDir.complete(value);
     });
-    // if (Platform.isAndroid) {
-    //   getApplicationSupportDirectory().then((value) {
-    //     cacheDir.complete(value);
-    //   });
-    // } else {
-    //   _createDesktopCacheDir().then((value) {
-    //     cacheDir.complete(value);
-    //   });
-    // }
   }
 
   factory AppPath() {
     _instance ??= AppPath._internal();
     return _instance!;
+  }
+
+  String get executableExtension {
+    return Platform.isWindows ? ".exe" : "";
+  }
+
+  String get executableDirPath {
+    final currentExecutablePath = Platform.resolvedExecutable;
+    return dirname(currentExecutablePath);
+  }
+
+  String get corePath {
+    return join(executableDirPath, "FlClashCore$executableExtension");
+  }
+
+  String get helperPath {
+    return join(executableDirPath, "$appHelperService$executableExtension");
   }
 
   Future<String> getDownloadDirPath() async {
@@ -58,6 +58,11 @@ class AppPath {
     return directory.path;
   }
 
+  Future<String> getLockFilePath() async {
+    final directory = await dataDir.future;
+    return join(directory.path, "FlClash.lock");
+  }
+
   Future<String> getProfilesPath() async {
     final directory = await dataDir.future;
     return join(directory.path, profilesDirectoryName);
@@ -67,6 +72,12 @@ class AppPath {
     if (id == null) return null;
     final directory = await getProfilesPath();
     return join(directory, "$id.yaml");
+  }
+
+  Future<String?> getProvidersPath(String? id) async {
+    if (id == null) return null;
+    final directory = await getProfilesPath();
+    return join(directory, "providers", id);
   }
 
   Future<String> get tempPath async {

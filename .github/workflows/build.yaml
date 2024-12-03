@@ -27,25 +27,6 @@ jobs:
             arch: arm64
 
     steps:
-      - name: Setup Mingw64
-        if: startsWith(matrix.platform,'windows')
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: mingw64
-          install: mingw-w64-x86_64-gcc
-          update: true
-
-      - name: Set Mingw64 Env
-        if: startsWith(matrix.platform,'windows')
-        run: |
-          echo "${{ runner.temp }}\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Check Matrix
-        run: |
-          echo "Running on ${{ matrix.os }}"
-          echo "Arch: ${{ runner.arch }}"
-          gcc --version
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -102,7 +83,6 @@ jobs:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
           overwrite: true
-
 
   upload:
     permissions: write-all

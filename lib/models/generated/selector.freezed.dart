@@ -1046,13 +1046,15 @@ abstract class _ApplicationSelectorState implements ApplicationSelectorState {
 /// @nodoc
 mixin _$TrayState {
   Mode get mode => throw _privateConstructorUsedError;
+  int get port => throw _privateConstructorUsedError;
   bool get autoLaunch => throw _privateConstructorUsedError;
-  bool get adminAutoLaunch => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
   bool get tunEnable => throw _privateConstructorUsedError;
   bool get isStart => throw _privateConstructorUsedError;
   String? get locale => throw _privateConstructorUsedError;
   Brightness? get brightness => throw _privateConstructorUsedError;
+  List<Group> get groups => throw _privateConstructorUsedError;
+  Map<String, String> get map => throw _privateConstructorUsedError;
 
   /// Create a copy of TrayState
   /// with the given fields replaced by the non-null parameter values.
@@ -1068,13 +1070,15 @@ abstract class $TrayStateCopyWith<$Res> {
   @useResult
   $Res call(
       {Mode mode,
+      int port,
       bool autoLaunch,
-      bool adminAutoLaunch,
       bool systemProxy,
       bool tunEnable,
       bool isStart,
       String? locale,
-      Brightness? brightness});
+      Brightness? brightness,
+      List<Group> groups,
+      Map<String, String> map});
 }
 
 /// @nodoc
@@ -1093,26 +1097,28 @@ class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
   @override
   $Res call({
     Object? mode = null,
+    Object? port = null,
     Object? autoLaunch = null,
-    Object? adminAutoLaunch = null,
     Object? systemProxy = null,
     Object? tunEnable = null,
     Object? isStart = null,
     Object? locale = freezed,
     Object? brightness = freezed,
+    Object? groups = null,
+    Object? map = null,
   }) {
     return _then(_value.copyWith(
       mode: null == mode
           ? _value.mode
           : mode // ignore: cast_nullable_to_non_nullable
               as Mode,
+      port: null == port
+          ? _value.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as int,
       autoLaunch: null == autoLaunch
           ? _value.autoLaunch
           : autoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      adminAutoLaunch: null == adminAutoLaunch
-          ? _value.adminAutoLaunch
-          : adminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
       systemProxy: null == systemProxy
           ? _value.systemProxy
@@ -1134,6 +1140,14 @@ class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
           ? _value.brightness
           : brightness // ignore: cast_nullable_to_non_nullable
               as Brightness?,
+      groups: null == groups
+          ? _value.groups
+          : groups // ignore: cast_nullable_to_non_nullable
+              as List<Group>,
+      map: null == map
+          ? _value.map
+          : map // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
     ) as $Val);
   }
 }
@@ -1148,13 +1162,15 @@ abstract class _$$TrayStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {Mode mode,
+      int port,
       bool autoLaunch,
-      bool adminAutoLaunch,
       bool systemProxy,
       bool tunEnable,
       bool isStart,
       String? locale,
-      Brightness? brightness});
+      Brightness? brightness,
+      List<Group> groups,
+      Map<String, String> map});
 }
 
 /// @nodoc
@@ -1171,26 +1187,28 @@ class __$$TrayStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? mode = null,
+    Object? port = null,
     Object? autoLaunch = null,
-    Object? adminAutoLaunch = null,
     Object? systemProxy = null,
     Object? tunEnable = null,
     Object? isStart = null,
     Object? locale = freezed,
     Object? brightness = freezed,
+    Object? groups = null,
+    Object? map = null,
   }) {
     return _then(_$TrayStateImpl(
       mode: null == mode
           ? _value.mode
           : mode // ignore: cast_nullable_to_non_nullable
               as Mode,
+      port: null == port
+          ? _value.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as int,
       autoLaunch: null == autoLaunch
           ? _value.autoLaunch
           : autoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      adminAutoLaunch: null == adminAutoLaunch
-          ? _value.adminAutoLaunch
-          : adminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
       systemProxy: null == systemProxy
           ? _value.systemProxy
@@ -1212,6 +1230,14 @@ class __$$TrayStateImplCopyWithImpl<$Res>
           ? _value.brightness
           : brightness // ignore: cast_nullable_to_non_nullable
               as Brightness?,
+      groups: null == groups
+          ? _value._groups
+          : groups // ignore: cast_nullable_to_non_nullable
+              as List<Group>,
+      map: null == map
+          ? _value._map
+          : map // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
     ));
   }
 }
@@ -1221,20 +1247,24 @@ class __$$TrayStateImplCopyWithImpl<$Res>
 class _$TrayStateImpl implements _TrayState {
   const _$TrayStateImpl(
       {required this.mode,
+      required this.port,
       required this.autoLaunch,
-      required this.adminAutoLaunch,
       required this.systemProxy,
       required this.tunEnable,
       required this.isStart,
       required this.locale,
-      required this.brightness});
+      required this.brightness,
+      required final List<Group> groups,
+      required final Map<String, String> map})
+      : _groups = groups,
+        _map = map;
 
   @override
   final Mode mode;
   @override
-  final bool autoLaunch;
+  final int port;
   @override
-  final bool adminAutoLaunch;
+  final bool autoLaunch;
   @override
   final bool systemProxy;
   @override
@@ -1245,10 +1275,25 @@ class _$TrayStateImpl implements _TrayState {
   final String? locale;
   @override
   final Brightness? brightness;
+  final List<Group> _groups;
+  @override
+  List<Group> get groups {
+    if (_groups is EqualUnmodifiableListView) return _groups;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_groups);
+  }
+
+  final Map<String, String> _map;
+  @override
+  Map<String, String> get map {
+    if (_map is EqualUnmodifiableMapView) return _map;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_map);
+  }
 
   @override
   String toString() {
-    return 'TrayState(mode: $mode, autoLaunch: $autoLaunch, adminAutoLaunch: $adminAutoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness)';
+    return 'TrayState(mode: $mode, port: $port, autoLaunch: $autoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness, groups: $groups, map: $map)';
   }
 
   @override
@@ -1257,10 +1302,9 @@ class _$TrayStateImpl implements _TrayState {
         (other.runtimeType == runtimeType &&
             other is _$TrayStateImpl &&
             (identical(other.mode, mode) || other.mode == mode) &&
+            (identical(other.port, port) || other.port == port) &&
             (identical(other.autoLaunch, autoLaunch) ||
                 other.autoLaunch == autoLaunch) &&
-            (identical(other.adminAutoLaunch, adminAutoLaunch) ||
-                other.adminAutoLaunch == adminAutoLaunch) &&
             (identical(other.systemProxy, systemProxy) ||
                 other.systemProxy == systemProxy) &&
             (identical(other.tunEnable, tunEnable) ||
@@ -1268,12 +1312,24 @@ class _$TrayStateImpl implements _TrayState {
             (identical(other.isStart, isStart) || other.isStart == isStart) &&
             (identical(other.locale, locale) || other.locale == locale) &&
             (identical(other.brightness, brightness) ||
-                other.brightness == brightness));
+                other.brightness == brightness) &&
+            const DeepCollectionEquality().equals(other._groups, _groups) &&
+            const DeepCollectionEquality().equals(other._map, _map));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, mode, autoLaunch,
-      adminAutoLaunch, systemProxy, tunEnable, isStart, locale, brightness);
+  int get hashCode => Object.hash(
+      runtimeType,
+      mode,
+      port,
+      autoLaunch,
+      systemProxy,
+      tunEnable,
+      isStart,
+      locale,
+      brightness,
+      const DeepCollectionEquality().hash(_groups),
+      const DeepCollectionEquality().hash(_map));
 
   /// Create a copy of TrayState
   /// with the given fields replaced by the non-null parameter values.
@@ -1287,20 +1343,22 @@ class _$TrayStateImpl implements _TrayState {
 abstract class _TrayState implements TrayState {
   const factory _TrayState(
       {required final Mode mode,
+      required final int port,
       required final bool autoLaunch,
-      required final bool adminAutoLaunch,
       required final bool systemProxy,
       required final bool tunEnable,
       required final bool isStart,
       required final String? locale,
-      required final Brightness? brightness}) = _$TrayStateImpl;
+      required final Brightness? brightness,
+      required final List<Group> groups,
+      required final Map<String, String> map}) = _$TrayStateImpl;
 
   @override
   Mode get mode;
   @override
-  bool get autoLaunch;
+  int get port;
   @override
-  bool get adminAutoLaunch;
+  bool get autoLaunch;
   @override
   bool get systemProxy;
   @override
@@ -1311,6 +1369,10 @@ abstract class _TrayState implements TrayState {
   String? get locale;
   @override
   Brightness? get brightness;
+  @override
+  List<Group> get groups;
+  @override
+  Map<String, String> get map;
 
   /// Create a copy of TrayState
   /// with the given fields replaced by the non-null parameter values.
@@ -3150,7 +3212,6 @@ abstract class _ProxiesActionsState implements ProxiesActionsState {
 /// @nodoc
 mixin _$AutoLaunchState {
   bool get isAutoLaunch => throw _privateConstructorUsedError;
-  bool get isAdminAutoLaunch => throw _privateConstructorUsedError;
 
   /// Create a copy of AutoLaunchState
   /// with the given fields replaced by the non-null parameter values.
@@ -3165,7 +3226,7 @@ abstract class $AutoLaunchStateCopyWith<$Res> {
           AutoLaunchState value, $Res Function(AutoLaunchState) then) =
       _$AutoLaunchStateCopyWithImpl<$Res, AutoLaunchState>;
   @useResult
-  $Res call({bool isAutoLaunch, bool isAdminAutoLaunch});
+  $Res call({bool isAutoLaunch});
 }
 
 /// @nodoc
@@ -3184,16 +3245,11 @@ class _$AutoLaunchStateCopyWithImpl<$Res, $Val extends AutoLaunchState>
   @override
   $Res call({
     Object? isAutoLaunch = null,
-    Object? isAdminAutoLaunch = null,
   }) {
     return _then(_value.copyWith(
       isAutoLaunch: null == isAutoLaunch
           ? _value.isAutoLaunch
           : isAutoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAdminAutoLaunch: null == isAdminAutoLaunch
-          ? _value.isAdminAutoLaunch
-          : isAdminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
     ) as $Val);
   }
@@ -3207,7 +3263,7 @@ abstract class _$$AutoLaunchStateImplCopyWith<$Res>
       __$$AutoLaunchStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool isAutoLaunch, bool isAdminAutoLaunch});
+  $Res call({bool isAutoLaunch});
 }
 
 /// @nodoc
@@ -3224,16 +3280,11 @@ class __$$AutoLaunchStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? isAutoLaunch = null,
-    Object? isAdminAutoLaunch = null,
   }) {
     return _then(_$AutoLaunchStateImpl(
       isAutoLaunch: null == isAutoLaunch
           ? _value.isAutoLaunch
           : isAutoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAdminAutoLaunch: null == isAdminAutoLaunch
-          ? _value.isAdminAutoLaunch
-          : isAdminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }
@@ -3242,17 +3293,14 @@ class __$$AutoLaunchStateImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$AutoLaunchStateImpl implements _AutoLaunchState {
-  const _$AutoLaunchStateImpl(
-      {required this.isAutoLaunch, required this.isAdminAutoLaunch});
+  const _$AutoLaunchStateImpl({required this.isAutoLaunch});
 
   @override
   final bool isAutoLaunch;
-  @override
-  final bool isAdminAutoLaunch;
 
   @override
   String toString() {
-    return 'AutoLaunchState(isAutoLaunch: $isAutoLaunch, isAdminAutoLaunch: $isAdminAutoLaunch)';
+    return 'AutoLaunchState(isAutoLaunch: $isAutoLaunch)';
   }
 
   @override
@@ -3261,13 +3309,11 @@ class _$AutoLaunchStateImpl implements _AutoLaunchState {
         (other.runtimeType == runtimeType &&
             other is _$AutoLaunchStateImpl &&
             (identical(other.isAutoLaunch, isAutoLaunch) ||
-                other.isAutoLaunch == isAutoLaunch) &&
-            (identical(other.isAdminAutoLaunch, isAdminAutoLaunch) ||
-                other.isAdminAutoLaunch == isAdminAutoLaunch));
+                other.isAutoLaunch == isAutoLaunch));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isAutoLaunch, isAdminAutoLaunch);
+  int get hashCode => Object.hash(runtimeType, isAutoLaunch);
 
   /// Create a copy of AutoLaunchState
   /// with the given fields replaced by the non-null parameter values.
@@ -3280,14 +3326,11 @@ class _$AutoLaunchStateImpl implements _AutoLaunchState {
 }
 
 abstract class _AutoLaunchState implements AutoLaunchState {
-  const factory _AutoLaunchState(
-      {required final bool isAutoLaunch,
-      required final bool isAdminAutoLaunch}) = _$AutoLaunchStateImpl;
+  const factory _AutoLaunchState({required final bool isAutoLaunch}) =
+      _$AutoLaunchStateImpl;
 
   @override
   bool get isAutoLaunch;
-  @override
-  bool get isAdminAutoLaunch;
 
   /// Create a copy of AutoLaunchState
   /// with the given fields replaced by the non-null parameter values.

@@ -330,5 +330,7 @@
   "routeMode_bypassPrivate": "Bypass private route address",
   "routeMode_config": "Use config",
   "routeAddress": "Route address",
-  "routeAddressDesc": "Config listen route address"
+  "routeAddressDesc": "Config listen route address",
+  "pleaseInputAdminPassword": "Please enter the admin password",
+  "copyEnvVar": "Copying environment variables"
 }

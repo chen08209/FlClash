@@ -98,6 +98,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "connectionsDesc": MessageLookupByLibrary.simpleMessage("查看当前连接数据"),
         "connectivity": MessageLookupByLibrary.simpleMessage("连通性："),
         "copy": MessageLookupByLibrary.simpleMessage("复制"),
+        "copyEnvVar": MessageLookupByLibrary.simpleMessage("复制环境变量"),
         "core": MessageLookupByLibrary.simpleMessage("内核"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("内核信息"),
         "country": MessageLookupByLibrary.simpleMessage("区域"),
@@ -259,6 +260,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "passwordTip": MessageLookupByLibrary.simpleMessage("密码不能为空"),
         "paste": MessageLookupByLibrary.simpleMessage("粘贴"),
         "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("请绑定WebDAV"),
+        "pleaseInputAdminPassword":
+            MessageLookupByLibrary.simpleMessage("请输入管理员密码"),
         "pleaseUploadFile": MessageLookupByLibrary.simpleMessage("请上传文件"),
         "pleaseUploadValidQrcode":
             MessageLookupByLibrary.simpleMessage("请上传有效的二维码"),

@@ -7,9 +7,9 @@ import 'dart:ui';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:lpinyin/lpinyin.dart';
 import 'package:zxing2/qrcode.dart';
-import 'package:image/image.dart' as img;
 
 class Other {
   Color? getDelayColor(int? delay) {
@@ -17,6 +17,14 @@ class Other {
     if (delay < 0) return Colors.red;
     if (delay < 600) return Colors.green;
     return const Color(0xFFC57F0A);
+  }
+
+  String get id {
+    final timestamp = DateTime.now().microsecondsSinceEpoch;
+    final random = Random();
+    final randomStr =
+        String.fromCharCodes(List.generate(8, (_) => random.nextInt(26) + 97));
+    return "$timestamp$randomStr";
   }
 
   String getDateStringLast2(int value) {
@@ -104,7 +112,7 @@ class Other {
   String getTrayIconPath({
     required Brightness brightness,
   }) {
-    if(Platform.isMacOS){
+    if (Platform.isMacOS) {
       return "assets/images/icon_white.png";
     }
     final suffix = Platform.isWindows ? "ico" : "png";
