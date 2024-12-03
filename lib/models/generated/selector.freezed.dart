@@ -1047,7 +1047,6 @@ abstract class _ApplicationSelectorState implements ApplicationSelectorState {
 mixin _$TrayState {
   Mode get mode => throw _privateConstructorUsedError;
   bool get autoLaunch => throw _privateConstructorUsedError;
-  bool get adminAutoLaunch => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
   bool get tunEnable => throw _privateConstructorUsedError;
   bool get isStart => throw _privateConstructorUsedError;
@@ -1069,7 +1068,6 @@ abstract class $TrayStateCopyWith<$Res> {
   $Res call(
       {Mode mode,
       bool autoLaunch,
-      bool adminAutoLaunch,
       bool systemProxy,
       bool tunEnable,
       bool isStart,
@@ -1094,7 +1092,6 @@ class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
   $Res call({
     Object? mode = null,
     Object? autoLaunch = null,
-    Object? adminAutoLaunch = null,
     Object? systemProxy = null,
     Object? tunEnable = null,
     Object? isStart = null,
@@ -1109,10 +1106,6 @@ class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
       autoLaunch: null == autoLaunch
           ? _value.autoLaunch
           : autoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      adminAutoLaunch: null == adminAutoLaunch
-          ? _value.adminAutoLaunch
-          : adminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
       systemProxy: null == systemProxy
           ? _value.systemProxy
@@ -1149,7 +1142,6 @@ abstract class _$$TrayStateImplCopyWith<$Res>
   $Res call(
       {Mode mode,
       bool autoLaunch,
-      bool adminAutoLaunch,
       bool systemProxy,
       bool tunEnable,
       bool isStart,
@@ -1172,7 +1164,6 @@ class __$$TrayStateImplCopyWithImpl<$Res>
   $Res call({
     Object? mode = null,
     Object? autoLaunch = null,
-    Object? adminAutoLaunch = null,
     Object? systemProxy = null,
     Object? tunEnable = null,
     Object? isStart = null,
@@ -1187,10 +1178,6 @@ class __$$TrayStateImplCopyWithImpl<$Res>
       autoLaunch: null == autoLaunch
           ? _value.autoLaunch
           : autoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      adminAutoLaunch: null == adminAutoLaunch
-          ? _value.adminAutoLaunch
-          : adminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
       systemProxy: null == systemProxy
           ? _value.systemProxy
@@ -1222,7 +1209,6 @@ class _$TrayStateImpl implements _TrayState {
   const _$TrayStateImpl(
       {required this.mode,
       required this.autoLaunch,
-      required this.adminAutoLaunch,
       required this.systemProxy,
       required this.tunEnable,
       required this.isStart,
@@ -1233,8 +1219,6 @@ class _$TrayStateImpl implements _TrayState {
   final Mode mode;
   @override
   final bool autoLaunch;
-  @override
-  final bool adminAutoLaunch;
   @override
   final bool systemProxy;
   @override
@@ -1248,7 +1232,7 @@ class _$TrayStateImpl implements _TrayState {
 
   @override
   String toString() {
-    return 'TrayState(mode: $mode, autoLaunch: $autoLaunch, adminAutoLaunch: $adminAutoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness)';
+    return 'TrayState(mode: $mode, autoLaunch: $autoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness)';
   }
 
   @override
@@ -1259,8 +1243,6 @@ class _$TrayStateImpl implements _TrayState {
             (identical(other.mode, mode) || other.mode == mode) &&
             (identical(other.autoLaunch, autoLaunch) ||
                 other.autoLaunch == autoLaunch) &&
-            (identical(other.adminAutoLaunch, adminAutoLaunch) ||
-                other.adminAutoLaunch == adminAutoLaunch) &&
             (identical(other.systemProxy, systemProxy) ||
                 other.systemProxy == systemProxy) &&
             (identical(other.tunEnable, tunEnable) ||
@@ -1272,8 +1254,8 @@ class _$TrayStateImpl implements _TrayState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, mode, autoLaunch,
-      adminAutoLaunch, systemProxy, tunEnable, isStart, locale, brightness);
+  int get hashCode => Object.hash(runtimeType, mode, autoLaunch, systemProxy,
+      tunEnable, isStart, locale, brightness);
 
   /// Create a copy of TrayState
   /// with the given fields replaced by the non-null parameter values.
@@ -1288,7 +1270,6 @@ abstract class _TrayState implements TrayState {
   const factory _TrayState(
       {required final Mode mode,
       required final bool autoLaunch,
-      required final bool adminAutoLaunch,
       required final bool systemProxy,
       required final bool tunEnable,
       required final bool isStart,
@@ -1299,8 +1280,6 @@ abstract class _TrayState implements TrayState {
   Mode get mode;
   @override
   bool get autoLaunch;
-  @override
-  bool get adminAutoLaunch;
   @override
   bool get systemProxy;
   @override
@@ -3150,7 +3129,6 @@ abstract class _ProxiesActionsState implements ProxiesActionsState {
 /// @nodoc
 mixin _$AutoLaunchState {
   bool get isAutoLaunch => throw _privateConstructorUsedError;
-  bool get isAdminAutoLaunch => throw _privateConstructorUsedError;
 
   /// Create a copy of AutoLaunchState
   /// with the given fields replaced by the non-null parameter values.
@@ -3165,7 +3143,7 @@ abstract class $AutoLaunchStateCopyWith<$Res> {
           AutoLaunchState value, $Res Function(AutoLaunchState) then) =
       _$AutoLaunchStateCopyWithImpl<$Res, AutoLaunchState>;
   @useResult
-  $Res call({bool isAutoLaunch, bool isAdminAutoLaunch});
+  $Res call({bool isAutoLaunch});
 }
 
 /// @nodoc
@@ -3184,16 +3162,11 @@ class _$AutoLaunchStateCopyWithImpl<$Res, $Val extends AutoLaunchState>
   @override
   $Res call({
     Object? isAutoLaunch = null,
-    Object? isAdminAutoLaunch = null,
   }) {
     return _then(_value.copyWith(
       isAutoLaunch: null == isAutoLaunch
           ? _value.isAutoLaunch
           : isAutoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAdminAutoLaunch: null == isAdminAutoLaunch
-          ? _value.isAdminAutoLaunch
-          : isAdminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
     ) as $Val);
   }
@@ -3207,7 +3180,7 @@ abstract class _$$AutoLaunchStateImplCopyWith<$Res>
       __$$AutoLaunchStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool isAutoLaunch, bool isAdminAutoLaunch});
+  $Res call({bool isAutoLaunch});
 }
 
 /// @nodoc
@@ -3224,16 +3197,11 @@ class __$$AutoLaunchStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? isAutoLaunch = null,
-    Object? isAdminAutoLaunch = null,
   }) {
     return _then(_$AutoLaunchStateImpl(
       isAutoLaunch: null == isAutoLaunch
           ? _value.isAutoLaunch
           : isAutoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAdminAutoLaunch: null == isAdminAutoLaunch
-          ? _value.isAdminAutoLaunch
-          : isAdminAutoLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }
@@ -3242,17 +3210,14 @@ class __$$AutoLaunchStateImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$AutoLaunchStateImpl implements _AutoLaunchState {
-  const _$AutoLaunchStateImpl(
-      {required this.isAutoLaunch, required this.isAdminAutoLaunch});
+  const _$AutoLaunchStateImpl({required this.isAutoLaunch});
 
   @override
   final bool isAutoLaunch;
-  @override
-  final bool isAdminAutoLaunch;
 
   @override
   String toString() {
-    return 'AutoLaunchState(isAutoLaunch: $isAutoLaunch, isAdminAutoLaunch: $isAdminAutoLaunch)';
+    return 'AutoLaunchState(isAutoLaunch: $isAutoLaunch)';
   }
 
   @override
@@ -3261,13 +3226,11 @@ class _$AutoLaunchStateImpl implements _AutoLaunchState {
         (other.runtimeType == runtimeType &&
             other is _$AutoLaunchStateImpl &&
             (identical(other.isAutoLaunch, isAutoLaunch) ||
-                other.isAutoLaunch == isAutoLaunch) &&
-            (identical(other.isAdminAutoLaunch, isAdminAutoLaunch) ||
-                other.isAdminAutoLaunch == isAdminAutoLaunch));
+                other.isAutoLaunch == isAutoLaunch));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isAutoLaunch, isAdminAutoLaunch);
+  int get hashCode => Object.hash(runtimeType, isAutoLaunch);
 
   /// Create a copy of AutoLaunchState
   /// with the given fields replaced by the non-null parameter values.
@@ -3280,14 +3243,11 @@ class _$AutoLaunchStateImpl implements _AutoLaunchState {
 }
 
 abstract class _AutoLaunchState implements AutoLaunchState {
-  const factory _AutoLaunchState(
-      {required final bool isAutoLaunch,
-      required final bool isAdminAutoLaunch}) = _$AutoLaunchStateImpl;
+  const factory _AutoLaunchState({required final bool isAutoLaunch}) =
+      _$AutoLaunchStateImpl;
 
   @override
   bool get isAutoLaunch;
-  @override
-  bool get isAdminAutoLaunch;
 
   /// Create a copy of AutoLaunchState
   /// with the given fields replaced by the non-null parameter values.

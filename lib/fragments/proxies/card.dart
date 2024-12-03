@@ -115,11 +115,10 @@ class ProxyCard extends StatelessWidget {
         groupName,
         nextProxyName,
       );
-      appController.changeProxy(
-        groupName: groupName,
-        proxyName: nextProxyName,
-      );
-      await appController.updateGroupDebounce();
+      await appController.changeProxyDebounce([
+        groupName,
+        nextProxyName,
+      ]);
       return;
     }
     globalState.showSnackBar(

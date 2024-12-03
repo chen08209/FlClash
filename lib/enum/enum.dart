@@ -178,3 +178,39 @@ enum RouteMode {
   bypassPrivate,
   config,
 }
+
+enum ActionMethod {
+  message,
+  initClash,
+  getIsInit,
+  forceGc,
+  shutdown,
+  validateConfig,
+  updateConfig,
+  getProxies,
+  changeProxy,
+  getTraffic,
+  getTotalTraffic,
+  resetTraffic,
+  asyncTestDelay,
+  getConnections,
+  closeConnections,
+  closeConnection,
+  getExternalProviders,
+  getExternalProvider,
+  updateGeoData,
+  updateExternalProvider,
+  sideLoadExternalProvider,
+  startLog,
+  stopLog,
+  startListener,
+  stopListener,
+}
+
+enum AuthorizeCode { none, success, error }
+
+enum WindowsHelperServiceStatus {
+  none,
+  presence,
+  running,
+}

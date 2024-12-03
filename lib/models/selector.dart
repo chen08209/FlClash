@@ -64,7 +64,6 @@ class TrayState with _$TrayState {
   const factory TrayState({
     required Mode mode,
     required bool autoLaunch,
-    required bool adminAutoLaunch,
     required bool systemProxy,
     required bool tunEnable,
     required bool isStart,
@@ -197,7 +196,6 @@ class ProxiesActionsState with _$ProxiesActionsState {
 class AutoLaunchState with _$AutoLaunchState {
   const factory AutoLaunchState({
     required bool isAutoLaunch,
-    required bool isAdminAutoLaunch,
   }) = _AutoLaunchState;
 }
 

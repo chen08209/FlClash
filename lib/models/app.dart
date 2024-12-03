@@ -1,8 +1,9 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
+
 import 'common.dart';
-import 'ffi.dart';
+import 'core.dart';
 import 'profile.dart';
 
 typedef DelayMap = Map<String, int?>;

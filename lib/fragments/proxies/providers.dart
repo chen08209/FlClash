@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/app.dart';
-import 'package:fl_clash/models/ffi.dart';
+import 'package:fl_clash/models/core.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +56,7 @@ class _ProvidersState extends State<Providers> {
           providerName: provider.name,
         );
         appState.setProvider(
-          clashCore.getExternalProvider(provider.name),
+          await clashCore.getExternalProvider(provider.name),
         );
       },
     );
@@ -122,7 +122,7 @@ class ProviderItem extends StatelessWidget {
         if (message.isNotEmpty) throw message;
       });
       appState.setProvider(
-        clashCore.getExternalProvider(provider.name),
+        await clashCore.getExternalProvider(provider.name),
       );
     });
     await globalState.appController.updateGroupDebounce();
@@ -143,7 +143,7 @@ class ProviderItem extends StatelessWidget {
       );
       if (message.isNotEmpty) throw message;
       appState.setProvider(
-        clashCore.getExternalProvider(provider.name),
+        await clashCore.getExternalProvider(provider.name),
       );
       if (message.isNotEmpty) throw message;
     });

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of '../ffi.dart';
+part of '../core.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
@@ -188,13 +188,13 @@ Map<String, dynamic> _$$NowImplToJson(_$NowImpl instance) => <String, dynamic>{
       'value': instance.value,
     };
 
-_$ProcessImpl _$$ProcessImplFromJson(Map<String, dynamic> json) =>
-    _$ProcessImpl(
+_$ProcessDataImpl _$$ProcessDataImplFromJson(Map<String, dynamic> json) =>
+    _$ProcessDataImpl(
       id: (json['id'] as num).toInt(),
       metadata: Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$$ProcessImplToJson(_$ProcessImpl instance) =>
+Map<String, dynamic> _$$ProcessDataImplToJson(_$ProcessDataImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'metadata': instance.metadata,
@@ -289,3 +289,44 @@ Map<String, dynamic> _$$TunPropsImplToJson(_$TunPropsImpl instance) =>
       'dns': instance.dns,
       'dns6': instance.dns6,
     };
+
+_$ActionImpl _$$ActionImplFromJson(Map<String, dynamic> json) => _$ActionImpl(
+      method: $enumDecode(_$ActionMethodEnumMap, json['method']),
+      data: json['data'],
+      id: json['id'] as String,
+    );
+
+Map<String, dynamic> _$$ActionImplToJson(_$ActionImpl instance) =>
+    <String, dynamic>{
+      'method': _$ActionMethodEnumMap[instance.method]!,
+      'data': instance.data,
+      'id': instance.id,
+    };
+
+const _$ActionMethodEnumMap = {
+  ActionMethod.message: 'message',
+  ActionMethod.initClash: 'initClash',
+  ActionMethod.getIsInit: 'getIsInit',
+  ActionMethod.forceGc: 'forceGc',
+  ActionMethod.shutdown: 'shutdown',
+  ActionMethod.validateConfig: 'validateConfig',
+  ActionMethod.updateConfig: 'updateConfig',
+  ActionMethod.getProxies: 'getProxies',
+  ActionMethod.changeProxy: 'changeProxy',
+  ActionMethod.getTraffic: 'getTraffic',
+  ActionMethod.getTotalTraffic: 'getTotalTraffic',
+  ActionMethod.resetTraffic: 'resetTraffic',
+  ActionMethod.asyncTestDelay: 'asyncTestDelay',
+  ActionMethod.getConnections: 'getConnections',
+  ActionMethod.closeConnections: 'closeConnections',
+  ActionMethod.closeConnection: 'closeConnection',
+  ActionMethod.getExternalProviders: 'getExternalProviders',
+  ActionMethod.getExternalProvider: 'getExternalProvider',
+  ActionMethod.updateGeoData: 'updateGeoData',
+  ActionMethod.updateExternalProvider: 'updateExternalProvider',
+  ActionMethod.sideLoadExternalProvider: 'sideLoadExternalProvider',
+  ActionMethod.startLog: 'startLog',
+  ActionMethod.stopLog: 'stopLog',
+  ActionMethod.startListener: 'startListener',
+  ActionMethod.stopListener: 'stopListener',
+};

@@ -1,10 +1,11 @@
-//go:build android
+//go:build android && cgo
 
 package tun
 
 import "C"
 import (
 	"core/state"
+	"github.com/metacubex/mihomo/constant"
 	LC "github.com/metacubex/mihomo/listener/config"
 	"github.com/metacubex/mihomo/listener/sing_tun"
 	"github.com/metacubex/mihomo/log"
@@ -23,7 +24,7 @@ type Props struct {
 	Dns6     string `json:"dns6"`
 }
 
-func Start(fd int) (*sing_tun.Listener, error) {
+func Start(fd int, device string, stack constant.TUNStack) (*sing_tun.Listener, error) {
 	var prefix4 []netip.Prefix
 	tempPrefix4, err := netip.ParsePrefix(state.DefaultIpv4Address)
 	if err != nil {
@@ -46,8 +47,8 @@ func Start(fd int) (*sing_tun.Listener, error) {
 
 	options := LC.Tun{
 		Enable:              true,
-		Device:              state.CurrentRawConfig.Tun.Device,
-		Stack:               state.CurrentRawConfig.Tun.Stack,
+		Device:              device,
+		Stack:               stack,
 		DNSHijack:           dnsHijack,
 		AutoRoute:           false,
 		AutoDetectInterface: false,

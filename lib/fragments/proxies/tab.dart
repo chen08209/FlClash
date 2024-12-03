@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -381,7 +382,9 @@ class _DelayTestButtonState extends State<DelayTestButton>
   _healthcheck() async {
     _controller.forward();
     await widget.onClick();
-    _controller.reverse();
+    if (mounted) {
+      _controller.reverse();
+    }
   }
 
   @override

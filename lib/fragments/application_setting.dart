@@ -60,32 +60,6 @@ class UsageSwitch extends StatelessWidget {
   }
 }
 
-class AdminAutoLaunchItem extends StatelessWidget {
-  const AdminAutoLaunchItem({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.appSetting.adminAutoLaunch,
-      builder: (_, adminAutoLaunch, __) {
-        return ListItem.switchItem(
-          title: Text(appLocalizations.adminAutoLaunch),
-          subtitle: Text(appLocalizations.adminAutoLaunchDesc),
-          delegate: SwitchDelegate(
-            value: adminAutoLaunch,
-            onChanged: (bool value) async {
-              final config = globalState.appController.config;
-              config.appSetting = config.appSetting.copyWith(
-                adminAutoLaunch: value,
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-}
-
 class ApplicationSettingFragment extends StatelessWidget {
   const ApplicationSettingFragment({super.key});
 
@@ -134,8 +108,6 @@ class ApplicationSettingFragment extends StatelessWidget {
             );
           },
         ),
-      if(Platform.isWindows)
-        const AdminAutoLaunchItem(),
       if (system.isDesktop)
         Selector<Config, bool>(
           selector: (_, config) => config.appSetting.silentLaunch,

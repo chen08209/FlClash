@@ -27,18 +27,19 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      connectionsNotifier.value = connectionsNotifier.value
-          .copyWith(connections: clashCore.getConnections());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      connectionsNotifier.value = connectionsNotifier.value.copyWith(
+        connections: await clashCore.getConnections(),
+      );
       if (timer != null) {
         timer?.cancel();
         timer = null;
       }
       timer = Timer.periodic(
         const Duration(seconds: 1),
-        (timer) {
+        (timer) async {
           connectionsNotifier.value = connectionsNotifier.value.copyWith(
-            connections: clashCore.getConnections(),
+            connections: await clashCore.getConnections(),
           );
         },
       );
@@ -66,10 +67,10 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
             width: 8,
           ),
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               clashCore.closeConnections();
               connectionsNotifier.value = connectionsNotifier.value.copyWith(
-                connections: clashCore.getConnections(),
+                connections: await clashCore.getConnections(),
               );
             },
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -99,10 +100,11 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
     );
   }
 
-  _handleBlockConnection(String id) {
+  _handleBlockConnection(String id) async {
     clashCore.closeConnection(id);
-    connectionsNotifier.value = connectionsNotifier.value
-        .copyWith(connections: clashCore.getConnections());
+    connectionsNotifier.value = connectionsNotifier.value.copyWith(
+      connections: await clashCore.getConnections(),
+    );
   }
 
   @override
@@ -239,10 +241,10 @@ class ConnectionsSearchDelegate extends SearchDelegate {
     );
   }
 
-  _handleBlockConnection(String id) {
+  _handleBlockConnection(String id) async {
     clashCore.closeConnection(id);
     connectionsNotifier.value = connectionsNotifier.value.copyWith(
-      connections: clashCore.getConnections(),
+      connections: await clashCore.getConnections(),
     );
   }
 

@@ -1,14 +1,35 @@
 // ignore_for_file: avoid_print
 
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
-void main() {
-  final cmdList = [];
-  final ignoreHosts = "\"ass\"";
-  cmdList.add(
-    ["gsettings", "set", "org.gnome.system.proxy", "port", ignoreHosts],
+Future<void> main() async {
+  // final cmdList = [];
+  // final ignoreHosts = "\"ass\"";
+  // cmdList.add(
+  //   ["gsettings", "set", "org.gnome.system.proxy", "port", ignoreHosts],
+  // );
+  // print(cmdList.first);
+  final internetAddress = InternetAddress(
+    "/tmp/FlClashSocket.sock",
+    type: InternetAddressType.unix,
   );
-  print(cmdList.first);
+
+  final socket = await Socket.connect(internetAddress, 0);
+  socket
+      .transform(
+        StreamTransformer<Uint8List, String>.fromHandlers(
+          handleData: (Uint8List data, EventSink<String> sink) {
+            sink.add(utf8.decode(data));
+          },
+        ),
+      )
+      .transform(LineSplitter())
+      .listen((res) {
+        print(res);
+      });
 }
 
 startService() async {

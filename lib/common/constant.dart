@@ -1,15 +1,20 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
-import 'system.dart';
 
 const appName = "FlClash";
+const appHelperService = "FlClashHelperService";
 const coreName = "clash.meta";
 const packageName = "com.follow.clash";
+final unixSocketPath = "/tmp/FlClashSocket_${Random().nextInt(10000)}.sock";
+const helperPort = 47890;
+const helperTag = "2024125";
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
@@ -21,7 +26,7 @@ const geoSiteFileName = "GeoSite.dat";
 final double kHeaderHeight = system.isDesktop
     ? !Platform.isMacOS
         ? 40
-        : 26
+        : 28
     : 0;
 const GeoXMap defaultGeoXMap = {
   "mmdb":

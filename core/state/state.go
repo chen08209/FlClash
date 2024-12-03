@@ -1,12 +1,10 @@
-package state
+//go:build android && cgo
 
-import "github.com/metacubex/mihomo/config"
+package state
 
 var DefaultIpv4Address = "172.19.0.1/30"
 var DefaultDnsAddress = "172.19.0.2"
 var DefaultIpv6Address = "fdfe:dcba:9876::1/126"
-
-var CurrentRawConfig = config.DefaultRawConfig()
 
 type AndroidVpnOptions struct {
 	Enable           bool           `json:"enable"`
@@ -41,7 +39,6 @@ type AndroidVpnRawOptions struct {
 type State struct {
 	AndroidVpnRawOptions
 	CurrentProfileName string `json:"currentProfileName"`
-	OnlyProxy          bool   `json:"onlyProxy"`
 }
 
 var CurrentState = &State{}
@@ -55,7 +52,5 @@ func GetIpv6Address() string {
 }
 
 func GetDnsServerAddress() string {
-	//prefix, _ := netip.ParsePrefix(DefaultIpv4Address)
-	//return prefix.Addr().String()
 	return DefaultDnsAddress
 }

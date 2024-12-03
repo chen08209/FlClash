@@ -20,7 +20,6 @@ class AppSetting with _$AppSetting {
     String? locale,
     @Default(false) bool onlyProxy,
     @Default(false) bool autoLaunch,
-    @Default(false) bool adminAutoLaunch,
     @Default(false) bool silentLaunch,
     @Default(false) bool autoRun,
     @Default(false) bool openLogs,

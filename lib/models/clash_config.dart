@@ -482,6 +482,28 @@ class ClashConfig extends ChangeNotifier {
     notifyListeners();
   }
 
+  ClashConfig copyWith() {
+    return ClashConfig()
+      ..mixedPort = _mixedPort
+      ..mode = _mode
+      ..ipv6 = _ipv6
+      ..findProcessMode = _findProcessMode
+      ..allowLan = _allowLan
+      ..tcpConcurrent = _tcpConcurrent
+      ..logLevel = _logLevel
+      ..tun = tun
+      ..unifiedDelay = _unifiedDelay
+      ..geodataLoader = _geodataLoader
+      ..externalController = _externalController
+      ..keepAliveInterval = _keepAliveInterval
+      ..dns = _dns
+      ..geoXUrl = _geoXUrl
+      ..routeMode = _routeMode
+      ..includeRouteAddress = _includeRouteAddress
+      ..rules = _rules
+      ..hosts = _hosts;
+  }
+
   Map<String, dynamic> toJson() {
     return _$ClashConfigToJson(this);
   }
