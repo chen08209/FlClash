@@ -462,7 +462,7 @@ class BuildCommand extends Command {
           Arch.amd64: "linux-x64",
         };
         final defaultTarget = targetMap[arch];
-        await _getLinuxDependencies();
+        await _getLinuxDependencies(arch!);
         _buildDistributor(
           target: target,
           targets: "appimage,deb,rpm",
