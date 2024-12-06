@@ -16,6 +16,8 @@ import com.follow.clash.GlobalState
 import com.follow.clash.RunState
 import com.follow.clash.extensions.getProtocol
 import com.follow.clash.extensions.resolveDns
+import com.follow.clash.models.Process
+import com.follow.clash.models.VpnOptions
 import com.follow.clash.services.FlClashService
 import com.follow.clash.services.FlClashVpnService
 import com.google.gson.Gson
@@ -28,8 +30,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
 import kotlin.concurrent.withLock
-import com.follow.clash.models.Process
-import com.follow.clash.models.VpnOptions
 
 
 class VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
@@ -111,11 +111,9 @@ class VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
             "resolverProcess" -> {
                 val data = call.argument<String>("data")
-                val process =
-                    if (data != null) Gson().fromJson(
-                        data,
-                        Process::class.java
-                    ) else null
+                val process = if (data != null) Gson().fromJson(
+                    data, Process::class.java
+                ) else null
                 val metadata = process?.metadata
                 if (metadata == null) {
                     result.success(null)
@@ -173,9 +171,7 @@ class VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     fun onUpdateNetwork() {
         val dns = networks.flatMap { network ->
             connectivity?.resolveDns(network) ?: emptyList()
-        }
-            .toSet()
-            .joinToString(",")
+        }.toSet().joinToString(",")
         scope.launch {
             withContext(Dispatchers.Main) {
                 flutterMethodChannel.invokeMethod("dnsChanged", dns)
@@ -239,8 +235,7 @@ class VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             GlobalState.runState.value = RunState.START
             val fd = flClashService?.start(options)
             flutterMethodChannel.invokeMethod(
-                "started",
-                fd
+                "started", fd
             )
         }
     }

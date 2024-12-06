@@ -8,6 +8,10 @@ class TempActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         when (intent.action) {
+            wrapAction("START") -> {
+                GlobalState.handleStart(applicationContext)
+            }
+
             wrapAction("STOP") -> {
                 GlobalState.handleStop()
             }

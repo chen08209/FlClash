@@ -212,9 +212,7 @@ class AppState with ChangeNotifier {
       case Mode.direct:
         return [];
       case Mode.global:
-        return groups
-            .where((element) => element.name == GroupName.GLOBAL.name)
-            .toList();
+        return groups.toList();
       case Mode.rule:
         return groups
             .where((item) => item.hidden == false)

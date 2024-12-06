@@ -10,14 +10,6 @@ import 'package:provider/provider.dart';
 class OutboundMode extends StatelessWidget {
   const OutboundMode({super.key});
 
-  _changeMode(BuildContext context, Mode? value) async {
-    final appController = globalState.appController;
-    final clashConfig = appController.clashConfig;
-    if (value == null || clashConfig.mode == value) return;
-    clashConfig.mode = value;
-    appController.addCheckIpNumDebounce();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Selector<ClashConfig, Mode>(
@@ -50,7 +42,10 @@ class OutboundMode extends StatelessWidget {
                       value: item,
                       groupValue: mode,
                       onChanged: (value) async {
-                        _changeMode(context, value);
+                        if (value == null) {
+                          return;
+                        }
+                        globalState.appController.changeMode(value);
                       },
                     ),
                     title: Text(

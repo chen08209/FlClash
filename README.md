@@ -34,6 +34,29 @@ on Mobile:
 
 ✨ Support subscription link, Dark mode
 
+## Use
+
+### Linux
+
+⚠️ Make sure to install the following dependencies before using them
+
+   ```bash
+    sudo apt-get install appindicator3-0.1 libappindicator3-dev
+    sudo apt-get install keybinder-3.0
+   ```
+
+### Android
+
+Support the following actions
+
+   ```bash
+    com.follow.clash.action.START
+    
+    com.follow.clash.action.STOP
+    
+    com.follow.clash.action.CHANGE
+   ```
+
 ## Download
 
 <a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" width="200px"/></a> <a href="https://github.com/chen08209/FlClash/releases"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" width="200px"/></a>
@@ -70,7 +93,7 @@ on Mobile:
         3. Run build script
 
            ```bash
-           dart .\setup.dart	
+           dart .\setup.dart windows --arch <arm64 | amd64>
            ```
 
     - linux
@@ -80,7 +103,7 @@ on Mobile:
         2. Run build script
 
            ```bash
-           dart .\setup.dart	
+           dart .\setup.dart linux --arch <arm64 | amd64>
            ```
 
     - macOS
@@ -90,7 +113,7 @@ on Mobile:
         2. Run build script
 
            ```bash
-           dart .\setup.dart	
+           dart .\setup.dart macos --arch <arm64 | amd64>
            ```
 
 ## Star

@@ -38,6 +38,9 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
       timer = Timer.periodic(
         const Duration(seconds: 1),
         (timer) async {
+          if (!context.mounted) {
+            return;
+          }
           connectionsNotifier.value = connectionsNotifier.value.copyWith(
             connections: await clashCore.getConnections(),
           );

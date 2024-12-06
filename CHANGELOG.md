@@ -1,3 +1,37 @@
+## v0.8.69
+
+- Remake desktop
+
+- Optimize change proxy
+
+- Optimize network check
+
+- Fix fallback issues
+
+- Optimize lots of details
+
+- Update change.yaml
+
+- Fix android tile issues
+
+- Fix windows tray issues
+
+- Support setting bypassDomain
+
+- Update flutter version
+
+- Fix android service issues
+
+- Fix macos dock exit button issues
+
+- Add route address setting
+
+- Optimize provider view
+
+- Update changelog
+
+- Update CHANGELOG.md
+
 ## v0.8.67
 
 - Add android shortcuts

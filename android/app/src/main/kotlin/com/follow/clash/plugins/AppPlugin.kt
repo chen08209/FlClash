@@ -46,8 +46,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private var activity: Activity? = null
 
-    private var toast: Toast? = null
-
     private lateinit var context: Context
 
     private lateinit var channel: MethodChannel

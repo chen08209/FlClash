@@ -21,6 +21,22 @@ extension TargetExt on Target {
     return name;
   }
 
+  bool get same {
+    if (this == Target.android) {
+      return true;
+    }
+    if (Platform.isWindows && this == Target.windows) {
+      return true;
+    }
+    if (Platform.isLinux && this == Target.linux) {
+      return true;
+    }
+    if (Platform.isMacOS && this == Target.macos) {
+      return true;
+    }
+    return false;
+  }
+
   String get dynamicLibExtensionName {
     final String extensionName;
     switch (this) {
@@ -76,12 +92,27 @@ class Build {
   static List<BuildItem> get buildItems => [
         BuildItem(
           target: Target.macos,
+          arch: Arch.arm64,
         ),
         BuildItem(
-          target: Target.windows,
+          target: Target.macos,
+          arch: Arch.amd64,
         ),
         BuildItem(
           target: Target.linux,
+          arch: Arch.arm64,
+        ),
+        BuildItem(
+          target: Target.linux,
+          arch: Arch.amd64,
+        ),
+        BuildItem(
+          target: Target.windows,
+          arch: Arch.amd64,
+        ),
+        BuildItem(
+          target: Target.windows,
+          arch: Arch.arm64,
         ),
         BuildItem(
           target: Target.android,
@@ -200,11 +231,10 @@ class Build {
 
       final Map<String, String> env = {};
       env["GOOS"] = item.target.os;
-
+      if (item.arch != null) {
+        env["GOARCH"] = item.arch!.name;
+      }
       if (isLib) {
-        if (item.arch != null) {
-          env["GOARCH"] = item.arch!.name;
-        }
         env["CGO_ENABLED"] = "1";
         env["CC"] = _getCc(item);
         env["CFLAGS"] = "-O3 -Werror";
@@ -273,6 +303,11 @@ class Build {
       workingDirectory: distributorDir,
     );
     await exec(
+      name: "upgrade distributor",
+      Build.getExecutable("flutter pub upgrade"),
+      workingDirectory: distributorDir,
+    );
+    await exec(
       name: "get distributor",
       Build.getExecutable("dart pub global activate -s path $distributorDir"),
     );
@@ -303,7 +338,7 @@ class BuildCommand extends Command {
   BuildCommand({
     required this.target,
   }) {
-    if (target == Target.android) {
+    if (target == Target.android || target == Target.linux) {
       argParser.addOption(
         "arch",
         valueHelp: arches.map((e) => e.name).join(','),
@@ -315,11 +350,10 @@ class BuildCommand extends Command {
         help: 'The $name build archName',
       );
     }
-
     argParser.addOption(
       "out",
       valueHelp: [
-        "app",
+        if (target.same) "app",
         "core",
       ].join(','),
       help: 'The $name build arch',
@@ -337,7 +371,7 @@ class BuildCommand extends Command {
       .map((e) => e.arch!)
       .toList();
 
-  _getLinuxDependencies() async {
+  _getLinuxDependencies(Arch arch) async {
     await Build.exec(
       Build.getExecutable("sudo apt update -y"),
     );
@@ -351,7 +385,7 @@ class BuildCommand extends Command {
       Build.getExecutable("sudo apt install -y rpm patchelf"),
     );
     await Build.exec(
-      Build.getExecutable("sudo apt-get install -y libkeybinder-3.0"),
+      Build.getExecutable("sudo apt-get install -y libkeybinder-3.0-dev"),
     );
     await Build.exec(
       Build.getExecutable("sudo apt install -y locate"),
@@ -359,9 +393,10 @@ class BuildCommand extends Command {
     await Build.exec(
       Build.getExecutable("sudo apt install -y libfuse2"),
     );
+    final downloadName = arch == Arch.amd64 ? "x86_64" : "aarch_64";
     await Build.exec(
       Build.getExecutable(
-        "wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage",
+        "wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$downloadName.AppImage",
       ),
     );
     await Build.exec(
@@ -409,14 +444,14 @@ class BuildCommand extends Command {
   @override
   Future<void> run() async {
     final mode = target == Target.android ? Mode.lib : Mode.core;
-    final String out = argResults?['out'] ?? 'app';
-    Arch? arch;
-    var archName = argResults?['arch'];
+    final String out = argResults?["out"] ?? (target.same ? "app" : "core");
+    final archName = argResults?["arch"];
+    final currentArches =
+        arches.where((element) => element.name == archName).toList();
+    final arch = currentArches.isEmpty ? null : currentArches.first;
 
-    if (target == Target.android) {
-      final currentArches =
-          arches.where((element) => element.name == archName).toList();
-      arch = currentArches.isEmpty ? null : currentArches.first;
+    if (arch == null && target != Target.android) {
+      throw "Invalid arch parameter";
     }
 
     await Build.buildCore(
@@ -440,13 +475,21 @@ class BuildCommand extends Command {
           targets: "exe,zip",
           args: "--description $archName",
         );
+        return;
       case Target.linux:
-        await _getLinuxDependencies();
+        final targetMap = {
+          Arch.arm64: "linux-arm64",
+          Arch.amd64: "linux-x64",
+        };
+        final defaultTarget = targetMap[arch];
+        await _getLinuxDependencies(arch!);
         _buildDistributor(
           target: target,
-          targets: "appimage,deb,rpm",
-          args: "--description $archName",
+          targets: "appimage,deb",
+          args:
+              "--description $archName --build-target-platform $defaultTarget",
         );
+        return;
       case Target.android:
         final targetMap = {
           Arch.arm: "android-arm",
@@ -464,6 +507,7 @@ class BuildCommand extends Command {
           args:
               "--flutter-build-args split-per-abi --build-target-platform ${defaultTargets.join(",")}",
         );
+        return;
       case Target.macos:
         await _getMacosDependencies();
         _buildDistributor(
@@ -471,6 +515,7 @@ class BuildCommand extends Command {
           targets: "dmg",
           args: "--description $archName",
         );
+        return;
     }
   }
 }
@@ -478,14 +523,8 @@ class BuildCommand extends Command {
 main(args) async {
   final runner = CommandRunner("setup", "build Application");
   runner.addCommand(BuildCommand(target: Target.android));
-  if (Platform.isWindows) {
-    runner.addCommand(BuildCommand(target: Target.windows));
-  }
-  if (Platform.isLinux) {
-    runner.addCommand(BuildCommand(target: Target.linux));
-  }
-  if (Platform.isMacOS) {
-    runner.addCommand(BuildCommand(target: Target.macos));
-  }
+  runner.addCommand(BuildCommand(target: Target.linux));
+  runner.addCommand(BuildCommand(target: Target.windows));
+  runner.addCommand(BuildCommand(target: Target.macos));
   runner.run(args);
 }

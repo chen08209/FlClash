@@ -582,6 +582,14 @@ class AppController {
     updateStatus(!appFlowingState.isStart);
   }
 
+  changeMode(Mode mode) {
+    clashConfig.mode = mode;
+    if (mode == Mode.global) {
+      config.updateCurrentGroupName(GroupName.GLOBAL.name);
+    }
+    addCheckIpNumDebounce();
+  }
+
   updateAutoLaunch() {
     config.appSetting = config.appSetting.copyWith(
       autoLaunch: !config.appSetting.autoLaunch,

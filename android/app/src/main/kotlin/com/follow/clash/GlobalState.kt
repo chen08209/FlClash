@@ -20,8 +20,6 @@ enum class RunState {
 
 
 object GlobalState {
-
-    private val lock = ReentrantLock()
     val runLock = ReentrantLock()
 
     val runState: MutableLiveData<RunState> = MutableLiveData<RunState>(RunState.STOP)
@@ -47,35 +45,46 @@ object GlobalState {
     }
 
     fun handleToggle(context: Context) {
+        val starting = handleStart(context)
+        if (!starting) {
+            handleStop()
+        }
+    }
+
+    fun handleStart(context: Context): Boolean {
         if (runState.value == RunState.STOP) {
             runState.value = RunState.PENDING
+            runLock.lock()
             val tilePlugin = getCurrentTilePlugin()
             if (tilePlugin != null) {
                 tilePlugin.handleStart()
             } else {
                 initServiceEngine(context)
             }
-        } else {
-            handleStop()
+            return true
         }
+        return false
     }
 
     fun handleStop() {
         if (runState.value == RunState.START) {
             runState.value = RunState.PENDING
+            runLock.lock()
             getCurrentTilePlugin()?.handleStop()
         }
     }
 
     fun destroyServiceEngine() {
-        serviceEngine?.destroy()
-        serviceEngine = null
+        runLock.withLock {
+            serviceEngine?.destroy()
+            serviceEngine = null
+        }
     }
 
     fun initServiceEngine(context: Context) {
         if (serviceEngine != null) return
-        lock.withLock {
-            destroyServiceEngine()
+        destroyServiceEngine()
+        runLock.withLock {
             serviceEngine = FlutterEngine(context)
             serviceEngine?.plugins?.add(VpnPlugin())
             serviceEngine?.plugins?.add(AppPlugin())

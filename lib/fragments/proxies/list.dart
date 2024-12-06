@@ -299,7 +299,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
                         headerState.currentIndex > state.groupNames.length - 1
                             ? 0
                             : headerState.currentIndex;
-                    if (index < 0) {
+                    if (index < 0 || state.groupNames.isEmpty) {
                       return Container();
                     }
                     return Stack(

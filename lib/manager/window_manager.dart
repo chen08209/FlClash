@@ -67,6 +67,12 @@ class _WindowContainerState extends State<WindowManager>
   @override
   Future<void> onWindowMoved() async {
     super.onWindowMoved();
+    final offset = await windowManager.getPosition();
+    final config = globalState.appController.config;
+    config.windowProps = config.windowProps.copyWith(
+      top: offset.dy,
+      left: offset.dx,
+    );
   }
 
   @override

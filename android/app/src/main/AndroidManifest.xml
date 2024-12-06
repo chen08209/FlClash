@@ -74,6 +74,10 @@
             android:theme="@style/TransparentTheme">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="${applicationId}.action.START" />
+            </intent-filter>
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="${applicationId}.action.STOP" />
             </intent-filter>
             <intent-filter>
@@ -88,7 +92,8 @@
             android:foregroundServiceType="specialUse"
             android:icon="@drawable/ic_stat_name"
             android:label="FlClash"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            tools:targetApi="n">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>

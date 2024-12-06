@@ -10,7 +10,6 @@
 
 [![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/FlClash)
 
-
 基于ClashMeta的多平台代理客户端，简单易用，开源无广告。
 
 on Desktop:
@@ -34,6 +33,29 @@ on Mobile:
 ☁️ 支持通过WebDAV同步数据
 
 ✨ 支持一键导入订阅, 深色模式
+
+## Use
+
+### Linux
+
+⚠️ 使用前请确保安装以下依赖
+
+   ```bash
+    sudo apt-get install appindicator3-0.1 libappindicator3-dev
+    sudo apt-get install keybinder-3.0
+   ```
+
+### Android
+
+支持下列操作
+
+   ```bash
+    com.follow.clash.action.START
+    
+    com.follow.clash.action.STOP
+    
+    com.follow.clash.action.CHANGE
+   ```
 
 ## Download
 
@@ -71,7 +93,7 @@ on Mobile:
         3. 运行构建脚本
 
            ```bash
-           dart .\setup.dart	
+           dart .\setup.dart windows --arch <arm64 | amd64>
            ```
 
     - linux
@@ -81,7 +103,7 @@ on Mobile:
         2. 运行构建脚本
 
            ```bash
-           dart .\setup.dart	
+           dart .\setup.dart linux --arch <arm64 | amd64>
            ```
 
     - macOS
@@ -91,7 +113,7 @@ on Mobile:
         2. 运行构建脚本
 
            ```bash
-             dart .\setup.dart	
+           dart .\setup.dart macos --arch <arm64 | amd64>
            ```
 
 ## Star History

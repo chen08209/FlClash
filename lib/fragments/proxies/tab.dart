@@ -117,9 +117,11 @@ class ProxiesTabFragmentState extends State<ProxiesTabFragment>
     }
     final currentGroup = currentGroups[index ?? _tabController!.index];
     currentProxies = currentGroup.all;
-    appController.config.updateCurrentGroupName(
-      currentGroup.name,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      appController.config.updateCurrentGroupName(
+        currentGroup.name,
+      );
+    });
   }
 
   _destroyTabController() {
@@ -129,6 +131,10 @@ class ProxiesTabFragmentState extends State<ProxiesTabFragment>
   }
 
   _updateTabController(int length, int index) {
+    if (length == 0) {
+      _destroyTabController();
+      return;
+    }
     final realIndex = index == -1 ? 0 : index;
     _tabController ??= TabController(
       length: length,
@@ -162,6 +168,9 @@ class ProxiesTabFragmentState extends State<ProxiesTabFragment>
           (item) => item == state.currentGroupName,
         );
         _updateTabController(state.groupNames.length, index);
+        if (state.groupNames.isEmpty) {
+          return Container();
+        }
         final GroupNameKeyMap keyMap = {};
         final children = state.groupNames.map((groupName) {
           keyMap[groupName] = GlobalObjectKey(groupName);
@@ -281,12 +290,15 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
     if (_controller.position.maxScrollExtent == 0) {
       return;
     }
+    final sortedProxies = globalState.appController.getSortProxies(
+      currentProxies,
+    );
     _controller.animateTo(
       min(
         16 +
             getScrollToSelectedOffset(
               groupName: groupName,
-              proxies: currentProxies,
+              proxies: sortedProxies,
             ),
         _controller.position.maxScrollExtent,
       ),
