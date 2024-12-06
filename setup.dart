@@ -347,7 +347,12 @@ class BuildCommand extends Command {
       .map((e) => e.arch!)
       .toList();
 
-  _getLinuxDependencies() async {
+  _getLinuxDependencies(Arch arch) async {
+    if (arch == Arch.arm64) {
+      await Build.exec(
+        Build.getExecutable("sudo apt-get install -y gcc-aarch64-linux-gnu"),
+      );
+    }
     await Build.exec(
       Build.getExecutable("sudo apt update -y"),
     );
