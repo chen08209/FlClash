@@ -63,12 +63,15 @@ class ApplicationSelectorState with _$ApplicationSelectorState {
 class TrayState with _$TrayState {
   const factory TrayState({
     required Mode mode,
+    required int port,
     required bool autoLaunch,
     required bool systemProxy,
     required bool tunEnable,
     required bool isStart,
     required String? locale,
     required Brightness? brightness,
+    required List<Group> groups,
+    required SelectedMap map,
   }) = _TrayState;
 }
 

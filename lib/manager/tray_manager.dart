@@ -36,6 +36,9 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
         systemProxy: config.networkProps.systemProxy,
         tunEnable: clashConfig.tun.enable,
         brightness: appState.brightness,
+        port: clashConfig.mixedPort,
+        groups: appState.groups,
+        map: appState.selectedMap,
       ),
       shouldRebuild: (prev, next) {
         if (prev != next) {

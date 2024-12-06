@@ -85,6 +85,37 @@ class Tray {
       );
     }
     menuItems.add(MenuItem.separator());
+    if (!Platform.isWindows) {
+      final groups = appState.currentGroups;
+      for (final group in groups) {
+        List<MenuItem> subMenuItems = [];
+        for (final proxy in group.all) {
+          subMenuItems.add(
+            MenuItem.checkbox(
+              label: proxy.name,
+              checked: appState.selectedMap[group.name] == group.name,
+              onClick: (_) {
+                globalState.appController.changeProxy(
+                  groupName: group.name,
+                  proxyName: group.name,
+                );
+              },
+            ),
+          );
+        }
+        menuItems.add(
+          MenuItem.submenu(
+            label: group.name,
+            submenu: Menu(
+              items: subMenuItems,
+            ),
+          ),
+        );
+      }
+      if (groups.isNotEmpty) {
+        menuItems.add(MenuItem.separator());
+      }
+    }
     if (appFlowingState.isStart) {
       menuItems.add(
         MenuItem.checkbox(
@@ -142,8 +173,9 @@ class Tray {
   Future<void> _copyEnv(int port) async {
     final url = "http://127.0.0.1:$port";
 
-    final cmdline =
-        Platform.isWindows ? "\$env:all_proxy=$url" : "export all_proxy=$url";
+    final cmdline = Platform.isWindows
+        ? "set \$env:all_proxy=$url"
+        : "export all_proxy=$url";
 
     await Clipboard.setData(
       ClipboardData(
