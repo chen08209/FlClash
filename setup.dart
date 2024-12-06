@@ -21,6 +21,22 @@ extension TargetExt on Target {
     return name;
   }
 
+  bool get same {
+    if (Platform.isAndroid) {
+      return true;
+    }
+    if (Platform.isWindows && this == Target.windows) {
+      return true;
+    }
+    if (Platform.isLinux && this == Target.linux) {
+      return true;
+    }
+    if (Platform.isMacOS && this == Target.macos) {
+      return true;
+    }
+    return false;
+  }
+
   String get dynamicLibExtensionName {
     final String extensionName;
     switch (this) {
@@ -325,11 +341,10 @@ class BuildCommand extends Command {
         help: 'The $name build archName',
       );
     }
-
     argParser.addOption(
       "out",
       valueHelp: [
-        "app",
+        if (target.same) "app",
         "core",
       ].join(','),
       help: 'The $name build arch',
@@ -347,12 +362,7 @@ class BuildCommand extends Command {
       .map((e) => e.arch!)
       .toList();
 
-  _getLinuxDependencies(Arch arch) async {
-    if (arch == Arch.arm64) {
-      await Build.exec(
-        Build.getExecutable("sudo apt-get install -y gcc-aarch64-linux-gnu"),
-      );
-    }
+  _getLinuxDependencies() async {
     await Build.exec(
       Build.getExecutable("sudo apt update -y"),
     );
@@ -424,8 +434,8 @@ class BuildCommand extends Command {
   @override
   Future<void> run() async {
     final mode = target == Target.android ? Mode.lib : Mode.core;
-    final String out = argResults?['out'] ?? 'app';
-    final archName = argResults?['arch'];
+    final String out = argResults?["out"] ?? (target.same ? "app" : "core");
+    final archName = argResults?["arch"];
     final currentArches =
         arches.where((element) => element.name == archName).toList();
     final arch = currentArches.isEmpty ? null : currentArches.first;
@@ -462,7 +472,7 @@ class BuildCommand extends Command {
           Arch.amd64: "linux-x64",
         };
         final defaultTarget = targetMap[arch];
-        await _getLinuxDependencies(arch!);
+        await _getLinuxDependencies();
         _buildDistributor(
           target: target,
           targets: "appimage,deb,rpm",
@@ -503,14 +513,8 @@ class BuildCommand extends Command {
 main(args) async {
   final runner = CommandRunner("setup", "build Application");
   runner.addCommand(BuildCommand(target: Target.android));
-  if (Platform.isWindows) {
-    runner.addCommand(BuildCommand(target: Target.windows));
-  }
-  if (Platform.isLinux) {
-    runner.addCommand(BuildCommand(target: Target.linux));
-  }
-  if (Platform.isMacOS) {
-    runner.addCommand(BuildCommand(target: Target.macos));
-  }
+  runner.addCommand(BuildCommand(target: Target.linux));
+  runner.addCommand(BuildCommand(target: Target.windows));
+  runner.addCommand(BuildCommand(target: Target.macos));
   runner.run(args);
 }

@@ -75,23 +75,23 @@ jobs:
     strategy:
       matrix:
         include:
-          #          - platform: android
-          #            os: ubuntu-latest
-          #          - platform: windows
-          #            os: windows-latest
-          #            arch: amd64
-          - platform: linux
+          - platform: android
             os: ubuntu-latest
+          - platform: windows
+            os: windows-latest
             arch: amd64
           - platform: linux
             os: ubuntu-latest
+            arch: amd64
+          #          - platform: linux
+          #            os: ubuntu-latest
+          #            arch: arm64
+          - platform: macos
+            os: macos-13
+            arch: amd64
+          - platform: macos
+            os: macos-latest
             arch: arm64
-    #          - platform: macos
-    #            os: macos-13
-    #            arch: amd64
-    #          - platform: macos
-    #            os: macos-latest
-    #            arch: arm64
 
     steps:
       - name: Checkout
@@ -151,97 +151,97 @@ jobs:
           path: ./dist
           overwrite: true
 
-#  upload:
-#    permissions: write-all
-#    needs: [ build ]
-#    runs-on: ubuntu-latest
-#    services:
-#      telegram-bot-api:
-#        image: aiogram/telegram-bot-api:latest
-#        env:
-#          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
-#          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-#        ports:
-#          - 8081:8081
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
-#
-#      - name: Download
-#        uses: actions/download-artifact@v4
-#        with:
-#          path: ./dist/
-#          pattern: artifact-*
-#          merge-multiple: true
-#
-#      - name: Generate release.md
-#        run: |
-#          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
-#          preTag=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
-#          currentTag=""
-#          for ((i = 0; i <= ${#tags[@]}; i++)); do
-#            if (( i < ${#tags[@]} )); then
-#              tag=${tags[$i]}
-#            else
-#              tag=""
-#            fi
-#            if [ -n "$currentTag" ]; then
-#              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
-#                break
-#              fi
-#            fi
-#            if [ -n "$currentTag" ]; then
-#              if [ -n "$tag" ]; then
-#                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
-#              else
-#                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
-#              fi
-#              echo "" >> release.md
-#            fi
-#            currentTag=$tag
-#          done
-#
-#      - name: Push to telegram
-#        env:
-#          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-#          TAG: ${{ github.ref_name }}
-#        run: |
-#          python -m pip install --upgrade pip
-#          pip install requests
-#          python release.py
-#
-#      - name: Patch release.md
-#        run: |
-#          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-#          sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
-#
-#      - name: Release
-#        if: ${{ !contains(github.ref, '+') }}
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          files: ./dist/*
-#          body_path: './release.md'
-#
-#      - name: Create Fdroid Source Dir
-#        if: ${{ !contains(github.ref, '+') }}
-#        run: |
-#          mkdir -p ./tmp
-#          cp ./dist/*android-arm64-v8a* ./tmp/ || true
-#          echo "Files copied successfully"
-#
-#      - name: Push to fdroid repo
-#        if: ${{ !contains(github.ref, '+') }}
-#        uses: cpina/github-action-push-to-another-repository@v1.7.2
-#        env:
-#          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
-#        with:
-#          source-directory: ./tmp/
-#          destination-github-username: chen08209
-#          destination-repository-name: FlClash-fdroid-repo
-#          user-name: 'github-actions[bot]'
-#          user-email: 'github-actions[bot]@users.noreply.github.com'
-#          target-branch: action-pr
-#          commit-message: Update from ${{ github.ref_name }}
-#          target-directory: /tmp/
+  upload:
+    permissions: write-all
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    services:
+      telegram-bot-api:
+        image: aiogram/telegram-bot-api:latest
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        ports:
+          - 8081:8081
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist/
+          pattern: artifact-*
+          merge-multiple: true
+
+      - name: Generate release.md
+        run: |
+          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
+          preTag=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
+          currentTag=""
+          for ((i = 0; i <= ${#tags[@]}; i++)); do
+            if (( i < ${#tags[@]} )); then
+              tag=${tags[$i]}
+            else
+              tag=""
+            fi
+            if [ -n "$currentTag" ]; then
+              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
+                break
+              fi
+            fi
+            if [ -n "$currentTag" ]; then
+              if [ -n "$tag" ]; then
+                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
+              else
+                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
+              fi
+              echo "" >> release.md
+            fi
+            currentTag=$tag
+          done
+
+      - name: Push to telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+          python release.py
+
+      - name: Patch release.md
+        run: |
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
+
+      - name: Release
+        if: ${{ !contains(github.ref, '+') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/*
+          body_path: './release.md'
+
+      - name: Create Fdroid Source Dir
+        if: ${{ !contains(github.ref, '+') }}
+        run: |
+          mkdir -p ./tmp
+          cp ./dist/*android-arm64-v8a* ./tmp/ || true
+          echo "Files copied successfully"
+
+      - name: Push to fdroid repo
+        if: ${{ !contains(github.ref, '+') }}
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+        with:
+          source-directory: ./tmp/
+          destination-github-username: chen08209
+          destination-repository-name: FlClash-fdroid-repo
+          user-name: 'github-actions[bot]'
+          user-email: 'github-actions[bot]@users.noreply.github.com'
+          target-branch: action-pr
+          commit-message: Update from ${{ github.ref_name }}
+          target-directory: /tmp/
