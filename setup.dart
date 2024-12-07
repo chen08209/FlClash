@@ -362,7 +362,7 @@ class BuildCommand extends Command {
       .map((e) => e.arch!)
       .toList();
 
-  _getLinuxDependencies() async {
+  _getLinuxDependencies(Arch arch) async {
     await Build.exec(
       Build.getExecutable("sudo apt update -y"),
     );
@@ -376,7 +376,7 @@ class BuildCommand extends Command {
       Build.getExecutable("sudo apt install -y rpm patchelf"),
     );
     await Build.exec(
-      Build.getExecutable("sudo apt-get install -y keybinder-3.0"),
+      Build.getExecutable("sudo apt-get install -y libkeybinder-3.0-dev"),
     );
     await Build.exec(
       Build.getExecutable("sudo apt install -y locate"),
@@ -384,9 +384,10 @@ class BuildCommand extends Command {
     await Build.exec(
       Build.getExecutable("sudo apt install -y libfuse2"),
     );
+    final downloadName = arch == Arch.amd64 ? "x86_64" : "aarch_64";
     await Build.exec(
       Build.getExecutable(
-        "wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage",
+        "wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$downloadName.AppImage",
       ),
     );
     await Build.exec(
@@ -472,10 +473,10 @@ class BuildCommand extends Command {
           Arch.amd64: "linux-x64",
         };
         final defaultTarget = targetMap[arch];
-        await _getLinuxDependencies();
+        await _getLinuxDependencies(arch!);
         _buildDistributor(
           target: target,
-          targets: "appimage,deb,rpm",
+          targets: "appimage,deb",
           args:
               "--description $archName --build-target-platform $defaultTarget",
         );
