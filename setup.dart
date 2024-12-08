@@ -111,6 +111,10 @@ class Build {
           arch: Arch.amd64,
         ),
         BuildItem(
+          target: Target.windows,
+          arch: Arch.arm64,
+        ),
+        BuildItem(
           target: Target.android,
           arch: Arch.arm,
           archName: 'armeabi-v7a',
