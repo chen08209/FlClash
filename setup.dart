@@ -299,6 +299,11 @@ class Build {
       workingDirectory: distributorDir,
     );
     await exec(
+      name: "upgrade distributor",
+      Build.getExecutable("flutter pub upgrade"),
+      workingDirectory: distributorDir,
+    );
+    await exec(
       name: "get distributor",
       Build.getExecutable("dart pub global activate -s path $distributorDir"),
     );
