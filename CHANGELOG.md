@@ -1,3 +1,11 @@
+## v0.8.70
+
+- Support better window position memory
+
+- Add windows arm64 and linux arm64 build script
+
+- Optimize some details
+
 ## v0.8.69
 
 - Remake desktop
