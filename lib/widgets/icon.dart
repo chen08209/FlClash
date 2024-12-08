@@ -2,11 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
 
-class CommonIcon extends StatelessWidget {
+class CommonTargetIcon extends StatelessWidget {
   final String src;
   final double size;
 
-  const CommonIcon({
+  const CommonTargetIcon({
     super.key,
     required this.src,
     required this.size,

@@ -15,9 +15,14 @@ const packageName = "com.follow.clash";
 final unixSocketPath = "/tmp/FlClashSocket_${Random().nextInt(10000)}.sock";
 const helperPort = 47890;
 const helperTag = "2024125";
+const baseInfoEdgeInsets = EdgeInsets.symmetric(
+  vertical: 16,
+  horizontal: 16,
+);
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
+const commonDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const mmdbFileName = "geoip.metadb";
 const asnFileName = "ASN.mmdb";
@@ -79,3 +84,7 @@ const viewModeColumnsMap = {
 };
 
 const defaultPrimaryColor = Colors.brown;
+
+double getWidgetHeight(num lines) {
+  return max(lines * 84 + (lines - 1) * 16, 0);
+}

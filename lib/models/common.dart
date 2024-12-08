@@ -180,7 +180,7 @@ class Traffic {
   TrafficValue up;
   TrafficValue down;
 
-  Traffic({num? up, num? down})
+  Traffic({int? up, int? down})
       : id = DateTime.now().millisecondsSinceEpoch,
         up = TrafficValue(value: up),
         down = TrafficValue(value: down);
@@ -225,11 +225,11 @@ class TrafficValueShow {
 
 @immutable
 class TrafficValue {
-  final num _value;
+  final int _value;
 
-  const TrafficValue({num? value}) : _value = value ?? 0;
+  const TrafficValue({int? value}) : _value = value ?? 0;
 
-  num get value => _value;
+  int get value => _value;
 
   String get show => "$showValue $showUnit";
 
@@ -343,7 +343,7 @@ class SystemColorSchemes {
             );
     }
     return lightColorScheme != null
-        ? ColorScheme.fromSeed(seedColor: darkColorScheme!.primary)
+        ? ColorScheme.fromSeed(seedColor: lightColorScheme!.primary)
         : ColorScheme.fromSeed(seedColor: defaultPrimaryColor);
   }
 }

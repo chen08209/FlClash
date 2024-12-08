@@ -382,28 +382,30 @@ class BuildCommand extends Command {
       Build.getExecutable("sudo apt install -y libayatana-appindicator3-dev"),
     );
     await Build.exec(
-      Build.getExecutable("sudo apt install -y rpm patchelf"),
-    );
-    await Build.exec(
       Build.getExecutable("sudo apt-get install -y libkeybinder-3.0-dev"),
     );
     await Build.exec(
       Build.getExecutable("sudo apt install -y locate"),
     );
-    await Build.exec(
-      Build.getExecutable("sudo apt install -y libfuse2"),
-    );
-    final downloadName = arch == Arch.amd64 ? "x86_64" : "aarch_64";
-    await Build.exec(
-      Build.getExecutable(
-        "wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$downloadName.AppImage",
-      ),
-    );
-    await Build.exec(
-      Build.getExecutable(
-        "chmod +x appimagetool",
-      ),
-    );
+    if (arch == Arch.amd64) {
+      await Build.exec(
+        Build.getExecutable("sudo apt install -y rpm patchelf"),
+      );
+      await Build.exec(
+        Build.getExecutable("sudo apt install -y libfuse2"),
+      );
+      final downloadName = arch == Arch.amd64 ? "x86_64" : "aarch_64";
+      await Build.exec(
+        Build.getExecutable(
+          "wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$downloadName.AppImage",
+        ),
+      );
+      await Build.exec(
+        Build.getExecutable(
+          "chmod +x appimagetool",
+        ),
+      );
+    }
     await Build.exec(
       Build.getExecutable(
         "sudo mv appimagetool /usr/local/bin/",
@@ -481,11 +483,18 @@ class BuildCommand extends Command {
           Arch.arm64: "linux-arm64",
           Arch.amd64: "linux-x64",
         };
+        final targets = [
+          "deb",
+          if (arch == Arch.amd64) ...[
+            "appimage",
+            "rpm",
+          ],
+        ].join(",");
         final defaultTarget = targetMap[arch];
         await _getLinuxDependencies(arch!);
         _buildDistributor(
           target: target,
-          targets: "appimage,deb",
+          targets: targets,
           args:
               "--description $archName --build-target-platform $defaultTarget",
         );

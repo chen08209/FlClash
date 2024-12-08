@@ -13,6 +13,10 @@ class AppDelegate: FlutterAppDelegate {
         WindowExtPlugin.instance?.handleShouldTerminate()
         return .terminateCancel
     }
+
+    override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+      return true
+    }
     
     override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {

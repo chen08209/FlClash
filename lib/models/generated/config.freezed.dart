@@ -21,6 +21,9 @@ AppSetting _$AppSettingFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$AppSetting {
   String? get locale => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+  List<DashboardWidget> get dashboardWidgets =>
+      throw _privateConstructorUsedError;
   bool get onlyProxy => throw _privateConstructorUsedError;
   bool get autoLaunch => throw _privateConstructorUsedError;
   bool get silentLaunch => throw _privateConstructorUsedError;
@@ -53,6 +56,8 @@ abstract class $AppSettingCopyWith<$Res> {
   @useResult
   $Res call(
       {String? locale,
+      @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+      List<DashboardWidget> dashboardWidgets,
       bool onlyProxy,
       bool autoLaunch,
       bool silentLaunch,
@@ -84,6 +89,7 @@ class _$AppSettingCopyWithImpl<$Res, $Val extends AppSetting>
   @override
   $Res call({
     Object? locale = freezed,
+    Object? dashboardWidgets = null,
     Object? onlyProxy = null,
     Object? autoLaunch = null,
     Object? silentLaunch = null,
@@ -103,6 +109,10 @@ class _$AppSettingCopyWithImpl<$Res, $Val extends AppSetting>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String?,
+      dashboardWidgets: null == dashboardWidgets
+          ? _value.dashboardWidgets
+          : dashboardWidgets // ignore: cast_nullable_to_non_nullable
+              as List<DashboardWidget>,
       onlyProxy: null == onlyProxy
           ? _value.onlyProxy
           : onlyProxy // ignore: cast_nullable_to_non_nullable
@@ -169,6 +179,8 @@ abstract class _$$AppSettingImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? locale,
+      @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+      List<DashboardWidget> dashboardWidgets,
       bool onlyProxy,
       bool autoLaunch,
       bool silentLaunch,
@@ -198,6 +210,7 @@ class __$$AppSettingImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? locale = freezed,
+    Object? dashboardWidgets = null,
     Object? onlyProxy = null,
     Object? autoLaunch = null,
     Object? silentLaunch = null,
@@ -217,6 +230,10 @@ class __$$AppSettingImplCopyWithImpl<$Res>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String?,
+      dashboardWidgets: null == dashboardWidgets
+          ? _value._dashboardWidgets
+          : dashboardWidgets // ignore: cast_nullable_to_non_nullable
+              as List<DashboardWidget>,
       onlyProxy: null == onlyProxy
           ? _value.onlyProxy
           : onlyProxy // ignore: cast_nullable_to_non_nullable
@@ -278,6 +295,8 @@ class __$$AppSettingImplCopyWithImpl<$Res>
 class _$AppSettingImpl implements _AppSetting {
   const _$AppSettingImpl(
       {this.locale,
+      @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+      final List<DashboardWidget> dashboardWidgets = defaultDashboardWidgets,
       this.onlyProxy = false,
       this.autoLaunch = false,
       this.silentLaunch = false,
@@ -290,13 +309,24 @@ class _$AppSettingImpl implements _AppSetting {
       this.showLabel = false,
       this.disclaimerAccepted = false,
       this.minimizeOnExit = true,
-      this.hidden = false});
+      this.hidden = false})
+      : _dashboardWidgets = dashboardWidgets;
 
   factory _$AppSettingImpl.fromJson(Map<String, dynamic> json) =>
       _$$AppSettingImplFromJson(json);
 
   @override
   final String? locale;
+  final List<DashboardWidget> _dashboardWidgets;
+  @override
+  @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+  List<DashboardWidget> get dashboardWidgets {
+    if (_dashboardWidgets is EqualUnmodifiableListView)
+      return _dashboardWidgets;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_dashboardWidgets);
+  }
+
   @override
   @JsonKey()
   final bool onlyProxy;
@@ -339,7 +369,7 @@ class _$AppSettingImpl implements _AppSetting {
 
   @override
   String toString() {
-    return 'AppSetting(locale: $locale, onlyProxy: $onlyProxy, autoLaunch: $autoLaunch, silentLaunch: $silentLaunch, autoRun: $autoRun, openLogs: $openLogs, closeConnections: $closeConnections, testUrl: $testUrl, isAnimateToPage: $isAnimateToPage, autoCheckUpdate: $autoCheckUpdate, showLabel: $showLabel, disclaimerAccepted: $disclaimerAccepted, minimizeOnExit: $minimizeOnExit, hidden: $hidden)';
+    return 'AppSetting(locale: $locale, dashboardWidgets: $dashboardWidgets, onlyProxy: $onlyProxy, autoLaunch: $autoLaunch, silentLaunch: $silentLaunch, autoRun: $autoRun, openLogs: $openLogs, closeConnections: $closeConnections, testUrl: $testUrl, isAnimateToPage: $isAnimateToPage, autoCheckUpdate: $autoCheckUpdate, showLabel: $showLabel, disclaimerAccepted: $disclaimerAccepted, minimizeOnExit: $minimizeOnExit, hidden: $hidden)';
   }
 
   @override
@@ -348,6 +378,8 @@ class _$AppSettingImpl implements _AppSetting {
         (other.runtimeType == runtimeType &&
             other is _$AppSettingImpl &&
             (identical(other.locale, locale) || other.locale == locale) &&
+            const DeepCollectionEquality()
+                .equals(other._dashboardWidgets, _dashboardWidgets) &&
             (identical(other.onlyProxy, onlyProxy) ||
                 other.onlyProxy == onlyProxy) &&
             (identical(other.autoLaunch, autoLaunch) ||
@@ -378,6 +410,7 @@ class _$AppSettingImpl implements _AppSetting {
   int get hashCode => Object.hash(
       runtimeType,
       locale,
+      const DeepCollectionEquality().hash(_dashboardWidgets),
       onlyProxy,
       autoLaunch,
       silentLaunch,
@@ -411,6 +444,8 @@ class _$AppSettingImpl implements _AppSetting {
 abstract class _AppSetting implements AppSetting {
   const factory _AppSetting(
       {final String? locale,
+      @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+      final List<DashboardWidget> dashboardWidgets,
       final bool onlyProxy,
       final bool autoLaunch,
       final bool silentLaunch,
@@ -430,6 +465,9 @@ abstract class _AppSetting implements AppSetting {
 
   @override
   String? get locale;
+  @override
+  @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+  List<DashboardWidget> get dashboardWidgets;
   @override
   bool get onlyProxy;
   @override

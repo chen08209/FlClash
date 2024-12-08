@@ -306,6 +306,7 @@ class AppFlowingState with ChangeNotifier {
   List<Log> _logs;
   List<Traffic> _traffics;
   Traffic _totalTraffic;
+  String? _localIp;
 
   AppFlowingState()
       : _logs = [],
@@ -350,7 +351,7 @@ class AppFlowingState with ChangeNotifier {
 
   addTraffic(Traffic traffic) {
     _traffics = List.from(_traffics)..add(traffic);
-    const maxLength = 60;
+    const maxLength = 30;
     _traffics = _traffics.safeSublist(_traffics.length - maxLength);
     notifyListeners();
   }
@@ -360,6 +361,15 @@ class AppFlowingState with ChangeNotifier {
   set totalTraffic(Traffic value) {
     if (_totalTraffic != value) {
       _totalTraffic = value;
+      notifyListeners();
+    }
+  }
+
+  String? get localIp => _localIp;
+
+  set localIp(String? value) {
+    if (_localIp != value) {
+      _localIp = value;
       notifyListeners();
     }
   }

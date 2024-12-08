@@ -24,6 +24,7 @@ class GlobalState {
   PageController? pageController;
   late Measure measure;
   DateTime? startTime;
+  final safeMessageOffsetNotifier = ValueNotifier(Offset.zero);
   final navigatorKey = GlobalKey<NavigatorState>();
   late AppController appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
@@ -301,37 +302,6 @@ class GlobalState {
     }
   }
 
-  showSnackBar(
-    BuildContext context, {
-    required String message,
-    SnackBarAction? action,
-  }) {
-    final width = context.viewWidth;
-    EdgeInsets margin;
-    if (width < 600) {
-      margin = const EdgeInsets.only(
-        bottom: 16,
-        right: 16,
-        left: 16,
-      );
-    } else {
-      margin = EdgeInsets.only(
-        bottom: 16,
-        left: 16,
-        right: width - 316,
-      );
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        action: action,
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(milliseconds: 1500),
-        margin: margin,
-      ),
-    );
-  }
-
   Future<T?> safeRun<T>(
     FutureOr<T> Function() futureFunction, {
     String? title,
@@ -340,14 +310,13 @@ class GlobalState {
       final res = await futureFunction();
       return res;
     } catch (e) {
-      showMessage(
-        title: title ?? appLocalizations.tip,
-        message: TextSpan(
-          text: e.toString(),
-        ),
-      );
+      showNotifier(e.toString());
       return null;
     }
+  }
+
+  showNotifier(String text) {
+    navigatorKey.currentContext?.showNotifier(text);
   }
 
   openUrl(String url) {

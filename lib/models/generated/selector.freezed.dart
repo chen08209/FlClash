@@ -3210,137 +3210,6 @@ abstract class _ProxiesActionsState implements ProxiesActionsState {
 }
 
 /// @nodoc
-mixin _$AutoLaunchState {
-  bool get isAutoLaunch => throw _privateConstructorUsedError;
-
-  /// Create a copy of AutoLaunchState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $AutoLaunchStateCopyWith<AutoLaunchState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $AutoLaunchStateCopyWith<$Res> {
-  factory $AutoLaunchStateCopyWith(
-          AutoLaunchState value, $Res Function(AutoLaunchState) then) =
-      _$AutoLaunchStateCopyWithImpl<$Res, AutoLaunchState>;
-  @useResult
-  $Res call({bool isAutoLaunch});
-}
-
-/// @nodoc
-class _$AutoLaunchStateCopyWithImpl<$Res, $Val extends AutoLaunchState>
-    implements $AutoLaunchStateCopyWith<$Res> {
-  _$AutoLaunchStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of AutoLaunchState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? isAutoLaunch = null,
-  }) {
-    return _then(_value.copyWith(
-      isAutoLaunch: null == isAutoLaunch
-          ? _value.isAutoLaunch
-          : isAutoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$AutoLaunchStateImplCopyWith<$Res>
-    implements $AutoLaunchStateCopyWith<$Res> {
-  factory _$$AutoLaunchStateImplCopyWith(_$AutoLaunchStateImpl value,
-          $Res Function(_$AutoLaunchStateImpl) then) =
-      __$$AutoLaunchStateImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({bool isAutoLaunch});
-}
-
-/// @nodoc
-class __$$AutoLaunchStateImplCopyWithImpl<$Res>
-    extends _$AutoLaunchStateCopyWithImpl<$Res, _$AutoLaunchStateImpl>
-    implements _$$AutoLaunchStateImplCopyWith<$Res> {
-  __$$AutoLaunchStateImplCopyWithImpl(
-      _$AutoLaunchStateImpl _value, $Res Function(_$AutoLaunchStateImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of AutoLaunchState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? isAutoLaunch = null,
-  }) {
-    return _then(_$AutoLaunchStateImpl(
-      isAutoLaunch: null == isAutoLaunch
-          ? _value.isAutoLaunch
-          : isAutoLaunch // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$AutoLaunchStateImpl implements _AutoLaunchState {
-  const _$AutoLaunchStateImpl({required this.isAutoLaunch});
-
-  @override
-  final bool isAutoLaunch;
-
-  @override
-  String toString() {
-    return 'AutoLaunchState(isAutoLaunch: $isAutoLaunch)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$AutoLaunchStateImpl &&
-            (identical(other.isAutoLaunch, isAutoLaunch) ||
-                other.isAutoLaunch == isAutoLaunch));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, isAutoLaunch);
-
-  /// Create a copy of AutoLaunchState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$AutoLaunchStateImplCopyWith<_$AutoLaunchStateImpl> get copyWith =>
-      __$$AutoLaunchStateImplCopyWithImpl<_$AutoLaunchStateImpl>(
-          this, _$identity);
-}
-
-abstract class _AutoLaunchState implements AutoLaunchState {
-  const factory _AutoLaunchState({required final bool isAutoLaunch}) =
-      _$AutoLaunchStateImpl;
-
-  @override
-  bool get isAutoLaunch;
-
-  /// Create a copy of AutoLaunchState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$AutoLaunchStateImplCopyWith<_$AutoLaunchStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
 mixin _$ProxyState {
   bool get isStart => throw _privateConstructorUsedError;
   bool get systemProxy => throw _privateConstructorUsedError;
@@ -4232,6 +4101,167 @@ abstract class _ClashConfigState implements ClashConfigState {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ClashConfigStateImplCopyWith<_$ClashConfigStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$DashboardState {
+  List<DashboardWidget> get dashboardWidgets =>
+      throw _privateConstructorUsedError;
+  double get viewWidth => throw _privateConstructorUsedError;
+
+  /// Create a copy of DashboardState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $DashboardStateCopyWith<DashboardState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $DashboardStateCopyWith<$Res> {
+  factory $DashboardStateCopyWith(
+          DashboardState value, $Res Function(DashboardState) then) =
+      _$DashboardStateCopyWithImpl<$Res, DashboardState>;
+  @useResult
+  $Res call({List<DashboardWidget> dashboardWidgets, double viewWidth});
+}
+
+/// @nodoc
+class _$DashboardStateCopyWithImpl<$Res, $Val extends DashboardState>
+    implements $DashboardStateCopyWith<$Res> {
+  _$DashboardStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of DashboardState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? dashboardWidgets = null,
+    Object? viewWidth = null,
+  }) {
+    return _then(_value.copyWith(
+      dashboardWidgets: null == dashboardWidgets
+          ? _value.dashboardWidgets
+          : dashboardWidgets // ignore: cast_nullable_to_non_nullable
+              as List<DashboardWidget>,
+      viewWidth: null == viewWidth
+          ? _value.viewWidth
+          : viewWidth // ignore: cast_nullable_to_non_nullable
+              as double,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$DashboardStateImplCopyWith<$Res>
+    implements $DashboardStateCopyWith<$Res> {
+  factory _$$DashboardStateImplCopyWith(_$DashboardStateImpl value,
+          $Res Function(_$DashboardStateImpl) then) =
+      __$$DashboardStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({List<DashboardWidget> dashboardWidgets, double viewWidth});
+}
+
+/// @nodoc
+class __$$DashboardStateImplCopyWithImpl<$Res>
+    extends _$DashboardStateCopyWithImpl<$Res, _$DashboardStateImpl>
+    implements _$$DashboardStateImplCopyWith<$Res> {
+  __$$DashboardStateImplCopyWithImpl(
+      _$DashboardStateImpl _value, $Res Function(_$DashboardStateImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of DashboardState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? dashboardWidgets = null,
+    Object? viewWidth = null,
+  }) {
+    return _then(_$DashboardStateImpl(
+      dashboardWidgets: null == dashboardWidgets
+          ? _value._dashboardWidgets
+          : dashboardWidgets // ignore: cast_nullable_to_non_nullable
+              as List<DashboardWidget>,
+      viewWidth: null == viewWidth
+          ? _value.viewWidth
+          : viewWidth // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$DashboardStateImpl implements _DashboardState {
+  const _$DashboardStateImpl(
+      {required final List<DashboardWidget> dashboardWidgets,
+      required this.viewWidth})
+      : _dashboardWidgets = dashboardWidgets;
+
+  final List<DashboardWidget> _dashboardWidgets;
+  @override
+  List<DashboardWidget> get dashboardWidgets {
+    if (_dashboardWidgets is EqualUnmodifiableListView)
+      return _dashboardWidgets;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_dashboardWidgets);
+  }
+
+  @override
+  final double viewWidth;
+
+  @override
+  String toString() {
+    return 'DashboardState(dashboardWidgets: $dashboardWidgets, viewWidth: $viewWidth)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$DashboardStateImpl &&
+            const DeepCollectionEquality()
+                .equals(other._dashboardWidgets, _dashboardWidgets) &&
+            (identical(other.viewWidth, viewWidth) ||
+                other.viewWidth == viewWidth));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType,
+      const DeepCollectionEquality().hash(_dashboardWidgets), viewWidth);
+
+  /// Create a copy of DashboardState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$DashboardStateImplCopyWith<_$DashboardStateImpl> get copyWith =>
+      __$$DashboardStateImplCopyWithImpl<_$DashboardStateImpl>(
+          this, _$identity);
+}
+
+abstract class _DashboardState implements DashboardState {
+  const factory _DashboardState(
+      {required final List<DashboardWidget> dashboardWidgets,
+      required final double viewWidth}) = _$DashboardStateImpl;
+
+  @override
+  List<DashboardWidget> get dashboardWidgets;
+  @override
+  double get viewWidth;
+
+  /// Create a copy of DashboardState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$DashboardStateImplCopyWith<_$DashboardStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

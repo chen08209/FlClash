@@ -332,5 +332,6 @@
   "routeAddress": "Route address",
   "routeAddressDesc": "Config listen route address",
   "pleaseInputAdminPassword": "Please enter the admin password",
-  "copyEnvVar": "Copying environment variables"
+  "copyEnvVar": "Copying environment variables",
+  "memoryInfo": "Memory info"
 }

@@ -3389,6 +3389,16 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Memory info`
+  String get memoryInfo {
+    return Intl.message(
+      'Memory info',
+      name: 'memoryInfo',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

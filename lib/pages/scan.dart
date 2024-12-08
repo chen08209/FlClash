@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/activate_box.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -113,14 +114,16 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                   }
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 8),
-                    child: AbsorbPointer(
-                      absorbing: state.torchState == TorchState.unavailable,
+                    child: ActivateBox(
+                      active: state.torchState != TorchState.unavailable,
                       child: IconButton(
                         color: Colors.white,
                         icon: icon,
                         style: ButtonStyle(
-                          foregroundColor: const WidgetStatePropertyAll(Colors.white),
-                          backgroundColor: WidgetStatePropertyAll(backgroundColor),
+                          foregroundColor:
+                              const WidgetStatePropertyAll(Colors.white),
+                          backgroundColor:
+                              WidgetStatePropertyAll(backgroundColor),
                         ),
                         onPressed: () => controller.toggleTorch(),
                       ),
@@ -155,8 +158,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_subscription?.cancel());
     _subscription = null;
-    super.dispose();
     await controller.dispose();
+    super.dispose();
   }
 }
 

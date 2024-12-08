@@ -13,104 +13,6 @@ typedef OnSelected = void Function(int index);
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  _getNavigationBar({
-    required BuildContext context,
-    required ViewMode viewMode,
-    required List<NavigationItem> navigationItems,
-    required int currentIndex,
-  }) {
-    if (viewMode == ViewMode.mobile) {
-      return NavigationBar(
-        destinations: navigationItems
-            .map(
-              (e) => NavigationDestination(
-                icon: e.icon,
-                label: Intl.message(e.label),
-              ),
-            )
-            .toList(),
-        onDestinationSelected: globalState.appController.toPage,
-        selectedIndex: currentIndex,
-      );
-    }
-    return LayoutBuilder(
-      builder: (_, container) {
-        return Material(
-          color: context.colorScheme.surfaceContainer,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: 16,
-            ),
-            height: container.maxHeight,
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: IntrinsicHeight(
-                      child: Selector<Config, bool>(
-                        selector: (_, config) => config.appSetting.showLabel,
-                        builder: (_, showLabel, __) {
-                          return NavigationRail(
-                            backgroundColor:
-                                context.colorScheme.surfaceContainer,
-                            selectedIconTheme: IconThemeData(
-                              color: context.colorScheme.onSurfaceVariant,
-                            ),
-                            unselectedIconTheme: IconThemeData(
-                              color: context.colorScheme.onSurfaceVariant,
-                            ),
-                            selectedLabelTextStyle:
-                                context.textTheme.labelLarge!.copyWith(
-                              color: context.colorScheme.onSurface,
-                            ),
-                            unselectedLabelTextStyle:
-                                context.textTheme.labelLarge!.copyWith(
-                              color: context.colorScheme.onSurface,
-                            ),
-                            destinations: navigationItems
-                                .map(
-                                  (e) => NavigationRailDestination(
-                                    icon: e.icon,
-                                    label: Text(
-                                      Intl.message(e.label),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onDestinationSelected:
-                                globalState.appController.toPage,
-                            extended: false,
-                            selectedIndex: currentIndex,
-                            labelType: showLabel
-                                ? NavigationRailLabelType.all
-                                : NavigationRailLabelType.none,
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(
-                  height: 16,
-                ),
-                IconButton(
-                  onPressed: () {
-                    final config = globalState.appController.config;
-                    final appSetting = config.appSetting;
-                    config.appSetting = appSetting.copyWith(
-                      showLabel: !appSetting.showLabel,
-                    );
-                  },
-                  icon: const Icon(Icons.menu),
-                )
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   _updatePageController(List<NavigationItem> navigationItems) {
     final currentLabel = globalState.appController.appState.currentLabel;
     final index = navigationItems.lastIndexWhere(
@@ -177,8 +79,7 @@ class HomePage extends StatelessWidget {
             (element) => element.label == currentLabel,
           );
           final currentIndex = index == -1 ? 0 : index;
-          final navigationBar = _getNavigationBar(
-            context: context,
+          final navigationBar = CommonNavigationBar(
             viewMode: viewMode,
             navigationItems: navigationItems,
             currentIndex: currentIndex,
@@ -198,6 +99,124 @@ class HomePage extends StatelessWidget {
           );
         },
         child: _buildPageView(),
+      ),
+    );
+  }
+}
+
+class CommonNavigationBar extends StatelessWidget {
+  final ViewMode viewMode;
+  final List<NavigationItem> navigationItems;
+  final int currentIndex;
+
+  const CommonNavigationBar({
+    super.key,
+    required this.viewMode,
+    required this.navigationItems,
+    required this.currentIndex,
+  });
+
+  _updateSafeMessageOffset(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final size = context.size;
+      if (viewMode == ViewMode.mobile) {
+        globalState.safeMessageOffsetNotifier.value = Offset(
+          0,
+          -(size?.height ?? 0),
+        );
+      } else {
+        globalState.safeMessageOffsetNotifier.value = Offset(
+          size?.width ?? 0,
+          0,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _updateSafeMessageOffset(context);
+    if (viewMode == ViewMode.mobile) {
+      return NavigationBar(
+        destinations: navigationItems
+            .map(
+              (e) => NavigationDestination(
+                icon: e.icon,
+                label: Intl.message(e.label),
+              ),
+            )
+            .toList(),
+        onDestinationSelected: globalState.appController.toPage,
+        selectedIndex: currentIndex,
+      );
+    }
+    return Material(
+      color: context.colorScheme.surfaceContainer,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: 16,
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: IntrinsicHeight(
+                  child: Selector<Config, bool>(
+                    selector: (_, config) => config.appSetting.showLabel,
+                    builder: (_, showLabel, __) {
+                      return NavigationRail(
+                        backgroundColor: context.colorScheme.surfaceContainer,
+                        selectedIconTheme: IconThemeData(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                        unselectedIconTheme: IconThemeData(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                        selectedLabelTextStyle:
+                            context.textTheme.labelLarge!.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
+                        unselectedLabelTextStyle:
+                            context.textTheme.labelLarge!.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
+                        destinations: navigationItems
+                            .map(
+                              (e) => NavigationRailDestination(
+                                icon: e.icon,
+                                label: Text(
+                                  Intl.message(e.label),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onDestinationSelected: globalState.appController.toPage,
+                        extended: false,
+                        selectedIndex: currentIndex,
+                        labelType: showLabel
+                            ? NavigationRailLabelType.all
+                            : NavigationRailLabelType.none,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 16,
+            ),
+            IconButton(
+              onPressed: () {
+                final config = globalState.appController.config;
+                final appSetting = config.appSetting;
+                config.appSetting = appSetting.copyWith(
+                  showLabel: !appSetting.showLabel,
+                );
+              },
+              icon: const Icon(Icons.menu),
+            )
+          ],
+        ),
       ),
     );
   }

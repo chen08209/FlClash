@@ -11,7 +11,6 @@ class ProxyCard extends StatelessWidget {
   final String groupName;
   final Proxy proxy;
   final GroupType groupType;
-  final CommonCardType style;
   final ProxyCardType type;
 
   const ProxyCard({
@@ -19,7 +18,6 @@ class ProxyCard extends StatelessWidget {
     required this.groupName,
     required this.proxy,
     required this.groupType,
-    this.style = CommonCardType.plain,
     required this.type,
   });
 
@@ -115,15 +113,11 @@ class ProxyCard extends StatelessWidget {
         groupName,
         nextProxyName,
       );
-      await appController.changeProxyDebounce([
-        groupName,
-        nextProxyName,
-      ]);
+      await appController.changeProxyDebounce(groupName, nextProxyName);
       return;
     }
-    globalState.showSnackBar(
-      context,
-      message: appLocalizations.notSelectedTip,
+    globalState.showNotifier(
+      appLocalizations.notSelectedTip,
     );
   }
 
@@ -138,7 +132,6 @@ class ProxyCard extends StatelessWidget {
         return Stack(
           children: [
             CommonCard(
-              type: style,
               key: key,
               onPressed: () {
                 _changeProxy(context);
@@ -167,8 +160,8 @@ class ProxyCard extends StatelessWidget {
                               desc,
                               overflow: TextOverflow.ellipsis,
                               style: context.textTheme.bodySmall?.copyWith(
-                                color: context.textTheme.bodySmall?.color
-                                    ?.toLight(),
+                                color:
+                                    context.textTheme.bodySmall?.color?.toLight,
                               ),
                             );
                           },
@@ -192,8 +185,8 @@ class ProxyCard extends StatelessWidget {
                                   proxy.type,
                                   style: context.textTheme.bodySmall?.copyWith(
                                     overflow: TextOverflow.ellipsis,
-                                    color: context.textTheme.bodySmall?.color
-                                        ?.toLight(),
+                                    color: context
+                                        .textTheme.bodySmall?.color?.toLight,
                                   ),
                                 ),
                               ),

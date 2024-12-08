@@ -19,8 +19,8 @@ class _ScrollOverBuilderState extends State<ScrollOverBuilder> {
 
   @override
   void dispose() {
-    super.dispose();
     isOverNotifier.dispose();
+    super.dispose();
   }
 
   @override
@@ -112,6 +112,25 @@ class ActiveBuilder extends StatelessWidget {
         );
       },
       child: child,
+    );
+  }
+}
+
+class ThemeModeBuilder extends StatelessWidget {
+  final StateWidgetBuilder<ThemeMode> builder;
+
+  const ThemeModeBuilder({
+    super.key,
+    required this.builder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<Config, ThemeMode>(
+      selector: (_, config) => config.themeProps.themeMode,
+      builder: (_, state, __) {
+        return builder(state);
+      },
     );
   }
 }

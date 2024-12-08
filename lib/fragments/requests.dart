@@ -95,10 +95,10 @@ class _RequestsFragmentState extends State<RequestsFragment> {
 
   @override
   void dispose() {
-    super.dispose();
     timer?.cancel();
     _scrollController.dispose();
     timer = null;
+    super.dispose();
   }
 
   @override

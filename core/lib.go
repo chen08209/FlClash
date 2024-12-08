@@ -120,6 +120,14 @@ func getConnections() *C.char {
 	return C.CString(handleGetConnections())
 }
 
+//export getMemory
+func getMemory(port C.longlong) {
+	i := int64(port)
+	handleGetMemory(func(value string) {
+		bridge.SendToPort(i, value)
+	})
+}
+
 //export closeConnections
 func closeConnections() {
 	handleCloseConnections()
@@ -157,6 +165,15 @@ func updateExternalProvider(providerNameChar *C.char, port C.longlong) {
 	i := int64(port)
 	providerName := C.GoString(providerNameChar)
 	handleUpdateExternalProvider(providerName, func(value string) {
+		bridge.SendToPort(i, value)
+	})
+}
+
+//export getCountryCode
+func getCountryCode(ipChar *C.char, port C.longlong) {
+	ip := C.GoString(ipChar)
+	i := int64(port)
+	handleGetCountryCode(ip, func(value string) {
 		bridge.SendToPort(i, value)
 	})
 }

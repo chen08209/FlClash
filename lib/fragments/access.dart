@@ -104,11 +104,9 @@ class _AccessFragmentState extends State<AccessFragment> {
         showSheet(
           title: appLocalizations.proxiesSetting,
           context: context,
-          builder: (_) {
-            return AccessControlWidget(
-              context: context,
-            );
-          },
+          body: AccessControlWidget(
+            context: context,
+          ),
         );
       },
       icon: const Icon(Icons.tune),
@@ -178,8 +176,8 @@ class _AccessFragmentState extends State<AccessFragment> {
                 status: !isAccessControl,
                 child: Column(
                   children: [
-                    AbsorbPointer(
-                      absorbing: !isAccessControl,
+                    ActivateBox(
+                      active: isAccessControl,
                       child: Padding(
                         padding: const EdgeInsets.only(
                           top: 4,
@@ -332,8 +330,8 @@ class PackageListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AbsorbPointer(
-      absorbing: !isActive,
+    return ActivateBox(
+      active: isActive,
       child: ListItem.checkbox(
         leading: SizedBox(
           width: 48,

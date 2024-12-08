@@ -253,6 +253,7 @@ class ListItem<T> extends StatelessWidget {
         splashFactory: NoSplash.splashFactory,
         onTap: onTap,
         child: Container(
+          constraints: BoxConstraints.expand(),
           padding: padding,
           child: Row(
             children: children,

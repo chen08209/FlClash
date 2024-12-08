@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -25,15 +26,20 @@ class _WindowContainerState extends State<WindowManager>
   Function? updateLaunchDebounce;
 
   _autoLaunchContainer(Widget child) {
-    return Selector<Config, AutoLaunchState>(
-      selector: (_, config) => AutoLaunchState(
-        isAutoLaunch: config.appSetting.autoLaunch,
-      ),
+    return Selector<Config, bool>(
+      selector: (_, config) => config.appSetting.autoLaunch,
+      shouldRebuild: (prev, next) {
+        if (prev != next) {
+          debouncer.call(
+            DebounceTag.autoLaunch,
+            () {
+              autoLaunch?.updateStatus(next);
+            },
+          );
+        }
+        return prev != next;
+      },
       builder: (_, state, child) {
-        updateLaunchDebounce ??= debounce((AutoLaunchState state) {
-          autoLaunch?.updateStatus(state);
-        });
-        updateLaunchDebounce!([state]);
         return child!;
       },
       child: child,
@@ -169,9 +175,9 @@ class _WindowHeaderState extends State<WindowHeader> {
 
   @override
   void dispose() {
-    super.dispose();
     isMaximizedNotifier.dispose();
     isPinNotifier.dispose();
+    super.dispose();
   }
 
   _updateMaximized() {
@@ -261,7 +267,7 @@ class _WindowHeaderState extends State<WindowHeader> {
                 _updateMaximized();
               },
               child: Container(
-                color: context.colorScheme.secondary.toSoft(),
+                color: context.colorScheme.secondary.toSoft,
                 alignment: Alignment.centerLeft,
                 height: kHeaderHeight,
               ),

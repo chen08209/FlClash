@@ -49,11 +49,11 @@ class _LogsFragmentState extends State<LogsFragment> {
 
   @override
   void dispose() {
-    super.dispose();
     timer?.cancel();
     logsNotifier.dispose();
     scrollController.dispose();
     timer = null;
+    super.dispose();
   }
 
   _handleExport() async {
@@ -86,9 +86,6 @@ class _LogsFragmentState extends State<LogsFragment> {
             );
           },
           icon: const Icon(Icons.search),
-        ),
-        const SizedBox(
-          width: 8,
         ),
         IconButton(
           onPressed: () {
@@ -235,8 +232,8 @@ class LogsSearchDelegate extends SearchDelegate {
 
   @override
   void dispose() {
-    super.dispose();
     logsNotifier.dispose();
+    super.dispose();
   }
 
   get state => logsNotifier.value;

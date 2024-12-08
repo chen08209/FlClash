@@ -41,9 +41,9 @@ class _ViewProfileState extends State<ViewProfile> {
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
     _focusNode.dispose();
+    super.dispose();
   }
 
   Profile get profile => widget.profile;

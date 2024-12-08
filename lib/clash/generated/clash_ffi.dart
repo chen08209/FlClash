@@ -2348,20 +2348,6 @@ class ClashFFI {
 
   set suboptarg(ffi.Pointer<ffi.Char> value) => _suboptarg.value = value;
 
-  void updateDns(
-    ffi.Pointer<ffi.Char> s,
-  ) {
-    return _updateDns(
-      s,
-    );
-  }
-
-  late final _updateDnsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
-          'updateDns');
-  late final _updateDns =
-      _updateDnsPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
-
   void initNativeApiBridge(
     ffi.Pointer<ffi.Void> api,
   ) {
@@ -2581,6 +2567,18 @@ class ClashFFI {
   late final _getConnections =
       _getConnectionsPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
 
+  void getMemory(
+    int port,
+  ) {
+    return _getMemory(
+      port,
+    );
+  }
+
+  late final _getMemoryPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.LongLong)>>('getMemory');
+  late final _getMemory = _getMemoryPtr.asFunction<void Function(int)>();
+
   void closeConnections() {
     return _closeConnections();
   }
@@ -2663,6 +2661,23 @@ class ClashFFI {
           ffi.Void Function(
               ffi.Pointer<ffi.Char>, ffi.LongLong)>>('updateExternalProvider');
   late final _updateExternalProvider = _updateExternalProviderPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Char>, int)>();
+
+  void getCountryCode(
+    ffi.Pointer<ffi.Char> ipChar,
+    int port,
+  ) {
+    return _getCountryCode(
+      ipChar,
+      port,
+    );
+  }
+
+  late final _getCountryCodePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<ffi.Char>, ffi.LongLong)>>('getCountryCode');
+  late final _getCountryCode = _getCountryCodePtr
       .asFunction<void Function(ffi.Pointer<ffi.Char>, int)>();
 
   void sideLoadExternalProvider(
@@ -2793,6 +2808,20 @@ class ClashFFI {
           'setState');
   late final _setState =
       _setStatePtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+
+  void updateDns(
+    ffi.Pointer<ffi.Char> s,
+  ) {
+    return _updateDns(
+      s,
+    );
+  }
+
+  late final _updateDnsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+          'updateDns');
+  late final _updateDns =
+      _updateDnsPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 }
 
 final class __mbstate_t extends ffi.Union {

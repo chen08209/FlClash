@@ -138,6 +138,8 @@ class ClashService with ClashInterface {
       case ActionMethod.updateGeoData:
       case ActionMethod.updateExternalProvider:
       case ActionMethod.sideLoadExternalProvider:
+      case ActionMethod.getCountryCode:
+      case ActionMethod.getMemory:
         completer?.complete(action.data as String);
         return;
       case ActionMethod.message:
@@ -146,7 +148,6 @@ class ClashService with ClashInterface {
       case ActionMethod.forceGc:
       case ActionMethod.startLog:
       case ActionMethod.stopLog:
-      default:
         return;
     }
   }
@@ -174,7 +175,16 @@ class ClashService with ClashInterface {
       onLast: () {
         callbackCompleterMap.remove(id);
       },
-      onTimeout: onTimeout,
+      onTimeout: onTimeout ??
+          () {
+            if (T is String) {
+              return "" as T;
+            }
+            if (T is bool) {
+              return false as T;
+            }
+            return null as T;
+          },
       functionName: id,
     );
   }
@@ -408,6 +418,21 @@ class ClashService with ClashInterface {
     final server = await serverCompleter.future;
     await server.close();
     await _deleteSocketFile();
+  }
+
+  @override
+  FutureOr<String> getCountryCode(String ip) {
+    return _invoke<String>(
+      method: ActionMethod.getCountryCode,
+      data: ip,
+    );
+  }
+
+  @override
+  FutureOr<String> getMemory() {
+    return _invoke<String>(
+      method: ActionMethod.getMemory,
+    );
   }
 }
 

@@ -54,6 +54,9 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
 _$AppSettingImpl _$$AppSettingImplFromJson(Map<String, dynamic> json) =>
     _$AppSettingImpl(
       locale: json['locale'] as String?,
+      dashboardWidgets: json['dashboardWidgets'] == null
+          ? defaultDashboardWidgets
+          : dashboardWidgetsRealFormJson(json['dashboardWidgets'] as List?),
       onlyProxy: json['onlyProxy'] as bool? ?? false,
       autoLaunch: json['autoLaunch'] as bool? ?? false,
       silentLaunch: json['silentLaunch'] as bool? ?? false,
@@ -72,6 +75,9 @@ _$AppSettingImpl _$$AppSettingImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$AppSettingImplToJson(_$AppSettingImpl instance) =>
     <String, dynamic>{
       'locale': instance.locale,
+      'dashboardWidgets': instance.dashboardWidgets
+          .map((e) => _$DashboardWidgetEnumMap[e]!)
+          .toList(),
       'onlyProxy': instance.onlyProxy,
       'autoLaunch': instance.autoLaunch,
       'silentLaunch': instance.silentLaunch,
@@ -86,6 +92,17 @@ Map<String, dynamic> _$$AppSettingImplToJson(_$AppSettingImpl instance) =>
       'minimizeOnExit': instance.minimizeOnExit,
       'hidden': instance.hidden,
     };
+
+const _$DashboardWidgetEnumMap = {
+  DashboardWidget.networkSpeed: 'networkSpeed',
+  DashboardWidget.outboundMode: 'outboundMode',
+  DashboardWidget.trafficUsage: 'trafficUsage',
+  DashboardWidget.networkDetection: 'networkDetection',
+  DashboardWidget.tunButton: 'tunButton',
+  DashboardWidget.systemProxyButton: 'systemProxyButton',
+  DashboardWidget.intranetIp: 'intranetIp',
+  DashboardWidget.memoryInfo: 'memoryInfo',
+};
 
 _$AccessControlImpl _$$AccessControlImplFromJson(Map<String, dynamic> json) =>
     _$AccessControlImpl(

@@ -157,6 +157,17 @@ func handleAction(action *Action) {
 	case stopListenerMethod:
 		action.callback(handleStopListener())
 		return
+	case getCountryCodeMethod:
+		ip := action.Data.(string)
+		handleGetCountryCode(ip, func(value string) {
+			action.callback(value)
+		})
+		return
+	case getMemoryMethod:
+		handleGetMemory(func(value string) {
+			action.callback(value)
+		})
+		return
 	}
 
 }

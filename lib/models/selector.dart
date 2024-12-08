@@ -196,13 +196,6 @@ class ProxiesActionsState with _$ProxiesActionsState {
 }
 
 @freezed
-class AutoLaunchState with _$AutoLaunchState {
-  const factory AutoLaunchState({
-    required bool isAutoLaunch,
-  }) = _AutoLaunchState;
-}
-
-@freezed
 class ProxyState with _$ProxyState {
   const factory ProxyState({
     required bool isStart,
@@ -242,6 +235,14 @@ class ClashConfigState with _$ClashConfigState {
     required List<String> rules,
     required String? globalRealUa,
   }) = _ClashConfigState;
+}
+
+@freezed
+class DashboardState with _$DashboardState {
+  const factory DashboardState({
+    required List<DashboardWidget> dashboardWidgets,
+    required double viewWidth,
+  }) = _DashboardState;
 }
 
 @freezed

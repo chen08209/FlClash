@@ -23,40 +23,47 @@ class AppController {
   late AppFlowingState appFlowingState;
   late Config config;
   late ClashConfig clashConfig;
-  late Function updateClashConfigDebounce;
-  late Function updateGroupDebounce;
-  late Function addCheckIpNumDebounce;
-  late Function applyProfileDebounce;
-  late Function savePreferencesDebounce;
-  late Function changeProxyDebounce;
 
   AppController(this.context) {
     appState = context.read<AppState>();
     config = context.read<Config>();
     clashConfig = context.read<ClashConfig>();
     appFlowingState = context.read<AppFlowingState>();
-    updateClashConfigDebounce = debounce<Function()>(() async {
-      await updateClashConfig();
+  }
+
+  updateClashConfigDebounce() {
+    debouncer.call(DebounceTag.updateClashConfig, updateClashConfig);
+  }
+
+  updateGroupsDebounce() {
+    debouncer.call(DebounceTag.updateGroups, updateGroups);
+  }
+
+  addCheckIpNumDebounce() {
+    debouncer.call(DebounceTag.addCheckIpNum, () {
+      appState.checkIpNum++;
     });
-    savePreferencesDebounce = debounce<Function()>(() async {
-      await savePreferences();
+  }
+
+  applyProfileDebounce() {
+    debouncer.call(DebounceTag.addCheckIpNum, () {
+      applyProfile(isPrue: true);
     });
-    applyProfileDebounce = debounce<Function()>(() async {
-      await applyProfile(isPrue: true);
-    });
-    changeProxyDebounce = debounce((String groupName, String proxyName) async {
+  }
+
+  savePreferencesDebounce() {
+    debouncer.call(DebounceTag.savePreferences, savePreferences);
+  }
+
+  changeProxyDebounce(String groupName, String proxyName) {
+    debouncer.call(DebounceTag.changeProxy,
+        (String groupName, String proxyName) async {
       await changeProxy(
         groupName: groupName,
         proxyName: proxyName,
       );
       await updateGroups();
-    });
-    addCheckIpNumDebounce = debounce(() {
-      appState.checkIpNum++;
-    });
-    updateGroupDebounce = debounce(() async {
-      await updateGroups();
-    });
+    }, args: [groupName, proxyName]);
   }
 
   restartCore() async {
@@ -94,9 +101,6 @@ class AppController {
       appFlowingState.traffics = [];
       appFlowingState.totalTraffic = Traffic();
       appFlowingState.runTime = null;
-      await Future.delayed(
-        Duration(milliseconds: 300),
-      );
       addCheckIpNumDebounce();
     }
   }
@@ -139,8 +143,14 @@ class AppController {
     }
   }
 
-  updateProviders() {
-    globalState.updateProviders(appState);
+  updateProviders() async {
+    await globalState.updateProviders(appState);
+  }
+
+  updateLocalIp() async {
+    appFlowingState.localIp = null;
+    await Future.delayed(commonDuration);
+    appFlowingState.localIp = await other.getLocalIpAddress();
   }
 
   Future<void> updateProfile(Profile profile) async {
@@ -148,6 +158,9 @@ class AppController {
     config.setProfile(
       newProfile.copyWith(isUpdating: false),
     );
+    if (profile.id == config.currentProfile?.id) {
+      applyProfileDebounce();
+    }
   }
 
   Future<void> updateClashConfig({bool isPatch = true}) async {
@@ -333,6 +346,9 @@ class AppController {
       config: config,
     );
     await _initStatus();
+    autoLaunch?.updateStatus(
+      config.appSetting.autoLaunch,
+    );
     autoUpdateProfiles();
     autoCheckUpdate();
   }
@@ -341,10 +357,12 @@ class AppController {
     if (Platform.isAndroid) {
       globalState.updateStartTime();
     }
-    if (globalState.isStart) {
-      await updateStatus(true);
-    } else {
-      await updateStatus(config.appSetting.autoRun);
+    final status =
+        globalState.isStart == true ? true : config.appSetting.autoRun;
+
+    await updateStatus(status);
+    if (!status) {
+      addCheckIpNumDebounce();
     }
   }
 
@@ -404,10 +422,6 @@ class AppController {
         );
       },
     );
-  }
-
-  showSnackBar(String message) {
-    globalState.showSnackBar(context, message: message);
   }
 
   Future<bool> showDisclaimer() async {

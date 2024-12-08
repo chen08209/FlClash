@@ -1,7 +1,9 @@
-import 'package:flutter/foundation.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:math' as math;
+
+typedef WrapBuilder = Widget Function(Widget child);
 
 class Grid extends MultiChildRenderObjectWidget {
   final double mainAxisSpacing;
@@ -362,6 +364,18 @@ class GridItem extends ParentDataWidget<GridParentData> {
 
   @override
   Type get debugTypicalAncestorWidgetClass => GridItem;
+
+  GridItem wrap({
+    required WrapBuilder builder,
+  }) {
+    return GridItem(
+      mainAxisCellCount: mainAxisCellCount,
+      crossAxisCellCount: crossAxisCellCount,
+      child: builder(
+        child,
+      ),
+    );
+  }
 }
 
 class _Origin {
@@ -372,11 +386,11 @@ class _Origin {
 }
 
 _Origin _getOrigin(List<double> offsets, int crossAxisCount) {
-  var length = offsets.length;
-  var origin = const _Origin(0, double.infinity);
+  final length = offsets.length;
+  _Origin origin = const _Origin(0, double.infinity);
   for (int i = 0; i < length; i++) {
     final offset = offsets[i];
-    if (offset.lessOrEqual(origin.mainAxisOffset)) {
+    if (offset.moreOrEqual(origin.mainAxisOffset)) {
       continue;
     }
     int start = 0;
@@ -386,7 +400,7 @@ _Origin _getOrigin(List<double> offsets, int crossAxisCount) {
             j < length &&
             length - j >= crossAxisCount - span;
         j++) {
-      if (offset.lessOrEqual(offsets[j])) {
+      if (offset.moreOrEqual(offsets[j])) {
         span++;
         if (span == crossAxisCount) {
           origin = _Origin(start, offset);
@@ -398,20 +412,4 @@ _Origin _getOrigin(List<double> offsets, int crossAxisCount) {
     }
   }
   return origin;
-}
-
-extension on double {
-  lessOrEqual(double value) {
-    return value < this || (value - this).abs() < precisionErrorTolerance + 1;
-  }
-}
-
-extension on Offset {
-  double getCrossAxisOffset(Axis direction) {
-    return direction == Axis.vertical ? dx : dy;
-  }
-
-  double getMainAxisOffset(Axis direction) {
-    return direction == Axis.vertical ? dy : dx;
-  }
 }

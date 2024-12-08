@@ -66,9 +66,6 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
             },
             icon: const Icon(Icons.search),
           ),
-          const SizedBox(
-            width: 8,
-          ),
           IconButton(
             onPressed: () async {
               clashCore.closeConnections();
@@ -112,11 +109,11 @@ class _ConnectionsFragmentState extends State<ConnectionsFragment> {
 
   @override
   void dispose() {
-    super.dispose();
     timer?.cancel();
     connectionsNotifier.dispose();
     _scrollController.dispose();
     timer = null;
+    super.dispose();
   }
 
   @override

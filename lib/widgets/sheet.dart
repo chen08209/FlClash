@@ -65,7 +65,7 @@ showExtendPage(
 
 showSheet({
   required BuildContext context,
-  required WidgetBuilder builder,
+  required Widget body,
   required String title,
   bool isScrollControlled = true,
   double width = 320,
@@ -78,9 +78,7 @@ showSheet({
       isScrollControlled: isScrollControlled,
       builder: (context) {
         return SafeArea(
-          child: builder(
-            context,
-          ),
+          child: body,
         );
       },
       showDragHandle: true,
@@ -95,7 +93,7 @@ showSheet({
         maxWidth: width,
       ),
       body: SafeArea(
-        child: builder(context),
+        child: body,
       ),
       title: title,
     );

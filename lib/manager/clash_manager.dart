@@ -1,4 +1,5 @@
 import 'package:fl_clash/clash/clash.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -20,8 +21,6 @@ class ClashManager extends StatefulWidget {
 }
 
 class _ClashContainerState extends State<ClashManager> with AppMessageListener {
-  Function? updateDelayDebounce;
-
   Widget _updateContainer(Widget child) {
     return Selector2<Config, ClashConfig, ClashConfigState>(
       selector: (_, config, clashConfig) => ClashConfigState(
@@ -103,18 +102,21 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
     final appController = globalState.appController;
     appController.setDelay(delay);
     super.onDelay(delay);
-    updateDelayDebounce ??= debounce(() async {
-      await appController.updateGroupDebounce();
-      await appController.addCheckIpNumDebounce();
-    }, milliseconds: 5000);
-    updateDelayDebounce!();
+    debouncer.call(
+      DebounceTag.updateDelay,
+      () async {
+        await appController.updateGroupsDebounce();
+        // await appController.addCheckIpNumDebounce();
+      },
+      duration: const Duration(milliseconds: 5000),
+    );
   }
 
   @override
   void onLog(Log log) {
     globalState.appController.appFlowingState.addLog(log);
     if (log.logLevel == LogLevel.error) {
-      globalState.appController.showSnackBar(log.payload ?? '');
+      globalState.showNotifier(log.payload ?? '');
     }
     super.onLog(log);
   }
@@ -139,7 +141,7 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
         providerName,
       ),
     );
-    await appController.updateGroupDebounce();
+    await appController.updateGroupsDebounce();
     super.onLoaded(providerName);
   }
 }

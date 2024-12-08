@@ -343,8 +343,8 @@ class _WebDAVFormDialogState extends State<WebDAVFormDialog> {
 
   @override
   void dispose() {
-    super.dispose();
     _obscureController.dispose();
+    super.dispose();
   }
 
   @override

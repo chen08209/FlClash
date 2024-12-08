@@ -52,9 +52,6 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
         );
         try {
           await appController.updateProfile(profile);
-          if (profile.id == appController.config.currentProfile?.id) {
-            appController.applyProfileDebounce();
-          }
         } catch (e) {
           messages.add("${profile.label ?? profile.id}: $e \n");
           config.setProfile(
@@ -93,16 +90,13 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
             },
             icon: const Icon(Icons.sync),
           ),
-          const SizedBox(
-            width: 8,
-          ),
           IconButton(
             onPressed: () {
               final profiles = globalState.appController.config.profiles;
               showSheet(
                 title: appLocalizations.profilesSort,
                 context: context,
-                builder: (_) => SizedBox(
+                body: SizedBox(
                   height: 400,
                   child: ReorderableProfiles(profiles: profiles),
                 ),
@@ -221,9 +215,6 @@ class ProfileItem extends StatelessWidget {
           ),
         );
         await appController.updateProfile(profile);
-        if (profile.id == appController.config.currentProfile?.id) {
-          appController.applyProfileDebounce();
-        }
       } catch (e) {
         config.setProfile(
           profile.copyWith(
@@ -296,6 +287,7 @@ class ProfileItem extends StatelessWidget {
                     child: CircularProgressIndicator(),
                   )
                 : CommonPopupMenu<ProfileActions>(
+                    icon: Icon(Icons.more_vert),
                     items: [
                       CommonPopupMenuItem(
                         action: ProfileActions.edit,

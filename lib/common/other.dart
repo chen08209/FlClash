@@ -34,6 +34,19 @@ class Other {
     );
   }
 
+  String get uuidV4 {
+    final Random random = Random();
+    final bytes = List.generate(16, (_) => random.nextInt(256));
+
+    bytes[6] = (bytes[6] & 0x0F) | 0x40;
+    bytes[8] = (bytes[8] & 0x3F) | 0x80;
+
+    final hex =
+        bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}';
+  }
+
   String getTimeDifference(DateTime dateTime) {
     var currentDateTime = DateTime.now();
     var difference = currentDateTime.difference(dateTime);
@@ -225,7 +238,7 @@ class Other {
   }
 
   int getProfilesColumns(double viewWidth) {
-    return max((viewWidth / 400).floor(), 1);
+    return max((viewWidth / 350).floor(), 1);
   }
 
   String getBackupFileName() {
@@ -239,6 +252,32 @@ class Other {
   Size getScreenSize() {
     final view = WidgetsBinding.instance.platformDispatcher.views.first;
     return view.physicalSize / view.devicePixelRatio;
+  }
+
+  Future<String?> getLocalIpAddress() async {
+    List<NetworkInterface> interfaces = await NetworkInterface.list(
+      includeLoopback: false,
+    )
+      ..sort((a, b) {
+        if (a.isWifi && !b.isWifi) return -1;
+        if (!a.isWifi && b.isWifi) return 1;
+        if (a.includesIPv4 && !b.includesIPv4) return -1;
+        if (!a.includesIPv4 && b.includesIPv4) return 1;
+        return 0;
+      });
+    for (final interface in interfaces) {
+      final addresses = interface.addresses;
+      if (addresses.isEmpty) {
+        continue;
+      }
+      addresses.sort((a, b) {
+        if (a.isIPv4 && !b.isIPv4) return -1;
+        if (!a.isIPv4 && b.isIPv4) return 1;
+        return 0;
+      });
+      return addresses.first.address;
+    }
+    return "";
   }
 }
 

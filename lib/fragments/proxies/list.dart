@@ -65,10 +65,10 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
 
   @override
   void dispose() {
-    super.dispose();
     _headerStateNotifier.dispose();
     _controller.removeListener(_adjustHeader);
     _controller.dispose();
+    super.dispose();
   }
 
   _handleChange(Set<String> currentUnfoldSet, String groupName) {
@@ -442,10 +442,10 @@ class _ListHeaderState extends State<ListHeader>
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: context.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: CommonIcon(
+                  child: CommonTargetIcon(
                     src: icon,
                     size: 32,
                   ),
@@ -454,7 +454,7 @@ class _ListHeaderState extends State<ListHeader>
                   margin: const EdgeInsets.only(
                     right: 16,
                   ),
-                  child: CommonIcon(
+                  child: CommonTargetIcon(
                     src: icon,
                     size: 42,
                   ),
@@ -471,7 +471,10 @@ class _ListHeaderState extends State<ListHeader>
   Widget build(BuildContext context) {
     return CommonCard(
       key: widget.key,
-      radius: 18,
+      backgroundColor: WidgetStatePropertyAll(
+        context.colorScheme.surfaceContainer,
+      ),
+      radius: 14,
       type: CommonCardType.filled,
       child: Container(
         padding: const EdgeInsets.symmetric(

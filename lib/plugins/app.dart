@@ -49,7 +49,7 @@ class App {
     return Isolate.run<List<Package>>(() {
       final List<dynamic> packagesRaw =
           packagesString != null ? json.decode(packagesString) : [];
-      return packagesRaw.map((e) => Package.fromJson(e)).toList();
+      return packagesRaw.map((e) => Package.fromJson(e)).toSet().toList();
     });
   }
 

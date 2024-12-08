@@ -306,6 +306,39 @@ class ClashLib with ClashInterface {
     clashFFI.forceGc();
   }
 
+  @override
+  FutureOr<String> getCountryCode(String ip) {
+    final completer = Completer<String>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if (!completer.isCompleted) {
+        completer.complete(message);
+        receiver.close();
+      }
+    });
+    final ipChar = ip.toNativeUtf8().cast<Char>();
+    clashFFI.getCountryCode(
+      ipChar,
+      receiver.sendPort.nativePort,
+    );
+    malloc.free(ipChar);
+    return completer.future;
+  }
+
+  @override
+  FutureOr<String> getMemory() {
+    final completer = Completer<String>();
+    final receiver = ReceivePort();
+    receiver.listen((message) {
+      if (!completer.isCompleted) {
+        completer.complete(message);
+        receiver.close();
+      }
+    });
+    clashFFI.getMemory(receiver.sendPort.nativePort);
+    return completer.future;
+  }
+
   /// Android
 
   startTun(int fd, int port) {

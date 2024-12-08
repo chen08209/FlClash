@@ -332,5 +332,6 @@
   "routeAddress": "路由地址",
   "routeAddressDesc": "配置监听路由地址",
   "pleaseInputAdminPassword": "请输入管理员密码",
-  "copyEnvVar": "复制环境变量"
+  "copyEnvVar": "复制环境变量",
+  "memoryInfo": "内存信息"
 }

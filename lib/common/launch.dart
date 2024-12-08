@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fl_clash/models/models.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 
 import 'constant.dart';
@@ -34,8 +33,7 @@ class AutoLaunch {
     return await launchAtStartup.disable();
   }
 
-  updateStatus(AutoLaunchState state) async {
-    final isAutoLaunch = state.isAutoLaunch;
+  updateStatus(bool isAutoLaunch) async {
     if (await isEnable == isAutoLaunch) return;
     if (isAutoLaunch == true) {
       enable();

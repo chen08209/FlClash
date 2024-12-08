@@ -61,7 +61,7 @@ class _ProvidersState extends State<Providers> {
       },
     );
     await Future.wait(updateProviders);
-    await globalState.appController.updateGroupDebounce();
+    await globalState.appController.updateGroupsDebounce();
   }
 
   @override
@@ -125,7 +125,7 @@ class ProviderItem extends StatelessWidget {
         await clashCore.getExternalProvider(provider.name),
       );
     });
-    await globalState.appController.updateGroupDebounce();
+    await globalState.appController.updateGroupsDebounce();
   }
 
   _handleSideLoadProvider() async {
@@ -147,7 +147,7 @@ class ProviderItem extends StatelessWidget {
       );
       if (message.isNotEmpty) throw message;
     });
-    await globalState.appController.updateGroupDebounce();
+    await globalState.appController.updateGroupsDebounce();
   }
 
   String _buildProviderDesc() {

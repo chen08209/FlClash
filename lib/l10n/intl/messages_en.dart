@@ -259,6 +259,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "loopbackDesc": MessageLookupByLibrary.simpleMessage(
             "Used for UWP loopback unlocking"),
         "loose": MessageLookupByLibrary.simpleMessage("Loose"),
+        "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory info"),
         "min": MessageLookupByLibrary.simpleMessage("Min"),
         "minimizeOnExit":
             MessageLookupByLibrary.simpleMessage("Minimize on exit"),
