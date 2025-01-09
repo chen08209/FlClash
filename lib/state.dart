@@ -305,12 +305,22 @@ class GlobalState {
   Future<T?> safeRun<T>(
     FutureOr<T> Function() futureFunction, {
     String? title,
+    bool silence = true,
   }) async {
     try {
       final res = await futureFunction();
       return res;
     } catch (e) {
-      showNotifier(e.toString());
+      if (silence) {
+        showNotifier(e.toString());
+      } else {
+        showMessage(
+          title: title ?? appLocalizations.tip,
+          message: TextSpan(
+            text: e.toString(),
+          ),
+        );
+      }
       return null;
     }
   }

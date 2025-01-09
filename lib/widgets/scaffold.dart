@@ -1,8 +1,8 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 
 class CommonScaffold extends StatefulWidget {
   final Widget body;
@@ -34,14 +34,11 @@ class CommonScaffold extends StatefulWidget {
           body: body,
           title: title,
           automaticallyImplyLeading: false,
-          leading: SizedBox(
-            height: kToolbarHeight,
-            child: IconButton(
-              icon: const BackButtonIcon(),
-              onPressed: () {
-                onBack();
-              },
-            ),
+          leading: IconButton(
+            icon: const BackButtonIcon(),
+            onPressed: () {
+              onBack();
+            },
           ),
         );
 
@@ -110,7 +107,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
   @override
   Widget build(BuildContext context) {
     final scaffold = Scaffold(
-      resizeToAvoidBottomInset: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Stack(
@@ -120,19 +116,19 @@ class CommonScaffoldState extends State<CommonScaffold> {
               valueListenable: _actions,
               builder: (_, actions, __) {
                 final realActions =
-                    actions.isNotEmpty ? actions : widget.actions ?? [];
+                actions.isNotEmpty ? actions : widget.actions ?? [];
                 return AppBar(
                   centerTitle: false,
                   systemOverlayStyle: SystemUiOverlayStyle(
                     statusBarColor: Colors.transparent,
                     statusBarIconBrightness:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? Brightness.light
-                            : Brightness.dark,
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Brightness.light
+                        : Brightness.dark,
                     systemNavigationBarIconBrightness:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? Brightness.light
-                            : Brightness.dark,
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Brightness.light
+                        : Brightness.dark,
                     systemNavigationBarColor: widget.bottomNavigationBar != null
                         ? context.colorScheme.surfaceContainer
                         : context.colorScheme.surface,
@@ -169,7 +165,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
       floatingActionButton: ValueListenableBuilder<Widget?>(
         valueListenable: _floatingActionButton,
         builder: (_, value, __) {
-          return value ?? Container();
+          return FadeScaleBox(
+            child: value ?? SizedBox(),
+          );
         },
       ),
       bottomNavigationBar: widget.bottomNavigationBar,

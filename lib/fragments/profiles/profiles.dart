@@ -207,7 +207,7 @@ class ProfileItem extends StatelessWidget {
     final appController = globalState.appController;
     final config = appController.config;
     if (profile.type == ProfileType.file) return;
-    await globalState.safeRun(() async {
+    await globalState.safeRun(silence: false, () async {
       try {
         config.setProfile(
           profile.copyWith(

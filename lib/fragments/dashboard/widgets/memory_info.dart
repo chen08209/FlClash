@@ -51,7 +51,9 @@ class _MemoryInfoState extends State<MemoryInfo> {
           iconData: Icons.memory,
           label: appLocalizations.memoryInfo,
         ),
-        onPressed: () {},
+        onPressed: () {
+          clashCore.requestGc();
+        },
         child: ValueListenableBuilder(
           valueListenable: _memoryInfoStateNotifier,
           builder: (_, trafficValue, __) {

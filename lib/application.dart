@@ -113,7 +113,7 @@ class ApplicationState extends State<Application> {
   }
 
   _autoUpdateProfilesTask() {
-    _autoUpdateProfilesTaskTimer = Timer(const Duration(seconds: 5), () async {
+    _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
       await globalState.appController.autoUpdateProfiles();
       _autoUpdateProfilesTask();
     });

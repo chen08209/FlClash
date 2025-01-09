@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:fl_clash/common/common.dart';
+
 extension CompleterExt<T> on Completer<T> {
   safeFuture({
     Duration? timeout,
@@ -8,8 +10,8 @@ extension CompleterExt<T> on Completer<T> {
     FutureOr<T> Function()? onTimeout,
     required String functionName,
   }) {
-    final realTimeout = timeout ?? const Duration(seconds: 6);
-    Timer(realTimeout + Duration(milliseconds: 1000), () {
+    final realTimeout = timeout ?? const Duration(minutes: 1);
+    Timer(realTimeout + moreDuration, () {
       if (onLast != null) {
         onLast();
       }

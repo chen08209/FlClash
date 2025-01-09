@@ -52,7 +52,7 @@ class _EditProfileState extends State<EditProfile> {
   _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
     final config = widget.context.read<Config>();
-    var profile = widget.profile.copyWith(
+    final profile = widget.profile.copyWith(
       url: urlController.text,
       label: labelController.text,
       autoUpdate: autoUpdate,

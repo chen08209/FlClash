@@ -42,17 +42,20 @@ class FadeScaleBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PageTransitionSwitcher(
+    return AnimatedSwitcher(
       transitionBuilder: (
         child,
         animation,
-        secondaryAnimation,
       ) {
-        return FadeScaleTransition(
-          animation: animation,
-          child: child,
+        return Container(
+          alignment: Alignment.bottomRight,
+          child: FadeScaleTransition(
+            animation: animation,
+            child: child,
+          ),
         );
       },
+      duration: Duration(milliseconds: 300),
       child: child,
     );
   }
