@@ -1,3 +1,15 @@
+## v0.8.71
+
+- Remake dashboard
+
+- Optimize theme
+
+- Optimize more details
+
+- Update flutter version
+
+- Update changelog
+
 ## v0.8.70
 
 - Support better window position memory
