@@ -1,3 +1,11 @@
+## v0.8.72
+
+- Update core
+
+- Fix some issues
+
+- Update changelog
+
 ## v0.8.71
 
 - Remake dashboard
