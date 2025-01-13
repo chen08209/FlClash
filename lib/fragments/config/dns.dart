@@ -225,7 +225,7 @@ class FakeIpFilterItem extends StatelessWidget {
               title: appLocalizations.fakeipFilter,
               items: fakeIpFilter,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -260,7 +260,7 @@ class DefaultNameserverItem extends StatelessWidget {
               title: appLocalizations.defaultNameserver,
               items: defaultNameserver,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -295,7 +295,7 @@ class NameserverItem extends StatelessWidget {
               title: "域名服务器",
               items: nameserver,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -384,7 +384,7 @@ class NameserverPolicyItem extends StatelessWidget {
               items: nameserverPolicy.entries,
               titleBuilder: (item) => Text(item.key),
               subtitleBuilder: (item) => Text(item.value),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -419,7 +419,7 @@ class ProxyServerNameserverItem extends StatelessWidget {
               title: appLocalizations.proxyNameserver,
               items: proxyServerNameserver,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -454,7 +454,7 @@ class FallbackItem extends StatelessWidget {
               title: appLocalizations.fallback,
               items: fallback,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -555,7 +555,7 @@ class GeositeItem extends StatelessWidget {
               title: "Geosite",
               items: geosite,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -591,7 +591,7 @@ class IpcidrItem extends StatelessWidget {
               title: appLocalizations.ipcidr,
               items: ipcidr,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -627,7 +627,7 @@ class DomainItem extends StatelessWidget {
               title: appLocalizations.domain,
               items: domain,
               titleBuilder: (item) => Text(item),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 final dns = clashConfig.dns;
                 clashConfig.dns = dns.copyWith(
@@ -709,16 +709,17 @@ class DnsListView extends StatelessWidget {
           context.findAncestorStateOfType<CommonScaffoldState>();
       commonScaffoldState?.actions = [
         IconButton(
-          onPressed: () {
-            globalState.showMessage(
-                title: appLocalizations.reset,
-                message: TextSpan(
-                  text: appLocalizations.resetTip,
-                ),
-                onTab: () {
-                  globalState.appController.clashConfig.dns = defaultDns;
-                  Navigator.of(context).pop();
-                });
+          onPressed: () async {
+            final res = await globalState.showMessage(
+              title: appLocalizations.reset,
+              message: TextSpan(
+                text: appLocalizations.resetTip,
+              ),
+            );
+            if (res != true) {
+              return;
+            }
+            globalState.appController.clashConfig.dns = defaultDns;
           },
           tooltip: appLocalizations.reset,
           icon: const Icon(

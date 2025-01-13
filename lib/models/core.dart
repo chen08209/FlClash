@@ -1,12 +1,12 @@
 // ignore_for_file: invalid_annotation_target
 
-import 'dart:convert';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/core.freezed.dart';
+
 part 'generated/core.g.dart';
 
 abstract mixin class AppMessageListener {
@@ -16,8 +16,6 @@ abstract mixin class AppMessageListener {
 
   void onRequest(Connection connection) {}
 
-  void onStarted(String runTime) {}
-
   void onLoaded(String providerName) {}
 }
 
@@ -25,10 +23,6 @@ abstract mixin class ServiceMessageListener {
   onProtect(Fd fd) {}
 
   onProcess(ProcessData process) {}
-
-  onStarted(String runTime) {}
-
-  onLoaded(String providerName) {}
 }
 
 @freezed
@@ -42,7 +36,6 @@ class CoreState with _$CoreState {
     required List<String> bypassDomain,
     required List<String> routeAddress,
     required bool ipv6,
-    required bool onlyProxy,
   }) = _CoreState;
 
   factory CoreState.fromJson(Map<String, Object?> json) =>
@@ -76,6 +69,7 @@ class ConfigExtendedParams with _$ConfigExtendedParams {
     @JsonKey(name: "selected-map") required SelectedMap selectedMap,
     @JsonKey(name: "override-dns") required bool overrideDns,
     @JsonKey(name: "test-url") required String testUrl,
+    @JsonKey(name: "only-statistics-proxy") required bool onlyStatisticsProxy,
   }) = _ConfigExtendedParams;
 
   factory ConfigExtendedParams.fromJson(Map<String, Object?> json) =>
@@ -106,6 +100,17 @@ class ChangeProxyParams with _$ChangeProxyParams {
 }
 
 @freezed
+class UpdateGeoDataParams with _$UpdateGeoDataParams {
+  const factory UpdateGeoDataParams({
+    @JsonKey(name: "geo-type") required String geoType,
+    @JsonKey(name: "geo-name") required String geoName,
+  }) = _UpdateGeoDataParams;
+
+  factory UpdateGeoDataParams.fromJson(Map<String, Object?> json) =>
+      _$UpdateGeoDataParamsFromJson(json);
+}
+
+@freezed
 class AppMessage with _$AppMessage {
   const factory AppMessage({
     required AppMessageType type,
@@ -117,20 +122,21 @@ class AppMessage with _$AppMessage {
 }
 
 @freezed
-class ServiceMessage with _$ServiceMessage {
-  const factory ServiceMessage({
-    required ServiceMessageType type,
+class InvokeMessage with _$InvokeMessage {
+  const factory InvokeMessage({
+    required InvokeMessageType type,
     dynamic data,
-  }) = _ServiceMessage;
+  }) = _InvokeMessage;
 
-  factory ServiceMessage.fromJson(Map<String, Object?> json) =>
-      _$ServiceMessageFromJson(json);
+  factory InvokeMessage.fromJson(Map<String, Object?> json) =>
+      _$InvokeMessageFromJson(json);
 }
 
 @freezed
 class Delay with _$Delay {
   const factory Delay({
     required String name,
+    required String url,
     int? value,
   }) = _Delay;
 
@@ -150,7 +156,7 @@ class Now with _$Now {
 @freezed
 class ProcessData with _$ProcessData {
   const factory ProcessData({
-    required int id,
+    required String id,
     required Metadata metadata,
   }) = _ProcessData;
 
@@ -161,7 +167,7 @@ class ProcessData with _$ProcessData {
 @freezed
 class Fd with _$Fd {
   const factory Fd({
-    required int id,
+    required String id,
     required int value,
   }) = _Fd;
 
@@ -171,7 +177,7 @@ class Fd with _$Fd {
 @freezed
 class ProcessMapItem with _$ProcessMapItem {
   const factory ProcessMapItem({
-    required int id,
+    required String id,
     required String value,
   }) = _ProcessMapItem;
 
@@ -241,14 +247,21 @@ class Action with _$Action {
   const factory Action({
     required ActionMethod method,
     required dynamic data,
+    @JsonKey(name: "default-value") required dynamic defaultValue,
     required String id,
   }) = _Action;
 
   factory Action.fromJson(Map<String, Object?> json) => _$ActionFromJson(json);
 }
 
-extension ActionExt on Action {
-  String get toJson {
-    return json.encode(this);
-  }
+@freezed
+class ActionResult with _$ActionResult {
+  const factory ActionResult({
+    required ActionMethod method,
+    required dynamic data,
+    String? id,
+  }) = _ActionResult;
+
+  factory ActionResult.fromJson(Map<String, Object?> json) =>
+      _$ActionResultFromJson(json);
 }

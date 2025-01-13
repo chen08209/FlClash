@@ -6,7 +6,7 @@ import 'common.dart';
 import 'core.dart';
 import 'profile.dart';
 
-typedef DelayMap = Map<String, int?>;
+typedef DelayMap = Map<String, Map<String, int?>>;
 
 class AppState with ChangeNotifier {
   List<NavigationItem> _navigationItems;
@@ -122,10 +122,6 @@ class AppState with ChangeNotifier {
     return selectedMap[firstGroupName] ?? firstGroup.now;
   }
 
-  int? getDelay(String proxyName) {
-    return _delayMap[getRealProxyName(proxyName)];
-  }
-
   VersionInfo? get versionInfo => _versionInfo;
 
   set versionInfo(VersionInfo? value) {
@@ -237,15 +233,20 @@ class AppState with ChangeNotifier {
   }
 
   set delayMap(DelayMap value) {
-    if (!stringAndIntQMapEquality.equals(_delayMap, value)) {
+    if (_delayMap != value) {
       _delayMap = value;
       notifyListeners();
     }
   }
 
   setDelay(Delay delay) {
-    if (_delayMap[delay.name] != delay.value) {
-      _delayMap = Map.from(_delayMap)..[delay.name] = delay.value;
+    if (_delayMap[delay.url]?[delay.name] != delay.value) {
+      final DelayMap newDelayMap = Map.from(_delayMap);
+      if (newDelayMap[delay.url] == null) {
+        newDelayMap[delay.url] = {};
+      }
+      newDelayMap[delay.url]![delay.name] = delay.value;
+      _delayMap = newDelayMap;
       notifyListeners();
     }
   }

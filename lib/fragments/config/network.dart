@@ -210,19 +210,19 @@ class BypassDomainItem extends StatelessWidget {
           context.findAncestorStateOfType<CommonScaffoldState>();
       commonScaffoldState?.actions = [
         IconButton(
-          onPressed: () {
-            globalState.showMessage(
+          onPressed: () async {
+            final res = await globalState.showMessage(
               title: appLocalizations.reset,
               message: TextSpan(
                 text: appLocalizations.resetTip,
               ),
-              onTab: () {
-                final config = globalState.appController.config;
-                config.networkProps = config.networkProps.copyWith(
-                  bypassDomain: defaultBypassDomain,
-                );
-                Navigator.of(context).pop();
-              },
+            );
+            if (res != true) {
+              return;
+            }
+            final config = globalState.appController.config;
+            config.networkProps = config.networkProps.copyWith(
+              bypassDomain: defaultBypassDomain,
             );
           },
           tooltip: appLocalizations.reset,
@@ -382,19 +382,19 @@ class NetworkListView extends StatelessWidget {
           context.findAncestorStateOfType<CommonScaffoldState>();
       commonScaffoldState?.actions = [
         IconButton(
-          onPressed: () {
-            globalState.showMessage(
+          onPressed: () async {
+            final res = await globalState.showMessage(
               title: appLocalizations.reset,
               message: TextSpan(
                 text: appLocalizations.resetTip,
               ),
-              onTab: () {
-                final appController = globalState.appController;
-                appController.config.vpnProps = defaultVpnProps;
-                appController.clashConfig.tun = defaultTun;
-                Navigator.of(context).pop();
-              },
             );
+            if (res != true) {
+              return;
+            }
+            final appController = globalState.appController;
+            appController.config.vpnProps = defaultVpnProps;
+            appController.clashConfig.tun = defaultTun;
           },
           tooltip: appLocalizations.reset,
           icon: const Icon(

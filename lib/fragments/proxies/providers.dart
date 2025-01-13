@@ -47,21 +47,40 @@ class _ProvidersState extends State<Providers> {
   _updateProviders() async {
     final appState = globalState.appController.appState;
     final providers = globalState.appController.appState.providers;
+    final messages = [];
     final updateProviders = providers.map<Future>(
       (provider) async {
         appState.setProvider(
           provider.copyWith(isUpdating: true),
         );
-        await clashCore.updateExternalProvider(
+        final message = await clashCore.updateExternalProvider(
           providerName: provider.name,
         );
+        if (message.isNotEmpty) {
+          messages.add("${provider.name}: $message \n");
+        }
         appState.setProvider(
           await clashCore.getExternalProvider(provider.name),
         );
       },
     );
+    final titleMedium = context.textTheme.titleMedium;
     await Future.wait(updateProviders);
     await globalState.appController.updateGroupsDebounce();
+    if (messages.isNotEmpty) {
+      globalState.showMessage(
+        title: appLocalizations.tip,
+        message: TextSpan(
+          children: [
+            for (final message in messages)
+              TextSpan(
+                text: message,
+                style: titleMedium,
+              )
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -107,10 +126,10 @@ class ProviderItem extends StatelessWidget {
   });
 
   _handleUpdateProvider() async {
-    await globalState.safeRun<void>(() async {
-      final appState = globalState.appController.appState;
-      if (provider.vehicleType != "HTTP") return;
-      await globalState.safeRun(() async {
+    final appState = globalState.appController.appState;
+    if (provider.vehicleType != "HTTP") return;
+    await globalState.safeRun(
+      () async {
         appState.setProvider(
           provider.copyWith(
             isUpdating: true,
@@ -120,11 +139,12 @@ class ProviderItem extends StatelessWidget {
           providerName: provider.name,
         );
         if (message.isNotEmpty) throw message;
-      });
-      appState.setProvider(
-        await clashCore.getExternalProvider(provider.name),
-      );
-    });
+      },
+      silence: false,
+    );
+    appState.setProvider(
+      await clashCore.getExternalProvider(provider.name),
+    );
     await globalState.appController.updateGroupsDebounce();
   }
 

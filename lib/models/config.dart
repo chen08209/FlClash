@@ -46,7 +46,7 @@ class AppSetting with _$AppSetting {
     @JsonKey(fromJson: dashboardWidgetsRealFormJson)
     @Default(defaultDashboardWidgets)
     List<DashboardWidget> dashboardWidgets,
-    @Default(false) bool onlyProxy,
+    @Default(false) bool onlyStatisticsProxy,
     @Default(false) bool autoLaunch,
     @Default(false) bool silentLaunch,
     @Default(false) bool autoRun,

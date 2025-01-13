@@ -23,7 +23,7 @@
         tools:ignore="QueryAllPackagesPermission" />
 
     <application
-        android:name="${applicationName}"
+        android:name=".FlClashApplication"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="FlClash">

@@ -34,3 +34,4 @@ export 'text.dart';
 export 'tray.dart';
 export 'window.dart';
 export 'windows.dart';
+export 'render.dart';

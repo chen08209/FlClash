@@ -2298,6 +2298,7 @@ abstract class _ProxiesListSelectorState implements ProxiesListSelectorState {
 
 /// @nodoc
 mixin _$ProxyGroupSelectorState {
+  String? get testUrl => throw _privateConstructorUsedError;
   ProxiesSortType get proxiesSortType => throw _privateConstructorUsedError;
   ProxyCardType get proxyCardType => throw _privateConstructorUsedError;
   num get sortNum => throw _privateConstructorUsedError;
@@ -2319,7 +2320,8 @@ abstract class $ProxyGroupSelectorStateCopyWith<$Res> {
       _$ProxyGroupSelectorStateCopyWithImpl<$Res, ProxyGroupSelectorState>;
   @useResult
   $Res call(
-      {ProxiesSortType proxiesSortType,
+      {String? testUrl,
+      ProxiesSortType proxiesSortType,
       ProxyCardType proxyCardType,
       num sortNum,
       GroupType groupType,
@@ -2343,6 +2345,7 @@ class _$ProxyGroupSelectorStateCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? testUrl = freezed,
     Object? proxiesSortType = null,
     Object? proxyCardType = null,
     Object? sortNum = null,
@@ -2351,6 +2354,10 @@ class _$ProxyGroupSelectorStateCopyWithImpl<$Res,
     Object? columns = null,
   }) {
     return _then(_value.copyWith(
+      testUrl: freezed == testUrl
+          ? _value.testUrl
+          : testUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       proxiesSortType: null == proxiesSortType
           ? _value.proxiesSortType
           : proxiesSortType // ignore: cast_nullable_to_non_nullable
@@ -2389,7 +2396,8 @@ abstract class _$$ProxyGroupSelectorStateImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {ProxiesSortType proxiesSortType,
+      {String? testUrl,
+      ProxiesSortType proxiesSortType,
       ProxyCardType proxyCardType,
       num sortNum,
       GroupType groupType,
@@ -2412,6 +2420,7 @@ class __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? testUrl = freezed,
     Object? proxiesSortType = null,
     Object? proxyCardType = null,
     Object? sortNum = null,
@@ -2420,6 +2429,10 @@ class __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>
     Object? columns = null,
   }) {
     return _then(_$ProxyGroupSelectorStateImpl(
+      testUrl: freezed == testUrl
+          ? _value.testUrl
+          : testUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       proxiesSortType: null == proxiesSortType
           ? _value.proxiesSortType
           : proxiesSortType // ignore: cast_nullable_to_non_nullable
@@ -2452,7 +2465,8 @@ class __$$ProxyGroupSelectorStateImplCopyWithImpl<$Res>
 
 class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
   const _$ProxyGroupSelectorStateImpl(
-      {required this.proxiesSortType,
+      {required this.testUrl,
+      required this.proxiesSortType,
       required this.proxyCardType,
       required this.sortNum,
       required this.groupType,
@@ -2460,6 +2474,8 @@ class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
       required this.columns})
       : _proxies = proxies;
 
+  @override
+  final String? testUrl;
   @override
   final ProxiesSortType proxiesSortType;
   @override
@@ -2481,7 +2497,7 @@ class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
 
   @override
   String toString() {
-    return 'ProxyGroupSelectorState(proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, groupType: $groupType, proxies: $proxies, columns: $columns)';
+    return 'ProxyGroupSelectorState(testUrl: $testUrl, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, groupType: $groupType, proxies: $proxies, columns: $columns)';
   }
 
   @override
@@ -2489,6 +2505,7 @@ class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ProxyGroupSelectorStateImpl &&
+            (identical(other.testUrl, testUrl) || other.testUrl == testUrl) &&
             (identical(other.proxiesSortType, proxiesSortType) ||
                 other.proxiesSortType == proxiesSortType) &&
             (identical(other.proxyCardType, proxyCardType) ||
@@ -2503,6 +2520,7 @@ class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
   @override
   int get hashCode => Object.hash(
       runtimeType,
+      testUrl,
       proxiesSortType,
       proxyCardType,
       sortNum,
@@ -2522,13 +2540,16 @@ class _$ProxyGroupSelectorStateImpl implements _ProxyGroupSelectorState {
 
 abstract class _ProxyGroupSelectorState implements ProxyGroupSelectorState {
   const factory _ProxyGroupSelectorState(
-      {required final ProxiesSortType proxiesSortType,
+      {required final String? testUrl,
+      required final ProxiesSortType proxiesSortType,
       required final ProxyCardType proxyCardType,
       required final num sortNum,
       required final GroupType groupType,
       required final List<Proxy> proxies,
       required final int columns}) = _$ProxyGroupSelectorStateImpl;
 
+  @override
+  String? get testUrl;
   @override
   ProxiesSortType get proxiesSortType;
   @override

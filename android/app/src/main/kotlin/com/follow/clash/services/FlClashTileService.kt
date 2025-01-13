@@ -66,7 +66,7 @@ class FlClashTileService : TileService() {
     override fun onClick() {
         super.onClick()
         activityTransfer()
-        GlobalState.handleToggle(applicationContext)
+        GlobalState.handleToggle()
     }
 
     override fun onDestroy() {

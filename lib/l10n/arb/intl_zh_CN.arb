@@ -333,5 +333,13 @@
   "routeAddressDesc": "配置监听路由地址",
   "pleaseInputAdminPassword": "请输入管理员密码",
   "copyEnvVar": "复制环境变量",
-  "memoryInfo": "内存信息"
+  "memoryInfo": "内存信息",
+  "cancel": "取消",
+  "fileIsUpdate": "文件有修改，是否保存修改",
+  "profileHasUpdate": "配置文件已经修改,是否关闭自动更新 ",
+  "hasCacheChange": "是否缓存修改",
+  "nullProxies": "暂无代理",
+  "copySuccess": "复制成功",
+  "copyLink": "复制链接",
+  "exportFile": "导出文件"
 }

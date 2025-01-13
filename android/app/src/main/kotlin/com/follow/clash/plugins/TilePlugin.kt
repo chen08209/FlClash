@@ -1,14 +1,13 @@
-
 package com.follow.clash.plugins
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-class TilePlugin(private val onStart: (() -> Unit)? = null, private val onStop: (() -> Unit)? = null) : FlutterPlugin,
-    MethodChannel.MethodCallHandler {
+class TilePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private lateinit var channel: MethodChannel
+
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "tile")
         channel.setMethodCallHandler(this)
@@ -20,13 +19,11 @@ class TilePlugin(private val onStart: (() -> Unit)? = null, private val onStop: 
     }
 
     fun handleStart() {
-        onStart?.let { it() }
         channel.invokeMethod("start", null)
     }
 
     fun handleStop() {
         channel.invokeMethod("stop", null)
-        onStop?.let { it() }
     }
 
     private fun handleDetached() {

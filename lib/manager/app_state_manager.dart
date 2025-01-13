@@ -21,11 +21,10 @@ class _AppStateManagerState extends State<AppStateManager>
   _updateNavigationsContainer(Widget child) {
     return Selector2<AppState, Config, UpdateNavigationsSelector>(
       selector: (_, appState, config) {
-        final group = appState.currentGroups;
         final hasProfile = config.profiles.isNotEmpty;
         return UpdateNavigationsSelector(
           openLogs: config.appSetting.openLogs,
-          hasProxies: group.isNotEmpty && hasProfile,
+          hasProxies: hasProfile && config.currentProfileId != null,
         );
       },
       builder: (context, state, child) {
@@ -74,9 +73,12 @@ class _AppStateManagerState extends State<AppStateManager>
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
-    final isPaused = state == AppLifecycleState.paused;
-    if (isPaused) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       globalState.appController.savePreferencesDebounce();
+      render?.pause();
+    } else {
+      render?.resume();
     }
   }
 
@@ -88,9 +90,14 @@ class _AppStateManagerState extends State<AppStateManager>
 
   @override
   Widget build(BuildContext context) {
-    return _cacheStateChange(
-      _updateNavigationsContainer(
-        widget.child,
+    return Listener(
+      onPointerDown: (_) {
+        render?.resume();
+      },
+      child: _cacheStateChange(
+        _updateNavigationsContainer(
+          widget.child,
+        ),
       ),
     );
   }

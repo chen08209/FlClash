@@ -26,3 +26,8 @@ data class VpnOptions(
     val ipv6Address: String,
     val dnsServerAddress: String,
 )
+
+data class StartForegroundParams(
+    val title: String,
+    val content: String,
+)

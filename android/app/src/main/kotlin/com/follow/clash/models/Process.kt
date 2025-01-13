@@ -1,7 +1,7 @@
 package com.follow.clash.models
 
 data class Process(
-    val id: Int,
+    val id: String,
     val metadata: Metadata,
 )
 

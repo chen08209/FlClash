@@ -9,7 +9,7 @@ class TempActivity : Activity() {
         super.onCreate(savedInstanceState)
         when (intent.action) {
             wrapAction("START") -> {
-                GlobalState.handleStart(applicationContext)
+                GlobalState.handleStart()
             }
 
             wrapAction("STOP") -> {
@@ -17,7 +17,7 @@ class TempActivity : Activity() {
             }
 
             wrapAction("CHANGE") -> {
-                GlobalState.handleToggle(applicationContext)
+                GlobalState.handleToggle()
             }
         }
         finishAndRemoveTask()

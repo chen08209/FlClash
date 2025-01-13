@@ -1,10 +1,12 @@
-package com.follow.clash
-
+package com.follow.clash.services
 
 import com.follow.clash.models.VpnOptions
 
 interface BaseServiceInterface {
+
     fun start(options: VpnOptions): Int
+
     fun stop()
-    fun startForeground(title: String, content: String)
+
+    suspend fun startForeground(title: String, content: String)
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/metacubex/mihomo/adapter"
@@ -42,11 +41,6 @@ func (a ExternalProviders) Len() int           { return len(a) }
 func (a ExternalProviders) Less(i, j int) bool { return a[i].Name < a[j].Name }
 func (a ExternalProviders) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
-func (message *Message) Json() (string, error) {
-	data, err := json.Marshal(message)
-	return string(data), err
-}
-
 func readFile(path string) ([]byte, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, err
@@ -85,16 +79,6 @@ func getRawConfigWithId(id string) *config.RawConfig {
 			continue
 		}
 		mapping["path"] = filepath.Join(getProfileProvidersPath(id), value)
-		if configParams.TestURL != nil {
-			if mapping["health-check"] != nil {
-				hc := mapping["health-check"].(map[string]any)
-				if hc != nil {
-					if hc["url"] != nil {
-						hc["url"] = *configParams.TestURL
-					}
-				}
-			}
-		}
 	}
 	for _, mapping := range prof.RuleProvider {
 		value, exist := mapping["path"].(string)

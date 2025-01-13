@@ -123,6 +123,7 @@ class ProxiesListSelectorState with _$ProxiesListSelectorState {
 @freezed
 class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
   const factory ProxyGroupSelectorState({
+    required String? testUrl,
     required ProxiesSortType proxiesSortType,
     required ProxyCardType proxyCardType,
     required num sortNum,

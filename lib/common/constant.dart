@@ -73,7 +73,7 @@ const hotKeyActionListEquality = ListEquality<HotKeyAction>();
 const stringAndStringMapEquality = MapEquality<String, String>();
 const stringAndStringMapEntryIterableEquality =
     IterableEquality<MapEntry<String, String>>();
-const stringAndIntQMapEquality = MapEquality<String, int?>();
+const delayMapEquality = MapEquality<String, Map<String, int?>>();
 const stringSetEquality = SetEquality<String>();
 const keyboardModifierListEquality = SetEquality<KeyboardModifier>();
 
@@ -88,3 +88,7 @@ const defaultPrimaryColor = Colors.brown;
 double getWidgetHeight(num lines) {
   return max(lines * 84 + (lines - 1) * 16, 0);
 }
+
+final mainIsolate = "FlClashMainIsolate";
+
+final serviceIsolate = "FlClashServiceIsolate";

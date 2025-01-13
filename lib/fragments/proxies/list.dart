@@ -134,6 +134,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
       if (isExpand) {
         final sortedProxies = globalState.appController.getSortProxies(
           group.all,
+          group.testUrl,
         );
         groupNameProxiesMap[groupName] = sortedProxies;
         final chunks = sortedProxies.chunks(columns);
@@ -142,6 +143,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
               .map<Widget>(
                 (proxy) => Flexible(
                   child: ProxyCard(
+                    testUrl: group.testUrl,
                     type: type,
                     groupType: group.type,
                     key: ValueKey('$groupName.${proxy.name}'),
@@ -259,6 +261,11 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
         return prev != next;
       },
       builder: (_, state, __) {
+        if (state.groupNames.isEmpty) {
+          return NullStatus(
+            label: appLocalizations.nullProxies,
+          );
+        }
         final items = _buildItems(
           groupNames: state.groupNames,
           currentUnfoldSet: state.currentUnfoldSet,
@@ -367,10 +374,13 @@ class _ListHeaderState extends State<ListHeader>
 
   bool get isExpand => widget.isExpand;
 
-  _delayTest(List<Proxy> proxies) async {
+  _delayTest() async {
     if (isLock) return;
     isLock = true;
-    await delayTest(proxies);
+    await delayTest(
+      widget.group.all,
+      widget.group.testUrl,
+    );
     isLock = false;
   }
 
@@ -563,9 +573,7 @@ class _ListHeaderState extends State<ListHeader>
                     ),
                   ),
                   IconButton(
-                    onPressed: () {
-                      _delayTest(widget.group.all);
-                    },
+                    onPressed: _delayTest,
                     icon: const Icon(
                       Icons.network_ping,
                     ),

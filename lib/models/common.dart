@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
@@ -291,6 +293,7 @@ class Group with _$Group {
     @Default([]) List<Proxy> all,
     String? now,
     bool? hidden,
+    String? testUrl,
     @Default("") String icon,
     required String name,
   }) = _Group;
@@ -440,4 +443,25 @@ class Field with _$Field {
     required String value,
     Validator? validator,
   }) = _Field;
+}
+
+enum ActionType {
+  primary,
+  danger,
+}
+
+class ActionItemData {
+  const ActionItemData({
+    this.icon,
+    required this.label,
+    required this.onPressed,
+    this.type,
+    this.iconSize,
+  });
+
+  final double? iconSize;
+  final String label;
+  final VoidCallback onPressed;
+  final IconData? icon;
+  final ActionType? type;
 }

@@ -96,6 +96,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "bypassDomain": MessageLookupByLibrary.simpleMessage("Bypass domain"),
         "bypassDomainDesc": MessageLookupByLibrary.simpleMessage(
             "Only takes effect when the system proxy is enabled"),
+        "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
         "cancelFilterSystemApp":
             MessageLookupByLibrary.simpleMessage("Cancel filter system app"),
         "cancelSelectAll":
@@ -123,6 +124,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "copy": MessageLookupByLibrary.simpleMessage("Copy"),
         "copyEnvVar": MessageLookupByLibrary.simpleMessage(
             "Copying environment variables"),
+        "copyLink": MessageLookupByLibrary.simpleMessage("Copy link"),
+        "copySuccess": MessageLookupByLibrary.simpleMessage("Copy success"),
         "core": MessageLookupByLibrary.simpleMessage("Core"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
         "country": MessageLookupByLibrary.simpleMessage("Country"),
@@ -170,6 +173,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "expand": MessageLookupByLibrary.simpleMessage("Standard"),
         "expirationTime":
             MessageLookupByLibrary.simpleMessage("Expiration time"),
+        "exportFile": MessageLookupByLibrary.simpleMessage("Export file"),
         "exportLogs": MessageLookupByLibrary.simpleMessage("Export logs"),
         "exportSuccess": MessageLookupByLibrary.simpleMessage("Export Success"),
         "externalController":
@@ -189,6 +193,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "file": MessageLookupByLibrary.simpleMessage("File"),
         "fileDesc":
             MessageLookupByLibrary.simpleMessage("Directly upload profile"),
+        "fileIsUpdate": MessageLookupByLibrary.simpleMessage(
+            "The file has been modified. Do you want to save the changes?"),
         "filterSystemApp":
             MessageLookupByLibrary.simpleMessage("Filter system app"),
         "findProcessMode": MessageLookupByLibrary.simpleMessage("Find process"),
@@ -208,6 +214,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "global": MessageLookupByLibrary.simpleMessage("Global"),
         "go": MessageLookupByLibrary.simpleMessage("Go"),
         "goDownload": MessageLookupByLibrary.simpleMessage("Go to download"),
+        "hasCacheChange": MessageLookupByLibrary.simpleMessage(
+            "Do you want to cache the changes?"),
         "hostsDesc": MessageLookupByLibrary.simpleMessage("Add Hosts"),
         "hotkeyConflict":
             MessageLookupByLibrary.simpleMessage("Hotkey conflict"),
@@ -303,6 +311,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "nullLogsDesc": MessageLookupByLibrary.simpleMessage("No logs"),
         "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
             "No profile, Please add a profile"),
+        "nullProxies": MessageLookupByLibrary.simpleMessage("No proxies"),
         "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("No requests"),
         "oneColumn": MessageLookupByLibrary.simpleMessage("One column"),
         "onlyIcon": MessageLookupByLibrary.simpleMessage("Icon"),
@@ -348,6 +357,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "profileAutoUpdateIntervalNullValidationDesc":
             MessageLookupByLibrary.simpleMessage(
                 "Please enter the auto update interval time"),
+        "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
+            "The profile has been modified. Do you want to disable auto update?"),
         "profileNameNullValidationDesc": MessageLookupByLibrary.simpleMessage(
             "Please input the profile name"),
         "profileParseErrorDesc":

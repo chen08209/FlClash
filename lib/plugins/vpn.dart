@@ -1,35 +1,46 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
-import 'dart:io';
-import 'dart:isolate';
 
 import 'package:fl_clash/clash/clash.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+abstract mixin class VpnListener {
+  void onStarted(int fd) {}
+
+  void onDnsChanged(String dns) {}
+}
 
 class Vpn {
   static Vpn? _instance;
   late MethodChannel methodChannel;
-  ReceivePort? receiver;
-  ServiceMessageListener? _serviceMessageHandler;
+  FutureOr<String> Function()? handleGetStartForegroundParams;
 
   Vpn._internal() {
     methodChannel = const MethodChannel("vpn");
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
-        case "started":
-          final fd = call.arguments as int;
-          onStarted(fd);
-          break;
         case "gc":
           clashCore.requestGc();
-        case "dnsChanged":
-          final dns = call.arguments as String;
-          clashLib?.updateDns(dns);
+        case "getStartForegroundParams":
+          if (handleGetStartForegroundParams != null) {
+            return await handleGetStartForegroundParams!();
+          }
+          return "";
         default:
-          throw MissingPluginException();
+          for (final VpnListener listener in _listeners) {
+            switch (call.method) {
+              case "started":
+                final fd = call.arguments as int;
+                listener.onStarted(fd);
+                break;
+              case "dnsChanged":
+                final dns = call.arguments as String;
+                listener.onDnsChanged(dns);
+            }
+          }
       }
     });
   }
@@ -39,14 +50,15 @@ class Vpn {
     return _instance!;
   }
 
-  Future<bool?> startVpn() async {
-    final options = clashLib?.getAndroidVpnOptions();
+  final ObserverList<VpnListener> _listeners = ObserverList<VpnListener>();
+
+  Future<bool?> start(AndroidVpnOptions options) async {
     return await methodChannel.invokeMethod<bool>("start", {
       'data': json.encode(options),
     });
   }
 
-  Future<bool?> stopVpn() async {
+  Future<bool?> stop() async {
     return await methodChannel.invokeMethod<bool>("stop");
   }
 
@@ -60,45 +72,13 @@ class Vpn {
     });
   }
 
-  Future<bool?> startForeground({
-    required String title,
-    required String content,
-  }) async {
-    return await methodChannel.invokeMethod<bool?>("startForeground", {
-      'title': title,
-      'content': content,
-    });
+  void addListener(VpnListener listener) {
+    _listeners.add(listener);
   }
 
-  onStarted(int fd) {
-    if (receiver != null) {
-      receiver!.close();
-      receiver == null;
-    }
-    receiver = ReceivePort();
-    receiver!.listen((message) {
-      _handleServiceMessage(message);
-    });
-    clashLib?.startTun(fd, receiver!.sendPort.nativePort);
-  }
-
-  setServiceMessageHandler(ServiceMessageListener serviceMessageListener) {
-    _serviceMessageHandler = serviceMessageListener;
-  }
-
-  _handleServiceMessage(String message) {
-    final m = ServiceMessage.fromJson(json.decode(message));
-    switch (m.type) {
-      case ServiceMessageType.protect:
-        _serviceMessageHandler?.onProtect(Fd.fromJson(m.data));
-      case ServiceMessageType.process:
-        _serviceMessageHandler?.onProcess(ProcessData.fromJson(m.data));
-      case ServiceMessageType.started:
-        _serviceMessageHandler?.onStarted(m.data);
-      case ServiceMessageType.loaded:
-        _serviceMessageHandler?.onLoaded(m.data);
-    }
+  void removeListener(VpnListener listener) {
+    _listeners.remove(listener);
   }
 }
 
-final vpn = Platform.isAndroid ? Vpn() : null;
+Vpn? get vpn => globalState.isService ? Vpn() : null;

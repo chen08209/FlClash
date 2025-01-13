@@ -100,15 +100,12 @@ enum AppMessageType {
   log,
   delay,
   request,
-  started,
   loaded,
 }
 
-enum ServiceMessageType {
+enum InvokeMessageType {
   protect,
   process,
-  started,
-  loaded,
 }
 
 enum FindProcessMode { always, off }
@@ -241,6 +238,17 @@ enum ActionMethod {
   stopListener,
   getCountryCode,
   getMemory,
+
+  ///Android,
+  setFdMap,
+  setProcessMap,
+  setState,
+  startTun,
+  stopTun,
+  getRunTime,
+  updateDns,
+  getAndroidVpnOptions,
+  getCurrentProfileName,
 }
 
 enum AuthorizeCode { none, success, error }

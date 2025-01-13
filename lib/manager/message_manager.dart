@@ -19,45 +19,26 @@ class MessageManager extends StatefulWidget {
 
 class MessageManagerState extends State<MessageManager>
     with SingleTickerProviderStateMixin {
-  final _floatMessageKey = GlobalKey();
-  List<CommonMessage> bufferMessages = [];
   final _messagesNotifier = ValueNotifier<List<CommonMessage>>([]);
-  final _floatMessageNotifier = ValueNotifier<CommonMessage?>(null);
   double maxWidth = 0;
+  Offset offset = Offset.zero;
 
   late AnimationController _animationController;
 
-  Completer? _animationCompleter;
-  late Animation<Offset> _floatOffsetAnimation;
-  late Animation<Offset> _commonOffsetAnimation;
   final animationDuration = commonDuration * 2;
-
-  _initTransformState() {
-    _floatMessageNotifier.value = null;
-    _floatOffsetAnimation = Tween(
-      begin: Offset.zero,
-      end: Offset.zero,
-    ).animate(_animationController);
-    _commonOffsetAnimation = _floatOffsetAnimation = Tween(
-      begin: Offset.zero,
-      end: Offset.zero,
-    ).animate(_animationController);
-  }
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 200),
+      duration: Duration(milliseconds: 400),
     );
-    _initTransformState();
   }
 
   @override
   void dispose() {
     _messagesNotifier.dispose();
-    _floatMessageNotifier.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -67,126 +48,13 @@ class MessageManagerState extends State<MessageManager>
       id: other.uuidV4,
       text: text,
     );
-    bufferMessages.add(commonMessage);
-    await _animationCompleter?.future;
-    _showMessage();
-  }
-
-  _showMessage() {
-    final commonMessage = bufferMessages.removeAt(0);
-    _floatOffsetAnimation = Tween(
-      begin: Offset(-maxWidth, 0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(
-          0.5,
-          1,
-          curve: Curves.easeInOut,
-        ),
-      ),
-    );
-    _floatMessageNotifier.value = commonMessage;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final size = _floatMessageKey.currentContext?.size ?? Size.zero;
-      _commonOffsetAnimation = Tween(
-        begin: Offset.zero,
-        end: Offset(0, -size.height - 12),
-      ).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: Interval(
-            0,
-            0.7,
-            curve: Curves.easeInOut,
-          ),
-        ),
+    _messagesNotifier.value = List.from(_messagesNotifier.value)
+      ..add(
+        commonMessage,
       );
-      _animationCompleter = Completer();
-      _animationCompleter?.complete(_animationController.forward(from: 0));
-      await _animationCompleter?.future;
-      _initTransformState();
-      _messagesNotifier.value = List.from(_messagesNotifier.value)
-        ..add(commonMessage);
-      Future.delayed(
-        commonMessage.duration,
-        () {
-          _removeMessage(commonMessage);
-        },
-      );
-    });
   }
 
-  Widget _wrapOffset(Widget child) {
-    return AnimatedBuilder(
-      animation: _animationController.view,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: _commonOffsetAnimation.value,
-          child: child!,
-        );
-      },
-      child: child,
-    );
-  }
-
-  Widget _wrapMessage(CommonMessage message) {
-    return Material(
-      elevation: 2,
-      borderRadius: BorderRadius.circular(8),
-      color: context.colorScheme.secondaryFixedDim,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 15),
-        child: Text(
-          message.text,
-          style: context.textTheme.bodyMedium?.copyWith(
-            color: context.colorScheme.onSecondaryFixedVariant,
-          ),
-          maxLines: 5,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-    );
-  }
-
-  Widget _floatMessage() {
-    return ValueListenableBuilder(
-      valueListenable: _floatMessageNotifier,
-      builder: (_, message, ___) {
-        if (message == null) {
-          return SizedBox();
-        }
-        return AnimatedBuilder(
-          key: _floatMessageKey,
-          animation: _animationController.view,
-          builder: (_, child) {
-            if (!_animationController.isAnimating) {
-              return Opacity(
-                opacity: 0,
-                child: child,
-              );
-            }
-            return Transform.translate(
-              offset: _floatOffsetAnimation.value,
-              child: child,
-            );
-          },
-          child: _wrapMessage(
-            message,
-          ),
-        );
-      },
-    );
-  }
-
-  _removeMessage(CommonMessage commonMessage) async {
-    final itemWrapState = GlobalObjectKey(commonMessage.id).currentState
-        as _MessageItemWrapState?;
-    await itemWrapState?.transform(
-      Offset(-maxWidth, 0),
-    );
+  _handleRemove(CommonMessage commonMessage) async {
     _messagesNotifier.value = List<CommonMessage>.from(_messagesNotifier.value)
       ..remove(commonMessage);
   }
@@ -204,6 +72,7 @@ class MessageManagerState extends State<MessageManager>
               child: ValueListenableBuilder(
                 valueListenable: globalState.safeMessageOffsetNotifier,
                 builder: (_, offset, child) {
+                  this.offset = offset;
                   if (offset == Offset.zero) {
                     return SizedBox();
                   }
@@ -234,15 +103,14 @@ class MessageManagerState extends State<MessageManager>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 for (final message in messages) ...[
-                                  if (message != messages.last)
+                                  if (message != messages.first)
                                     SizedBox(
-                                      height: 8,
+                                      height: 12,
                                     ),
-                                  _MessageItemWrap(
+                                  _MessageItem(
                                     key: GlobalObjectKey(message.id),
-                                    child: _wrapOffset(
-                                      _wrapMessage(message),
-                                    ),
+                                    message: message,
+                                    onRemove: _handleRemove,
                                   ),
                                 ],
                               ],
@@ -250,7 +118,6 @@ class MessageManagerState extends State<MessageManager>
                           },
                         ),
                       ),
-                      _floatMessage(),
                     ],
                   ),
                 ),
@@ -263,22 +130,25 @@ class MessageManagerState extends State<MessageManager>
   }
 }
 
-class _MessageItemWrap extends StatefulWidget {
-  final Widget child;
+class _MessageItem extends StatefulWidget {
+  final CommonMessage message;
+  final Function(CommonMessage message) onRemove;
 
-  const _MessageItemWrap({
+  const _MessageItem({
     super.key,
-    required this.child,
+    required this.message,
+    required this.onRemove,
   });
 
   @override
-  State<_MessageItemWrap> createState() => _MessageItemWrapState();
+  State<_MessageItem> createState() => _MessageItemState();
 }
 
-class _MessageItemWrapState extends State<_MessageItemWrap>
+class _MessageItemState extends State<_MessageItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  Offset _nextOffset = Offset.zero;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
@@ -287,11 +157,41 @@ class _MessageItemWrapState extends State<_MessageItemWrap>
       vsync: this,
       duration: commonDuration * 1.5,
     );
-  }
+    _offsetAnimation = Tween<Offset>(
+      begin: Offset(-1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Interval(
+        0.0,
+        1,
+        curve: Curves.easeOut,
+      ),
+    ));
 
-  transform(Offset offset) async {
-    _nextOffset = offset;
-    await _controller.forward(from: 0);
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Interval(
+        0.0,
+        0.2,
+        curve: Curves.easeIn,
+      ),
+    ));
+
+    _controller.forward();
+
+    Future.delayed(
+      widget.message.duration,
+      () async {
+        await _controller.reverse();
+        widget.onRemove(
+          widget.message,
+        );
+      },
+    );
   }
 
   @override
@@ -305,26 +205,30 @@ class _MessageItemWrapState extends State<_MessageItemWrap>
     return AnimatedBuilder(
       animation: _controller.view,
       builder: (_, child) {
-        if (_nextOffset == Offset.zero) {
-          return child!;
-        }
-        final offset = Tween(
-          begin: Offset.zero,
-          end: _nextOffset,
-        )
-            .animate(
-              CurvedAnimation(
-                parent: _controller,
-                curve: Curves.easeOut,
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _offsetAnimation,
+            child: Material(
+              elevation: _controller.value * 12,
+              borderRadius: BorderRadius.circular(8),
+              color: context.colorScheme.surfaceContainer,
+              clipBehavior: Clip.none,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                child: Text(
+                  widget.message.text,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            )
-            .value;
-        return Transform.translate(
-          offset: offset,
-          child: child!,
+            ),
+          ),
         );
       },
-      child: widget.child,
     );
   }
 }

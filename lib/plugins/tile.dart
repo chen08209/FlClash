@@ -15,7 +15,6 @@ abstract mixin class TileListener {
 }
 
 class Tile {
-  StreamSubscription? subscription;
 
   final MethodChannel _channel = const MethodChannel('tile');
 

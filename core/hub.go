@@ -26,8 +26,10 @@ import (
 )
 
 var (
-	isInit            = false
-	configParams      = ConfigExtendedParams{}
+	isInit       = false
+	configParams = ConfigExtendedParams{
+		OnlyStatisticsProxy: false,
+	}
 	externalProviders = map[string]cp.Provider{}
 	logSubscriber     observable.Subscription[log.Event]
 	currentConfig     *config.Config
@@ -149,8 +151,8 @@ func handleChangeProxy(data string, fn func(string string)) {
 	}()
 }
 
-func handleGetTraffic(onlyProxy bool) string {
-	up, down := statistic.DefaultManager.Current(onlyProxy)
+func handleGetTraffic() string {
+	up, down := statistic.DefaultManager.Current(configParams.OnlyStatisticsProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -163,8 +165,8 @@ func handleGetTraffic(onlyProxy bool) string {
 	return string(data)
 }
 
-func handleGetTotalTraffic(onlyProxy bool) string {
-	up, down := statistic.DefaultManager.Total(onlyProxy)
+func handleGetTotalTraffic() string {
+	up, down := statistic.DefaultManager.Total(configParams.OnlyStatisticsProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -213,7 +215,13 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			return false, nil
 		}
 
-		delay, err := proxy.URLTest(ctx, constant.DefaultTestURL, expectedStatus)
+		testUrl := constant.DefaultTestURL
+
+		if params.TestUrl != "" {
+			testUrl = params.TestUrl
+		}
+
+		delay, err := proxy.URLTest(ctx, testUrl, expectedStatus)
 		if err != nil || delay == 0 {
 			delayData.Value = -1
 			data, _ := json.Marshal(delayData)
@@ -238,17 +246,6 @@ func handleGetConnections() string {
 		return ""
 	}
 	return string(data)
-}
-
-func handleCloseConnectionsUnLock() bool {
-	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
-		err := c.Close()
-		if err != nil {
-			return false
-		}
-		return true
-	})
-	return true
 }
 
 func handleCloseConnections() bool {
@@ -395,7 +392,7 @@ func handleStartLog() {
 				Type: LogMessage,
 				Data: logData,
 			}
-			SendMessage(*message)
+			sendMessage(*message)
 		}
 	}()
 }
@@ -427,8 +424,9 @@ func handleGetMemory(fn func(value string)) {
 }
 
 func init() {
-	adapter.UrlTestHook = func(name string, delay uint16) {
+	adapter.UrlTestHook = func(url string, name string, delay uint16) {
 		delayData := &Delay{
+			Url:  url,
 			Name: name,
 		}
 		if delay == 0 {
@@ -436,19 +434,19 @@ func init() {
 		} else {
 			delayData.Value = int32(delay)
 		}
-		SendMessage(Message{
+		sendMessage(Message{
 			Type: DelayMessage,
 			Data: delayData,
 		})
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
-		SendMessage(Message{
+		sendMessage(Message{
 			Type: RequestMessage,
 			Data: c,
 		})
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {
-		SendMessage(Message{
+		sendMessage(Message{
 			Type: LoadedMessage,
 			Data: providerName,
 		})

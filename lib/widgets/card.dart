@@ -141,7 +141,7 @@ class CommonCard extends StatelessWidget {
         if (isSelected) {
           return colorScheme.secondaryContainer;
         }
-        return colorScheme.surfaceContainerLow;
+        return colorScheme.surfaceContainer;
     }
   }
 
@@ -166,7 +166,7 @@ class CommonCard extends StatelessWidget {
         ],
       );
     }
-
+    
     if (selectWidget != null && isSelected) {
       final List<Widget> children = [];
       children.add(childWidget);
@@ -182,6 +182,9 @@ class CommonCard extends StatelessWidget {
 
     return OutlinedButton(
       clipBehavior: Clip.antiAlias,
+      onLongPress: (){
+
+      },
       style: ButtonStyle(
         padding: const WidgetStatePropertyAll(EdgeInsets.zero),
         shape: WidgetStatePropertyAll(

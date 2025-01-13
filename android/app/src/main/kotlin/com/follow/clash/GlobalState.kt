@@ -31,7 +31,7 @@ object GlobalState {
         return currentEngine?.plugins?.get(AppPlugin::class.java) as AppPlugin?
     }
 
-    fun getText(text: String): String {
+    suspend fun getText(text: String): String {
         return getCurrentAppPlugin()?.getText(text) ?: ""
     }
 
@@ -44,14 +44,14 @@ object GlobalState {
         return serviceEngine?.plugins?.get(VpnPlugin::class.java) as VpnPlugin?
     }
 
-    fun handleToggle(context: Context) {
-        val starting = handleStart(context)
+    fun handleToggle() {
+        val starting = handleStart()
         if (!starting) {
             handleStop()
         }
     }
 
-    fun handleStart(context: Context): Boolean {
+    fun handleStart(): Boolean {
         if (runState.value == RunState.STOP) {
             runState.value = RunState.PENDING
             runLock.lock()
@@ -59,7 +59,7 @@ object GlobalState {
             if (tilePlugin != null) {
                 tilePlugin.handleStart()
             } else {
-                initServiceEngine(context)
+                initServiceEngine()
             }
             return true
         }
@@ -74,6 +74,12 @@ object GlobalState {
         }
     }
 
+    fun handleTryDestroy() {
+        if (flutterEngine == null) {
+            destroyServiceEngine()
+        }
+    }
+
     fun destroyServiceEngine() {
         runLock.withLock {
             serviceEngine?.destroy()
@@ -81,21 +87,21 @@ object GlobalState {
         }
     }
 
-    fun initServiceEngine(context: Context) {
+    fun initServiceEngine() {
         if (serviceEngine != null) return
         destroyServiceEngine()
         runLock.withLock {
-            serviceEngine = FlutterEngine(context)
-            serviceEngine?.plugins?.add(VpnPlugin())
+            serviceEngine = FlutterEngine(FlClashApplication.getAppContext())
+            serviceEngine?.plugins?.add(VpnPlugin)
             serviceEngine?.plugins?.add(AppPlugin())
             serviceEngine?.plugins?.add(TilePlugin())
-            serviceEngine?.plugins?.add(ServicePlugin())
             val vpnService = DartExecutor.DartEntrypoint(
                 FlutterInjector.instance().flutterLoader().findAppBundlePath(),
-                "vpnService"
+                "_service"
             )
             serviceEngine?.dartExecutor?.executeDartEntrypoint(
                 vpnService,
+                if (flutterEngine == null) listOf("quick") else null
             )
         }
     }

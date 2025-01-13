@@ -76,13 +76,10 @@ class AppController {
 
   updateStatus(bool isStart) async {
     if (isStart) {
-      await globalState.handleStart();
-      updateRunTime();
-      updateTraffic();
-      globalState.updateFunctionLists = [
+      await globalState.handleStart([
         updateRunTime,
         updateTraffic,
-      ];
+      ]);
       final currentLastModified =
           await config.getCurrentProfile()?.profileLastModified;
       if (currentLastModified == null ||
@@ -158,6 +155,13 @@ class AppController {
     config.setProfile(
       newProfile.copyWith(isUpdating: false),
     );
+    if (profile.id == config.currentProfile?.id) {
+      applyProfileDebounce();
+    }
+  }
+
+  setProfile(Profile profile) {
+    config.setProfile(profile);
     if (profile.id == config.currentProfile?.id) {
       applyProfileDebounce();
     }
@@ -279,8 +283,9 @@ class AppController {
       await clashService?.destroy();
       await proxy?.stopProxy();
       await savePreferences();
-    } catch (_) {}
-    system.exit();
+    } finally {
+      system.exit();
+    }
   }
 
   autoCheckUpdate() async {
@@ -298,7 +303,7 @@ class AppController {
       final body = data['body'];
       final submits = other.parseReleaseBody(body);
       final textTheme = context.textTheme;
-      globalState.showMessage(
+      final res = await globalState.showMessage(
         title: appLocalizations.discoverNewVersion,
         message: TextSpan(
           text: "$tagName \n",
@@ -315,12 +320,13 @@ class AppController {
               ),
           ],
         ),
-        onTab: () {
-          launchUrl(
-            Uri.parse("https://github.com/$repository/releases/latest"),
-          );
-        },
         confirmText: appLocalizations.goDownload,
+      );
+      if (res != true) {
+        return;
+      }
+      launchUrl(
+        Uri.parse("https://github.com/$repository/releases/latest"),
       );
     } else if (handleError) {
       globalState.showMessage(
@@ -337,9 +343,6 @@ class AppController {
     if (!isDisclaimerAccepted) {
       handleExit();
     }
-    if (!config.appSetting.silentLaunch) {
-      window?.show();
-    }
     await globalState.initCore(
       appState: appState,
       clashConfig: clashConfig,
@@ -351,11 +354,16 @@ class AppController {
     );
     autoUpdateProfiles();
     autoCheckUpdate();
+    if (!config.appSetting.silentLaunch) {
+      window?.show();
+    } else {
+      window?.hide();
+    }
   }
 
   _initStatus() async {
     if (Platform.isAndroid) {
-      globalState.updateStartTime();
+      await globalState.updateStartTime();
     }
     final status =
         globalState.isStart == true ? true : config.appSetting.autoRun;
@@ -370,7 +378,10 @@ class AppController {
     appState.setDelay(delay);
   }
 
-  toPage(int index, {bool hasAnimate = false}) {
+  toPage(
+    int index, {
+    bool hasAnimate = false,
+  }) {
     if (index > appState.currentNavigationItems.length - 1) {
       return;
     }
@@ -397,8 +408,8 @@ class AppController {
 
   initLink() {
     linkManager.initAppLinksListen(
-      (url) {
-        globalState.showMessage(
+      (url) async {
+        final res = await globalState.showMessage(
           title: "${appLocalizations.add}${appLocalizations.profile}",
           message: TextSpan(
             children: [
@@ -416,10 +427,12 @@ class AppController {
                       "${appLocalizations.create}${appLocalizations.profile}"),
             ],
           ),
-          onTab: () {
-            addProfileFormURL(url);
-          },
         );
+
+        if (res != true) {
+          return;
+        }
+        addProfileFormURL(url);
       },
     );
   }
@@ -522,6 +535,18 @@ class AppController {
     });
   }
 
+  int? getDelay(String proxyName, [String? url]) {
+    final currentDelayMap = appState.delayMap[getRealTestUrl(url)];
+    return currentDelayMap?[appState.getRealProxyName(proxyName)];
+  }
+
+  String getRealTestUrl(String? url) {
+    if (url == null || url.isEmpty) {
+      return config.appSetting.testUrl;
+    }
+    return url;
+  }
+
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
       ..sort(
@@ -532,12 +557,12 @@ class AppController {
       );
   }
 
-  List<Proxy> _sortOfDelay(List<Proxy> proxies) {
-    return proxies = List.of(proxies)
+  List<Proxy> _sortOfDelay(String url, List<Proxy> proxies) {
+    return List.of(proxies)
       ..sort(
         (a, b) {
-          final aDelay = appState.getDelay(a.name);
-          final bDelay = appState.getDelay(b.name);
+          final aDelay = getDelay(a.name, url);
+          final bDelay = getDelay(b.name, url);
           if (aDelay == null && bDelay == null) {
             return 0;
           }
@@ -552,10 +577,10 @@ class AppController {
       );
   }
 
-  List<Proxy> getSortProxies(List<Proxy> proxies) {
+  List<Proxy> getSortProxies(List<Proxy> proxies, [String? url]) {
     return switch (config.proxiesStyle.sortType) {
       ProxiesSortType.none => proxies,
-      ProxiesSortType.delay => _sortOfDelay(proxies),
+      ProxiesSortType.delay => _sortOfDelay(getRealTestUrl(url), proxies),
       ProxiesSortType.name => _sortOfName(proxies),
     };
   }
@@ -578,6 +603,10 @@ class AppController {
         await File(providersPath).delete(recursive: true);
       }
     });
+  }
+
+  bool get isMobileView {
+    return appState.viewMode == ViewMode.mobile;
   }
 
   updateTun() {

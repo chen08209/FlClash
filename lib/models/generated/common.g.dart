@@ -161,6 +161,7 @@ _$GroupImpl _$$GroupImplFromJson(Map<String, dynamic> json) => _$GroupImpl(
           const [],
       now: json['now'] as String?,
       hidden: json['hidden'] as bool?,
+      testUrl: json['testUrl'] as String?,
       icon: json['icon'] as String? ?? "",
       name: json['name'] as String,
     );
@@ -171,6 +172,7 @@ Map<String, dynamic> _$$GroupImplToJson(_$GroupImpl instance) =>
       'all': instance.all,
       'now': instance.now,
       'hidden': instance.hidden,
+      'testUrl': instance.testUrl,
       'icon': instance.icon,
       'name': instance.name,
     };

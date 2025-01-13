@@ -80,6 +80,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "blacklistMode": MessageLookupByLibrary.simpleMessage("黑名单模式"),
         "bypassDomain": MessageLookupByLibrary.simpleMessage("排除域名"),
         "bypassDomainDesc": MessageLookupByLibrary.simpleMessage("仅在系统代理启用时生效"),
+        "cancel": MessageLookupByLibrary.simpleMessage("取消"),
         "cancelFilterSystemApp":
             MessageLookupByLibrary.simpleMessage("取消过滤系统应用"),
         "cancelSelectAll": MessageLookupByLibrary.simpleMessage("取消全选"),
@@ -99,6 +100,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "connectivity": MessageLookupByLibrary.simpleMessage("连通性："),
         "copy": MessageLookupByLibrary.simpleMessage("复制"),
         "copyEnvVar": MessageLookupByLibrary.simpleMessage("复制环境变量"),
+        "copyLink": MessageLookupByLibrary.simpleMessage("复制链接"),
+        "copySuccess": MessageLookupByLibrary.simpleMessage("复制成功"),
         "core": MessageLookupByLibrary.simpleMessage("内核"),
         "coreInfo": MessageLookupByLibrary.simpleMessage("内核信息"),
         "country": MessageLookupByLibrary.simpleMessage("区域"),
@@ -138,6 +141,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "exit": MessageLookupByLibrary.simpleMessage("退出"),
         "expand": MessageLookupByLibrary.simpleMessage("标准"),
         "expirationTime": MessageLookupByLibrary.simpleMessage("到期时间"),
+        "exportFile": MessageLookupByLibrary.simpleMessage("导出文件"),
         "exportLogs": MessageLookupByLibrary.simpleMessage("导出日志"),
         "exportSuccess": MessageLookupByLibrary.simpleMessage("导出成功"),
         "externalController": MessageLookupByLibrary.simpleMessage("外部控制器"),
@@ -152,6 +156,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "fallbackFilter": MessageLookupByLibrary.simpleMessage("Fallback过滤"),
         "file": MessageLookupByLibrary.simpleMessage("文件"),
         "fileDesc": MessageLookupByLibrary.simpleMessage("直接上传配置文件"),
+        "fileIsUpdate": MessageLookupByLibrary.simpleMessage("文件有修改，是否保存修改"),
         "filterSystemApp": MessageLookupByLibrary.simpleMessage("过滤系统应用"),
         "findProcessMode": MessageLookupByLibrary.simpleMessage("查找进程"),
         "findProcessModeDesc":
@@ -168,6 +173,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "global": MessageLookupByLibrary.simpleMessage("全局"),
         "go": MessageLookupByLibrary.simpleMessage("前往"),
         "goDownload": MessageLookupByLibrary.simpleMessage("前往下载"),
+        "hasCacheChange": MessageLookupByLibrary.simpleMessage("是否缓存修改"),
         "hostsDesc": MessageLookupByLibrary.simpleMessage("追加Hosts"),
         "hotkeyConflict": MessageLookupByLibrary.simpleMessage("快捷键冲突"),
         "hotkeyManagement": MessageLookupByLibrary.simpleMessage("快捷键管理"),
@@ -241,6 +247,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "nullLogsDesc": MessageLookupByLibrary.simpleMessage("暂无日志"),
         "nullProfileDesc":
             MessageLookupByLibrary.simpleMessage("没有配置文件,请先添加配置文件"),
+        "nullProxies": MessageLookupByLibrary.simpleMessage("暂无代理"),
         "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("暂无请求"),
         "oneColumn": MessageLookupByLibrary.simpleMessage("一列"),
         "onlyIcon": MessageLookupByLibrary.simpleMessage("仅图标"),
@@ -275,6 +282,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("请输入有效间隔时间格式"),
         "profileAutoUpdateIntervalNullValidationDesc":
             MessageLookupByLibrary.simpleMessage("请输入自动更新间隔时间"),
+        "profileHasUpdate":
+            MessageLookupByLibrary.simpleMessage("配置文件已经修改,是否关闭自动更新 "),
         "profileNameNullValidationDesc":
             MessageLookupByLibrary.simpleMessage("请输入配置名称"),
         "profileParseErrorDesc":

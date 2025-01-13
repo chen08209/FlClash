@@ -153,7 +153,10 @@ class ApplicationState extends State<Application> {
     return AppStateManager(
       child: ClashManager(
         child: ConnectivityManager(
-          onConnectivityChanged: globalState.appController.updateLocalIp,
+          onConnectivityChanged: () {
+            globalState.appController.updateLocalIp();
+            globalState.appController.addCheckIpNumDebounce();
+          },
           child: child,
         ),
       ),
@@ -175,8 +178,8 @@ class ApplicationState extends State<Application> {
 
   @override
   Widget build(context) {
-    return _buildWrap(
-      _buildPlatformWrap(
+    return _buildPlatformWrap(
+      _buildWrap(
         Selector2<AppState, Config, ApplicationSelectorState>(
           selector: (_, appState, config) => ApplicationSelectorState(
             locale: config.appSetting.locale,
@@ -252,7 +255,7 @@ class ApplicationState extends State<Application> {
     linkManager.destroy();
     _autoUpdateGroupTaskTimer?.cancel();
     _autoUpdateProfilesTaskTimer?.cancel();
-    await clashService?.destroy();
+    await clashCore.destroy();
     await globalState.appController.savePreferences();
     await globalState.appController.handleExit();
     super.dispose();

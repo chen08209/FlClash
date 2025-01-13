@@ -59,6 +59,12 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
   }
 
   @override
+  void onTrayMenuItemClick(MenuItem menuItem) {
+    render?.active();
+    super.onTrayMenuItemClick(menuItem);
+  }
+
+  @override
   onTrayIconMouseDown() {
     window?.show();
   }

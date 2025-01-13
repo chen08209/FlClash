@@ -99,14 +99,13 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
 
   @override
   Future<void> onDelay(Delay delay) async {
+    super.onDelay(delay);
     final appController = globalState.appController;
     appController.setDelay(delay);
-    super.onDelay(delay);
     debouncer.call(
       DebounceTag.updateDelay,
       () async {
         await appController.updateGroupsDebounce();
-        // await appController.addCheckIpNumDebounce();
       },
       duration: const Duration(milliseconds: 5000),
     );
@@ -119,12 +118,6 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
       globalState.showNotifier(log.payload ?? '');
     }
     super.onLog(log);
-  }
-
-  @override
-  void onStarted(String runTime) {
-    super.onStarted(runTime);
-    globalState.appController.applyProfileDebounce();
   }
 
   @override

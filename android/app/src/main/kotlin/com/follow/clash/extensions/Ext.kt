@@ -97,7 +97,6 @@ fun String.toCIDR(): CIDR {
     return CIDR(address, prefixLength)
 }
 
-
 fun ConnectivityManager.resolveDns(network: Network?): List<String> {
     val properties = getLinkProperties(network) ?: return listOf()
     return properties.dnsServers.map { it.asSocketAddressText(53) }
@@ -142,7 +141,6 @@ fun Context.getActionPendingIntent(action: String): PendingIntent {
         )
     }
 }
-
 
 private fun numericToTextFormat(src: ByteArray): String {
     val sb = StringBuilder(39)

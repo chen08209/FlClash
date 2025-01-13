@@ -191,8 +191,10 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
     isUpdating.value = true;
     try {
       final message = await clashCore.updateGeoData(
-        geoName: geoItem.fileName,
-        geoType: geoItem.label,
+        UpdateGeoDataParams(
+          geoName: geoItem.fileName,
+          geoType: geoItem.label,
+        ),
       );
       if (message.isNotEmpty) throw message;
     } catch (e) {
@@ -249,12 +251,8 @@ class UpdateGeoUrlFormDialog extends StatefulWidget {
   final String url;
   final String? defaultValue;
 
-  const UpdateGeoUrlFormDialog({
-    super.key,
-    required this.title,
-    required this.url,
-    this.defaultValue
-  });
+  const UpdateGeoUrlFormDialog(
+      {super.key, required this.title, required this.url, this.defaultValue});
 
   @override
   State<UpdateGeoUrlFormDialog> createState() => _UpdateGeoUrlFormDialogState();

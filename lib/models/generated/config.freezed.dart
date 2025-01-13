@@ -24,7 +24,7 @@ mixin _$AppSetting {
   @JsonKey(fromJson: dashboardWidgetsRealFormJson)
   List<DashboardWidget> get dashboardWidgets =>
       throw _privateConstructorUsedError;
-  bool get onlyProxy => throw _privateConstructorUsedError;
+  bool get onlyStatisticsProxy => throw _privateConstructorUsedError;
   bool get autoLaunch => throw _privateConstructorUsedError;
   bool get silentLaunch => throw _privateConstructorUsedError;
   bool get autoRun => throw _privateConstructorUsedError;
@@ -58,7 +58,7 @@ abstract class $AppSettingCopyWith<$Res> {
       {String? locale,
       @JsonKey(fromJson: dashboardWidgetsRealFormJson)
       List<DashboardWidget> dashboardWidgets,
-      bool onlyProxy,
+      bool onlyStatisticsProxy,
       bool autoLaunch,
       bool silentLaunch,
       bool autoRun,
@@ -90,7 +90,7 @@ class _$AppSettingCopyWithImpl<$Res, $Val extends AppSetting>
   $Res call({
     Object? locale = freezed,
     Object? dashboardWidgets = null,
-    Object? onlyProxy = null,
+    Object? onlyStatisticsProxy = null,
     Object? autoLaunch = null,
     Object? silentLaunch = null,
     Object? autoRun = null,
@@ -113,9 +113,9 @@ class _$AppSettingCopyWithImpl<$Res, $Val extends AppSetting>
           ? _value.dashboardWidgets
           : dashboardWidgets // ignore: cast_nullable_to_non_nullable
               as List<DashboardWidget>,
-      onlyProxy: null == onlyProxy
-          ? _value.onlyProxy
-          : onlyProxy // ignore: cast_nullable_to_non_nullable
+      onlyStatisticsProxy: null == onlyStatisticsProxy
+          ? _value.onlyStatisticsProxy
+          : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
               as bool,
       autoLaunch: null == autoLaunch
           ? _value.autoLaunch
@@ -181,7 +181,7 @@ abstract class _$$AppSettingImplCopyWith<$Res>
       {String? locale,
       @JsonKey(fromJson: dashboardWidgetsRealFormJson)
       List<DashboardWidget> dashboardWidgets,
-      bool onlyProxy,
+      bool onlyStatisticsProxy,
       bool autoLaunch,
       bool silentLaunch,
       bool autoRun,
@@ -211,7 +211,7 @@ class __$$AppSettingImplCopyWithImpl<$Res>
   $Res call({
     Object? locale = freezed,
     Object? dashboardWidgets = null,
-    Object? onlyProxy = null,
+    Object? onlyStatisticsProxy = null,
     Object? autoLaunch = null,
     Object? silentLaunch = null,
     Object? autoRun = null,
@@ -234,9 +234,9 @@ class __$$AppSettingImplCopyWithImpl<$Res>
           ? _value._dashboardWidgets
           : dashboardWidgets // ignore: cast_nullable_to_non_nullable
               as List<DashboardWidget>,
-      onlyProxy: null == onlyProxy
-          ? _value.onlyProxy
-          : onlyProxy // ignore: cast_nullable_to_non_nullable
+      onlyStatisticsProxy: null == onlyStatisticsProxy
+          ? _value.onlyStatisticsProxy
+          : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
               as bool,
       autoLaunch: null == autoLaunch
           ? _value.autoLaunch
@@ -297,7 +297,7 @@ class _$AppSettingImpl implements _AppSetting {
       {this.locale,
       @JsonKey(fromJson: dashboardWidgetsRealFormJson)
       final List<DashboardWidget> dashboardWidgets = defaultDashboardWidgets,
-      this.onlyProxy = false,
+      this.onlyStatisticsProxy = false,
       this.autoLaunch = false,
       this.silentLaunch = false,
       this.autoRun = false,
@@ -329,7 +329,7 @@ class _$AppSettingImpl implements _AppSetting {
 
   @override
   @JsonKey()
-  final bool onlyProxy;
+  final bool onlyStatisticsProxy;
   @override
   @JsonKey()
   final bool autoLaunch;
@@ -369,7 +369,7 @@ class _$AppSettingImpl implements _AppSetting {
 
   @override
   String toString() {
-    return 'AppSetting(locale: $locale, dashboardWidgets: $dashboardWidgets, onlyProxy: $onlyProxy, autoLaunch: $autoLaunch, silentLaunch: $silentLaunch, autoRun: $autoRun, openLogs: $openLogs, closeConnections: $closeConnections, testUrl: $testUrl, isAnimateToPage: $isAnimateToPage, autoCheckUpdate: $autoCheckUpdate, showLabel: $showLabel, disclaimerAccepted: $disclaimerAccepted, minimizeOnExit: $minimizeOnExit, hidden: $hidden)';
+    return 'AppSetting(locale: $locale, dashboardWidgets: $dashboardWidgets, onlyStatisticsProxy: $onlyStatisticsProxy, autoLaunch: $autoLaunch, silentLaunch: $silentLaunch, autoRun: $autoRun, openLogs: $openLogs, closeConnections: $closeConnections, testUrl: $testUrl, isAnimateToPage: $isAnimateToPage, autoCheckUpdate: $autoCheckUpdate, showLabel: $showLabel, disclaimerAccepted: $disclaimerAccepted, minimizeOnExit: $minimizeOnExit, hidden: $hidden)';
   }
 
   @override
@@ -380,8 +380,8 @@ class _$AppSettingImpl implements _AppSetting {
             (identical(other.locale, locale) || other.locale == locale) &&
             const DeepCollectionEquality()
                 .equals(other._dashboardWidgets, _dashboardWidgets) &&
-            (identical(other.onlyProxy, onlyProxy) ||
-                other.onlyProxy == onlyProxy) &&
+            (identical(other.onlyStatisticsProxy, onlyStatisticsProxy) ||
+                other.onlyStatisticsProxy == onlyStatisticsProxy) &&
             (identical(other.autoLaunch, autoLaunch) ||
                 other.autoLaunch == autoLaunch) &&
             (identical(other.silentLaunch, silentLaunch) ||
@@ -411,7 +411,7 @@ class _$AppSettingImpl implements _AppSetting {
       runtimeType,
       locale,
       const DeepCollectionEquality().hash(_dashboardWidgets),
-      onlyProxy,
+      onlyStatisticsProxy,
       autoLaunch,
       silentLaunch,
       autoRun,
@@ -446,7 +446,7 @@ abstract class _AppSetting implements AppSetting {
       {final String? locale,
       @JsonKey(fromJson: dashboardWidgetsRealFormJson)
       final List<DashboardWidget> dashboardWidgets,
-      final bool onlyProxy,
+      final bool onlyStatisticsProxy,
       final bool autoLaunch,
       final bool silentLaunch,
       final bool autoRun,
@@ -469,7 +469,7 @@ abstract class _AppSetting implements AppSetting {
   @JsonKey(fromJson: dashboardWidgetsRealFormJson)
   List<DashboardWidget> get dashboardWidgets;
   @override
-  bool get onlyProxy;
+  bool get onlyStatisticsProxy;
   @override
   bool get autoLaunch;
   @override

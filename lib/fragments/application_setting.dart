@@ -40,7 +40,7 @@ class UsageSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Selector<Config, bool>(
-      selector: (_, config) => config.appSetting.onlyProxy,
+      selector: (_, config) => config.appSetting.onlyStatisticsProxy,
       builder: (_, onlyProxy, __) {
         return ListItem.switchItem(
           title: Text(appLocalizations.onlyStatisticsProxy),
@@ -50,7 +50,7 @@ class UsageSwitch extends StatelessWidget {
             onChanged: (bool value) async {
               final config = globalState.appController.config;
               config.appSetting = config.appSetting.copyWith(
-                onlyProxy: value,
+                onlyStatisticsProxy: value,
               );
             },
           ),

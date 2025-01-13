@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
@@ -6,8 +7,9 @@ import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
-final _memoryInfoStateNotifier =
-    ValueNotifier<TrafficValue>(TrafficValue(value: 0));
+final _memoryInfoStateNotifier = ValueNotifier<TrafficValue>(
+  TrafficValue(value: 0),
+);
 
 class MemoryInfo extends StatefulWidget {
   const MemoryInfo({super.key});
@@ -22,10 +24,7 @@ class _MemoryInfoState extends State<MemoryInfo> {
   @override
   void initState() {
     super.initState();
-    clashCore.getMemory().then((memory) {
-      _memoryInfoStateNotifier.value = TrafficValue(value: memory);
-    });
-    _updateMemoryData();
+    _updateMemory();
   }
 
   @override
@@ -34,11 +33,15 @@ class _MemoryInfoState extends State<MemoryInfo> {
     super.dispose();
   }
 
-  _updateMemoryData() {
-    timer = Timer(Duration(seconds: 2), () async {
-      final memory = await clashCore.getMemory();
-      _memoryInfoStateNotifier.value = TrafficValue(value: memory);
-      _updateMemoryData();
+  _updateMemory() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final rss = ProcessInfo.currentRss;
+      _memoryInfoStateNotifier.value = TrafficValue(
+        value: clashLib != null ? rss : await clashCore.getMemory() + rss,
+      );
+      timer = Timer(Duration(seconds: 5), () async {
+        _updateMemory();
+      });
     });
   }
 

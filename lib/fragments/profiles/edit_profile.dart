@@ -1,15 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class EditProfile extends StatefulWidget {
   final Profile profile;
@@ -30,9 +30,12 @@ class _EditProfileState extends State<EditProfile> {
   late TextEditingController urlController;
   late TextEditingController autoUpdateDurationController;
   late bool autoUpdate;
+  String? rawText;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final fileInfoNotifier = ValueNotifier<FileInfo?>(null);
   Uint8List? fileData;
+
+  Profile get profile => widget.profile;
 
   @override
   void initState() {
@@ -51,28 +54,43 @@ class _EditProfileState extends State<EditProfile> {
 
   _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
-    final config = widget.context.read<Config>();
-    final profile = widget.profile.copyWith(
-      url: urlController.text,
-      label: labelController.text,
-      autoUpdate: autoUpdate,
-      autoUpdateDuration: Duration(
-        minutes: int.parse(
-          autoUpdateDurationController.text,
-        ),
-      ),
-    );
+    final appController = globalState.appController;
+    Profile profile = this.profile.copyWith(
+          url: urlController.text,
+          label: labelController.text,
+          autoUpdate: autoUpdate,
+          autoUpdateDuration: Duration(
+            minutes: int.parse(
+              autoUpdateDurationController.text,
+            ),
+          ),
+        );
     final hasUpdate = widget.profile.url != profile.url;
     if (fileData != null) {
-      config.setProfile(await profile.saveFile(fileData!));
+      if (profile.type == ProfileType.url && autoUpdate) {
+        final res = await globalState.showMessage(
+          title: appLocalizations.tip,
+          message: TextSpan(
+            text: appLocalizations.profileHasUpdate,
+          ),
+        );
+        if (res == true) {
+          profile = profile.copyWith(
+            autoUpdate: false,
+          );
+        }
+      }
+      appController.setProfile(await profile.saveFile(fileData!));
+    } else if (!hasUpdate) {
+      appController.setProfile(profile);
     } else {
-      config.setProfile(profile);
-    }
-    if (hasUpdate) {
       globalState.homeScaffoldKey.currentState?.loadingRun(
         () async {
+          await Future.delayed(
+            commonDuration,
+          );
           if (hasUpdate) {
-            await globalState.appController.updateProfile(profile);
+            await appController.updateProfile(profile);
           }
         },
       );
@@ -102,22 +120,69 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-  _editProfileFile() async {
-    final profilePath = await appPath.getProfilePath(widget.profile.id);
-    if (profilePath == null) return;
-    globalState.safeRun(() async {
-      if (Platform.isAndroid) {
-        await app?.openFile(
-          profilePath,
-        );
-        return;
-      }
-      await launchUrl(
-        Uri.file(
-          profilePath,
-        ),
+  _handleSaveEdit(BuildContext context, String data) async {
+    final message = await globalState.safeRun<String>(
+      () async {
+        final message = await clashCore.validateConfig(data);
+        return message;
+      },
+      silence: false,
+    );
+    if (message?.isNotEmpty == true) {
+      globalState.showMessage(
+        title: appLocalizations.tip,
+        message: TextSpan(text: message),
       );
-    });
+      return;
+    }
+    if (context.mounted) {
+      Navigator.of(context).pop(data);
+    }
+  }
+
+  _editProfileFile() async {
+    if (rawText == null) {
+      final profilePath = await appPath.getProfilePath(widget.profile.id);
+      if (profilePath == null) return;
+      final file = File(profilePath);
+      rawText = await file.readAsString();
+    }
+    if (!mounted) return;
+    final title = widget.profile.label ?? widget.profile.id;
+    final data = await BaseNavigator.push<String>(
+      globalState.homeScaffoldKey.currentContext!,
+      EditorPage(
+        title: title,
+        content: rawText!,
+        onSave: _handleSaveEdit,
+        onPop: (context, data) async {
+          if (data == rawText) {
+            return true;
+          }
+          final res = await globalState.showMessage(
+            title: title,
+            message: TextSpan(
+              text: appLocalizations.hasCacheChange,
+            ),
+          );
+          if (res == true && context.mounted) {
+            _handleSaveEdit(context, data);
+          } else {
+            return true;
+          }
+          return false;
+        },
+      ),
+    );
+    if (data == null) {
+      return;
+    }
+    rawText = data;
+    fileData = Uint8List.fromList(utf8.encode(data));
+    fileInfoNotifier.value = fileInfoNotifier.value?.copyWith(
+      size: fileData?.length ?? 0,
+      lastModified: DateTime.now(),
+    );
   }
 
   _uploadProfileFile() async {
@@ -128,6 +193,20 @@ class _EditProfileState extends State<EditProfile> {
       size: fileData?.length ?? 0,
       lastModified: DateTime.now(),
     );
+  }
+
+  _handleBack() async {
+    final res = await globalState.showMessage(
+      title: appLocalizations.tip,
+      message: TextSpan(text: appLocalizations.fileIsUpdate),
+    );
+    if (res == true) {
+      _handleConfirm();
+    } else {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   @override
@@ -245,34 +324,45 @@ class _EditProfileState extends State<EditProfile> {
         },
       ),
     ];
-    return FloatLayout(
-      floatingWidget: FloatWrapper(
-        child: FloatingActionButton.extended(
-          heroTag: null,
-          onPressed: _handleConfirm,
-          label: Text(appLocalizations.save),
-          icon: const Icon(Icons.save),
-        ),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: 16,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, __) {
+        if (didPop) return;
+        if (fileData == null) {
+          Navigator.of(context).pop();
+          return;
+        }
+        _handleBack();
+      },
+      child: FloatLayout(
+        floatingWidget: FloatWrapper(
+          child: FloatingActionButton.extended(
+            heroTag: null,
+            onPressed: _handleConfirm,
+            label: Text(appLocalizations.save),
+            icon: const Icon(Icons.save),
           ),
-          child: ListView.separated(
-            padding: kMaterialListPadding.copyWith(
-              bottom: 72,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 16,
             ),
-            itemBuilder: (_, index) {
-              return items[index];
-            },
-            separatorBuilder: (_, __) {
-              return const SizedBox(
-                height: 24,
-              );
-            },
-            itemCount: items.length,
+            child: ListView.separated(
+              padding: kMaterialListPadding.copyWith(
+                bottom: 72,
+              ),
+              itemBuilder: (_, index) {
+                return items[index];
+              },
+              separatorBuilder: (_, __) {
+                return const SizedBox(
+                  height: 24,
+                );
+              },
+              itemCount: items.length,
+            ),
           ),
         ),
       ),

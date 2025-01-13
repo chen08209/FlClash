@@ -23,7 +23,6 @@ _$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
           .map((e) => e as String)
           .toList(),
       ipv6: json['ipv6'] as bool,
-      onlyProxy: json['onlyProxy'] as bool,
     );
 
 Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
@@ -36,7 +35,6 @@ Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
       'bypassDomain': instance.bypassDomain,
       'routeAddress': instance.routeAddress,
       'ipv6': instance.ipv6,
-      'onlyProxy': instance.onlyProxy,
     };
 
 _$AndroidVpnOptionsImpl _$$AndroidVpnOptionsImplFromJson(
@@ -84,6 +82,7 @@ _$ConfigExtendedParamsImpl _$$ConfigExtendedParamsImplFromJson(
       selectedMap: Map<String, String>.from(json['selected-map'] as Map),
       overrideDns: json['override-dns'] as bool,
       testUrl: json['test-url'] as String,
+      onlyStatisticsProxy: json['only-statistics-proxy'] as bool,
     );
 
 Map<String, dynamic> _$$ConfigExtendedParamsImplToJson(
@@ -94,6 +93,7 @@ Map<String, dynamic> _$$ConfigExtendedParamsImplToJson(
       'selected-map': instance.selectedMap,
       'override-dns': instance.overrideDns,
       'test-url': instance.testUrl,
+      'only-statistics-proxy': instance.onlyStatisticsProxy,
     };
 
 _$UpdateConfigParamsImpl _$$UpdateConfigParamsImplFromJson(
@@ -127,6 +127,20 @@ Map<String, dynamic> _$$ChangeProxyParamsImplToJson(
       'proxy-name': instance.proxyName,
     };
 
+_$UpdateGeoDataParamsImpl _$$UpdateGeoDataParamsImplFromJson(
+        Map<String, dynamic> json) =>
+    _$UpdateGeoDataParamsImpl(
+      geoType: json['geo-type'] as String,
+      geoName: json['geo-name'] as String,
+    );
+
+Map<String, dynamic> _$$UpdateGeoDataParamsImplToJson(
+        _$UpdateGeoDataParamsImpl instance) =>
+    <String, dynamic>{
+      'geo-type': instance.geoType,
+      'geo-name': instance.geoName,
+    };
+
 _$AppMessageImpl _$$AppMessageImplFromJson(Map<String, dynamic> json) =>
     _$AppMessageImpl(
       type: $enumDecode(_$AppMessageTypeEnumMap, json['type']),
@@ -143,38 +157,36 @@ const _$AppMessageTypeEnumMap = {
   AppMessageType.log: 'log',
   AppMessageType.delay: 'delay',
   AppMessageType.request: 'request',
-  AppMessageType.started: 'started',
   AppMessageType.loaded: 'loaded',
 };
 
-_$ServiceMessageImpl _$$ServiceMessageImplFromJson(Map<String, dynamic> json) =>
-    _$ServiceMessageImpl(
-      type: $enumDecode(_$ServiceMessageTypeEnumMap, json['type']),
+_$InvokeMessageImpl _$$InvokeMessageImplFromJson(Map<String, dynamic> json) =>
+    _$InvokeMessageImpl(
+      type: $enumDecode(_$InvokeMessageTypeEnumMap, json['type']),
       data: json['data'],
     );
 
-Map<String, dynamic> _$$ServiceMessageImplToJson(
-        _$ServiceMessageImpl instance) =>
+Map<String, dynamic> _$$InvokeMessageImplToJson(_$InvokeMessageImpl instance) =>
     <String, dynamic>{
-      'type': _$ServiceMessageTypeEnumMap[instance.type]!,
+      'type': _$InvokeMessageTypeEnumMap[instance.type]!,
       'data': instance.data,
     };
 
-const _$ServiceMessageTypeEnumMap = {
-  ServiceMessageType.protect: 'protect',
-  ServiceMessageType.process: 'process',
-  ServiceMessageType.started: 'started',
-  ServiceMessageType.loaded: 'loaded',
+const _$InvokeMessageTypeEnumMap = {
+  InvokeMessageType.protect: 'protect',
+  InvokeMessageType.process: 'process',
 };
 
 _$DelayImpl _$$DelayImplFromJson(Map<String, dynamic> json) => _$DelayImpl(
       name: json['name'] as String,
+      url: json['url'] as String,
       value: (json['value'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$DelayImplToJson(_$DelayImpl instance) =>
     <String, dynamic>{
       'name': instance.name,
+      'url': instance.url,
       'value': instance.value,
     };
 
@@ -190,7 +202,7 @@ Map<String, dynamic> _$$NowImplToJson(_$NowImpl instance) => <String, dynamic>{
 
 _$ProcessDataImpl _$$ProcessDataImplFromJson(Map<String, dynamic> json) =>
     _$ProcessDataImpl(
-      id: (json['id'] as num).toInt(),
+      id: json['id'] as String,
       metadata: Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
     );
 
@@ -201,7 +213,7 @@ Map<String, dynamic> _$$ProcessDataImplToJson(_$ProcessDataImpl instance) =>
     };
 
 _$FdImpl _$$FdImplFromJson(Map<String, dynamic> json) => _$FdImpl(
-      id: (json['id'] as num).toInt(),
+      id: json['id'] as String,
       value: (json['value'] as num).toInt(),
     );
 
@@ -212,7 +224,7 @@ Map<String, dynamic> _$$FdImplToJson(_$FdImpl instance) => <String, dynamic>{
 
 _$ProcessMapItemImpl _$$ProcessMapItemImplFromJson(Map<String, dynamic> json) =>
     _$ProcessMapItemImpl(
-      id: (json['id'] as num).toInt(),
+      id: json['id'] as String,
       value: json['value'] as String,
     );
 
@@ -293,6 +305,7 @@ Map<String, dynamic> _$$TunPropsImplToJson(_$TunPropsImpl instance) =>
 _$ActionImpl _$$ActionImplFromJson(Map<String, dynamic> json) => _$ActionImpl(
       method: $enumDecode(_$ActionMethodEnumMap, json['method']),
       data: json['data'],
+      defaultValue: json['default-value'],
       id: json['id'] as String,
     );
 
@@ -300,6 +313,7 @@ Map<String, dynamic> _$$ActionImplToJson(_$ActionImpl instance) =>
     <String, dynamic>{
       'method': _$ActionMethodEnumMap[instance.method]!,
       'data': instance.data,
+      'default-value': instance.defaultValue,
       'id': instance.id,
     };
 
@@ -331,4 +345,27 @@ const _$ActionMethodEnumMap = {
   ActionMethod.stopListener: 'stopListener',
   ActionMethod.getCountryCode: 'getCountryCode',
   ActionMethod.getMemory: 'getMemory',
+  ActionMethod.setFdMap: 'setFdMap',
+  ActionMethod.setProcessMap: 'setProcessMap',
+  ActionMethod.setState: 'setState',
+  ActionMethod.startTun: 'startTun',
+  ActionMethod.stopTun: 'stopTun',
+  ActionMethod.getRunTime: 'getRunTime',
+  ActionMethod.updateDns: 'updateDns',
+  ActionMethod.getAndroidVpnOptions: 'getAndroidVpnOptions',
+  ActionMethod.getCurrentProfileName: 'getCurrentProfileName',
 };
+
+_$ActionResultImpl _$$ActionResultImplFromJson(Map<String, dynamic> json) =>
+    _$ActionResultImpl(
+      method: $enumDecode(_$ActionMethodEnumMap, json['method']),
+      data: json['data'],
+      id: json['id'] as String?,
+    );
+
+Map<String, dynamic> _$$ActionResultImplToJson(_$ActionResultImpl instance) =>
+    <String, dynamic>{
+      'method': _$ActionMethodEnumMap[instance.method]!,
+      'data': instance.data,
+      'id': instance.id,
+    };

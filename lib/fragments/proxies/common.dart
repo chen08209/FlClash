@@ -38,33 +38,48 @@ double getItemHeight(ProxyCardType proxyCardType) {
   };
 }
 
-proxyDelayTest(Proxy proxy) async {
+proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   final appController = globalState.appController;
   final proxyName = appController.appState.getRealProxyName(proxy.name);
+  final url = appController.getRealTestUrl(testUrl);
   globalState.appController.setDelay(
     Delay(
+      url: url,
       name: proxyName,
       value: 0,
     ),
   );
-  globalState.appController.setDelay(await clashCore.getDelay(proxyName));
+  globalState.appController.setDelay(
+    await clashCore.getDelay(
+      url,
+      proxyName,
+    ),
+  );
 }
 
-delayTest(List<Proxy> proxies) async {
+delayTest(List<Proxy> proxies, [String? testUrl]) async {
   final appController = globalState.appController;
   final proxyNames = proxies
       .map((proxy) => appController.appState.getRealProxyName(proxy.name))
       .toSet()
       .toList();
 
+  final url = appController.getRealTestUrl(testUrl);
+
   final delayProxies = proxyNames.map<Future>((proxyName) async {
     globalState.appController.setDelay(
       Delay(
+        url: url,
         name: proxyName,
         value: 0,
       ),
     );
-    globalState.appController.setDelay(await clashCore.getDelay(proxyName));
+    globalState.appController.setDelay(
+      await clashCore.getDelay(
+        url,
+        proxyName,
+      ),
+    );
   }).toList();
 
   final batchesDelayProxies = delayProxies.batch(100);
@@ -86,7 +101,7 @@ double getScrollToSelectedOffset({
   final proxyCardType = appController.config.proxiesStyle.cardType;
   final selectedName = appController.getCurrentSelectedName(groupName);
   final findSelectedIndex = proxies.indexWhere(
-    (proxy) => proxy.name == selectedName,
+        (proxy) => proxy.name == selectedName,
   );
   final selectedIndex = findSelectedIndex != -1 ? findSelectedIndex : 0;
   final rows = (selectedIndex / columns).floor();

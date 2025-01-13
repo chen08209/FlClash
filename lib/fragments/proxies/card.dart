@@ -12,10 +12,12 @@ class ProxyCard extends StatelessWidget {
   final Proxy proxy;
   final GroupType groupType;
   final ProxyCardType type;
+  final String? testUrl;
 
   const ProxyCard({
     super.key,
     required this.groupName,
+    required this.testUrl,
     required this.proxy,
     required this.groupType,
     required this.type,
@@ -24,16 +26,18 @@ class ProxyCard extends StatelessWidget {
   Measure get measure => globalState.measure;
 
   _handleTestCurrentDelay() {
-    proxyDelayTest(proxy);
+    proxyDelayTest(
+      proxy,
+      testUrl,
+    );
   }
 
   Widget _buildDelayText() {
     return SizedBox(
       height: measure.labelSmallHeight,
       child: Selector<AppState, int?>(
-        selector: (context, appState) => appState.getDelay(
-          proxy.name,
-        ),
+        selector: (context, appState) =>
+            globalState.appController.getDelay(proxy.name,testUrl),
         builder: (context, delay, __) {
           return FadeBox(
             child: Builder(

@@ -76,41 +76,11 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
                       -16,
                       -20,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.arrow_upward,
-                          color: color,
-                          size: 16,
-                        ),
-                        SizedBox(
-                          width: 2,
-                        ),
-                        Text(
-                          "${_getLastTraffic(traffics).up}/s",
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: color,
-                          ),
-                        ),
-                        SizedBox(
-                          width: 16,
-                        ),
-                        Icon(
-                          Icons.arrow_downward,
-                          color: color,
-                          size: 16,
-                        ),
-                        SizedBox(
-                          width: 2,
-                        ),
-                        Text(
-                          "${_getLastTraffic(traffics).down}/s",
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: color,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      "${_getLastTraffic(traffics).up}↑   ${_getLastTraffic(traffics).down}↓",
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: color,
+                      ),
                     ),
                   ),
                 ),

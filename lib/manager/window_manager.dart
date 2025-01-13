@@ -65,6 +65,18 @@ class _WindowContainerState extends State<WindowManager>
   }
 
   @override
+  void onWindowFocus() {
+    super.onWindowFocus();
+    render?.resume();
+  }
+
+  @override
+  void onWindowBlur() {
+    super.onWindowBlur();
+    render?.pause();
+  }
+
+  @override
   Future<void> onShouldTerminate() async {
     await globalState.appController.handleExit();
     super.onShouldTerminate();

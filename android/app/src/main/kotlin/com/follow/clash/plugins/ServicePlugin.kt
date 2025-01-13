@@ -1,20 +1,19 @@
 package com.follow.clash.plugins
 
-import android.content.Context
+import com.follow.clash.FlClashApplication
 import com.follow.clash.GlobalState
+import com.follow.clash.models.VpnOptions
+import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
 
-class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
+data object ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private lateinit var flutterMethodChannel: MethodChannel
 
-    private lateinit var context: Context
-
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        context = flutterPluginBinding.applicationContext
         flutterMethodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, "service")
         flutterMethodChannel.setMethodCallHandler(this)
     }
@@ -24,9 +23,22 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) = when (call.method) {
+        "startVpn" -> {
+            val data = call.argument<String>("data")
+            val options = Gson().fromJson(data, VpnOptions::class.java)
+            GlobalState.getCurrentVPNPlugin()?.handleStart(options)
+            result.success(true)
+        }
+
+        "stopVpn" -> {
+            GlobalState.getCurrentVPNPlugin()?.handleStop()
+            result.success(true)
+        }
+
         "init" -> {
-            GlobalState.getCurrentAppPlugin()?.requestNotificationsPermission(context)
-            GlobalState.initServiceEngine(context)
+            GlobalState.getCurrentAppPlugin()
+                ?.requestNotificationsPermission()
+            GlobalState.initServiceEngine()
             result.success(true)
         }
 
@@ -41,7 +53,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     private fun handleDestroy() {
-        GlobalState.getCurrentVPNPlugin()?.stop()
+        GlobalState.getCurrentVPNPlugin()?.handleStop()
         GlobalState.destroyServiceEngine()
     }
 }
