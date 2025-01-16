@@ -107,6 +107,12 @@ class VpnSystemProxyItem extends StatelessWidget {
               config.vpnProps = vpnProps.copyWith(
                 systemProxy: value,
               );
+              // 如果关闭系统代理
+              if (!value) {
+                config.networkProps = config.networkProps.copyWith(
+                  systemProxy: false,
+                );
+              }
             },
           ),
         );
@@ -134,6 +140,12 @@ class SystemProxyItem extends StatelessWidget {
               config.networkProps = networkProps.copyWith(
                 systemProxy: value,
               );
+              // 如果关闭系统代理
+              if (Platform.isAndroid && !value) {
+                config.vpnProps = config.vpnProps.copyWith(
+                  systemProxy: false,
+                );
+              }
             },
           ),
         );
