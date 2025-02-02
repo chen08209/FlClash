@@ -99,6 +99,10 @@ Future<void> _service(List<String> flags) async {
     )
         .then(
       (res) async {
+        if (res.isNotEmpty) {
+          await vpn?.stop();
+          exit(0);
+        }
         await vpn?.start(
           clashLibHandler.getAndroidVpnOptions(),
         );

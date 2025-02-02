@@ -315,7 +315,10 @@ func quickStart(dirChar *C.char, paramsChar *C.char, stateParamsChar *C.char, po
 	bytes := []byte(C.GoString(paramsChar))
 	stateParams := C.GoString(stateParamsChar)
 	go func() {
-		handleInitClash(dir)
+		res := handleInitClash(dir)
+		if res == false {
+			bridge.SendToPort(i, "init error")
+		}
 		handleSetState(stateParams)
 		bridge.SendToPort(i, handleUpdateConfig(bytes))
 	}()

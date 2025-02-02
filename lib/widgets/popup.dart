@@ -93,16 +93,14 @@ class CommonPopupBox extends StatefulWidget {
   });
 
   @override
-  State<CommonPopupBox> createState() => _CommonPopupBoxState();
+  State<CommonPopupBox> createState() => CommonPopupBoxState();
 }
 
-class _CommonPopupBoxState extends State<CommonPopupBox> {
-  final _targetKey = GlobalKey();
+class CommonPopupBoxState extends State<CommonPopupBox> {
   final _targetOffsetValueNotifier = ValueNotifier(Offset.zero);
 
   _handleTargetOffset() {
-    final renderBox =
-        _targetKey.currentContext?.findRenderObject() as RenderBox?;
+    final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) {
       return;
     }
@@ -111,28 +109,22 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: (details) {
-        _handleTargetOffset();
-        Navigator.of(context).push(
-          CommonPopupRoute(
-            barrierLabel: other.id,
-            builder: (BuildContext context) {
-              return widget.popup;
-            },
-            offsetNotifier: _targetOffsetValueNotifier,
-          ),
-        );
-      },
-      key: _targetKey,
-      child: LayoutBuilder(
-        builder: (_, __) {
-          return widget.target;
+  pop() {
+    _handleTargetOffset();
+    Navigator.of(context).push(
+      CommonPopupRoute(
+        barrierLabel: other.id,
+        builder: (BuildContext context) {
+          return widget.popup;
         },
+        offsetNotifier: _targetOffsetValueNotifier,
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.target;
   }
 }
 

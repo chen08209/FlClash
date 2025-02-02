@@ -289,6 +289,7 @@ class ProfileItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final key = GlobalKey<CommonPopupBoxState>();
     return CommonCard(
       isSelected: profile.id == groupValue,
       onPressed: () {
@@ -308,6 +309,7 @@ class ProfileItem extends StatelessWidget {
                     child: CircularProgressIndicator(),
                   )
                 : CommonPopupBox(
+                    key: key,
                     popup: CommonPopupMenu(
                       items: [
                         ActionItemData(
@@ -352,7 +354,9 @@ class ProfileItem extends StatelessWidget {
                       ],
                     ),
                     target: IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        key.currentState?.pop();
+                      },
                       icon: Icon(Icons.more_vert),
                     ),
                   ),
