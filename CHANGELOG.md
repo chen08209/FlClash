@@ -1,3 +1,21 @@
+## v0.8.73
+
+- Update popup menu
+
+- Add file editor
+
+- Fix android service issues
+
+- Optimize desktop background performance
+
+- Optimize android main process performance
+
+- Optimize delay test
+
+- Optimize vpn protect
+
+- Update changelog
+
 ## v0.8.72
 
 - Update core
