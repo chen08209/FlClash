@@ -21,7 +21,10 @@ class HomePage extends StatelessWidget {
     final currentIndex = index == -1 ? 0 : index;
     if (globalState.pageController != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        globalState.appController.toPage(currentIndex, hasAnimate: true);
+        globalState.appController.toPage(
+          currentIndex,
+          hasAnimate: true,
+        );
       });
     } else {
       globalState.pageController = PageController(
@@ -152,71 +155,69 @@ class CommonNavigationBar extends StatelessWidget {
     }
     return Material(
       color: context.colorScheme.surfaceContainer,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: 16,
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: IntrinsicHeight(
-                  child: Selector<Config, bool>(
-                    selector: (_, config) => config.appSetting.showLabel,
-                    builder: (_, showLabel, __) {
-                      return NavigationRail(
-                        backgroundColor: context.colorScheme.surfaceContainer,
-                        selectedIconTheme: IconThemeData(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                        unselectedIconTheme: IconThemeData(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                        selectedLabelTextStyle:
-                            context.textTheme.labelLarge!.copyWith(
-                          color: context.colorScheme.onSurface,
-                        ),
-                        unselectedLabelTextStyle:
-                            context.textTheme.labelLarge!.copyWith(
-                          color: context.colorScheme.onSurface,
-                        ),
-                        destinations: navigationItems
-                            .map(
-                              (e) => NavigationRailDestination(
-                                icon: e.icon,
-                                label: Text(
-                                  Intl.message(e.label),
-                                ),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: IntrinsicHeight(
+                child: Selector<Config, bool>(
+                  selector: (_, config) => config.appSetting.showLabel,
+                  builder: (_, showLabel, __) {
+                    return NavigationRail(
+                      backgroundColor: context.colorScheme.surfaceContainer,
+                      selectedIconTheme: IconThemeData(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                      unselectedIconTheme: IconThemeData(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                      selectedLabelTextStyle:
+                          context.textTheme.labelLarge!.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
+                      unselectedLabelTextStyle:
+                          context.textTheme.labelLarge!.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
+                      destinations: navigationItems
+                          .map(
+                            (e) => NavigationRailDestination(
+                              icon: e.icon,
+                              label: Text(
+                                Intl.message(e.label),
                               ),
-                            )
-                            .toList(),
-                        onDestinationSelected: globalState.appController.toPage,
-                        extended: false,
-                        selectedIndex: currentIndex,
-                        labelType: showLabel
-                            ? NavigationRailLabelType.all
-                            : NavigationRailLabelType.none,
-                      );
-                    },
-                  ),
+                            ),
+                          )
+                          .toList(),
+                      onDestinationSelected: globalState.appController.toPage,
+                      extended: false,
+                      selectedIndex: currentIndex,
+                      labelType: showLabel
+                          ? NavigationRailLabelType.all
+                          : NavigationRailLabelType.none,
+                    );
+                  },
                 ),
               ),
             ),
-            const SizedBox(
-              height: 16,
-            ),
-            IconButton(
-              onPressed: () {
-                final config = globalState.appController.config;
-                final appSetting = config.appSetting;
-                config.appSetting = appSetting.copyWith(
-                  showLabel: !appSetting.showLabel,
-                );
-              },
-              icon: const Icon(Icons.menu),
-            )
-          ],
-        ),
+          ),
+          const SizedBox(
+            height: 16,
+          ),
+          IconButton(
+            onPressed: () {
+              final config = globalState.appController.config;
+              final appSetting = config.appSetting;
+              config.appSetting = appSetting.copyWith(
+                showLabel: !appSetting.showLabel,
+              );
+            },
+            icon: const Icon(Icons.menu),
+          ),
+          const SizedBox(
+            height: 16,
+          ),
+        ],
       ),
     );
   }

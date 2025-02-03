@@ -268,9 +268,9 @@ abstract class ClashHandlerInterface with ClashInterface {
   @override
   Future<String> updateGeoData(UpdateGeoDataParams params) {
     return invoke<String>(
-      method: ActionMethod.updateGeoData,
-      data: json.encode(params),
-    );
+        method: ActionMethod.updateGeoData,
+        data: json.encode(params),
+        timeout: Duration(minutes: 1));
   }
 
   @override
@@ -292,6 +292,7 @@ abstract class ClashHandlerInterface with ClashInterface {
     return invoke<String>(
       method: ActionMethod.updateExternalProvider,
       data: providerName,
+      timeout: Duration(minutes: 1),
     );
   }
 

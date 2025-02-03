@@ -1,15 +1,11 @@
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
-import 'package:image/image.dart' as img;
 import 'package:lpinyin/lpinyin.dart';
-import 'package:zxing2/qrcode.dart';
 
 class Other {
   Color? getDelayColor(int? delay) {
@@ -32,6 +28,26 @@ class Other {
     return valueRaw.substring(
       valueRaw.length - 2,
     );
+  }
+
+  String generateRandomString({int minLength = 10, int maxLength = 100}) {
+    const latinChars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+
+    int length = minLength + random.nextInt(maxLength - minLength + 1);
+
+    String result = '';
+    for (int i = 0; i < length; i++) {
+      if (random.nextBool()) {
+        result +=
+            String.fromCharCode(0x4E00 + random.nextInt(0x9FA5 - 0x4E00 + 1));
+      } else {
+        result += latinChars[random.nextInt(latinChars.length)];
+      }
+    }
+
+    return result;
   }
 
   String get uuidV4 {
@@ -163,30 +179,6 @@ class Other {
     return value.isNotEmpty
         ? PinyinHelper.getFirstWordPinyin(value.substring(0, 1))
         : "";
-  }
-
-  Future<String?> parseQRCode(Uint8List? bytes) {
-    return Isolate.run<String?>(() {
-      if (bytes == null) return null;
-      img.Image? image = img.decodeImage(bytes);
-      LuminanceSource source = RGBLuminanceSource(
-        image!.width,
-        image.height,
-        image
-            .convert(numChannels: 4)
-            .getBytes(order: img.ChannelOrder.abgr)
-            .buffer
-            .asInt32List(),
-      );
-      final bitmap = BinaryBitmap(GlobalHistogramBinarizer(source));
-      final reader = QRCodeReader();
-      try {
-        final result = reader.decode(bitmap);
-        return result.text;
-      } catch (_) {
-        return null;
-      }
-    });
   }
 
   String? getFileNameForDisposition(String? disposition) {

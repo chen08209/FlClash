@@ -35,6 +35,7 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
       delegate: OpenDelegate(
         title: Intl.message(navigationItem.label),
         widget: navigationItem.fragment,
+        extendPageWidth: 360,
       ),
     );
   }
@@ -195,14 +196,17 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
           Selector<AppState, MoreToolsSelectorState>(
             selector: (_, appState) {
               return MoreToolsSelectorState(
-                navigationItems: appState.viewMode == ViewMode.mobile
-                    ? appState.navigationItems.where(
-                        (element) {
-                          return element.modes
-                              .contains(NavigationItemMode.more);
-                        },
-                      ).toList()
-                    : [],
+                navigationItems: appState.navigationItems.where((element) {
+                  final isMore =
+                      element.modes.contains(NavigationItemMode.more);
+                  final isDesktop =
+                      element.modes.contains(NavigationItemMode.desktop);
+                  if (isMore && !isDesktop) return true;
+                  if (appState.viewMode != ViewMode.mobile || !isMore) {
+                    return false;
+                  }
+                  return true;
+                }).toList(),
               );
             },
             builder: (_, state, __) {

@@ -27,11 +27,11 @@ Future<void> main() async {
   globalState.packageInfo = await PackageInfo.fromPlatform();
   final version = await system.version;
   final config = await preferences.getConfig() ?? Config();
+  final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
   await AppLocalizations.load(
     other.getLocaleForString(config.appSetting.locale) ??
         WidgetsBinding.instance.platformDispatcher.locale,
   );
-  final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
   await android?.init();
   await window?.init(config.windowProps, version);
   final appState = AppState(
@@ -89,7 +89,7 @@ Future<void> _service(List<String> flags) async {
     await ClashCore.initGeo();
     globalState.packageInfo = await PackageInfo.fromPlatform();
     final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
-    final homeDirPath = await appPath.getHomeDirPath();
+    final homeDirPath = await appPath.homeDirPath;
     await app?.tip(appLocalizations.startVpn);
     clashLibHandler
         .quickStart(

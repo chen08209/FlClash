@@ -18,17 +18,20 @@ class AppLocalizations {
   static AppLocalizations? _current;
 
   static AppLocalizations get current {
-    assert(_current != null,
-        'No instance of AppLocalizations was loaded. Try to initialize the AppLocalizations delegate before accessing AppLocalizations.current.');
+    assert(
+      _current != null,
+      'No instance of AppLocalizations was loaded. Try to initialize the AppLocalizations delegate before accessing AppLocalizations.current.',
+    );
     return _current!;
   }
 
   static const AppLocalizationDelegate delegate = AppLocalizationDelegate();
 
   static Future<AppLocalizations> load(Locale locale) {
-    final name = (locale.countryCode?.isEmpty ?? false)
-        ? locale.languageCode
-        : locale.toString();
+    final name =
+        (locale.countryCode?.isEmpty ?? false)
+            ? locale.languageCode
+            : locale.toString();
     final localeName = Intl.canonicalizedLocale(name);
     return initializeMessages(localeName).then((_) {
       Intl.defaultLocale = localeName;
@@ -41,8 +44,10 @@ class AppLocalizations {
 
   static AppLocalizations of(BuildContext context) {
     final instance = AppLocalizations.maybeOf(context);
-    assert(instance != null,
-        'No instance of AppLocalizations present in the widget tree. Did you add AppLocalizations.delegate in localizationsDelegates?');
+    assert(
+      instance != null,
+      'No instance of AppLocalizations present in the widget tree. Did you add AppLocalizations.delegate in localizationsDelegates?',
+    );
     return instance!;
   }
 
@@ -52,92 +57,47 @@ class AppLocalizations {
 
   /// `Rule`
   String get rule {
-    return Intl.message(
-      'Rule',
-      name: 'rule',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Rule', name: 'rule', desc: '', args: []);
   }
 
   /// `Global`
   String get global {
-    return Intl.message(
-      'Global',
-      name: 'global',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Global', name: 'global', desc: '', args: []);
   }
 
   /// `Direct`
   String get direct {
-    return Intl.message(
-      'Direct',
-      name: 'direct',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Direct', name: 'direct', desc: '', args: []);
   }
 
   /// `Dashboard`
   String get dashboard {
-    return Intl.message(
-      'Dashboard',
-      name: 'dashboard',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Dashboard', name: 'dashboard', desc: '', args: []);
   }
 
   /// `Proxies`
   String get proxies {
-    return Intl.message(
-      'Proxies',
-      name: 'proxies',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Proxies', name: 'proxies', desc: '', args: []);
   }
 
   /// `Profile`
   String get profile {
-    return Intl.message(
-      'Profile',
-      name: 'profile',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Profile', name: 'profile', desc: '', args: []);
   }
 
   /// `Profiles`
   String get profiles {
-    return Intl.message(
-      'Profiles',
-      name: 'profiles',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Profiles', name: 'profiles', desc: '', args: []);
   }
 
   /// `Tools`
   String get tools {
-    return Intl.message(
-      'Tools',
-      name: 'tools',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Tools', name: 'tools', desc: '', args: []);
   }
 
   /// `Logs`
   String get logs {
-    return Intl.message(
-      'Logs',
-      name: 'logs',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Logs', name: 'logs', desc: '', args: []);
   }
 
   /// `Log capture records`
@@ -152,12 +112,7 @@ class AppLocalizations {
 
   /// `Resources`
   String get resources {
-    return Intl.message(
-      'Resources',
-      name: 'resources',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Resources', name: 'resources', desc: '', args: []);
   }
 
   /// `External resource related info`
@@ -182,12 +137,7 @@ class AppLocalizations {
 
   /// `Core info`
   String get coreInfo {
-    return Intl.message(
-      'Core info',
-      name: 'coreInfo',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Core info', name: 'coreInfo', desc: '', args: []);
   }
 
   /// `Unable to obtain core info`
@@ -232,32 +182,17 @@ class AppLocalizations {
 
   /// `Upload`
   String get upload {
-    return Intl.message(
-      'Upload',
-      name: 'upload',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Upload', name: 'upload', desc: '', args: []);
   }
 
   /// `Download`
   String get download {
-    return Intl.message(
-      'Download',
-      name: 'download',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Download', name: 'download', desc: '', args: []);
   }
 
   /// `No proxy`
   String get noProxy {
-    return Intl.message(
-      'No proxy',
-      name: 'noProxy',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('No proxy', name: 'noProxy', desc: '', args: []);
   }
 
   /// `Please create a profile or add a valid profile`
@@ -282,82 +217,42 @@ class AppLocalizations {
 
   /// `No logs`
   String get nullLogsDesc {
-    return Intl.message(
-      'No logs',
-      name: 'nullLogsDesc',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('No logs', name: 'nullLogsDesc', desc: '', args: []);
   }
 
   /// `Settings`
   String get settings {
-    return Intl.message(
-      'Settings',
-      name: 'settings',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Settings', name: 'settings', desc: '', args: []);
   }
 
   /// `Language`
   String get language {
-    return Intl.message(
-      'Language',
-      name: 'language',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Language', name: 'language', desc: '', args: []);
   }
 
   /// `Default`
   String get defaultText {
-    return Intl.message(
-      'Default',
-      name: 'defaultText',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Default', name: 'defaultText', desc: '', args: []);
   }
 
   /// `More`
   String get more {
-    return Intl.message(
-      'More',
-      name: 'more',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('More', name: 'more', desc: '', args: []);
   }
 
   /// `Other`
   String get other {
-    return Intl.message(
-      'Other',
-      name: 'other',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Other', name: 'other', desc: '', args: []);
   }
 
   /// `About`
   String get about {
-    return Intl.message(
-      'About',
-      name: 'about',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('About', name: 'about', desc: '', args: []);
   }
 
   /// `English`
   String get en {
-    return Intl.message(
-      'English',
-      name: 'en',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('English', name: 'en', desc: '', args: []);
   }
 
   /// `Simplified Chinese`
@@ -372,12 +267,7 @@ class AppLocalizations {
 
   /// `Theme`
   String get theme {
-    return Intl.message(
-      'Theme',
-      name: 'theme',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Theme', name: 'theme', desc: '', args: []);
   }
 
   /// `Set dark mode,adjust the color`
@@ -392,12 +282,7 @@ class AppLocalizations {
 
   /// `Override`
   String get override {
-    return Intl.message(
-      'Override',
-      name: 'override',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Override', name: 'override', desc: '', args: []);
   }
 
   /// `Override Proxy related config`
@@ -412,12 +297,7 @@ class AppLocalizations {
 
   /// `AllowLan`
   String get allowLan {
-    return Intl.message(
-      'AllowLan',
-      name: 'allowLan',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('AllowLan', name: 'allowLan', desc: '', args: []);
   }
 
   /// `Allow access proxy through the LAN`
@@ -432,12 +312,7 @@ class AppLocalizations {
 
   /// `TUN`
   String get tun {
-    return Intl.message(
-      'TUN',
-      name: 'tun',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('TUN', name: 'tun', desc: '', args: []);
   }
 
   /// `only effective in administrator mode`
@@ -472,12 +347,7 @@ class AppLocalizations {
 
   /// `Auto launch`
   String get autoLaunch {
-    return Intl.message(
-      'Auto launch',
-      name: 'autoLaunch',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Auto launch', name: 'autoLaunch', desc: '', args: []);
   }
 
   /// `Follow the system self startup`
@@ -512,12 +382,7 @@ class AppLocalizations {
 
   /// `AutoRun`
   String get autoRun {
-    return Intl.message(
-      'AutoRun',
-      name: 'autoRun',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('AutoRun', name: 'autoRun', desc: '', args: []);
   }
 
   /// `Auto run when the application is opened`
@@ -532,12 +397,7 @@ class AppLocalizations {
 
   /// `Logcat`
   String get logcat {
-    return Intl.message(
-      'Logcat',
-      name: 'logcat',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Logcat', name: 'logcat', desc: '', args: []);
   }
 
   /// `Disabling will hide the log entry`
@@ -592,12 +452,7 @@ class AppLocalizations {
 
   /// `Application`
   String get application {
-    return Intl.message(
-      'Application',
-      name: 'application',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Application', name: 'application', desc: '', args: []);
   }
 
   /// `Modify application related settings`
@@ -612,152 +467,77 @@ class AppLocalizations {
 
   /// `Edit`
   String get edit {
-    return Intl.message(
-      'Edit',
-      name: 'edit',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Edit', name: 'edit', desc: '', args: []);
   }
 
   /// `Confirm`
   String get confirm {
-    return Intl.message(
-      'Confirm',
-      name: 'confirm',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Confirm', name: 'confirm', desc: '', args: []);
   }
 
   /// `Update`
   String get update {
-    return Intl.message(
-      'Update',
-      name: 'update',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Update', name: 'update', desc: '', args: []);
   }
 
   /// `Add`
   String get add {
-    return Intl.message(
-      'Add',
-      name: 'add',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Add', name: 'add', desc: '', args: []);
   }
 
   /// `Save`
   String get save {
-    return Intl.message(
-      'Save',
-      name: 'save',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Save', name: 'save', desc: '', args: []);
   }
 
   /// `Delete`
   String get delete {
-    return Intl.message(
-      'Delete',
-      name: 'delete',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Delete', name: 'delete', desc: '', args: []);
   }
 
   /// `Years`
   String get years {
-    return Intl.message(
-      'Years',
-      name: 'years',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Years', name: 'years', desc: '', args: []);
   }
 
   /// `Months`
   String get months {
-    return Intl.message(
-      'Months',
-      name: 'months',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Months', name: 'months', desc: '', args: []);
   }
 
   /// `Hours`
   String get hours {
-    return Intl.message(
-      'Hours',
-      name: 'hours',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Hours', name: 'hours', desc: '', args: []);
   }
 
   /// `Days`
   String get days {
-    return Intl.message(
-      'Days',
-      name: 'days',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Days', name: 'days', desc: '', args: []);
   }
 
   /// `Minutes`
   String get minutes {
-    return Intl.message(
-      'Minutes',
-      name: 'minutes',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Minutes', name: 'minutes', desc: '', args: []);
   }
 
   /// `Seconds`
   String get seconds {
-    return Intl.message(
-      'Seconds',
-      name: 'seconds',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Seconds', name: 'seconds', desc: '', args: []);
   }
 
   /// ` Ago`
   String get ago {
-    return Intl.message(
-      ' Ago',
-      name: 'ago',
-      desc: '',
-      args: [],
-    );
+    return Intl.message(' Ago', name: 'ago', desc: '', args: []);
   }
 
   /// `Just`
   String get just {
-    return Intl.message(
-      'Just',
-      name: 'just',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Just', name: 'just', desc: '', args: []);
   }
 
   /// `QR code`
   String get qrcode {
-    return Intl.message(
-      'QR code',
-      name: 'qrcode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('QR code', name: 'qrcode', desc: '', args: []);
   }
 
   /// `Scan QR code to obtain profile`
@@ -772,12 +552,7 @@ class AppLocalizations {
 
   /// `URL`
   String get url {
-    return Intl.message(
-      'URL',
-      name: 'url',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('URL', name: 'url', desc: '', args: []);
   }
 
   /// `Obtain profile through URL`
@@ -792,12 +567,7 @@ class AppLocalizations {
 
   /// `File`
   String get file {
-    return Intl.message(
-      'File',
-      name: 'file',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('File', name: 'file', desc: '', args: []);
   }
 
   /// `Directly upload profile`
@@ -812,12 +582,7 @@ class AppLocalizations {
 
   /// `Name`
   String get name {
-    return Intl.message(
-      'Name',
-      name: 'name',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Name', name: 'name', desc: '', args: []);
   }
 
   /// `Please input the profile name`
@@ -852,12 +617,7 @@ class AppLocalizations {
 
   /// `Auto update`
   String get autoUpdate {
-    return Intl.message(
-      'Auto update',
-      name: 'autoUpdate',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Auto update', name: 'autoUpdate', desc: '', args: []);
   }
 
   /// `Auto update interval (minutes)`
@@ -892,62 +652,32 @@ class AppLocalizations {
 
   /// `Theme mode`
   String get themeMode {
-    return Intl.message(
-      'Theme mode',
-      name: 'themeMode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Theme mode', name: 'themeMode', desc: '', args: []);
   }
 
   /// `Theme color`
   String get themeColor {
-    return Intl.message(
-      'Theme color',
-      name: 'themeColor',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Theme color', name: 'themeColor', desc: '', args: []);
   }
 
   /// `Preview`
   String get preview {
-    return Intl.message(
-      'Preview',
-      name: 'preview',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Preview', name: 'preview', desc: '', args: []);
   }
 
   /// `Auto`
   String get auto {
-    return Intl.message(
-      'Auto',
-      name: 'auto',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Auto', name: 'auto', desc: '', args: []);
   }
 
   /// `Light`
   String get light {
-    return Intl.message(
-      'Light',
-      name: 'light',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Light', name: 'light', desc: '', args: []);
   }
 
   /// `Dark`
   String get dark {
-    return Intl.message(
-      'Dark',
-      name: 'dark',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Dark', name: 'dark', desc: '', args: []);
   }
 
   /// `Import from URL`
@@ -962,12 +692,7 @@ class AppLocalizations {
 
   /// `Submit`
   String get submit {
-    return Intl.message(
-      'Submit',
-      name: 'submit',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Submit', name: 'submit', desc: '', args: []);
   }
 
   /// `Do you want to pass`
@@ -982,12 +707,7 @@ class AppLocalizations {
 
   /// `Create`
   String get create {
-    return Intl.message(
-      'Create',
-      name: 'create',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Create', name: 'create', desc: '', args: []);
   }
 
   /// `Sort by default`
@@ -1002,22 +722,12 @@ class AppLocalizations {
 
   /// `Sort by delay`
   String get delaySort {
-    return Intl.message(
-      'Sort by delay',
-      name: 'delaySort',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Sort by delay', name: 'delaySort', desc: '', args: []);
   }
 
   /// `Sort by name`
   String get nameSort {
-    return Intl.message(
-      'Sort by name',
-      name: 'nameSort',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Sort by name', name: 'nameSort', desc: '', args: []);
   }
 
   /// `Please upload file`
@@ -1082,12 +792,7 @@ class AppLocalizations {
 
   /// `Select all`
   String get selectAll {
-    return Intl.message(
-      'Select all',
-      name: 'selectAll',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Select all', name: 'selectAll', desc: '', args: []);
   }
 
   /// `Cancel select all`
@@ -1132,12 +837,7 @@ class AppLocalizations {
 
   /// `Selected`
   String get selected {
-    return Intl.message(
-      'Selected',
-      name: 'selected',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Selected', name: 'selected', desc: '', args: []);
   }
 
   /// `unable to update current profile`
@@ -1172,12 +872,7 @@ class AppLocalizations {
 
   /// `ProxyPort`
   String get proxyPort {
-    return Intl.message(
-      'ProxyPort',
-      name: 'proxyPort',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('ProxyPort', name: 'proxyPort', desc: '', args: []);
   }
 
   /// `Set the Clash listening port`
@@ -1192,42 +887,22 @@ class AppLocalizations {
 
   /// `Port`
   String get port {
-    return Intl.message(
-      'Port',
-      name: 'port',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Port', name: 'port', desc: '', args: []);
   }
 
   /// `LogLevel`
   String get logLevel {
-    return Intl.message(
-      'LogLevel',
-      name: 'logLevel',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('LogLevel', name: 'logLevel', desc: '', args: []);
   }
 
   /// `Show`
   String get show {
-    return Intl.message(
-      'Show',
-      name: 'show',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Show', name: 'show', desc: '', args: []);
   }
 
   /// `Exit`
   String get exit {
-    return Intl.message(
-      'Exit',
-      name: 'exit',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Exit', name: 'exit', desc: '', args: []);
   }
 
   /// `System proxy`
@@ -1242,22 +917,12 @@ class AppLocalizations {
 
   /// `Project`
   String get project {
-    return Intl.message(
-      'Project',
-      name: 'project',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Project', name: 'project', desc: '', args: []);
   }
 
   /// `Core`
   String get core {
-    return Intl.message(
-      'Core',
-      name: 'core',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Core', name: 'core', desc: '', args: []);
   }
 
   /// `Tab animation`
@@ -1302,12 +967,7 @@ class AppLocalizations {
 
   /// `Stopping VPN...`
   String get stopVpn {
-    return Intl.message(
-      'Stopping VPN...',
-      name: 'stopVpn',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Stopping VPN...', name: 'stopVpn', desc: '', args: []);
   }
 
   /// `Discovery a new version`
@@ -1352,12 +1012,7 @@ class AppLocalizations {
 
   /// `tip`
   String get tip {
-    return Intl.message(
-      'tip',
-      name: 'tip',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('tip', name: 'tip', desc: '', args: []);
   }
 
   /// `Backup and Recovery`
@@ -1382,32 +1037,17 @@ class AppLocalizations {
 
   /// `Account`
   String get account {
-    return Intl.message(
-      'Account',
-      name: 'account',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Account', name: 'account', desc: '', args: []);
   }
 
   /// `Backup`
   String get backup {
-    return Intl.message(
-      'Backup',
-      name: 'backup',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Backup', name: 'backup', desc: '', args: []);
   }
 
   /// `Recovery`
   String get recovery {
-    return Intl.message(
-      'Recovery',
-      name: 'recovery',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Recovery', name: 'recovery', desc: '', args: []);
   }
 
   /// `Only recovery profiles`
@@ -1452,12 +1092,7 @@ class AppLocalizations {
 
   /// `No info`
   String get noInfo {
-    return Intl.message(
-      'No info',
-      name: 'noInfo',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('No info', name: 'noInfo', desc: '', args: []);
   }
 
   /// `Please bind WebDAV`
@@ -1472,12 +1107,7 @@ class AppLocalizations {
 
   /// `Bind`
   String get bind {
-    return Intl.message(
-      'Bind',
-      name: 'bind',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Bind', name: 'bind', desc: '', args: []);
   }
 
   /// `Connectivity：`
@@ -1502,12 +1132,7 @@ class AppLocalizations {
 
   /// `Address`
   String get address {
-    return Intl.message(
-      'Address',
-      name: 'address',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Address', name: 'address', desc: '', args: []);
   }
 
   /// `WebDAV server address`
@@ -1532,12 +1157,7 @@ class AppLocalizations {
 
   /// `Password`
   String get password {
-    return Intl.message(
-      'Password',
-      name: 'password',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Password', name: 'password', desc: '', args: []);
   }
 
   /// `Password cannot be empty`
@@ -1602,22 +1222,12 @@ class AppLocalizations {
 
   /// `Unknown`
   String get unknown {
-    return Intl.message(
-      'Unknown',
-      name: 'unknown',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Unknown', name: 'unknown', desc: '', args: []);
   }
 
   /// `GeoData`
   String get geoData {
-    return Intl.message(
-      'GeoData',
-      name: 'geoData',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('GeoData', name: 'geoData', desc: '', args: []);
   }
 
   /// `External resources`
@@ -1632,42 +1242,22 @@ class AppLocalizations {
 
   /// `Checking...`
   String get checking {
-    return Intl.message(
-      'Checking...',
-      name: 'checking',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Checking...', name: 'checking', desc: '', args: []);
   }
 
   /// `Country`
   String get country {
-    return Intl.message(
-      'Country',
-      name: 'country',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Country', name: 'country', desc: '', args: []);
   }
 
   /// `Check error`
   String get checkError {
-    return Intl.message(
-      'Check error',
-      name: 'checkError',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Check error', name: 'checkError', desc: '', args: []);
   }
 
   /// `Search`
   String get search {
-    return Intl.message(
-      'Search',
-      name: 'search',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Search', name: 'search', desc: '', args: []);
   }
 
   /// `Allow applications to bypass VPN`
@@ -1722,22 +1312,12 @@ class AppLocalizations {
 
   /// `App`
   String get app {
-    return Intl.message(
-      'App',
-      name: 'app',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('App', name: 'app', desc: '', args: []);
   }
 
   /// `General`
   String get general {
-    return Intl.message(
-      'General',
-      name: 'general',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('General', name: 'general', desc: '', args: []);
   }
 
   /// `Attach HTTP proxy to VpnService`
@@ -1822,12 +1402,7 @@ class AppLocalizations {
 
   /// `Requests`
   String get requests {
-    return Intl.message(
-      'Requests',
-      name: 'requests',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Requests', name: 'requests', desc: '', args: []);
   }
 
   /// `View recently request records`
@@ -1862,12 +1437,7 @@ class AppLocalizations {
 
   /// `Init`
   String get init {
-    return Intl.message(
-      'Init',
-      name: 'init',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Init', name: 'init', desc: '', args: []);
   }
 
   /// `Long term effective`
@@ -1892,12 +1462,7 @@ class AppLocalizations {
 
   /// `Connections`
   String get connections {
-    return Intl.message(
-      'Connections',
-      name: 'connections',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Connections', name: 'connections', desc: '', args: []);
   }
 
   /// `View current connections data`
@@ -1932,72 +1497,37 @@ class AppLocalizations {
 
   /// `Intranet IP`
   String get intranetIP {
-    return Intl.message(
-      'Intranet IP',
-      name: 'intranetIP',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Intranet IP', name: 'intranetIP', desc: '', args: []);
   }
 
   /// `View`
   String get view {
-    return Intl.message(
-      'View',
-      name: 'view',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('View', name: 'view', desc: '', args: []);
   }
 
   /// `Cut`
   String get cut {
-    return Intl.message(
-      'Cut',
-      name: 'cut',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Cut', name: 'cut', desc: '', args: []);
   }
 
   /// `Copy`
   String get copy {
-    return Intl.message(
-      'Copy',
-      name: 'copy',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Copy', name: 'copy', desc: '', args: []);
   }
 
   /// `Paste`
   String get paste {
-    return Intl.message(
-      'Paste',
-      name: 'paste',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Paste', name: 'paste', desc: '', args: []);
   }
 
   /// `Test url`
   String get testUrl {
-    return Intl.message(
-      'Test url',
-      name: 'testUrl',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Test url', name: 'testUrl', desc: '', args: []);
   }
 
   /// `Sync`
   String get sync {
-    return Intl.message(
-      'Sync',
-      name: 'sync',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Sync', name: 'sync', desc: '', args: []);
   }
 
   /// `Hidden from recent tasks`
@@ -2022,22 +1552,12 @@ class AppLocalizations {
 
   /// `One column`
   String get oneColumn {
-    return Intl.message(
-      'One column',
-      name: 'oneColumn',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('One column', name: 'oneColumn', desc: '', args: []);
   }
 
   /// `Two columns`
   String get twoColumns {
-    return Intl.message(
-      'Two columns',
-      name: 'twoColumns',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Two columns', name: 'twoColumns', desc: '', args: []);
   }
 
   /// `Three columns`
@@ -2062,102 +1582,52 @@ class AppLocalizations {
 
   /// `Standard`
   String get expand {
-    return Intl.message(
-      'Standard',
-      name: 'expand',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Standard', name: 'expand', desc: '', args: []);
   }
 
   /// `Shrink`
   String get shrink {
-    return Intl.message(
-      'Shrink',
-      name: 'shrink',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Shrink', name: 'shrink', desc: '', args: []);
   }
 
   /// `Min`
   String get min {
-    return Intl.message(
-      'Min',
-      name: 'min',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Min', name: 'min', desc: '', args: []);
   }
 
   /// `Tab`
   String get tab {
-    return Intl.message(
-      'Tab',
-      name: 'tab',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Tab', name: 'tab', desc: '', args: []);
   }
 
   /// `List`
   String get list {
-    return Intl.message(
-      'List',
-      name: 'list',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('List', name: 'list', desc: '', args: []);
   }
 
   /// `Delay`
   String get delay {
-    return Intl.message(
-      'Delay',
-      name: 'delay',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Delay', name: 'delay', desc: '', args: []);
   }
 
   /// `Style`
   String get style {
-    return Intl.message(
-      'Style',
-      name: 'style',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Style', name: 'style', desc: '', args: []);
   }
 
   /// `Size`
   String get size {
-    return Intl.message(
-      'Size',
-      name: 'size',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Size', name: 'size', desc: '', args: []);
   }
 
   /// `Sort`
   String get sort {
-    return Intl.message(
-      'Sort',
-      name: 'sort',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Sort', name: 'sort', desc: '', args: []);
   }
 
   /// `Columns`
   String get columns {
-    return Intl.message(
-      'Columns',
-      name: 'columns',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Columns', name: 'columns', desc: '', args: []);
   }
 
   /// `Proxies setting`
@@ -2172,22 +1642,12 @@ class AppLocalizations {
 
   /// `Proxy group`
   String get proxyGroup {
-    return Intl.message(
-      'Proxy group',
-      name: 'proxyGroup',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Proxy group', name: 'proxyGroup', desc: '', args: []);
   }
 
   /// `Go`
   String get go {
-    return Intl.message(
-      'Go',
-      name: 'go',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Go', name: 'go', desc: '', args: []);
   }
 
   /// `External link`
@@ -2282,32 +1742,17 @@ class AppLocalizations {
 
   /// ` entries`
   String get entries {
-    return Intl.message(
-      ' entries',
-      name: 'entries',
-      desc: '',
-      args: [],
-    );
+    return Intl.message(' entries', name: 'entries', desc: '', args: []);
   }
 
   /// `Local`
   String get local {
-    return Intl.message(
-      'Local',
-      name: 'local',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Local', name: 'local', desc: '', args: []);
   }
 
   /// `Remote`
   String get remote {
-    return Intl.message(
-      'Remote',
-      name: 'remote',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Remote', name: 'remote', desc: '', args: []);
   }
 
   /// `Backup local data to WebDAV`
@@ -2352,42 +1797,22 @@ class AppLocalizations {
 
   /// `Mode`
   String get mode {
-    return Intl.message(
-      'Mode',
-      name: 'mode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Mode', name: 'mode', desc: '', args: []);
   }
 
   /// `Time`
   String get time {
-    return Intl.message(
-      'Time',
-      name: 'time',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Time', name: 'time', desc: '', args: []);
   }
 
   /// `Source`
   String get source {
-    return Intl.message(
-      'Source',
-      name: 'source',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Source', name: 'source', desc: '', args: []);
   }
 
   /// `All apps`
   String get allApps {
-    return Intl.message(
-      'All apps',
-      name: 'allApps',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('All apps', name: 'allApps', desc: '', args: []);
   }
 
   /// `Only third-party apps`
@@ -2402,12 +1827,7 @@ class AppLocalizations {
 
   /// `Action`
   String get action {
-    return Intl.message(
-      'Action',
-      name: 'action',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Action', name: 'action', desc: '', args: []);
   }
 
   /// `Intelligent selection`
@@ -2442,42 +1862,22 @@ class AppLocalizations {
 
   /// `Layout`
   String get layout {
-    return Intl.message(
-      'Layout',
-      name: 'layout',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Layout', name: 'layout', desc: '', args: []);
   }
 
   /// `Tight`
   String get tight {
-    return Intl.message(
-      'Tight',
-      name: 'tight',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Tight', name: 'tight', desc: '', args: []);
   }
 
   /// `Standard`
   String get standard {
-    return Intl.message(
-      'Standard',
-      name: 'standard',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Standard', name: 'standard', desc: '', args: []);
   }
 
   /// `Loose`
   String get loose {
-    return Intl.message(
-      'Loose',
-      name: 'loose',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Loose', name: 'loose', desc: '', args: []);
   }
 
   /// `Profiles sort`
@@ -2492,22 +1892,12 @@ class AppLocalizations {
 
   /// `Start`
   String get start {
-    return Intl.message(
-      'Start',
-      name: 'start',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Start', name: 'start', desc: '', args: []);
   }
 
   /// `Stop`
   String get stop {
-    return Intl.message(
-      'Stop',
-      name: 'stop',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Stop', name: 'stop', desc: '', args: []);
   }
 
   /// `Processing app related settings`
@@ -2552,22 +1942,12 @@ class AppLocalizations {
 
   /// `Key`
   String get key {
-    return Intl.message(
-      'Key',
-      name: 'key',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Key', name: 'key', desc: '', args: []);
   }
 
   /// `Value`
   String get value {
-    return Intl.message(
-      'Value',
-      name: 'value',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Value', name: 'value', desc: '', args: []);
   }
 
   /// `Cannot be empty`
@@ -2582,12 +1962,7 @@ class AppLocalizations {
 
   /// `Add Hosts`
   String get hostsDesc {
-    return Intl.message(
-      'Add Hosts',
-      name: 'hostsDesc',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Add Hosts', name: 'hostsDesc', desc: '', args: []);
   }
 
   /// `Changes take effect after restarting the VPN`
@@ -2612,12 +1987,7 @@ class AppLocalizations {
 
   /// `Options`
   String get options {
-    return Intl.message(
-      'Options',
-      name: 'options',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Options', name: 'options', desc: '', args: []);
   }
 
   /// `Loopback unlock tool`
@@ -2642,12 +2012,7 @@ class AppLocalizations {
 
   /// `Providers`
   String get providers {
-    return Intl.message(
-      'Providers',
-      name: 'providers',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Providers', name: 'providers', desc: '', args: []);
   }
 
   /// `Proxy providers`
@@ -2692,12 +2057,7 @@ class AppLocalizations {
 
   /// `Status`
   String get status {
-    return Intl.message(
-      'Status',
-      name: 'status',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Status', name: 'status', desc: '', args: []);
   }
 
   /// `System DNS will be used when turned off`
@@ -2742,12 +2102,7 @@ class AppLocalizations {
 
   /// `DNS mode`
   String get dnsMode {
-    return Intl.message(
-      'DNS mode',
-      name: 'dnsMode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('DNS mode', name: 'dnsMode', desc: '', args: []);
   }
 
   /// `Fakeip range`
@@ -2792,12 +2147,7 @@ class AppLocalizations {
 
   /// `Nameserver`
   String get nameserver {
-    return Intl.message(
-      'Nameserver',
-      name: 'nameserver',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Nameserver', name: 'nameserver', desc: '', args: []);
   }
 
   /// `For resolving domain`
@@ -2812,12 +2162,7 @@ class AppLocalizations {
 
   /// `Use hosts`
   String get useHosts {
-    return Intl.message(
-      'Use hosts',
-      name: 'useHosts',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Use hosts', name: 'useHosts', desc: '', args: []);
   }
 
   /// `Use system hosts`
@@ -2872,12 +2217,7 @@ class AppLocalizations {
 
   /// `Fallback`
   String get fallback {
-    return Intl.message(
-      'Fallback',
-      name: 'fallback',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Fallback', name: 'fallback', desc: '', args: []);
   }
 
   /// `Generally use offshore DNS`
@@ -2902,72 +2242,37 @@ class AppLocalizations {
 
   /// `Geoip code`
   String get geoipCode {
-    return Intl.message(
-      'Geoip code',
-      name: 'geoipCode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Geoip code', name: 'geoipCode', desc: '', args: []);
   }
 
   /// `Ipcidr`
   String get ipcidr {
-    return Intl.message(
-      'Ipcidr',
-      name: 'ipcidr',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Ipcidr', name: 'ipcidr', desc: '', args: []);
   }
 
   /// `Domain`
   String get domain {
-    return Intl.message(
-      'Domain',
-      name: 'domain',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Domain', name: 'domain', desc: '', args: []);
   }
 
   /// `Reset`
   String get reset {
-    return Intl.message(
-      'Reset',
-      name: 'reset',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Reset', name: 'reset', desc: '', args: []);
   }
 
   /// `Show/Hide`
   String get action_view {
-    return Intl.message(
-      'Show/Hide',
-      name: 'action_view',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Show/Hide', name: 'action_view', desc: '', args: []);
   }
 
   /// `Start/Stop`
   String get action_start {
-    return Intl.message(
-      'Start/Stop',
-      name: 'action_start',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Start/Stop', name: 'action_start', desc: '', args: []);
   }
 
   /// `Switch mode`
   String get action_mode {
-    return Intl.message(
-      'Switch mode',
-      name: 'action_mode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Switch mode', name: 'action_mode', desc: '', args: []);
   }
 
   /// `System proxy`
@@ -2982,22 +2287,12 @@ class AppLocalizations {
 
   /// `TUN`
   String get action_tun {
-    return Intl.message(
-      'TUN',
-      name: 'action_tun',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('TUN', name: 'action_tun', desc: '', args: []);
   }
 
   /// `Disclaimer`
   String get disclaimer {
-    return Intl.message(
-      'Disclaimer',
-      name: 'disclaimer',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Disclaimer', name: 'disclaimer', desc: '', args: []);
   }
 
   /// `This software is only used for non-commercial purposes such as learning exchanges and scientific research. It is strictly prohibited to use this software for commercial purposes. Any commercial activity, if any, has nothing to do with this software.`
@@ -3012,12 +2307,7 @@ class AppLocalizations {
 
   /// `Agree`
   String get agree {
-    return Intl.message(
-      'Agree',
-      name: 'agree',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Agree', name: 'agree', desc: '', args: []);
   }
 
   /// `Hotkey Management`
@@ -3072,32 +2362,17 @@ class AppLocalizations {
 
   /// `Remove`
   String get remove {
-    return Intl.message(
-      'Remove',
-      name: 'remove',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Remove', name: 'remove', desc: '', args: []);
   }
 
   /// `No HotKey`
   String get noHotKey {
-    return Intl.message(
-      'No HotKey',
-      name: 'noHotKey',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('No HotKey', name: 'noHotKey', desc: '', args: []);
   }
 
   /// `No network`
   String get noNetwork {
-    return Intl.message(
-      'No network',
-      name: 'noNetwork',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('No network', name: 'noNetwork', desc: '', args: []);
   }
 
   /// `Allow IPv6 inbound`
@@ -3112,12 +2387,7 @@ class AppLocalizations {
 
   /// `Export logs`
   String get exportLogs {
-    return Intl.message(
-      'Export logs',
-      name: 'exportLogs',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Export logs', name: 'exportLogs', desc: '', args: []);
   }
 
   /// `Export Success`
@@ -3132,52 +2402,27 @@ class AppLocalizations {
 
   /// `Icon style`
   String get iconStyle {
-    return Intl.message(
-      'Icon style',
-      name: 'iconStyle',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Icon style', name: 'iconStyle', desc: '', args: []);
   }
 
   /// `Icon`
   String get onlyIcon {
-    return Intl.message(
-      'Icon',
-      name: 'onlyIcon',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Icon', name: 'onlyIcon', desc: '', args: []);
   }
 
   /// `None`
   String get noIcon {
-    return Intl.message(
-      'None',
-      name: 'noIcon',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('None', name: 'noIcon', desc: '', args: []);
   }
 
   /// `Stack mode`
   String get stackMode {
-    return Intl.message(
-      'Stack mode',
-      name: 'stackMode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Stack mode', name: 'stackMode', desc: '', args: []);
   }
 
   /// `Network`
   String get network {
-    return Intl.message(
-      'Network',
-      name: 'network',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Network', name: 'network', desc: '', args: []);
   }
 
   /// `Modify network-related settings`
@@ -3222,22 +2467,12 @@ class AppLocalizations {
 
   /// `RegExp`
   String get regExp {
-    return Intl.message(
-      'RegExp',
-      name: 'regExp',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('RegExp', name: 'regExp', desc: '', args: []);
   }
 
   /// `Icon`
   String get icon {
-    return Intl.message(
-      'Icon',
-      name: 'icon',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Icon', name: 'icon', desc: '', args: []);
   }
 
   /// `Icon configuration`
@@ -3252,12 +2487,7 @@ class AppLocalizations {
 
   /// `No data`
   String get noData {
-    return Intl.message(
-      'No data',
-      name: 'noData',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('No data', name: 'noData', desc: '', args: []);
   }
 
   /// `Admin auto launch`
@@ -3282,52 +2512,27 @@ class AppLocalizations {
 
   /// `FontFamily`
   String get fontFamily {
-    return Intl.message(
-      'FontFamily',
-      name: 'fontFamily',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('FontFamily', name: 'fontFamily', desc: '', args: []);
   }
 
   /// `System font`
   String get systemFont {
-    return Intl.message(
-      'System font',
-      name: 'systemFont',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('System font', name: 'systemFont', desc: '', args: []);
   }
 
   /// `Toggle`
   String get toggle {
-    return Intl.message(
-      'Toggle',
-      name: 'toggle',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Toggle', name: 'toggle', desc: '', args: []);
   }
 
   /// `System`
   String get system {
-    return Intl.message(
-      'System',
-      name: 'system',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('System', name: 'system', desc: '', args: []);
   }
 
   /// `Route mode`
   String get routeMode {
-    return Intl.message(
-      'Route mode',
-      name: 'routeMode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Route mode', name: 'routeMode', desc: '', args: []);
   }
 
   /// `Bypass private route address`
@@ -3392,22 +2597,12 @@ class AppLocalizations {
 
   /// `Memory info`
   String get memoryInfo {
-    return Intl.message(
-      'Memory info',
-      name: 'memoryInfo',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Memory info', name: 'memoryInfo', desc: '', args: []);
   }
 
   /// `Cancel`
   String get cancel {
-    return Intl.message(
-      'Cancel',
-      name: 'cancel',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Cancel', name: 'cancel', desc: '', args: []);
   }
 
   /// `The file has been modified. Do you want to save the changes?`
@@ -3442,12 +2637,7 @@ class AppLocalizations {
 
   /// `No proxies`
   String get nullProxies {
-    return Intl.message(
-      'No proxies',
-      name: 'nullProxies',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('No proxies', name: 'nullProxies', desc: '', args: []);
   }
 
   /// `Copy success`
@@ -3462,19 +2652,19 @@ class AppLocalizations {
 
   /// `Copy link`
   String get copyLink {
-    return Intl.message(
-      'Copy link',
-      name: 'copyLink',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Copy link', name: 'copyLink', desc: '', args: []);
   }
 
   /// `Export file`
   String get exportFile {
+    return Intl.message('Export file', name: 'exportFile', desc: '', args: []);
+  }
+
+  /// `The cache is corrupt. Do you want to clear it?`
+  String get cacheCorrupt {
     return Intl.message(
-      'Export file',
-      name: 'exportFile',
+      'The cache is corrupt. Do you want to clear it?',
+      name: 'cacheCorrupt',
       desc: '',
       args: [],
     );

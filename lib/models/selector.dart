@@ -164,7 +164,7 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
               other.getPinyin(b.label),
             ),
           AccessSortType.time =>
-            a.firstInstallTime.compareTo(b.firstInstallTime),
+            b.lastUpdateTime.compareTo(a.lastUpdateTime),
         };
       },
     ).sorted(

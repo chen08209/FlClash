@@ -22,4 +22,23 @@ extension BuildContextExtension on BuildContext {
   ColorScheme get colorScheme => Theme.of(this).colorScheme;
 
   TextTheme get textTheme => Theme.of(this).textTheme;
+
+  T? findLastStateOfType<T extends State>() {
+    T? state;
+
+    visitor(Element element) {
+      if(!element.mounted){
+        return;
+      }
+      if(element is StatefulElement){
+        if (element.state is T) {
+          state = element.state as T;
+        }
+      }
+      element.visitChildren(visitor);
+    }
+
+    visitor(this as Element);
+    return state;
+  }
 }

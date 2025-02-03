@@ -341,5 +341,6 @@
   "nullProxies": "暂无代理",
   "copySuccess": "复制成功",
   "copyLink": "复制链接",
-  "exportFile": "导出文件"
+  "exportFile": "导出文件",
+  "cacheCorrupt": "缓存已损坏，是否清空？"
 }

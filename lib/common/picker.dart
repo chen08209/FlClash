@@ -4,13 +4,14 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class Picker {
   Future<PlatformFile?> pickerFile() async {
     final filePickerResult = await FilePicker.platform.pickFiles(
       withData: true,
       allowMultiple: false,
-      initialDirectory: await appPath.getDownloadDirPath(),
+      initialDirectory: await appPath.downloadDirPath,
     );
     return filePickerResult?.files.first;
   }
@@ -18,7 +19,7 @@ class Picker {
   Future<String?> saveFile(String fileName, Uint8List bytes) async {
     final path = await FilePicker.platform.saveFile(
       fileName: fileName,
-      initialDirectory: await appPath.getDownloadDirPath(),
+      initialDirectory: await appPath.downloadDirPath,
       bytes: Platform.isAndroid ? bytes : null,
     );
     if (!Platform.isAndroid && path != null) {
@@ -30,9 +31,14 @@ class Picker {
 
   Future<String?> pickerConfigQRCode() async {
     final xFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    final bytes = await xFile?.readAsBytes();
-    if (bytes == null) return null;
-    final result = await other.parseQRCode(bytes);
+    if (xFile == null) {
+      return null;
+    }
+    final controller = MobileScannerController();
+    final capture = await controller.analyzeImage(xFile.path, formats: [
+      BarcodeFormat.qrCode,
+    ]);
+    final result = capture?.barcodes.first.rawValue;
     if (result == null || !result.isUrl) {
       throw appLocalizations.pleaseUploadValidQrcode;
     }

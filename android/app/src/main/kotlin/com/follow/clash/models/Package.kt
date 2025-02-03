@@ -4,5 +4,5 @@ data class Package(
     val packageName: String,
     val label: String,
     val isSystem: Boolean,
-    val firstInstallTime: Long,
+    val lastUpdateTime: Long,
 )

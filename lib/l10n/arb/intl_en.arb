@@ -341,5 +341,6 @@
   "nullProxies": "No proxies",
   "copySuccess": "Copy success",
   "copyLink": "Copy link",
-  "exportFile": "Export file"
+  "exportFile": "Export file",
+  "cacheCorrupt": "The cache is corrupt. Do you want to clear it?"
 }

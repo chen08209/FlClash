@@ -210,7 +210,7 @@ class Proxy extends ProxyPlatform {
             [
               "-setproxybypassdomains",
               dev,
-              bypassDomain.join(" "),
+              bypassDomain.join(","),
             ],
           ),
         ]);

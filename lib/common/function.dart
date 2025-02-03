@@ -1,7 +1,7 @@
 import 'dart:async';
 
 class Debouncer {
-  Map<dynamic, Timer> operators = {};
+  final Map<dynamic, Timer> _operations = {};
 
   call(
     dynamic tag,
@@ -9,14 +9,15 @@ class Debouncer {
     List<dynamic>? args,
     Duration duration = const Duration(milliseconds: 600),
   }) {
-    final timer = operators[tag];
+    final timer = _operations[tag];
     if (timer != null) {
       timer.cancel();
     }
-    operators[tag] = Timer(
+    _operations[tag] = Timer(
       duration,
       () {
-        operators.remove(tag);
+        _operations[tag]?.cancel();
+        _operations.remove(tag);
         Function.apply(
           func,
           args,
@@ -26,8 +27,43 @@ class Debouncer {
   }
 
   cancel(dynamic tag) {
-    operators[tag]?.cancel();
+    _operations[tag]?.cancel();
   }
 }
 
+class Throttler {
+  final Map<dynamic, Timer> _operations = {};
+
+  call(
+    String tag,
+    Function func, {
+    List<dynamic>? args,
+    Duration duration = const Duration(milliseconds: 600),
+  }) {
+    final timer = _operations[tag];
+    if (timer != null) {
+      return true;
+    }
+    _operations[tag] = Timer(
+      duration,
+      () {
+        _operations[tag]?.cancel();
+        _operations.remove(tag);
+        Function.apply(
+          func,
+          args,
+        );
+      },
+    );
+    return false;
+  }
+
+  cancel(dynamic tag) {
+    _operations[tag]?.cancel();
+  }
+}
+
+
 final debouncer = Debouncer();
+
+final throttler = Throttler();

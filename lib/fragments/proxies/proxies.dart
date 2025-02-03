@@ -21,10 +21,8 @@ class _ProxiesFragmentState extends State<ProxiesFragment> {
   final GlobalKey<ProxiesTabFragmentState> _proxiesTabKey = GlobalKey();
 
   _initActions(ProxiesType proxiesType, bool hasProvider) {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      final commonScaffoldState =
-          context.findAncestorStateOfType<CommonScaffoldState>();
-      commonScaffoldState?.actions = [
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.commonScaffoldState?.actions = [
         if (hasProvider) ...[
           IconButton(
             onPressed: () {

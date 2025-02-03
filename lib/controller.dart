@@ -338,11 +338,27 @@ class AppController {
     }
   }
 
-  init() async {
-    final isDisclaimerAccepted = await handlerDisclaimer();
-    if (!isDisclaimerAccepted) {
-      handleExit();
+  _handlePreference() async {
+    if (await preferences.isInit) {
+      return;
     }
+    final res = await globalState.showMessage(
+      title: appLocalizations.tip,
+      message: TextSpan(text: appLocalizations.cacheCorrupt),
+    );
+    if (res) {
+      final file = File(await appPath.sharedPreferencesPath);
+      final isExists = await file.exists();
+      if (isExists) {
+        await file.delete();
+      }
+    }
+    await handleExit();
+  }
+
+  init() async {
+    await _handlePreference();
+    await _handlerDisclaimer();
     await globalState.initCore(
       appState: appState,
       clashConfig: clashConfig,
@@ -473,11 +489,15 @@ class AppController {
         false;
   }
 
-  Future<bool> handlerDisclaimer() async {
+  _handlerDisclaimer() async {
     if (config.appSetting.disclaimerAccepted) {
-      return true;
+      return;
     }
-    return showDisclaimer();
+    final isDisclaimerAccepted = await showDisclaimer();
+    if (!isDisclaimerAccepted) {
+      await handleExit();
+    }
+    return;
   }
 
   addProfileFormURL(String url) async {
@@ -673,8 +693,8 @@ class AppController {
   }
 
   Future<List<int>> backupData() async {
-    final homeDirPath = await appPath.getHomeDirPath();
-    final profilesPath = await appPath.getProfilesPath();
+    final homeDirPath = await appPath.homeDirPath;
+    final profilesPath = await appPath.profilesPath;
     final configJson = config.toJson();
     final clashConfigJson = clashConfig.toJson();
     return Isolate.run<List<int>>(() async {
@@ -705,7 +725,7 @@ class AppController {
       final zipDecoder = ZipDecoder();
       return zipDecoder.decodeBytes(data);
     });
-    final homeDirPath = await appPath.getHomeDirPath();
+    final homeDirPath = await appPath.homeDirPath;
     final configs =
         archive.files.where((item) => item.name.endsWith(".json")).toList();
     final profiles =

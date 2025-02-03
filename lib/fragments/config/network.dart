@@ -206,9 +206,7 @@ class BypassDomainItem extends StatelessWidget {
 
   _initActions(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      final commonScaffoldState =
-          context.findAncestorStateOfType<CommonScaffoldState>();
-      commonScaffoldState?.actions = [
+      context.commonScaffoldState?.actions = [
         IconButton(
           onPressed: () async {
             final res = await globalState.showMessage(
@@ -378,9 +376,7 @@ class NetworkListView extends StatelessWidget {
 
   _initActions(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      final commonScaffoldState =
-          context.findAncestorStateOfType<CommonScaffoldState>();
-      commonScaffoldState?.actions = [
+      context.commonScaffoldState?.actions = [
         IconButton(
           onPressed: () async {
             final res = await globalState.showMessage(

@@ -320,9 +320,7 @@ class ProxyGroupViewState extends State<ProxyGroupView> {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final commonScaffoldState =
-          context.findAncestorStateOfType<CommonScaffoldState>();
-      commonScaffoldState?.floatingActionButton = DelayTestButton(
+      context.commonScaffoldState?.floatingActionButton = DelayTestButton(
         onClick: () async {
           await _delayTest();
         },

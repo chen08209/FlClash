@@ -29,7 +29,7 @@ _$PackageImpl _$$PackageImplFromJson(Map<String, dynamic> json) =>
       packageName: json['packageName'] as String,
       label: json['label'] as String,
       isSystem: json['isSystem'] as bool,
-      firstInstallTime: (json['firstInstallTime'] as num).toInt(),
+      lastUpdateTime: (json['lastUpdateTime'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$PackageImplToJson(_$PackageImpl instance) =>
@@ -37,7 +37,7 @@ Map<String, dynamic> _$$PackageImplToJson(_$PackageImpl instance) =>
       'packageName': instance.packageName,
       'label': instance.label,
       'isSystem': instance.isSystem,
-      'firstInstallTime': instance.firstInstallTime,
+      'lastUpdateTime': instance.lastUpdateTime,
     };
 
 _$MetadataImpl _$$MetadataImplFromJson(Map<String, dynamic> json) =>
@@ -85,46 +85,6 @@ Map<String, dynamic> _$$ConnectionImplToJson(_$ConnectionImpl instance) =>
       'start': instance.start.toIso8601String(),
       'metadata': instance.metadata,
       'chains': instance.chains,
-    };
-
-_$LogsAndKeywordsImpl _$$LogsAndKeywordsImplFromJson(
-        Map<String, dynamic> json) =>
-    _$LogsAndKeywordsImpl(
-      logs: (json['logs'] as List<dynamic>?)
-              ?.map((e) => Log.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-      keywords: (json['keywords'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
-    );
-
-Map<String, dynamic> _$$LogsAndKeywordsImplToJson(
-        _$LogsAndKeywordsImpl instance) =>
-    <String, dynamic>{
-      'logs': instance.logs,
-      'keywords': instance.keywords,
-    };
-
-_$ConnectionsAndKeywordsImpl _$$ConnectionsAndKeywordsImplFromJson(
-        Map<String, dynamic> json) =>
-    _$ConnectionsAndKeywordsImpl(
-      connections: (json['connections'] as List<dynamic>?)
-              ?.map((e) => Connection.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-      keywords: (json['keywords'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
-    );
-
-Map<String, dynamic> _$$ConnectionsAndKeywordsImplToJson(
-        _$ConnectionsAndKeywordsImpl instance) =>
-    <String, dynamic>{
-      'connections': instance.connections,
-      'keywords': instance.keywords,
     };
 
 _$DAVImpl _$$DAVImplFromJson(Map<String, dynamic> json) => _$DAVImpl(

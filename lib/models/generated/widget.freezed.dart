@@ -310,3 +310,188 @@ abstract class _CommonMessage implements CommonMessage {
   _$$CommonMessageImplCopyWith<_$CommonMessageImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+/// @nodoc
+mixin _$CommonAppBarState {
+  List<Widget> get actions => throw _privateConstructorUsedError;
+  dynamic Function(String)? get onSearch => throw _privateConstructorUsedError;
+  bool get searching => throw _privateConstructorUsedError;
+
+  /// Create a copy of CommonAppBarState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $CommonAppBarStateCopyWith<CommonAppBarState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $CommonAppBarStateCopyWith<$Res> {
+  factory $CommonAppBarStateCopyWith(
+          CommonAppBarState value, $Res Function(CommonAppBarState) then) =
+      _$CommonAppBarStateCopyWithImpl<$Res, CommonAppBarState>;
+  @useResult
+  $Res call(
+      {List<Widget> actions,
+      dynamic Function(String)? onSearch,
+      bool searching});
+}
+
+/// @nodoc
+class _$CommonAppBarStateCopyWithImpl<$Res, $Val extends CommonAppBarState>
+    implements $CommonAppBarStateCopyWith<$Res> {
+  _$CommonAppBarStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of CommonAppBarState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? actions = null,
+    Object? onSearch = freezed,
+    Object? searching = null,
+  }) {
+    return _then(_value.copyWith(
+      actions: null == actions
+          ? _value.actions
+          : actions // ignore: cast_nullable_to_non_nullable
+              as List<Widget>,
+      onSearch: freezed == onSearch
+          ? _value.onSearch
+          : onSearch // ignore: cast_nullable_to_non_nullable
+              as dynamic Function(String)?,
+      searching: null == searching
+          ? _value.searching
+          : searching // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$CommonAppBarStateImplCopyWith<$Res>
+    implements $CommonAppBarStateCopyWith<$Res> {
+  factory _$$CommonAppBarStateImplCopyWith(_$CommonAppBarStateImpl value,
+          $Res Function(_$CommonAppBarStateImpl) then) =
+      __$$CommonAppBarStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {List<Widget> actions,
+      dynamic Function(String)? onSearch,
+      bool searching});
+}
+
+/// @nodoc
+class __$$CommonAppBarStateImplCopyWithImpl<$Res>
+    extends _$CommonAppBarStateCopyWithImpl<$Res, _$CommonAppBarStateImpl>
+    implements _$$CommonAppBarStateImplCopyWith<$Res> {
+  __$$CommonAppBarStateImplCopyWithImpl(_$CommonAppBarStateImpl _value,
+      $Res Function(_$CommonAppBarStateImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of CommonAppBarState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? actions = null,
+    Object? onSearch = freezed,
+    Object? searching = null,
+  }) {
+    return _then(_$CommonAppBarStateImpl(
+      actions: null == actions
+          ? _value._actions
+          : actions // ignore: cast_nullable_to_non_nullable
+              as List<Widget>,
+      onSearch: freezed == onSearch
+          ? _value.onSearch
+          : onSearch // ignore: cast_nullable_to_non_nullable
+              as dynamic Function(String)?,
+      searching: null == searching
+          ? _value.searching
+          : searching // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$CommonAppBarStateImpl implements _CommonAppBarState {
+  const _$CommonAppBarStateImpl(
+      {final List<Widget> actions = const [],
+      this.onSearch,
+      this.searching = false})
+      : _actions = actions;
+
+  final List<Widget> _actions;
+  @override
+  @JsonKey()
+  List<Widget> get actions {
+    if (_actions is EqualUnmodifiableListView) return _actions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_actions);
+  }
+
+  @override
+  final dynamic Function(String)? onSearch;
+  @override
+  @JsonKey()
+  final bool searching;
+
+  @override
+  String toString() {
+    return 'CommonAppBarState(actions: $actions, onSearch: $onSearch, searching: $searching)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$CommonAppBarStateImpl &&
+            const DeepCollectionEquality().equals(other._actions, _actions) &&
+            (identical(other.onSearch, onSearch) ||
+                other.onSearch == onSearch) &&
+            (identical(other.searching, searching) ||
+                other.searching == searching));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType,
+      const DeepCollectionEquality().hash(_actions), onSearch, searching);
+
+  /// Create a copy of CommonAppBarState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$CommonAppBarStateImplCopyWith<_$CommonAppBarStateImpl> get copyWith =>
+      __$$CommonAppBarStateImplCopyWithImpl<_$CommonAppBarStateImpl>(
+          this, _$identity);
+}
+
+abstract class _CommonAppBarState implements CommonAppBarState {
+  const factory _CommonAppBarState(
+      {final List<Widget> actions,
+      final dynamic Function(String)? onSearch,
+      final bool searching}) = _$CommonAppBarStateImpl;
+
+  @override
+  List<Widget> get actions;
+  @override
+  dynamic Function(String)? get onSearch;
+  @override
+  bool get searching;
+
+  /// Create a copy of CommonAppBarState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$CommonAppBarStateImplCopyWith<_$CommonAppBarStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

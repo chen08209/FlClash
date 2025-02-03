@@ -37,7 +37,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.lang.ref.WeakReference
@@ -302,7 +301,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 packageName = it.packageName,
                 label = it.applicationInfo.loadLabel(packageManager).toString(),
                 isSystem = (it.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 1,
-                firstInstallTime = it.firstInstallTime
+                lastUpdateTime = it.lastUpdateTime
             )
         }?.let { packages.addAll(it) }
         return packages

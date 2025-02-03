@@ -178,10 +178,6 @@ class CommonPopupMenu extends StatelessWidget {
         ? context.colorScheme.error
         : context.colorScheme.onSurfaceVariant;
     return InkWell(
-      hoverColor:
-          isDanger ? context.colorScheme.errorContainer.withOpacity(0.3) : null,
-      splashColor:
-          isDanger ? context.colorScheme.errorContainer.withOpacity(0.4) : null,
       onTap: () {
         Navigator.of(context).pop();
         item.onPressed();

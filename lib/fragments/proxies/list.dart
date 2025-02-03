@@ -273,13 +273,8 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
           type: state.proxyCardType,
         );
         final itemsOffset = _getItemHeightList(items, state.proxyCardType);
-        return Scrollbar(
+        return CommonScrollBar(
           controller: _controller,
-          thumbVisibility: true,
-          trackVisibility: true,
-          thickness: 8,
-          radius: const Radius.circular(8),
-          interactive: true,
           child: Stack(
             children: [
               Positioned.fill(

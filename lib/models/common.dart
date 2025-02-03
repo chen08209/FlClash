@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/common.freezed.dart';
-
 part 'generated/common.g.dart';
 
 @freezed
@@ -31,7 +30,7 @@ class Package with _$Package {
     required String packageName,
     required String label,
     required bool isSystem,
-    required int firstInstallTime,
+    required int lastUpdateTime,
   }) = _Package;
 
   factory Package.fromJson(Map<String, Object?> json) =>
@@ -71,6 +70,19 @@ class Connection with _$Connection {
       _$ConnectionFromJson(json);
 }
 
+extension ConnectionExt on Connection {
+  String get desc {
+    var text = "${metadata.network}://";
+    final ips = [
+      metadata.host,
+      metadata.destinationIP,
+    ].where((ip) => ip.isNotEmpty);
+    text += ips.join("/");
+    text += ":${metadata.destinationPort}";
+    return text;
+  }
+}
+
 @JsonSerializable()
 class Log {
   @JsonKey(name: "LogLevel")
@@ -101,42 +113,58 @@ class Log {
 }
 
 @freezed
-class LogsAndKeywords with _$LogsAndKeywords {
-  const factory LogsAndKeywords({
+class LogsState with _$LogsState {
+  const factory LogsState({
     @Default([]) List<Log> logs,
     @Default([]) List<String> keywords,
-  }) = _LogsAndKeywords;
-
-  factory LogsAndKeywords.fromJson(Map<String, Object?> json) =>
-      _$LogsAndKeywordsFromJson(json);
+    @Default("") String query,
+  }) = _LogsState;
 }
 
-extension LogsAndKeywordsExt on LogsAndKeywords {
-  List<Log> get filteredLogs => logs
-      .where(
-        (log) => {log.logLevel.name}.containsAll(keywords),
-      )
-      .toList();
+extension LogsStateExt on LogsState {
+  List<Log> get list {
+    final lowQuery = query.toLowerCase();
+    return logs.where(
+      (log) {
+        final payload = log.payload?.toLowerCase();
+        final logLevelName = log.logLevel.name;
+        return {logLevelName}.containsAll(keywords) &&
+            ((payload?.contains(lowQuery) ?? false) ||
+                logLevelName.contains(lowQuery));
+      },
+    ).toList();
+  }
 }
 
 @freezed
-class ConnectionsAndKeywords with _$ConnectionsAndKeywords {
-  const factory ConnectionsAndKeywords({
+class ConnectionsState with _$ConnectionsState {
+  const factory ConnectionsState({
     @Default([]) List<Connection> connections,
     @Default([]) List<String> keywords,
-  }) = _ConnectionsAndKeywords;
-
-  factory ConnectionsAndKeywords.fromJson(Map<String, Object?> json) =>
-      _$ConnectionsAndKeywordsFromJson(json);
+    @Default("") String query,
+  }) = _ConnectionsState;
 }
 
-extension ConnectionsAndKeywordsExt on ConnectionsAndKeywords {
-  List<Connection> get filteredConnections => connections
-      .where((connection) => {
-            ...connection.chains,
-            connection.metadata.process,
-          }.containsAll(keywords))
-      .toList();
+extension ConnectionsStateExt on ConnectionsState {
+  List<Connection> get list {
+    final lowerQuery = query.toLowerCase().trim();
+    final lowQuery = query.toLowerCase();
+    return connections.where((connection) {
+      final chains = connection.chains;
+      final process = connection.metadata.process;
+      final networkText = connection.metadata.network.toLowerCase();
+      final hostText = connection.metadata.host.toLowerCase();
+      final destinationIPText = connection.metadata.destinationIP.toLowerCase();
+      final processText = connection.metadata.process.toLowerCase();
+      final chainsText = chains.join("").toLowerCase();
+      return {...chains, process}.containsAll(keywords) &&
+          (networkText.contains(lowerQuery) ||
+              hostText.contains(lowerQuery) ||
+              destinationIPText.contains(lowQuery) ||
+              processText.contains(lowerQuery) ||
+              chainsText.contains(lowerQuery));
+    }).toList();
+  }
 }
 
 const defaultDavFileName = "backup.zip";

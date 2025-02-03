@@ -20,11 +20,13 @@ class AccessFragment extends StatefulWidget {
 class _AccessFragmentState extends State<AccessFragment> {
   List<String> acceptList = [];
   List<String> rejectList = [];
+  late ScrollController _controller;
 
   @override
   void initState() {
     super.initState();
     _updateInitList();
+    _controller = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appState = globalState.appController.appState;
       if (appState.packages.isEmpty) {
@@ -33,6 +35,12 @@ class _AccessFragmentState extends State<AccessFragment> {
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   _updateInitList() {
@@ -52,8 +60,8 @@ class _AccessFragmentState extends State<AccessFragment> {
             rejectList: rejectList,
           ),
         ).then((_) => setState(() {
-          _updateInitList();
-        }));
+              _updateInitList();
+            }));
       },
       icon: const Icon(Icons.search),
     );
@@ -268,39 +276,44 @@ class _AccessFragmentState extends State<AccessFragment> {
                           ? const Center(
                               child: CircularProgressIndicator(),
                             )
-                          : ListView.builder(
-                              itemCount: packages.length,
-                              itemBuilder: (_, index) {
-                                final package = packages[index];
-                                return PackageListItem(
-                                  key: Key(package.packageName),
-                                  package: package,
-                                  value:
-                                      valueList.contains(package.packageName),
-                                  isActive: isAccessControl,
-                                  onChanged: (value) {
-                                    if (value == true) {
-                                      valueList.add(package.packageName);
-                                    } else {
-                                      valueList.remove(package.packageName);
-                                    }
-                                    final config =
-                                        globalState.appController.config;
-                                    if (accessControlMode ==
-                                        AccessControlMode.acceptSelected) {
-                                      config.accessControl =
-                                          config.accessControl.copyWith(
-                                        acceptList: valueList,
-                                      );
-                                    } else {
-                                      config.accessControl =
-                                          config.accessControl.copyWith(
-                                        rejectList: valueList,
-                                      );
-                                    }
-                                  },
-                                );
-                              },
+                          : CommonScrollBar(
+                              controller: _controller,
+                              child: ListView.builder(
+                                controller: _controller,
+                                itemCount: packages.length,
+                                itemExtent: 72,
+                                itemBuilder: (_, index) {
+                                  final package = packages[index];
+                                  return PackageListItem(
+                                    key: Key(package.packageName),
+                                    package: package,
+                                    value:
+                                        valueList.contains(package.packageName),
+                                    isActive: isAccessControl,
+                                    onChanged: (value) {
+                                      if (value == true) {
+                                        valueList.add(package.packageName);
+                                      } else {
+                                        valueList.remove(package.packageName);
+                                      }
+                                      final config =
+                                          globalState.appController.config;
+                                      if (accessControlMode ==
+                                          AccessControlMode.acceptSelected) {
+                                        config.accessControl =
+                                            config.accessControl.copyWith(
+                                          acceptList: valueList,
+                                        );
+                                      } else {
+                                        config.accessControl =
+                                            config.accessControl.copyWith(
+                                          rejectList: valueList,
+                                        );
+                                      }
+                                    },
+                                  );
+                                },
+                              ),
                             ),
                     ),
                   ],

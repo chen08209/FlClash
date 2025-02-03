@@ -33,7 +33,7 @@ class ClashCore {
   }
 
   static Future<void> initGeo() async {
-    final homePath = await appPath.getHomeDirPath();
+    final homePath = await appPath.homeDirPath;
     final homeDir = Directory(homePath);
     final isExists = await homeDir.exists();
     if (!isExists) {
@@ -68,7 +68,7 @@ class ClashCore {
     required Config config,
   }) async {
     await initGeo();
-    final homeDirPath = await appPath.getHomeDirPath();
+    final homeDirPath = await appPath.homeDirPath;
     return await clashInterface.init(homeDirPath);
   }
 

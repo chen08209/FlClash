@@ -48,35 +48,40 @@ class AppPath {
     return join(executableDirPath, "$appHelperService$executableExtension");
   }
 
-  Future<String> getDownloadDirPath() async {
+  Future<String> get downloadDirPath async {
     final directory = await downloadDir.future;
     return directory.path;
   }
 
-  Future<String> getHomeDirPath() async {
+  Future<String> get homeDirPath async {
     final directory = await dataDir.future;
     return directory.path;
   }
 
-  Future<String> getLockFilePath() async {
+  Future<String> get lockFilePath async {
     final directory = await dataDir.future;
     return join(directory.path, "FlClash.lock");
   }
 
-  Future<String> getProfilesPath() async {
+  Future<String> get sharedPreferencesPath async {
+    final directory = await dataDir.future;
+    return join(directory.path, "shared_preferences.json");
+  }
+
+  Future<String> get profilesPath async {
     final directory = await dataDir.future;
     return join(directory.path, profilesDirectoryName);
   }
 
   Future<String?> getProfilePath(String? id) async {
     if (id == null) return null;
-    final directory = await getProfilesPath();
+    final directory = await profilesPath;
     return join(directory, "$id.yaml");
   }
 
   Future<String?> getProvidersPath(String? id) async {
     if (id == null) return null;
-    final directory = await getProfilesPath();
+    final directory = await profilesPath;
     return join(directory, "providers", id);
   }
 

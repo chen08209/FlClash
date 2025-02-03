@@ -28,9 +28,7 @@ class _ProvidersState extends State<Providers> {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
         globalState.appController.updateProviders();
-        final commonScaffoldState =
-            context.findAncestorStateOfType<CommonScaffoldState>();
-        commonScaffoldState?.actions = [
+        context.commonScaffoldState?.actions = [
           IconButton(
             onPressed: () {
               _updateProviders();

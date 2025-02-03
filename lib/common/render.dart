@@ -49,6 +49,7 @@ class Render {
     _isPaused = false;
     _dispatcher.onBeginFrame = _beginFrame;
     _dispatcher.onDrawFrame = _drawFrame;
+    _dispatcher.scheduleFrame();
     debugPrint("[App] resume");
   }
 }

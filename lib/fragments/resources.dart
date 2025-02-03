@@ -112,7 +112,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   }
 
   Future<FileInfo> _getGeoFileLastModified(String fileName) async {
-    final homePath = await appPath.getHomeDirPath();
+    final homePath = await appPath.homeDirPath;
     final file = File(join(homePath, fileName));
     final lastModified = await file.lastModified();
     final size = await file.length();
@@ -183,7 +183,12 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   }
 
   _handleUpdateGeoDataItem() async {
-    await globalState.safeRun<void>(updateGeoDateItem);
+    await globalState.safeRun<void>(
+      () async {
+        await updateGeoDateItem();
+      },
+      silence: false,
+    );
     setState(() {});
   }
 
@@ -196,6 +201,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
           geoType: geoItem.label,
         ),
       );
+      print(message);
       if (message.isNotEmpty) throw message;
     } catch (e) {
       isUpdating.value = false;

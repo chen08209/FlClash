@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -23,8 +24,7 @@ class _DashboardFragmentState extends State<DashboardFragment> {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final commonScaffoldState =
-          context.findAncestorStateOfType<CommonScaffoldState>();
+      final commonScaffoldState = context.commonScaffoldState;
       commonScaffoldState?.floatingActionButton = const StartButton();
       commonScaffoldState?.actions = [
         ValueListenableBuilder(
