@@ -1,3 +1,9 @@
+## v0.8.74
+
+- Fix some issues
+
+- Update changelog
+
 ## v0.8.73
 
 - Update popup menu
