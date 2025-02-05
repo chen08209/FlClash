@@ -71,6 +71,8 @@
   "just": "Just",
   "qrcode": "QR code",
   "qrcodeDesc": "Scan QR code to obtain profile",
+  "clipboardcode": "Clipboard",
+  "clipboardDesc": "Import subscription links from clipboard",
   "url": "URL",
   "urlDesc": "Obtain profile through URL",
   "file": "File",
