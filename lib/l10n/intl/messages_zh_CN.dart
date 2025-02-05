@@ -308,6 +308,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "prueBlackMode": MessageLookupByLibrary.simpleMessage("纯黑模式"),
         "qrcode": MessageLookupByLibrary.simpleMessage("二维码"),
         "qrcodeDesc": MessageLookupByLibrary.simpleMessage("扫描二维码获取配置文件"),
+        "clipboardcode": MessageLookupByLibrary.simpleMessage("剪贴板"),
+        "clipboardDesc": MessageLookupByLibrary.simpleMessage("从剪贴板导入订阅链接"),    
         "recovery": MessageLookupByLibrary.simpleMessage("恢复"),
         "recoveryAll": MessageLookupByLibrary.simpleMessage("恢复所有数据"),
         "recoveryProfiles": MessageLookupByLibrary.simpleMessage("仅恢复配置文件"),
