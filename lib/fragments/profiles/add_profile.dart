@@ -82,7 +82,7 @@ class AddProfile extends StatelessWidget {
         // 新增菜单项：从剪贴板导入
         ListItem(
           leading: const Icon(Icons.content_paste),
-          title: Text(appLocalizations.clipboardcode),      /剪贴板导入
+          title: Text(appLocalizations.clipboardcode),      //剪贴板导入
           subtitle: Text(appLocalizations.clipboardDesc),   //从剪贴板导入订阅链接
           onTap: _handleAddProfileFromClipboard,
         )
