@@ -770,6 +770,26 @@ class AppLocalizations {
     );
   }
 
+   /// `Clipboard`
+  String get clipboardcode {
+    return Intl.message(
+      'Clipboard',
+      name: 'clipboardcode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Import subscription links from clipboard`
+  String get clipboardDesc {
+    return Intl.message(
+      'Import subscription links from clipboard',
+      name: 'clipboardDesc',
+      desc: '',
+      args: [],
+    );
+  } 
+
   /// `URL`
   String get url {
     return Intl.message(
