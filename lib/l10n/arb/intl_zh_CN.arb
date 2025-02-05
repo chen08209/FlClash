@@ -71,6 +71,8 @@
   "just": "刚刚",
   "qrcode": "二维码",
   "qrcodeDesc": "扫描二维码获取配置文件",
+  "clipboardcode": "剪贴板",
+  "clipboardDesc": "从剪贴板导入订阅链接", 
   "url": "URL",
   "urlDesc": "通过URL获取配置文件",
   "file": "文件",
