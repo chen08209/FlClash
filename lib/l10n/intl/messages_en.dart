@@ -389,6 +389,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "qrcode": MessageLookupByLibrary.simpleMessage("QR code"),
         "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
             "Scan QR code to obtain profile"),
+        "clipboardcode": MessageLookupByLibrary.simpleMessage("Clipboard"),
+        "clipboardDesc": MessageLookupByLibrary.simpleMessage(
+        "Import subscription links from clipboard"),
         "recovery": MessageLookupByLibrary.simpleMessage("Recovery"),
         "recoveryAll":
             MessageLookupByLibrary.simpleMessage("Recovery all data"),
