@@ -89,25 +89,24 @@ class ApplicationSettingFragment extends StatelessWidget {
           );
         },
       ),
-      if (system.isDesktop)
-        Selector<Config, bool>(
-          selector: (_, config) => config.appSetting.autoLaunch,
-          builder: (_, autoLaunch, child) {
-            return ListItem.switchItem(
-              title: Text(appLocalizations.autoLaunch),
-              subtitle: Text(appLocalizations.autoLaunchDesc),
-              delegate: SwitchDelegate(
-                value: autoLaunch,
-                onChanged: (bool value) {
-                  final config = globalState.appController.config;
-                  config.appSetting = config.appSetting.copyWith(
-                    autoLaunch: value,
-                  );
-                },
-              ),
-            );
-          },
-        ),
+      Selector<Config, bool>(
+        selector: (_, config) => config.appSetting.autoLaunch,
+        builder: (_, autoLaunch, child) {
+          return ListItem.switchItem(
+            title: Text(appLocalizations.autoLaunch),
+            subtitle: Text(appLocalizations.autoLaunchDesc),
+            delegate: SwitchDelegate(
+              value: autoLaunch,
+              onChanged: (bool value) {
+                final config = globalState.appController.config;
+                config.appSetting = config.appSetting.copyWith(
+                  autoLaunch: value,
+                );
+              },
+            ),
+          );
+        },
+      ),
       if (system.isDesktop)
         Selector<Config, bool>(
           selector: (_, config) => config.appSetting.silentLaunch,

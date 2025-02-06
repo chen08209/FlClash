@@ -1,3 +1,5 @@
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -50,11 +52,34 @@ class _AndroidContainerState extends State<AndroidManager> {
     );
   }
 
+  _autoLaunchContainer(Widget child) {
+    return Selector<Config, bool>(
+      selector: (_, config) => config.appSetting.autoLaunch,
+      shouldRebuild: (prev, next) {
+        if (prev != next) {
+          debouncer.call(
+            DebounceTag.autoLaunch,
+            () {
+              autoLaunch.updateStatus(next);
+            },
+          );
+        }
+        return prev != next;
+      },
+      builder: (_, state, child) {
+        return child!;
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _updateCoreState(
       _excludeContainer(
-        widget.child,
+        _autoLaunchContainer(
+          widget.child
+        )
       ),
     );
   }
