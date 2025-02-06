@@ -98,6 +98,18 @@ class App {
       "value": value,
     });
   }
+
+  Future<bool?> isAutoStartEnabled() {
+    return methodChannel.invokeMethod<bool>(
+      "isAutoStartEnabled"
+    );
+  }
+
+  Future<bool?> setAutoStartEnabled(bool enabled) {
+    return methodChannel.invokeMethod<bool>(
+      "setAutoStartEnabled", enabled
+    );
+  }
 }
 
 final app = Platform.isAndroid ? App() : null;

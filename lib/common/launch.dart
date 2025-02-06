@@ -5,15 +5,18 @@ import 'package:launch_at_startup/launch_at_startup.dart';
 
 import 'constant.dart';
 import 'system.dart';
+import 'package:fl_clash/plugins/app.dart';
 
 class AutoLaunch {
   static AutoLaunch? _instance;
 
   AutoLaunch._internal() {
-    launchAtStartup.setup(
-      appName: appName,
-      appPath: Platform.resolvedExecutable,
-    );
+    if (system.isDesktop) {
+      launchAtStartup.setup(
+        appName: appName,
+        appPath: Platform.resolvedExecutable,
+      );
+    }
   }
 
   factory AutoLaunch() {
@@ -22,15 +25,27 @@ class AutoLaunch {
   }
 
   Future<bool> get isEnable async {
-    return await launchAtStartup.isEnabled();
+    if (system.isDesktop) {
+      return await launchAtStartup.isEnabled();
+    } else {
+      return (await app?.isAutoStartEnabled())!;
+    }
   }
 
   Future<bool> enable() async {
-    return await launchAtStartup.enable();
+    if (system.isDesktop) {
+      return await launchAtStartup.enable();
+    } else {
+      return (await app?.setAutoStartEnabled(true))!;
+    }
   }
 
   Future<bool> disable() async {
-    return await launchAtStartup.disable();
+    if (system.isDesktop) {
+      return await launchAtStartup.disable();
+    } else {
+      return (await app?.setAutoStartEnabled(false))!;
+    }
   }
 
   updateStatus(bool isAutoLaunch) async {
@@ -43,4 +58,4 @@ class AutoLaunch {
   }
 }
 
-final autoLaunch = system.isDesktop ? AutoLaunch() : null;
+final autoLaunch = AutoLaunch();
