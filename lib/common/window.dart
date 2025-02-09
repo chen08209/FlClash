@@ -60,10 +60,10 @@ class Window {
   }
 
   show() async {
+    render?.resume();
     await windowManager.show();
     await windowManager.focus();
     await windowManager.setSkipTaskbar(false);
-    render?.resume();
   }
 
   Future<bool> isVisible() async {
@@ -75,9 +75,9 @@ class Window {
   }
 
   hide() async {
+    render?.pause();
     await windowManager.hide();
     await windowManager.setSkipTaskbar(true);
-    render?.pause();
   }
 }
 
