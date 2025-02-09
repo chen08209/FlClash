@@ -44,6 +44,7 @@ func handleInitClash(homeDirStr string) bool {
 }
 
 func handleStartListener() bool {
+	handleCloseConnections()
 	runLock.Lock()
 	defer runLock.Unlock()
 	isRunning = true
