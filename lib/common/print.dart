@@ -18,7 +18,7 @@ class CommonPrint {
     if (globalState.isService) {
       return;
     }
-    globalState.appController.appFlowingState.logs.add(Log(
+    globalState.appController.appFlowingState.addLog(Log(
       logLevel: LogLevel.info,
       payload: payload,
     ));
