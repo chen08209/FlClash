@@ -45,6 +45,13 @@ class ShowBarScrollBehavior extends BaseScrollBehavior {
 }
 
 class NextClampingScrollPhysics extends ClampingScrollPhysics {
+  const NextClampingScrollPhysics({super.parent});
+
+  @override
+  NextClampingScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return NextClampingScrollPhysics(parent: buildParent(ancestor));
+  }
+
   @override
   Simulation? createBallisticSimulation(
       ScrollMetrics position, double velocity) {
@@ -115,9 +122,7 @@ class ReverseScrollPosition extends ScrollPositionWithSingleContext {
     super.keepScrollOffset,
     super.oldPosition,
     super.debugLabel,
-  }) : _initialPixels = initialPixels ?? 0;
-
-  final double _initialPixels;
+  });
 
   bool _isInit = false;
 
