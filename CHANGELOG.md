@@ -1,3 +1,15 @@
+## v0.8.75
+
+- Add windows storage corruption detection
+
+- Fix core crash caused by windows resource manager restart
+
+- Optimize logs, requests, access to pages
+
+- Fix macos bypass domain issues
+
+- Update changelog
+
 ## v0.8.74
 
 - Fix some issues
