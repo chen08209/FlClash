@@ -64,104 +64,100 @@ Future<void> main() async {
 Future<void> _service(List<String> flags) async {
   globalState.isService = true;
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    final quickStart = flags.contains("quick");
-    final clashLibHandler = ClashLibHandler();
-    final config = await preferences.getConfig() ?? Config();
-    await AppLocalizations.load(
-      other.getLocaleForString(config.appSetting.locale) ??
-          WidgetsBinding.instance.platformDispatcher.locale,
-    );
+  final quickStart = flags.contains("quick");
+  final clashLibHandler = ClashLibHandler();
+  final config = await preferences.getConfig() ?? Config();
+  await AppLocalizations.load(
+    other.getLocaleForString(config.appSetting.locale) ??
+        WidgetsBinding.instance.platformDispatcher.locale,
+  );
 
-    tile?.addListener(
-      _TileListenerWithService(
-        onStop: () async {
-          await app?.tip(appLocalizations.stopVpn);
-          clashLibHandler.stopListener();
-          clashLibHandler.stopTun();
+  tile?.addListener(
+    _TileListenerWithService(
+      onStop: () async {
+        await app?.tip(appLocalizations.stopVpn);
+        clashLibHandler.stopListener();
+        clashLibHandler.stopTun();
+        await vpn?.stop();
+        exit(0);
+      },
+    ),
+  );
+
+  vpn?.handleGetStartForegroundParams = () {
+    final traffic = clashLibHandler.getTraffic();
+    return json.encode({
+      "title": clashLibHandler.getCurrentProfileName(),
+      "content": "$traffic"
+    });
+  };
+
+  vpn?.addListener(
+    _VpnListenerWithService(
+      onStarted: (int fd) {
+        commonPrint.log("vpn started fd: $fd");
+        final time = clashLibHandler.startTun(fd);
+        commonPrint.log("vpn start tun time: $time");
+      },
+      onDnsChanged: (String dns) {
+        clashLibHandler.updateDns(dns);
+      },
+    ),
+  );
+
+  final invokeReceiverPort = ReceivePort();
+
+  clashLibHandler.attachInvokePort(
+    invokeReceiverPort.sendPort.nativePort,
+  );
+
+  invokeReceiverPort.listen(
+    (message) async {
+      final invokeMessage = InvokeMessage.fromJson(json.decode(message));
+      switch (invokeMessage.type) {
+        case InvokeMessageType.protect:
+          final fd = Fd.fromJson(invokeMessage.data);
+          await vpn?.setProtect(fd.value);
+          clashLibHandler.setFdMap(fd.id);
+        case InvokeMessageType.process:
+          final process = ProcessData.fromJson(invokeMessage.data);
+          final processName = await vpn?.resolverProcess(process) ?? "";
+          clashLibHandler.setProcessMap(
+            ProcessMapItem(
+              id: process.id,
+              value: processName,
+            ),
+          );
+      }
+    },
+  );
+  if (!quickStart) {
+    _handleMainIpc(clashLibHandler);
+  } else {
+    commonPrint.log("quick start");
+    await ClashCore.initGeo();
+    globalState.packageInfo = await PackageInfo.fromPlatform();
+    app?.tip(appLocalizations.startVpn);
+    final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
+    final homeDirPath = await appPath.homeDirPath;
+    clashLibHandler
+        .quickStart(
+      homeDirPath,
+      globalState.getUpdateConfigParams(config, clashConfig, false),
+      globalState.getCoreState(config, clashConfig),
+    )
+        .then(
+      (res) async {
+        if (res.isNotEmpty) {
           await vpn?.stop();
           exit(0);
-        },
-      ),
-    );
-
-    vpn?.handleGetStartForegroundParams = () {
-      final traffic = clashLibHandler.getTraffic();
-      return json.encode({
-        "title": clashLibHandler.getCurrentProfileName(),
-        "content": "$traffic"
-      });
-    };
-
-    vpn?.addListener(
-      _VpnListenerWithService(
-        onStarted: (int fd) {
-          commonPrint.log("vpn started fd: $fd");
-          final time = clashLibHandler.startTun(fd);
-          commonPrint.log("vpn start tun time: $time");
-        },
-        onDnsChanged: (String dns) {
-          clashLibHandler.updateDns(dns);
-        },
-      ),
-    );
-
-    final invokeReceiverPort = ReceivePort();
-
-    clashLibHandler.attachInvokePort(
-      invokeReceiverPort.sendPort.nativePort,
-    );
-
-    invokeReceiverPort.listen(
-      (message) async {
-        final invokeMessage = InvokeMessage.fromJson(json.decode(message));
-        switch (invokeMessage.type) {
-          case InvokeMessageType.protect:
-            final fd = Fd.fromJson(invokeMessage.data);
-            await vpn?.setProtect(fd.value);
-            clashLibHandler.setFdMap(fd.id);
-          case InvokeMessageType.process:
-            final process = ProcessData.fromJson(invokeMessage.data);
-            final processName = await vpn?.resolverProcess(process) ?? "";
-            clashLibHandler.setProcessMap(
-              ProcessMapItem(
-                id: process.id,
-                value: processName,
-              ),
-            );
         }
+        await vpn?.start(
+          clashLibHandler.getAndroidVpnOptions(),
+        );
+        clashLibHandler.startListener();
       },
     );
-
-    if (!quickStart) {
-      _handleMainIpc(clashLibHandler);
-    } else {
-      await ClashCore.initGeo();
-      globalState.packageInfo = await PackageInfo.fromPlatform();
-      app?.tip(appLocalizations.startVpn);
-      final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
-      final homeDirPath = await appPath.homeDirPath;
-      clashLibHandler
-          .quickStart(
-        homeDirPath,
-        globalState.getUpdateConfigParams(config, clashConfig, false),
-        globalState.getCoreState(config, clashConfig),
-      )
-          .then(
-        (res) async {
-          if (res.isNotEmpty) {
-            await vpn?.stop();
-            exit(0);
-          }
-          await vpn?.start(
-            clashLibHandler.getAndroidVpnOptions(),
-          );
-          clashLibHandler.startListener();
-        },
-      );
-    }
-  } catch (e) {
-    commonPrint.log("service error ${e.toString()}");
   }
 }
 

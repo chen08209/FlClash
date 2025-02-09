@@ -13,8 +13,9 @@ class CommonPrint {
     return _instance!;
   }
 
-  log(String? payload) {
-    debugPrint("[FlClash] $payload");
+  log(String? text) {
+    final payload = "[FlClash] $text";
+    debugPrint(payload);
     if (globalState.isService) {
       return;
     }

@@ -201,7 +201,6 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
           geoType: geoItem.label,
         ),
       );
-      print(message);
       if (message.isNotEmpty) throw message;
     } catch (e) {
       isUpdating.value = false;

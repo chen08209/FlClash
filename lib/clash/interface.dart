@@ -3,12 +3,8 @@ import 'dart:convert';
 
 import 'package:fl_clash/clash/message.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/future.dart';
-import 'package:fl_clash/common/other.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:flutter/material.dart' hide Action;
 
 mixin ClashInterface {
   Future<bool> init(String homeDir);
@@ -233,6 +229,7 @@ abstract class ClashHandlerInterface with ClashInterface {
     return await invoke<String>(
       method: ActionMethod.updateConfig,
       data: json.encode(updateConfigParams),
+      timeout: Duration(minutes: 2),
     );
   }
 
@@ -240,6 +237,7 @@ abstract class ClashHandlerInterface with ClashInterface {
   Future<String> getProxies() {
     return invoke<String>(
       method: ActionMethod.getProxies,
+      timeout: Duration(seconds: 5),
     );
   }
 

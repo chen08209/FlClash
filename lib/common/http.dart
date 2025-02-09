@@ -1,10 +1,8 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:flutter/cupertino.dart';
 
 import '../state.dart';
-import 'constant.dart';
 
 class FlClashHttpOverrides extends HttpOverrides {
   @override

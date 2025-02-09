@@ -375,6 +375,7 @@ class AppController {
     } else {
       window?.hide();
     }
+    appState.isInit = true;
   }
 
   _initStatus() async {

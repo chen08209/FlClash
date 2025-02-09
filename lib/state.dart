@@ -47,10 +47,10 @@ class GlobalState {
   }
 
   executorUpdateTask() async {
-    if (timer != null && timer!.isActive == true) return;
     for (final task in tasks) {
       await task();
     }
+    timer = null;
   }
 
   stopUpdateTasks() {
@@ -119,10 +119,10 @@ class GlobalState {
   }
 
   handleStart([UpdateTasks? tasks]) async {
+    startTime ??= DateTime.now();
     await clashCore.startListener();
     await service?.startVpn();
     startUpdateTasks(tasks);
-    startTime ??= DateTime.now();
   }
 
   restartCore({
@@ -149,8 +149,8 @@ class GlobalState {
 
   Future handleStop() async {
     startTime = null;
-    await clashCore.stopListener();
-    clashLib?.stopTun();
+    // await clashCore.stopListener();
+    await clashLib?.stopTun();
     await service?.stopVpn();
     stopUpdateTasks();
   }
@@ -160,7 +160,7 @@ class GlobalState {
     required Config config,
     required ClashConfig clashConfig,
   }) async {
-    clashCore.requestGc();
+    await clashCore.requestGc();
     await updateClashConfig(
       appState: appState,
       clashConfig: clashConfig,
@@ -204,19 +204,19 @@ class GlobalState {
     );
   }
 
-  init({
+  Future<void> init({
     required AppState appState,
     required Config config,
     required ClashConfig clashConfig,
   }) async {
-    appState.isInit = await clashCore.isInit;
-    if (!appState.isInit) {
-      appState.isInit = await clashCore.init(
+    final isInit = await clashCore.isInit;
+    if (!isInit) {
+      await clashLib?.setState(
+        getCoreState(config, clashConfig),
+      );
+      await clashCore.init(
         config: config,
         clashConfig: clashConfig,
-      );
-      clashLib?.setState(
-        getCoreState(config, clashConfig),
       );
     }
   }

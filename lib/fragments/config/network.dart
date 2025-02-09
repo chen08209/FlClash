@@ -347,7 +347,7 @@ final networkItems = [
     ...generateSection(
       title: "VPN",
       items: [
-        const SystemProxyItem(),
+        const VpnSystemProxyItem(),
         const AllowBypassItem(),
         const Ipv6Item(),
       ],

@@ -10,6 +10,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.content.getSystemService
 import com.follow.clash.FlClashApplication
 import com.follow.clash.GlobalState
@@ -92,11 +93,13 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
             "setProtect" -> {
                 val fd = call.argument<Int>("fd")
-                if (fd != null) {
-                    if (flClashService is FlClashVpnService) {
+                if (fd != null && flClashService is FlClashVpnService) {
+                    try {
                         (flClashService as FlClashVpnService).protect(fd)
+                        result.success(true)
+                    } catch (e: RuntimeException) {
+                        result.success(false)
                     }
-                    result.success(true)
                 } else {
                     result.success(false)
                 }
