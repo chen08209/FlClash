@@ -96,7 +96,6 @@ Future<void> _service(List<String> flags) async {
     _VpnListenerWithService(
       onStarted: (int fd) {
         clashLibHandler.startTun(fd);
-        clashLibHandler.startListener();
       },
       onDnsChanged: (String dns) {
         clashLibHandler.updateDns(dns);
@@ -154,6 +153,7 @@ Future<void> _service(List<String> flags) async {
         await vpn?.start(
           clashLibHandler.getAndroidVpnOptions(),
         );
+        clashLibHandler.startListener();
       },
     );
   }

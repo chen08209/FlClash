@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'print.dart';
+
 extension StringExtension on String {
   bool get isUrl {
     return RegExp(r'^(http|https|ftp)://').hasMatch(this);
@@ -43,7 +45,7 @@ extension StringExtension on String {
       RegExp(this);
       return true;
     } catch (e) {
-      debugPrint(e.toString());
+      commonPrint.log(e.toString());
       return false;
     }
   }

@@ -36,3 +36,4 @@ export 'window.dart';
 export 'windows.dart';
 export 'render.dart';
 export 'view.dart';
+export 'print.dart';

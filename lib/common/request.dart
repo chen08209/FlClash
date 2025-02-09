@@ -95,7 +95,7 @@ class Request {
         }
         return ipInfo;
       } catch (e) {
-        debugPrint("checkIp error ===> $e");
+        commonPrint.log("checkIp error ===> $e");
         if (e is DioException && e.type == DioExceptionType.cancel) {
           throw "cancelled";
         }

@@ -54,7 +54,7 @@ class Windows {
     calloc.free(argumentsPtr);
     calloc.free(operationPtr);
 
-    debugPrint("[Windows] runas: $command $arguments resultCode:$result");
+    commonPrint.log("windows runas: $command $arguments resultCode:$result");
 
     if (result < 42) {
       return false;

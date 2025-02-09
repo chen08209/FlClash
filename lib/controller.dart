@@ -248,7 +248,7 @@ class AppController {
   }
 
   savePreferences() async {
-    debugPrint("[APP] savePreferences");
+    commonPrint.log("savePreferences");
     await preferences.saveConfig(config);
     await preferences.saveClashConfig(clashConfig);
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_clash/clash/message.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/future.dart';
 import 'package:fl_clash/common/other.dart';
@@ -137,7 +138,7 @@ abstract class ClashHandlerInterface with ClashInterface {
           completer?.complete(result.data);
       }
     } catch (_) {
-      debugPrint(result.id);
+      commonPrint.log(result.id);
     }
   }
 
