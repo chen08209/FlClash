@@ -83,6 +83,53 @@ Future<void> _service(List<String> flags) async {
       },
     ),
   );
+
+  vpn?.handleGetStartForegroundParams = () {
+    final traffic = clashLibHandler.getTraffic();
+    return json.encode({
+      "title": clashLibHandler.getCurrentProfileName(),
+      "content": "$traffic"
+    });
+  };
+
+  vpn?.addListener(
+    _VpnListenerWithService(
+      onStarted: (int fd) {
+        clashLibHandler.startTun(fd);
+      },
+      onDnsChanged: (String dns) {
+        clashLibHandler.updateDns(dns);
+      },
+    ),
+  );
+
+  final invokeReceiverPort = ReceivePort();
+
+  clashLibHandler.attachInvokePort(
+    invokeReceiverPort.sendPort.nativePort,
+  );
+
+  invokeReceiverPort.listen(
+    (message) async {
+      final invokeMessage = InvokeMessage.fromJson(json.decode(message));
+      switch (invokeMessage.type) {
+        case InvokeMessageType.protect:
+          final fd = Fd.fromJson(invokeMessage.data);
+          await vpn?.setProtect(fd.value);
+          clashLibHandler.setFdMap(fd.id);
+        case InvokeMessageType.process:
+          final process = ProcessData.fromJson(invokeMessage.data);
+          final processName = await vpn?.resolverProcess(process) ?? "";
+          clashLibHandler.setProcessMap(
+            ProcessMapItem(
+              id: process.id,
+              value: processName,
+            ),
+          );
+      }
+    },
+  );
+
   if (!quickStart) {
     _handleMainIpc(clashLibHandler);
   } else {
@@ -110,49 +157,6 @@ Future<void> _service(List<String> flags) async {
       },
     );
   }
-
-  vpn?.handleGetStartForegroundParams = () {
-    final traffic = clashLibHandler.getTraffic();
-    return json.encode({
-      "title": clashLibHandler.getCurrentProfileName(),
-      "content": "$traffic"
-    });
-  };
-
-  vpn?.addListener(
-    _VpnListenerWithService(
-      onStarted: (int fd) {
-        clashLibHandler.startTun(fd);
-      },
-      onDnsChanged: (String dns) {
-        clashLibHandler.updateDns(dns);
-      },
-    ),
-  );
-  final invokeReceiverPort = ReceivePort();
-  clashLibHandler.attachInvokePort(
-    invokeReceiverPort.sendPort.nativePort,
-  );
-  invokeReceiverPort.listen(
-    (message) async {
-      final invokeMessage = InvokeMessage.fromJson(json.decode(message));
-      switch (invokeMessage.type) {
-        case InvokeMessageType.protect:
-          final fd = Fd.fromJson(invokeMessage.data);
-          await vpn?.setProtect(fd.value);
-          clashLibHandler.setFdMap(fd.id);
-        case InvokeMessageType.process:
-          final process = ProcessData.fromJson(invokeMessage.data);
-          final processName = await vpn?.resolverProcess(process) ?? "";
-          clashLibHandler.setProcessMap(
-            ProcessMapItem(
-              id: process.id,
-              value: processName,
-            ),
-          );
-      }
-    },
-  );
 }
 
 _handleMainIpc(ClashLibHandler clashLibHandler) {
