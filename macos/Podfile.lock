@@ -99,24 +99,24 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
-  app_links: 10e0a0ab602ffaf34d142cd4862f29d34b303b2a
-  connectivity_plus: 18382e7311ba19efcaee94442b23b32507b20695
-  device_info_plus: ce1b7762849d3ec103d0e0517299f2db7ad60720
-  dynamic_color: 2eaa27267de1ca20d879fbd6e01259773fb1670f
-  file_selector_macos: cc3858c981fe6889f364731200d6232dac1d812d
+  app_links: 9028728e32c83a0831d9db8cf91c526d16cc5468
+  connectivity_plus: 2256d3e20624a7749ed21653aafe291a46446fee
+  device_info_plus: a56e6e74dbbd2bb92f2da12c64ddd4f67a749041
+  dynamic_color: b820c000cc68df65e7ba7ff177cb98404ce56651
+  file_selector_macos: 6280b52b459ae6c590af5d78fc35c7267a3c4b31
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
   HotKey: e96d8a2ddbf4591131e2bb3f54e69554d90cdca6
-  hotkey_manager_macos: 1e2edb0c7ae4fe67108af44a9d3445de41404160
-  mobile_scanner: 07710d6b9b2c220ae899de2d7ecf5d77ffa56333
-  package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b
-  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  screen_retriever_macos: 776e0fa5d42c6163d2bf772d22478df4b302b161
-  shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
-  sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
-  tray_manager: 9064e219c56d75c476e46b9a21182087930baf90
-  url_launcher_macos: c82c93949963e55b228a30115bd219499a6fe404
-  window_ext: cbf41f054296dcfb15a1cb53610ef3eab6311f13
-  window_manager: 3a1844359a6295ab1e47659b1a777e36773cd6e8
+  hotkey_manager_macos: a4317849af96d2430fa89944d3c58977ca089fbe
+  mobile_scanner: 0e365ed56cad24f28c0fd858ca04edefb40dfac3
+  package_info_plus: f0052d280d17aa382b932f399edf32507174e870
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  screen_retriever_macos: 452e51764a9e1cdb74b3c541238795849f21557f
+  shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
+  sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
+  tray_manager: a104b5c81b578d83f3c3d0f40a997c8b10810166
+  url_launcher_macos: 0fba8ddabfc33ce0a9afe7c5fef5aab3d8d2d673
+  window_ext: 4afef727fe428b30c68ce800ba92e890fd329f63
+  window_manager: 1d01fa7ac65a6e6f83b965471b1a7fdd3f06166c
 
 PODFILE CHECKSUM: 236401fc2c932af29a9fcf0e97baeeb2d750d367
 

@@ -2,14 +2,15 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_ext/window_ext.dart';
 import 'package:window_manager/window_manager.dart';
 
-class WindowManager extends StatefulWidget {
+class WindowManager extends ConsumerStatefulWidget {
   final Widget child;
 
   const WindowManager({
@@ -18,17 +19,22 @@ class WindowManager extends StatefulWidget {
   });
 
   @override
-  State<WindowManager> createState() => _WindowContainerState();
+  ConsumerState<WindowManager> createState() => _WindowContainerState();
 }
 
-class _WindowContainerState extends State<WindowManager>
+class _WindowContainerState extends ConsumerState<WindowManager>
     with WindowListener, WindowExtListener {
-  Function? updateLaunchDebounce;
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
 
-  _autoLaunchContainer(Widget child) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.appSetting.autoLaunch,
-      shouldRebuild: (prev, next) {
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(
+      appSettingProvider.select((state) => state.autoLaunch),
+      (prev, next) {
         if (prev != next) {
           debouncer.call(
             DebounceTag.autoLaunch,
@@ -37,23 +43,8 @@ class _WindowContainerState extends State<WindowManager>
             },
           );
         }
-        return prev != next;
       },
-      builder: (_, state, child) {
-        return child!;
-      },
-      child: child,
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _autoLaunchContainer(widget.child);
-  }
-
-  @override
-  void initState() {
-    super.initState();
     windowExtManager.addListener(this);
     windowManager.addListener(this);
   }
@@ -86,22 +77,24 @@ class _WindowContainerState extends State<WindowManager>
   Future<void> onWindowMoved() async {
     super.onWindowMoved();
     final offset = await windowManager.getPosition();
-    final config = globalState.appController.config;
-    config.windowProps = config.windowProps.copyWith(
-      top: offset.dy,
-      left: offset.dx,
-    );
+    ref.read(windowSettingProvider.notifier).updateState(
+          (state) => state.copyWith(
+            top: offset.dy,
+            left: offset.dx,
+          ),
+        );
   }
 
   @override
   Future<void> onWindowResized() async {
     super.onWindowResized();
     final size = await windowManager.getSize();
-    final config = globalState.appController.config;
-    config.windowProps = config.windowProps.copyWith(
-      width: size.width,
-      height: size.height,
-    );
+    ref.read(windowSettingProvider.notifier).updateState(
+          (state) => state.copyWith(
+            width: size.width,
+            height: size.height,
+          ),
+        );
   }
 
   @override
@@ -134,9 +127,9 @@ class WindowHeaderContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<AppState, int>(
-      selector: (_, appState) => appState.version,
-      builder: (_, version, child) {
+    return Consumer(
+      builder: (_, ref, child) {
+        final version = ref.watch(versionProvider);
         if (version <= 10 && Platform.isMacOS) {
           return child!;
         }

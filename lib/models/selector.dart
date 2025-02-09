@@ -16,22 +16,6 @@ class StartButtonSelectorState with _$StartButtonSelectorState {
 }
 
 @freezed
-class CheckIpSelectorState with _$CheckIpSelectorState {
-  const factory CheckIpSelectorState({
-    required String? currentProfileId,
-    required SelectedMap selectedMap,
-  }) = _CheckIpSelectorState;
-}
-
-@freezed
-class NetworkDetectionSelectorState with _$NetworkDetectionSelectorState {
-  const factory NetworkDetectionSelectorState({
-    required String? currentProxyName,
-    required int? delay,
-  }) = _NetworkDetectionSelectorState;
-}
-
-@freezed
 class ProfilesSelectorState with _$ProfilesSelectorState {
   const factory ProfilesSelectorState({
     required List<Profile> profiles,
@@ -49,17 +33,6 @@ class NetworkDetectionState with _$NetworkDetectionState {
 }
 
 @freezed
-class ApplicationSelectorState with _$ApplicationSelectorState {
-  const factory ApplicationSelectorState({
-    required String? locale,
-    required ThemeMode? themeMode,
-    required int? primaryColor,
-    required bool prueBlack,
-    required FontFamily fontFamily,
-  }) = _ApplicationSelectorState;
-}
-
-@freezed
 class TrayState with _$TrayState {
   const factory TrayState({
     required Mode mode,
@@ -71,33 +44,18 @@ class TrayState with _$TrayState {
     required String? locale,
     required Brightness? brightness,
     required List<Group> groups,
-    required SelectedMap map,
+    required SelectedMap selectedMap,
   }) = _TrayState;
-}
-
-@freezed
-class UpdateNavigationsSelector with _$UpdateNavigationsSelector {
-  const factory UpdateNavigationsSelector({
-    required bool openLogs,
-    required bool hasProxies,
-  }) = _UpdateNavigationsSelector;
 }
 
 @freezed
 class HomeState with _$HomeState {
   const factory HomeState({
-    required String currentLabel,
+    required PageLabel pageLabel,
     required List<NavigationItem> navigationItems,
     required ViewMode viewMode,
     required String? locale,
   }) = _HomeState;
-}
-
-@freezed
-class ProxiesCardSelectorState with _$ProxiesCardSelectorState {
-  const factory ProxiesCardSelectorState({
-    required bool isSelected,
-  }) = _ProxiesCardSelectorState;
 }
 
 @freezed
@@ -106,6 +64,27 @@ class ProxiesSelectorState with _$ProxiesSelectorState {
     required List<String> groupNames,
     required String? currentGroupName,
   }) = _ProxiesSelectorState;
+}
+
+@freezed
+class GroupNamesState with _$GroupNamesState {
+  const factory GroupNamesState({
+    required List<String> groupNames,
+  }) = _GroupNamesState;
+}
+
+@freezed
+class GroupsState with _$GroupsState {
+  const factory GroupsState({
+    required List<Group> value,
+  }) = _GroupsState;
+}
+
+@freezed
+class NavigationItemsState with _$NavigationItemsState {
+  const factory NavigationItemsState({
+    required List<NavigationItem> value,
+  }) = _NavigationItemsState;
 }
 
 @freezed
@@ -145,7 +124,6 @@ class PackageListSelectorState with _$PackageListSelectorState {
   const factory PackageListSelectorState({
     required List<Package> packages,
     required AccessControl accessControl,
-    required bool isAccessControl,
   }) = _PackageListSelectorState;
 }
 
@@ -163,8 +141,7 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
               other.getPinyin(a.label),
               other.getPinyin(b.label),
             ),
-          AccessSortType.time =>
-            b.lastUpdateTime.compareTo(a.lastUpdateTime),
+          AccessSortType.time => b.lastUpdateTime.compareTo(a.lastUpdateTime),
         };
       },
     ).sorted(
@@ -191,8 +168,9 @@ class ProxiesListHeaderSelectorState with _$ProxiesListHeaderSelectorState {
 @freezed
 class ProxiesActionsState with _$ProxiesActionsState {
   const factory ProxiesActionsState({
-    required bool isCurrent,
-    required bool hasProvider,
+    required PageLabel pageLabel,
+    required ProxiesType type,
+    required bool hasProviders,
   }) = _ProxiesActionsState;
 }
 
@@ -207,34 +185,10 @@ class ProxyState with _$ProxyState {
 }
 
 @freezed
-class HttpOverridesState with _$HttpOverridesState {
-  const factory HttpOverridesState({
-    required bool isStart,
-    required int port,
-  }) = _HttpOverridesState;
-}
-
-@freezed
 class ClashConfigState with _$ClashConfigState {
   const factory ClashConfigState({
-    required int mixedPort,
-    required bool allowLan,
-    required bool ipv6,
     required bool overrideDns,
-    required String geodataLoader,
-    required LogLevel logLevel,
-    required String externalController,
-    required Mode mode,
-    required FindProcessMode findProcessMode,
-    required int keepAliveInterval,
-    required bool unifiedDelay,
-    required bool tcpConcurrent,
-    required HostsMap hosts,
-    required Tun tun,
-    required Dns dns,
-    required GeoXMap geoXUrl,
-    required List<String> rules,
-    required String? globalRealUa,
+    required ClashConfig clashConfig,
   }) = _ClashConfigState;
 }
 
@@ -247,10 +201,9 @@ class DashboardState with _$DashboardState {
 }
 
 @freezed
-class VPNState with _$VPNState {
-  const factory VPNState({
-    required AccessControl? accessControl,
+class VpnState with _$VpnState {
+  const factory VpnState({
     required TunStack stack,
     required VpnProps vpnProps,
-  }) = _VPNState;
+  }) = _VpnState;
 }

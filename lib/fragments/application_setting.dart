@@ -1,61 +1,258 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
-class CloseConnectionsSwitch extends StatelessWidget {
-  const CloseConnectionsSwitch({super.key});
+class CloseConnectionsItem extends ConsumerWidget {
+  const CloseConnectionsItem({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.appSetting.closeConnections,
-      builder: (_, closeConnections, __) {
-        return ListItem.switchItem(
-          title: Text(appLocalizations.autoCloseConnections),
-          subtitle: Text(appLocalizations.autoCloseConnectionsDesc),
-          delegate: SwitchDelegate(
-            value: closeConnections,
-            onChanged: (value) async {
-              final config = globalState.appController.config;
-              config.appSetting = config.appSetting.copyWith(
-                closeConnections: value,
+  Widget build(BuildContext context, ref) {
+    final closeConnections = ref.watch(
+      appSettingProvider.select((state) => state.closeConnections),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.autoCloseConnections),
+      subtitle: Text(appLocalizations.autoCloseConnectionsDesc),
+      delegate: SwitchDelegate(
+        value: closeConnections,
+        onChanged: (value) async {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  closeConnections: value,
+                ),
               );
-            },
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 }
 
-class UsageSwitch extends StatelessWidget {
-  const UsageSwitch({super.key});
+class UsageItem extends ConsumerWidget {
+  const UsageItem({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.appSetting.onlyStatisticsProxy,
-      builder: (_, onlyProxy, __) {
-        return ListItem.switchItem(
-          title: Text(appLocalizations.onlyStatisticsProxy),
-          subtitle: Text(appLocalizations.onlyStatisticsProxyDesc),
-          delegate: SwitchDelegate(
-            value: onlyProxy,
-            onChanged: (bool value) async {
-              final config = globalState.appController.config;
-              config.appSetting = config.appSetting.copyWith(
-                onlyStatisticsProxy: value,
+  Widget build(BuildContext context, ref) {
+    final onlyStatisticsProxy = ref.watch(
+      appSettingProvider.select((state) => state.onlyStatisticsProxy),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.onlyStatisticsProxy),
+      subtitle: Text(appLocalizations.onlyStatisticsProxyDesc),
+      delegate: SwitchDelegate(
+        value: onlyStatisticsProxy,
+        onChanged: (bool value) async {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  onlyStatisticsProxy: value,
+                ),
               );
-            },
-          ),
-        );
-      },
+        },
+      ),
+    );
+  }
+}
+
+class MinimizeItem extends ConsumerWidget {
+  const MinimizeItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final minimizeOnExit = ref.watch(
+      appSettingProvider.select((state) => state.minimizeOnExit),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.minimizeOnExit),
+      subtitle: Text(appLocalizations.minimizeOnExitDesc),
+      delegate: SwitchDelegate(
+        value: minimizeOnExit,
+        onChanged: (bool value) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  minimizeOnExit: value,
+                ),
+              );
+        },
+      ),
+    );
+  }
+}
+
+class AutoLaunchItem extends ConsumerWidget {
+  const AutoLaunchItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final autoLaunch = ref.watch(
+      appSettingProvider.select((state) => state.autoLaunch),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.autoLaunch),
+      subtitle: Text(appLocalizations.autoLaunchDesc),
+      delegate: SwitchDelegate(
+        value: autoLaunch,
+        onChanged: (bool value) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  autoLaunch: value,
+                ),
+              );
+        },
+      ),
+    );
+  }
+}
+
+class SilentLaunchItem extends ConsumerWidget {
+  const SilentLaunchItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final silentLaunch = ref.watch(
+      appSettingProvider.select((state) => state.silentLaunch),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.silentLaunch),
+      subtitle: Text(appLocalizations.silentLaunchDesc),
+      delegate: SwitchDelegate(
+        value: silentLaunch,
+        onChanged: (bool value) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  silentLaunch: value,
+                ),
+              );
+        },
+      ),
+    );
+  }
+}
+
+class AutoRunItem extends ConsumerWidget {
+  const AutoRunItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final autoRun = ref.watch(
+      appSettingProvider.select((state) => state.autoRun),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.autoRun),
+      subtitle: Text(appLocalizations.autoRunDesc),
+      delegate: SwitchDelegate(
+        value: autoRun,
+        onChanged: (bool value) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  autoRun: value,
+                ),
+              );
+        },
+      ),
+    );
+  }
+}
+
+class HiddenItem extends ConsumerWidget {
+  const HiddenItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hidden = ref.watch(
+      appSettingProvider.select((state) => state.hidden),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.exclude),
+      subtitle: Text(appLocalizations.excludeDesc),
+      delegate: SwitchDelegate(
+        value: hidden,
+        onChanged: (value) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  hidden: value,
+                ),
+              );
+        },
+      ),
+    );
+  }
+}
+
+class AnimateTabItem extends ConsumerWidget {
+  const AnimateTabItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAnimateToPage = ref.watch(
+      appSettingProvider.select((state) => state.isAnimateToPage),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.tabAnimation),
+      subtitle: Text(appLocalizations.tabAnimationDesc),
+      delegate: SwitchDelegate(
+        value: isAnimateToPage,
+        onChanged: (value) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  isAnimateToPage: value,
+                ),
+              );
+        },
+      ),
+    );
+  }
+}
+
+class OpenLogsItem extends ConsumerWidget {
+  const OpenLogsItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final openLogs = ref.watch(
+      appSettingProvider.select((state) => state.openLogs),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.logcat),
+      subtitle: Text(appLocalizations.logcatDesc),
+      delegate: SwitchDelegate(
+        value: openLogs,
+        onChanged: (bool value) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  openLogs: value,
+                ),
+              );
+        },
+      ),
+    );
+  }
+}
+
+class AutoCheckUpdateItem extends ConsumerWidget {
+  const AutoCheckUpdateItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final autoCheckUpdate = ref.watch(
+      appSettingProvider.select((state) => state.autoCheckUpdate),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.autoCheckUpdate),
+      subtitle: Text(appLocalizations.autoCheckUpdateDesc),
+      delegate: SwitchDelegate(
+        value: autoCheckUpdate,
+        onChanged: (bool value) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(
+                  autoCheckUpdate: value,
+                ),
+              );
+        },
+      ),
     );
   }
 }
@@ -71,156 +268,20 @@ class ApplicationSettingFragment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [
-      Selector<Config, bool>(
-        selector: (_, config) => config.appSetting.minimizeOnExit,
-        builder: (_, isMinimizeOnExit, child) {
-          return ListItem.switchItem(
-            title: Text(appLocalizations.minimizeOnExit),
-            subtitle: Text(appLocalizations.minimizeOnExitDesc),
-            delegate: SwitchDelegate(
-              value: isMinimizeOnExit,
-              onChanged: (bool value) {
-                final config = context.read<Config>();
-                config.appSetting = config.appSetting.copyWith(
-                  minimizeOnExit: value,
-                );
-              },
-            ),
-          );
-        },
-      ),
-      if (system.isDesktop)
-        Selector<Config, bool>(
-          selector: (_, config) => config.appSetting.autoLaunch,
-          builder: (_, autoLaunch, child) {
-            return ListItem.switchItem(
-              title: Text(appLocalizations.autoLaunch),
-              subtitle: Text(appLocalizations.autoLaunchDesc),
-              delegate: SwitchDelegate(
-                value: autoLaunch,
-                onChanged: (bool value) {
-                  final config = globalState.appController.config;
-                  config.appSetting = config.appSetting.copyWith(
-                    autoLaunch: value,
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      if (system.isDesktop)
-        Selector<Config, bool>(
-          selector: (_, config) => config.appSetting.silentLaunch,
-          builder: (_, silentLaunch, child) {
-            return ListItem.switchItem(
-              title: Text(appLocalizations.silentLaunch),
-              subtitle: Text(appLocalizations.silentLaunchDesc),
-              delegate: SwitchDelegate(
-                value: silentLaunch,
-                onChanged: (bool value) {
-                  final config = globalState.appController.config;
-                  config.appSetting = config.appSetting.copyWith(
-                    silentLaunch: value,
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      Selector<Config, bool>(
-        selector: (_, config) => config.appSetting.autoRun,
-        builder: (_, autoRun, child) {
-          return ListItem.switchItem(
-            title: Text(appLocalizations.autoRun),
-            subtitle: Text(appLocalizations.autoRunDesc),
-            delegate: SwitchDelegate(
-              value: autoRun,
-              onChanged: (bool value) {
-                final config = globalState.appController.config;
-                config.appSetting = config.appSetting.copyWith(
-                  autoRun: value,
-                );
-              },
-            ),
-          );
-        },
-      ),
-      if (Platform.isAndroid)
-        Selector<Config, bool>(
-          selector: (_, config) => config.appSetting.hidden,
-          builder: (_, isExclude, child) {
-            return ListItem.switchItem(
-              title: Text(appLocalizations.exclude),
-              subtitle: Text(appLocalizations.excludeDesc),
-              delegate: SwitchDelegate(
-                value: isExclude,
-                onChanged: (value) {
-                  final config = globalState.appController.config;
-                  config.appSetting = config.appSetting.copyWith(
-                    hidden: value,
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      if (Platform.isAndroid)
-        Selector<Config, bool>(
-          selector: (_, config) => config.appSetting.isAnimateToPage,
-          builder: (_, isAnimateToPage, child) {
-            return ListItem.switchItem(
-              title: Text(appLocalizations.tabAnimation),
-              subtitle: Text(appLocalizations.tabAnimationDesc),
-              delegate: SwitchDelegate(
-                value: isAnimateToPage,
-                onChanged: (value) {
-                  final config = globalState.appController.config;
-                  config.appSetting = config.appSetting.copyWith(
-                    isAnimateToPage: value,
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      Selector<Config, bool>(
-        selector: (_, config) => config.appSetting.openLogs,
-        builder: (_, openLogs, child) {
-          return ListItem.switchItem(
-            title: Text(appLocalizations.logcat),
-            subtitle: Text(appLocalizations.logcatDesc),
-            delegate: SwitchDelegate(
-              value: openLogs,
-              onChanged: (bool value) {
-                final config = globalState.appController.config;
-                config.appSetting = config.appSetting.copyWith(
-                  openLogs: value,
-                );
-              },
-            ),
-          );
-        },
-      ),
-      const CloseConnectionsSwitch(),
-      const UsageSwitch(),
-      Selector<Config, bool>(
-        selector: (_, config) => config.appSetting.autoCheckUpdate,
-        builder: (_, autoCheckUpdate, child) {
-          return ListItem.switchItem(
-            title: Text(appLocalizations.autoCheckUpdate),
-            subtitle: Text(appLocalizations.autoCheckUpdateDesc),
-            delegate: SwitchDelegate(
-              value: autoCheckUpdate,
-              onChanged: (bool value) {
-                final config = globalState.appController.config;
-                config.appSetting = config.appSetting.copyWith(
-                  autoCheckUpdate: value,
-                );
-              },
-            ),
-          );
-        },
-      ),
+      MinimizeItem(),
+      if (system.isDesktop) ...[
+        AutoLaunchItem(),
+        SilentLaunchItem(),
+      ],
+      AutoRunItem(),
+      if (Platform.isAndroid) ...[
+        HiddenItem(),
+        AnimateTabItem(),
+      ],
+      OpenLogsItem(),
+      CloseConnectionsItem(),
+      UsageItem(),
+      AutoCheckUpdateItem(),
     ];
     return ListView.separated(
       itemBuilder: (_, index) {

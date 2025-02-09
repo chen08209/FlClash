@@ -296,10 +296,14 @@ class CommonScaffoldState extends State<CommonScaffold> {
                         icon: Icon(Icons.close),
                       )
                     else
-                      ...realActions.separated(
-                        SizedBox(
-                          width: 4,
-                        ),
+                      Row(
+                        children: [
+                          ...realActions.separated(
+                            SizedBox(
+                              width: 4,
+                            ),
+                          )
+                        ],
                       ),
                     SizedBox(
                       width: 8,

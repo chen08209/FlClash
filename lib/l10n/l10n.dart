@@ -2669,6 +2669,16 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Relying on third-party APIs is for reference only`
+  String get detectionTip {
+    return Intl.message(
+      'Relying on third-party APIs is for reference only',
+      name: 'detectionTip',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

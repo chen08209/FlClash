@@ -17,7 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$NavigationItem {
   Icon get icon => throw _privateConstructorUsedError;
-  String get label => throw _privateConstructorUsedError;
+  PageLabel get label => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   Widget get fragment => throw _privateConstructorUsedError;
   bool get keep => throw _privateConstructorUsedError;
@@ -39,7 +39,7 @@ abstract class $NavigationItemCopyWith<$Res> {
   @useResult
   $Res call(
       {Icon icon,
-      String label,
+      PageLabel label,
       String? description,
       Widget fragment,
       bool keep,
@@ -78,7 +78,7 @@ class _$NavigationItemCopyWithImpl<$Res, $Val extends NavigationItem>
       label: null == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
-              as String,
+              as PageLabel,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -113,7 +113,7 @@ abstract class _$$NavigationItemImplCopyWith<$Res>
   @useResult
   $Res call(
       {Icon icon,
-      String label,
+      PageLabel label,
       String? description,
       Widget fragment,
       bool keep,
@@ -150,7 +150,7 @@ class __$$NavigationItemImplCopyWithImpl<$Res>
       label: null == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
-              as String,
+              as PageLabel,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -194,7 +194,7 @@ class _$NavigationItemImpl implements _NavigationItem {
   @override
   final Icon icon;
   @override
-  final String label;
+  final PageLabel label;
   @override
   final String? description;
   @override
@@ -251,7 +251,7 @@ class _$NavigationItemImpl implements _NavigationItem {
 abstract class _NavigationItem implements NavigationItem {
   const factory _NavigationItem(
       {required final Icon icon,
-      required final String label,
+      required final PageLabel label,
       final String? description,
       required final Widget fragment,
       final bool keep,
@@ -261,7 +261,7 @@ abstract class _NavigationItem implements NavigationItem {
   @override
   Icon get icon;
   @override
-  String get label;
+  PageLabel get label;
   @override
   String? get description;
   @override
@@ -1984,6 +1984,186 @@ abstract class _VersionInfo implements VersionInfo {
       throw _privateConstructorUsedError;
 }
 
+Proxy _$ProxyFromJson(Map<String, dynamic> json) {
+  return _Proxy.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Proxy {
+  String get name => throw _privateConstructorUsedError;
+  String get type => throw _privateConstructorUsedError;
+  String? get now => throw _privateConstructorUsedError;
+
+  /// Serializes this Proxy to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ProxyCopyWith<Proxy> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxyCopyWith<$Res> {
+  factory $ProxyCopyWith(Proxy value, $Res Function(Proxy) then) =
+      _$ProxyCopyWithImpl<$Res, Proxy>;
+  @useResult
+  $Res call({String name, String type, String? now});
+}
+
+/// @nodoc
+class _$ProxyCopyWithImpl<$Res, $Val extends Proxy>
+    implements $ProxyCopyWith<$Res> {
+  _$ProxyCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? type = null,
+    Object? now = freezed,
+  }) {
+    return _then(_value.copyWith(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      now: freezed == now
+          ? _value.now
+          : now // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxyImplCopyWith<$Res> implements $ProxyCopyWith<$Res> {
+  factory _$$ProxyImplCopyWith(
+          _$ProxyImpl value, $Res Function(_$ProxyImpl) then) =
+      __$$ProxyImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String name, String type, String? now});
+}
+
+/// @nodoc
+class __$$ProxyImplCopyWithImpl<$Res>
+    extends _$ProxyCopyWithImpl<$Res, _$ProxyImpl>
+    implements _$$ProxyImplCopyWith<$Res> {
+  __$$ProxyImplCopyWithImpl(
+      _$ProxyImpl _value, $Res Function(_$ProxyImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? type = null,
+    Object? now = freezed,
+  }) {
+    return _then(_$ProxyImpl(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      now: freezed == now
+          ? _value.now
+          : now // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ProxyImpl implements _Proxy {
+  const _$ProxyImpl({required this.name, required this.type, this.now});
+
+  factory _$ProxyImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ProxyImplFromJson(json);
+
+  @override
+  final String name;
+  @override
+  final String type;
+  @override
+  final String? now;
+
+  @override
+  String toString() {
+    return 'Proxy(name: $name, type: $type, now: $now)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxyImpl &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.now, now) || other.now == now));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, name, type, now);
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>
+      __$$ProxyImplCopyWithImpl<_$ProxyImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ProxyImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Proxy implements Proxy {
+  const factory _Proxy(
+      {required final String name,
+      required final String type,
+      final String? now}) = _$ProxyImpl;
+
+  factory _Proxy.fromJson(Map<String, dynamic> json) = _$ProxyImpl.fromJson;
+
+  @override
+  String get name;
+  @override
+  String get type;
+  @override
+  String? get now;
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Group _$GroupFromJson(Map<String, dynamic> json) {
   return _Group.fromJson(json);
 }
@@ -2270,183 +2450,152 @@ abstract class _Group implements Group {
       throw _privateConstructorUsedError;
 }
 
-Proxy _$ProxyFromJson(Map<String, dynamic> json) {
-  return _Proxy.fromJson(json);
-}
-
 /// @nodoc
-mixin _$Proxy {
-  String get name => throw _privateConstructorUsedError;
-  String get type => throw _privateConstructorUsedError;
-  String? get now => throw _privateConstructorUsedError;
+mixin _$ColorSchemes {
+  ColorScheme? get lightColorScheme => throw _privateConstructorUsedError;
+  ColorScheme? get darkColorScheme => throw _privateConstructorUsedError;
 
-  /// Serializes this Proxy to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Proxy
+  /// Create a copy of ColorSchemes
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ProxyCopyWith<Proxy> get copyWith => throw _privateConstructorUsedError;
+  $ColorSchemesCopyWith<ColorSchemes> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ProxyCopyWith<$Res> {
-  factory $ProxyCopyWith(Proxy value, $Res Function(Proxy) then) =
-      _$ProxyCopyWithImpl<$Res, Proxy>;
+abstract class $ColorSchemesCopyWith<$Res> {
+  factory $ColorSchemesCopyWith(
+          ColorSchemes value, $Res Function(ColorSchemes) then) =
+      _$ColorSchemesCopyWithImpl<$Res, ColorSchemes>;
   @useResult
-  $Res call({String name, String type, String? now});
+  $Res call({ColorScheme? lightColorScheme, ColorScheme? darkColorScheme});
 }
 
 /// @nodoc
-class _$ProxyCopyWithImpl<$Res, $Val extends Proxy>
-    implements $ProxyCopyWith<$Res> {
-  _$ProxyCopyWithImpl(this._value, this._then);
+class _$ColorSchemesCopyWithImpl<$Res, $Val extends ColorSchemes>
+    implements $ColorSchemesCopyWith<$Res> {
+  _$ColorSchemesCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Proxy
+  /// Create a copy of ColorSchemes
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? name = null,
-    Object? type = null,
-    Object? now = freezed,
+    Object? lightColorScheme = freezed,
+    Object? darkColorScheme = freezed,
   }) {
     return _then(_value.copyWith(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      now: freezed == now
-          ? _value.now
-          : now // ignore: cast_nullable_to_non_nullable
-              as String?,
+      lightColorScheme: freezed == lightColorScheme
+          ? _value.lightColorScheme
+          : lightColorScheme // ignore: cast_nullable_to_non_nullable
+              as ColorScheme?,
+      darkColorScheme: freezed == darkColorScheme
+          ? _value.darkColorScheme
+          : darkColorScheme // ignore: cast_nullable_to_non_nullable
+              as ColorScheme?,
     ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$ProxyImplCopyWith<$Res> implements $ProxyCopyWith<$Res> {
-  factory _$$ProxyImplCopyWith(
-          _$ProxyImpl value, $Res Function(_$ProxyImpl) then) =
-      __$$ProxyImplCopyWithImpl<$Res>;
+abstract class _$$ColorSchemesImplCopyWith<$Res>
+    implements $ColorSchemesCopyWith<$Res> {
+  factory _$$ColorSchemesImplCopyWith(
+          _$ColorSchemesImpl value, $Res Function(_$ColorSchemesImpl) then) =
+      __$$ColorSchemesImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String name, String type, String? now});
+  $Res call({ColorScheme? lightColorScheme, ColorScheme? darkColorScheme});
 }
 
 /// @nodoc
-class __$$ProxyImplCopyWithImpl<$Res>
-    extends _$ProxyCopyWithImpl<$Res, _$ProxyImpl>
-    implements _$$ProxyImplCopyWith<$Res> {
-  __$$ProxyImplCopyWithImpl(
-      _$ProxyImpl _value, $Res Function(_$ProxyImpl) _then)
+class __$$ColorSchemesImplCopyWithImpl<$Res>
+    extends _$ColorSchemesCopyWithImpl<$Res, _$ColorSchemesImpl>
+    implements _$$ColorSchemesImplCopyWith<$Res> {
+  __$$ColorSchemesImplCopyWithImpl(
+      _$ColorSchemesImpl _value, $Res Function(_$ColorSchemesImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Proxy
+  /// Create a copy of ColorSchemes
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? name = null,
-    Object? type = null,
-    Object? now = freezed,
+    Object? lightColorScheme = freezed,
+    Object? darkColorScheme = freezed,
   }) {
-    return _then(_$ProxyImpl(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      now: freezed == now
-          ? _value.now
-          : now // ignore: cast_nullable_to_non_nullable
-              as String?,
+    return _then(_$ColorSchemesImpl(
+      lightColorScheme: freezed == lightColorScheme
+          ? _value.lightColorScheme
+          : lightColorScheme // ignore: cast_nullable_to_non_nullable
+              as ColorScheme?,
+      darkColorScheme: freezed == darkColorScheme
+          ? _value.darkColorScheme
+          : darkColorScheme // ignore: cast_nullable_to_non_nullable
+              as ColorScheme?,
     ));
   }
 }
 
 /// @nodoc
-@JsonSerializable()
-class _$ProxyImpl implements _Proxy {
-  const _$ProxyImpl({required this.name, required this.type, this.now});
 
-  factory _$ProxyImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProxyImplFromJson(json);
+class _$ColorSchemesImpl implements _ColorSchemes {
+  const _$ColorSchemesImpl({this.lightColorScheme, this.darkColorScheme});
 
   @override
-  final String name;
+  final ColorScheme? lightColorScheme;
   @override
-  final String type;
-  @override
-  final String? now;
+  final ColorScheme? darkColorScheme;
 
   @override
   String toString() {
-    return 'Proxy(name: $name, type: $type, now: $now)';
+    return 'ColorSchemes(lightColorScheme: $lightColorScheme, darkColorScheme: $darkColorScheme)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProxyImpl &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.type, type) || other.type == type) &&
-            (identical(other.now, now) || other.now == now));
+            other is _$ColorSchemesImpl &&
+            (identical(other.lightColorScheme, lightColorScheme) ||
+                other.lightColorScheme == lightColorScheme) &&
+            (identical(other.darkColorScheme, darkColorScheme) ||
+                other.darkColorScheme == darkColorScheme));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, name, type, now);
+  int get hashCode =>
+      Object.hash(runtimeType, lightColorScheme, darkColorScheme);
 
-  /// Create a copy of Proxy
+  /// Create a copy of ColorSchemes
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>
-      __$$ProxyImplCopyWithImpl<_$ProxyImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ProxyImplToJson(
-      this,
-    );
-  }
+  _$$ColorSchemesImplCopyWith<_$ColorSchemesImpl> get copyWith =>
+      __$$ColorSchemesImplCopyWithImpl<_$ColorSchemesImpl>(this, _$identity);
 }
 
-abstract class _Proxy implements Proxy {
-  const factory _Proxy(
-      {required final String name,
-      required final String type,
-      final String? now}) = _$ProxyImpl;
-
-  factory _Proxy.fromJson(Map<String, dynamic> json) = _$ProxyImpl.fromJson;
+abstract class _ColorSchemes implements ColorSchemes {
+  const factory _ColorSchemes(
+      {final ColorScheme? lightColorScheme,
+      final ColorScheme? darkColorScheme}) = _$ColorSchemesImpl;
 
   @override
-  String get name;
+  ColorScheme? get lightColorScheme;
   @override
-  String get type;
-  @override
-  String? get now;
+  ColorScheme? get darkColorScheme;
 
-  /// Create a copy of Proxy
+  /// Create a copy of ColorSchemes
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>
+  _$$ColorSchemesImplCopyWith<_$ColorSchemesImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

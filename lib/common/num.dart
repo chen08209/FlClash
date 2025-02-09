@@ -2,8 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 extension NumExt on num {
-  String fixed({digit = 2}) {
-    return toStringAsFixed(truncateToDouble() == this ? 0 : digit);
+  String fixed({decimals = 2}) {
+    String formatted = toStringAsFixed(decimals);
+    if (formatted.contains('.')) {
+      formatted = formatted.replaceAll(RegExp(r'0*$'), '');
+      if (formatted.endsWith('.')) {
+        formatted = formatted.substring(0, formatted.length - 1);
+      }
+    }
+    return formatted;
   }
 }
 

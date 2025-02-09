@@ -3,25 +3,25 @@ import 'dart:io';
 
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/app.dart';
 import 'package:fl_clash/models/core.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 typedef UpdatingMap = Map<String, bool>;
 
-class Providers extends StatefulWidget {
-  const Providers({
+class ProvidersView extends ConsumerStatefulWidget {
+  const ProvidersView({
     super.key,
   });
 
   @override
-  State<Providers> createState() => _ProvidersState();
+  ConsumerState<ProvidersView> createState() => _ProvidersViewState();
 }
 
-class _ProvidersState extends State<Providers> {
+class _ProvidersViewState extends ConsumerState<ProvidersView> {
   @override
   void initState() {
     super.initState();
@@ -43,12 +43,12 @@ class _ProvidersState extends State<Providers> {
   }
 
   _updateProviders() async {
-    final appState = globalState.appController.appState;
-    final providers = globalState.appController.appState.providers;
+    final providers = ref.read(providersProvider);
+    final providersNotifier = ref.read(providersProvider.notifier);
     final messages = [];
     final updateProviders = providers.map<Future>(
       (provider) async {
-        appState.setProvider(
+        providersNotifier.setProvider(
           provider.copyWith(isUpdating: true),
         );
         final message = await clashCore.updateExternalProvider(
@@ -57,7 +57,7 @@ class _ProvidersState extends State<Providers> {
         if (message.isNotEmpty) {
           messages.add("${provider.name}: $message \n");
         }
-        appState.setProvider(
+        providersNotifier.setProvider(
           await clashCore.getExternalProvider(provider.name),
         );
       },
@@ -83,35 +83,29 @@ class _ProvidersState extends State<Providers> {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<AppState, List<ExternalProvider>>(
-      selector: (_, appState) => appState.providers,
-      builder: (_, providers, ___) {
-        final proxyProviders =
-            providers.where((item) => item.type == "Proxy").map(
-                  (item) => ProviderItem(
-                    provider: item,
-                  ),
-                );
-        final ruleProviders =
-            providers.where((item) => item.type == "Rule").map(
-                  (item) => ProviderItem(
-                    provider: item,
-                  ),
-                );
-        final proxySection = generateSection(
-          title: appLocalizations.proxyProviders,
-          items: proxyProviders,
+    final providers = ref.watch(providersProvider);
+    final proxyProviders = providers.where((item) => item.type == "Proxy").map(
+          (item) => ProviderItem(
+            provider: item,
+          ),
         );
-        final ruleSection = generateSection(
-          title: appLocalizations.ruleProviders,
-          items: ruleProviders,
+    final ruleProviders = providers.where((item) => item.type == "Rule").map(
+          (item) => ProviderItem(
+            provider: item,
+          ),
         );
-        return generateListView([
-          ...proxySection,
-          ...ruleSection,
-        ]);
-      },
+    final proxySection = generateSection(
+      title: appLocalizations.proxyProviders,
+      items: proxyProviders,
     );
+    final ruleSection = generateSection(
+      title: appLocalizations.ruleProviders,
+      items: ruleProviders,
+    );
+    return generateListView([
+      ...proxySection,
+      ...ruleSection,
+    ]);
   }
 }
 
@@ -124,11 +118,11 @@ class ProviderItem extends StatelessWidget {
   });
 
   _handleUpdateProvider() async {
-    final appState = globalState.appController.appState;
+    final appController = globalState.appController;
     if (provider.vehicleType != "HTTP") return;
     await globalState.safeRun(
       () async {
-        appState.setProvider(
+        appController.setProvider(
           provider.copyWith(
             isUpdating: true,
           ),
@@ -140,7 +134,7 @@ class ProviderItem extends StatelessWidget {
       },
       silence: false,
     );
-    appState.setProvider(
+    appController.setProvider(
       await clashCore.getExternalProvider(provider.name),
     );
     await globalState.appController.updateGroupsDebounce();
@@ -149,7 +143,6 @@ class ProviderItem extends StatelessWidget {
   _handleSideLoadProvider() async {
     await globalState.safeRun<void>(() async {
       final platformFile = await picker.pickerFile();
-      final appState = globalState.appController.appState;
       final bytes = platformFile?.bytes;
       if (bytes == null || provider.path == null) return;
       final file = await File(provider.path!).create(recursive: true);
@@ -160,7 +153,7 @@ class ProviderItem extends StatelessWidget {
         data: utf8.decode(bytes),
       );
       if (message.isNotEmpty) throw message;
-      appState.setProvider(
+      globalState.appController.setProvider(
         await clashCore.getExternalProvider(provider.name),
       );
       if (message.isNotEmpty) throw message;

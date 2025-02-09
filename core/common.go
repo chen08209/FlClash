@@ -31,7 +31,7 @@ import (
 var (
 	isRunning = false
 	runLock   sync.Mutex
-	ips       = []string{"ipwho.is", "ifconfig.me", "icanhazip.com", "api.ip.sb", "ipinfo.io"}
+	ips       = []string{"ipwho.is", "api.ip.sb", "ipapi.co", "ipinfo.io"}
 	b, _      = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 )
 
@@ -215,6 +215,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Tun.Device = patchConfig.Tun.Device
 	targetConfig.Tun.DNSHijack = patchConfig.Tun.DNSHijack
 	targetConfig.Tun.Stack = patchConfig.Tun.Stack
+	targetConfig.Tun.RouteAddress = patchConfig.Tun.RouteAddress
 	targetConfig.GeodataLoader = patchConfig.GeodataLoader
 	targetConfig.Profile.StoreSelected = false
 	targetConfig.GeoXUrl = patchConfig.GeoXUrl

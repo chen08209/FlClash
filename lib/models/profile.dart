@@ -76,6 +76,14 @@ class Profile with _$Profile {
   }
 }
 
+
+extension ProfilesExt on List<Profile> {
+  Profile? getProfile(String? profileId) {
+    final index = indexWhere((profile) => profile.id == profileId);
+    return index == -1 ? null : this[index];
+  }
+}
+
 extension ProfileExtension on Profile {
   ProfileType get type =>
       url.isEmpty == true ? ProfileType.file : ProfileType.url;

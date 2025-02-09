@@ -1,6 +1,5 @@
 // ignore_for_file: invalid_annotation_target
 
-
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -28,14 +27,10 @@ abstract mixin class ServiceMessageListener {
 @freezed
 class CoreState with _$CoreState {
   const factory CoreState({
-    required bool enable,
-    AccessControl? accessControl,
-    required String currentProfileName,
-    required bool allowBypass,
-    required bool systemProxy,
-    required List<String> bypassDomain,
-    required List<String> routeAddress,
-    required bool ipv6,
+    @JsonKey(name: "vpn-props") required VpnProps vpnProps,
+    @JsonKey(name: "only-statistics-proxy") required bool onlyStatisticsProxy,
+    @JsonKey(name: "current-profile-name") required String currentProfileName,
+    @JsonKey(name: "bypass-domain") @Default([]) List<String> bypassDomain,
   }) = _CoreState;
 
   factory CoreState.fromJson(Map<String, Object?> json) =>
@@ -53,7 +48,7 @@ class AndroidVpnOptions with _$AndroidVpnOptions {
     required List<String> bypassDomain,
     required String ipv4Address,
     required String ipv6Address,
-    required List<String> routeAddress,
+    @Default([]) List<String> routeAddress,
     required String dnsServerAddress,
   }) = _AndroidVpnOptions;
 
@@ -65,11 +60,9 @@ class AndroidVpnOptions with _$AndroidVpnOptions {
 class ConfigExtendedParams with _$ConfigExtendedParams {
   const factory ConfigExtendedParams({
     @JsonKey(name: "is-patch") required bool isPatch,
-    @JsonKey(name: "is-compatible") required bool isCompatible,
     @JsonKey(name: "selected-map") required SelectedMap selectedMap,
     @JsonKey(name: "override-dns") required bool overrideDns,
     @JsonKey(name: "test-url") required String testUrl,
-    @JsonKey(name: "only-statistics-proxy") required bool onlyStatisticsProxy,
   }) = _ConfigExtendedParams;
 
   factory ConfigExtendedParams.fromJson(Map<String, Object?> json) =>

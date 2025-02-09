@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 const appName = "FlClash";
 const appHelperService = "FlClashHelperService";
 const coreName = "clash.meta";
+const browserUa =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const packageName = "com.follow.clash";
 final unixSocketPath = "/tmp/FlClashSocket_${Random().nextInt(10000)}.sock";
 const helperPort = 47890;
@@ -33,16 +35,6 @@ final double kHeaderHeight = system.isDesktop
         ? 40
         : 28
     : 0;
-const GeoXMap defaultGeoXMap = {
-  "mmdb":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
-  "asn":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
-  "geoip":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
-  "geosite":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"
-};
 const profilesDirectoryName = "profiles";
 const localhost = "127.0.0.1";
 const clashConfigKey = "clash_config";
@@ -53,8 +45,6 @@ const repository = "chen08209/FlClash";
 const defaultExternalController = "127.0.0.1:9090";
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
-const geodataLoaderMemconservative = "memconservative";
-const geodataLoaderStandard = "standard";
 const defaultTestUrl = "https://www.gstatic.com/generate_204";
 final filter = ImageFilter.blur(
   sigmaX: 5,

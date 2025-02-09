@@ -91,7 +91,6 @@ class _InputDialogState extends State<InputDialog> {
 
   _handleUpdate() async {
     final text = textController.value.text;
-    if (text.isEmpty) return;
     Navigator.of(context).pop<String>(text);
   }
 
@@ -119,6 +118,9 @@ class _InputDialogState extends State<InputDialog> {
                 border: const OutlineInputBorder(),
                 suffixText: suffixText,
               ),
+              onSubmitted: (_){
+                _handleUpdate();
+              },
             ),
           ],
         ),

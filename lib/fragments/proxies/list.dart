@@ -3,10 +3,13 @@ import 'dart:math';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
 import 'common.dart';
@@ -78,7 +81,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
     } else {
       tempUnfoldSet.add(groupName);
     }
-    globalState.appController.config.updateCurrentUnfoldSet(
+    globalState.appController.updateCurrentUnfoldSet(
       tempUnfoldSet,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,7 +108,8 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
     return itemHeightList;
   }
 
-  List<Widget> _buildItems({
+  List<Widget> _buildItems(
+    WidgetRef ref, {
     required List<String> groupNames,
     required int columns,
     required Set<String> currentUnfoldSet,
@@ -115,7 +119,10 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
     final GroupNameProxiesMap groupNameProxiesMap = {};
     for (final groupName in groupNames) {
       final group =
-          globalState.appController.appState.getGroupWithName(groupName)!;
+          ref.read(groupsProvider.select((state) => state.getGroup(groupName)));
+      if (group == null) {
+        continue;
+      }
       final isExpand = currentUnfoldSet.contains(groupName);
       items.addAll([
         ListHeader(
@@ -186,16 +193,21 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
     return items;
   }
 
-  _buildHeader({
+  _buildHeader(
+    WidgetRef ref, {
     required String groupName,
     required Set<String> currentUnfoldSet,
   }) {
     final group =
-        globalState.appController.appState.getGroupWithName(groupName)!;
+        ref.read(groupsProvider.select((state) => state.getGroup(groupName)));
+    if (group == null) {
+      return SizedBox();
+    }
     final isExpand = currentUnfoldSet.contains(groupName);
     return SizedBox(
       height: listHeaderHeight,
       child: ListHeader(
+        enterAnimated: false,
         onScrollToSelected: _scrollToGroupSelected,
         key: Key(groupName),
         isExpand: isExpand,
@@ -212,7 +224,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
       return;
     }
     final appController = globalState.appController;
-    final currentGroups = appController.appState.currentGroups;
+    final currentGroups = appController.getCurrentGroups();
     final groupNames = currentGroups.map((e) => e.name).toList();
     final findIndex = groupNames.indexWhere((item) => item == groupName);
     final index = findIndex != -1 ? findIndex : 0;
@@ -235,38 +247,16 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
 
   @override
   Widget build(BuildContext context) {
-    return Selector2<AppState, Config, ProxiesListSelectorState>(
-      selector: (_, appState, config) {
-        final currentGroups = appState.currentGroups;
-        final groupNames = currentGroups.map((e) => e.name).toList();
-        return ProxiesListSelectorState(
-          groupNames: groupNames,
-          currentUnfoldSet: config.currentUnfoldSet,
-          proxyCardType: config.proxiesStyle.cardType,
-          proxiesSortType: config.proxiesStyle.sortType,
-          columns: other.getProxiesColumns(
-            appState.viewWidth,
-            config.proxiesStyle.layout,
-          ),
-          sortNum: appState.sortNum,
-        );
-      },
-      shouldRebuild: (prev, next) {
-        if (!stringListEquality.equals(prev.groupNames, next.groupNames)) {
-          _headerStateNotifier.value = const ProxiesListHeaderSelectorState(
-            offset: 0,
-            currentIndex: 0,
-          );
-        }
-        return prev != next;
-      },
-      builder: (_, state, __) {
+    return Consumer(
+      builder: (_, ref, __) {
+        final state = ref.watch(proxiesListSelectorStateProvider);
         if (state.groupNames.isEmpty) {
           return NullStatus(
             label: appLocalizations.nullProxies,
           );
         }
         final items = _buildItems(
+          ref,
           groupNames: state.groupNames,
           currentUnfoldSet: state.currentUnfoldSet,
           columns: state.columns,
@@ -318,6 +308,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
                               bottom: 8,
                             ),
                             child: _buildHeader(
+                              ref,
                               groupName: state.groupNames[index],
                               currentUnfoldSet: state.currentUnfoldSet,
                             ),
@@ -343,8 +334,11 @@ class ListHeader extends StatefulWidget {
   final Function(String groupName) onScrollToSelected;
   final bool isExpand;
 
+  final bool enterAnimated;
+
   const ListHeader({
     super.key,
+    this.enterAnimated = true,
     required this.group,
     required this.onChange,
     required this.onScrollToSelected,
@@ -417,57 +411,53 @@ class _ListHeaderState extends State<ListHeader>
   }
 
   Widget _buildIcon() {
-    return Selector<Config, ProxiesIconStyle>(
-      selector: (_, config) => config.proxiesStyle.iconStyle,
-      builder: (_, iconStyle, child) {
-        return Selector<Config, String>(
-          selector: (_, config) {
-            final iconMapEntryList =
-                config.proxiesStyle.iconMap.entries.toList();
-            final index = iconMapEntryList.indexWhere((item) {
-              try {
-                return RegExp(item.key).hasMatch(groupName);
-              } catch (_) {
-                return false;
-              }
-            });
-            if (index != -1) {
-              return iconMapEntryList[index].value;
+    return Consumer(
+      builder: (_, ref, child) {
+        final iconStyle = ref.watch(
+            proxiesStyleSettingProvider.select((state) => state.iconStyle));
+        final icon = ref.watch(proxiesStyleSettingProvider.select((state) {
+          final iconMapEntryList = state.iconMap.entries.toList();
+          final index = iconMapEntryList.indexWhere((item) {
+            try {
+              return RegExp(item.key).hasMatch(groupName);
+            } catch (_) {
+              return false;
             }
-            return icon;
-          },
-          builder: (_, icon, __) {
-            return switch (iconStyle) {
-              ProxiesIconStyle.standard => Container(
-                  height: 48,
-                  width: 48,
-                  margin: const EdgeInsets.only(
-                    right: 16,
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: CommonTargetIcon(
-                    src: icon,
-                    size: 32,
-                  ),
-                ),
-              ProxiesIconStyle.icon => Container(
-                  margin: const EdgeInsets.only(
-                    right: 16,
-                  ),
-                  child: CommonTargetIcon(
-                    src: icon,
-                    size: 42,
-                  ),
-                ),
-              ProxiesIconStyle.none => Container(),
-            };
-          },
-        );
+          });
+          if (index != -1) {
+            return iconMapEntryList[index].value;
+          }
+          return this.icon;
+        }));
+        return switch (iconStyle) {
+          ProxiesIconStyle.standard => Container(
+              height: 48,
+              width: 48,
+              margin: const EdgeInsets.only(
+                right: 16,
+              ),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: context.colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: CommonTargetIcon(
+                src: icon,
+                size: 32,
+              ),
+            ),
+          ProxiesIconStyle.icon => Container(
+              margin: const EdgeInsets.only(
+                right: 16,
+              ),
+              child: CommonTargetIcon(
+                src: icon,
+                size: 42,
+              ),
+            ),
+          ProxiesIconStyle.none => Container(),
+        };
       },
     );
   }
@@ -475,13 +465,15 @@ class _ListHeaderState extends State<ListHeader>
   @override
   Widget build(BuildContext context) {
     return CommonCard(
+      enterAnimated: widget.enterAnimated,
       key: widget.key,
+      borderSide: WidgetStatePropertyAll(BorderSide.none),
       backgroundColor: WidgetStatePropertyAll(
         context.colorScheme.surfaceContainer,
       ),
       radius: 14,
       type: CommonCardType.filled,
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 12,
@@ -518,9 +510,13 @@ class _ListHeaderState extends State<ListHeader>
                               ),
                               Flexible(
                                 flex: 1,
-                                child: currentSelectedProxyNameBuilder(
-                                  groupName: groupName,
-                                  builder: (currentGroupName) {
+                                child: Consumer(
+                                  builder: (_, ref, __) {
+                                    final proxyName = ref
+                                        .watch(getSelectedProxyNameProvider(
+                                          groupName,
+                                        ))
+                                        .getSafeValue("");
                                     return Row(
                                       mainAxisSize: MainAxisSize.min,
                                       mainAxisAlignment:
@@ -528,12 +524,12 @@ class _ListHeaderState extends State<ListHeader>
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
                                       children: [
-                                        if (currentGroupName.isNotEmpty) ...[
+                                        if (proxyName.isNotEmpty) ...[
                                           Flexible(
                                             flex: 1,
                                             child: EmojiText(
                                               overflow: TextOverflow.ellipsis,
-                                              " · $currentGroupName",
+                                              " · $proxyName",
                                               style: context.textTheme
                                                   .labelMedium?.toLight,
                                             ),

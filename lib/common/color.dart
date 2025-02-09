@@ -11,7 +11,7 @@ extension ColorExtension on Color {
   }
 
   Color get toSoft {
-    return withOpacity(0.12);
+    return withOpacity(0.15);
   }
 
   Color get toLittle {

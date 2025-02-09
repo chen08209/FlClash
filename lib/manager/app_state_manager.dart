@@ -1,8 +1,6 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class AppStateManager extends StatefulWidget {
   final Widget child;
@@ -18,48 +16,6 @@ class AppStateManager extends StatefulWidget {
 
 class _AppStateManagerState extends State<AppStateManager>
     with WidgetsBindingObserver {
-  _updateNavigationsContainer(Widget child) {
-    return Selector2<AppState, Config, UpdateNavigationsSelector>(
-      selector: (_, appState, config) {
-        final group = appState.currentGroups;
-        final hasProfile = config.profiles.isNotEmpty;
-        return UpdateNavigationsSelector(
-          openLogs: config.appSetting.openLogs,
-          hasProxies: group.isNotEmpty && hasProfile,
-        );
-      },
-      builder: (context, state, child) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) {
-            globalState.appController.appState.navigationItems =
-                navigation.getItems(
-              openLogs: state.openLogs,
-              hasProxies: state.hasProxies,
-            );
-          },
-        );
-        return child!;
-      },
-      child: child,
-    );
-  }
-
-  _cacheStateChange(Widget child) {
-    return Selector2<Config, ClashConfig, String>(
-      selector: (_, config, clashConfig) => "$clashConfig $config",
-      shouldRebuild: (prev, next) {
-        if (prev != next) {
-          globalState.appController.savePreferencesDebounce();
-        }
-        return prev != next;
-      },
-      builder: (context, state, child) {
-        return child!;
-      },
-      child: child,
-    );
-  }
-
   @override
   void initState() {
     super.initState();
@@ -76,7 +32,7 @@ class _AppStateManagerState extends State<AppStateManager>
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      globalState.appController.savePreferencesDebounce();
+      globalState.appController.savePreferences();
       render?.pause();
     } else {
       render?.resume();
@@ -85,8 +41,9 @@ class _AppStateManagerState extends State<AppStateManager>
 
   @override
   void didChangePlatformBrightness() {
-    globalState.appController.appState.brightness =
-        WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    globalState.appController.updateBrightness(
+      WidgetsBinding.instance.platformDispatcher.platformBrightness,
+    );
   }
 
   @override
@@ -95,11 +52,7 @@ class _AppStateManagerState extends State<AppStateManager>
       onPointerHover: (_) {
         render?.resume();
       },
-      child: _cacheStateChange(
-        _updateNavigationsContainer(
-          widget.child,
-        ),
-      ),
+      child: widget.child,
     );
   }
 }

@@ -2,31 +2,42 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/start_button.dart';
 
-class DashboardFragment extends StatefulWidget {
+class DashboardFragment extends ConsumerStatefulWidget {
   const DashboardFragment({super.key});
 
   @override
-  State<DashboardFragment> createState() => _DashboardFragmentState();
+  ConsumerState<DashboardFragment> createState() => _DashboardFragmentState();
 }
 
-class _DashboardFragmentState extends State<DashboardFragment> {
+class _DashboardFragmentState extends ConsumerState<DashboardFragment>
+    with PageMixin {
   final key = GlobalKey<SuperGridState>();
 
-  _initScaffold(bool isCurrent) {
-    if (!isCurrent) {
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final commonScaffoldState = context.commonScaffoldState;
-      commonScaffoldState?.floatingActionButton = const StartButton();
-      commonScaffoldState?.actions = [
+  @override
+  initState() {
+    ref.listenManual(
+      isCurrentPageProvider(PageLabel.dashboard),
+      (prev, next) {
+        if (prev != next && next == true) {
+          initPageState();
+        }
+      },
+      fireImmediately: true,
+    );
+    return super.initState();
+  }
+
+  @override
+  Widget? get floatingActionButton => const StartButton();
+
+  @override
+  List<Widget> get actions => [
         ValueListenableBuilder(
           valueListenable: key.currentState!.addedChildrenNotifier,
           builder: (_, addedChildren, child) {
@@ -67,72 +78,59 @@ class _DashboardFragmentState extends State<DashboardFragment> {
           },
         ),
       ];
-    });
+
+  _handleSave(List<GridItem> girdItems, WidgetRef ref) {
+    final dashboardWidgets = girdItems
+        .map(
+          (item) => DashboardWidget.getDashboardWidget(item),
+        )
+        .toList();
+    ref.read(appSettingProvider.notifier).updateState(
+          (state) => state.copyWith(dashboardWidgets: dashboardWidgets),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ActiveBuilder(
-      label: "dashboard",
-      builder: (isCurrent, child) {
-        _initScaffold(isCurrent);
-        return child!;
-      },
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16).copyWith(
-            bottom: 88,
-          ),
-          child: Selector2<AppState, Config, DashboardState>(
-            selector: (_, appState, config) => DashboardState(
-              dashboardWidgets: config.appSetting.dashboardWidgets,
-              viewWidth: appState.viewWidth,
-            ),
-            builder: (_, state, ___) {
-              final columns = max(4 * ((state.viewWidth / 350).ceil()), 8);
-              return SuperGrid(
-                key: key,
-                crossAxisCount: columns,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                children: [
-                  ...state.dashboardWidgets
-                      .where(
-                        (item) => item.platforms.contains(
-                          SupportPlatform.currentPlatform,
-                        ),
-                      )
-                      .map(
-                        (item) => item.widget,
+    final dashboardState = ref.watch(dashboardStateProvider);
+    final columns = max(4 * ((dashboardState.viewWidth / 350).ceil()), 8);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16).copyWith(
+          bottom: 88,
+        ),
+        child: SuperGrid(
+          key: key,
+          crossAxisCount: columns,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          children: [
+            ...dashboardState.dashboardWidgets
+                .where(
+                  (item) => item.platforms.contains(
+                    SupportPlatform.currentPlatform,
+                  ),
+                )
+                .map(
+                  (item) => item.widget,
+                ),
+          ],
+          onSave: (girdItems) {
+            _handleSave(girdItems, ref);
+          },
+          addedItemsBuilder: (girdItems) {
+            return DashboardWidget.values
+                .where(
+                  (item) =>
+                      !girdItems.contains(item.widget) &&
+                      item.platforms.contains(
+                        SupportPlatform.currentPlatform,
                       ),
-                ],
-                onSave: (girdItems) {
-                  final dashboardWidgets = girdItems
-                      .map(
-                        (item) => DashboardWidget.getDashboardWidget(item),
-                      )
-                      .toList();
-                  final config = globalState.appController.config;
-                  config.appSetting = config.appSetting.copyWith(
-                    dashboardWidgets: dashboardWidgets,
-                  );
-                },
-                addedItemsBuilder: (girdItems) {
-                  return DashboardWidget.values
-                      .where(
-                        (item) =>
-                            !girdItems.contains(item.widget) &&
-                            item.platforms.contains(
-                              SupportPlatform.currentPlatform,
-                            ),
-                      )
-                      .map((item) => item.widget)
-                      .toList();
-                },
-              );
-            },
-          ),
+                )
+                .map((item) => item.widget)
+                .toList();
+          },
         ),
       ),
     );

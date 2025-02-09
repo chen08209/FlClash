@@ -49,8 +49,8 @@ func invokeAction(paramsChar *C.char, port C.longlong) {
 		bridge.SendToPort(i, err.Error())
 		return
 	}
-	go handleAction(action, func(bytes []byte) {
-		bridge.SendToPort(i, string(bytes))
+	go handleAction(action, func(data interface{}) {
+		bridge.SendToPort(i, string(action.getResult(data)))
 	})
 }
 
@@ -64,7 +64,7 @@ func sendMessage(message Message) {
 	}
 	bridge.SendToPort(messagePort, string(Action{
 		Method: messageMethod,
-	}.wrapMessage(res)))
+	}.getResult(res)))
 }
 
 //export startListener

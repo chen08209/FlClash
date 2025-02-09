@@ -2,10 +2,11 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TrafficUsage extends StatelessWidget {
   const TrafficUsage({super.key});
@@ -62,9 +63,9 @@ class TrafficUsage extends StatelessWidget {
           iconData: Icons.data_saver_off,
         ),
         onPressed: () {},
-        child: Selector<AppFlowingState, Traffic>(
-          selector: (_, appFlowingState) => appFlowingState.totalTraffic,
-          builder: (_, totalTraffic, __) {
+        child: Consumer(
+          builder: (_, ref, __) {
+            final totalTraffic = ref.watch(totalTrafficProvider);
             final upTotalTrafficValue = totalTraffic.up;
             final downTotalTrafficValue = totalTraffic.down;
             return Padding(

@@ -342,5 +342,6 @@
   "copySuccess": "复制成功",
   "copyLink": "复制链接",
   "exportFile": "导出文件",
-  "cacheCorrupt": "缓存已损坏，是否清空？"
+  "cacheCorrupt": "缓存已损坏，是否清空？",
+  "detectionTip": "依赖第三方程序仅供参考"
 }

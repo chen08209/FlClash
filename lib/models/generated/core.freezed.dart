@@ -20,14 +20,14 @@ CoreState _$CoreStateFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$CoreState {
-  bool get enable => throw _privateConstructorUsedError;
-  AccessControl? get accessControl => throw _privateConstructorUsedError;
+  @JsonKey(name: "vpn-props")
+  VpnProps get vpnProps => throw _privateConstructorUsedError;
+  @JsonKey(name: "only-statistics-proxy")
+  bool get onlyStatisticsProxy => throw _privateConstructorUsedError;
+  @JsonKey(name: "current-profile-name")
   String get currentProfileName => throw _privateConstructorUsedError;
-  bool get allowBypass => throw _privateConstructorUsedError;
-  bool get systemProxy => throw _privateConstructorUsedError;
+  @JsonKey(name: "bypass-domain")
   List<String> get bypassDomain => throw _privateConstructorUsedError;
-  List<String> get routeAddress => throw _privateConstructorUsedError;
-  bool get ipv6 => throw _privateConstructorUsedError;
 
   /// Serializes this CoreState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,16 +45,12 @@ abstract class $CoreStateCopyWith<$Res> {
       _$CoreStateCopyWithImpl<$Res, CoreState>;
   @useResult
   $Res call(
-      {bool enable,
-      AccessControl? accessControl,
-      String currentProfileName,
-      bool allowBypass,
-      bool systemProxy,
-      List<String> bypassDomain,
-      List<String> routeAddress,
-      bool ipv6});
+      {@JsonKey(name: "vpn-props") VpnProps vpnProps,
+      @JsonKey(name: "only-statistics-proxy") bool onlyStatisticsProxy,
+      @JsonKey(name: "current-profile-name") String currentProfileName,
+      @JsonKey(name: "bypass-domain") List<String> bypassDomain});
 
-  $AccessControlCopyWith<$Res>? get accessControl;
+  $VpnPropsCopyWith<$Res> get vpnProps;
 }
 
 /// @nodoc
@@ -72,48 +68,28 @@ class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? enable = null,
-    Object? accessControl = freezed,
+    Object? vpnProps = null,
+    Object? onlyStatisticsProxy = null,
     Object? currentProfileName = null,
-    Object? allowBypass = null,
-    Object? systemProxy = null,
     Object? bypassDomain = null,
-    Object? routeAddress = null,
-    Object? ipv6 = null,
   }) {
     return _then(_value.copyWith(
-      enable: null == enable
-          ? _value.enable
-          : enable // ignore: cast_nullable_to_non_nullable
+      vpnProps: null == vpnProps
+          ? _value.vpnProps
+          : vpnProps // ignore: cast_nullable_to_non_nullable
+              as VpnProps,
+      onlyStatisticsProxy: null == onlyStatisticsProxy
+          ? _value.onlyStatisticsProxy
+          : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
               as bool,
-      accessControl: freezed == accessControl
-          ? _value.accessControl
-          : accessControl // ignore: cast_nullable_to_non_nullable
-              as AccessControl?,
       currentProfileName: null == currentProfileName
           ? _value.currentProfileName
           : currentProfileName // ignore: cast_nullable_to_non_nullable
               as String,
-      allowBypass: null == allowBypass
-          ? _value.allowBypass
-          : allowBypass // ignore: cast_nullable_to_non_nullable
-              as bool,
-      systemProxy: null == systemProxy
-          ? _value.systemProxy
-          : systemProxy // ignore: cast_nullable_to_non_nullable
-              as bool,
       bypassDomain: null == bypassDomain
           ? _value.bypassDomain
           : bypassDomain // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      routeAddress: null == routeAddress
-          ? _value.routeAddress
-          : routeAddress // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      ipv6: null == ipv6
-          ? _value.ipv6
-          : ipv6 // ignore: cast_nullable_to_non_nullable
-              as bool,
     ) as $Val);
   }
 
@@ -121,13 +97,9 @@ class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $AccessControlCopyWith<$Res>? get accessControl {
-    if (_value.accessControl == null) {
-      return null;
-    }
-
-    return $AccessControlCopyWith<$Res>(_value.accessControl!, (value) {
-      return _then(_value.copyWith(accessControl: value) as $Val);
+  $VpnPropsCopyWith<$Res> get vpnProps {
+    return $VpnPropsCopyWith<$Res>(_value.vpnProps, (value) {
+      return _then(_value.copyWith(vpnProps: value) as $Val);
     });
   }
 }
@@ -141,17 +113,13 @@ abstract class _$$CoreStateImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {bool enable,
-      AccessControl? accessControl,
-      String currentProfileName,
-      bool allowBypass,
-      bool systemProxy,
-      List<String> bypassDomain,
-      List<String> routeAddress,
-      bool ipv6});
+      {@JsonKey(name: "vpn-props") VpnProps vpnProps,
+      @JsonKey(name: "only-statistics-proxy") bool onlyStatisticsProxy,
+      @JsonKey(name: "current-profile-name") String currentProfileName,
+      @JsonKey(name: "bypass-domain") List<String> bypassDomain});
 
   @override
-  $AccessControlCopyWith<$Res>? get accessControl;
+  $VpnPropsCopyWith<$Res> get vpnProps;
 }
 
 /// @nodoc
@@ -167,48 +135,28 @@ class __$$CoreStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? enable = null,
-    Object? accessControl = freezed,
+    Object? vpnProps = null,
+    Object? onlyStatisticsProxy = null,
     Object? currentProfileName = null,
-    Object? allowBypass = null,
-    Object? systemProxy = null,
     Object? bypassDomain = null,
-    Object? routeAddress = null,
-    Object? ipv6 = null,
   }) {
     return _then(_$CoreStateImpl(
-      enable: null == enable
-          ? _value.enable
-          : enable // ignore: cast_nullable_to_non_nullable
+      vpnProps: null == vpnProps
+          ? _value.vpnProps
+          : vpnProps // ignore: cast_nullable_to_non_nullable
+              as VpnProps,
+      onlyStatisticsProxy: null == onlyStatisticsProxy
+          ? _value.onlyStatisticsProxy
+          : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
               as bool,
-      accessControl: freezed == accessControl
-          ? _value.accessControl
-          : accessControl // ignore: cast_nullable_to_non_nullable
-              as AccessControl?,
       currentProfileName: null == currentProfileName
           ? _value.currentProfileName
           : currentProfileName // ignore: cast_nullable_to_non_nullable
               as String,
-      allowBypass: null == allowBypass
-          ? _value.allowBypass
-          : allowBypass // ignore: cast_nullable_to_non_nullable
-              as bool,
-      systemProxy: null == systemProxy
-          ? _value.systemProxy
-          : systemProxy // ignore: cast_nullable_to_non_nullable
-              as bool,
       bypassDomain: null == bypassDomain
           ? _value._bypassDomain
           : bypassDomain // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      routeAddress: null == routeAddress
-          ? _value._routeAddress
-          : routeAddress // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      ipv6: null == ipv6
-          ? _value.ipv6
-          : ipv6 // ignore: cast_nullable_to_non_nullable
-              as bool,
     ));
   }
 }
@@ -217,52 +165,37 @@ class __$$CoreStateImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$CoreStateImpl implements _CoreState {
   const _$CoreStateImpl(
-      {required this.enable,
-      this.accessControl,
-      required this.currentProfileName,
-      required this.allowBypass,
-      required this.systemProxy,
-      required final List<String> bypassDomain,
-      required final List<String> routeAddress,
-      required this.ipv6})
-      : _bypassDomain = bypassDomain,
-        _routeAddress = routeAddress;
+      {@JsonKey(name: "vpn-props") required this.vpnProps,
+      @JsonKey(name: "only-statistics-proxy") required this.onlyStatisticsProxy,
+      @JsonKey(name: "current-profile-name") required this.currentProfileName,
+      @JsonKey(name: "bypass-domain")
+      final List<String> bypassDomain = const []})
+      : _bypassDomain = bypassDomain;
 
   factory _$CoreStateImpl.fromJson(Map<String, dynamic> json) =>
       _$$CoreStateImplFromJson(json);
 
   @override
-  final bool enable;
+  @JsonKey(name: "vpn-props")
+  final VpnProps vpnProps;
   @override
-  final AccessControl? accessControl;
+  @JsonKey(name: "only-statistics-proxy")
+  final bool onlyStatisticsProxy;
   @override
+  @JsonKey(name: "current-profile-name")
   final String currentProfileName;
-  @override
-  final bool allowBypass;
-  @override
-  final bool systemProxy;
   final List<String> _bypassDomain;
   @override
+  @JsonKey(name: "bypass-domain")
   List<String> get bypassDomain {
     if (_bypassDomain is EqualUnmodifiableListView) return _bypassDomain;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_bypassDomain);
   }
 
-  final List<String> _routeAddress;
-  @override
-  List<String> get routeAddress {
-    if (_routeAddress is EqualUnmodifiableListView) return _routeAddress;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_routeAddress);
-  }
-
-  @override
-  final bool ipv6;
-
   @override
   String toString() {
-    return 'CoreState(enable: $enable, accessControl: $accessControl, currentProfileName: $currentProfileName, allowBypass: $allowBypass, systemProxy: $systemProxy, bypassDomain: $bypassDomain, routeAddress: $routeAddress, ipv6: $ipv6)';
+    return 'CoreState(vpnProps: $vpnProps, onlyStatisticsProxy: $onlyStatisticsProxy, currentProfileName: $currentProfileName, bypassDomain: $bypassDomain)';
   }
 
   @override
@@ -270,34 +203,20 @@ class _$CoreStateImpl implements _CoreState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$CoreStateImpl &&
-            (identical(other.enable, enable) || other.enable == enable) &&
-            (identical(other.accessControl, accessControl) ||
-                other.accessControl == accessControl) &&
+            (identical(other.vpnProps, vpnProps) ||
+                other.vpnProps == vpnProps) &&
+            (identical(other.onlyStatisticsProxy, onlyStatisticsProxy) ||
+                other.onlyStatisticsProxy == onlyStatisticsProxy) &&
             (identical(other.currentProfileName, currentProfileName) ||
                 other.currentProfileName == currentProfileName) &&
-            (identical(other.allowBypass, allowBypass) ||
-                other.allowBypass == allowBypass) &&
-            (identical(other.systemProxy, systemProxy) ||
-                other.systemProxy == systemProxy) &&
             const DeepCollectionEquality()
-                .equals(other._bypassDomain, _bypassDomain) &&
-            const DeepCollectionEquality()
-                .equals(other._routeAddress, _routeAddress) &&
-            (identical(other.ipv6, ipv6) || other.ipv6 == ipv6));
+                .equals(other._bypassDomain, _bypassDomain));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      enable,
-      accessControl,
-      currentProfileName,
-      allowBypass,
-      systemProxy,
-      const DeepCollectionEquality().hash(_bypassDomain),
-      const DeepCollectionEquality().hash(_routeAddress),
-      ipv6);
+  int get hashCode => Object.hash(runtimeType, vpnProps, onlyStatisticsProxy,
+      currentProfileName, const DeepCollectionEquality().hash(_bypassDomain));
 
   /// Create a copy of CoreState
   /// with the given fields replaced by the non-null parameter values.
@@ -317,34 +236,29 @@ class _$CoreStateImpl implements _CoreState {
 
 abstract class _CoreState implements CoreState {
   const factory _CoreState(
-      {required final bool enable,
-      final AccessControl? accessControl,
-      required final String currentProfileName,
-      required final bool allowBypass,
-      required final bool systemProxy,
-      required final List<String> bypassDomain,
-      required final List<String> routeAddress,
-      required final bool ipv6}) = _$CoreStateImpl;
+          {@JsonKey(name: "vpn-props") required final VpnProps vpnProps,
+          @JsonKey(name: "only-statistics-proxy")
+          required final bool onlyStatisticsProxy,
+          @JsonKey(name: "current-profile-name")
+          required final String currentProfileName,
+          @JsonKey(name: "bypass-domain") final List<String> bypassDomain}) =
+      _$CoreStateImpl;
 
   factory _CoreState.fromJson(Map<String, dynamic> json) =
       _$CoreStateImpl.fromJson;
 
   @override
-  bool get enable;
+  @JsonKey(name: "vpn-props")
+  VpnProps get vpnProps;
   @override
-  AccessControl? get accessControl;
+  @JsonKey(name: "only-statistics-proxy")
+  bool get onlyStatisticsProxy;
   @override
+  @JsonKey(name: "current-profile-name")
   String get currentProfileName;
   @override
-  bool get allowBypass;
-  @override
-  bool get systemProxy;
-  @override
+  @JsonKey(name: "bypass-domain")
   List<String> get bypassDomain;
-  @override
-  List<String> get routeAddress;
-  @override
-  bool get ipv6;
 
   /// Create a copy of CoreState
   /// with the given fields replaced by the non-null parameter values.
@@ -592,7 +506,7 @@ class _$AndroidVpnOptionsImpl implements _AndroidVpnOptions {
       required final List<String> bypassDomain,
       required this.ipv4Address,
       required this.ipv6Address,
-      required final List<String> routeAddress,
+      final List<String> routeAddress = const [],
       required this.dnsServerAddress})
       : _bypassDomain = bypassDomain,
         _routeAddress = routeAddress;
@@ -624,6 +538,7 @@ class _$AndroidVpnOptionsImpl implements _AndroidVpnOptions {
   final String ipv6Address;
   final List<String> _routeAddress;
   @override
+  @JsonKey()
   List<String> get routeAddress {
     if (_routeAddress is EqualUnmodifiableListView) return _routeAddress;
     // ignore: implicit_dynamic_type
@@ -705,7 +620,7 @@ abstract class _AndroidVpnOptions implements AndroidVpnOptions {
       required final List<String> bypassDomain,
       required final String ipv4Address,
       required final String ipv6Address,
-      required final List<String> routeAddress,
+      final List<String> routeAddress,
       required final String dnsServerAddress}) = _$AndroidVpnOptionsImpl;
 
   factory _AndroidVpnOptions.fromJson(Map<String, dynamic> json) =
@@ -748,16 +663,12 @@ ConfigExtendedParams _$ConfigExtendedParamsFromJson(Map<String, dynamic> json) {
 mixin _$ConfigExtendedParams {
   @JsonKey(name: "is-patch")
   bool get isPatch => throw _privateConstructorUsedError;
-  @JsonKey(name: "is-compatible")
-  bool get isCompatible => throw _privateConstructorUsedError;
   @JsonKey(name: "selected-map")
   Map<String, String> get selectedMap => throw _privateConstructorUsedError;
   @JsonKey(name: "override-dns")
   bool get overrideDns => throw _privateConstructorUsedError;
   @JsonKey(name: "test-url")
   String get testUrl => throw _privateConstructorUsedError;
-  @JsonKey(name: "only-statistics-proxy")
-  bool get onlyStatisticsProxy => throw _privateConstructorUsedError;
 
   /// Serializes this ConfigExtendedParams to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -777,11 +688,9 @@ abstract class $ConfigExtendedParamsCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: "is-patch") bool isPatch,
-      @JsonKey(name: "is-compatible") bool isCompatible,
       @JsonKey(name: "selected-map") Map<String, String> selectedMap,
       @JsonKey(name: "override-dns") bool overrideDns,
-      @JsonKey(name: "test-url") String testUrl,
-      @JsonKey(name: "only-statistics-proxy") bool onlyStatisticsProxy});
+      @JsonKey(name: "test-url") String testUrl});
 }
 
 /// @nodoc
@@ -801,20 +710,14 @@ class _$ConfigExtendedParamsCopyWithImpl<$Res,
   @override
   $Res call({
     Object? isPatch = null,
-    Object? isCompatible = null,
     Object? selectedMap = null,
     Object? overrideDns = null,
     Object? testUrl = null,
-    Object? onlyStatisticsProxy = null,
   }) {
     return _then(_value.copyWith(
       isPatch: null == isPatch
           ? _value.isPatch
           : isPatch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isCompatible: null == isCompatible
-          ? _value.isCompatible
-          : isCompatible // ignore: cast_nullable_to_non_nullable
               as bool,
       selectedMap: null == selectedMap
           ? _value.selectedMap
@@ -828,10 +731,6 @@ class _$ConfigExtendedParamsCopyWithImpl<$Res,
           ? _value.testUrl
           : testUrl // ignore: cast_nullable_to_non_nullable
               as String,
-      onlyStatisticsProxy: null == onlyStatisticsProxy
-          ? _value.onlyStatisticsProxy
-          : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
-              as bool,
     ) as $Val);
   }
 }
@@ -846,11 +745,9 @@ abstract class _$$ConfigExtendedParamsImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: "is-patch") bool isPatch,
-      @JsonKey(name: "is-compatible") bool isCompatible,
       @JsonKey(name: "selected-map") Map<String, String> selectedMap,
       @JsonKey(name: "override-dns") bool overrideDns,
-      @JsonKey(name: "test-url") String testUrl,
-      @JsonKey(name: "only-statistics-proxy") bool onlyStatisticsProxy});
+      @JsonKey(name: "test-url") String testUrl});
 }
 
 /// @nodoc
@@ -867,20 +764,14 @@ class __$$ConfigExtendedParamsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? isPatch = null,
-    Object? isCompatible = null,
     Object? selectedMap = null,
     Object? overrideDns = null,
     Object? testUrl = null,
-    Object? onlyStatisticsProxy = null,
   }) {
     return _then(_$ConfigExtendedParamsImpl(
       isPatch: null == isPatch
           ? _value.isPatch
           : isPatch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isCompatible: null == isCompatible
-          ? _value.isCompatible
-          : isCompatible // ignore: cast_nullable_to_non_nullable
               as bool,
       selectedMap: null == selectedMap
           ? _value._selectedMap
@@ -894,10 +785,6 @@ class __$$ConfigExtendedParamsImplCopyWithImpl<$Res>
           ? _value.testUrl
           : testUrl // ignore: cast_nullable_to_non_nullable
               as String,
-      onlyStatisticsProxy: null == onlyStatisticsProxy
-          ? _value.onlyStatisticsProxy
-          : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
-              as bool,
     ));
   }
 }
@@ -907,13 +794,10 @@ class __$$ConfigExtendedParamsImplCopyWithImpl<$Res>
 class _$ConfigExtendedParamsImpl implements _ConfigExtendedParams {
   const _$ConfigExtendedParamsImpl(
       {@JsonKey(name: "is-patch") required this.isPatch,
-      @JsonKey(name: "is-compatible") required this.isCompatible,
       @JsonKey(name: "selected-map")
       required final Map<String, String> selectedMap,
       @JsonKey(name: "override-dns") required this.overrideDns,
-      @JsonKey(name: "test-url") required this.testUrl,
-      @JsonKey(name: "only-statistics-proxy")
-      required this.onlyStatisticsProxy})
+      @JsonKey(name: "test-url") required this.testUrl})
       : _selectedMap = selectedMap;
 
   factory _$ConfigExtendedParamsImpl.fromJson(Map<String, dynamic> json) =>
@@ -922,9 +806,6 @@ class _$ConfigExtendedParamsImpl implements _ConfigExtendedParams {
   @override
   @JsonKey(name: "is-patch")
   final bool isPatch;
-  @override
-  @JsonKey(name: "is-compatible")
-  final bool isCompatible;
   final Map<String, String> _selectedMap;
   @override
   @JsonKey(name: "selected-map")
@@ -940,13 +821,10 @@ class _$ConfigExtendedParamsImpl implements _ConfigExtendedParams {
   @override
   @JsonKey(name: "test-url")
   final String testUrl;
-  @override
-  @JsonKey(name: "only-statistics-proxy")
-  final bool onlyStatisticsProxy;
 
   @override
   String toString() {
-    return 'ConfigExtendedParams(isPatch: $isPatch, isCompatible: $isCompatible, selectedMap: $selectedMap, overrideDns: $overrideDns, testUrl: $testUrl, onlyStatisticsProxy: $onlyStatisticsProxy)';
+    return 'ConfigExtendedParams(isPatch: $isPatch, selectedMap: $selectedMap, overrideDns: $overrideDns, testUrl: $testUrl)';
   }
 
   @override
@@ -955,27 +833,17 @@ class _$ConfigExtendedParamsImpl implements _ConfigExtendedParams {
         (other.runtimeType == runtimeType &&
             other is _$ConfigExtendedParamsImpl &&
             (identical(other.isPatch, isPatch) || other.isPatch == isPatch) &&
-            (identical(other.isCompatible, isCompatible) ||
-                other.isCompatible == isCompatible) &&
             const DeepCollectionEquality()
                 .equals(other._selectedMap, _selectedMap) &&
             (identical(other.overrideDns, overrideDns) ||
                 other.overrideDns == overrideDns) &&
-            (identical(other.testUrl, testUrl) || other.testUrl == testUrl) &&
-            (identical(other.onlyStatisticsProxy, onlyStatisticsProxy) ||
-                other.onlyStatisticsProxy == onlyStatisticsProxy));
+            (identical(other.testUrl, testUrl) || other.testUrl == testUrl));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isPatch,
-      isCompatible,
-      const DeepCollectionEquality().hash(_selectedMap),
-      overrideDns,
-      testUrl,
-      onlyStatisticsProxy);
+  int get hashCode => Object.hash(runtimeType, isPatch,
+      const DeepCollectionEquality().hash(_selectedMap), overrideDns, testUrl);
 
   /// Create a copy of ConfigExtendedParams
   /// with the given fields replaced by the non-null parameter values.
@@ -997,14 +865,12 @@ class _$ConfigExtendedParamsImpl implements _ConfigExtendedParams {
 
 abstract class _ConfigExtendedParams implements ConfigExtendedParams {
   const factory _ConfigExtendedParams(
-      {@JsonKey(name: "is-patch") required final bool isPatch,
-      @JsonKey(name: "is-compatible") required final bool isCompatible,
-      @JsonKey(name: "selected-map")
-      required final Map<String, String> selectedMap,
-      @JsonKey(name: "override-dns") required final bool overrideDns,
-      @JsonKey(name: "test-url") required final String testUrl,
-      @JsonKey(name: "only-statistics-proxy")
-      required final bool onlyStatisticsProxy}) = _$ConfigExtendedParamsImpl;
+          {@JsonKey(name: "is-patch") required final bool isPatch,
+          @JsonKey(name: "selected-map")
+          required final Map<String, String> selectedMap,
+          @JsonKey(name: "override-dns") required final bool overrideDns,
+          @JsonKey(name: "test-url") required final String testUrl}) =
+      _$ConfigExtendedParamsImpl;
 
   factory _ConfigExtendedParams.fromJson(Map<String, dynamic> json) =
       _$ConfigExtendedParamsImpl.fromJson;
@@ -1012,9 +878,6 @@ abstract class _ConfigExtendedParams implements ConfigExtendedParams {
   @override
   @JsonKey(name: "is-patch")
   bool get isPatch;
-  @override
-  @JsonKey(name: "is-compatible")
-  bool get isCompatible;
   @override
   @JsonKey(name: "selected-map")
   Map<String, String> get selectedMap;
@@ -1024,9 +887,6 @@ abstract class _ConfigExtendedParams implements ConfigExtendedParams {
   @override
   @JsonKey(name: "test-url")
   String get testUrl;
-  @override
-  @JsonKey(name: "only-statistics-proxy")
-  bool get onlyStatisticsProxy;
 
   /// Create a copy of ConfigExtendedParams
   /// with the given fields replaced by the non-null parameter values.
@@ -1068,6 +928,7 @@ abstract class $UpdateConfigParamsCopyWith<$Res> {
       ClashConfig config,
       ConfigExtendedParams params});
 
+  $ClashConfigCopyWith<$Res> get config;
   $ConfigExtendedParamsCopyWith<$Res> get params;
 }
 
@@ -1110,6 +971,16 @@ class _$UpdateConfigParamsCopyWithImpl<$Res, $Val extends UpdateConfigParams>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
+  $ClashConfigCopyWith<$Res> get config {
+    return $ClashConfigCopyWith<$Res>(_value.config, (value) {
+      return _then(_value.copyWith(config: value) as $Val);
+    });
+  }
+
+  /// Create a copy of UpdateConfigParams
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
   $ConfigExtendedParamsCopyWith<$Res> get params {
     return $ConfigExtendedParamsCopyWith<$Res>(_value.params, (value) {
       return _then(_value.copyWith(params: value) as $Val);
@@ -1130,6 +1001,8 @@ abstract class _$$UpdateConfigParamsImplCopyWith<$Res>
       ClashConfig config,
       ConfigExtendedParams params});
 
+  @override
+  $ClashConfigCopyWith<$Res> get config;
   @override
   $ConfigExtendedParamsCopyWith<$Res> get params;
 }

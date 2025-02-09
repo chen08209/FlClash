@@ -68,17 +68,19 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
             }
             addDnsServer(options.dnsServerAddress)
             setMtu(9000)
-            options.accessControl?.let { accessControl ->
-                when (accessControl.mode) {
-                    AccessControlMode.acceptSelected -> {
-                        (accessControl.acceptList + packageName).forEach {
-                            addAllowedApplication(it)
+            options.accessControl.let { accessControl ->
+                if (accessControl.enable) {
+                    when (accessControl.mode) {
+                        AccessControlMode.acceptSelected -> {
+                            (accessControl.acceptList + packageName).forEach {
+                                addAllowedApplication(it)
+                            }
                         }
-                    }
 
-                    AccessControlMode.rejectSelected -> {
-                        (accessControl.rejectList - packageName).forEach {
-                            addDisallowedApplication(it)
+                        AccessControlMode.rejectSelected -> {
+                            (accessControl.rejectList - packageName).forEach {
+                                addDisallowedApplication(it)
+                            }
                         }
                     }
                 }

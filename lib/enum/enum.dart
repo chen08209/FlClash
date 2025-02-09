@@ -34,7 +34,24 @@ const desktopPlatforms = [
   SupportPlatform.Windows,
 ];
 
-enum GroupType { Selector, URLTest, Fallback, LoadBalance, Relay }
+enum GroupType {
+  Selector,
+  URLTest,
+  Fallback,
+  LoadBalance,
+  Relay;
+
+  static GroupType parseProfileType(String type) {
+    return switch (type) {
+      "url-test" => URLTest,
+      "select" => Selector,
+      "fallback" => Fallback,
+      "load-balance" => LoadBalance,
+      "relay" => Relay,
+      String() => throw UnimplementedError(),
+    };
+  }
+}
 
 enum GroupName { GLOBAL, Proxy, Auto, Fallback }
 
@@ -45,7 +62,7 @@ extension GroupTypeExtension on GroupType {
       )
       .toList();
 
-  bool get isURLTestOrFallback {
+  bool get isComputedSelected {
     return [GroupType.URLTest, GroupType.Fallback].contains(this);
   }
 
@@ -136,6 +153,13 @@ enum DnsMode {
   @JsonValue("redir-host")
   redirHost,
   hosts
+}
+
+enum ExternalControllerStatus {
+  @JsonValue("")
+  close,
+  @JsonValue("127.0.0.1:9090")
+  open
 }
 
 enum KeyboardModifier {
@@ -238,6 +262,7 @@ enum ActionMethod {
   stopListener,
   getCountryCode,
   getMemory,
+  getProfile,
 
   ///Android,
   setFdMap,
@@ -270,7 +295,11 @@ enum DebounceTag {
   handleWill,
   updateDelay,
   vpnTip,
-  autoLaunch
+  autoLaunch,
+  renderPause,
+  updatePageIndex,
+  pageChange,
+  proxiesTabChange,
 }
 
 enum DashboardWidget {
@@ -340,4 +369,20 @@ enum DashboardWidget {
     );
     return dashboardWidgets[index];
   }
+}
+
+enum GeodataLoader {
+  standard,
+  memconservative,
+}
+
+enum PageLabel {
+  dashboard,
+  proxies,
+  profiles,
+  tools,
+  logs,
+  requests,
+  resources,
+  connections,
 }

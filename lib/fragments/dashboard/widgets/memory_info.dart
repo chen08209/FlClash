@@ -47,6 +47,11 @@ class _MemoryInfoState extends State<MemoryInfo> {
 
   @override
   Widget build(BuildContext context) {
+    final darkenLighter = context.colorScheme.secondaryContainer
+        .blendDarken(context, factor: 0.1)
+        .toLighter;
+    final darken = context.colorScheme.secondaryContainer
+        .blendDarken(context, factor: 0.1);
     return SizedBox(
       height: getWidgetHeight(2),
       child: CommonCard(
@@ -90,17 +95,14 @@ class _MemoryInfoState extends State<MemoryInfo> {
                         child: WaveView(
                           waveAmplitude: 12.0,
                           waveFrequency: 0.35,
-                          waveColor: context.colorScheme.secondaryContainer
-                              .blendDarken(context, factor: 0.1)
-                              .toLighter,
+                          waveColor: darkenLighter,
                         ),
                       ),
                       Positioned.fill(
                         child: WaveView(
                           waveAmplitude: 12.0,
                           waveFrequency: 0.9,
-                          waveColor: context.colorScheme.secondaryContainer
-                              .blendDarken(context, factor: 0.1),
+                          waveColor: darken,
                         ),
                       ),
                     ],

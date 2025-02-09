@@ -2,10 +2,6 @@
 
 package main
 
-func nextHandle(action *Action) {
-	return action
-}
-
-func nextHandle(action *Action, send func([]byte)) bool {
+func nextHandle(action *Action, result func(data interface{})) bool {
 	return false
 }

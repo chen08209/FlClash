@@ -1,11 +1,11 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 class OutboundMode extends StatelessWidget {
   const OutboundMode({super.key});
@@ -15,9 +15,10 @@ class OutboundMode extends StatelessWidget {
     final height = getWidgetHeight(2);
     return SizedBox(
       height: height,
-      child: Selector<ClashConfig, Mode>(
-        selector: (_, clashConfig) => clashConfig.mode,
-        builder: (_, mode, __) {
+      child: Consumer(
+        builder: (_, ref, __) {
+          final mode =
+              ref.watch(patchClashConfigProvider.select((state) => state.mode));
           return CommonCard(
             onPressed: () {},
             info: Info(

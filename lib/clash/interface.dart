@@ -2,12 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_clash/clash/message.dart';
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/future.dart';
-import 'package:fl_clash/common/other.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:flutter/material.dart' hide Action;
 
 mixin ClashInterface {
   Future<bool> init(String homeDir);
@@ -66,14 +63,16 @@ mixin ClashInterface {
   FutureOr<bool> closeConnection(String id);
 
   FutureOr<bool> closeConnections();
+
+  FutureOr<String> getProfile(String id);
+
+  Future<bool> setState(CoreState state);
 }
 
 mixin AndroidClashInterface {
   Future<bool> setFdMap(int fd);
 
   Future<bool> setProcessMap(ProcessMapItem item);
-
-  Future<bool> setState(CoreState state);
 
   Future<bool> stopTun();
 
@@ -106,6 +105,7 @@ abstract class ClashHandlerInterface with ClashInterface {
         case ActionMethod.closeConnections:
         case ActionMethod.closeConnection:
         case ActionMethod.stopListener:
+        case ActionMethod.setState:
           completer?.complete(result.data as bool);
           return;
         case ActionMethod.changeProxy:
@@ -137,7 +137,7 @@ abstract class ClashHandlerInterface with ClashInterface {
           completer?.complete(result.data);
       }
     } catch (_) {
-      debugPrint(result.id);
+      commonPrint.log(result.id);
     }
   }
 
@@ -199,6 +199,14 @@ abstract class ClashHandlerInterface with ClashInterface {
   }
 
   @override
+  Future<bool> setState(CoreState state) {
+    return invoke<bool>(
+      method: ActionMethod.setState,
+      data: json.encode(state),
+    );
+  }
+
+  @override
   shutdown() async {
     return await invoke<bool>(
       method: ActionMethod.shutdown,
@@ -232,6 +240,7 @@ abstract class ClashHandlerInterface with ClashInterface {
     return await invoke<String>(
       method: ActionMethod.updateConfig,
       data: json.encode(updateConfigParams),
+      timeout: Duration(minutes: 2),
     );
   }
 
@@ -239,6 +248,7 @@ abstract class ClashHandlerInterface with ClashInterface {
   Future<String> getProxies() {
     return invoke<String>(
       method: ActionMethod.getProxies,
+      timeout: Duration(seconds: 5),
     );
   }
 
@@ -314,6 +324,14 @@ abstract class ClashHandlerInterface with ClashInterface {
   Future<bool> closeConnection(String id) {
     return invoke<bool>(
       method: ActionMethod.closeConnection,
+      data: id,
+    );
+  }
+
+  @override
+  Future<String> getProfile(String id) {
+    return invoke<String>(
+      method: ActionMethod.getProfile,
       data: id,
     );
   }

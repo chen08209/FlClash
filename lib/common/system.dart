@@ -46,7 +46,7 @@ class System {
     } else if (Platform.isLinux) {
       final result = await Process.run('stat', ['-c', '%U:%G %A', corePath]);
       final output = result.stdout.trim();
-      if (output.startsWith('root:') && output.contains('rwx')) {
+      if (output.startsWith('root:') && output.contains('rws')) {
         return true;
       }
       return false;

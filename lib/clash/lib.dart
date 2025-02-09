@@ -67,7 +67,6 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
     switch (result.method) {
       case ActionMethod.setFdMap:
       case ActionMethod.setProcessMap:
-      case ActionMethod.setState:
       case ActionMethod.stopTun:
       case ActionMethod.updateDns:
         completer?.complete(result.data as bool);
@@ -120,14 +119,6 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
     return invoke<bool>(
       method: ActionMethod.setProcessMap,
       data: item,
-    );
-  }
-
-  @override
-  Future<bool> setState(CoreState state) {
-    return invoke<bool>(
-      method: ActionMethod.setState,
-      data: json.encode(state),
     );
   }
 
@@ -259,7 +250,7 @@ class ClashLibHandler {
 
   setProcessMap(ProcessMapItem processMapItem) {
     final processMapItemChar =
-        json.encode(processMapItem).toNativeUtf8().cast<Char>();
+    json.encode(processMapItem).toNativeUtf8().cast<Char>();
     clashFFI.setProcessMap(processMapItemChar);
     malloc.free(processMapItemChar);
   }
@@ -321,10 +312,10 @@ class ClashLibHandler {
   }
 
   Future<String> quickStart(
-    String homeDir,
-    UpdateConfigParams updateConfigParams,
-    CoreState state,
-  ) {
+      String homeDir,
+      UpdateConfigParams updateConfigParams,
+      CoreState state,
+      ) {
     final completer = Completer<String>();
     final receiver = ReceivePort();
     receiver.listen((message) {
