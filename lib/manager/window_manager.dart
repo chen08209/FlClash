@@ -33,7 +33,7 @@ class _WindowContainerState extends State<WindowManager>
           debouncer.call(
             DebounceTag.autoLaunch,
             () {
-              autoLaunch?.updateStatus(next);
+              autoLaunch.updateStatus(next);
             },
           );
         }

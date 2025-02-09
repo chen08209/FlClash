@@ -365,7 +365,7 @@ class AppController {
       config: config,
     );
     await _initStatus();
-    autoLaunch?.updateStatus(
+    autoLaunch.updateStatus(
       config.appSetting.autoLaunch,
     );
     autoUpdateProfiles();
