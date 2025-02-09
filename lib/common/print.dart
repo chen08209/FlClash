@@ -14,7 +14,7 @@ class CommonPrint {
   }
 
   log(String? payload) {
-    debugPrint("[App] $payload");
+    debugPrint("[FlClash] $payload");
     if (globalState.isService) {
       return;
     }
