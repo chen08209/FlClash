@@ -19,7 +19,7 @@ func sendMessage(message Message) {
 	}
 	send(Action{
 		Method: messageMethod,
-	}.wrapMessage(res))
+	}.getResult(res))
 }
 
 func send(data []byte) {
@@ -61,8 +61,8 @@ func startServer(arg string) {
 			return
 		}
 
-		go handleAction(action, func(bytes []byte) {
-			send(bytes)
+		go handleAction(action, func(data interface{}) {
+			send(action.getResult(data))
 		})
 	}
 }

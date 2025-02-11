@@ -179,6 +179,15 @@ func handleGetTotalTraffic() string {
 	return string(data)
 }
 
+func handleGetProfile(profileId string) string {
+	prof := getRawConfigWithId(profileId)
+	data, err := json.Marshal(prof)
+	if err != nil {
+		return ""
+	}
+	return string(data)
+}
+
 func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
 }

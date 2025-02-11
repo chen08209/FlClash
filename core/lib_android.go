@@ -263,46 +263,46 @@ func handleGetCurrentProfileName() string {
 	return state.CurrentState.CurrentProfileName
 }
 
-func nextHandle(action *Action, send func([]byte)) bool {
+func nextHandle(action *Action, result func(data interface{})) bool {
 	switch action.Method {
 	case startTunMethod:
 		data := action.Data.(string)
 		var fd int
 		_ = json.Unmarshal([]byte(data), &fd)
-		send(action.wrapMessage(handleStartTun(fd)))
+		result(handleStartTun(fd))
 		return true
 	case stopTunMethod:
 		handleStopTun()
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case setStateMethod:
 		data := action.Data.(string)
 		handleSetState(data)
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case getAndroidVpnOptionsMethod:
-		send(action.wrapMessage(handleGetAndroidVpnOptions()))
+		result(handleGetAndroidVpnOptions())
 		return true
 	case updateDnsMethod:
 		data := action.Data.(string)
 		handleUpdateDns(data)
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case setFdMapMethod:
 		fdId := action.Data.(string)
 		handleSetFdMap(fdId)
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case setProcessMapMethod:
 		data := action.Data.(string)
 		handleSetProcessMap(data)
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case getRunTimeMethod:
-		send(action.wrapMessage(handleGetRunTime()))
+		result(handleGetRunTime())
 		return true
 	case getCurrentProfileNameMethod:
-		send(action.wrapMessage(handleGetCurrentProfileName()))
+		result(handleGetCurrentProfileName())
 		return true
 	}
 	return false

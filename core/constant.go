@@ -80,6 +80,7 @@ const (
 	getAndroidVpnOptionsMethod     Method = "getAndroidVpnOptions"
 	getRunTimeMethod               Method = "getRunTime"
 	getCurrentProfileNameMethod    Method = "getCurrentProfileName"
+	getProfileMethod               Method = "getProfile"
 )
 
 type Method string
