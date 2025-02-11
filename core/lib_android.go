@@ -52,18 +52,6 @@ func NewInvokeManager() *InvokeManager {
 	}
 }
 
-func (m *InvokeManager) load(id string) string {
-	res, ok := m.invokeMap.Load(id)
-	if ok {
-		return res.(string)
-	}
-	return ""
-}
-
-func (m *InvokeManager) delete(id string) {
-	m.invokeMap.Delete(id)
-}
-
 func (m *InvokeManager) completer(id string, value string) {
 	m.invokeMap.Store(id, value)
 	m.chanLock.Lock()
@@ -74,7 +62,7 @@ func (m *InvokeManager) completer(id string, value string) {
 	m.chanLock.Unlock()
 }
 
-func (m *InvokeManager) await(id string) {
+func (m *InvokeManager) await(id string) string {
 	m.chanLock.Lock()
 	if _, ok := m.chanMap[id]; !ok {
 		m.chanMap[id] = make(chan struct{})
@@ -85,12 +73,17 @@ func (m *InvokeManager) await(id string) {
 	timeout := time.After(500 * time.Millisecond)
 	select {
 	case <-ch:
-		return
+		res, ok := m.invokeMap.Load(id)
+		m.invokeMap.Delete(id)
+		if ok {
+			return res.(string)
+		} else {
+			return ""
+		}
 	case <-timeout:
 		m.completer(id, "")
-		return
+		return ""
 	}
-
 }
 
 var (
@@ -195,7 +188,6 @@ func initSocketHook() {
 			})
 
 			fdInvokeMap.await(id)
-			fdInvokeMap.delete(id)
 		})
 	}
 }
@@ -214,10 +206,7 @@ func init() {
 			Id:       id,
 			Metadata: metadata,
 		})
-		processInvokeMap.await(id)
-		res := processInvokeMap.load(id)
-		processInvokeMap.delete(id)
-		return res, nil
+		return processInvokeMap.await(id), nil
 	}
 }
 
