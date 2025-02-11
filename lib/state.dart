@@ -115,7 +115,9 @@ class GlobalState {
     );
     if (res.isNotEmpty) throw res;
     lastTunEnable = useClashConfig.tun.enable;
-    lastProfileModified = await config.getCurrentProfile()?.profileLastModified;
+    lastProfileModified = await config
+        .getCurrentProfile()
+        ?.profileLastModified;
   }
 
   handleStart([UpdateTasks? tasks]) async {
@@ -184,7 +186,7 @@ class GlobalState {
       bypassDomain: config.networkProps.bypassDomain,
       systemProxy: config.vpnProps.systemProxy,
       currentProfileName:
-          config.currentProfile?.label ?? config.currentProfileId ?? "",
+      config.currentProfile?.label ?? config.currentProfileId ?? "",
       routeAddress: clashConfig.routeAddress,
     );
   }
@@ -241,7 +243,10 @@ class GlobalState {
               child: SingleChildScrollView(
                 child: SelectableText.rich(
                   TextSpan(
-                    style: Theme.of(context).textTheme.labelLarge,
+                    style: Theme
+                        .of(context)
+                        .textTheme
+                        .labelLarge,
                     children: [message],
                   ),
                   style: const TextStyle(
@@ -312,8 +317,7 @@ class GlobalState {
     }
   }
 
-  Future<T?> safeRun<T>(
-    FutureOr<T> Function() futureFunction, {
+  Future<T?> safeRun<T>(FutureOr<T> Function() futureFunction, {
     String? title,
     bool silence = true,
   }) async {

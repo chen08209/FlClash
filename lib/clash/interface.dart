@@ -63,6 +63,8 @@ mixin ClashInterface {
   FutureOr<bool> closeConnection(String id);
 
   FutureOr<bool> closeConnections();
+
+  FutureOr<String> getProfile(String id);
 }
 
 mixin AndroidClashInterface {
@@ -313,6 +315,14 @@ abstract class ClashHandlerInterface with ClashInterface {
   Future<bool> closeConnection(String id) {
     return invoke<bool>(
       method: ActionMethod.closeConnection,
+      data: id,
+    );
+  }
+
+  @override
+  Future<String> getProfile(String id) {
+    return invoke<String>(
+      method: ActionMethod.getProfile,
       data: id,
     );
   }

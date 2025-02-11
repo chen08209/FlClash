@@ -238,6 +238,7 @@ enum ActionMethod {
   stopListener,
   getCountryCode,
   getMemory,
+  getProfile,
 
   ///Android,
   setFdMap,

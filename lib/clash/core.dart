@@ -234,6 +234,10 @@ class ClashCore {
     return int.parse(value);
   }
 
+  Future<String> getProfile(String id) {
+    return clashInterface.getProfile(id);
+  }
+
   resetTraffic() {
     clashInterface.resetTraffic();
   }
