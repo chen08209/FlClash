@@ -72,6 +72,7 @@ class Request {
   }
 
   final List<String> _ipInfoSources = [
+    "https://api.ipify.org",
     "https://ipwho.is/?fields=ip&output=csv",
     "https://ipinfo.io/ip",
     "https://ifconfig.me/ip/",

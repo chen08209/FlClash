@@ -68,7 +68,7 @@ class CommonRoute<T> extends MaterialPageRoute<T> {
   Duration get transitionDuration => const Duration(milliseconds: 500);
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 300);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 250);
 }
 
 final Animatable<Offset> _kRightMiddleTween = Tween<Offset>(
@@ -272,7 +272,7 @@ class _CommonEdgeShadowPainter extends BoxPainter {
       return;
     }
 
-    final double shadowWidth = 0.05 * configuration.size!.width;
+    final double shadowWidth = 0.03 * configuration.size!.width;
     final double shadowHeight = configuration.size!.height;
     final double bandWidth = shadowWidth / (colors.length - 1);
 
