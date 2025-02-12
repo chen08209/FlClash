@@ -250,7 +250,7 @@ class ClashConfig extends ChangeNotifier {
   Dns _dns;
   GeoXMap _geoXUrl;
   List<String> _rules;
-  String? _globalRealUa;
+  String _globalUa;
   HostsMap _hosts;
   List<String> _includeRouteAddress;
   RouteMode _routeMode;
@@ -261,6 +261,7 @@ class ClashConfig extends ChangeNotifier {
         _ipv6 = false,
         _findProcessMode = FindProcessMode.off,
         _allowLan = false,
+        _globalUa = "",
         _tcpConcurrent = false,
         _logLevel = LogLevel.info,
         _tun = const Tun(),
@@ -415,21 +416,17 @@ class ClashConfig extends ChangeNotifier {
     }
   }
 
-  @JsonKey(name: "global-ua", includeFromJson: false, includeToJson: true)
+  @JsonKey(name: "global-ua", defaultValue: "")
   String get globalUa {
-    if (_globalRealUa == null) {
+    if (_globalUa.isEmpty) {
       return globalState.packageInfo.ua;
-    } else {
-      return _globalRealUa!;
     }
+    return _globalUa;
   }
 
-  @JsonKey(name: "global-real-ua", defaultValue: null)
-  String? get globalRealUa => _globalRealUa;
-
-  set globalRealUa(String? value) {
-    if (_globalRealUa != value) {
-      _globalRealUa = value;
+  set globalUa(String value) {
+    if (_globalUa != value) {
+      _globalUa = value;
       notifyListeners();
     }
   }
@@ -493,7 +490,7 @@ class ClashConfig extends ChangeNotifier {
       _findProcessMode = clashConfig._findProcessMode;
       _geoXUrl = clashConfig._geoXUrl;
       _unifiedDelay = clashConfig._unifiedDelay;
-      _globalRealUa = clashConfig._globalRealUa;
+      _globalUa = clashConfig._globalUa;
       _tcpConcurrent = clashConfig._tcpConcurrent;
       _externalController = clashConfig._externalController;
       _geodataLoader = clashConfig._geodataLoader;
@@ -537,6 +534,6 @@ class ClashConfig extends ChangeNotifier {
 
   @override
   String toString() {
-    return 'ClashConfig{_mixedPort: $_mixedPort, _allowLan: $_allowLan, _ipv6: $_ipv6, _geodataLoader: $_geodataLoader, _logLevel: $_logLevel, _externalController: $_externalController, _mode: $_mode, _findProcessMode: $_findProcessMode, _keepAliveInterval: $_keepAliveInterval, _unifiedDelay: $_unifiedDelay, _tcpConcurrent: $_tcpConcurrent, _tun: $_tun, _dns: $_dns, _geoXUrl: $_geoXUrl, _rules: $_rules, _globalRealUa: $_globalRealUa, _hosts: $_hosts}';
+    return 'ClashConfig{_mixedPort: $_mixedPort, _allowLan: $_allowLan, _ipv6: $_ipv6, _geodataLoader: $_geodataLoader, _logLevel: $_logLevel, _externalController: $_externalController, _mode: $_mode, _findProcessMode: $_findProcessMode, _keepAliveInterval: $_keepAliveInterval, _unifiedDelay: $_unifiedDelay, _tcpConcurrent: $_tcpConcurrent, _tun: $_tun, _dns: $_dns, _geoXUrl: $_geoXUrl, _rules: $_rules, _globalUa: $_globalUa, _hosts: $_hosts, _includeRouteAddress: $_includeRouteAddress, _routeMode: $_routeMode}';
   }
 }

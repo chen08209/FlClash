@@ -43,24 +43,27 @@ class UaItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, String?>(
-      selector: (_, clashConfig) => clashConfig.globalRealUa,
+    return Selector<ClashConfig, String>(
+      selector: (_, clashConfig) => clashConfig.globalUa,
       builder: (_, value, __) {
         return ListItem<String?>.options(
           leading: const Icon(Icons.computer_outlined),
           title: const Text("UA"),
-          subtitle: Text(value ?? appLocalizations.defaultText),
+          subtitle: Text(value.isEmpty ? appLocalizations.defaultText : value),
           delegate: OptionsDelegate<String?>(
             title: "UA",
             options: [
-              null,
+              globalState.packageInfo.ua,
               "clash-verge/v1.6.6",
               "ClashforWindows/0.19.23",
             ],
             value: value,
             onChanged: (ua) {
+              if (ua == null) {
+                return;
+              }
               final appController = globalState.appController;
-              appController.clashConfig.globalRealUa = ua;
+              appController.clashConfig.globalUa = ua;
             },
             textBuilder: (ua) => ua ?? appLocalizations.defaultText,
           ),
@@ -220,7 +223,7 @@ class HostsItem extends StatelessWidget {
               items: entries,
               titleBuilder: (item) => Text(item.key),
               subtitleBuilder: (item) => Text(item.value),
-              onChange: (items){
+              onChange: (items) {
                 final clashConfig = globalState.appController.clashConfig;
                 clashConfig.hosts = Map.fromEntries(items);
               },

@@ -41,7 +41,7 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
         hosts: clashConfig.hosts,
         geoXUrl: clashConfig.geoXUrl,
         rules: clashConfig.rules,
-        globalRealUa: clashConfig.globalRealUa,
+        globalUa: clashConfig.globalUa,
       ),
       shouldRebuild: (prev, next) {
         if (prev != next) {

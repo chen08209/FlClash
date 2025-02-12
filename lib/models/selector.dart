@@ -234,7 +234,7 @@ class ClashConfigState with _$ClashConfigState {
     required Dns dns,
     required GeoXMap geoXUrl,
     required List<String> rules,
-    required String? globalRealUa,
+    required String? globalUa,
   }) = _ClashConfigState;
 }
 

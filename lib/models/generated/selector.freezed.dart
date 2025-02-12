@@ -3592,7 +3592,7 @@ mixin _$ClashConfigState {
   Dns get dns => throw _privateConstructorUsedError;
   Map<String, String> get geoXUrl => throw _privateConstructorUsedError;
   List<String> get rules => throw _privateConstructorUsedError;
-  String? get globalRealUa => throw _privateConstructorUsedError;
+  String? get globalUa => throw _privateConstructorUsedError;
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.
@@ -3625,7 +3625,7 @@ abstract class $ClashConfigStateCopyWith<$Res> {
       Dns dns,
       Map<String, String> geoXUrl,
       List<String> rules,
-      String? globalRealUa});
+      String? globalUa});
 
   $TunCopyWith<$Res> get tun;
   $DnsCopyWith<$Res> get dns;
@@ -3663,7 +3663,7 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
     Object? dns = null,
     Object? geoXUrl = null,
     Object? rules = null,
-    Object? globalRealUa = freezed,
+    Object? globalUa = freezed,
   }) {
     return _then(_value.copyWith(
       mixedPort: null == mixedPort
@@ -3734,9 +3734,9 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
           ? _value.rules
           : rules // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      globalRealUa: freezed == globalRealUa
-          ? _value.globalRealUa
-          : globalRealUa // ignore: cast_nullable_to_non_nullable
+      globalUa: freezed == globalUa
+          ? _value.globalUa
+          : globalUa // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
   }
@@ -3788,7 +3788,7 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
       Dns dns,
       Map<String, String> geoXUrl,
       List<String> rules,
-      String? globalRealUa});
+      String? globalUa});
 
   @override
   $TunCopyWith<$Res> get tun;
@@ -3826,7 +3826,7 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
     Object? dns = null,
     Object? geoXUrl = null,
     Object? rules = null,
-    Object? globalRealUa = freezed,
+    Object? globalUa = freezed,
   }) {
     return _then(_$ClashConfigStateImpl(
       mixedPort: null == mixedPort
@@ -3897,9 +3897,9 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
           ? _value._rules
           : rules // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      globalRealUa: freezed == globalRealUa
-          ? _value.globalRealUa
-          : globalRealUa // ignore: cast_nullable_to_non_nullable
+      globalUa: freezed == globalUa
+          ? _value.globalUa
+          : globalUa // ignore: cast_nullable_to_non_nullable
               as String?,
     ));
   }
@@ -3926,7 +3926,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
       required this.dns,
       required final Map<String, String> geoXUrl,
       required final List<String> rules,
-      required this.globalRealUa})
+      required this.globalUa})
       : _hosts = hosts,
         _geoXUrl = geoXUrl,
         _rules = rules;
@@ -3984,11 +3984,11 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   }
 
   @override
-  final String? globalRealUa;
+  final String? globalUa;
 
   @override
   String toString() {
-    return 'ClashConfigState(mixedPort: $mixedPort, allowLan: $allowLan, ipv6: $ipv6, overrideDns: $overrideDns, geodataLoader: $geodataLoader, logLevel: $logLevel, externalController: $externalController, mode: $mode, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, hosts: $hosts, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, rules: $rules, globalRealUa: $globalRealUa)';
+    return 'ClashConfigState(mixedPort: $mixedPort, allowLan: $allowLan, ipv6: $ipv6, overrideDns: $overrideDns, geodataLoader: $geodataLoader, logLevel: $logLevel, externalController: $externalController, mode: $mode, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, hosts: $hosts, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, rules: $rules, globalUa: $globalUa)';
   }
 
   @override
@@ -4023,8 +4023,8 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
             (identical(other.dns, dns) || other.dns == dns) &&
             const DeepCollectionEquality().equals(other._geoXUrl, _geoXUrl) &&
             const DeepCollectionEquality().equals(other._rules, _rules) &&
-            (identical(other.globalRealUa, globalRealUa) ||
-                other.globalRealUa == globalRealUa));
+            (identical(other.globalUa, globalUa) ||
+                other.globalUa == globalUa));
   }
 
   @override
@@ -4047,7 +4047,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
       dns,
       const DeepCollectionEquality().hash(_geoXUrl),
       const DeepCollectionEquality().hash(_rules),
-      globalRealUa);
+      globalUa);
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.
@@ -4078,7 +4078,7 @@ abstract class _ClashConfigState implements ClashConfigState {
       required final Dns dns,
       required final Map<String, String> geoXUrl,
       required final List<String> rules,
-      required final String? globalRealUa}) = _$ClashConfigStateImpl;
+      required final String? globalUa}) = _$ClashConfigStateImpl;
 
   @override
   int get mixedPort;
@@ -4115,7 +4115,7 @@ abstract class _ClashConfigState implements ClashConfigState {
   @override
   List<String> get rules;
   @override
-  String? get globalRealUa;
+  String? get globalUa;
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.

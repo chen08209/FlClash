@@ -24,7 +24,7 @@ ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig()
   ..tun = Tun.fromJson(json['tun'] as Map<String, dynamic>)
   ..dns = Dns.safeDnsFromJson(json['dns'] as Map<String, Object?>)
   ..rules = (json['rules'] as List<dynamic>).map((e) => e as String).toList()
-  ..globalRealUa = json['global-real-ua'] as String?
+  ..globalUa = json['global-ua'] as String? ?? ''
   ..geoXUrl = (json['geox-url'] as Map<String, dynamic>?)?.map(
         (k, e) => MapEntry(k, e as String),
       ) ??
@@ -66,7 +66,6 @@ Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
       'dns': instance.dns,
       'rules': instance.rules,
       'global-ua': instance.globalUa,
-      'global-real-ua': instance.globalRealUa,
       'geox-url': instance.geoXUrl,
       'hosts': instance.hosts,
       'route-address': instance.routeAddress,

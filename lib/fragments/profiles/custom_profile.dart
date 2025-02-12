@@ -1,4 +1,5 @@
 import 'package:fl_clash/clash/clash.dart';
+import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/cupertino.dart';
 
 class CustomProfile extends StatefulWidget {
@@ -15,15 +16,18 @@ class CustomProfile extends StatefulWidget {
 
 class _CustomProfileState extends State<CustomProfile> {
   @override
-  void initState()  {
+  void initState() {
     super.initState();
-    clashCore.getProfile(widget.profileId).then((res){
-      print(res);
-    });
+    // clashCore.getProfile(widget.profileId).then((res) {
+    //   print(res);
+    // });
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return CommonScaffold(
+      body: Center(),
+      title: "自定义",
+    );
   }
 }
