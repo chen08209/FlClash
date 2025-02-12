@@ -90,6 +90,7 @@ class ClashCore {
     final proxiesRawString = await clashInterface.getProxies();
     return Isolate.run<List<Group>>(() {
       if (proxiesRawString.isEmpty) return [];
+      print(proxiesRawString);
       final proxies = (json.decode(proxiesRawString) ?? {}) as Map;
       if (proxies.isEmpty) return [];
       final groupNames = [

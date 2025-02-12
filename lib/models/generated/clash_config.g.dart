@@ -98,6 +98,53 @@ const _$RouteModeEnumMap = {
   RouteMode.config: 'config',
 };
 
+_$ProxyGroupImpl _$$ProxyGroupImplFromJson(Map<String, dynamic> json) =>
+    _$ProxyGroupImpl(
+      name: json['name'] as String,
+      type: $enumDecode(_$GroupTypeEnumMap, json['type']),
+      proxies:
+          (json['proxies'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      use: (json['use'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      interval: (json['interval'] as num?)?.toInt(),
+      lazy: json['lazy'] as bool?,
+      url: json['url'] as String?,
+      timeout: (json['timeout'] as num?)?.toInt(),
+      maxFailedTimes: (json['max-failed-times'] as num?)?.toInt(),
+      filter: json['filter'] as String?,
+      excludeFilter: json['expected-filter'] as String?,
+      excludeType: json['exclude-type'] as String?,
+      expectedStatus: (json['expected-status'] as num?)?.toInt(),
+      hidden: json['hidden'] as bool?,
+      icon: json['icon'] as String?,
+    );
+
+Map<String, dynamic> _$$ProxyGroupImplToJson(_$ProxyGroupImpl instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'type': _$GroupTypeEnumMap[instance.type]!,
+      'proxies': instance.proxies,
+      'use': instance.use,
+      'interval': instance.interval,
+      'lazy': instance.lazy,
+      'url': instance.url,
+      'timeout': instance.timeout,
+      'max-failed-times': instance.maxFailedTimes,
+      'filter': instance.filter,
+      'expected-filter': instance.excludeFilter,
+      'exclude-type': instance.excludeType,
+      'expected-status': instance.expectedStatus,
+      'hidden': instance.hidden,
+      'icon': instance.icon,
+    };
+
+const _$GroupTypeEnumMap = {
+  GroupType.Selector: 'Selector',
+  GroupType.URLTest: 'URLTest',
+  GroupType.Fallback: 'Fallback',
+  GroupType.LoadBalance: 'LoadBalance',
+  GroupType.Relay: 'Relay',
+};
+
 _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
       enable: json['enable'] as bool? ?? false,
       device: json['device'] as String? ?? appName,

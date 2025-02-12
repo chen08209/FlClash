@@ -1984,6 +1984,186 @@ abstract class _VersionInfo implements VersionInfo {
       throw _privateConstructorUsedError;
 }
 
+Proxy _$ProxyFromJson(Map<String, dynamic> json) {
+  return _Proxy.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Proxy {
+  String get name => throw _privateConstructorUsedError;
+  String get type => throw _privateConstructorUsedError;
+  String? get now => throw _privateConstructorUsedError;
+
+  /// Serializes this Proxy to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ProxyCopyWith<Proxy> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxyCopyWith<$Res> {
+  factory $ProxyCopyWith(Proxy value, $Res Function(Proxy) then) =
+      _$ProxyCopyWithImpl<$Res, Proxy>;
+  @useResult
+  $Res call({String name, String type, String? now});
+}
+
+/// @nodoc
+class _$ProxyCopyWithImpl<$Res, $Val extends Proxy>
+    implements $ProxyCopyWith<$Res> {
+  _$ProxyCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? type = null,
+    Object? now = freezed,
+  }) {
+    return _then(_value.copyWith(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      now: freezed == now
+          ? _value.now
+          : now // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxyImplCopyWith<$Res> implements $ProxyCopyWith<$Res> {
+  factory _$$ProxyImplCopyWith(
+          _$ProxyImpl value, $Res Function(_$ProxyImpl) then) =
+      __$$ProxyImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String name, String type, String? now});
+}
+
+/// @nodoc
+class __$$ProxyImplCopyWithImpl<$Res>
+    extends _$ProxyCopyWithImpl<$Res, _$ProxyImpl>
+    implements _$$ProxyImplCopyWith<$Res> {
+  __$$ProxyImplCopyWithImpl(
+      _$ProxyImpl _value, $Res Function(_$ProxyImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? type = null,
+    Object? now = freezed,
+  }) {
+    return _then(_$ProxyImpl(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      now: freezed == now
+          ? _value.now
+          : now // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ProxyImpl implements _Proxy {
+  const _$ProxyImpl({required this.name, required this.type, this.now});
+
+  factory _$ProxyImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ProxyImplFromJson(json);
+
+  @override
+  final String name;
+  @override
+  final String type;
+  @override
+  final String? now;
+
+  @override
+  String toString() {
+    return 'Proxy(name: $name, type: $type, now: $now)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxyImpl &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.now, now) || other.now == now));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, name, type, now);
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>
+      __$$ProxyImplCopyWithImpl<_$ProxyImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ProxyImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Proxy implements Proxy {
+  const factory _Proxy(
+      {required final String name,
+      required final String type,
+      final String? now}) = _$ProxyImpl;
+
+  factory _Proxy.fromJson(Map<String, dynamic> json) = _$ProxyImpl.fromJson;
+
+  @override
+  String get name;
+  @override
+  String get type;
+  @override
+  String? get now;
+
+  /// Create a copy of Proxy
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Group _$GroupFromJson(Map<String, dynamic> json) {
   return _Group.fromJson(json);
 }
@@ -2267,186 +2447,6 @@ abstract class _Group implements Group {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$GroupImplCopyWith<_$GroupImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-Proxy _$ProxyFromJson(Map<String, dynamic> json) {
-  return _Proxy.fromJson(json);
-}
-
-/// @nodoc
-mixin _$Proxy {
-  String get name => throw _privateConstructorUsedError;
-  String get type => throw _privateConstructorUsedError;
-  String? get now => throw _privateConstructorUsedError;
-
-  /// Serializes this Proxy to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Proxy
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $ProxyCopyWith<Proxy> get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ProxyCopyWith<$Res> {
-  factory $ProxyCopyWith(Proxy value, $Res Function(Proxy) then) =
-      _$ProxyCopyWithImpl<$Res, Proxy>;
-  @useResult
-  $Res call({String name, String type, String? now});
-}
-
-/// @nodoc
-class _$ProxyCopyWithImpl<$Res, $Val extends Proxy>
-    implements $ProxyCopyWith<$Res> {
-  _$ProxyCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of Proxy
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? name = null,
-    Object? type = null,
-    Object? now = freezed,
-  }) {
-    return _then(_value.copyWith(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      now: freezed == now
-          ? _value.now
-          : now // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$ProxyImplCopyWith<$Res> implements $ProxyCopyWith<$Res> {
-  factory _$$ProxyImplCopyWith(
-          _$ProxyImpl value, $Res Function(_$ProxyImpl) then) =
-      __$$ProxyImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String name, String type, String? now});
-}
-
-/// @nodoc
-class __$$ProxyImplCopyWithImpl<$Res>
-    extends _$ProxyCopyWithImpl<$Res, _$ProxyImpl>
-    implements _$$ProxyImplCopyWith<$Res> {
-  __$$ProxyImplCopyWithImpl(
-      _$ProxyImpl _value, $Res Function(_$ProxyImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of Proxy
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? name = null,
-    Object? type = null,
-    Object? now = freezed,
-  }) {
-    return _then(_$ProxyImpl(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      now: freezed == now
-          ? _value.now
-          : now // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$ProxyImpl implements _Proxy {
-  const _$ProxyImpl({required this.name, required this.type, this.now});
-
-  factory _$ProxyImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProxyImplFromJson(json);
-
-  @override
-  final String name;
-  @override
-  final String type;
-  @override
-  final String? now;
-
-  @override
-  String toString() {
-    return 'Proxy(name: $name, type: $type, now: $now)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ProxyImpl &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.type, type) || other.type == type) &&
-            (identical(other.now, now) || other.now == now));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, name, type, now);
-
-  /// Create a copy of Proxy
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>
-      __$$ProxyImplCopyWithImpl<_$ProxyImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ProxyImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _Proxy implements Proxy {
-  const factory _Proxy(
-      {required final String name,
-      required final String type,
-      final String? now}) = _$ProxyImpl;
-
-  factory _Proxy.fromJson(Map<String, dynamic> json) = _$ProxyImpl.fromJson;
-
-  @override
-  String get name;
-  @override
-  String get type;
-  @override
-  String? get now;
-
-  /// Create a copy of Proxy
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProxyImplCopyWith<_$ProxyImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

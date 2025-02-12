@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/fragments/profiles/custom_profile.dart';
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -256,16 +257,16 @@ class ProfileItem extends StatelessWidget {
     ];
   }
 
-  _handleCopyLink(BuildContext context) async {
-    await Clipboard.setData(
-      ClipboardData(
-        text: profile.url,
-      ),
-    );
-    if (context.mounted) {
-      context.showNotifier(appLocalizations.copySuccess);
-    }
-  }
+  // _handleCopyLink(BuildContext context) async {
+  //   await Clipboard.setData(
+  //     ClipboardData(
+  //       text: profile.url,
+  //     ),
+  //   );
+  //   if (context.mounted) {
+  //     context.showNotifier(appLocalizations.copySuccess);
+  //   }
+  // }
 
   _handleExportFile(BuildContext context) async {
     final commonScaffoldState = context.commonScaffoldState;
@@ -284,6 +285,13 @@ class ProfileItem extends StatelessWidget {
     if (res == true && context.mounted) {
       context.showNotifier(appLocalizations.exportSuccess);
     }
+  }
+
+  _handlePushCustomPage(BuildContext context, String id) {
+    BaseNavigator.push(
+      context,
+      CustomProfile(profileId: id,),
+    );
   }
 
   @override
@@ -326,14 +334,21 @@ class ProfileItem extends StatelessWidget {
                               _handleUpdateProfile();
                             },
                           ),
-                          ActionItemData(
-                            icon: Icons.copy,
-                            label: appLocalizations.copyLink,
-                            onPressed: () {
-                              _handleCopyLink(context);
-                            },
-                          ),
+                          // ActionItemData(
+                          //   icon: Icons.copy,
+                          //   label: appLocalizations.copyLink,
+                          //   onPressed: () {
+                          //     _handleCopyLink(context);
+                          //   },
+                          // ),
                         ],
+                        ActionItemData(
+                          icon: Icons.extension_outlined,
+                          label: "自定义",
+                          onPressed: () {
+                            _handlePushCustomPage(context, profile.id);
+                          },
+                        ),
                         ActionItemData(
                           icon: Icons.file_copy_outlined,
                           label: appLocalizations.exportFile,

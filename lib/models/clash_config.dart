@@ -8,119 +8,14 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../enum/enum.dart';
 
 part 'generated/clash_config.freezed.dart';
+
 part 'generated/clash_config.g.dart';
 
-const defaultTun = Tun();
-
-@freezed
-class Tun with _$Tun {
-  const factory Tun({
-    @Default(false) bool enable,
-    @Default(appName) String device,
-    @Default(TunStack.gvisor) TunStack stack,
-    @JsonKey(name: "dns-hijack") @Default(["any:53"]) List<String> dnsHijack,
-  }) = _Tun;
-
-  factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
-
-  factory Tun.realFromJson(Map<String, Object?>? json) {
-    if (json == null) {
-      return defaultTun;
-    }
-    try {
-      return Tun.fromJson(json);
-    } catch (_) {
-      return defaultTun;
-    }
-  }
-}
-
-@freezed
-class FallbackFilter with _$FallbackFilter {
-  const factory FallbackFilter({
-    @Default(true) bool geoip,
-    @Default("CN") @JsonKey(name: "geoip-code") String geoipCode,
-    @Default(["gfw"]) List<String> geosite,
-    @Default(["240.0.0.0/4"]) List<String> ipcidr,
-    @Default([
-      "+.google.com",
-      "+.facebook.com",
-      "+.youtube.com",
-    ])
-    List<String> domain,
-  }) = _FallbackFilter;
-
-  factory FallbackFilter.fromJson(Map<String, Object?> json) =>
-      _$FallbackFilterFromJson(json);
-}
-
-const defaultDns = Dns();
-
-@freezed
-class Dns with _$Dns {
-  const factory Dns({
-    @Default(true) bool enable,
-    @Default(false) @JsonKey(name: "prefer-h3") bool preferH3,
-    @Default(true) @JsonKey(name: "use-hosts") bool useHosts,
-    @Default(true) @JsonKey(name: "use-system-hosts") bool useSystemHosts,
-    @Default(false) @JsonKey(name: "respect-rules") bool respectRules,
-    @Default(false) bool ipv6,
-    @Default(["223.5.5.5"])
-    @JsonKey(name: "default-nameserver")
-    List<String> defaultNameserver,
-    @Default(DnsMode.fakeIp)
-    @JsonKey(name: "enhanced-mode")
-    DnsMode enhancedMode,
-    @Default("198.18.0.1/16")
-    @JsonKey(name: "fake-ip-range")
-    String fakeIpRange,
-    @Default([
-      "*.lan",
-      "localhost.ptlogin2.qq.com",
-    ])
-    @JsonKey(name: "fake-ip-filter")
-    List<String> fakeIpFilter,
-    @Default({
-      "www.baidu.com": "114.114.114.114",
-      "+.internal.crop.com": "10.0.0.1",
-      "geosite:cn": "https://doh.pub/dns-query"
-    })
-    @JsonKey(name: "nameserver-policy")
-    Map<String, String> nameserverPolicy,
-    @Default([
-      "https://doh.pub/dns-query",
-      "https://dns.alidns.com/dns-query",
-    ])
-    List<String> nameserver,
-    @Default([
-      "tls://8.8.4.4",
-      "tls://1.1.1.1",
-    ])
-    List<String> fallback,
-    @Default([
-      "https://doh.pub/dns-query",
-    ])
-    @JsonKey(name: "proxy-server-nameserver")
-    List<String> proxyServerNameserver,
-    @Default(FallbackFilter())
-    @JsonKey(name: "fallback-filter")
-    FallbackFilter fallbackFilter,
-  }) = _Dns;
-
-  factory Dns.fromJson(Map<String, Object?> json) => _$DnsFromJson(json);
-
-  factory Dns.safeDnsFromJson(Map<String, Object?> json) {
-    try {
-      return Dns.fromJson(json);
-    } catch (_) {
-      return const Dns();
-    }
-  }
-}
-
 typedef GeoXMap = Map<String, String>;
-
 typedef HostsMap = Map<String, String>;
+
+const defaultTun = Tun();
+const defaultDns = Dns();
 
 const defaultMixedPort = 7890;
 const defaultKeepAliveInterval = 30;
@@ -209,6 +104,134 @@ const defaultBypassPrivateRouteAddress = [
   "fe00::/9",
   "fec0::/10"
 ];
+
+@freezed
+class ProxyGroup with _$ProxyGroup {
+  const factory ProxyGroup({
+    required String name,
+    required GroupType type,
+    List<String>? proxies,
+    List<String>? use,
+    int? interval,
+    bool? lazy,
+    String? url,
+    int? timeout,
+    @JsonKey(name: "max-failed-times") int? maxFailedTimes,
+    String? filter,
+    @JsonKey(name: "expected-filter") String? excludeFilter,
+    @JsonKey(name: "exclude-type") String? excludeType,
+    @JsonKey(name: "expected-status") int? expectedStatus,
+    bool? hidden,
+    String? icon,
+  }) = _ProxyGroup;
+
+  factory ProxyGroup.fromJson(Map<String, Object?> json) =>
+      _$ProxyGroupFromJson(json);
+}
+
+@freezed
+class Tun with _$Tun {
+  const factory Tun({
+    @Default(false) bool enable,
+    @Default(appName) String device,
+    @Default(TunStack.gvisor) TunStack stack,
+    @JsonKey(name: "dns-hijack") @Default(["any:53"]) List<String> dnsHijack,
+  }) = _Tun;
+
+  factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
+
+  factory Tun.realFromJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return defaultTun;
+    }
+    try {
+      return Tun.fromJson(json);
+    } catch (_) {
+      return defaultTun;
+    }
+  }
+}
+
+@freezed
+class FallbackFilter with _$FallbackFilter {
+  const factory FallbackFilter({
+    @Default(true) bool geoip,
+    @Default("CN") @JsonKey(name: "geoip-code") String geoipCode,
+    @Default(["gfw"]) List<String> geosite,
+    @Default(["240.0.0.0/4"]) List<String> ipcidr,
+    @Default([
+      "+.google.com",
+      "+.facebook.com",
+      "+.youtube.com",
+    ])
+    List<String> domain,
+  }) = _FallbackFilter;
+
+  factory FallbackFilter.fromJson(Map<String, Object?> json) =>
+      _$FallbackFilterFromJson(json);
+}
+
+@freezed
+class Dns with _$Dns {
+  const factory Dns({
+    @Default(true) bool enable,
+    @Default(false) @JsonKey(name: "prefer-h3") bool preferH3,
+    @Default(true) @JsonKey(name: "use-hosts") bool useHosts,
+    @Default(true) @JsonKey(name: "use-system-hosts") bool useSystemHosts,
+    @Default(false) @JsonKey(name: "respect-rules") bool respectRules,
+    @Default(false) bool ipv6,
+    @Default(["223.5.5.5"])
+    @JsonKey(name: "default-nameserver")
+    List<String> defaultNameserver,
+    @Default(DnsMode.fakeIp)
+    @JsonKey(name: "enhanced-mode")
+    DnsMode enhancedMode,
+    @Default("198.18.0.1/16")
+    @JsonKey(name: "fake-ip-range")
+    String fakeIpRange,
+    @Default([
+      "*.lan",
+      "localhost.ptlogin2.qq.com",
+    ])
+    @JsonKey(name: "fake-ip-filter")
+    List<String> fakeIpFilter,
+    @Default({
+      "www.baidu.com": "114.114.114.114",
+      "+.internal.crop.com": "10.0.0.1",
+      "geosite:cn": "https://doh.pub/dns-query"
+    })
+    @JsonKey(name: "nameserver-policy")
+    Map<String, String> nameserverPolicy,
+    @Default([
+      "https://doh.pub/dns-query",
+      "https://dns.alidns.com/dns-query",
+    ])
+    List<String> nameserver,
+    @Default([
+      "tls://8.8.4.4",
+      "tls://1.1.1.1",
+    ])
+    List<String> fallback,
+    @Default([
+      "https://doh.pub/dns-query",
+    ])
+    @JsonKey(name: "proxy-server-nameserver")
+    List<String> proxyServerNameserver,
+    @Default(FallbackFilter())
+    @JsonKey(name: "fallback-filter")
+    FallbackFilter fallbackFilter,
+  }) = _Dns;
+
+  factory Dns.fromJson(Map<String, Object?> json) => _$DnsFromJson(json);
+
+  factory Dns.safeDnsFromJson(Map<String, Object?> json) {
+    try {
+      return Dns.fromJson(json);
+    } catch (_) {
+      return const Dns();
+    }
+  }
+}
 
 @JsonSerializable()
 class ClashConfig extends ChangeNotifier {

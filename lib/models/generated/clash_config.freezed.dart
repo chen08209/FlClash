@@ -14,6 +14,490 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) {
+  return _ProxyGroup.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ProxyGroup {
+  String get name => throw _privateConstructorUsedError;
+  GroupType get type => throw _privateConstructorUsedError;
+  List<String>? get proxies => throw _privateConstructorUsedError;
+  List<String>? get use => throw _privateConstructorUsedError;
+  int? get interval => throw _privateConstructorUsedError;
+  bool? get lazy => throw _privateConstructorUsedError;
+  String? get url => throw _privateConstructorUsedError;
+  int? get timeout => throw _privateConstructorUsedError;
+  @JsonKey(name: "max-failed-times")
+  int? get maxFailedTimes => throw _privateConstructorUsedError;
+  String? get filter => throw _privateConstructorUsedError;
+  @JsonKey(name: "expected-filter")
+  String? get excludeFilter => throw _privateConstructorUsedError;
+  @JsonKey(name: "exclude-type")
+  String? get excludeType => throw _privateConstructorUsedError;
+  @JsonKey(name: "expected-status")
+  int? get expectedStatus => throw _privateConstructorUsedError;
+  bool? get hidden => throw _privateConstructorUsedError;
+  String? get icon => throw _privateConstructorUsedError;
+
+  /// Serializes this ProxyGroup to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of ProxyGroup
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ProxyGroupCopyWith<ProxyGroup> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxyGroupCopyWith<$Res> {
+  factory $ProxyGroupCopyWith(
+          ProxyGroup value, $Res Function(ProxyGroup) then) =
+      _$ProxyGroupCopyWithImpl<$Res, ProxyGroup>;
+  @useResult
+  $Res call(
+      {String name,
+      GroupType type,
+      List<String>? proxies,
+      List<String>? use,
+      int? interval,
+      bool? lazy,
+      String? url,
+      int? timeout,
+      @JsonKey(name: "max-failed-times") int? maxFailedTimes,
+      String? filter,
+      @JsonKey(name: "expected-filter") String? excludeFilter,
+      @JsonKey(name: "exclude-type") String? excludeType,
+      @JsonKey(name: "expected-status") int? expectedStatus,
+      bool? hidden,
+      String? icon});
+}
+
+/// @nodoc
+class _$ProxyGroupCopyWithImpl<$Res, $Val extends ProxyGroup>
+    implements $ProxyGroupCopyWith<$Res> {
+  _$ProxyGroupCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ProxyGroup
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? type = null,
+    Object? proxies = freezed,
+    Object? use = freezed,
+    Object? interval = freezed,
+    Object? lazy = freezed,
+    Object? url = freezed,
+    Object? timeout = freezed,
+    Object? maxFailedTimes = freezed,
+    Object? filter = freezed,
+    Object? excludeFilter = freezed,
+    Object? excludeType = freezed,
+    Object? expectedStatus = freezed,
+    Object? hidden = freezed,
+    Object? icon = freezed,
+  }) {
+    return _then(_value.copyWith(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as GroupType,
+      proxies: freezed == proxies
+          ? _value.proxies
+          : proxies // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      use: freezed == use
+          ? _value.use
+          : use // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      interval: freezed == interval
+          ? _value.interval
+          : interval // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lazy: freezed == lazy
+          ? _value.lazy
+          : lazy // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      url: freezed == url
+          ? _value.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as String?,
+      timeout: freezed == timeout
+          ? _value.timeout
+          : timeout // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxFailedTimes: freezed == maxFailedTimes
+          ? _value.maxFailedTimes
+          : maxFailedTimes // ignore: cast_nullable_to_non_nullable
+              as int?,
+      filter: freezed == filter
+          ? _value.filter
+          : filter // ignore: cast_nullable_to_non_nullable
+              as String?,
+      excludeFilter: freezed == excludeFilter
+          ? _value.excludeFilter
+          : excludeFilter // ignore: cast_nullable_to_non_nullable
+              as String?,
+      excludeType: freezed == excludeType
+          ? _value.excludeType
+          : excludeType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      expectedStatus: freezed == expectedStatus
+          ? _value.expectedStatus
+          : expectedStatus // ignore: cast_nullable_to_non_nullable
+              as int?,
+      hidden: freezed == hidden
+          ? _value.hidden
+          : hidden // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      icon: freezed == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxyGroupImplCopyWith<$Res>
+    implements $ProxyGroupCopyWith<$Res> {
+  factory _$$ProxyGroupImplCopyWith(
+          _$ProxyGroupImpl value, $Res Function(_$ProxyGroupImpl) then) =
+      __$$ProxyGroupImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String name,
+      GroupType type,
+      List<String>? proxies,
+      List<String>? use,
+      int? interval,
+      bool? lazy,
+      String? url,
+      int? timeout,
+      @JsonKey(name: "max-failed-times") int? maxFailedTimes,
+      String? filter,
+      @JsonKey(name: "expected-filter") String? excludeFilter,
+      @JsonKey(name: "exclude-type") String? excludeType,
+      @JsonKey(name: "expected-status") int? expectedStatus,
+      bool? hidden,
+      String? icon});
+}
+
+/// @nodoc
+class __$$ProxyGroupImplCopyWithImpl<$Res>
+    extends _$ProxyGroupCopyWithImpl<$Res, _$ProxyGroupImpl>
+    implements _$$ProxyGroupImplCopyWith<$Res> {
+  __$$ProxyGroupImplCopyWithImpl(
+      _$ProxyGroupImpl _value, $Res Function(_$ProxyGroupImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ProxyGroup
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? type = null,
+    Object? proxies = freezed,
+    Object? use = freezed,
+    Object? interval = freezed,
+    Object? lazy = freezed,
+    Object? url = freezed,
+    Object? timeout = freezed,
+    Object? maxFailedTimes = freezed,
+    Object? filter = freezed,
+    Object? excludeFilter = freezed,
+    Object? excludeType = freezed,
+    Object? expectedStatus = freezed,
+    Object? hidden = freezed,
+    Object? icon = freezed,
+  }) {
+    return _then(_$ProxyGroupImpl(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as GroupType,
+      proxies: freezed == proxies
+          ? _value._proxies
+          : proxies // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      use: freezed == use
+          ? _value._use
+          : use // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      interval: freezed == interval
+          ? _value.interval
+          : interval // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lazy: freezed == lazy
+          ? _value.lazy
+          : lazy // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      url: freezed == url
+          ? _value.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as String?,
+      timeout: freezed == timeout
+          ? _value.timeout
+          : timeout // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxFailedTimes: freezed == maxFailedTimes
+          ? _value.maxFailedTimes
+          : maxFailedTimes // ignore: cast_nullable_to_non_nullable
+              as int?,
+      filter: freezed == filter
+          ? _value.filter
+          : filter // ignore: cast_nullable_to_non_nullable
+              as String?,
+      excludeFilter: freezed == excludeFilter
+          ? _value.excludeFilter
+          : excludeFilter // ignore: cast_nullable_to_non_nullable
+              as String?,
+      excludeType: freezed == excludeType
+          ? _value.excludeType
+          : excludeType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      expectedStatus: freezed == expectedStatus
+          ? _value.expectedStatus
+          : expectedStatus // ignore: cast_nullable_to_non_nullable
+              as int?,
+      hidden: freezed == hidden
+          ? _value.hidden
+          : hidden // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      icon: freezed == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ProxyGroupImpl implements _ProxyGroup {
+  const _$ProxyGroupImpl(
+      {required this.name,
+      required this.type,
+      final List<String>? proxies,
+      final List<String>? use,
+      this.interval,
+      this.lazy,
+      this.url,
+      this.timeout,
+      @JsonKey(name: "max-failed-times") this.maxFailedTimes,
+      this.filter,
+      @JsonKey(name: "expected-filter") this.excludeFilter,
+      @JsonKey(name: "exclude-type") this.excludeType,
+      @JsonKey(name: "expected-status") this.expectedStatus,
+      this.hidden,
+      this.icon})
+      : _proxies = proxies,
+        _use = use;
+
+  factory _$ProxyGroupImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ProxyGroupImplFromJson(json);
+
+  @override
+  final String name;
+  @override
+  final GroupType type;
+  final List<String>? _proxies;
+  @override
+  List<String>? get proxies {
+    final value = _proxies;
+    if (value == null) return null;
+    if (_proxies is EqualUnmodifiableListView) return _proxies;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _use;
+  @override
+  List<String>? get use {
+    final value = _use;
+    if (value == null) return null;
+    if (_use is EqualUnmodifiableListView) return _use;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  @override
+  final int? interval;
+  @override
+  final bool? lazy;
+  @override
+  final String? url;
+  @override
+  final int? timeout;
+  @override
+  @JsonKey(name: "max-failed-times")
+  final int? maxFailedTimes;
+  @override
+  final String? filter;
+  @override
+  @JsonKey(name: "expected-filter")
+  final String? excludeFilter;
+  @override
+  @JsonKey(name: "exclude-type")
+  final String? excludeType;
+  @override
+  @JsonKey(name: "expected-status")
+  final int? expectedStatus;
+  @override
+  final bool? hidden;
+  @override
+  final String? icon;
+
+  @override
+  String toString() {
+    return 'ProxyGroup(name: $name, type: $type, proxies: $proxies, use: $use, interval: $interval, lazy: $lazy, url: $url, timeout: $timeout, maxFailedTimes: $maxFailedTimes, filter: $filter, excludeFilter: $excludeFilter, excludeType: $excludeType, expectedStatus: $expectedStatus, hidden: $hidden, icon: $icon)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxyGroupImpl &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.type, type) || other.type == type) &&
+            const DeepCollectionEquality().equals(other._proxies, _proxies) &&
+            const DeepCollectionEquality().equals(other._use, _use) &&
+            (identical(other.interval, interval) ||
+                other.interval == interval) &&
+            (identical(other.lazy, lazy) || other.lazy == lazy) &&
+            (identical(other.url, url) || other.url == url) &&
+            (identical(other.timeout, timeout) || other.timeout == timeout) &&
+            (identical(other.maxFailedTimes, maxFailedTimes) ||
+                other.maxFailedTimes == maxFailedTimes) &&
+            (identical(other.filter, filter) || other.filter == filter) &&
+            (identical(other.excludeFilter, excludeFilter) ||
+                other.excludeFilter == excludeFilter) &&
+            (identical(other.excludeType, excludeType) ||
+                other.excludeType == excludeType) &&
+            (identical(other.expectedStatus, expectedStatus) ||
+                other.expectedStatus == expectedStatus) &&
+            (identical(other.hidden, hidden) || other.hidden == hidden) &&
+            (identical(other.icon, icon) || other.icon == icon));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      name,
+      type,
+      const DeepCollectionEquality().hash(_proxies),
+      const DeepCollectionEquality().hash(_use),
+      interval,
+      lazy,
+      url,
+      timeout,
+      maxFailedTimes,
+      filter,
+      excludeFilter,
+      excludeType,
+      expectedStatus,
+      hidden,
+      icon);
+
+  /// Create a copy of ProxyGroup
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxyGroupImplCopyWith<_$ProxyGroupImpl> get copyWith =>
+      __$$ProxyGroupImplCopyWithImpl<_$ProxyGroupImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ProxyGroupImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ProxyGroup implements ProxyGroup {
+  const factory _ProxyGroup(
+      {required final String name,
+      required final GroupType type,
+      final List<String>? proxies,
+      final List<String>? use,
+      final int? interval,
+      final bool? lazy,
+      final String? url,
+      final int? timeout,
+      @JsonKey(name: "max-failed-times") final int? maxFailedTimes,
+      final String? filter,
+      @JsonKey(name: "expected-filter") final String? excludeFilter,
+      @JsonKey(name: "exclude-type") final String? excludeType,
+      @JsonKey(name: "expected-status") final int? expectedStatus,
+      final bool? hidden,
+      final String? icon}) = _$ProxyGroupImpl;
+
+  factory _ProxyGroup.fromJson(Map<String, dynamic> json) =
+      _$ProxyGroupImpl.fromJson;
+
+  @override
+  String get name;
+  @override
+  GroupType get type;
+  @override
+  List<String>? get proxies;
+  @override
+  List<String>? get use;
+  @override
+  int? get interval;
+  @override
+  bool? get lazy;
+  @override
+  String? get url;
+  @override
+  int? get timeout;
+  @override
+  @JsonKey(name: "max-failed-times")
+  int? get maxFailedTimes;
+  @override
+  String? get filter;
+  @override
+  @JsonKey(name: "expected-filter")
+  String? get excludeFilter;
+  @override
+  @JsonKey(name: "exclude-type")
+  String? get excludeType;
+  @override
+  @JsonKey(name: "expected-status")
+  int? get expectedStatus;
+  @override
+  bool? get hidden;
+  @override
+  String? get icon;
+
+  /// Create a copy of ProxyGroup
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ProxyGroupImplCopyWith<_$ProxyGroupImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Tun _$TunFromJson(Map<String, dynamic> json) {
   return _Tun.fromJson(json);
 }
