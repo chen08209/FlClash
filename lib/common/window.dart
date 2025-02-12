@@ -24,6 +24,8 @@ class Window {
     );
     if (!Platform.isMacOS || version > 10) {
       await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
+    }
+    if(!Platform.isMacOS){
       final left = props.left ?? 0;
       final top = props.top ?? 0;
       final right = left + props.width;
@@ -33,7 +35,7 @@ class Window {
       } else {
         final displays = await screenRetriever.getAllDisplays();
         final isPositionValid = displays.any(
-          (display) {
+              (display) {
             final displayBounds = Rect.fromLTWH(
               display.visiblePosition!.dx,
               display.visiblePosition!.dy,
