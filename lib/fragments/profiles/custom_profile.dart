@@ -18,9 +18,9 @@ class _CustomProfileState extends State<CustomProfile> {
   @override
   void initState() {
     super.initState();
-    // clashCore.getProfile(widget.profileId).then((res) {
-    //   print(res);
-    // });
+    clashCore.getProfile(widget.profileId).then((res) {
+      print(res);
+    });
   }
 
   @override

@@ -49,7 +49,9 @@ class UaItem extends StatelessWidget {
         return ListItem<String?>.options(
           leading: const Icon(Icons.computer_outlined),
           title: const Text("UA"),
-          subtitle: Text(value.isEmpty ? appLocalizations.defaultText : value),
+          subtitle: Text(value == globalState.packageInfo.ua
+              ? appLocalizations.defaultText
+              : value),
           delegate: OptionsDelegate<String?>(
             title: "UA",
             options: [
@@ -65,7 +67,9 @@ class UaItem extends StatelessWidget {
               final appController = globalState.appController;
               appController.clashConfig.globalUa = ua;
             },
-            textBuilder: (ua) => ua ?? appLocalizations.defaultText,
+            textBuilder: (ua) => ua == globalState.packageInfo.ua
+                ? appLocalizations.defaultText
+                : ua ?? "",
           ),
         );
       },
