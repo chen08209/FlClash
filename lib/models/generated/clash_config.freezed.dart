@@ -1560,3 +1560,743 @@ abstract class _Dns implements Dns {
   _$$DnsImplCopyWith<_$DnsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+GeoXUrl _$GeoXUrlFromJson(Map<String, dynamic> json) {
+  return _GeoXUrl.fromJson(json);
+}
+
+/// @nodoc
+mixin _$GeoXUrl {
+  String get mmdb => throw _privateConstructorUsedError;
+  String get asn => throw _privateConstructorUsedError;
+  String get geoip => throw _privateConstructorUsedError;
+  String get geosite => throw _privateConstructorUsedError;
+
+  /// Serializes this GeoXUrl to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of GeoXUrl
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $GeoXUrlCopyWith<GeoXUrl> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $GeoXUrlCopyWith<$Res> {
+  factory $GeoXUrlCopyWith(GeoXUrl value, $Res Function(GeoXUrl) then) =
+      _$GeoXUrlCopyWithImpl<$Res, GeoXUrl>;
+  @useResult
+  $Res call({String mmdb, String asn, String geoip, String geosite});
+}
+
+/// @nodoc
+class _$GeoXUrlCopyWithImpl<$Res, $Val extends GeoXUrl>
+    implements $GeoXUrlCopyWith<$Res> {
+  _$GeoXUrlCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of GeoXUrl
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? mmdb = null,
+    Object? asn = null,
+    Object? geoip = null,
+    Object? geosite = null,
+  }) {
+    return _then(_value.copyWith(
+      mmdb: null == mmdb
+          ? _value.mmdb
+          : mmdb // ignore: cast_nullable_to_non_nullable
+              as String,
+      asn: null == asn
+          ? _value.asn
+          : asn // ignore: cast_nullable_to_non_nullable
+              as String,
+      geoip: null == geoip
+          ? _value.geoip
+          : geoip // ignore: cast_nullable_to_non_nullable
+              as String,
+      geosite: null == geosite
+          ? _value.geosite
+          : geosite // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$GeoXUrlImplCopyWith<$Res> implements $GeoXUrlCopyWith<$Res> {
+  factory _$$GeoXUrlImplCopyWith(
+          _$GeoXUrlImpl value, $Res Function(_$GeoXUrlImpl) then) =
+      __$$GeoXUrlImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String mmdb, String asn, String geoip, String geosite});
+}
+
+/// @nodoc
+class __$$GeoXUrlImplCopyWithImpl<$Res>
+    extends _$GeoXUrlCopyWithImpl<$Res, _$GeoXUrlImpl>
+    implements _$$GeoXUrlImplCopyWith<$Res> {
+  __$$GeoXUrlImplCopyWithImpl(
+      _$GeoXUrlImpl _value, $Res Function(_$GeoXUrlImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of GeoXUrl
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? mmdb = null,
+    Object? asn = null,
+    Object? geoip = null,
+    Object? geosite = null,
+  }) {
+    return _then(_$GeoXUrlImpl(
+      mmdb: null == mmdb
+          ? _value.mmdb
+          : mmdb // ignore: cast_nullable_to_non_nullable
+              as String,
+      asn: null == asn
+          ? _value.asn
+          : asn // ignore: cast_nullable_to_non_nullable
+              as String,
+      geoip: null == geoip
+          ? _value.geoip
+          : geoip // ignore: cast_nullable_to_non_nullable
+              as String,
+      geosite: null == geosite
+          ? _value.geosite
+          : geosite // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$GeoXUrlImpl implements _GeoXUrl {
+  const _$GeoXUrlImpl(
+      {this.mmdb =
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+      this.asn =
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+      this.geoip =
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
+      this.geosite =
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"});
+
+  factory _$GeoXUrlImpl.fromJson(Map<String, dynamic> json) =>
+      _$$GeoXUrlImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final String mmdb;
+  @override
+  @JsonKey()
+  final String asn;
+  @override
+  @JsonKey()
+  final String geoip;
+  @override
+  @JsonKey()
+  final String geosite;
+
+  @override
+  String toString() {
+    return 'GeoXUrl(mmdb: $mmdb, asn: $asn, geoip: $geoip, geosite: $geosite)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$GeoXUrlImpl &&
+            (identical(other.mmdb, mmdb) || other.mmdb == mmdb) &&
+            (identical(other.asn, asn) || other.asn == asn) &&
+            (identical(other.geoip, geoip) || other.geoip == geoip) &&
+            (identical(other.geosite, geosite) || other.geosite == geosite));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, mmdb, asn, geoip, geosite);
+
+  /// Create a copy of GeoXUrl
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$GeoXUrlImplCopyWith<_$GeoXUrlImpl> get copyWith =>
+      __$$GeoXUrlImplCopyWithImpl<_$GeoXUrlImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$GeoXUrlImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _GeoXUrl implements GeoXUrl {
+  const factory _GeoXUrl(
+      {final String mmdb,
+      final String asn,
+      final String geoip,
+      final String geosite}) = _$GeoXUrlImpl;
+
+  factory _GeoXUrl.fromJson(Map<String, dynamic> json) = _$GeoXUrlImpl.fromJson;
+
+  @override
+  String get mmdb;
+  @override
+  String get asn;
+  @override
+  String get geoip;
+  @override
+  String get geosite;
+
+  /// Create a copy of GeoXUrl
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$GeoXUrlImplCopyWith<_$GeoXUrlImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$RawClashConfig {
+  @JsonKey(name: "mixed-port", defaultValue: 7890)
+  int get mixedPort => throw _privateConstructorUsedError;
+  @JsonKey(defaultValue: Mode.rule)
+  Mode get mode => throw _privateConstructorUsedError;
+  @JsonKey(name: "allow-lan", defaultValue: false)
+  bool get allowLan => throw _privateConstructorUsedError;
+  @JsonKey(name: "log-level", defaultValue: LogLevel.info)
+  LogLevel get logLevel => throw _privateConstructorUsedError;
+  @JsonKey(defaultValue: false)
+  bool get ipv6 => throw _privateConstructorUsedError;
+  @JsonKey(name: "unified-delay", defaultValue: true)
+  bool get unifiedDelay => throw _privateConstructorUsedError;
+  @JsonKey(name: "tcp-concurrent", defaultValue: true)
+  bool get tcpConcurrent => throw _privateConstructorUsedError;
+  @JsonKey(defaultValue: defaultTun)
+  Tun get tun => throw _privateConstructorUsedError;
+  @JsonKey(defaultValue: defaultDns)
+  Dns get dns => throw _privateConstructorUsedError;
+  @JsonKey(defaultValue: defaultGeoXUrl)
+  GeoXUrl get geoXUrl => throw _privateConstructorUsedError;
+  @JsonKey(name: "geodata-loader", defaultValue: GeodataLoader.memconservative)
+  GeodataLoader get geodataLoader => throw _privateConstructorUsedError;
+  @JsonKey(name: "proxy-groups", defaultValue: [])
+  List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
+  @JsonKey(defaultValue: [])
+  List<String> get rules => throw _privateConstructorUsedError;
+  @JsonKey(name: "global-ua")
+  String? get globalUa => throw _privateConstructorUsedError;
+
+  /// Create a copy of RawClashConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $RawClashConfigCopyWith<RawClashConfig> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $RawClashConfigCopyWith<$Res> {
+  factory $RawClashConfigCopyWith(
+          RawClashConfig value, $Res Function(RawClashConfig) then) =
+      _$RawClashConfigCopyWithImpl<$Res, RawClashConfig>;
+  @useResult
+  $Res call(
+      {@JsonKey(name: "mixed-port", defaultValue: 7890) int mixedPort,
+      @JsonKey(defaultValue: Mode.rule) Mode mode,
+      @JsonKey(name: "allow-lan", defaultValue: false) bool allowLan,
+      @JsonKey(name: "log-level", defaultValue: LogLevel.info)
+      LogLevel logLevel,
+      @JsonKey(defaultValue: false) bool ipv6,
+      @JsonKey(name: "unified-delay", defaultValue: true) bool unifiedDelay,
+      @JsonKey(name: "tcp-concurrent", defaultValue: true) bool tcpConcurrent,
+      @JsonKey(defaultValue: defaultTun) Tun tun,
+      @JsonKey(defaultValue: defaultDns) Dns dns,
+      @JsonKey(defaultValue: defaultGeoXUrl) GeoXUrl geoXUrl,
+      @JsonKey(
+          name: "geodata-loader", defaultValue: GeodataLoader.memconservative)
+      GeodataLoader geodataLoader,
+      @JsonKey(name: "proxy-groups", defaultValue: [])
+      List<ProxyGroup> proxyGroups,
+      @JsonKey(defaultValue: []) List<String> rules,
+      @JsonKey(name: "global-ua") String? globalUa});
+
+  $TunCopyWith<$Res> get tun;
+  $DnsCopyWith<$Res> get dns;
+  $GeoXUrlCopyWith<$Res> get geoXUrl;
+}
+
+/// @nodoc
+class _$RawClashConfigCopyWithImpl<$Res, $Val extends RawClashConfig>
+    implements $RawClashConfigCopyWith<$Res> {
+  _$RawClashConfigCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of RawClashConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? mixedPort = null,
+    Object? mode = null,
+    Object? allowLan = null,
+    Object? logLevel = null,
+    Object? ipv6 = null,
+    Object? unifiedDelay = null,
+    Object? tcpConcurrent = null,
+    Object? tun = null,
+    Object? dns = null,
+    Object? geoXUrl = null,
+    Object? geodataLoader = null,
+    Object? proxyGroups = null,
+    Object? rules = null,
+    Object? globalUa = freezed,
+  }) {
+    return _then(_value.copyWith(
+      mixedPort: null == mixedPort
+          ? _value.mixedPort
+          : mixedPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      mode: null == mode
+          ? _value.mode
+          : mode // ignore: cast_nullable_to_non_nullable
+              as Mode,
+      allowLan: null == allowLan
+          ? _value.allowLan
+          : allowLan // ignore: cast_nullable_to_non_nullable
+              as bool,
+      logLevel: null == logLevel
+          ? _value.logLevel
+          : logLevel // ignore: cast_nullable_to_non_nullable
+              as LogLevel,
+      ipv6: null == ipv6
+          ? _value.ipv6
+          : ipv6 // ignore: cast_nullable_to_non_nullable
+              as bool,
+      unifiedDelay: null == unifiedDelay
+          ? _value.unifiedDelay
+          : unifiedDelay // ignore: cast_nullable_to_non_nullable
+              as bool,
+      tcpConcurrent: null == tcpConcurrent
+          ? _value.tcpConcurrent
+          : tcpConcurrent // ignore: cast_nullable_to_non_nullable
+              as bool,
+      tun: null == tun
+          ? _value.tun
+          : tun // ignore: cast_nullable_to_non_nullable
+              as Tun,
+      dns: null == dns
+          ? _value.dns
+          : dns // ignore: cast_nullable_to_non_nullable
+              as Dns,
+      geoXUrl: null == geoXUrl
+          ? _value.geoXUrl
+          : geoXUrl // ignore: cast_nullable_to_non_nullable
+              as GeoXUrl,
+      geodataLoader: null == geodataLoader
+          ? _value.geodataLoader
+          : geodataLoader // ignore: cast_nullable_to_non_nullable
+              as GeodataLoader,
+      proxyGroups: null == proxyGroups
+          ? _value.proxyGroups
+          : proxyGroups // ignore: cast_nullable_to_non_nullable
+              as List<ProxyGroup>,
+      rules: null == rules
+          ? _value.rules
+          : rules // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      globalUa: freezed == globalUa
+          ? _value.globalUa
+          : globalUa // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+
+  /// Create a copy of RawClashConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $TunCopyWith<$Res> get tun {
+    return $TunCopyWith<$Res>(_value.tun, (value) {
+      return _then(_value.copyWith(tun: value) as $Val);
+    });
+  }
+
+  /// Create a copy of RawClashConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $DnsCopyWith<$Res> get dns {
+    return $DnsCopyWith<$Res>(_value.dns, (value) {
+      return _then(_value.copyWith(dns: value) as $Val);
+    });
+  }
+
+  /// Create a copy of RawClashConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $GeoXUrlCopyWith<$Res> get geoXUrl {
+    return $GeoXUrlCopyWith<$Res>(_value.geoXUrl, (value) {
+      return _then(_value.copyWith(geoXUrl: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$RawClashConfigImplCopyWith<$Res>
+    implements $RawClashConfigCopyWith<$Res> {
+  factory _$$RawClashConfigImplCopyWith(_$RawClashConfigImpl value,
+          $Res Function(_$RawClashConfigImpl) then) =
+      __$$RawClashConfigImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(name: "mixed-port", defaultValue: 7890) int mixedPort,
+      @JsonKey(defaultValue: Mode.rule) Mode mode,
+      @JsonKey(name: "allow-lan", defaultValue: false) bool allowLan,
+      @JsonKey(name: "log-level", defaultValue: LogLevel.info)
+      LogLevel logLevel,
+      @JsonKey(defaultValue: false) bool ipv6,
+      @JsonKey(name: "unified-delay", defaultValue: true) bool unifiedDelay,
+      @JsonKey(name: "tcp-concurrent", defaultValue: true) bool tcpConcurrent,
+      @JsonKey(defaultValue: defaultTun) Tun tun,
+      @JsonKey(defaultValue: defaultDns) Dns dns,
+      @JsonKey(defaultValue: defaultGeoXUrl) GeoXUrl geoXUrl,
+      @JsonKey(
+          name: "geodata-loader", defaultValue: GeodataLoader.memconservative)
+      GeodataLoader geodataLoader,
+      @JsonKey(name: "proxy-groups", defaultValue: [])
+      List<ProxyGroup> proxyGroups,
+      @JsonKey(defaultValue: []) List<String> rules,
+      @JsonKey(name: "global-ua") String? globalUa});
+
+  @override
+  $TunCopyWith<$Res> get tun;
+  @override
+  $DnsCopyWith<$Res> get dns;
+  @override
+  $GeoXUrlCopyWith<$Res> get geoXUrl;
+}
+
+/// @nodoc
+class __$$RawClashConfigImplCopyWithImpl<$Res>
+    extends _$RawClashConfigCopyWithImpl<$Res, _$RawClashConfigImpl>
+    implements _$$RawClashConfigImplCopyWith<$Res> {
+  __$$RawClashConfigImplCopyWithImpl(
+      _$RawClashConfigImpl _value, $Res Function(_$RawClashConfigImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of RawClashConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? mixedPort = null,
+    Object? mode = null,
+    Object? allowLan = null,
+    Object? logLevel = null,
+    Object? ipv6 = null,
+    Object? unifiedDelay = null,
+    Object? tcpConcurrent = null,
+    Object? tun = null,
+    Object? dns = null,
+    Object? geoXUrl = null,
+    Object? geodataLoader = null,
+    Object? proxyGroups = null,
+    Object? rules = null,
+    Object? globalUa = freezed,
+  }) {
+    return _then(_$RawClashConfigImpl(
+      null == mixedPort
+          ? _value.mixedPort
+          : mixedPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      null == mode
+          ? _value.mode
+          : mode // ignore: cast_nullable_to_non_nullable
+              as Mode,
+      null == allowLan
+          ? _value.allowLan
+          : allowLan // ignore: cast_nullable_to_non_nullable
+              as bool,
+      null == logLevel
+          ? _value.logLevel
+          : logLevel // ignore: cast_nullable_to_non_nullable
+              as LogLevel,
+      null == ipv6
+          ? _value.ipv6
+          : ipv6 // ignore: cast_nullable_to_non_nullable
+              as bool,
+      null == unifiedDelay
+          ? _value.unifiedDelay
+          : unifiedDelay // ignore: cast_nullable_to_non_nullable
+              as bool,
+      null == tcpConcurrent
+          ? _value.tcpConcurrent
+          : tcpConcurrent // ignore: cast_nullable_to_non_nullable
+              as bool,
+      null == tun
+          ? _value.tun
+          : tun // ignore: cast_nullable_to_non_nullable
+              as Tun,
+      null == dns
+          ? _value.dns
+          : dns // ignore: cast_nullable_to_non_nullable
+              as Dns,
+      null == geoXUrl
+          ? _value.geoXUrl
+          : geoXUrl // ignore: cast_nullable_to_non_nullable
+              as GeoXUrl,
+      null == geodataLoader
+          ? _value.geodataLoader
+          : geodataLoader // ignore: cast_nullable_to_non_nullable
+              as GeodataLoader,
+      null == proxyGroups
+          ? _value._proxyGroups
+          : proxyGroups // ignore: cast_nullable_to_non_nullable
+              as List<ProxyGroup>,
+      null == rules
+          ? _value._rules
+          : rules // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      freezed == globalUa
+          ? _value.globalUa
+          : globalUa // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$RawClashConfigImpl implements _RawClashConfig {
+  const _$RawClashConfigImpl(
+      @JsonKey(name: "mixed-port", defaultValue: 7890) this.mixedPort,
+      @JsonKey(defaultValue: Mode.rule) this.mode,
+      @JsonKey(name: "allow-lan", defaultValue: false) this.allowLan,
+      @JsonKey(name: "log-level", defaultValue: LogLevel.info) this.logLevel,
+      @JsonKey(defaultValue: false) this.ipv6,
+      @JsonKey(name: "unified-delay", defaultValue: true) this.unifiedDelay,
+      @JsonKey(name: "tcp-concurrent", defaultValue: true) this.tcpConcurrent,
+      @JsonKey(defaultValue: defaultTun) this.tun,
+      @JsonKey(defaultValue: defaultDns) this.dns,
+      @JsonKey(defaultValue: defaultGeoXUrl) this.geoXUrl,
+      @JsonKey(
+          name: "geodata-loader", defaultValue: GeodataLoader.memconservative)
+      this.geodataLoader,
+      @JsonKey(name: "proxy-groups", defaultValue: [])
+      final List<ProxyGroup> proxyGroups,
+      @JsonKey(defaultValue: []) final List<String> rules,
+      @JsonKey(name: "global-ua") this.globalUa)
+      : _proxyGroups = proxyGroups,
+        _rules = rules;
+
+  @override
+  @JsonKey(name: "mixed-port", defaultValue: 7890)
+  final int mixedPort;
+  @override
+  @JsonKey(defaultValue: Mode.rule)
+  final Mode mode;
+  @override
+  @JsonKey(name: "allow-lan", defaultValue: false)
+  final bool allowLan;
+  @override
+  @JsonKey(name: "log-level", defaultValue: LogLevel.info)
+  final LogLevel logLevel;
+  @override
+  @JsonKey(defaultValue: false)
+  final bool ipv6;
+  @override
+  @JsonKey(name: "unified-delay", defaultValue: true)
+  final bool unifiedDelay;
+  @override
+  @JsonKey(name: "tcp-concurrent", defaultValue: true)
+  final bool tcpConcurrent;
+  @override
+  @JsonKey(defaultValue: defaultTun)
+  final Tun tun;
+  @override
+  @JsonKey(defaultValue: defaultDns)
+  final Dns dns;
+  @override
+  @JsonKey(defaultValue: defaultGeoXUrl)
+  final GeoXUrl geoXUrl;
+  @override
+  @JsonKey(name: "geodata-loader", defaultValue: GeodataLoader.memconservative)
+  final GeodataLoader geodataLoader;
+  final List<ProxyGroup> _proxyGroups;
+  @override
+  @JsonKey(name: "proxy-groups", defaultValue: [])
+  List<ProxyGroup> get proxyGroups {
+    if (_proxyGroups is EqualUnmodifiableListView) return _proxyGroups;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_proxyGroups);
+  }
+
+  final List<String> _rules;
+  @override
+  @JsonKey(defaultValue: [])
+  List<String> get rules {
+    if (_rules is EqualUnmodifiableListView) return _rules;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_rules);
+  }
+
+  @override
+  @JsonKey(name: "global-ua")
+  final String? globalUa;
+
+  @override
+  String toString() {
+    return 'RawClashConfig(mixedPort: $mixedPort, mode: $mode, allowLan: $allowLan, logLevel: $logLevel, ipv6: $ipv6, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, geodataLoader: $geodataLoader, proxyGroups: $proxyGroups, rules: $rules, globalUa: $globalUa)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$RawClashConfigImpl &&
+            (identical(other.mixedPort, mixedPort) ||
+                other.mixedPort == mixedPort) &&
+            (identical(other.mode, mode) || other.mode == mode) &&
+            (identical(other.allowLan, allowLan) ||
+                other.allowLan == allowLan) &&
+            (identical(other.logLevel, logLevel) ||
+                other.logLevel == logLevel) &&
+            (identical(other.ipv6, ipv6) || other.ipv6 == ipv6) &&
+            (identical(other.unifiedDelay, unifiedDelay) ||
+                other.unifiedDelay == unifiedDelay) &&
+            (identical(other.tcpConcurrent, tcpConcurrent) ||
+                other.tcpConcurrent == tcpConcurrent) &&
+            (identical(other.tun, tun) || other.tun == tun) &&
+            (identical(other.dns, dns) || other.dns == dns) &&
+            (identical(other.geoXUrl, geoXUrl) || other.geoXUrl == geoXUrl) &&
+            (identical(other.geodataLoader, geodataLoader) ||
+                other.geodataLoader == geodataLoader) &&
+            const DeepCollectionEquality()
+                .equals(other._proxyGroups, _proxyGroups) &&
+            const DeepCollectionEquality().equals(other._rules, _rules) &&
+            (identical(other.globalUa, globalUa) ||
+                other.globalUa == globalUa));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      mixedPort,
+      mode,
+      allowLan,
+      logLevel,
+      ipv6,
+      unifiedDelay,
+      tcpConcurrent,
+      tun,
+      dns,
+      geoXUrl,
+      geodataLoader,
+      const DeepCollectionEquality().hash(_proxyGroups),
+      const DeepCollectionEquality().hash(_rules),
+      globalUa);
+
+  /// Create a copy of RawClashConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$RawClashConfigImplCopyWith<_$RawClashConfigImpl> get copyWith =>
+      __$$RawClashConfigImplCopyWithImpl<_$RawClashConfigImpl>(
+          this, _$identity);
+}
+
+abstract class _RawClashConfig implements RawClashConfig {
+  const factory _RawClashConfig(
+      @JsonKey(name: "mixed-port", defaultValue: 7890) final int mixedPort,
+      @JsonKey(defaultValue: Mode.rule) final Mode mode,
+      @JsonKey(name: "allow-lan", defaultValue: false) final bool allowLan,
+      @JsonKey(name: "log-level", defaultValue: LogLevel.info)
+      final LogLevel logLevel,
+      @JsonKey(defaultValue: false) final bool ipv6,
+      @JsonKey(name: "unified-delay", defaultValue: true)
+      final bool unifiedDelay,
+      @JsonKey(name: "tcp-concurrent", defaultValue: true)
+      final bool tcpConcurrent,
+      @JsonKey(defaultValue: defaultTun) final Tun tun,
+      @JsonKey(defaultValue: defaultDns) final Dns dns,
+      @JsonKey(defaultValue: defaultGeoXUrl) final GeoXUrl geoXUrl,
+      @JsonKey(
+          name: "geodata-loader", defaultValue: GeodataLoader.memconservative)
+      final GeodataLoader geodataLoader,
+      @JsonKey(name: "proxy-groups", defaultValue: [])
+      final List<ProxyGroup> proxyGroups,
+      @JsonKey(defaultValue: []) final List<String> rules,
+      @JsonKey(name: "global-ua")
+      final String? globalUa) = _$RawClashConfigImpl;
+
+  @override
+  @JsonKey(name: "mixed-port", defaultValue: 7890)
+  int get mixedPort;
+  @override
+  @JsonKey(defaultValue: Mode.rule)
+  Mode get mode;
+  @override
+  @JsonKey(name: "allow-lan", defaultValue: false)
+  bool get allowLan;
+  @override
+  @JsonKey(name: "log-level", defaultValue: LogLevel.info)
+  LogLevel get logLevel;
+  @override
+  @JsonKey(defaultValue: false)
+  bool get ipv6;
+  @override
+  @JsonKey(name: "unified-delay", defaultValue: true)
+  bool get unifiedDelay;
+  @override
+  @JsonKey(name: "tcp-concurrent", defaultValue: true)
+  bool get tcpConcurrent;
+  @override
+  @JsonKey(defaultValue: defaultTun)
+  Tun get tun;
+  @override
+  @JsonKey(defaultValue: defaultDns)
+  Dns get dns;
+  @override
+  @JsonKey(defaultValue: defaultGeoXUrl)
+  GeoXUrl get geoXUrl;
+  @override
+  @JsonKey(name: "geodata-loader", defaultValue: GeodataLoader.memconservative)
+  GeodataLoader get geodataLoader;
+  @override
+  @JsonKey(name: "proxy-groups", defaultValue: [])
+  List<ProxyGroup> get proxyGroups;
+  @override
+  @JsonKey(defaultValue: [])
+  List<String> get rules;
+  @override
+  @JsonKey(name: "global-ua")
+  String? get globalUa;
+
+  /// Create a copy of RawClashConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$RawClashConfigImplCopyWith<_$RawClashConfigImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

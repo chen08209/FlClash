@@ -16,6 +16,7 @@ typedef HostsMap = Map<String, String>;
 
 const defaultTun = Tun();
 const defaultDns = Dns();
+const defaultGeoXUrl = GeoXUrl();
 
 const defaultMixedPort = 7890;
 const defaultKeepAliveInterval = 30;
@@ -231,6 +232,65 @@ class Dns with _$Dns {
       return const Dns();
     }
   }
+}
+
+@freezed
+class GeoXUrl with _$GeoXUrl {
+  const factory GeoXUrl({
+    @Default(
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+    )
+    String mmdb,
+    @Default(
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+    )
+    String asn,
+    @Default(
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
+    )
+    String geoip,
+    @Default(
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
+    )
+    String geosite,
+  }) = _GeoXUrl;
+
+  factory GeoXUrl.fromJson(Map<String, Object?> json) =>
+      _$GeoXUrlFromJson(json);
+}
+
+@freezed
+class RawClashConfig with _$RawClashConfig {
+  const factory RawClashConfig(
+    @JsonKey(name: "mixed-port", defaultValue: 7890) int mixedPort,
+    @JsonKey(defaultValue: Mode.rule) Mode mode,
+    @JsonKey(name: "allow-lan", defaultValue: false) bool allowLan,
+    @JsonKey(name: "log-level", defaultValue: LogLevel.info) LogLevel logLevel,
+    @JsonKey(defaultValue: false) bool ipv6,
+    @JsonKey(name: "unified-delay", defaultValue: true) bool unifiedDelay,
+    @JsonKey(name: "tcp-concurrent", defaultValue: true) bool tcpConcurrent,
+    @JsonKey(defaultValue: defaultTun) Tun tun,
+    @JsonKey(defaultValue: defaultDns) Dns dns,
+    @JsonKey(defaultValue: defaultGeoXUrl) GeoXUrl geoXUrl,
+    @JsonKey(
+      name: "geodata-loader",
+      defaultValue: GeodataLoader.memconservative,
+    )
+    GeodataLoader geodataLoader,
+    @JsonKey(
+      name: "proxy-groups",
+      defaultValue: [],
+    )
+    List<ProxyGroup> proxyGroups,
+    @JsonKey(
+      defaultValue: [],
+    )
+    List<String> rules,
+    @JsonKey(
+      name: "global-ua",
+    )
+    String? globalUa,
+  ) = _RawClashConfig;
 }
 
 @JsonSerializable()

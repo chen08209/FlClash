@@ -269,3 +269,23 @@ const _$DnsModeEnumMap = {
   DnsMode.redirHost: 'redir-host',
   DnsMode.hosts: 'hosts',
 };
+
+_$GeoXUrlImpl _$$GeoXUrlImplFromJson(Map<String, dynamic> json) =>
+    _$GeoXUrlImpl(
+      mmdb: json['mmdb'] as String? ??
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+      asn: json['asn'] as String? ??
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+      geoip: json['geoip'] as String? ??
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
+      geosite: json['geosite'] as String? ??
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
+    );
+
+Map<String, dynamic> _$$GeoXUrlImplToJson(_$GeoXUrlImpl instance) =>
+    <String, dynamic>{
+      'mmdb': instance.mmdb,
+      'asn': instance.asn,
+      'geoip': instance.geoip,
+      'geosite': instance.geosite,
+    };

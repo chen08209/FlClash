@@ -342,3 +342,8 @@ enum DashboardWidget {
     return dashboardWidgets[index];
   }
 }
+
+enum GeodataLoader {
+  standard,
+  memconservative,
+}
