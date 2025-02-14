@@ -25,9 +25,6 @@ runAppWithPreferences(
 }) {
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider<ClashConfig>(
-        create: (_) => clashConfig,
-      ),
       ChangeNotifierProvider<Config>(
         create: (_) => config,
       ),

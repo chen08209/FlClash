@@ -62,9 +62,8 @@ class TUNButton extends StatelessWidget {
                     return Switch(
                       value: enable,
                       onChanged: (value) {
-                        final clashConfig =
-                            globalState.appController.clashConfig;
-                        clashConfig.tun = clashConfig.tun.copyWith(
+                        final config = globalState.appController.config;
+                        config.patchClashConfig = config.patchClashConfig.copyWith.tun(
                           enable: value,
                         );
                       },

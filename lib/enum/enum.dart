@@ -138,6 +138,13 @@ enum DnsMode {
   hosts
 }
 
+enum ExternalControllerStatus {
+  @JsonValue("")
+  close,
+  @JsonValue("127.0.0.1:9090")
+  open
+}
+
 enum KeyboardModifier {
   alt([
     PhysicalKeyboardKey.altLeft,

@@ -33,16 +33,6 @@ final double kHeaderHeight = system.isDesktop
         ? 40
         : 28
     : 0;
-const GeoXMap defaultGeoXMap = {
-  "mmdb":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
-  "asn":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
-  "geoip":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
-  "geosite":
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"
-};
 const profilesDirectoryName = "profiles";
 const localhost = "127.0.0.1";
 const clashConfigKey = "clash_config";

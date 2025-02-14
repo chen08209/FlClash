@@ -30,7 +30,7 @@ class Request {
           url,
           options: Options(
             headers: {
-              "User-Agent": globalState.appController.clashConfig.globalUa
+              "User-Agent": globalState.appController.config.patchClashConfig.globalUa
             },
             responseType: ResponseType.bytes,
           ),

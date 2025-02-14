@@ -29,7 +29,6 @@ class _AndroidContainerState extends State<AndroidManager> {
     return Selector2<Config, ClashConfig, CoreState>(
       selector: (_, config, clashConfig) => globalState.getCoreState(
         config,
-        clashConfig,
       ),
       builder: (__, state, child) {
         clashLib?.setState(state);

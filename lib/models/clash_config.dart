@@ -1,8 +1,6 @@
 // ignore_for_file: invalid_annotation_target
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../enum/enum.dart';
@@ -11,8 +9,9 @@ part 'generated/clash_config.freezed.dart';
 
 part 'generated/clash_config.g.dart';
 
-typedef GeoXMap = Map<String, String>;
 typedef HostsMap = Map<String, String>;
+
+final defaultClashConfig = ClashConfig();
 
 const defaultTun = Tun();
 const defaultDns = Dns();
@@ -141,7 +140,7 @@ class Tun with _$Tun {
 
   factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
 
-  factory Tun.realFromJson(Map<String, Object?>? json) {
+  factory Tun.safeFormJson(Map<String, Object?>? json) {
     if (json == null) {
       return defaultTun;
     }
@@ -257,343 +256,358 @@ class GeoXUrl with _$GeoXUrl {
 
   factory GeoXUrl.fromJson(Map<String, Object?> json) =>
       _$GeoXUrlFromJson(json);
+
+  factory GeoXUrl.safeFormJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return defaultGeoXUrl;
+    }
+    try {
+      return GeoXUrl.fromJson(json);
+    } catch (_) {
+      return defaultGeoXUrl;
+    }
+  }
 }
 
 @freezed
-class RawClashConfig with _$RawClashConfig {
-  const factory RawClashConfig(
-    @JsonKey(name: "mixed-port", defaultValue: 7890) int mixedPort,
-    @JsonKey(defaultValue: Mode.rule) Mode mode,
-    @JsonKey(name: "allow-lan", defaultValue: false) bool allowLan,
-    @JsonKey(name: "log-level", defaultValue: LogLevel.info) LogLevel logLevel,
-    @JsonKey(defaultValue: false) bool ipv6,
-    @JsonKey(name: "unified-delay", defaultValue: true) bool unifiedDelay,
-    @JsonKey(name: "tcp-concurrent", defaultValue: true) bool tcpConcurrent,
-    @JsonKey(defaultValue: defaultTun) Tun tun,
-    @JsonKey(defaultValue: defaultDns) Dns dns,
-    @JsonKey(defaultValue: defaultGeoXUrl) GeoXUrl geoXUrl,
-    @JsonKey(
-      name: "geodata-loader",
-      defaultValue: GeodataLoader.memconservative,
-    )
+class ClashConfig with _$ClashConfig {
+  const factory ClashConfig({
+    @Default(defaultMixedPort) @JsonKey(name: "mixed-port") int mixedPort,
+    @Default(Mode.rule) Mode mode,
+    @Default(false) @JsonKey(name: "allow-lan") bool allowLan,
+    @Default(LogLevel.info) @JsonKey(name: "log-level") LogLevel logLevel,
+    @Default(false) bool ipv6,
+    @Default(FindProcessMode.off)
+    @JsonKey(name: "find-process-mode")
+    FindProcessMode findProcessMode,
+    @Default(defaultKeepAliveInterval)
+    @JsonKey(name: "keep-alive-interval")
+    int keepAliveInterval,
+    @Default(true) @JsonKey(name: "unified-delay") bool unifiedDelay,
+    @Default(true) @JsonKey(name: "tcp-concurrent") bool tcpConcurrent,
+    @Default(defaultTun) @JsonKey(fromJson: Tun.safeFormJson) Tun tun,
+    @Default(defaultDns) @JsonKey(fromJson: Dns.safeDnsFromJson) Dns dns,
+    @Default(defaultGeoXUrl)
+    @JsonKey(fromJson: GeoXUrl.safeFormJson)
+    GeoXUrl geoXUrl,
+    @Default(GeodataLoader.memconservative)
+    @JsonKey(name: "geodata-loader")
     GeodataLoader geodataLoader,
-    @JsonKey(
-      name: "proxy-groups",
-      defaultValue: [],
-    )
-    List<ProxyGroup> proxyGroups,
-    @JsonKey(
-      defaultValue: [],
-    )
-    List<String> rules,
-    @JsonKey(
-      name: "global-ua",
-    )
-    String? globalUa,
-  ) = _RawClashConfig;
+    @Default([]) @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
+    @Default([]) List<String> rules,
+    @JsonKey(name: "global-ua") String? globalUa,
+    @Default([]) @JsonKey(name: "route-address") List<String> routeAddress,
+    @Default(ExternalControllerStatus.close)
+    @JsonKey(name: "external-controller")
+    ExternalControllerStatus externalController,
+    @Default({}) HostsMap hosts,
+  }) = _ClashConfig;
+
+  factory ClashConfig.fromJson(Map<String, Object?> json) =>
+      _$ClashConfigFromJson(json);
 }
 
-@JsonSerializable()
-class ClashConfig extends ChangeNotifier {
-  int _mixedPort;
-  bool _allowLan;
-  bool _ipv6;
-  String _geodataLoader;
-  LogLevel _logLevel;
-  String _externalController;
-  Mode _mode;
-  FindProcessMode _findProcessMode;
-  int _keepAliveInterval;
-  bool _unifiedDelay;
-  bool _tcpConcurrent;
-  Tun _tun;
-  Dns _dns;
-  GeoXMap _geoXUrl;
-  List<String> _rules;
-  String _globalUa;
-  HostsMap _hosts;
-  List<String> _includeRouteAddress;
-  RouteMode _routeMode;
-
-  ClashConfig()
-      : _mixedPort = defaultMixedPort,
-        _mode = Mode.rule,
-        _ipv6 = false,
-        _findProcessMode = FindProcessMode.off,
-        _allowLan = false,
-        _globalUa = "",
-        _tcpConcurrent = false,
-        _logLevel = LogLevel.info,
-        _tun = const Tun(),
-        _unifiedDelay = false,
-        _geodataLoader = geodataLoaderMemconservative,
-        _externalController = '',
-        _keepAliveInterval = defaultKeepAliveInterval,
-        _dns = defaultDns,
-        _geoXUrl = defaultGeoXMap,
-        _routeMode = RouteMode.config,
-        _includeRouteAddress = [],
-        _rules = [],
-        _hosts = {};
-
-  @JsonKey(name: "mixed-port", defaultValue: defaultMixedPort)
-  int get mixedPort => _mixedPort;
-
-  set mixedPort(int value) {
-    if (_mixedPort != value) {
-      _mixedPort = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(defaultValue: Mode.rule)
-  Mode get mode => _mode;
-
-  set mode(Mode value) {
-    if (_mode != value) {
-      _mode = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "find-process-mode", defaultValue: FindProcessMode.off)
-  FindProcessMode get findProcessMode => _findProcessMode;
-
-  set findProcessMode(FindProcessMode value) {
-    if (_findProcessMode != value) {
-      _findProcessMode = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "allow-lan")
-  bool get allowLan => _allowLan;
-
-  set allowLan(bool value) {
-    if (_allowLan != value) {
-      _allowLan = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "log-level", defaultValue: LogLevel.info)
-  LogLevel get logLevel => _logLevel;
-
-  set logLevel(LogLevel value) {
-    if (_logLevel != value) {
-      _logLevel = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "external-controller", defaultValue: '')
-  String get externalController => _externalController;
-
-  set externalController(String value) {
-    if (_externalController != value) {
-      _externalController = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "keep-alive-interval", defaultValue: defaultKeepAliveInterval)
-  int get keepAliveInterval => _keepAliveInterval;
-
-  set keepAliveInterval(int value) {
-    if (_keepAliveInterval != value) {
-      _keepAliveInterval = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(defaultValue: false)
-  bool get ipv6 => _ipv6;
-
-  set ipv6(bool value) {
-    if (_ipv6 != value) {
-      _ipv6 = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "geodata-loader", defaultValue: geodataLoaderMemconservative)
-  String get geodataLoader => _geodataLoader;
-
-  set geodataLoader(String value) {
-    if (_geodataLoader != value) {
-      _geodataLoader = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "unified-delay", defaultValue: false)
-  bool get unifiedDelay => _unifiedDelay;
-
-  set unifiedDelay(bool value) {
-    if (_unifiedDelay != value) {
-      _unifiedDelay = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "tcp-concurrent", defaultValue: false)
-  bool get tcpConcurrent => _tcpConcurrent;
-
-  set tcpConcurrent(bool value) {
-    if (_tcpConcurrent != value) {
-      _tcpConcurrent = value;
-      notifyListeners();
-    }
-  }
-
-  Tun get tun {
-    return _tun;
-  }
-
-  set tun(Tun value) {
-    if (_tun != value) {
-      _tun = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(fromJson: Dns.safeDnsFromJson)
-  Dns get dns => _dns;
-
-  set dns(Dns value) {
-    if (_dns != value) {
-      _dns = value;
-      notifyListeners();
-    }
-  }
-
-  List<String> get rules => _rules;
-
-  set rules(List<String> value) {
-    if (_rules != value) {
-      _rules = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "global-ua", defaultValue: "")
-  String get globalUa {
-    if (_globalUa.isEmpty) {
-      return globalState.packageInfo.ua;
-    }
-    return _globalUa;
-  }
-
-  set globalUa(String value) {
-    if (_globalUa != value) {
-      _globalUa = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "geox-url", defaultValue: defaultGeoXMap)
-  GeoXMap get geoXUrl => _geoXUrl;
-
-  set geoXUrl(GeoXMap value) {
-    if (!stringAndStringMapEquality.equals(value, _geoXUrl)) {
-      _geoXUrl = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(defaultValue: {})
-  HostsMap get hosts => _hosts;
-
-  set hosts(HostsMap value) {
-    if (!stringAndStringMapEquality.equals(value, _hosts)) {
-      _hosts = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "route-address", includeFromJson: false, includeToJson: true)
-  List<String> get routeAddress {
-    return switch (_routeMode == RouteMode.config) {
-      true => _includeRouteAddress,
-      false => defaultBypassPrivateRouteAddress,
-    };
-  }
-
-  @JsonKey(name: "include-route-address", defaultValue: [])
-  List<String> get includeRouteAddress => _includeRouteAddress;
-
-  set includeRouteAddress(List<String> value) {
-    if (!stringListEquality.equals(value, _includeRouteAddress)) {
-      _includeRouteAddress = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(name: "route-mode", defaultValue: RouteMode.config)
-  RouteMode get routeMode => _routeMode;
-
-  set routeMode(RouteMode value) {
-    if (value != _routeMode) {
-      _routeMode = value;
-      notifyListeners();
-    }
-  }
-
-  update([ClashConfig? clashConfig]) {
-    if (clashConfig != null) {
-      _mixedPort = clashConfig._mixedPort;
-      _allowLan = clashConfig._allowLan;
-      _hosts = clashConfig._hosts;
-      _mode = clashConfig._mode;
-      _logLevel = clashConfig._logLevel;
-      _tun = clashConfig._tun;
-      _findProcessMode = clashConfig._findProcessMode;
-      _geoXUrl = clashConfig._geoXUrl;
-      _unifiedDelay = clashConfig._unifiedDelay;
-      _globalUa = clashConfig._globalUa;
-      _tcpConcurrent = clashConfig._tcpConcurrent;
-      _externalController = clashConfig._externalController;
-      _geodataLoader = clashConfig._geodataLoader;
-      _dns = clashConfig._dns;
-      _rules = clashConfig._rules;
-      _routeMode = clashConfig._routeMode;
-      _includeRouteAddress = clashConfig._includeRouteAddress;
-    }
-    notifyListeners();
-  }
-
-  ClashConfig copyWith() {
-    return ClashConfig()
-      ..mixedPort = _mixedPort
-      ..mode = _mode
-      ..ipv6 = _ipv6
-      ..findProcessMode = _findProcessMode
-      ..allowLan = _allowLan
-      ..tcpConcurrent = _tcpConcurrent
-      ..logLevel = _logLevel
-      ..tun = tun
-      ..unifiedDelay = _unifiedDelay
-      ..geodataLoader = _geodataLoader
-      ..externalController = _externalController
-      ..keepAliveInterval = _keepAliveInterval
-      ..dns = _dns
-      ..geoXUrl = _geoXUrl
-      ..routeMode = _routeMode
-      ..includeRouteAddress = _includeRouteAddress
-      ..rules = _rules
-      ..hosts = _hosts;
-  }
-
-  Map<String, dynamic> toJson() {
-    return _$ClashConfigToJson(this);
-  }
-
-  factory ClashConfig.fromJson(Map<String, dynamic> json) {
-    return _$ClashConfigFromJson(json);
-  }
-
-  @override
-  String toString() {
-    return 'ClashConfig{_mixedPort: $_mixedPort, _allowLan: $_allowLan, _ipv6: $_ipv6, _geodataLoader: $_geodataLoader, _logLevel: $_logLevel, _externalController: $_externalController, _mode: $_mode, _findProcessMode: $_findProcessMode, _keepAliveInterval: $_keepAliveInterval, _unifiedDelay: $_unifiedDelay, _tcpConcurrent: $_tcpConcurrent, _tun: $_tun, _dns: $_dns, _geoXUrl: $_geoXUrl, _rules: $_rules, _globalUa: $_globalUa, _hosts: $_hosts, _includeRouteAddress: $_includeRouteAddress, _routeMode: $_routeMode}';
-  }
-}
+// @JsonSerializable()
+// class ClashConfig extends ChangeNotifier {
+//   int _mixedPort;
+//   bool _allowLan;
+//   bool _ipv6;
+//   String _geodataLoader;
+//   LogLevel _logLevel;
+//   String _externalController;
+//   Mode _mode;
+//   FindProcessMode _findProcessMode;
+//   int _keepAliveInterval;
+//   bool _unifiedDelay;
+//   bool _tcpConcurrent;
+//   Tun _tun;
+//   Dns _dns;
+//   GeoXMap _geoXUrl;
+//   List<String> _rules;
+//   String _globalUa;
+//   HostsMap _hosts;
+//   List<String> _includeRouteAddress;
+//   RouteMode _routeMode;
+//
+//   ClashConfig()
+//       : _mixedPort = defaultMixedPort,
+//         _mode = Mode.rule,
+//         _ipv6 = false,
+//         _findProcessMode = FindProcessMode.off,
+//         _allowLan = false,
+//         _globalUa = "",
+//         _tcpConcurrent = false,
+//         _logLevel = LogLevel.info,
+//         _tun = const Tun(),
+//         _unifiedDelay = false,
+//         _geodataLoader = geodataLoaderMemconservative,
+//         _externalController = '',
+//         _keepAliveInterval = defaultKeepAliveInterval,
+//         _dns = defaultDns,
+//         _geoXUrl = defaultGeoXMap,
+//         _routeMode = RouteMode.config,
+//         _includeRouteAddress = [],
+//         _rules = [],
+//         _hosts = {};
+//
+//   @JsonKey(name: "mixed-port", defaultValue: defaultMixedPort)
+//   int get mixedPort => _mixedPort;
+//
+//   set mixedPort(int value) {
+//     if (_mixedPort != value) {
+//       _mixedPort = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(defaultValue: Mode.rule)
+//   Mode get mode => _mode;
+//
+//   set mode(Mode value) {
+//     if (_mode != value) {
+//       _mode = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "find-process-mode", defaultValue: FindProcessMode.off)
+//   FindProcessMode get findProcessMode => _findProcessMode;
+//
+//   set findProcessMode(FindProcessMode value) {
+//     if (_findProcessMode != value) {
+//       _findProcessMode = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "allow-lan")
+//   bool get allowLan => _allowLan;
+//
+//   set allowLan(bool value) {
+//     if (_allowLan != value) {
+//       _allowLan = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "log-level", defaultValue: LogLevel.info)
+//   LogLevel get logLevel => _logLevel;
+//
+//   set logLevel(LogLevel value) {
+//     if (_logLevel != value) {
+//       _logLevel = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "external-controller", defaultValue: '')
+//   String get externalController => _externalController;
+//
+//   set externalController(String value) {
+//     if (_externalController != value) {
+//       _externalController = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "keep-alive-interval", defaultValue: defaultKeepAliveInterval)
+//   int get keepAliveInterval => _keepAliveInterval;
+//
+//   set keepAliveInterval(int value) {
+//     if (_keepAliveInterval != value) {
+//       _keepAliveInterval = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(defaultValue: false)
+//   bool get ipv6 => _ipv6;
+//
+//   set ipv6(bool value) {
+//     if (_ipv6 != value) {
+//       _ipv6 = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "geodata-loader", defaultValue: geodataLoaderMemconservative)
+//   String get geodataLoader => _geodataLoader;
+//
+//   set geodataLoader(String value) {
+//     if (_geodataLoader != value) {
+//       _geodataLoader = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "unified-delay", defaultValue: false)
+//   bool get unifiedDelay => _unifiedDelay;
+//
+//   set unifiedDelay(bool value) {
+//     if (_unifiedDelay != value) {
+//       _unifiedDelay = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "tcp-concurrent", defaultValue: false)
+//   bool get tcpConcurrent => _tcpConcurrent;
+//
+//   set tcpConcurrent(bool value) {
+//     if (_tcpConcurrent != value) {
+//       _tcpConcurrent = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   Tun get tun {
+//     return _tun;
+//   }
+//
+//   set tun(Tun value) {
+//     if (_tun != value) {
+//       _tun = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(fromJson: Dns.safeDnsFromJson)
+//   Dns get dns => _dns;
+//
+//   set dns(Dns value) {
+//     if (_dns != value) {
+//       _dns = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   List<String> get rules => _rules;
+//
+//   set rules(List<String> value) {
+//     if (_rules != value) {
+//       _rules = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "global-ua", defaultValue: "")
+//   String get globalUa {
+//     if (_globalUa.isEmpty) {
+//       return globalState.packageInfo.ua;
+//     }
+//     return _globalUa;
+//   }
+//
+//   set globalUa(String value) {
+//     if (_globalUa != value) {
+//       _globalUa = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "geox-url", defaultValue: defaultGeoXMap)
+//   GeoXMap get geoXUrl => _geoXUrl;
+//
+//   set geoXUrl(GeoXMap value) {
+//     if (!stringAndStringMapEquality.equals(value, _geoXUrl)) {
+//       _geoXUrl = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(defaultValue: {})
+//   HostsMap get hosts => _hosts;
+//
+//   set hosts(HostsMap value) {
+//     if (!stringAndStringMapEquality.equals(value, _hosts)) {
+//       _hosts = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "route-address", includeFromJson: false, includeToJson: true)
+//   List<String> get routeAddress {
+//     return switch (_routeMode == RouteMode.config) {
+//       true => _includeRouteAddress,
+//       false => defaultBypassPrivateRouteAddress,
+//     };
+//   }
+//
+//   @JsonKey(name: "include-route-address", defaultValue: [])
+//   List<String> get includeRouteAddress => _includeRouteAddress;
+//
+//   set includeRouteAddress(List<String> value) {
+//     if (!stringListEquality.equals(value, _includeRouteAddress)) {
+//       _includeRouteAddress = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   @JsonKey(name: "route-mode", defaultValue: RouteMode.config)
+//   RouteMode get routeMode => _routeMode;
+//
+//   set routeMode(RouteMode value) {
+//     if (value != _routeMode) {
+//       _routeMode = value;
+//       notifyListeners();
+//     }
+//   }
+//
+//   update([ClashConfig? clashConfig]) {
+//     if (clashConfig != null) {
+//       _mixedPort = clashConfig._mixedPort;
+//       _allowLan = clashConfig._allowLan;
+//       _hosts = clashConfig._hosts;
+//       _mode = clashConfig._mode;
+//       _logLevel = clashConfig._logLevel;
+//       _tun = clashConfig._tun;
+//       _findProcessMode = clashConfig._findProcessMode;
+//       _geoXUrl = clashConfig._geoXUrl;
+//       _unifiedDelay = clashConfig._unifiedDelay;
+//       _globalUa = clashConfig._globalUa;
+//       _tcpConcurrent = clashConfig._tcpConcurrent;
+//       _externalController = clashConfig._externalController;
+//       _geodataLoader = clashConfig._geodataLoader;
+//       _dns = clashConfig._dns;
+//       _rules = clashConfig._rules;
+//       _routeMode = clashConfig._routeMode;
+//       _includeRouteAddress = clashConfig._includeRouteAddress;
+//     }
+//     notifyListeners();
+//   }
+//
+//   ClashConfig copyWith() {
+//     return ClashConfig()
+//       ..mixedPort = _mixedPort
+//       ..mode = _mode
+//       ..ipv6 = _ipv6
+//       ..findProcessMode = _findProcessMode
+//       ..allowLan = _allowLan
+//       ..tcpConcurrent = _tcpConcurrent
+//       ..logLevel = _logLevel
+//       ..tun = tun
+//       ..unifiedDelay = _unifiedDelay
+//       ..geodataLoader = _geodataLoader
+//       ..externalController = _externalController
+//       ..keepAliveInterval = _keepAliveInterval
+//       ..dns = _dns
+//       ..geoXUrl = _geoXUrl
+//       ..routeMode = _routeMode
+//       ..includeRouteAddress = _includeRouteAddress
+//       ..rules = _rules
+//       ..hosts = _hosts;
+//   }
+//
+//   Map<String, dynamic> toJson() {
+//     return _$ClashConfigToJson(this);
+//   }
+//
+//   factory ClashConfig.fromJson(Map<String, dynamic> json) {
+//     return _$ClashConfigFromJson(json);
+//   }
+//
+//   @override
+//   String toString() {
+//     return 'ClashConfig{_mixedPort: $_mixedPort, _allowLan: $_allowLan, _ipv6: $_ipv6, _geodataLoader: $_geodataLoader, _logLevel: $_logLevel, _externalController: $_externalController, _mode: $_mode, _findProcessMode: $_findProcessMode, _keepAliveInterval: $_keepAliveInterval, _unifiedDelay: $_unifiedDelay, _tcpConcurrent: $_tcpConcurrent, _tun: $_tun, _dns: $_dns, _geoXUrl: $_geoXUrl, _rules: $_rules, _globalUa: $_globalUa, _hosts: $_hosts, _includeRouteAddress: $_includeRouteAddress, _routeMode: $_routeMode}';
+//   }
+// }

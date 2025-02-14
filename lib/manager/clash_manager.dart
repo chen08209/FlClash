@@ -22,27 +22,30 @@ class ClashManager extends StatefulWidget {
 
 class _ClashContainerState extends State<ClashManager> with AppMessageListener {
   Widget _updateContainer(Widget child) {
-    return Selector2<Config, ClashConfig, ClashConfigState>(
-      selector: (_, config, clashConfig) => ClashConfigState(
-        overrideDns: config.overrideDns,
-        mixedPort: clashConfig.mixedPort,
-        allowLan: clashConfig.allowLan,
-        ipv6: clashConfig.ipv6,
-        logLevel: clashConfig.logLevel,
-        geodataLoader: clashConfig.geodataLoader,
-        externalController: clashConfig.externalController,
-        mode: clashConfig.mode,
-        findProcessMode: clashConfig.findProcessMode,
-        keepAliveInterval: clashConfig.keepAliveInterval,
-        unifiedDelay: clashConfig.unifiedDelay,
-        tcpConcurrent: clashConfig.tcpConcurrent,
-        tun: clashConfig.tun,
-        dns: clashConfig.dns,
-        hosts: clashConfig.hosts,
-        geoXUrl: clashConfig.geoXUrl,
-        rules: clashConfig.rules,
-        globalUa: clashConfig.globalUa,
-      ),
+    return Selector<Config, ClashConfigState>(
+      selector: (_, config) {
+        final clashConfig = config.patchClashConfig;
+        return ClashConfigState(
+          overrideDns: config.overrideDns,
+          mixedPort: config.patchClashConfig.mixedPort,
+          allowLan: clashConfig.allowLan,
+          ipv6: clashConfig.ipv6,
+          logLevel: clashConfig.logLevel,
+          geodataLoader: clashConfig.geodataLoader,
+          externalController: clashConfig.externalController,
+          mode: clashConfig.mode,
+          findProcessMode: clashConfig.findProcessMode,
+          keepAliveInterval: clashConfig.keepAliveInterval,
+          unifiedDelay: clashConfig.unifiedDelay,
+          tcpConcurrent: clashConfig.tcpConcurrent,
+          tun: clashConfig.tun,
+          dns: clashConfig.dns,
+          hosts: clashConfig.hosts,
+          geoXUrl: clashConfig.geoXUrl,
+          rules: clashConfig.rules,
+          globalUa: clashConfig.globalUa,
+        );
+      },
       shouldRebuild: (prev, next) {
         if (prev != next) {
           globalState.appController.updateClashConfigDebounce();
@@ -104,7 +107,7 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
     appController.setDelay(delay);
     debouncer.call(
       DebounceTag.updateDelay,
-      () async {
+          () async {
         await appController.updateGroupsDebounce();
       },
       duration: const Duration(milliseconds: 5000),

@@ -48,7 +48,6 @@ Future<void> main() async {
     appState: appState,
     appFlowingState: appFlowingState,
     config: config,
-    clashConfig: clashConfig,
   );
   HttpOverrides.global = FlClashHttpOverrides();
   runAppWithPreferences(
@@ -138,13 +137,12 @@ Future<void> _service(List<String> flags) async {
     await ClashCore.initGeo();
     globalState.packageInfo = await PackageInfo.fromPlatform();
     app?.tip(appLocalizations.startVpn);
-    final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
     final homeDirPath = await appPath.homeDirPath;
     clashLibHandler
         .quickStart(
       homeDirPath,
-      globalState.getUpdateConfigParams(config, clashConfig, false),
-      globalState.getCoreState(config, clashConfig),
+      globalState.getUpdateConfigParams(config, false),
+      globalState.getCoreState(config),
     )
         .then(
       (res) async {

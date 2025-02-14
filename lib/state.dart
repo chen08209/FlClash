@@ -61,30 +61,26 @@ class GlobalState {
 
   Future<void> initCore({
     required AppState appState,
-    required ClashConfig clashConfig,
     required Config config,
   }) async {
     await globalState.init(
       appState: appState,
       config: config,
-      clashConfig: clashConfig,
     );
     await applyProfile(
       appState: appState,
       config: config,
-      clashConfig: clashConfig,
     );
   }
 
   Future<void> updateClashConfig({
     required AppState appState,
-    required ClashConfig clashConfig,
     required Config config,
     bool isPatch = true,
   }) async {
     await config.currentProfile?.checkAndUpdate();
-    final useClashConfig = clashConfig.copyWith();
-    if (clashConfig.tun.enable != lastTunEnable &&
+    bool enableTun = config.patchClashConfig.tun.enable;
+    if (enableTun != lastTunEnable &&
         lastTunEnable == false &&
         !Platform.isAndroid) {
       final code = await system.authorizeCore();
@@ -92,17 +88,14 @@ class GlobalState {
         case AuthorizeCode.none:
           break;
         case AuthorizeCode.success:
-          lastTunEnable = useClashConfig.tun.enable;
+          lastTunEnable = enableTun;
           await restartCore(
             appState: appState,
-            clashConfig: clashConfig,
             config: config,
           );
           return;
         case AuthorizeCode.error:
-          useClashConfig.tun = useClashConfig.tun.copyWith(
-            enable: false,
-          );
+          enableTun = false;
       }
     }
     if (config.appSetting.openLogs) {
@@ -110,14 +103,13 @@ class GlobalState {
     } else {
       clashCore.stopLog();
     }
-    final res = await clashCore.updateConfig(
-      getUpdateConfigParams(config, clashConfig, isPatch),
-    );
+    final res = await clashCore.updateConfig(getUpdateConfigParams(
+      config,
+      isPatch,
+    ));
     if (res.isNotEmpty) throw res;
-    lastTunEnable = useClashConfig.tun.enable;
-    lastProfileModified = await config
-        .getCurrentProfile()
-        ?.profileLastModified;
+    lastTunEnable = enableTun;
+    lastProfileModified = await config.getCurrentProfile()?.profileLastModified;
   }
 
   handleStart([UpdateTasks? tasks]) async {
@@ -129,14 +121,12 @@ class GlobalState {
 
   restartCore({
     required AppState appState,
-    required ClashConfig clashConfig,
     required Config config,
     bool isPatch = true,
   }) async {
     await clashService?.reStart();
     await initCore(
       appState: appState,
-      clashConfig: clashConfig,
       config: config,
     );
 
@@ -160,12 +150,10 @@ class GlobalState {
   Future applyProfile({
     required AppState appState,
     required Config config,
-    required ClashConfig clashConfig,
   }) async {
     await clashCore.requestGc();
     await updateClashConfig(
       appState: appState,
-      clashConfig: clashConfig,
       config: config,
       isPatch: false,
     );
@@ -177,7 +165,7 @@ class GlobalState {
     appState.providers = await clashCore.getExternalProviders();
   }
 
-  CoreState getCoreState(Config config, ClashConfig clashConfig) {
+  CoreState getCoreState(Config config) {
     return CoreState(
       enable: config.vpnProps.enable,
       accessControl: config.isAccessControl ? config.accessControl : null,
@@ -186,15 +174,16 @@ class GlobalState {
       bypassDomain: config.networkProps.bypassDomain,
       systemProxy: config.vpnProps.systemProxy,
       currentProfileName:
-      config.currentProfile?.label ?? config.currentProfileId ?? "",
-      routeAddress: clashConfig.routeAddress,
+          config.currentProfile?.label ?? config.currentProfileId ?? "",
+      routeAddress: config.patchClashConfig.routeAddress,
     );
   }
 
-  getUpdateConfigParams(Config config, ClashConfig clashConfig, bool isPatch) {
+  getUpdateConfigParams(Config config, bool isPatch) {
+    final patchClashConfig = config.patchClashConfig;
     return UpdateConfigParams(
       profileId: config.currentProfileId ?? "",
-      config: clashConfig,
+      config: patchClashConfig,
       params: ConfigExtendedParams(
         isPatch: isPatch,
         isCompatible: true,
@@ -209,17 +198,13 @@ class GlobalState {
   Future<void> init({
     required AppState appState,
     required Config config,
-    required ClashConfig clashConfig,
   }) async {
     final isInit = await clashCore.isInit;
     if (!isInit) {
       await clashLib?.setState(
-        getCoreState(config, clashConfig),
+        getCoreState(config),
       );
-      await clashCore.init(
-        config: config,
-        clashConfig: clashConfig,
-      );
+      await clashCore.init();
     }
   }
 
@@ -243,10 +228,7 @@ class GlobalState {
               child: SingleChildScrollView(
                 child: SelectableText.rich(
                   TextSpan(
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .labelLarge,
+                    style: Theme.of(context).textTheme.labelLarge,
                     children: [message],
                   ),
                   style: const TextStyle(
@@ -317,7 +299,8 @@ class GlobalState {
     }
   }
 
-  Future<T?> safeRun<T>(FutureOr<T> Function() futureFunction, {
+  Future<T?> safeRun<T>(
+    FutureOr<T> Function() futureFunction, {
     String? title,
     bool silence = true,
   }) async {

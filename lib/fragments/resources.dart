@@ -85,11 +85,12 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   GeoItem get geoItem => widget.geoItem;
 
   _updateUrl(String url) async {
+    final defaultMap = defaultGeoXUrl.toJson();
     final newUrl = await globalState.showCommonDialog<String>(
       child: UpdateGeoUrlFormDialog(
         title: geoItem.label,
         url: url,
-        defaultValue: defaultGeoXMap[geoItem.key],
+        defaultValue: defaultMap[geoItem.key],
       ),
     );
     if (newUrl != null && newUrl != url && mounted) {
@@ -97,9 +98,11 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         if (!newUrl.isUrl) {
           throw "Invalid url";
         }
-        final appController = globalState.appController;
-        appController.clashConfig.geoXUrl =
-            Map.from(appController.clashConfig.geoXUrl)..[geoItem.key] = newUrl;
+        final config = globalState.appController.config;
+        final map = config.patchClashConfig.geoXUrl.toJson();
+        map[geoItem.key] = newUrl;
+        config.patchClashConfig =
+            config.patchClashConfig.copyWith(geoXUrl: GeoXUrl.fromJson(map));
       } catch (e) {
         globalState.showMessage(
           title: geoItem.label,
@@ -225,7 +228,8 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
       ),
       title: Text(geoItem.label),
       subtitle: Selector<ClashConfig, String>(
-        selector: (_, clashConfig) => clashConfig.geoXUrl[geoItem.key]!,
+        selector: (_, clashConfig) =>
+            clashConfig.geoXUrl.toJson()[geoItem.key]!,
         builder: (_, value, __) {
           return _buildSubtitle(value);
         },

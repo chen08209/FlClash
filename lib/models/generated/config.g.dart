@@ -8,7 +8,7 @@ part of '../config.dart';
 
 Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
   ..appSetting =
-      AppSetting.realFromJson(json['appSetting'] as Map<String, Object?>?)
+      AppSetting.safeFromJson(json['appSetting'] as Map<String, Object?>?)
   ..profiles = (json['profiles'] as List<dynamic>?)
           ?.map((e) => Profile.fromJson(e as Map<String, dynamic>))
           .toList() ??
@@ -32,8 +32,10 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
       []
   ..proxiesStyle =
       ProxiesStyle.fromJson(json['proxiesStyle'] as Map<String, dynamic>?)
+  ..patchClashConfig =
+      ClashConfig.fromJson(json['patchClashConfig'] as Map<String, dynamic>)
   ..themeProps =
-      ThemeProps.realFromJson(json['themeProps'] as Map<String, Object?>?);
+      ThemeProps.safeFromJson(json['themeProps'] as Map<String, Object?>?);
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'appSetting': instance.appSetting,
@@ -48,6 +50,7 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
       'overrideDns': instance.overrideDns,
       'hotKeyActions': instance.hotKeyActions,
       'proxiesStyle': instance.proxiesStyle,
+      'patchClashConfig': instance.patchClashConfig,
       'themeProps': instance.themeProps,
     };
 
@@ -56,7 +59,7 @@ _$AppSettingImpl _$$AppSettingImplFromJson(Map<String, dynamic> json) =>
       locale: json['locale'] as String?,
       dashboardWidgets: json['dashboardWidgets'] == null
           ? defaultDashboardWidgets
-          : dashboardWidgetsRealFormJson(json['dashboardWidgets'] as List?),
+          : dashboardWidgetsSafeFormJson(json['dashboardWidgets'] as List?),
       onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool? ?? false,
       autoLaunch: json['autoLaunch'] as bool? ?? false,
       silentLaunch: json['silentLaunch'] as bool? ?? false,

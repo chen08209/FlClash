@@ -3579,9 +3579,10 @@ mixin _$ClashConfigState {
   bool get allowLan => throw _privateConstructorUsedError;
   bool get ipv6 => throw _privateConstructorUsedError;
   bool get overrideDns => throw _privateConstructorUsedError;
-  String get geodataLoader => throw _privateConstructorUsedError;
+  GeodataLoader get geodataLoader => throw _privateConstructorUsedError;
   LogLevel get logLevel => throw _privateConstructorUsedError;
-  String get externalController => throw _privateConstructorUsedError;
+  ExternalControllerStatus get externalController =>
+      throw _privateConstructorUsedError;
   Mode get mode => throw _privateConstructorUsedError;
   FindProcessMode get findProcessMode => throw _privateConstructorUsedError;
   int get keepAliveInterval => throw _privateConstructorUsedError;
@@ -3590,7 +3591,7 @@ mixin _$ClashConfigState {
   Map<String, String> get hosts => throw _privateConstructorUsedError;
   Tun get tun => throw _privateConstructorUsedError;
   Dns get dns => throw _privateConstructorUsedError;
-  Map<String, String> get geoXUrl => throw _privateConstructorUsedError;
+  GeoXUrl get geoXUrl => throw _privateConstructorUsedError;
   List<String> get rules => throw _privateConstructorUsedError;
   String? get globalUa => throw _privateConstructorUsedError;
 
@@ -3612,9 +3613,9 @@ abstract class $ClashConfigStateCopyWith<$Res> {
       bool allowLan,
       bool ipv6,
       bool overrideDns,
-      String geodataLoader,
+      GeodataLoader geodataLoader,
       LogLevel logLevel,
-      String externalController,
+      ExternalControllerStatus externalController,
       Mode mode,
       FindProcessMode findProcessMode,
       int keepAliveInterval,
@@ -3623,12 +3624,13 @@ abstract class $ClashConfigStateCopyWith<$Res> {
       Map<String, String> hosts,
       Tun tun,
       Dns dns,
-      Map<String, String> geoXUrl,
+      GeoXUrl geoXUrl,
       List<String> rules,
       String? globalUa});
 
   $TunCopyWith<$Res> get tun;
   $DnsCopyWith<$Res> get dns;
+  $GeoXUrlCopyWith<$Res> get geoXUrl;
 }
 
 /// @nodoc
@@ -3685,7 +3687,7 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
       geodataLoader: null == geodataLoader
           ? _value.geodataLoader
           : geodataLoader // ignore: cast_nullable_to_non_nullable
-              as String,
+              as GeodataLoader,
       logLevel: null == logLevel
           ? _value.logLevel
           : logLevel // ignore: cast_nullable_to_non_nullable
@@ -3693,7 +3695,7 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
       externalController: null == externalController
           ? _value.externalController
           : externalController // ignore: cast_nullable_to_non_nullable
-              as String,
+              as ExternalControllerStatus,
       mode: null == mode
           ? _value.mode
           : mode // ignore: cast_nullable_to_non_nullable
@@ -3729,7 +3731,7 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
       geoXUrl: null == geoXUrl
           ? _value.geoXUrl
           : geoXUrl // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
+              as GeoXUrl,
       rules: null == rules
           ? _value.rules
           : rules // ignore: cast_nullable_to_non_nullable
@@ -3760,6 +3762,16 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
       return _then(_value.copyWith(dns: value) as $Val);
     });
   }
+
+  /// Create a copy of ClashConfigState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $GeoXUrlCopyWith<$Res> get geoXUrl {
+    return $GeoXUrlCopyWith<$Res>(_value.geoXUrl, (value) {
+      return _then(_value.copyWith(geoXUrl: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -3775,9 +3787,9 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
       bool allowLan,
       bool ipv6,
       bool overrideDns,
-      String geodataLoader,
+      GeodataLoader geodataLoader,
       LogLevel logLevel,
-      String externalController,
+      ExternalControllerStatus externalController,
       Mode mode,
       FindProcessMode findProcessMode,
       int keepAliveInterval,
@@ -3786,7 +3798,7 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
       Map<String, String> hosts,
       Tun tun,
       Dns dns,
-      Map<String, String> geoXUrl,
+      GeoXUrl geoXUrl,
       List<String> rules,
       String? globalUa});
 
@@ -3794,6 +3806,8 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
   $TunCopyWith<$Res> get tun;
   @override
   $DnsCopyWith<$Res> get dns;
+  @override
+  $GeoXUrlCopyWith<$Res> get geoXUrl;
 }
 
 /// @nodoc
@@ -3848,7 +3862,7 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
       geodataLoader: null == geodataLoader
           ? _value.geodataLoader
           : geodataLoader // ignore: cast_nullable_to_non_nullable
-              as String,
+              as GeodataLoader,
       logLevel: null == logLevel
           ? _value.logLevel
           : logLevel // ignore: cast_nullable_to_non_nullable
@@ -3856,7 +3870,7 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
       externalController: null == externalController
           ? _value.externalController
           : externalController // ignore: cast_nullable_to_non_nullable
-              as String,
+              as ExternalControllerStatus,
       mode: null == mode
           ? _value.mode
           : mode // ignore: cast_nullable_to_non_nullable
@@ -3890,9 +3904,9 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
           : dns // ignore: cast_nullable_to_non_nullable
               as Dns,
       geoXUrl: null == geoXUrl
-          ? _value._geoXUrl
+          ? _value.geoXUrl
           : geoXUrl // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
+              as GeoXUrl,
       rules: null == rules
           ? _value._rules
           : rules // ignore: cast_nullable_to_non_nullable
@@ -3924,11 +3938,10 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
       required final Map<String, String> hosts,
       required this.tun,
       required this.dns,
-      required final Map<String, String> geoXUrl,
+      required this.geoXUrl,
       required final List<String> rules,
       required this.globalUa})
       : _hosts = hosts,
-        _geoXUrl = geoXUrl,
         _rules = rules;
 
   @override
@@ -3940,11 +3953,11 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   @override
   final bool overrideDns;
   @override
-  final String geodataLoader;
+  final GeodataLoader geodataLoader;
   @override
   final LogLevel logLevel;
   @override
-  final String externalController;
+  final ExternalControllerStatus externalController;
   @override
   final Mode mode;
   @override
@@ -3967,14 +3980,8 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   final Tun tun;
   @override
   final Dns dns;
-  final Map<String, String> _geoXUrl;
   @override
-  Map<String, String> get geoXUrl {
-    if (_geoXUrl is EqualUnmodifiableMapView) return _geoXUrl;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_geoXUrl);
-  }
-
+  final GeoXUrl geoXUrl;
   final List<String> _rules;
   @override
   List<String> get rules {
@@ -4021,7 +4028,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
             const DeepCollectionEquality().equals(other._hosts, _hosts) &&
             (identical(other.tun, tun) || other.tun == tun) &&
             (identical(other.dns, dns) || other.dns == dns) &&
-            const DeepCollectionEquality().equals(other._geoXUrl, _geoXUrl) &&
+            (identical(other.geoXUrl, geoXUrl) || other.geoXUrl == geoXUrl) &&
             const DeepCollectionEquality().equals(other._rules, _rules) &&
             (identical(other.globalUa, globalUa) ||
                 other.globalUa == globalUa));
@@ -4045,7 +4052,7 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
       const DeepCollectionEquality().hash(_hosts),
       tun,
       dns,
-      const DeepCollectionEquality().hash(_geoXUrl),
+      geoXUrl,
       const DeepCollectionEquality().hash(_rules),
       globalUa);
 
@@ -4065,9 +4072,9 @@ abstract class _ClashConfigState implements ClashConfigState {
       required final bool allowLan,
       required final bool ipv6,
       required final bool overrideDns,
-      required final String geodataLoader,
+      required final GeodataLoader geodataLoader,
       required final LogLevel logLevel,
-      required final String externalController,
+      required final ExternalControllerStatus externalController,
       required final Mode mode,
       required final FindProcessMode findProcessMode,
       required final int keepAliveInterval,
@@ -4076,7 +4083,7 @@ abstract class _ClashConfigState implements ClashConfigState {
       required final Map<String, String> hosts,
       required final Tun tun,
       required final Dns dns,
-      required final Map<String, String> geoXUrl,
+      required final GeoXUrl geoXUrl,
       required final List<String> rules,
       required final String? globalUa}) = _$ClashConfigStateImpl;
 
@@ -4089,11 +4096,11 @@ abstract class _ClashConfigState implements ClashConfigState {
   @override
   bool get overrideDns;
   @override
-  String get geodataLoader;
+  GeodataLoader get geodataLoader;
   @override
   LogLevel get logLevel;
   @override
-  String get externalController;
+  ExternalControllerStatus get externalController;
   @override
   Mode get mode;
   @override
@@ -4111,7 +4118,7 @@ abstract class _ClashConfigState implements ClashConfigState {
   @override
   Dns get dns;
   @override
-  Map<String, String> get geoXUrl;
+  GeoXUrl get geoXUrl;
   @override
   List<String> get rules;
   @override

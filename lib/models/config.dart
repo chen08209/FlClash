@@ -27,8 +27,9 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.intranetIp,
 ];
 
-List<DashboardWidget> dashboardWidgetsRealFormJson(
-    List<dynamic>? dashboardWidgets) {
+List<DashboardWidget> dashboardWidgetsSafeFormJson(
+  List<dynamic>? dashboardWidgets,
+) {
   try {
     return dashboardWidgets
             ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e))
@@ -43,8 +44,8 @@ List<DashboardWidget> dashboardWidgetsRealFormJson(
 class AppSetting with _$AppSetting {
   const factory AppSetting({
     String? locale,
-    @JsonKey(fromJson: dashboardWidgetsRealFormJson)
     @Default(defaultDashboardWidgets)
+    @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
     List<DashboardWidget> dashboardWidgets,
     @Default(false) bool onlyStatisticsProxy,
     @Default(false) bool autoLaunch,
@@ -64,7 +65,7 @@ class AppSetting with _$AppSetting {
   factory AppSetting.fromJson(Map<String, Object?> json) =>
       _$AppSettingFromJson(json);
 
-  factory AppSetting.realFromJson(Map<String, Object?>? json) {
+  factory AppSetting.safeFromJson(Map<String, Object?>? json) {
     final appSetting =
         json == null ? defaultAppSetting : AppSetting.fromJson(json);
     return appSetting.copyWith(
@@ -191,7 +192,7 @@ class ThemeProps with _$ThemeProps {
   factory ThemeProps.fromJson(Map<String, Object?> json) =>
       _$ThemePropsFromJson(json);
 
-  factory ThemeProps.realFromJson(Map<String, Object?>? json) {
+  factory ThemeProps.safeFromJson(Map<String, Object?>? json) {
     if (json == null) {
       return defaultThemeProps;
     }
@@ -218,6 +219,7 @@ class Config extends ChangeNotifier {
   bool _overrideDns;
   List<HotKeyAction> _hotKeyActions;
   ProxiesStyle _proxiesStyle;
+  ClashConfig _patchClashConfig;
 
   Config()
       : _profiles = [],
@@ -230,9 +232,10 @@ class Config extends ChangeNotifier {
         _appSetting = defaultAppSetting,
         _hotKeyActions = [],
         _proxiesStyle = defaultProxiesStyle,
-        _themeProps = defaultThemeProps;
+        _themeProps = defaultThemeProps,
+        _patchClashConfig = defaultClashConfig;
 
-  @JsonKey(fromJson: AppSetting.realFromJson)
+  @JsonKey(fromJson: AppSetting.safeFromJson)
   AppSetting get appSetting => _appSetting;
 
   set appSetting(AppSetting value) {
@@ -452,7 +455,16 @@ class Config extends ChangeNotifier {
     }
   }
 
-  @JsonKey(fromJson: ThemeProps.realFromJson)
+  ClashConfig get patchClashConfig => _patchClashConfig;
+
+  set patchClashConfig(ClashConfig value) {
+    if (_patchClashConfig != value) {
+      _patchClashConfig = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(fromJson: ThemeProps.safeFromJson)
   ThemeProps get themeProps => _themeProps;
 
   set themeProps(ThemeProps value) {
@@ -487,6 +499,7 @@ class Config extends ChangeNotifier {
         _currentProfileId = _profiles.first.id;
       }
       if (onlyProfiles) return;
+      _patchClashConfig = config._patchClashConfig;
       _appSetting = config._appSetting;
       _currentProfileId = config._currentProfileId;
       _dav = config._dav;

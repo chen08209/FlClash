@@ -6,97 +6,6 @@ part of '../clash_config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => ClashConfig()
-  ..mixedPort = (json['mixed-port'] as num?)?.toInt() ?? 7890
-  ..mode = $enumDecodeNullable(_$ModeEnumMap, json['mode']) ?? Mode.rule
-  ..findProcessMode = $enumDecodeNullable(
-          _$FindProcessModeEnumMap, json['find-process-mode']) ??
-      FindProcessMode.off
-  ..allowLan = json['allow-lan'] as bool
-  ..logLevel =
-      $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']) ?? LogLevel.info
-  ..externalController = json['external-controller'] as String? ?? ''
-  ..keepAliveInterval = (json['keep-alive-interval'] as num?)?.toInt() ?? 30
-  ..ipv6 = json['ipv6'] as bool? ?? false
-  ..geodataLoader = json['geodata-loader'] as String? ?? 'memconservative'
-  ..unifiedDelay = json['unified-delay'] as bool? ?? false
-  ..tcpConcurrent = json['tcp-concurrent'] as bool? ?? false
-  ..tun = Tun.fromJson(json['tun'] as Map<String, dynamic>)
-  ..dns = Dns.safeDnsFromJson(json['dns'] as Map<String, Object?>)
-  ..rules = (json['rules'] as List<dynamic>).map((e) => e as String).toList()
-  ..globalUa = json['global-ua'] as String? ?? ''
-  ..geoXUrl = (json['geox-url'] as Map<String, dynamic>?)?.map(
-        (k, e) => MapEntry(k, e as String),
-      ) ??
-      {
-        'mmdb':
-            'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
-        'asn':
-            'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb',
-        'geoip':
-            'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat',
-        'geosite':
-            'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat'
-      }
-  ..hosts = (json['hosts'] as Map<String, dynamic>?)?.map(
-        (k, e) => MapEntry(k, e as String),
-      ) ??
-      {}
-  ..includeRouteAddress = (json['include-route-address'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      []
-  ..routeMode = $enumDecodeNullable(_$RouteModeEnumMap, json['route-mode']) ??
-      RouteMode.config;
-
-Map<String, dynamic> _$ClashConfigToJson(ClashConfig instance) =>
-    <String, dynamic>{
-      'mixed-port': instance.mixedPort,
-      'mode': _$ModeEnumMap[instance.mode]!,
-      'find-process-mode': _$FindProcessModeEnumMap[instance.findProcessMode]!,
-      'allow-lan': instance.allowLan,
-      'log-level': _$LogLevelEnumMap[instance.logLevel]!,
-      'external-controller': instance.externalController,
-      'keep-alive-interval': instance.keepAliveInterval,
-      'ipv6': instance.ipv6,
-      'geodata-loader': instance.geodataLoader,
-      'unified-delay': instance.unifiedDelay,
-      'tcp-concurrent': instance.tcpConcurrent,
-      'tun': instance.tun,
-      'dns': instance.dns,
-      'rules': instance.rules,
-      'global-ua': instance.globalUa,
-      'geox-url': instance.geoXUrl,
-      'hosts': instance.hosts,
-      'route-address': instance.routeAddress,
-      'include-route-address': instance.includeRouteAddress,
-      'route-mode': _$RouteModeEnumMap[instance.routeMode]!,
-    };
-
-const _$ModeEnumMap = {
-  Mode.rule: 'rule',
-  Mode.global: 'global',
-  Mode.direct: 'direct',
-};
-
-const _$FindProcessModeEnumMap = {
-  FindProcessMode.always: 'always',
-  FindProcessMode.off: 'off',
-};
-
-const _$LogLevelEnumMap = {
-  LogLevel.debug: 'debug',
-  LogLevel.info: 'info',
-  LogLevel.warning: 'warning',
-  LogLevel.error: 'error',
-  LogLevel.silent: 'silent',
-};
-
-const _$RouteModeEnumMap = {
-  RouteMode.bypassPrivate: 'bypassPrivate',
-  RouteMode.config: 'config',
-};
-
 _$ProxyGroupImpl _$$ProxyGroupImplFromJson(Map<String, dynamic> json) =>
     _$ProxyGroupImpl(
       name: json['name'] as String,
@@ -289,3 +198,104 @@ Map<String, dynamic> _$$GeoXUrlImplToJson(_$GeoXUrlImpl instance) =>
       'geoip': instance.geoip,
       'geosite': instance.geosite,
     };
+
+_$ClashConfigImpl _$$ClashConfigImplFromJson(Map<String, dynamic> json) =>
+    _$ClashConfigImpl(
+      mixedPort: (json['mixed-port'] as num?)?.toInt() ?? defaultMixedPort,
+      mode: $enumDecodeNullable(_$ModeEnumMap, json['mode']) ?? Mode.rule,
+      allowLan: json['allow-lan'] as bool? ?? false,
+      logLevel: $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']) ??
+          LogLevel.info,
+      ipv6: json['ipv6'] as bool? ?? false,
+      findProcessMode: $enumDecodeNullable(
+              _$FindProcessModeEnumMap, json['find-process-mode']) ??
+          FindProcessMode.off,
+      keepAliveInterval: (json['keep-alive-interval'] as num?)?.toInt() ??
+          defaultKeepAliveInterval,
+      unifiedDelay: json['unified-delay'] as bool? ?? true,
+      tcpConcurrent: json['tcp-concurrent'] as bool? ?? true,
+      tun: json['tun'] == null
+          ? defaultTun
+          : Tun.safeFormJson(json['tun'] as Map<String, Object?>?),
+      dns: json['dns'] == null
+          ? defaultDns
+          : Dns.safeDnsFromJson(json['dns'] as Map<String, Object?>),
+      geoXUrl: json['geoXUrl'] == null
+          ? defaultGeoXUrl
+          : GeoXUrl.safeFormJson(json['geoXUrl'] as Map<String, Object?>?),
+      geodataLoader:
+          $enumDecodeNullable(_$GeodataLoaderEnumMap, json['geodata-loader']) ??
+              GeodataLoader.memconservative,
+      proxyGroups: (json['proxy-groups'] as List<dynamic>?)
+              ?.map((e) => ProxyGroup.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      rules:
+          (json['rules'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+              const [],
+      globalUa: json['global-ua'] as String?,
+      routeAddress: (json['route-address'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      externalController: $enumDecodeNullable(
+              _$ExternalControllerStatusEnumMap, json['external-controller']) ??
+          ExternalControllerStatus.close,
+      hosts: (json['hosts'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+    );
+
+Map<String, dynamic> _$$ClashConfigImplToJson(_$ClashConfigImpl instance) =>
+    <String, dynamic>{
+      'mixed-port': instance.mixedPort,
+      'mode': _$ModeEnumMap[instance.mode]!,
+      'allow-lan': instance.allowLan,
+      'log-level': _$LogLevelEnumMap[instance.logLevel]!,
+      'ipv6': instance.ipv6,
+      'find-process-mode': _$FindProcessModeEnumMap[instance.findProcessMode]!,
+      'keep-alive-interval': instance.keepAliveInterval,
+      'unified-delay': instance.unifiedDelay,
+      'tcp-concurrent': instance.tcpConcurrent,
+      'tun': instance.tun,
+      'dns': instance.dns,
+      'geoXUrl': instance.geoXUrl,
+      'geodata-loader': _$GeodataLoaderEnumMap[instance.geodataLoader]!,
+      'proxy-groups': instance.proxyGroups,
+      'rules': instance.rules,
+      'global-ua': instance.globalUa,
+      'route-address': instance.routeAddress,
+      'external-controller':
+          _$ExternalControllerStatusEnumMap[instance.externalController]!,
+      'hosts': instance.hosts,
+    };
+
+const _$ModeEnumMap = {
+  Mode.rule: 'rule',
+  Mode.global: 'global',
+  Mode.direct: 'direct',
+};
+
+const _$LogLevelEnumMap = {
+  LogLevel.debug: 'debug',
+  LogLevel.info: 'info',
+  LogLevel.warning: 'warning',
+  LogLevel.error: 'error',
+  LogLevel.silent: 'silent',
+};
+
+const _$FindProcessModeEnumMap = {
+  FindProcessMode.always: 'always',
+  FindProcessMode.off: 'off',
+};
+
+const _$GeodataLoaderEnumMap = {
+  GeodataLoader.standard: 'standard',
+  GeodataLoader.memconservative: 'memconservative',
+};
+
+const _$ExternalControllerStatusEnumMap = {
+  ExternalControllerStatus.close: '',
+  ExternalControllerStatus.open: '127.0.0.1:9090',
+};

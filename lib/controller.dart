@@ -22,12 +22,10 @@ class AppController {
   late AppState appState;
   late AppFlowingState appFlowingState;
   late Config config;
-  late ClashConfig clashConfig;
 
   AppController(this.context) {
     appState = context.read<AppState>();
     config = context.read<Config>();
-    clashConfig = context.read<ClashConfig>();
     appFlowingState = context.read<AppFlowingState>();
   }
 
@@ -69,7 +67,6 @@ class AppController {
   restartCore() async {
     await globalState.restartCore(
       appState: appState,
-      clashConfig: clashConfig,
       config: config,
     );
   }
@@ -173,7 +170,6 @@ class AppController {
     await commonScaffoldState?.loadingRun(() async {
       await globalState.updateClashConfig(
         appState: appState,
-        clashConfig: clashConfig,
         config: config,
         isPatch: isPatch,
       );
@@ -185,7 +181,6 @@ class AppController {
       await globalState.applyProfile(
         appState: appState,
         config: config,
-        clashConfig: clashConfig,
       );
     } else {
       final commonScaffoldState = globalState.homeScaffoldKey.currentState;
@@ -194,7 +189,6 @@ class AppController {
         await globalState.applyProfile(
           appState: appState,
           config: config,
-          clashConfig: clashConfig,
         );
       });
     }
@@ -250,7 +244,7 @@ class AppController {
   savePreferences() async {
     commonPrint.log("savePreferences");
     await preferences.saveConfig(config);
-    await preferences.saveClashConfig(clashConfig);
+    // await preferences.saveClashConfig(clashConfig);
   }
 
   changeProxy({
@@ -361,7 +355,6 @@ class AppController {
     await _handlerDisclaimer();
     await globalState.initCore(
       appState: appState,
-      clashConfig: clashConfig,
       config: config,
     );
     await _initStatus();
@@ -631,8 +624,8 @@ class AppController {
   }
 
   updateTun() {
-    clashConfig.tun = clashConfig.tun.copyWith(
-      enable: !clashConfig.tun.enable,
+    config.patchClashConfig = config.patchClashConfig.copyWith.tun(
+      enable: !config.patchClashConfig.tun.enable,
     );
   }
 
@@ -647,7 +640,9 @@ class AppController {
   }
 
   changeMode(Mode mode) {
-    clashConfig.mode = mode;
+    config.patchClashConfig = config.patchClashConfig.copyWith(
+      mode: mode,
+    );
     if (mode == Mode.global) {
       config.updateCurrentGroupName(GroupName.GLOBAL.name);
     }
@@ -670,12 +665,14 @@ class AppController {
   }
 
   updateMode() {
-    final index = Mode.values.indexWhere((item) => item == clashConfig.mode);
+    final index = Mode.values.indexWhere((item) => item == config.patchClashConfig.mode);
     if (index == -1) {
       return;
     }
     final nextIndex = index + 1 > Mode.values.length - 1 ? 0 : index + 1;
-    clashConfig.mode = Mode.values[nextIndex];
+    config.patchClashConfig = config.patchClashConfig.copyWith(
+      mode: Mode.values[nextIndex],
+    );
   }
 
   Future<bool> exportLogs() async {
@@ -697,11 +694,9 @@ class AppController {
     final homeDirPath = await appPath.homeDirPath;
     final profilesPath = await appPath.profilesPath;
     final configJson = config.toJson();
-    final clashConfigJson = clashConfig.toJson();
     return Isolate.run<List<int>>(() async {
       final archive = Archive();
       archive.add("config.json", configJson);
-      archive.add("clashConfig.json", clashConfigJson);
       await archive.addDirectoryToArchive(profilesPath, homeDirPath);
       final zipEncoder = ZipEncoder();
       return zipEncoder.encode(archive) ?? [];
@@ -713,7 +708,6 @@ class AppController {
       appState: appState,
       appFlowingState: appFlowingState,
       config: config,
-      clashConfig: clashConfig,
       focus: focus,
     );
   }
@@ -733,19 +727,11 @@ class AppController {
         archive.files.where((item) => !item.name.endsWith(".json"));
     final configIndex =
         configs.indexWhere((config) => config.name == "config.json");
-    final clashConfigIndex =
-        configs.indexWhere((config) => config.name == "clashConfig.json");
-    if (configIndex == -1 || clashConfigIndex == -1) throw "invalid backup.zip";
+    if (configIndex == -1) throw "invalid backup.zip";
     final configFile = configs[configIndex];
-    final clashConfigFile = configs[clashConfigIndex];
     final tempConfig = Config.fromJson(
       json.decode(
         utf8.decode(configFile.content),
-      ),
-    );
-    final tempClashConfig = ClashConfig.fromJson(
-      json.decode(
-        utf8.decode(clashConfigFile.content),
       ),
     );
     for (final profile in profiles) {
@@ -754,11 +740,19 @@ class AppController {
       await file.create(recursive: true);
       await file.writeAsBytes(profile.content);
     }
-    if (recoveryOption == RecoveryOption.onlyProfiles) {
-      config.update(tempConfig, RecoveryOption.onlyProfiles);
-    } else {
-      config.update(tempConfig, RecoveryOption.all);
-      clashConfig.update(tempClashConfig);
+    config.update(tempConfig, recoveryOption);
+    final clashConfigIndex =
+        configs.indexWhere((config) => config.name == "clashConfig.json");
+    if (clashConfigIndex == -1) {
+      return;
     }
+    final clashConfigFile = configs[clashConfigIndex];
+    config.patchClashConfig = ClashConfig.fromJson(
+      json.decode(
+        utf8.decode(
+          clashConfigFile.content,
+        ),
+      ),
+    );
   }
 }

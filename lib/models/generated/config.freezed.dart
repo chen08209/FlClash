@@ -21,7 +21,7 @@ AppSetting _$AppSettingFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$AppSetting {
   String? get locale => throw _privateConstructorUsedError;
-  @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+  @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
   List<DashboardWidget> get dashboardWidgets =>
       throw _privateConstructorUsedError;
   bool get onlyStatisticsProxy => throw _privateConstructorUsedError;
@@ -56,7 +56,7 @@ abstract class $AppSettingCopyWith<$Res> {
   @useResult
   $Res call(
       {String? locale,
-      @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+      @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
       List<DashboardWidget> dashboardWidgets,
       bool onlyStatisticsProxy,
       bool autoLaunch,
@@ -179,7 +179,7 @@ abstract class _$$AppSettingImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? locale,
-      @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+      @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
       List<DashboardWidget> dashboardWidgets,
       bool onlyStatisticsProxy,
       bool autoLaunch,
@@ -295,7 +295,7 @@ class __$$AppSettingImplCopyWithImpl<$Res>
 class _$AppSettingImpl implements _AppSetting {
   const _$AppSettingImpl(
       {this.locale,
-      @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+      @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
       final List<DashboardWidget> dashboardWidgets = defaultDashboardWidgets,
       this.onlyStatisticsProxy = false,
       this.autoLaunch = false,
@@ -319,7 +319,7 @@ class _$AppSettingImpl implements _AppSetting {
   final String? locale;
   final List<DashboardWidget> _dashboardWidgets;
   @override
-  @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+  @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
   List<DashboardWidget> get dashboardWidgets {
     if (_dashboardWidgets is EqualUnmodifiableListView)
       return _dashboardWidgets;
@@ -444,7 +444,7 @@ class _$AppSettingImpl implements _AppSetting {
 abstract class _AppSetting implements AppSetting {
   const factory _AppSetting(
       {final String? locale,
-      @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+      @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
       final List<DashboardWidget> dashboardWidgets,
       final bool onlyStatisticsProxy,
       final bool autoLaunch,
@@ -466,7 +466,7 @@ abstract class _AppSetting implements AppSetting {
   @override
   String? get locale;
   @override
-  @JsonKey(fromJson: dashboardWidgetsRealFormJson)
+  @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
   List<DashboardWidget> get dashboardWidgets;
   @override
   bool get onlyStatisticsProxy;

@@ -36,8 +36,8 @@ class StatusItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.dns.enable,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.dns.enable,
       builder: (_, enable, __) {
         return ListItem.switchItem(
           title: Text(appLocalizations.status),
@@ -45,9 +45,8 @@ class StatusItem extends StatelessWidget {
           delegate: SwitchDelegate(
             value: enable,
             onChanged: (bool value) async {
-              final clashConfig = globalState.appController.clashConfig;
-              final dns = clashConfig.dns;
-              clashConfig.dns = dns.copyWith(
+              final config = globalState.appController.config;
+              config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                 enable: value,
               );
             },
@@ -63,8 +62,8 @@ class PreferH3Item extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.dns.preferH3,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.dns.preferH3,
       builder: (_, preferH3, __) {
         return ListItem.switchItem(
           title: const Text("PreferH3"),
@@ -72,9 +71,8 @@ class PreferH3Item extends StatelessWidget {
           delegate: SwitchDelegate(
             value: preferH3,
             onChanged: (bool value) async {
-              final clashConfig = globalState.appController.clashConfig;
-              final dns = clashConfig.dns;
-              clashConfig.dns = dns.copyWith(
+              final config = globalState.appController.config;
+              config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                 preferH3: value,
               );
             },
@@ -90,17 +88,16 @@ class IPv6Item extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.dns.ipv6,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.ipv6,
       builder: (_, ipv6, __) {
         return ListItem.switchItem(
           title: const Text("IPv6"),
           delegate: SwitchDelegate(
             value: ipv6,
             onChanged: (bool value) async {
-              final clashConfig = globalState.appController.clashConfig;
-              final dns = clashConfig.dns;
-              clashConfig.dns = dns.copyWith(
+              final config = globalState.appController.config;
+              config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                 ipv6: value,
               );
             },
@@ -116,8 +113,8 @@ class RespectRulesItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.dns.respectRules,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.dns.respectRules,
       builder: (_, respectRules, __) {
         return ListItem.switchItem(
           title: Text(appLocalizations.respectRules),
@@ -125,9 +122,8 @@ class RespectRulesItem extends StatelessWidget {
           delegate: SwitchDelegate(
             value: respectRules,
             onChanged: (bool value) async {
-              final clashConfig = globalState.appController.clashConfig;
-              final dns = clashConfig.dns;
-              clashConfig.dns = dns.copyWith(
+              final config = globalState.appController.config;
+              config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                 respectRules: value,
               );
             },
@@ -143,8 +139,8 @@ class DnsModeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, DnsMode>(
-      selector: (_, clashConfig) => clashConfig.dns.enhancedMode,
+    return Selector<Config, DnsMode>(
+      selector: (_, config) => config.patchClashConfig.dns.enhancedMode,
       builder: (_, enhancedMode, __) {
         return ListItem<DnsMode>.options(
           title: Text(appLocalizations.dnsMode),
@@ -156,9 +152,10 @@ class DnsModeItem extends StatelessWidget {
               if (value == null) {
                 return;
               }
-              final clashConfig = globalState.appController.clashConfig;
-              final dns = clashConfig.dns;
-              clashConfig.dns = dns.copyWith(enhancedMode: value);
+              final config = globalState.appController.config;
+              config.patchClashConfig = config.patchClashConfig.copyWith.dns(
+                enhancedMode: value,
+              );
             },
             textBuilder: (dnsMode) => dnsMode.name,
             value: enhancedMode,
@@ -174,8 +171,8 @@ class FakeIpRangeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, String>(
-      selector: (_, clashConfig) => clashConfig.dns.fakeIpRange,
+    return Selector<Config, String>(
+      selector: (_, config) => config.patchClashConfig.dns.fakeIpRange,
       builder: (_, fakeIpRange, __) {
         return ListItem.input(
           title: Text(appLocalizations.fakeipRange),
@@ -184,20 +181,21 @@ class FakeIpRangeItem extends StatelessWidget {
             title: appLocalizations.fakeipRange,
             value: fakeIpRange,
             onChanged: (String? value) {
-              if (value != null) {
-                try {
-                  final clashConfig = globalState.appController.clashConfig;
-                  clashConfig.dns = clashConfig.dns.copyWith(
-                    fakeIpRange: value,
-                  );
-                } catch (e) {
-                  globalState.showMessage(
-                    title: appLocalizations.fakeipRange,
-                    message: TextSpan(
-                      text: e.toString(),
-                    ),
-                  );
-                }
+              if (value == null) {
+                return;
+              }
+              try {
+                final config = globalState.appController.config;
+                config.patchClashConfig = config.patchClashConfig.copyWith.dns(
+                  fakeIpRange: value,
+                );
+              } catch (e) {
+                globalState.showMessage(
+                  title: appLocalizations.fakeipRange,
+                  message: TextSpan(
+                    text: e.toString(),
+                  ),
+                );
               }
             },
           ),
@@ -226,9 +224,8 @@ class FakeIpFilterItem extends StatelessWidget {
               items: fakeIpFilter,
               titleBuilder: (item) => Text(item),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
+                final config = globalState.appController.config;
+                config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                   fakeIpFilter: List.from(items),
                 );
               },
@@ -252,8 +249,9 @@ class DefaultNameserverItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: appLocalizations.defaultNameserver,
-        widget: Selector<ClashConfig, List<String>>(
-          selector: (_, clashConfig) => clashConfig.dns.defaultNameserver,
+        widget: Selector<Config, List<String>>(
+          selector: (_, config) =>
+              config.patchClashConfig.dns.defaultNameserver,
           shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
           builder: (_, defaultNameserver, __) {
             return ListPage(
@@ -261,9 +259,8 @@ class DefaultNameserverItem extends StatelessWidget {
               items: defaultNameserver,
               titleBuilder: (item) => Text(item),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
+                final config = globalState.appController.config;
+                config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                   defaultNameserver: List.from(items),
                 );
               },
@@ -296,9 +293,8 @@ class NameserverItem extends StatelessWidget {
               items: nameserver,
               titleBuilder: (item) => Text(item),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
+                final config = globalState.appController.config;
+                config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                   nameserver: List.from(items),
                 );
               },
@@ -324,9 +320,8 @@ class UseHostsItem extends StatelessWidget {
           delegate: SwitchDelegate(
             value: useHosts,
             onChanged: (bool value) async {
-              final clashConfig = globalState.appController.clashConfig;
-              final dns = clashConfig.dns;
-              clashConfig.dns = dns.copyWith(
+              final config = globalState.appController.config;
+              config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                 useHosts: value,
               );
             },
@@ -342,17 +337,16 @@ class UseSystemHostsItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.dns.useSystemHosts,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.dns.useSystemHosts,
       builder: (_, useSystemHosts, __) {
         return ListItem.switchItem(
           title: Text(appLocalizations.useSystemHosts),
           delegate: SwitchDelegate(
             value: useSystemHosts,
             onChanged: (bool value) async {
-              final clashConfig = globalState.appController.clashConfig;
-              final dns = clashConfig.dns;
-              clashConfig.dns = dns.copyWith(
+              final config = globalState.appController.config;
+              config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                 useSystemHosts: value,
               );
             },
@@ -385,9 +379,8 @@ class NameserverPolicyItem extends StatelessWidget {
               titleBuilder: (item) => Text(item.key),
               subtitleBuilder: (item) => Text(item.value),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
+                final config = globalState.appController.config;
+                config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                   nameserverPolicy: Map.fromEntries(items),
                 );
               },
@@ -411,8 +404,9 @@ class ProxyServerNameserverItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: appLocalizations.proxyNameserver,
-        widget: Selector<ClashConfig, List<String>>(
-          selector: (_, clashConfig) => clashConfig.dns.proxyServerNameserver,
+        widget: Selector<Config, List<String>>(
+          selector: (_, config) =>
+              config.patchClashConfig.dns.proxyServerNameserver,
           shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
           builder: (_, proxyServerNameserver, __) {
             return ListPage(
@@ -420,9 +414,8 @@ class ProxyServerNameserverItem extends StatelessWidget {
               items: proxyServerNameserver,
               titleBuilder: (item) => Text(item),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
+                final config = globalState.appController.config;
+                config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                   proxyServerNameserver: List.from(items),
                 );
               },
@@ -455,9 +448,8 @@ class FallbackItem extends StatelessWidget {
               items: fallback,
               titleBuilder: (item) => Text(item),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
+                final config = globalState.appController.config;
+                config.patchClashConfig = config.patchClashConfig.copyWith.dns(
                   fallback: List.from(items),
                 );
               },
@@ -483,10 +475,10 @@ class GeoipItem extends StatelessWidget {
           delegate: SwitchDelegate(
             value: geoip,
             onChanged: (bool value) async {
-              final clashConfig = globalState.appController.clashConfig;
-              final dns = clashConfig.dns;
-              clashConfig.dns = dns.copyWith(
-                fallbackFilter: dns.fallbackFilter.copyWith(geoip: value),
+              final config = globalState.appController.config;
+              config.patchClashConfig =
+                  config.patchClashConfig.copyWith.dns.fallbackFilter(
+                geoip: value,
               );
             },
           ),
@@ -501,8 +493,9 @@ class GeoipCodeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, String>(
-      selector: (_, clashConfig) => clashConfig.dns.fallbackFilter.geoipCode,
+    return Selector<Config, String>(
+      selector: (_, config) =>
+          config.patchClashConfig.dns.fallbackFilter.geoipCode,
       builder: (_, geoipCode, __) {
         return ListItem.input(
           title: Text(appLocalizations.geoipCode),
@@ -511,23 +504,22 @@ class GeoipCodeItem extends StatelessWidget {
             title: appLocalizations.geoipCode,
             value: geoipCode,
             onChanged: (String? value) {
-              if (value != null) {
-                try {
-                  final clashConfig = globalState.appController.clashConfig;
-                  final dns = clashConfig.dns;
-                  clashConfig.dns = dns.copyWith(
-                    fallbackFilter: dns.fallbackFilter.copyWith(
-                      geoipCode: value,
-                    ),
-                  );
-                } catch (e) {
-                  globalState.showMessage(
-                    title: appLocalizations.geoipCode,
-                    message: TextSpan(
-                      text: e.toString(),
-                    ),
-                  );
-                }
+              if (value == null) {
+                return;
+              }
+              try {
+                final config = globalState.appController.config;
+                config.patchClashConfig =
+                    config.patchClashConfig.copyWith.dns.fallbackFilter(
+                  geoipCode: value,
+                );
+              } catch (e) {
+                globalState.showMessage(
+                  title: appLocalizations.geoipCode,
+                  message: TextSpan(
+                    text: e.toString(),
+                  ),
+                );
               }
             },
           ),
@@ -556,12 +548,10 @@ class GeositeItem extends StatelessWidget {
               items: geosite,
               titleBuilder: (item) => Text(item),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
-                  fallbackFilter: dns.fallbackFilter.copyWith(
-                    geosite: List.from(items),
-                  ),
+                final config = globalState.appController.config;
+                config.patchClashConfig =
+                    config.patchClashConfig.copyWith.dns.fallbackFilter(
+                  geosite: List.from(items),
                 );
               },
             );
@@ -592,12 +582,10 @@ class IpcidrItem extends StatelessWidget {
               items: ipcidr,
               titleBuilder: (item) => Text(item),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
-                  fallbackFilter: dns.fallbackFilter.copyWith(
-                    ipcidr: List.from(items),
-                  ),
+                final config = globalState.appController.config;
+                config.patchClashConfig =
+                    config.patchClashConfig.copyWith.dns.fallbackFilter(
+                  ipcidr: List.from(items),
                 );
               },
             );
@@ -628,12 +616,10 @@ class DomainItem extends StatelessWidget {
               items: domain,
               titleBuilder: (item) => Text(item),
               onChange: (items) {
-                final clashConfig = globalState.appController.clashConfig;
-                final dns = clashConfig.dns;
-                clashConfig.dns = dns.copyWith(
-                  fallbackFilter: dns.fallbackFilter.copyWith(
-                    domain: List.from(items),
-                  ),
+                final config = globalState.appController.config;
+                config.patchClashConfig =
+                    config.patchClashConfig.copyWith.dns.fallbackFilter(
+                  domain: List.from(items),
                 );
               },
             );
@@ -705,7 +691,7 @@ class DnsListView extends StatelessWidget {
 
   _initActions(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-     context.commonScaffoldState?.actions = [
+      context.commonScaffoldState?.actions = [
         IconButton(
           onPressed: () async {
             final res = await globalState.showMessage(
@@ -717,7 +703,11 @@ class DnsListView extends StatelessWidget {
             if (res != true) {
               return;
             }
-            globalState.appController.clashConfig.dns = defaultDns;
+
+            final config = globalState.appController.config;
+            config.patchClashConfig = config.patchClashConfig.copyWith(
+              dns: defaultDns,
+            );
           },
           tooltip: appLocalizations.reset,
           icon: const Icon(

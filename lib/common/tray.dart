@@ -42,7 +42,6 @@ class Tray {
     required AppState appState,
     required AppFlowingState appFlowingState,
     required Config config,
-    required ClashConfig clashConfig,
     bool focus = false,
   }) async {
     if (Platform.isAndroid) {
@@ -80,7 +79,7 @@ class Tray {
           onClick: (_) {
             globalState.appController.changeMode(mode);
           },
-          checked: mode == clashConfig.mode,
+          checked: mode == config.patchClashConfig.mode,
         ),
       );
     }
@@ -128,7 +127,7 @@ class Tray {
           onClick: (_) {
             globalState.appController.updateTun();
           },
-          checked: clashConfig.tun.enable,
+          checked: config.patchClashConfig.tun.enable,
         ),
       );
       menuItems.add(
@@ -152,7 +151,7 @@ class Tray {
     final copyEnvVarMenuItem = MenuItem(
       label: appLocalizations.copyEnvVar,
       onClick: (_) async {
-        await _copyEnv(clashConfig.mixedPort);
+        await _copyEnv(config.patchClashConfig.mixedPort);
       },
     );
     menuItems.add(autoStartMenuItem);

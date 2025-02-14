@@ -63,10 +63,7 @@ class ClashCore {
     }
   }
 
-  Future<bool> init({
-    required ClashConfig clashConfig,
-    required Config config,
-  }) async {
+  Future<bool> init() async {
     await initGeo();
     final homeDirPath = await appPath.homeDirPath;
     return await clashInterface.init(homeDirPath);

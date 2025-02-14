@@ -1068,6 +1068,7 @@ abstract class $UpdateConfigParamsCopyWith<$Res> {
       ClashConfig config,
       ConfigExtendedParams params});
 
+  $ClashConfigCopyWith<$Res> get config;
   $ConfigExtendedParamsCopyWith<$Res> get params;
 }
 
@@ -1110,6 +1111,16 @@ class _$UpdateConfigParamsCopyWithImpl<$Res, $Val extends UpdateConfigParams>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
+  $ClashConfigCopyWith<$Res> get config {
+    return $ClashConfigCopyWith<$Res>(_value.config, (value) {
+      return _then(_value.copyWith(config: value) as $Val);
+    });
+  }
+
+  /// Create a copy of UpdateConfigParams
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
   $ConfigExtendedParamsCopyWith<$Res> get params {
     return $ConfigExtendedParamsCopyWith<$Res>(_value.params, (value) {
       return _then(_value.copyWith(params: value) as $Val);
@@ -1130,6 +1141,8 @@ abstract class _$$UpdateConfigParamsImplCopyWith<$Res>
       ClashConfig config,
       ConfigExtendedParams params});
 
+  @override
+  $ClashConfigCopyWith<$Res> get config;
   @override
   $ConfigExtendedParamsCopyWith<$Res> get params;
 }
