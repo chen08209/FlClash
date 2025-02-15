@@ -27,7 +27,7 @@ Future<void> main() async {
   globalState.packageInfo = await PackageInfo.fromPlatform();
   final version = await system.version;
   final config = await preferences.getConfig() ?? Config();
-  final clashConfig = await preferences.getClashConfig() ?? ClashConfig();
+  await globalState.migrateOldData(config);
   await AppLocalizations.load(
     other.getLocaleForString(config.appSetting.locale) ??
         WidgetsBinding.instance.platformDispatcher.locale,
@@ -35,7 +35,7 @@ Future<void> main() async {
   await android?.init();
   await window?.init(config.windowProps, version);
   final appState = AppState(
-    mode: clashConfig.mode,
+    mode: config.patchClashConfig.mode,
     version: version,
     selectedMap: config.currentSelectedMap,
   );
@@ -55,7 +55,6 @@ Future<void> main() async {
     appState: appState,
     appFlowingState: appFlowingState,
     config: config,
-    clashConfig: clashConfig,
   );
 }
 

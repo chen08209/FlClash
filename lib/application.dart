@@ -21,7 +21,6 @@ runAppWithPreferences(
   required AppState appState,
   required Config config,
   required AppFlowingState appFlowingState,
-  required ClashConfig clashConfig,
 }) {
   runApp(MultiProvider(
     providers: [
@@ -31,10 +30,10 @@ runAppWithPreferences(
       ChangeNotifierProvider<AppFlowingState>(
         create: (_) => appFlowingState,
       ),
-      ChangeNotifierProxyProvider2<Config, ClashConfig, AppState>(
+      ChangeNotifierProxyProvider<Config, AppState>(
         create: (_) => appState,
-        update: (_, config, clashConfig, appState) {
-          appState?.mode = clashConfig.mode;
+        update: (_, config, appState) {
+          appState?.mode = config.patchClashConfig.mode;
           appState?.selectedMap = config.currentSelectedMap;
           return appState!;
         },

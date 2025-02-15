@@ -340,6 +340,15 @@ class GlobalState {
     }
     launchUrl(Uri.parse(url));
   }
+
+  Future<void> migrateOldData(Config config) async {
+    final clashConfig = await preferences.getClashConfig();
+    if (clashConfig != null) {
+      config.patchClashConfig = clashConfig;
+      preferences.clearClashConfig();
+      preferences.saveConfig(config);
+    }
+  }
 }
 
 final globalState = GlobalState();
