@@ -288,6 +288,7 @@ class GlobalState {
     final traffic = await clashCore.getTraffic();
     if (appFlowingState != null) {
       appFlowingState.addTraffic(traffic);
+      tray.updateTrayTitle(traffic);
       appFlowingState.totalTraffic = await clashCore.getTotalTraffic();
     }
   }

@@ -72,7 +72,6 @@ class TrayState with _$TrayState {
     required Brightness? brightness,
     required List<Group> groups,
     required SelectedMap map,
-    Traffic? traffic,
   }) = _TrayState;
 }
 

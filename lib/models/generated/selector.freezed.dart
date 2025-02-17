@@ -1055,7 +1055,6 @@ mixin _$TrayState {
   Brightness? get brightness => throw _privateConstructorUsedError;
   List<Group> get groups => throw _privateConstructorUsedError;
   Map<String, String> get map => throw _privateConstructorUsedError;
-  Traffic? get traffic => throw _privateConstructorUsedError;
 
   /// Create a copy of TrayState
   /// with the given fields replaced by the non-null parameter values.
@@ -1079,8 +1078,7 @@ abstract class $TrayStateCopyWith<$Res> {
       String? locale,
       Brightness? brightness,
       List<Group> groups,
-      Map<String, String> map,
-      Traffic? traffic});
+      Map<String, String> map});
 }
 
 /// @nodoc
@@ -1108,7 +1106,6 @@ class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
     Object? brightness = freezed,
     Object? groups = null,
     Object? map = null,
-    Object? traffic = freezed,
   }) {
     return _then(_value.copyWith(
       mode: null == mode
@@ -1151,10 +1148,6 @@ class _$TrayStateCopyWithImpl<$Res, $Val extends TrayState>
           ? _value.map
           : map // ignore: cast_nullable_to_non_nullable
               as Map<String, String>,
-      traffic: freezed == traffic
-          ? _value.traffic
-          : traffic // ignore: cast_nullable_to_non_nullable
-              as Traffic?,
     ) as $Val);
   }
 }
@@ -1177,8 +1170,7 @@ abstract class _$$TrayStateImplCopyWith<$Res>
       String? locale,
       Brightness? brightness,
       List<Group> groups,
-      Map<String, String> map,
-      Traffic? traffic});
+      Map<String, String> map});
 }
 
 /// @nodoc
@@ -1204,7 +1196,6 @@ class __$$TrayStateImplCopyWithImpl<$Res>
     Object? brightness = freezed,
     Object? groups = null,
     Object? map = null,
-    Object? traffic = freezed,
   }) {
     return _then(_$TrayStateImpl(
       mode: null == mode
@@ -1247,10 +1238,6 @@ class __$$TrayStateImplCopyWithImpl<$Res>
           ? _value._map
           : map // ignore: cast_nullable_to_non_nullable
               as Map<String, String>,
-      traffic: freezed == traffic
-          ? _value.traffic
-          : traffic // ignore: cast_nullable_to_non_nullable
-              as Traffic?,
     ));
   }
 }
@@ -1268,8 +1255,7 @@ class _$TrayStateImpl implements _TrayState {
       required this.locale,
       required this.brightness,
       required final List<Group> groups,
-      required final Map<String, String> map,
-      this.traffic})
+      required final Map<String, String> map})
       : _groups = groups,
         _map = map;
 
@@ -1306,11 +1292,8 @@ class _$TrayStateImpl implements _TrayState {
   }
 
   @override
-  final Traffic? traffic;
-
-  @override
   String toString() {
-    return 'TrayState(mode: $mode, port: $port, autoLaunch: $autoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness, groups: $groups, map: $map, traffic: $traffic)';
+    return 'TrayState(mode: $mode, port: $port, autoLaunch: $autoLaunch, systemProxy: $systemProxy, tunEnable: $tunEnable, isStart: $isStart, locale: $locale, brightness: $brightness, groups: $groups, map: $map)';
   }
 
   @override
@@ -1331,8 +1314,7 @@ class _$TrayStateImpl implements _TrayState {
             (identical(other.brightness, brightness) ||
                 other.brightness == brightness) &&
             const DeepCollectionEquality().equals(other._groups, _groups) &&
-            const DeepCollectionEquality().equals(other._map, _map) &&
-            (identical(other.traffic, traffic) || other.traffic == traffic));
+            const DeepCollectionEquality().equals(other._map, _map));
   }
 
   @override
@@ -1347,8 +1329,7 @@ class _$TrayStateImpl implements _TrayState {
       locale,
       brightness,
       const DeepCollectionEquality().hash(_groups),
-      const DeepCollectionEquality().hash(_map),
-      traffic);
+      const DeepCollectionEquality().hash(_map));
 
   /// Create a copy of TrayState
   /// with the given fields replaced by the non-null parameter values.
@@ -1370,8 +1351,7 @@ abstract class _TrayState implements TrayState {
       required final String? locale,
       required final Brightness? brightness,
       required final List<Group> groups,
-      required final Map<String, String> map,
-      final Traffic? traffic}) = _$TrayStateImpl;
+      required final Map<String, String> map}) = _$TrayStateImpl;
 
   @override
   Mode get mode;
@@ -1393,8 +1373,6 @@ abstract class _TrayState implements TrayState {
   List<Group> get groups;
   @override
   Map<String, String> get map;
-  @override
-  Traffic? get traffic;
 
   /// Create a copy of TrayState
   /// with the given fields replaced by the non-null parameter values.

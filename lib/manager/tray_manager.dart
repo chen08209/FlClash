@@ -40,11 +40,6 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
         port: config.patchClashConfig.mixedPort,
         groups: appState.groups,
         map: appState.selectedMap,
-        traffic: Platform.isMacOS
-            ? (appFlowingState.traffics.isNotEmpty
-                ? appFlowingState.traffics.last
-                : null)
-            : null,
       ),
       shouldRebuild: (prev, next) {
         if (prev != next) {

@@ -95,6 +95,7 @@ class AppController {
       appFlowingState.traffics = [];
       appFlowingState.totalTraffic = Traffic();
       appFlowingState.runTime = null;
+      tray.updateTrayTitle(null);
       addCheckIpNumDebounce();
     }
   }
