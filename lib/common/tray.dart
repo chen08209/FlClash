@@ -17,6 +17,7 @@ class Tray {
   Future _updateSystemTray({
     required Brightness? brightness,
     bool force = false,
+    Traffic? traffic,
   }) async {
     if (Platform.isAndroid) {
       return;
@@ -31,6 +32,15 @@ class Tray {
       ),
       isTemplate: true,
     );
+    if (Platform.isMacOS) {
+      if (traffic == null) {
+        await trayManager.setTitle("");
+      } else {
+        await trayManager.setTitle(
+          "↑ ${traffic.up}\n↓ ${traffic.down}",
+        );
+      }
+    }
     if (!Platform.isLinux) {
       await trayManager.setToolTip(
         appName,
@@ -47,10 +57,14 @@ class Tray {
     if (Platform.isAndroid) {
       return;
     }
+    final traffic = appFlowingState.traffics.isNotEmpty
+        ? appFlowingState.traffics.last
+        : null;
     if (!Platform.isLinux) {
       await _updateSystemTray(
         brightness: appState.brightness,
         force: focus,
+        traffic: traffic,
       );
     }
     List<MenuItem> menuItems = [];
@@ -170,6 +184,7 @@ class Tray {
       await _updateSystemTray(
         brightness: appState.brightness,
         force: focus,
+        traffic: traffic,
       );
     }
   }

@@ -72,6 +72,7 @@ class TrayState with _$TrayState {
     required Brightness? brightness,
     required List<Group> groups,
     required SelectedMap map,
+    Traffic? traffic,
   }) = _TrayState;
 }
 
@@ -163,8 +164,7 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
               other.getPinyin(a.label),
               other.getPinyin(b.label),
             ),
-          AccessSortType.time =>
-            b.lastUpdateTime.compareTo(a.lastUpdateTime),
+          AccessSortType.time => b.lastUpdateTime.compareTo(a.lastUpdateTime),
         };
       },
     ).sorted(
