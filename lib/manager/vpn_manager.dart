@@ -36,11 +36,11 @@ class _VpnContainerState extends State<VpnManager> {
 
   @override
   Widget build(BuildContext context) {
-    return Selector2<Config, ClashConfig, VPNState>(
-      selector: (_, config, clashConfig) => VPNState(
+    return Selector<Config, VPNState>(
+      selector: (_, config) => VPNState(
         accessControl: config.accessControl,
         vpnProps: config.vpnProps,
-        stack: clashConfig.tun.stack,
+        stack: config.patchClashConfig.tun.stack,
       ),
       shouldRebuild: (prev, next) {
         if (prev != next) {

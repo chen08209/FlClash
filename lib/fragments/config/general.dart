@@ -11,8 +11,8 @@ class LogLevelItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, LogLevel>(
-      selector: (_, clashConfig) => clashConfig.logLevel,
+    return Selector<Config, LogLevel>(
+      selector: (_, config) => config.patchClashConfig.logLevel,
       builder: (_, value, __) {
         return ListItem<LogLevel>.options(
           leading: const Icon(Icons.info_outline),
@@ -44,8 +44,8 @@ class UaItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, String?>(
-      selector: (_, clashConfig) => clashConfig.globalUa,
+    return Selector<Config, String?>(
+      selector: (_, config) => config.patchClashConfig.globalUa,
       builder: (_, value, __) {
         return ListItem<String?>.options(
           leading: const Icon(Icons.computer_outlined),
@@ -80,8 +80,8 @@ class KeepAliveIntervalItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, int>(
-      selector: (_, config) => config.keepAliveInterval,
+    return Selector<Config, int>(
+      selector: (_, config) => config.patchClashConfig.keepAliveInterval,
       builder: (_, value, __) {
         return ListItem.input(
           leading: const Icon(Icons.timer_outlined),
@@ -169,8 +169,8 @@ class MixedPortItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, int>(
-      selector: (_, clashConfig) => clashConfig.mixedPort,
+    return Selector<Config, int>(
+      selector: (_, config) => config.patchClashConfig.mixedPort,
       builder: (_, value, __) {
         return ListItem.input(
           leading: const Icon(Icons.adjust_outlined),
@@ -220,8 +220,8 @@ class HostsItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: "Hosts",
-        widget: Selector<ClashConfig, HostsMap>(
-          selector: (_, clashConfig) => clashConfig.hosts,
+        widget: Selector<Config, HostsMap>(
+          selector: (_, config) => config.patchClashConfig.hosts,
           shouldRebuild: (prev, next) =>
               !stringAndStringMapEquality.equals(prev, next),
           builder: (_, hosts, ___) {
@@ -251,8 +251,8 @@ class Ipv6Item extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.ipv6,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.ipv6,
       builder: (_, ipv6, __) {
         return ListItem.switchItem(
           leading: const Icon(Icons.water_outlined),
@@ -278,8 +278,8 @@ class AllowLanItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.allowLan,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.allowLan,
       builder: (_, allowLan, __) {
         return ListItem.switchItem(
           leading: const Icon(Icons.device_hub),
@@ -305,8 +305,8 @@ class UnifiedDelayItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.unifiedDelay,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.unifiedDelay,
       builder: (_, unifiedDelay, __) {
         return ListItem.switchItem(
           leading: const Icon(Icons.compress_outlined),
@@ -332,9 +332,9 @@ class FindProcessItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) =>
-          clashConfig.findProcessMode == FindProcessMode.always,
+    return Selector<Config, bool>(
+      selector: (_, config) =>
+          config.patchClashConfig.findProcessMode == FindProcessMode.always,
       builder: (_, findProcess, __) {
         return ListItem.switchItem(
           leading: const Icon(Icons.polymer_outlined),
@@ -361,8 +361,8 @@ class TcpConcurrentItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.tcpConcurrent,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.tcpConcurrent,
       builder: (_, tcpConcurrent, __) {
         return ListItem.switchItem(
           leading: const Icon(Icons.double_arrow_outlined),
@@ -388,9 +388,9 @@ class GeodataLoaderItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) =>
-          clashConfig.geodataLoader == geodataLoaderMemconservative,
+    return Selector<Config, bool>(
+      selector: (_, config) =>
+          config.patchClashConfig.geodataLoader == geodataLoaderMemconservative,
       builder: (_, memconservative, __) {
         return ListItem.switchItem(
           leading: const Icon(Icons.memory),
@@ -418,9 +418,10 @@ class ExternalControllerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) =>
-          clashConfig.externalController == ExternalControllerStatus.open,
+    return Selector<Config, bool>(
+      selector: (_, config) =>
+          config.patchClashConfig.externalController ==
+          ExternalControllerStatus.open,
       builder: (_, hasExternalController, __) {
         return ListItem.switchItem(
           leading: const Icon(Icons.api_outlined),

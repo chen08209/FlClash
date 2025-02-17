@@ -40,8 +40,8 @@ class TUNItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.tun.enable,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.tun.enable,
       builder: (_, enable, __) {
         return ListItem.switchItem(
           title: Text(appLocalizations.tun),
@@ -174,8 +174,8 @@ class TunStackItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, TunStack>(
-      selector: (_, clashConfig) => clashConfig.tun.stack,
+    return Selector<Config, TunStack>(
+      selector: (_, config) => config.patchClashConfig.tun.stack,
       builder: (_, stack, __) {
         return ListItem.options(
           title: Text(appLocalizations.stackMode),

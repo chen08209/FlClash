@@ -18,9 +18,9 @@ class FindProcessBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) =>
-          clashConfig.findProcessMode == FindProcessMode.always &&
+    return Selector<Config, bool>(
+      selector: (_, config) =>
+          config.patchClashConfig.findProcessMode == FindProcessMode.always &&
           Platform.isAndroid,
       builder: (_, value, __) {
         return builder(value);

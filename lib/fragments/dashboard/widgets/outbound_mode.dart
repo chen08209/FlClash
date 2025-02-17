@@ -15,8 +15,8 @@ class OutboundMode extends StatelessWidget {
     final height = getWidgetHeight(2);
     return SizedBox(
       height: height,
-      child: Selector<ClashConfig, Mode>(
-        selector: (_, clashConfig) => clashConfig.mode,
+      child: Selector<Config, Mode>(
+        selector: (_, config) => config.patchClashConfig.mode,
         builder: (_, mode, __) {
           return CommonCard(
             onPressed: () {},

@@ -21,11 +21,11 @@ class ProxyManager extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector3<AppFlowingState, Config, ClashConfig, ProxyState>(
-      selector: (_, appFlowingState, config, clashConfig) => ProxyState(
+    return Selector2<AppFlowingState, Config, ProxyState>(
+      selector: (_, appFlowingState, config) => ProxyState(
         isStart: appFlowingState.isStart,
         systemProxy: config.networkProps.systemProxy,
-        port: clashConfig.mixedPort,
+        port: config.patchClashConfig.mixedPort,
         bassDomain: config.networkProps.bypassDomain,
       ),
       builder: (_, state, child) {

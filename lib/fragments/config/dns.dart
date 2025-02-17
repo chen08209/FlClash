@@ -215,8 +215,8 @@ class FakeIpFilterItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: appLocalizations.fakeipFilter,
-        widget: Selector<ClashConfig, List<String>>(
-          selector: (_, clashConfig) => clashConfig.dns.fakeIpFilter,
+        widget: Selector<Config, List<String>>(
+          selector: (_, config) => config.patchClashConfig.dns.fakeIpFilter,
           shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
           builder: (_, fakeIpFilter, __) {
             return ListPage(
@@ -284,8 +284,8 @@ class NameserverItem extends StatelessWidget {
       delegate: OpenDelegate(
         title: appLocalizations.nameserver,
         isBlur: false,
-        widget: Selector<ClashConfig, List<String>>(
-          selector: (_, clashConfig) => clashConfig.dns.nameserver,
+        widget: Selector<Config, List<String>>(
+          selector: (_, config) => config.patchClashConfig.dns.nameserver,
           shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
           builder: (_, nameserver, __) {
             return ListPage(
@@ -312,8 +312,8 @@ class UseHostsItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.dns.useHosts,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.dns.useHosts,
       builder: (_, useHosts, __) {
         return ListItem.switchItem(
           title: Text(appLocalizations.useHosts),
@@ -368,8 +368,8 @@ class NameserverPolicyItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: appLocalizations.nameserverPolicy,
-        widget: Selector<ClashConfig, Map<String, String>>(
-          selector: (_, clashConfig) => clashConfig.dns.nameserverPolicy,
+        widget: Selector<Config, Map<String, String>>(
+          selector: (_, config) => config.patchClashConfig.dns.nameserverPolicy,
           shouldRebuild: (prev, next) =>
               !const MapEquality<String, String>().equals(prev, next),
           builder: (_, nameserverPolicy, __) {
@@ -439,8 +439,8 @@ class FallbackItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: appLocalizations.fallback,
-        widget: Selector<ClashConfig, List<String>>(
-          selector: (_, clashConfig) => clashConfig.dns.fallback,
+        widget: Selector<Config, List<String>>(
+          selector: (_, config) => config.patchClashConfig.dns.fallback,
           shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
           builder: (_, fallback, __) {
             return ListPage(
@@ -467,8 +467,8 @@ class GeoipItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) => clashConfig.dns.fallbackFilter.geoip,
+    return Selector<Config, bool>(
+      selector: (_, config) => config.patchClashConfig.dns.fallbackFilter.geoip,
       builder: (_, geoip, __) {
         return ListItem.switchItem(
           title: const Text("Geoip"),
@@ -539,8 +539,9 @@ class GeositeItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: "Geosite",
-        widget: Selector<ClashConfig, List<String>>(
-          selector: (_, clashConfig) => clashConfig.dns.fallbackFilter.geosite,
+        widget: Selector<Config, List<String>>(
+          selector: (_, config) =>
+              config.patchClashConfig.dns.fallbackFilter.geosite,
           shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
           builder: (_, geosite, __) {
             return ListPage(
@@ -573,8 +574,9 @@ class IpcidrItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: appLocalizations.ipcidr,
-        widget: Selector<ClashConfig, List<String>>(
-          selector: (_, clashConfig) => clashConfig.dns.fallbackFilter.ipcidr,
+        widget: Selector<Config, List<String>>(
+          selector: (_, config) =>
+              config.patchClashConfig.dns.fallbackFilter.ipcidr,
           shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
           builder: (_, ipcidr, __) {
             return ListPage(
@@ -607,8 +609,9 @@ class DomainItem extends StatelessWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: appLocalizations.domain,
-        widget: Selector<ClashConfig, List<String>>(
-          selector: (_, clashConfig) => clashConfig.dns.fallbackFilter.domain,
+        widget: Selector<Config, List<String>>(
+          selector: (_, config) =>
+              config.patchClashConfig.dns.fallbackFilter.domain,
           shouldRebuild: (prev, next) => !stringListEquality.equals(prev, next),
           builder: (_, domain, __) {
             return ListPage(

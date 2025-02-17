@@ -45,8 +45,8 @@ class _AppStateManagerState extends State<AppStateManager>
   }
 
   _cacheStateChange(Widget child) {
-    return Selector2<Config, ClashConfig, String>(
-      selector: (_, config, clashConfig) => "$clashConfig $config",
+    return Selector<Config, String>(
+      selector: (_, config) => "$config",
       shouldRebuild: (prev, next) {
         if (prev != next) {
           globalState.appController.savePreferencesDebounce();

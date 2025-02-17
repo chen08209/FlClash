@@ -26,8 +26,8 @@ class _AndroidContainerState extends State<AndroidManager> {
   }
 
   Widget _updateCoreState(Widget child) {
-    return Selector2<Config, ClashConfig, CoreState>(
-      selector: (_, config, clashConfig) => globalState.getCoreState(
+    return Selector<Config, CoreState>(
+      selector: (_, config) => globalState.getCoreState(
         config,
       ),
       builder: (__, state, child) {

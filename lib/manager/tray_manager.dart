@@ -26,17 +26,16 @@ class _TrayContainerState extends State<TrayManager> with TrayListener {
 
   @override
   Widget build(BuildContext context) {
-    return Selector4<AppState, AppFlowingState, Config, ClashConfig, TrayState>(
-      selector: (_, appState, appFlowingState, config, clashConfig) =>
-          TrayState(
-        mode: clashConfig.mode,
+    return Selector3<AppState, AppFlowingState, Config, TrayState>(
+      selector: (_, appState, appFlowingState, config) => TrayState(
+        mode: config.patchClashConfig.mode,
         autoLaunch: config.appSetting.autoLaunch,
         isStart: appFlowingState.isStart,
         locale: config.appSetting.locale,
         systemProxy: config.networkProps.systemProxy,
-        tunEnable: clashConfig.tun.enable,
+        tunEnable: config.patchClashConfig.tun.enable,
         brightness: appState.brightness,
-        port: clashConfig.mixedPort,
+        port: config.patchClashConfig.mixedPort,
         groups: appState.groups,
         map: appState.selectedMap,
       ),

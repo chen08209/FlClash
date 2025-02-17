@@ -56,8 +56,8 @@ class TUNButton extends StatelessWidget {
                     ),
                   ),
                 ),
-                Selector<ClashConfig, bool>(
-                  selector: (_, clashConfig) => clashConfig.tun.enable,
+                Selector<Config, bool>(
+                  selector: (_, config) => config.patchClashConfig.tun.enable,
                   builder: (_, enable, __) {
                     return Switch(
                       value: enable,

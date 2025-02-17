@@ -227,9 +227,9 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         vertical: 4,
       ),
       title: Text(geoItem.label),
-      subtitle: Selector<ClashConfig, String>(
-        selector: (_, clashConfig) =>
-            clashConfig.geoXUrl.toJson()[geoItem.key]!,
+      subtitle: Selector<Config, String>(
+        selector: (_, config) =>
+            config.patchClashConfig.geoXUrl.toJson()[geoItem.key]!,
         builder: (_, value, __) {
           return _buildSubtitle(value);
         },
