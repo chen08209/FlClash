@@ -12,7 +12,7 @@ part 'generated/clash_config.g.dart';
 
 typedef HostsMap = Map<String, String>;
 
-final defaultClashConfig = ClashConfig();
+const defaultClashConfig = ClashConfig();
 
 const defaultTun = Tun();
 const defaultDns = Dns();
@@ -137,7 +137,6 @@ class Tun with _$Tun {
     @Default(appName) String device,
     @Default(TunStack.gvisor) TunStack stack,
     @JsonKey(name: "dns-hijack") @Default(["any:53"]) List<String> dnsHijack,
-    @JsonKey(name: "route-address") @Default([]) List<String> routeAddress,
   }) = _Tun;
 
   factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
@@ -313,4 +312,15 @@ class ClashConfig with _$ClashConfig {
 
   factory ClashConfig.fromJson(Map<String, Object?> json) =>
       _$ClashConfigFromJson(json);
+
+  factory ClashConfig.safeFormJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return defaultClashConfig;
+    }
+    try {
+      return ClashConfig.fromJson(json);
+    } catch (_) {
+      return defaultClashConfig;
+    }
+  }
 }

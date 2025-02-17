@@ -271,7 +271,7 @@ class RouteModeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Selector<Config, RouteMode>(
-      selector: (_, config) => config.networkProps.routeMode,
+      selector: (_, config) => config.vpnProps.routeMode,
       builder: (_, value, __) {
         return ListItem<RouteMode>.options(
           title: Text(appLocalizations.routeMode),
@@ -284,7 +284,7 @@ class RouteModeItem extends StatelessWidget {
                 return;
               }
               final config = globalState.appController.config;
-              config.networkProps = config.networkProps.copyWith(
+              config.vpnProps = config.vpnProps.copyWith(
                 routeMode: value,
               );
             },
@@ -305,8 +305,7 @@ class RouteAddressItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Selector<Config, bool>(
-      selector: (_, config) =>
-          config.networkProps.routeMode == RouteMode.config,
+      selector: (_, config) => config.vpnProps.routeMode == RouteMode.config,
       builder: (_, value, child) {
         if (value) {
           return child!;
@@ -320,8 +319,8 @@ class RouteAddressItem extends StatelessWidget {
           isBlur: false,
           isScaffold: true,
           title: appLocalizations.routeAddress,
-          widget: Selector<ClashConfig, List<String>>(
-            selector: (_, clashConfig) => clashConfig.tun.routeAddress,
+          widget: Selector<Config, List<String>>(
+            selector: (_, config) => config.vpnProps.routeAddress,
             shouldRebuild: (prev, next) =>
                 !stringListEquality.equals(prev, next),
             builder: (context, routeAddress, __) {
@@ -331,8 +330,7 @@ class RouteAddressItem extends StatelessWidget {
                 titleBuilder: (item) => Text(item),
                 onChange: (items) {
                   final config = globalState.appController.config;
-                  config.patchClashConfig =
-                      config.patchClashConfig.copyWith.tun(
+                  config.vpnProps = config.vpnProps.copyWith(
                     routeAddress: Set<String>.from(items).toList(),
                   );
                 },
@@ -370,8 +368,10 @@ final networkItems = [
     items: [
       if (system.isDesktop) const TUNItem(),
       const TunStackItem(),
-      const RouteModeItem(),
-      const RouteAddressItem(),
+      if (Platform.isAndroid) ...[
+        const RouteModeItem(),
+        const RouteAddressItem(),
+      ]
     ],
   ),
 ];

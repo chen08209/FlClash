@@ -62,10 +62,6 @@ _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
               ?.map((e) => e as String)
               .toList() ??
           const ["any:53"],
-      routeAddress: (json['route-address'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
     );
 
 Map<String, dynamic> _$$TunImplToJson(_$TunImpl instance) => <String, dynamic>{
@@ -73,7 +69,6 @@ Map<String, dynamic> _$$TunImplToJson(_$TunImpl instance) => <String, dynamic>{
       'device': instance.device,
       'stack': _$TunStackEnumMap[instance.stack]!,
       'dns-hijack': instance.dnsHijack,
-      'route-address': instance.routeAddress,
     };
 
 const _$TunStackEnumMap = {
