@@ -169,6 +169,8 @@ class GlobalState {
     return CoreState(
       vpnProps: config.vpnProps,
       onlyStatisticsProxy: config.appSetting.onlyStatisticsProxy,
+      currentProfileName:
+          config.currentProfile?.label ?? config.currentProfile?.id ?? "",
     );
   }
 
