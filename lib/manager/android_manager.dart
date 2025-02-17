@@ -25,19 +25,6 @@ class _AndroidContainerState extends State<AndroidManager> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
-  Widget _updateCoreState(Widget child) {
-    return Selector<Config, CoreState>(
-      selector: (_, config) => globalState.getCoreState(
-        config,
-      ),
-      builder: (__, state, child) {
-        clashLib?.setState(state);
-        return child!;
-      },
-      child: child,
-    );
-  }
-
   Widget _excludeContainer(Widget child) {
     return Selector<Config, bool>(
       selector: (_, config) => config.appSetting.hidden,
@@ -51,10 +38,8 @@ class _AndroidContainerState extends State<AndroidManager> {
 
   @override
   Widget build(BuildContext context) {
-    return _updateCoreState(
-      _excludeContainer(
-        widget.child,
-      ),
+    return _excludeContainer(
+      widget.child,
     );
   }
 }

@@ -214,15 +214,15 @@ func handleGetAndroidVpnOptions() string {
 	tunLock.Lock()
 	defer tunLock.Unlock()
 	options := state.AndroidVpnOptions{
-		Enable:           state.CurrentState.Enable,
+		Enable:           state.CurrentState.VpnProps.Enable,
 		Port:             currentConfig.General.MixedPort,
 		Ipv4Address:      state.DefaultIpv4Address,
 		Ipv6Address:      state.GetIpv6Address(),
-		AccessControl:    state.CurrentState.AccessControl,
-		SystemProxy:      state.CurrentState.SystemProxy,
-		AllowBypass:      state.CurrentState.AllowBypass,
-		RouteAddress:     state.CurrentState.RouteAddress,
-		BypassDomain:     state.CurrentState.BypassDomain,
+		AccessControl:    state.CurrentState.VpnProps.AccessControl,
+		SystemProxy:      state.CurrentState.VpnProps.SystemProxy,
+		AllowBypass:      state.CurrentState.VpnProps.AllowBypass,
+		RouteAddress:     state.CurrentState.VpnProps.RouteAddress,
+		BypassDomain:     state.CurrentState.VpnProps.BypassDomain,
 		DnsServerAddress: state.GetDnsServerAddress(),
 	}
 	data, err := json.Marshal(options)
@@ -231,10 +231,6 @@ func handleGetAndroidVpnOptions() string {
 		return ""
 	}
 	return string(data)
-}
-
-func handleSetState(params string) {
-	_ = json.Unmarshal([]byte(params), state.CurrentState)
 }
 
 func handleUpdateDns(value string) {
@@ -262,11 +258,6 @@ func nextHandle(action *Action, result func(data interface{})) bool {
 		return true
 	case stopTunMethod:
 		handleStopTun()
-		result(true)
-		return true
-	case setStateMethod:
-		data := action.Data.(string)
-		handleSetState(data)
 		result(true)
 		return true
 	case getAndroidVpnOptionsMethod:

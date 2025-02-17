@@ -141,7 +141,7 @@ class GlobalState {
 
   Future handleStop() async {
     startTime = null;
-    // await clashCore.stopListener();
+    await clashCore.stopListener();
     await clashLib?.stopTun();
     await service?.stopVpn();
     stopUpdateTasks();
@@ -167,15 +167,8 @@ class GlobalState {
 
   CoreState getCoreState(Config config) {
     return CoreState(
-      enable: config.vpnProps.enable,
-      accessControl: config.isAccessControl ? config.accessControl : null,
-      ipv6: config.vpnProps.ipv6,
-      allowBypass: config.vpnProps.allowBypass,
-      bypassDomain: config.networkProps.bypassDomain,
-      systemProxy: config.vpnProps.systemProxy,
-      currentProfileName:
-          config.currentProfile?.label ?? config.currentProfileId ?? "",
-      routeAddress: config.routeAddress,
+      vpnProps: config.vpnProps,
+      onlyStatisticsProxy: config.appSetting.onlyStatisticsProxy,
     );
   }
 
@@ -188,11 +181,9 @@ class GlobalState {
       ),
       params: ConfigExtendedParams(
         isPatch: isPatch,
-        isCompatible: true,
         selectedMap: config.currentSelectedMap,
         overrideDns: config.overrideDns,
         testUrl: config.appSetting.testUrl,
-        onlyStatisticsProxy: config.appSetting.onlyStatisticsProxy,
       ),
     );
   }

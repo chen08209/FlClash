@@ -162,6 +162,10 @@ func handleAction(action *Action, result func(data interface{})) {
 			result(handleGetProfile(profileId))
 		})
 		return
+	case setStateMethod:
+		data := action.Data.(string)
+		handleSetState(data)
+		result(true)
 	default:
 		handle := nextHandle(action, result)
 		if handle {

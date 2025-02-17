@@ -65,14 +65,14 @@ mixin ClashInterface {
   FutureOr<bool> closeConnections();
 
   FutureOr<String> getProfile(String id);
+
+  Future<bool> setState(CoreState state);
 }
 
 mixin AndroidClashInterface {
   Future<bool> setFdMap(int fd);
 
   Future<bool> setProcessMap(ProcessMapItem item);
-
-  Future<bool> setState(CoreState state);
 
   Future<bool> stopTun();
 
@@ -105,6 +105,7 @@ abstract class ClashHandlerInterface with ClashInterface {
         case ActionMethod.closeConnections:
         case ActionMethod.closeConnection:
         case ActionMethod.stopListener:
+        case ActionMethod.setState:
           completer?.complete(result.data as bool);
           return;
         case ActionMethod.changeProxy:
@@ -194,6 +195,14 @@ abstract class ClashHandlerInterface with ClashInterface {
     return invoke<bool>(
       method: ActionMethod.initClash,
       data: homeDir,
+    );
+  }
+
+  @override
+  Future<bool> setState(CoreState state) {
+    return invoke<bool>(
+      method: ActionMethod.setState,
+      data: json.encode(state),
     );
   }
 

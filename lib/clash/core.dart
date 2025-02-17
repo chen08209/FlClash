@@ -69,6 +69,10 @@ class ClashCore {
     return await clashInterface.init(homeDirPath);
   }
 
+  Future<bool> setState(CoreState state) async {
+    return await clashInterface.setState(state);
+  }
+
   shutdown() async {
     await clashInterface.shutdown();
   }

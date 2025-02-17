@@ -67,7 +67,6 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
     switch (result.method) {
       case ActionMethod.setFdMap:
       case ActionMethod.setProcessMap:
-      case ActionMethod.setState:
       case ActionMethod.stopTun:
       case ActionMethod.updateDns:
         completer?.complete(result.data as bool);
@@ -120,14 +119,6 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
     return invoke<bool>(
       method: ActionMethod.setProcessMap,
       data: item,
-    );
-  }
-
-  @override
-  Future<bool> setState(CoreState state) {
-    return invoke<bool>(
-      method: ActionMethod.setState,
-      data: json.encode(state),
     );
   }
 

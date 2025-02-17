@@ -1,5 +1,3 @@
-//go:build android && cgo
-
 package state
 
 var DefaultIpv4Address = "172.19.0.1/30"
@@ -37,14 +35,18 @@ type AndroidVpnRawOptions struct {
 }
 
 type State struct {
-	AndroidVpnRawOptions
-	CurrentProfileName string `json:"currentProfileName"`
+	VpnProps            AndroidVpnRawOptions `json:"vpn-props"`
+	CurrentProfileName  string               `json:"current-profile-name"`
+	OnlyStatisticsProxy bool                 `json:"only-statistics-proxy"`
 }
 
-var CurrentState = &State{}
+var CurrentState = &State{
+	OnlyStatisticsProxy: false,
+	CurrentProfileName:  "",
+}
 
 func GetIpv6Address() string {
-	if CurrentState.Ipv6 {
+	if CurrentState.VpnProps.Ipv6 {
 		return DefaultIpv6Address
 	} else {
 		return ""

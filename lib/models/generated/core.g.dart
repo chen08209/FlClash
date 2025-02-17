@@ -8,33 +8,16 @@ part of '../core.dart';
 
 _$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
     _$CoreStateImpl(
-      enable: json['enable'] as bool,
-      accessControl: json['accessControl'] == null
-          ? null
-          : AccessControl.fromJson(
-              json['accessControl'] as Map<String, dynamic>),
-      currentProfileName: json['currentProfileName'] as String,
-      allowBypass: json['allowBypass'] as bool,
-      systemProxy: json['systemProxy'] as bool,
-      bypassDomain: (json['bypassDomain'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      routeAddress: (json['routeAddress'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      ipv6: json['ipv6'] as bool,
+      vpnProps: VpnProps.fromJson(json['vpn-props'] as Map<String, dynamic>?),
+      onlyStatisticsProxy: json['only-statistics-proxy'] as bool,
+      currentProfileName: json['current-profile-name'] as String,
     );
 
 Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
     <String, dynamic>{
-      'enable': instance.enable,
-      'accessControl': instance.accessControl,
-      'currentProfileName': instance.currentProfileName,
-      'allowBypass': instance.allowBypass,
-      'systemProxy': instance.systemProxy,
-      'bypassDomain': instance.bypassDomain,
-      'routeAddress': instance.routeAddress,
-      'ipv6': instance.ipv6,
+      'vpn-props': instance.vpnProps,
+      'only-statistics-proxy': instance.onlyStatisticsProxy,
+      'current-profile-name': instance.currentProfileName,
     };
 
 _$AndroidVpnOptionsImpl _$$AndroidVpnOptionsImplFromJson(
@@ -78,22 +61,18 @@ _$ConfigExtendedParamsImpl _$$ConfigExtendedParamsImplFromJson(
         Map<String, dynamic> json) =>
     _$ConfigExtendedParamsImpl(
       isPatch: json['is-patch'] as bool,
-      isCompatible: json['is-compatible'] as bool,
       selectedMap: Map<String, String>.from(json['selected-map'] as Map),
       overrideDns: json['override-dns'] as bool,
       testUrl: json['test-url'] as String,
-      onlyStatisticsProxy: json['only-statistics-proxy'] as bool,
     );
 
 Map<String, dynamic> _$$ConfigExtendedParamsImplToJson(
         _$ConfigExtendedParamsImpl instance) =>
     <String, dynamic>{
       'is-patch': instance.isPatch,
-      'is-compatible': instance.isCompatible,
       'selected-map': instance.selectedMap,
       'override-dns': instance.overrideDns,
       'test-url': instance.testUrl,
-      'only-statistics-proxy': instance.onlyStatisticsProxy,
     };
 
 _$UpdateConfigParamsImpl _$$UpdateConfigParamsImplFromJson(

@@ -59,6 +59,19 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
     );
   }
 
+  Widget _updateCoreState(Widget child) {
+    return Selector<Config, CoreState>(
+      selector: (_, config) => globalState.getCoreState(
+        config,
+      ),
+      builder: (__, state, child) {
+        clashCore.setState(state);
+        return child!;
+      },
+      child: child,
+    );
+  }
+
   Widget _changeProfileContainer(Widget child) {
     return Selector<Config, String?>(
       selector: (_, config) => config.currentProfileId,
@@ -83,7 +96,9 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
   Widget build(BuildContext context) {
     return _changeProfileContainer(
       _updateContainer(
-        widget.child,
+        _updateCoreState(
+          widget.child,
+        ),
       ),
     );
   }
@@ -107,7 +122,7 @@ class _ClashContainerState extends State<ClashManager> with AppMessageListener {
     appController.setDelay(delay);
     debouncer.call(
       DebounceTag.updateDelay,
-          () async {
+      () async {
         await appController.updateGroupsDebounce();
       },
       duration: const Duration(milliseconds: 5000),
