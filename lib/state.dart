@@ -196,7 +196,7 @@ class GlobalState {
   }) async {
     final isInit = await clashCore.isInit;
     if (!isInit) {
-      await clashLib?.setState(
+      await clashCore.setState(
         getCoreState(config),
       );
       await clashCore.init();
