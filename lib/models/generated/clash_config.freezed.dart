@@ -509,6 +509,8 @@ mixin _$Tun {
   TunStack get stack => throw _privateConstructorUsedError;
   @JsonKey(name: "dns-hijack")
   List<String> get dnsHijack => throw _privateConstructorUsedError;
+  @JsonKey(name: "route-address")
+  List<String> get routeAddress => throw _privateConstructorUsedError;
 
   /// Serializes this Tun to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -528,7 +530,8 @@ abstract class $TunCopyWith<$Res> {
       {bool enable,
       String device,
       TunStack stack,
-      @JsonKey(name: "dns-hijack") List<String> dnsHijack});
+      @JsonKey(name: "dns-hijack") List<String> dnsHijack,
+      @JsonKey(name: "route-address") List<String> routeAddress});
 }
 
 /// @nodoc
@@ -549,6 +552,7 @@ class _$TunCopyWithImpl<$Res, $Val extends Tun> implements $TunCopyWith<$Res> {
     Object? device = null,
     Object? stack = null,
     Object? dnsHijack = null,
+    Object? routeAddress = null,
   }) {
     return _then(_value.copyWith(
       enable: null == enable
@@ -567,6 +571,10 @@ class _$TunCopyWithImpl<$Res, $Val extends Tun> implements $TunCopyWith<$Res> {
           ? _value.dnsHijack
           : dnsHijack // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      routeAddress: null == routeAddress
+          ? _value.routeAddress
+          : routeAddress // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 }
@@ -581,7 +589,8 @@ abstract class _$$TunImplCopyWith<$Res> implements $TunCopyWith<$Res> {
       {bool enable,
       String device,
       TunStack stack,
-      @JsonKey(name: "dns-hijack") List<String> dnsHijack});
+      @JsonKey(name: "dns-hijack") List<String> dnsHijack,
+      @JsonKey(name: "route-address") List<String> routeAddress});
 }
 
 /// @nodoc
@@ -599,6 +608,7 @@ class __$$TunImplCopyWithImpl<$Res> extends _$TunCopyWithImpl<$Res, _$TunImpl>
     Object? device = null,
     Object? stack = null,
     Object? dnsHijack = null,
+    Object? routeAddress = null,
   }) {
     return _then(_$TunImpl(
       enable: null == enable
@@ -617,6 +627,10 @@ class __$$TunImplCopyWithImpl<$Res> extends _$TunCopyWithImpl<$Res, _$TunImpl>
           ? _value._dnsHijack
           : dnsHijack // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      routeAddress: null == routeAddress
+          ? _value._routeAddress
+          : routeAddress // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -629,8 +643,11 @@ class _$TunImpl implements _Tun {
       this.device = appName,
       this.stack = TunStack.gvisor,
       @JsonKey(name: "dns-hijack")
-      final List<String> dnsHijack = const ["any:53"]})
-      : _dnsHijack = dnsHijack;
+      final List<String> dnsHijack = const ["any:53"],
+      @JsonKey(name: "route-address")
+      final List<String> routeAddress = const []})
+      : _dnsHijack = dnsHijack,
+        _routeAddress = routeAddress;
 
   factory _$TunImpl.fromJson(Map<String, dynamic> json) =>
       _$$TunImplFromJson(json);
@@ -653,9 +670,18 @@ class _$TunImpl implements _Tun {
     return EqualUnmodifiableListView(_dnsHijack);
   }
 
+  final List<String> _routeAddress;
+  @override
+  @JsonKey(name: "route-address")
+  List<String> get routeAddress {
+    if (_routeAddress is EqualUnmodifiableListView) return _routeAddress;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_routeAddress);
+  }
+
   @override
   String toString() {
-    return 'Tun(enable: $enable, device: $device, stack: $stack, dnsHijack: $dnsHijack)';
+    return 'Tun(enable: $enable, device: $device, stack: $stack, dnsHijack: $dnsHijack, routeAddress: $routeAddress)';
   }
 
   @override
@@ -667,13 +693,20 @@ class _$TunImpl implements _Tun {
             (identical(other.device, device) || other.device == device) &&
             (identical(other.stack, stack) || other.stack == stack) &&
             const DeepCollectionEquality()
-                .equals(other._dnsHijack, _dnsHijack));
+                .equals(other._dnsHijack, _dnsHijack) &&
+            const DeepCollectionEquality()
+                .equals(other._routeAddress, _routeAddress));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, enable, device, stack,
-      const DeepCollectionEquality().hash(_dnsHijack));
+  int get hashCode => Object.hash(
+      runtimeType,
+      enable,
+      device,
+      stack,
+      const DeepCollectionEquality().hash(_dnsHijack),
+      const DeepCollectionEquality().hash(_routeAddress));
 
   /// Create a copy of Tun
   /// with the given fields replaced by the non-null parameter values.
@@ -693,10 +726,12 @@ class _$TunImpl implements _Tun {
 
 abstract class _Tun implements Tun {
   const factory _Tun(
-      {final bool enable,
-      final String device,
-      final TunStack stack,
-      @JsonKey(name: "dns-hijack") final List<String> dnsHijack}) = _$TunImpl;
+          {final bool enable,
+          final String device,
+          final TunStack stack,
+          @JsonKey(name: "dns-hijack") final List<String> dnsHijack,
+          @JsonKey(name: "route-address") final List<String> routeAddress}) =
+      _$TunImpl;
 
   factory _Tun.fromJson(Map<String, dynamic> json) = _$TunImpl.fromJson;
 
@@ -709,6 +744,9 @@ abstract class _Tun implements Tun {
   @override
   @JsonKey(name: "dns-hijack")
   List<String> get dnsHijack;
+  @override
+  @JsonKey(name: "route-address")
+  List<String> get routeAddress;
 
   /// Create a copy of Tun
   /// with the given fields replaced by the non-null parameter values.
@@ -1803,10 +1841,8 @@ mixin _$ClashConfig {
   @JsonKey(name: "proxy-groups")
   List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
   List<String> get rules => throw _privateConstructorUsedError;
-  @JsonKey(name: "global-ua")
+  @JsonKey(name: "global-ua", toJson: globalUaToJson)
   String? get globalUa => throw _privateConstructorUsedError;
-  @JsonKey(name: "route-address")
-  List<String> get routeAddress => throw _privateConstructorUsedError;
   @JsonKey(name: "external-controller")
   ExternalControllerStatus get externalController =>
       throw _privateConstructorUsedError;
@@ -1844,8 +1880,7 @@ abstract class $ClashConfigCopyWith<$Res> {
       @JsonKey(name: "geodata-loader") GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
       List<String> rules,
-      @JsonKey(name: "global-ua") String? globalUa,
-      @JsonKey(name: "route-address") List<String> routeAddress,
+      @JsonKey(name: "global-ua", toJson: globalUaToJson) String? globalUa,
       @JsonKey(name: "external-controller")
       ExternalControllerStatus externalController,
       Map<String, String> hosts});
@@ -1886,7 +1921,6 @@ class _$ClashConfigCopyWithImpl<$Res, $Val extends ClashConfig>
     Object? proxyGroups = null,
     Object? rules = null,
     Object? globalUa = freezed,
-    Object? routeAddress = null,
     Object? externalController = null,
     Object? hosts = null,
   }) {
@@ -1955,10 +1989,6 @@ class _$ClashConfigCopyWithImpl<$Res, $Val extends ClashConfig>
           ? _value.globalUa
           : globalUa // ignore: cast_nullable_to_non_nullable
               as String?,
-      routeAddress: null == routeAddress
-          ? _value.routeAddress
-          : routeAddress // ignore: cast_nullable_to_non_nullable
-              as List<String>,
       externalController: null == externalController
           ? _value.externalController
           : externalController // ignore: cast_nullable_to_non_nullable
@@ -2025,8 +2055,7 @@ abstract class _$$ClashConfigImplCopyWith<$Res>
       @JsonKey(name: "geodata-loader") GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
       List<String> rules,
-      @JsonKey(name: "global-ua") String? globalUa,
-      @JsonKey(name: "route-address") List<String> routeAddress,
+      @JsonKey(name: "global-ua", toJson: globalUaToJson) String? globalUa,
       @JsonKey(name: "external-controller")
       ExternalControllerStatus externalController,
       Map<String, String> hosts});
@@ -2068,7 +2097,6 @@ class __$$ClashConfigImplCopyWithImpl<$Res>
     Object? proxyGroups = null,
     Object? rules = null,
     Object? globalUa = freezed,
-    Object? routeAddress = null,
     Object? externalController = null,
     Object? hosts = null,
   }) {
@@ -2137,10 +2165,6 @@ class __$$ClashConfigImplCopyWithImpl<$Res>
           ? _value.globalUa
           : globalUa // ignore: cast_nullable_to_non_nullable
               as String?,
-      routeAddress: null == routeAddress
-          ? _value._routeAddress
-          : routeAddress // ignore: cast_nullable_to_non_nullable
-              as List<String>,
       externalController: null == externalController
           ? _value.externalController
           : externalController // ignore: cast_nullable_to_non_nullable
@@ -2176,15 +2200,12 @@ class _$ClashConfigImpl implements _ClashConfig {
       @JsonKey(name: "proxy-groups")
       final List<ProxyGroup> proxyGroups = const [],
       final List<String> rules = const [],
-      @JsonKey(name: "global-ua") this.globalUa,
-      @JsonKey(name: "route-address")
-      final List<String> routeAddress = const [],
+      @JsonKey(name: "global-ua", toJson: globalUaToJson) this.globalUa,
       @JsonKey(name: "external-controller")
       this.externalController = ExternalControllerStatus.close,
       final Map<String, String> hosts = const {}})
       : _proxyGroups = proxyGroups,
         _rules = rules,
-        _routeAddress = routeAddress,
         _hosts = hosts;
 
   factory _$ClashConfigImpl.fromJson(Map<String, dynamic> json) =>
@@ -2248,17 +2269,8 @@ class _$ClashConfigImpl implements _ClashConfig {
   }
 
   @override
-  @JsonKey(name: "global-ua")
+  @JsonKey(name: "global-ua", toJson: globalUaToJson)
   final String? globalUa;
-  final List<String> _routeAddress;
-  @override
-  @JsonKey(name: "route-address")
-  List<String> get routeAddress {
-    if (_routeAddress is EqualUnmodifiableListView) return _routeAddress;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_routeAddress);
-  }
-
   @override
   @JsonKey(name: "external-controller")
   final ExternalControllerStatus externalController;
@@ -2273,7 +2285,7 @@ class _$ClashConfigImpl implements _ClashConfig {
 
   @override
   String toString() {
-    return 'ClashConfig(mixedPort: $mixedPort, mode: $mode, allowLan: $allowLan, logLevel: $logLevel, ipv6: $ipv6, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, geodataLoader: $geodataLoader, proxyGroups: $proxyGroups, rules: $rules, globalUa: $globalUa, routeAddress: $routeAddress, externalController: $externalController, hosts: $hosts)';
+    return 'ClashConfig(mixedPort: $mixedPort, mode: $mode, allowLan: $allowLan, logLevel: $logLevel, ipv6: $ipv6, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, geodataLoader: $geodataLoader, proxyGroups: $proxyGroups, rules: $rules, globalUa: $globalUa, externalController: $externalController, hosts: $hosts)';
   }
 
   @override
@@ -2307,8 +2319,6 @@ class _$ClashConfigImpl implements _ClashConfig {
             const DeepCollectionEquality().equals(other._rules, _rules) &&
             (identical(other.globalUa, globalUa) ||
                 other.globalUa == globalUa) &&
-            const DeepCollectionEquality()
-                .equals(other._routeAddress, _routeAddress) &&
             (identical(other.externalController, externalController) ||
                 other.externalController == externalController) &&
             const DeepCollectionEquality().equals(other._hosts, _hosts));
@@ -2316,28 +2326,26 @@ class _$ClashConfigImpl implements _ClashConfig {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hashAll([
-        runtimeType,
-        mixedPort,
-        mode,
-        allowLan,
-        logLevel,
-        ipv6,
-        findProcessMode,
-        keepAliveInterval,
-        unifiedDelay,
-        tcpConcurrent,
-        tun,
-        dns,
-        geoXUrl,
-        geodataLoader,
-        const DeepCollectionEquality().hash(_proxyGroups),
-        const DeepCollectionEquality().hash(_rules),
-        globalUa,
-        const DeepCollectionEquality().hash(_routeAddress),
-        externalController,
-        const DeepCollectionEquality().hash(_hosts)
-      ]);
+  int get hashCode => Object.hash(
+      runtimeType,
+      mixedPort,
+      mode,
+      allowLan,
+      logLevel,
+      ipv6,
+      findProcessMode,
+      keepAliveInterval,
+      unifiedDelay,
+      tcpConcurrent,
+      tun,
+      dns,
+      geoXUrl,
+      geodataLoader,
+      const DeepCollectionEquality().hash(_proxyGroups),
+      const DeepCollectionEquality().hash(_rules),
+      globalUa,
+      externalController,
+      const DeepCollectionEquality().hash(_hosts));
 
   /// Create a copy of ClashConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -2372,8 +2380,8 @@ abstract class _ClashConfig implements ClashConfig {
       @JsonKey(name: "geodata-loader") final GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") final List<ProxyGroup> proxyGroups,
       final List<String> rules,
-      @JsonKey(name: "global-ua") final String? globalUa,
-      @JsonKey(name: "route-address") final List<String> routeAddress,
+      @JsonKey(name: "global-ua", toJson: globalUaToJson)
+      final String? globalUa,
       @JsonKey(name: "external-controller")
       final ExternalControllerStatus externalController,
       final Map<String, String> hosts}) = _$ClashConfigImpl;
@@ -2424,11 +2432,8 @@ abstract class _ClashConfig implements ClashConfig {
   @override
   List<String> get rules;
   @override
-  @JsonKey(name: "global-ua")
+  @JsonKey(name: "global-ua", toJson: globalUaToJson)
   String? get globalUa;
-  @override
-  @JsonKey(name: "route-address")
-  List<String> get routeAddress;
   @override
   @JsonKey(name: "external-controller")
   ExternalControllerStatus get externalController;

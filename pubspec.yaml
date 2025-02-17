@@ -60,6 +60,7 @@ dev_dependencies:
   json_serializable: ^6.7.1
   build_runner: ^2.4.9
   args: ^2.4.2
+  freezed: ^2.5.1
 
 flutter:
   uses-material-design: true

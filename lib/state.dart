@@ -175,7 +175,7 @@ class GlobalState {
       systemProxy: config.vpnProps.systemProxy,
       currentProfileName:
           config.currentProfile?.label ?? config.currentProfileId ?? "",
-      routeAddress: config.patchClashConfig.routeAddress,
+      routeAddress: config.routeAddress,
     );
   }
 
@@ -183,7 +183,9 @@ class GlobalState {
     final patchClashConfig = config.patchClashConfig;
     return UpdateConfigParams(
       profileId: config.currentProfileId ?? "",
-      config: patchClashConfig,
+      config: patchClashConfig.copyWith.tun(
+        routeAddress: config.routeAddress,
+      ),
       params: ConfigExtendedParams(
         isPatch: isPatch,
         isCompatible: true,

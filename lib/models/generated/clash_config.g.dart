@@ -62,6 +62,10 @@ _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
               ?.map((e) => e as String)
               .toList() ??
           const ["any:53"],
+      routeAddress: (json['route-address'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$TunImplToJson(_$TunImpl instance) => <String, dynamic>{
@@ -69,6 +73,7 @@ Map<String, dynamic> _$$TunImplToJson(_$TunImpl instance) => <String, dynamic>{
       'device': instance.device,
       'stack': _$TunStackEnumMap[instance.stack]!,
       'dns-hijack': instance.dnsHijack,
+      'route-address': instance.routeAddress,
     };
 
 const _$TunStackEnumMap = {
@@ -234,10 +239,6 @@ _$ClashConfigImpl _$$ClashConfigImplFromJson(Map<String, dynamic> json) =>
           (json['rules'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
       globalUa: json['global-ua'] as String?,
-      routeAddress: (json['route-address'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
       externalController: $enumDecodeNullable(
               _$ExternalControllerStatusEnumMap, json['external-controller']) ??
           ExternalControllerStatus.close,
@@ -264,8 +265,7 @@ Map<String, dynamic> _$$ClashConfigImplToJson(_$ClashConfigImpl instance) =>
       'geodata-loader': _$GeodataLoaderEnumMap[instance.geodataLoader]!,
       'proxy-groups': instance.proxyGroups,
       'rules': instance.rules,
-      'global-ua': instance.globalUa,
-      'route-address': instance.routeAddress,
+      'global-ua': globalUaToJson(instance.globalUa),
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,
       'hosts': instance.hosts,

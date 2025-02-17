@@ -148,6 +148,7 @@ class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
     @Default(true) bool systemProxy,
     @Default(defaultBypassDomain) List<String> bypassDomain,
+    @Default(RouteMode.bypassPrivate) RouteMode routeMode,
   }) = _NetworkProps;
 
   factory NetworkProps.fromJson(Map<String, Object?>? json) =>
@@ -485,6 +486,18 @@ class Config extends ChangeNotifier {
     notifyListeners();
   }
 
+  @JsonKey(
+    includeToJson: false,
+    includeFromJson: false,
+  )
+  List<String> get routeAddress {
+    if(networkProps.routeMode == RouteMode.bypassPrivate){
+      return defaultBypassDomain;
+    }else {
+      return _patchClashConfig.tun.routeAddress;
+    }
+  }
+
   update([
     Config? config,
     RecoveryOption recoveryOptions = RecoveryOption.all,
@@ -522,10 +535,5 @@ class Config extends ChangeNotifier {
 
   factory Config.fromJson(Map<String, dynamic> json) {
     return _$ConfigFromJson(json);
-  }
-
-  @override
-  String toString() {
-    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle}';
   }
 }

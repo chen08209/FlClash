@@ -1187,6 +1187,7 @@ NetworkProps _$NetworkPropsFromJson(Map<String, dynamic> json) {
 mixin _$NetworkProps {
   bool get systemProxy => throw _privateConstructorUsedError;
   List<String> get bypassDomain => throw _privateConstructorUsedError;
+  RouteMode get routeMode => throw _privateConstructorUsedError;
 
   /// Serializes this NetworkProps to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1204,7 +1205,7 @@ abstract class $NetworkPropsCopyWith<$Res> {
           NetworkProps value, $Res Function(NetworkProps) then) =
       _$NetworkPropsCopyWithImpl<$Res, NetworkProps>;
   @useResult
-  $Res call({bool systemProxy, List<String> bypassDomain});
+  $Res call({bool systemProxy, List<String> bypassDomain, RouteMode routeMode});
 }
 
 /// @nodoc
@@ -1224,6 +1225,7 @@ class _$NetworkPropsCopyWithImpl<$Res, $Val extends NetworkProps>
   $Res call({
     Object? systemProxy = null,
     Object? bypassDomain = null,
+    Object? routeMode = null,
   }) {
     return _then(_value.copyWith(
       systemProxy: null == systemProxy
@@ -1234,6 +1236,10 @@ class _$NetworkPropsCopyWithImpl<$Res, $Val extends NetworkProps>
           ? _value.bypassDomain
           : bypassDomain // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      routeMode: null == routeMode
+          ? _value.routeMode
+          : routeMode // ignore: cast_nullable_to_non_nullable
+              as RouteMode,
     ) as $Val);
   }
 }
@@ -1246,7 +1252,7 @@ abstract class _$$NetworkPropsImplCopyWith<$Res>
       __$$NetworkPropsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool systemProxy, List<String> bypassDomain});
+  $Res call({bool systemProxy, List<String> bypassDomain, RouteMode routeMode});
 }
 
 /// @nodoc
@@ -1264,6 +1270,7 @@ class __$$NetworkPropsImplCopyWithImpl<$Res>
   $Res call({
     Object? systemProxy = null,
     Object? bypassDomain = null,
+    Object? routeMode = null,
   }) {
     return _then(_$NetworkPropsImpl(
       systemProxy: null == systemProxy
@@ -1274,6 +1281,10 @@ class __$$NetworkPropsImplCopyWithImpl<$Res>
           ? _value._bypassDomain
           : bypassDomain // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      routeMode: null == routeMode
+          ? _value.routeMode
+          : routeMode // ignore: cast_nullable_to_non_nullable
+              as RouteMode,
     ));
   }
 }
@@ -1283,7 +1294,8 @@ class __$$NetworkPropsImplCopyWithImpl<$Res>
 class _$NetworkPropsImpl implements _NetworkProps {
   const _$NetworkPropsImpl(
       {this.systemProxy = true,
-      final List<String> bypassDomain = defaultBypassDomain})
+      final List<String> bypassDomain = defaultBypassDomain,
+      this.routeMode = RouteMode.bypassPrivate})
       : _bypassDomain = bypassDomain;
 
   factory _$NetworkPropsImpl.fromJson(Map<String, dynamic> json) =>
@@ -1302,8 +1314,12 @@ class _$NetworkPropsImpl implements _NetworkProps {
   }
 
   @override
+  @JsonKey()
+  final RouteMode routeMode;
+
+  @override
   String toString() {
-    return 'NetworkProps(systemProxy: $systemProxy, bypassDomain: $bypassDomain)';
+    return 'NetworkProps(systemProxy: $systemProxy, bypassDomain: $bypassDomain, routeMode: $routeMode)';
   }
 
   @override
@@ -1314,13 +1330,15 @@ class _$NetworkPropsImpl implements _NetworkProps {
             (identical(other.systemProxy, systemProxy) ||
                 other.systemProxy == systemProxy) &&
             const DeepCollectionEquality()
-                .equals(other._bypassDomain, _bypassDomain));
+                .equals(other._bypassDomain, _bypassDomain) &&
+            (identical(other.routeMode, routeMode) ||
+                other.routeMode == routeMode));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, systemProxy,
-      const DeepCollectionEquality().hash(_bypassDomain));
+      const DeepCollectionEquality().hash(_bypassDomain), routeMode);
 
   /// Create a copy of NetworkProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1341,7 +1359,8 @@ class _$NetworkPropsImpl implements _NetworkProps {
 abstract class _NetworkProps implements NetworkProps {
   const factory _NetworkProps(
       {final bool systemProxy,
-      final List<String> bypassDomain}) = _$NetworkPropsImpl;
+      final List<String> bypassDomain,
+      final RouteMode routeMode}) = _$NetworkPropsImpl;
 
   factory _NetworkProps.fromJson(Map<String, dynamic> json) =
       _$NetworkPropsImpl.fromJson;
@@ -1350,6 +1369,8 @@ abstract class _NetworkProps implements NetworkProps {
   bool get systemProxy;
   @override
   List<String> get bypassDomain;
+  @override
+  RouteMode get routeMode;
 
   /// Create a copy of NetworkProps
   /// with the given fields replaced by the non-null parameter values.

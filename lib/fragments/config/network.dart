@@ -265,81 +265,86 @@ class BypassDomainItem extends StatelessWidget {
   }
 }
 
-// class RouteModeItem extends StatelessWidget {
-//   const RouteModeItem({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Selector<ClashConfig, RouteMode>(
-//       selector: (_, clashConfig) => clashConfig.routeMode,
-//       builder: (_, value, __) {
-//         return ListItem<RouteMode>.options(
-//           title: Text(appLocalizations.routeMode),
-//           subtitle: Text(Intl.message("routeMode_${value.name}")),
-//           delegate: OptionsDelegate<RouteMode>(
-//             title: appLocalizations.routeMode,
-//             options: RouteMode.values,
-//             onChanged: (RouteMode? value) {
-//               if (value == null) {
-//                 return;
-//               }
-//               // final appController = globalState.appController;
-//               // appController.clashConfig.routeMode = value;
-//             },
-//             textBuilder: (routeMode) => Intl.message(
-//               "routeMode_${routeMode.name}",
-//             ),
-//             value: value,
-//           ),
-//         );
-//       },
-//     );
-//   }
-// }
+class RouteModeItem extends StatelessWidget {
+  const RouteModeItem({super.key});
 
-// class RouteAddressItem extends StatelessWidget {
-//   const RouteAddressItem({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Selector<ClashConfig, bool>(
-//       selector: (_, clashConfig) => clashConfig.routeMode == RouteMode.config,
-//       builder: (_, value, child) {
-//         if (value) {
-//           return child!;
-//         }
-//         return Container();
-//       },
-//       child: ListItem.open(
-//         title: Text(appLocalizations.routeAddress),
-//         subtitle: Text(appLocalizations.routeAddressDesc),
-//         delegate: OpenDelegate(
-//           isBlur: false,
-//           isScaffold: true,
-//           title: appLocalizations.routeAddress,
-//           widget: Selector<ClashConfig, List<String>>(
-//             selector: (_, clashConfig) => clashConfig.includeRouteAddress,
-//             shouldRebuild: (prev, next) =>
-//                 !stringListEquality.equals(prev, next),
-//             builder: (context, routeAddress, __) {
-//               return ListPage(
-//                 title: appLocalizations.routeAddress,
-//                 items: routeAddress,
-//                 titleBuilder: (item) => Text(item),
-//                 onChange: (items) {
-//                   final clashConfig = globalState.appController.clashConfig;
-//                   clashConfig.includeRouteAddress =
-//                       Set<String>.from(items).toList();
-//                 },
-//               );
-//             },
-//           ),
-//           extendPageWidth: 360,
-//         ),
-//       ),
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Selector<Config, RouteMode>(
+      selector: (_, config) => config.networkProps.routeMode,
+      builder: (_, value, __) {
+        return ListItem<RouteMode>.options(
+          title: Text(appLocalizations.routeMode),
+          subtitle: Text(Intl.message("routeMode_${value.name}")),
+          delegate: OptionsDelegate<RouteMode>(
+            title: appLocalizations.routeMode,
+            options: RouteMode.values,
+            onChanged: (RouteMode? value) {
+              if (value == null) {
+                return;
+              }
+              final config = globalState.appController.config;
+              config.networkProps = config.networkProps.copyWith(
+                routeMode: value,
+              );
+            },
+            textBuilder: (routeMode) => Intl.message(
+              "routeMode_${routeMode.name}",
+            ),
+            value: value,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class RouteAddressItem extends StatelessWidget {
+  const RouteAddressItem({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<Config, bool>(
+      selector: (_, config) =>
+          config.networkProps.routeMode == RouteMode.config,
+      builder: (_, value, child) {
+        if (value) {
+          return child!;
+        }
+        return Container();
+      },
+      child: ListItem.open(
+        title: Text(appLocalizations.routeAddress),
+        subtitle: Text(appLocalizations.routeAddressDesc),
+        delegate: OpenDelegate(
+          isBlur: false,
+          isScaffold: true,
+          title: appLocalizations.routeAddress,
+          widget: Selector<ClashConfig, List<String>>(
+            selector: (_, clashConfig) => clashConfig.tun.routeAddress,
+            shouldRebuild: (prev, next) =>
+                !stringListEquality.equals(prev, next),
+            builder: (context, routeAddress, __) {
+              return ListPage(
+                title: appLocalizations.routeAddress,
+                items: routeAddress,
+                titleBuilder: (item) => Text(item),
+                onChange: (items) {
+                  final config = globalState.appController.config;
+                  config.patchClashConfig =
+                      config.patchClashConfig.copyWith.tun(
+                    routeAddress: Set<String>.from(items).toList(),
+                  );
+                },
+              );
+            },
+          ),
+          extendPageWidth: 360,
+        ),
+      ),
+    );
+  }
+}
 
 final networkItems = [
   if (Platform.isAndroid) const VPNItem(),
@@ -365,8 +370,8 @@ final networkItems = [
     items: [
       if (system.isDesktop) const TUNItem(),
       const TunStackItem(),
-      // const RouteModeItem(),
-      // const RouteAddressItem(),
+      const RouteModeItem(),
+      const RouteAddressItem(),
     ],
   ),
 ];
