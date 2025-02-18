@@ -270,13 +270,6 @@ class GeoXUrl with _$GeoXUrl {
   }
 }
 
-String globalUaToJson(String? value) {
-  if (value == null) {
-    return globalState.packageInfo.ua;
-  }
-  return value;
-}
-
 @freezed
 class ClashConfig with _$ClashConfig {
   const factory ClashConfig({
@@ -303,7 +296,7 @@ class ClashConfig with _$ClashConfig {
     GeodataLoader geodataLoader,
     @Default([]) @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
     @Default([]) List<String> rules,
-    @JsonKey(name: "global-ua", toJson: globalUaToJson) String? globalUa,
+    @JsonKey(name: "global-ua") String? globalUa,
     @Default(ExternalControllerStatus.close)
     @JsonKey(name: "external-controller")
     ExternalControllerStatus externalController,

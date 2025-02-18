@@ -178,7 +178,9 @@ class GlobalState {
     final patchClashConfig = config.patchClashConfig;
     return UpdateConfigParams(
       profileId: config.currentProfileId ?? "",
-      config: patchClashConfig,
+      config: patchClashConfig.copyWith(
+        globalUa: patchClashConfig.globalUa ?? packageInfo.ua,
+      ),
       params: ConfigExtendedParams(
         isPatch: isPatch,
         selectedMap: config.currentSelectedMap,
@@ -339,7 +341,7 @@ class GlobalState {
     final clashConfig = await preferences.getClashConfig();
     if (clashConfig != null) {
       config.patchClashConfig = clashConfig;
-      // preferences.clearClashConfig();
+      preferences.clearClashConfig();
       preferences.saveConfig(config);
     }
   }

@@ -1803,7 +1803,7 @@ mixin _$ClashConfig {
   @JsonKey(name: "proxy-groups")
   List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
   List<String> get rules => throw _privateConstructorUsedError;
-  @JsonKey(name: "global-ua", toJson: globalUaToJson)
+  @JsonKey(name: "global-ua")
   String? get globalUa => throw _privateConstructorUsedError;
   @JsonKey(name: "external-controller")
   ExternalControllerStatus get externalController =>
@@ -1842,7 +1842,7 @@ abstract class $ClashConfigCopyWith<$Res> {
       @JsonKey(name: "geodata-loader") GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
       List<String> rules,
-      @JsonKey(name: "global-ua", toJson: globalUaToJson) String? globalUa,
+      @JsonKey(name: "global-ua") String? globalUa,
       @JsonKey(name: "external-controller")
       ExternalControllerStatus externalController,
       Map<String, String> hosts});
@@ -2017,7 +2017,7 @@ abstract class _$$ClashConfigImplCopyWith<$Res>
       @JsonKey(name: "geodata-loader") GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
       List<String> rules,
-      @JsonKey(name: "global-ua", toJson: globalUaToJson) String? globalUa,
+      @JsonKey(name: "global-ua") String? globalUa,
       @JsonKey(name: "external-controller")
       ExternalControllerStatus externalController,
       Map<String, String> hosts});
@@ -2162,7 +2162,7 @@ class _$ClashConfigImpl implements _ClashConfig {
       @JsonKey(name: "proxy-groups")
       final List<ProxyGroup> proxyGroups = const [],
       final List<String> rules = const [],
-      @JsonKey(name: "global-ua", toJson: globalUaToJson) this.globalUa,
+      @JsonKey(name: "global-ua") this.globalUa,
       @JsonKey(name: "external-controller")
       this.externalController = ExternalControllerStatus.close,
       final Map<String, String> hosts = const {}})
@@ -2231,7 +2231,7 @@ class _$ClashConfigImpl implements _ClashConfig {
   }
 
   @override
-  @JsonKey(name: "global-ua", toJson: globalUaToJson)
+  @JsonKey(name: "global-ua")
   final String? globalUa;
   @override
   @JsonKey(name: "external-controller")
@@ -2342,8 +2342,7 @@ abstract class _ClashConfig implements ClashConfig {
       @JsonKey(name: "geodata-loader") final GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") final List<ProxyGroup> proxyGroups,
       final List<String> rules,
-      @JsonKey(name: "global-ua", toJson: globalUaToJson)
-      final String? globalUa,
+      @JsonKey(name: "global-ua") final String? globalUa,
       @JsonKey(name: "external-controller")
       final ExternalControllerStatus externalController,
       final Map<String, String> hosts}) = _$ClashConfigImpl;
@@ -2394,7 +2393,7 @@ abstract class _ClashConfig implements ClashConfig {
   @override
   List<String> get rules;
   @override
-  @JsonKey(name: "global-ua", toJson: globalUaToJson)
+  @JsonKey(name: "global-ua")
   String? get globalUa;
   @override
   @JsonKey(name: "external-controller")

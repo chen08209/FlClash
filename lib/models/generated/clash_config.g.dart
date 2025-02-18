@@ -260,7 +260,7 @@ Map<String, dynamic> _$$ClashConfigImplToJson(_$ClashConfigImpl instance) =>
       'geodata-loader': _$GeodataLoaderEnumMap[instance.geodataLoader]!,
       'proxy-groups': instance.proxyGroups,
       'rules': instance.rules,
-      'global-ua': globalUaToJson(instance.globalUa),
+      'global-ua': instance.globalUa,
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,
       'hosts': instance.hosts,

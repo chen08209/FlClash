@@ -65,9 +65,8 @@ class UaItem extends StatelessWidget {
                 globalUa: ua,
               );
             },
-            textBuilder: (ua) => ua == globalState.packageInfo.ua
-                ? appLocalizations.defaultText
-                : ua ?? "",
+            textBuilder: (ua) =>
+                ua == null ? appLocalizations.defaultText : ua ?? "",
           ),
         );
       },
