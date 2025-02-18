@@ -33,7 +33,7 @@ func Start(fd int, device string, stack constant.TUNStack) (*sing_tun.Listener, 
 	}
 	prefix4 = append(prefix4, tempPrefix4)
 	var prefix6 []netip.Prefix
-	if state.CurrentState.Ipv6 {
+	if state.CurrentState.VpnProps.Ipv6 {
 		tempPrefix6, err := netip.ParsePrefix(state.DefaultIpv6Address)
 		if err != nil {
 			log.Errorln("startTUN error:", err)
