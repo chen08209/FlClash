@@ -66,7 +66,7 @@ class UaItem extends StatelessWidget {
               );
             },
             textBuilder: (ua) =>
-                ua == null ? appLocalizations.defaultText : ua ?? "",
+                ua ?? appLocalizations.defaultText,
           ),
         );
       },
@@ -389,14 +389,14 @@ class GeodataLoaderItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Selector<Config, bool>(
       selector: (_, config) =>
-          config.patchClashConfig.geodataLoader == geodataLoaderMemconservative,
-      builder: (_, memconservative, __) {
+          config.patchClashConfig.geodataLoader == GeodataLoader.memconservative,
+      builder: (_, isMemconservative, __) {
         return ListItem.switchItem(
           leading: const Icon(Icons.memory),
           title: Text(appLocalizations.geodataLoader),
           subtitle: Text(appLocalizations.geodataLoaderDesc),
           delegate: SwitchDelegate(
-            value: memconservative,
+            value: isMemconservative,
             onChanged: (bool value) async {
               final config = globalState.appController.config;
               config.patchClashConfig = config.patchClashConfig.copyWith(
