@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/common.freezed.dart';
+
 part 'generated/common.g.dart';
 
 @freezed
@@ -244,7 +245,7 @@ class Traffic {
 
 @immutable
 class TrafficValueShow {
-  final String value;
+  final double value;
   final TrafficUnit unit;
 
   const TrafficValueShow({
@@ -300,35 +301,37 @@ class TrafficValue {
 
   String get show => "$showValue $showUnit";
 
-  String get showValue => trafficValueShow.value;
+  String get shortShow => "${trafficValueShow.value.fixed(digit: 1)} $showUnit";
+
+  String get showValue => trafficValueShow.value.fixed();
 
   String get showUnit => trafficValueShow.unit.name;
 
   TrafficValueShow get trafficValueShow {
-    if (_value > pow(1024, 4) / 2) {
+    if (_value > pow(1024, 4)) {
       return TrafficValueShow(
-        value: (_value / pow(1024, 4)).fixed(),
+        value: _value / pow(1024, 4),
         unit: TrafficUnit.TB,
       );
     }
-    if (_value > pow(1024, 3) / 2) {
+    if (_value > pow(1024, 3)) {
       return TrafficValueShow(
-        value: (_value / pow(1024, 3)).fixed(),
+        value: _value / pow(1024, 3),
         unit: TrafficUnit.GB,
       );
     }
-    if (_value > pow(1024, 2) / 2) {
+    if (_value > pow(1024, 2)) {
       return TrafficValueShow(
-          value: (_value / pow(1024, 2)).fixed(), unit: TrafficUnit.MB);
+          value: _value / pow(1024, 2), unit: TrafficUnit.MB);
     }
-    if (_value > pow(1024, 1) / 2) {
+    if (_value > pow(1024, 1)) {
       return TrafficValueShow(
-        value: (_value / pow(1024, 1)).fixed(),
+        value: _value / pow(1024, 2),
         unit: TrafficUnit.KB,
       );
     }
     return TrafficValueShow(
-      value: _value.fixed(),
+      value: _value.toDouble(),
       unit: TrafficUnit.B,
     );
   }

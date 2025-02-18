@@ -182,7 +182,7 @@ class Tray {
       await trayManager.setTitle("");
     } else {
       await trayManager.setTitle(
-        "${traffic.up} ↑ \n${traffic.down} ↓",
+        "${traffic.up.shortShow} ↑ \n${traffic.down.shortShow} ↓",
       );
     }
   }
