@@ -226,8 +226,6 @@ func handleGetAndroidVpnOptions() string {
 		DnsServerAddress: state.GetDnsServerAddress(),
 	}
 	data, err := json.Marshal(options)
-	log.Infoln("[handleGetAndroidVpnOptions] %v", currentConfig.General.Tun.RouteAddress)
-	log.Infoln("[handleGetAndroidVpnOptions] %s", data)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return ""
