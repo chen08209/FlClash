@@ -34,7 +34,24 @@ const desktopPlatforms = [
   SupportPlatform.Windows,
 ];
 
-enum GroupType { Selector, URLTest, Fallback, LoadBalance, Relay }
+enum GroupType {
+  Selector,
+  URLTest,
+  Fallback,
+  LoadBalance,
+  Relay;
+
+  static GroupType parseProfileType(String type) {
+    return switch (type) {
+      "url-test" => URLTest,
+      "select" => Selector,
+      "fallback" => Fallback,
+      "load-balance" => LoadBalance,
+      "relay" => Relay,
+      String() => throw UnimplementedError(),
+    };
+  }
+}
 
 enum GroupName { GLOBAL, Proxy, Auto, Fallback }
 

@@ -21,6 +21,7 @@ ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ProxyGroup {
   String get name => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: GroupType.parseProfileType)
   GroupType get type => throw _privateConstructorUsedError;
   List<String>? get proxies => throw _privateConstructorUsedError;
   List<String>? get use => throw _privateConstructorUsedError;
@@ -58,7 +59,7 @@ abstract class $ProxyGroupCopyWith<$Res> {
   @useResult
   $Res call(
       {String name,
-      GroupType type,
+      @JsonKey(fromJson: GroupType.parseProfileType) GroupType type,
       List<String>? proxies,
       List<String>? use,
       int? interval,
@@ -180,7 +181,7 @@ abstract class _$$ProxyGroupImplCopyWith<$Res>
   @useResult
   $Res call(
       {String name,
-      GroupType type,
+      @JsonKey(fromJson: GroupType.parseProfileType) GroupType type,
       List<String>? proxies,
       List<String>? use,
       int? interval,
@@ -295,7 +296,7 @@ class __$$ProxyGroupImplCopyWithImpl<$Res>
 class _$ProxyGroupImpl implements _ProxyGroup {
   const _$ProxyGroupImpl(
       {required this.name,
-      required this.type,
+      @JsonKey(fromJson: GroupType.parseProfileType) required this.type,
       final List<String>? proxies,
       final List<String>? use,
       this.interval,
@@ -318,6 +319,7 @@ class _$ProxyGroupImpl implements _ProxyGroup {
   @override
   final String name;
   @override
+  @JsonKey(fromJson: GroupType.parseProfileType)
   final GroupType type;
   final List<String>? _proxies;
   @override
@@ -437,6 +439,7 @@ class _$ProxyGroupImpl implements _ProxyGroup {
 abstract class _ProxyGroup implements ProxyGroup {
   const factory _ProxyGroup(
       {required final String name,
+      @JsonKey(fromJson: GroupType.parseProfileType)
       required final GroupType type,
       final List<String>? proxies,
       final List<String>? use,
@@ -458,6 +461,7 @@ abstract class _ProxyGroup implements ProxyGroup {
   @override
   String get name;
   @override
+  @JsonKey(fromJson: GroupType.parseProfileType)
   GroupType get type;
   @override
   List<String>? get proxies;
@@ -1822,7 +1826,7 @@ mixin _$ClashConfig {
   @JsonKey(name: "log-level")
   LogLevel get logLevel => throw _privateConstructorUsedError;
   bool get ipv6 => throw _privateConstructorUsedError;
-  @JsonKey(name: "find-process-mode")
+  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
   FindProcessMode get findProcessMode => throw _privateConstructorUsedError;
   @JsonKey(name: "keep-alive-interval")
   int get keepAliveInterval => throw _privateConstructorUsedError;
@@ -1870,7 +1874,8 @@ abstract class $ClashConfigCopyWith<$Res> {
       @JsonKey(name: "allow-lan") bool allowLan,
       @JsonKey(name: "log-level") LogLevel logLevel,
       bool ipv6,
-      @JsonKey(name: "find-process-mode") FindProcessMode findProcessMode,
+      @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+      FindProcessMode findProcessMode,
       @JsonKey(name: "keep-alive-interval") int keepAliveInterval,
       @JsonKey(name: "unified-delay") bool unifiedDelay,
       @JsonKey(name: "tcp-concurrent") bool tcpConcurrent,
@@ -2045,7 +2050,8 @@ abstract class _$$ClashConfigImplCopyWith<$Res>
       @JsonKey(name: "allow-lan") bool allowLan,
       @JsonKey(name: "log-level") LogLevel logLevel,
       bool ipv6,
-      @JsonKey(name: "find-process-mode") FindProcessMode findProcessMode,
+      @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+      FindProcessMode findProcessMode,
       @JsonKey(name: "keep-alive-interval") int keepAliveInterval,
       @JsonKey(name: "unified-delay") bool unifiedDelay,
       @JsonKey(name: "tcp-concurrent") bool tcpConcurrent,
@@ -2186,7 +2192,7 @@ class _$ClashConfigImpl implements _ClashConfig {
       @JsonKey(name: "allow-lan") this.allowLan = false,
       @JsonKey(name: "log-level") this.logLevel = LogLevel.info,
       this.ipv6 = false,
-      @JsonKey(name: "find-process-mode")
+      @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
       this.findProcessMode = FindProcessMode.off,
       @JsonKey(name: "keep-alive-interval")
       this.keepAliveInterval = defaultKeepAliveInterval,
@@ -2227,7 +2233,7 @@ class _$ClashConfigImpl implements _ClashConfig {
   @JsonKey()
   final bool ipv6;
   @override
-  @JsonKey(name: "find-process-mode")
+  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
   final FindProcessMode findProcessMode;
   @override
   @JsonKey(name: "keep-alive-interval")
@@ -2370,7 +2376,8 @@ abstract class _ClashConfig implements ClashConfig {
       @JsonKey(name: "allow-lan") final bool allowLan,
       @JsonKey(name: "log-level") final LogLevel logLevel,
       final bool ipv6,
-      @JsonKey(name: "find-process-mode") final FindProcessMode findProcessMode,
+      @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+      final FindProcessMode findProcessMode,
       @JsonKey(name: "keep-alive-interval") final int keepAliveInterval,
       @JsonKey(name: "unified-delay") final bool unifiedDelay,
       @JsonKey(name: "tcp-concurrent") final bool tcpConcurrent,
@@ -2402,7 +2409,7 @@ abstract class _ClashConfig implements ClashConfig {
   @override
   bool get ipv6;
   @override
-  @JsonKey(name: "find-process-mode")
+  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
   FindProcessMode get findProcessMode;
   @override
   @JsonKey(name: "keep-alive-interval")

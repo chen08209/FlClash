@@ -235,8 +235,12 @@ class ClashCore {
     return int.parse(value);
   }
 
-  Future<String> getProfile(String id) {
-    return clashInterface.getProfile(id);
+  Future<ClashConfig?> getProfile(String id) async {
+    final res = await clashInterface.getProfile(id);
+    if (res.isEmpty) {
+      return null;
+    }
+    return ClashConfig.fromJson(json.decode(res));
   }
 
   resetTraffic() {

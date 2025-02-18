@@ -9,7 +9,7 @@ part of '../clash_config.dart';
 _$ProxyGroupImpl _$$ProxyGroupImplFromJson(Map<String, dynamic> json) =>
     _$ProxyGroupImpl(
       name: json['name'] as String,
-      type: $enumDecode(_$GroupTypeEnumMap, json['type']),
+      type: GroupType.parseProfileType(json['type'] as String),
       proxies:
           (json['proxies'] as List<dynamic>?)?.map((e) => e as String).toList(),
       use: (json['use'] as List<dynamic>?)?.map((e) => e as String).toList(),
@@ -213,7 +213,8 @@ _$ClashConfigImpl _$$ClashConfigImplFromJson(Map<String, dynamic> json) =>
           LogLevel.info,
       ipv6: json['ipv6'] as bool? ?? false,
       findProcessMode: $enumDecodeNullable(
-              _$FindProcessModeEnumMap, json['find-process-mode']) ??
+              _$FindProcessModeEnumMap, json['find-process-mode'],
+              unknownValue: FindProcessMode.off) ??
           FindProcessMode.off,
       keepAliveInterval: (json['keep-alive-interval'] as num?)?.toInt() ??
           defaultKeepAliveInterval,

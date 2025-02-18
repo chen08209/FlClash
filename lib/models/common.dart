@@ -301,7 +301,7 @@ class TrafficValue {
 
   String get show => "$showValue $showUnit";
 
-  String get shortShow => "${trafficValueShow.value.fixed(digit: 1)} $showUnit";
+  String get shortShow => "${trafficValueShow.value.fixed(decimals: 1)} $showUnit";
 
   String get showValue => trafficValueShow.value.fixed();
 

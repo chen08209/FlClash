@@ -109,6 +109,9 @@ const defaultBypassPrivateRouteAddress = [
 class ProxyGroup with _$ProxyGroup {
   const factory ProxyGroup({
     required String name,
+    @JsonKey(
+      fromJson: GroupType.parseProfileType,
+    )
     required GroupType type,
     List<String>? proxies,
     List<String>? use,
@@ -279,7 +282,10 @@ class ClashConfig with _$ClashConfig {
     @Default(LogLevel.info) @JsonKey(name: "log-level") LogLevel logLevel,
     @Default(false) bool ipv6,
     @Default(FindProcessMode.off)
-    @JsonKey(name: "find-process-mode")
+    @JsonKey(
+      name: "find-process-mode",
+      unknownEnumValue: FindProcessMode.off,
+    )
     FindProcessMode findProcessMode,
     @Default(defaultKeepAliveInterval)
     @JsonKey(name: "keep-alive-interval")
