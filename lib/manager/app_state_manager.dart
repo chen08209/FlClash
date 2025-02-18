@@ -19,13 +19,11 @@ class AppStateManager extends StatefulWidget {
 class _AppStateManagerState extends State<AppStateManager>
     with WidgetsBindingObserver {
   _updateNavigationsContainer(Widget child) {
-    return Selector2<AppState, Config, UpdateNavigationsSelector>(
-      selector: (_, appState, config) {
-        final group = appState.currentGroups;
-        final hasProfile = config.profiles.isNotEmpty;
+    return Selector<Config, UpdateNavigationsSelector>(
+      selector: (_, config) {
         return UpdateNavigationsSelector(
           openLogs: config.appSetting.openLogs,
-          hasProxies: group.isNotEmpty && hasProfile,
+          hasProxies: config.profiles.isNotEmpty,
         );
       },
       builder: (context, state, child) {
