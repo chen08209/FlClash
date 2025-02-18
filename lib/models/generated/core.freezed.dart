@@ -26,6 +26,8 @@ mixin _$CoreState {
   bool get onlyStatisticsProxy => throw _privateConstructorUsedError;
   @JsonKey(name: "current-profile-name")
   String get currentProfileName => throw _privateConstructorUsedError;
+  @JsonKey(name: "bypass-domain")
+  List<String> get bypassDomain => throw _privateConstructorUsedError;
 
   /// Serializes this CoreState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,7 +47,8 @@ abstract class $CoreStateCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: "vpn-props") VpnProps vpnProps,
       @JsonKey(name: "only-statistics-proxy") bool onlyStatisticsProxy,
-      @JsonKey(name: "current-profile-name") String currentProfileName});
+      @JsonKey(name: "current-profile-name") String currentProfileName,
+      @JsonKey(name: "bypass-domain") List<String> bypassDomain});
 
   $VpnPropsCopyWith<$Res> get vpnProps;
 }
@@ -68,6 +71,7 @@ class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
     Object? vpnProps = null,
     Object? onlyStatisticsProxy = null,
     Object? currentProfileName = null,
+    Object? bypassDomain = null,
   }) {
     return _then(_value.copyWith(
       vpnProps: null == vpnProps
@@ -82,6 +86,10 @@ class _$CoreStateCopyWithImpl<$Res, $Val extends CoreState>
           ? _value.currentProfileName
           : currentProfileName // ignore: cast_nullable_to_non_nullable
               as String,
+      bypassDomain: null == bypassDomain
+          ? _value.bypassDomain
+          : bypassDomain // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 
@@ -107,7 +115,8 @@ abstract class _$$CoreStateImplCopyWith<$Res>
   $Res call(
       {@JsonKey(name: "vpn-props") VpnProps vpnProps,
       @JsonKey(name: "only-statistics-proxy") bool onlyStatisticsProxy,
-      @JsonKey(name: "current-profile-name") String currentProfileName});
+      @JsonKey(name: "current-profile-name") String currentProfileName,
+      @JsonKey(name: "bypass-domain") List<String> bypassDomain});
 
   @override
   $VpnPropsCopyWith<$Res> get vpnProps;
@@ -129,6 +138,7 @@ class __$$CoreStateImplCopyWithImpl<$Res>
     Object? vpnProps = null,
     Object? onlyStatisticsProxy = null,
     Object? currentProfileName = null,
+    Object? bypassDomain = null,
   }) {
     return _then(_$CoreStateImpl(
       vpnProps: null == vpnProps
@@ -143,6 +153,10 @@ class __$$CoreStateImplCopyWithImpl<$Res>
           ? _value.currentProfileName
           : currentProfileName // ignore: cast_nullable_to_non_nullable
               as String,
+      bypassDomain: null == bypassDomain
+          ? _value._bypassDomain
+          : bypassDomain // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -153,7 +167,10 @@ class _$CoreStateImpl implements _CoreState {
   const _$CoreStateImpl(
       {@JsonKey(name: "vpn-props") required this.vpnProps,
       @JsonKey(name: "only-statistics-proxy") required this.onlyStatisticsProxy,
-      @JsonKey(name: "current-profile-name") required this.currentProfileName});
+      @JsonKey(name: "current-profile-name") required this.currentProfileName,
+      @JsonKey(name: "bypass-domain")
+      final List<String> bypassDomain = const []})
+      : _bypassDomain = bypassDomain;
 
   factory _$CoreStateImpl.fromJson(Map<String, dynamic> json) =>
       _$$CoreStateImplFromJson(json);
@@ -167,10 +184,18 @@ class _$CoreStateImpl implements _CoreState {
   @override
   @JsonKey(name: "current-profile-name")
   final String currentProfileName;
+  final List<String> _bypassDomain;
+  @override
+  @JsonKey(name: "bypass-domain")
+  List<String> get bypassDomain {
+    if (_bypassDomain is EqualUnmodifiableListView) return _bypassDomain;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_bypassDomain);
+  }
 
   @override
   String toString() {
-    return 'CoreState(vpnProps: $vpnProps, onlyStatisticsProxy: $onlyStatisticsProxy, currentProfileName: $currentProfileName)';
+    return 'CoreState(vpnProps: $vpnProps, onlyStatisticsProxy: $onlyStatisticsProxy, currentProfileName: $currentProfileName, bypassDomain: $bypassDomain)';
   }
 
   @override
@@ -183,13 +208,15 @@ class _$CoreStateImpl implements _CoreState {
             (identical(other.onlyStatisticsProxy, onlyStatisticsProxy) ||
                 other.onlyStatisticsProxy == onlyStatisticsProxy) &&
             (identical(other.currentProfileName, currentProfileName) ||
-                other.currentProfileName == currentProfileName));
+                other.currentProfileName == currentProfileName) &&
+            const DeepCollectionEquality()
+                .equals(other._bypassDomain, _bypassDomain));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, vpnProps, onlyStatisticsProxy, currentProfileName);
+  int get hashCode => Object.hash(runtimeType, vpnProps, onlyStatisticsProxy,
+      currentProfileName, const DeepCollectionEquality().hash(_bypassDomain));
 
   /// Create a copy of CoreState
   /// with the given fields replaced by the non-null parameter values.
@@ -209,11 +236,13 @@ class _$CoreStateImpl implements _CoreState {
 
 abstract class _CoreState implements CoreState {
   const factory _CoreState(
-      {@JsonKey(name: "vpn-props") required final VpnProps vpnProps,
-      @JsonKey(name: "only-statistics-proxy")
-      required final bool onlyStatisticsProxy,
-      @JsonKey(name: "current-profile-name")
-      required final String currentProfileName}) = _$CoreStateImpl;
+          {@JsonKey(name: "vpn-props") required final VpnProps vpnProps,
+          @JsonKey(name: "only-statistics-proxy")
+          required final bool onlyStatisticsProxy,
+          @JsonKey(name: "current-profile-name")
+          required final String currentProfileName,
+          @JsonKey(name: "bypass-domain") final List<String> bypassDomain}) =
+      _$CoreStateImpl;
 
   factory _CoreState.fromJson(Map<String, dynamic> json) =
       _$CoreStateImpl.fromJson;
@@ -227,6 +256,9 @@ abstract class _CoreState implements CoreState {
   @override
   @JsonKey(name: "current-profile-name")
   String get currentProfileName;
+  @override
+  @JsonKey(name: "bypass-domain")
+  List<String> get bypassDomain;
 
   /// Create a copy of CoreState
   /// with the given fields replaced by the non-null parameter values.

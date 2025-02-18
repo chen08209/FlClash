@@ -11,6 +11,10 @@ _$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
       vpnProps: VpnProps.fromJson(json['vpn-props'] as Map<String, dynamic>?),
       onlyStatisticsProxy: json['only-statistics-proxy'] as bool,
       currentProfileName: json['current-profile-name'] as String,
+      bypassDomain: (json['bypass-domain'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
@@ -18,6 +22,7 @@ Map<String, dynamic> _$$CoreStateImplToJson(_$CoreStateImpl instance) =>
       'vpn-props': instance.vpnProps,
       'only-statistics-proxy': instance.onlyStatisticsProxy,
       'current-profile-name': instance.currentProfileName,
+      'bypass-domain': instance.bypassDomain,
     };
 
 _$AndroidVpnOptionsImpl _$$AndroidVpnOptionsImplFromJson(

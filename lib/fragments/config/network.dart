@@ -271,7 +271,7 @@ class RouteModeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Selector<Config, RouteMode>(
-      selector: (_, config) => config.vpnProps.routeMode,
+      selector: (_, config) => config.networkProps.routeMode,
       builder: (_, value, __) {
         return ListItem<RouteMode>.options(
           title: Text(appLocalizations.routeMode),
@@ -284,7 +284,7 @@ class RouteModeItem extends StatelessWidget {
                 return;
               }
               final config = globalState.appController.config;
-              config.vpnProps = config.vpnProps.copyWith(
+              config.networkProps = config.networkProps.copyWith(
                 routeMode: value,
               );
             },
@@ -305,7 +305,7 @@ class RouteAddressItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Selector<Config, bool>(
-      selector: (_, config) => config.vpnProps.routeMode == RouteMode.config,
+      selector: (_, config) => config.networkProps.routeMode == RouteMode.config,
       builder: (_, value, child) {
         if (value) {
           return child!;
@@ -320,7 +320,7 @@ class RouteAddressItem extends StatelessWidget {
           isScaffold: true,
           title: appLocalizations.routeAddress,
           widget: Selector<Config, List<String>>(
-            selector: (_, config) => config.vpnProps.routeAddress,
+            selector: (_, config) => config.patchClashConfig.tun.routeAddress,
             shouldRebuild: (prev, next) =>
                 !stringListEquality.equals(prev, next),
             builder: (context, routeAddress, __) {
@@ -330,7 +330,7 @@ class RouteAddressItem extends StatelessWidget {
                 titleBuilder: (item) => Text(item),
                 onChange: (items) {
                   final config = globalState.appController.config;
-                  config.vpnProps = config.vpnProps.copyWith(
+                  config.patchClashConfig = config.patchClashConfig.copyWith.tun(
                     routeAddress: Set<String>.from(items).toList(),
                   );
                 },
@@ -368,10 +368,8 @@ final networkItems = [
     items: [
       if (system.isDesktop) const TUNItem(),
       const TunStackItem(),
-      if (Platform.isAndroid) ...[
-        const RouteModeItem(),
-        const RouteAddressItem(),
-      ]
+      const RouteModeItem(),
+      const RouteAddressItem(),
     ],
   ),
 ];

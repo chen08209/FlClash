@@ -978,9 +978,6 @@ mixin _$VpnProps {
   bool get systemProxy => throw _privateConstructorUsedError;
   bool get ipv6 => throw _privateConstructorUsedError;
   bool get allowBypass => throw _privateConstructorUsedError;
-  RouteMode get routeMode => throw _privateConstructorUsedError;
-  @JsonKey(name: "route-address")
-  List<String> get routeAddress => throw _privateConstructorUsedError;
 
   /// Serializes this VpnProps to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -997,13 +994,7 @@ abstract class $VpnPropsCopyWith<$Res> {
   factory $VpnPropsCopyWith(VpnProps value, $Res Function(VpnProps) then) =
       _$VpnPropsCopyWithImpl<$Res, VpnProps>;
   @useResult
-  $Res call(
-      {bool enable,
-      bool systemProxy,
-      bool ipv6,
-      bool allowBypass,
-      RouteMode routeMode,
-      @JsonKey(name: "route-address") List<String> routeAddress});
+  $Res call({bool enable, bool systemProxy, bool ipv6, bool allowBypass});
 }
 
 /// @nodoc
@@ -1025,8 +1016,6 @@ class _$VpnPropsCopyWithImpl<$Res, $Val extends VpnProps>
     Object? systemProxy = null,
     Object? ipv6 = null,
     Object? allowBypass = null,
-    Object? routeMode = null,
-    Object? routeAddress = null,
   }) {
     return _then(_value.copyWith(
       enable: null == enable
@@ -1045,14 +1034,6 @@ class _$VpnPropsCopyWithImpl<$Res, $Val extends VpnProps>
           ? _value.allowBypass
           : allowBypass // ignore: cast_nullable_to_non_nullable
               as bool,
-      routeMode: null == routeMode
-          ? _value.routeMode
-          : routeMode // ignore: cast_nullable_to_non_nullable
-              as RouteMode,
-      routeAddress: null == routeAddress
-          ? _value.routeAddress
-          : routeAddress // ignore: cast_nullable_to_non_nullable
-              as List<String>,
     ) as $Val);
   }
 }
@@ -1065,13 +1046,7 @@ abstract class _$$VpnPropsImplCopyWith<$Res>
       __$$VpnPropsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {bool enable,
-      bool systemProxy,
-      bool ipv6,
-      bool allowBypass,
-      RouteMode routeMode,
-      @JsonKey(name: "route-address") List<String> routeAddress});
+  $Res call({bool enable, bool systemProxy, bool ipv6, bool allowBypass});
 }
 
 /// @nodoc
@@ -1091,8 +1066,6 @@ class __$$VpnPropsImplCopyWithImpl<$Res>
     Object? systemProxy = null,
     Object? ipv6 = null,
     Object? allowBypass = null,
-    Object? routeMode = null,
-    Object? routeAddress = null,
   }) {
     return _then(_$VpnPropsImpl(
       enable: null == enable
@@ -1111,14 +1084,6 @@ class __$$VpnPropsImplCopyWithImpl<$Res>
           ? _value.allowBypass
           : allowBypass // ignore: cast_nullable_to_non_nullable
               as bool,
-      routeMode: null == routeMode
-          ? _value.routeMode
-          : routeMode // ignore: cast_nullable_to_non_nullable
-              as RouteMode,
-      routeAddress: null == routeAddress
-          ? _value._routeAddress
-          : routeAddress // ignore: cast_nullable_to_non_nullable
-              as List<String>,
     ));
   }
 }
@@ -1130,11 +1095,7 @@ class _$VpnPropsImpl implements _VpnProps {
       {this.enable = true,
       this.systemProxy = true,
       this.ipv6 = false,
-      this.allowBypass = true,
-      this.routeMode = RouteMode.bypassPrivate,
-      @JsonKey(name: "route-address")
-      final List<String> routeAddress = const []})
-      : _routeAddress = routeAddress;
+      this.allowBypass = true});
 
   factory _$VpnPropsImpl.fromJson(Map<String, dynamic> json) =>
       _$$VpnPropsImplFromJson(json);
@@ -1151,21 +1112,10 @@ class _$VpnPropsImpl implements _VpnProps {
   @override
   @JsonKey()
   final bool allowBypass;
-  @override
-  @JsonKey()
-  final RouteMode routeMode;
-  final List<String> _routeAddress;
-  @override
-  @JsonKey(name: "route-address")
-  List<String> get routeAddress {
-    if (_routeAddress is EqualUnmodifiableListView) return _routeAddress;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_routeAddress);
-  }
 
   @override
   String toString() {
-    return 'VpnProps(enable: $enable, systemProxy: $systemProxy, ipv6: $ipv6, allowBypass: $allowBypass, routeMode: $routeMode, routeAddress: $routeAddress)';
+    return 'VpnProps(enable: $enable, systemProxy: $systemProxy, ipv6: $ipv6, allowBypass: $allowBypass)';
   }
 
   @override
@@ -1178,23 +1128,13 @@ class _$VpnPropsImpl implements _VpnProps {
                 other.systemProxy == systemProxy) &&
             (identical(other.ipv6, ipv6) || other.ipv6 == ipv6) &&
             (identical(other.allowBypass, allowBypass) ||
-                other.allowBypass == allowBypass) &&
-            (identical(other.routeMode, routeMode) ||
-                other.routeMode == routeMode) &&
-            const DeepCollectionEquality()
-                .equals(other._routeAddress, _routeAddress));
+                other.allowBypass == allowBypass));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      enable,
-      systemProxy,
-      ipv6,
-      allowBypass,
-      routeMode,
-      const DeepCollectionEquality().hash(_routeAddress));
+  int get hashCode =>
+      Object.hash(runtimeType, enable, systemProxy, ipv6, allowBypass);
 
   /// Create a copy of VpnProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1214,13 +1154,10 @@ class _$VpnPropsImpl implements _VpnProps {
 
 abstract class _VpnProps implements VpnProps {
   const factory _VpnProps(
-          {final bool enable,
-          final bool systemProxy,
-          final bool ipv6,
-          final bool allowBypass,
-          final RouteMode routeMode,
-          @JsonKey(name: "route-address") final List<String> routeAddress}) =
-      _$VpnPropsImpl;
+      {final bool enable,
+      final bool systemProxy,
+      final bool ipv6,
+      final bool allowBypass}) = _$VpnPropsImpl;
 
   factory _VpnProps.fromJson(Map<String, dynamic> json) =
       _$VpnPropsImpl.fromJson;
@@ -1233,11 +1170,6 @@ abstract class _VpnProps implements VpnProps {
   bool get ipv6;
   @override
   bool get allowBypass;
-  @override
-  RouteMode get routeMode;
-  @override
-  @JsonKey(name: "route-address")
-  List<String> get routeAddress;
 
   /// Create a copy of VpnProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1255,6 +1187,7 @@ NetworkProps _$NetworkPropsFromJson(Map<String, dynamic> json) {
 mixin _$NetworkProps {
   bool get systemProxy => throw _privateConstructorUsedError;
   List<String> get bypassDomain => throw _privateConstructorUsedError;
+  RouteMode get routeMode => throw _privateConstructorUsedError;
 
   /// Serializes this NetworkProps to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1272,7 +1205,7 @@ abstract class $NetworkPropsCopyWith<$Res> {
           NetworkProps value, $Res Function(NetworkProps) then) =
       _$NetworkPropsCopyWithImpl<$Res, NetworkProps>;
   @useResult
-  $Res call({bool systemProxy, List<String> bypassDomain});
+  $Res call({bool systemProxy, List<String> bypassDomain, RouteMode routeMode});
 }
 
 /// @nodoc
@@ -1292,6 +1225,7 @@ class _$NetworkPropsCopyWithImpl<$Res, $Val extends NetworkProps>
   $Res call({
     Object? systemProxy = null,
     Object? bypassDomain = null,
+    Object? routeMode = null,
   }) {
     return _then(_value.copyWith(
       systemProxy: null == systemProxy
@@ -1302,6 +1236,10 @@ class _$NetworkPropsCopyWithImpl<$Res, $Val extends NetworkProps>
           ? _value.bypassDomain
           : bypassDomain // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      routeMode: null == routeMode
+          ? _value.routeMode
+          : routeMode // ignore: cast_nullable_to_non_nullable
+              as RouteMode,
     ) as $Val);
   }
 }
@@ -1314,7 +1252,7 @@ abstract class _$$NetworkPropsImplCopyWith<$Res>
       __$$NetworkPropsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool systemProxy, List<String> bypassDomain});
+  $Res call({bool systemProxy, List<String> bypassDomain, RouteMode routeMode});
 }
 
 /// @nodoc
@@ -1332,6 +1270,7 @@ class __$$NetworkPropsImplCopyWithImpl<$Res>
   $Res call({
     Object? systemProxy = null,
     Object? bypassDomain = null,
+    Object? routeMode = null,
   }) {
     return _then(_$NetworkPropsImpl(
       systemProxy: null == systemProxy
@@ -1342,6 +1281,10 @@ class __$$NetworkPropsImplCopyWithImpl<$Res>
           ? _value._bypassDomain
           : bypassDomain // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      routeMode: null == routeMode
+          ? _value.routeMode
+          : routeMode // ignore: cast_nullable_to_non_nullable
+              as RouteMode,
     ));
   }
 }
@@ -1351,7 +1294,8 @@ class __$$NetworkPropsImplCopyWithImpl<$Res>
 class _$NetworkPropsImpl implements _NetworkProps {
   const _$NetworkPropsImpl(
       {this.systemProxy = true,
-      final List<String> bypassDomain = defaultBypassDomain})
+      final List<String> bypassDomain = defaultBypassDomain,
+      this.routeMode = RouteMode.bypassPrivate})
       : _bypassDomain = bypassDomain;
 
   factory _$NetworkPropsImpl.fromJson(Map<String, dynamic> json) =>
@@ -1370,8 +1314,12 @@ class _$NetworkPropsImpl implements _NetworkProps {
   }
 
   @override
+  @JsonKey()
+  final RouteMode routeMode;
+
+  @override
   String toString() {
-    return 'NetworkProps(systemProxy: $systemProxy, bypassDomain: $bypassDomain)';
+    return 'NetworkProps(systemProxy: $systemProxy, bypassDomain: $bypassDomain, routeMode: $routeMode)';
   }
 
   @override
@@ -1382,13 +1330,15 @@ class _$NetworkPropsImpl implements _NetworkProps {
             (identical(other.systemProxy, systemProxy) ||
                 other.systemProxy == systemProxy) &&
             const DeepCollectionEquality()
-                .equals(other._bypassDomain, _bypassDomain));
+                .equals(other._bypassDomain, _bypassDomain) &&
+            (identical(other.routeMode, routeMode) ||
+                other.routeMode == routeMode));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, systemProxy,
-      const DeepCollectionEquality().hash(_bypassDomain));
+      const DeepCollectionEquality().hash(_bypassDomain), routeMode);
 
   /// Create a copy of NetworkProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1409,7 +1359,8 @@ class _$NetworkPropsImpl implements _NetworkProps {
 abstract class _NetworkProps implements NetworkProps {
   const factory _NetworkProps(
       {final bool systemProxy,
-      final List<String> bypassDomain}) = _$NetworkPropsImpl;
+      final List<String> bypassDomain,
+      final RouteMode routeMode}) = _$NetworkPropsImpl;
 
   factory _NetworkProps.fromJson(Map<String, dynamic> json) =
       _$NetworkPropsImpl.fromJson;
@@ -1418,6 +1369,8 @@ abstract class _NetworkProps implements NetworkProps {
   bool get systemProxy;
   @override
   List<String> get bypassDomain;
+  @override
+  RouteMode get routeMode;
 
   /// Create a copy of NetworkProps
   /// with the given fields replaced by the non-null parameter values.

@@ -221,8 +221,8 @@ func handleGetAndroidVpnOptions() string {
 		AccessControl:    state.CurrentState.VpnProps.AccessControl,
 		SystemProxy:      state.CurrentState.VpnProps.SystemProxy,
 		AllowBypass:      state.CurrentState.VpnProps.AllowBypass,
-		RouteAddress:     state.CurrentState.VpnProps.RouteAddress,
-		BypassDomain:     state.CurrentState.VpnProps.BypassDomain,
+		RouteAddress:     currentConfig.General.Tun.RouteAddressSet,
+		BypassDomain:     state.CurrentState.BypassDomain,
 		DnsServerAddress: state.GetDnsServerAddress(),
 	}
 	data, err := json.Marshal(options)

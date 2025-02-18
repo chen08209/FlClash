@@ -136,6 +136,7 @@ class Tun with _$Tun {
     @Default(appName) String device,
     @Default(TunStack.gvisor) TunStack stack,
     @JsonKey(name: "dns-hijack") @Default(["any:53"]) List<String> dnsHijack,
+    @JsonKey(name: "route-address") @Default([]) List<String> routeAddress,
   }) = _Tun;
 
   factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);

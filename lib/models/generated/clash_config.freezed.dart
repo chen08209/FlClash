@@ -509,6 +509,8 @@ mixin _$Tun {
   TunStack get stack => throw _privateConstructorUsedError;
   @JsonKey(name: "dns-hijack")
   List<String> get dnsHijack => throw _privateConstructorUsedError;
+  @JsonKey(name: "route-address")
+  List<String> get routeAddress => throw _privateConstructorUsedError;
 
   /// Serializes this Tun to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -528,7 +530,8 @@ abstract class $TunCopyWith<$Res> {
       {bool enable,
       String device,
       TunStack stack,
-      @JsonKey(name: "dns-hijack") List<String> dnsHijack});
+      @JsonKey(name: "dns-hijack") List<String> dnsHijack,
+      @JsonKey(name: "route-address") List<String> routeAddress});
 }
 
 /// @nodoc
@@ -549,6 +552,7 @@ class _$TunCopyWithImpl<$Res, $Val extends Tun> implements $TunCopyWith<$Res> {
     Object? device = null,
     Object? stack = null,
     Object? dnsHijack = null,
+    Object? routeAddress = null,
   }) {
     return _then(_value.copyWith(
       enable: null == enable
@@ -567,6 +571,10 @@ class _$TunCopyWithImpl<$Res, $Val extends Tun> implements $TunCopyWith<$Res> {
           ? _value.dnsHijack
           : dnsHijack // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      routeAddress: null == routeAddress
+          ? _value.routeAddress
+          : routeAddress // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 }
@@ -581,7 +589,8 @@ abstract class _$$TunImplCopyWith<$Res> implements $TunCopyWith<$Res> {
       {bool enable,
       String device,
       TunStack stack,
-      @JsonKey(name: "dns-hijack") List<String> dnsHijack});
+      @JsonKey(name: "dns-hijack") List<String> dnsHijack,
+      @JsonKey(name: "route-address") List<String> routeAddress});
 }
 
 /// @nodoc
@@ -599,6 +608,7 @@ class __$$TunImplCopyWithImpl<$Res> extends _$TunCopyWithImpl<$Res, _$TunImpl>
     Object? device = null,
     Object? stack = null,
     Object? dnsHijack = null,
+    Object? routeAddress = null,
   }) {
     return _then(_$TunImpl(
       enable: null == enable
@@ -617,6 +627,10 @@ class __$$TunImplCopyWithImpl<$Res> extends _$TunCopyWithImpl<$Res, _$TunImpl>
           ? _value._dnsHijack
           : dnsHijack // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      routeAddress: null == routeAddress
+          ? _value._routeAddress
+          : routeAddress // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -629,8 +643,11 @@ class _$TunImpl implements _Tun {
       this.device = appName,
       this.stack = TunStack.gvisor,
       @JsonKey(name: "dns-hijack")
-      final List<String> dnsHijack = const ["any:53"]})
-      : _dnsHijack = dnsHijack;
+      final List<String> dnsHijack = const ["any:53"],
+      @JsonKey(name: "route-address")
+      final List<String> routeAddress = const []})
+      : _dnsHijack = dnsHijack,
+        _routeAddress = routeAddress;
 
   factory _$TunImpl.fromJson(Map<String, dynamic> json) =>
       _$$TunImplFromJson(json);
@@ -653,9 +670,18 @@ class _$TunImpl implements _Tun {
     return EqualUnmodifiableListView(_dnsHijack);
   }
 
+  final List<String> _routeAddress;
+  @override
+  @JsonKey(name: "route-address")
+  List<String> get routeAddress {
+    if (_routeAddress is EqualUnmodifiableListView) return _routeAddress;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_routeAddress);
+  }
+
   @override
   String toString() {
-    return 'Tun(enable: $enable, device: $device, stack: $stack, dnsHijack: $dnsHijack)';
+    return 'Tun(enable: $enable, device: $device, stack: $stack, dnsHijack: $dnsHijack, routeAddress: $routeAddress)';
   }
 
   @override
@@ -667,13 +693,20 @@ class _$TunImpl implements _Tun {
             (identical(other.device, device) || other.device == device) &&
             (identical(other.stack, stack) || other.stack == stack) &&
             const DeepCollectionEquality()
-                .equals(other._dnsHijack, _dnsHijack));
+                .equals(other._dnsHijack, _dnsHijack) &&
+            const DeepCollectionEquality()
+                .equals(other._routeAddress, _routeAddress));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, enable, device, stack,
-      const DeepCollectionEquality().hash(_dnsHijack));
+  int get hashCode => Object.hash(
+      runtimeType,
+      enable,
+      device,
+      stack,
+      const DeepCollectionEquality().hash(_dnsHijack),
+      const DeepCollectionEquality().hash(_routeAddress));
 
   /// Create a copy of Tun
   /// with the given fields replaced by the non-null parameter values.
@@ -693,10 +726,12 @@ class _$TunImpl implements _Tun {
 
 abstract class _Tun implements Tun {
   const factory _Tun(
-      {final bool enable,
-      final String device,
-      final TunStack stack,
-      @JsonKey(name: "dns-hijack") final List<String> dnsHijack}) = _$TunImpl;
+          {final bool enable,
+          final String device,
+          final TunStack stack,
+          @JsonKey(name: "dns-hijack") final List<String> dnsHijack,
+          @JsonKey(name: "route-address") final List<String> routeAddress}) =
+      _$TunImpl;
 
   factory _Tun.fromJson(Map<String, dynamic> json) = _$TunImpl.fromJson;
 
@@ -709,6 +744,9 @@ abstract class _Tun implements Tun {
   @override
   @JsonKey(name: "dns-hijack")
   List<String> get dnsHijack;
+  @override
+  @JsonKey(name: "route-address")
+  List<String> get routeAddress;
 
   /// Create a copy of Tun
   /// with the given fields replaced by the non-null parameter values.

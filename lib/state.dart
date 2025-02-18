@@ -171,6 +171,7 @@ class GlobalState {
       onlyStatisticsProxy: config.appSetting.onlyStatisticsProxy,
       currentProfileName:
           config.currentProfile?.label ?? config.currentProfile?.id ?? "",
+      bypassDomain: config.networkProps.bypassDomain,
     );
   }
 

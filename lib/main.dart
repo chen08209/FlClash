@@ -65,6 +65,7 @@ Future<void> _service(List<String> flags) async {
   final quickStart = flags.contains("quick");
   final clashLibHandler = ClashLibHandler();
   final config = await preferences.getConfig() ?? Config();
+  await globalState.migrateOldData(config);
   await AppLocalizations.load(
     other.getLocaleForString(config.appSetting.locale) ??
         WidgetsBinding.instance.platformDispatcher.locale,

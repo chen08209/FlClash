@@ -166,12 +166,6 @@ _$VpnPropsImpl _$$VpnPropsImplFromJson(Map<String, dynamic> json) =>
       systemProxy: json['systemProxy'] as bool? ?? true,
       ipv6: json['ipv6'] as bool? ?? false,
       allowBypass: json['allowBypass'] as bool? ?? true,
-      routeMode: $enumDecodeNullable(_$RouteModeEnumMap, json['routeMode']) ??
-          RouteMode.bypassPrivate,
-      routeAddress: (json['route-address'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
     );
 
 Map<String, dynamic> _$$VpnPropsImplToJson(_$VpnPropsImpl instance) =>
@@ -180,14 +174,7 @@ Map<String, dynamic> _$$VpnPropsImplToJson(_$VpnPropsImpl instance) =>
       'systemProxy': instance.systemProxy,
       'ipv6': instance.ipv6,
       'allowBypass': instance.allowBypass,
-      'routeMode': _$RouteModeEnumMap[instance.routeMode]!,
-      'route-address': instance.routeAddress,
     };
-
-const _$RouteModeEnumMap = {
-  RouteMode.bypassPrivate: 'bypassPrivate',
-  RouteMode.config: 'config',
-};
 
 _$NetworkPropsImpl _$$NetworkPropsImplFromJson(Map<String, dynamic> json) =>
     _$NetworkPropsImpl(
@@ -196,13 +183,21 @@ _$NetworkPropsImpl _$$NetworkPropsImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           defaultBypassDomain,
+      routeMode: $enumDecodeNullable(_$RouteModeEnumMap, json['routeMode']) ??
+          RouteMode.bypassPrivate,
     );
 
 Map<String, dynamic> _$$NetworkPropsImplToJson(_$NetworkPropsImpl instance) =>
     <String, dynamic>{
       'systemProxy': instance.systemProxy,
       'bypassDomain': instance.bypassDomain,
+      'routeMode': _$RouteModeEnumMap[instance.routeMode]!,
     };
+
+const _$RouteModeEnumMap = {
+  RouteMode.bypassPrivate: 'bypassPrivate',
+  RouteMode.config: 'config',
+};
 
 _$ProxiesStyleImpl _$$ProxiesStyleImplFromJson(Map<String, dynamic> json) =>
     _$ProxiesStyleImpl(

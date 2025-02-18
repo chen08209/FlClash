@@ -30,6 +30,7 @@ class CoreState with _$CoreState {
     @JsonKey(name: "vpn-props") required VpnProps vpnProps,
     @JsonKey(name: "only-statistics-proxy") required bool onlyStatisticsProxy,
     @JsonKey(name: "current-profile-name") required String currentProfileName,
+    @JsonKey(name: "bypass-domain") @Default([]) List<String> bypassDomain,
   }) = _CoreState;
 
   factory CoreState.fromJson(Map<String, Object?> json) =>

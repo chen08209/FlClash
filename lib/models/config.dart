@@ -137,8 +137,6 @@ class VpnProps with _$VpnProps {
     @Default(true) bool systemProxy,
     @Default(false) bool ipv6,
     @Default(true) bool allowBypass,
-    @Default(RouteMode.bypassPrivate) RouteMode routeMode,
-    @JsonKey(name: "route-address") @Default([]) List<String> routeAddress,
   }) = _VpnProps;
 
   factory VpnProps.fromJson(Map<String, Object?>? json) =>
@@ -150,6 +148,7 @@ class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
     @Default(true) bool systemProxy,
     @Default(defaultBypassDomain) List<String> bypassDomain,
+    @Default(RouteMode.bypassPrivate) RouteMode routeMode,
   }) = _NetworkProps;
 
   factory NetworkProps.fromJson(Map<String, Object?>? json) =>

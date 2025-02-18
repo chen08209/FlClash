@@ -29,15 +29,14 @@ type AndroidVpnRawOptions struct {
 	AccessControl *AccessControl `json:"accessControl"`
 	AllowBypass   bool           `json:"allowBypass"`
 	SystemProxy   bool           `json:"systemProxy"`
-	RouteAddress  []string       `json:"routeAddress"`
 	Ipv6          bool           `json:"ipv6"`
-	BypassDomain  []string       `json:"bypassDomain"`
 }
 
 type State struct {
 	VpnProps            AndroidVpnRawOptions `json:"vpn-props"`
 	CurrentProfileName  string               `json:"current-profile-name"`
 	OnlyStatisticsProxy bool                 `json:"only-statistics-proxy"`
+	BypassDomain        []string             `json:"bypass-domain"`
 }
 
 var CurrentState = &State{
