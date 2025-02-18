@@ -1,4 +1,3 @@
-import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/cupertino.dart';
 
