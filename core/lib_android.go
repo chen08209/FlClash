@@ -221,11 +221,13 @@ func handleGetAndroidVpnOptions() string {
 		AccessControl:    state.CurrentState.VpnProps.AccessControl,
 		SystemProxy:      state.CurrentState.VpnProps.SystemProxy,
 		AllowBypass:      state.CurrentState.VpnProps.AllowBypass,
-		RouteAddress:     currentConfig.General.Tun.RouteAddressSet,
+		RouteAddress:     currentConfig.General.Tun.RouteAddress,
 		BypassDomain:     state.CurrentState.BypassDomain,
 		DnsServerAddress: state.GetDnsServerAddress(),
 	}
 	data, err := json.Marshal(options)
+	log.Infoln("[handleGetAndroidVpnOptions] %v", currentConfig.General.Tun.RouteAddress)
+	log.Infoln("[handleGetAndroidVpnOptions] %s", data)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return ""

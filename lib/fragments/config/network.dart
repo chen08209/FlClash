@@ -351,6 +351,7 @@ final networkItems = [
       title: "VPN",
       items: [
         const VpnSystemProxyItem(),
+        const BypassDomainItem(),
         const AllowBypassItem(),
         const Ipv6Item(),
       ],

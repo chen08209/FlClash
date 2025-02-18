@@ -1,5 +1,7 @@
 package state
 
+import "net/netip"
+
 var DefaultIpv4Address = "172.19.0.1/30"
 var DefaultDnsAddress = "172.19.0.2"
 var DefaultIpv6Address = "fdfe:dcba:9876::1/126"
@@ -11,7 +13,7 @@ type AndroidVpnOptions struct {
 	AllowBypass      bool           `json:"allowBypass"`
 	SystemProxy      bool           `json:"systemProxy"`
 	BypassDomain     []string       `json:"bypassDomain"`
-	RouteAddress     []string       `json:"routeAddress"`
+	RouteAddress     []netip.Prefix `json:"routeAddress"`
 	Ipv4Address      string         `json:"ipv4Address"`
 	Ipv6Address      string         `json:"ipv6Address"`
 	DnsServerAddress string         `json:"dnsServerAddress"`

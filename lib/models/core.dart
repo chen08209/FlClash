@@ -48,7 +48,7 @@ class AndroidVpnOptions with _$AndroidVpnOptions {
     required List<String> bypassDomain,
     required String ipv4Address,
     required String ipv6Address,
-    required List<String> routeAddress,
+    @Default([]) List<String> routeAddress,
     required String dnsServerAddress,
   }) = _AndroidVpnOptions;
 

@@ -181,6 +181,11 @@ class GlobalState {
       profileId: config.currentProfileId ?? "",
       config: patchClashConfig.copyWith(
         globalUa: patchClashConfig.globalUa ?? packageInfo.ua,
+        tun: patchClashConfig.tun.copyWith(
+          routeAddress: config.networkProps.routeMode == RouteMode.bypassPrivate
+              ? defaultBypassPrivateRouteAddress
+              : patchClashConfig.tun.routeAddress,
+        ),
       ),
       params: ConfigExtendedParams(
         isPatch: isPatch,

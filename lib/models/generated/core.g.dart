@@ -41,9 +41,10 @@ _$AndroidVpnOptionsImpl _$$AndroidVpnOptionsImplFromJson(
           .toList(),
       ipv4Address: json['ipv4Address'] as String,
       ipv6Address: json['ipv6Address'] as String,
-      routeAddress: (json['routeAddress'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
+      routeAddress: (json['routeAddress'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       dnsServerAddress: json['dnsServerAddress'] as String,
     );
 

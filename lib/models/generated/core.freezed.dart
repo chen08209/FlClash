@@ -506,7 +506,7 @@ class _$AndroidVpnOptionsImpl implements _AndroidVpnOptions {
       required final List<String> bypassDomain,
       required this.ipv4Address,
       required this.ipv6Address,
-      required final List<String> routeAddress,
+      final List<String> routeAddress = const [],
       required this.dnsServerAddress})
       : _bypassDomain = bypassDomain,
         _routeAddress = routeAddress;
@@ -538,6 +538,7 @@ class _$AndroidVpnOptionsImpl implements _AndroidVpnOptions {
   final String ipv6Address;
   final List<String> _routeAddress;
   @override
+  @JsonKey()
   List<String> get routeAddress {
     if (_routeAddress is EqualUnmodifiableListView) return _routeAddress;
     // ignore: implicit_dynamic_type
@@ -619,7 +620,7 @@ abstract class _AndroidVpnOptions implements AndroidVpnOptions {
       required final List<String> bypassDomain,
       required final String ipv4Address,
       required final String ipv6Address,
-      required final List<String> routeAddress,
+      final List<String> routeAddress,
       required final String dnsServerAddress}) = _$AndroidVpnOptionsImpl;
 
   factory _AndroidVpnOptions.fromJson(Map<String, dynamic> json) =
