@@ -305,23 +305,23 @@ class TrafficValue {
   String get showUnit => trafficValueShow.unit.name;
 
   TrafficValueShow get trafficValueShow {
-    if (_value > pow(1024, 4)) {
+    if (_value > pow(1024, 4) / 2) {
       return TrafficValueShow(
         value: (_value / pow(1024, 4)).fixed(),
         unit: TrafficUnit.TB,
       );
     }
-    if (_value > pow(1024, 3)) {
+    if (_value > pow(1024, 3) / 2) {
       return TrafficValueShow(
         value: (_value / pow(1024, 3)).fixed(),
         unit: TrafficUnit.GB,
       );
     }
-    if (_value > pow(1024, 2)) {
+    if (_value > pow(1024, 2) / 2) {
       return TrafficValueShow(
           value: (_value / pow(1024, 2)).fixed(), unit: TrafficUnit.MB);
     }
-    if (_value > pow(1024, 1)) {
+    if (_value > pow(1024, 1) / 2) {
       return TrafficValueShow(
         value: (_value / pow(1024, 1)).fixed(),
         unit: TrafficUnit.KB,
