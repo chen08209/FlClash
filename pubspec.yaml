@@ -53,15 +53,20 @@ dependencies:
   connectivity_plus: ^6.1.0
   screen_retriever: ^0.2.0
   defer_pointer: ^0.0.2
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
   ffigen: ^15.0.0
   json_serializable: ^6.7.1
-  build_runner: ^2.4.9
+  build_runner: ^2.4.13
   args: ^2.4.2
   freezed: ^2.5.1
+  riverpod_generator: ^2.6.3
+  custom_lint: ^0.7.0
+  riverpod_lint: ^2.6.3
 
 flutter:
   uses-material-design: true
