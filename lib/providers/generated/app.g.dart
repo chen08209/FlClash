@@ -6,7 +6,7 @@ part of '../app.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$logsHash() => r'c1050fd080d7f0c8bcf788609cb01c0cfd3ce055';
+String _$logsHash() => r'816008c2728322832e6e0a64cb45efcb45cf509a';
 
 /// See also [Logs].
 @ProviderFor(Logs)
@@ -20,7 +20,68 @@ final logsProvider = AutoDisposeNotifierProvider<Logs, FixedList<Log>>.internal(
 );
 
 typedef _$Logs = AutoDisposeNotifier<FixedList<Log>>;
-String _$trafficsHash() => r'e15bb1c1d06bfc469b23c1f6abf504f2bccff8d7';
+String _$requestsHash() => r'69e3f3b9bc8aaeb37bc28a7c4f35584fb05e6999';
+
+/// See also [Requests].
+@ProviderFor(Requests)
+final requestsProvider =
+    AutoDisposeNotifierProvider<Requests, FixedList<Connection>>.internal(
+  Requests.new,
+  name: r'requestsProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$requestsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$Requests = AutoDisposeNotifier<FixedList<Connection>>;
+String _$providersHash() => r'dfd39d193436896fbaa97e74d173828298695328';
+
+/// See also [Providers].
+@ProviderFor(Providers)
+final providersProvider =
+    AutoDisposeNotifierProvider<Providers, List<ExternalProvider>>.internal(
+  Providers.new,
+  name: r'providersProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$providersHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$Providers = AutoDisposeNotifier<List<ExternalProvider>>;
+String _$packagesHash() => r'60de4847bfdba57b679629d1063c0ddc9404f038';
+
+/// See also [Packages].
+@ProviderFor(Packages)
+final packagesProvider =
+    AutoDisposeNotifierProvider<Packages, List<Package>>.internal(
+  Packages.new,
+  name: r'packagesProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$packagesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$Packages = AutoDisposeNotifier<List<Package>>;
+String _$appBrightnessHash() => r'1f2bec4a994b361a4a7f2dc62b3d861371175400';
+
+/// See also [AppBrightness].
+@ProviderFor(AppBrightness)
+final appBrightnessProvider =
+    AutoDisposeNotifierProvider<AppBrightness, Brightness?>.internal(
+  AppBrightness.new,
+  name: r'appBrightnessProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$appBrightnessHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$AppBrightness = AutoDisposeNotifier<Brightness?>;
+String _$trafficsHash() => r'17e5fe87e89f4fdc6a40c2ba47660a4094c9ff26';
 
 /// See also [Traffics].
 @ProviderFor(Traffics)
@@ -151,7 +212,36 @@ final sortNumProvider = AutoDisposeNotifierProvider<SortNum, int>.internal(
 );
 
 typedef _$SortNum = AutoDisposeNotifier<int>;
-String _$groupsHash() => r'33ff19af3f717d15a7a49ba9fbec898eb6d5b5fb';
+String _$checkIpNumHash() => r'f8fea14689979efd0be66e1a6dbc43ebe351c50c';
+
+/// See also [CheckIpNum].
+@ProviderFor(CheckIpNum)
+final checkIpNumProvider =
+    AutoDisposeNotifierProvider<CheckIpNum, int>.internal(
+  CheckIpNum.new,
+  name: r'checkIpNumProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$checkIpNumHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$CheckIpNum = AutoDisposeNotifier<int>;
+String _$versionHash() => r'6ed921ee2962adafdc87b59243ec50c67c91b2b1';
+
+/// See also [Version].
+@ProviderFor(Version)
+final versionProvider = AutoDisposeNotifierProvider<Version, int>.internal(
+  Version.new,
+  name: r'versionProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$versionHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$Version = AutoDisposeNotifier<int>;
+String _$groupsHash() => r'cc3629eeb3aef4effe8aadb66aba7002f533ec78';
 
 /// See also [Groups].
 @ProviderFor(Groups)
@@ -166,5 +256,38 @@ final groupsProvider =
 );
 
 typedef _$Groups = AutoDisposeNotifier<List<Group>>;
+String _$selectedDataSourceHash() =>
+    r'1ab7893bf34eaa084d6bddc4809595c442eae9a0';
+
+/// See also [SelectedDataSource].
+@ProviderFor(SelectedDataSource)
+final selectedDataSourceProvider = AutoDisposeNotifierProvider<
+    SelectedDataSource, Map<String, String>>.internal(
+  SelectedDataSource.new,
+  name: r'selectedDataSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$selectedDataSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$SelectedDataSource = AutoDisposeNotifier<Map<String, String>>;
+String _$delayDataSourceHash() => r'ac291a99259ad7b5d3c0c4a92cbfe18a283f0751';
+
+/// See also [DelayDataSource].
+@ProviderFor(DelayDataSource)
+final delayDataSourceProvider =
+    AutoDisposeNotifierProvider<DelayDataSource, DelayMap>.internal(
+  DelayDataSource.new,
+  name: r'delayDataSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$delayDataSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$DelayDataSource = AutoDisposeNotifier<DelayMap>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
