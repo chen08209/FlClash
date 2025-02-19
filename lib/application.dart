@@ -7,9 +7,11 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import 'controller.dart';
@@ -24,36 +26,36 @@ runAppWithPreferences(
 }) {
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider<Config>(
-        create: (_) => config,
-      ),
-      ChangeNotifierProvider<AppFlowingState>(
-        create: (_) => appFlowingState,
-      ),
-      ChangeNotifierProxyProvider<Config, AppState>(
-        create: (_) => appState,
-        update: (_, config, appState) {
-          appState?.mode = config.patchClashConfig.mode;
-          appState?.selectedMap = config.currentSelectedMap;
-          return appState!;
-        },
-      )
+      // ChangeNotifierProvider<Config>(
+      //   create: (_) => config,
+      // ),
+      // ChangeNotifierProvider<AppFlowingState>(
+      //   create: (_) => appFlowingState,
+      // ),
+      // ChangeNotifierProxyProvider<Config, AppState>(
+      //   create: (_) => appState,
+      //   update: (_, config, appState) {
+      //     appState?.mode = config.patchClashConfig.mode;
+      //     appState?.selectedMap = config.currentSelectedMap;
+      //     return appState!;
+      //   },
+      // )
     ],
     child: child,
   ));
 }
 
-class Application extends StatefulWidget {
+class Application extends ConsumerStatefulWidget {
   const Application({
     super.key,
   });
 
   @override
-  State<Application> createState() => ApplicationState();
+  ConsumerState<Application> createState() => ApplicationState();
 }
 
-class ApplicationState extends State<Application> {
-  late SystemColorSchemes systemColorSchemes;
+class ApplicationState extends ConsumerState<Application> {
+  late ColorSchemes systemColorSchemes;
   Timer? _autoUpdateGroupTaskTimer;
   Timer? _autoUpdateProfilesTaskTimer;
 
@@ -69,7 +71,7 @@ class ApplicationState extends State<Application> {
   ColorScheme _getAppColorScheme({
     required Brightness brightness,
     int? primaryColor,
-    required SystemColorSchemes systemColorSchemes,
+    required ColorSchemes systemColorSchemes,
   }) {
     if (primaryColor != null) {
       return ColorScheme.fromSeed(
@@ -77,7 +79,7 @@ class ApplicationState extends State<Application> {
         brightness: brightness,
       );
     } else {
-      return systemColorSchemes.getSystemColorSchemeForBrightness(brightness);
+      return systemColorSchemes.getColorSchemeForBrightness(brightness);
     }
   }
 
@@ -163,7 +165,7 @@ class ApplicationState extends State<Application> {
     ColorScheme? lightDynamic,
     ColorScheme? darkDynamic,
   ) {
-    systemColorSchemes = SystemColorSchemes(
+    systemColorSchemes = ColorSchemes(
       lightColorScheme: lightDynamic,
       darkColorScheme: darkDynamic,
     );

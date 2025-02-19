@@ -13,7 +13,7 @@ class AppState with ChangeNotifier {
   bool _isInit;
   VersionInfo? _versionInfo;
   String _currentLabel;
-  SystemColorSchemes _systemColorSchemes;
+  ColorSchemes _systemColorSchemes;
   num _sortNum;
   Mode _mode;
   DelayMap _delayMap;
@@ -48,7 +48,7 @@ class AppState with ChangeNotifier {
         _groups = [],
         _providers = [],
         _packages = [],
-        _systemColorSchemes = const SystemColorSchemes(),
+        _systemColorSchemes = const ColorSchemes(),
         _version = version;
 
   String get currentLabel => _currentLabel;
@@ -141,9 +141,9 @@ class AppState with ChangeNotifier {
     notifyListeners();
   }
 
-  SystemColorSchemes get systemColorSchemes => _systemColorSchemes;
+  ColorSchemes get systemColorSchemes => _systemColorSchemes;
 
-  set systemColorSchemes(SystemColorSchemes value) {
+  set systemColorSchemes(ColorSchemes value) {
     if (_systemColorSchemes != value) {
       _systemColorSchemes = value;
       notifyListeners();

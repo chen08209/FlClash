@@ -238,7 +238,7 @@ class AppController {
     await globalState.updateGroups(appState);
   }
 
-  updateSystemColorSchemes(SystemColorSchemes systemColorSchemes) {
+  updateSystemColorSchemes(ColorSchemes systemColorSchemes) {
     appState.systemColorSchemes = systemColorSchemes;
   }
 

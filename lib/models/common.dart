@@ -301,7 +301,8 @@ class TrafficValue {
 
   String get show => "$showValue $showUnit";
 
-  String get shortShow => "${trafficValueShow.value.fixed(decimals: 1)} $showUnit";
+  String get shortShow =>
+      "${trafficValueShow.value.fixed(decimals: 1)} $showUnit";
 
   String get showValue => trafficValueShow.value.fixed();
 
@@ -352,27 +353,26 @@ class TrafficValue {
   int get hashCode => _value.hashCode;
 }
 
-@immutable
-class SystemColorSchemes {
-  final ColorScheme? lightColorScheme;
-  final ColorScheme? darkColorScheme;
+@freezed
+class ColorSchemes with _$ColorSchemes {
+  const factory ColorSchemes({
+    ColorScheme? lightColorScheme,
+    ColorScheme? darkColorScheme,
+  }) = _ColorSchemes;
+}
 
-  const SystemColorSchemes({
-    this.lightColorScheme,
-    this.darkColorScheme,
-  });
-
-  getSystemColorSchemeForBrightness(Brightness? brightness) {
+extension ColorSchemesExt on ColorSchemes{
+  ColorScheme getColorSchemeForBrightness(Brightness? brightness) {
     if (brightness == Brightness.dark) {
       return darkColorScheme != null
           ? ColorScheme.fromSeed(
-              seedColor: darkColorScheme!.primary,
-              brightness: Brightness.dark,
-            )
+        seedColor: darkColorScheme!.primary,
+        brightness: Brightness.dark,
+      )
           : ColorScheme.fromSeed(
-              seedColor: defaultPrimaryColor,
-              brightness: Brightness.dark,
-            );
+        seedColor: defaultPrimaryColor,
+        brightness: Brightness.dark,
+      );
     }
     return lightColorScheme != null
         ? ColorScheme.fromSeed(seedColor: lightColorScheme!.primary)

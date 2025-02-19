@@ -2450,6 +2450,155 @@ abstract class _Group implements Group {
       throw _privateConstructorUsedError;
 }
 
+/// @nodoc
+mixin _$ColorSchemes {
+  ColorScheme? get lightColorScheme => throw _privateConstructorUsedError;
+  ColorScheme? get darkColorScheme => throw _privateConstructorUsedError;
+
+  /// Create a copy of ColorSchemes
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ColorSchemesCopyWith<ColorSchemes> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ColorSchemesCopyWith<$Res> {
+  factory $ColorSchemesCopyWith(
+          ColorSchemes value, $Res Function(ColorSchemes) then) =
+      _$ColorSchemesCopyWithImpl<$Res, ColorSchemes>;
+  @useResult
+  $Res call({ColorScheme? lightColorScheme, ColorScheme? darkColorScheme});
+}
+
+/// @nodoc
+class _$ColorSchemesCopyWithImpl<$Res, $Val extends ColorSchemes>
+    implements $ColorSchemesCopyWith<$Res> {
+  _$ColorSchemesCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ColorSchemes
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? lightColorScheme = freezed,
+    Object? darkColorScheme = freezed,
+  }) {
+    return _then(_value.copyWith(
+      lightColorScheme: freezed == lightColorScheme
+          ? _value.lightColorScheme
+          : lightColorScheme // ignore: cast_nullable_to_non_nullable
+              as ColorScheme?,
+      darkColorScheme: freezed == darkColorScheme
+          ? _value.darkColorScheme
+          : darkColorScheme // ignore: cast_nullable_to_non_nullable
+              as ColorScheme?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ColorSchemesImplCopyWith<$Res>
+    implements $ColorSchemesCopyWith<$Res> {
+  factory _$$ColorSchemesImplCopyWith(
+          _$ColorSchemesImpl value, $Res Function(_$ColorSchemesImpl) then) =
+      __$$ColorSchemesImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({ColorScheme? lightColorScheme, ColorScheme? darkColorScheme});
+}
+
+/// @nodoc
+class __$$ColorSchemesImplCopyWithImpl<$Res>
+    extends _$ColorSchemesCopyWithImpl<$Res, _$ColorSchemesImpl>
+    implements _$$ColorSchemesImplCopyWith<$Res> {
+  __$$ColorSchemesImplCopyWithImpl(
+      _$ColorSchemesImpl _value, $Res Function(_$ColorSchemesImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ColorSchemes
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? lightColorScheme = freezed,
+    Object? darkColorScheme = freezed,
+  }) {
+    return _then(_$ColorSchemesImpl(
+      lightColorScheme: freezed == lightColorScheme
+          ? _value.lightColorScheme
+          : lightColorScheme // ignore: cast_nullable_to_non_nullable
+              as ColorScheme?,
+      darkColorScheme: freezed == darkColorScheme
+          ? _value.darkColorScheme
+          : darkColorScheme // ignore: cast_nullable_to_non_nullable
+              as ColorScheme?,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ColorSchemesImpl implements _ColorSchemes {
+  const _$ColorSchemesImpl({this.lightColorScheme, this.darkColorScheme});
+
+  @override
+  final ColorScheme? lightColorScheme;
+  @override
+  final ColorScheme? darkColorScheme;
+
+  @override
+  String toString() {
+    return 'ColorSchemes(lightColorScheme: $lightColorScheme, darkColorScheme: $darkColorScheme)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ColorSchemesImpl &&
+            (identical(other.lightColorScheme, lightColorScheme) ||
+                other.lightColorScheme == lightColorScheme) &&
+            (identical(other.darkColorScheme, darkColorScheme) ||
+                other.darkColorScheme == darkColorScheme));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, lightColorScheme, darkColorScheme);
+
+  /// Create a copy of ColorSchemes
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ColorSchemesImplCopyWith<_$ColorSchemesImpl> get copyWith =>
+      __$$ColorSchemesImplCopyWithImpl<_$ColorSchemesImpl>(this, _$identity);
+}
+
+abstract class _ColorSchemes implements ColorSchemes {
+  const factory _ColorSchemes(
+      {final ColorScheme? lightColorScheme,
+      final ColorScheme? darkColorScheme}) = _$ColorSchemesImpl;
+
+  @override
+  ColorScheme? get lightColorScheme;
+  @override
+  ColorScheme? get darkColorScheme;
+
+  /// Create a copy of ColorSchemes
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ColorSchemesImplCopyWith<_$ColorSchemesImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 HotKeyAction _$HotKeyActionFromJson(Map<String, dynamic> json) {
   return _HotKeyAction.fromJson(json);
 }
