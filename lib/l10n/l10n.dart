@@ -265,6 +265,16 @@ class AppLocalizations {
     );
   }
 
+    /// `Russian`
+  String get ru {
+    return Intl.message(
+      'Russian',
+      name: 'ru',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Theme`
   String get theme {
     return Intl.message('Theme', name: 'theme', desc: '', args: []);
@@ -2678,6 +2688,7 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
     return const <Locale>[
       Locale.fromSubtags(languageCode: 'en'),
       Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),
+      Locale.fromSubtags(languageCode: 'ru'),
     ];
   }
 
