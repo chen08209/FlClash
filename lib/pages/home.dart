@@ -10,36 +10,51 @@ import '../widgets/widgets.dart';
 
 typedef OnSelected = void Function(int index);
 
+class NavigationOffsetNotifier extends ChangeNotifier {
+  Offset _offset = Offset.zero;
+
+  Offset get offset => _offset;
+
+  void updateOffset(BuildContext context, ViewMode viewMode) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final size = context.size;
+      final newOffset = viewMode == ViewMode.mobile
+          ? Offset(0, -(size?.height ?? 0))
+          : Offset(size?.width ?? 0, 0);
+
+      if (_offset != newOffset) {
+        _offset = newOffset;
+        notifyListeners();
+      }
+    });
+  }
+}
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  _updatePageController(List<NavigationItem> navigationItems) {
+  void _updatePageController(List<NavigationItem> navigationItems) {
     final currentLabel = globalState.appController.appState.currentLabel;
-    final index = navigationItems.lastIndexWhere(
-      (element) => element.label == currentLabel,
-    );
+    final index = navigationItems.lastIndexWhere((e) => e.label == currentLabel);
     final currentIndex = index == -1 ? 0 : index;
-    if (globalState.pageController != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        globalState.appController.toPage(
-          currentIndex,
-          hasAnimate: true,
-        );
-      });
-    } else {
-      globalState.pageController = PageController(
+
+    if (globalState.pageController?.hasClients != true ||
+        globalState.pageController?.initialPage != currentIndex) {
+      globalState.pageController ??= PageController(
         initialPage: currentIndex,
         keepPage: true,
       );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        globalState.appController.toPage(currentIndex, hasAnimate: true);
+      });
     }
   }
 
   Widget _buildPageView() {
     return Selector<AppState, List<NavigationItem>>(
       selector: (_, appState) => appState.currentNavigationItems,
-      shouldRebuild: (prev, next) {
-        return prev.length != next.length;
-      },
+      shouldRebuild: (prev, next) => prev.length != next.length,
       builder: (_, navigationItems, __) {
         _updatePageController(navigationItems);
         return PageView.builder(
@@ -47,11 +62,11 @@ class HomePage extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: navigationItems.length,
           itemBuilder: (_, index) {
-            final navigationItem = navigationItems[index];
+            final item = navigationItems[index];
             return KeepScope(
-              keep: navigationItem.keep,
-              key: Key(navigationItem.label),
-              child: navigationItem.fragment,
+              keep: item.keep,
+              key: Key(item.label),
+              child: item.fragment,
             );
           },
         );
@@ -61,47 +76,36 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BackScope(
-      child: Selector2<AppState, Config, HomeState>(
-        selector: (_, appState, config) {
-          return HomeState(
+    return ChangeNotifierProvider(
+      create: (_) => NavigationOffsetNotifier(),
+      child: BackScope(
+        child: Selector2<AppState, Config, HomeState>(
+          selector: (_, appState, config) => HomeState(
             currentLabel: appState.currentLabel,
             navigationItems: appState.currentNavigationItems,
             viewMode: appState.viewMode,
             locale: config.appSetting.locale,
-          );
-        },
-        shouldRebuild: (prev, next) {
-          return prev != next;
-        },
-        builder: (_, state, child) {
-          final viewMode = state.viewMode;
-          final navigationItems = state.navigationItems;
-          final currentLabel = state.currentLabel;
-          final index = navigationItems.lastIndexWhere(
-            (element) => element.label == currentLabel,
-          );
-          final currentIndex = index == -1 ? 0 : index;
-          final navigationBar = CommonNavigationBar(
-            viewMode: viewMode,
-            navigationItems: navigationItems,
-            currentIndex: currentIndex,
-          );
-          final bottomNavigationBar =
-              viewMode == ViewMode.mobile ? navigationBar : null;
-          final sideNavigationBar =
-              viewMode != ViewMode.mobile ? navigationBar : null;
-          return CommonScaffold(
-            key: globalState.homeScaffoldKey,
-            title: Intl.message(
-              currentLabel,
-            ),
-            sideNavigationBar: sideNavigationBar,
-            body: child!,
-            bottomNavigationBar: bottomNavigationBar,
-          );
-        },
-        child: _buildPageView(),
+          ),
+          shouldRebuild: (prev, next) => prev != next,
+          builder: (_, state, child) {
+            final navigationBar = CommonNavigationBar(
+              viewMode: state.viewMode,
+              navigationItems: state.navigationItems,
+              currentIndex: state.navigationItems.indexWhere(
+                (e) => e.label == state.currentLabel,
+              ).clamp(0, state.navigationItems.length - 1),
+            );
+
+            return CommonScaffold(
+              key: globalState.homeScaffoldKey,
+              title: Intl.message(state.currentLabel),
+              sideNavigationBar: state.viewMode != ViewMode.mobile ? navigationBar : null,
+              body: child!,
+              bottomNavigationBar: state.viewMode == ViewMode.mobile ? navigationBar : null,
+            );
+          },
+          child: _buildPageView(),
+        ),
       ),
     );
   }
@@ -119,26 +123,10 @@ class CommonNavigationBar extends StatelessWidget {
     required this.currentIndex,
   });
 
-  _updateSafeMessageOffset(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final size = context.size;
-      if (viewMode == ViewMode.mobile) {
-        globalState.safeMessageOffsetNotifier.value = Offset(
-          0,
-          -(size?.height ?? 0),
-        );
-      } else {
-        globalState.safeMessageOffsetNotifier.value = Offset(
-          size?.width ?? 0,
-          0,
-        );
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    _updateSafeMessageOffset(context);
+    context.read<NavigationOffsetNotifier>().updateOffset(context, viewMode);
+
     if (viewMode == ViewMode.mobile) {
       return NavigationBar(
         destinations: navigationItems
@@ -153,6 +141,7 @@ class CommonNavigationBar extends StatelessWidget {
         selectedIndex: currentIndex,
       );
     }
+
     return Material(
       color: context.colorScheme.surfaceContainer,
       child: Column(
@@ -163,60 +152,58 @@ class CommonNavigationBar extends StatelessWidget {
                 child: Selector<Config, bool>(
                   selector: (_, config) => config.appSetting.showLabel,
                   builder: (_, showLabel, __) {
-                    return NavigationRail(
-                      backgroundColor: context.colorScheme.surfaceContainer,
-                      selectedIconTheme: IconThemeData(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                      unselectedIconTheme: IconThemeData(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                      selectedLabelTextStyle:
-                          context.textTheme.labelLarge!.copyWith(
-                        color: context.colorScheme.onSurface,
-                      ),
-                      unselectedLabelTextStyle:
-                          context.textTheme.labelLarge!.copyWith(
-                        color: context.colorScheme.onSurface,
-                      ),
-                      destinations: navigationItems
-                          .map(
-                            (e) => NavigationRailDestination(
-                              icon: e.icon,
-                              label: Text(
-                                Intl.message(e.label),
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: NavigationRail(
+                        key: ValueKey(currentIndex),
+                        backgroundColor: context.colorScheme.surfaceContainer,
+                        selectedIconTheme: IconThemeData(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                        unselectedIconTheme: IconThemeData(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                        selectedLabelTextStyle: context.textTheme.labelLarge!.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
+                        unselectedLabelTextStyle: context.textTheme.labelLarge!.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
+                        destinations: navigationItems
+                            .map(
+                              (e) => NavigationRailDestination(
+                                icon: e.icon,
+                                label: Text(Intl.message(e.label)),
                               ),
-                            ),
-                          )
-                          .toList(),
-                      onDestinationSelected: globalState.appController.toPage,
-                      extended: false,
-                      selectedIndex: currentIndex,
-                      labelType: showLabel
-                          ? NavigationRailLabelType.all
-                          : NavigationRailLabelType.none,
+                            )
+                            .toList(),
+                        onDestinationSelected: globalState.appController.toPage,
+                        extended: false,
+                        selectedIndex: currentIndex,
+                        labelType: showLabel
+                            ? NavigationRailLabelType.all
+                            : NavigationRailLabelType.none,
+                      ),
                     );
                   },
                 ),
               ),
             ),
           ),
-          const SizedBox(
-            height: 16,
+          const SizedBox(height: 16),
+          Tooltip(
+            message: Intl.message('Toggle Labels'),
+            child: IconButton(
+              onPressed: () {
+                final config = globalState.appController.config;
+                config.appSetting = config.appSetting.copyWith(
+                  showLabel: !config.appSetting.showLabel,
+                );
+              },
+              icon: const Icon(Icons.menu),
+            ),
           ),
-          IconButton(
-            onPressed: () {
-              final config = globalState.appController.config;
-              final appSetting = config.appSetting;
-              config.appSetting = appSetting.copyWith(
-                showLabel: !appSetting.showLabel,
-              );
-            },
-            icon: const Icon(Icons.menu),
-          ),
-          const SizedBox(
-            height: 16,
-          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
