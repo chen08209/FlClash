@@ -73,11 +73,21 @@ jobs:
 
       - name: 安装 flutter_distributor
         run: |
-          dart pub global activate -s path ./plugins/flutter_distributor/packages/flutter_distributor
+          # 清理 PUB_CACHE，避免缓存问题
+          rm -rf $HOME/.pub-cache
+          mkdir -p $HOME/.pub-cache
+          # 优先尝试本地路径安装
+          echo "尝试从本地路径安装 flutter_distributor..."
+          dart pub global activate -s path ./plugins/flutter_distributor/packages/flutter_distributor || {
+            echo "本地路径安装失败，尝试从 Pub 安装最新版本..."
+            dart pub global activate flutter_distributor
+          }
+          # 验证安装
           echo "安装 flutter_distributor 完成，版本："
-          dart pub global run flutter_distributor --version || echo "错误：flutter_distributor 安装失败"
+          $HOME/.pub-cache/bin/flutter_distributor --version || echo "错误：flutter_distributor 安装失败"
         env:
-          PATH: "${{ runner.os == 'Windows' && 'C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin' || '$HOME/.pub-cache/bin' }}:$PATH"
+          PUB_CACHE: $HOME/.pub-cache
+          PATH: $HOME/.pub-cache/bin:$PATH
 
       - name: 构建应用
         run: |
