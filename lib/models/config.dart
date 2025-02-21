@@ -6,18 +6,18 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'models.dart'; // 确保导入 models.dart 以获取 SelectedMap
+import 'models.dart';
 
 part 'generated/config.freezed.dart';
 part 'generated/config.g.dart';
 
-/// 默认 API 基础地址，用于与服务器通信。
+/// 默认 API 基础地址。
 const String defaultApiBaseUrl = "https://api.ppanel.dev";
 
-/// 备用域名，用于解析 TXT DNS 记录获取多个备用 API 地址。
+/// 解析 TXT DNS 记录，获取备用 API 地址。
 const String fallbackDomain = "example.com";
 
-/// 多个公共 DNS 服务地址，用于解析 TXT 记录。
+/// 公共 DNS 服务地址，解析 TXT 记录。
 const List<String> dnsServices = [
   "https://1.1.1.1/dns-query", // Cloudflare DNS
   "https://dns.google/resolve", // Google Public DNS
