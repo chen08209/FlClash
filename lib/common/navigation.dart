@@ -60,10 +60,18 @@ class Navigation {
             ? [NavigationItemMode.desktop, NavigationItemMode.more]
             : [],
       ),
+      // 隐藏 tools 导航项（不删除，仅移除 modes 使其不显示）
       const NavigationItem(
         icon: Icon(Icons.construction),
         label: "tools",
         fragment: ToolsFragment(),
+        modes: [],
+      ),
+      // 新增个人中心导航项，默认桌面端和移动端均显示
+      const NavigationItem(
+        icon: Icon(Icons.person),
+        label: "个人中心",
+        fragment: PersonalCenterFragment(),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
     ];
