@@ -8,6 +8,7 @@ import 'package:fl_clash/services/api_service.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // 添加导入以使用 Clipboard 和 ClipboardData
 import 'package:provider/provider.dart';
 
 // 配置文件管理页面，展示和管理 Clash 配置文件
