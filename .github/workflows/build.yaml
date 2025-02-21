@@ -49,6 +49,7 @@ jobs:
       - name: 设置 Android 签名（仅 Android）
         if: startsWith(matrix.platform,'android')
         run: |
+          if [ -z "${{ secrets.KEYSTORE }}" ]; then echo "错误：KEYSTORE 未设置"; exit 1; fi
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
           echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
@@ -57,7 +58,7 @@ jobs:
       - name: 设置 Go 环境
         uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          go-version: '1.22'  # 指定具体版本，避免不一致
           cache-dependency-path: |
             core/go.sum
 
@@ -73,9 +74,15 @@ jobs:
 
       - name: 安装 flutter_distributor
         run: |
-          # 清理 PUB_CACHE，避免缓存问题
-          rm -rf $HOME/.pub-cache
-          mkdir -p $HOME/.pub-cache
+          # 确保基础命令可用
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            export PATH="$PATH;C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin"
+          else
+            export PATH="/usr/bin:/bin:$HOME/.pub-cache/bin:$PATH"
+          fi
+          # 清理 PUB_CACHE
+          echo "清理 PUB_CACHE..."
+          rm -rf "$HOME/.pub-cache" && mkdir -p "$HOME/.pub-cache" || echo "警告：无法清理 PUB_CACHE，可能无需清理"
           # 优先尝试本地路径安装
           echo "尝试从本地路径安装 flutter_distributor..."
           dart pub global activate -s path ./plugins/flutter_distributor/packages/flutter_distributor || {
@@ -84,25 +91,28 @@ jobs:
           }
           # 验证安装
           echo "安装 flutter_distributor 完成，版本："
-          $HOME/.pub-cache/bin/flutter_distributor --version || echo "错误：flutter_distributor 安装失败"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            "C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin\\flutter_distributor" --version || (echo "错误：flutter_distributor 安装失败" && exit 1)
+          else
+            "$HOME/.pub-cache/bin/flutter_distributor" --version || (echo "错误：flutter_distributor 安装失败" && exit 1)
+          fi
         env:
           PUB_CACHE: $HOME/.pub-cache
-          PATH: $HOME/.pub-cache/bin:$PATH
 
       - name: 构建应用
         run: |
-          # 设置 PATH 以包含 flutter_distributor
+          # 设置 PATH
           if [ "${{ runner.os }}" = "Windows" ]; then
             export PATH="$PATH;C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin"
           else
-            export PATH="$HOME/.pub-cache/bin:$PATH"
+            export PATH="/usr/bin:/bin:$HOME/.pub-cache/bin:$PATH"
           fi
-          # 执行构建命令并捕获日志
+          # 执行构建
           echo "开始构建 ${{ matrix.platform }} (${{ matrix.arch }}) ..."
           dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} > build.log 2>&1 || (cat build.log && exit 1)
           echo "构建日志："
           cat build.log
-          # 检查构建输出目录
+          # 检查输出
           echo "构建完成，正在检查输出目录 ./dist 的内容："
           if [ "${{ runner.os }}" = "Windows" ]; then
             powershell -Command "Get-ChildItem ./dist -ErrorAction SilentlyContinue; if ($?) { Write-Host '构建成功' } else { Write-Host '错误：构建失败，./dist 目录不存在或为空' }"
