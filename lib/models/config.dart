@@ -1,3 +1,4 @@
+// lib/models/config.dart
 // ignore_for_file: invalid_annotation_target
 
 import 'dart:io';
@@ -10,7 +11,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'models.dart';
 
 part 'generated/config.freezed.dart';
-
 part 'generated/config.g.dart';
 
 final defaultAppSetting = const AppSetting().copyWith(
@@ -218,6 +218,8 @@ class Config extends ChangeNotifier {
   bool _overrideDns;
   List<HotKeyAction> _hotKeyActions;
   ProxiesStyle _proxiesStyle;
+  bool _isAuthenticated; // 新增：认证状态
+  String? _token; // 新增：认证 token
 
   Config()
       : _profiles = [],
@@ -230,7 +232,9 @@ class Config extends ChangeNotifier {
         _appSetting = defaultAppSetting,
         _hotKeyActions = [],
         _proxiesStyle = defaultProxiesStyle,
-        _themeProps = defaultThemeProps;
+        _themeProps = defaultThemeProps,
+        _isAuthenticated = false,
+        _token = null;
 
   @JsonKey(fromJson: AppSetting.realFromJson)
   AppSetting get appSetting => _appSetting;
@@ -462,6 +466,26 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: false)
+  bool get isAuthenticated => _isAuthenticated;
+
+  set isAuthenticated(bool value) {
+    if (_isAuthenticated != value) {
+      _isAuthenticated = value;
+      notifyListeners();
+    }
+  }
+
+  @JsonKey(defaultValue: null)
+  String? get token => _token;
+
+  set token(String? value) {
+    if (_token != value) {
+      _token = value;
+      notifyListeners();
+    }
+  }
+
   updateOrAddHotKeyAction(HotKeyAction hotKeyAction) {
     final index =
         _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
@@ -499,6 +523,8 @@ class Config extends ChangeNotifier {
       _overrideDns = config._overrideDns;
       _networkProps = config._networkProps;
       _hotKeyActions = config._hotKeyActions;
+      _isAuthenticated = config._isAuthenticated;
+      _token = config._token;
     }
     notifyListeners();
   }
@@ -513,6 +539,6 @@ class Config extends ChangeNotifier {
 
   @override
   String toString() {
-    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle}';
+    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token}';
   }
 }
