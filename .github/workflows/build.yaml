@@ -71,16 +71,33 @@ jobs:
       - name: 获取 Flutter 依赖
         run: flutter pub get
 
+      - name: 安装 flutter_distributor
+        run: |
+          dart pub global activate -s path ./plugins/flutter_distributor/packages/flutter_distributor
+          echo "安装 flutter_distributor 完成，版本："
+          dart pub global run flutter_distributor --version || echo "错误：flutter_distributor 安装失败"
+        env:
+          PATH: "${{ runner.os == 'Windows' && 'C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin' || '$HOME/.pub-cache/bin' }}:$PATH"
+
       - name: 构建应用
         run: |
-          # 执行构建命令
-          dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
-          # 检查构建输出目录并打印日志，方便调试
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            powershell -Command "Write-Host '构建完成，正在检查输出目录 ./dist 的内容：'; Get-ChildItem ./dist -ErrorAction SilentlyContinue; if ($?) { Write-Host '构建成功' } else { Write-Host '错误：构建失败，./dist 目录不存在或为空' }"
+          # 设置 PATH 以包含 flutter_distributor
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            export PATH="$PATH;C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin"
           else
-            echo "构建完成，正在检查输出目录 ./dist 的内容："
-            ls -la ./dist || echo "错误：构建失败，./dist 目录不存在或为空"
+            export PATH="$HOME/.pub-cache/bin:$PATH"
+          fi
+          # 执行构建命令并捕获日志
+          echo "开始构建 ${{ matrix.platform }} (${{ matrix.arch }}) ..."
+          dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} > build.log 2>&1 || (cat build.log && exit 1)
+          echo "构建日志："
+          cat build.log
+          # 检查构建输出目录
+          echo "构建完成，正在检查输出目录 ./dist 的内容："
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            powershell -Command "Get-ChildItem ./dist -ErrorAction SilentlyContinue; if ($?) { Write-Host '构建成功' } else { Write-Host '错误：构建失败，./dist 目录不存在或为空' }"
+          else
+            ls -la ./dist && echo "构建成功" || echo "错误：构建失败，./dist 目录不存在或为空"
           fi
         env:
           FLUTTER_ROOT: C:\hostedtoolcache\windows\flutter\stable-3.24.5-x64
