@@ -27,8 +27,7 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.intranetIp,
 ];
 
-List<DashboardWidget> dashboardWidgetsRealFormJson(
-    List<dynamic>? dashboardWidgets) {
+List<DashboardWidget> dashboardWidgetsRealFormJson(List<dynamic>? dashboardWidgets) {
   try {
     return dashboardWidgets
             ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e))
@@ -61,12 +60,10 @@ class AppSetting with _$AppSetting {
     @Default(false) bool hidden,
   }) = _AppSetting;
 
-  factory AppSetting.fromJson(Map<String, Object?> json) =>
-      _$AppSettingFromJson(json);
+  factory AppSetting.fromJson(Map<String, Object?> json) => _$AppSettingFromJson(json);
 
   factory AppSetting.realFromJson(Map<String, Object?>? json) {
-    final appSetting =
-        json == null ? defaultAppSetting : AppSetting.fromJson(json);
+    final appSetting = json == null ? defaultAppSetting : AppSetting.fromJson(json);
     return appSetting.copyWith(
       isAnimateToPage: system.isDesktop ? false : appSetting.isAnimateToPage,
     );
@@ -83,8 +80,7 @@ class AccessControl with _$AccessControl {
     @Default(true) bool isFilterSystemApp,
   }) = _AccessControl;
 
-  factory AccessControl.fromJson(Map<String, Object?> json) =>
-      _$AccessControlFromJson(json);
+  factory AccessControl.fromJson(Map<String, Object?> json) => _$AccessControlFromJson(json);
 }
 
 extension AccessControlExt on AccessControl {
@@ -188,8 +184,7 @@ class ThemeProps with _$ThemeProps {
     @Default(FontFamily.system) FontFamily fontFamily,
   }) = _ThemeProps;
 
-  factory ThemeProps.fromJson(Map<String, Object?> json) =>
-      _$ThemePropsFromJson(json);
+  factory ThemeProps.fromJson(Map<String, Object?> json) => _$ThemePropsFromJson(json);
 
   factory ThemeProps.realFromJson(Map<String, Object?>? json) {
     if (json == null) {
@@ -201,6 +196,16 @@ class ThemeProps with _$ThemeProps {
       return defaultThemeProps;
     }
   }
+}
+
+@freezed
+class User with _$User {
+  const factory User({
+    required String email,
+    String? password, // 可选字段，避免明文存储敏感信息
+  }) = _User;
+
+  factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 }
 
 @JsonSerializable()
@@ -218,8 +223,9 @@ class Config extends ChangeNotifier {
   bool _overrideDns;
   List<HotKeyAction> _hotKeyActions;
   ProxiesStyle _proxiesStyle;
-  bool _isAuthenticated; // 新增：认证状态
-  String? _token; // 新增：认证 token
+  bool _isAuthenticated;
+  String? _token;
+  User? _user;
 
   Config()
       : _profiles = [],
@@ -234,7 +240,8 @@ class Config extends ChangeNotifier {
         _proxiesStyle = defaultProxiesStyle,
         _themeProps = defaultThemeProps,
         _isAuthenticated = false,
-        _token = null;
+        _token = null,
+        _user = null;
 
   @JsonKey(fromJson: AppSetting.realFromJson)
   AppSetting get appSetting => _appSetting;
@@ -265,8 +272,7 @@ class Config extends ChangeNotifier {
   String? _getLabel(String? label, String id) {
     final realLabel = label ?? id;
     final hasDup = _profiles.indexWhere(
-            (element) => element.label == realLabel && element.id != id) !=
-        -1;
+            (element) => element.label == realLabel && element.id != id) != -1;
     if (hasDup) {
       return _getLabel(other.getOverwriteLabel(realLabel), id);
     } else {
@@ -276,8 +282,7 @@ class Config extends ChangeNotifier {
 
   _setProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(_profiles);
-    final index =
-        profilesTemp.indexWhere((element) => element.id == profile.id);
+    final index = profilesTemp.indexWhere((element) => element.id == profile.id);
     final updateProfile = profile.copyWith(
       label: _getLabel(profile.label, profile.id),
     );
@@ -314,8 +319,7 @@ class Config extends ChangeNotifier {
   }
 
   Profile? get currentProfile {
-    final index =
-        profiles.indexWhere((profile) => profile.id == _currentProfileId);
+    final index = profiles.indexWhere((profile) => profile.id == _currentProfileId);
     return index == -1 ? null : profiles[index];
   }
 
@@ -335,8 +339,7 @@ class Config extends ChangeNotifier {
   }
 
   updateCurrentGroupName(String groupName) {
-    if (currentProfile != null &&
-        currentProfile!.currentGroupName != groupName) {
+    if (currentProfile != null && currentProfile!.currentGroupName != groupName) {
       _setProfile(
         currentProfile!.copyWith(
           currentGroupName: groupName,
@@ -351,8 +354,7 @@ class Config extends ChangeNotifier {
   }
 
   updateCurrentSelectedMap(String groupName, String proxyName) {
-    if (currentProfile != null &&
-        currentProfile!.selectedMap[groupName] != proxyName) {
+    if (currentProfile != null && currentProfile!.selectedMap[groupName] != proxyName) {
       final SelectedMap selectedMap = Map.from(
         currentProfile?.selectedMap ?? {},
       )..[groupName] = proxyName;
@@ -486,9 +488,17 @@ class Config extends ChangeNotifier {
     }
   }
 
+  User? get user => _user;
+
+  set user(User? value) {
+    if (_user != value) {
+      _user = value;
+      notifyListeners();
+    }
+  }
+
   updateOrAddHotKeyAction(HotKeyAction hotKeyAction) {
-    final index =
-        _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
+    final index = _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
     if (index == -1) {
       _hotKeyActions = List.from(_hotKeyActions)..add(hotKeyAction);
     } else {
@@ -525,6 +535,7 @@ class Config extends ChangeNotifier {
       _hotKeyActions = config._hotKeyActions;
       _isAuthenticated = config._isAuthenticated;
       _token = config._token;
+      _user = config._user;
     }
     notifyListeners();
   }
@@ -539,6 +550,12 @@ class Config extends ChangeNotifier {
 
   @override
   String toString() {
-    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token}';
+    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, '
+        '_isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, '
+        '_windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, '
+        '_networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, '
+        '_proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token, _user: $_user}';
   }
 }
+
+typedef SelectedMap = Map<String, String>;
