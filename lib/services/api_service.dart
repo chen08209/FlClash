@@ -78,4 +78,39 @@ class ApiService {
     ).timeout(const Duration(seconds: 10));
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
+
+  // 获取用户订阅信息并构建订阅 URL
+  static Future<String?> getUserSubscribe({
+    required String apiBaseUrl,
+    required String token,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$apiBaseUrl/v1/public/user/subscribe'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': ' $token', // 无 Bearer 前缀，与其他 API 一致
+      },
+    ).timeout(const Duration(seconds: 10));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (data['code'] != 200 || data['data'] == null) {
+      throw Exception(data['msg'] ?? 'Failed to fetch user subscribe info');
+    }
+
+    // 解析响应体，提取第一个订阅的 token
+    final list = (data['data']['list'] as List<dynamic>?) ?? [];
+    if (list.isEmpty) {
+      throw Exception('No subscription found in response');
+    }
+
+    final firstSubscription = list.first as Map<String, dynamic>;
+    final subscribeToken = firstSubscription['token'] as String?;
+
+    if (subscribeToken == null || subscribeToken.isEmpty) {
+      throw Exception('Token not found in subscription data');
+    }
+
+    // 构建 URL: apiBaseUrl + /api/subscribe?token=subscribeToken
+    return '$apiBaseUrl/api/subscribe?token=$subscribeToken';
+  }
 }
