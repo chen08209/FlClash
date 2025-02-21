@@ -76,12 +76,15 @@ jobs:
           # 执行构建命令
           dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
           # 检查构建输出目录并打印日志，方便调试
-          echo "构建完成，正在检查输出目录 ./dist 的内容："
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            dir ./dist || echo "错误：构建失败，./dist 目录不存在或为空"
+            powershell -Command "Write-Host '构建完成，正在检查输出目录 ./dist 的内容：'; Get-ChildItem ./dist -ErrorAction SilentlyContinue; if ($?) { Write-Host '构建成功' } else { Write-Host '错误：构建失败，./dist 目录不存在或为空' }"
           else
+            echo "构建完成，正在检查输出目录 ./dist 的内容："
             ls -la ./dist || echo "错误：构建失败，./dist 目录不存在或为空"
           fi
+        env:
+          FLUTTER_ROOT: C:\hostedtoolcache\windows\flutter\stable-3.24.5-x64
+          PUB_CACHE: C:\Users\runneradmin\AppData\Local\Pub\Cache
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
