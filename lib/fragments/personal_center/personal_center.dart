@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:fl_clash/pages/auth.dart' show apiBaseUrl;
 
 class PersonalCenterFragment extends StatefulWidget {
   const PersonalCenterFragment({super.key});
@@ -25,7 +24,7 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
       final config = Provider.of<Config>(context, listen: false);
       config.token = null;
       config.isAuthenticated = false;
-      config.user = null; // 清空用户信息
+      config.user = null;
       globalState.navigatorKey.currentState?.pushReplacementNamed('/auth') ??
           Navigator.of(context).pushReplacementNamed('/auth');
     } catch (e) {
@@ -45,7 +44,7 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/v1/auth/change_password'), // 假设的 API 端点
+        Uri.parse('${config.apiBaseUrl}/v1/auth/change_password'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${config.token}',
