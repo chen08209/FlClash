@@ -1,7 +1,7 @@
 name: build
 
 on:
-  workflow_dispatch:  # 修改为手动触发
+  workflow_dispatch:  # 手动触发
 
 jobs:
   build:
@@ -73,6 +73,9 @@ jobs:
 
       - name: Get Flutter Dependency
         run: flutter pub get
+
+      - name: Generate Freezed and JSON Serializable Files
+        run: flutter pub run build_runner build --delete-conflicting-outputs
 
       - name: Setup
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
