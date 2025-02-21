@@ -1,7 +1,9 @@
 name: build
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -23,27 +25,21 @@ jobs:
           - platform: macos
             os: macos-latest
             arch: arm64
-      # 确保矩阵中的失败不会取消其他实例
-      fail-fast: false
-
-    # 允许该 Job 在某些步骤失败时继续运行
-    continue-on-error: true
 
     steps:
-      - name: 检出代码
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: 设置 Java 环境（仅 Android）
+      - name: Setup JAVA
         if: startsWith(matrix.platform,'android')
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 17
-        continue-on-error: true
 
-      - name: 设置 NDK 环境（仅 Android）
+      - name: Setup NDK
         if: startsWith(matrix.platform,'android')
         uses: nttld/setup-ndk@v1
         id: setup-ndk
@@ -51,113 +47,198 @@ jobs:
           ndk-version: r26b
           add-to-path: true
           link-to-sdk: true
-        continue-on-error: true
 
-      - name: 设置 Android 签名（仅 Android）
+      - name: Setup Android Signing
         if: startsWith(matrix.platform,'android')
         run: |
-          # 检查所有必要的 secrets
-          echo "检查 Android 签名密钥配置..."
-          if [ -z "${{ secrets.KEYSTORE }}" ]; then
-            echo "警告：KEYSTORE 未设置，请在 GitHub Secrets 中添加 'KEYSTORE'，跳过签名配置"
-          elif [ -z "${{ secrets.KEY_ALIAS }}" ]; then
-            echo "警告：KEY_ALIAS 未设置，请在 GitHub Secrets 中添加 'KEY_ALIAS'，跳过签名配置"
-          elif [ -z "${{ secrets.STORE_PASSWORD }}" ]; then
-            echo "警告：STORE_PASSWORD 未设置，请在 GitHub Secrets 中添加 'STORE_PASSWORD'，跳过签名配置"
-          elif [ -z "${{ secrets.KEY_PASSWORD }}" ]; then
-            echo "警告：KEY_PASSWORD 未设置，请在 GitHub Secrets 中添加 'KEY_PASSWORD'，跳过签名配置"
-          else
-            # 配置签名密钥
-            echo "正在解码 KEYSTORE 并生成 keystore.jks..."
-            echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks || {
-              echo "警告：KEYSTORE 解码失败，可能是无效的 base64 字符串，跳过签名配置"
-            }
-            echo "正在写入 android/local.properties..."
-            echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
-            echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
-            echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
-            echo "Android 签名配置完成"
-          fi
-        shell: /usr/bin/bash -e {0}
-        continue-on-error: true
+          echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
+          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
 
-      - name: 设置 Go 环境
+
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: 'stable'
           cache-dependency-path: |
             core/go.sum
-        continue-on-error: true
 
-      - name: 设置 Flutter 环境
-        uses: subosito/flutter-action@v2  # 修正为正确的 action
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.24.5
           channel: stable
           cache: true
-        continue-on-error: true
 
-      - name: 获取 Flutter 依赖
-        run: flutter pub get || echo "警告：获取 Flutter 依赖失败，继续执行后续步骤"
-        continue-on-error: true
+      - name: Get Flutter Dependency
+        run: flutter pub get
 
-      - name: 安装 flutter_distributor
-        run: |
-          # 确保基础命令可用
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            export PATH="$PATH;C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin"
-          else
-            export PATH="/usr/bin:/bin:$HOME/.pub-cache/bin:$PATH"
-          fi
-          # 清理 PUB_CACHE
-          echo "清理 PUB_CACHE..."
-          rm -rf "$HOME/.pub-cache" && mkdir -p "$HOME/.pub-cache" || echo "警告：无法清理 PUB_CACHE，继续执行"
-          # 尝试安装 flutter_distributor
-          echo "尝试从本地路径安装 flutter_distributor..."
-          dart pub global activate -s path ./plugins/flutter_distributor/packages/flutter_distributor || {
-            echo "本地路径安装失败，尝试从 Pub 安装最新版本..."
-            dart pub global activate flutter_distributor || echo "警告：flutter_distributor 从 Pub 安装失败，继续执行"
-          }
-          # 验证安装
-          echo "安装 flutter_distributor 完成，版本："
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            "C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin\\flutter_distributor" --version || echo "警告：flutter_distributor 验证失败，继续执行"
-          else
-            "$HOME/.pub-cache/bin/flutter_distributor" --version || echo "警告：flutter_distributor 验证失败，继续执行"
-          fi
-        env:
-          PUB_CACHE: $HOME/.pub-cache
-        continue-on-error: true
+      - name: Setup
+        run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
 
-      - name: 构建应用
-        run: |
-          # 设置 PATH
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            export PATH="$PATH;C:\\Users\\runneradmin\\AppData\\Local\\Pub\\Cache\\bin"
-          else
-            export PATH="/usr/bin:/bin:$HOME/.pub-cache/bin:$PATH"
-          fi
-          # 执行构建
-          echo "开始构建 ${{ matrix.platform }} (${{ matrix.arch }}) ..."
-          dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} > build.log 2>&1 || echo "警告：构建失败，查看 build.log"
-          echo "构建日志："
-          cat build.log || echo "警告：无法读取构建日志"
-          # 检查输出
-          echo "构建完成，正在检查输出目录 ./dist 的内容："
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            powershell -Command "Get-ChildItem ./dist -ErrorAction SilentlyContinue; if ($?) { Write-Host '构建成功' } else { Write-Host '警告：构建失败，./dist 目录不存在或为空' }"
-          else
-            ls -la ./dist && echo "构建成功" || echo "警告：构建失败，./dist 目录不存在或为空"
-          fi
-        env:
-          FLUTTER_ROOT: C:\hostedtoolcache\windows\flutter\stable-3.24.5-x64
-          PUB_CACHE: C:\Users\runneradmin\AppData\Local\Pub\Cache
-        continue-on-error: true
-
-      - name: 上传构建产物
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
           overwrite: true
-        continue-on-error: true  # 即使构建失败，也尝试上传已有产物
+
+  changelog:
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    steps:
+      - name: Checkout
+        if: ${{ !contains(github.ref, '+') }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/heads/main
+
+      - name: Generate
+        if: ${{ !contains(github.ref, '+') }}
+        run: |
+          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
+          preTag=$(grep -oP '^## \K.*' CHANGELOG.md | head -n 1)
+          currentTag=""
+          for ((i = 0; i <= ${#tags[@]}; i++)); do
+            if (( i < ${#tags[@]} )); then
+              tag=${tags[$i]}
+            else
+              tag=""
+            fi
+            if [ -n "$currentTag" ]; then
+              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
+                break
+              fi
+            fi
+            if [ -n "$currentTag" ]; then
+              echo "## $currentTag" >> NEW_CHANGELOG.md
+              echo "" >> NEW_CHANGELOG.md
+              if [ -n "$tag" ]; then
+                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+              else
+                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
+              fi
+              echo "" >> NEW_CHANGELOG.md
+            fi
+            currentTag=$tag
+          done
+          cat CHANGELOG.md >> NEW_CHANGELOG.md
+          cat NEW_CHANGELOG.md > CHANGELOG.md
+
+      - name: Commit
+        if: ${{ !contains(github.ref, '+') }}
+        run: |
+          git add CHANGELOG.md
+          if ! git diff --cached --quiet; then
+            echo "Commit pushing"
+            git config --local user.email "chen08209@gmail.com"
+            git config --local user.name "chen08209"
+            git commit -m "Update changelog"
+            git push
+            if [ $? -eq 0 ]; then
+              echo "Push succeeded"
+            else
+              echo "Push failed"
+              exit 1
+            fi
+          fi
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload:
+    permissions: write-all
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    services:
+      telegram-bot-api:
+        image: aiogram/telegram-bot-api:latest
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        ports:
+          - 8081:8081
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist/
+          pattern: artifact-*
+          merge-multiple: true
+
+      - name: Generate release.md
+        run: |
+          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
+          preTag=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
+          currentTag=""
+          for ((i = 0; i <= ${#tags[@]}; i++)); do
+            if (( i < ${#tags[@]} )); then
+              tag=${tags[$i]}
+            else
+              tag=""
+            fi
+            if [ -n "$currentTag" ]; then
+              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
+                break
+              fi
+            fi
+            if [ -n "$currentTag" ]; then
+              if [ -n "$tag" ]; then
+                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
+              else
+                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
+              fi
+              echo "" >> release.md
+            fi
+            currentTag=$tag
+          done
+
+      - name: Push to telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+          python release.py
+
+      - name: Patch release.md
+        run: |
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
+
+      - name: Release
+        if: ${{ !contains(github.ref, '+') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/*
+          body_path: './release.md'
+
+      - name: Create Fdroid Source Dir
+        if: ${{ !contains(github.ref, '+') }}
+        run: |
+          mkdir -p ./tmp
+          cp ./dist/*android-arm64-v8a* ./tmp/ || true
+          echo "Files copied successfully"
+
+      - name: Push to fdroid repo
+        if: ${{ !contains(github.ref, '+') }}
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+        with:
+          source-directory: ./tmp/
+          destination-github-username: chen08209
+          destination-repository-name: FlClash-fdroid-repo
+          user-name: 'github-actions[bot]'
+          user-email: 'github-actions[bot]@users.noreply.github.com'
+          target-branch: action-pr
+          commit-message: Update from ${{ github.ref_name }}
+          target-directory: /tmp/
