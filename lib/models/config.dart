@@ -1,6 +1,3 @@
-// lib/models/config.dart
-// ignore_for_file: invalid_annotation_target
-
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -8,7 +5,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'models.dart';
+import 'models.dart'; // 确保导入 models.dart 以获取 SelectedMap
 
 part 'generated/config.freezed.dart';
 part 'generated/config.g.dart';
@@ -229,7 +226,7 @@ class Config extends ChangeNotifier {
   bool _isAuthenticated;
   String? _token;
   User? _user;
-  String _apiBaseUrl; // 新增 API 地址字段
+  String _apiBaseUrl;
 
   Config()
       : _profiles = [],
@@ -551,7 +548,7 @@ class Config extends ChangeNotifier {
       _isAuthenticated = config._isAuthenticated;
       _token = config._token;
       _user = config._user;
-      _apiBaseUrl = config._apiBaseUrl; // 更新 API 地址
+      _apiBaseUrl = config._apiBaseUrl;
     }
     notifyListeners();
   }
@@ -574,5 +571,3 @@ class Config extends ChangeNotifier {
         '_user: $_user, _apiBaseUrl: $_apiBaseUrl}';
   }
 }
-
-typedef SelectedMap = Map<String, String>;
