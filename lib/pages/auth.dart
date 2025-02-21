@@ -7,8 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String apiBaseUrl = "https://api.ppanel.dev"; // 替换为实际 API 地址
-
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
@@ -38,7 +36,6 @@ class _AuthPageState extends State<AuthPage> {
       final config = Provider.of<Config>(context, listen: false);
       config.token = token;
       config.isAuthenticated = true;
-      // 如果需要加载用户信息，可以在这里调用 API 或从本地存储中恢复
       _navigateToHome();
     }
   }
@@ -49,7 +46,7 @@ class _AuthPageState extends State<AuthPage> {
     final config = Provider.of<Config>(context, listen: false);
     config.token = token;
     config.isAuthenticated = true;
-    config.user = User(email: email, password: password); // 保存用户信息
+    config.user = User(email: email, password: password);
   }
 
   Future<void> _sendCode(int type) async {
@@ -63,8 +60,9 @@ class _AuthPageState extends State<AuthPage> {
       _errorMessage = null;
     });
     try {
+      final config = Provider.of<Config>(context, listen: false);
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/v1/common/send_code'),
+        Uri.parse('${config.apiBaseUrl}/v1/common/send_code'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'type': type}),
       ).timeout(const Duration(seconds: 10));
@@ -90,8 +88,9 @@ class _AuthPageState extends State<AuthPage> {
       _errorMessage = null;
     });
     try {
+      final config = Provider.of<Config>(context, listen: false);
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/v1/auth/login'),
+        Uri.parse('${config.apiBaseUrl}/v1/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       ).timeout(const Duration(seconds: 10));
@@ -123,8 +122,9 @@ class _AuthPageState extends State<AuthPage> {
       _errorMessage = null;
     });
     try {
+      final config = Provider.of<Config>(context, listen: false);
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/v1/auth/register'),
+        Uri.parse('${config.apiBaseUrl}/v1/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -160,8 +160,9 @@ class _AuthPageState extends State<AuthPage> {
       _errorMessage = null;
     });
     try {
+      final config = Provider.of<Config>(context, listen: false);
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/v1/auth/reset'),
+        Uri.parse('${config.apiBaseUrl}/v1/auth/reset'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password, 'code': code}),
       ).timeout(const Duration(seconds: 10));
