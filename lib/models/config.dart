@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:http/http.dart' as http;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -10,9 +11,63 @@ import 'models.dart'; // 确保导入 models.dart 以获取 SelectedMap
 part 'generated/config.freezed.dart';
 part 'generated/config.g.dart';
 
-// 默认 API 地址
+/// 默认 API 基础地址，用于与服务器通信。
 const String defaultApiBaseUrl = "https://api.ppanel.dev";
 
+/// 备用域名，用于解析 TXT DNS 记录获取多个备用 API 地址。
+const String fallbackDomain = "example.com";
+
+/// 多个公共 DNS 服务地址，用于解析 TXT 记录。
+const List<String> dnsServices = [
+  "https://1.1.1.1/dns-query", // Cloudflare DNS
+  "https://dns.google/resolve", // Google Public DNS
+  "https://dns.adguard.com/dns-query", // AdGuard DNS
+];
+
+/// 检查 URL 的延迟和可用性，返回延迟（毫秒）或 -1（不可用）
+Future<int> _checkUrlLatency(String url) async {
+  try {
+    final stopwatch = Stopwatch()..start();
+    final response = await http.head(Uri.parse(url)).timeout(const Duration(seconds: 5));
+    stopwatch.stop();
+    return response.statusCode >= 200 && response.statusCode < 300
+        ? stopwatch.elapsedMilliseconds
+        : -1;
+  } catch (e) {
+    print("Failed to check $url: $e");
+    return -1; // 不可用标记
+  }
+}
+
+/// 从多个 DNS 服务解析 example.com 的 TXT DNS 记录，获取备用 API 地址
+Future<List<String>> _fetchTxtRecords() async {
+  for (final dnsService in dnsServices) {
+    try {
+      final response = await http.get(
+        Uri.parse('$dnsService?name=$fallbackDomain&type=TXT'),
+        headers: dnsService.contains("dns-query") ? {'Accept': 'application/dns-json'} : null,
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final txtRecords = (data['Answer'] as List<dynamic>?) ?? [];
+        if (txtRecords.isEmpty) return []; // 允许空白
+        final txtData = txtRecords.first['data'] as String?;
+        if (txtData == null || txtData.trim().isEmpty) return []; // 允许空白
+        return txtData
+            .split(' ')
+            .map((url) => 'https://$url') // 添加协议前缀
+            .where((url) => Uri.tryParse(url)?.isAbsolute == true)
+            .toList();
+      }
+    } catch (e) {
+      print("Failed to fetch TXT records from $dnsService: $e");
+    }
+  }
+  print("All DNS services failed to fetch TXT records");
+  return [];
+}
+
+// 默认应用设置
 final defaultAppSetting = const AppSetting().copyWith(
   isAnimateToPage: system.isDesktop ? false : true,
 );
@@ -228,7 +283,9 @@ class Config extends ChangeNotifier {
   User? _user;
   String _apiBaseUrl;
 
-  Config()
+  Config() : this._init();
+
+  Config._init()
       : _profiles = [],
         _isAccessControl = false,
         _accessControl = const AccessControl(),
@@ -243,7 +300,57 @@ class Config extends ChangeNotifier {
         _isAuthenticated = false,
         _token = null,
         _user = null,
-        _apiBaseUrl = defaultApiBaseUrl;
+        _apiBaseUrl = defaultApiBaseUrl {
+    _initializeApiBaseUrl();
+  }
+
+  // 初始化 API 地址，默认使用 defaultApiBaseUrl，并在后台检测最佳地址
+  void _initializeApiBaseUrl() {
+    _apiBaseUrl = defaultApiBaseUrl; // 初始使用默认地址
+    Future.microtask(_updateToBestApiBaseUrl); // 后台检测
+  }
+
+  // 在后台检测所有地址并切换到延迟最低的
+  Future<void> _updateToBestApiBaseUrl() async {
+    final futures = <Future<Map<String, int>>>[
+      _checkUrlLatency(defaultApiBaseUrl).then((latency) => {defaultApiBaseUrl: latency}),
+      _fetchTxtRecords().then((urls) async {
+        final results = <String, int>{};
+        final latencyFutures = urls.map((url) => _checkUrlLatency(url).then((latency) => {url: latency}));
+        final latencies = await Future.wait(latencyFutures);
+        for (var latency in latencies) {
+          results.addAll(latency);
+        }
+        return results;
+      }),
+    ];
+
+    // 等待所有检查完成
+    final results = await Future.wait(futures);
+    final allLatencies = <String, int>{};
+    for (var result in results) {
+      allLatencies.addAll(result);
+    }
+
+    // 选择延迟最低的可用地址
+    String? bestUrl;
+    int minLatency = -1;
+    for (var entry in allLatencies.entries) {
+      final latency = entry.value;
+      if (latency >= 0 && (minLatency == -1 || latency < minLatency)) {
+        minLatency = latency;
+        bestUrl = entry.key;
+      }
+    }
+
+    // 更新 API 地址
+    if (bestUrl != null && bestUrl != _apiBaseUrl) {
+      _apiBaseUrl = bestUrl;
+      notifyListeners();
+    }
+
+    print("Selected API base URL: $_apiBaseUrl with latency: $minLatency ms");
+  }
 
   @JsonKey(fromJson: AppSetting.realFromJson)
   AppSetting get appSetting => _appSetting;
@@ -261,9 +368,7 @@ class Config extends ChangeNotifier {
   }
 
   Profile? getCurrentProfileForId(String? value) {
-    if (value == null) {
-      return null;
-    }
+    if (value == null) return null;
     return _profiles.firstWhere((element) => element.id == value);
   }
 
@@ -332,9 +437,7 @@ class Config extends ChangeNotifier {
   updateCurrentUnfoldSet(Set<String> value) {
     if (!stringSetEquality.equals(currentUnfoldSet, value)) {
       _setProfile(
-        currentProfile!.copyWith(
-          unfoldSet: value,
-        ),
+        currentProfile!.copyWith(unfoldSet: value),
       );
       notifyListeners();
     }
@@ -343,9 +446,7 @@ class Config extends ChangeNotifier {
   updateCurrentGroupName(String groupName) {
     if (currentProfile != null && currentProfile!.currentGroupName != groupName) {
       _setProfile(
-        currentProfile!.copyWith(
-          currentGroupName: groupName,
-        ),
+        currentProfile!.copyWith(currentGroupName: groupName),
       );
       notifyListeners();
     }
@@ -357,13 +458,9 @@ class Config extends ChangeNotifier {
 
   updateCurrentSelectedMap(String groupName, String proxyName) {
     if (currentProfile != null && currentProfile!.selectedMap[groupName] != proxyName) {
-      final SelectedMap selectedMap = Map.from(
-        currentProfile?.selectedMap ?? {},
-      )..[groupName] = proxyName;
+      final SelectedMap selectedMap = Map.from(currentProfile?.selectedMap ?? {})..[groupName] = proxyName;
       _setProfile(
-        currentProfile!.copyWith(
-          selectedMap: selectedMap,
-        ),
+        currentProfile!.copyWith(selectedMap: selectedMap),
       );
       notifyListeners();
     }
@@ -451,10 +548,7 @@ class Config extends ChangeNotifier {
 
   set proxiesStyle(ProxiesStyle value) {
     if (_proxiesStyle != value ||
-        !stringAndStringMapEntryIterableEquality.equals(
-          _proxiesStyle.iconMap.entries,
-          value.iconMap.entries,
-        )) {
+        !stringAndStringMapEntryIterableEquality.equals(_proxiesStyle.iconMap.entries, value.iconMap.entries)) {
       _proxiesStyle = value;
       notifyListeners();
     }
@@ -503,6 +597,9 @@ class Config extends ChangeNotifier {
   String get apiBaseUrl => _apiBaseUrl;
 
   set apiBaseUrl(String value) {
+    if (!Uri.parse(value).isAbsolute) {
+      throw ArgumentError("Invalid API base URL: $value");
+    }
     if (_apiBaseUrl != value) {
       _apiBaseUrl = value;
       notifyListeners();
