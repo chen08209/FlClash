@@ -38,17 +38,18 @@ class _AuthPageState extends State<AuthPage> {
       final config = Provider.of<Config>(context, listen: false);
       config.token = token;
       config.isAuthenticated = true;
-      globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
-          Navigator.of(context).pushReplacementNamed('/home');
+      // 如果需要加载用户信息，可以在这里调用 API 或从本地存储中恢复
+      _navigateToHome();
     }
   }
 
-  Future<void> _saveToken(String token) async {
+  Future<void> _saveToken(String token, String email, [String? password]) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
     final config = Provider.of<Config>(context, listen: false);
     config.token = token;
     config.isAuthenticated = true;
+    config.user = User(email: email, password: password); // 保存用户信息
   }
 
   Future<void> _sendCode(int type) async {
@@ -96,9 +97,8 @@ class _AuthPageState extends State<AuthPage> {
       ).timeout(const Duration(seconds: 10));
       final data = jsonDecode(response.body);
       if (data['code'] == 200) {
-        await _saveToken(data['data']['token']);
-        globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
-            Navigator.of(context).pushReplacementNamed('/home');
+        await _saveToken(data['data']['token'], email, password);
+        _navigateToHome();
       } else {
         setState(() => _errorMessage = data['msg'] ?? "登录失败");
       }
@@ -135,9 +135,8 @@ class _AuthPageState extends State<AuthPage> {
       ).timeout(const Duration(seconds: 10));
       final data = jsonDecode(response.body);
       if (data['code'] == 200) {
-        await _saveToken(data['data']['token']);
-        globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
-            Navigator.of(context).pushReplacementNamed('/home');
+        await _saveToken(data['data']['token'], email, password);
+        _navigateToHome();
       } else {
         setState(() => _errorMessage = data['msg'] ?? "注册失败");
       }
@@ -168,9 +167,8 @@ class _AuthPageState extends State<AuthPage> {
       ).timeout(const Duration(seconds: 10));
       final data = jsonDecode(response.body);
       if (data['code'] == 200) {
-        await _saveToken(data['data']['token']);
-        globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
-            Navigator.of(context).pushReplacementNamed('/home');
+        await _saveToken(data['data']['token'], email, password);
+        _navigateToHome();
       } else {
         setState(() => _errorMessage = data['msg'] ?? "重置密码失败");
       }
@@ -179,6 +177,11 @@ class _AuthPageState extends State<AuthPage> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _navigateToHome() {
+    globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
+        Navigator.of(context).pushReplacementNamed('/home');
   }
 
   @override
@@ -232,12 +235,11 @@ class _AuthPageState extends State<AuthPage> {
                               ),
                             Expanded(
                               child: Text(
-                                _mode == 0
-                                    ? "欢迎登录"
-                                    : _mode == 1
-                                        ? "注册账号"
-                                        : "重置密码",
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                                _mode == 0 ? "欢迎登录" : _mode == 1 ? "注册账号" : "重置密码",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -262,7 +264,11 @@ class _AuthPageState extends State<AuthPage> {
                         if (_errorMessage != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 12.0),
-                            child: Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.redAccent),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         const SizedBox(height: 20.0),
                         ElevatedButton(
@@ -283,15 +289,24 @@ class _AuthPageState extends State<AuthPage> {
                                   height: 20,
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.0),
                                 )
-                              : Text(_mode == 0 ? "登录" : _mode == 1 ? "注册" : "重置", style: const TextStyle(fontSize: 16.0)),
+                              : Text(
+                                  _mode == 0 ? "登录" : _mode == 1 ? "注册" : "重置",
+                                  style: const TextStyle(fontSize: 16.0),
+                                ),
                         ),
                         const SizedBox(height: 16.0),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (_mode == 0) ...[
-                              TextButton(onPressed: () => setState(() => _mode = 1), child: const Text("没有账号？注册")),
-                              TextButton(onPressed: () => setState(() => _mode = 2), child: const Text("忘记密码？")),
+                              TextButton(
+                                onPressed: () => setState(() => _mode = 1),
+                                child: const Text("没有账号？注册"),
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() => _mode = 2),
+                                child: const Text("忘记密码？"),
+                              ),
                             ],
                           ],
                         ),
@@ -307,7 +322,8 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool obscureText = false}) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon,
+      {bool obscureText = false}) {
     return TextField(
       controller: controller,
       obscureText: obscureText,
