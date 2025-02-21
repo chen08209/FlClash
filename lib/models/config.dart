@@ -5,11 +5,14 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/profile.dart'; // 导入 Profile 类型
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/config.freezed.dart';
 part 'generated/config.g.dart';
+
+typedef SelectedMap = Map<String, String>;
 
 final defaultAppSetting = const AppSetting().copyWith(
   isAnimateToPage: system.isDesktop ? false : true,
@@ -207,17 +210,15 @@ class Config extends ChangeNotifier {
   String? _currentProfileId;
   bool _isAccessControl;
   AccessControl _accessControl;
-  DAV? _dav;
   WindowProps _windowProps;
   ThemeProps _themeProps;
   VpnProps _vpnProps;
   NetworkProps _networkProps;
   bool _overrideDns;
-  List<HotKeyAction> _hotKeyActions;
   ProxiesStyle _proxiesStyle;
   bool _isAuthenticated;
   String? _token;
-  String? _subscribeUrl; // 新增字段
+  String? _subscribeUrl;
 
   Config()
       : _profiles = [],
@@ -228,7 +229,6 @@ class Config extends ChangeNotifier {
         _networkProps = const NetworkProps(),
         _overrideDns = false,
         _appSetting = defaultAppSetting,
-        _hotKeyActions = [],
         _proxiesStyle = defaultProxiesStyle,
         _themeProps = defaultThemeProps,
         _isAuthenticated = false,
@@ -245,7 +245,7 @@ class Config extends ChangeNotifier {
     }
   }
 
-  deleteProfileById(String id) {
+  void deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
     notifyListeners();
   }
@@ -270,7 +270,7 @@ class Config extends ChangeNotifier {
     }
   }
 
-  _setProfile(Profile profile) {
+  void _setProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(_profiles);
     final index = profilesTemp.indexWhere((element) => element.id == profile.id);
     final updateProfile = profile.copyWith(label: _getLabel(profile.label, profile.id));
@@ -282,7 +282,7 @@ class Config extends ChangeNotifier {
     _profiles = profilesTemp;
   }
 
-  setProfile(Profile profile) {
+  void setProfile(Profile profile) {
     _setProfile(profile);
     notifyListeners();
   }
@@ -315,14 +315,14 @@ class Config extends ChangeNotifier {
 
   Set<String> get currentUnfoldSet => currentProfile?.unfoldSet ?? {};
 
-  updateCurrentUnfoldSet(Set<String> value) {
-    if (!stringSetEquality.equals(currentUnfoldSet, value)) {
+  void updateCurrentUnfoldSet(Set<String> value) {
+    if (!stringSetEquality.equals(currentUnfoldSet, value) && currentProfile != null) {
       _setProfile(currentProfile!.copyWith(unfoldSet: value));
       notifyListeners();
     }
   }
 
-  updateCurrentGroupName(String groupName) {
+  void updateCurrentGroupName(String groupName) {
     if (currentProfile != null && currentProfile!.currentGroupName != groupName) {
       _setProfile(currentProfile!.copyWith(currentGroupName: groupName));
       notifyListeners();
@@ -333,7 +333,7 @@ class Config extends ChangeNotifier {
     return currentProfile?.selectedMap ?? {};
   }
 
-  updateCurrentSelectedMap(String groupName, String proxyName) {
+  void updateCurrentSelectedMap(String groupName, String proxyName) {
     if (currentProfile != null && currentProfile!.selectedMap[groupName] != proxyName) {
       final SelectedMap selectedMap = Map.from(currentProfile?.selectedMap ?? {})
         ..[groupName] = proxyName;
@@ -360,15 +360,6 @@ class Config extends ChangeNotifier {
   set accessControl(AccessControl value) {
     if (_accessControl != value) {
       _accessControl = value;
-      notifyListeners();
-    }
-  }
-
-  DAV? get dav => _dav;
-
-  set dav(DAV? value) {
-    if (_dav != value) {
-      _dav = value;
       notifyListeners();
     }
   }
@@ -406,16 +397,6 @@ class Config extends ChangeNotifier {
   set overrideDns(bool value) {
     if (_overrideDns != value) {
       _overrideDns = value;
-      notifyListeners();
-    }
-  }
-
-  @JsonKey(defaultValue: [])
-  List<HotKeyAction> get hotKeyActions => _hotKeyActions;
-
-  set hotKeyActions(List<HotKeyAction> value) {
-    if (_hotKeyActions != value) {
-      _hotKeyActions = value;
       notifyListeners();
     }
   }
@@ -471,17 +452,7 @@ class Config extends ChangeNotifier {
     }
   }
 
-  updateOrAddHotKeyAction(HotKeyAction hotKeyAction) {
-    final index = _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
-    if (index == -1) {
-      _hotKeyActions = List.from(_hotKeyActions)..add(hotKeyAction);
-    } else {
-      _hotKeyActions = List.from(_hotKeyActions)..[index] = hotKeyAction;
-    }
-    notifyListeners();
-  }
-
-  update([Config? config, RecoveryOption recoveryOptions = RecoveryOption.all]) {
+  void update([Config? config, RecoveryOption recoveryOptions = RecoveryOption.all]) {
     if (config != null) {
       _profiles = config._profiles;
       for (final profile in config._profiles) {
@@ -494,19 +465,17 @@ class Config extends ChangeNotifier {
       if (onlyProfiles) return;
       _appSetting = config._appSetting;
       _currentProfileId = config._currentProfileId;
-      _dav = config._dav;
       _isAccessControl = config._isAccessControl;
       _accessControl = config._accessControl;
-      _themeProps = config._themeProps;
       _windowProps = config._windowProps;
-      _proxiesStyle = config._proxiesStyle;
+      _themeProps = config._themeProps;
       _vpnProps = config._vpnProps;
       _overrideDns = config._overrideDns;
       _networkProps = config._networkProps;
-      _hotKeyActions = config._hotKeyActions;
+      _proxiesStyle = config._proxiesStyle;
       _isAuthenticated = config._isAuthenticated;
       _token = config._token;
-      _subscribeUrl = config._subscribeUrl; // 更新订阅 URL
+      _subscribeUrl = config._subscribeUrl;
     }
     notifyListeners();
   }
@@ -517,6 +486,6 @@ class Config extends ChangeNotifier {
 
   @override
   String toString() {
-    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token, _subscribeUrl: $_subscribeUrl}';
+    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token, _subscribeUrl: $_subscribeUrl}';
   }
 }
