@@ -5,14 +5,13 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/profile.dart'; // 导入 Profile 类型
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'models.dart';
+
 part 'generated/config.freezed.dart';
 part 'generated/config.g.dart';
-
-typedef SelectedMap = Map<String, String>;
 
 final defaultAppSetting = const AppSetting().copyWith(
   isAnimateToPage: system.isDesktop ? false : true,
@@ -28,7 +27,8 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.intranetIp,
 ];
 
-List<DashboardWidget> dashboardWidgetsRealFormJson(List<dynamic>? dashboardWidgets) {
+List<DashboardWidget> dashboardWidgetsRealFormJson(
+    List<dynamic>? dashboardWidgets) {
   try {
     return dashboardWidgets
             ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e))
@@ -210,15 +210,16 @@ class Config extends ChangeNotifier {
   String? _currentProfileId;
   bool _isAccessControl;
   AccessControl _accessControl;
+  DAV? _dav;
   WindowProps _windowProps;
   ThemeProps _themeProps;
   VpnProps _vpnProps;
   NetworkProps _networkProps;
   bool _overrideDns;
+  List<HotKeyAction> _hotKeyActions;
   ProxiesStyle _proxiesStyle;
-  bool _isAuthenticated;
-  String? _token;
-  String? _subscribeUrl;
+  bool _isAuthenticated; // 新增：认证状态
+  String? _token; // 新增：认证 token
 
   Config()
       : _profiles = [],
@@ -229,11 +230,11 @@ class Config extends ChangeNotifier {
         _networkProps = const NetworkProps(),
         _overrideDns = false,
         _appSetting = defaultAppSetting,
+        _hotKeyActions = [],
         _proxiesStyle = defaultProxiesStyle,
         _themeProps = defaultThemeProps,
         _isAuthenticated = false,
-        _token = null,
-        _subscribeUrl = null;
+        _token = null;
 
   @JsonKey(fromJson: AppSetting.realFromJson)
   AppSetting get appSetting => _appSetting;
@@ -245,13 +246,15 @@ class Config extends ChangeNotifier {
     }
   }
 
-  void deleteProfileById(String id) {
+  deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
     notifyListeners();
   }
 
   Profile? getCurrentProfileForId(String? value) {
-    if (value == null) return null;
+    if (value == null) {
+      return null;
+    }
     return _profiles.firstWhere((element) => element.id == value);
   }
 
@@ -261,8 +264,9 @@ class Config extends ChangeNotifier {
 
   String? _getLabel(String? label, String id) {
     final realLabel = label ?? id;
-    final hasDup =
-        _profiles.indexWhere((element) => element.label == realLabel && element.id != id) != -1;
+    final hasDup = _profiles.indexWhere(
+            (element) => element.label == realLabel && element.id != id) !=
+        -1;
     if (hasDup) {
       return _getLabel(other.getOverwriteLabel(realLabel), id);
     } else {
@@ -270,10 +274,13 @@ class Config extends ChangeNotifier {
     }
   }
 
-  void _setProfile(Profile profile) {
+  _setProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(_profiles);
-    final index = profilesTemp.indexWhere((element) => element.id == profile.id);
-    final updateProfile = profile.copyWith(label: _getLabel(profile.label, profile.id));
+    final index =
+        profilesTemp.indexWhere((element) => element.id == profile.id);
+    final updateProfile = profile.copyWith(
+      label: _getLabel(profile.label, profile.id),
+    );
     if (index == -1) {
       profilesTemp.add(updateProfile);
     } else {
@@ -282,7 +289,7 @@ class Config extends ChangeNotifier {
     _profiles = profilesTemp;
   }
 
-  void setProfile(Profile profile) {
+  setProfile(Profile profile) {
     _setProfile(profile);
     notifyListeners();
   }
@@ -307,7 +314,8 @@ class Config extends ChangeNotifier {
   }
 
   Profile? get currentProfile {
-    final index = profiles.indexWhere((profile) => profile.id == _currentProfileId);
+    final index =
+        profiles.indexWhere((profile) => profile.id == _currentProfileId);
     return index == -1 ? null : profiles[index];
   }
 
@@ -315,16 +323,25 @@ class Config extends ChangeNotifier {
 
   Set<String> get currentUnfoldSet => currentProfile?.unfoldSet ?? {};
 
-  void updateCurrentUnfoldSet(Set<String> value) {
-    if (!stringSetEquality.equals(currentUnfoldSet, value) && currentProfile != null) {
-      _setProfile(currentProfile!.copyWith(unfoldSet: value));
+  updateCurrentUnfoldSet(Set<String> value) {
+    if (!stringSetEquality.equals(currentUnfoldSet, value)) {
+      _setProfile(
+        currentProfile!.copyWith(
+          unfoldSet: value,
+        ),
+      );
       notifyListeners();
     }
   }
 
-  void updateCurrentGroupName(String groupName) {
-    if (currentProfile != null && currentProfile!.currentGroupName != groupName) {
-      _setProfile(currentProfile!.copyWith(currentGroupName: groupName));
+  updateCurrentGroupName(String groupName) {
+    if (currentProfile != null &&
+        currentProfile!.currentGroupName != groupName) {
+      _setProfile(
+        currentProfile!.copyWith(
+          currentGroupName: groupName,
+        ),
+      );
       notifyListeners();
     }
   }
@@ -333,11 +350,17 @@ class Config extends ChangeNotifier {
     return currentProfile?.selectedMap ?? {};
   }
 
-  void updateCurrentSelectedMap(String groupName, String proxyName) {
-    if (currentProfile != null && currentProfile!.selectedMap[groupName] != proxyName) {
-      final SelectedMap selectedMap = Map.from(currentProfile?.selectedMap ?? {})
-        ..[groupName] = proxyName;
-      _setProfile(currentProfile!.copyWith(selectedMap: selectedMap));
+  updateCurrentSelectedMap(String groupName, String proxyName) {
+    if (currentProfile != null &&
+        currentProfile!.selectedMap[groupName] != proxyName) {
+      final SelectedMap selectedMap = Map.from(
+        currentProfile?.selectedMap ?? {},
+      )..[groupName] = proxyName;
+      _setProfile(
+        currentProfile!.copyWith(
+          selectedMap: selectedMap,
+        ),
+      );
       notifyListeners();
     }
   }
@@ -360,6 +383,15 @@ class Config extends ChangeNotifier {
   set accessControl(AccessControl value) {
     if (_accessControl != value) {
       _accessControl = value;
+      notifyListeners();
+    }
+  }
+
+  DAV? get dav => _dav;
+
+  set dav(DAV? value) {
+    if (_dav != value) {
+      _dav = value;
       notifyListeners();
     }
   }
@@ -401,12 +433,24 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: [])
+  List<HotKeyAction> get hotKeyActions => _hotKeyActions;
+
+  set hotKeyActions(List<HotKeyAction> value) {
+    if (_hotKeyActions != value) {
+      _hotKeyActions = value;
+      notifyListeners();
+    }
+  }
+
   ProxiesStyle get proxiesStyle => _proxiesStyle;
 
   set proxiesStyle(ProxiesStyle value) {
     if (_proxiesStyle != value ||
         !stringAndStringMapEntryIterableEquality.equals(
-            _proxiesStyle.iconMap.entries, value.iconMap.entries)) {
+          _proxiesStyle.iconMap.entries,
+          value.iconMap.entries,
+        )) {
       _proxiesStyle = value;
       notifyListeners();
     }
@@ -442,17 +486,21 @@ class Config extends ChangeNotifier {
     }
   }
 
-  @JsonKey(defaultValue: null)
-  String? get subscribeUrl => _subscribeUrl;
-
-  set subscribeUrl(String? value) {
-    if (_subscribeUrl != value) {
-      _subscribeUrl = value;
-      notifyListeners();
+  updateOrAddHotKeyAction(HotKeyAction hotKeyAction) {
+    final index =
+        _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
+    if (index == -1) {
+      _hotKeyActions = List.from(_hotKeyActions)..add(hotKeyAction);
+    } else {
+      _hotKeyActions = List.from(_hotKeyActions)..[index] = hotKeyAction;
     }
+    notifyListeners();
   }
 
-  void update([Config? config, RecoveryOption recoveryOptions = RecoveryOption.all]) {
+  update([
+    Config? config,
+    RecoveryOption recoveryOptions = RecoveryOption.all,
+  ]) {
     if (config != null) {
       _profiles = config._profiles;
       for (final profile in config._profiles) {
@@ -465,27 +513,32 @@ class Config extends ChangeNotifier {
       if (onlyProfiles) return;
       _appSetting = config._appSetting;
       _currentProfileId = config._currentProfileId;
+      _dav = config._dav;
       _isAccessControl = config._isAccessControl;
       _accessControl = config._accessControl;
-      _windowProps = config._windowProps;
       _themeProps = config._themeProps;
+      _windowProps = config._windowProps;
+      _proxiesStyle = config._proxiesStyle;
       _vpnProps = config._vpnProps;
       _overrideDns = config._overrideDns;
       _networkProps = config._networkProps;
-      _proxiesStyle = config._proxiesStyle;
+      _hotKeyActions = config._hotKeyActions;
       _isAuthenticated = config._isAuthenticated;
       _token = config._token;
-      _subscribeUrl = config._subscribeUrl;
     }
     notifyListeners();
   }
 
-  Map<String, dynamic> toJson() => _$ConfigToJson(this);
+  Map<String, dynamic> toJson() {
+    return _$ConfigToJson(this);
+  }
 
-  factory Config.fromJson(Map<String, dynamic> json) => _$ConfigFromJson(json);
+  factory Config.fromJson(Map<String, dynamic> json) {
+    return _$ConfigFromJson(json);
+  }
 
   @override
   String toString() {
-    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token, _subscribeUrl: $_subscribeUrl}';
+    return 'Config{_appSetting: $_appSetting, _profiles: $_profiles, _currentProfileId: $_currentProfileId, _isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, _windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, _networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, _proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token}';
   }
 }
