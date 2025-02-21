@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_clash/models/config.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:fl_clash/pages/auth.dart' show apiBaseUrl;
 
 class PersonalCenterFragment extends StatefulWidget {
   const PersonalCenterFragment({super.key});
@@ -15,13 +18,53 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
   bool _isLoading = false;
 
   Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    try {
+      setState(() => _isLoading = true);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+      final config = Provider.of<Config>(context, listen: false);
+      config.token = null;
+      config.isAuthenticated = false;
+      config.user = null; // 清空用户信息
+      globalState.navigatorKey.currentState?.pushReplacementNamed('/auth') ??
+          Navigator.of(context).pushReplacementNamed('/auth');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("退出失败: $e")));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _changePassword(String newPassword) async {
     final config = Provider.of<Config>(context, listen: false);
-    config.token = null;
-    config.isAuthenticated = false;
-    globalState.navigatorKey.currentState?.pushReplacementNamed('/auth') ??
-        Navigator.of(context).pushReplacementNamed('/auth');
+    if (config.token == null || config.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("未登录，无法修改密码")));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/v1/auth/change_password'), // 假设的 API 端点
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${config.token}',
+        },
+        body: jsonEncode({'password': newPassword}),
+      ).timeout(const Duration(seconds: 10));
+
+      final data = jsonDecode(response.body);
+      if (data['code'] == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("密码修改成功")));
+        config.user = config.user!.copyWith(password: newPassword);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data['msg'] ?? "修改密码失败")));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("错误: $e")));
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _showChangePasswordDialog() {
@@ -38,6 +81,8 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
             TextField(
               controller: passwordController,
               obscureText: true,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: "新密码",
                 prefixIcon: Icon(Icons.lock),
@@ -47,6 +92,8 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
             TextField(
               controller: confirmPasswordController,
               obscureText: true,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
               decoration: const InputDecoration(
                 labelText: "确认密码",
                 prefixIcon: Icon(Icons.lock_outline),
@@ -60,25 +107,30 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
             child: const Text("取消"),
           ),
           ElevatedButton(
-            onPressed: () {
-              final newPassword = passwordController.text;
-              final confirmPassword = confirmPasswordController.text;
-              if (newPassword.isEmpty || confirmPassword.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("请填写所有字段")),
-                );
-              } else if (newPassword != confirmPassword) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("两次输入的密码不一致")),
-                );
-              } else {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("密码已修改（模拟）")),
-                );
-              }
-            },
-            child: const Text("确认修改"),
+            onPressed: _isLoading
+                ? null
+                : () async {
+                    final newPassword = passwordController.text;
+                    final confirmPassword = confirmPasswordController.text;
+                    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("请填写所有字段")));
+                      return;
+                    }
+                    if (newPassword != confirmPassword) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(const SnackBar(content: Text("两次输入的密码不一致")));
+                      return;
+                    }
+                    Navigator.pop(context);
+                    await _changePassword(newPassword);
+                  },
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.0),
+                  )
+                : const Text("确认修改"),
           ),
         ],
       ),
@@ -130,7 +182,7 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
                 ElevatedButton.icon(
                   icon: const Icon(Icons.lock_reset),
                   label: const Text("修改密码"),
-                  onPressed: _showChangePasswordDialog,
+                  onPressed: _isLoading ? null : _showChangePasswordDialog,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14.0),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
@@ -145,13 +197,7 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
                     padding: const EdgeInsets.symmetric(vertical: 14.0),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                   ),
-                  onPressed: _isLoading
-                      ? null
-                      : () async {
-                          setState(() => _isLoading = true);
-                          await _logout();
-                          setState(() => _isLoading = false);
-                        },
+                  onPressed: _isLoading ? null : _logout,
                 ),
               ],
             ),
