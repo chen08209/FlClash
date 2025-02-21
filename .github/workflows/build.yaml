@@ -1,4 +1,4 @@
-name: 手动构建
+name: manual-build
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
           - macos
 
 jobs:
-  构建:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -34,84 +34,87 @@ jobs:
           - platform: macos
             os: macos-latest
             arch: arm64
+      fail-fast: false
 
-    if: inputs.platform == 'all' || inputs.platform == matrix.platform
+    # 修复点：只能使用 inputs 变量，matrix 在 strategy 外无法直接访问
+    # 使用 contains() 判断是否执行
+    if: ${{ inputs.platform == 'all' || contains(fromJson('["android", "windows", "linux", "macos"]'), inputs.platform) && inputs.platform == matrix.platform }}
 
     steps:
-      - name: 拉取代码
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: 创建 dist 目录
+      - name: Create dist directory
         run: mkdir -p dist
 
-      - name: 配置 JAVA (Android)
-        if: startsWith(matrix.platform, 'android')
+      - name: Setup JAVA (Android)
+        if: ${{ matrix.platform == 'android' }}
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 17
 
-      - name: 配置 NDK (Android)
-        if: startsWith(matrix.platform, 'android')
+      - name: Setup NDK (Android)
+        if: ${{ matrix.platform == 'android' }}
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r26b
           add-to-path: true
           link-to-sdk: true
 
-      - name: 配置 Android 签名
-        if: startsWith(matrix.platform, 'android')
+      - name: Setup Android Signing
+        if: ${{ matrix.platform == 'android' }}
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
           echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
 
-      - name: 配置 Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
 
-      - name: 配置 Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.24.5
           channel: stable
           cache: true
 
-      - name: 获取 Flutter 依赖
+      - name: Get Flutter dependencies
         run: flutter pub get
 
-      - name: 设置构建环境
-        run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
+      - name: Build Project
+        run: dart setup.dart ${{ matrix.platform }}${{ matrix.arch && format(' --arch {0}', matrix.arch) }}
 
-      - name: 上传构建产物
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: dist/
           overwrite: true
 
-  上传:
-    needs: [ 构建 ]
+  upload:
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取代码
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 创建 dist 目录
+      - name: Create dist directory
         run: mkdir -p dist
 
-      - name: 下载构建产物
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist/
           pattern: artifact-*
           merge-multiple: true
 
-      - name: 上传最终构建产物
+      - name: Upload final build
         uses: actions/upload-artifact@v4
         with:
           name: final-build-output
