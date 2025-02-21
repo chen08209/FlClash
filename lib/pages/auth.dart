@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String apiBaseUrl = "https://api.ppanel.dev"; // 替换为实际 API 地址
+const String apiBaseUrl = "https://api.ppanel.dev";
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -39,9 +39,8 @@ class _AuthPageState extends State<AuthPage> {
       final config = Provider.of<Config>(context, listen: false);
       config.token = token;
       config.isAuthenticated = true;
-      print("已加载保存的 token: $token，跳转到 /home");
-      globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
-          Navigator.of(context).pushReplacementNamed('/home');
+      await _fetchSubscribeUrl(token);
+      globalState.navigatorKey.currentState?.pushReplacementNamed('/home');
     }
   }
 
@@ -51,7 +50,37 @@ class _AuthPageState extends State<AuthPage> {
     final config = Provider.of<Config>(context, listen: false);
     config.token = token;
     config.isAuthenticated = true;
-    print("Token 已保存: $token, isAuthenticated: ${config.isAuthenticated}");
+  }
+
+  Future<void> _fetchSubscribeUrl(String authToken) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/v1/public/user/subscribe'),
+        headers: {'Authorization': 'Bearer $authToken'},
+      ).timeout(const Duration(seconds: 10));
+      print("订阅响应: ${response.statusCode}, ${response.body}");
+      final data = jsonDecode(response.body);
+      if (data['code'] == 0 && data['data']['list'].isNotEmpty) {
+        final subscribeToken = data['data']['list'][0]['token'];
+        final subscribeUrl = '$apiBaseUrl/api/subscribe?token=$subscribeToken';
+        final config = Provider.of<Config>(context, listen: false);
+        config.subscribeUrl = subscribeUrl;
+        print("订阅 URL 已存储: $subscribeUrl");
+        await _addProfileFromSubscribeUrl(subscribeUrl);
+      } else {
+        setState(() => _errorMessage = data['msg'] ?? "获取订阅失败");
+      }
+    } catch (e) {
+      setState(() => _errorMessage = "获取订阅错误: $e");
+      print("订阅错误: $e");
+    }
+  }
+
+  Future<void> _addProfileFromSubscribeUrl(String url) async {
+    final config = Provider.of<Config>(context, listen: false);
+    final newProfile = Profile.normal(label: "订阅配置", url: url);
+    config.setProfile(newProfile);
+    await newProfile.checkAndUpdate();
   }
 
   Future<void> _sendCode(int type) async {
@@ -70,9 +99,7 @@ class _AuthPageState extends State<AuthPage> {
         Uri.parse('$apiBaseUrl/v1/common/send_code'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'type': type}),
-      ).timeout(const Duration(seconds: 10), onTimeout: () {
-        throw TimeoutException("请求超时");
-      });
+      ).timeout(const Duration(seconds: 10));
       print("发送验证码响应: ${response.statusCode}, ${response.body}");
       final data = jsonDecode(response.body);
       if (data['code'] == 200 && data['data']['status']) {
@@ -105,17 +132,15 @@ class _AuthPageState extends State<AuthPage> {
         Uri.parse('$apiBaseUrl/v1/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
-      ).timeout(const Duration(seconds: 10), onTimeout: () {
-        throw TimeoutException("请求超时");
-      });
+      ).timeout(const Duration(seconds: 10));
       print("API响应: ${response.statusCode}, ${response.body}");
       final data = jsonDecode(response.body);
       if (data['code'] == 200) {
         final token = data['data']['token'];
         print("登录成功，token: $token");
         await _saveToken(token);
-        globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
-            Navigator.of(context).pushReplacementNamed('/home');
+        await _fetchSubscribeUrl(token);
+        globalState.navigatorKey.currentState?.pushReplacementNamed('/home');
       } else {
         setState(() => _errorMessage = data['msg'] ?? "登录失败");
       }
@@ -151,17 +176,15 @@ class _AuthPageState extends State<AuthPage> {
           'invite': invite,
           'code': code.isEmpty ? null : code,
         }),
-      ).timeout(const Duration(seconds: 10), onTimeout: () {
-        throw TimeoutException("请求超时");
-      });
+      ).timeout(const Duration(seconds: 10));
       print("注册响应: ${response.statusCode}, ${response.body}");
       final data = jsonDecode(response.body);
       if (data['code'] == 200) {
         final token = data['data']['token'];
         print("注册成功，token: $token");
         await _saveToken(token);
-        globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
-            Navigator.of(context).pushReplacementNamed('/home');
+        await _fetchSubscribeUrl(token);
+        globalState.navigatorKey.currentState?.pushReplacementNamed('/home');
       } else {
         setState(() => _errorMessage = data['msg'] ?? "注册失败");
       }
@@ -195,17 +218,15 @@ class _AuthPageState extends State<AuthPage> {
           'password': password,
           'code': code,
         }),
-      ).timeout(const Duration(seconds: 10), onTimeout: () {
-        throw TimeoutException("请求超时");
-      });
+      ).timeout(const Duration(seconds: 10));
       print("重置密码响应: ${response.statusCode}, ${response.body}");
       final data = jsonDecode(response.body);
       if (data['code'] == 200) {
         final token = data['data']['token'];
         print("重置密码成功，token: $token");
         await _saveToken(token);
-        globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
-            Navigator.of(context).pushReplacementNamed('/home');
+        await _fetchSubscribeUrl(token);
+        globalState.navigatorKey.currentState?.pushReplacementNamed('/home');
       } else {
         setState(() => _errorMessage = data['msg'] ?? "重置密码失败");
       }
@@ -255,7 +276,6 @@ class _AuthPageState extends State<AuthPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 标题
                       Text(
                         _mode == 0 ? "欢迎登录" : _mode == 1 ? "注册账号" : "重置密码",
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -264,20 +284,54 @@ class _AuthPageState extends State<AuthPage> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16.0),
-                      // 输入框
-                      _buildTextField(_emailController, "邮箱", Icons.email),
+                      TextField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: "邮箱",
+                          prefixIcon: Icon(Icons.email, color: Colors.blueAccent),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+                          filled: true,
+                          fillColor: Colors.grey,
+                        ),
+                      ),
                       const SizedBox(height: 12.0),
-                      _buildTextField(_passwordController, "密码", Icons.lock,
-                          obscureText: true),
+                      TextField(
+                        controller: _passwordController,
+                        decoration: const InputDecoration(
+                          labelText: "密码",
+                          prefixIcon: Icon(Icons.lock, color: Colors.blueAccent),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+                          filled: true,
+                          fillColor: Colors.grey,
+                        ),
+                        obscureText: true,
+                      ),
                       if (_mode == 1) ...[
                         const SizedBox(height: 12.0),
-                        _buildTextField(_inviteController, "邀请码", Icons.card_giftcard),
+                        TextField(
+                          controller: _inviteController,
+                          decoration: const InputDecoration(
+                            labelText: "邀请码",
+                            prefixIcon: Icon(Icons.card_giftcard, color: Colors.blueAccent),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+                            filled: true,
+                            fillColor: Colors.grey,
+                          ),
+                        ),
                       ],
                       if (_mode > 0) ...[
                         const SizedBox(height: 12.0),
-                        _buildTextField(_codeController, "验证码", Icons.verified),
+                        TextField(
+                          controller: _codeController,
+                          decoration: const InputDecoration(
+                            labelText: "验证码",
+                            prefixIcon: Icon(Icons.verified, color: Colors.blueAccent),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+                            filled: true,
+                            fillColor: Colors.grey,
+                          ),
+                        ),
                       ],
-                      // 错误消息
                       if (_errorMessage != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 12.0),
@@ -288,7 +342,6 @@ class _AuthPageState extends State<AuthPage> {
                           ),
                         ),
                       const SizedBox(height: 20.0),
-                      // 主按钮
                       ElevatedButton(
                         onPressed: _isLoading
                             ? null
@@ -300,9 +353,7 @@ class _AuthPageState extends State<AuthPage> {
                               },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                           elevation: 4.0,
                         ),
                         child: _isLoading
@@ -319,7 +370,6 @@ class _AuthPageState extends State<AuthPage> {
                                 style: const TextStyle(fontSize: 16.0),
                               ),
                       ),
-                      // 发送验证码按钮
                       if (_mode > 0)
                         Padding(
                           padding: const EdgeInsets.only(top: 12.0),
@@ -332,15 +382,65 @@ class _AuthPageState extends State<AuthPage> {
                           ),
                         ),
                       const SizedBox(height: 20.0),
-                      // 模式切换
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildModeButton("登录", 0),
+                          GestureDetector(
+                            onTap: () => setState(() => _mode = 0),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                              decoration: BoxDecoration(
+                                color: _mode == 0 ? Colors.blueAccent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(20.0),
+                              ),
+                              child: Text(
+                                "登录",
+                                style: TextStyle(
+                                  color: _mode == 0 ? Colors.white : Colors.grey.shade700,
+                                  fontWeight: _mode == 0 ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(width: 16.0),
-                          _buildModeButton("注册", 1),
+                          GestureDetector(
+                            onTap: () => setState(() => _mode = 1),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                              decoration: BoxDecoration(
+                                color: _mode == 1 ? Colors.blueAccent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(20.0),
+                              ),
+                              child: Text(
+                                "注册",
+                                style: TextStyle(
+                                  color: _mode == 1 ? Colors.white : Colors.grey.shade700,
+                                  fontWeight: _mode == 1 ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(width: 16.0),
-                          _buildModeButton("重置密码", 2),
+                          GestureDetector(
+                            onTap: () => setState(() => _mode = 2),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                              decoration: BoxDecoration(
+                                color: _mode == 2 ? Colors.blueAccent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(20.0),
+                              ),
+                              child: Text(
+                                "重置密码",
+                                style: TextStyle(
+                                  color: _mode == 2 ? Colors.white : Colors.grey.shade700,
+                                  fontWeight: _mode == 2 ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -348,51 +448,6 @@ class _AuthPageState extends State<AuthPage> {
                 ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 构建美化的输入框
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    bool obscureText = false,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.blueAccent),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-      ),
-    );
-  }
-
-  // 构建模式切换按钮
-  Widget _buildModeButton(String text, int mode) {
-    return GestureDetector(
-      onTap: () => setState(() => _mode = mode),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        decoration: BoxDecoration(
-          color: _mode == mode ? Colors.blueAccent : Colors.transparent,
-          borderRadius: BorderRadius.circular(20.0),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: _mode == mode ? Colors.white : Colors.grey.shade700,
-            fontWeight: _mode == mode ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),
