@@ -5,7 +5,8 @@ on:
     inputs:
       platform:
         description: '选择构建的平台'
-        required: false
+        required: true
+        default: 'all'
         type: choice
         options:
           - all
@@ -19,26 +20,26 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include:
-          - platform: android
-            os: ubuntu-latest
-          - platform: windows
-            os: windows-latest
-            arch: amd64
-          - platform: linux
-            os: ubuntu-latest
-            arch: amd64
-          - platform: macos
-            os: macos-13
-            arch: amd64
-          - platform: macos
-            os: macos-latest
-            arch: arm64
+        include: ${{ fromJson(
+          inputs.platform == 'all'
+          && '[
+            {"platform":"android","os":"ubuntu-latest"},
+            {"platform":"windows","os":"windows-latest","arch":"amd64"},
+            {"platform":"linux","os":"ubuntu-latest","arch":"amd64"},
+            {"platform":"macos","os":"macos-13","arch":"amd64"},
+            {"platform":"macos","os":"macos-latest","arch":"arm64"}
+          ]'
+          || format(
+            '[{{"platform":"{0}","os":"{1}","arch":"{2}"}}]',
+            inputs.platform,
+            inputs.platform == 'android' && 'ubuntu-latest' ||
+            inputs.platform == 'windows' && 'windows-latest' ||
+            inputs.platform == 'linux' && 'ubuntu-latest' ||
+            'macos-latest',
+            inputs.platform == 'android' && '' || 'amd64'
+          )
+        ) }}
       fail-fast: false
-
-    # 修复点：只能使用 inputs 变量，matrix 在 strategy 外无法直接访问
-    # 使用 contains() 判断是否执行
-    if: ${{ inputs.platform == 'all' || contains(fromJson('["android", "windows", "linux", "macos"]'), inputs.platform) && inputs.platform == matrix.platform }}
 
     steps:
       - name: Checkout code
