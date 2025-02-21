@@ -13,6 +13,9 @@ import 'models.dart';
 part 'generated/config.freezed.dart';
 part 'generated/config.g.dart';
 
+// 默认 API 地址
+const String defaultApiBaseUrl = "https://api.ppanel.dev";
+
 final defaultAppSetting = const AppSetting().copyWith(
   isAnimateToPage: system.isDesktop ? false : true,
 );
@@ -202,7 +205,7 @@ class ThemeProps with _$ThemeProps {
 class User with _$User {
   const factory User({
     required String email,
-    String? password, // 可选字段，避免明文存储敏感信息
+    String? password,
   }) = _User;
 
   factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
@@ -226,6 +229,7 @@ class Config extends ChangeNotifier {
   bool _isAuthenticated;
   String? _token;
   User? _user;
+  String _apiBaseUrl; // 新增 API 地址字段
 
   Config()
       : _profiles = [],
@@ -241,7 +245,8 @@ class Config extends ChangeNotifier {
         _themeProps = defaultThemeProps,
         _isAuthenticated = false,
         _token = null,
-        _user = null;
+        _user = null,
+        _apiBaseUrl = defaultApiBaseUrl;
 
   @JsonKey(fromJson: AppSetting.realFromJson)
   AppSetting get appSetting => _appSetting;
@@ -497,6 +502,16 @@ class Config extends ChangeNotifier {
     }
   }
 
+  @JsonKey(defaultValue: defaultApiBaseUrl)
+  String get apiBaseUrl => _apiBaseUrl;
+
+  set apiBaseUrl(String value) {
+    if (_apiBaseUrl != value) {
+      _apiBaseUrl = value;
+      notifyListeners();
+    }
+  }
+
   updateOrAddHotKeyAction(HotKeyAction hotKeyAction) {
     final index = _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
     if (index == -1) {
@@ -536,6 +551,7 @@ class Config extends ChangeNotifier {
       _isAuthenticated = config._isAuthenticated;
       _token = config._token;
       _user = config._user;
+      _apiBaseUrl = config._apiBaseUrl; // 更新 API 地址
     }
     notifyListeners();
   }
@@ -554,7 +570,8 @@ class Config extends ChangeNotifier {
         '_isAccessControl: $_isAccessControl, _accessControl: $_accessControl, _dav: $_dav, '
         '_windowProps: $_windowProps, _themeProps: $_themeProps, _vpnProps: $_vpnProps, '
         '_networkProps: $_networkProps, _overrideDns: $_overrideDns, _hotKeyActions: $_hotKeyActions, '
-        '_proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token, _user: $_user}';
+        '_proxiesStyle: $_proxiesStyle, _isAuthenticated: $_isAuthenticated, _token: $_token, '
+        '_user: $_user, _apiBaseUrl: $_apiBaseUrl}';
   }
 }
 
