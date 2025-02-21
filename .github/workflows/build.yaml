@@ -1,72 +1,56 @@
-name: manual-build
+name: build
 
 on:
-  workflow_dispatch:
-    inputs:
-      platform:
-        description: '选择构建的平台'
-        required: true
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - android
-          - windows
-          - linux
-          - macos
+  workflow_dispatch:  # 修改为手动触发
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include: ${{ fromJson(
-          inputs.platform == 'all'
-          && '[
-            {"platform":"android","os":"ubuntu-latest"},
-            {"platform":"windows","os":"windows-latest","arch":"amd64"},
-            {"platform":"linux","os":"ubuntu-latest","arch":"amd64"},
-            {"platform":"macos","os":"macos-13","arch":"amd64"},
-            {"platform":"macos","os":"macos-latest","arch":"arm64"}
-          ]'
-          || format(
-            '[{{"platform":"{0}","os":"{1}","arch":"{2}"}}]',
-            inputs.platform,
-            inputs.platform == 'android' && 'ubuntu-latest' ||
-            inputs.platform == 'windows' && 'windows-latest' ||
-            inputs.platform == 'linux' && 'ubuntu-latest' ||
-            'macos-latest',
-            inputs.platform == 'android' && '' || 'amd64'
-          )
-        ) }}
-      fail-fast: false
+        include:
+          - platform: android
+            os: ubuntu-latest
+          - platform: windows
+            os: windows-latest
+            arch: amd64
+          - platform: linux
+            os: ubuntu-latest
+            arch: amd64
+          - platform: macos
+            os: macos-13
+            arch: amd64
+          - platform: macos
+            os: macos-latest
+            arch: arm64
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Create dist directory
+      - name: Ensure dist directory exists
         run: mkdir -p dist
 
-      - name: Setup JAVA (Android)
-        if: ${{ matrix.platform == 'android' }}
+      - name: Setup JAVA
+        if: startsWith(matrix.platform,'android')
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 17
 
-      - name: Setup NDK (Android)
-        if: ${{ matrix.platform == 'android' }}
+      - name: Setup NDK
+        if: startsWith(matrix.platform,'android')
         uses: nttld/setup-ndk@v1
+        id: setup-ndk
         with:
           ndk-version: r26b
           add-to-path: true
           link-to-sdk: true
 
       - name: Setup Android Signing
-        if: ${{ matrix.platform == 'android' }}
+        if: startsWith(matrix.platform,'android')
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
@@ -77,6 +61,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
+          cache-dependency-path: |
+            core/go.sum
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -85,39 +71,15 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Get Flutter dependencies
+      - name: Get Flutter Dependency
         run: flutter pub get
 
-      - name: Build Project
-        run: dart setup.dart ${{ matrix.platform }}${{ matrix.arch && format(' --arch {0}', matrix.arch) }}
+      - name: Setup
+        run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
 
-      - name: Upload build artifacts
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
-          path: dist/
-          overwrite: true
-
-  upload:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create dist directory
-        run: mkdir -p dist
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist/
-          pattern: artifact-*
-          merge-multiple: true
-
-      - name: Upload final build
-        uses: actions/upload-artifact@v4
-        with:
-          name: final-build-output
-          path: dist/
+          path: ./dist
           overwrite: true
