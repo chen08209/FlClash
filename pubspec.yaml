@@ -13,8 +13,8 @@ dependencies:
   intl: ^0.19.0
   path_provider: ^2.1.0
   path: ^1.9.0
-  shared_preferences: ^2.5.1
-  provider: ^6.0.5
+  shared_preferences: ^2.5.1  # 已存在，用于 token 持久化
+  provider: ^6.0.5  # 已存在，用于状态管理
   window_manager: ^0.4.3
   dynamic_color: ^1.7.0
   proxy:
@@ -52,6 +52,8 @@ dependencies:
   connectivity_plus: ^6.1.0
   screen_retriever: ^0.2.0
   defer_pointer: ^0.0.2
+  http: ^1.2.2  # 新增，用于发送 API 请求
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -79,12 +81,14 @@ flutter:
     - family: Icons
       fonts:
         - asset: assets/fonts/Icons.ttf
+
 ffigen:
   name: "ClashFFI"
   output: 'lib/clash/generated/clash_ffi.dart'
   headers:
     entry-points:
       - 'libclash/android/arm64-v8a/libclash.h'
+
 flutter_intl:
   enabled: true
   class_name: AppLocalizations
