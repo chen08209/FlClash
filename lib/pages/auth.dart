@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/services/api_service.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// 认证页面，支持登录、注册和重置密码
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
@@ -29,6 +29,7 @@ class _AuthPageState extends State<AuthPage> {
     _loadToken();
   }
 
+  // 检查本地是否有 token，若有则跳转到首页
   Future<void> _loadToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -40,6 +41,7 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
+  // 保存 token 和用户信息到本地和 Config
   Future<void> _saveToken(String token, String email, [String? password]) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
@@ -49,6 +51,7 @@ class _AuthPageState extends State<AuthPage> {
     config.user = User(email: email, password: password);
   }
 
+  // 发送验证码
   Future<void> _sendCode(int type) async {
     final email = _emailController.text;
     if (email.isEmpty) {
@@ -61,12 +64,11 @@ class _AuthPageState extends State<AuthPage> {
     });
     try {
       final config = Provider.of<Config>(context, listen: false);
-      final response = await http.post(
-        Uri.parse('${config.apiBaseUrl}/v1/common/send_code'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'type': type}),
-      ).timeout(const Duration(seconds: 10));
-      final data = jsonDecode(response.body);
+      final data = await ApiService.sendCode(
+        apiBaseUrl: config.apiBaseUrl,
+        email: email,
+        type: type,
+      );
       setState(() => _errorMessage =
           data['code'] == 200 && data['data']['status'] ? "验证码发送成功" : data['msg'] ?? "发送验证码失败");
     } catch (e) {
@@ -76,6 +78,7 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
+  // 执行登录
   Future<void> _login() async {
     final email = _emailController.text;
     final password = _passwordController.text;
@@ -89,12 +92,11 @@ class _AuthPageState extends State<AuthPage> {
     });
     try {
       final config = Provider.of<Config>(context, listen: false);
-      final response = await http.post(
-        Uri.parse('${config.apiBaseUrl}/v1/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      ).timeout(const Duration(seconds: 10));
-      final data = jsonDecode(response.body);
+      final data = await ApiService.login(
+        apiBaseUrl: config.apiBaseUrl,
+        email: email,
+        password: password,
+      );
       if (data['code'] == 200) {
         await _saveToken(data['data']['token'], email, password);
         _navigateToHome();
@@ -108,6 +110,7 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
+  // 执行注册
   Future<void> _register() async {
     final email = _emailController.text;
     final password = _passwordController.text;
@@ -123,17 +126,13 @@ class _AuthPageState extends State<AuthPage> {
     });
     try {
       final config = Provider.of<Config>(context, listen: false);
-      final response = await http.post(
-        Uri.parse('${config.apiBaseUrl}/v1/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-          'invite': invite,
-          'code': code.isEmpty ? null : code,
-        }),
-      ).timeout(const Duration(seconds: 10));
-      final data = jsonDecode(response.body);
+      final data = await ApiService.register(
+        apiBaseUrl: config.apiBaseUrl,
+        email: email,
+        password: password,
+        invite: invite,
+        code: code,
+      );
       if (data['code'] == 200) {
         await _saveToken(data['data']['token'], email, password);
         _navigateToHome();
@@ -147,6 +146,7 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
+  // 执行密码重置
   Future<void> _resetPassword() async {
     final email = _emailController.text;
     final password = _passwordController.text;
@@ -161,12 +161,12 @@ class _AuthPageState extends State<AuthPage> {
     });
     try {
       final config = Provider.of<Config>(context, listen: false);
-      final response = await http.post(
-        Uri.parse('${config.apiBaseUrl}/v1/auth/reset'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password, 'code': code}),
-      ).timeout(const Duration(seconds: 10));
-      final data = jsonDecode(response.body);
+      final data = await ApiService.resetPassword(
+        apiBaseUrl: config.apiBaseUrl,
+        email: email,
+        password: password,
+        code: code,
+      );
       if (data['code'] == 200) {
         await _saveToken(data['data']['token'], email, password);
         _navigateToHome();
@@ -180,6 +180,7 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
+  // 导航到首页
   void _navigateToHome() {
     globalState.navigatorKey.currentState?.pushReplacementNamed('/home') ??
         Navigator.of(context).pushReplacementNamed('/home');
@@ -323,6 +324,7 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
+  // 构建通用的文本输入框
   Widget _buildTextField(TextEditingController controller, String label, IconData icon,
       {bool obscureText = false}) {
     return TextField(
