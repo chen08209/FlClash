@@ -358,7 +358,6 @@ class AppController {
 
   init() async {
     await _handlePreference();
-    await _handlerDisclaimer();
     await globalState.initCore(
       appState: appState,
       clashConfig: clashConfig,
@@ -451,53 +450,6 @@ class AppController {
         addProfileFormURL(url);
       },
     );
-  }
-
-  Future<bool> showDisclaimer() async {
-    return await globalState.showCommonDialog<bool>(
-          dismissible: false,
-          child: AlertDialog(
-            title: Text(appLocalizations.disclaimer),
-            content: Container(
-              width: dialogCommonWidth,
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  appLocalizations.disclaimerDesc,
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop<bool>(false);
-                },
-                child: Text(appLocalizations.exit),
-              ),
-              TextButton(
-                onPressed: () {
-                  config.appSetting = config.appSetting.copyWith(
-                    disclaimerAccepted: true,
-                  );
-                  Navigator.of(context).pop<bool>(true);
-                },
-                child: Text(appLocalizations.agree),
-              )
-            ],
-          ),
-        ) ??
-        false;
-  }
-
-  _handlerDisclaimer() async {
-    if (config.appSetting.disclaimerAccepted) {
-      return;
-    }
-    final isDisclaimerAccepted = await showDisclaimer();
-    if (!isDisclaimerAccepted) {
-      await handleExit();
-    }
-    return;
   }
 
   addProfileFormURL(String url) async {
