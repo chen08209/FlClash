@@ -1,4 +1,3 @@
-// lib/common/navigation.dart
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/fragments.dart';
 import 'package:fl_clash/models/models.dart';
@@ -7,9 +6,9 @@ import 'package:flutter/material.dart';
 class Navigation {
   static Navigation? _instance;
 
-  List<NavigationItem> getItems({
-    bool openLogs = false,  // 保留参数，但不再使用
-    bool hasProxies = false, // 保留参数，但不再使用
+  getItems({
+    bool openLogs = false,
+    bool hasProxies = false,
   }) {
     return [
       const NavigationItem(
@@ -17,15 +16,55 @@ class Navigation {
         label: "dashboard",
         fragment: DashboardFragment(),
       ),
+      NavigationItem(
+        icon: const Icon(Icons.rocket),
+        label: "proxies",
+        fragment: const ProxiesFragment(),
+        modes: hasProxies
+            ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
+            : [],
+      ),
       const NavigationItem(
         icon: Icon(Icons.folder),
         label: "profiles",
         fragment: ProfilesFragment(),
       ),
       const NavigationItem(
-        icon: Icon(Icons.rocket),
-        label: "proxies",
-        fragment: ProxiesFragment(),
+        icon: Icon(Icons.view_timeline),
+        label: "requests",
+        fragment: RequestsFragment(),
+        description: "requestsDesc",
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
+      const NavigationItem(
+        icon: Icon(Icons.ballot),
+        label: "connections",
+        fragment: ConnectionsFragment(),
+        description: "connectionsDesc",
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
+      const NavigationItem(
+        icon: Icon(Icons.storage),
+        label: "resources",
+        description: "resourcesDesc",
+        keep: false,
+        fragment: Resources(),
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
+        icon: const Icon(Icons.adb),
+        label: "logs",
+        fragment: const LogsFragment(),
+        description: "logsDesc",
+        modes: openLogs
+            ? [NavigationItemMode.desktop, NavigationItemMode.more]
+            : [],
+      ),
+      const NavigationItem(
+        icon: Icon(Icons.construction),
+        label: "tools",
+        fragment: ToolsFragment(),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
     ];
   }
