@@ -1,3 +1,4 @@
+// lib/application.dart
 import 'dart:async';
 
 import 'package:dynamic_color/dynamic_color.dart';
@@ -239,12 +240,15 @@ class ApplicationState extends State<Application> {
                       primaryColor: state.primaryColor,
                     ).toPrueBlack(state.prueBlack),
                   ),
-                  home: child,
+                  initialRoute: Provider.of<Config>(context, listen: false).isAuthenticated ? '/home' : '/auth',
+                  routes: {
+                    '/auth': (context) => const AuthPage(),
+                    '/home': (context) => const HomePage(),
+                  },
                 );
               },
             );
           },
-          child: const HomePage(),
         ),
       ),
     );
