@@ -64,17 +64,18 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
     return generateSection(
       title: appLocalizations.other,
       items: [
-        ListItem(
-          leading: const Icon(Icons.gavel),
-          title: Text(appLocalizations.disclaimer),
-          onTap: () async {
-            final isDisclaimerAccepted =
-                await globalState.appController.showDisclaimer();
-            if (!isDisclaimerAccepted) {
-              globalState.appController.handleExit();
-            }
-          },
-        ),
+        // 删除免责声明相关项
+        // ListItem(
+        //   leading: const Icon(Icons.gavel),
+        //   title: Text(appLocalizations.disclaimer),
+        //   onTap: () async {
+        //     final isDisclaimerAccepted =
+        //         await globalState.appController.showDisclaimer();
+        //     if (!isDisclaimerAccepted) {
+        //       globalState.appController.handleExit();
+        //     }
+        //   },
+        // ),
         ListItem.open(
           leading: const Icon(Icons.info),
           title: Text(appLocalizations.about),
@@ -227,7 +228,7 @@ class _ToolboxFragmentState extends State<ToolsFragment> {
         return ListView.builder(
           itemCount: items.length,
           itemBuilder: (_, index) => items[index],
-          padding: const EdgeInsets.only(bottom: 20),
+          padding: const EdgeInsets.only(custom: 20),
         );
       },
     );
