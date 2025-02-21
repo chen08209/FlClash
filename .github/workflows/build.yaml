@@ -1,9 +1,8 @@
 name: build
 
+# 修改为手动触发
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -55,7 +54,6 @@ jobs:
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
           echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
-
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -144,7 +142,6 @@ jobs:
               exit 1
             fi
           fi
-
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -242,4 +239,3 @@ jobs:
           target-branch: action-pr
           commit-message: Update from ${{ github.ref_name }}
           target-directory: /tmp/
-
