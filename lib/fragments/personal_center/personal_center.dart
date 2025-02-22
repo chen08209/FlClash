@@ -237,63 +237,68 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
     final isDesktop = screenWidth > 600;
 
     return Scaffold(
-      body: Container(
-        padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: isDesktop ? 60 : 40,
-              backgroundColor: Colors.blueAccent,
-              child: Text(
-                email.isNotEmpty ? email[0].toUpperCase() : "U",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: isDesktop ? 48 : 32,
+      body: Center(
+        child: Container(
+          padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
+          constraints: BoxConstraints(
+            maxWidth: isDesktop ? 600 : 400,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: isDesktop ? 60 : 40,
+                backgroundColor: Colors.blueAccent,
+                child: Text(
+                  email.isNotEmpty ? email[0].toUpperCase() : "U",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isDesktop ? 48 : 32,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: isDesktop ? 24 : 16),
-            Text(
-              email,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: isDesktop ? 24 : 20,
-              ),
-            ),
-            SizedBox(height: isDesktop ? 32 : 24),
-            SizedBox(
-              width: isDesktop ? 300 : 200,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.lock_reset),
-                label: const Text("修改密码"),
-                onPressed: _isLoading ? null : _showChangePasswordDialog,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[700],
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: isDesktop ? 16.0 : 14.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+              SizedBox(height: isDesktop ? 24 : 16),
+              Text(
+                email,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: isDesktop ? 24 : 20,
                 ),
               ),
-            ),
-            SizedBox(height: isDesktop ? 24 : 16),
-            SizedBox(
-              width: isDesktop ? 300 : 200,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.logout),
-                label: const Text("退出登录"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red[600],
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: isDesktop ? 16.0 : 14.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+              SizedBox(height: isDesktop ? 32 : 24),
+              SizedBox(
+                width: isDesktop ? 300 : 200,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.lock_reset),
+                  label: const Text("修改密码"),
+                  onPressed: _isLoading ? null : _showChangePasswordDialog,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[700],
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: isDesktop ? 16.0 : 14.0),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                  ),
                 ),
-                onPressed: _isLoading ? null : _logout,
               ),
-            ),
-          ],
+              SizedBox(height: isDesktop ? 24 : 16),
+              SizedBox(
+                width: isDesktop ? 300 : 200,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.logout),
+                  label: const Text("退出登录"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[600],
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: isDesktop ? 16.0 : 14.0),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                  ),
+                  onPressed: _isLoading ? null : _logout,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
