@@ -1,77 +1,85 @@
-import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'dart:convert'; // 导入 JSON 解析库，支持 jsonDecode 方法
+import 'dart:io'; // 导入 IO 库，用于平台检测
+import 'package:http/http.dart' as http; // 导入 HTTP 客户端，用于网络请求
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:flutter/material.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:fl_clash/common/common.dart'; // 自定义通用工具模块
+import 'package:fl_clash/enum/enum.dart'; // 自定义枚举类型
+import 'package:flutter/material.dart'; // Flutter Material 库，提供 UI 和状态管理支持
+import 'package:freezed_annotation/freezed_annotation.dart'; // Freezed 库，用于生成不可变数据类
 
-import 'models.dart';
+import 'models.dart'; // 导入其他自定义模型
 
-part 'generated/config.freezed.dart';
-part 'generated/config.g.dart';
+part 'generated/config.freezed.dart'; // Freezed 生成的不可变类代码
+part 'generated/config.g.dart'; // JSON 序列化生成代码
 
-/// 默认 API 基础地址。
+/// 默认 API 基础地址，用于网络请求的默认服务器。
 const String defaultApiBaseUrl = "https://api.ppanel.dev";
 
-/// 解析 TXT DNS 记录，获取备用 API 地址。
+/// 备用域名，用于通过 DNS TXT 记录获取其他 API 地址。
 const String fallbackDomain = "example.com";
 
-/// 公共 DNS 服务地址，解析 TXT 记录。
+/// 公共 DNS 服务地址列表，用于解析 TXT 记录以获取备用 API 地址。
 const List<String> dnsServices = [
   "https://1.1.1.1/dns-query", // Cloudflare DNS
   "https://dns.google/resolve", // Google Public DNS
   "https://dns.adguard.com/dns-query", // AdGuard DNS
 ];
 
-/// 检查 URL 的延迟和可用性，返回延迟（毫秒）或 -1（不可用）
+/// 检查指定 URL 的延迟和可用性。
+/// - [url]: 要检查的 URL 地址。
+/// - 返回: 延迟（毫秒），若不可用则返回 -1。
+/// - 注意: 使用 HEAD 请求，超时设为 5 秒。
 Future<int> _checkUrlLatency(String url) async {
   try {
-    final stopwatch = Stopwatch()..start();
+    final stopwatch = Stopwatch()..start(); // 开始计时
     final response = await http.head(Uri.parse(url)).timeout(const Duration(seconds: 5));
-    stopwatch.stop();
+    stopwatch.stop(); // 停止计时
+    // 检查状态码是否在 200-299 范围内，表示可用
     return response.statusCode >= 200 && response.statusCode < 300
         ? stopwatch.elapsedMilliseconds
         : -1;
   } catch (e) {
-    print("Failed to check $url: $e");
-    return -1; // 不可用标记
+    print("Failed to check $url: $e"); // 打印错误日志
+    return -1; // 返回不可用标记
   }
 }
 
-/// 从多个 DNS 服务解析 example.com 的 TXT DNS 记录，获取备用 API 地址
+/// 从多个 DNS 服务解析 fallbackDomain 的 TXT 记录，获取备用 API 地址。
+/// - 返回: 包含备用 API 地址的列表，若失败则返回空列表。
+/// - 逻辑: 遍历 dnsServices，发送 GET 请求并解析 JSON 响应。
 Future<List<String>> _fetchTxtRecords() async {
   for (final dnsService in dnsServices) {
     try {
       final response = await http.get(
         Uri.parse('$dnsService?name=$fallbackDomain&type=TXT'),
         headers: dnsService.contains("dns-query") ? {'Accept': 'application/dns-json'} : null,
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 10)); // 10 秒超时
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final txtRecords = (data['Answer'] as List<dynamic>?) ?? [];
-        if (txtRecords.isEmpty) return []; // 允许空白
-        final txtData = txtRecords.first['data'] as String?;
-        if (txtData == null || txtData.trim().isEmpty) return []; // 允许空白
+        final data = jsonDecode(response.body); // 解析 JSON 响应
+        final txtRecords = (data['Answer'] as List<dynamic>?) ?? []; // 获取 Answer 字段
+        if (txtRecords.isEmpty) return []; // 无记录时返回空列表
+        final txtData = txtRecords.first['data'] as String?; // 提取第一个 TXT 数据
+        if (txtData == null || txtData.trim().isEmpty) return []; // 数据为空时返回空列表
         return txtData
-            .split(' ')
-            .map((url) => 'https://$url') // 添加协议前缀
-            .where((url) => Uri.tryParse(url)?.isAbsolute == true)
+            .split(' ') // 按空格分割
+            .map((url) => 'https://$url') // 添加 HTTPS 前缀
+            .where((url) => Uri.tryParse(url)?.isAbsolute == true) // 过滤有效 URL
             .toList();
       }
     } catch (e) {
-      print("Failed to fetch TXT records from $dnsService: $e");
+      print("Failed to fetch TXT records from $dnsService: $e"); // 打印失败日志
     }
   }
-  print("All DNS services failed to fetch TXT records");
-  return [];
+  print("All DNS services failed to fetch TXT records"); // 所有服务失败时打印
+  return []; // 返回空列表
 }
 
-// 默认应用设置
+// 默认应用设置，根据平台调整动画开关（桌面端禁用）。
 final defaultAppSetting = const AppSetting().copyWith(
   isAnimateToPage: system.isDesktop ? false : true,
 );
 
+/// 默认仪表盘小部件列表，定义初始显示的内容。
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
   DashboardWidget.systemProxyButton,
@@ -82,41 +90,46 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.intranetIp,
 ];
 
+/// 将 JSON 数据转换为 DashboardWidget 枚举列表。
+/// - [dashboardWidgets]: 动态 JSON 数据。
+/// - 返回: 解析后的小部件列表，若失败则返回默认值。
 List<DashboardWidget> dashboardWidgetsRealFormJson(List<dynamic>? dashboardWidgets) {
   try {
     return dashboardWidgets
-            ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e))
+            ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e)) // 枚举解码
             .toList() ??
         defaultDashboardWidgets;
   } catch (_) {
-    return defaultDashboardWidgets;
+    return defaultDashboardWidgets; // 解析失败时返回默认值
   }
 }
 
+/// 应用设置模型，存储用户偏好设置。
 @freezed
 class AppSetting with _$AppSetting {
   const factory AppSetting({
-    String? locale,
+    String? locale, // 语言设置
     @JsonKey(fromJson: dashboardWidgetsRealFormJson)
     @Default(defaultDashboardWidgets)
-    List<DashboardWidget> dashboardWidgets,
-    @Default(false) bool onlyStatisticsProxy,
-    @Default(false) bool autoLaunch,
-    @Default(false) bool silentLaunch,
-    @Default(false) bool autoRun,
-    @Default(false) bool openLogs,
-    @Default(true) bool closeConnections,
-    @Default(defaultTestUrl) String testUrl,
-    @Default(true) bool isAnimateToPage,
-    @Default(true) bool autoCheckUpdate,
-    @Default(false) bool showLabel,
-    @Default(false) bool disclaimerAccepted,
-    @Default(true) bool minimizeOnExit,
-    @Default(false) bool hidden,
+    List<DashboardWidget> dashboardWidgets, // 仪表盘小部件
+    @Default(false) bool onlyStatisticsProxy, // 是否仅统计代理
+    @Default(false) bool autoLaunch, // 自动启动
+    @Default(false) bool silentLaunch, // 静默启动
+    @Default(false) bool autoRun, // 开机自启
+    @Default(false) bool openLogs, // 开启日志
+    @Default(true) bool closeConnections, // 关闭连接
+    @Default(defaultTestUrl) String testUrl, // 测试 URL
+    @Default(true) bool isAnimateToPage, // 页面动画
+    @Default(true) bool autoCheckUpdate, // 自动检查更新
+    @Default(false) bool showLabel, // 显示标签
+    @Default(false) bool disclaimerAccepted, // 免责声明接受
+    @Default(true) bool minimizeOnExit, // 退出时最小化
+    @Default(false) bool hidden, // 隐藏窗口
   }) = _AppSetting;
 
   factory AppSetting.fromJson(Map<String, Object?> json) => _$AppSettingFromJson(json);
 
+  /// 从 JSON 创建实例，提供容错和平台适配。
   factory AppSetting.realFromJson(Map<String, Object?>? json) {
     final appSetting = json == null ? defaultAppSetting : AppSetting.fromJson(json);
     return appSetting.copyWith(
@@ -125,19 +138,21 @@ class AppSetting with _$AppSetting {
   }
 }
 
+/// 访问控制模型，定义代理访问规则。
 @freezed
 class AccessControl with _$AccessControl {
   const factory AccessControl({
-    @Default(AccessControlMode.rejectSelected) AccessControlMode mode,
-    @Default([]) List<String> acceptList,
-    @Default([]) List<String> rejectList,
-    @Default(AccessSortType.none) AccessSortType sort,
-    @Default(true) bool isFilterSystemApp,
+    @Default(AccessControlMode.rejectSelected) AccessControlMode mode, // 模式
+    @Default([]) List<String> acceptList, // 接受列表
+    @Default([]) List<String> rejectList, // 拒绝列表
+    @Default(AccessSortType.none) AccessSortType sort, // 排序类型
+    @Default(true) bool isFilterSystemApp, // 过滤系统应用
   }) = _AccessControl;
 
   factory AccessControl.fromJson(Map<String, Object?> json) => _$AccessControlFromJson(json);
 }
 
+/// 访问控制扩展，提供当前生效的列表。
 extension AccessControlExt on AccessControl {
   List<String> get currentList => switch (mode) {
         AccessControlMode.acceptSelected => acceptList,
@@ -145,19 +160,21 @@ extension AccessControlExt on AccessControl {
       };
 }
 
+/// 窗口属性模型，定义窗口大小和位置。
 @freezed
 class WindowProps with _$WindowProps {
   const factory WindowProps({
-    @Default(900) double width,
-    @Default(600) double height,
-    double? top,
-    double? left,
+    @Default(900) double width, // 宽度
+    @Default(600) double height, // 高度
+    double? top, // 顶部位置
+    double? left, // 左侧位置
   }) = _WindowProps;
 
   factory WindowProps.fromJson(Map<String, Object?>? json) =>
       json == null ? const WindowProps() : _$WindowPropsFromJson(json);
 }
 
+/// 默认绕过域名列表，定义不需要代理的域名。
 const defaultBypassDomain = [
   "*zhihu.com",
   "*zhimg.com",
@@ -178,49 +195,55 @@ const defaultBypassDomain = [
   "192.168.*"
 ];
 
+/// 默认 VPN 属性。
 const defaultVpnProps = VpnProps();
 
+/// VPN 属性模型，定义 VPN 相关设置。
 @freezed
 class VpnProps with _$VpnProps {
   const factory VpnProps({
-    @Default(true) bool enable,
-    @Default(true) bool systemProxy,
-    @Default(false) bool ipv6,
-    @Default(true) bool allowBypass,
+    @Default(true) bool enable, // 是否启用
+    @Default(true) bool systemProxy, // 系统代理
+    @Default(false) bool ipv6, // IPv6 支持
+    @Default(true) bool allowBypass, // 允许绕过
   }) = _VpnProps;
 
   factory VpnProps.fromJson(Map<String, Object?>? json) =>
       json == null ? const VpnProps() : _$VpnPropsFromJson(json);
 }
 
+/// 网络属性模型，定义网络代理设置。
 @freezed
 class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
-    @Default(true) bool systemProxy,
-    @Default(defaultBypassDomain) List<String> bypassDomain,
+    @Default(true) bool systemProxy, // 系统代理
+    @Default(defaultBypassDomain) List<String> bypassDomain, // 绕过域名
   }) = _NetworkProps;
 
   factory NetworkProps.fromJson(Map<String, Object?>? json) =>
       json == null ? const NetworkProps() : _$NetworkPropsFromJson(json);
 }
 
+/// 默认代理样式。
 const defaultProxiesStyle = ProxiesStyle();
 
+/// 代理样式模型，定义代理显示样式。
 @freezed
 class ProxiesStyle with _$ProxiesStyle {
   const factory ProxiesStyle({
-    @Default(ProxiesType.tab) ProxiesType type,
-    @Default(ProxiesSortType.none) ProxiesSortType sortType,
-    @Default(ProxiesLayout.standard) ProxiesLayout layout,
-    @Default(ProxiesIconStyle.standard) ProxiesIconStyle iconStyle,
-    @Default(ProxyCardType.expand) ProxyCardType cardType,
-    @Default({}) Map<String, String> iconMap,
+    @Default(ProxiesType.tab) ProxiesType type, // 类型
+    @Default(ProxiesSortType.none) ProxiesSortType sortType, // 排序
+    @Default(ProxiesLayout.standard) ProxiesLayout layout, // 布局
+    @Default(ProxiesIconStyle.standard) ProxiesIconStyle iconStyle, // 图标样式
+    @Default(ProxyCardType.expand) ProxyCardType cardType, // 卡片类型
+    @Default({}) Map<String, String> iconMap, // 图标映射
   }) = _ProxiesStyle;
 
   factory ProxiesStyle.fromJson(Map<String, Object?>? json) =>
       json == null ? defaultProxiesStyle : _$ProxiesStyleFromJson(json);
 }
 
+/// 默认主题属性，根据平台调整字体和颜色。
 final defaultThemeProps = Platform.isWindows
     ? const ThemeProps().copyWith(
         fontFamily: FontFamily.miSans,
@@ -230,17 +253,19 @@ final defaultThemeProps = Platform.isWindows
         primaryColor: defaultPrimaryColor.value,
       );
 
+/// 主题属性模型，定义 UI 主题设置。
 @freezed
 class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
-    int? primaryColor,
-    @Default(ThemeMode.system) ThemeMode themeMode,
-    @Default(false) bool prueBlack,
-    @Default(FontFamily.system) FontFamily fontFamily,
+    int? primaryColor, // 主色值
+    @Default(ThemeMode.system) ThemeMode themeMode, // 主题模式
+    @Default(false) bool prueBlack, // 纯黑模式
+    @Default(FontFamily.system) FontFamily fontFamily, // 字体
   }) = _ThemeProps;
 
   factory ThemeProps.fromJson(Map<String, Object?> json) => _$ThemePropsFromJson(json);
 
+  /// 从 JSON 创建实例，提供容错处理。
   factory ThemeProps.realFromJson(Map<String, Object?>? json) {
     if (json == null) {
       return defaultThemeProps;
@@ -248,43 +273,47 @@ class ThemeProps with _$ThemeProps {
     try {
       return ThemeProps.fromJson(json);
     } catch (_) {
-      return defaultThemeProps;
+      return defaultThemeProps; // 解析失败时返回默认值
     }
   }
 }
 
+/// 用户信息模型，存储用户认证数据。
 @freezed
 class User with _$User {
   const factory User({
-    required String email,
-    String? password,
+    required String email, // 邮箱（必填）
+    String? password, // 密码（可选）
   }) = _User;
 
   factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 }
 
+/// 配置类，管理应用的所有状态。
 @JsonSerializable()
 class Config extends ChangeNotifier {
-  AppSetting _appSetting;
-  List<Profile> _profiles;
-  String? _currentProfileId;
-  bool _isAccessControl;
-  AccessControl _accessControl;
-  DAV? _dav;
-  WindowProps _windowProps;
-  ThemeProps _themeProps;
-  VpnProps _vpnProps;
-  NetworkProps _networkProps;
-  bool _overrideDns;
-  List<HotKeyAction> _hotKeyActions;
-  ProxiesStyle _proxiesStyle;
-  bool _isAuthenticated;
-  String? _token;
-  User? _user;
-  String _apiBaseUrl;
+  AppSetting _appSetting; // 应用设置
+  List<Profile> _profiles; // 配置文件列表
+  String? _currentProfileId; // 当前配置文件 ID
+  bool _isAccessControl; // 是否启用访问控制（Android 专属）
+  AccessControl _accessControl; // 访问控制设置
+  DAV? _dav; // WebDAV 配置
+  WindowProps _windowProps; // 窗口属性
+  ThemeProps _themeProps; // 主题设置
+  VpnProps _vpnProps; // VPN 设置
+  NetworkProps _networkProps; // 网络设置
+  bool _overrideDns; // 是否覆盖 DNS
+  List<HotKeyAction> _hotKeyActions; // 快捷键动作
+  ProxiesStyle _proxiesStyle; // 代理样式
+  bool _isAuthenticated; // 认证状态
+  String? _token; // 认证令牌
+  User? _user; // 用户信息
+  String _apiBaseUrl; // API 基础地址
 
+  /// 默认构造函数，调用初始化方法。
   Config() : this._init();
 
+  /// 初始化构造函数，设置默认值并启动 API 地址检测。
   Config._init()
       : _profiles = [],
         _isAccessControl = false,
@@ -304,13 +333,13 @@ class Config extends ChangeNotifier {
     _initializeApiBaseUrl();
   }
 
-  // 初始化 API 地址，默认使用 defaultApiBaseUrl，并在后台检测最佳地址
+  /// 初始化 API 地址，默认使用 defaultApiBaseUrl 并异步检测最佳地址。
   void _initializeApiBaseUrl() {
-    _apiBaseUrl = defaultApiBaseUrl; // 初始使用默认地址
-    Future.microtask(_updateToBestApiBaseUrl); // 后台检测
+    _apiBaseUrl = defaultApiBaseUrl;
+    Future.microtask(_updateToBestApiBaseUrl); // 在微任务中执行检测
   }
 
-  // 在后台检测所有地址并切换到延迟最低的
+  /// 检测所有地址并切换到延迟最低的可用地址。
   Future<void> _updateToBestApiBaseUrl() async {
     final futures = <Future<Map<String, int>>>[
       _checkUrlLatency(defaultApiBaseUrl).then((latency) => {defaultApiBaseUrl: latency}),
@@ -325,7 +354,7 @@ class Config extends ChangeNotifier {
       }),
     ];
 
-    // 等待所有检查完成
+    // 等待所有延迟检查完成
     final results = await Future.wait(futures);
     final allLatencies = <String, int>{};
     for (var result in results) {
@@ -343,7 +372,7 @@ class Config extends ChangeNotifier {
       }
     }
 
-    // 更新 API 地址
+    // 更新 API 地址并通知监听者
     if (bestUrl != null && bestUrl != _apiBaseUrl) {
       _apiBaseUrl = bestUrl;
       notifyListeners();
@@ -358,24 +387,28 @@ class Config extends ChangeNotifier {
   set appSetting(AppSetting value) {
     if (_appSetting != value) {
       _appSetting = value;
-      notifyListeners();
+      notifyListeners(); // 通知 UI 更新
     }
   }
 
+  /// 删除指定 ID 的配置文件。
   deleteProfileById(String id) {
     _profiles = profiles.where((element) => element.id != id).toList();
     notifyListeners();
   }
 
+  /// 根据 ID 获取配置文件。
   Profile? getCurrentProfileForId(String? value) {
     if (value == null) return null;
     return _profiles.firstWhere((element) => element.id == value);
   }
 
+  /// 获取当前配置文件。
   Profile? getCurrentProfile() {
     return getCurrentProfileForId(_currentProfileId);
   }
 
+  /// 获取唯一标签，处理重复情况。
   String? _getLabel(String? label, String id) {
     final realLabel = label ?? id;
     final hasDup = _profiles.indexWhere(
@@ -387,6 +420,7 @@ class Config extends ChangeNotifier {
     }
   }
 
+  /// 更新或添加配置文件（内部方法）。
   _setProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(_profiles);
     final index = profilesTemp.indexWhere((element) => element.id == profile.id);
@@ -401,6 +435,7 @@ class Config extends ChangeNotifier {
     _profiles = profilesTemp;
   }
 
+  /// 更新或添加配置文件（公开方法）。
   setProfile(Profile profile) {
     _setProfile(profile);
     notifyListeners();
@@ -434,6 +469,7 @@ class Config extends ChangeNotifier {
 
   Set<String> get currentUnfoldSet => currentProfile?.unfoldSet ?? {};
 
+  /// 更新当前配置的展开状态。
   updateCurrentUnfoldSet(Set<String> value) {
     if (!stringSetEquality.equals(currentUnfoldSet, value)) {
       _setProfile(
@@ -443,6 +479,7 @@ class Config extends ChangeNotifier {
     }
   }
 
+  /// 更新当前配置的分组名称。
   updateCurrentGroupName(String groupName) {
     if (currentProfile != null && currentProfile!.currentGroupName != groupName) {
       _setProfile(
@@ -456,6 +493,7 @@ class Config extends ChangeNotifier {
     return currentProfile?.selectedMap ?? {};
   }
 
+  /// 更新当前配置的代理选择。
   updateCurrentSelectedMap(String groupName, String proxyName) {
     if (currentProfile != null && currentProfile!.selectedMap[groupName] != proxyName) {
       final SelectedMap selectedMap = Map.from(currentProfile?.selectedMap ?? {})..[groupName] = proxyName;
@@ -468,7 +506,7 @@ class Config extends ChangeNotifier {
 
   @JsonKey(defaultValue: false)
   bool get isAccessControl {
-    if (!Platform.isAndroid) return false;
+    if (!Platform.isAndroid) return false; // 非 Android 平台禁用
     return _isAccessControl;
   }
 
@@ -598,7 +636,7 @@ class Config extends ChangeNotifier {
 
   set apiBaseUrl(String value) {
     if (!Uri.parse(value).isAbsolute) {
-      throw ArgumentError("Invalid API base URL: $value");
+      throw ArgumentError("Invalid API base URL: $value"); // 验证 URL 有效性
     }
     if (_apiBaseUrl != value) {
       _apiBaseUrl = value;
@@ -606,6 +644,7 @@ class Config extends ChangeNotifier {
     }
   }
 
+  /// 更新或添加快捷键动作。
   updateOrAddHotKeyAction(HotKeyAction hotKeyAction) {
     final index = _hotKeyActions.indexWhere((item) => item.action == hotKeyAction.action);
     if (index == -1) {
@@ -616,6 +655,7 @@ class Config extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 从另一个 Config 对象更新状态，支持部分更新。
   update([
     Config? config,
     RecoveryOption recoveryOptions = RecoveryOption.all,
@@ -650,10 +690,12 @@ class Config extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 转换为 JSON。
   Map<String, dynamic> toJson() {
     return _$ConfigToJson(this);
   }
 
+  /// 从 JSON 创建实例。
   factory Config.fromJson(Map<String, dynamic> json) {
     return _$ConfigFromJson(json);
   }
