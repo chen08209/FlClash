@@ -238,6 +238,7 @@ class _PersonalCenterFragmentState extends State<PersonalCenterFragment> {
         padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0), // 桌面端更大内边距，移动端较小
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center, // 垂直居中对齐
+          crossAxisAlignment: CrossAxisAlignment.center, // 水平居中对齐
           children: [
             // 用户头像
             CircleAvatar(
