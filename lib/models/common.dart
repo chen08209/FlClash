@@ -334,7 +334,7 @@ class TrafficValue {
     }
     if (_value > pow(1024, 1)) {
       return TrafficValueShow(
-        value: _value / pow(1024, 2),
+        value: _value / pow(1024, 1),
         unit: TrafficUnit.KB,
       );
     }

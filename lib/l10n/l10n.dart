@@ -2670,10 +2670,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Relying on third-party APIs is for reference only`
+  /// `Relying on third-party api is for reference only`
   String get detectionTip {
     return Intl.message(
-      'Relying on third-party APIs is for reference only',
+      'Relying on third-party api is for reference only',
       name: 'detectionTip',
       desc: '',
       args: [],

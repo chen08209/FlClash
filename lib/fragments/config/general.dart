@@ -189,13 +189,11 @@ class MixedPortItem extends ConsumerWidget {
   }
 }
 
-class HostsItem extends ConsumerWidget {
+class HostsItem extends StatelessWidget {
   const HostsItem({super.key});
 
   @override
-  Widget build(BuildContext context, ref) {
-    final hosts =
-        ref.watch(patchClashConfigProvider.select((state) => state.hosts));
+  Widget build(BuildContext context) {
     return ListItem.open(
       leading: const Icon(Icons.view_list_outlined),
       title: const Text("Hosts"),
@@ -203,17 +201,23 @@ class HostsItem extends ConsumerWidget {
       delegate: OpenDelegate(
         isBlur: false,
         title: "Hosts",
-        widget: ListPage(
-          title: "Hosts",
-          items: hosts.entries,
-          titleBuilder: (item) => Text(item.key),
-          subtitleBuilder: (item) => Text(item.value),
-          onChange: (items) {
-            ref.read(patchClashConfigProvider.notifier).updateState(
-                  (state) => state.copyWith(
-                    hosts: Map.fromEntries(items),
-                  ),
-                );
+        widget: Consumer(
+          builder: (_, ref, __) {
+            final hosts = ref
+                .watch(patchClashConfigProvider.select((state) => state.hosts));
+            return ListPage(
+              title: "Hosts",
+              items: hosts.entries,
+              titleBuilder: (item) => Text(item.key),
+              subtitleBuilder: (item) => Text(item.value),
+              onChange: (items) {
+                ref.read(patchClashConfigProvider.notifier).updateState(
+                      (state) => state.copyWith(
+                        hosts: Map.fromEntries(items),
+                      ),
+                    );
+              },
+            );
           },
         ),
         extendPageWidth: 360,

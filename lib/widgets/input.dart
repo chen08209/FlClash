@@ -4,6 +4,7 @@ import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/null_status.dart';
 import 'package:flutter/material.dart';
+
 import 'card.dart';
 import 'float_layout.dart';
 import 'list.dart';
@@ -118,7 +119,7 @@ class _InputDialogState extends State<InputDialog> {
                 border: const OutlineInputBorder(),
                 suffixText: suffixText,
               ),
-              onSubmitted: (_){
+              onSubmitted: (_) {
                 _handleUpdate();
               },
             ),
@@ -256,7 +257,8 @@ class ListPage<T> extends StatelessWidget {
                 child: ListItem(
                   leading: leadingBuilder != null ? leadingBuilder!(e) : null,
                   title: titleBuilder(e),
-                  subtitle: subtitleBuilder != null ? subtitleBuilder!(e) : null,
+                  subtitle:
+                      subtitleBuilder != null ? subtitleBuilder!(e) : null,
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () {
@@ -318,6 +320,7 @@ class ListPage<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("daad===>$items");
     return FloatLayout(
       floatingWidget: FloatWrapper(
         child: FloatingActionButton(

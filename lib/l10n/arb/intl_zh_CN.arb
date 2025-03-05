@@ -343,5 +343,5 @@
   "copyLink": "复制链接",
   "exportFile": "导出文件",
   "cacheCorrupt": "缓存已损坏，是否清空？",
-  "detectionTip": "依赖第三方程序仅供参考"
+  "detectionTip": "依赖第三方api仅供参考"
 }

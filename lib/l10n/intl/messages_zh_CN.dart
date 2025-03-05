@@ -122,7 +122,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "desc": MessageLookupByLibrary.simpleMessage(
       "基于ClashMeta的多平台代理客户端，简单易用，开源无广告。",
     ),
-    "detectionTip": MessageLookupByLibrary.simpleMessage("依赖第三方程序仅供参考"),
+    "detectionTip": MessageLookupByLibrary.simpleMessage("依赖第三方api仅供参考"),
     "direct": MessageLookupByLibrary.simpleMessage("直连"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("免责声明"),
     "disclaimerDesc": MessageLookupByLibrary.simpleMessage(

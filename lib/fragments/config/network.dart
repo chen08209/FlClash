@@ -186,7 +186,7 @@ class TunStackItem extends ConsumerWidget {
   }
 }
 
-class BypassDomainItem extends ConsumerWidget {
+class BypassDomainItem extends StatelessWidget {
   const BypassDomainItem({super.key});
 
   _initActions(BuildContext context, WidgetRef ref) {
@@ -219,10 +219,7 @@ class BypassDomainItem extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, ref) {
-    final bypassDomain =
-        ref.watch(networkSettingProvider.select((state) => state.bypassDomain));
-
+  Widget build(BuildContext context) {
     return ListItem.open(
       title: Text(appLocalizations.bypassDomain),
       subtitle: Text(appLocalizations.bypassDomainDesc),
@@ -230,21 +227,25 @@ class BypassDomainItem extends ConsumerWidget {
         isBlur: false,
         isScaffold: true,
         title: appLocalizations.bypassDomain,
-        widget: Builder(builder: (context) {
-          _initActions(context, ref);
-          return ListPage(
-            title: appLocalizations.bypassDomain,
-            items: bypassDomain,
-            titleBuilder: (item) => Text(item),
-            onChange: (items) {
-              ref.read(networkSettingProvider.notifier).updateState(
-                    (state) => state.copyWith(
-                      bypassDomain: List.from(items),
-                    ),
-                  );
-            },
-          );
-        }),
+        widget: Consumer(
+          builder: (_, ref, __) {
+            _initActions(context, ref);
+            final bypassDomain = ref.watch(
+                networkSettingProvider.select((state) => state.bypassDomain));
+            return ListPage(
+              title: appLocalizations.bypassDomain,
+              items: bypassDomain,
+              titleBuilder: (item) => Text(item),
+              onChange: (items) {
+                ref.read(networkSettingProvider.notifier).updateState(
+                      (state) => state.copyWith(
+                        bypassDomain: List.from(items),
+                      ),
+                    );
+              },
+            );
+          },
+        ),
         extendPageWidth: 360,
       ),
     );
@@ -293,8 +294,6 @@ class RouteAddressItem extends ConsumerWidget {
     if (bypassPrivate) {
       return Container();
     }
-    final routeAddress = ref.watch(
-        patchClashConfigProvider.select((state) => state.tun.routeAddress));
     return ListItem.open(
       title: Text(appLocalizations.routeAddress),
       subtitle: Text(appLocalizations.routeAddressDesc),
@@ -302,16 +301,22 @@ class RouteAddressItem extends ConsumerWidget {
         isBlur: false,
         isScaffold: true,
         title: appLocalizations.routeAddress,
-        widget: ListPage(
-          title: appLocalizations.routeAddress,
-          items: routeAddress,
-          titleBuilder: (item) => Text(item),
-          onChange: (items) {
-            ref.read(patchClashConfigProvider.notifier).updateState(
-                  (state) => state.copyWith.tun(
-                    routeAddress: List.from(items),
-                  ),
-                );
+        widget: Consumer(
+          builder: (_, ref, __) {
+            final routeAddress = ref.watch(patchClashConfigProvider
+                .select((state) => state.tun.routeAddress));
+            return ListPage(
+              title: appLocalizations.routeAddress,
+              items: routeAddress,
+              titleBuilder: (item) => Text(item),
+              onChange: (items) {
+                ref.read(patchClashConfigProvider.notifier).updateState(
+                      (state) => state.copyWith.tun(
+                        routeAddress: List.from(items),
+                      ),
+                    );
+              },
+            );
           },
         ),
         extendPageWidth: 360,
