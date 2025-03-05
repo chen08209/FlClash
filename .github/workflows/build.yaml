@@ -239,7 +239,6 @@ jobs:
           destination-repository-name: FlClash-fdroid-repo
           user-name: 'github-actions[bot]'
           user-email: 'github-actions[bot]@users.noreply.github.com'
-          target-branch: action-pr
           commit-message: Update from ${{ github.ref_name }}
           target-directory: /tmp/
 
