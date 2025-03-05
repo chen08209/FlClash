@@ -1,3 +1,19 @@
+## v0.8.77
+
+- Optimize performance
+
+- Update core
+
+- Optimize core stability
+
+- Fix linux tun authority check error
+
+- Fix some issues
+
+- Fix scroll physics error
+
+- Update changelog
+
 ## v0.8.75
 
 - Add windows storage corruption detection
