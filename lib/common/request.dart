@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/cupertino.dart';
 
 class Request {
   late final Dio _dio;
+  late final Dio _clashDio;
   String? userAgent;
 
   Request() {
@@ -20,22 +22,24 @@ class Request {
         },
       ),
     );
+    _clashDio = Dio();
+    _clashDio.httpClientAdapter = IOHttpClientAdapter(createHttpClient: () {
+      final client = HttpClient();
+      client.findProxy = (Uri uri) {
+        client.userAgent = globalState.ua;
+        return FlClashHttpOverrides.handleFindProxy(uri);
+      };
+      return client;
+    });
   }
 
   Future<Response> getFileResponseForUrl(String url) async {
-    final response = await _dio
-        .get(
-          url,
-          options: Options(
-            headers: {
-              "User-Agent": globalState.ua,
-            },
-            responseType: ResponseType.bytes,
-          ),
-        )
-        .timeout(
-          httpTimeoutDuration * 6,
-        );
+    final response = await _clashDio.get(
+      url,
+      options: Options(
+        responseType: ResponseType.bytes,
+      ),
+    );
     return response;
   }
 
@@ -109,9 +113,6 @@ class Request {
           .get(
             "http://$localhost:$helperPort/ping",
             options: Options(
-              headers: {
-                "User-Agent": browserUa,
-              },
               responseType: ResponseType.plain,
             ),
           )

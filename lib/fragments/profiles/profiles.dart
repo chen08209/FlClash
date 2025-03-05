@@ -181,10 +181,6 @@ class ProfileItem extends StatelessWidget {
     await globalState.appController.deleteProfile(profile.id);
   }
 
-  _handleUpdateProfile() async {
-    await globalState.safeRun<void>(updateProfile);
-  }
-
   Future updateProfile() async {
     final appController = globalState.appController;
     if (profile.type == ProfileType.file) return;
@@ -323,7 +319,7 @@ class ProfileItem extends StatelessWidget {
                             icon: Icons.sync_alt_sharp,
                             label: appLocalizations.sync,
                             onPressed: () {
-                              _handleUpdateProfile();
+                              updateProfile();
                             },
                           ),
                           // ActionItemData(

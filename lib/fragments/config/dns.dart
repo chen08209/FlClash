@@ -48,6 +48,32 @@ class StatusItem extends ConsumerWidget {
   }
 }
 
+class ListenItem extends ConsumerWidget {
+  const ListenItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final listen =
+        ref.watch(patchClashConfigProvider.select((state) => state.dns.listen));
+    return ListItem.input(
+      title: Text(appLocalizations.listen),
+      subtitle: Text(listen),
+      delegate: InputDelegate(
+        title: appLocalizations.listen,
+        value: listen,
+        onChanged: (String? value) {
+          if (value == null) {
+            return;
+          }
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith.dns(listen: value));
+        },
+      ),
+    );
+  }
+}
+
 class PreferH3Item extends ConsumerWidget {
   const PreferH3Item({super.key});
 
@@ -596,6 +622,7 @@ class DnsOptions extends StatelessWidget {
         title: appLocalizations.options,
         items: [
           const StatusItem(),
+          const ListenItem(),
           const UseHostsItem(),
           const UseSystemHostsItem(),
           const IPv6Item(),

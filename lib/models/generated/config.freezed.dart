@@ -1725,8 +1725,7 @@ ThemeProps _$ThemePropsFromJson(Map<String, dynamic> json) {
 mixin _$ThemeProps {
   int? get primaryColor => throw _privateConstructorUsedError;
   ThemeMode get themeMode => throw _privateConstructorUsedError;
-  bool get prueBlack => throw _privateConstructorUsedError;
-  FontFamily get fontFamily => throw _privateConstructorUsedError;
+  bool get pureBlack => throw _privateConstructorUsedError;
 
   /// Serializes this ThemeProps to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1744,11 +1743,7 @@ abstract class $ThemePropsCopyWith<$Res> {
           ThemeProps value, $Res Function(ThemeProps) then) =
       _$ThemePropsCopyWithImpl<$Res, ThemeProps>;
   @useResult
-  $Res call(
-      {int? primaryColor,
-      ThemeMode themeMode,
-      bool prueBlack,
-      FontFamily fontFamily});
+  $Res call({int? primaryColor, ThemeMode themeMode, bool pureBlack});
 }
 
 /// @nodoc
@@ -1768,8 +1763,7 @@ class _$ThemePropsCopyWithImpl<$Res, $Val extends ThemeProps>
   $Res call({
     Object? primaryColor = freezed,
     Object? themeMode = null,
-    Object? prueBlack = null,
-    Object? fontFamily = null,
+    Object? pureBlack = null,
   }) {
     return _then(_value.copyWith(
       primaryColor: freezed == primaryColor
@@ -1780,14 +1774,10 @@ class _$ThemePropsCopyWithImpl<$Res, $Val extends ThemeProps>
           ? _value.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
               as ThemeMode,
-      prueBlack: null == prueBlack
-          ? _value.prueBlack
-          : prueBlack // ignore: cast_nullable_to_non_nullable
+      pureBlack: null == pureBlack
+          ? _value.pureBlack
+          : pureBlack // ignore: cast_nullable_to_non_nullable
               as bool,
-      fontFamily: null == fontFamily
-          ? _value.fontFamily
-          : fontFamily // ignore: cast_nullable_to_non_nullable
-              as FontFamily,
     ) as $Val);
   }
 }
@@ -1800,11 +1790,7 @@ abstract class _$$ThemePropsImplCopyWith<$Res>
       __$$ThemePropsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {int? primaryColor,
-      ThemeMode themeMode,
-      bool prueBlack,
-      FontFamily fontFamily});
+  $Res call({int? primaryColor, ThemeMode themeMode, bool pureBlack});
 }
 
 /// @nodoc
@@ -1822,8 +1808,7 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
   $Res call({
     Object? primaryColor = freezed,
     Object? themeMode = null,
-    Object? prueBlack = null,
-    Object? fontFamily = null,
+    Object? pureBlack = null,
   }) {
     return _then(_$ThemePropsImpl(
       primaryColor: freezed == primaryColor
@@ -1834,14 +1819,10 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
           ? _value.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
               as ThemeMode,
-      prueBlack: null == prueBlack
-          ? _value.prueBlack
-          : prueBlack // ignore: cast_nullable_to_non_nullable
+      pureBlack: null == pureBlack
+          ? _value.pureBlack
+          : pureBlack // ignore: cast_nullable_to_non_nullable
               as bool,
-      fontFamily: null == fontFamily
-          ? _value.fontFamily
-          : fontFamily // ignore: cast_nullable_to_non_nullable
-              as FontFamily,
     ));
   }
 }
@@ -1852,8 +1833,7 @@ class _$ThemePropsImpl implements _ThemeProps {
   const _$ThemePropsImpl(
       {this.primaryColor,
       this.themeMode = ThemeMode.system,
-      this.prueBlack = false,
-      this.fontFamily = FontFamily.system});
+      this.pureBlack = false});
 
   factory _$ThemePropsImpl.fromJson(Map<String, dynamic> json) =>
       _$$ThemePropsImplFromJson(json);
@@ -1865,14 +1845,11 @@ class _$ThemePropsImpl implements _ThemeProps {
   final ThemeMode themeMode;
   @override
   @JsonKey()
-  final bool prueBlack;
-  @override
-  @JsonKey()
-  final FontFamily fontFamily;
+  final bool pureBlack;
 
   @override
   String toString() {
-    return 'ThemeProps(primaryColor: $primaryColor, themeMode: $themeMode, prueBlack: $prueBlack, fontFamily: $fontFamily)';
+    return 'ThemeProps(primaryColor: $primaryColor, themeMode: $themeMode, pureBlack: $pureBlack)';
   }
 
   @override
@@ -1884,16 +1861,14 @@ class _$ThemePropsImpl implements _ThemeProps {
                 other.primaryColor == primaryColor) &&
             (identical(other.themeMode, themeMode) ||
                 other.themeMode == themeMode) &&
-            (identical(other.prueBlack, prueBlack) ||
-                other.prueBlack == prueBlack) &&
-            (identical(other.fontFamily, fontFamily) ||
-                other.fontFamily == fontFamily));
+            (identical(other.pureBlack, pureBlack) ||
+                other.pureBlack == pureBlack));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, primaryColor, themeMode, prueBlack, fontFamily);
+      Object.hash(runtimeType, primaryColor, themeMode, pureBlack);
 
   /// Create a copy of ThemeProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1915,8 +1890,7 @@ abstract class _ThemeProps implements ThemeProps {
   const factory _ThemeProps(
       {final int? primaryColor,
       final ThemeMode themeMode,
-      final bool prueBlack,
-      final FontFamily fontFamily}) = _$ThemePropsImpl;
+      final bool pureBlack}) = _$ThemePropsImpl;
 
   factory _ThemeProps.fromJson(Map<String, dynamic> json) =
       _$ThemePropsImpl.fromJson;
@@ -1926,9 +1900,7 @@ abstract class _ThemeProps implements ThemeProps {
   @override
   ThemeMode get themeMode;
   @override
-  bool get prueBlack;
-  @override
-  FontFamily get fontFamily;
+  bool get pureBlack;
 
   /// Create a copy of ThemeProps
   /// with the given fields replaced by the non-null parameter values.

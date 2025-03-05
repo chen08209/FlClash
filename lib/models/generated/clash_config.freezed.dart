@@ -1039,6 +1039,7 @@ Dns _$DnsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Dns {
   bool get enable => throw _privateConstructorUsedError;
+  String get listen => throw _privateConstructorUsedError;
   @JsonKey(name: "prefer-h3")
   bool get preferH3 => throw _privateConstructorUsedError;
   @JsonKey(name: "use-hosts")
@@ -1082,6 +1083,7 @@ abstract class $DnsCopyWith<$Res> {
   @useResult
   $Res call(
       {bool enable,
+      String listen,
       @JsonKey(name: "prefer-h3") bool preferH3,
       @JsonKey(name: "use-hosts") bool useHosts,
       @JsonKey(name: "use-system-hosts") bool useSystemHosts,
@@ -1116,6 +1118,7 @@ class _$DnsCopyWithImpl<$Res, $Val extends Dns> implements $DnsCopyWith<$Res> {
   @override
   $Res call({
     Object? enable = null,
+    Object? listen = null,
     Object? preferH3 = null,
     Object? useHosts = null,
     Object? useSystemHosts = null,
@@ -1136,6 +1139,10 @@ class _$DnsCopyWithImpl<$Res, $Val extends Dns> implements $DnsCopyWith<$Res> {
           ? _value.enable
           : enable // ignore: cast_nullable_to_non_nullable
               as bool,
+      listen: null == listen
+          ? _value.listen
+          : listen // ignore: cast_nullable_to_non_nullable
+              as String,
       preferH3: null == preferH3
           ? _value.preferH3
           : preferH3 // ignore: cast_nullable_to_non_nullable
@@ -1214,6 +1221,7 @@ abstract class _$$DnsImplCopyWith<$Res> implements $DnsCopyWith<$Res> {
   @useResult
   $Res call(
       {bool enable,
+      String listen,
       @JsonKey(name: "prefer-h3") bool preferH3,
       @JsonKey(name: "use-hosts") bool useHosts,
       @JsonKey(name: "use-system-hosts") bool useSystemHosts,
@@ -1246,6 +1254,7 @@ class __$$DnsImplCopyWithImpl<$Res> extends _$DnsCopyWithImpl<$Res, _$DnsImpl>
   @override
   $Res call({
     Object? enable = null,
+    Object? listen = null,
     Object? preferH3 = null,
     Object? useHosts = null,
     Object? useSystemHosts = null,
@@ -1266,6 +1275,10 @@ class __$$DnsImplCopyWithImpl<$Res> extends _$DnsCopyWithImpl<$Res, _$DnsImpl>
           ? _value.enable
           : enable // ignore: cast_nullable_to_non_nullable
               as bool,
+      listen: null == listen
+          ? _value.listen
+          : listen // ignore: cast_nullable_to_non_nullable
+              as String,
       preferH3: null == preferH3
           ? _value.preferH3
           : preferH3 // ignore: cast_nullable_to_non_nullable
@@ -1331,6 +1344,7 @@ class __$$DnsImplCopyWithImpl<$Res> extends _$DnsCopyWithImpl<$Res, _$DnsImpl>
 class _$DnsImpl implements _Dns {
   const _$DnsImpl(
       {this.enable = true,
+      this.listen = "0.0.0.0:1053",
       @JsonKey(name: "prefer-h3") this.preferH3 = false,
       @JsonKey(name: "use-hosts") this.useHosts = true,
       @JsonKey(name: "use-system-hosts") this.useSystemHosts = true,
@@ -1374,6 +1388,9 @@ class _$DnsImpl implements _Dns {
   @override
   @JsonKey()
   final bool enable;
+  @override
+  @JsonKey()
+  final String listen;
   @override
   @JsonKey(name: "prefer-h3")
   final bool preferH3;
@@ -1457,7 +1474,7 @@ class _$DnsImpl implements _Dns {
 
   @override
   String toString() {
-    return 'Dns(enable: $enable, preferH3: $preferH3, useHosts: $useHosts, useSystemHosts: $useSystemHosts, respectRules: $respectRules, ipv6: $ipv6, defaultNameserver: $defaultNameserver, enhancedMode: $enhancedMode, fakeIpRange: $fakeIpRange, fakeIpFilter: $fakeIpFilter, nameserverPolicy: $nameserverPolicy, nameserver: $nameserver, fallback: $fallback, proxyServerNameserver: $proxyServerNameserver, fallbackFilter: $fallbackFilter)';
+    return 'Dns(enable: $enable, listen: $listen, preferH3: $preferH3, useHosts: $useHosts, useSystemHosts: $useSystemHosts, respectRules: $respectRules, ipv6: $ipv6, defaultNameserver: $defaultNameserver, enhancedMode: $enhancedMode, fakeIpRange: $fakeIpRange, fakeIpFilter: $fakeIpFilter, nameserverPolicy: $nameserverPolicy, nameserver: $nameserver, fallback: $fallback, proxyServerNameserver: $proxyServerNameserver, fallbackFilter: $fallbackFilter)';
   }
 
   @override
@@ -1466,6 +1483,7 @@ class _$DnsImpl implements _Dns {
         (other.runtimeType == runtimeType &&
             other is _$DnsImpl &&
             (identical(other.enable, enable) || other.enable == enable) &&
+            (identical(other.listen, listen) || other.listen == listen) &&
             (identical(other.preferH3, preferH3) ||
                 other.preferH3 == preferH3) &&
             (identical(other.useHosts, useHosts) ||
@@ -1499,6 +1517,7 @@ class _$DnsImpl implements _Dns {
   int get hashCode => Object.hash(
       runtimeType,
       enable,
+      listen,
       preferH3,
       useHosts,
       useSystemHosts,
@@ -1533,6 +1552,7 @@ class _$DnsImpl implements _Dns {
 abstract class _Dns implements Dns {
   const factory _Dns(
       {final bool enable,
+      final String listen,
       @JsonKey(name: "prefer-h3") final bool preferH3,
       @JsonKey(name: "use-hosts") final bool useHosts,
       @JsonKey(name: "use-system-hosts") final bool useSystemHosts,
@@ -1555,6 +1575,8 @@ abstract class _Dns implements Dns {
 
   @override
   bool get enable;
+  @override
+  String get listen;
   @override
   @JsonKey(name: "prefer-h3")
   bool get preferH3;

@@ -320,7 +320,6 @@ class ListPage<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("daad===>$items");
     return FloatLayout(
       floatingWidget: FloatWrapper(
         child: FloatingActionButton(

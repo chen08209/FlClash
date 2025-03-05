@@ -24,7 +24,7 @@ final currentGroupsStateProvider = AutoDisposeProvider<GroupsState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrentGroupsStateRef = AutoDisposeProviderRef<GroupsState>;
-String _$navigationsStateHash() => r'3c57f9161625f0376679cfe8b1cce0beadd709a7';
+String _$navigationsStateHash() => r'802ae70cc8b7d7f5620b340911da89d74960bfbd';
 
 /// See also [navigationsState].
 @ProviderFor(navigationsState)
@@ -95,7 +95,7 @@ final clashConfigStateProvider = AutoDisposeProvider<ClashConfigState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ClashConfigStateRef = AutoDisposeProviderRef<ClashConfigState>;
-String _$proxyStateHash() => r'418464d2ab29bb701ff001ca80396526fd2c8d3a';
+String _$proxyStateHash() => r'61ec20fcf35118aca445719c83e77e7d237f5570';
 
 /// See also [proxyState].
 @ProviderFor(proxyState)
@@ -111,7 +111,7 @@ final proxyStateProvider = AutoDisposeProvider<ProxyState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ProxyStateRef = AutoDisposeProviderRef<ProxyState>;
-String _$trayStateHash() => r'06ff742a92893667a30bc6a25d13594d83dd74fc';
+String _$trayStateHash() => r'39ff84c50ad9c9cc666fa2538fe13ec0d7236b2e';
 
 /// See also [trayState].
 @ProviderFor(trayState)
@@ -292,7 +292,7 @@ final groupNamesStateProvider = AutoDisposeProvider<GroupNamesState>.internal(
 // ignore: unused_element
 typedef GroupNamesStateRef = AutoDisposeProviderRef<GroupNamesState>;
 String _$proxyGroupSelectorStateHash() =>
-    r'b76f5ad536469e11a4ffa6a262dd4df61d280823';
+    r'5bc86d13286c6c859f0b874235a281122cc612ba';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -766,7 +766,7 @@ class _GetRealTestUrlProviderElement extends AutoDisposeProviderElement<String>
   String? get testUrl => (origin as GetRealTestUrlProvider).testUrl;
 }
 
-String _$getDelayHash() => r'dbc584d16f24abbc548d4c560ef50d172db23818';
+String _$getDelayHash() => r'b5920ac7de0aaadb8ff63fac993bd90ff87cd25a';
 
 /// See also [getDelay].
 @ProviderFor(getDelay)
@@ -1108,29 +1108,29 @@ final getProxiesColumnsProvider = AutoDisposeProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef GetProxiesColumnsRef = AutoDisposeProviderRef<int>;
-String _$getRealProxyNameHash() => r'47be6d115aa170f9bff610ec2cf7669e168bf472';
+String _$getProxyCardStateHash() => r'0f131148cb5ed60c9c4c4f31fbe32f114ac346bb';
 
-/// See also [getRealProxyName].
-@ProviderFor(getRealProxyName)
-const getRealProxyNameProvider = GetRealProxyNameFamily();
+/// See also [getProxyCardState].
+@ProviderFor(getProxyCardState)
+const getProxyCardStateProvider = GetProxyCardStateFamily();
 
-/// See also [getRealProxyName].
-class GetRealProxyNameFamily extends Family<String> {
-  /// See also [getRealProxyName].
-  const GetRealProxyNameFamily();
+/// See also [getProxyCardState].
+class GetProxyCardStateFamily extends Family<ProxyCardState> {
+  /// See also [getProxyCardState].
+  const GetProxyCardStateFamily();
 
-  /// See also [getRealProxyName].
-  GetRealProxyNameProvider call(
+  /// See also [getProxyCardState].
+  GetProxyCardStateProvider call(
     String proxyName,
   ) {
-    return GetRealProxyNameProvider(
+    return GetProxyCardStateProvider(
       proxyName,
     );
   }
 
   @override
-  GetRealProxyNameProvider getProviderOverride(
-    covariant GetRealProxyNameProvider provider,
+  GetProxyCardStateProvider getProviderOverride(
+    covariant GetProxyCardStateProvider provider,
   ) {
     return call(
       provider.proxyName,
@@ -1149,32 +1149,32 @@ class GetRealProxyNameFamily extends Family<String> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'getRealProxyNameProvider';
+  String? get name => r'getProxyCardStateProvider';
 }
 
-/// See also [getRealProxyName].
-class GetRealProxyNameProvider extends AutoDisposeProvider<String> {
-  /// See also [getRealProxyName].
-  GetRealProxyNameProvider(
+/// See also [getProxyCardState].
+class GetProxyCardStateProvider extends AutoDisposeProvider<ProxyCardState> {
+  /// See also [getProxyCardState].
+  GetProxyCardStateProvider(
     String proxyName,
   ) : this._internal(
-          (ref) => getRealProxyName(
-            ref as GetRealProxyNameRef,
+          (ref) => getProxyCardState(
+            ref as GetProxyCardStateRef,
             proxyName,
           ),
-          from: getRealProxyNameProvider,
-          name: r'getRealProxyNameProvider',
+          from: getProxyCardStateProvider,
+          name: r'getProxyCardStateProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$getRealProxyNameHash,
-          dependencies: GetRealProxyNameFamily._dependencies,
+                  : _$getProxyCardStateHash,
+          dependencies: GetProxyCardStateFamily._dependencies,
           allTransitiveDependencies:
-              GetRealProxyNameFamily._allTransitiveDependencies,
+              GetProxyCardStateFamily._allTransitiveDependencies,
           proxyName: proxyName,
         );
 
-  GetRealProxyNameProvider._internal(
+  GetProxyCardStateProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -1188,12 +1188,12 @@ class GetRealProxyNameProvider extends AutoDisposeProvider<String> {
 
   @override
   Override overrideWith(
-    String Function(GetRealProxyNameRef provider) create,
+    ProxyCardState Function(GetProxyCardStateRef provider) create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: GetRealProxyNameProvider._internal(
-        (ref) => create(ref as GetRealProxyNameRef),
+      override: GetProxyCardStateProvider._internal(
+        (ref) => create(ref as GetProxyCardStateRef),
         from: from,
         name: null,
         dependencies: null,
@@ -1205,13 +1205,13 @@ class GetRealProxyNameProvider extends AutoDisposeProvider<String> {
   }
 
   @override
-  AutoDisposeProviderElement<String> createElement() {
-    return _GetRealProxyNameProviderElement(this);
+  AutoDisposeProviderElement<ProxyCardState> createElement() {
+    return _GetProxyCardStateProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GetRealProxyNameProvider && other.proxyName == proxyName;
+    return other is GetProxyCardStateProvider && other.proxyName == proxyName;
   }
 
   @override
@@ -1225,17 +1225,18 @@ class GetRealProxyNameProvider extends AutoDisposeProvider<String> {
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin GetRealProxyNameRef on AutoDisposeProviderRef<String> {
+mixin GetProxyCardStateRef on AutoDisposeProviderRef<ProxyCardState> {
   /// The parameter `proxyName` of this provider.
   String get proxyName;
 }
 
-class _GetRealProxyNameProviderElement
-    extends AutoDisposeProviderElement<String> with GetRealProxyNameRef {
-  _GetRealProxyNameProviderElement(super.provider);
+class _GetProxyCardStateProviderElement
+    extends AutoDisposeProviderElement<ProxyCardState>
+    with GetProxyCardStateRef {
+  _GetProxyCardStateProviderElement(super.provider);
 
   @override
-  String get proxyName => (origin as GetRealProxyNameProvider).proxyName;
+  String get proxyName => (origin as GetProxyCardStateProvider).proxyName;
 }
 
 String _$getProxyNameHash() => r'204a477ea18c8e1eeef55b3efd3d47e45b0d2350';
@@ -1500,7 +1501,7 @@ class _GetSelectedProxyNameProviderElement
   String get groupName => (origin as GetSelectedProxyNameProvider).groupName;
 }
 
-String _$getProxyDescHash() => r'7c06402957387c35d9dc515ca109f8f7dbb481b0';
+String _$getProxyDescHash() => r'c173fe2393d9c4f5d5d17480e69f9126bb76a17d';
 
 /// See also [getProxyDesc].
 @ProviderFor(getProxyDesc)

@@ -108,7 +108,7 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
 
   _tabControllerListener([int? index]) {
     int? groupIndex = index;
-    if(groupIndex == -1){
+    if (groupIndex == -1) {
       return;
     }
     final appController = globalState.appController;

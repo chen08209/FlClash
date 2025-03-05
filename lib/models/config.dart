@@ -1,7 +1,5 @@
 // ignore_for_file: invalid_annotation_target
 
-import 'dart:io';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +8,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'models.dart';
 
 part 'generated/config.freezed.dart';
-
 part 'generated/config.g.dart';
 
 const defaultBypassDomain = [
@@ -39,15 +36,10 @@ const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyle = ProxiesStyle();
 const defaultWindowProps = WindowProps();
 const defaultAccessControl = AccessControl();
-final defaultThemeProps = Platform.isWindows
-    ? ThemeProps().copyWith(
-        fontFamily: FontFamily.miSans,
-        primaryColor: defaultPrimaryColor.value,
-      )
-    : ThemeProps().copyWith(
-        primaryColor: defaultPrimaryColor.value,
-        themeMode: ThemeMode.dark,
-      );
+final defaultThemeProps = ThemeProps().copyWith(
+  primaryColor: defaultPrimaryColor.value,
+  themeMode: ThemeMode.dark,
+);
 
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
@@ -185,8 +177,7 @@ class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
     int? primaryColor,
     @Default(ThemeMode.system) ThemeMode themeMode,
-    @Default(false) bool prueBlack,
-    @Default(FontFamily.system) FontFamily fontFamily,
+    @Default(false) bool pureBlack,
   }) = _ThemeProps;
 
   factory ThemeProps.fromJson(Map<String, Object?> json) =>
@@ -244,5 +235,4 @@ extension ConfigExt on Config {
   Profile? get currentProfile {
     return profiles.getProfile(currentProfileId);
   }
-
 }

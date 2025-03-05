@@ -219,8 +219,6 @@ enum ProxiesIconStyle {
 }
 
 enum FontFamily {
-  system(),
-  miSans("MiSans"),
   twEmoji("Twemoji"),
   icon("Icons");
 

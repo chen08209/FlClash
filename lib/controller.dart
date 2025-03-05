@@ -28,7 +28,9 @@ class AppController {
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
   updateClashConfigDebounce() {
-    debouncer.call(DebounceTag.updateClashConfig, updateClashConfig);
+    debouncer.call(DebounceTag.updateClashConfig, () {
+      updateClashConfig(true);
+    });
   }
 
   updateGroupsDebounce() {
@@ -41,10 +43,12 @@ class AppController {
     });
   }
 
-  applyProfileDebounce() {
-    debouncer.call(DebounceTag.addCheckIpNum, () {
-      applyProfile();
-    });
+  applyProfileDebounce({
+    bool silence = false,
+  }) {
+    debouncer.call(DebounceTag.applyProfile, (silence) {
+      applyProfile(silence: silence);
+    }, args: [silence]);
   }
 
   savePreferencesDebounce() {
@@ -156,18 +160,18 @@ class AppController {
         .read(profilesProvider.notifier)
         .setProfile(newProfile.copyWith(isUpdating: false));
     if (profile.id == _ref.read(currentProfileIdProvider)) {
-      applyProfileDebounce();
+      applyProfileDebounce(silence: true);
     }
   }
 
-  _setProfile(Profile profile) {
+  setProfile(Profile profile) {
     _ref.read(profilesProvider.notifier).setProfile(profile);
   }
 
-  setProfile(Profile profile) {
-    _setProfile(profile);
+  setProfileAndAutoApply(Profile profile) {
+    _ref.read(profilesProvider.notifier).setProfile(profile);
     if (profile.id == _ref.read(currentProfileIdProvider)) {
-      applyProfileDebounce();
+      applyProfileDebounce(silence: true);
     }
   }
 
@@ -219,8 +223,8 @@ class AppController {
     return currentGroupName;
   }
 
-  getRealProxyName(proxyName) {
-    return _ref.read(getRealTestUrlProvider(proxyName));
+  ProxyCardState getProxyCardState(proxyName) {
+    return _ref.read(getProxyCardStateProvider(proxyName));
   }
 
   getSelectedProxyName(groupName) {
@@ -232,7 +236,7 @@ class AppController {
     if (profile == null || profile.currentGroupName == groupName) {
       return;
     }
-    _setProfile(
+    setProfile(
       profile.copyWith(currentGroupName: groupName),
     );
   }
@@ -754,13 +758,13 @@ class AppController {
   updateSystemProxy() {
     _ref.read(networkSettingProvider.notifier).updateState(
           (state) => state.copyWith(
-            systemProxy: state.systemProxy,
+            systemProxy: !state.systemProxy,
           ),
         );
   }
 
   updateStart() {
-    updateStatus(_ref.read(runTimeProvider.notifier).isStart);
+    updateStatus(!_ref.read(runTimeProvider.notifier).isStart);
   }
 
   updateCurrentSelectedMap(String groupName, String proxyName) {
@@ -794,10 +798,10 @@ class AppController {
     _ref.read(patchClashConfigProvider.notifier).updateState(
           (state) => state.copyWith(mode: mode),
         );
-    if (mode == Mode.global) {
-      updateCurrentGroupName(GroupName.GLOBAL.name);
-    }
-    addCheckIpNumDebounce();
+    // if (mode == Mode.global) {
+    //   updateCurrentGroupName(GroupName.GLOBAL.name);
+    // }
+    // addCheckIpNumDebounce();
   }
 
   updateAutoLaunch() {

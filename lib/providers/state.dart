@@ -29,7 +29,8 @@ GroupsState currentGroupsState(Ref ref) {
 @riverpod
 NavigationItemsState navigationsState(Ref ref) {
   final openLogs = ref.watch(appSettingProvider).openLogs;
-  final hasProxies = ref.watch(currentGroupsStateProvider.select((state)=>state.value.isNotEmpty));
+  final hasProxies = ref.watch(
+      currentGroupsStateProvider.select((state) => state.value.isNotEmpty));
   return NavigationItemsState(
     value: navigation.getItems(
       openLogs: openLogs,
@@ -79,7 +80,7 @@ ClashConfigState clashConfigState(Ref ref) {
 
 @riverpod
 ProxyState proxyState(Ref ref) {
-  final isStart = ref.watch(runTimeProvider.select((state)=>state != null));
+  final isStart = ref.watch(runTimeProvider.select((state) => state != null));
   final networkProps = ref.watch(networkSettingProvider);
   final mixedPort = ref.watch(
     patchClashConfigProvider.select((state) => state.mixedPort),
@@ -94,7 +95,7 @@ ProxyState proxyState(Ref ref) {
 
 @riverpod
 TrayState trayState(Ref ref) {
-  final isStart = ref.watch(runTimeProvider.select((state)=>state != null));
+  final isStart = ref.watch(runTimeProvider.select((state) => state != null));
   final networkProps = ref.watch(networkSettingProvider);
   final clashConfig = ref.watch(
     patchClashConfigProvider,
@@ -114,7 +115,7 @@ TrayState trayState(Ref ref) {
   return TrayState(
     mode: clashConfig.mode,
     port: clashConfig.mixedPort,
-    autoLaunch: appSetting.autoRun,
+    autoLaunch: appSetting.autoLaunch,
     systemProxy: networkProps.systemProxy,
     tunEnable: clashConfig.tun.enable,
     isStart: isStart,
@@ -255,9 +256,6 @@ GroupNamesState groupNamesState(Ref ref) {
 
 @riverpod
 ProxyGroupSelectorState proxyGroupSelectorState(Ref ref, String groupName) {
-  final testUrl = ref.watch(appSettingProvider.select(
-    (state) => state.testUrl,
-  ));
   final proxiesStyle = ref.watch(
     proxiesStyleSettingProvider,
   );
@@ -269,7 +267,7 @@ ProxyGroupSelectorState proxyGroupSelectorState(Ref ref, String groupName) {
   final sortNum = ref.watch(sortNumProvider);
   final columns = ref.watch(getProxiesColumnsProvider);
   return ProxyGroupSelectorState(
-    testUrl: testUrl,
+    testUrl: group?.testUrl,
     proxiesSortType: proxiesStyle.sortType,
     proxyCardType: proxiesStyle.cardType,
     sortNum: sortNum,
@@ -338,11 +336,21 @@ int? getDelay(
   String? testUrl,
 }) {
   final currentTestUrl = ref.watch(getRealTestUrlProvider(testUrl));
-  return ref.watch(
-    delayDataSourceProvider.select(
-      (state) => state[currentTestUrl]?[proxyName],
+  final proxyCardState = ref.watch(
+    getProxyCardStateProvider(
+      proxyName,
     ),
   );
+  final delay = ref.watch(
+    delayDataSourceProvider.select(
+      (state) {
+        final delayMap =
+            state[proxyCardState.testUrl.getSafeValue(currentTestUrl)];
+        return delayMap?[proxyCardState.proxyName];
+      },
+    ),
+  );
+  return delay;
 }
 
 @riverpod
@@ -392,30 +400,34 @@ int getProxiesColumns(Ref ref) {
   return other.getProxiesColumns(viewWidth, proxiesLayout);
 }
 
-String _getRealProxyName(
+ProxyCardState _getProxyCardState(
   List<Group> groups,
   SelectedMap selectedMap,
-  String proxyName,
+  ProxyCardState proxyDelayState,
 ) {
-  if (proxyName.isEmpty) return proxyName;
-  final index = groups.indexWhere((element) => element.name == proxyName);
-  if (index == -1) return proxyName;
+  if (proxyDelayState.proxyName.isEmpty) return proxyDelayState;
+  final index =
+      groups.indexWhere((element) => element.name == proxyDelayState.proxyName);
+  if (index == -1) return proxyDelayState;
   final group = groups[index];
-  final currentSelectedName =
-      group.getCurrentSelectedName(selectedMap[proxyName] ?? '');
-  if (currentSelectedName.isEmpty) return proxyName;
-  return _getRealProxyName(
+  final currentSelectedName = group
+      .getCurrentSelectedName(selectedMap[proxyDelayState.proxyName] ?? '');
+  return _getProxyCardState(
     groups,
     selectedMap,
-    proxyName,
+    proxyDelayState.copyWith(
+      proxyName: currentSelectedName,
+      testUrl: group.testUrl,
+    ),
   );
 }
 
 @riverpod
-String getRealProxyName(Ref ref, String proxyName) {
+ProxyCardState getProxyCardState(Ref ref, String proxyName) {
   final groups = ref.watch(groupsProvider);
   final selectedMap = ref.watch(selectedMapProvider);
-  return _getRealProxyName(groups, selectedMap, proxyName);
+  return _getProxyCardState(
+      groups, selectedMap, ProxyCardState(proxyName: proxyName));
 }
 
 @riverpod
@@ -445,6 +457,7 @@ String getProxyDesc(Ref ref, Proxy proxy) {
     final groups = ref.watch(groupsProvider);
     final index = groups.indexWhere((element) => element.name == proxy.name);
     if (index == -1) return proxy.type;
-    return "${proxy.type}(${groups[index].now ?? '*'})";
+    final state = ref.watch(getProxyCardStateProvider(proxy.name));
+    return "${proxy.type}(${state.proxyName.isNotEmpty ? state.proxyName : '*'})";
   }
 }

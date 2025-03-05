@@ -62,15 +62,15 @@ class ApplicationState extends ConsumerState<Application> {
     _autoUpdateProfilesTask();
     globalState.appController = AppController(context, ref);
     globalState.measure = Measure.of(context);
-    ref.listenManual(themeSettingProvider.select((state) => state.fontFamily),
-        (prev, next) {
-      if (prev != next) {
-        globalState.measure = Measure.of(
-          context,
-          fontFamily: next.value,
-        );
-      }
-    }, fireImmediately: true);
+    // ref.listenManual(themeSettingProvider.select((state) => state.fontFamily),
+    //     (prev, next) {
+    //   if (prev != next) {
+    //     globalState.measure = Measure.of(
+    //       context,
+    //       fontFamily: next.value,
+    //     );
+    //   }
+    // }, fireImmediately: true);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final currentContext = globalState.navigatorKey.currentContext;
       if (currentContext != null) {
@@ -194,7 +194,6 @@ class ApplicationState extends ConsumerState<Application> {
                   themeMode: themeProps.themeMode,
                   theme: ThemeData(
                     useMaterial3: true,
-                    fontFamily: themeProps.fontFamily.value,
                     pageTransitionsTheme: _pageTransitionsTheme,
                     colorScheme: _getAppColorScheme(
                       brightness: Brightness.light,
@@ -204,13 +203,12 @@ class ApplicationState extends ConsumerState<Application> {
                   ),
                   darkTheme: ThemeData(
                     useMaterial3: true,
-                    fontFamily: themeProps.fontFamily.value,
                     pageTransitionsTheme: _pageTransitionsTheme,
                     colorScheme: _getAppColorScheme(
                       brightness: Brightness.dark,
                       systemColorSchemes: systemColorSchemes,
                       primaryColor: themeProps.primaryColor,
-                    ).toPrueBlack(themeProps.prueBlack),
+                    ).toPureBlack(themeProps.pureBlack),
                   ),
                   home: child,
                 );

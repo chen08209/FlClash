@@ -22,44 +22,46 @@ double getItemHeight(ProxyCardType proxyCardType) {
 
 proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   final appController = globalState.appController;
-  final proxyName = appController.getRealProxyName(proxy.name);
-  final url = appController.getRealTestUrl(testUrl);
+  final state = appController.getProxyCardState(proxy.name);
+  final url = state.testUrl.getSafeValue(
+    appController.getRealTestUrl(testUrl),
+  );
   appController.setDelay(
     Delay(
       url: url,
-      name: proxyName,
+      name: state.proxyName,
       value: 0,
     ),
   );
   appController.setDelay(
     await clashCore.getDelay(
       url,
-      proxyName,
+      state.proxyName,
     ),
   );
 }
 
 delayTest(List<Proxy> proxies, [String? testUrl]) async {
   final appController = globalState.appController;
-  final proxyNames = proxies
-      .map((proxy) => appController.getRealProxyName(proxy.name))
-      .toSet()
-      .toList();
-
-  final url = appController.getRealTestUrl(testUrl);
+  final proxyNames = proxies.map((proxy) => proxy.name).toSet().toList();
 
   final delayProxies = proxyNames.map<Future>((proxyName) async {
+    final state = appController.getProxyCardState(proxyName);
+    final url = state.testUrl.getSafeValue(
+      appController.getRealTestUrl(testUrl),
+    );
+    final name = state.proxyName;
     appController.setDelay(
       Delay(
         url: url,
-        name: proxyName,
+        name: name,
         value: 0,
       ),
     );
     appController.setDelay(
       await clashCore.getDelay(
         url,
-        proxyName,
+        name,
       ),
     );
   }).toList();

@@ -98,7 +98,7 @@ class _ThemeColorsBoxState extends ConsumerState<ThemeColorsBox> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _FontFamilyItem(),
+        // _FontFamilyItem(),
         _ThemeModeItem(),
         _PrimaryColorItem(),
         _PrueBlackItem(),
@@ -110,74 +110,74 @@ class _ThemeColorsBoxState extends ConsumerState<ThemeColorsBox> {
   }
 }
 
-class _FontFamilyItem extends ConsumerWidget {
-  const _FontFamilyItem();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final fontFamily =
-        ref.watch(themeSettingProvider.select((state) => state.fontFamily));
-    List<FontFamilyItem> fontFamilyItems = [
-      FontFamilyItem(
-        label: appLocalizations.systemFont,
-        fontFamily: FontFamily.system,
-      ),
-      const FontFamilyItem(
-        label: "MiSans",
-        fontFamily: FontFamily.miSans,
-      ),
-    ];
-    return ItemCard(
-      info: Info(
-        label: appLocalizations.fontFamily,
-        iconData: Icons.text_fields,
-      ),
-      child: Container(
-        margin: const EdgeInsets.only(
-          left: 16,
-          right: 16,
-        ),
-        height: 48,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemBuilder: (_, index) {
-            final fontFamilyItem = fontFamilyItems[index];
-            return CommonCard(
-              isSelected: fontFamilyItem.fontFamily == fontFamily,
-              onPressed: () {
-                ref.read(themeSettingProvider.notifier).updateState(
-                      (state) => state.copyWith(
-                        fontFamily: fontFamilyItem.fontFamily,
-                      ),
-                    );
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        fontFamilyItem.label,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-          separatorBuilder: (_, __) {
-            return const SizedBox(
-              width: 16,
-            );
-          },
-          itemCount: fontFamilyItems.length,
-        ),
-      ),
-    );
-  }
-}
+// class _FontFamilyItem extends ConsumerWidget {
+//   const _FontFamilyItem();
+//
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final fontFamily =
+//         ref.watch(themeSettingProvider.select((state) => state.fontFamily));
+//     List<FontFamilyItem> fontFamilyItems = [
+//       FontFamilyItem(
+//         label: appLocalizations.systemFont,
+//         fontFamily: FontFamily.system,
+//       ),
+//       const FontFamilyItem(
+//         label: "roboto",
+//         fontFamily: FontFamily.roboto,
+//       ),
+//     ];
+//     return ItemCard(
+//       info: Info(
+//         label: appLocalizations.fontFamily,
+//         iconData: Icons.text_fields,
+//       ),
+//       child: Container(
+//         margin: const EdgeInsets.only(
+//           left: 16,
+//           right: 16,
+//         ),
+//         height: 48,
+//         child: ListView.separated(
+//           scrollDirection: Axis.horizontal,
+//           itemBuilder: (_, index) {
+//             final fontFamilyItem = fontFamilyItems[index];
+//             return CommonCard(
+//               isSelected: fontFamilyItem.fontFamily == fontFamily,
+//               onPressed: () {
+//                 ref.read(themeSettingProvider.notifier).updateState(
+//                       (state) => state.copyWith(
+//                         fontFamily: fontFamilyItem.fontFamily,
+//                       ),
+//                     );
+//               },
+//               child: Padding(
+//                 padding: const EdgeInsets.symmetric(horizontal: 16),
+//                 child: Row(
+//                   mainAxisSize: MainAxisSize.min,
+//                   mainAxisAlignment: MainAxisAlignment.start,
+//                   children: [
+//                     Flexible(
+//                       child: Text(
+//                         fontFamilyItem.label,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             );
+//           },
+//           separatorBuilder: (_, __) {
+//             return const SizedBox(
+//               width: 16,
+//             );
+//           },
+//           itemCount: fontFamilyItems.length,
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class _ThemeModeItem extends ConsumerWidget {
   const _ThemeModeItem();
@@ -320,7 +320,7 @@ class _PrueBlackItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final prueBlack =
-        ref.watch(themeSettingProvider.select((state) => state.prueBlack));
+        ref.watch(themeSettingProvider.select((state) => state.pureBlack));
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: ListItem.switchItem(
@@ -328,13 +328,13 @@ class _PrueBlackItem extends ConsumerWidget {
           Icons.contrast,
           color: context.colorScheme.primary,
         ),
-        title: Text(appLocalizations.prueBlackMode),
+        title: Text(appLocalizations.pureBlackMode),
         delegate: SwitchDelegate(
           value: prueBlack,
           onChanged: (value) {
             ref.read(themeSettingProvider.notifier).updateState(
                   (state) => state.copyWith(
-                    prueBlack: value,
+                    pureBlack: value,
                   ),
                 );
           },

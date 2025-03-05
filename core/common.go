@@ -28,6 +28,14 @@ import (
 	"sync"
 )
 
+func splitByComma(s string) interface{} {
+	parts := strings.Split(s, ",")
+	if len(parts) > 1 {
+		return parts
+	}
+	return s
+}
+
 var (
 	isRunning = false
 	runLock   sync.Mutex
@@ -162,7 +170,17 @@ func decorationConfig(profileId string, cfg config.RawConfig) *config.RawConfig 
 
 func genHosts(hosts, patchHosts map[string]any) {
 	for k, v := range patchHosts {
-		hosts[k] = v
+		if str, ok := v.(string); ok {
+			hosts[k] = splitByComma(str)
+		}
+	}
+}
+
+func modPatchDns(dns *config.RawDNS) {
+	for pair := dns.NameServerPolicy.Oldest(); pair != nil; pair = pair.Next() {
+		if str, ok := pair.Value.(string); ok {
+			dns.NameServerPolicy.Set(pair.Key, splitByComma(str))
+		}
 	}
 }
 
@@ -228,6 +246,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	}
 	genHosts(targetConfig.Hosts, patchConfig.Hosts)
 	if configParams.OverrideDns {
+		modPatchDns(&patchConfig.DNS)
 		targetConfig.DNS = patchConfig.DNS
 	} else {
 		if targetConfig.DNS.Enable == false {

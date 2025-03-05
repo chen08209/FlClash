@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 extension ColorExtension on Color {
-
   Color get toLight {
     return withOpacity(0.8);
   }
@@ -51,7 +50,7 @@ extension ColorExtension on Color {
 }
 
 extension ColorSchemeExtension on ColorScheme {
-  ColorScheme toPrueBlack(bool isPrueBlack) => isPrueBlack
+  ColorScheme toPureBlack(bool isPrueBlack) => isPrueBlack
       ? copyWith(
           surface: Colors.black,
           surfaceContainer: surfaceContainer.darken(

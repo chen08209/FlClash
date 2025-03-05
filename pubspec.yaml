@@ -1,7 +1,7 @@
 name: fl_clash
 description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
-version: 0.8.78+202503052
+version: 0.8.79+202503071
 environment:
   sdk: '>=3.1.0 <4.0.0'
 
@@ -10,11 +10,10 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  intl: ^0.19.0
+  intl: any
   path_provider: ^2.1.0
   path: ^1.9.0
   shared_preferences: ^2.5.1
-  #  provider: ^6.0.5
   window_manager: ^0.4.3
   dynamic_color: ^1.7.0
   proxy:
@@ -36,7 +35,7 @@ dependencies:
   freezed_annotation: ^2.4.1
   image_picker: ^1.1.2
   webdav_client: ^1.2.2
-  dio: ^5.4.3+1
+  dio: ^5.8.0+1
   win32: ^5.5.1
   ffi: ^2.1.2
   re_editor: ^0.6.0
@@ -55,6 +54,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
   riverpod: ^2.6.1
+  google_fonts: ^6.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -79,9 +79,6 @@ flutter:
     - family: Twemoji
       fonts:
         - asset: assets/fonts/Twemoji.Mozilla.ttf
-    - family: MiSans
-      fonts:
-        - asset: assets/fonts/MiSans-Regular.ttf
     - family: Icons
       fonts:
         - asset: assets/fonts/Icons.ttf

@@ -6,7 +6,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../enum/enum.dart';
 
 part 'generated/clash_config.freezed.dart';
-
 part 'generated/clash_config.g.dart';
 
 typedef HostsMap = Map<String, String>;
@@ -179,6 +178,7 @@ class FallbackFilter with _$FallbackFilter {
 class Dns with _$Dns {
   const factory Dns({
     @Default(true) bool enable,
+    @Default("0.0.0.0:1053") String listen,
     @Default(false) @JsonKey(name: "prefer-h3") bool preferH3,
     @Default(true) @JsonKey(name: "use-hosts") bool useHosts,
     @Default(true) @JsonKey(name: "use-system-hosts") bool useSystemHosts,

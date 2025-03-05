@@ -112,6 +112,7 @@ Map<String, dynamic> _$$FallbackFilterImplToJson(
 
 _$DnsImpl _$$DnsImplFromJson(Map<String, dynamic> json) => _$DnsImpl(
       enable: json['enable'] as bool? ?? true,
+      listen: json['listen'] as String? ?? "0.0.0.0:1053",
       preferH3: json['prefer-h3'] as bool? ?? false,
       useHosts: json['use-hosts'] as bool? ?? true,
       useSystemHosts: json['use-system-hosts'] as bool? ?? true,
@@ -161,6 +162,7 @@ _$DnsImpl _$$DnsImplFromJson(Map<String, dynamic> json) => _$DnsImpl(
 
 Map<String, dynamic> _$$DnsImplToJson(_$DnsImpl instance) => <String, dynamic>{
       'enable': instance.enable,
+      'listen': instance.listen,
       'prefer-h3': instance.preferH3,
       'use-hosts': instance.useHosts,
       'use-system-hosts': instance.useSystemHosts,

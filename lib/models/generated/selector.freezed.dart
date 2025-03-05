@@ -3326,6 +3326,154 @@ abstract class _DashboardState implements DashboardState {
 }
 
 /// @nodoc
+mixin _$ProxyCardState {
+  String get proxyName => throw _privateConstructorUsedError;
+  String? get testUrl => throw _privateConstructorUsedError;
+
+  /// Create a copy of ProxyCardState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ProxyCardStateCopyWith<ProxyCardState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ProxyCardStateCopyWith<$Res> {
+  factory $ProxyCardStateCopyWith(
+          ProxyCardState value, $Res Function(ProxyCardState) then) =
+      _$ProxyCardStateCopyWithImpl<$Res, ProxyCardState>;
+  @useResult
+  $Res call({String proxyName, String? testUrl});
+}
+
+/// @nodoc
+class _$ProxyCardStateCopyWithImpl<$Res, $Val extends ProxyCardState>
+    implements $ProxyCardStateCopyWith<$Res> {
+  _$ProxyCardStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ProxyCardState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? proxyName = null,
+    Object? testUrl = freezed,
+  }) {
+    return _then(_value.copyWith(
+      proxyName: null == proxyName
+          ? _value.proxyName
+          : proxyName // ignore: cast_nullable_to_non_nullable
+              as String,
+      testUrl: freezed == testUrl
+          ? _value.testUrl
+          : testUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ProxyCardStateImplCopyWith<$Res>
+    implements $ProxyCardStateCopyWith<$Res> {
+  factory _$$ProxyCardStateImplCopyWith(_$ProxyCardStateImpl value,
+          $Res Function(_$ProxyCardStateImpl) then) =
+      __$$ProxyCardStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String proxyName, String? testUrl});
+}
+
+/// @nodoc
+class __$$ProxyCardStateImplCopyWithImpl<$Res>
+    extends _$ProxyCardStateCopyWithImpl<$Res, _$ProxyCardStateImpl>
+    implements _$$ProxyCardStateImplCopyWith<$Res> {
+  __$$ProxyCardStateImplCopyWithImpl(
+      _$ProxyCardStateImpl _value, $Res Function(_$ProxyCardStateImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ProxyCardState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? proxyName = null,
+    Object? testUrl = freezed,
+  }) {
+    return _then(_$ProxyCardStateImpl(
+      proxyName: null == proxyName
+          ? _value.proxyName
+          : proxyName // ignore: cast_nullable_to_non_nullable
+              as String,
+      testUrl: freezed == testUrl
+          ? _value.testUrl
+          : testUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ProxyCardStateImpl implements _ProxyCardState {
+  const _$ProxyCardStateImpl({required this.proxyName, this.testUrl});
+
+  @override
+  final String proxyName;
+  @override
+  final String? testUrl;
+
+  @override
+  String toString() {
+    return 'ProxyCardState(proxyName: $proxyName, testUrl: $testUrl)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ProxyCardStateImpl &&
+            (identical(other.proxyName, proxyName) ||
+                other.proxyName == proxyName) &&
+            (identical(other.testUrl, testUrl) || other.testUrl == testUrl));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, proxyName, testUrl);
+
+  /// Create a copy of ProxyCardState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ProxyCardStateImplCopyWith<_$ProxyCardStateImpl> get copyWith =>
+      __$$ProxyCardStateImplCopyWithImpl<_$ProxyCardStateImpl>(
+          this, _$identity);
+}
+
+abstract class _ProxyCardState implements ProxyCardState {
+  const factory _ProxyCardState(
+      {required final String proxyName,
+      final String? testUrl}) = _$ProxyCardStateImpl;
+
+  @override
+  String get proxyName;
+  @override
+  String? get testUrl;
+
+  /// Create a copy of ProxyCardState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ProxyCardStateImplCopyWith<_$ProxyCardStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$VpnState {
   TunStack get stack => throw _privateConstructorUsedError;
   VpnProps get vpnProps => throw _privateConstructorUsedError;

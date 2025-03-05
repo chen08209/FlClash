@@ -201,6 +201,14 @@ class DashboardState with _$DashboardState {
 }
 
 @freezed
+class ProxyCardState with _$ProxyCardState {
+  const factory ProxyCardState({
+    required String proxyName,
+    String? testUrl,
+  }) = _ProxyCardState;
+}
+
+@freezed
 class VpnState with _$VpnState {
   const factory VpnState({
     required TunStack stack,

@@ -7,7 +7,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/app.g.dart';
 
-
 @riverpod
 class Logs extends _$Logs with AutoDisposeNotifierMixin {
   @override
@@ -336,4 +335,3 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
     }
   }
 }
-
