@@ -1,3 +1,11 @@
+## v0.8.78
+
+- Fix list form input view issues
+
+- Fix traffic view issues
+
+- Update changelog
+
 ## v0.8.77
 
 - Optimize performance
