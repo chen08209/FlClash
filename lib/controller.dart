@@ -485,7 +485,7 @@ class AppController {
     await initCore();
     await _initStatus();
     updateTray(true);
-    autoLaunch?.updateStatus(
+    autoLaunch.updateStatus(
       _ref.read(appSettingProvider).autoLaunch,
     );
     autoUpdateProfiles();

@@ -3,6 +3,7 @@ package com.follow.clash.plugins
 import android.Manifest
 import android.app.Activity
 import android.app.ActivityManager
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.ComponentInfo
@@ -18,6 +19,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
+import com.follow.clash.AutoStartReceiver
 import com.follow.clash.FlClashApplication
 import com.follow.clash.GlobalState
 import com.follow.clash.R
@@ -213,6 +215,27 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             "openFile" -> {
                 val path = call.argument<String>("path")!!
                 openFile(path)
+                result.success(true)
+            }
+
+            "isAutoStartEnabled" -> {
+                val context = FlClashApplication.getAppContext()
+                val enabled = context.packageManager.getComponentEnabledSetting(
+                    ComponentName(context, AutoStartReceiver::class.java)
+                ).and(PackageManager.COMPONENT_ENABLED_STATE_ENABLED) != 0
+                result.success(enabled)
+            }
+
+            "setAutoStartEnabled" -> {
+                val enabled = call.arguments as Boolean
+                val context = FlClashApplication.getAppContext()
+                val value = if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                context.packageManager.setComponentEnabledSetting(
+                    ComponentName(context, AutoStartReceiver::class.java),
+                    value,
+                    PackageManager.DONT_KILL_APP
+                )
                 result.success(true)
             }
 
