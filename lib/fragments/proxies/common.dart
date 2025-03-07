@@ -26,6 +26,9 @@ proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   final url = state.testUrl.getSafeValue(
     appController.getRealTestUrl(testUrl),
   );
+  if (state.proxyName.isEmpty) {
+    return;
+  }
   appController.setDelay(
     Delay(
       url: url,
@@ -51,6 +54,9 @@ delayTest(List<Proxy> proxies, [String? testUrl]) async {
       appController.getRealTestUrl(testUrl),
     );
     final name = state.proxyName;
+    if (name.isEmpty) {
+      return;
+    }
     appController.setDelay(
       Delay(
         url: url,
