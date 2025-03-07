@@ -1,3 +1,19 @@
+## v0.8.79
+
+- Fix tab delay view issues
+
+- Fix tray action issues
+
+- Fix get profile redirect client ua issues
+
+- Fix proxy card delay view issues
+
+- Add Russian, Japanese adaptation
+
+- Fix some issues
+
+- Update changelog
+
 ## v0.8.78
 
 - Fix list form input view issues
