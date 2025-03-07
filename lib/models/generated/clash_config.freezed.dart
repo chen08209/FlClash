@@ -1750,7 +1750,7 @@ class _$GeoXUrlImpl implements _GeoXUrl {
       {this.mmdb =
           "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
       this.asn =
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
       this.geoip =
           "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
       this.geosite =

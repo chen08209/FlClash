@@ -59,7 +59,9 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
     final isStart = appState.runTime != null;
     if (_preIsStart == false &&
         _preIsStart == isStart &&
-        _networkDetectionState.value.ipInfo != null) return;
+        _networkDetectionState.value.ipInfo != null) {
+      return;
+    }
     _clearSetTimeoutTimer();
     _networkDetectionState.value = _networkDetectionState.value.copyWith(
       isTesting: true,

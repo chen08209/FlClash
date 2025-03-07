@@ -245,7 +245,7 @@ class GeoXUrl with _$GeoXUrl {
     )
     String mmdb,
     @Default(
-      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+      "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
     )
     String asn,
     @Default(
