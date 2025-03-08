@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +19,17 @@ class DonutChartData {
   String toString() {
     return 'DonutChartData{_value: $_value}';
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DonutChartData &&
+          runtimeType == other.runtimeType &&
+          _value == other._value &&
+          color == other.color;
+
+  @override
+  int get hashCode => _value.hashCode ^ color.hashCode;
 }
 
 class DonutChart extends StatefulWidget {

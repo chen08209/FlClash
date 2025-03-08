@@ -25,7 +25,7 @@ class Render {
     debouncer.call(
       DebounceTag.renderPause,
       _pause,
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
     );
   }
 

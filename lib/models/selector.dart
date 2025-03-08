@@ -8,6 +8,15 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/selector.freezed.dart';
 
 @freezed
+class VM2<A, B> with _$VM2<A, B> {
+  const factory VM2({
+    required A a,
+    required B b,
+  }) = _VM2;
+}
+
+
+@freezed
 class StartButtonSelectorState with _$StartButtonSelectorState {
   const factory StartButtonSelectorState({
     required bool isInit,
@@ -134,18 +143,19 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
     return packages
         .where((item) => isFilterSystemApp ? item.isSystem == false : true)
         .sorted(
-      (a, b) {
+          (a, b) {
         return switch (sort) {
           AccessSortType.none => 0,
-          AccessSortType.name => other.sortByChar(
-              other.getPinyin(a.label),
-              other.getPinyin(b.label),
-            ),
+          AccessSortType.name =>
+              other.sortByChar(
+                other.getPinyin(a.label),
+                other.getPinyin(b.label),
+              ),
           AccessSortType.time => b.lastUpdateTime.compareTo(a.lastUpdateTime),
         };
       },
     ).sorted(
-      (a, b) {
+          (a, b) {
         final isSelectA = selectedList.contains(a.packageName);
         final isSelectB = selectedList.contains(b.packageName);
         if (isSelectA && isSelectB) return 0;

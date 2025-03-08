@@ -15,6 +15,153 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
+mixin _$VM2<A, B> {
+  A get a => throw _privateConstructorUsedError;
+  B get b => throw _privateConstructorUsedError;
+
+  /// Create a copy of VM2
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $VM2CopyWith<A, B, VM2<A, B>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $VM2CopyWith<A, B, $Res> {
+  factory $VM2CopyWith(VM2<A, B> value, $Res Function(VM2<A, B>) then) =
+      _$VM2CopyWithImpl<A, B, $Res, VM2<A, B>>;
+  @useResult
+  $Res call({A a, B b});
+}
+
+/// @nodoc
+class _$VM2CopyWithImpl<A, B, $Res, $Val extends VM2<A, B>>
+    implements $VM2CopyWith<A, B, $Res> {
+  _$VM2CopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of VM2
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? a = freezed,
+    Object? b = freezed,
+  }) {
+    return _then(_value.copyWith(
+      a: freezed == a
+          ? _value.a
+          : a // ignore: cast_nullable_to_non_nullable
+              as A,
+      b: freezed == b
+          ? _value.b
+          : b // ignore: cast_nullable_to_non_nullable
+              as B,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$VM2ImplCopyWith<A, B, $Res>
+    implements $VM2CopyWith<A, B, $Res> {
+  factory _$$VM2ImplCopyWith(
+          _$VM2Impl<A, B> value, $Res Function(_$VM2Impl<A, B>) then) =
+      __$$VM2ImplCopyWithImpl<A, B, $Res>;
+  @override
+  @useResult
+  $Res call({A a, B b});
+}
+
+/// @nodoc
+class __$$VM2ImplCopyWithImpl<A, B, $Res>
+    extends _$VM2CopyWithImpl<A, B, $Res, _$VM2Impl<A, B>>
+    implements _$$VM2ImplCopyWith<A, B, $Res> {
+  __$$VM2ImplCopyWithImpl(
+      _$VM2Impl<A, B> _value, $Res Function(_$VM2Impl<A, B>) _then)
+      : super(_value, _then);
+
+  /// Create a copy of VM2
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? a = freezed,
+    Object? b = freezed,
+  }) {
+    return _then(_$VM2Impl<A, B>(
+      a: freezed == a
+          ? _value.a
+          : a // ignore: cast_nullable_to_non_nullable
+              as A,
+      b: freezed == b
+          ? _value.b
+          : b // ignore: cast_nullable_to_non_nullable
+              as B,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$VM2Impl<A, B> implements _VM2<A, B> {
+  const _$VM2Impl({required this.a, required this.b});
+
+  @override
+  final A a;
+  @override
+  final B b;
+
+  @override
+  String toString() {
+    return 'VM2<$A, $B>(a: $a, b: $b)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$VM2Impl<A, B> &&
+            const DeepCollectionEquality().equals(other.a, a) &&
+            const DeepCollectionEquality().equals(other.b, b));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(a),
+      const DeepCollectionEquality().hash(b));
+
+  /// Create a copy of VM2
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$VM2ImplCopyWith<A, B, _$VM2Impl<A, B>> get copyWith =>
+      __$$VM2ImplCopyWithImpl<A, B, _$VM2Impl<A, B>>(this, _$identity);
+}
+
+abstract class _VM2<A, B> implements VM2<A, B> {
+  const factory _VM2({required final A a, required final B b}) =
+      _$VM2Impl<A, B>;
+
+  @override
+  A get a;
+  @override
+  B get b;
+
+  /// Create a copy of VM2
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$VM2ImplCopyWith<A, B, _$VM2Impl<A, B>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$StartButtonSelectorState {
   bool get isInit => throw _privateConstructorUsedError;
   bool get hasProfile => throw _privateConstructorUsedError;

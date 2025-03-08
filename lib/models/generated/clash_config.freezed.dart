@@ -1834,6 +1834,202 @@ abstract class _GeoXUrl implements GeoXUrl {
       throw _privateConstructorUsedError;
 }
 
+ClashConfigSnippet _$ClashConfigSnippetFromJson(Map<String, dynamic> json) {
+  return _ClashConfigSnippet.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ClashConfigSnippet {
+  @JsonKey(name: "proxy-groups")
+  List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
+  List<String> get rule => throw _privateConstructorUsedError;
+
+  /// Serializes this ClashConfigSnippet to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of ClashConfigSnippet
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ClashConfigSnippetCopyWith<ClashConfigSnippet> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ClashConfigSnippetCopyWith<$Res> {
+  factory $ClashConfigSnippetCopyWith(
+          ClashConfigSnippet value, $Res Function(ClashConfigSnippet) then) =
+      _$ClashConfigSnippetCopyWithImpl<$Res, ClashConfigSnippet>;
+  @useResult
+  $Res call(
+      {@JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
+      List<String> rule});
+}
+
+/// @nodoc
+class _$ClashConfigSnippetCopyWithImpl<$Res, $Val extends ClashConfigSnippet>
+    implements $ClashConfigSnippetCopyWith<$Res> {
+  _$ClashConfigSnippetCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ClashConfigSnippet
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? proxyGroups = null,
+    Object? rule = null,
+  }) {
+    return _then(_value.copyWith(
+      proxyGroups: null == proxyGroups
+          ? _value.proxyGroups
+          : proxyGroups // ignore: cast_nullable_to_non_nullable
+              as List<ProxyGroup>,
+      rule: null == rule
+          ? _value.rule
+          : rule // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ClashConfigSnippetImplCopyWith<$Res>
+    implements $ClashConfigSnippetCopyWith<$Res> {
+  factory _$$ClashConfigSnippetImplCopyWith(_$ClashConfigSnippetImpl value,
+          $Res Function(_$ClashConfigSnippetImpl) then) =
+      __$$ClashConfigSnippetImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
+      List<String> rule});
+}
+
+/// @nodoc
+class __$$ClashConfigSnippetImplCopyWithImpl<$Res>
+    extends _$ClashConfigSnippetCopyWithImpl<$Res, _$ClashConfigSnippetImpl>
+    implements _$$ClashConfigSnippetImplCopyWith<$Res> {
+  __$$ClashConfigSnippetImplCopyWithImpl(_$ClashConfigSnippetImpl _value,
+      $Res Function(_$ClashConfigSnippetImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ClashConfigSnippet
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? proxyGroups = null,
+    Object? rule = null,
+  }) {
+    return _then(_$ClashConfigSnippetImpl(
+      proxyGroups: null == proxyGroups
+          ? _value._proxyGroups
+          : proxyGroups // ignore: cast_nullable_to_non_nullable
+              as List<ProxyGroup>,
+      rule: null == rule
+          ? _value._rule
+          : rule // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
+  const _$ClashConfigSnippetImpl(
+      {@JsonKey(name: "proxy-groups")
+      final List<ProxyGroup> proxyGroups = const [],
+      final List<String> rule = const []})
+      : _proxyGroups = proxyGroups,
+        _rule = rule;
+
+  factory _$ClashConfigSnippetImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ClashConfigSnippetImplFromJson(json);
+
+  final List<ProxyGroup> _proxyGroups;
+  @override
+  @JsonKey(name: "proxy-groups")
+  List<ProxyGroup> get proxyGroups {
+    if (_proxyGroups is EqualUnmodifiableListView) return _proxyGroups;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_proxyGroups);
+  }
+
+  final List<String> _rule;
+  @override
+  @JsonKey()
+  List<String> get rule {
+    if (_rule is EqualUnmodifiableListView) return _rule;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_rule);
+  }
+
+  @override
+  String toString() {
+    return 'ClashConfigSnippet(proxyGroups: $proxyGroups, rule: $rule)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ClashConfigSnippetImpl &&
+            const DeepCollectionEquality()
+                .equals(other._proxyGroups, _proxyGroups) &&
+            const DeepCollectionEquality().equals(other._rule, _rule));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(_proxyGroups),
+      const DeepCollectionEquality().hash(_rule));
+
+  /// Create a copy of ClashConfigSnippet
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ClashConfigSnippetImplCopyWith<_$ClashConfigSnippetImpl> get copyWith =>
+      __$$ClashConfigSnippetImplCopyWithImpl<_$ClashConfigSnippetImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ClashConfigSnippetImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ClashConfigSnippet implements ClashConfigSnippet {
+  const factory _ClashConfigSnippet(
+      {@JsonKey(name: "proxy-groups") final List<ProxyGroup> proxyGroups,
+      final List<String> rule}) = _$ClashConfigSnippetImpl;
+
+  factory _ClashConfigSnippet.fromJson(Map<String, dynamic> json) =
+      _$ClashConfigSnippetImpl.fromJson;
+
+  @override
+  @JsonKey(name: "proxy-groups")
+  List<ProxyGroup> get proxyGroups;
+  @override
+  List<String> get rule;
+
+  /// Create a copy of ClashConfigSnippet
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ClashConfigSnippetImplCopyWith<_$ClashConfigSnippetImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) {
   return _ClashConfig.fromJson(json);
 }
@@ -1866,7 +2062,7 @@ mixin _$ClashConfig {
   GeodataLoader get geodataLoader => throw _privateConstructorUsedError;
   @JsonKey(name: "proxy-groups")
   List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
-  List<String> get rules => throw _privateConstructorUsedError;
+  List<String> get rule => throw _privateConstructorUsedError;
   @JsonKey(name: "global-ua")
   String? get globalUa => throw _privateConstructorUsedError;
   @JsonKey(name: "external-controller")
@@ -1907,7 +2103,7 @@ abstract class $ClashConfigCopyWith<$Res> {
       GeoXUrl geoXUrl,
       @JsonKey(name: "geodata-loader") GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-      List<String> rules,
+      List<String> rule,
       @JsonKey(name: "global-ua") String? globalUa,
       @JsonKey(name: "external-controller")
       ExternalControllerStatus externalController,
@@ -1947,7 +2143,7 @@ class _$ClashConfigCopyWithImpl<$Res, $Val extends ClashConfig>
     Object? geoXUrl = null,
     Object? geodataLoader = null,
     Object? proxyGroups = null,
-    Object? rules = null,
+    Object? rule = null,
     Object? globalUa = freezed,
     Object? externalController = null,
     Object? hosts = null,
@@ -2009,9 +2205,9 @@ class _$ClashConfigCopyWithImpl<$Res, $Val extends ClashConfig>
           ? _value.proxyGroups
           : proxyGroups // ignore: cast_nullable_to_non_nullable
               as List<ProxyGroup>,
-      rules: null == rules
-          ? _value.rules
-          : rules // ignore: cast_nullable_to_non_nullable
+      rule: null == rule
+          ? _value.rule
+          : rule // ignore: cast_nullable_to_non_nullable
               as List<String>,
       globalUa: freezed == globalUa
           ? _value.globalUa
@@ -2084,7 +2280,7 @@ abstract class _$$ClashConfigImplCopyWith<$Res>
       GeoXUrl geoXUrl,
       @JsonKey(name: "geodata-loader") GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-      List<String> rules,
+      List<String> rule,
       @JsonKey(name: "global-ua") String? globalUa,
       @JsonKey(name: "external-controller")
       ExternalControllerStatus externalController,
@@ -2125,7 +2321,7 @@ class __$$ClashConfigImplCopyWithImpl<$Res>
     Object? geoXUrl = null,
     Object? geodataLoader = null,
     Object? proxyGroups = null,
-    Object? rules = null,
+    Object? rule = null,
     Object? globalUa = freezed,
     Object? externalController = null,
     Object? hosts = null,
@@ -2187,9 +2383,9 @@ class __$$ClashConfigImplCopyWithImpl<$Res>
           ? _value._proxyGroups
           : proxyGroups // ignore: cast_nullable_to_non_nullable
               as List<ProxyGroup>,
-      rules: null == rules
-          ? _value._rules
-          : rules // ignore: cast_nullable_to_non_nullable
+      rule: null == rule
+          ? _value._rule
+          : rule // ignore: cast_nullable_to_non_nullable
               as List<String>,
       globalUa: freezed == globalUa
           ? _value.globalUa
@@ -2230,13 +2426,13 @@ class _$ClashConfigImpl implements _ClashConfig {
       this.geodataLoader = GeodataLoader.memconservative,
       @JsonKey(name: "proxy-groups")
       final List<ProxyGroup> proxyGroups = const [],
-      final List<String> rules = const [],
+      final List<String> rule = const [],
       @JsonKey(name: "global-ua") this.globalUa,
       @JsonKey(name: "external-controller")
       this.externalController = ExternalControllerStatus.close,
       final Map<String, String> hosts = const {}})
       : _proxyGroups = proxyGroups,
-        _rules = rules,
+        _rule = rule,
         _hosts = hosts;
 
   factory _$ClashConfigImpl.fromJson(Map<String, dynamic> json) =>
@@ -2290,13 +2486,13 @@ class _$ClashConfigImpl implements _ClashConfig {
     return EqualUnmodifiableListView(_proxyGroups);
   }
 
-  final List<String> _rules;
+  final List<String> _rule;
   @override
   @JsonKey()
-  List<String> get rules {
-    if (_rules is EqualUnmodifiableListView) return _rules;
+  List<String> get rule {
+    if (_rule is EqualUnmodifiableListView) return _rule;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_rules);
+    return EqualUnmodifiableListView(_rule);
   }
 
   @override
@@ -2316,7 +2512,7 @@ class _$ClashConfigImpl implements _ClashConfig {
 
   @override
   String toString() {
-    return 'ClashConfig(mixedPort: $mixedPort, mode: $mode, allowLan: $allowLan, logLevel: $logLevel, ipv6: $ipv6, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, geodataLoader: $geodataLoader, proxyGroups: $proxyGroups, rules: $rules, globalUa: $globalUa, externalController: $externalController, hosts: $hosts)';
+    return 'ClashConfig(mixedPort: $mixedPort, mode: $mode, allowLan: $allowLan, logLevel: $logLevel, ipv6: $ipv6, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, geodataLoader: $geodataLoader, proxyGroups: $proxyGroups, rule: $rule, globalUa: $globalUa, externalController: $externalController, hosts: $hosts)';
   }
 
   @override
@@ -2347,7 +2543,7 @@ class _$ClashConfigImpl implements _ClashConfig {
                 other.geodataLoader == geodataLoader) &&
             const DeepCollectionEquality()
                 .equals(other._proxyGroups, _proxyGroups) &&
-            const DeepCollectionEquality().equals(other._rules, _rules) &&
+            const DeepCollectionEquality().equals(other._rule, _rule) &&
             (identical(other.globalUa, globalUa) ||
                 other.globalUa == globalUa) &&
             (identical(other.externalController, externalController) ||
@@ -2373,7 +2569,7 @@ class _$ClashConfigImpl implements _ClashConfig {
       geoXUrl,
       geodataLoader,
       const DeepCollectionEquality().hash(_proxyGroups),
-      const DeepCollectionEquality().hash(_rules),
+      const DeepCollectionEquality().hash(_rule),
       globalUa,
       externalController,
       const DeepCollectionEquality().hash(_hosts));
@@ -2412,7 +2608,7 @@ abstract class _ClashConfig implements ClashConfig {
       final GeoXUrl geoXUrl,
       @JsonKey(name: "geodata-loader") final GeodataLoader geodataLoader,
       @JsonKey(name: "proxy-groups") final List<ProxyGroup> proxyGroups,
-      final List<String> rules,
+      final List<String> rule,
       @JsonKey(name: "global-ua") final String? globalUa,
       @JsonKey(name: "external-controller")
       final ExternalControllerStatus externalController,
@@ -2462,7 +2658,7 @@ abstract class _ClashConfig implements ClashConfig {
   @JsonKey(name: "proxy-groups")
   List<ProxyGroup> get proxyGroups;
   @override
-  List<String> get rules;
+  List<String> get rule;
   @override
   @JsonKey(name: "global-ua")
   String? get globalUa;

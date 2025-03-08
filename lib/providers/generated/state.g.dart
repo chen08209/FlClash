@@ -95,7 +95,7 @@ final clashConfigStateProvider = AutoDisposeProvider<ClashConfigState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ClashConfigStateRef = AutoDisposeProviderRef<ClashConfigState>;
-String _$proxyStateHash() => r'61ec20fcf35118aca445719c83e77e7d237f5570';
+String _$proxyStateHash() => r'22478fb593aaca11dfe2cf64472013190475a5bc';
 
 /// See also [proxyState].
 @ProviderFor(proxyState)
