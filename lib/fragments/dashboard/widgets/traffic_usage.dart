@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class TrafficUsage extends StatelessWidget {
   const TrafficUsage({super.key});
 
-  Widget getTrafficDataItem(
+  Widget _buildTrafficDataItem(
     BuildContext context,
     Icon icon,
     TrafficValue trafficValue,
@@ -189,7 +189,7 @@ class TrafficUsage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  getTrafficDataItem(
+                  _buildTrafficDataItem(
                     context,
                     Icon(
                       Icons.arrow_upward,
@@ -201,7 +201,7 @@ class TrafficUsage extends StatelessWidget {
                   const SizedBox(
                     height: 8,
                   ),
-                  getTrafficDataItem(
+                  _buildTrafficDataItem(
                     context,
                     Icon(
                       Icons.arrow_downward,

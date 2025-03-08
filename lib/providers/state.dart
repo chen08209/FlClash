@@ -81,14 +81,19 @@ ClashConfigState clashConfigState(Ref ref) {
 @riverpod
 ProxyState proxyState(Ref ref) {
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
-  final networkProps = ref.watch(networkSettingProvider);
+  final vm2 = ref.watch(networkSettingProvider.select(
+    (state) => VM2(
+      a: state.systemProxy,
+      b: state.bypassDomain,
+    ),
+  ));
   final mixedPort = ref.watch(
     patchClashConfigProvider.select((state) => state.mixedPort),
   );
   return ProxyState(
     isStart: isStart,
-    systemProxy: networkProps.systemProxy,
-    bassDomain: networkProps.bypassDomain,
+    systemProxy: vm2.a,
+    bassDomain: vm2.b,
     port: mixedPort,
   );
 }

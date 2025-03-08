@@ -274,6 +274,17 @@ class GeoXUrl with _$GeoXUrl {
 }
 
 @freezed
+class ClashConfigSnippet with _$ClashConfigSnippet {
+  const factory ClashConfigSnippet({
+    @Default([]) @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
+    @Default([]) List<String> rule,
+  }) = _ClashConfigSnippet;
+
+  factory ClashConfigSnippet.fromJson(Map<String, Object?> json) =>
+      _$ClashConfigSnippetFromJson(json);
+}
+
+@freezed
 class ClashConfig with _$ClashConfig {
   const factory ClashConfig({
     @Default(defaultMixedPort) @JsonKey(name: "mixed-port") int mixedPort,
@@ -301,7 +312,7 @@ class ClashConfig with _$ClashConfig {
     @JsonKey(name: "geodata-loader")
     GeodataLoader geodataLoader,
     @Default([]) @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-    @Default([]) List<String> rules,
+    @Default([]) List<String> rule,
     @JsonKey(name: "global-ua") String? globalUa,
     @Default(ExternalControllerStatus.close)
     @JsonKey(name: "external-controller")

@@ -62,12 +62,12 @@ class _MemoryInfoState extends State<MemoryInfo> {
         onPressed: () {
           clashCore.requestGc();
         },
-        child: ValueListenableBuilder(
-          valueListenable: _memoryInfoStateNotifier,
-          builder: (_, trafficValue, __) {
-            return Column(
-              children: [
-                Padding(
+        child: Column(
+          children: [
+            ValueListenableBuilder(
+              valueListenable: _memoryInfoStateNotifier,
+              builder: (_, trafficValue, __) {
+                return Padding(
                   padding: baseInfoEdgeInsets.copyWith(
                     bottom: 0,
                     top: 12,
@@ -87,30 +87,30 @@ class _MemoryInfoState extends State<MemoryInfo> {
                       )
                     ],
                   ),
-                ),
-                Flexible(
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: WaveView(
-                          waveAmplitude: 12.0,
-                          waveFrequency: 0.35,
-                          waveColor: darkenLighter,
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: WaveView(
-                          waveAmplitude: 12.0,
-                          waveFrequency: 0.9,
-                          waveColor: darken,
-                        ),
-                      ),
-                    ],
+                );
+              },
+            ),
+            Flexible(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: WaveView(
+                      waveAmplitude: 12.0,
+                      waveFrequency: 0.35,
+                      waveColor: darkenLighter,
+                    ),
                   ),
-                )
-              ],
-            );
-          },
+                  Positioned.fill(
+                    child: WaveView(
+                      waveAmplitude: 12.0,
+                      waveFrequency: 0.9,
+                      waveColor: darken,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -206,6 +206,25 @@ Map<String, dynamic> _$$GeoXUrlImplToJson(_$GeoXUrlImpl instance) =>
       'geosite': instance.geosite,
     };
 
+_$ClashConfigSnippetImpl _$$ClashConfigSnippetImplFromJson(
+        Map<String, dynamic> json) =>
+    _$ClashConfigSnippetImpl(
+      proxyGroups: (json['proxy-groups'] as List<dynamic>?)
+              ?.map((e) => ProxyGroup.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      rule:
+          (json['rule'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+              const [],
+    );
+
+Map<String, dynamic> _$$ClashConfigSnippetImplToJson(
+        _$ClashConfigSnippetImpl instance) =>
+    <String, dynamic>{
+      'proxy-groups': instance.proxyGroups,
+      'rule': instance.rule,
+    };
+
 _$ClashConfigImpl _$$ClashConfigImplFromJson(Map<String, dynamic> json) =>
     _$ClashConfigImpl(
       mixedPort: (json['mixed-port'] as num?)?.toInt() ?? defaultMixedPort,
@@ -238,8 +257,8 @@ _$ClashConfigImpl _$$ClashConfigImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => ProxyGroup.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      rules:
-          (json['rules'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      rule:
+          (json['rule'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
       globalUa: json['global-ua'] as String?,
       externalController: $enumDecodeNullable(
@@ -267,7 +286,7 @@ Map<String, dynamic> _$$ClashConfigImplToJson(_$ClashConfigImpl instance) =>
       'geox-url': instance.geoXUrl,
       'geodata-loader': _$GeodataLoaderEnumMap[instance.geodataLoader]!,
       'proxy-groups': instance.proxyGroups,
-      'rules': instance.rules,
+      'rule': instance.rule,
       'global-ua': instance.globalUa,
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,

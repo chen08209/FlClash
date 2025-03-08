@@ -14,6 +14,7 @@ class Navigation {
       const NavigationItem(
         icon: Icon(Icons.space_dashboard),
         label: PageLabel.dashboard,
+        keep: false,
         fragment: DashboardFragment(
           key: GlobalObjectKey(PageLabel.dashboard),
         ),
