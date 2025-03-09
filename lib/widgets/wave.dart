@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class WaveView extends StatefulWidget {
@@ -87,7 +88,9 @@ class WavePainter extends CustomPainter {
 
     path.moveTo(0, baseHeight);
 
-    for (double x = 0; x <= size.width; x++) {
+    final dot = size.width / 20;
+
+    for (double x = 0; x <= size.width; x += dot) {
       final y = waveAmplitude *
           sin((x / size.width * 2 * pi * waveFrequency) +
               (animationValue * 2 * pi));
