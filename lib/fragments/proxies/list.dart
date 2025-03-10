@@ -490,7 +490,7 @@ class _ListHeaderState extends State<ListHeader>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        EmojiText(
                           groupName,
                           style: context.textTheme.titleMedium,
                         ),
