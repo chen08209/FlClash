@@ -1,3 +1,15 @@
+## v0.8.80
+
+- Optimize dashboard performance
+
+- Fix some issues
+
+- Fix unselected proxy group delay issues
+
+- Fix asn url issues
+
+- Update changelog
+
 ## v0.8.79
 
 - Fix tab delay view issues
