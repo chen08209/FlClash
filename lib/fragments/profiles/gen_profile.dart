@@ -1,20 +1,22 @@
+import 'package:fl_clash/clash/core.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 
-class CustomProfile extends StatefulWidget {
+class GenProfile extends StatefulWidget {
   final String profileId;
 
-  const CustomProfile({
+  const GenProfile({
     super.key,
     required this.profileId,
   });
 
   @override
-  State<CustomProfile> createState() => _CustomProfileState();
+  State<GenProfile> createState() => _GenProfileState();
 }
 
-class _CustomProfileState extends State<CustomProfile> {
+class _GenProfileState extends State<GenProfile> {
   final _currentClashConfigNotifier = ValueNotifier<ClashConfig?>(null);
 
   @override
@@ -24,12 +26,12 @@ class _CustomProfileState extends State<CustomProfile> {
   }
 
   _initCurrentClashConfig() async {
-    // final currentProfileId = globalState.config.currentProfileId;
-    // if (currentProfileId == null) {
-    //   return;
-    // }
-    // _currentClashConfigNotifier.value =
-    //     await clashCore.getProfile(currentProfileId);
+    final currentProfileId = globalState.config.currentProfileId;
+    if (currentProfileId == null) {
+      return;
+    }
+    _currentClashConfigNotifier.value =
+        await clashCore.getProfile(currentProfileId);
   }
 
   @override

@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../enum/enum.dart';
 
 part 'generated/clash_config.freezed.dart';
+
 part 'generated/clash_config.g.dart';
 
 typedef HostsMap = Map<String, String>;
@@ -110,8 +111,7 @@ class ProxyGroup with _$ProxyGroup {
     required String name,
     @JsonKey(
       fromJson: GroupType.parseProfileType,
-    )
-    required GroupType type,
+    ) required GroupType type,
     List<String>? proxies,
     List<String>? use,
     int? interval,
@@ -166,8 +166,7 @@ class FallbackFilter with _$FallbackFilter {
       "+.google.com",
       "+.facebook.com",
       "+.youtube.com",
-    ])
-    List<String> domain,
+    ]) List<String> domain,
   }) = _FallbackFilter;
 
   factory FallbackFilter.fromJson(Map<String, Object?> json) =>
@@ -184,46 +183,35 @@ class Dns with _$Dns {
     @Default(true) @JsonKey(name: "use-system-hosts") bool useSystemHosts,
     @Default(false) @JsonKey(name: "respect-rules") bool respectRules,
     @Default(false) bool ipv6,
-    @Default(["223.5.5.5"])
-    @JsonKey(name: "default-nameserver")
-    List<String> defaultNameserver,
-    @Default(DnsMode.fakeIp)
-    @JsonKey(name: "enhanced-mode")
-    DnsMode enhancedMode,
-    @Default("198.18.0.1/16")
-    @JsonKey(name: "fake-ip-range")
-    String fakeIpRange,
+    @Default(["223.5.5.5"]) @JsonKey(name: "default-nameserver") List<
+        String> defaultNameserver,
+    @Default(DnsMode.fakeIp) @JsonKey(
+        name: "enhanced-mode") DnsMode enhancedMode,
+    @Default("198.18.0.1/16") @JsonKey(
+        name: "fake-ip-range") String fakeIpRange,
     @Default([
       "*.lan",
       "localhost.ptlogin2.qq.com",
-    ])
-    @JsonKey(name: "fake-ip-filter")
-    List<String> fakeIpFilter,
+    ]) @JsonKey(name: "fake-ip-filter") List<String> fakeIpFilter,
     @Default({
       "www.baidu.com": "114.114.114.114",
       "+.internal.crop.com": "10.0.0.1",
       "geosite:cn": "https://doh.pub/dns-query"
-    })
-    @JsonKey(name: "nameserver-policy")
-    Map<String, String> nameserverPolicy,
+    }) @JsonKey(name: "nameserver-policy") Map<String, String> nameserverPolicy,
     @Default([
       "https://doh.pub/dns-query",
       "https://dns.alidns.com/dns-query",
-    ])
-    List<String> nameserver,
+    ]) List<String> nameserver,
     @Default([
       "tls://8.8.4.4",
       "tls://1.1.1.1",
-    ])
-    List<String> fallback,
+    ]) List<String> fallback,
     @Default([
       "https://doh.pub/dns-query",
-    ])
-    @JsonKey(name: "proxy-server-nameserver")
-    List<String> proxyServerNameserver,
-    @Default(FallbackFilter())
-    @JsonKey(name: "fallback-filter")
-    FallbackFilter fallbackFilter,
+    ]) @JsonKey(name: "proxy-server-nameserver") List<
+        String> proxyServerNameserver,
+    @Default(FallbackFilter()) @JsonKey(
+        name: "fallback-filter") FallbackFilter fallbackFilter,
   }) = _Dns;
 
   factory Dns.fromJson(Map<String, Object?> json) => _$DnsFromJson(json);
@@ -242,20 +230,16 @@ class GeoXUrl with _$GeoXUrl {
   const factory GeoXUrl({
     @Default(
       "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
-    )
-    String mmdb,
+    ) String mmdb,
     @Default(
       "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
-    )
-    String asn,
+    ) String asn,
     @Default(
       "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
-    )
-    String geoip,
+    ) String geoip,
     @Default(
       "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
-    )
-    String geosite,
+    ) String geosite,
   }) = _GeoXUrl;
 
   factory GeoXUrl.fromJson(Map<String, Object?> json) =>
@@ -273,6 +257,9 @@ class GeoXUrl with _$GeoXUrl {
   }
 }
 
+class CustomClashConfigSnippetPart {
+}
+
 @freezed
 class ClashConfig with _$ClashConfig {
   const factory ClashConfig({
@@ -281,31 +268,25 @@ class ClashConfig with _$ClashConfig {
     @Default(false) @JsonKey(name: "allow-lan") bool allowLan,
     @Default(LogLevel.info) @JsonKey(name: "log-level") LogLevel logLevel,
     @Default(false) bool ipv6,
-    @Default(FindProcessMode.off)
-    @JsonKey(
+    @Default(FindProcessMode.off) @JsonKey(
       name: "find-process-mode",
       unknownEnumValue: FindProcessMode.off,
-    )
-    FindProcessMode findProcessMode,
-    @Default(defaultKeepAliveInterval)
-    @JsonKey(name: "keep-alive-interval")
-    int keepAliveInterval,
+    ) FindProcessMode findProcessMode,
+    @Default(defaultKeepAliveInterval) @JsonKey(
+        name: "keep-alive-interval") int keepAliveInterval,
     @Default(true) @JsonKey(name: "unified-delay") bool unifiedDelay,
     @Default(true) @JsonKey(name: "tcp-concurrent") bool tcpConcurrent,
     @Default(defaultTun) @JsonKey(fromJson: Tun.safeFormJson) Tun tun,
     @Default(defaultDns) @JsonKey(fromJson: Dns.safeDnsFromJson) Dns dns,
-    @Default(defaultGeoXUrl)
-    @JsonKey(name: "geox-url", fromJson: GeoXUrl.safeFormJson)
-    GeoXUrl geoXUrl,
-    @Default(GeodataLoader.memconservative)
-    @JsonKey(name: "geodata-loader")
-    GeodataLoader geodataLoader,
+    @Default(defaultGeoXUrl) @JsonKey(
+        name: "geox-url", fromJson: GeoXUrl.safeFormJson) GeoXUrl geoXUrl,
+    @Default(GeodataLoader.memconservative) @JsonKey(
+        name: "geodata-loader") GeodataLoader geodataLoader,
     @Default([]) @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
     @Default([]) List<String> rules,
     @JsonKey(name: "global-ua") String? globalUa,
-    @Default(ExternalControllerStatus.close)
-    @JsonKey(name: "external-controller")
-    ExternalControllerStatus externalController,
+    @Default(ExternalControllerStatus.close) @JsonKey(
+        name: "external-controller") ExternalControllerStatus externalController,
     @Default({}) HostsMap hosts,
   }) = _ClashConfig;
 

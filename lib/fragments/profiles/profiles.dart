@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'add_profile.dart';
+import 'gen_profile.dart';
 
 class ProfilesFragment extends StatefulWidget {
   const ProfilesFragment({super.key});
@@ -273,14 +274,14 @@ class ProfileItem extends StatelessWidget {
     }
   }
 
-  // _handlePushCustomPage(BuildContext context, String id) {
-  //   BaseNavigator.push(
-  //     context,
-  //     CustomProfile(
-  //       profileId: id,
-  //     ),
-  //   );
-  // }
+  _handlePushGenProfilePage(BuildContext context, String id) {
+    BaseNavigator.push(
+      context,
+      GenProfile(
+        profileId: id,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -330,13 +331,13 @@ class ProfileItem extends StatelessWidget {
                           //   },
                           // ),
                         ],
-                        // ActionItemData(
-                        //   icon: Icons.extension_outlined,
-                        //   label: "自定义",
-                        //   onPressed: () {
-                        //     _handlePushCustomPage(context, profile.id);
-                        //   },
-                        // ),
+                        ActionItemData(
+                          icon: Icons.extension_outlined,
+                          label: "自定义",
+                          onPressed: () {
+                            _handlePushGenProfilePage(context, profile.id);
+                          },
+                        ),
                         ActionItemData(
                           icon: Icons.file_copy_outlined,
                           label: appLocalizations.exportFile,
