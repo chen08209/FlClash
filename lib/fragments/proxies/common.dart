@@ -94,3 +94,6 @@ double getScrollToSelectedOffset({
   final rows = (selectedIndex / columns).floor();
   return rows * getItemHeight(proxyCardType) + (rows - 1) * 8;
 }
+  final rows = (selectedIndex / columns).floor();
+  return rows * getItemHeight(proxyCardType) + (rows - 1) * 8;
+}
