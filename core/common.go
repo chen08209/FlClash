@@ -28,8 +28,12 @@ import (
 	"sync"
 )
 
-func splitByComma(s string) interface{} {
-	parts := strings.Split(s, ",")
+func splitByMultipleSeparators(s string) interface{} {
+	isSeparator := func(r rune) bool {
+		return r == ',' || r == ' ' || r == ';'
+	}
+
+	parts := strings.FieldsFunc(s, isSeparator)
 	if len(parts) > 1 {
 		return parts
 	}
@@ -168,18 +172,18 @@ func decorationConfig(profileId string, cfg config.RawConfig) *config.RawConfig 
 	return prof
 }
 
-func genHosts(hosts, patchHosts map[string]any) {
+func attachHosts(hosts, patchHosts map[string]any) {
 	for k, v := range patchHosts {
 		if str, ok := v.(string); ok {
-			hosts[k] = splitByComma(str)
+			hosts[k] = splitByMultipleSeparators(str)
 		}
 	}
 }
 
-func modPatchDns(dns *config.RawDNS) {
+func updatePatchDns(dns config.RawDNS) {
 	for pair := dns.NameServerPolicy.Oldest(); pair != nil; pair = pair.Next() {
 		if str, ok := pair.Value.(string); ok {
-			dns.NameServerPolicy.Set(pair.Key, splitByComma(str))
+			dns.NameServerPolicy.Set(pair.Key, splitByMultipleSeparators(str))
 		}
 	}
 }
@@ -191,26 +195,25 @@ func trimArr(arr []string) (r []string) {
 	return
 }
 
-func overrideRules(rules *[]string) {
-	var target = ""
-	for _, line := range *rules {
+func overrideRules(rules, patchRules []string) []string {
+	target := ""
+	for _, line := range rules {
 		rule := trimArr(strings.Split(line, ","))
-		l := len(rule)
-		if l != 2 {
-			return
+		if len(rule) != 2 {
+			continue
 		}
-		if strings.ToUpper(rule[0]) == "MATCH" {
+		if strings.EqualFold(rule[0], "MATCH") {
 			target = rule[1]
 			break
 		}
 	}
 	if target == "" {
-		return
+		return rules
 	}
-	var rulesExt = lo.Map(ips, func(ip string, index int) string {
-		return fmt.Sprintf("DOMAIN %s %s", ip, target)
+	rulesExt := lo.Map(ips, func(ip string, _ int) string {
+		return fmt.Sprintf("DOMAIN,%s,%s", ip, target)
 	})
-	*rules = append(rulesExt, *rules...)
+	return append(append(rulesExt, patchRules...), rules...)
 }
 
 func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig) {
@@ -244,16 +247,20 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	for idx := range targetConfig.ProxyGroup {
 		targetConfig.ProxyGroup[idx]["url"] = ""
 	}
-	genHosts(targetConfig.Hosts, patchConfig.Hosts)
+	attachHosts(targetConfig.Hosts, patchConfig.Hosts)
 	if configParams.OverrideDns {
-		modPatchDns(&patchConfig.DNS)
+		updatePatchDns(patchConfig.DNS)
 		targetConfig.DNS = patchConfig.DNS
 	} else {
 		if targetConfig.DNS.Enable == false {
 			targetConfig.DNS.Enable = true
 		}
 	}
-	overrideRules(&targetConfig.Rule)
+	if configParams.OverrideRule {
+		targetConfig.Rule = overrideRules(patchConfig.Rule, []string{})
+	} else {
+		targetConfig.Rule = overrideRules(targetConfig.Rule, patchConfig.Rule)
+	}
 }
 
 func patchConfig() {
@@ -267,6 +274,7 @@ func patchConfig() {
 	dialer.DefaultInterface.Store(general.Interface)
 	adapter.UnifiedDelay.Store(general.UnifiedDelay)
 	tunnel.SetMode(general.Mode)
+	tunnel.UpdateRules(currentConfig.Rules, currentConfig.SubRules, currentConfig.RuleProviders)
 	log.SetLevel(general.LogLevel)
 	resolver.DisableIPv6 = !general.IPv6
 

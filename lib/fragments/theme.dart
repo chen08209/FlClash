@@ -291,12 +291,12 @@ class _PrimaryColorItem extends ConsumerWidget {
           itemBuilder: (_, index) {
             final color = primaryColors[index];
             return ColorSchemeBox(
-              isSelected: color?.value == primaryColor,
+              isSelected: color?.toARGB32() == primaryColor,
               primaryColor: color,
               onPressed: () {
                 ref.read(themeSettingProvider.notifier).updateState(
                       (state) => state.copyWith(
-                        primaryColor: color?.value,
+                        primaryColor: color?.toARGB32(),
                       ),
                     );
               },

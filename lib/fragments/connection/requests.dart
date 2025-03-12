@@ -20,6 +20,7 @@ class RequestsFragment extends ConsumerStatefulWidget {
 
 class _RequestsFragmentState extends ConsumerState<RequestsFragment>
     with PageMixin {
+  final GlobalKey<CacheItemExtentListViewState> _key = GlobalKey();
   final _requestsStateNotifier =
       ValueNotifier<ConnectionsState>(const ConnectionsState());
   List<Connection> _requests = [];
@@ -27,8 +28,6 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
   final ScrollController _scrollController = ScrollController(
     initialScrollOffset: _preOffset != 0 ? _preOffset : double.maxFinite,
   );
-
-  final FixedMap<String, double?> _cacheDynamicHeightMap = FixedMap(1000);
 
   double _currentMaxWidth = 0;
 
@@ -78,10 +77,6 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
   }
 
   double _calcCacheHeight(Connection item) {
-    final cacheHeight = _cacheDynamicHeightMap.get(item.id);
-    if (cacheHeight != null) {
-      return cacheHeight;
-    }
     final size = globalState.measure.computeTextSize(
       Text(
         item.desc,
@@ -102,14 +97,13 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
     final lines = (chainSize.height / baseHeight).round();
     final computerHeight =
         size.height + chainSize.height + 24 + 24 * (lines - 1);
-    _cacheDynamicHeightMap.put(item.id, computerHeight);
     return computerHeight;
   }
 
   _handleTryClearCache(double maxWidth) {
     if (_currentMaxWidth != maxWidth) {
       _currentMaxWidth = maxWidth;
-      _cacheDynamicHeightMap.clear();
+      _key.currentState?.clearCache();
     }
   }
 
@@ -118,7 +112,6 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
     _requestsStateNotifier.dispose();
     _scrollController.dispose();
     _currentMaxWidth = 0;
-    _cacheDynamicHeightMap.clear();
     super.dispose();
   }
 
@@ -179,12 +172,13 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
                   },
                   child: CommonScrollBar(
                     controller: _scrollController,
-                    child: ListView.builder(
+                    child: CacheItemExtentListView(
+                      key: _key,
                       reverse: true,
                       shrinkWrap: true,
                       physics: NextClampingScrollPhysics(),
                       controller: _scrollController,
-                      itemExtentBuilder: (index, __) {
+                      itemExtentBuilder: (index) {
                         final widget = items[index];
                         if (widget.runtimeType == Divider) {
                           return 0;
@@ -199,6 +193,14 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
                         return items[index];
                       },
                       itemCount: items.length,
+                      keyBuilder: (int index) {
+                        final widget = items[index];
+                        if (widget.runtimeType == Divider) {
+                          return "divider";
+                        }
+                        final connection = connections[(index / 2).floor()];
+                        return connection.id;
+                      },
                     ),
                   ),
                 ),

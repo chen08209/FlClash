@@ -83,13 +83,19 @@ class Request {
   Future<IpInfo?> checkIp({CancelToken? cancelToken}) async {
     for (final source in _ipInfoSources.entries) {
       try {
-        final response = await _dio.get<Map<String, dynamic>>(
-          source.key,
-          cancelToken: cancelToken,
-          options: Options(
-            responseType: ResponseType.json,
-          ),
-        );
+        final response = await Dio()
+            .get<Map<String, dynamic>>(
+              source.key,
+              cancelToken: cancelToken,
+              options: Options(
+                responseType: ResponseType.json,
+              ),
+            )
+            .timeout(
+              Duration(
+                seconds: 30,
+              ),
+            );
         if (response.statusCode != 200 || response.data == null) {
           continue;
         }

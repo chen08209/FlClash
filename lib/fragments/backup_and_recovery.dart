@@ -6,6 +6,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/text.dart';
@@ -174,7 +175,7 @@ class BackupAndRecovery extends ConsumerWidget {
                     future: client!.pingCompleter.future,
                     builder: (_, snapshot) {
                       return Center(
-                        child: FadeBox(
+                        child: FadeThroughBox(
                           child: snapshot.connectionState ==
                                   ConnectionState.waiting
                               ? const SizedBox(
@@ -275,30 +276,27 @@ class _RecoveryOptionsDialogState extends State<RecoveryOptionsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(appLocalizations.recovery),
-      contentPadding: const EdgeInsets.symmetric(
+    return CommonDialog(
+      title: appLocalizations.recovery,
+      padding: const EdgeInsets.symmetric(
         horizontal: 8,
         vertical: 16,
       ),
-      content: SizedBox(
-        width: 250,
-        child: Wrap(
-          children: [
-            ListItem(
-              onTap: () {
-                _handleOnTab(RecoveryOption.onlyProfiles);
-              },
-              title: Text(appLocalizations.recoveryProfiles),
-            ),
-            ListItem(
-              onTap: () {
-                _handleOnTab(RecoveryOption.all);
-              },
-              title: Text(appLocalizations.recoveryAll),
-            )
-          ],
-        ),
+      child: Wrap(
+        children: [
+          ListItem(
+            onTap: () {
+              _handleOnTab(RecoveryOption.onlyProfiles);
+            },
+            title: Text(appLocalizations.recoveryProfiles),
+          ),
+          ListItem(
+            onTap: () {
+              _handleOnTab(RecoveryOption.all);
+            },
+            title: Text(appLocalizations.recoveryAll),
+          )
+        ],
       ),
     );
   }
@@ -351,78 +349,8 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(appLocalizations.webDAVConfiguration),
-      content: Form(
-        key: _formKey,
-        child: SizedBox(
-          width: dialogCommonWidth,
-          child: Wrap(
-            runSpacing: 16,
-            children: [
-              TextFormField(
-                controller: uriController,
-                maxLines: 5,
-                minLines: 1,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.link),
-                  border: const OutlineInputBorder(),
-                  labelText: appLocalizations.address,
-                  helperText: appLocalizations.addressHelp,
-                ),
-                validator: (String? value) {
-                  if (value == null || value.isEmpty || !value.isUrl) {
-                    return appLocalizations.addressTip;
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: userController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.account_circle),
-                  border: const OutlineInputBorder(),
-                  labelText: appLocalizations.account,
-                ),
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return appLocalizations.accountTip;
-                  }
-                  return null;
-                },
-              ),
-              ValueListenableBuilder(
-                valueListenable: _obscureController,
-                builder: (_, obscure, __) {
-                  return TextFormField(
-                    controller: passwordController,
-                    obscureText: obscure,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.password),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscure ? Icons.visibility : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          _obscureController.value = !obscure;
-                        },
-                      ),
-                      labelText: appLocalizations.password,
-                    ),
-                    validator: (String? value) {
-                      if (value == null || value.isEmpty) {
-                        return appLocalizations.passwordTip;
-                      }
-                      return null;
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
+    return CommonDialog(
+      title: appLocalizations.webDAVConfiguration,
       actions: [
         if (widget.dav != null)
           TextButton(
@@ -434,6 +362,73 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
           child: Text(appLocalizations.save),
         )
       ],
+      child: Form(
+        key: _formKey,
+        child: Wrap(
+          runSpacing: 16,
+          children: [
+            TextFormField(
+              controller: uriController,
+              maxLines: 5,
+              minLines: 1,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.link),
+                border: const OutlineInputBorder(),
+                labelText: appLocalizations.address,
+                helperText: appLocalizations.addressHelp,
+              ),
+              validator: (String? value) {
+                if (value == null || value.isEmpty || !value.isUrl) {
+                  return appLocalizations.addressTip;
+                }
+                return null;
+              },
+            ),
+            TextFormField(
+              controller: userController,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.account_circle),
+                border: const OutlineInputBorder(),
+                labelText: appLocalizations.account,
+              ),
+              validator: (String? value) {
+                if (value == null || value.isEmpty) {
+                  return appLocalizations.accountTip;
+                }
+                return null;
+              },
+            ),
+            ValueListenableBuilder(
+              valueListenable: _obscureController,
+              builder: (_, obscure, __) {
+                return TextFormField(
+                  controller: passwordController,
+                  obscureText: obscure,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.password),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        _obscureController.value = !obscure;
+                      },
+                    ),
+                    labelText: appLocalizations.password,
+                  ),
+                  validator: (String? value) {
+                    if (value == null || value.isEmpty) {
+                      return appLocalizations.passwordTip;
+                    }
+                    return null;
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,8 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -205,7 +203,7 @@ class FakeIpFilterItem extends StatelessWidget {
     return ListItem.open(
       title: Text(appLocalizations.fakeipFilter),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: appLocalizations.fakeipFilter,
         widget: Consumer(
           builder: (_, ref, __) {
@@ -213,7 +211,7 @@ class FakeIpFilterItem extends StatelessWidget {
               patchClashConfigProvider
                   .select((state) => state.dns.fakeIpFilter),
             );
-            return ListPage(
+            return ListInputPage(
               title: appLocalizations.fakeipFilter,
               items: fakeIpFilter,
               titleBuilder: (item) => Text(item),
@@ -227,7 +225,6 @@ class FakeIpFilterItem extends StatelessWidget {
             );
           },
         ),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -242,14 +239,14 @@ class DefaultNameserverItem extends StatelessWidget {
       title: Text(appLocalizations.defaultNameserver),
       subtitle: Text(appLocalizations.defaultNameserverDesc),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: appLocalizations.defaultNameserver,
         widget: Consumer(builder: (_, ref, __) {
           final defaultNameserver = ref.watch(
             patchClashConfigProvider
                 .select((state) => state.dns.defaultNameserver),
           );
-          return ListPage(
+          return ListInputPage(
             title: appLocalizations.defaultNameserver,
             items: defaultNameserver,
             titleBuilder: (item) => Text(item),
@@ -262,7 +259,6 @@ class DefaultNameserverItem extends StatelessWidget {
             },
           );
         }),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -278,13 +274,13 @@ class NameserverItem extends StatelessWidget {
       subtitle: Text(appLocalizations.nameserverDesc),
       delegate: OpenDelegate(
         title: appLocalizations.nameserver,
-        isBlur: false,
+        blur: false,
         widget: Consumer(builder: (_, ref, __) {
           final nameserver = ref.watch(
             patchClashConfigProvider.select((state) => state.dns.nameserver),
           );
-          return ListPage(
-            title: "域名服务器",
+          return ListInputPage(
+            title: appLocalizations.nameserver,
             items: nameserver,
             titleBuilder: (item) => Text(item),
             onChange: (items) {
@@ -296,7 +292,6 @@ class NameserverItem extends StatelessWidget {
             },
           );
         }),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -357,28 +352,27 @@ class NameserverPolicyItem extends StatelessWidget {
       title: Text(appLocalizations.nameserverPolicy),
       subtitle: Text(appLocalizations.nameserverPolicyDesc),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: appLocalizations.nameserverPolicy,
         widget: Consumer(builder: (_, ref, __) {
           final nameserverPolicy = ref.watch(
             patchClashConfigProvider
                 .select((state) => state.dns.nameserverPolicy),
           );
-          return ListPage(
+          return MapInputPage(
             title: appLocalizations.nameserverPolicy,
-            items: nameserverPolicy.entries,
+            map: nameserverPolicy,
             titleBuilder: (item) => Text(item.key),
             subtitleBuilder: (item) => Text(item.value),
-            onChange: (items) {
+            onChange: (value) {
               ref.read(patchClashConfigProvider.notifier).updateState(
                     (state) => state.copyWith.dns(
-                      nameserverPolicy: Map.fromEntries(items),
+                      nameserverPolicy: value,
                     ),
                   );
             },
           );
         }),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -393,7 +387,7 @@ class ProxyServerNameserverItem extends StatelessWidget {
       title: Text(appLocalizations.proxyNameserver),
       subtitle: Text(appLocalizations.proxyNameserverDesc),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: appLocalizations.proxyNameserver,
         widget: Consumer(
           builder: (_, ref, __) {
@@ -401,7 +395,7 @@ class ProxyServerNameserverItem extends StatelessWidget {
               patchClashConfigProvider
                   .select((state) => state.dns.proxyServerNameserver),
             );
-            return ListPage(
+            return ListInputPage(
               title: appLocalizations.proxyNameserver,
               items: proxyServerNameserver,
               titleBuilder: (item) => Text(item),
@@ -415,7 +409,6 @@ class ProxyServerNameserverItem extends StatelessWidget {
             );
           },
         ),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -430,13 +423,13 @@ class FallbackItem extends StatelessWidget {
       title: Text(appLocalizations.fallback),
       subtitle: Text(appLocalizations.fallbackDesc),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: appLocalizations.fallback,
         widget: Consumer(builder: (_, ref, __) {
           final fallback = ref.watch(
             patchClashConfigProvider.select((state) => state.dns.fallback),
           );
-          return ListPage(
+          return ListInputPage(
             title: appLocalizations.fallback,
             items: fallback,
             titleBuilder: (item) => Text(item),
@@ -449,7 +442,6 @@ class FallbackItem extends StatelessWidget {
             },
           );
         }),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -518,14 +510,14 @@ class GeositeItem extends StatelessWidget {
     return ListItem.open(
       title: const Text("Geosite"),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: "Geosite",
         widget: Consumer(builder: (_, ref, __) {
           final geosite = ref.watch(
             patchClashConfigProvider
                 .select((state) => state.dns.fallbackFilter.geosite),
           );
-          return ListPage(
+          return ListInputPage(
             title: "Geosite",
             items: geosite,
             titleBuilder: (item) => Text(item),
@@ -538,7 +530,6 @@ class GeositeItem extends StatelessWidget {
             },
           );
         }),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -552,14 +543,14 @@ class IpcidrItem extends StatelessWidget {
     return ListItem.open(
       title: Text(appLocalizations.ipcidr),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: appLocalizations.ipcidr,
         widget: Consumer(builder: (_, ref, ___) {
           final ipcidr = ref.watch(
             patchClashConfigProvider
                 .select((state) => state.dns.fallbackFilter.ipcidr),
           );
-          return ListPage(
+          return ListInputPage(
             title: appLocalizations.ipcidr,
             items: ipcidr,
             titleBuilder: (item) => Text(item),
@@ -572,7 +563,6 @@ class IpcidrItem extends StatelessWidget {
             },
           );
         }),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -586,14 +576,14 @@ class DomainItem extends StatelessWidget {
     return ListItem.open(
       title: Text(appLocalizations.domain),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: appLocalizations.domain,
         widget: Consumer(builder: (_, ref, __) {
           final domain = ref.watch(
             patchClashConfigProvider
                 .select((state) => state.dns.fallbackFilter.domain),
           );
-          return ListPage(
+          return ListInputPage(
             title: appLocalizations.domain,
             items: domain,
             titleBuilder: (item) => Text(item),
@@ -606,7 +596,6 @@ class DomainItem extends StatelessWidget {
             },
           );
         }),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -671,39 +660,8 @@ const dnsItems = <Widget>[
 class DnsListView extends ConsumerWidget {
   const DnsListView({super.key});
 
-  _initActions(BuildContext context, WidgetRef ref) {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      context.commonScaffoldState?.actions = [
-        IconButton(
-          onPressed: () async {
-            final res = await globalState.showMessage(
-              title: appLocalizations.reset,
-              message: TextSpan(
-                text: appLocalizations.resetTip,
-              ),
-            );
-            if (res != true) {
-              return;
-            }
-
-            ref.read(patchClashConfigProvider.notifier).updateState(
-                  (state) => state.copyWith(
-                    dns: defaultDns,
-                  ),
-                );
-          },
-          tooltip: appLocalizations.reset,
-          icon: const Icon(
-            Icons.replay,
-          ),
-        )
-      ];
-    });
-  }
-
   @override
   Widget build(BuildContext context, ref) {
-    _initActions(context, ref);
     return generateListView(
       dnsItems,
     );

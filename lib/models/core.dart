@@ -62,6 +62,7 @@ class ConfigExtendedParams with _$ConfigExtendedParams {
     @JsonKey(name: "is-patch") required bool isPatch,
     @JsonKey(name: "selected-map") required SelectedMap selectedMap,
     @JsonKey(name: "override-dns") required bool overrideDns,
+    @JsonKey(name: "override-rule") required bool overrideRule,
     @JsonKey(name: "test-url") required String testUrl,
   }) = _ConfigExtendedParams;
 

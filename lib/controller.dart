@@ -10,12 +10,14 @@ import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
+import 'fragments/profiles/override_profile.dart';
 import 'models/models.dart';
 
 class AppController {
@@ -242,6 +244,7 @@ class AppController {
   }
 
   Future<void> updateClashConfig([bool? isPatch]) async {
+    commonPrint.log("update clash patch: ${isPatch ?? false}");
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
     await commonScaffoldState?.loadingRun(() async {
@@ -414,6 +417,9 @@ class AppController {
     Map<String, dynamic>? data,
     bool handleError = false,
   }) async {
+    if(globalState.isPre){
+      return;
+    }
     if (data != null) {
       final tagName = data['tag_name'];
       final body = data['body'];
@@ -520,37 +526,12 @@ class AppController {
     _ref.read(delayDataSourceProvider.notifier).setDelay(delay);
   }
 
-  toPage(
-    int index, {
-    bool hasAnimate = false,
-  }) {
-    final navigations = _ref.read(currentNavigationsStateProvider).value;
-    if (index > navigations.length - 1) {
-      return;
-    }
-    _ref.read(currentPageLabelProvider.notifier).value =
-        navigations[index].label;
-    final isAnimateToPage = _ref.read(appSettingProvider).isAnimateToPage;
-    final isMobile =
-        _ref.read(viewWidthProvider.notifier).viewMode == ViewMode.mobile;
-    if (isAnimateToPage && isMobile || hasAnimate) {
-      globalState.pageController?.animateToPage(
-        index,
-        duration: kTabScrollDuration,
-        curve: Curves.easeOut,
-      );
-    } else {
-      globalState.pageController?.jumpToPage(index);
-    }
+  toPage(PageLabel pageLabel) {
+    _ref.read(currentPageLabelProvider.notifier).value = pageLabel;
   }
 
   toProfiles() {
-    final index = _ref.read(currentNavigationsStateProvider).value.indexWhere(
-          (element) => element.label == PageLabel.profiles,
-        );
-    if (index != -1) {
-      toPage(index);
-    }
+    toPage(PageLabel.profiles);
   }
 
   initLink() {
@@ -587,17 +568,8 @@ class AppController {
   Future<bool> showDisclaimer() async {
     return await globalState.showCommonDialog<bool>(
           dismissible: false,
-          child: AlertDialog(
-            title: Text(appLocalizations.disclaimer),
-            content: Container(
-              width: dialogCommonWidth,
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  appLocalizations.disclaimerDesc,
-                ),
-              ),
-            ),
+          child: CommonDialog(
+            title: appLocalizations.disclaimer,
             actions: [
               TextButton(
                 onPressed: () {
@@ -615,6 +587,9 @@ class AppController {
                 child: Text(appLocalizations.agree),
               )
             ],
+            child: SelectableText(
+              appLocalizations.disclaimerDesc,
+            ),
           ),
         ) ??
         false;
@@ -680,9 +655,9 @@ class AppController {
     addProfileFormURL(url);
   }
 
-  updateViewWidth(double width) {
+  updateViewSize(Size size) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ref.read(viewWidthProvider.notifier).value = width;
+      _ref.read(viewSizeProvider.notifier).value = size;
     });
   }
 
@@ -741,10 +716,18 @@ class AppController {
     final providersPath = await appPath.getProvidersPath(profileId);
     return await Isolate.run(() async {
       if (profilePath != null) {
-        await File(profilePath).delete(recursive: true);
+        final profileFile = File(profilePath);
+        final isExists = await profileFile.exists();
+        if (isExists) {
+          profileFile.delete(recursive: true);
+        }
       }
       if (providersPath != null) {
-        await File(providersPath).delete(recursive: true);
+        final providersFileDir = File(providersPath);
+        final isExists = await providersFileDir.exists();
+        if (isExists) {
+          providersFileDir.delete(recursive: true);
+        }
       }
     });
   }
@@ -798,10 +781,10 @@ class AppController {
     _ref.read(patchClashConfigProvider.notifier).updateState(
           (state) => state.copyWith(mode: mode),
         );
-    // if (mode == Mode.global) {
-    //   updateCurrentGroupName(GroupName.GLOBAL.name);
-    // }
-    // addCheckIpNumDebounce();
+    if (mode == Mode.global) {
+      updateCurrentGroupName(GroupName.GLOBAL.name);
+    }
+    addCheckIpNumDebounce();
   }
 
   updateAutoLaunch() {
@@ -813,7 +796,7 @@ class AppController {
   }
 
   updateVisible() async {
-    final visible = await window?.isVisible();
+    final visible = await window?.isVisible;
     if (visible != null && !visible) {
       window?.show();
     } else {
@@ -832,6 +815,38 @@ class AppController {
         return state.copyWith(
           mode: Mode.values[nextIndex],
         );
+      },
+    );
+  }
+
+  handleAddOrUpdate(WidgetRef ref, [Rule? rule]) async {
+    final res = await globalState.showCommonDialog<Rule>(
+      child: AddRuleDialog(
+        rule: rule,
+        snippet: ref.read(
+          profileOverrideStateProvider.select(
+            (state) => state.snippet!,
+          ),
+        ),
+      ),
+    );
+    if (res == null) {
+      return;
+    }
+    ref.read(profileOverrideStateProvider.notifier).updateState(
+      (state) {
+        final model = state.copyWith.overrideData!(
+          rule: state.overrideData!.rule.updateRules(
+            (rules) {
+              final index = rules.indexWhere((item) => item.id == res.id);
+              if (index == -1) {
+                return List.from([res, ...rules]);
+              }
+              return List.from(rules)..[index] = res;
+            },
+          ),
+        );
+        return model;
       },
     );
   }

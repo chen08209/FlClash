@@ -238,6 +238,7 @@ mixin _$Profile {
   bool get autoUpdate => throw _privateConstructorUsedError;
   Map<String, String> get selectedMap => throw _privateConstructorUsedError;
   Set<String> get unfoldSet => throw _privateConstructorUsedError;
+  OverrideData get overrideData => throw _privateConstructorUsedError;
   @JsonKey(includeToJson: false, includeFromJson: false)
   bool get isUpdating => throw _privateConstructorUsedError;
 
@@ -266,9 +267,11 @@ abstract class $ProfileCopyWith<$Res> {
       bool autoUpdate,
       Map<String, String> selectedMap,
       Set<String> unfoldSet,
+      OverrideData overrideData,
       @JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating});
 
   $SubscriptionInfoCopyWith<$Res>? get subscriptionInfo;
+  $OverrideDataCopyWith<$Res> get overrideData;
 }
 
 /// @nodoc
@@ -296,6 +299,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? autoUpdate = null,
     Object? selectedMap = null,
     Object? unfoldSet = null,
+    Object? overrideData = null,
     Object? isUpdating = null,
   }) {
     return _then(_value.copyWith(
@@ -339,6 +343,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
           ? _value.unfoldSet
           : unfoldSet // ignore: cast_nullable_to_non_nullable
               as Set<String>,
+      overrideData: null == overrideData
+          ? _value.overrideData
+          : overrideData // ignore: cast_nullable_to_non_nullable
+              as OverrideData,
       isUpdating: null == isUpdating
           ? _value.isUpdating
           : isUpdating // ignore: cast_nullable_to_non_nullable
@@ -357,6 +365,16 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
 
     return $SubscriptionInfoCopyWith<$Res>(_value.subscriptionInfo!, (value) {
       return _then(_value.copyWith(subscriptionInfo: value) as $Val);
+    });
+  }
+
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $OverrideDataCopyWith<$Res> get overrideData {
+    return $OverrideDataCopyWith<$Res>(_value.overrideData, (value) {
+      return _then(_value.copyWith(overrideData: value) as $Val);
     });
   }
 }
@@ -379,10 +397,13 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
       bool autoUpdate,
       Map<String, String> selectedMap,
       Set<String> unfoldSet,
+      OverrideData overrideData,
       @JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating});
 
   @override
   $SubscriptionInfoCopyWith<$Res>? get subscriptionInfo;
+  @override
+  $OverrideDataCopyWith<$Res> get overrideData;
 }
 
 /// @nodoc
@@ -408,6 +429,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? autoUpdate = null,
     Object? selectedMap = null,
     Object? unfoldSet = null,
+    Object? overrideData = null,
     Object? isUpdating = null,
   }) {
     return _then(_$ProfileImpl(
@@ -451,6 +473,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
           ? _value._unfoldSet
           : unfoldSet // ignore: cast_nullable_to_non_nullable
               as Set<String>,
+      overrideData: null == overrideData
+          ? _value.overrideData
+          : overrideData // ignore: cast_nullable_to_non_nullable
+              as OverrideData,
       isUpdating: null == isUpdating
           ? _value.isUpdating
           : isUpdating // ignore: cast_nullable_to_non_nullable
@@ -473,6 +499,7 @@ class _$ProfileImpl implements _Profile {
       this.autoUpdate = true,
       final Map<String, String> selectedMap = const {},
       final Set<String> unfoldSet = const {},
+      this.overrideData = const OverrideData(),
       @JsonKey(includeToJson: false, includeFromJson: false)
       this.isUpdating = false})
       : _selectedMap = selectedMap,
@@ -518,12 +545,15 @@ class _$ProfileImpl implements _Profile {
   }
 
   @override
+  @JsonKey()
+  final OverrideData overrideData;
+  @override
   @JsonKey(includeToJson: false, includeFromJson: false)
   final bool isUpdating;
 
   @override
   String toString() {
-    return 'Profile(id: $id, label: $label, currentGroupName: $currentGroupName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, subscriptionInfo: $subscriptionInfo, autoUpdate: $autoUpdate, selectedMap: $selectedMap, unfoldSet: $unfoldSet, isUpdating: $isUpdating)';
+    return 'Profile(id: $id, label: $label, currentGroupName: $currentGroupName, url: $url, lastUpdateDate: $lastUpdateDate, autoUpdateDuration: $autoUpdateDuration, subscriptionInfo: $subscriptionInfo, autoUpdate: $autoUpdate, selectedMap: $selectedMap, unfoldSet: $unfoldSet, overrideData: $overrideData, isUpdating: $isUpdating)';
   }
 
   @override
@@ -548,6 +578,8 @@ class _$ProfileImpl implements _Profile {
                 .equals(other._selectedMap, _selectedMap) &&
             const DeepCollectionEquality()
                 .equals(other._unfoldSet, _unfoldSet) &&
+            (identical(other.overrideData, overrideData) ||
+                other.overrideData == overrideData) &&
             (identical(other.isUpdating, isUpdating) ||
                 other.isUpdating == isUpdating));
   }
@@ -566,6 +598,7 @@ class _$ProfileImpl implements _Profile {
       autoUpdate,
       const DeepCollectionEquality().hash(_selectedMap),
       const DeepCollectionEquality().hash(_unfoldSet),
+      overrideData,
       isUpdating);
 
   /// Create a copy of Profile
@@ -596,6 +629,7 @@ abstract class _Profile implements Profile {
       final bool autoUpdate,
       final Map<String, String> selectedMap,
       final Set<String> unfoldSet,
+      final OverrideData overrideData,
       @JsonKey(includeToJson: false, includeFromJson: false)
       final bool isUpdating}) = _$ProfileImpl;
 
@@ -622,6 +656,8 @@ abstract class _Profile implements Profile {
   @override
   Set<String> get unfoldSet;
   @override
+  OverrideData get overrideData;
+  @override
   @JsonKey(includeToJson: false, includeFromJson: false)
   bool get isUpdating;
 
@@ -630,5 +666,400 @@ abstract class _Profile implements Profile {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ProfileImplCopyWith<_$ProfileImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+OverrideData _$OverrideDataFromJson(Map<String, dynamic> json) {
+  return _OverrideData.fromJson(json);
+}
+
+/// @nodoc
+mixin _$OverrideData {
+  bool get enable => throw _privateConstructorUsedError;
+  OverrideRule get rule => throw _privateConstructorUsedError;
+
+  /// Serializes this OverrideData to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of OverrideData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $OverrideDataCopyWith<OverrideData> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $OverrideDataCopyWith<$Res> {
+  factory $OverrideDataCopyWith(
+          OverrideData value, $Res Function(OverrideData) then) =
+      _$OverrideDataCopyWithImpl<$Res, OverrideData>;
+  @useResult
+  $Res call({bool enable, OverrideRule rule});
+
+  $OverrideRuleCopyWith<$Res> get rule;
+}
+
+/// @nodoc
+class _$OverrideDataCopyWithImpl<$Res, $Val extends OverrideData>
+    implements $OverrideDataCopyWith<$Res> {
+  _$OverrideDataCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of OverrideData
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? enable = null,
+    Object? rule = null,
+  }) {
+    return _then(_value.copyWith(
+      enable: null == enable
+          ? _value.enable
+          : enable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      rule: null == rule
+          ? _value.rule
+          : rule // ignore: cast_nullable_to_non_nullable
+              as OverrideRule,
+    ) as $Val);
+  }
+
+  /// Create a copy of OverrideData
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $OverrideRuleCopyWith<$Res> get rule {
+    return $OverrideRuleCopyWith<$Res>(_value.rule, (value) {
+      return _then(_value.copyWith(rule: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$OverrideDataImplCopyWith<$Res>
+    implements $OverrideDataCopyWith<$Res> {
+  factory _$$OverrideDataImplCopyWith(
+          _$OverrideDataImpl value, $Res Function(_$OverrideDataImpl) then) =
+      __$$OverrideDataImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({bool enable, OverrideRule rule});
+
+  @override
+  $OverrideRuleCopyWith<$Res> get rule;
+}
+
+/// @nodoc
+class __$$OverrideDataImplCopyWithImpl<$Res>
+    extends _$OverrideDataCopyWithImpl<$Res, _$OverrideDataImpl>
+    implements _$$OverrideDataImplCopyWith<$Res> {
+  __$$OverrideDataImplCopyWithImpl(
+      _$OverrideDataImpl _value, $Res Function(_$OverrideDataImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of OverrideData
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? enable = null,
+    Object? rule = null,
+  }) {
+    return _then(_$OverrideDataImpl(
+      enable: null == enable
+          ? _value.enable
+          : enable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      rule: null == rule
+          ? _value.rule
+          : rule // ignore: cast_nullable_to_non_nullable
+              as OverrideRule,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$OverrideDataImpl implements _OverrideData {
+  const _$OverrideDataImpl(
+      {this.enable = false, this.rule = const OverrideRule()});
+
+  factory _$OverrideDataImpl.fromJson(Map<String, dynamic> json) =>
+      _$$OverrideDataImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final bool enable;
+  @override
+  @JsonKey()
+  final OverrideRule rule;
+
+  @override
+  String toString() {
+    return 'OverrideData(enable: $enable, rule: $rule)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$OverrideDataImpl &&
+            (identical(other.enable, enable) || other.enable == enable) &&
+            (identical(other.rule, rule) || other.rule == rule));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, enable, rule);
+
+  /// Create a copy of OverrideData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$OverrideDataImplCopyWith<_$OverrideDataImpl> get copyWith =>
+      __$$OverrideDataImplCopyWithImpl<_$OverrideDataImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$OverrideDataImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _OverrideData implements OverrideData {
+  const factory _OverrideData({final bool enable, final OverrideRule rule}) =
+      _$OverrideDataImpl;
+
+  factory _OverrideData.fromJson(Map<String, dynamic> json) =
+      _$OverrideDataImpl.fromJson;
+
+  @override
+  bool get enable;
+  @override
+  OverrideRule get rule;
+
+  /// Create a copy of OverrideData
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$OverrideDataImplCopyWith<_$OverrideDataImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+OverrideRule _$OverrideRuleFromJson(Map<String, dynamic> json) {
+  return _OverrideRule.fromJson(json);
+}
+
+/// @nodoc
+mixin _$OverrideRule {
+  OverrideRuleType get type => throw _privateConstructorUsedError;
+  List<Rule> get overrideRules => throw _privateConstructorUsedError;
+  List<Rule> get addedRules => throw _privateConstructorUsedError;
+
+  /// Serializes this OverrideRule to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of OverrideRule
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $OverrideRuleCopyWith<OverrideRule> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $OverrideRuleCopyWith<$Res> {
+  factory $OverrideRuleCopyWith(
+          OverrideRule value, $Res Function(OverrideRule) then) =
+      _$OverrideRuleCopyWithImpl<$Res, OverrideRule>;
+  @useResult
+  $Res call(
+      {OverrideRuleType type, List<Rule> overrideRules, List<Rule> addedRules});
+}
+
+/// @nodoc
+class _$OverrideRuleCopyWithImpl<$Res, $Val extends OverrideRule>
+    implements $OverrideRuleCopyWith<$Res> {
+  _$OverrideRuleCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of OverrideRule
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? type = null,
+    Object? overrideRules = null,
+    Object? addedRules = null,
+  }) {
+    return _then(_value.copyWith(
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as OverrideRuleType,
+      overrideRules: null == overrideRules
+          ? _value.overrideRules
+          : overrideRules // ignore: cast_nullable_to_non_nullable
+              as List<Rule>,
+      addedRules: null == addedRules
+          ? _value.addedRules
+          : addedRules // ignore: cast_nullable_to_non_nullable
+              as List<Rule>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$OverrideRuleImplCopyWith<$Res>
+    implements $OverrideRuleCopyWith<$Res> {
+  factory _$$OverrideRuleImplCopyWith(
+          _$OverrideRuleImpl value, $Res Function(_$OverrideRuleImpl) then) =
+      __$$OverrideRuleImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {OverrideRuleType type, List<Rule> overrideRules, List<Rule> addedRules});
+}
+
+/// @nodoc
+class __$$OverrideRuleImplCopyWithImpl<$Res>
+    extends _$OverrideRuleCopyWithImpl<$Res, _$OverrideRuleImpl>
+    implements _$$OverrideRuleImplCopyWith<$Res> {
+  __$$OverrideRuleImplCopyWithImpl(
+      _$OverrideRuleImpl _value, $Res Function(_$OverrideRuleImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of OverrideRule
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? type = null,
+    Object? overrideRules = null,
+    Object? addedRules = null,
+  }) {
+    return _then(_$OverrideRuleImpl(
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as OverrideRuleType,
+      overrideRules: null == overrideRules
+          ? _value._overrideRules
+          : overrideRules // ignore: cast_nullable_to_non_nullable
+              as List<Rule>,
+      addedRules: null == addedRules
+          ? _value._addedRules
+          : addedRules // ignore: cast_nullable_to_non_nullable
+              as List<Rule>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$OverrideRuleImpl implements _OverrideRule {
+  const _$OverrideRuleImpl(
+      {this.type = OverrideRuleType.added,
+      final List<Rule> overrideRules = const [],
+      final List<Rule> addedRules = const []})
+      : _overrideRules = overrideRules,
+        _addedRules = addedRules;
+
+  factory _$OverrideRuleImpl.fromJson(Map<String, dynamic> json) =>
+      _$$OverrideRuleImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final OverrideRuleType type;
+  final List<Rule> _overrideRules;
+  @override
+  @JsonKey()
+  List<Rule> get overrideRules {
+    if (_overrideRules is EqualUnmodifiableListView) return _overrideRules;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_overrideRules);
+  }
+
+  final List<Rule> _addedRules;
+  @override
+  @JsonKey()
+  List<Rule> get addedRules {
+    if (_addedRules is EqualUnmodifiableListView) return _addedRules;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_addedRules);
+  }
+
+  @override
+  String toString() {
+    return 'OverrideRule(type: $type, overrideRules: $overrideRules, addedRules: $addedRules)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$OverrideRuleImpl &&
+            (identical(other.type, type) || other.type == type) &&
+            const DeepCollectionEquality()
+                .equals(other._overrideRules, _overrideRules) &&
+            const DeepCollectionEquality()
+                .equals(other._addedRules, _addedRules));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      type,
+      const DeepCollectionEquality().hash(_overrideRules),
+      const DeepCollectionEquality().hash(_addedRules));
+
+  /// Create a copy of OverrideRule
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$OverrideRuleImplCopyWith<_$OverrideRuleImpl> get copyWith =>
+      __$$OverrideRuleImplCopyWithImpl<_$OverrideRuleImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$OverrideRuleImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _OverrideRule implements OverrideRule {
+  const factory _OverrideRule(
+      {final OverrideRuleType type,
+      final List<Rule> overrideRules,
+      final List<Rule> addedRules}) = _$OverrideRuleImpl;
+
+  factory _OverrideRule.fromJson(Map<String, dynamic> json) =
+      _$OverrideRuleImpl.fromJson;
+
+  @override
+  OverrideRuleType get type;
+  @override
+  List<Rule> get overrideRules;
+  @override
+  List<Rule> get addedRules;
+
+  /// Create a copy of OverrideRule
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$OverrideRuleImplCopyWith<_$OverrideRuleImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

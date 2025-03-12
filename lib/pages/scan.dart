@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:fl_clash/common/color.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
 import 'package:flutter/material.dart';
@@ -188,7 +189,7 @@ class ScannerOverlay extends CustomPainter {
       );
 
     final backgroundPaint = Paint()
-      ..color = Colors.black.withOpacity(0.5)
+      ..color = Colors.black.opacity50
       ..style = PaintingStyle.fill
       ..blendMode = BlendMode.dstOut;
 

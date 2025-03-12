@@ -38,7 +38,7 @@ class OutboundMode extends StatelessWidget {
                   for (final item in Mode.values)
                     Flexible(
                       child: ListItem.radio(
-                        prue: true,
+                        dense: true,
                         horizontalTitleGap: 4,
                         padding: const EdgeInsets.only(
                           left: 12,

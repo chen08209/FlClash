@@ -53,6 +53,16 @@ const _$GroupTypeEnumMap = {
   GroupType.Relay: 'Relay',
 };
 
+_$RuleProviderImpl _$$RuleProviderImplFromJson(Map<String, dynamic> json) =>
+    _$RuleProviderImpl(
+      name: json['name'] as String,
+    );
+
+Map<String, dynamic> _$$RuleProviderImplToJson(_$RuleProviderImpl instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+    };
+
 _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
       enable: json['enable'] as bool? ?? false,
       device: json['device'] as String? ?? appName,
@@ -206,6 +216,27 @@ Map<String, dynamic> _$$GeoXUrlImplToJson(_$GeoXUrlImpl instance) =>
       'geosite': instance.geosite,
     };
 
+_$RuleImpl _$$RuleImplFromJson(Map<String, dynamic> json) => _$RuleImpl(
+      id: json['id'] as String,
+      value: json['value'] as String,
+    );
+
+Map<String, dynamic> _$$RuleImplToJson(_$RuleImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'value': instance.value,
+    };
+
+_$SubRuleImpl _$$SubRuleImplFromJson(Map<String, dynamic> json) =>
+    _$SubRuleImpl(
+      name: json['name'] as String,
+    );
+
+Map<String, dynamic> _$$SubRuleImplToJson(_$SubRuleImpl instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+    };
+
 _$ClashConfigSnippetImpl _$$ClashConfigSnippetImplFromJson(
         Map<String, dynamic> json) =>
     _$ClashConfigSnippetImpl(
@@ -213,9 +244,13 @@ _$ClashConfigSnippetImpl _$$ClashConfigSnippetImplFromJson(
               ?.map((e) => ProxyGroup.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      rule:
-          (json['rule'] as List<dynamic>?)?.map((e) => e as String).toList() ??
-              const [],
+      rule: json['rule'] == null ? const [] : _genRule(json['rule'] as List?),
+      ruleProvider: json['rule-providers'] == null
+          ? const []
+          : _genRuleProviders(json['rule-providers'] as Map<String, dynamic>),
+      subRules: json['sub-rules'] == null
+          ? const []
+          : _genSubRules(json['sub-rules'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$ClashConfigSnippetImplToJson(
@@ -223,6 +258,8 @@ Map<String, dynamic> _$$ClashConfigSnippetImplToJson(
     <String, dynamic>{
       'proxy-groups': instance.proxyGroups,
       'rule': instance.rule,
+      'rule-providers': instance.ruleProvider,
+      'sub-rules': instance.subRules,
     };
 
 _$ClashConfigImpl _$$ClashConfigImplFromJson(Map<String, dynamic> json) =>

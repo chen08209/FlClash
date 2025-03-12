@@ -82,22 +82,81 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
   Duration get transitionDuration => const Duration(milliseconds: 150);
 }
 
+class PopupController extends ValueNotifier<bool> {
+  PopupController() : super(false);
+
+  open() {
+    value = true;
+  }
+
+  close() {
+    value = false;
+  }
+}
+
 class CommonPopupBox extends StatefulWidget {
   final Widget target;
   final Widget popup;
+  final PopupController? controller;
 
   const CommonPopupBox({
     super.key,
     required this.target,
     required this.popup,
+    this.controller,
   });
 
   @override
-  State<CommonPopupBox> createState() => CommonPopupBoxState();
+  State<CommonPopupBox> createState() => _CommonPopupBoxState();
 }
 
-class CommonPopupBoxState extends State<CommonPopupBox> {
+class _CommonPopupBoxState extends State<CommonPopupBox> {
   final _targetOffsetValueNotifier = ValueNotifier(Offset.zero);
+
+  @override
+  void initState() {
+    widget.controller?.addListener(_handleChange);
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(CommonPopupBox oldWidget) {
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?.removeListener(_handleChange);
+      oldWidget.controller?.dispose();
+      widget.controller?.addListener(_handleChange);
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_handleChange);
+    super.dispose();
+  }
+
+  _handleChange() {
+    if (widget.controller?.value == true) {
+      _open();
+    }
+  }
+
+  _open() {
+    _handleTargetOffset();
+    Navigator.of(context)
+        .push(
+      CommonPopupRoute(
+        barrierLabel: other.id,
+        builder: (BuildContext context) {
+          return widget.popup;
+        },
+        offsetNotifier: _targetOffsetValueNotifier,
+      ),
+    )
+        .then((res) {
+      widget.controller?.close();
+    });
+  }
 
   _handleTargetOffset() {
     final renderBox = context.findRenderObject() as RenderBox?;
@@ -106,19 +165,6 @@ class CommonPopupBoxState extends State<CommonPopupBox> {
     }
     _targetOffsetValueNotifier.value = renderBox.localToGlobal(
       Offset.zero,
-    );
-  }
-
-  pop() {
-    _handleTargetOffset();
-    Navigator.of(context).push(
-      CommonPopupRoute(
-        barrierLabel: other.id,
-        builder: (BuildContext context) {
-          return widget.popup;
-        },
-        offsetNotifier: _targetOffsetValueNotifier,
-      ),
     );
   }
 
@@ -161,7 +207,7 @@ class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
 }
 
 class CommonPopupMenu extends StatelessWidget {
-  final List<ActionItemData> items;
+  final List<PopupMenuItemData> items;
 
   const CommonPopupMenu({
     super.key,
@@ -170,18 +216,26 @@ class CommonPopupMenu extends StatelessWidget {
 
   Widget _popupMenuItem(
     BuildContext context, {
-    required ActionItemData item,
+    required PopupMenuItemData item,
     required int index,
   }) {
-    final isDanger = item.type == ActionType.danger;
+    final isDanger = item.type == PopupMenuItemType.danger;
+    final onPressed = item.onPressed;
+    final disabled = onPressed == null;
     final color = isDanger
-        ? context.colorScheme.error
-        : context.colorScheme.onSurfaceVariant;
+        ? disabled
+            ? context.colorScheme.error.opacity30
+            : context.colorScheme.error
+        : disabled
+            ? context.colorScheme.onSurface.opacity30
+            : context.colorScheme.onSurface;
     return InkWell(
-      onTap: () {
-        Navigator.of(context).pop();
-        item.onPressed();
-      },
+      onTap: onPressed != null
+          ? () {
+              Navigator.of(context).pop();
+              onPressed();
+            }
+          : null,
       child: Padding(
         padding: EdgeInsets.only(
           left: 16,

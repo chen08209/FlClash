@@ -945,16 +945,6 @@ class AppLocalizations {
     );
   }
 
-  /// `When enabled, the home tab will add a toggle animation`
-  String get tabAnimationDesc {
-    return Intl.message(
-      'When enabled, the home tab will add a toggle animation',
-      name: 'tabAnimationDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.`
   String get desc {
     return Intl.message(
@@ -1430,16 +1420,6 @@ class AppLocalizations {
     return Intl.message(
       'Find process',
       name: 'findProcessMode',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `There is a risk of flashback after opening`
-  String get findProcessModeDesc {
-    return Intl.message(
-      'There is a risk of flashback after opening',
-      name: 'findProcessModeDesc',
       desc: '',
       args: [],
     );
@@ -1925,16 +1905,6 @@ class AppLocalizations {
     return Intl.message(
       'Modify VPN related settings',
       name: 'vpnDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Overwrite general settings`
-  String get generalDesc {
-    return Intl.message(
-      'Overwrite general settings',
-      name: 'generalDesc',
       desc: '',
       args: [],
     );
@@ -2693,6 +2663,246 @@ class AppLocalizations {
   /// `Listen`
   String get listen {
     return Intl.message('Listen', name: 'listen', desc: '', args: []);
+  }
+
+  /// `The current key already exists`
+  String get keyExists {
+    return Intl.message(
+      'The current key already exists',
+      name: 'keyExists',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The current value already exists`
+  String get valueExists {
+    return Intl.message(
+      'The current value already exists',
+      name: 'valueExists',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `undo`
+  String get undo {
+    return Intl.message('undo', name: 'undo', desc: '', args: []);
+  }
+
+  /// `redo`
+  String get redo {
+    return Intl.message('redo', name: 'redo', desc: '', args: []);
+  }
+
+  /// `none`
+  String get none {
+    return Intl.message('none', name: 'none', desc: '', args: []);
+  }
+
+  /// `Basic configuration`
+  String get basicConfig {
+    return Intl.message(
+      'Basic configuration',
+      name: 'basicConfig',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Modify the basic configuration globally`
+  String get basicConfigDesc {
+    return Intl.message(
+      'Modify the basic configuration globally',
+      name: 'basicConfigDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} items have been selected`
+  String selectedCountTitle(Object count) {
+    return Intl.message(
+      '$count items have been selected',
+      name: 'selectedCountTitle',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Add rule`
+  String get addRule {
+    return Intl.message('Add rule', name: 'addRule', desc: '', args: []);
+  }
+
+  /// `Rule provider cannot be empty`
+  String get ruleProviderEmptyTip {
+    return Intl.message(
+      'Rule provider cannot be empty',
+      name: 'ruleProviderEmptyTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rule name`
+  String get ruleName {
+    return Intl.message('Rule name', name: 'ruleName', desc: '', args: []);
+  }
+
+  /// `Content`
+  String get content {
+    return Intl.message('Content', name: 'content', desc: '', args: []);
+  }
+
+  /// `Content cannot be empty`
+  String get contentEmptyTip {
+    return Intl.message(
+      'Content cannot be empty',
+      name: 'contentEmptyTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sub rule`
+  String get subRule {
+    return Intl.message('Sub rule', name: 'subRule', desc: '', args: []);
+  }
+
+  /// `Sub rule content cannot be empty`
+  String get subRuleEmptyTip {
+    return Intl.message(
+      'Sub rule content cannot be empty',
+      name: 'subRuleEmptyTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rule target`
+  String get ruleTarget {
+    return Intl.message('Rule target', name: 'ruleTarget', desc: '', args: []);
+  }
+
+  /// `Rule target cannot be empty`
+  String get ruleTargetEmptyTip {
+    return Intl.message(
+      'Rule target cannot be empty',
+      name: 'ruleTargetEmptyTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Source IP`
+  String get sourceIp {
+    return Intl.message('Source IP', name: 'sourceIp', desc: '', args: []);
+  }
+
+  /// `No resolve IP`
+  String get noResolve {
+    return Intl.message('No resolve IP', name: 'noResolve', desc: '', args: []);
+  }
+
+  /// `Get original rules`
+  String get getOriginRules {
+    return Intl.message(
+      'Get original rules',
+      name: 'getOriginRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Override the original rule`
+  String get overrideOriginRules {
+    return Intl.message(
+      'Override the original rule',
+      name: 'overrideOriginRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Attach on the original rules`
+  String get addedOriginRules {
+    return Intl.message(
+      'Attach on the original rules',
+      name: 'addedOriginRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable override`
+  String get enableOverride {
+    return Intl.message(
+      'Enable override',
+      name: 'enableOverride',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to delete the selected rule?`
+  String get deleteRuleTip {
+    return Intl.message(
+      'Are you sure you want to delete the selected rule?',
+      name: 'deleteRuleTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Do you want to save the changes?`
+  String get saveChanges {
+    return Intl.message(
+      'Do you want to save the changes?',
+      name: 'saveChanges',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Modify general settings`
+  String get generalDesc {
+    return Intl.message(
+      'Modify general settings',
+      name: 'generalDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `There is a certain performance loss after opening`
+  String get findProcessModeDesc {
+    return Intl.message(
+      'There is a certain performance loss after opening',
+      name: 'findProcessModeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Effective only in mobile view`
+  String get tabAnimationDesc {
+    return Intl.message(
+      'Effective only in mobile view',
+      name: 'tabAnimationDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to save?`
+  String get saveTip {
+    return Intl.message(
+      'Are you sure you want to save?',
+      name: 'saveTip',
+      desc: '',
+      args: [],
+    );
   }
 }
 

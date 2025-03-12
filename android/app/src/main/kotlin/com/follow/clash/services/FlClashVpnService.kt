@@ -6,7 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.net.ProxyInfo
 import android.net.VpnService
 import android.os.Binder
@@ -165,7 +165,7 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
         return notificationBuilderDeferred.await()
     }
 
-    @SuppressLint("ForegroundServiceType", "WrongConstant")
+    @SuppressLint("ForegroundServiceType")
     override suspend fun startForeground(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
@@ -182,7 +182,11 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 .setContentText(content)
                 .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            try {
+                startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            } catch (_: Exception) {
+                startForeground(notificationId, notification)
+            }
         } else {
             startForeground(notificationId, notification)
         }

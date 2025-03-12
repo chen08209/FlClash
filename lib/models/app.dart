@@ -18,7 +18,7 @@ class AppState with _$AppState {
     @Default([]) List<Package> packages,
     @Default(ColorSchemes()) ColorSchemes colorSchemes,
     @Default(0) int sortNum,
-    required double viewWidth,
+    required Size viewSize,
     @Default({}) DelayMap delayMap,
     @Default([]) List<Group> groups,
     @Default(0) int checkIpNum,
@@ -35,7 +35,7 @@ class AppState with _$AppState {
 }
 
 extension AppStateExt on AppState {
-  ViewMode get viewMode => other.getViewMode(viewWidth);
+  ViewMode get viewMode => other.getViewMode(viewSize.width);
 
   bool get isStart => runTime != null;
 }

@@ -83,7 +83,7 @@ final themeSettingProvider =
 );
 
 typedef _$ThemeSetting = AutoDisposeNotifier<ThemeProps>;
-String _$profilesHash() => r'c2bc502d31321274a44901b675fbbab60b4519c3';
+String _$profilesHash() => r'2023af6ceaf273df480897561565cb3be8054ded';
 
 /// See also [Profiles].
 @ProviderFor(Profiles)

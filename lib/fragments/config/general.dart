@@ -199,28 +199,27 @@ class HostsItem extends StatelessWidget {
       title: const Text("Hosts"),
       subtitle: Text(appLocalizations.hostsDesc),
       delegate: OpenDelegate(
-        isBlur: false,
+        blur: false,
         title: "Hosts",
         widget: Consumer(
           builder: (_, ref, __) {
             final hosts = ref
                 .watch(patchClashConfigProvider.select((state) => state.hosts));
-            return ListPage(
+            return MapInputPage(
               title: "Hosts",
-              items: hosts.entries,
+              map: hosts,
               titleBuilder: (item) => Text(item.key),
               subtitleBuilder: (item) => Text(item.value),
-              onChange: (items) {
+              onChange: (value) {
                 ref.read(patchClashConfigProvider.notifier).updateState(
                       (state) => state.copyWith(
-                        hosts: Map.fromEntries(items),
+                        hosts: value,
                       ),
                     );
               },
             );
           },
         ),
-        extendPageWidth: 360,
       ),
     );
   }

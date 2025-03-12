@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +21,7 @@ class _AppStateManagerState extends State<AppStateManager>
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -54,5 +57,26 @@ class _AppStateManagerState extends State<AppStateManager>
       },
       child: widget.child,
     );
+  }
+}
+
+class AppEnvManager extends StatelessWidget {
+  final Widget child;
+
+  const AppEnvManager({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (globalState.isPre) {
+      return Banner(
+        message: 'PRE',
+        location: BannerLocation.topEnd,
+        child: child,
+      );
+    }
+    return child;
   }
 }

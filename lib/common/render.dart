@@ -22,7 +22,7 @@ class Render {
   }
 
   pause() {
-    debouncer.call(
+    throttler.call(
       DebounceTag.renderPause,
       _pause,
       duration: Duration(seconds: 5),
@@ -30,11 +30,11 @@ class Render {
   }
 
   resume() {
-    debouncer.cancel(DebounceTag.renderPause);
+    throttler.cancel(DebounceTag.renderPause);
     _resume();
   }
 
-  void _pause() {
+  void _pause() async {
     if (_isPaused) return;
     _isPaused = true;
     _beginFrame = _dispatcher.onBeginFrame;

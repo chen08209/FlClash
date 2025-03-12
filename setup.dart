@@ -358,6 +358,14 @@ class BuildCommand extends Command {
       ].join(','),
       help: 'The $name build arch',
     );
+    argParser.addOption(
+      "env",
+      valueHelp: [
+        "pre",
+        "stable",
+      ].join(','),
+      help: 'The $name build env',
+    );
   }
 
   @override
@@ -423,12 +431,13 @@ class BuildCommand extends Command {
     required Target target,
     required String targets,
     String args = '',
+    required String env,
   }) async {
     await Build.getDistributor();
     await Build.exec(
       name: name,
       Build.getExecutable(
-        "flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose $args",
+        "flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose $args --build-dart-define=APP_ENV=$env",
       ),
     );
   }
@@ -448,6 +457,7 @@ class BuildCommand extends Command {
     final mode = target == Target.android ? Mode.lib : Mode.core;
     final String out = argResults?["out"] ?? (target.same ? "app" : "core");
     final archName = argResults?["arch"];
+    final env = argResults?["env"] ?? "pre";
     final currentArches =
         arches.where((element) => element.name == archName).toList();
     final arch = currentArches.isEmpty ? null : currentArches.first;
@@ -476,6 +486,7 @@ class BuildCommand extends Command {
           target: target,
           targets: "exe,zip",
           args: "--description $archName",
+          env: env,
         );
         return;
       case Target.linux:
@@ -497,6 +508,7 @@ class BuildCommand extends Command {
           targets: targets,
           args:
               "--description $archName --build-target-platform $defaultTarget",
+          env: env,
         );
         return;
       case Target.android:
@@ -515,6 +527,7 @@ class BuildCommand extends Command {
           targets: "apk",
           args:
               "--flutter-build-args split-per-abi --build-target-platform ${defaultTargets.join(",")}",
+          env: env,
         );
         return;
       case Target.macos:
@@ -523,6 +536,7 @@ class BuildCommand extends Command {
           target: target,
           targets: "dmg",
           args: "--description $archName",
+          env: env,
         );
         return;
     }

@@ -31,7 +31,7 @@ class IntranetIP extends StatelessWidget {
                 child: Consumer(
                   builder: (_, ref, __) {
                     final localIp = ref.watch(localIpProvider);
-                    return FadeBox(
+                    return FadeThroughBox(
                       child: localIp != null
                           ? TooltipText(
                               text: Text(

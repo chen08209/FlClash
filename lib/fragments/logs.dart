@@ -22,8 +22,8 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
   final _scrollController = ScrollController(
     initialScrollOffset: _preOffset != 0 ? _preOffset : double.maxFinite,
   );
-  final FixedMap<String, double?> _cacheDynamicHeightMap = FixedMap(1000);
   double _currentMaxWidth = 0;
+  final GlobalKey<CacheItemExtentListViewState> _key = GlobalKey();
 
   List<Log> _logs = [];
 
@@ -90,14 +90,13 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
   void dispose() {
     _logsStateNotifier.dispose();
     _scrollController.dispose();
-    _cacheDynamicHeightMap.clear();
     super.dispose();
   }
 
   _handleTryClearCache(double maxWidth) {
     if (_currentMaxWidth != maxWidth) {
       _currentMaxWidth = maxWidth;
-      _cacheDynamicHeightMap.clear();
+      _key.currentState?.clearCache();
     }
   }
 
@@ -116,27 +115,19 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
     );
   }
 
-  double _calcCacheHeight(String text) {
-    final cacheHeight = _cacheDynamicHeightMap.get(text);
-    if (cacheHeight != null) {
-      return cacheHeight;
-    }
-    final size = globalState.measure.computeTextSize(
-      Text(
-        text,
-        style: globalState.appController.context.textTheme.bodyLarge,
-      ),
-      maxWidth: _currentMaxWidth,
-    );
-    _cacheDynamicHeightMap.put(text, size.height);
-    return size.height;
-  }
-
   double _getItemHeight(Log log) {
     final measure = globalState.measure;
     final bodySmallHeight = measure.bodySmallHeight;
     final bodyMediumHeight = measure.bodyMediumHeight;
-    final height = _calcCacheHeight(log.payload ?? "");
+    final height = globalState.measure
+        .computeTextSize(
+          Text(
+            log.payload ?? "",
+            style: globalState.appController.context.textTheme.bodyLarge,
+          ),
+          maxWidth: _currentMaxWidth,
+        )
+        .height;
     return height + bodySmallHeight + 8 + bodyMediumHeight + 40;
   }
 
@@ -196,7 +187,8 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
                 },
                 child: CommonScrollBar(
                   controller: _scrollController,
-                  child: ListView.builder(
+                  child: CacheItemExtentListView(
+                    key: _key,
                     reverse: true,
                     shrinkWrap: true,
                     physics: NextClampingScrollPhysics(),
@@ -204,7 +196,7 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
                     itemBuilder: (_, index) {
                       return items[index];
                     },
-                    itemExtentBuilder: (index, __) {
+                    itemExtentBuilder: (index) {
                       final item = items[index];
                       if (item.runtimeType == Divider) {
                         return 0;
@@ -213,6 +205,14 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
                       return _getItemHeight(log);
                     },
                     itemCount: items.length,
+                    keyBuilder: (int index) {
+                      final item = items[index];
+                      if (item.runtimeType == Divider) {
+                        return "divider";
+                      }
+                      final log = logs[(index / 2).floor()];
+                      return log.payload ?? "";
+                    },
                   ),
                 ),
               );
@@ -270,13 +270,5 @@ class LogItem extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class NoGlowScrollBehavior extends ScrollBehavior {
-  @override
-  Widget buildOverscrollIndicator(
-      BuildContext context, Widget child, ScrollableDetails details) {
-    return child; // 禁用过度滚动效果
   }
 }

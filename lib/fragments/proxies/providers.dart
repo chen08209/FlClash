@@ -222,7 +222,7 @@ class ProviderItem extends StatelessWidget {
       trailing: SizedBox(
         height: 48,
         width: 48,
-        child: FadeBox(
+        child: FadeThroughBox(
           child: provider.isUpdating
               ? const Padding(
                   padding: EdgeInsets.all(8),
