@@ -291,16 +291,18 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     private fun getPackages(): List<Package> {
         val packageManager = FlClashApplication.getAppContext().packageManager
         if (packages.isNotEmpty()) return packages
-        packageManager?.getInstalledPackages(PackageManager.GET_META_DATA)?.filter {
-            it.packageName != FlClashApplication.getAppContext().packageName
-                    || it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
-                    || it.packageName == "android"
+        packageManager?.getInstalledPackages(PackageManager.GET_META_DATA or PackageManager.GET_PERMISSIONS)
+            ?.filter {
+                it.packageName != FlClashApplication.getAppContext().packageName && (
+                        it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
+                                || it.packageName == "android"
+                        )
 
-        }?.map {
+            }?.map {
             Package(
                 packageName = it.packageName,
-                label = it.applicationInfo.loadLabel(packageManager).toString(),
-                isSystem = (it.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 1,
+                label = it.applicationInfo?.loadLabel(packageManager).toString(),
+                isSystem = (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM)) == 1,
                 lastUpdateTime = it.lastUpdateTime
             )
         }?.let { packages.addAll(it) }
@@ -353,7 +355,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     suspend fun getText(text: String): String? {
-        return withContext(Dispatchers.Default){
+        return withContext(Dispatchers.Default) {
             channel.awaitResult<String>("getText", text)
         }
     }
@@ -391,31 +393,33 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             }.forEach {
                 if (it.name.matches(chinaAppRegex)) return true
             }
-            ZipFile(File(packageInfo.applicationInfo.publicSourceDir)).use {
-                for (packageEntry in it.entries()) {
-                    if (packageEntry.name.startsWith("firebase-")) return false
-                }
-                for (packageEntry in it.entries()) {
-                    if (!(packageEntry.name.startsWith("classes") && packageEntry.name.endsWith(
-                            ".dex"
-                        ))
-                    ) {
-                        continue
+            packageInfo.applicationInfo?.publicSourceDir?.let {
+                ZipFile(File(it)).use {
+                    for (packageEntry in it.entries()) {
+                        if (packageEntry.name.startsWith("firebase-")) return false
                     }
-                    if (packageEntry.size > 15000000) {
-                        return true
-                    }
-                    val input = it.getInputStream(packageEntry).buffered()
-                    val dexFile = try {
-                        DexBackedDexFile.fromInputStream(null, input)
-                    } catch (e: Exception) {
-                        return false
-                    }
-                    for (clazz in dexFile.classes) {
-                        val clazzName =
-                            clazz.type.substring(1, clazz.type.length - 1).replace("/", ".")
-                                .replace("$", ".")
-                        if (clazzName.matches(chinaAppRegex)) return true
+                    for (packageEntry in it.entries()) {
+                        if (!(packageEntry.name.startsWith("classes") && packageEntry.name.endsWith(
+                                ".dex"
+                            ))
+                        ) {
+                            continue
+                        }
+                        if (packageEntry.size > 15000000) {
+                            return true
+                        }
+                        val input = it.getInputStream(packageEntry).buffered()
+                        val dexFile = try {
+                            DexBackedDexFile.fromInputStream(null, input)
+                        } catch (e: Exception) {
+                            return false
+                        }
+                        for (clazz in dexFile.classes) {
+                            val clazzName =
+                                clazz.type.substring(1, clazz.type.length - 1).replace("/", ".")
+                                    .replace("$", ".")
+                            if (clazzName.matches(chinaAppRegex)) return true
+                        }
                     }
                 }
             }

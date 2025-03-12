@@ -282,7 +282,7 @@ class _EditProfileState extends State<EditProfile> {
       ValueListenableBuilder<FileInfo?>(
         valueListenable: fileInfoNotifier,
         builder: (_, fileInfo, __) {
-          return FadeBox(
+          return FadeThroughBox(
             child: fileInfo == null
                 ? Container()
                 : ListItem(
@@ -324,15 +324,13 @@ class _EditProfileState extends State<EditProfile> {
         },
       ),
     ];
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, __) {
-        if (didPop) return;
+    return CommonPopScope(
+      onPop: () {
         if (fileData == null) {
-          Navigator.of(context).pop();
-          return;
+          return true;
         }
         _handleBack();
+        return false;
       },
       child: FloatLayout(
         floatingWidget: FloatWrapper(

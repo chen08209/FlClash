@@ -8,3 +8,4 @@ export 'vpn_manager.dart';
 export 'proxy_manager.dart';
 export 'connectivity_manager.dart';
 export 'message_manager.dart';
+export 'theme_manager.dart';

@@ -78,7 +78,7 @@ final coreStateProvider = AutoDisposeProvider<CoreState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CoreStateRef = AutoDisposeProviderRef<CoreState>;
-String _$clashConfigStateHash() => r'0708f81450e740a471c65d1dd5db0ed0dc702b3c';
+String _$clashConfigStateHash() => r'848f6b2f734d99fb11ec05f73d614be415e9658f';
 
 /// See also [clashConfigState].
 @ProviderFor(clashConfigState)
@@ -143,7 +143,7 @@ final vpnStateProvider = AutoDisposeProvider<VpnState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef VpnStateRef = AutoDisposeProviderRef<VpnState>;
-String _$homeStateHash() => r'4c8a996c43a705f6d089a727563c20ff87e13a97';
+String _$homeStateHash() => r'2829f5d6a8548f8a97253a5437bf5c498b17c9ba';
 
 /// See also [homeState].
 @ProviderFor(homeState)
@@ -469,7 +469,7 @@ final packageListSelectorStateProvider =
 typedef PackageListSelectorStateRef
     = AutoDisposeProviderRef<PackageListSelectorState>;
 String _$moreToolsSelectorStateHash() =>
-    r'82837b45198a75af9a9ce49b9c3ef97c6f8e9f87';
+    r'd27e3eceec2422ad6b6231cf52b892e63c67e365';
 
 /// See also [moreToolsSelectorState].
 @ProviderFor(moreToolsSelectorState)
@@ -488,7 +488,7 @@ final moreToolsSelectorStateProvider =
 // ignore: unused_element
 typedef MoreToolsSelectorStateRef
     = AutoDisposeProviderRef<MoreToolsSelectorState>;
-String _$isCurrentPageHash() => r'562702367f009c7b324395ab0a2ad3464784be8c';
+String _$isCurrentPageHash() => r'7c300770aef90da23109d9fcfc3bf26140d8cd08';
 
 /// See also [isCurrentPage].
 @ProviderFor(isCurrentPage)
@@ -1630,5 +1630,157 @@ class _GetProxyDescProviderElement extends AutoDisposeProviderElement<String>
   @override
   Proxy get proxy => (origin as GetProxyDescProvider).proxy;
 }
+
+String _$getProfileOverrideDataHash() =>
+    r'a17ec085f1733b63b123ac08aa7737588c048c5f';
+
+/// See also [getProfileOverrideData].
+@ProviderFor(getProfileOverrideData)
+const getProfileOverrideDataProvider = GetProfileOverrideDataFamily();
+
+/// See also [getProfileOverrideData].
+class GetProfileOverrideDataFamily extends Family<OverrideData?> {
+  /// See also [getProfileOverrideData].
+  const GetProfileOverrideDataFamily();
+
+  /// See also [getProfileOverrideData].
+  GetProfileOverrideDataProvider call(
+    String profileId,
+  ) {
+    return GetProfileOverrideDataProvider(
+      profileId,
+    );
+  }
+
+  @override
+  GetProfileOverrideDataProvider getProviderOverride(
+    covariant GetProfileOverrideDataProvider provider,
+  ) {
+    return call(
+      provider.profileId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getProfileOverrideDataProvider';
+}
+
+/// See also [getProfileOverrideData].
+class GetProfileOverrideDataProvider
+    extends AutoDisposeProvider<OverrideData?> {
+  /// See also [getProfileOverrideData].
+  GetProfileOverrideDataProvider(
+    String profileId,
+  ) : this._internal(
+          (ref) => getProfileOverrideData(
+            ref as GetProfileOverrideDataRef,
+            profileId,
+          ),
+          from: getProfileOverrideDataProvider,
+          name: r'getProfileOverrideDataProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getProfileOverrideDataHash,
+          dependencies: GetProfileOverrideDataFamily._dependencies,
+          allTransitiveDependencies:
+              GetProfileOverrideDataFamily._allTransitiveDependencies,
+          profileId: profileId,
+        );
+
+  GetProfileOverrideDataProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.profileId,
+  }) : super.internal();
+
+  final String profileId;
+
+  @override
+  Override overrideWith(
+    OverrideData? Function(GetProfileOverrideDataRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetProfileOverrideDataProvider._internal(
+        (ref) => create(ref as GetProfileOverrideDataRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        profileId: profileId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeProviderElement<OverrideData?> createElement() {
+    return _GetProfileOverrideDataProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetProfileOverrideDataProvider &&
+        other.profileId == profileId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, profileId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetProfileOverrideDataRef on AutoDisposeProviderRef<OverrideData?> {
+  /// The parameter `profileId` of this provider.
+  String get profileId;
+}
+
+class _GetProfileOverrideDataProviderElement
+    extends AutoDisposeProviderElement<OverrideData?>
+    with GetProfileOverrideDataRef {
+  _GetProfileOverrideDataProviderElement(super.provider);
+
+  @override
+  String get profileId => (origin as GetProfileOverrideDataProvider).profileId;
+}
+
+String _$profileOverrideStateHash() =>
+    r'16d7c75849ed077d60553e5d2bba4ed54b307971';
+
+/// See also [ProfileOverrideState].
+@ProviderFor(ProfileOverrideState)
+final profileOverrideStateProvider = AutoDisposeNotifierProvider<
+    ProfileOverrideState, ProfileOverrideStateModel>.internal(
+  ProfileOverrideState.new,
+  name: r'profileOverrideStateProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$profileOverrideStateHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ProfileOverrideState = AutoDisposeNotifier<ProfileOverrideStateModel>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

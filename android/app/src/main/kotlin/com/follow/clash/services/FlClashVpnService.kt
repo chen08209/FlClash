@@ -6,7 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.net.ProxyInfo
 import android.net.VpnService
 import android.os.Binder
@@ -45,9 +45,16 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 addAddress(cidr.address, cidr.prefixLength)
                 val routeAddress = options.getIpv4RouteAddress()
                 if (routeAddress.isNotEmpty()) {
-                    routeAddress.forEach { i ->
-                        Log.d("addRoute4", "address: ${i.address} prefixLength:${i.prefixLength}")
-                        addRoute(i.address, i.prefixLength)
+                    try {
+                        routeAddress.forEach { i ->
+                            Log.d(
+                                "addRoute4",
+                                "address: ${i.address} prefixLength:${i.prefixLength}"
+                            )
+                            addRoute(i.address, i.prefixLength)
+                        }
+                    } catch (_: Exception) {
+                        addRoute("0.0.0.0", 0)
                     }
                 } else {
                     addRoute("0.0.0.0", 0)
@@ -58,9 +65,16 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 addAddress(cidr.address, cidr.prefixLength)
                 val routeAddress = options.getIpv6RouteAddress()
                 if (routeAddress.isNotEmpty()) {
-                    routeAddress.forEach { i ->
-                        Log.d("addRoute6", "address: ${i.address} prefixLength:${i.prefixLength}")
-                        addRoute(i.address, i.prefixLength)
+                    try {
+                        routeAddress.forEach { i ->
+                            Log.d(
+                                "addRoute6",
+                                "address: ${i.address} prefixLength:${i.prefixLength}"
+                            )
+                            addRoute(i.address, i.prefixLength)
+                        }
+                    } catch (_: Exception) {
+                        addRoute("::", 0)
                     }
                 } else {
                     addRoute("::", 0)
@@ -165,7 +179,7 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
         return notificationBuilderDeferred.await()
     }
 
-    @SuppressLint("ForegroundServiceType", "WrongConstant")
+    @SuppressLint("ForegroundServiceType")
     override suspend fun startForeground(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
@@ -182,7 +196,11 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 .setContentText(content)
                 .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            try {
+                startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            } catch (_: Exception) {
+                startForeground(notificationId, notification)
+            }
         } else {
             startForeground(notificationId, notification)
         }

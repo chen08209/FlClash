@@ -312,121 +312,155 @@ abstract class _CommonMessage implements CommonMessage {
 }
 
 /// @nodoc
-mixin _$CommonAppBarState {
+mixin _$AppBarState {
   List<Widget> get actions => throw _privateConstructorUsedError;
-  dynamic Function(String)? get onSearch => throw _privateConstructorUsedError;
-  bool get searching => throw _privateConstructorUsedError;
+  AppBarSearchState? get searchState => throw _privateConstructorUsedError;
+  AppBarEditState? get editState => throw _privateConstructorUsedError;
 
-  /// Create a copy of CommonAppBarState
+  /// Create a copy of AppBarState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $CommonAppBarStateCopyWith<CommonAppBarState> get copyWith =>
+  $AppBarStateCopyWith<AppBarState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $CommonAppBarStateCopyWith<$Res> {
-  factory $CommonAppBarStateCopyWith(
-          CommonAppBarState value, $Res Function(CommonAppBarState) then) =
-      _$CommonAppBarStateCopyWithImpl<$Res, CommonAppBarState>;
+abstract class $AppBarStateCopyWith<$Res> {
+  factory $AppBarStateCopyWith(
+          AppBarState value, $Res Function(AppBarState) then) =
+      _$AppBarStateCopyWithImpl<$Res, AppBarState>;
   @useResult
   $Res call(
       {List<Widget> actions,
-      dynamic Function(String)? onSearch,
-      bool searching});
+      AppBarSearchState? searchState,
+      AppBarEditState? editState});
+
+  $AppBarSearchStateCopyWith<$Res>? get searchState;
+  $AppBarEditStateCopyWith<$Res>? get editState;
 }
 
 /// @nodoc
-class _$CommonAppBarStateCopyWithImpl<$Res, $Val extends CommonAppBarState>
-    implements $CommonAppBarStateCopyWith<$Res> {
-  _$CommonAppBarStateCopyWithImpl(this._value, this._then);
+class _$AppBarStateCopyWithImpl<$Res, $Val extends AppBarState>
+    implements $AppBarStateCopyWith<$Res> {
+  _$AppBarStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CommonAppBarState
+  /// Create a copy of AppBarState
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? actions = null,
-    Object? onSearch = freezed,
-    Object? searching = null,
+    Object? searchState = freezed,
+    Object? editState = freezed,
   }) {
     return _then(_value.copyWith(
       actions: null == actions
           ? _value.actions
           : actions // ignore: cast_nullable_to_non_nullable
               as List<Widget>,
-      onSearch: freezed == onSearch
-          ? _value.onSearch
-          : onSearch // ignore: cast_nullable_to_non_nullable
-              as dynamic Function(String)?,
-      searching: null == searching
-          ? _value.searching
-          : searching // ignore: cast_nullable_to_non_nullable
-              as bool,
+      searchState: freezed == searchState
+          ? _value.searchState
+          : searchState // ignore: cast_nullable_to_non_nullable
+              as AppBarSearchState?,
+      editState: freezed == editState
+          ? _value.editState
+          : editState // ignore: cast_nullable_to_non_nullable
+              as AppBarEditState?,
     ) as $Val);
+  }
+
+  /// Create a copy of AppBarState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $AppBarSearchStateCopyWith<$Res>? get searchState {
+    if (_value.searchState == null) {
+      return null;
+    }
+
+    return $AppBarSearchStateCopyWith<$Res>(_value.searchState!, (value) {
+      return _then(_value.copyWith(searchState: value) as $Val);
+    });
+  }
+
+  /// Create a copy of AppBarState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $AppBarEditStateCopyWith<$Res>? get editState {
+    if (_value.editState == null) {
+      return null;
+    }
+
+    return $AppBarEditStateCopyWith<$Res>(_value.editState!, (value) {
+      return _then(_value.copyWith(editState: value) as $Val);
+    });
   }
 }
 
 /// @nodoc
-abstract class _$$CommonAppBarStateImplCopyWith<$Res>
-    implements $CommonAppBarStateCopyWith<$Res> {
-  factory _$$CommonAppBarStateImplCopyWith(_$CommonAppBarStateImpl value,
-          $Res Function(_$CommonAppBarStateImpl) then) =
-      __$$CommonAppBarStateImplCopyWithImpl<$Res>;
+abstract class _$$AppBarStateImplCopyWith<$Res>
+    implements $AppBarStateCopyWith<$Res> {
+  factory _$$AppBarStateImplCopyWith(
+          _$AppBarStateImpl value, $Res Function(_$AppBarStateImpl) then) =
+      __$$AppBarStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
       {List<Widget> actions,
-      dynamic Function(String)? onSearch,
-      bool searching});
+      AppBarSearchState? searchState,
+      AppBarEditState? editState});
+
+  @override
+  $AppBarSearchStateCopyWith<$Res>? get searchState;
+  @override
+  $AppBarEditStateCopyWith<$Res>? get editState;
 }
 
 /// @nodoc
-class __$$CommonAppBarStateImplCopyWithImpl<$Res>
-    extends _$CommonAppBarStateCopyWithImpl<$Res, _$CommonAppBarStateImpl>
-    implements _$$CommonAppBarStateImplCopyWith<$Res> {
-  __$$CommonAppBarStateImplCopyWithImpl(_$CommonAppBarStateImpl _value,
-      $Res Function(_$CommonAppBarStateImpl) _then)
+class __$$AppBarStateImplCopyWithImpl<$Res>
+    extends _$AppBarStateCopyWithImpl<$Res, _$AppBarStateImpl>
+    implements _$$AppBarStateImplCopyWith<$Res> {
+  __$$AppBarStateImplCopyWithImpl(
+      _$AppBarStateImpl _value, $Res Function(_$AppBarStateImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CommonAppBarState
+  /// Create a copy of AppBarState
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? actions = null,
-    Object? onSearch = freezed,
-    Object? searching = null,
+    Object? searchState = freezed,
+    Object? editState = freezed,
   }) {
-    return _then(_$CommonAppBarStateImpl(
+    return _then(_$AppBarStateImpl(
       actions: null == actions
           ? _value._actions
           : actions // ignore: cast_nullable_to_non_nullable
               as List<Widget>,
-      onSearch: freezed == onSearch
-          ? _value.onSearch
-          : onSearch // ignore: cast_nullable_to_non_nullable
-              as dynamic Function(String)?,
-      searching: null == searching
-          ? _value.searching
-          : searching // ignore: cast_nullable_to_non_nullable
-              as bool,
+      searchState: freezed == searchState
+          ? _value.searchState
+          : searchState // ignore: cast_nullable_to_non_nullable
+              as AppBarSearchState?,
+      editState: freezed == editState
+          ? _value.editState
+          : editState // ignore: cast_nullable_to_non_nullable
+              as AppBarEditState?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$CommonAppBarStateImpl implements _CommonAppBarState {
-  const _$CommonAppBarStateImpl(
-      {final List<Widget> actions = const [],
-      this.onSearch,
-      this.searching = false})
+class _$AppBarStateImpl implements _AppBarState {
+  const _$AppBarStateImpl(
+      {final List<Widget> actions = const [], this.searchState, this.editState})
       : _actions = actions;
 
   final List<Widget> _actions;
@@ -439,59 +473,373 @@ class _$CommonAppBarStateImpl implements _CommonAppBarState {
   }
 
   @override
-  final dynamic Function(String)? onSearch;
+  final AppBarSearchState? searchState;
   @override
-  @JsonKey()
-  final bool searching;
+  final AppBarEditState? editState;
 
   @override
   String toString() {
-    return 'CommonAppBarState(actions: $actions, onSearch: $onSearch, searching: $searching)';
+    return 'AppBarState(actions: $actions, searchState: $searchState, editState: $editState)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$CommonAppBarStateImpl &&
+            other is _$AppBarStateImpl &&
             const DeepCollectionEquality().equals(other._actions, _actions) &&
-            (identical(other.onSearch, onSearch) ||
-                other.onSearch == onSearch) &&
-            (identical(other.searching, searching) ||
-                other.searching == searching));
+            (identical(other.searchState, searchState) ||
+                other.searchState == searchState) &&
+            (identical(other.editState, editState) ||
+                other.editState == editState));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType,
-      const DeepCollectionEquality().hash(_actions), onSearch, searching);
+      const DeepCollectionEquality().hash(_actions), searchState, editState);
 
-  /// Create a copy of CommonAppBarState
+  /// Create a copy of AppBarState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$CommonAppBarStateImplCopyWith<_$CommonAppBarStateImpl> get copyWith =>
-      __$$CommonAppBarStateImplCopyWithImpl<_$CommonAppBarStateImpl>(
-          this, _$identity);
+  _$$AppBarStateImplCopyWith<_$AppBarStateImpl> get copyWith =>
+      __$$AppBarStateImplCopyWithImpl<_$AppBarStateImpl>(this, _$identity);
 }
 
-abstract class _CommonAppBarState implements CommonAppBarState {
-  const factory _CommonAppBarState(
+abstract class _AppBarState implements AppBarState {
+  const factory _AppBarState(
       {final List<Widget> actions,
-      final dynamic Function(String)? onSearch,
-      final bool searching}) = _$CommonAppBarStateImpl;
+      final AppBarSearchState? searchState,
+      final AppBarEditState? editState}) = _$AppBarStateImpl;
 
   @override
   List<Widget> get actions;
   @override
-  dynamic Function(String)? get onSearch;
+  AppBarSearchState? get searchState;
   @override
-  bool get searching;
+  AppBarEditState? get editState;
 
-  /// Create a copy of CommonAppBarState
+  /// Create a copy of AppBarState
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$CommonAppBarStateImplCopyWith<_$CommonAppBarStateImpl> get copyWith =>
+  _$$AppBarStateImplCopyWith<_$AppBarStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$AppBarSearchState {
+  dynamic Function(String) get onSearch => throw _privateConstructorUsedError;
+  bool get isSearch => throw _privateConstructorUsedError;
+
+  /// Create a copy of AppBarSearchState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $AppBarSearchStateCopyWith<AppBarSearchState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $AppBarSearchStateCopyWith<$Res> {
+  factory $AppBarSearchStateCopyWith(
+          AppBarSearchState value, $Res Function(AppBarSearchState) then) =
+      _$AppBarSearchStateCopyWithImpl<$Res, AppBarSearchState>;
+  @useResult
+  $Res call({dynamic Function(String) onSearch, bool isSearch});
+}
+
+/// @nodoc
+class _$AppBarSearchStateCopyWithImpl<$Res, $Val extends AppBarSearchState>
+    implements $AppBarSearchStateCopyWith<$Res> {
+  _$AppBarSearchStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of AppBarSearchState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? onSearch = null,
+    Object? isSearch = null,
+  }) {
+    return _then(_value.copyWith(
+      onSearch: null == onSearch
+          ? _value.onSearch
+          : onSearch // ignore: cast_nullable_to_non_nullable
+              as dynamic Function(String),
+      isSearch: null == isSearch
+          ? _value.isSearch
+          : isSearch // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$AppBarSearchStateImplCopyWith<$Res>
+    implements $AppBarSearchStateCopyWith<$Res> {
+  factory _$$AppBarSearchStateImplCopyWith(_$AppBarSearchStateImpl value,
+          $Res Function(_$AppBarSearchStateImpl) then) =
+      __$$AppBarSearchStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({dynamic Function(String) onSearch, bool isSearch});
+}
+
+/// @nodoc
+class __$$AppBarSearchStateImplCopyWithImpl<$Res>
+    extends _$AppBarSearchStateCopyWithImpl<$Res, _$AppBarSearchStateImpl>
+    implements _$$AppBarSearchStateImplCopyWith<$Res> {
+  __$$AppBarSearchStateImplCopyWithImpl(_$AppBarSearchStateImpl _value,
+      $Res Function(_$AppBarSearchStateImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of AppBarSearchState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? onSearch = null,
+    Object? isSearch = null,
+  }) {
+    return _then(_$AppBarSearchStateImpl(
+      onSearch: null == onSearch
+          ? _value.onSearch
+          : onSearch // ignore: cast_nullable_to_non_nullable
+              as dynamic Function(String),
+      isSearch: null == isSearch
+          ? _value.isSearch
+          : isSearch // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$AppBarSearchStateImpl implements _AppBarSearchState {
+  const _$AppBarSearchStateImpl(
+      {required this.onSearch, this.isSearch = false});
+
+  @override
+  final dynamic Function(String) onSearch;
+  @override
+  @JsonKey()
+  final bool isSearch;
+
+  @override
+  String toString() {
+    return 'AppBarSearchState(onSearch: $onSearch, isSearch: $isSearch)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$AppBarSearchStateImpl &&
+            (identical(other.onSearch, onSearch) ||
+                other.onSearch == onSearch) &&
+            (identical(other.isSearch, isSearch) ||
+                other.isSearch == isSearch));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, onSearch, isSearch);
+
+  /// Create a copy of AppBarSearchState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$AppBarSearchStateImplCopyWith<_$AppBarSearchStateImpl> get copyWith =>
+      __$$AppBarSearchStateImplCopyWithImpl<_$AppBarSearchStateImpl>(
+          this, _$identity);
+}
+
+abstract class _AppBarSearchState implements AppBarSearchState {
+  const factory _AppBarSearchState(
+      {required final dynamic Function(String) onSearch,
+      final bool isSearch}) = _$AppBarSearchStateImpl;
+
+  @override
+  dynamic Function(String) get onSearch;
+  @override
+  bool get isSearch;
+
+  /// Create a copy of AppBarSearchState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$AppBarSearchStateImplCopyWith<_$AppBarSearchStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$AppBarEditState {
+  dynamic get editCount => throw _privateConstructorUsedError;
+  bool get isEdit => throw _privateConstructorUsedError;
+  dynamic Function() get onExit => throw _privateConstructorUsedError;
+
+  /// Create a copy of AppBarEditState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $AppBarEditStateCopyWith<AppBarEditState> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $AppBarEditStateCopyWith<$Res> {
+  factory $AppBarEditStateCopyWith(
+          AppBarEditState value, $Res Function(AppBarEditState) then) =
+      _$AppBarEditStateCopyWithImpl<$Res, AppBarEditState>;
+  @useResult
+  $Res call({dynamic editCount, bool isEdit, dynamic Function() onExit});
+}
+
+/// @nodoc
+class _$AppBarEditStateCopyWithImpl<$Res, $Val extends AppBarEditState>
+    implements $AppBarEditStateCopyWith<$Res> {
+  _$AppBarEditStateCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of AppBarEditState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? editCount = freezed,
+    Object? isEdit = null,
+    Object? onExit = null,
+  }) {
+    return _then(_value.copyWith(
+      editCount: freezed == editCount
+          ? _value.editCount
+          : editCount // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      isEdit: null == isEdit
+          ? _value.isEdit
+          : isEdit // ignore: cast_nullable_to_non_nullable
+              as bool,
+      onExit: null == onExit
+          ? _value.onExit
+          : onExit // ignore: cast_nullable_to_non_nullable
+              as dynamic Function(),
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$AppBarEditStateImplCopyWith<$Res>
+    implements $AppBarEditStateCopyWith<$Res> {
+  factory _$$AppBarEditStateImplCopyWith(_$AppBarEditStateImpl value,
+          $Res Function(_$AppBarEditStateImpl) then) =
+      __$$AppBarEditStateImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({dynamic editCount, bool isEdit, dynamic Function() onExit});
+}
+
+/// @nodoc
+class __$$AppBarEditStateImplCopyWithImpl<$Res>
+    extends _$AppBarEditStateCopyWithImpl<$Res, _$AppBarEditStateImpl>
+    implements _$$AppBarEditStateImplCopyWith<$Res> {
+  __$$AppBarEditStateImplCopyWithImpl(
+      _$AppBarEditStateImpl _value, $Res Function(_$AppBarEditStateImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of AppBarEditState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? editCount = freezed,
+    Object? isEdit = null,
+    Object? onExit = null,
+  }) {
+    return _then(_$AppBarEditStateImpl(
+      editCount: freezed == editCount ? _value.editCount! : editCount,
+      isEdit: null == isEdit
+          ? _value.isEdit
+          : isEdit // ignore: cast_nullable_to_non_nullable
+              as bool,
+      onExit: null == onExit
+          ? _value.onExit
+          : onExit // ignore: cast_nullable_to_non_nullable
+              as dynamic Function(),
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$AppBarEditStateImpl implements _AppBarEditState {
+  const _$AppBarEditStateImpl(
+      {this.editCount = 0, this.isEdit = false, required this.onExit});
+
+  @override
+  @JsonKey()
+  final dynamic editCount;
+  @override
+  @JsonKey()
+  final bool isEdit;
+  @override
+  final dynamic Function() onExit;
+
+  @override
+  String toString() {
+    return 'AppBarEditState(editCount: $editCount, isEdit: $isEdit, onExit: $onExit)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$AppBarEditStateImpl &&
+            const DeepCollectionEquality().equals(other.editCount, editCount) &&
+            (identical(other.isEdit, isEdit) || other.isEdit == isEdit) &&
+            (identical(other.onExit, onExit) || other.onExit == onExit));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType,
+      const DeepCollectionEquality().hash(editCount), isEdit, onExit);
+
+  /// Create a copy of AppBarEditState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$AppBarEditStateImplCopyWith<_$AppBarEditStateImpl> get copyWith =>
+      __$$AppBarEditStateImplCopyWithImpl<_$AppBarEditStateImpl>(
+          this, _$identity);
+}
+
+abstract class _AppBarEditState implements AppBarEditState {
+  const factory _AppBarEditState(
+      {final dynamic editCount,
+      final bool isEdit,
+      required final dynamic Function() onExit}) = _$AppBarEditStateImpl;
+
+  @override
+  dynamic get editCount;
+  @override
+  bool get isEdit;
+  @override
+  dynamic Function() get onExit;
+
+  /// Create a copy of AppBarEditState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$AppBarEditStateImplCopyWith<_$AppBarEditStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

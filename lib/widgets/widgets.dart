@@ -1,5 +1,5 @@
 export 'animate_grid.dart';
-export 'back_scope.dart';
+export 'pop_scope.dart';
 export 'builder.dart';
 export 'card.dart';
 export 'chip.dart';
@@ -27,3 +27,5 @@ export 'donut_chart.dart';
 export 'activate_box.dart';
 export 'wave.dart';
 export 'scroll.dart';
+export 'dialog.dart';
+export 'effect.dart';

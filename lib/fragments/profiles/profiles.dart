@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
+import 'package:fl_clash/fragments/profiles/override_profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -11,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'add_profile.dart';
-import 'gen_profile.dart';
 
 class ProfilesFragment extends StatefulWidget {
   const ProfilesFragment({super.key});
@@ -24,12 +24,17 @@ class _ProfilesFragmentState extends State<ProfilesFragment> with PageMixin {
   Function? applyConfigDebounce;
 
   _handleShowAddExtendPage() {
-    showExtendPage(
+    showExtend(
       globalState.navigatorKey.currentState!.context,
-      body: AddProfile(
-        context: globalState.navigatorKey.currentState!.context,
-      ),
-      title: "${appLocalizations.add}${appLocalizations.profile}",
+      builder: (_, type) {
+        return AdaptiveSheetScaffold(
+          type: type,
+          body: AddProfile(
+            context: globalState.navigatorKey.currentState!.context,
+          ),
+          title: "${appLocalizations.add}${appLocalizations.profile}",
+        );
+      },
     );
   }
 
@@ -81,12 +86,13 @@ class _ProfilesFragmentState extends State<ProfilesFragment> with PageMixin {
           onPressed: () {
             final profiles = globalState.config.profiles;
             showSheet(
-              title: appLocalizations.profilesSort,
               context: context,
-              body: SizedBox(
-                height: 400,
-                child: ReorderableProfiles(profiles: profiles),
-              ),
+              builder: (_, type) {
+                return ReorderableProfilesSheet(
+                  type: type,
+                  profiles: profiles,
+                );
+              },
             );
           },
           icon: const Icon(Icons.sort),
@@ -205,13 +211,18 @@ class ProfileItem extends StatelessWidget {
   }
 
   _handleShowEditExtendPage(BuildContext context) {
-    showExtendPage(
+    showExtend(
       context,
-      body: EditProfile(
-        profile: profile,
-        context: context,
-      ),
-      title: "${appLocalizations.edit}${appLocalizations.profile}",
+      builder: (_, type) {
+        return AdaptiveSheetScaffold(
+          type: type,
+          body: EditProfile(
+            profile: profile,
+            context: context,
+          ),
+          title: "${appLocalizations.edit}${appLocalizations.profile}",
+        );
+      },
     );
   }
 
@@ -277,7 +288,7 @@ class ProfileItem extends StatelessWidget {
   _handlePushGenProfilePage(BuildContext context, String id) {
     BaseNavigator.push(
       context,
-      GenProfile(
+      OverrideProfile(
         profileId: id,
       ),
     );
@@ -285,7 +296,6 @@ class ProfileItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final key = GlobalKey<CommonPopupBoxState>();
     return CommonCard(
       isSelected: profile.id == groupValue,
       onPressed: () {
@@ -298,17 +308,16 @@ class ProfileItem extends StatelessWidget {
         trailing: SizedBox(
           height: 40,
           width: 40,
-          child: FadeBox(
+          child: FadeThroughBox(
             child: profile.isUpdating
                 ? const Padding(
                     padding: EdgeInsets.all(8),
                     child: CircularProgressIndicator(),
                   )
                 : CommonPopupBox(
-                    key: key,
                     popup: CommonPopupMenu(
                       items: [
-                        ActionItemData(
+                        PopupMenuItemData(
                           icon: Icons.edit_outlined,
                           label: appLocalizations.edit,
                           onPressed: () {
@@ -316,52 +325,47 @@ class ProfileItem extends StatelessWidget {
                           },
                         ),
                         if (profile.type == ProfileType.url) ...[
-                          ActionItemData(
+                          PopupMenuItemData(
                             icon: Icons.sync_alt_sharp,
                             label: appLocalizations.sync,
                             onPressed: () {
                               updateProfile();
                             },
                           ),
-                          // ActionItemData(
-                          //   icon: Icons.copy,
-                          //   label: appLocalizations.copyLink,
-                          //   onPressed: () {
-                          //     _handleCopyLink(context);
-                          //   },
-                          // ),
                         ],
-                        // ActionItemData(
-                        //   icon: Icons.extension_outlined,
-                        //   label: "自定义",
-                        //   onPressed: () {
-                        //     _handlePushGenProfilePage(context, profile.id);
-                        //   },
-                        // ),
-                        ActionItemData(
+                        PopupMenuItemData(
+                          icon: Icons.extension_outlined,
+                          label: appLocalizations.override,
+                          onPressed: () {
+                            _handlePushGenProfilePage(context, profile.id);
+                          },
+                        ),
+                        PopupMenuItemData(
                           icon: Icons.file_copy_outlined,
                           label: appLocalizations.exportFile,
                           onPressed: () {
                             _handleExportFile(context);
                           },
                         ),
-                        ActionItemData(
+                        PopupMenuItemData(
                           icon: Icons.delete_outlined,
                           iconSize: 20,
                           label: appLocalizations.delete,
                           onPressed: () {
                             _handleDeleteProfile(context);
                           },
-                          type: ActionType.danger,
+                          type: PopupMenuItemType.danger,
                         ),
                       ],
                     ),
-                    target: IconButton(
-                      onPressed: () {
-                        key.currentState?.pop();
-                      },
-                      icon: Icon(Icons.more_vert),
-                    ),
+                    targetBuilder: (open) {
+                      return IconButton(
+                        onPressed: () {
+                          open();
+                        },
+                        icon: Icon(Icons.more_vert),
+                      );
+                    },
                   ),
           ),
         ),
@@ -397,19 +401,22 @@ class ProfileItem extends StatelessWidget {
   }
 }
 
-class ReorderableProfiles extends StatefulWidget {
+class ReorderableProfilesSheet extends StatefulWidget {
   final List<Profile> profiles;
+  final SheetType type;
 
-  const ReorderableProfiles({
+  const ReorderableProfilesSheet({
     super.key,
     required this.profiles,
+    required this.type,
   });
 
   @override
-  State<ReorderableProfiles> createState() => _ReorderableProfilesState();
+  State<ReorderableProfilesSheet> createState() =>
+      _ReorderableProfilesSheetState();
 }
 
-class _ReorderableProfilesState extends State<ReorderableProfiles> {
+class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
   late List<Profile> profiles;
 
   @override
@@ -453,74 +460,61 @@ class _ReorderableProfilesState extends State<ReorderableProfiles> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Expanded(
-          flex: 1,
-          child: ReorderableListView.builder(
-            buildDefaultDragHandles: false,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            proxyDecorator: proxyDecorator,
-            onReorder: (oldIndex, newIndex) {
-              setState(() {
-                if (oldIndex < newIndex) {
-                  newIndex -= 1;
-                }
-                final profile = profiles.removeAt(oldIndex);
-                profiles.insert(newIndex, profile);
-              });
-            },
-            itemBuilder: (_, index) {
-              final profile = profiles[index];
-              return Container(
-                key: Key(profile.id),
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: CommonCard(
-                  type: CommonCardType.filled,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.only(
-                      right: 16,
-                      left: 16,
-                    ),
-                    title: Text(profile.label ?? profile.id),
-                    trailing: ReorderableDragStartListener(
-                      index: index,
-                      child: const Icon(Icons.drag_handle),
-                    ),
+    return AdaptiveSheetScaffold(
+      type: widget.type,
+      actions: [
+        IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            globalState.appController.setProfiles(profiles);
+          },
+          icon: Icon(
+            Icons.save,
+          ),
+        )
+      ],
+      body: Padding(
+        padding: EdgeInsets.only(bottom: 32),
+        child: ReorderableListView.builder(
+          buildDefaultDragHandles: false,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+          ),
+          proxyDecorator: proxyDecorator,
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
+              final profile = profiles.removeAt(oldIndex);
+              profiles.insert(newIndex, profile);
+            });
+          },
+          itemBuilder: (_, index) {
+            final profile = profiles[index];
+            return Container(
+              key: Key(profile.id),
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: CommonCard(
+                type: CommonCardType.filled,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.only(
+                    right: 16,
+                    left: 16,
+                  ),
+                  title: Text(profile.label ?? profile.id),
+                  trailing: ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(Icons.drag_handle),
                   ),
                 ),
-              );
-            },
-            itemCount: profiles.length,
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 24,
-          ),
-          child: FilledButton.tonal(
-            onPressed: () {
-              Navigator.of(context).pop();
-              globalState.appController.setProfiles(profiles);
-            },
-            style: ButtonStyle(
-              padding: WidgetStateProperty.all(
-                const EdgeInsets.symmetric(vertical: 8),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  appLocalizations.confirm,
-                ),
-              ],
-            ),
-          ),
+            );
+          },
+          itemCount: profiles.length,
         ),
-      ],
+      ),
+      title: appLocalizations.profilesSort,
     );
   }
 }

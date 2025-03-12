@@ -13,8 +13,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 typedef UpdatingMap = Map<String, bool>;
 
 class ProvidersView extends ConsumerStatefulWidget {
+  final SheetType type;
+
   const ProvidersView({
     super.key,
+    required this.type,
   });
 
   @override
@@ -22,25 +25,6 @@ class ProvidersView extends ConsumerStatefulWidget {
 }
 
 class _ProvidersViewState extends ConsumerState<ProvidersView> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) {
-        globalState.appController.updateProviders();
-        context.commonScaffoldState?.actions = [
-          IconButton(
-            onPressed: () {
-              _updateProviders();
-            },
-            icon: const Icon(
-              Icons.sync,
-            ),
-          )
-        ];
-      },
-    );
-  }
 
   _updateProviders() async {
     final providers = ref.read(providersProvider);
@@ -102,10 +86,24 @@ class _ProvidersViewState extends ConsumerState<ProvidersView> {
       title: appLocalizations.ruleProviders,
       items: ruleProviders,
     );
-    return generateListView([
-      ...proxySection,
-      ...ruleSection,
-    ]);
+    return AdaptiveSheetScaffold(
+      actions: [
+        IconButton(
+          onPressed: () {
+            _updateProviders();
+          },
+          icon: const Icon(
+            Icons.sync,
+          ),
+        )
+      ],
+      type: widget.type,
+      body: generateListView([
+        ...proxySection,
+        ...ruleSection,
+      ]),
+      title: appLocalizations.providers,
+    );
   }
 }
 
@@ -222,7 +220,7 @@ class ProviderItem extends StatelessWidget {
       trailing: SizedBox(
         height: 48,
         width: 48,
-        child: FadeBox(
+        child: FadeThroughBox(
           child: provider.isUpdating
               ? const Padding(
                   padding: EdgeInsets.all(8),

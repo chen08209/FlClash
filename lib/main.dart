@@ -27,6 +27,7 @@ Future<void> main() async {
   await globalState.initApp(version);
   await android?.init();
   await window?.init(version);
+  globalState.isPre = const String.fromEnvironment("APP_ENV") != 'stable';
   HttpOverrides.global = FlClashHttpOverrides();
   runApp(ProviderScope(
     child: const Application(),

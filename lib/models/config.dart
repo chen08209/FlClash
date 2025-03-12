@@ -37,7 +37,7 @@ const defaultProxiesStyle = ProxiesStyle();
 const defaultWindowProps = WindowProps();
 const defaultAccessControl = AccessControl();
 final defaultThemeProps = ThemeProps().copyWith(
-  primaryColor: defaultPrimaryColor.value,
+  primaryColor: defaultPrimaryColor.toARGB32(),
   themeMode: ThemeMode.dark,
 );
 
@@ -121,7 +121,7 @@ extension AccessControlExt on AccessControl {
 @freezed
 class WindowProps with _$WindowProps {
   const factory WindowProps({
-    @Default(900) double width,
+    @Default(750) double width,
     @Default(600) double height,
     double? top,
     double? left,

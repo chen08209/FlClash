@@ -4,6 +4,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/card.dart';
+import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -156,9 +157,28 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(IntlExt.actionMessage((widget.hotKeyAction.action.name))),
-      content: ValueListenableBuilder(
+    return CommonDialog(
+      title: IntlExt.actionMessage(widget.hotKeyAction.action.name),
+      actions: [
+        TextButton(
+          onPressed: () {
+            _handleRemove();
+          },
+          child: Text(appLocalizations.remove),
+        ),
+        const SizedBox(
+          width: 8,
+        ),
+        TextButton(
+          onPressed: () {
+            _handleConfirm();
+          },
+          child: Text(
+            appLocalizations.confirm,
+          ),
+        ),
+      ],
+      child: ValueListenableBuilder(
         valueListenable: hotKeyActionNotifier,
         builder: (_, hotKeyAction, ___) {
           final key = hotKeyAction.key;
@@ -191,25 +211,6 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
           );
         },
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            _handleRemove();
-          },
-          child: Text(appLocalizations.remove),
-        ),
-        const SizedBox(
-          width: 8,
-        ),
-        TextButton(
-          onPressed: () {
-            _handleConfirm();
-          },
-          child: Text(
-            appLocalizations.confirm,
-          ),
-        ),
-      ],
     );
   }
 }

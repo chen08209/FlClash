@@ -276,8 +276,8 @@ class ApplicationSettingFragment extends StatelessWidget {
       AutoRunItem(),
       if (Platform.isAndroid) ...[
         HiddenItem(),
-        AnimateTabItem(),
       ],
+      AnimateTabItem(),
       OpenLogsItem(),
       CloseConnectionsItem(),
       UsageItem(),

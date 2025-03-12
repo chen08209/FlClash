@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:animations/animations.dart';
 import 'package:fl_clash/clash/clash.dart';
+import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/plugins/service.dart';
+import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -23,13 +25,13 @@ class GlobalState {
   Timer? groupsUpdateTimer;
   late Config config;
   late AppState appState;
+  bool isPre = true;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
-  PageController? pageController;
   late Measure measure;
+  late CommonTheme theme;
   DateTime? startTime;
   UpdateTasks tasks = [];
-  final safeMessageOffsetNotifier = ValueNotifier(Offset.zero);
   final navigatorKey = GlobalKey<NavigatorState>();
   late AppController appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
@@ -46,7 +48,7 @@ class GlobalState {
   initApp(int version) async {
     appState = AppState(
       version: version,
-      viewWidth: other.getScreenSize().width,
+      viewSize: Size.zero,
       requests: FixedList(1000),
       logs: FixedList(1000),
       traffics: FixedList(30),
@@ -114,7 +116,7 @@ class GlobalState {
   }
 
   Future<bool?> showMessage({
-    required String title,
+    String? title,
     required InlineSpan message,
     String? confirmText,
     bool cancelable = true,
@@ -122,23 +124,8 @@ class GlobalState {
     return await showCommonDialog<bool>(
       child: Builder(
         builder: (context) {
-          return AlertDialog(
-            title: Text(title),
-            content: Container(
-              width: 300,
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: SingleChildScrollView(
-                child: SelectableText.rich(
-                  TextSpan(
-                    style: Theme.of(context).textTheme.labelLarge,
-                    children: [message],
-                  ),
-                  style: const TextStyle(
-                    overflow: TextOverflow.visible,
-                  ),
-                ),
-              ),
-            ),
+          return CommonDialog(
+            title: title ?? appLocalizations.tip,
             actions: [
               if (cancelable)
                 TextButton(
@@ -154,6 +141,21 @@ class GlobalState {
                 child: Text(confirmText ?? appLocalizations.confirm),
               )
             ],
+            child: Container(
+              width: 300,
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: SingleChildScrollView(
+                child: SelectableText.rich(
+                  TextSpan(
+                    style: Theme.of(context).textTheme.labelLarge,
+                    children: [message],
+                  ),
+                  style: const TextStyle(
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+              ),
+            ),
           );
         },
       ),
@@ -171,7 +173,7 @@ class GlobalState {
         barrierDismissible: dismissible,
       ),
       builder: (_) => child,
-      filter: filter,
+      filter: commonFilter,
     );
   }
 
@@ -251,12 +253,17 @@ class GlobalState {
               ? defaultBypassPrivateRouteAddress
               : clashConfig.tun.routeAddress,
         ),
+        rule: currentProfile?.overrideData.runningRule ?? [],
       ),
       params: ConfigExtendedParams(
         isPatch: isPatch ?? false,
         selectedMap: currentProfile?.selectedMap ?? {},
         overrideDns: config.overrideDns,
         testUrl: config.appSetting.testUrl,
+        overrideRule:
+            currentProfile?.overrideData.rule.type == OverrideRuleType.override
+                ? true
+                : false,
       ),
     );
   }

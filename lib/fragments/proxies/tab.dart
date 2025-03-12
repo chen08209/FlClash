@@ -49,7 +49,7 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
   _buildMoreButton() {
     return Consumer(
       builder: (_, ref, ___) {
-        final isMobileView = ref.watch(viewWidthProvider.notifier).isMobileView;
+        final isMobileView = ref.watch(isMobileViewProvider);
         return IconButton(
           onPressed: _showMoreMenu,
           icon: isMobileView
@@ -67,42 +67,48 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
   _showMoreMenu() {
     showSheet(
       context: context,
-      width: 380,
-      isScrollControlled: false,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Consumer(
-          builder: (_, ref, __) {
-            final state = ref.watch(proxiesSelectorStateProvider);
-            return SizedBox(
-              width: double.infinity,
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                runSpacing: 8,
-                spacing: 8,
-                children: [
-                  for (final groupName in state.groupNames)
-                    SettingTextCard(
-                      groupName,
-                      onPressed: () {
-                        final index = state.groupNames.indexWhere(
-                          (item) => item == groupName,
-                        );
-                        if (index == -1) return;
-                        _tabController?.animateTo(index);
-                        globalState.appController
-                            .updateCurrentGroupName(groupName);
-                        Navigator.of(context).pop();
-                      },
-                      isSelected: groupName == state.currentGroupName,
-                    )
-                ],
-              ),
-            );
-          },
-        ),
+      props: SheetProps(
+        isScrollControlled: false,
       ),
-      title: appLocalizations.proxyGroup,
+      builder: (_, type) {
+        return AdaptiveSheetScaffold(
+          type: type,
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Consumer(
+              builder: (_, ref, __) {
+                final state = ref.watch(proxiesSelectorStateProvider);
+                return SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    runSpacing: 8,
+                    spacing: 8,
+                    children: [
+                      for (final groupName in state.groupNames)
+                        SettingTextCard(
+                          groupName,
+                          onPressed: () {
+                            final index = state.groupNames.indexWhere(
+                              (item) => item == groupName,
+                            );
+                            if (index == -1) return;
+                            _tabController?.animateTo(index);
+                            globalState.appController
+                                .updateCurrentGroupName(groupName);
+                            Navigator.of(context).pop();
+                          },
+                          isSelected: groupName == state.currentGroupName,
+                        )
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          title: appLocalizations.proxyGroup,
+        );
+      },
     );
   }
 
@@ -238,7 +244,7 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      context.colorScheme.surface.withOpacity(0.1),
+                      context.colorScheme.surface.opacity10,
                       context.colorScheme.surface,
                     ],
                     stops: const [
@@ -319,32 +325,35 @@ class ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
     );
     return Align(
       alignment: Alignment.topCenter,
-      child: GridView.builder(
+      child: CommonAutoHiddenScrollBar(
         controller: _controller,
-        padding: const EdgeInsets.only(
-          top: 16,
-          left: 16,
-          right: 16,
-          bottom: 96,
+        child: GridView.builder(
+          controller: _controller,
+          padding: const EdgeInsets.only(
+            top: 16,
+            left: 16,
+            right: 16,
+            bottom: 96,
+          ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            mainAxisExtent: getItemHeight(proxyCardType),
+          ),
+          itemCount: sortedProxies.length,
+          itemBuilder: (_, index) {
+            final proxy = sortedProxies[index];
+            return ProxyCard(
+              testUrl: state.testUrl,
+              groupType: state.groupType,
+              type: proxyCardType,
+              key: ValueKey('$groupName.${proxy.name}'),
+              proxy: proxy,
+              groupName: groupName,
+            );
+          },
         ),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          mainAxisExtent: getItemHeight(proxyCardType),
-        ),
-        itemCount: sortedProxies.length,
-        itemBuilder: (_, index) {
-          final proxy = sortedProxies[index];
-          return ProxyCard(
-            testUrl: state.testUrl,
-            groupType: state.groupType,
-            type: proxyCardType,
-            key: ValueKey('$groupName.${proxy.name}'),
-            proxy: proxy,
-            groupName: groupName,
-          );
-        },
       ),
     );
   }

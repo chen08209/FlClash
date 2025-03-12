@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 
 class FadeBox extends StatelessWidget {
   final Widget child;
+  final Alignment? alignment;
 
   const FadeBox({
     super.key,
     required this.child,
+    this.alignment,
   });
 
   @override
@@ -19,7 +21,38 @@ class FadeBox extends StatelessWidget {
         secondaryAnimation,
       ) {
         return Container(
-          alignment: Alignment.centerLeft,
+          alignment: alignment ?? Alignment.centerLeft,
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+class FadeThroughBox extends StatelessWidget {
+  final Widget child;
+  final Alignment? alignment;
+
+  const FadeThroughBox({
+    super.key,
+    required this.child,
+    this.alignment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PageTransitionSwitcher(
+      transitionBuilder: (
+        child,
+        animation,
+        secondaryAnimation,
+      ) {
+        return Container(
+          alignment: alignment ?? Alignment.centerLeft,
           child: FadeThroughTransition(
             animation: animation,
             fillColor: Colors.transparent,

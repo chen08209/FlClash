@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../enum/enum.dart';
 
 part 'generated/clash_config.freezed.dart';
+
 part 'generated/clash_config.g.dart';
 
 typedef HostsMap = Map<String, String>;
@@ -122,13 +123,23 @@ class ProxyGroup with _$ProxyGroup {
     String? filter,
     @JsonKey(name: "expected-filter") String? excludeFilter,
     @JsonKey(name: "exclude-type") String? excludeType,
-    @JsonKey(name: "expected-status") int? expectedStatus,
+    @JsonKey(name: "expected-status") dynamic expectedStatus,
     bool? hidden,
     String? icon,
   }) = _ProxyGroup;
 
   factory ProxyGroup.fromJson(Map<String, Object?> json) =>
       _$ProxyGroupFromJson(json);
+}
+
+@freezed
+class RuleProvider with _$RuleProvider {
+  const factory RuleProvider({
+    required String name,
+  }) = _RuleProvider;
+
+  factory RuleProvider.fromJson(Map<String, Object?> json) =>
+      _$RuleProviderFromJson(json);
 }
 
 @freezed
@@ -274,10 +285,135 @@ class GeoXUrl with _$GeoXUrl {
 }
 
 @freezed
+class ParsedRule with _$ParsedRule {
+  const factory ParsedRule({
+    required RuleAction ruleAction,
+    String? content,
+    String? ruleTarget,
+    String? ruleProvider,
+    String? subRule,
+    @Default(false) bool noResolve,
+    @Default(false) bool src,
+  }) = _ParsedRule;
+
+  factory ParsedRule.parseString(String value) {
+    final splits = value.split(",");
+    final shortSplits = splits
+        .where(
+          (item) => !item.contains("src") && !item.contains("no-resolve"),
+        )
+        .toList();
+    final ruleAction = RuleAction.values.firstWhere(
+      (item) => item.value == shortSplits.first,
+      orElse: () => RuleAction.DOMAIN,
+    );
+    String? subRule;
+    String? ruleTarget;
+
+    if (ruleAction == RuleAction.SUB_RULE) {
+      subRule = shortSplits.last;
+    } else {
+      ruleTarget = shortSplits.last;
+    }
+
+    String? content;
+    String? ruleProvider;
+
+    if (ruleAction == RuleAction.RULE_SET) {
+      ruleProvider = shortSplits.sublist(1, shortSplits.length - 1).join(",");
+    } else {
+      content = shortSplits.sublist(1, shortSplits.length - 1).join(",");
+    }
+
+    return ParsedRule(
+      ruleAction: ruleAction,
+      content: content,
+      src: splits.contains("src"),
+      ruleProvider: ruleProvider,
+      noResolve: splits.contains("no-resolve"),
+      subRule: subRule,
+      ruleTarget: ruleTarget,
+    );
+  }
+}
+
+extension ParsedRuleExt on ParsedRule {
+  String get value {
+    return [
+      ruleAction.value,
+      ruleAction == RuleAction.RULE_SET ? ruleProvider : content,
+      ruleAction == RuleAction.SUB_RULE ? subRule : ruleTarget,
+      if (ruleAction.hasParams) ...[
+        if (src) "src",
+        if (noResolve) "no-resolve",
+      ]
+    ].join(",");
+  }
+}
+
+@freezed
+class Rule with _$Rule {
+  const factory Rule({
+    required String id,
+    required String value,
+  }) = _Rule;
+
+  factory Rule.value(String value) {
+    return Rule(
+      value: value,
+      id: other.uuidV4,
+    );
+  }
+
+  factory Rule.fromJson(Map<String, Object?> json) => _$RuleFromJson(json);
+}
+
+@freezed
+class SubRule with _$SubRule {
+  const factory SubRule({
+    required String name,
+  }) = _SubRule;
+
+  factory SubRule.fromJson(Map<String, Object?> json) =>
+      _$SubRuleFromJson(json);
+}
+
+_genRule(List<dynamic>? rules) {
+  if (rules == null) {
+    return [];
+  }
+  return rules
+      .map(
+        (item) => Rule.value(item),
+      )
+      .toList();
+}
+
+List<RuleProvider> _genRuleProviders(Map<String, dynamic> json) {
+  return json.entries.map((entry) => RuleProvider(name: entry.key)).toList();
+}
+
+List<SubRule> _genSubRules(Map<String, dynamic> json) {
+  return json.entries
+      .map(
+        (entry) => SubRule(
+          name: entry.key,
+        ),
+      )
+      .toList();
+}
+
+@freezed
 class ClashConfigSnippet with _$ClashConfigSnippet {
   const factory ClashConfigSnippet({
     @Default([]) @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-    @Default([]) List<String> rule,
+    @JsonKey(fromJson: _genRule) @Default([]) List<Rule> rule,
+    @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+    @Default([])
+    List<RuleProvider> ruleProvider,
+    @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+    @Default([])
+    List<SubRule> subRules,
   }) = _ClashConfigSnippet;
 
   factory ClashConfigSnippet.fromJson(Map<String, Object?> json) =>

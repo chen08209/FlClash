@@ -141,6 +141,15 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
     state = profilesTemp;
   }
 
+  updateProfile(String profileId, Profile Function(Profile profile) builder) {
+    final List<Profile> profilesTemp = List.from(state);
+    final index = profilesTemp.indexWhere((element) => element.id == profileId);
+    if (index != -1) {
+      profilesTemp[index] = builder(profilesTemp[index]);
+    }
+    state = profilesTemp;
+  }
+
   deleteProfileById(String id) {
     state = state.where((element) => element.id != id).toList();
   }

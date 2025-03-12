@@ -50,19 +50,19 @@ class AddProfile extends StatelessWidget {
     return ListView(
       children: [
         ListItem(
-          leading: const Icon(Icons.qr_code),
+          leading: const Icon(Icons.qr_code_sharp),
           title: Text(appLocalizations.qrcode),
           subtitle: Text(appLocalizations.qrcodeDesc),
           onTap: _toScan,
         ),
         ListItem(
-          leading: const Icon(Icons.upload_file),
+          leading: const Icon(Icons.upload_file_sharp),
           title: Text(appLocalizations.file),
           subtitle: Text(appLocalizations.fileDesc),
           onTap: _handleAddProfileFormFile,
         ),
         ListItem(
-          leading: const Icon(Icons.cloud_download),
+          leading: const Icon(Icons.cloud_download_sharp),
           title: Text(appLocalizations.url),
           subtitle: Text(appLocalizations.urlDesc),
           onTap: _toAdd,
@@ -90,9 +90,15 @@ class _URLFormDialogState extends State<URLFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(appLocalizations.importFromURL),
-      content: SizedBox(
+    return CommonDialog(
+      title: appLocalizations.importFromURL,
+      actions: [
+        TextButton(
+          onPressed: _handleAddProfileFormURL,
+          child: Text(appLocalizations.submit),
+        )
+      ],
+      child: SizedBox(
         width: 300,
         child: Wrap(
           runSpacing: 16,
@@ -109,12 +115,6 @@ class _URLFormDialogState extends State<URLFormDialog> {
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _handleAddProfileFormURL,
-          child: Text(appLocalizations.submit),
-        )
-      ],
     );
   }
 }

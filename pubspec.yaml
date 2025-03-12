@@ -1,7 +1,7 @@
 name: fl_clash
 description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
-version: 0.8.80+202503101
+version: 0.8.81+202504081
 environment:
   sdk: '>=3.1.0 <4.0.0'
 
@@ -20,14 +20,14 @@ dependencies:
     path: plugins/proxy
   window_ext:
     path: plugins/window_ext
-  launch_at_startup: ^0.2.2
+  launch_at_startup: ^0.5.1
   windows_single_instance: ^1.0.1
   json_annotation: ^4.9.0
   file_picker: ^8.0.3
   mobile_scanner: ^6.0.2
-  app_links: ^3.5.0
-  win32_registry: ^1.1.5
-  tray_manager: ^0.3.2
+  app_links: ^6.4.0
+  win32_registry: ^2.0.0
+  tray_manager: ^0.4.0
   collection: ^1.18.0
   animations: ^2.0.11
   package_info_plus: ^8.0.0
@@ -38,23 +38,21 @@ dependencies:
   dio: ^5.8.0+1
   win32: ^5.5.1
   ffi: ^2.1.2
-  re_editor: ^0.6.0
+  re_editor: ^0.7.0
   re_highlight: ^0.0.3
   archive: ^3.6.1
   lpinyin: ^2.0.3
   emoji_regex: ^0.0.5
-  process_run: ^1.1.0
   cached_network_image: ^3.4.0
   hotkey_manager: ^0.2.3
   uni_platform: ^0.1.3
-  device_info_plus: ^10.1.2
+  device_info_plus: ^11.3.3
   connectivity_plus: ^6.1.0
   screen_retriever: ^0.2.0
   defer_pointer: ^0.0.2
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
   riverpod: ^2.6.1
-  google_fonts: ^6.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -76,6 +74,9 @@ flutter:
     - assets/images/
     - assets/images/avatars/
   fonts:
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
     - family: Twemoji
       fonts:
         - asset: assets/fonts/Twemoji.Mozilla.ttf
