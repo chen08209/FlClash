@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/color.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
 
@@ -28,7 +29,7 @@ class CommonChip extends StatelessWidget {
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         onDeleted: onPressed ?? () {},
         side:
-            BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
+            BorderSide(color: Theme.of(context).dividerColor.opacity15),
         labelStyle: Theme.of(context).textTheme.bodyMedium,
         label: Text(label),
       );
@@ -42,7 +43,7 @@ class CommonChip extends StatelessWidget {
         horizontal: 4,
       ),
       onPressed: onPressed ?? () {},
-      side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
+      side: BorderSide(color: Theme.of(context).dividerColor.opacity15),
       labelStyle: Theme.of(context).textTheme.bodyMedium,
       label: Text(label),
     );

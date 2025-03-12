@@ -382,7 +382,7 @@ extension ColorSchemesExt on ColorSchemes {
             );
     }
     return lightColorScheme != null
-        ? ColorScheme.fromSeed(seedColor: lightColorScheme!.primary)
+        ? ColorScheme.fromSeed(seedColor: lightColorScheme!.primary,dynamicSchemeVariant: DynamicSchemeVariant.vibrant)
         : ColorScheme.fromSeed(seedColor: defaultPrimaryColor);
   }
 }
@@ -481,13 +481,13 @@ class Field with _$Field {
   }) = _Field;
 }
 
-enum ActionType {
+enum PopupMenuItemType {
   primary,
   danger,
 }
 
-class ActionItemData {
-  const ActionItemData({
+class PopupMenuItemData {
+  const PopupMenuItemData({
     this.icon,
     required this.label,
     required this.onPressed,
@@ -497,7 +497,7 @@ class ActionItemData {
 
   final double? iconSize;
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final IconData? icon;
-  final ActionType? type;
+  final PopupMenuItemType? type;
 }

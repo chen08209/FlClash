@@ -178,7 +178,7 @@ class ProxyCard extends StatelessWidget {
                               style: context.textTheme.bodySmall?.copyWith(
                                 overflow: TextOverflow.ellipsis,
                                 color:
-                                    context.textTheme.bodySmall?.color?.toLight,
+                                    context.textTheme.bodySmall?.color?.opacity80,
                               ),
                             ),
                           ),
@@ -221,7 +221,7 @@ class _ProxyDesc extends ConsumerWidget {
       desc,
       overflow: TextOverflow.ellipsis,
       style: context.textTheme.bodySmall?.copyWith(
-        color: context.textTheme.bodySmall?.color?.toLight,
+        color: context.textTheme.bodySmall?.color?.opacity80,
       ),
     );
   }

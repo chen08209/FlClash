@@ -20,10 +20,27 @@ class CommonMessage with _$CommonMessage {
 }
 
 @freezed
-class CommonAppBarState with _$CommonAppBarState {
-  const factory CommonAppBarState({
+class AppBarState with _$AppBarState {
+  const factory AppBarState({
     @Default([]) List<Widget> actions,
-    Function(String)? onSearch,
-    @Default(false) bool searching,
-  }) = _CommonAppBarState;
+    AppBarSearchState? searchState,
+    AppBarEditState? editState,
+  }) = _AppBarState;
+}
+
+@freezed
+class AppBarSearchState with _$AppBarSearchState {
+  const factory AppBarSearchState({
+    required Function(String) onSearch,
+    @Default(false) bool isSearch,
+  }) = _AppBarSearchState;
+}
+
+@freezed
+class AppBarEditState with _$AppBarEditState {
+  const factory AppBarEditState({
+    @Default(0) editCount,
+    @Default(false) bool isEdit,
+    required Function() onExit,
+  }) = _AppBarEditState;
 }

@@ -35,7 +35,6 @@ class _ToolboxFragmentState extends ConsumerState<ToolsFragment> {
       delegate: OpenDelegate(
         title: Intl.message(navigationItem.label.name),
         widget: navigationItem.fragment,
-        extendPageWidth: 360,
       ),
     );
   }
@@ -65,7 +64,7 @@ class _ToolboxFragmentState extends ConsumerState<ToolsFragment> {
     );
   }
 
-  List<Widget> _getSettingList() {
+  _getSettingList() {
     return generateSection(
       title: appLocalizations.settings,
       items: [
@@ -75,7 +74,7 @@ class _ToolboxFragmentState extends ConsumerState<ToolsFragment> {
         if (system.isDesktop) _HotkeyItem(),
         if (Platform.isWindows) _LoopbackItem(),
         if (Platform.isAndroid) _AccessItem(),
-        _OverrideItem(),
+        _ConfigItem(),
         _SettingItem(),
       ],
     );
@@ -155,7 +154,6 @@ class _ThemeItem extends StatelessWidget {
       delegate: OpenDelegate(
         title: appLocalizations.theme,
         widget: const ThemeFragment(),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -231,15 +229,15 @@ class _AccessItem extends StatelessWidget {
   }
 }
 
-class _OverrideItem extends StatelessWidget {
-  const _OverrideItem();
+class _ConfigItem extends StatelessWidget {
+  const _ConfigItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
       leading: const Icon(Icons.edit),
-      title: Text(appLocalizations.override),
-      subtitle: Text(appLocalizations.overrideDesc),
+      title: Text(appLocalizations.basicConfig),
+      subtitle: Text(appLocalizations.basicConfigDesc),
       delegate: OpenDelegate(
         title: appLocalizations.override,
         widget: const ConfigFragment(),

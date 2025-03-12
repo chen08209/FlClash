@@ -16,13 +16,20 @@ class TUNButton extends StatelessWidget {
         onPressed: () {
           showSheet(
             context: context,
-            body: generateListView(generateSection(
-              items: [
-                if (system.isDesktop) const TUNItem(),
-                const TunStackItem(),
-              ],
-            )),
-            title: appLocalizations.tun,
+            builder: (_, type) {
+              return AdaptiveSheetScaffold(
+                type: type,
+                body: generateListView(
+                  generateSection(
+                    items: [
+                      if (system.isDesktop) const TUNItem(),
+                      const TunStackItem(),
+                    ],
+                  ),
+                ),
+                title: appLocalizations.tun,
+              );
+            },
           );
         },
         info: Info(
@@ -89,15 +96,20 @@ class SystemProxyButton extends StatelessWidget {
         onPressed: () {
           showSheet(
             context: context,
-            body: generateListView(
-              generateSection(
-                items: [
-                  SystemProxyItem(),
-                  BypassDomainItem(),
-                ],
-              ),
-            ),
-            title: appLocalizations.systemProxy,
+            builder: (_, type) {
+              return AdaptiveSheetScaffold(
+                type: type,
+                body: generateListView(
+                  generateSection(
+                    items: [
+                      SystemProxyItem(),
+                      BypassDomainItem(),
+                    ],
+                  ),
+                ),
+                title: appLocalizations.systemProxy,
+              );
+            },
           );
         },
         info: Info(

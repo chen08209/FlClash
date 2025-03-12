@@ -8,7 +8,10 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'clash_config.dart';
+
 part 'generated/profile.freezed.dart';
+
 part 'generated/profile.g.dart';
 
 typedef SelectedMap = Map<String, String>;
@@ -55,6 +58,7 @@ class Profile with _$Profile {
     @Default(true) bool autoUpdate,
     @Default({}) SelectedMap selectedMap,
     @Default({}) Set<String> unfoldSet,
+    @Default(OverrideData()) OverrideData overrideData,
     @JsonKey(includeToJson: false, includeFromJson: false)
     @Default(false)
     bool isUpdating,
@@ -76,6 +80,51 @@ class Profile with _$Profile {
   }
 }
 
+@freezed
+class OverrideData with _$OverrideData {
+  const factory OverrideData({
+    @Default(false) bool enable,
+    @Default(OverrideRule()) OverrideRule rule,
+  }) = _OverrideData;
+
+  factory OverrideData.fromJson(Map<String, Object?> json) =>
+      _$OverrideDataFromJson(json);
+}
+
+extension OverrideDataExt on OverrideData {
+  List<String> get runningRule {
+    if (!enable) {
+      return [];
+    }
+    return rule.rules.map((item) => item.value).toList();
+  }
+}
+
+@freezed
+class OverrideRule with _$OverrideRule {
+  const factory OverrideRule({
+    @Default(OverrideRuleType.added) OverrideRuleType type,
+    @Default([]) List<Rule> overrideRules,
+    @Default([]) List<Rule> addedRules,
+  }) = _OverrideRule;
+
+  factory OverrideRule.fromJson(Map<String, Object?> json) =>
+      _$OverrideRuleFromJson(json);
+}
+
+extension OverrideRuleExt on OverrideRule {
+  List<Rule> get rules => switch (type == OverrideRuleType.override) {
+        true => overrideRules,
+        false => addedRules,
+      };
+
+  OverrideRule updateRules(List<Rule> Function(List<Rule> rules) builder) {
+    if (type == OverrideRuleType.added) {
+      return copyWith(addedRules: builder(addedRules));
+    }
+    return copyWith(overrideRules: builder(overrideRules));
+  }
+}
 
 extension ProfilesExt on List<Profile> {
   Profile? getProfile(String? profileId) {

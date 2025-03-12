@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/widgets/scroll.dart';
 import 'package:flutter/material.dart';
 
 class BaseScrollBehavior extends MaterialScrollBehavior {
@@ -15,8 +16,6 @@ class BaseScrollBehavior extends MaterialScrollBehavior {
         PointerDeviceKind.unknown,
       };
 }
-
-class BaseScrollBehavior2 extends ScrollBehavior {}
 
 class HiddenBarScrollBehavior extends BaseScrollBehavior {
   @override
@@ -36,8 +35,7 @@ class ShowBarScrollBehavior extends BaseScrollBehavior {
     Widget child,
     ScrollableDetails details,
   ) {
-    return Scrollbar(
-      interactive: true,
+    return CommonAutoHiddenScrollBar(
       controller: details.controller,
       child: child,
     );

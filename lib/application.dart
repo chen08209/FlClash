@@ -61,16 +61,6 @@ class ApplicationState extends ConsumerState<Application> {
     _autoUpdateGroupTask();
     _autoUpdateProfilesTask();
     globalState.appController = AppController(context, ref);
-    globalState.measure = Measure.of(context);
-    // ref.listenManual(themeSettingProvider.select((state) => state.fontFamily),
-    //     (prev, next) {
-    //   if (prev != next) {
-    //     globalState.measure = Measure.of(
-    //       context,
-    //       fontFamily: next.value,
-    //     );
-    //   }
-    // }, fireImmediately: true);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final currentContext = globalState.navigatorKey.currentContext;
       if (currentContext != null) {
@@ -98,7 +88,7 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  _buildPlatformWrap(Widget child) {
+  _buildPlatformState(Widget child) {
     if (system.isDesktop) {
       return WindowManager(
         child: TrayManager(
@@ -117,18 +107,7 @@ class ApplicationState extends ConsumerState<Application> {
     );
   }
 
-  _buildPage(Widget page) {
-    if (system.isDesktop) {
-      return WindowHeaderContainer(
-        child: page,
-      );
-    }
-    return VpnManager(
-      child: page,
-    );
-  }
-
-  _buildWrap(Widget child) {
+  _buildState(Widget child) {
     return AppStateManager(
       child: ClashManager(
         child: ConnectivityManager(
@@ -138,6 +117,25 @@ class ApplicationState extends ConsumerState<Application> {
           },
           child: child,
         ),
+      ),
+    );
+  }
+
+  _buildPlatformApp(Widget child) {
+    if (system.isDesktop) {
+      return WindowHeaderContainer(
+        child: child,
+      );
+    }
+    return VpnManager(
+      child: child,
+    );
+  }
+
+  _buildApp(Widget child) {
+    return MessageManager(
+      child: ThemeManager(
+        child: child,
       ),
     );
   }
@@ -157,8 +155,8 @@ class ApplicationState extends ConsumerState<Application> {
 
   @override
   Widget build(context) {
-    return _buildPlatformWrap(
-      _buildWrap(
+    return _buildPlatformState(
+      _buildState(
         Consumer(
           builder: (_, ref, child) {
             final locale =
@@ -168,6 +166,7 @@ class ApplicationState extends ConsumerState<Application> {
               builder: (lightDynamic, darkDynamic) {
                 _updateSystemColorSchemes(lightDynamic, darkDynamic);
                 return MaterialApp(
+                  debugShowCheckedModeBanner: false,
                   navigatorKey: globalState.navigatorKey,
                   localizationsDelegates: const [
                     AppLocalizations.delegate,
@@ -176,14 +175,9 @@ class ApplicationState extends ConsumerState<Application> {
                     GlobalWidgetsLocalizations.delegate
                   ],
                   builder: (_, child) {
-                    return MessageManager(
-                      child: LayoutBuilder(
-                        builder: (_, container) {
-                          globalState.appController.updateViewWidth(
-                            container.maxWidth,
-                          );
-                          return _buildPage(child!);
-                        },
+                    return AppEnvManager(
+                      child: _buildPlatformApp(
+                        _buildApp(child!),
                       ),
                     );
                   },

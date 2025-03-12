@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+env:
+  IS_STABLE: ${{ !contains(github.ref, '-') }}
 
 jobs:
   build:
@@ -74,7 +76,7 @@ jobs:
         run: flutter pub get
 
       - name: Setup
-        run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
+        run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -88,14 +90,13 @@ jobs:
     needs: [ build ]
     steps:
       - name: Checkout
-        if: ${{ !contains(github.ref, '+') }}
         uses: actions/checkout@v4
+        if: ${{ env.IS_STABLE == 'true' }}
         with:
           fetch-depth: 0
           ref: refs/heads/main
-
       - name: Generate
-        if: ${{ !contains(github.ref, '+') }}
+        if: ${{ env.IS_STABLE == 'true' }}
         run: |
           tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
           preTag=$(grep -oP '^## \K.*' CHANGELOG.md | head -n 1)
@@ -127,7 +128,7 @@ jobs:
           cat NEW_CHANGELOG.md > CHANGELOG.md
 
       - name: Commit
-        if: ${{ !contains(github.ref, '+') }}
+        if: ${{ env.IS_STABLE == 'true' }}
         run: |
           git add CHANGELOG.md
           if ! git diff --cached --quiet; then
@@ -206,7 +207,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests
-          python release.py
+          python release_telegram.py
 
       - name: Patch release.md
         run: |
@@ -214,21 +215,21 @@ jobs:
           sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
 
       - name: Release
-        if: ${{ !contains(github.ref, '+') }}
+        if: ${{ env.IS_STABLE == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/*
           body_path: './release.md'
 
       - name: Create Fdroid Source Dir
-        if: ${{ !contains(github.ref, '+') }}
+        if: ${{ env.IS_STABLE == 'true' }}
         run: |
           mkdir -p ./tmp
           cp ./dist/*android-arm64-v8a* ./tmp/ || true
           echo "Files copied successfully"
 
       - name: Push to fdroid repo
-        if: ${{ !contains(github.ref, '+') }}
+        if: ${{ env.IS_STABLE == 'true' }}
         uses: cpina/github-action-push-to-another-repository@v1.7.2
         env:
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
@@ -238,7 +239,7 @@ jobs:
           destination-repository-name: FlClash-fdroid-repo
           user-name: 'github-actions[bot]'
           user-email: 'github-actions[bot]@users.noreply.github.com'
-          target-branch: action-pr
+          target-branch: main
           commit-message: Update from ${{ github.ref_name }}
           target-directory: /tmp/
 

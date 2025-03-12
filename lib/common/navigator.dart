@@ -70,7 +70,7 @@ class CommonRoute<T> extends MaterialPageRoute<T> {
   Duration get transitionDuration => const Duration(milliseconds: 500);
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 250);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 500);
 }
 
 final Animatable<Offset> _kRightMiddleTween = Tween<Offset>(
@@ -194,7 +194,7 @@ class _CommonPageTransitionState extends State<CommonPageTransition> {
       _primaryPositionCurve = CurvedAnimation(
         parent: widget.primaryRouteAnimation,
         curve: Curves.fastEaseInToSlowEaseOut,
-        reverseCurve: Curves.easeInOut,
+        reverseCurve: Curves.fastEaseInToSlowEaseOut.flipped,
       );
       _secondaryPositionCurve = CurvedAnimation(
         parent: widget.secondaryRouteAnimation,
@@ -218,9 +218,8 @@ class _CommonPageTransitionState extends State<CommonPageTransition> {
         begin: const _CommonEdgeShadowDecoration(),
         end: _CommonEdgeShadowDecoration(
           <Color>[
-            widget.context.colorScheme.inverseSurface.withOpacity(
-              0.06,
-            ),
+            widget.context.colorScheme.inverseSurface
+                .withValues(alpha: 0.02),
             Colors.transparent,
           ],
         ),
@@ -274,7 +273,7 @@ class _CommonEdgeShadowPainter extends BoxPainter {
       return;
     }
 
-    final double shadowWidth = 0.03 * configuration.size!.width;
+    final double shadowWidth = 1 * configuration.size!.width;
     final double shadowHeight = configuration.size!.height;
     final double bandWidth = shadowWidth / (colors.length - 1);
 

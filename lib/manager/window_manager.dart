@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -24,6 +25,7 @@ class WindowManager extends ConsumerStatefulWidget {
 
 class _WindowContainerState extends ConsumerState<WindowManager>
     with WindowListener, WindowExtListener {
+
   @override
   Widget build(BuildContext context) {
     return widget.child;
@@ -271,7 +273,7 @@ class _WindowHeaderState extends State<WindowHeader> {
                 _updateMaximized();
               },
               child: Container(
-                color: context.colorScheme.secondary.toSoft,
+                color: context.colorScheme.secondary.opacity15,
                 alignment: Alignment.centerLeft,
                 height: kHeaderHeight,
               ),

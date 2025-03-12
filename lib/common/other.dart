@@ -241,11 +241,6 @@ class Other {
     return "${appName}_${DateTime.now().show}.log";
   }
 
-  Size getScreenSize() {
-    final view = WidgetsBinding.instance.platformDispatcher.views.first;
-    return view.physicalSize / view.devicePixelRatio;
-  }
-
   Future<String?> getLocalIpAddress() async {
     List<NetworkInterface> interfaces = await NetworkInterface.list(
       includeLoopback: false,

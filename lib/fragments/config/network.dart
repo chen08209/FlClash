@@ -224,15 +224,14 @@ class BypassDomainItem extends StatelessWidget {
       title: Text(appLocalizations.bypassDomain),
       subtitle: Text(appLocalizations.bypassDomainDesc),
       delegate: OpenDelegate(
-        isBlur: false,
-        isScaffold: true,
+        blur: false,
         title: appLocalizations.bypassDomain,
         widget: Consumer(
           builder: (_, ref, __) {
             _initActions(context, ref);
             final bypassDomain = ref.watch(
                 networkSettingProvider.select((state) => state.bypassDomain));
-            return ListPage(
+            return ListInputPage(
               title: appLocalizations.bypassDomain,
               items: bypassDomain,
               titleBuilder: (item) => Text(item),
@@ -246,7 +245,6 @@ class BypassDomainItem extends StatelessWidget {
             );
           },
         ),
-        extendPageWidth: 360,
       ),
     );
   }
@@ -298,14 +296,14 @@ class RouteAddressItem extends ConsumerWidget {
       title: Text(appLocalizations.routeAddress),
       subtitle: Text(appLocalizations.routeAddressDesc),
       delegate: OpenDelegate(
-        isBlur: false,
-        isScaffold: true,
+        blur: false,
+        maxWidth: 360,
         title: appLocalizations.routeAddress,
         widget: Consumer(
           builder: (_, ref, __) {
             final routeAddress = ref.watch(patchClashConfigProvider
                 .select((state) => state.tun.routeAddress));
-            return ListPage(
+            return ListInputPage(
               title: appLocalizations.routeAddress,
               items: routeAddress,
               titleBuilder: (item) => Text(item),
@@ -319,7 +317,6 @@ class RouteAddressItem extends ConsumerWidget {
             );
           },
         ),
-        extendPageWidth: 360,
       ),
     );
   }

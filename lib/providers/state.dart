@@ -72,9 +72,13 @@ CoreState coreState(Ref ref) {
 ClashConfigState clashConfigState(Ref ref) {
   final clashConfig = ref.watch(patchClashConfigProvider);
   final overrideDns = ref.watch(overrideDnsProvider);
+  final overrideData = ref.watch(currentProfileProvider.select(
+    (state) => state?.overrideData,
+  ));
   return ClashConfigState(
     overrideDns: overrideDns,
     clashConfig: clashConfig,
+    overrideData: overrideData ?? OverrideData(),
   );
 }
 
@@ -148,7 +152,7 @@ VpnState vpnState(Ref ref) {
 HomeState homeState(Ref ref) {
   final pageLabel = ref.watch(currentPageLabelProvider);
   final navigationItems = ref.watch(currentNavigationsStateProvider).value;
-  final viewMode = ref.watch(viewWidthProvider.notifier).viewMode;
+  final viewMode = ref.watch(viewModeProvider);
   final locale = ref.watch(appSettingProvider).locale;
   return HomeState(
     pageLabel: pageLabel,
@@ -295,7 +299,7 @@ PackageListSelectorState packageListSelectorState(Ref ref) {
 
 @riverpod
 MoreToolsSelectorState moreToolsSelectorState(Ref ref) {
-  final viewMode = ref.watch(viewWidthProvider.notifier).viewMode;
+  final viewMode = ref.watch(viewModeProvider);
   final navigationItems = ref.watch(navigationsStateProvider.select((state) {
     return state.value.where((element) {
       final isMore = element.modes.contains(NavigationItemMode.more);
@@ -322,7 +326,7 @@ bool isCurrentPage(
     return true;
   }
   if (handler != null) {
-    final viewMode = ref.watch(viewWidthProvider.notifier).viewMode;
+    final viewMode = ref.watch(viewModeProvider);
     return handler(currentPageLabel, viewMode);
   }
   return false;
@@ -417,6 +421,9 @@ ProxyCardState _getProxyCardState(
   final group = groups[index];
   final currentSelectedName = group
       .getCurrentSelectedName(selectedMap[proxyDelayState.proxyName] ?? '');
+  if (currentSelectedName.isEmpty) {
+    return proxyDelayState;
+  }
   return _getProxyCardState(
     groups,
     selectedMap,
@@ -465,4 +472,35 @@ String getProxyDesc(Ref ref, Proxy proxy) {
     final state = ref.watch(getProxyCardStateProvider(proxy.name));
     return "${proxy.type}(${state.proxyName.isNotEmpty ? state.proxyName : '*'})";
   }
+}
+
+@riverpod
+class ProfileOverrideState extends _$ProfileOverrideState {
+  @override
+  ProfileOverrideStateModel build() {
+    return ProfileOverrideStateModel(
+      isEdit: false,
+      selectedRules: {},
+    );
+  }
+
+  updateState(
+    ProfileOverrideStateModel? Function(ProfileOverrideStateModel state)
+        builder,
+  ) {
+    final value = builder(state);
+    if (value == null) {
+      return;
+    }
+    state = value;
+  }
+}
+
+@riverpod
+OverrideData? getProfileOverrideData(Ref ref, String profileId) {
+  return ref.watch(
+    profilesProvider.select(
+      (state) => state.getProfile(profileId)?.overrideData,
+    ),
+  );
 }

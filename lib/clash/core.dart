@@ -240,7 +240,7 @@ class ClashCore {
     if (res.isEmpty) {
       return null;
     }
-    return ClashConfigSnippet.fromJson(json.decode(res));
+    return Isolate.run(() => ClashConfigSnippet.fromJson(json.decode(res)));
   }
 
   resetTraffic() {
