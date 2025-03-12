@@ -5,13 +5,11 @@ import 'package:flutter/material.dart';
 class Measure {
   final TextScaler _textScale;
   final BuildContext context;
-  final String? _fontFamily;
 
-  Measure.of(this.context, {String? fontFamily})
+  Measure.of(this.context)
       : _textScale = TextScaler.linear(
-          WidgetsBinding.instance.platformDispatcher.textScaleFactor,
-        ),
-        _fontFamily = fontFamily ?? "";
+          textScaleFactor,
+        );
 
   Size computeTextSize(
     Text text, {
@@ -20,9 +18,7 @@ class Measure {
     final textPainter = TextPainter(
       text: TextSpan(
         text: text.data,
-        style: text.style?.copyWith(
-          fontFamily: _fontFamily,
-        ),
+        style: text.style,
       ),
       maxLines: text.maxLines,
       textScaler: _textScale,

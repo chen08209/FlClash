@@ -82,6 +82,7 @@ class _OpenContainerState<T> extends State<OpenContainer<T?>> {
       child: GestureDetector(
         onTap: widget.tappable ? openContainer : null,
         child: Material(
+          color: Colors.transparent,
           clipBehavior: widget.clipBehavior,
           child: Builder(
             key: _closedBuilderKey,

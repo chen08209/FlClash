@@ -149,7 +149,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
               builder: (_, snapshot) {
                 return SizedBox(
                   height: 24,
-                  child: FadeBox(
+                  child: FadeThroughBox(
                     key: Key("fade_box_${geoItem.label}"),
                     child: snapshot.data == null
                         ? const SizedBox(
@@ -248,7 +248,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         child: ValueListenableBuilder(
           valueListenable: isUpdating,
           builder: (_, isUpdating, ___) {
-            return FadeBox(
+            return FadeThroughBox(
               child: isUpdating
                   ? const Padding(
                       padding: EdgeInsets.all(8),
@@ -299,24 +299,8 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
-      content: SizedBox(
-        width: 300,
-        child: Wrap(
-          runSpacing: 16,
-          children: [
-            TextField(
-              maxLines: 5,
-              minLines: 1,
-              controller: urlController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return CommonDialog(
+      title: widget.title,
       actions: [
         if (widget.defaultValue != null &&
             urlController.value.text != widget.defaultValue) ...[
@@ -333,6 +317,19 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
           child: Text(appLocalizations.submit),
         )
       ],
+      child: Wrap(
+        runSpacing: 16,
+        children: [
+          TextField(
+            maxLines: 5,
+            minLines: 1,
+            controller: urlController,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

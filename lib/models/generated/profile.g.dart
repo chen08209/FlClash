@@ -48,6 +48,9 @@ _$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toSet() ??
           const {},
+      overrideData: json['overrideData'] == null
+          ? const OverrideData()
+          : OverrideData.fromJson(json['overrideData'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
@@ -62,4 +65,45 @@ Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
       'autoUpdate': instance.autoUpdate,
       'selectedMap': instance.selectedMap,
       'unfoldSet': instance.unfoldSet.toList(),
+      'overrideData': instance.overrideData,
     };
+
+_$OverrideDataImpl _$$OverrideDataImplFromJson(Map<String, dynamic> json) =>
+    _$OverrideDataImpl(
+      enable: json['enable'] as bool? ?? false,
+      rule: json['rule'] == null
+          ? const OverrideRule()
+          : OverrideRule.fromJson(json['rule'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$$OverrideDataImplToJson(_$OverrideDataImpl instance) =>
+    <String, dynamic>{
+      'enable': instance.enable,
+      'rule': instance.rule,
+    };
+
+_$OverrideRuleImpl _$$OverrideRuleImplFromJson(Map<String, dynamic> json) =>
+    _$OverrideRuleImpl(
+      type: $enumDecodeNullable(_$OverrideRuleTypeEnumMap, json['type']) ??
+          OverrideRuleType.added,
+      overrideRules: (json['overrideRules'] as List<dynamic>?)
+              ?.map((e) => Rule.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      addedRules: (json['addedRules'] as List<dynamic>?)
+              ?.map((e) => Rule.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+
+Map<String, dynamic> _$$OverrideRuleImplToJson(_$OverrideRuleImpl instance) =>
+    <String, dynamic>{
+      'type': _$OverrideRuleTypeEnumMap[instance.type]!,
+      'overrideRules': instance.overrideRules,
+      'addedRules': instance.addedRules,
+    };
+
+const _$OverrideRuleTypeEnumMap = {
+  OverrideRuleType.override: 'override',
+  OverrideRuleType.added: 'added',
+};

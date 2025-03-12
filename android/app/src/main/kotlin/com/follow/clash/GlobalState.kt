@@ -1,9 +1,7 @@
 package com.follow.clash
 
-import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import com.follow.clash.plugins.AppPlugin
-import com.follow.clash.plugins.ServicePlugin
 import com.follow.clash.plugins.TilePlugin
 import com.follow.clash.plugins.VpnPlugin
 import io.flutter.FlutterInjector

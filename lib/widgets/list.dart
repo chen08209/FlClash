@@ -49,28 +49,16 @@ class CheckboxDelegate<T> extends Delegate {
 class OpenDelegate extends Delegate {
   final Widget widget;
   final String title;
-  final double? extendPageWidth;
-  final bool isBlur;
-  final bool isScaffold;
+  final double? maxWidth;
+  final Widget? action;
+  final bool blur;
 
   const OpenDelegate({
     required this.title,
     required this.widget,
-    this.extendPageWidth,
-    this.isBlur = true,
-    this.isScaffold = false,
-  });
-}
-
-class NextDelegate extends Delegate {
-  final Widget widget;
-  final String title;
-  final double? extendPageWidth;
-
-  const NextDelegate({
-    required this.title,
-    required this.widget,
-    this.extendPageWidth,
+    this.maxWidth,
+    this.action,
+    this.blur = true,
   });
 }
 
@@ -112,10 +100,12 @@ class ListItem<T> extends StatelessWidget {
   final Widget? subtitle;
   final EdgeInsets padding;
   final ListTileTitleAlignment tileTitleAlignment;
-  final bool? prue;
+  final bool? dense;
   final Widget? trailing;
   final Delegate delegate;
   final double? horizontalTitleGap;
+  final TextStyle? titleTextStyle;
+  final TextStyle? subtitleTextStyle;
   final void Function()? onTap;
 
   const ListItem({
@@ -126,8 +116,10 @@ class ListItem<T> extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 16),
     this.trailing,
     this.horizontalTitleGap,
-    this.prue,
+    this.dense,
     this.onTap,
+    this.titleTextStyle,
+    this.subtitleTextStyle,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : delegate = const Delegate();
 
@@ -140,7 +132,9 @@ class ListItem<T> extends StatelessWidget {
     this.trailing,
     required OpenDelegate this.delegate,
     this.horizontalTitleGap,
-    this.prue,
+    this.dense,
+    this.titleTextStyle,
+    this.subtitleTextStyle,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
 
@@ -153,7 +147,9 @@ class ListItem<T> extends StatelessWidget {
     this.trailing,
     required OptionsDelegate<T> this.delegate,
     this.horizontalTitleGap,
-    this.prue,
+    this.dense,
+    this.titleTextStyle,
+    this.subtitleTextStyle,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
 
@@ -166,20 +162,9 @@ class ListItem<T> extends StatelessWidget {
     this.trailing,
     required InputDelegate this.delegate,
     this.horizontalTitleGap,
-    this.prue,
-    this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : onTap = null;
-
-  const ListItem.next({
-    super.key,
-    required this.title,
-    this.subtitle,
-    this.leading,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
-    this.trailing,
-    required NextDelegate this.delegate,
-    this.horizontalTitleGap,
-    this.prue,
+    this.dense,
+    this.titleTextStyle,
+    this.subtitleTextStyle,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
 
@@ -191,7 +176,9 @@ class ListItem<T> extends StatelessWidget {
     this.padding = const EdgeInsets.only(left: 16, right: 8),
     required CheckboxDelegate<T> this.delegate,
     this.horizontalTitleGap,
-    this.prue,
+    this.dense,
+    this.titleTextStyle,
+    this.subtitleTextStyle,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   })  : trailing = null,
         onTap = null;
@@ -204,7 +191,9 @@ class ListItem<T> extends StatelessWidget {
     this.padding = const EdgeInsets.only(left: 16, right: 8),
     required SwitchDelegate<T> this.delegate,
     this.horizontalTitleGap,
-    this.prue,
+    this.dense,
+    this.titleTextStyle,
+    this.subtitleTextStyle,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   })  : trailing = null,
         onTap = null;
@@ -217,7 +206,9 @@ class ListItem<T> extends StatelessWidget {
     this.padding = const EdgeInsets.only(left: 12, right: 16),
     required RadioDelegate<T> this.delegate,
     this.horizontalTitleGap = 8,
-    this.prue,
+    this.dense,
+    this.titleTextStyle,
+    this.subtitleTextStyle,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   })  : leading = null,
         onTap = null;
@@ -227,42 +218,11 @@ class ListItem<T> extends StatelessWidget {
     Widget? trailing,
     Widget? leading,
   }) {
-    if (prue == true) {
-      final List<Widget> children = [];
-      if (leading != null) {
-        children.add(leading);
-        children.add(
-          SizedBox(
-            width: horizontalTitleGap,
-          ),
-        );
-      }
-      children.add(
-        Expanded(
-          child: title,
-        ),
-      );
-      if (trailing != null) {
-        children.add(
-          SizedBox(
-            width: horizontalTitleGap,
-          ),
-        );
-        children.add(trailing);
-      }
-      return InkWell(
-        splashFactory: NoSplash.splashFactory,
-        onTap: onTap,
-        child: Container(
-          constraints: BoxConstraints.expand(),
-          padding: padding,
-          child: Row(
-            children: children,
-          ),
-        ),
-      );
-    }
     return ListTile(
+      key: key,
+      dense: dense,
+      titleTextStyle: titleTextStyle,
+      subtitleTextStyle: subtitleTextStyle,
       leading: leading ?? this.leading,
       horizontalTitleGap: horizontalTitleGap,
       title: title,
@@ -286,13 +246,22 @@ class ListItem<T> extends StatelessWidget {
           openAction() {
             final isMobile = globalState.appState.viewMode == ViewMode.mobile;
             if (!isMobile) {
-              showExtendPage(
+              showExtend(
                 context,
-                body: child,
-                title: openDelegate.title,
-                extendPageWidth: openDelegate.extendPageWidth,
-                isBlur: openDelegate.isBlur,
-                isScaffold: openDelegate.isScaffold,
+                props: ExtendProps(
+                  blur: openDelegate.blur,
+                  maxWidth: openDelegate.maxWidth,
+                ),
+                builder: (_, type) {
+                  return AdaptiveSheetScaffold(
+                    actions: [
+                      if (openDelegate.action != null) openDelegate.action!,
+                    ],
+                    type: type,
+                    body: child,
+                    title: openDelegate.title,
+                  );
+                },
               );
               return;
             }
@@ -345,31 +314,6 @@ class ListItem<T> extends StatelessWidget {
         },
       );
     }
-    if (delegate is NextDelegate) {
-      final nextDelegate = delegate as NextDelegate;
-      return _buildListTile(
-        onTap: () {
-          final isMobile = globalState.appState.viewMode == ViewMode.mobile;
-          if (!isMobile) {
-            showExtendPage(
-              context,
-              body: nextDelegate.widget,
-              title: nextDelegate.title,
-              extendPageWidth: nextDelegate.extendPageWidth,
-            );
-            return;
-          }
-
-          BaseNavigator.push(
-              context,
-              CommonScaffold(
-                key: Key(nextDelegate.title),
-                body: nextDelegate.widget,
-                title: nextDelegate.title,
-              ));
-        },
-      );
-    }
     if (delegate is CheckboxDelegate) {
       final checkboxDelegate = delegate as CheckboxDelegate;
       return _buildListTile(
@@ -378,7 +322,7 @@ class ListItem<T> extends StatelessWidget {
             checkboxDelegate.onChanged!(!checkboxDelegate.value);
           }
         },
-        trailing: Checkbox(
+        trailing: CommonCheckBox(
           value: checkboxDelegate.value,
           onChanged: checkboxDelegate.onChanged,
         ),
@@ -427,41 +371,68 @@ class ListItem<T> extends StatelessWidget {
 
 class ListHeader extends StatelessWidget {
   final String title;
+  final String? subTitle;
   final List<Widget> actions;
+  final EdgeInsets? padding;
+  final double? space;
 
   const ListHeader({
     super.key,
     required this.title,
+    this.subTitle,
+    this.padding,
     List<Widget>? actions,
+    this.space,
   }) : actions = actions ?? const [];
 
   @override
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
+      padding: padding ??
+          const EdgeInsets.only(
+            left: 16,
+            right: 8,
+            top: 24,
+            bottom: 8,
+          ),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-          ),
           Expanded(
-            flex: 1,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ...actions,
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .opacity80,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                if (subTitle != null)
+                  Text(
+                    subTitle!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                  ),
               ],
             ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ...genActions(
+                actions,
+                space: space,
+              ),
+            ],
           ),
         ],
       ),
@@ -523,4 +494,133 @@ Widget generateListView(List<Widget> items) {
       bottom: 16,
     ),
   );
+}
+
+class CacheItemExtentListView extends StatefulWidget {
+  final NullableIndexedWidgetBuilder itemBuilder;
+  final int itemCount;
+  final String Function(int index) keyBuilder;
+  final double Function(int index) itemExtentBuilder;
+  final ScrollPhysics? physics;
+  final bool shrinkWrap;
+  final bool reverse;
+  final ScrollController controller;
+
+  const CacheItemExtentListView({
+    super.key,
+    this.physics,
+    this.reverse = false,
+    this.shrinkWrap = false,
+    required this.itemBuilder,
+    required this.controller,
+    required this.keyBuilder,
+    required this.itemCount,
+    required this.itemExtentBuilder,
+  });
+
+  @override
+  State<CacheItemExtentListView> createState() =>
+      CacheItemExtentListViewState();
+}
+
+class CacheItemExtentListViewState extends State<CacheItemExtentListView> {
+  late final FixedMap<String, double> _cacheHeightMap;
+
+  @override
+  void initState() {
+    super.initState();
+    _cacheHeightMap = FixedMap(widget.itemCount);
+  }
+
+  clearCache() {
+    _cacheHeightMap.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _cacheHeightMap.updateMaxSize(widget.itemCount);
+    return ListView.builder(
+      itemBuilder: widget.itemBuilder,
+      itemCount: widget.itemCount,
+      physics: widget.physics,
+      reverse: widget.reverse,
+      shrinkWrap: widget.shrinkWrap,
+      controller: widget.controller,
+      itemExtentBuilder: (index, __) {
+        final key = widget.keyBuilder(index);
+        if (_cacheHeightMap.containsKey(key)) {
+          return _cacheHeightMap.get(key);
+        }
+        return _cacheHeightMap.put(key, widget.itemExtentBuilder(index));
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _cacheHeightMap.clear();
+    super.dispose();
+  }
+}
+
+class CacheItemExtentSliverReorderableList extends StatefulWidget {
+  final IndexedWidgetBuilder itemBuilder;
+  final int itemCount;
+  final String Function(int index) keyBuilder;
+  final double Function(int index) itemExtentBuilder;
+  final ReorderCallback onReorder;
+  final ReorderItemProxyDecorator? proxyDecorator;
+
+  const CacheItemExtentSliverReorderableList({
+    super.key,
+    required this.itemBuilder,
+    required this.keyBuilder,
+    required this.itemCount,
+    required this.itemExtentBuilder,
+    required this.onReorder,
+    this.proxyDecorator,
+  });
+
+  @override
+  State<CacheItemExtentSliverReorderableList> createState() =>
+      CacheItemExtentSliverReorderableListState();
+}
+
+class CacheItemExtentSliverReorderableListState
+    extends State<CacheItemExtentSliverReorderableList> {
+  late final FixedMap<String, double> _cacheHeightMap;
+
+  @override
+  void initState() {
+    super.initState();
+    _cacheHeightMap = FixedMap(widget.itemCount);
+  }
+
+  clearCache() {
+    _cacheHeightMap.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _cacheHeightMap.updateMaxSize(widget.itemCount);
+    return SliverReorderableList(
+      itemBuilder: widget.itemBuilder,
+      itemCount: widget.itemCount,
+      itemExtentBuilder: (index, __) {
+        final key = widget.keyBuilder(index);
+        if (_cacheHeightMap.containsKey(key)) {
+          return _cacheHeightMap.get(key);
+        }
+        return _cacheHeightMap.put(key, widget.itemExtentBuilder(index));
+      },
+      onReorder: widget.onReorder,
+      proxyDecorator: widget.proxyDecorator,
+    );
+  }
+
+  @override
+  void dispose() {
+    _cacheHeightMap.clear();
+    super.dispose();
+  }
 }

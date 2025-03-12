@@ -467,10 +467,6 @@ class _ListHeaderState extends State<ListHeader>
     return CommonCard(
       enterAnimated: widget.enterAnimated,
       key: widget.key,
-      borderSide: WidgetStatePropertyAll(BorderSide.none),
-      backgroundColor: WidgetStatePropertyAll(
-        context.colorScheme.surfaceContainer,
-      ),
       radius: 14,
       type: CommonCardType.filled,
       child: Padding(
@@ -556,6 +552,7 @@ class _ListHeaderState extends State<ListHeader>
               children: [
                 if (isExpand) ...[
                   IconButton(
+                    visualDensity: VisualDensity.standard,
                     onPressed: () {
                       widget.onScrollToSelected(groupName);
                     },
@@ -565,12 +562,13 @@ class _ListHeaderState extends State<ListHeader>
                   ),
                   IconButton(
                     onPressed: _delayTest,
+                    visualDensity: VisualDensity.standard,
                     icon: const Icon(
                       Icons.network_ping,
                     ),
                   ),
                   const SizedBox(
-                    width: 4,
+                    width: 6,
                   ),
                 ],
                 AnimatedBuilder(

@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:fl_clash/common/color.dart';
 import 'package:flutter/material.dart';
 
 class Point {
@@ -191,8 +192,8 @@ class LineChartPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          color.withOpacity(0.3),
-          color.withOpacity(0.1),
+          color.opacity38,
+          color.opacity10,
         ],
       );
 

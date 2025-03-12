@@ -1,6 +1,5 @@
 package com.follow.clash.plugins
 
-import com.follow.clash.FlClashApplication
 import com.follow.clash.GlobalState
 import com.follow.clash.models.VpnOptions
 import com.google.gson.Gson

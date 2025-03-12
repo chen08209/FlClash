@@ -1,3 +1,4 @@
+import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod/riverpod.dart';
 import 'context.dart';
@@ -29,8 +30,14 @@ mixin PageMixin<T extends StatefulWidget> on State<T> {
       final commonScaffoldState = context.commonScaffoldState;
       commonScaffoldState?.actions = actions;
       commonScaffoldState?.floatingActionButton = floatingActionButton;
-      commonScaffoldState?.onSearch = onSearch;
       commonScaffoldState?.onKeywordsUpdate = onKeywordsUpdate;
+      commonScaffoldState?.updateSearchState(
+        (_) => onSearch != null
+            ? AppBarSearchState(
+                onSearch: onSearch!,
+              )
+            : null,
+      );
     });
   }
 

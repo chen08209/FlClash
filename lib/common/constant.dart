@@ -21,6 +21,11 @@ const baseInfoEdgeInsets = EdgeInsets.symmetric(
   vertical: 16,
   horizontal: 16,
 );
+
+double textScaleFactor = min(
+  WidgetsBinding.instance.platformDispatcher.textScaleFactor,
+  1.2,
+);
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
@@ -46,7 +51,7 @@ const defaultExternalController = "127.0.0.1:9090";
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
 const defaultTestUrl = "https://www.gstatic.com/generate_204";
-final filter = ImageFilter.blur(
+final commonFilter = ImageFilter.blur(
   sigmaX: 5,
   sigmaY: 5,
   tileMode: TileMode.mirror,
@@ -76,7 +81,7 @@ const viewModeColumnsMap = {
 const defaultPrimaryColor = Colors.brown;
 
 double getWidgetHeight(num lines) {
-  return max(lines * 84 + (lines - 1) * 16, 0);
+  return max(lines * 84 * textScaleFactor + (lines - 1) * 16, 0);
 }
 
 final mainIsolate = "FlClashMainIsolate";

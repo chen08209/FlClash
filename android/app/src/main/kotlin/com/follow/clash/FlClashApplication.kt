@@ -1,7 +1,7 @@
 package com.follow.clash;
 
 import android.app.Application
-import android.content.Context;
+import android.content.Context
 
 class FlClashApplication : Application() {
     companion object {

@@ -40,39 +40,41 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
       parent: animation,
       curve: Curves.easeIn,
     ).value;
-    return ValueListenableBuilder(
-      valueListenable: offsetNotifier,
-      builder: (_, value, child) {
-        return Align(
-          alignment: align,
-          child: CustomSingleChildLayout(
-            delegate: OverflowAwareLayoutDelegate(
-              offset: value.translate(
-                48,
-                12,
+    return SafeArea(
+      child: ValueListenableBuilder(
+        valueListenable: offsetNotifier,
+        builder: (_, value, child) {
+          return Align(
+            alignment: align,
+            child: CustomSingleChildLayout(
+              delegate: OverflowAwareLayoutDelegate(
+                offset: value.translate(
+                  48,
+                  -8,
+                ),
               ),
-            ),
-            child: child,
-          ),
-        );
-      },
-      child: AnimatedBuilder(
-        animation: animation,
-        builder: (_, Widget? child) {
-          return Opacity(
-            opacity: 0.1 + 0.9 * animationValue,
-            child: Transform.scale(
-              alignment: align,
-              scale: 0.8 + 0.2 * animationValue,
-              child: Transform.translate(
-                offset: Offset(0, -10) * (1 - animationValue),
-                child: child!,
-              ),
+              child: child,
             ),
           );
         },
-        child: builder(
-          context,
+        child: AnimatedBuilder(
+          animation: animation,
+          builder: (_, Widget? child) {
+            return Opacity(
+              opacity: 0.1 + 0.9 * animationValue,
+              child: Transform.scale(
+                alignment: align,
+                scale: 0.8 + 0.2 * animationValue,
+                child: Transform.translate(
+                  offset: Offset(0, -10) * (1 - animationValue),
+                  child: child!,
+                ),
+              ),
+            );
+          },
+          child: builder(
+            context,
+          ),
         ),
       ),
     );
@@ -82,36 +84,47 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
   Duration get transitionDuration => const Duration(milliseconds: 150);
 }
 
+class PopupController extends ValueNotifier<bool> {
+  PopupController() : super(false);
+
+  open() {
+    value = true;
+  }
+
+  close() {
+    value = false;
+  }
+}
+
+typedef PopupOpen = Function({
+  Offset offset,
+});
+
 class CommonPopupBox extends StatefulWidget {
-  final Widget target;
+  final Widget Function(PopupOpen open) targetBuilder;
   final Widget popup;
 
   const CommonPopupBox({
     super.key,
-    required this.target,
+    required this.targetBuilder,
     required this.popup,
   });
 
   @override
-  State<CommonPopupBox> createState() => CommonPopupBoxState();
+  State<CommonPopupBox> createState() => _CommonPopupBoxState();
 }
 
-class CommonPopupBoxState extends State<CommonPopupBox> {
-  final _targetOffsetValueNotifier = ValueNotifier(Offset.zero);
+class _CommonPopupBoxState extends State<CommonPopupBox> {
+  bool _isOpen = false;
+  final _targetOffsetValueNotifier = ValueNotifier<Offset>(Offset.zero);
+  Offset _offset = Offset.zero;
 
-  _handleTargetOffset() {
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) {
-      return;
-    }
-    _targetOffsetValueNotifier.value = renderBox.localToGlobal(
-      Offset.zero,
-    );
-  }
-
-  pop() {
-    _handleTargetOffset();
-    Navigator.of(context).push(
+  _open({Offset offset = Offset.zero}) {
+    _offset = offset;
+    _updateOffset();
+    _isOpen = true;
+    Navigator.of(context)
+        .push(
       CommonPopupRoute(
         barrierLabel: other.id,
         builder: (BuildContext context) {
@@ -119,12 +132,38 @@ class CommonPopupBoxState extends State<CommonPopupBox> {
         },
         offsetNotifier: _targetOffsetValueNotifier,
       ),
-    );
+    )
+        .then((_) {
+      _isOpen = false;
+    });
+  }
+
+  _updateOffset() {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) {
+      return;
+    }
+    final viewPadding = MediaQuery.of(context).viewPadding;
+    _targetOffsetValueNotifier.value = renderBox
+        .localToGlobal(
+          Offset.zero.translate(viewPadding.right, viewPadding.top),
+        )
+        .translate(
+          _offset.dx,
+          _offset.dy,
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.target;
+    return LayoutBuilder(builder: (_, __) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_isOpen) {
+          _updateOffset();
+        }
+      });
+      return widget.targetBuilder(_open);
+    });
   }
 }
 
@@ -142,14 +181,14 @@ class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
 
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    final saveOffset = Offset(16, 16);
+    final safeOffset = Offset(16, 16);
     double x = (offset.dx - childSize.width).clamp(
       0,
-      size.width - saveOffset.dx - childSize.width,
+      size.width - safeOffset.dx - childSize.width,
     );
     double y = (offset.dy).clamp(
       0,
-      size.height - saveOffset.dy - childSize.height,
+      size.height - safeOffset.dy - childSize.height,
     );
     return Offset(x, y);
   }
@@ -161,28 +200,41 @@ class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
 }
 
 class CommonPopupMenu extends StatelessWidget {
-  final List<ActionItemData> items;
+  final List<PopupMenuItemData> items;
+  final double? minWidth;
 
   const CommonPopupMenu({
     super.key,
     required this.items,
+    this.minWidth,
   });
 
   Widget _popupMenuItem(
     BuildContext context, {
-    required ActionItemData item,
+    required PopupMenuItemData item,
     required int index,
   }) {
-    final isDanger = item.type == ActionType.danger;
+    final isDanger = item.type == PopupMenuItemType.danger;
+    final onPressed = item.onPressed;
+    final disabled = onPressed == null;
     final color = isDanger
-        ? context.colorScheme.error
-        : context.colorScheme.onSurfaceVariant;
+        ? disabled
+            ? context.colorScheme.error.opacity30
+            : context.colorScheme.error
+        : disabled
+            ? context.colorScheme.onSurface.opacity30
+            : context.colorScheme.onSurface;
     return InkWell(
-      onTap: () {
-        Navigator.of(context).pop();
-        item.onPressed();
-      },
-      child: Padding(
+      onTap: onPressed != null
+          ? () {
+              Navigator.of(context).pop();
+              onPressed();
+            }
+          : null,
+      child: Container(
+        constraints: BoxConstraints(
+          minWidth: minWidth ?? 120,
+        ),
         padding: EdgeInsets.only(
           left: 16,
           right: 64,

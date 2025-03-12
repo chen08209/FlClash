@@ -28,12 +28,13 @@ class _ProxiesFragmentState extends ConsumerState<ProxiesFragment>
         if (_hasProviders)
           IconButton(
             onPressed: () {
-              showExtendPage(
-                isScaffold: true,
-                extendPageWidth: 360,
+              showExtend(
                 context,
-                body: const ProvidersView(),
-                title: appLocalizations.providers,
+                builder: (_, type) {
+                  return ProvidersView(
+                    type: type,
+                  );
+                },
               );
             },
             icon: const Icon(
@@ -51,11 +52,15 @@ class _ProxiesFragmentState extends ConsumerState<ProxiesFragment>
               )
             : IconButton(
                 onPressed: () {
-                  showExtendPage(
+                  showExtend(
                     context,
-                    extendPageWidth: 360,
-                    title: appLocalizations.iconConfiguration,
-                    body: _IconConfigView(),
+                    builder: (_, type) {
+                      return AdaptiveSheetScaffold(
+                        type: type,
+                        body: const _IconConfigView(),
+                        title: appLocalizations.iconConfiguration,
+                      );
+                    },
                   );
                 },
                 icon: const Icon(
@@ -65,9 +70,17 @@ class _ProxiesFragmentState extends ConsumerState<ProxiesFragment>
         IconButton(
           onPressed: () {
             showSheet(
-              title: appLocalizations.proxiesSetting,
               context: context,
-              body: const ProxiesSetting(),
+              props: SheetProps(
+                isScrollControlled: true,
+              ),
+              builder: (_, type) {
+                return AdaptiveSheetScaffold(
+                  type: type,
+                  body: const ProxiesSetting(),
+                  title: appLocalizations.proxiesSetting,
+                );
+              },
             );
           },
           icon: const Icon(
@@ -128,13 +141,11 @@ class _IconConfigView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final iconMap =
         ref.watch(proxiesStyleSettingProvider.select((state) => state.iconMap));
-    final entries = iconMap.entries.toList();
-    return ListPage(
+    return MapInputPage(
       title: appLocalizations.iconConfiguration,
-      items: entries,
+      map: iconMap,
       keyLabel: appLocalizations.regExp,
       valueLabel: appLocalizations.icon,
-      keyBuilder: (item) => Key(item.key),
       titleBuilder: (item) => Text(item.key),
       leadingBuilder: (item) => Container(
         decoration: BoxDecoration(
@@ -151,10 +162,10 @@ class _IconConfigView extends ConsumerWidget {
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
-      onChange: (entries) {
+      onChange: (value) {
         ref.read(proxiesStyleSettingProvider.notifier).updateState(
               (state) => state.copyWith(
-                iconMap: Map.fromEntries(entries),
+                iconMap: value,
               ),
             );
       },

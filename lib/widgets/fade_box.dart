@@ -20,6 +20,35 @@ class FadeBox extends StatelessWidget {
       ) {
         return Container(
           alignment: Alignment.centerLeft,
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+class FadeThroughBox extends StatelessWidget {
+  final Widget child;
+
+  const FadeThroughBox({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PageTransitionSwitcher(
+      transitionBuilder: (
+        child,
+        animation,
+        secondaryAnimation,
+      ) {
+        return Container(
+          alignment: Alignment.centerLeft,
           child: FadeThroughTransition(
             animation: animation,
             fillColor: Colors.transparent,

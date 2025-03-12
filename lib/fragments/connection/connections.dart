@@ -125,7 +125,7 @@ class _ConnectionsFragmentState extends ConsumerState<ConnectionsFragment>
               return ConnectionItem(
                 key: Key(connection.id),
                 connection: connection,
-                onClick: (value) {
+                onClickKeyword: (value) {
                   context.commonScaffoldState?.addKeyword(value);
                 },
                 trailing: IconButton(

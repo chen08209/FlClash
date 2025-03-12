@@ -37,7 +37,7 @@ mixin _$ProxyGroup {
   @JsonKey(name: "exclude-type")
   String? get excludeType => throw _privateConstructorUsedError;
   @JsonKey(name: "expected-status")
-  int? get expectedStatus => throw _privateConstructorUsedError;
+  dynamic get expectedStatus => throw _privateConstructorUsedError;
   bool? get hidden => throw _privateConstructorUsedError;
   String? get icon => throw _privateConstructorUsedError;
 
@@ -70,7 +70,7 @@ abstract class $ProxyGroupCopyWith<$Res> {
       String? filter,
       @JsonKey(name: "expected-filter") String? excludeFilter,
       @JsonKey(name: "exclude-type") String? excludeType,
-      @JsonKey(name: "expected-status") int? expectedStatus,
+      @JsonKey(name: "expected-status") dynamic expectedStatus,
       bool? hidden,
       String? icon});
 }
@@ -158,7 +158,7 @@ class _$ProxyGroupCopyWithImpl<$Res, $Val extends ProxyGroup>
       expectedStatus: freezed == expectedStatus
           ? _value.expectedStatus
           : expectedStatus // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as dynamic,
       hidden: freezed == hidden
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
@@ -192,7 +192,7 @@ abstract class _$$ProxyGroupImplCopyWith<$Res>
       String? filter,
       @JsonKey(name: "expected-filter") String? excludeFilter,
       @JsonKey(name: "exclude-type") String? excludeType,
-      @JsonKey(name: "expected-status") int? expectedStatus,
+      @JsonKey(name: "expected-status") dynamic expectedStatus,
       bool? hidden,
       String? icon});
 }
@@ -278,7 +278,7 @@ class __$$ProxyGroupImplCopyWithImpl<$Res>
       expectedStatus: freezed == expectedStatus
           ? _value.expectedStatus
           : expectedStatus // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as dynamic,
       hidden: freezed == hidden
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
@@ -362,7 +362,7 @@ class _$ProxyGroupImpl implements _ProxyGroup {
   final String? excludeType;
   @override
   @JsonKey(name: "expected-status")
-  final int? expectedStatus;
+  final dynamic expectedStatus;
   @override
   final bool? hidden;
   @override
@@ -394,8 +394,8 @@ class _$ProxyGroupImpl implements _ProxyGroup {
                 other.excludeFilter == excludeFilter) &&
             (identical(other.excludeType, excludeType) ||
                 other.excludeType == excludeType) &&
-            (identical(other.expectedStatus, expectedStatus) ||
-                other.expectedStatus == expectedStatus) &&
+            const DeepCollectionEquality()
+                .equals(other.expectedStatus, expectedStatus) &&
             (identical(other.hidden, hidden) || other.hidden == hidden) &&
             (identical(other.icon, icon) || other.icon == icon));
   }
@@ -416,7 +416,7 @@ class _$ProxyGroupImpl implements _ProxyGroup {
       filter,
       excludeFilter,
       excludeType,
-      expectedStatus,
+      const DeepCollectionEquality().hash(expectedStatus),
       hidden,
       icon);
 
@@ -451,7 +451,7 @@ abstract class _ProxyGroup implements ProxyGroup {
       final String? filter,
       @JsonKey(name: "expected-filter") final String? excludeFilter,
       @JsonKey(name: "exclude-type") final String? excludeType,
-      @JsonKey(name: "expected-status") final int? expectedStatus,
+      @JsonKey(name: "expected-status") final dynamic expectedStatus,
       final bool? hidden,
       final String? icon}) = _$ProxyGroupImpl;
 
@@ -488,7 +488,7 @@ abstract class _ProxyGroup implements ProxyGroup {
   String? get excludeType;
   @override
   @JsonKey(name: "expected-status")
-  int? get expectedStatus;
+  dynamic get expectedStatus;
   @override
   bool? get hidden;
   @override
@@ -499,6 +499,156 @@ abstract class _ProxyGroup implements ProxyGroup {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ProxyGroupImplCopyWith<_$ProxyGroupImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+RuleProvider _$RuleProviderFromJson(Map<String, dynamic> json) {
+  return _RuleProvider.fromJson(json);
+}
+
+/// @nodoc
+mixin _$RuleProvider {
+  String get name => throw _privateConstructorUsedError;
+
+  /// Serializes this RuleProvider to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of RuleProvider
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $RuleProviderCopyWith<RuleProvider> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $RuleProviderCopyWith<$Res> {
+  factory $RuleProviderCopyWith(
+          RuleProvider value, $Res Function(RuleProvider) then) =
+      _$RuleProviderCopyWithImpl<$Res, RuleProvider>;
+  @useResult
+  $Res call({String name});
+}
+
+/// @nodoc
+class _$RuleProviderCopyWithImpl<$Res, $Val extends RuleProvider>
+    implements $RuleProviderCopyWith<$Res> {
+  _$RuleProviderCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of RuleProvider
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+  }) {
+    return _then(_value.copyWith(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$RuleProviderImplCopyWith<$Res>
+    implements $RuleProviderCopyWith<$Res> {
+  factory _$$RuleProviderImplCopyWith(
+          _$RuleProviderImpl value, $Res Function(_$RuleProviderImpl) then) =
+      __$$RuleProviderImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String name});
+}
+
+/// @nodoc
+class __$$RuleProviderImplCopyWithImpl<$Res>
+    extends _$RuleProviderCopyWithImpl<$Res, _$RuleProviderImpl>
+    implements _$$RuleProviderImplCopyWith<$Res> {
+  __$$RuleProviderImplCopyWithImpl(
+      _$RuleProviderImpl _value, $Res Function(_$RuleProviderImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of RuleProvider
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+  }) {
+    return _then(_$RuleProviderImpl(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$RuleProviderImpl implements _RuleProvider {
+  const _$RuleProviderImpl({required this.name});
+
+  factory _$RuleProviderImpl.fromJson(Map<String, dynamic> json) =>
+      _$$RuleProviderImplFromJson(json);
+
+  @override
+  final String name;
+
+  @override
+  String toString() {
+    return 'RuleProvider(name: $name)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$RuleProviderImpl &&
+            (identical(other.name, name) || other.name == name));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, name);
+
+  /// Create a copy of RuleProvider
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$RuleProviderImplCopyWith<_$RuleProviderImpl> get copyWith =>
+      __$$RuleProviderImplCopyWithImpl<_$RuleProviderImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$RuleProviderImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _RuleProvider implements RuleProvider {
+  const factory _RuleProvider({required final String name}) =
+      _$RuleProviderImpl;
+
+  factory _RuleProvider.fromJson(Map<String, dynamic> json) =
+      _$RuleProviderImpl.fromJson;
+
+  @override
+  String get name;
+
+  /// Create a copy of RuleProvider
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$RuleProviderImplCopyWith<_$RuleProviderImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1834,6 +1984,571 @@ abstract class _GeoXUrl implements GeoXUrl {
       throw _privateConstructorUsedError;
 }
 
+/// @nodoc
+mixin _$ParsedRule {
+  RuleAction get ruleAction => throw _privateConstructorUsedError;
+  String? get content => throw _privateConstructorUsedError;
+  String? get ruleTarget => throw _privateConstructorUsedError;
+  String? get ruleProvider => throw _privateConstructorUsedError;
+  String? get subRule => throw _privateConstructorUsedError;
+  bool get noResolve => throw _privateConstructorUsedError;
+  bool get src => throw _privateConstructorUsedError;
+
+  /// Create a copy of ParsedRule
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ParsedRuleCopyWith<ParsedRule> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ParsedRuleCopyWith<$Res> {
+  factory $ParsedRuleCopyWith(
+          ParsedRule value, $Res Function(ParsedRule) then) =
+      _$ParsedRuleCopyWithImpl<$Res, ParsedRule>;
+  @useResult
+  $Res call(
+      {RuleAction ruleAction,
+      String? content,
+      String? ruleTarget,
+      String? ruleProvider,
+      String? subRule,
+      bool noResolve,
+      bool src});
+}
+
+/// @nodoc
+class _$ParsedRuleCopyWithImpl<$Res, $Val extends ParsedRule>
+    implements $ParsedRuleCopyWith<$Res> {
+  _$ParsedRuleCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ParsedRule
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? ruleAction = null,
+    Object? content = freezed,
+    Object? ruleTarget = freezed,
+    Object? ruleProvider = freezed,
+    Object? subRule = freezed,
+    Object? noResolve = null,
+    Object? src = null,
+  }) {
+    return _then(_value.copyWith(
+      ruleAction: null == ruleAction
+          ? _value.ruleAction
+          : ruleAction // ignore: cast_nullable_to_non_nullable
+              as RuleAction,
+      content: freezed == content
+          ? _value.content
+          : content // ignore: cast_nullable_to_non_nullable
+              as String?,
+      ruleTarget: freezed == ruleTarget
+          ? _value.ruleTarget
+          : ruleTarget // ignore: cast_nullable_to_non_nullable
+              as String?,
+      ruleProvider: freezed == ruleProvider
+          ? _value.ruleProvider
+          : ruleProvider // ignore: cast_nullable_to_non_nullable
+              as String?,
+      subRule: freezed == subRule
+          ? _value.subRule
+          : subRule // ignore: cast_nullable_to_non_nullable
+              as String?,
+      noResolve: null == noResolve
+          ? _value.noResolve
+          : noResolve // ignore: cast_nullable_to_non_nullable
+              as bool,
+      src: null == src
+          ? _value.src
+          : src // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ParsedRuleImplCopyWith<$Res>
+    implements $ParsedRuleCopyWith<$Res> {
+  factory _$$ParsedRuleImplCopyWith(
+          _$ParsedRuleImpl value, $Res Function(_$ParsedRuleImpl) then) =
+      __$$ParsedRuleImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {RuleAction ruleAction,
+      String? content,
+      String? ruleTarget,
+      String? ruleProvider,
+      String? subRule,
+      bool noResolve,
+      bool src});
+}
+
+/// @nodoc
+class __$$ParsedRuleImplCopyWithImpl<$Res>
+    extends _$ParsedRuleCopyWithImpl<$Res, _$ParsedRuleImpl>
+    implements _$$ParsedRuleImplCopyWith<$Res> {
+  __$$ParsedRuleImplCopyWithImpl(
+      _$ParsedRuleImpl _value, $Res Function(_$ParsedRuleImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ParsedRule
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? ruleAction = null,
+    Object? content = freezed,
+    Object? ruleTarget = freezed,
+    Object? ruleProvider = freezed,
+    Object? subRule = freezed,
+    Object? noResolve = null,
+    Object? src = null,
+  }) {
+    return _then(_$ParsedRuleImpl(
+      ruleAction: null == ruleAction
+          ? _value.ruleAction
+          : ruleAction // ignore: cast_nullable_to_non_nullable
+              as RuleAction,
+      content: freezed == content
+          ? _value.content
+          : content // ignore: cast_nullable_to_non_nullable
+              as String?,
+      ruleTarget: freezed == ruleTarget
+          ? _value.ruleTarget
+          : ruleTarget // ignore: cast_nullable_to_non_nullable
+              as String?,
+      ruleProvider: freezed == ruleProvider
+          ? _value.ruleProvider
+          : ruleProvider // ignore: cast_nullable_to_non_nullable
+              as String?,
+      subRule: freezed == subRule
+          ? _value.subRule
+          : subRule // ignore: cast_nullable_to_non_nullable
+              as String?,
+      noResolve: null == noResolve
+          ? _value.noResolve
+          : noResolve // ignore: cast_nullable_to_non_nullable
+              as bool,
+      src: null == src
+          ? _value.src
+          : src // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ParsedRuleImpl implements _ParsedRule {
+  const _$ParsedRuleImpl(
+      {required this.ruleAction,
+      this.content,
+      this.ruleTarget,
+      this.ruleProvider,
+      this.subRule,
+      this.noResolve = false,
+      this.src = false});
+
+  @override
+  final RuleAction ruleAction;
+  @override
+  final String? content;
+  @override
+  final String? ruleTarget;
+  @override
+  final String? ruleProvider;
+  @override
+  final String? subRule;
+  @override
+  @JsonKey()
+  final bool noResolve;
+  @override
+  @JsonKey()
+  final bool src;
+
+  @override
+  String toString() {
+    return 'ParsedRule(ruleAction: $ruleAction, content: $content, ruleTarget: $ruleTarget, ruleProvider: $ruleProvider, subRule: $subRule, noResolve: $noResolve, src: $src)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ParsedRuleImpl &&
+            (identical(other.ruleAction, ruleAction) ||
+                other.ruleAction == ruleAction) &&
+            (identical(other.content, content) || other.content == content) &&
+            (identical(other.ruleTarget, ruleTarget) ||
+                other.ruleTarget == ruleTarget) &&
+            (identical(other.ruleProvider, ruleProvider) ||
+                other.ruleProvider == ruleProvider) &&
+            (identical(other.subRule, subRule) || other.subRule == subRule) &&
+            (identical(other.noResolve, noResolve) ||
+                other.noResolve == noResolve) &&
+            (identical(other.src, src) || other.src == src));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, ruleAction, content, ruleTarget,
+      ruleProvider, subRule, noResolve, src);
+
+  /// Create a copy of ParsedRule
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ParsedRuleImplCopyWith<_$ParsedRuleImpl> get copyWith =>
+      __$$ParsedRuleImplCopyWithImpl<_$ParsedRuleImpl>(this, _$identity);
+}
+
+abstract class _ParsedRule implements ParsedRule {
+  const factory _ParsedRule(
+      {required final RuleAction ruleAction,
+      final String? content,
+      final String? ruleTarget,
+      final String? ruleProvider,
+      final String? subRule,
+      final bool noResolve,
+      final bool src}) = _$ParsedRuleImpl;
+
+  @override
+  RuleAction get ruleAction;
+  @override
+  String? get content;
+  @override
+  String? get ruleTarget;
+  @override
+  String? get ruleProvider;
+  @override
+  String? get subRule;
+  @override
+  bool get noResolve;
+  @override
+  bool get src;
+
+  /// Create a copy of ParsedRule
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ParsedRuleImplCopyWith<_$ParsedRuleImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+Rule _$RuleFromJson(Map<String, dynamic> json) {
+  return _Rule.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Rule {
+  String get id => throw _privateConstructorUsedError;
+  String get value => throw _privateConstructorUsedError;
+
+  /// Serializes this Rule to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Rule
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $RuleCopyWith<Rule> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $RuleCopyWith<$Res> {
+  factory $RuleCopyWith(Rule value, $Res Function(Rule) then) =
+      _$RuleCopyWithImpl<$Res, Rule>;
+  @useResult
+  $Res call({String id, String value});
+}
+
+/// @nodoc
+class _$RuleCopyWithImpl<$Res, $Val extends Rule>
+    implements $RuleCopyWith<$Res> {
+  _$RuleCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Rule
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? value = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$RuleImplCopyWith<$Res> implements $RuleCopyWith<$Res> {
+  factory _$$RuleImplCopyWith(
+          _$RuleImpl value, $Res Function(_$RuleImpl) then) =
+      __$$RuleImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String id, String value});
+}
+
+/// @nodoc
+class __$$RuleImplCopyWithImpl<$Res>
+    extends _$RuleCopyWithImpl<$Res, _$RuleImpl>
+    implements _$$RuleImplCopyWith<$Res> {
+  __$$RuleImplCopyWithImpl(_$RuleImpl _value, $Res Function(_$RuleImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Rule
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? value = null,
+  }) {
+    return _then(_$RuleImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$RuleImpl implements _Rule {
+  const _$RuleImpl({required this.id, required this.value});
+
+  factory _$RuleImpl.fromJson(Map<String, dynamic> json) =>
+      _$$RuleImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  final String value;
+
+  @override
+  String toString() {
+    return 'Rule(id: $id, value: $value)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$RuleImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.value, value) || other.value == value));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, value);
+
+  /// Create a copy of Rule
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$RuleImplCopyWith<_$RuleImpl> get copyWith =>
+      __$$RuleImplCopyWithImpl<_$RuleImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$RuleImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Rule implements Rule {
+  const factory _Rule({required final String id, required final String value}) =
+      _$RuleImpl;
+
+  factory _Rule.fromJson(Map<String, dynamic> json) = _$RuleImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  String get value;
+
+  /// Create a copy of Rule
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$RuleImplCopyWith<_$RuleImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+SubRule _$SubRuleFromJson(Map<String, dynamic> json) {
+  return _SubRule.fromJson(json);
+}
+
+/// @nodoc
+mixin _$SubRule {
+  String get name => throw _privateConstructorUsedError;
+
+  /// Serializes this SubRule to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of SubRule
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $SubRuleCopyWith<SubRule> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $SubRuleCopyWith<$Res> {
+  factory $SubRuleCopyWith(SubRule value, $Res Function(SubRule) then) =
+      _$SubRuleCopyWithImpl<$Res, SubRule>;
+  @useResult
+  $Res call({String name});
+}
+
+/// @nodoc
+class _$SubRuleCopyWithImpl<$Res, $Val extends SubRule>
+    implements $SubRuleCopyWith<$Res> {
+  _$SubRuleCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of SubRule
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+  }) {
+    return _then(_value.copyWith(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$SubRuleImplCopyWith<$Res> implements $SubRuleCopyWith<$Res> {
+  factory _$$SubRuleImplCopyWith(
+          _$SubRuleImpl value, $Res Function(_$SubRuleImpl) then) =
+      __$$SubRuleImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String name});
+}
+
+/// @nodoc
+class __$$SubRuleImplCopyWithImpl<$Res>
+    extends _$SubRuleCopyWithImpl<$Res, _$SubRuleImpl>
+    implements _$$SubRuleImplCopyWith<$Res> {
+  __$$SubRuleImplCopyWithImpl(
+      _$SubRuleImpl _value, $Res Function(_$SubRuleImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of SubRule
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+  }) {
+    return _then(_$SubRuleImpl(
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$SubRuleImpl implements _SubRule {
+  const _$SubRuleImpl({required this.name});
+
+  factory _$SubRuleImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SubRuleImplFromJson(json);
+
+  @override
+  final String name;
+
+  @override
+  String toString() {
+    return 'SubRule(name: $name)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SubRuleImpl &&
+            (identical(other.name, name) || other.name == name));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, name);
+
+  /// Create a copy of SubRule
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SubRuleImplCopyWith<_$SubRuleImpl> get copyWith =>
+      __$$SubRuleImplCopyWithImpl<_$SubRuleImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$SubRuleImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _SubRule implements SubRule {
+  const factory _SubRule({required final String name}) = _$SubRuleImpl;
+
+  factory _SubRule.fromJson(Map<String, dynamic> json) = _$SubRuleImpl.fromJson;
+
+  @override
+  String get name;
+
+  /// Create a copy of SubRule
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$SubRuleImplCopyWith<_$SubRuleImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 ClashConfigSnippet _$ClashConfigSnippetFromJson(Map<String, dynamic> json) {
   return _ClashConfigSnippet.fromJson(json);
 }
@@ -1842,7 +2557,12 @@ ClashConfigSnippet _$ClashConfigSnippetFromJson(Map<String, dynamic> json) {
 mixin _$ClashConfigSnippet {
   @JsonKey(name: "proxy-groups")
   List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
-  List<String> get rule => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _genRule)
+  List<Rule> get rule => throw _privateConstructorUsedError;
+  @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+  List<RuleProvider> get ruleProvider => throw _privateConstructorUsedError;
+  @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+  List<SubRule> get subRules => throw _privateConstructorUsedError;
 
   /// Serializes this ClashConfigSnippet to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1862,7 +2582,11 @@ abstract class $ClashConfigSnippetCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-      List<String> rule});
+      @JsonKey(fromJson: _genRule) List<Rule> rule,
+      @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+      List<RuleProvider> ruleProvider,
+      @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+      List<SubRule> subRules});
 }
 
 /// @nodoc
@@ -1882,6 +2606,8 @@ class _$ClashConfigSnippetCopyWithImpl<$Res, $Val extends ClashConfigSnippet>
   $Res call({
     Object? proxyGroups = null,
     Object? rule = null,
+    Object? ruleProvider = null,
+    Object? subRules = null,
   }) {
     return _then(_value.copyWith(
       proxyGroups: null == proxyGroups
@@ -1891,7 +2617,15 @@ class _$ClashConfigSnippetCopyWithImpl<$Res, $Val extends ClashConfigSnippet>
       rule: null == rule
           ? _value.rule
           : rule // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as List<Rule>,
+      ruleProvider: null == ruleProvider
+          ? _value.ruleProvider
+          : ruleProvider // ignore: cast_nullable_to_non_nullable
+              as List<RuleProvider>,
+      subRules: null == subRules
+          ? _value.subRules
+          : subRules // ignore: cast_nullable_to_non_nullable
+              as List<SubRule>,
     ) as $Val);
   }
 }
@@ -1906,7 +2640,11 @@ abstract class _$$ClashConfigSnippetImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-      List<String> rule});
+      @JsonKey(fromJson: _genRule) List<Rule> rule,
+      @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+      List<RuleProvider> ruleProvider,
+      @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+      List<SubRule> subRules});
 }
 
 /// @nodoc
@@ -1924,6 +2662,8 @@ class __$$ClashConfigSnippetImplCopyWithImpl<$Res>
   $Res call({
     Object? proxyGroups = null,
     Object? rule = null,
+    Object? ruleProvider = null,
+    Object? subRules = null,
   }) {
     return _then(_$ClashConfigSnippetImpl(
       proxyGroups: null == proxyGroups
@@ -1933,7 +2673,15 @@ class __$$ClashConfigSnippetImplCopyWithImpl<$Res>
       rule: null == rule
           ? _value._rule
           : rule // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as List<Rule>,
+      ruleProvider: null == ruleProvider
+          ? _value._ruleProvider
+          : ruleProvider // ignore: cast_nullable_to_non_nullable
+              as List<RuleProvider>,
+      subRules: null == subRules
+          ? _value._subRules
+          : subRules // ignore: cast_nullable_to_non_nullable
+              as List<SubRule>,
     ));
   }
 }
@@ -1944,9 +2692,15 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
   const _$ClashConfigSnippetImpl(
       {@JsonKey(name: "proxy-groups")
       final List<ProxyGroup> proxyGroups = const [],
-      final List<String> rule = const []})
+      @JsonKey(fromJson: _genRule) final List<Rule> rule = const [],
+      @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+      final List<RuleProvider> ruleProvider = const [],
+      @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+      final List<SubRule> subRules = const []})
       : _proxyGroups = proxyGroups,
-        _rule = rule;
+        _rule = rule,
+        _ruleProvider = ruleProvider,
+        _subRules = subRules;
 
   factory _$ClashConfigSnippetImpl.fromJson(Map<String, dynamic> json) =>
       _$$ClashConfigSnippetImplFromJson(json);
@@ -1960,18 +2714,36 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
     return EqualUnmodifiableListView(_proxyGroups);
   }
 
-  final List<String> _rule;
+  final List<Rule> _rule;
   @override
-  @JsonKey()
-  List<String> get rule {
+  @JsonKey(fromJson: _genRule)
+  List<Rule> get rule {
     if (_rule is EqualUnmodifiableListView) return _rule;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_rule);
   }
 
+  final List<RuleProvider> _ruleProvider;
+  @override
+  @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+  List<RuleProvider> get ruleProvider {
+    if (_ruleProvider is EqualUnmodifiableListView) return _ruleProvider;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_ruleProvider);
+  }
+
+  final List<SubRule> _subRules;
+  @override
+  @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+  List<SubRule> get subRules {
+    if (_subRules is EqualUnmodifiableListView) return _subRules;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_subRules);
+  }
+
   @override
   String toString() {
-    return 'ClashConfigSnippet(proxyGroups: $proxyGroups, rule: $rule)';
+    return 'ClashConfigSnippet(proxyGroups: $proxyGroups, rule: $rule, ruleProvider: $ruleProvider, subRules: $subRules)';
   }
 
   @override
@@ -1981,7 +2753,10 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
             other is _$ClashConfigSnippetImpl &&
             const DeepCollectionEquality()
                 .equals(other._proxyGroups, _proxyGroups) &&
-            const DeepCollectionEquality().equals(other._rule, _rule));
+            const DeepCollectionEquality().equals(other._rule, _rule) &&
+            const DeepCollectionEquality()
+                .equals(other._ruleProvider, _ruleProvider) &&
+            const DeepCollectionEquality().equals(other._subRules, _subRules));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1989,7 +2764,9 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
   int get hashCode => Object.hash(
       runtimeType,
       const DeepCollectionEquality().hash(_proxyGroups),
-      const DeepCollectionEquality().hash(_rule));
+      const DeepCollectionEquality().hash(_rule),
+      const DeepCollectionEquality().hash(_ruleProvider),
+      const DeepCollectionEquality().hash(_subRules));
 
   /// Create a copy of ClashConfigSnippet
   /// with the given fields replaced by the non-null parameter values.
@@ -2011,7 +2788,11 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
 abstract class _ClashConfigSnippet implements ClashConfigSnippet {
   const factory _ClashConfigSnippet(
       {@JsonKey(name: "proxy-groups") final List<ProxyGroup> proxyGroups,
-      final List<String> rule}) = _$ClashConfigSnippetImpl;
+      @JsonKey(fromJson: _genRule) final List<Rule> rule,
+      @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+      final List<RuleProvider> ruleProvider,
+      @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+      final List<SubRule> subRules}) = _$ClashConfigSnippetImpl;
 
   factory _ClashConfigSnippet.fromJson(Map<String, dynamic> json) =
       _$ClashConfigSnippetImpl.fromJson;
@@ -2020,7 +2801,14 @@ abstract class _ClashConfigSnippet implements ClashConfigSnippet {
   @JsonKey(name: "proxy-groups")
   List<ProxyGroup> get proxyGroups;
   @override
-  List<String> get rule;
+  @JsonKey(fromJson: _genRule)
+  List<Rule> get rule;
+  @override
+  @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+  List<RuleProvider> get ruleProvider;
+  @override
+  @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+  List<SubRule> get subRules;
 
   /// Create a copy of ClashConfigSnippet
   /// with the given fields replaced by the non-null parameter values.

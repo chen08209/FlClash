@@ -12,7 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final _networkDetectionState = ValueNotifier<NetworkDetectionState>(
   const NetworkDetectionState(
-    isTesting: true,
+    isTesting: false,
+    isLoading: true,
     ipInfo: null,
   ),
 );
@@ -28,7 +29,6 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
   bool? _preIsStart;
   Timer? _setTimeoutTimer;
   CancelToken? cancelToken;
-  Completer? checkedCompleter;
 
   @override
   void initState() {
@@ -37,11 +37,14 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
         _startCheck();
       }
     });
+    if (!_networkDetectionState.value.isTesting &&
+        _networkDetectionState.value.isLoading) {
+      _startCheck();
+    }
     super.initState();
   }
 
   _startCheck() async {
-    await checkedCompleter?.future;
     if (cancelToken != null) {
       cancelToken!.cancel();
       cancelToken = null;
@@ -64,7 +67,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
     }
     _clearSetTimeoutTimer();
     _networkDetectionState.value = _networkDetectionState.value.copyWith(
-      isTesting: true,
+      isLoading: true,
       ipInfo: null,
     );
     _preIsStart = isStart;
@@ -74,16 +77,16 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
     }
     cancelToken = CancelToken();
     try {
+      _networkDetectionState.value = _networkDetectionState.value.copyWith(
+        isTesting: true,
+      );
       final ipInfo = await request.checkIp(cancelToken: cancelToken);
+      _networkDetectionState.value = _networkDetectionState.value.copyWith(
+        isTesting: false,
+      );
       if (ipInfo != null) {
-        checkedCompleter = Completer();
-        checkedCompleter?.complete(
-          Future.delayed(
-            Duration(milliseconds: 3000),
-          ),
-        );
         _networkDetectionState.value = _networkDetectionState.value.copyWith(
-          isTesting: false,
+          isLoading: false,
           ipInfo: ipInfo,
         );
         return;
@@ -91,14 +94,14 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
       _clearSetTimeoutTimer();
       _setTimeoutTimer = Timer(const Duration(milliseconds: 300), () {
         _networkDetectionState.value = _networkDetectionState.value.copyWith(
-          isTesting: false,
+          isLoading: false,
           ipInfo: null,
         );
       });
     } catch (e) {
       if (e.toString() == "cancelled") {
         _networkDetectionState.value = _networkDetectionState.value.copyWith(
-          isTesting: true,
+          isLoading: true,
           ipInfo: null,
         );
       }
@@ -136,7 +139,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
         valueListenable: _networkDetectionState,
         builder: (_, state, __) {
           final ipInfo = state.ipInfo;
-          final isTesting = state.isTesting;
+          final isLoading = state.isLoading;
           return CommonCard(
             onPressed: () {},
             child: Column(
@@ -218,7 +221,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                   ),
                   child: SizedBox(
                     height: globalState.measure.bodyMediumHeight + 2,
-                    child: FadeBox(
+                    child: FadeThroughBox(
                       child: ipInfo != null
                           ? TooltipText(
                               text: Text(
@@ -229,8 +232,8 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             )
-                          : FadeBox(
-                              child: isTesting == false && ipInfo == null
+                          : FadeThroughBox(
+                              child: isLoading == false && ipInfo == null
                                   ? Text(
                                       "timeout",
                                       style: context.textTheme.bodyMedium

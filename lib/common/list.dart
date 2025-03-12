@@ -32,7 +32,7 @@ class FixedList<T> {
 }
 
 class FixedMap<K, V> {
-  final int maxSize;
+  int maxSize;
   final Map<K, V> _map = {};
   final Queue<K> _queue = Queue<K>();
 
@@ -45,6 +45,7 @@ class FixedMap<K, V> {
     }
     _map[key] = value;
     _queue.add(key);
+    return value;
   }
 
   clear() {
@@ -52,7 +53,12 @@ class FixedMap<K, V> {
     _queue.clear();
   }
 
+  updateMaxSize(int size){
+    maxSize = size;
+  }
+
   V? get(K key) => _map[key];
+
 
   bool containsKey(K key) => _map.containsKey(key);
 

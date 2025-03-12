@@ -31,6 +31,7 @@
 		7AC6855B2B8AF836004C123B /* (null) in Bundle Framework */ = {isa = PBXBuildFile; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		CDD319C761C7664F6008596B /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4121E8CCDC7DC35194714CDE /* Pods_Runner.framework */; };
 		F50091052CF74B7700D43AEA /* FlClashCore in CopyFiles */ = {isa = PBXBuildFile; fileRef = F50091042CF74B7700D43AEA /* FlClashCore */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		F5AA39AF2DA1D9FB00F5C816 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = F5AA39AE2DA1D9FB00F5C816 /* LaunchAtLogin */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -135,6 +136,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F5AA39AF2DA1D9FB00F5C816 /* LaunchAtLogin in Frameworks */,
 				CDD319C761C7664F6008596B /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -326,6 +328,9 @@
 				Base,
 			);
 			mainGroup = 33CC10E42044A3C60003C045;
+			packageReferences = (
+				F5AA39AD2DA1D9FB00F5C816 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
+			);
 			productRefGroup = 33CC10EE2044A3C60003C045 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -827,6 +832,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F5AA39AD2DA1D9FB00F5C816 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F5AA39AE2DA1D9FB00F5C816 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F5AA39AD2DA1D9FB00F5C816 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */;
+			productName = LaunchAtLogin;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 33CC10E52044A3C60003C045 /* Project object */;
 }

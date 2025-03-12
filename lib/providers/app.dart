@@ -3,6 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/app.g.dart';
@@ -182,22 +183,42 @@ class RunTime extends _$RunTime with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class ViewWidth extends _$ViewWidth with AutoDisposeNotifierMixin {
+class ViewSize extends _$ViewSize with AutoDisposeNotifierMixin {
   @override
-  double build() {
-    return globalState.appState.viewWidth;
+  Size build() {
+    return globalState.appState.viewSize;
   }
 
   @override
   onUpdate(value) {
     globalState.appState = globalState.appState.copyWith(
-      viewWidth: value,
+      viewSize: value,
     );
   }
 
-  ViewMode get viewMode => other.getViewMode(state);
+  ViewMode get viewMode => other.getViewMode(state.width);
 
   bool get isMobileView => viewMode == ViewMode.mobile;
+}
+
+@riverpod
+double viewWidth(Ref ref) {
+  return ref.watch(viewSizeProvider).width;
+}
+
+@riverpod
+ViewMode viewMode(Ref ref) {
+  return other.getViewMode(ref.watch(viewWidthProvider));
+}
+
+@riverpod
+bool isMobileView(Ref ref) {
+  return ref.watch(viewModeProvider) == ViewMode.mobile;
+}
+
+@riverpod
+double viewHeight(Ref ref) {
+  return ref.watch(viewSizeProvider).height;
 }
 
 @riverpod

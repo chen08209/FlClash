@@ -7,7 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -87,6 +87,7 @@ class FlClashService : Service(), BaseServiceInterface {
             }
         }
     }
+
     private suspend fun getNotificationBuilder(): NotificationCompat.Builder {
         return notificationBuilderDeferred.await()
     }
@@ -100,7 +101,8 @@ class FlClashService : Service(), BaseServiceInterface {
         }
     }
 
-    @SuppressLint("ForegroundServiceType", "WrongConstant")
+
+    @SuppressLint("ForegroundServiceType")
     override suspend fun startForeground(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
@@ -116,7 +118,11 @@ class FlClashService : Service(), BaseServiceInterface {
                 .setContentTitle(title)
                 .setContentText(content).build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            try {
+                startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            } catch (_: Exception) {
+                startForeground(notificationId, notification)
+            }
         } else {
             startForeground(notificationId, notification)
         }
