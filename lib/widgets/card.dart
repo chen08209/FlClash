@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:flutter/material.dart';
 
 import 'text.dart';
@@ -56,8 +57,8 @@ class InfoHeader extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
                     ),
                   ),
                 ),
@@ -90,9 +91,12 @@ class CommonCard extends StatelessWidget {
     this.backgroundColor,
     this.radius = 12,
     required this.child,
+    this.enterAnimated = false,
+    this.borderSide,
     this.info,
   }) : isSelected = isSelected ?? false;
 
+  final bool enterAnimated;
   final bool isSelected;
   final void Function()? onPressed;
   final Widget? selectWidget;
@@ -101,6 +105,7 @@ class CommonCard extends StatelessWidget {
   final CommonCardType type;
   final double radius;
   final WidgetStateProperty<Color?>? backgroundColor;
+  final WidgetStateProperty<BorderSide?>? borderSide;
 
   BorderSide getBorderSide(BuildContext context, Set<WidgetState> states) {
     final colorScheme = context.colorScheme;
@@ -166,7 +171,7 @@ class CommonCard extends StatelessWidget {
         ],
       );
     }
-    
+
     if (selectWidget != null && isSelected) {
       final List<Widget> children = [];
       children.add(childWidget);
@@ -180,7 +185,7 @@ class CommonCard extends StatelessWidget {
       );
     }
 
-    return OutlinedButton(
+    final card = OutlinedButton(
       clipBehavior: Clip.antiAlias,
       style: ButtonStyle(
         padding: const WidgetStatePropertyAll(EdgeInsets.zero),
@@ -195,13 +200,21 @@ class CommonCard extends StatelessWidget {
             WidgetStateProperty.resolveWith(
               (states) => getBackgroundColor(context, states),
             ),
-        side: WidgetStateProperty.resolveWith(
-          (states) => getBorderSide(context, states),
-        ),
+        side: borderSide ??
+            WidgetStateProperty.resolveWith(
+              (states) => getBorderSide(context, states),
+            ),
       ),
       onPressed: onPressed,
       child: childWidget,
     );
+
+    return switch (enterAnimated) {
+      true => FadeScaleEnterBox(
+          child: card,
+        ),
+      false => card,
+    };
   }
 }
 

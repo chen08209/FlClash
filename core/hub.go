@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"core/state"
 	"encoding/json"
 	"fmt"
 	"github.com/metacubex/mihomo/adapter"
@@ -26,10 +27,8 @@ import (
 )
 
 var (
-	isInit       = false
-	configParams = ConfigExtendedParams{
-		OnlyStatisticsProxy: false,
-	}
+	isInit            = false
+	configParams      = ConfigExtendedParams{}
 	externalProviders = map[string]cp.Provider{}
 	logSubscriber     observable.Subscription[log.Event]
 	currentConfig     *config.Config
@@ -152,7 +151,7 @@ func handleChangeProxy(data string, fn func(string string)) {
 }
 
 func handleGetTraffic() string {
-	up, down := statistic.DefaultManager.Current(configParams.OnlyStatisticsProxy)
+	up, down := statistic.DefaultManager.Current(state.CurrentState.OnlyStatisticsProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -166,7 +165,7 @@ func handleGetTraffic() string {
 }
 
 func handleGetTotalTraffic() string {
-	up, down := statistic.DefaultManager.Total(configParams.OnlyStatisticsProxy)
+	up, down := statistic.DefaultManager.Total(state.CurrentState.OnlyStatisticsProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -174,6 +173,15 @@ func handleGetTotalTraffic() string {
 	data, err := json.Marshal(traffic)
 	if err != nil {
 		fmt.Println("Error:", err)
+		return ""
+	}
+	return string(data)
+}
+
+func handleGetProfile(profileId string) string {
+	prof := getRawConfigWithId(profileId)
+	data, err := json.Marshal(prof)
+	if err != nil {
 		return ""
 	}
 	return string(data)
@@ -220,6 +228,7 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 		if params.TestUrl != "" {
 			testUrl = params.TestUrl
 		}
+		delayData.Url = testUrl
 
 		delay, err := proxy.URLTest(ctx, testUrl, expectedStatus)
 		if err != nil || delay == 0 {
@@ -421,6 +430,10 @@ func handleGetMemory(fn func(value string)) {
 	go func() {
 		fn(strconv.FormatUint(statistic.DefaultManager.Memory(), 10))
 	}()
+}
+
+func handleSetState(params string) {
+	_ = json.Unmarshal([]byte(params), state.CurrentState)
 }
 
 func init() {

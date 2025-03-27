@@ -1,12 +1,12 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/models/config.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
-import 'package:provider/provider.dart';
 
 class HotKeyManager extends StatelessWidget {
   final Widget child;
@@ -36,11 +36,11 @@ class HotKeyManager extends StatelessWidget {
   }) async {
     await hotKeyManager.unregisterAll();
     final hotkeyActionHandles = hotKeyActions.where(
-          (hotKeyAction) {
+      (hotKeyAction) {
         return hotKeyAction.key != null && hotKeyAction.modifiers.isNotEmpty;
       },
     ).map<Future>(
-          (hotKeyAction) async {
+      (hotKeyAction) async {
         final modifiers = hotKeyAction.modifiers
             .map((item) => item.toHotKeyModifier())
             .toList();
@@ -61,14 +61,18 @@ class HotKeyManager extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<Config, List<HotKeyAction>>(
-      selector: (_, config) => config.hotKeyActions,
-      shouldRebuild: (prev, next) {
-        return !hotKeyActionListEquality.equals(prev, next);
-      },
-      builder: (_, hotKeyActions, __) {
-        _updateHotKeys(hotKeyActions: hotKeyActions);
-        return child;
+    return Consumer(
+      builder: (_, ref, child) {
+        ref.listenManual(
+          hotKeyActionsProvider,
+          (prev, next) {
+            if (!hotKeyActionListEquality.equals(prev, next)) {
+              _updateHotKeys(hotKeyActions: next);
+            }
+          },
+          fireImmediately: true,
+        );
+        return child!;
       },
       child: child,
     );

@@ -1,11 +1,9 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../widgets/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ThemeModeItem {
   final ThemeMode themeMode;
@@ -88,99 +86,106 @@ class ItemCard extends StatelessWidget {
   }
 }
 
-class ThemeColorsBox extends StatefulWidget {
+class ThemeColorsBox extends ConsumerStatefulWidget {
   const ThemeColorsBox({super.key});
 
   @override
-  State<ThemeColorsBox> createState() => _ThemeColorsBoxState();
+  ConsumerState<ThemeColorsBox> createState() => _ThemeColorsBoxState();
 }
 
-class _ThemeColorsBoxState extends State<ThemeColorsBox> {
-  Widget _themeModeCheckBox({
-    bool? isSelected,
-    required ThemeModeItem themeModeItem,
-  }) {
-    return CommonCard(
-      isSelected: isSelected,
-      onPressed: () {
-        final appController = globalState.appController;
-        appController.config.themeProps =
-            appController.config.themeProps.copyWith(
-          themeMode: themeModeItem.themeMode,
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Flexible(
-              child: Icon(themeModeItem.iconData),
-            ),
-            const SizedBox(
-              width: 8,
-            ),
-            Flexible(
-              child: Text(
-                themeModeItem.label,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _primaryColorCheckBox({
-    bool? isSelected,
-    Color? color,
-  }) {
-    return ColorSchemeBox(
-      isSelected: isSelected,
-      primaryColor: color,
-      onPressed: () {
-        final appController = globalState.appController;
-        appController.config.themeProps =
-            appController.config.themeProps.copyWith(
-          primaryColor: color?.value,
-        );
-      },
-    );
-  }
-
-  Widget _fontFamilyCheckBox({
-    bool? isSelected,
-    required FontFamilyItem fontFamilyItem,
-  }) {
-    return CommonCard(
-      isSelected: isSelected,
-      onPressed: () {
-        final appController = globalState.appController;
-        appController.config.themeProps =
-            appController.config.themeProps.copyWith(
-          fontFamily: fontFamilyItem.fontFamily,
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Flexible(
-              child: Text(
-                fontFamilyItem.label,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+class _ThemeColorsBoxState extends ConsumerState<ThemeColorsBox> {
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // _FontFamilyItem(),
+        _ThemeModeItem(),
+        _PrimaryColorItem(),
+        _PrueBlackItem(),
+        const SizedBox(
+          height: 64,
+        ),
+      ],
+    );
+  }
+}
+
+// class _FontFamilyItem extends ConsumerWidget {
+//   const _FontFamilyItem();
+//
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final fontFamily =
+//         ref.watch(themeSettingProvider.select((state) => state.fontFamily));
+//     List<FontFamilyItem> fontFamilyItems = [
+//       FontFamilyItem(
+//         label: appLocalizations.systemFont,
+//         fontFamily: FontFamily.system,
+//       ),
+//       const FontFamilyItem(
+//         label: "roboto",
+//         fontFamily: FontFamily.roboto,
+//       ),
+//     ];
+//     return ItemCard(
+//       info: Info(
+//         label: appLocalizations.fontFamily,
+//         iconData: Icons.text_fields,
+//       ),
+//       child: Container(
+//         margin: const EdgeInsets.only(
+//           left: 16,
+//           right: 16,
+//         ),
+//         height: 48,
+//         child: ListView.separated(
+//           scrollDirection: Axis.horizontal,
+//           itemBuilder: (_, index) {
+//             final fontFamilyItem = fontFamilyItems[index];
+//             return CommonCard(
+//               isSelected: fontFamilyItem.fontFamily == fontFamily,
+//               onPressed: () {
+//                 ref.read(themeSettingProvider.notifier).updateState(
+//                       (state) => state.copyWith(
+//                         fontFamily: fontFamilyItem.fontFamily,
+//                       ),
+//                     );
+//               },
+//               child: Padding(
+//                 padding: const EdgeInsets.symmetric(horizontal: 16),
+//                 child: Row(
+//                   mainAxisSize: MainAxisSize.min,
+//                   mainAxisAlignment: MainAxisAlignment.start,
+//                   children: [
+//                     Flexible(
+//                       child: Text(
+//                         fontFamilyItem.label,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             );
+//           },
+//           separatorBuilder: (_, __) {
+//             return const SizedBox(
+//               width: 16,
+//             );
+//           },
+//           itemCount: fontFamilyItems.length,
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+class _ThemeModeItem extends ConsumerWidget {
+  const _ThemeModeItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode =
+        ref.watch(themeSettingProvider.select((state) => state.themeMode));
     List<ThemeModeItem> themeModeItems = [
       ThemeModeItem(
         iconData: Icons.auto_mode,
@@ -198,6 +203,68 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
         themeMode: ThemeMode.dark,
       ),
     ];
+    return ItemCard(
+      info: Info(
+        label: appLocalizations.themeMode,
+        iconData: Icons.brightness_high,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        height: 64,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: themeModeItems.length,
+          itemBuilder: (_, index) {
+            final themeModeItem = themeModeItems[index];
+            return CommonCard(
+              isSelected: themeModeItem.themeMode == themeMode,
+              onPressed: () {
+                ref.read(themeSettingProvider.notifier).updateState(
+                      (state) => state.copyWith(
+                        themeMode: themeModeItem.themeMode,
+                      ),
+                    );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Flexible(
+                      child: Icon(themeModeItem.iconData),
+                    ),
+                    const SizedBox(
+                      width: 8,
+                    ),
+                    Flexible(
+                      child: Text(
+                        themeModeItem.label,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+          separatorBuilder: (_, __) {
+            return const SizedBox(
+              width: 16,
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _PrimaryColorItem extends ConsumerWidget {
+  const _PrimaryColorItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final primaryColor =
+        ref.watch(themeSettingProvider.select((state) => state.primaryColor));
     List<Color?> primaryColors = [
       null,
       defaultPrimaryColor,
@@ -207,147 +274,72 @@ class _ThemeColorsBoxState extends State<ThemeColorsBox> {
       Colors.yellowAccent,
       Colors.purple,
     ];
-    List<FontFamilyItem> fontFamilyItems = [
-      FontFamilyItem(
-        label: appLocalizations.systemFont,
-        fontFamily: FontFamily.system,
+    return ItemCard(
+      info: Info(
+        label: appLocalizations.themeColor,
+        iconData: Icons.palette,
       ),
-      const FontFamilyItem(
-        label: "MiSans",
-        fontFamily: FontFamily.miSans,
+      child: Container(
+        margin: const EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: 16,
+        ),
+        height: 88,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemBuilder: (_, index) {
+            final color = primaryColors[index];
+            return ColorSchemeBox(
+              isSelected: color?.value == primaryColor,
+              primaryColor: color,
+              onPressed: () {
+                ref.read(themeSettingProvider.notifier).updateState(
+                      (state) => state.copyWith(
+                        primaryColor: color?.value,
+                      ),
+                    );
+              },
+            );
+          },
+          separatorBuilder: (_, __) {
+            return const SizedBox(
+              width: 16,
+            );
+          },
+          itemCount: primaryColors.length,
+        ),
       ),
-    ];
-    return Column(
-      children: [
-        ItemCard(
-          info: Info(
-            label: appLocalizations.fontFamily,
-            iconData: Icons.text_fields,
-          ),
-          child: Container(
-            margin: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-            ),
-            height: 48,
-            child: Selector<Config, FontFamily>(
-              selector: (_, config) => config.themeProps.fontFamily,
-              builder: (_, fontFamily, __) {
-                return ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (_, index) {
-                    final fontFamilyItem = fontFamilyItems[index];
-                    return _fontFamilyCheckBox(
-                      isSelected: fontFamily == fontFamilyItem.fontFamily,
-                      fontFamilyItem: fontFamilyItem,
-                    );
-                  },
-                  separatorBuilder: (_, __) {
-                    return const SizedBox(
-                      width: 16,
-                    );
-                  },
-                  itemCount: fontFamilyItems.length,
+    );
+  }
+}
+
+class _PrueBlackItem extends ConsumerWidget {
+  const _PrueBlackItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prueBlack =
+        ref.watch(themeSettingProvider.select((state) => state.pureBlack));
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: ListItem.switchItem(
+        leading: Icon(
+          Icons.contrast,
+          color: context.colorScheme.primary,
+        ),
+        title: Text(appLocalizations.pureBlackMode),
+        delegate: SwitchDelegate(
+          value: prueBlack,
+          onChanged: (value) {
+            ref.read(themeSettingProvider.notifier).updateState(
+                  (state) => state.copyWith(
+                    pureBlack: value,
+                  ),
                 );
-              },
-            ),
-          ),
+          },
         ),
-        ItemCard(
-          info: Info(
-            label: appLocalizations.themeMode,
-            iconData: Icons.brightness_high,
-          ),
-          child: Selector<Config, ThemeMode>(
-            selector: (_, config) => config.themeProps.themeMode,
-            builder: (_, themeMode, __) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                height: 64,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: themeModeItems.length,
-                  itemBuilder: (_, index) {
-                    final themeModeItem = themeModeItems[index];
-                    return _themeModeCheckBox(
-                      isSelected: themeMode == themeModeItem.themeMode,
-                      themeModeItem: themeModeItem,
-                    );
-                  },
-                  separatorBuilder: (_, __) {
-                    return const SizedBox(
-                      width: 16,
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-        ItemCard(
-          info: Info(
-            label: appLocalizations.themeColor,
-            iconData: Icons.palette,
-          ),
-          child: Container(
-            margin: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-              bottom: 16,
-            ),
-            height: 88,
-            child: Selector<Config, int?>(
-              selector: (_, config) => config.themeProps.primaryColor,
-              builder: (_, currentPrimaryColor, __) {
-                return ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (_, index) {
-                    final primaryColor = primaryColors[index];
-                    return _primaryColorCheckBox(
-                      isSelected: currentPrimaryColor == primaryColor?.value,
-                      color: primaryColor,
-                    );
-                  },
-                  separatorBuilder: (_, __) {
-                    return const SizedBox(
-                      width: 16,
-                    );
-                  },
-                  itemCount: primaryColors.length,
-                );
-              },
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Selector<Config, bool>(
-            selector: (_, config) => config.themeProps.prueBlack,
-            builder: (_, value, ___) {
-              return ListItem.switchItem(
-                leading: Icon(
-                  Icons.contrast,
-                  color: context.colorScheme.primary,
-                ),
-                title: Text(appLocalizations.prueBlackMode),
-                delegate: SwitchDelegate(
-                  value: value,
-                  onChanged: (value) {
-                    final appController = globalState.appController;
-                    appController.config.themeProps =
-                        appController.config.themeProps.copyWith(
-                      prueBlack: value,
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(
-          height: 64,
-        ),
-      ],
+      ),
     );
   }
 }

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart';
 
 class Windows {
@@ -54,7 +53,7 @@ class Windows {
     calloc.free(argumentsPtr);
     calloc.free(operationPtr);
 
-    debugPrint("[Windows] runas: $command $arguments resultCode:$result");
+    commonPrint.log("windows runas: $command $arguments resultCode:$result");
 
     if (result < 42) {
       return false;

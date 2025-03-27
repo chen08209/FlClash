@@ -80,9 +80,9 @@ class _EditProfileState extends State<EditProfile> {
           );
         }
       }
-      appController.setProfile(await profile.saveFile(fileData!));
+      appController.setProfileAndAutoApply(await profile.saveFile(fileData!));
     } else if (!hasUpdate) {
-      appController.setProfile(profile);
+      appController.setProfileAndAutoApply(profile);
     } else {
       globalState.homeScaffoldKey.currentState?.loadingRun(
         () async {

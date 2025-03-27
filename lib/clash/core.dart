@@ -63,13 +63,14 @@ class ClashCore {
     }
   }
 
-  Future<bool> init({
-    required ClashConfig clashConfig,
-    required Config config,
-  }) async {
+  Future<bool> init() async {
     await initGeo();
     final homeDirPath = await appPath.homeDirPath;
     return await clashInterface.init(homeDirPath);
+  }
+
+  Future<bool> setState(CoreState state) async {
+    return await clashInterface.setState(state);
   }
 
   shutdown() async {
@@ -232,6 +233,14 @@ class ClashCore {
       return 0;
     }
     return int.parse(value);
+  }
+
+  Future<ClashConfigSnippet?> getProfile(String id) async {
+    final res = await clashInterface.getProfile(id);
+    if (res.isEmpty) {
+      return null;
+    }
+    return ClashConfigSnippet.fromJson(json.decode(res));
   }
 
   resetTraffic() {

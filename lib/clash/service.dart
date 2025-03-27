@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:fl_clash/clash/interface.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/core.dart';
+import 'package:fl_clash/state.dart';
 
 class ClashService extends ClashHandlerInterface {
   static ClashService? _instance;
@@ -13,6 +14,8 @@ class ClashService extends ClashHandlerInterface {
   Completer<ServerSocket> serverCompleter = Completer();
 
   Completer<Socket> socketCompleter = Completer();
+
+  bool isStarting = false;
 
   Process? process;
 
@@ -27,48 +30,61 @@ class ClashService extends ClashHandlerInterface {
   }
 
   _initServer() async {
-    final address = !Platform.isWindows
-        ? InternetAddress(
-            unixSocketPath,
-            type: InternetAddressType.unix,
-          )
-        : InternetAddress(
-            localhost,
-            type: InternetAddressType.IPv4,
-          );
-    await _deleteSocketFile();
-    final server = await ServerSocket.bind(
-      address,
-      0,
-      shared: true,
-    );
-    serverCompleter.complete(server);
-    await for (final socket in server) {
-      await _destroySocket();
-      socketCompleter.complete(socket);
-      socket
-          .transform(
-            StreamTransformer<Uint8List, String>.fromHandlers(
-              handleData: (Uint8List data, EventSink<String> sink) {
-                sink.add(utf8.decode(data, allowMalformed: true));
+    runZonedGuarded(() async {
+      final address = !Platform.isWindows
+          ? InternetAddress(
+              unixSocketPath,
+              type: InternetAddressType.unix,
+            )
+          : InternetAddress(
+              localhost,
+              type: InternetAddressType.IPv4,
+            );
+      await _deleteSocketFile();
+      final server = await ServerSocket.bind(
+        address,
+        0,
+        shared: true,
+      );
+      serverCompleter.complete(server);
+      await for (final socket in server) {
+        await _destroySocket();
+        socketCompleter.complete(socket);
+        socket
+            .transform(
+              StreamTransformer<Uint8List, String>.fromHandlers(
+                handleData: (Uint8List data, EventSink<String> sink) {
+                  sink.add(utf8.decode(data, allowMalformed: true));
+                },
+              ),
+            )
+            .transform(LineSplitter())
+            .listen(
+              (data) {
+                handleResult(
+                  ActionResult.fromJson(
+                    json.decode(data.trim()),
+                  ),
+                );
               },
-            ),
-          )
-          .transform(LineSplitter())
-          .listen(
-            (data) {
-              handleResult(
-                ActionResult.fromJson(
-                  json.decode(data.trim()),
-                ),
-              );
-            },
-          );
-    }
+            );
+      }
+    }, (error, stack) {
+      commonPrint.log(error.toString());
+      if(error is SocketException){
+        globalState.showNotifier(error.toString());
+        globalState.appController.restartCore();
+      }
+    });
   }
 
   @override
   reStart() async {
+    if (isStarting == true) {
+      return;
+    }
+    isStarting = true;
+    socketCompleter = Completer();
     if (process != null) {
       await shutdown();
     }
@@ -90,6 +106,7 @@ class ClashService extends ClashHandlerInterface {
       ],
     );
     process!.stdout.listen((_) {});
+    isStarting = false;
   }
 
   @override
@@ -125,7 +142,6 @@ class ClashService extends ClashHandlerInterface {
 
   @override
   shutdown() async {
-    await super.shutdown();
     if (Platform.isWindows) {
       await request.stopCoreByHelper();
     }

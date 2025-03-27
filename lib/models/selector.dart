@@ -8,27 +8,20 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/selector.freezed.dart';
 
 @freezed
+class VM2<A, B> with _$VM2<A, B> {
+  const factory VM2({
+    required A a,
+    required B b,
+  }) = _VM2;
+}
+
+
+@freezed
 class StartButtonSelectorState with _$StartButtonSelectorState {
   const factory StartButtonSelectorState({
     required bool isInit,
     required bool hasProfile,
   }) = _StartButtonSelectorState;
-}
-
-@freezed
-class CheckIpSelectorState with _$CheckIpSelectorState {
-  const factory CheckIpSelectorState({
-    required String? currentProfileId,
-    required SelectedMap selectedMap,
-  }) = _CheckIpSelectorState;
-}
-
-@freezed
-class NetworkDetectionSelectorState with _$NetworkDetectionSelectorState {
-  const factory NetworkDetectionSelectorState({
-    required String? currentProxyName,
-    required int? delay,
-  }) = _NetworkDetectionSelectorState;
 }
 
 @freezed
@@ -49,17 +42,6 @@ class NetworkDetectionState with _$NetworkDetectionState {
 }
 
 @freezed
-class ApplicationSelectorState with _$ApplicationSelectorState {
-  const factory ApplicationSelectorState({
-    required String? locale,
-    required ThemeMode? themeMode,
-    required int? primaryColor,
-    required bool prueBlack,
-    required FontFamily fontFamily,
-  }) = _ApplicationSelectorState;
-}
-
-@freezed
 class TrayState with _$TrayState {
   const factory TrayState({
     required Mode mode,
@@ -71,33 +53,18 @@ class TrayState with _$TrayState {
     required String? locale,
     required Brightness? brightness,
     required List<Group> groups,
-    required SelectedMap map,
+    required SelectedMap selectedMap,
   }) = _TrayState;
-}
-
-@freezed
-class UpdateNavigationsSelector with _$UpdateNavigationsSelector {
-  const factory UpdateNavigationsSelector({
-    required bool openLogs,
-    required bool hasProxies,
-  }) = _UpdateNavigationsSelector;
 }
 
 @freezed
 class HomeState with _$HomeState {
   const factory HomeState({
-    required String currentLabel,
+    required PageLabel pageLabel,
     required List<NavigationItem> navigationItems,
     required ViewMode viewMode,
     required String? locale,
   }) = _HomeState;
-}
-
-@freezed
-class ProxiesCardSelectorState with _$ProxiesCardSelectorState {
-  const factory ProxiesCardSelectorState({
-    required bool isSelected,
-  }) = _ProxiesCardSelectorState;
 }
 
 @freezed
@@ -106,6 +73,27 @@ class ProxiesSelectorState with _$ProxiesSelectorState {
     required List<String> groupNames,
     required String? currentGroupName,
   }) = _ProxiesSelectorState;
+}
+
+@freezed
+class GroupNamesState with _$GroupNamesState {
+  const factory GroupNamesState({
+    required List<String> groupNames,
+  }) = _GroupNamesState;
+}
+
+@freezed
+class GroupsState with _$GroupsState {
+  const factory GroupsState({
+    required List<Group> value,
+  }) = _GroupsState;
+}
+
+@freezed
+class NavigationItemsState with _$NavigationItemsState {
+  const factory NavigationItemsState({
+    required List<NavigationItem> value,
+  }) = _NavigationItemsState;
 }
 
 @freezed
@@ -145,7 +133,6 @@ class PackageListSelectorState with _$PackageListSelectorState {
   const factory PackageListSelectorState({
     required List<Package> packages,
     required AccessControl accessControl,
-    required bool isAccessControl,
   }) = _PackageListSelectorState;
 }
 
@@ -156,19 +143,19 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
     return packages
         .where((item) => isFilterSystemApp ? item.isSystem == false : true)
         .sorted(
-      (a, b) {
+          (a, b) {
         return switch (sort) {
           AccessSortType.none => 0,
-          AccessSortType.name => other.sortByChar(
-              other.getPinyin(a.label),
-              other.getPinyin(b.label),
-            ),
-          AccessSortType.time =>
-            b.lastUpdateTime.compareTo(a.lastUpdateTime),
+          AccessSortType.name =>
+              other.sortByChar(
+                other.getPinyin(a.label),
+                other.getPinyin(b.label),
+              ),
+          AccessSortType.time => b.lastUpdateTime.compareTo(a.lastUpdateTime),
         };
       },
     ).sorted(
-      (a, b) {
+          (a, b) {
         final isSelectA = selectedList.contains(a.packageName);
         final isSelectB = selectedList.contains(b.packageName);
         if (isSelectA && isSelectB) return 0;
@@ -191,8 +178,9 @@ class ProxiesListHeaderSelectorState with _$ProxiesListHeaderSelectorState {
 @freezed
 class ProxiesActionsState with _$ProxiesActionsState {
   const factory ProxiesActionsState({
-    required bool isCurrent,
-    required bool hasProvider,
+    required PageLabel pageLabel,
+    required ProxiesType type,
+    required bool hasProviders,
   }) = _ProxiesActionsState;
 }
 
@@ -207,34 +195,10 @@ class ProxyState with _$ProxyState {
 }
 
 @freezed
-class HttpOverridesState with _$HttpOverridesState {
-  const factory HttpOverridesState({
-    required bool isStart,
-    required int port,
-  }) = _HttpOverridesState;
-}
-
-@freezed
 class ClashConfigState with _$ClashConfigState {
   const factory ClashConfigState({
-    required int mixedPort,
-    required bool allowLan,
-    required bool ipv6,
     required bool overrideDns,
-    required String geodataLoader,
-    required LogLevel logLevel,
-    required String externalController,
-    required Mode mode,
-    required FindProcessMode findProcessMode,
-    required int keepAliveInterval,
-    required bool unifiedDelay,
-    required bool tcpConcurrent,
-    required HostsMap hosts,
-    required Tun tun,
-    required Dns dns,
-    required GeoXMap geoXUrl,
-    required List<String> rules,
-    required String? globalRealUa,
+    required ClashConfig clashConfig,
   }) = _ClashConfigState;
 }
 
@@ -247,10 +211,17 @@ class DashboardState with _$DashboardState {
 }
 
 @freezed
-class VPNState with _$VPNState {
-  const factory VPNState({
-    required AccessControl? accessControl,
+class ProxyCardState with _$ProxyCardState {
+  const factory ProxyCardState({
+    required String proxyName,
+    String? testUrl,
+  }) = _ProxyCardState;
+}
+
+@freezed
+class VpnState with _$VpnState {
+  const factory VpnState({
     required TunStack stack,
     required VpnProps vpnProps,
-  }) = _VPNState;
+  }) = _VpnState;
 }

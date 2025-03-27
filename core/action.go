@@ -22,99 +22,99 @@ func (result ActionResult) Json() ([]byte, error) {
 	return data, err
 }
 
-func (action Action) wrapMessage(data interface{}) []byte {
-	sendAction := ActionResult{
+func (action Action) getResult(data interface{}) []byte {
+	resultAction := ActionResult{
 		Id:     action.Id,
 		Method: action.Method,
 		Data:   data,
 	}
-	res, _ := sendAction.Json()
+	res, _ := resultAction.Json()
 	return res
 }
 
-func handleAction(action *Action, send func([]byte)) {
+func handleAction(action *Action, result func(data interface{})) {
 	switch action.Method {
 	case initClashMethod:
 		data := action.Data.(string)
-		send(action.wrapMessage(handleInitClash(data)))
+		result(handleInitClash(data))
 		return
 	case getIsInitMethod:
-		send(action.wrapMessage(handleGetIsInit()))
+		result(handleGetIsInit())
 		return
 	case forceGcMethod:
 		handleForceGc()
-		send(action.wrapMessage(true))
+		result(true)
 		return
 	case shutdownMethod:
-		send(action.wrapMessage(handleShutdown()))
+		result(handleShutdown())
 		return
 	case validateConfigMethod:
 		data := []byte(action.Data.(string))
-		send(action.wrapMessage(handleValidateConfig(data)))
+		result(handleValidateConfig(data))
 		return
 	case updateConfigMethod:
 		data := []byte(action.Data.(string))
-		send(action.wrapMessage(handleUpdateConfig(data)))
+		result(handleUpdateConfig(data))
 		return
 	case getProxiesMethod:
-		send(action.wrapMessage(handleGetProxies()))
+		result(handleGetProxies())
 		return
 	case changeProxyMethod:
 		data := action.Data.(string)
 		handleChangeProxy(data, func(value string) {
-			send(action.wrapMessage(value))
+			result(value)
 		})
 		return
 	case getTrafficMethod:
-		send(action.wrapMessage(handleGetTraffic()))
+		result(handleGetTraffic())
 		return
 	case getTotalTrafficMethod:
-		send(action.wrapMessage(handleGetTotalTraffic()))
+		result(handleGetTotalTraffic())
 		return
 	case resetTrafficMethod:
 		handleResetTraffic()
-		send(action.wrapMessage(true))
+		result(true)
 		return
 	case asyncTestDelayMethod:
 		data := action.Data.(string)
 		handleAsyncTestDelay(data, func(value string) {
-			send(action.wrapMessage(value))
+			result(value)
 		})
 		return
 	case getConnectionsMethod:
-		send(action.wrapMessage(handleGetConnections()))
+		result(handleGetConnections())
 		return
 	case closeConnectionsMethod:
-		send(action.wrapMessage(handleCloseConnections()))
+		result(handleCloseConnections())
 		return
 	case closeConnectionMethod:
 		id := action.Data.(string)
-		send(action.wrapMessage(handleCloseConnection(id)))
+		result(handleCloseConnection(id))
 		return
 	case getExternalProvidersMethod:
-		send(action.wrapMessage(handleGetExternalProviders()))
+		result(handleGetExternalProviders())
 		return
 	case getExternalProviderMethod:
 		externalProviderName := action.Data.(string)
-		send(action.wrapMessage(handleGetExternalProvider(externalProviderName)))
+		result(handleGetExternalProvider(externalProviderName))
 	case updateGeoDataMethod:
 		paramsString := action.Data.(string)
 		var params = map[string]string{}
 		err := json.Unmarshal([]byte(paramsString), &params)
 		if err != nil {
-			send(action.wrapMessage(err.Error()))
+			result(err.Error())
 			return
 		}
 		geoType := params["geo-type"]
 		geoName := params["geo-name"]
 		handleUpdateGeoData(geoType, geoName, func(value string) {
-			send(action.wrapMessage(value))
+			result(value)
 		})
 		return
 	case updateExternalProviderMethod:
 		providerName := action.Data.(string)
 		handleUpdateExternalProvider(providerName, func(value string) {
-			send(action.wrapMessage(value))
+			result(value)
 		})
 		return
 	case sideLoadExternalProviderMethod:
@@ -122,46 +122,56 @@ func handleAction(action *Action, send func([]byte)) {
 		var params = map[string]string{}
 		err := json.Unmarshal([]byte(paramsString), &params)
 		if err != nil {
-			send(action.wrapMessage(err.Error()))
+			result(err.Error())
 			return
 		}
 		providerName := params["providerName"]
 		data := params["data"]
 		handleSideLoadExternalProvider(providerName, []byte(data), func(value string) {
-			send(action.wrapMessage(value))
+			result(value)
 		})
 		return
 	case startLogMethod:
 		handleStartLog()
-		send(action.wrapMessage(true))
+		result(true)
 		return
 	case stopLogMethod:
 		handleStopLog()
-		send(action.wrapMessage(true))
+		result(true)
 		return
 	case startListenerMethod:
-		send(action.wrapMessage(handleStartListener()))
+		result(handleStartListener())
 		return
 	case stopListenerMethod:
-		send(action.wrapMessage(handleStopListener()))
+		result(handleStopListener())
 		return
 	case getCountryCodeMethod:
 		ip := action.Data.(string)
 		handleGetCountryCode(ip, func(value string) {
-			send(action.wrapMessage(value))
+			result(value)
 		})
 		return
 	case getMemoryMethod:
 		handleGetMemory(func(value string) {
-			send(action.wrapMessage(value))
+			result(value)
 		})
 		return
+	case getProfileMethod:
+		profileId := action.Data.(string)
+		handleGetMemory(func(value string) {
+			result(handleGetProfile(profileId))
+		})
+		return
+	case setStateMethod:
+		data := action.Data.(string)
+		handleSetState(data)
+		result(true)
 	default:
-		handle := nextHandle(action, send)
+		handle := nextHandle(action, result)
 		if handle {
 			return
 		} else {
-			send(action.wrapMessage(action.DefaultValue))
+			result(action.DefaultValue)
 		}
 	}
 }

@@ -2,9 +2,9 @@ import 'dart:collection';
 
 class FixedList<T> {
   final int maxLength;
-  final List<T> _list = [];
+  final List<T> _list;
 
-  FixedList(this.maxLength);
+  FixedList(this.maxLength, {List<T>? list}) : _list = list ?? [];
 
   add(T item) {
     if (_list.length == maxLength) {
@@ -13,11 +13,22 @@ class FixedList<T> {
     _list.add(item);
   }
 
+  clear() {
+    _list.clear();
+  }
+
   List<T> get list => List.unmodifiable(_list);
 
   int get length => _list.length;
 
   T operator [](int index) => _list[index];
+
+  FixedList<T> copyWith() {
+    return FixedList(
+      maxLength,
+      list: _list,
+    );
+  }
 }
 
 class FixedMap<K, V> {
@@ -36,7 +47,7 @@ class FixedMap<K, V> {
     _queue.add(key);
   }
 
-  clear(){
+  clear() {
     _map.clear();
     _queue.clear();
   }

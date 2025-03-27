@@ -1,13 +1,14 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/card.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 extension IntlExt on Intl {
   static actionMessage(String messageText) =>
@@ -38,29 +39,20 @@ class HotKeyFragment extends StatelessWidget {
       itemCount: HotAction.values.length,
       itemBuilder: (_, index) {
         final hotAction = HotAction.values[index];
-        return Selector<Config, HotKeyAction>(
-          selector: (_, config) {
-            final index = config.hotKeyActions.indexWhere(
-              (item) => item.action == hotAction,
-            );
-            return index != -1
-                ? config.hotKeyActions[index]
-                : HotKeyAction(
-                    action: hotAction,
-                  );
-          },
-          builder: (_, value, __) {
+        return Consumer(
+          builder: (_, ref, __) {
+            final hotKeyAction = ref.watch(getHotKeyActionProvider(hotAction));
             return ListItem(
               title: Text(IntlExt.actionMessage(hotAction.name)),
               subtitle: Text(
-                getSubtitle(value),
+                getSubtitle(hotKeyAction),
                 style: context.textTheme.bodyMedium
                     ?.copyWith(color: context.colorScheme.primary),
               ),
               onTap: () {
                 globalState.showCommonDialog(
                   child: HotKeyRecorder(
-                    hotKeyAction: value,
+                    hotKeyAction: hotKeyAction,
                   ),
                 );
               },
@@ -121,8 +113,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
 
   _handleRemove() {
     Navigator.of(context).pop();
-    final config = globalState.appController.config;
-    config.updateOrAddHotKeyAction(
+    globalState.appController.updateOrAddHotKeyAction(
       hotKeyActionNotifier.value.copyWith(
         modifiers: {},
         key: null,
@@ -132,7 +123,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
 
   _handleConfirm() {
     Navigator.of(context).pop();
-    final config = globalState.appController.config;
+    final config = globalState.config;
     final currentHotkeyAction = hotKeyActionNotifier.value;
     if (currentHotkeyAction.key == null ||
         currentHotkeyAction.modifiers.isEmpty) {
@@ -158,7 +149,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
       );
       return;
     }
-    config.updateOrAddHotKeyAction(
+    globalState.appController.updateOrAddHotKeyAction(
       currentHotkeyAction,
     );
   }

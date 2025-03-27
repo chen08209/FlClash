@@ -1,10 +1,12 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 
 class BaseNavigator {
   static Future<T?> push<T>(BuildContext context, Widget child) async {
-    if (!globalState.appController.isMobileView) {
+    if (globalState.appState.viewMode != ViewMode.mobile) {
       return await Navigator.of(context).push<T>(
         CommonDesktopRoute(
           builder: (context) => child,
@@ -68,7 +70,7 @@ class CommonRoute<T> extends MaterialPageRoute<T> {
   Duration get transitionDuration => const Duration(milliseconds: 500);
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 300);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 250);
 }
 
 final Animatable<Offset> _kRightMiddleTween = Tween<Offset>(
@@ -272,7 +274,7 @@ class _CommonEdgeShadowPainter extends BoxPainter {
       return;
     }
 
-    final double shadowWidth = 0.05 * configuration.size!.width;
+    final double shadowWidth = 0.03 * configuration.size!.width;
     final double shadowHeight = configuration.size!.height;
     final double bandWidth = shadowWidth / (colors.length - 1);
 

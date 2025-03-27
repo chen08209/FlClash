@@ -8,13 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/common.freezed.dart';
+
 part 'generated/common.g.dart';
 
 @freezed
 class NavigationItem with _$NavigationItem {
   const factory NavigationItem({
     required Icon icon,
-    required String label,
+    required PageLabel label,
     final String? description,
     required Widget fragment,
     @Default(true) bool keep,
@@ -244,13 +245,57 @@ class Traffic {
 
 @immutable
 class TrafficValueShow {
-  final String value;
+  final double value;
   final TrafficUnit unit;
 
   const TrafficValueShow({
     required this.value,
     required this.unit,
   });
+}
+
+@freezed
+class Proxy with _$Proxy {
+  const factory Proxy({
+    required String name,
+    required String type,
+    String? now,
+  }) = _Proxy;
+
+  factory Proxy.fromJson(Map<String, Object?> json) => _$ProxyFromJson(json);
+}
+
+@freezed
+class Group with _$Group {
+  const factory Group({
+    required GroupType type,
+    @Default([]) List<Proxy> all,
+    String? now,
+    bool? hidden,
+    String? testUrl,
+    @Default("") String icon,
+    required String name,
+  }) = _Group;
+
+  factory Group.fromJson(Map<String, Object?> json) => _$GroupFromJson(json);
+}
+
+extension GroupsExt on List<Group> {
+  Group? getGroup(String groupName) {
+    final index = indexWhere((element) => element.name == groupName);
+    return index != -1 ? this[index] : null;
+  }
+}
+
+extension GroupExt on Group {
+  String get realNow => now ?? "";
+
+  String getCurrentSelectedName(String proxyName) {
+    if (type.isComputedSelected) {
+      return realNow.isNotEmpty ? realNow : proxyName;
+    }
+    return proxyName.isNotEmpty ? proxyName : realNow;
+  }
 }
 
 @immutable
@@ -263,35 +308,38 @@ class TrafficValue {
 
   String get show => "$showValue $showUnit";
 
-  String get showValue => trafficValueShow.value;
+  String get shortShow =>
+      "${trafficValueShow.value.fixed(decimals: 1)} $showUnit";
+
+  String get showValue => trafficValueShow.value.fixed();
 
   String get showUnit => trafficValueShow.unit.name;
 
   TrafficValueShow get trafficValueShow {
     if (_value > pow(1024, 4)) {
       return TrafficValueShow(
-        value: (_value / pow(1024, 4)).fixed(),
+        value: _value / pow(1024, 4),
         unit: TrafficUnit.TB,
       );
     }
     if (_value > pow(1024, 3)) {
       return TrafficValueShow(
-        value: (_value / pow(1024, 3)).fixed(),
+        value: _value / pow(1024, 3),
         unit: TrafficUnit.GB,
       );
     }
     if (_value > pow(1024, 2)) {
       return TrafficValueShow(
-          value: (_value / pow(1024, 2)).fixed(), unit: TrafficUnit.MB);
+          value: _value / pow(1024, 2), unit: TrafficUnit.MB);
     }
     if (_value > pow(1024, 1)) {
       return TrafficValueShow(
-        value: (_value / pow(1024, 1)).fixed(),
+        value: _value / pow(1024, 1),
         unit: TrafficUnit.KB,
       );
     }
     return TrafficValueShow(
-      value: _value.fixed(),
+      value: _value.toDouble(),
       unit: TrafficUnit.B,
     );
   }
@@ -312,56 +360,16 @@ class TrafficValue {
   int get hashCode => _value.hashCode;
 }
 
-typedef ProxyMap = Map<String, Proxy>;
-
 @freezed
-class Group with _$Group {
-  const factory Group({
-    required GroupType type,
-    @Default([]) List<Proxy> all,
-    String? now,
-    bool? hidden,
-    String? testUrl,
-    @Default("") String icon,
-    required String name,
-  }) = _Group;
-
-  factory Group.fromJson(Map<String, Object?> json) => _$GroupFromJson(json);
+class ColorSchemes with _$ColorSchemes {
+  const factory ColorSchemes({
+    ColorScheme? lightColorScheme,
+    ColorScheme? darkColorScheme,
+  }) = _ColorSchemes;
 }
 
-extension GroupExt on Group {
-  String get realNow => now ?? "";
-
-  String getCurrentSelectedName(String proxyName) {
-    if (type.isURLTestOrFallback) {
-      return realNow.isNotEmpty ? realNow : proxyName;
-    }
-    return proxyName.isNotEmpty ? proxyName : realNow;
-  }
-}
-
-@freezed
-class Proxy with _$Proxy {
-  const factory Proxy({
-    required String name,
-    required String type,
-    String? now,
-  }) = _Proxy;
-
-  factory Proxy.fromJson(Map<String, Object?> json) => _$ProxyFromJson(json);
-}
-
-@immutable
-class SystemColorSchemes {
-  final ColorScheme? lightColorScheme;
-  final ColorScheme? darkColorScheme;
-
-  const SystemColorSchemes({
-    this.lightColorScheme,
-    this.darkColorScheme,
-  });
-
-  getSystemColorSchemeForBrightness(Brightness? brightness) {
+extension ColorSchemesExt on ColorSchemes {
+  ColorScheme getColorSchemeForBrightness(Brightness? brightness) {
     if (brightness == Brightness.dark) {
       return darkColorScheme != null
           ? ColorScheme.fromSeed(

@@ -31,6 +31,7 @@ class Service {
 
   Future<bool?> startVpn() async {
     final options = await clashLib?.getAndroidVpnOptions();
+    // commonPrint.log("$options");
     return await methodChannel.invokeMethod<bool>("startVpn", {
       'data': json.encode(options),
     });

@@ -8,12 +8,11 @@ import (
 )
 
 type ConfigExtendedParams struct {
-	IsPatch             bool              `json:"is-patch"`
-	IsCompatible        bool              `json:"is-compatible"`
-	SelectedMap         map[string]string `json:"selected-map"`
-	TestURL             *string           `json:"test-url"`
-	OverrideDns         bool              `json:"override-dns"`
-	OnlyStatisticsProxy bool              `json:"only-statistics-proxy"`
+	IsPatch      bool              `json:"is-patch"`
+	IsCompatible bool              `json:"is-compatible"`
+	SelectedMap  map[string]string `json:"selected-map"`
+	TestURL      *string           `json:"test-url"`
+	OverrideDns  bool              `json:"override-dns"`
 }
 
 type GenerateConfigParams struct {
@@ -80,6 +79,7 @@ const (
 	getAndroidVpnOptionsMethod     Method = "getAndroidVpnOptions"
 	getRunTimeMethod               Method = "getRunTime"
 	getCurrentProfileNameMethod    Method = "getCurrentProfileName"
+	getProfileMethod               Method = "getProfile"
 )
 
 type Method string

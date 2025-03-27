@@ -255,6 +255,16 @@ class AppLocalizations {
     return Intl.message('English', name: 'en', desc: '', args: []);
   }
 
+  /// `Japanese`
+  String get ja {
+    return Intl.message('Japanese', name: 'ja', desc: '', args: []);
+  }
+
+  /// `Russian`
+  String get ru {
+    return Intl.message('Russian', name: 'ru', desc: '', args: []);
+  }
+
   /// `Simplified Chinese`
   String get zh_CN {
     return Intl.message(
@@ -1670,10 +1680,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Auto lose connections`
+  /// `Auto close connections`
   String get autoCloseConnections {
     return Intl.message(
-      'Auto lose connections',
+      'Auto close connections',
       name: 'autoCloseConnections',
       desc: '',
       args: [],
@@ -1720,11 +1730,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Prue black mode`
-  String get prueBlackMode {
+  /// `Pure black mode`
+  String get pureBlackMode {
     return Intl.message(
-      'Prue black mode',
-      name: 'prueBlackMode',
+      'Pure black mode',
+      name: 'pureBlackMode',
       desc: '',
       args: [],
     );
@@ -2669,6 +2679,21 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Relying on third-party api is for reference only`
+  String get detectionTip {
+    return Intl.message(
+      'Relying on third-party api is for reference only',
+      name: 'detectionTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Listen`
+  String get listen {
+    return Intl.message('Listen', name: 'listen', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -2677,6 +2702,8 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
   List<Locale> get supportedLocales {
     return const <Locale>[
       Locale.fromSubtags(languageCode: 'en'),
+      Locale.fromSubtags(languageCode: 'ja'),
+      Locale.fromSubtags(languageCode: 'ru'),
       Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),
     ];
   }

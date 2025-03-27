@@ -1,12 +1,10 @@
-import 'package:fl_clash/clash/clash.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AndroidManager extends StatefulWidget {
+class AndroidManager extends ConsumerStatefulWidget {
   final Widget child;
 
   const AndroidManager({
@@ -15,47 +13,25 @@ class AndroidManager extends StatefulWidget {
   });
 
   @override
-  State<AndroidManager> createState() => _AndroidContainerState();
+  ConsumerState<AndroidManager> createState() => _AndroidContainerState();
 }
 
-class _AndroidContainerState extends State<AndroidManager> {
+class _AndroidContainerState extends ConsumerState<AndroidManager> {
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  }
-
-  Widget _updateCoreState(Widget child) {
-    return Selector2<Config, ClashConfig, CoreState>(
-      selector: (_, config, clashConfig) => globalState.getCoreState(
-        config,
-        clashConfig,
-      ),
-      builder: (__, state, child) {
-        clashLib?.setState(state);
-        return child!;
+    ref.listenManual(
+      appSettingProvider.select((state) => state.hidden),
+      (prev, next) {
+        app?.updateExcludeFromRecents(next);
       },
-      child: child,
-    );
-  }
-
-  Widget _excludeContainer(Widget child) {
-    return Selector<Config, bool>(
-      selector: (_, config) => config.appSetting.hidden,
-      builder: (_, hidden, child) {
-        app?.updateExcludeFromRecents(hidden);
-        return child!;
-      },
-      child: child,
+      fireImmediately: true
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return _updateCoreState(
-      _excludeContainer(
-        widget.child,
-      ),
-    );
+    return widget.child;
   }
 }

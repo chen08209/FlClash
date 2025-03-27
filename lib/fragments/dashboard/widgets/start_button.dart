@@ -1,8 +1,9 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class StartButton extends StatefulWidget {
   const StartButton({super.key});
@@ -19,7 +20,7 @@ class _StartButtonState extends State<StartButton>
   @override
   void initState() {
     super.initState();
-    isStart = globalState.appController.appFlowingState.isStart;
+    isStart = globalState.appState.runTime != null;
     _controller = AnimationController(
       vsync: this,
       value: isStart ? 1 : 0,
@@ -34,11 +35,10 @@ class _StartButtonState extends State<StartButton>
   }
 
   handleSwitchStart() {
-    final appController = globalState.appController;
-    if (isStart == appController.appFlowingState.isStart) {
+    if (isStart == globalState.appState.isStart) {
       isStart = !isStart;
       updateController();
-      appController.updateStatus(isStart);
+      globalState.appController.updateStatus(isStart);
     }
   }
 
@@ -50,31 +50,24 @@ class _StartButtonState extends State<StartButton>
     }
   }
 
-  Widget _updateControllerContainer(Widget child) {
-    return Selector<AppFlowingState, bool>(
-      selector: (_, appFlowingState) => appFlowingState.isStart,
-      builder: (_, isStart, child) {
-        if (isStart != this.isStart) {
-          this.isStart = isStart;
-          updateController();
-        }
-        return child!;
-      },
-      child: child,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Selector2<AppState, Config, StartButtonSelectorState>(
-      selector: (_, appState, config) => StartButtonSelectorState(
-        isInit: appState.isInit,
-        hasProfile: config.profiles.isNotEmpty,
-      ),
-      builder: (_, state, child) {
+    return Consumer(
+      builder: (_, ref, child) {
+        final state = ref.watch(startButtonSelectorStateProvider);
         if (!state.isInit || !state.hasProfile) {
           return Container();
         }
+        ref.listenManual(
+          runTimeProvider.select((state) => state != null),
+          (prev, next) {
+            if (next != isStart) {
+              isStart = next;
+              updateController();
+            }
+          },
+          fireImmediately: true,
+        );
         final textWidth = globalState.measure
                 .computeTextSize(
                   Text(
@@ -86,53 +79,51 @@ class _StartButtonState extends State<StartButton>
                 )
                 .width +
             16;
-        return _updateControllerContainer(
-          AnimatedBuilder(
-            animation: _controller.view,
-            builder: (_, child) {
-              return SizedBox(
-                width: 56 + textWidth * _controller.value,
-                height: 56,
-                child: FloatingActionButton(
-                  heroTag: null,
-                  onPressed: () {
-                    handleSwitchStart();
-                  },
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        alignment: Alignment.center,
-                        child: AnimatedIcon(
-                          icon: AnimatedIcons.play_pause,
-                          progress: _controller,
-                        ),
+        return AnimatedBuilder(
+          animation: _controller.view,
+          builder: (_, child) {
+            return SizedBox(
+              width: 56 + textWidth * _controller.value,
+              height: 56,
+              child: FloatingActionButton(
+                heroTag: null,
+                onPressed: () {
+                  handleSwitchStart();
+                },
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      alignment: Alignment.center,
+                      child: AnimatedIcon(
+                        icon: AnimatedIcons.play_pause,
+                        progress: _controller,
                       ),
-                      Expanded(
-                        child: ClipRect(
-                          child: OverflowBox(
-                            maxWidth: textWidth,
-                            child: Container(
-                              alignment: Alignment.centerLeft,
-                              child: child!,
-                            ),
+                    ),
+                    Expanded(
+                      child: ClipRect(
+                        child: OverflowBox(
+                          maxWidth: textWidth,
+                          child: Container(
+                            alignment: Alignment.centerLeft,
+                            child: child!,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            },
-            child: child,
-          ),
+              ),
+            );
+          },
+          child: child,
         );
       },
-      child: Selector<AppFlowingState, int?>(
-        selector: (_, appFlowingState) => appFlowingState.runTime,
-        builder: (_, int? value, __) {
-          final text = other.getTimeText(value);
+      child: Consumer(
+        builder: (_, ref, __) {
+          final runTime = ref.watch(runTimeProvider);
+          final text = other.getTimeText(runTime);
           return Text(
             text,
             style: Theme.of(context).textTheme.titleMedium?.toSoftBold,

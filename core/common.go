@@ -28,10 +28,18 @@ import (
 	"sync"
 )
 
+func splitByComma(s string) interface{} {
+	parts := strings.Split(s, ",")
+	if len(parts) > 1 {
+		return parts
+	}
+	return s
+}
+
 var (
 	isRunning = false
 	runLock   sync.Mutex
-	ips       = []string{"ipwho.is", "ifconfig.me", "icanhazip.com", "api.ip.sb", "ipinfo.io"}
+	ips       = []string{"ipwho.is", "api.ip.sb", "ipapi.co", "ipinfo.io"}
 	b, _      = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 )
 
@@ -162,7 +170,17 @@ func decorationConfig(profileId string, cfg config.RawConfig) *config.RawConfig 
 
 func genHosts(hosts, patchHosts map[string]any) {
 	for k, v := range patchHosts {
-		hosts[k] = v
+		if str, ok := v.(string); ok {
+			hosts[k] = splitByComma(str)
+		}
+	}
+}
+
+func modPatchDns(dns *config.RawDNS) {
+	for pair := dns.NameServerPolicy.Oldest(); pair != nil; pair = pair.Next() {
+		if str, ok := pair.Value.(string); ok {
+			dns.NameServerPolicy.Set(pair.Key, splitByComma(str))
+		}
 	}
 }
 
@@ -215,6 +233,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Tun.Device = patchConfig.Tun.Device
 	targetConfig.Tun.DNSHijack = patchConfig.Tun.DNSHijack
 	targetConfig.Tun.Stack = patchConfig.Tun.Stack
+	targetConfig.Tun.RouteAddress = patchConfig.Tun.RouteAddress
 	targetConfig.GeodataLoader = patchConfig.GeodataLoader
 	targetConfig.Profile.StoreSelected = false
 	targetConfig.GeoXUrl = patchConfig.GeoXUrl
@@ -227,6 +246,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	}
 	genHosts(targetConfig.Hosts, patchConfig.Hosts)
 	if configParams.OverrideDns {
+		modPatchDns(&patchConfig.DNS)
 		targetConfig.DNS = patchConfig.DNS
 	} else {
 		if targetConfig.DNS.Enable == false {

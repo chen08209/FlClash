@@ -1,9 +1,9 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/app.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class IntranetIP extends StatelessWidget {
   const IntranetIP({super.key});
@@ -28,15 +28,15 @@ class IntranetIP extends StatelessWidget {
             children: [
               SizedBox(
                 height: globalState.measure.bodyMediumHeight + 2,
-                child: Selector<AppFlowingState, String?>(
-                  selector: (_, appFlowingState) => appFlowingState.localIp,
-                  builder: (_, value, __) {
+                child: Consumer(
+                  builder: (_, ref, __) {
+                    final localIp = ref.watch(localIpProvider);
                     return FadeBox(
-                      child: value != null
+                      child: localIp != null
                           ? TooltipText(
                               text: Text(
-                                value.isNotEmpty
-                                    ? value
+                                localIp.isNotEmpty
+                                    ? localIp
                                     : appLocalizations.noNetwork,
                                 style: context.textTheme.bodyMedium?.toLight
                                     .adjustSize(1),
@@ -48,7 +48,9 @@ class IntranetIP extends StatelessWidget {
                               padding: EdgeInsets.all(2),
                               child: AspectRatio(
                                 aspectRatio: 1,
-                                child: CircularProgressIndicator(),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                             ),
                     );

@@ -4,13 +4,14 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/fragments/profiles/edit_profile.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'add_profile.dart';
+import 'gen_profile.dart';
 
 class ProfilesFragment extends StatefulWidget {
   const ProfilesFragment({super.key});
@@ -19,7 +20,7 @@ class ProfilesFragment extends StatefulWidget {
   State<ProfilesFragment> createState() => _ProfilesFragmentState();
 }
 
-class _ProfilesFragmentState extends State<ProfilesFragment> {
+class _ProfilesFragmentState extends State<ProfilesFragment> with PageMixin {
   Function? applyConfigDebounce;
 
   _handleShowAddExtendPage() {
@@ -33,21 +34,19 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
   }
 
   _updateProfiles() async {
-    final appController = globalState.appController;
-    final config = appController.config;
-    final profiles = appController.config.profiles;
+    final profiles = globalState.config.profiles;
     final messages = [];
     final updateProfiles = profiles.map<Future>(
       (profile) async {
         if (profile.type == ProfileType.file) return;
-        config.setProfile(
+        globalState.appController.setProfile(
           profile.copyWith(isUpdating: true),
         );
         try {
-          await appController.updateProfile(profile);
+          await globalState.appController.updateProfile(profile);
         } catch (e) {
           messages.add("${profile.label ?? profile.id}: $e \n");
-          config.setProfile(
+          globalState.appController.setProfile(
             profile.copyWith(
               isUpdating: false,
             ),
@@ -70,96 +69,90 @@ class _ProfilesFragmentState extends State<ProfilesFragment> {
     }
   }
 
-  _initScaffold() {
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) {
-        if (!mounted) return;
-        final commonScaffoldState = context.commonScaffoldState;
-        commonScaffoldState?.actions = [
-          IconButton(
-            onPressed: () {
-              _updateProfiles();
-            },
-            icon: const Icon(Icons.sync),
-          ),
-          IconButton(
-            onPressed: () {
-              final profiles = globalState.appController.config.profiles;
-              showSheet(
-                title: appLocalizations.profilesSort,
-                context: context,
-                body: SizedBox(
-                  height: 400,
-                  child: ReorderableProfiles(profiles: profiles),
-                ),
-              );
-            },
-            icon: const Icon(Icons.sort),
-            iconSize: 26,
-          ),
-        ];
-        commonScaffoldState?.floatingActionButton = FloatingActionButton(
-          heroTag: null,
-          onPressed: _handleShowAddExtendPage,
-          child: const Icon(
-            Icons.add,
-          ),
-        );
-      },
-    );
-  }
+  @override
+  List<Widget> get actions => [
+        IconButton(
+          onPressed: () {
+            _updateProfiles();
+          },
+          icon: const Icon(Icons.sync),
+        ),
+        IconButton(
+          onPressed: () {
+            final profiles = globalState.config.profiles;
+            showSheet(
+              title: appLocalizations.profilesSort,
+              context: context,
+              body: SizedBox(
+                height: 400,
+                child: ReorderableProfiles(profiles: profiles),
+              ),
+            );
+          },
+          icon: const Icon(Icons.sort),
+          iconSize: 26,
+        ),
+      ];
+
+  @override
+  Widget? get floatingActionButton => FloatingActionButton(
+        heroTag: null,
+        onPressed: _handleShowAddExtendPage,
+        child: const Icon(
+          Icons.add,
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
-    return ActiveBuilder(
-      label: "profiles",
-      builder: (isCurrent, child) {
-        if (isCurrent) {
-          _initScaffold();
-        }
-        return child!;
-      },
-      child: Selector2<AppState, Config, ProfilesSelectorState>(
-        selector: (_, appState, config) => ProfilesSelectorState(
-          profiles: config.profiles,
-          currentProfileId: config.currentProfileId,
-          columns: other.getProfilesColumns(appState.viewWidth),
-        ),
-        builder: (context, state, child) {
-          if (state.profiles.isEmpty) {
-            return NullStatus(
-              label: appLocalizations.nullProfileDesc,
-            );
-          }
-          return Align(
-            alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: 88,
-              ),
-              child: Grid(
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                crossAxisCount: state.columns,
-                children: [
-                  for (int i = 0; i < state.profiles.length; i++)
-                    GridItem(
-                      child: ProfileItem(
-                        key: Key(state.profiles[i].id),
-                        profile: state.profiles[i],
-                        groupValue: state.currentProfileId,
-                        onChanged: globalState.appController.changeProfile,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+    return Consumer(
+      builder: (_, ref, __) {
+        ref.listenManual(
+          isCurrentPageProvider(PageLabel.profiles),
+          (prev, next) {
+            if (prev != next && next == true) {
+              initPageState();
+            }
+          },
+          fireImmediately: true,
+        );
+        final profilesSelectorState = ref.watch(profilesSelectorStateProvider);
+        if (profilesSelectorState.profiles.isEmpty) {
+          return NullStatus(
+            label: appLocalizations.nullProfileDesc,
           );
-        },
-      ),
+        }
+        return Align(
+          alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: 88,
+            ),
+            child: Grid(
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              crossAxisCount: profilesSelectorState.columns,
+              children: [
+                for (int i = 0; i < profilesSelectorState.profiles.length; i++)
+                  GridItem(
+                    child: ProfileItem(
+                      key: Key(profilesSelectorState.profiles[i].id),
+                      profile: profilesSelectorState.profiles[i],
+                      groupValue: profilesSelectorState.currentProfileId,
+                      onChanged: (profileId) {
+                        ref.read(currentProfileIdProvider.notifier).value =
+                            profileId;
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -189,24 +182,19 @@ class ProfileItem extends StatelessWidget {
     await globalState.appController.deleteProfile(profile.id);
   }
 
-  _handleUpdateProfile() async {
-    await globalState.safeRun<void>(updateProfile);
-  }
-
   Future updateProfile() async {
     final appController = globalState.appController;
-    final config = appController.config;
     if (profile.type == ProfileType.file) return;
     await globalState.safeRun(silence: false, () async {
       try {
-        config.setProfile(
+        appController.setProfile(
           profile.copyWith(
             isUpdating: true,
           ),
         );
         await appController.updateProfile(profile);
       } catch (e) {
-        config.setProfile(
+        appController.setProfile(
           profile.copyWith(
             isUpdating: false,
           ),
@@ -256,16 +244,16 @@ class ProfileItem extends StatelessWidget {
     ];
   }
 
-  _handleCopyLink(BuildContext context) async {
-    await Clipboard.setData(
-      ClipboardData(
-        text: profile.url,
-      ),
-    );
-    if (context.mounted) {
-      context.showNotifier(appLocalizations.copySuccess);
-    }
-  }
+  // _handleCopyLink(BuildContext context) async {
+  //   await Clipboard.setData(
+  //     ClipboardData(
+  //       text: profile.url,
+  //     ),
+  //   );
+  //   if (context.mounted) {
+  //     context.showNotifier(appLocalizations.copySuccess);
+  //   }
+  // }
 
   _handleExportFile(BuildContext context) async {
     final commonScaffoldState = context.commonScaffoldState;
@@ -284,6 +272,15 @@ class ProfileItem extends StatelessWidget {
     if (res == true && context.mounted) {
       context.showNotifier(appLocalizations.exportSuccess);
     }
+  }
+
+  _handlePushGenProfilePage(BuildContext context, String id) {
+    BaseNavigator.push(
+      context,
+      GenProfile(
+        profileId: id,
+      ),
+    );
   }
 
   @override
@@ -323,17 +320,24 @@ class ProfileItem extends StatelessWidget {
                             icon: Icons.sync_alt_sharp,
                             label: appLocalizations.sync,
                             onPressed: () {
-                              _handleUpdateProfile();
+                              updateProfile();
                             },
                           ),
-                          ActionItemData(
-                            icon: Icons.copy,
-                            label: appLocalizations.copyLink,
-                            onPressed: () {
-                              _handleCopyLink(context);
-                            },
-                          ),
+                          // ActionItemData(
+                          //   icon: Icons.copy,
+                          //   label: appLocalizations.copyLink,
+                          //   onPressed: () {
+                          //     _handleCopyLink(context);
+                          //   },
+                          // ),
                         ],
+                        // ActionItemData(
+                        //   icon: Icons.extension_outlined,
+                        //   label: "自定义",
+                        //   onPressed: () {
+                        //     _handlePushGenProfilePage(context, profile.id);
+                        //   },
+                        // ),
                         ActionItemData(
                           icon: Icons.file_copy_outlined,
                           label: appLocalizations.exportFile,
@@ -499,7 +503,7 @@ class _ReorderableProfilesState extends State<ReorderableProfiles> {
           child: FilledButton.tonal(
             onPressed: () {
               Navigator.of(context).pop();
-              globalState.appController.config.profiles = profiles;
+              globalState.appController.setProfiles(profiles);
             },
             style: ButtonStyle(
               padding: WidgetStateProperty.all(

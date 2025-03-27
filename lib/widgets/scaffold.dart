@@ -186,48 +186,46 @@ class CommonScaffoldState extends State<CommonScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    final body = SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ValueListenableBuilder(
-            valueListenable: _keywordsNotifier,
-            builder: (_, keywords, __) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_onKeywordsUpdate != null) {
-                  _onKeywordsUpdate!(keywords);
-                }
-              });
-              if (keywords.isEmpty) {
-                return SizedBox();
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ValueListenableBuilder(
+          valueListenable: _keywordsNotifier,
+          builder: (_, keywords, __) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_onKeywordsUpdate != null) {
+                _onKeywordsUpdate!(keywords);
               }
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                child: Wrap(
-                  runSpacing: 8,
-                  spacing: 8,
-                  children: [
-                    for (final keyword in keywords)
-                      CommonChip(
-                        label: keyword,
-                        type: ChipType.delete,
-                        onPressed: () {
-                          _deleteKeyword(keyword);
-                        },
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-          Expanded(
-            child: widget.body,
-          ),
-        ],
-      ),
+            });
+            if (keywords.isEmpty) {
+              return SizedBox();
+            }
+            return Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              child: Wrap(
+                runSpacing: 8,
+                spacing: 8,
+                children: [
+                  for (final keyword in keywords)
+                    CommonChip(
+                      label: keyword,
+                      type: ChipType.delete,
+                      onPressed: () {
+                        _deleteKeyword(keyword);
+                      },
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+        Expanded(
+          child: widget.body,
+        ),
+      ],
     );
     final scaffold = Scaffold(
       appBar: PreferredSize(
@@ -296,10 +294,14 @@ class CommonScaffoldState extends State<CommonScaffold> {
                         icon: Icon(Icons.close),
                       )
                     else
-                      ...realActions.separated(
-                        SizedBox(
-                          width: 4,
-                        ),
+                      Row(
+                        children: [
+                          ...realActions.separated(
+                            SizedBox(
+                              width: 4,
+                            ),
+                          )
+                        ],
                       ),
                     SizedBox(
                       width: 8,

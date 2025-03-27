@@ -6,3 +6,9 @@
 	path = plugins/flutter_distributor
 	url = git@github.com:chen08209/flutter_distributor.git
 	branch = FlClash
+[submodule "plugins/tray_manager"]
+	path = plugins/tray_manager
+	url = git@github.com:chen08209/tray_manager.git
+	branch = main
+
+

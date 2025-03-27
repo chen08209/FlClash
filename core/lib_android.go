@@ -52,18 +52,6 @@ func NewInvokeManager() *InvokeManager {
 	}
 }
 
-func (m *InvokeManager) load(id string) string {
-	res, ok := m.invokeMap.Load(id)
-	if ok {
-		return res.(string)
-	}
-	return ""
-}
-
-func (m *InvokeManager) delete(id string) {
-	m.invokeMap.Delete(id)
-}
-
 func (m *InvokeManager) completer(id string, value string) {
 	m.invokeMap.Store(id, value)
 	m.chanLock.Lock()
@@ -74,7 +62,7 @@ func (m *InvokeManager) completer(id string, value string) {
 	m.chanLock.Unlock()
 }
 
-func (m *InvokeManager) await(id string) {
+func (m *InvokeManager) await(id string) string {
 	m.chanLock.Lock()
 	if _, ok := m.chanMap[id]; !ok {
 		m.chanMap[id] = make(chan struct{})
@@ -85,12 +73,17 @@ func (m *InvokeManager) await(id string) {
 	timeout := time.After(500 * time.Millisecond)
 	select {
 	case <-ch:
-		return
+		res, ok := m.invokeMap.Load(id)
+		m.invokeMap.Delete(id)
+		if ok {
+			return res.(string)
+		} else {
+			return ""
+		}
 	case <-timeout:
 		m.completer(id, "")
-		return
+		return ""
 	}
-
 }
 
 var (
@@ -195,7 +188,6 @@ func initSocketHook() {
 			})
 
 			fdInvokeMap.await(id)
-			fdInvokeMap.delete(id)
 		})
 	}
 }
@@ -214,10 +206,7 @@ func init() {
 			Id:       id,
 			Metadata: metadata,
 		})
-		processInvokeMap.await(id)
-		res := processInvokeMap.load(id)
-		processInvokeMap.delete(id)
-		return res, nil
+		return processInvokeMap.await(id), nil
 	}
 }
 
@@ -225,14 +214,14 @@ func handleGetAndroidVpnOptions() string {
 	tunLock.Lock()
 	defer tunLock.Unlock()
 	options := state.AndroidVpnOptions{
-		Enable:           state.CurrentState.Enable,
+		Enable:           state.CurrentState.VpnProps.Enable,
 		Port:             currentConfig.General.MixedPort,
 		Ipv4Address:      state.DefaultIpv4Address,
 		Ipv6Address:      state.GetIpv6Address(),
-		AccessControl:    state.CurrentState.AccessControl,
-		SystemProxy:      state.CurrentState.SystemProxy,
-		AllowBypass:      state.CurrentState.AllowBypass,
-		RouteAddress:     state.CurrentState.RouteAddress,
+		AccessControl:    state.CurrentState.VpnProps.AccessControl,
+		SystemProxy:      state.CurrentState.VpnProps.SystemProxy,
+		AllowBypass:      state.CurrentState.VpnProps.AllowBypass,
+		RouteAddress:     currentConfig.General.Tun.RouteAddress,
 		BypassDomain:     state.CurrentState.BypassDomain,
 		DnsServerAddress: state.GetDnsServerAddress(),
 	}
@@ -242,10 +231,6 @@ func handleGetAndroidVpnOptions() string {
 		return ""
 	}
 	return string(data)
-}
-
-func handleSetState(params string) {
-	_ = json.Unmarshal([]byte(params), state.CurrentState)
 }
 
 func handleUpdateDns(value string) {
@@ -263,46 +248,41 @@ func handleGetCurrentProfileName() string {
 	return state.CurrentState.CurrentProfileName
 }
 
-func nextHandle(action *Action, send func([]byte)) bool {
+func nextHandle(action *Action, result func(data interface{})) bool {
 	switch action.Method {
 	case startTunMethod:
 		data := action.Data.(string)
 		var fd int
 		_ = json.Unmarshal([]byte(data), &fd)
-		send(action.wrapMessage(handleStartTun(fd)))
+		result(handleStartTun(fd))
 		return true
 	case stopTunMethod:
 		handleStopTun()
-		send(action.wrapMessage(true))
-		return true
-	case setStateMethod:
-		data := action.Data.(string)
-		handleSetState(data)
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case getAndroidVpnOptionsMethod:
-		send(action.wrapMessage(handleGetAndroidVpnOptions()))
+		result(handleGetAndroidVpnOptions())
 		return true
 	case updateDnsMethod:
 		data := action.Data.(string)
 		handleUpdateDns(data)
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case setFdMapMethod:
 		fdId := action.Data.(string)
 		handleSetFdMap(fdId)
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case setProcessMapMethod:
 		data := action.Data.(string)
 		handleSetProcessMap(data)
-		send(action.wrapMessage(true))
+		result(true)
 		return true
 	case getRunTimeMethod:
-		send(action.wrapMessage(handleGetRunTime()))
+		result(handleGetRunTime())
 		return true
 	case getCurrentProfileNameMethod:
-		send(action.wrapMessage(handleGetCurrentProfileName()))
+		result(handleGetCurrentProfileName())
 		return true
 	}
 	return false

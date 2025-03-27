@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/scheduler.dart';
 
 class Render {
@@ -23,14 +23,14 @@ class Render {
 
   pause() {
     debouncer.call(
-      "render_pause",
+      DebounceTag.renderPause,
       _pause,
       duration: Duration(seconds: 5),
     );
   }
 
   resume() {
-    debouncer.cancel("render_pause");
+    debouncer.cancel(DebounceTag.renderPause);
     _resume();
   }
 
@@ -41,7 +41,7 @@ class Render {
     _drawFrame = _dispatcher.onDrawFrame;
     _dispatcher.onBeginFrame = null;
     _dispatcher.onDrawFrame = null;
-    debugPrint("[App] pause");
+    commonPrint.log("pause");
   }
 
   void _resume() {
@@ -50,7 +50,7 @@ class Render {
     _dispatcher.onBeginFrame = _beginFrame;
     _dispatcher.onDrawFrame = _drawFrame;
     _dispatcher.scheduleFrame();
-    debugPrint("[App] resume");
+    commonPrint.log("resume");
   }
 }
 

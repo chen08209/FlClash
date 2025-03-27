@@ -1,8 +1,9 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NetworkSpeed extends StatefulWidget {
   const NetworkSpeed({super.key});
@@ -49,9 +50,9 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
           label: appLocalizations.networkSpeed,
           iconData: Icons.speed_sharp,
         ),
-        child: Selector<AppFlowingState, List<Traffic>>(
-          selector: (_, appFlowingState) => appFlowingState.traffics,
-          builder: (_, traffics, __) {
+        child: Consumer(
+          builder: (_, ref, __) {
+            final traffics = ref.watch(trafficsProvider).list;
             return Stack(
               children: [
                 Positioned.fill(

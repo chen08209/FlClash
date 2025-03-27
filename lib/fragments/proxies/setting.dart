@@ -1,11 +1,10 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 class ProxiesSetting extends StatelessWidget {
   const ProxiesSetting({super.key});
@@ -56,10 +55,11 @@ class ProxiesSetting extends StatelessWidget {
         SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
-          child: Selector<Config, ProxiesType>(
-            selector: (_, config) => config.proxiesStyle.type,
-            builder: (_, proxiesType, __) {
-              final config = globalState.appController.config;
+          child: Consumer(
+            builder: (_, ref, __) {
+              final proxiesType = ref.watch(proxiesStyleSettingProvider.select(
+                (state) => state.type,
+              ));
               return Wrap(
                 spacing: 16,
                 children: [
@@ -71,9 +71,13 @@ class ProxiesSetting extends StatelessWidget {
                       ),
                       isSelected: proxiesType == item,
                       onPressed: () {
-                        config.proxiesStyle = config.proxiesStyle.copyWith(
-                          type: item,
-                        );
+                        ref
+                            .read(proxiesStyleSettingProvider.notifier)
+                            .updateState((state) {
+                          return state.copyWith(
+                            type: item,
+                          );
+                        });
                       },
                     )
                 ],
@@ -92,10 +96,11 @@ class ProxiesSetting extends StatelessWidget {
         SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
-          child: Selector<Config, ProxiesSortType>(
-            selector: (_, config) => config.proxiesStyle.sortType,
-            builder: (_, proxiesSortType, __) {
-              final config = globalState.appController.config;
+          child: Consumer(
+            builder: (_, ref, __) {
+              final sortType = ref.watch(proxiesStyleSettingProvider.select(
+                (state) => state.sortType,
+              ));
               return Wrap(
                 spacing: 16,
                 children: [
@@ -105,11 +110,15 @@ class ProxiesSetting extends StatelessWidget {
                         label: _getStringProxiesSortType(item),
                         iconData: _getIconWithProxiesSortType(item),
                       ),
-                      isSelected: proxiesSortType == item,
+                      isSelected: sortType == item,
                       onPressed: () {
-                        config.proxiesStyle = config.proxiesStyle.copyWith(
-                          sortType: item,
-                        );
+                        ref
+                            .read(proxiesStyleSettingProvider.notifier)
+                            .updateState((state) {
+                          return state.copyWith(
+                            sortType: item,
+                          );
+                        });
                       },
                     ),
                 ],
@@ -128,21 +137,26 @@ class ProxiesSetting extends StatelessWidget {
         SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
-          child: Selector<Config, ProxyCardType>(
-            selector: (_, config) => config.proxiesStyle.cardType,
-            builder: (_, proxyCardType, __) {
-              final config = globalState.appController.config;
+          child: Consumer(
+            builder: (_, ref, __) {
+              final cardType = ref.watch(proxiesStyleSettingProvider.select(
+                (state) => state.cardType,
+              ));
               return Wrap(
                 spacing: 16,
                 children: [
                   for (final item in ProxyCardType.values)
                     SettingTextCard(
                       Intl.message(item.name),
-                      isSelected: item == proxyCardType,
+                      isSelected: item == cardType,
                       onPressed: () {
-                        config.proxiesStyle = config.proxiesStyle.copyWith(
-                          cardType: item,
-                        );
+                        ref
+                            .read(proxiesStyleSettingProvider.notifier)
+                            .updateState((state) {
+                          return state.copyWith(
+                            cardType: item,
+                          );
+                        });
                       },
                     )
                 ],
@@ -163,21 +177,26 @@ class ProxiesSetting extends StatelessWidget {
             horizontal: 16,
           ),
           scrollDirection: Axis.horizontal,
-          child: Selector<Config, ProxiesLayout>(
-            selector: (_, config) => config.proxiesStyle.layout,
-            builder: (_, proxiesLayout, __) {
-              final config = globalState.appController.config;
+          child: Consumer(
+            builder: (_, ref, __) {
+              final layout = ref.watch(proxiesStyleSettingProvider.select(
+                (state) => state.layout,
+              ));
               return Wrap(
                 spacing: 16,
                 children: [
                   for (final item in ProxiesLayout.values)
                     SettingTextCard(
                       getTextForProxiesLayout(item),
-                      isSelected: item == proxiesLayout,
+                      isSelected: item == layout,
                       onPressed: () {
-                        config.proxiesStyle = config.proxiesStyle.copyWith(
-                          layout: item,
-                        );
+                        ref
+                            .watch(proxiesStyleSettingProvider.notifier)
+                            .updateState((state) {
+                          return state.copyWith(
+                            layout: item,
+                          );
+                        });
                       },
                     )
                 ],
@@ -196,9 +215,11 @@ class ProxiesSetting extends StatelessWidget {
         SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
-          child: Selector<Config, ProxiesIconStyle>(
-            selector: (_, config) => config.proxiesStyle.iconStyle,
-            builder: (_, iconStyle, __) {
+          child: Consumer(
+            builder: (_, ref, __) {
+              final iconStyle = ref.watch(proxiesStyleSettingProvider.select(
+                (state) => state.iconStyle,
+              ));
               return Wrap(
                 spacing: 16,
                 children: [
@@ -207,10 +228,13 @@ class ProxiesSetting extends StatelessWidget {
                       _getTextWithProxiesIconStyle(item),
                       isSelected: iconStyle == item,
                       onPressed: () {
-                        final config = globalState.appController.config;
-                        config.proxiesStyle = config.proxiesStyle.copyWith(
-                          iconStyle: item,
-                        );
+                        ref
+                            .read(proxiesStyleSettingProvider.notifier)
+                            .updateState((state) {
+                          return state.copyWith(
+                            iconStyle: item,
+                          );
+                        });
                       },
                     ),
                 ],
@@ -234,11 +258,11 @@ class ProxiesSetting extends StatelessWidget {
           ..._buildSortSetting(),
           ..._buildLayoutSetting(),
           ..._buildSizeSetting(),
-          Selector<Config, bool>(
-            selector: (_, config) =>
-                config.proxiesStyle.type == ProxiesType.list,
-            builder: (_, value, child) {
-              if (value) {
+          Consumer(
+            builder: (_, ref, child) {
+              final isList = ref.watch(proxiesStyleSettingProvider
+                  .select((state) => state.type == ProxiesType.list));
+              if (isList) {
                 return child!;
               }
               return Container();

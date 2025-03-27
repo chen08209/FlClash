@@ -89,7 +89,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Auto check for updates when the app starts",
     ),
     "autoCloseConnections": MessageLookupByLibrary.simpleMessage(
-      "Auto lose connections",
+      "Auto close connections",
     ),
     "autoCloseConnectionsDesc": MessageLookupByLibrary.simpleMessage(
       "Auto close connections after change node",
@@ -179,6 +179,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "desc": MessageLookupByLibrary.simpleMessage(
       "A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.",
+    ),
+    "detectionTip": MessageLookupByLibrary.simpleMessage(
+      "Relying on third-party api is for reference only",
     ),
     "direct": MessageLookupByLibrary.simpleMessage("Direct"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("Disclaimer"),
@@ -293,6 +296,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ipv6InboundDesc": MessageLookupByLibrary.simpleMessage(
       "Allow IPv6 inbound",
     ),
+    "ja": MessageLookupByLibrary.simpleMessage("Japanese"),
     "just": MessageLookupByLibrary.simpleMessage("Just"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "Tcp keep alive interval",
@@ -302,6 +306,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "list": MessageLookupByLibrary.simpleMessage("List"),
+    "listen": MessageLookupByLibrary.simpleMessage("Listen"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localBackupDesc": MessageLookupByLibrary.simpleMessage(
       "Backup local data to local",
@@ -467,7 +472,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Set the Clash listening port",
     ),
     "proxyProviders": MessageLookupByLibrary.simpleMessage("Proxy providers"),
-    "prueBlackMode": MessageLookupByLibrary.simpleMessage("Prue black mode"),
+    "pureBlackMode": MessageLookupByLibrary.simpleMessage("Pure black mode"),
     "qrcode": MessageLookupByLibrary.simpleMessage("QR code"),
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
       "Scan QR code to obtain profile",
@@ -510,6 +515,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Bypass private route address",
     ),
     "routeMode_config": MessageLookupByLibrary.simpleMessage("Use config"),
+    "ru": MessageLookupByLibrary.simpleMessage("Russian"),
     "rule": MessageLookupByLibrary.simpleMessage("Rule"),
     "ruleProviders": MessageLookupByLibrary.simpleMessage("Rule providers"),
     "save": MessageLookupByLibrary.simpleMessage("Save"),

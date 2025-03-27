@@ -10,7 +10,7 @@ extension CompleterExt<T> on Completer<T> {
     FutureOr<T> Function()? onTimeout,
     required String functionName,
   }) {
-    final realTimeout = timeout ?? const Duration(seconds: 1);
+    final realTimeout = timeout ?? const Duration(seconds: 30);
     Timer(realTimeout + commonDuration, () {
       if (onLast != null) {
         onLast();

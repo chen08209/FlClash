@@ -6,55 +6,82 @@ import 'package:flutter/material.dart';
 class Navigation {
   static Navigation? _instance;
 
-  getItems({
+  List<NavigationItem> getItems({
     bool openLogs = false,
     bool hasProxies = false,
   }) {
     return [
       const NavigationItem(
         icon: Icon(Icons.space_dashboard),
-        label: "dashboard",
-        fragment: DashboardFragment(),
+        label: PageLabel.dashboard,
+        keep: false,
+        fragment: DashboardFragment(
+          key: GlobalObjectKey(PageLabel.dashboard),
+        ),
       ),
       NavigationItem(
-        icon: const Icon(Icons.rocket),
-        label: "proxies",
-        fragment: const ProxiesFragment(),
+        icon: const Icon(Icons.article),
+        label: PageLabel.proxies,
+        fragment: const ProxiesFragment(
+          key: GlobalObjectKey(
+            PageLabel.proxies,
+          ),
+        ),
         modes: hasProxies
             ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
             : [],
       ),
       const NavigationItem(
         icon: Icon(Icons.folder),
-        label: "profiles",
-        fragment: ProfilesFragment(),
+        label: PageLabel.profiles,
+        fragment: ProfilesFragment(
+          key: GlobalObjectKey(
+            PageLabel.profiles,
+          ),
+        ),
       ),
       const NavigationItem(
         icon: Icon(Icons.view_timeline),
-        label: "requests",
-        fragment: RequestsFragment(),
+        label: PageLabel.requests,
+        fragment: RequestsFragment(
+          key: GlobalObjectKey(
+            PageLabel.requests,
+          ),
+        ),
         description: "requestsDesc",
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       const NavigationItem(
         icon: Icon(Icons.ballot),
-        label: "connections",
-        fragment: ConnectionsFragment(),
+        label: PageLabel.connections,
+        fragment: ConnectionsFragment(
+          key: GlobalObjectKey(
+            PageLabel.connections,
+          ),
+        ),
         description: "connectionsDesc",
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       const NavigationItem(
         icon: Icon(Icons.storage),
-        label: "resources",
+        label: PageLabel.resources,
         description: "resourcesDesc",
         keep: false,
-        fragment: Resources(),
+        fragment: Resources(
+          key: GlobalObjectKey(
+            PageLabel.resources,
+          ),
+        ),
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
         icon: const Icon(Icons.adb),
-        label: "logs",
-        fragment: const LogsFragment(),
+        label: PageLabel.logs,
+        fragment: const LogsFragment(
+          key: GlobalObjectKey(
+            PageLabel.logs,
+          ),
+        ),
         description: "logsDesc",
         modes: openLogs
             ? [NavigationItemMode.desktop, NavigationItemMode.more]
@@ -62,8 +89,12 @@ class Navigation {
       ),
       const NavigationItem(
         icon: Icon(Icons.construction),
-        label: "tools",
-        fragment: ToolsFragment(),
+        label: PageLabel.tools,
+        fragment: ToolsFragment(
+          key: GlobalObjectKey(
+            PageLabel.tools,
+          ),
+        ),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
     ];

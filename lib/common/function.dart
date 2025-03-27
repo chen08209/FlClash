@@ -63,6 +63,22 @@ class Throttler {
   }
 }
 
+Future<T> retry<T>({
+  required Future<T> Function() task,
+  int maxAttempts = 3,
+  required bool Function(T res) retryIf,
+  Duration delay = Duration.zero,
+}) async {
+  int attempts = 0;
+  while (attempts < maxAttempts) {
+    final res = await task();
+    if (!retryIf(res) || attempts >= maxAttempts) {
+      return res;
+    }
+    attempts++;
+  }
+  throw "unknown error";
+}
 
 final debouncer = Debouncer();
 

@@ -7,57 +7,27 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'controller.dart';
 import 'models/models.dart';
 import 'pages/pages.dart';
 
-runAppWithPreferences(
-  Widget child, {
-  required AppState appState,
-  required Config config,
-  required AppFlowingState appFlowingState,
-  required ClashConfig clashConfig,
-}) {
-  runApp(MultiProvider(
-    providers: [
-      ChangeNotifierProvider<ClashConfig>(
-        create: (_) => clashConfig,
-      ),
-      ChangeNotifierProvider<Config>(
-        create: (_) => config,
-      ),
-      ChangeNotifierProvider<AppFlowingState>(
-        create: (_) => appFlowingState,
-      ),
-      ChangeNotifierProxyProvider2<Config, ClashConfig, AppState>(
-        create: (_) => appState,
-        update: (_, config, clashConfig, appState) {
-          appState?.mode = clashConfig.mode;
-          appState?.selectedMap = config.currentSelectedMap;
-          return appState!;
-        },
-      )
-    ],
-    child: child,
-  ));
-}
-
-class Application extends StatefulWidget {
+class Application extends ConsumerStatefulWidget {
   const Application({
     super.key,
   });
 
   @override
-  State<Application> createState() => ApplicationState();
+  ConsumerState<Application> createState() => ApplicationState();
 }
 
-class ApplicationState extends State<Application> {
-  late SystemColorSchemes systemColorSchemes;
+class ApplicationState extends ConsumerState<Application> {
+  late ColorSchemes systemColorSchemes;
   Timer? _autoUpdateGroupTaskTimer;
   Timer? _autoUpdateProfilesTaskTimer;
 
@@ -73,7 +43,7 @@ class ApplicationState extends State<Application> {
   ColorScheme _getAppColorScheme({
     required Brightness brightness,
     int? primaryColor,
-    required SystemColorSchemes systemColorSchemes,
+    required ColorSchemes systemColorSchemes,
   }) {
     if (primaryColor != null) {
       return ColorScheme.fromSeed(
@@ -81,7 +51,7 @@ class ApplicationState extends State<Application> {
         brightness: brightness,
       );
     } else {
-      return systemColorSchemes.getSystemColorSchemeForBrightness(brightness);
+      return systemColorSchemes.getColorSchemeForBrightness(brightness);
     }
   }
 
@@ -90,12 +60,21 @@ class ApplicationState extends State<Application> {
     super.initState();
     _autoUpdateGroupTask();
     _autoUpdateProfilesTask();
-    globalState.appController = AppController(context);
+    globalState.appController = AppController(context, ref);
     globalState.measure = Measure.of(context);
+    // ref.listenManual(themeSettingProvider.select((state) => state.fontFamily),
+    //     (prev, next) {
+    //   if (prev != next) {
+    //     globalState.measure = Measure.of(
+    //       context,
+    //       fontFamily: next.value,
+    //     );
+    //   }
+    // }, fireImmediately: true);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final currentContext = globalState.navigatorKey.currentContext;
       if (currentContext != null) {
-        globalState.appController = AppController(currentContext);
+        globalState.appController = AppController(currentContext, ref);
       }
       await globalState.appController.init();
       globalState.appController.initLink();
@@ -167,7 +146,7 @@ class ApplicationState extends State<Application> {
     ColorScheme? lightDynamic,
     ColorScheme? darkDynamic,
   ) {
-    systemColorSchemes = SystemColorSchemes(
+    systemColorSchemes = ColorSchemes(
       lightColorScheme: lightDynamic,
       darkColorScheme: darkDynamic,
     );
@@ -180,15 +159,11 @@ class ApplicationState extends State<Application> {
   Widget build(context) {
     return _buildPlatformWrap(
       _buildWrap(
-        Selector2<AppState, Config, ApplicationSelectorState>(
-          selector: (_, appState, config) => ApplicationSelectorState(
-            locale: config.appSetting.locale,
-            themeMode: config.themeProps.themeMode,
-            primaryColor: config.themeProps.primaryColor,
-            prueBlack: config.themeProps.prueBlack,
-            fontFamily: config.themeProps.fontFamily,
-          ),
-          builder: (_, state, child) {
+        Consumer(
+          builder: (_, ref, child) {
+            final locale =
+                ref.watch(appSettingProvider.select((state) => state.locale));
+            final themeProps = ref.watch(themeSettingProvider);
             return DynamicColorBuilder(
               builder: (lightDynamic, darkDynamic) {
                 _updateSystemColorSchemes(lightDynamic, darkDynamic);
@@ -204,11 +179,9 @@ class ApplicationState extends State<Application> {
                     return MessageManager(
                       child: LayoutBuilder(
                         builder: (_, container) {
-                          final appController = globalState.appController;
-                          final maxWidth = container.maxWidth;
-                          if (appController.appState.viewWidth != maxWidth) {
-                            globalState.appController.updateViewWidth(maxWidth);
-                          }
+                          globalState.appController.updateViewWidth(
+                            container.maxWidth,
+                          );
                           return _buildPage(child!);
                         },
                       ),
@@ -216,28 +189,26 @@ class ApplicationState extends State<Application> {
                   },
                   scrollBehavior: BaseScrollBehavior(),
                   title: appName,
-                  locale: other.getLocaleForString(state.locale),
+                  locale: other.getLocaleForString(locale),
                   supportedLocales: AppLocalizations.delegate.supportedLocales,
-                  themeMode: state.themeMode,
+                  themeMode: themeProps.themeMode,
                   theme: ThemeData(
                     useMaterial3: true,
-                    fontFamily: state.fontFamily.value,
                     pageTransitionsTheme: _pageTransitionsTheme,
                     colorScheme: _getAppColorScheme(
                       brightness: Brightness.light,
                       systemColorSchemes: systemColorSchemes,
-                      primaryColor: state.primaryColor,
+                      primaryColor: themeProps.primaryColor,
                     ),
                   ),
                   darkTheme: ThemeData(
                     useMaterial3: true,
-                    fontFamily: state.fontFamily.value,
                     pageTransitionsTheme: _pageTransitionsTheme,
                     colorScheme: _getAppColorScheme(
                       brightness: Brightness.dark,
                       systemColorSchemes: systemColorSchemes,
-                      primaryColor: state.primaryColor,
-                    ).toPrueBlack(state.prueBlack),
+                      primaryColor: themeProps.primaryColor,
+                    ).toPureBlack(themeProps.pureBlack),
                   ),
                   home: child,
                 );

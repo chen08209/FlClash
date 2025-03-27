@@ -4,19 +4,26 @@ import 'package:flutter/material.dart';
 
 class Measure {
   final TextScaler _textScale;
-  late BuildContext context;
+  final BuildContext context;
+  final String? _fontFamily;
 
-  Measure.of(this.context)
+  Measure.of(this.context, {String? fontFamily})
       : _textScale = TextScaler.linear(
           WidgetsBinding.instance.platformDispatcher.textScaleFactor,
-        );
+        ),
+        _fontFamily = fontFamily ?? "";
 
   Size computeTextSize(
     Text text, {
     double maxWidth = double.infinity,
   }) {
     final textPainter = TextPainter(
-      text: TextSpan(text: text.data, style: text.style),
+      text: TextSpan(
+        text: text.data,
+        style: text.style?.copyWith(
+          fontFamily: _fontFamily,
+        ),
+      ),
       maxLines: text.maxLines,
       textScaler: _textScale,
       textDirection: text.textDirection ?? TextDirection.ltr,

@@ -30,6 +30,8 @@
   "other": "Other",
   "about": "About",
   "en": "English",
+  "ja": "Japanese",
+  "ru": "Russian",
   "zh_CN": "Simplified Chinese",
   "theme": "Theme",
   "themeDesc": "Set dark mode,adjust the color",
@@ -215,12 +217,12 @@
   "go": "Go",
   "externalLink": "External link",
   "otherContributors": "Other contributors",
-  "autoCloseConnections": "Auto lose connections",
+  "autoCloseConnections": "Auto close connections",
   "autoCloseConnectionsDesc": "Auto close connections after change node",
   "onlyStatisticsProxy": "Only statistics proxy",
   "onlyStatisticsProxyDesc": "When turned on, only statistics proxy traffic",
   "deleteProfileTip": "Sure you want to delete the current profile?",
-  "prueBlackMode": "Prue black mode",
+  "pureBlackMode": "Pure black mode",
   "keepAliveIntervalDesc": "Tcp keep alive interval",
   "entries": " entries",
   "local": "Local",
@@ -342,5 +344,7 @@
   "copySuccess": "Copy success",
   "copyLink": "Copy link",
   "exportFile": "Export file",
-  "cacheCorrupt": "The cache is corrupt. Do you want to clear it?"
+  "cacheCorrupt": "The cache is corrupt. Do you want to clear it?",
+  "detectionTip": "Relying on third-party api is for reference only",
+  "listen": "Listen"
 }

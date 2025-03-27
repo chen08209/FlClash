@@ -30,6 +30,8 @@
   "other": "其他",
   "about": "关于",
   "en": "英语",
+  "ja": "日语",
+  "ru": "俄语",
   "zh_CN": "中文简体",
   "theme": "主题",
   "themeDesc": "设置深色模式，调整色彩",
@@ -220,7 +222,7 @@
   "onlyStatisticsProxy": "仅统计代理",
   "onlyStatisticsProxyDesc": "开启后，将只统计代理流量",
   "deleteProfileTip": "确定要删除当前配置吗?",
-  "prueBlackMode": "纯黑模式",
+  "pureBlackMode": "纯黑模式",
   "keepAliveIntervalDesc": "TCP保持活动间隔",
   "entries": "个条目",
   "local": "本地",
@@ -342,5 +344,7 @@
   "copySuccess": "复制成功",
   "copyLink": "复制链接",
   "exportFile": "导出文件",
-  "cacheCorrupt": "缓存已损坏，是否清空？"
+  "cacheCorrupt": "缓存已损坏，是否清空？",
+  "detectionTip": "依赖第三方api，仅供参考",
+  "listen": "监听"
 }

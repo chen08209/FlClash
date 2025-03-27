@@ -1,24 +1,23 @@
-import 'dart:async';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/models.dart';
 import '../widgets/widgets.dart';
 
 double _preOffset = 0;
 
-class LogsFragment extends StatefulWidget {
+class LogsFragment extends ConsumerStatefulWidget {
   const LogsFragment({super.key});
 
   @override
-  State<LogsFragment> createState() => _LogsFragmentState();
+  ConsumerState<LogsFragment> createState() => _LogsFragmentState();
 }
 
-class _LogsFragmentState extends State<LogsFragment> with ViewMixin {
+class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
   final _logsStateNotifier = ValueNotifier<LogsState>(LogsState());
   final _scrollController = ScrollController(
     initialScrollOffset: _preOffset != 0 ? _preOffset : double.maxFinite,
@@ -31,10 +30,34 @@ class _LogsFragmentState extends State<LogsFragment> with ViewMixin {
   @override
   void initState() {
     super.initState();
-    final appController = globalState.appController;
-    final appFlowingState = appController.appFlowingState;
     _logsStateNotifier.value = _logsStateNotifier.value.copyWith(
-      logs: appFlowingState.logs,
+      logs: globalState.appState.logs.list,
+    );
+    ref.listenManual(
+      logsProvider.select((state) => state.list),
+      (prev, next) {
+        if (prev != next) {
+          final isEquality = logListEquality.equals(prev, next);
+          if (!isEquality) {
+            _logs = next;
+            updateLogsThrottler();
+          }
+        }
+      },
+      fireImmediately: true,
+    );
+    ref.listenManual(
+      isCurrentPageProvider(
+        PageLabel.logs,
+        handler: (pageLabel, viewMode) =>
+            pageLabel == PageLabel.tools && viewMode == ViewMode.mobile,
+      ),
+      (prev, next) {
+        if (prev != next && next == true) {
+          initPageState();
+        }
+      },
+      fireImmediately: true,
     );
   }
 
@@ -93,12 +116,6 @@ class _LogsFragmentState extends State<LogsFragment> with ViewMixin {
     );
   }
 
-  _initActions() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      super.initViewState();
-    });
-  }
-
   double _calcCacheHeight(String text) {
     final cacheHeight = _cacheDynamicHeightMap.get(text);
     if (cacheHeight != null) {
@@ -140,98 +157,66 @@ class _LogsFragmentState extends State<LogsFragment> with ViewMixin {
     }, duration: commonDuration);
   }
 
-  Widget _wrapLogsUpdate(Widget child) {
-    return Selector<AppFlowingState, List<Log>>(
-      selector: (_, appFlowingState) => appFlowingState.logs,
-      shouldRebuild: (prev, next) {
-        final isEquality = logListEquality.equals(prev, next);
-        if (!isEquality) {
-          _logs = next;
-          updateLogsThrottler();
-        }
-        return !isEquality;
-      },
-      builder: (_, next, child) {
-        return child!;
-      },
-      child: child,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (_, constraints) {
         _handleTryClearCache(constraints.maxWidth - 40);
-        return Selector<AppState, bool?>(
-          selector: (_, appState) =>
-              appState.currentLabel == 'logs' ||
-              appState.viewMode == ViewMode.mobile &&
-                  appState.currentLabel == "tools",
-          builder: (_, isCurrent, child) {
-            if (isCurrent == null || isCurrent) {
-              _initActions();
-            }
-            return child!;
-          },
-          child: _wrapLogsUpdate(
-            Align(
-              alignment: Alignment.topCenter,
-              child: ValueListenableBuilder<LogsState>(
-                valueListenable: _logsStateNotifier,
-                builder: (_, state, __) {
-                  final logs = state.list;
-                  if (logs.isEmpty) {
-                    return NullStatus(
-                      label: appLocalizations.nullLogsDesc,
-                    );
-                  }
-                  final items = logs
-                      .map<Widget>(
-                        (log) => LogItem(
-                          key: Key(log.dateTime.toString()),
-                          log: log,
-                          onClick: (value) {
-                            context.commonScaffoldState?.addKeyword(value);
-                          },
-                        ),
-                      )
-                      .separated(
-                        const Divider(
-                          height: 0,
-                        ),
-                      )
-                      .toList();
-                  return NotificationListener<ScrollEndNotification>(
-                    onNotification: (details) {
-                      _preOffset = details.metrics.pixels;
-                      return false;
-                    },
-                    child: CommonScrollBar(
-                      controller: _scrollController,
-                      child: ListView.builder(
-                        reverse: true,
-                        shrinkWrap: true,
-                        physics: NextClampingScrollPhysics(),
-                        controller: _scrollController,
-                        itemBuilder: (_, index) {
-                          return items[index];
-                        },
-                        itemExtentBuilder: (index, __) {
-                          final item = items[index];
-                          if (item.runtimeType == Divider) {
-                            return 0;
-                          }
-                          final log = logs[(index / 2).floor()];
-                          return _getItemHeight(log);
-                        },
-                        itemCount: items.length,
-                      ),
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ValueListenableBuilder<LogsState>(
+            valueListenable: _logsStateNotifier,
+            builder: (_, state, __) {
+              final logs = state.list;
+              if (logs.isEmpty) {
+                return NullStatus(
+                  label: appLocalizations.nullLogsDesc,
+                );
+              }
+              final items = logs
+                  .map<Widget>(
+                    (log) => LogItem(
+                      key: Key(log.dateTime.toString()),
+                      log: log,
+                      onClick: (value) {
+                        context.commonScaffoldState?.addKeyword(value);
+                      },
                     ),
-                  );
+                  )
+                  .separated(
+                    const Divider(
+                      height: 0,
+                    ),
+                  )
+                  .toList();
+              return NotificationListener<ScrollEndNotification>(
+                onNotification: (details) {
+                  _preOffset = details.metrics.pixels;
+                  return false;
                 },
-              ),
-            ),
+                child: CommonScrollBar(
+                  controller: _scrollController,
+                  child: ListView.builder(
+                    reverse: true,
+                    shrinkWrap: true,
+                    physics: NextClampingScrollPhysics(),
+                    controller: _scrollController,
+                    itemBuilder: (_, index) {
+                      return items[index];
+                    },
+                    itemExtentBuilder: (index, __) {
+                      final item = items[index];
+                      if (item.runtimeType == Divider) {
+                        return 0;
+                      }
+                      final log = logs[(index / 2).floor()];
+                      return _getItemHeight(log);
+                    },
+                    itemCount: items.length,
+                  ),
+                ),
+              );
+            },
           ),
         );
       },

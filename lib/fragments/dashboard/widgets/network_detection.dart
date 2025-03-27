@@ -4,10 +4,11 @@ import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final _networkDetectionState = ValueNotifier<NetworkDetectionState>(
   const NetworkDetectionState(
@@ -16,14 +17,14 @@ final _networkDetectionState = ValueNotifier<NetworkDetectionState>(
   ),
 );
 
-class NetworkDetection extends StatefulWidget {
+class NetworkDetection extends ConsumerStatefulWidget {
   const NetworkDetection({super.key});
 
   @override
-  State<NetworkDetection> createState() => _NetworkDetectionState();
+  ConsumerState<NetworkDetection> createState() => _NetworkDetectionState();
 }
 
-class _NetworkDetectionState extends State<NetworkDetection> {
+class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
   bool? _preIsStart;
   Timer? _setTimeoutTimer;
   CancelToken? cancelToken;
@@ -31,6 +32,11 @@ class _NetworkDetectionState extends State<NetworkDetection> {
 
   @override
   void initState() {
+    ref.listenManual(checkIpNumProvider, (prev, next) {
+      if (prev != next) {
+        _startCheck();
+      }
+    });
     super.initState();
   }
 
@@ -47,12 +53,15 @@ class _NetworkDetectionState extends State<NetworkDetection> {
   }
 
   _checkIp() async {
-    final appState = globalState.appController.appState;
-    final appFlowingState = globalState.appController.appFlowingState;
+    final appState = globalState.appState;
     final isInit = appState.isInit;
     if (!isInit) return;
-    final isStart = appFlowingState.isStart;
-    if (_preIsStart == false && _preIsStart == isStart) return;
+    final isStart = appState.runTime != null;
+    if (_preIsStart == false &&
+        _preIsStart == isStart &&
+        _networkDetectionState.value.ipInfo != null) {
+      return;
+    }
     _clearSetTimeoutTimer();
     _networkDetectionState.value = _networkDetectionState.value.copyWith(
       isTesting: true,
@@ -109,24 +118,6 @@ class _NetworkDetectionState extends State<NetworkDetection> {
     }
   }
 
-  _checkIpContainer(Widget child) {
-    return Selector<AppState, num>(
-      selector: (_, appState) {
-        return appState.checkIpNum;
-      },
-      shouldRebuild: (prev, next) {
-        if (prev != next) {
-          _startCheck();
-        }
-        return prev != next;
-      },
-      builder: (_, checkIpNum, child) {
-        return child!;
-      },
-      child: child,
-    );
-  }
-
   _countryCodeToEmoji(String countryCode) {
     final String code = countryCode.toUpperCase();
     if (code.length != 2) {
@@ -141,109 +132,130 @@ class _NetworkDetectionState extends State<NetworkDetection> {
   Widget build(BuildContext context) {
     return SizedBox(
       height: getWidgetHeight(1),
-      child: _checkIpContainer(
-        ValueListenableBuilder<NetworkDetectionState>(
-          valueListenable: _networkDetectionState,
-          builder: (_, state, __) {
-            final ipInfo = state.ipInfo;
-            final isTesting = state.isTesting;
-            return CommonCard(
-              onPressed: () {},
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    height: globalState.measure.titleMediumHeight + 16,
-                    padding: baseInfoEdgeInsets.copyWith(
-                      bottom: 0,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        ipInfo != null
-                            ? Text(
-                                _countryCodeToEmoji(
-                                  ipInfo.countryCode,
-                                ),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.toLight
-                                    .copyWith(
-                                      fontFamily: FontFamily.twEmoji.value,
-                                    ),
-                              )
-                            : Icon(
-                                Icons.network_check,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+      child: ValueListenableBuilder<NetworkDetectionState>(
+        valueListenable: _networkDetectionState,
+        builder: (_, state, __) {
+          final ipInfo = state.ipInfo;
+          final isTesting = state.isTesting;
+          return CommonCard(
+            onPressed: () {},
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  height: globalState.measure.titleMediumHeight + 16,
+                  padding: baseInfoEdgeInsets.copyWith(
+                    bottom: 0,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      ipInfo != null
+                          ? Text(
+                              _countryCodeToEmoji(
+                                ipInfo.countryCode,
                               ),
-                        const SizedBox(
-                          width: 8,
-                        ),
-                        Flexible(
-                          flex: 1,
-                          child: TooltipText(
-                            text: Text(
-                              appLocalizations.networkDetection,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context)
                                   .textTheme
-                                  .titleSmall
-                                  ?.copyWith(
-                                    color: context.colorScheme.onSurfaceVariant,
+                                  .titleMedium
+                                  ?.toLight
+                                  .copyWith(
+                                    fontFamily: FontFamily.twEmoji.value,
                                   ),
+                            )
+                          : Icon(
+                              Icons.network_check,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
+                      const SizedBox(
+                        width: 8,
+                      ),
+                      Flexible(
+                        flex: 1,
+                        child: TooltipText(
+                          text: Text(
+                            appLocalizations.networkDetection,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  color: context.colorScheme.onSurfaceVariant,
+                                ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: 2),
+                      AspectRatio(
+                        aspectRatio: 1,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            globalState.showMessage(
+                              title: appLocalizations.tip,
+                              message: TextSpan(
+                                text: appLocalizations.detectionTip,
+                              ),
+                              cancelable: false,
+                            );
+                          },
+                          icon: Icon(
+                            size: 16,
+                            Icons.info_outline,
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    ],
                   ),
-                  Container(
-                    padding: baseInfoEdgeInsets.copyWith(
-                      top: 0,
-                    ),
-                    child: SizedBox(
-                      height: globalState.measure.bodyMediumHeight + 2,
-                      child: FadeBox(
-                        child: ipInfo != null
-                            ? TooltipText(
-                                text: Text(
-                                  ipInfo.ip,
-                                  style: context.textTheme.bodyMedium?.toLight
-                                      .adjustSize(1),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              )
-                            : FadeBox(
-                                child: isTesting == false && ipInfo == null
-                                    ? Text(
-                                        "timeout",
-                                        style: context.textTheme.bodyMedium
-                                            ?.copyWith(color: Colors.red)
-                                            .adjustSize(1),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      )
-                                    : Container(
-                                        padding: const EdgeInsets.all(2),
-                                        child: const AspectRatio(
-                                          aspectRatio: 1,
-                                          child: CircularProgressIndicator(),
+                ),
+                Container(
+                  padding: baseInfoEdgeInsets.copyWith(
+                    top: 0,
+                  ),
+                  child: SizedBox(
+                    height: globalState.measure.bodyMediumHeight + 2,
+                    child: FadeBox(
+                      child: ipInfo != null
+                          ? TooltipText(
+                              text: Text(
+                                ipInfo.ip,
+                                style: context.textTheme.bodyMedium?.toLight
+                                    .adjustSize(1),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            )
+                          : FadeBox(
+                              child: isTesting == false && ipInfo == null
+                                  ? Text(
+                                      "timeout",
+                                      style: context.textTheme.bodyMedium
+                                          ?.copyWith(color: Colors.red)
+                                          .adjustSize(1),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    )
+                                  : Container(
+                                      padding: const EdgeInsets.all(2),
+                                      child: const AspectRatio(
+                                        aspectRatio: 1,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
                                         ),
                                       ),
-                              ),
-                      ),
+                                    ),
+                            ),
                     ),
-                  )
-                ],
-              ),
-            );
-          },
-        ),
+                  ),
+                )
+              ],
+            ),
+          );
+        },
       ),
     );
   }

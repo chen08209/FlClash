@@ -4,9 +4,10 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class FindProcessBuilder extends StatelessWidget {
   final Widget Function(bool value) builder;
@@ -18,11 +19,15 @@ class FindProcessBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<ClashConfig, bool>(
-      selector: (_, clashConfig) =>
-          clashConfig.findProcessMode == FindProcessMode.always &&
-          Platform.isAndroid,
-      builder: (_, value, __) {
+    return Consumer(
+      builder: (_, ref, __) {
+        final value = ref.watch(
+          patchClashConfigProvider.select(
+            (state) =>
+                state.findProcessMode == FindProcessMode.always &&
+                Platform.isAndroid,
+          ),
+        );
         return builder(value);
       },
     );

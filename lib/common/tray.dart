@@ -39,10 +39,7 @@ class Tray {
   }
 
   update({
-    required AppState appState,
-    required AppFlowingState appFlowingState,
-    required Config config,
-    required ClashConfig clashConfig,
+    required TrayState trayState,
     bool focus = false,
   }) async {
     if (Platform.isAndroid) {
@@ -50,7 +47,7 @@ class Tray {
     }
     if (!Platform.isLinux) {
       await _updateSystemTray(
-        brightness: appState.brightness,
+        brightness: trayState.brightness,
         force: focus,
       );
     }
@@ -63,9 +60,7 @@ class Tray {
     );
     menuItems.add(showMenuItem);
     final startMenuItem = MenuItem.checkbox(
-      label: appFlowingState.isStart
-          ? appLocalizations.stop
-          : appLocalizations.start,
+      label: trayState.isStart ? appLocalizations.stop : appLocalizations.start,
       onClick: (_) async {
         globalState.appController.updateStart();
       },
@@ -80,23 +75,22 @@ class Tray {
           onClick: (_) {
             globalState.appController.changeMode(mode);
           },
-          checked: mode == clashConfig.mode,
+          checked: mode == trayState.mode,
         ),
       );
     }
     menuItems.add(MenuItem.separator());
     if (!Platform.isWindows) {
-      final groups = appState.currentGroups;
-      for (final group in groups) {
+      for (final group in trayState.groups) {
         List<MenuItem> subMenuItems = [];
         for (final proxy in group.all) {
           subMenuItems.add(
             MenuItem.checkbox(
               label: proxy.name,
-              checked: appState.selectedMap[group.name] == proxy.name,
+              checked: trayState.selectedMap[group.name] == proxy.name,
               onClick: (_) {
                 final appController = globalState.appController;
-                appController.config.updateCurrentSelectedMap(
+                appController.updateCurrentSelectedMap(
                   group.name,
                   proxy.name,
                 );
@@ -117,18 +111,18 @@ class Tray {
           ),
         );
       }
-      if (groups.isNotEmpty) {
+      if (trayState.groups.isNotEmpty) {
         menuItems.add(MenuItem.separator());
       }
     }
-    if (appFlowingState.isStart) {
+    if (trayState.isStart) {
       menuItems.add(
         MenuItem.checkbox(
           label: appLocalizations.tun,
           onClick: (_) {
             globalState.appController.updateTun();
           },
-          checked: clashConfig.tun.enable,
+          checked: trayState.tunEnable,
         ),
       );
       menuItems.add(
@@ -137,7 +131,7 @@ class Tray {
           onClick: (_) {
             globalState.appController.updateSystemProxy();
           },
-          checked: config.networkProps.systemProxy,
+          checked: trayState.systemProxy,
         ),
       );
       menuItems.add(MenuItem.separator());
@@ -147,12 +141,12 @@ class Tray {
       onClick: (_) async {
         globalState.appController.updateAutoLaunch();
       },
-      checked: config.appSetting.autoLaunch,
+      checked: trayState.autoLaunch,
     );
     final copyEnvVarMenuItem = MenuItem(
       label: appLocalizations.copyEnvVar,
       onClick: (_) async {
-        await _copyEnv(clashConfig.mixedPort);
+        await _copyEnv(trayState.port);
       },
     );
     menuItems.add(autoStartMenuItem);
@@ -169,10 +163,23 @@ class Tray {
     await trayManager.setContextMenu(menu);
     if (Platform.isLinux) {
       await _updateSystemTray(
-        brightness: appState.brightness,
+        brightness: trayState.brightness,
         force: focus,
       );
     }
+  }
+
+  updateTrayTitle([Traffic? traffic]) async {
+    // if (!Platform.isMacOS) {
+    //   return;
+    // }
+    // if (traffic == null) {
+    //   await trayManager.setTitle("");
+    // } else {
+    //   await trayManager.setTitle(
+    //     "${traffic.up.shortShow} ↑ \n${traffic.down.shortShow} ↓",
+    //   );
+    // }
   }
 
   Future<void> _copyEnv(int port) async {
