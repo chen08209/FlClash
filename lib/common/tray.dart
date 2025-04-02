@@ -81,6 +81,7 @@ class Tray {
     }
     menuItems.add(MenuItem.separator());
     if (!Platform.isWindows) {
+      List<MenuItem> groupMenuItems = [];
       for (final group in trayState.groups) {
         List<MenuItem> subMenuItems = [];
         for (final proxy in group.all) {
@@ -102,7 +103,7 @@ class Tray {
             ),
           );
         }
-        menuItems.add(
+        groupMenuItems.add(
           MenuItem.submenu(
             label: group.name,
             submenu: Menu(
@@ -111,6 +112,14 @@ class Tray {
           ),
         );
       }
+      menuItems.add(
+        MenuItem.submenu(
+          label: appLocalizations.proxies,
+          submenu: Menu(
+            items: groupMenuItems,
+          ),
+        ),
+      );
       if (trayState.groups.isNotEmpty) {
         menuItems.add(MenuItem.separator());
       }
