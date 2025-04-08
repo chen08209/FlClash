@@ -68,7 +68,7 @@ class Proxy extends ProxyPlatform {
         cmdList.add(
           ["gsettings", "set", "org.gnome.system.proxy", "mode", "manual"],
         );
-        final ignoreHosts = "\"['${bypassDomain.join("', '")}']\"";
+        final ignoreHosts = "['${bypassDomain.join("', '")}']";
         cmdList.add(
           [
             "gsettings",
