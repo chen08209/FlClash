@@ -1,3 +1,13 @@
+## v0.8.81
+
+- Add rule override
+
+- Update core
+
+- Optimize more details
+
+- Update changelog
+
 ## v0.8.80
 
 - Optimize dashboard performance
