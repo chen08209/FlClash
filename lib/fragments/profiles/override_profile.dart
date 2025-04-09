@@ -45,6 +45,7 @@ class _OverrideProfileState extends State<OverrideProfile> {
   }
 
   _handleSave(WidgetRef ref, OverrideData overrideData) {
+    ref.read(needApplyProvider.notifier).value = true;
     ref.read(profilesProvider.notifier).updateProfile(
           widget.profileId,
           (state) => state.copyWith(

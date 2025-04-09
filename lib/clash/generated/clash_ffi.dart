@@ -2348,6 +2348,97 @@ class ClashFFI {
 
   set suboptarg(ffi.Pointer<ffi.Char> value) => _suboptarg.value = value;
 
+  void protect(
+    protect_func fn,
+    ffi.Pointer<ffi.Void> tun_interface,
+    int fd,
+  ) {
+    return _protect(
+      fn,
+      tun_interface,
+      fd,
+    );
+  }
+
+  late final _protectPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              protect_func, ffi.Pointer<ffi.Void>, ffi.Int)>>('protect');
+  late final _protect = _protectPtr
+      .asFunction<void Function(protect_func, ffi.Pointer<ffi.Void>, int)>();
+
+  ffi.Pointer<ffi.Char> resolve_process(
+    resolve_process_func fn,
+    ffi.Pointer<ffi.Void> tun_interface,
+    int protocol,
+    ffi.Pointer<ffi.Char> source,
+    ffi.Pointer<ffi.Char> target,
+    int uid,
+  ) {
+    return _resolve_process(
+      fn,
+      tun_interface,
+      protocol,
+      source,
+      target,
+      uid,
+    );
+  }
+
+  late final _resolve_processPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+              resolve_process_func,
+              ffi.Pointer<ffi.Void>,
+              ffi.Int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int)>>('resolve_process');
+  late final _resolve_process = _resolve_processPtr.asFunction<
+      ffi.Pointer<ffi.Char> Function(
+          resolve_process_func,
+          ffi.Pointer<ffi.Void>,
+          int,
+          ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Char>,
+          int)>();
+
+  void release_object(
+    release_object_func fn,
+    ffi.Pointer<ffi.Void> obj,
+  ) {
+    return _release_object(
+      fn,
+      obj,
+    );
+  }
+
+  late final _release_objectPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              release_object_func, ffi.Pointer<ffi.Void>)>>('release_object');
+  late final _release_object = _release_objectPtr
+      .asFunction<void Function(release_object_func, ffi.Pointer<ffi.Void>)>();
+
+  void registerCallbacks(
+    protect_func markSocketFunc,
+    resolve_process_func resolveProcessFunc,
+    release_object_func releaseObjectFunc,
+  ) {
+    return _registerCallbacks(
+      markSocketFunc,
+      resolveProcessFunc,
+      releaseObjectFunc,
+    );
+  }
+
+  late final _registerCallbacksPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(protect_func, resolve_process_func,
+              release_object_func)>>('registerCallbacks');
+  late final _registerCallbacks = _registerCallbacksPtr.asFunction<
+      void Function(protect_func, resolve_process_func, release_object_func)>();
+
   void initNativeApiBridge(
     ffi.Pointer<ffi.Void> api,
   ) {
@@ -2443,28 +2534,14 @@ class ClashFFI {
       _lookup<ffi.NativeFunction<ffi.Void Function()>>('stopListener');
   late final _stopListener = _stopListenerPtr.asFunction<void Function()>();
 
-  void attachInvokePort(
-    int mPort,
-  ) {
-    return _attachInvokePort(
-      mPort,
-    );
-  }
-
-  late final _attachInvokePortPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.LongLong)>>(
-          'attachInvokePort');
-  late final _attachInvokePort =
-      _attachInvokePortPtr.asFunction<void Function(int)>();
-
   void quickStart(
-    ffi.Pointer<ffi.Char> dirChar,
+    ffi.Pointer<ffi.Char> initParamsChar,
     ffi.Pointer<ffi.Char> paramsChar,
     ffi.Pointer<ffi.Char> stateParamsChar,
     int port,
   ) {
     return _quickStart(
-      dirChar,
+      initParamsChar,
       paramsChar,
       stateParamsChar,
       port,
@@ -2479,19 +2556,21 @@ class ClashFFI {
       void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
           ffi.Pointer<ffi.Char>, int)>();
 
-  ffi.Pointer<ffi.Char> startTUN(
+  int startTUN(
     int fd,
+    ffi.Pointer<ffi.Void> callback,
   ) {
     return _startTUN(
       fd,
+      callback,
     );
   }
 
-  late final _startTUNPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
-          'startTUN');
+  late final _startTUNPtr = _lookup<
+          ffi.NativeFunction<GoUint8 Function(ffi.Int, ffi.Pointer<ffi.Void>)>>(
+      'startTUN');
   late final _startTUN =
-      _startTUNPtr.asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+      _startTUNPtr.asFunction<int Function(int, ffi.Pointer<ffi.Void>)>();
 
   ffi.Pointer<ffi.Char> getRunTime() {
     return _getRunTime();
@@ -2510,20 +2589,6 @@ class ClashFFI {
   late final _stopTunPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function()>>('stopTun');
   late final _stopTun = _stopTunPtr.asFunction<void Function()>();
-
-  void setFdMap(
-    ffi.Pointer<ffi.Char> fdIdChar,
-  ) {
-    return _setFdMap(
-      fdIdChar,
-    );
-  }
-
-  late final _setFdMapPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
-          'setFdMap');
-  late final _setFdMap =
-      _setFdMapPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> getCurrentProfileName() {
     return _getCurrentProfileName();
@@ -2572,20 +2637,6 @@ class ClashFFI {
           'updateDns');
   late final _updateDns =
       _updateDnsPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
-
-  void setProcessMap(
-    ffi.Pointer<ffi.Char> s,
-  ) {
-    return _setProcessMap(
-      s,
-    );
-  }
-
-  late final _setProcessMapPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
-          'setProcessMap');
-  late final _setProcessMap =
-      _setProcessMapPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 }
 
 final class __mbstate_t extends ffi.Union {
@@ -3738,6 +3789,31 @@ typedef mode_t = __darwin_mode_t;
 typedef __darwin_mode_t = __uint16_t;
 typedef __uint16_t = ffi.UnsignedShort;
 typedef Dart__uint16_t = int;
+typedef protect_func = ffi.Pointer<ffi.NativeFunction<protect_funcFunction>>;
+typedef protect_funcFunction = ffi.Void Function(
+    ffi.Pointer<ffi.Void> tun_interface, ffi.Int fd);
+typedef Dartprotect_funcFunction = void Function(
+    ffi.Pointer<ffi.Void> tun_interface, int fd);
+typedef resolve_process_func
+    = ffi.Pointer<ffi.NativeFunction<resolve_process_funcFunction>>;
+typedef resolve_process_funcFunction = ffi.Pointer<ffi.Char> Function(
+    ffi.Pointer<ffi.Void> tun_interface,
+    ffi.Int protocol,
+    ffi.Pointer<ffi.Char> source,
+    ffi.Pointer<ffi.Char> target,
+    ffi.Int uid);
+typedef Dartresolve_process_funcFunction = ffi.Pointer<ffi.Char> Function(
+    ffi.Pointer<ffi.Void> tun_interface,
+    int protocol,
+    ffi.Pointer<ffi.Char> source,
+    ffi.Pointer<ffi.Char> target,
+    int uid);
+typedef release_object_func
+    = ffi.Pointer<ffi.NativeFunction<release_object_funcFunction>>;
+typedef release_object_funcFunction = ffi.Void Function(
+    ffi.Pointer<ffi.Void> obj);
+typedef Dartrelease_object_funcFunction = void Function(
+    ffi.Pointer<ffi.Void> obj);
 
 final class GoInterface extends ffi.Struct {
   external ffi.Pointer<ffi.Void> t;
@@ -3758,6 +3834,8 @@ final class GoSlice extends ffi.Struct {
 typedef GoInt = GoInt64;
 typedef GoInt64 = ffi.LongLong;
 typedef DartGoInt64 = int;
+typedef GoUint8 = ffi.UnsignedChar;
+typedef DartGoUint8 = int;
 
 const int __has_safe_buffers = 1;
 
@@ -3973,6 +4051,8 @@ const int __MAC_15_0 = 150000;
 
 const int __MAC_15_1 = 150100;
 
+const int __MAC_15_2 = 150200;
+
 const int __IPHONE_2_0 = 20000;
 
 const int __IPHONE_2_1 = 20100;
@@ -4135,6 +4215,8 @@ const int __IPHONE_18_0 = 180000;
 
 const int __IPHONE_18_1 = 180100;
 
+const int __IPHONE_18_2 = 180200;
+
 const int __WATCHOS_1_0 = 10000;
 
 const int __WATCHOS_2_0 = 20000;
@@ -4232,6 +4314,8 @@ const int __WATCHOS_10_5 = 100500;
 const int __WATCHOS_11_0 = 110000;
 
 const int __WATCHOS_11_1 = 110100;
+
+const int __WATCHOS_11_2 = 110200;
 
 const int __TVOS_9_0 = 90000;
 
@@ -4333,6 +4417,8 @@ const int __TVOS_18_0 = 180000;
 
 const int __TVOS_18_1 = 180100;
 
+const int __TVOS_18_2 = 180200;
+
 const int __BRIDGEOS_2_0 = 20000;
 
 const int __BRIDGEOS_3_0 = 30000;
@@ -4389,6 +4475,8 @@ const int __BRIDGEOS_9_0 = 90000;
 
 const int __BRIDGEOS_9_1 = 90100;
 
+const int __BRIDGEOS_9_2 = 90200;
+
 const int __DRIVERKIT_19_0 = 190000;
 
 const int __DRIVERKIT_20_0 = 200000;
@@ -4419,6 +4507,8 @@ const int __DRIVERKIT_24_0 = 240000;
 
 const int __DRIVERKIT_24_1 = 240100;
 
+const int __DRIVERKIT_24_2 = 240200;
+
 const int __VISIONOS_1_0 = 10000;
 
 const int __VISIONOS_1_1 = 10100;
@@ -4428,6 +4518,8 @@ const int __VISIONOS_1_2 = 10200;
 const int __VISIONOS_2_0 = 20000;
 
 const int __VISIONOS_2_1 = 20100;
+
+const int __VISIONOS_2_2 = 20200;
 
 const int MAC_OS_X_VERSION_10_0 = 1000;
 
@@ -4555,9 +4647,11 @@ const int MAC_OS_VERSION_15_0 = 150000;
 
 const int MAC_OS_VERSION_15_1 = 150100;
 
+const int MAC_OS_VERSION_15_2 = 150200;
+
 const int __MAC_OS_X_VERSION_MIN_REQUIRED = 150000;
 
-const int __MAC_OS_X_VERSION_MAX_ALLOWED = 150100;
+const int __MAC_OS_X_VERSION_MAX_ALLOWED = 150200;
 
 const int __ENABLE_LEGACY_MAC_AVAILABILITY = 1;
 

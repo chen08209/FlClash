@@ -24,6 +24,7 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(':app')
+    project.evaluationDependsOn(':core')
 }
 
 tasks.register("clean", Delete) {

@@ -31,6 +31,7 @@ class AppState with _$AppState {
     required FixedList<Log> logs,
     required FixedList<Traffic> traffics,
     required Traffic totalTraffic,
+    @Default(false) bool needApply,
   }) = _AppState;
 }
 

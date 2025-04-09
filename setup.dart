@@ -199,6 +199,7 @@ class Build {
     required Mode mode,
     required Target target,
     Arch? arch,
+    bool stable = false,
   }) async {
     final isLib = mode == Mode.lib;
 
@@ -237,7 +238,9 @@ class Build {
       if (isLib) {
         env["CGO_ENABLED"] = "1";
         env["CC"] = _getCc(item);
-        env["CFLAGS"] = "-O3 -Werror";
+        if (stable) {
+          env["CFLAGS"] = "-O3 -Werror";
+        }
       } else {
         env["CGO_ENABLED"] = "0";
       }
@@ -245,7 +248,7 @@ class Build {
       final execLines = [
         "go",
         "build",
-        "-ldflags=-w -s",
+        if (stable) "-ldflags=-w -s",
         "-tags=$tags",
         if (isLib) "-buildmode=c-shared",
         "-o",
@@ -470,6 +473,7 @@ class BuildCommand extends Command {
       target: target,
       arch: arch,
       mode: mode,
+      stable: env == "stable"
     );
 
     if (target == Target.windows) {

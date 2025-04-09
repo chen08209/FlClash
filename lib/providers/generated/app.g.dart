@@ -336,5 +336,19 @@ final delayDataSourceProvider =
 );
 
 typedef _$DelayDataSource = AutoDisposeNotifier<DelayMap>;
+String _$needApplyHash() => r'62ff248d67b0525c6a55e556fbd29a2044e97766';
+
+/// See also [NeedApply].
+@ProviderFor(NeedApply)
+final needApplyProvider = AutoDisposeNotifierProvider<NeedApply, bool>.internal(
+  NeedApply.new,
+  name: r'needApplyProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$needApplyHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$NeedApply = AutoDisposeNotifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -356,3 +356,18 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
     }
   }
 }
+
+@riverpod
+class NeedApply extends _$NeedApply with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return globalState.appState.needApply;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.appState = globalState.appState.copyWith(
+      needApply: value,
+    );
+  }
+}

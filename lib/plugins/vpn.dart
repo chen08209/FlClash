@@ -8,8 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 abstract mixin class VpnListener {
-  void onStarted(int fd) {}
-
   void onDnsChanged(String dns) {}
 }
 
@@ -32,10 +30,6 @@ class Vpn {
         default:
           for (final VpnListener listener in _listeners) {
             switch (call.method) {
-              case "started":
-                final fd = call.arguments as int;
-                listener.onStarted(fd);
-                break;
               case "dnsChanged":
                 final dns = call.arguments as String;
                 listener.onDnsChanged(dns);
@@ -60,16 +54,6 @@ class Vpn {
 
   Future<bool?> stop() async {
     return await methodChannel.invokeMethod<bool>("stop");
-  }
-
-  Future<bool?> setProtect(int fd) async {
-    return await methodChannel.invokeMethod<bool?>("setProtect", {'fd': fd});
-  }
-
-  Future<String?> resolverProcess(ProcessData process) async {
-    return await methodChannel.invokeMethod<String>("resolverProcess", {
-      "data": json.encode(process),
-    });
   }
 
   void addListener(VpnListener listener) {
