@@ -173,7 +173,7 @@ extension ProfileExtension on Profile {
     final disposition = response.headers.value("content-disposition");
     final userinfo = response.headers.value('subscription-userinfo');
     return await copyWith(
-      label: label ?? other.getFileNameForDisposition(disposition) ?? id,
+      label: label ?? utils.getFileNameForDisposition(disposition) ?? id,
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
     ).saveFile(response.data);
   }

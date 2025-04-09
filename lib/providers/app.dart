@@ -196,7 +196,7 @@ class ViewSize extends _$ViewSize with AutoDisposeNotifierMixin {
     );
   }
 
-  ViewMode get viewMode => other.getViewMode(state.width);
+  ViewMode get viewMode => utils.getViewMode(state.width);
 
   bool get isMobileView => viewMode == ViewMode.mobile;
 }
@@ -208,7 +208,7 @@ double viewWidth(Ref ref) {
 
 @riverpod
 ViewMode viewMode(Ref ref) {
-  return other.getViewMode(ref.watch(viewWidthProvider));
+  return utils.getViewMode(ref.watch(viewWidthProvider));
 }
 
 @riverpod
@@ -354,5 +354,20 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
       newDelayMap[delay.url]![delay.name] = delay.value;
       state = newDelayMap;
     }
+  }
+}
+
+@riverpod
+class NeedApply extends _$NeedApply with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return globalState.appState.needApply;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.appState = globalState.appState.copyWith(
+      needApply: value,
+    );
   }
 }

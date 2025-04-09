@@ -155,9 +155,9 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
       (a, b) {
         return switch (sort) {
           AccessSortType.none => 0,
-          AccessSortType.name => other.sortByChar(
-              other.getPinyin(a.label),
-              other.getPinyin(b.label),
+          AccessSortType.name => utils.sortByChar(
+              utils.getPinyin(a.label),
+              utils.getPinyin(b.label),
             ),
           AccessSortType.time => b.lastUpdateTime.compareTo(a.lastUpdateTime),
         };

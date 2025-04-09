@@ -8,8 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../widgets/widgets.dart';
 
-double _preOffset = 0;
-
 class LogsFragment extends ConsumerStatefulWidget {
   const LogsFragment({super.key});
 
@@ -19,9 +17,8 @@ class LogsFragment extends ConsumerStatefulWidget {
 
 class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
   final _logsStateNotifier = ValueNotifier<LogsState>(LogsState());
-  final _scrollController = ScrollController(
-    initialScrollOffset: _preOffset != 0 ? _preOffset : double.maxFinite,
-  );
+  final _cacheKey = ValueKey("logs_list");
+  late ScrollController _scrollController;
   double _currentMaxWidth = 0;
   final GlobalKey<CacheItemExtentListViewState> _key = GlobalKey();
 
@@ -30,6 +27,10 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
   @override
   void initState() {
     super.initState();
+    final preOffset = globalState.cacheScrollPosition[_cacheKey] ?? -1;
+    _scrollController = ScrollController(
+      initialScrollOffset: preOffset > 0 ? preOffset : double.maxFinite,
+    );
     _logsStateNotifier.value = _logsStateNotifier.value.copyWith(
       logs: globalState.appState.logs.list,
     );
@@ -180,11 +181,10 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
                     ),
                   )
                   .toList();
-              return NotificationListener<ScrollEndNotification>(
-                onNotification: (details) {
-                  _preOffset = details.metrics.pixels;
-                  return false;
-                },
+              return ScrollToEndBox<Log>(
+                controller: _scrollController,
+                cacheKey: _cacheKey,
+                dataSource: logs,
                 child: CommonScrollBar(
                   controller: _scrollController,
                   child: CacheItemExtentListView(

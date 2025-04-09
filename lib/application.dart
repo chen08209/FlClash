@@ -7,7 +7,7 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -43,16 +43,8 @@ class ApplicationState extends ConsumerState<Application> {
   ColorScheme _getAppColorScheme({
     required Brightness brightness,
     int? primaryColor,
-    required ColorSchemes systemColorSchemes,
   }) {
-    if (primaryColor != null) {
-      return ColorScheme.fromSeed(
-        seedColor: Color(primaryColor),
-        brightness: brightness,
-      );
-    } else {
-      return systemColorSchemes.getColorSchemeForBrightness(brightness);
-    }
+    return ref.read(genColorSchemeProvider(brightness));
   }
 
   @override
@@ -183,7 +175,7 @@ class ApplicationState extends ConsumerState<Application> {
                   },
                   scrollBehavior: BaseScrollBehavior(),
                   title: appName,
-                  locale: other.getLocaleForString(locale),
+                  locale: utils.getLocaleForString(locale),
                   supportedLocales: AppLocalizations.delegate.supportedLocales,
                   themeMode: themeProps.themeMode,
                   theme: ThemeData(
@@ -191,7 +183,6 @@ class ApplicationState extends ConsumerState<Application> {
                     pageTransitionsTheme: _pageTransitionsTheme,
                     colorScheme: _getAppColorScheme(
                       brightness: Brightness.light,
-                      systemColorSchemes: systemColorSchemes,
                       primaryColor: themeProps.primaryColor,
                     ),
                   ),
@@ -200,7 +191,6 @@ class ApplicationState extends ConsumerState<Application> {
                     pageTransitionsTheme: _pageTransitionsTheme,
                     colorScheme: _getAppColorScheme(
                       brightness: Brightness.dark,
-                      systemColorSchemes: systemColorSchemes,
                       primaryColor: themeProps.primaryColor,
                     ).toPureBlack(themeProps.pureBlack),
                   ),

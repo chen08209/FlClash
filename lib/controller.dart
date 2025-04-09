@@ -30,8 +30,9 @@ class AppController {
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
   updateClashConfigDebounce() {
-    debouncer.call(DebounceTag.updateClashConfig, () {
-      updateClashConfig(true);
+    debouncer.call(DebounceTag.updateClashConfig, () async {
+      final isPatch = globalState.appState.needApply ? false : true;
+      await updateClashConfig(isPatch);
     });
   }
 
@@ -70,7 +71,7 @@ class AppController {
 
   restartCore() async {
     await clashService?.reStart();
-    await initCore();
+    await _initCore();
 
     if (_ref.read(runTimeProvider.notifier).isStart) {
       await globalState.handleStart();
@@ -100,7 +101,6 @@ class AppController {
       _ref.read(trafficsProvider.notifier).clear();
       _ref.read(totalTrafficProvider.notifier).value = Traffic();
       _ref.read(runTimeProvider.notifier).value = null;
-      // tray.updateTrayTitle(null);
       addCheckIpNumDebounce();
     }
   }
@@ -153,7 +153,7 @@ class AppController {
   updateLocalIp() async {
     _ref.read(localIpProvider.notifier).value = null;
     await Future.delayed(commonDuration);
-    _ref.read(localIpProvider.notifier).value = await other.getLocalIpAddress();
+    _ref.read(localIpProvider.notifier).value = await utils.getLocalIpAddress();
   }
 
   Future<void> updateProfile(Profile profile) async {
@@ -283,6 +283,9 @@ class AppController {
     final res = await clashCore.updateConfig(
       globalState.getUpdateConfigParams(isPatch),
     );
+    if (isPatch == false) {
+      _ref.read(needApplyProvider.notifier).value = false;
+    }
     if (res.isNotEmpty) throw res;
     lastTunEnable = enableTun;
     lastProfileModified = await profile?.profileLastModified;
@@ -417,13 +420,13 @@ class AppController {
     Map<String, dynamic>? data,
     bool handleError = false,
   }) async {
-    if(globalState.isPre){
+    if (globalState.isPre) {
       return;
     }
     if (data != null) {
       final tagName = data['tag_name'];
       final body = data['body'];
-      final submits = other.parseReleaseBody(body);
+      final submits = utils.parseReleaseBody(body);
       final textTheme = context.textTheme;
       final res = await globalState.showMessage(
         title: appLocalizations.discoverNewVersion,
@@ -478,7 +481,7 @@ class AppController {
     await handleExit();
   }
 
-  Future<void> initCore() async {
+  Future<void> _initCore() async {
     final isInit = await clashCore.isInit;
     if (!isInit) {
       await clashCore.setState(
@@ -492,7 +495,7 @@ class AppController {
   init() async {
     await _handlePreference();
     await _handlerDisclaimer();
-    await initCore();
+    await _initCore();
     await _initStatus();
     updateTray(true);
     autoLaunch?.updateStatus(
@@ -668,9 +671,9 @@ class AppController {
   List<Proxy> _sortOfName(List<Proxy> proxies) {
     return List.of(proxies)
       ..sort(
-        (a, b) => other.sortByChar(
-          other.getPinyin(a.name),
-          other.getPinyin(b.name),
+        (a, b) => utils.sortByChar(
+          utils.getPinyin(a.name),
+          utils.getPinyin(b.name),
         ),
       );
   }
@@ -860,7 +863,7 @@ class AppController {
       return utf8.encode(logsRawString);
     });
     return await picker.saveFile(
-          other.logFile,
+          utils.logFile,
           Uint8List.fromList(data),
         ) !=
         null;

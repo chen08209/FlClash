@@ -1151,6 +1151,178 @@ abstract class _UpdateConfigParams implements UpdateConfigParams {
       throw _privateConstructorUsedError;
 }
 
+InitParams _$InitParamsFromJson(Map<String, dynamic> json) {
+  return _InitParams.fromJson(json);
+}
+
+/// @nodoc
+mixin _$InitParams {
+  @JsonKey(name: "home-dir")
+  String get homeDir => throw _privateConstructorUsedError;
+  int get version => throw _privateConstructorUsedError;
+
+  /// Serializes this InitParams to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of InitParams
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $InitParamsCopyWith<InitParams> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $InitParamsCopyWith<$Res> {
+  factory $InitParamsCopyWith(
+          InitParams value, $Res Function(InitParams) then) =
+      _$InitParamsCopyWithImpl<$Res, InitParams>;
+  @useResult
+  $Res call({@JsonKey(name: "home-dir") String homeDir, int version});
+}
+
+/// @nodoc
+class _$InitParamsCopyWithImpl<$Res, $Val extends InitParams>
+    implements $InitParamsCopyWith<$Res> {
+  _$InitParamsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of InitParams
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? homeDir = null,
+    Object? version = null,
+  }) {
+    return _then(_value.copyWith(
+      homeDir: null == homeDir
+          ? _value.homeDir
+          : homeDir // ignore: cast_nullable_to_non_nullable
+              as String,
+      version: null == version
+          ? _value.version
+          : version // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$InitParamsImplCopyWith<$Res>
+    implements $InitParamsCopyWith<$Res> {
+  factory _$$InitParamsImplCopyWith(
+          _$InitParamsImpl value, $Res Function(_$InitParamsImpl) then) =
+      __$$InitParamsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({@JsonKey(name: "home-dir") String homeDir, int version});
+}
+
+/// @nodoc
+class __$$InitParamsImplCopyWithImpl<$Res>
+    extends _$InitParamsCopyWithImpl<$Res, _$InitParamsImpl>
+    implements _$$InitParamsImplCopyWith<$Res> {
+  __$$InitParamsImplCopyWithImpl(
+      _$InitParamsImpl _value, $Res Function(_$InitParamsImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of InitParams
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? homeDir = null,
+    Object? version = null,
+  }) {
+    return _then(_$InitParamsImpl(
+      homeDir: null == homeDir
+          ? _value.homeDir
+          : homeDir // ignore: cast_nullable_to_non_nullable
+              as String,
+      version: null == version
+          ? _value.version
+          : version // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$InitParamsImpl implements _InitParams {
+  const _$InitParamsImpl(
+      {@JsonKey(name: "home-dir") required this.homeDir,
+      required this.version});
+
+  factory _$InitParamsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$InitParamsImplFromJson(json);
+
+  @override
+  @JsonKey(name: "home-dir")
+  final String homeDir;
+  @override
+  final int version;
+
+  @override
+  String toString() {
+    return 'InitParams(homeDir: $homeDir, version: $version)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$InitParamsImpl &&
+            (identical(other.homeDir, homeDir) || other.homeDir == homeDir) &&
+            (identical(other.version, version) || other.version == version));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, homeDir, version);
+
+  /// Create a copy of InitParams
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$InitParamsImplCopyWith<_$InitParamsImpl> get copyWith =>
+      __$$InitParamsImplCopyWithImpl<_$InitParamsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$InitParamsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _InitParams implements InitParams {
+  const factory _InitParams(
+      {@JsonKey(name: "home-dir") required final String homeDir,
+      required final int version}) = _$InitParamsImpl;
+
+  factory _InitParams.fromJson(Map<String, dynamic> json) =
+      _$InitParamsImpl.fromJson;
+
+  @override
+  @JsonKey(name: "home-dir")
+  String get homeDir;
+  @override
+  int get version;
+
+  /// Create a copy of InitParams
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$InitParamsImplCopyWith<_$InitParamsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 ChangeProxyParams _$ChangeProxyParamsFromJson(Map<String, dynamic> json) {
   return _ChangeProxyParams.fromJson(json);
 }

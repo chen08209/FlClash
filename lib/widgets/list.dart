@@ -278,6 +278,9 @@ class ListItem<T> extends StatelessWidget {
             onBack: action,
             title: openDelegate.title,
             body: child,
+            actions: [
+              if (openDelegate.action != null) openDelegate.action!,
+            ],
           );
         },
       );
@@ -494,133 +497,4 @@ Widget generateListView(List<Widget> items) {
       bottom: 16,
     ),
   );
-}
-
-class CacheItemExtentListView extends StatefulWidget {
-  final NullableIndexedWidgetBuilder itemBuilder;
-  final int itemCount;
-  final String Function(int index) keyBuilder;
-  final double Function(int index) itemExtentBuilder;
-  final ScrollPhysics? physics;
-  final bool shrinkWrap;
-  final bool reverse;
-  final ScrollController controller;
-
-  const CacheItemExtentListView({
-    super.key,
-    this.physics,
-    this.reverse = false,
-    this.shrinkWrap = false,
-    required this.itemBuilder,
-    required this.controller,
-    required this.keyBuilder,
-    required this.itemCount,
-    required this.itemExtentBuilder,
-  });
-
-  @override
-  State<CacheItemExtentListView> createState() =>
-      CacheItemExtentListViewState();
-}
-
-class CacheItemExtentListViewState extends State<CacheItemExtentListView> {
-  late final FixedMap<String, double> _cacheHeightMap;
-
-  @override
-  void initState() {
-    super.initState();
-    _cacheHeightMap = FixedMap(widget.itemCount);
-  }
-
-  clearCache() {
-    _cacheHeightMap.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    _cacheHeightMap.updateMaxSize(widget.itemCount);
-    return ListView.builder(
-      itemBuilder: widget.itemBuilder,
-      itemCount: widget.itemCount,
-      physics: widget.physics,
-      reverse: widget.reverse,
-      shrinkWrap: widget.shrinkWrap,
-      controller: widget.controller,
-      itemExtentBuilder: (index, __) {
-        final key = widget.keyBuilder(index);
-        if (_cacheHeightMap.containsKey(key)) {
-          return _cacheHeightMap.get(key);
-        }
-        return _cacheHeightMap.put(key, widget.itemExtentBuilder(index));
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _cacheHeightMap.clear();
-    super.dispose();
-  }
-}
-
-class CacheItemExtentSliverReorderableList extends StatefulWidget {
-  final IndexedWidgetBuilder itemBuilder;
-  final int itemCount;
-  final String Function(int index) keyBuilder;
-  final double Function(int index) itemExtentBuilder;
-  final ReorderCallback onReorder;
-  final ReorderItemProxyDecorator? proxyDecorator;
-
-  const CacheItemExtentSliverReorderableList({
-    super.key,
-    required this.itemBuilder,
-    required this.keyBuilder,
-    required this.itemCount,
-    required this.itemExtentBuilder,
-    required this.onReorder,
-    this.proxyDecorator,
-  });
-
-  @override
-  State<CacheItemExtentSliverReorderableList> createState() =>
-      CacheItemExtentSliverReorderableListState();
-}
-
-class CacheItemExtentSliverReorderableListState
-    extends State<CacheItemExtentSliverReorderableList> {
-  late final FixedMap<String, double> _cacheHeightMap;
-
-  @override
-  void initState() {
-    super.initState();
-    _cacheHeightMap = FixedMap(widget.itemCount);
-  }
-
-  clearCache() {
-    _cacheHeightMap.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    _cacheHeightMap.updateMaxSize(widget.itemCount);
-    return SliverReorderableList(
-      itemBuilder: widget.itemBuilder,
-      itemCount: widget.itemCount,
-      itemExtentBuilder: (index, __) {
-        final key = widget.keyBuilder(index);
-        if (_cacheHeightMap.containsKey(key)) {
-          return _cacheHeightMap.get(key);
-        }
-        return _cacheHeightMap.put(key, widget.itemExtentBuilder(index));
-      },
-      onReorder: widget.onReorder,
-      proxyDecorator: widget.proxyDecorator,
-    );
-  }
-
-  @override
-  void dispose() {
-    _cacheHeightMap.clear();
-    super.dispose();
-  }
 }

@@ -71,7 +71,7 @@ class _StartButtonState extends State<StartButton>
         final textWidth = globalState.measure
                 .computeTextSize(
                   Text(
-                    other.getTimeDifference(
+                    utils.getTimeDifference(
                       DateTime.now(),
                     ),
                     style: Theme.of(context).textTheme.titleMedium?.toSoftBold,
@@ -123,7 +123,7 @@ class _StartButtonState extends State<StartButton>
       child: Consumer(
         builder: (_, ref, __) {
           final runTime = ref.watch(runTimeProvider);
-          final text = other.getTimeText(runTime);
+          final text = utils.getTimeText(runTime);
           return Text(
             text,
             style: Theme.of(context).textTheme.titleMedium?.toSoftBold,

@@ -42,11 +42,13 @@ class CommonScaffold extends StatefulWidget {
     required Widget body,
     required String title,
     required Function onBack,
+    required List<Widget> actions,
   }) : this(
           key: key,
           body: body,
           title: title,
           automaticallyImplyLeading: false,
+          actions: actions,
           leading: IconButton(
             icon: const BackButtonIcon(),
             onPressed: () {

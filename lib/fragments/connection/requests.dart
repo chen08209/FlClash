@@ -11,8 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'item.dart';
 
-double _preOffset = 0;
-
 class RequestsFragment extends ConsumerStatefulWidget {
   const RequestsFragment({super.key});
 
@@ -26,10 +24,8 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
   final _requestsStateNotifier =
       ValueNotifier<ConnectionsState>(const ConnectionsState());
   List<Connection> _requests = [];
-
-  final ScrollController _scrollController = ScrollController(
-    initialScrollOffset: _preOffset != 0 ? _preOffset : double.maxFinite,
-  );
+  final _cacheKey = ValueKey("requests_list");
+  late ScrollController _scrollController;
 
   double _currentMaxWidth = 0;
 
@@ -49,10 +45,13 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
   @override
   void initState() {
     super.initState();
+    final preOffset = globalState.cacheScrollPosition[_cacheKey] ?? -1;
+    _scrollController = ScrollController(
+      initialScrollOffset: preOffset > 0 ? preOffset : double.maxFinite,
+    );
     _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
       connections: globalState.appState.requests.list,
     );
-
     ref.listenManual(
       isCurrentPageProvider(
         PageLabel.requests,
@@ -177,11 +176,10 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
                   .toList();
               return Align(
                 alignment: Alignment.topCenter,
-                child: NotificationListener<ScrollEndNotification>(
-                  onNotification: (details) {
-                    _preOffset = details.metrics.pixels;
-                    return false;
-                  },
+                child: ScrollToEndBox(
+                  controller: _scrollController,
+                  cacheKey: _cacheKey,
+                  dataSource: connections,
                   child: CommonScrollBar(
                     controller: _scrollController,
                     child: CacheItemExtentListView(

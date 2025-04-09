@@ -22,7 +22,7 @@ final viewWidthProvider = AutoDisposeProvider<double>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ViewWidthRef = AutoDisposeProviderRef<double>;
-String _$viewModeHash() => r'fbda5aee64803b09b1431b00650ac6e16d044743';
+String _$viewModeHash() => r'736e2acc7e7d98ee30132de1990bf85f9506b47a';
 
 /// See also [viewMode].
 @ProviderFor(viewMode)
@@ -203,7 +203,7 @@ final runTimeProvider = AutoDisposeNotifierProvider<RunTime, int?>.internal(
 );
 
 typedef _$RunTime = AutoDisposeNotifier<int?>;
-String _$viewSizeHash() => r'44a8ff7a1fb1a9ad278b999560bef3ce2c9fea2a';
+String _$viewSizeHash() => r'07f9cce28a69d1496ba4643ef72a739312f6fc28';
 
 /// See also [ViewSize].
 @ProviderFor(ViewSize)
@@ -336,5 +336,19 @@ final delayDataSourceProvider =
 );
 
 typedef _$DelayDataSource = AutoDisposeNotifier<DelayMap>;
+String _$needApplyHash() => r'62ff248d67b0525c6a55e556fbd29a2044e97766';
+
+/// See also [NeedApply].
+@ProviderFor(NeedApply)
+final needApplyProvider = AutoDisposeNotifierProvider<NeedApply, bool>.internal(
+  NeedApply.new,
+  name: r'needApplyProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$needApplyHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$NeedApply = AutoDisposeNotifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

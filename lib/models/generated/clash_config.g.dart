@@ -268,11 +268,11 @@ _$ClashConfigImpl _$$ClashConfigImplFromJson(Map<String, dynamic> json) =>
       mode: $enumDecodeNullable(_$ModeEnumMap, json['mode']) ?? Mode.rule,
       allowLan: json['allow-lan'] as bool? ?? false,
       logLevel: $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']) ??
-          LogLevel.info,
+          LogLevel.error,
       ipv6: json['ipv6'] as bool? ?? false,
       findProcessMode: $enumDecodeNullable(
               _$FindProcessModeEnumMap, json['find-process-mode'],
-              unknownValue: FindProcessMode.off) ??
+              unknownValue: FindProcessMode.always) ??
           FindProcessMode.off,
       keepAliveInterval: (json['keep-alive-interval'] as num?)?.toInt() ??
           defaultKeepAliveInterval,

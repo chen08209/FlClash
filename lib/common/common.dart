@@ -19,7 +19,7 @@ export 'navigation.dart';
 export 'navigator.dart';
 export 'network.dart';
 export 'num.dart';
-export 'other.dart';
+export 'utils.dart';
 export 'package.dart';
 export 'path.dart';
 export 'picker.dart';

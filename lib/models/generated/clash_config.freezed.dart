@@ -2832,7 +2832,7 @@ mixin _$ClashConfig {
   @JsonKey(name: "log-level")
   LogLevel get logLevel => throw _privateConstructorUsedError;
   bool get ipv6 => throw _privateConstructorUsedError;
-  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
   FindProcessMode get findProcessMode => throw _privateConstructorUsedError;
   @JsonKey(name: "keep-alive-interval")
   int get keepAliveInterval => throw _privateConstructorUsedError;
@@ -2880,7 +2880,8 @@ abstract class $ClashConfigCopyWith<$Res> {
       @JsonKey(name: "allow-lan") bool allowLan,
       @JsonKey(name: "log-level") LogLevel logLevel,
       bool ipv6,
-      @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+      @JsonKey(
+          name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
       FindProcessMode findProcessMode,
       @JsonKey(name: "keep-alive-interval") int keepAliveInterval,
       @JsonKey(name: "unified-delay") bool unifiedDelay,
@@ -3057,7 +3058,8 @@ abstract class _$$ClashConfigImplCopyWith<$Res>
       @JsonKey(name: "allow-lan") bool allowLan,
       @JsonKey(name: "log-level") LogLevel logLevel,
       bool ipv6,
-      @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+      @JsonKey(
+          name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
       FindProcessMode findProcessMode,
       @JsonKey(name: "keep-alive-interval") int keepAliveInterval,
       @JsonKey(name: "unified-delay") bool unifiedDelay,
@@ -3198,9 +3200,10 @@ class _$ClashConfigImpl implements _ClashConfig {
       {@JsonKey(name: "mixed-port") this.mixedPort = defaultMixedPort,
       this.mode = Mode.rule,
       @JsonKey(name: "allow-lan") this.allowLan = false,
-      @JsonKey(name: "log-level") this.logLevel = LogLevel.info,
+      @JsonKey(name: "log-level") this.logLevel = LogLevel.error,
       this.ipv6 = false,
-      @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+      @JsonKey(
+          name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
       this.findProcessMode = FindProcessMode.off,
       @JsonKey(name: "keep-alive-interval")
       this.keepAliveInterval = defaultKeepAliveInterval,
@@ -3242,7 +3245,7 @@ class _$ClashConfigImpl implements _ClashConfig {
   @JsonKey()
   final bool ipv6;
   @override
-  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
   final FindProcessMode findProcessMode;
   @override
   @JsonKey(name: "keep-alive-interval")
@@ -3385,7 +3388,8 @@ abstract class _ClashConfig implements ClashConfig {
       @JsonKey(name: "allow-lan") final bool allowLan,
       @JsonKey(name: "log-level") final LogLevel logLevel,
       final bool ipv6,
-      @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+      @JsonKey(
+          name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
       final FindProcessMode findProcessMode,
       @JsonKey(name: "keep-alive-interval") final int keepAliveInterval,
       @JsonKey(name: "unified-delay") final bool unifiedDelay,
@@ -3419,7 +3423,7 @@ abstract class _ClashConfig implements ClashConfig {
   @override
   bool get ipv6;
   @override
-  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.off)
+  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
   FindProcessMode get findProcessMode;
   @override
   @JsonKey(name: "keep-alive-interval")

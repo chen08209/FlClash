@@ -1,5 +1,6 @@
 package com.follow.clash
 
+import com.follow.clash.core.Core
 import com.follow.clash.plugins.AppPlugin
 import com.follow.clash.plugins.ServicePlugin
 import com.follow.clash.plugins.TilePlugin
