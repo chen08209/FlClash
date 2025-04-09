@@ -63,7 +63,7 @@ class ProxyCard extends StatelessWidget {
                     delay > 0 ? '$delay ms' : "Timeout",
                     style: context.textTheme.labelSmall?.copyWith(
                       overflow: TextOverflow.ellipsis,
-                      color: other.getDelayColor(
+                      color: utils.getDelayColor(
                         delay,
                       ),
                     ),

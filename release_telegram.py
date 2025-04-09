@@ -19,16 +19,26 @@ media = []
 files = {}
 
 i = 1
+
+releaseKeywords = [
+    "windows-amd64-setup",
+    "android-arm64",
+    "macos-arm64",
+    "macos-amd64"
+]
+
 for file in os.listdir(DIST_DIR):
     file_path = os.path.join(DIST_DIR, file)
     if os.path.isfile(file_path):
-        file_key = f"file{i}"
-        media.append({
-            "type": "document",
-            "media": f"attach://{file_key}"
-        })
-        files[file_key] = open(file_path, 'rb')
-        i += 1
+        file_lower = file.lower()
+        if any(kw in file_lower for kw in releaseKeywords):
+            file_key = f"file{i}"
+            media.append({
+                "type": "document",
+                "media": f"attach://{file_key}"
+            })
+            files[file_key] = open(file_path, 'rb')
+            i += 1
 
 if TAG:
     text += f"\n**{TAG}**\n"

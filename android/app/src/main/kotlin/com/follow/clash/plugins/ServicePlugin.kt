@@ -52,7 +52,6 @@ data object ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     private fun handleDestroy() {
-        GlobalState.getCurrentVPNPlugin()?.handleStop()
         GlobalState.destroyServiceEngine()
     }
 }

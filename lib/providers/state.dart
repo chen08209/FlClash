@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -205,7 +206,7 @@ ProfilesSelectorState profilesSelectorState(Ref ref) {
   final currentProfileId = ref.watch(currentProfileIdProvider);
   final profiles = ref.watch(profilesProvider);
   final columns = ref.watch(
-      viewWidthProvider.select((state) => other.getProfilesColumns(state)));
+      viewWidthProvider.select((state) => utils.getProfilesColumns(state)));
   return ProfilesSelectorState(
     profiles: profiles,
     currentProfileId: currentProfileId,
@@ -406,7 +407,7 @@ int getProxiesColumns(Ref ref) {
   final viewWidth = ref.watch(viewWidthProvider);
   final proxiesLayout =
       ref.watch(proxiesStyleSettingProvider.select((state) => state.layout));
-  return other.getProxiesColumns(viewWidth, proxiesLayout);
+  return utils.getProxiesColumns(viewWidth, proxiesLayout);
 }
 
 ProxyCardState _getProxyCardState(
@@ -502,5 +503,34 @@ OverrideData? getProfileOverrideData(Ref ref, String profileId) {
     profilesProvider.select(
       (state) => state.getProfile(profileId)?.overrideData,
     ),
+  );
+}
+
+@riverpod
+ColorScheme genColorScheme(
+  Ref ref,
+  Brightness brightness, {
+  Color? color,
+  bool isOverride = false,
+}) {
+  final vm2 = ref.watch(
+    themeSettingProvider.select(
+      (state) => VM2(
+        a: state.primaryColor,
+        b: state.schemeVariant,
+      ),
+    ),
+  );
+  if (color == null && (isOverride == true || vm2.a == null)) {
+    final colorSchemes = ref.watch(appSchemesProvider);
+    return colorSchemes.getColorSchemeForBrightness(
+      brightness,
+      vm2.b,
+    );
+  }
+  return ColorScheme.fromSeed(
+    seedColor: color ?? Color(vm2.a!),
+    brightness: brightness,
+    dynamicSchemeVariant: vm2.b,
   );
 }

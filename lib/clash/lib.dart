@@ -122,25 +122,12 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
     );
   }
 
-  @override
-  Future<DateTime?> startTun(int fd) async {
-    final res = await invoke<String>(
-      method: ActionMethod.startTun,
-      data: json.encode(fd),
-    );
-
-    if (res.isEmpty) {
-      return null;
-    }
-    return DateTime.fromMillisecondsSinceEpoch(int.parse(res));
-  }
-
-  @override
-  Future<bool> stopTun() {
-    return invoke<bool>(
-      method: ActionMethod.stopTun,
-    );
-  }
+  // @override
+  // Future<bool> stopTun() {
+  //   return invoke<bool>(
+  //     method: ActionMethod.stopTun,
+  //   );
+  // }
 
   @override
   Future<AndroidVpnOptions?> getAndroidVpnOptions() async {
@@ -224,35 +211,10 @@ class ClashLibHandler {
     );
   }
 
-  attachInvokePort(int invokePort) {
-    clashFFI.attachInvokePort(
-      invokePort,
-    );
-  }
-
-  DateTime? startTun(int fd) {
-    final runTimeRaw = clashFFI.startTUN(fd);
-    final runTimeString = runTimeRaw.cast<Utf8>().toDartString();
-    clashFFI.freeCString(runTimeRaw);
-    if (runTimeString.isEmpty) return null;
-    return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
-  }
-
-  stopTun() {
-    clashFFI.stopTun();
-  }
-
   updateDns(String dns) {
     final dnsChar = dns.toNativeUtf8().cast<Char>();
     clashFFI.updateDns(dnsChar);
     malloc.free(dnsChar);
-  }
-
-  setProcessMap(ProcessMapItem processMapItem) {
-    final processMapItemChar =
-    json.encode(processMapItem).toNativeUtf8().cast<Char>();
-    clashFFI.setProcessMap(processMapItemChar);
-    malloc.free(processMapItemChar);
   }
 
   setState(CoreState state) {
@@ -305,17 +267,11 @@ class ClashLibHandler {
     return true;
   }
 
-  setFdMap(String id) {
-    final idChar = id.toNativeUtf8().cast<Char>();
-    clashFFI.setFdMap(idChar);
-    malloc.free(idChar);
-  }
-
   Future<String> quickStart(
-      String homeDir,
-      UpdateConfigParams updateConfigParams,
-      CoreState state,
-      ) {
+    InitParams initParams,
+    UpdateConfigParams updateConfigParams,
+    CoreState state,
+  ) {
     final completer = Completer<String>();
     final receiver = ReceivePort();
     receiver.listen((message) {
@@ -325,17 +281,18 @@ class ClashLibHandler {
       }
     });
     final params = json.encode(updateConfigParams);
+    final initValue = json.encode(initParams);
     final stateParams = json.encode(state);
-    final homeChar = homeDir.toNativeUtf8().cast<Char>();
+    final initParamsChar = initValue.toNativeUtf8().cast<Char>();
     final paramsChar = params.toNativeUtf8().cast<Char>();
     final stateParamsChar = stateParams.toNativeUtf8().cast<Char>();
     clashFFI.quickStart(
-      homeChar,
+      initParamsChar,
       paramsChar,
       stateParamsChar,
       receiver.sendPort.nativePort,
     );
-    malloc.free(homeChar);
+    malloc.free(initParamsChar);
     malloc.free(paramsChar);
     malloc.free(stateParamsChar);
     return completer.future;

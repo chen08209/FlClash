@@ -372,5 +372,18 @@
   "generalDesc": "Изменение общих настроек",
   "findProcessModeDesc": "При включении возможны небольшие потери производительности",
   "tabAnimationDesc": "Действительно только в мобильном виде",
-  "saveTip": "Вы уверены, что хотите сохранить?"
+  "saveTip": "Вы уверены, что хотите сохранить?",
+  "deleteColorTip": "Удалить текущий цвет?",
+  "colorExists": "Этот цвет уже существует",
+  "colorSchemes": "Цветовые схемы",
+  "palette": "Палитра",
+  "tonalSpotScheme": "Тональный акцент",
+  "fidelityScheme": "Точная передача",
+  "monochromeScheme": "Монохром",
+  "neutralScheme": "Нейтральные",
+  "vibrantScheme": "Яркие",
+  "expressiveScheme": "Экспрессивные",
+  "contentScheme": "Контентная тема",
+  "rainbowScheme": "Радужные",
+  "fruitSaladScheme": "Фруктовый микс"
 }

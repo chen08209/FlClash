@@ -20,6 +20,7 @@ typedef UpdateTasks = List<FutureOr Function()>;
 
 class GlobalState {
   static GlobalState? _instance;
+  Map<Key, double> cacheScrollPosition = {};
   bool isService = false;
   Timer? timer;
   Timer? groupsUpdateTimer;
@@ -65,7 +66,7 @@ class GlobalState {
         );
     await globalState.migrateOldData(config);
     await AppLocalizations.load(
-      other.getLocaleForString(config.appSetting.locale) ??
+      utils.getLocaleForString(config.appSetting.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );
   }
@@ -110,7 +111,6 @@ class GlobalState {
   Future handleStop() async {
     startTime = null;
     await clashCore.stopListener();
-    await clashLib?.stopTun();
     await service?.stopVpn();
     stopUpdateTasks();
   }

@@ -122,7 +122,7 @@ class _LocaleItem extends ConsumerWidget {
     final locale =
         ref.watch(appSettingProvider.select((state) => state.locale));
     final subTitle = locale ?? appLocalizations.defaultText;
-    final currentLocale = other.getLocaleForString(locale);
+    final currentLocale = utils.getLocaleForString(locale);
     return ListItem<Locale?>.options(
       leading: const Icon(Icons.language_outlined),
       title: Text(appLocalizations.language),

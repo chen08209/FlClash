@@ -31,11 +31,12 @@ class AppState with _$AppState {
     required FixedList<Log> logs,
     required FixedList<Traffic> traffics,
     required Traffic totalTraffic,
+    @Default(false) bool needApply,
   }) = _AppState;
 }
 
 extension AppStateExt on AppState {
-  ViewMode get viewMode => other.getViewMode(viewSize.width);
+  ViewMode get viewMode => utils.getViewMode(viewSize.width);
 
   bool get isStart => runTime != null;
 }

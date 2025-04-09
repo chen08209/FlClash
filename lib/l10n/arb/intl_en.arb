@@ -372,5 +372,18 @@
   "generalDesc": "Modify general settings",
   "findProcessModeDesc": "There is a certain performance loss after opening",
   "tabAnimationDesc": "Effective only in mobile view",
-  "saveTip": "Are you sure you want to save?"
+  "saveTip": "Are you sure you want to save?",
+  "deleteColorTip": "Are you sure you want to delete the current color?",
+  "colorExists": "Current color already exists",
+  "colorSchemes": "Color schemes",
+  "palette": "Palette",
+  "tonalSpotScheme": "TonalSpot",
+  "fidelityScheme": "Fidelity",
+  "monochromeScheme": "Monochrome",
+  "neutralScheme": "Neutral",
+  "vibrantScheme": "Vibrant",
+  "expressiveScheme": "Expressive",
+  "contentScheme": "Content",
+  "rainbowScheme": "Rainbow",
+  "fruitSaladScheme": "FruitSalad"
 }

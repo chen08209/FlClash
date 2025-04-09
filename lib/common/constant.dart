@@ -78,7 +78,7 @@ const viewModeColumnsMap = {
   ViewMode.desktop: [4, 3],
 };
 
-const defaultPrimaryColor = Colors.brown;
+const defaultPrimaryColor = 0xFF795548;
 
 double getWidgetHeight(num lines) {
   return max(lines * 84 * textScaleFactor + (lines - 1) * 16, 0);
@@ -87,3 +87,13 @@ double getWidgetHeight(num lines) {
 final mainIsolate = "FlClashMainIsolate";
 
 final serviceIsolate = "FlClashServiceIsolate";
+
+const defaultPrimaryColors = [
+  defaultPrimaryColor,
+  0xFF03A9F4,
+  0xFFFFFF00,
+  0XFFBBC9CC,
+  0XFFABD397,
+  0XFFD8C0C3,
+  0XFF665390,
+];

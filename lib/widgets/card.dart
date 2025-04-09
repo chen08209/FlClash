@@ -32,7 +32,7 @@ class InfoHeader extends StatelessWidget {
     return Padding(
       padding: padding ?? baseInfoEdgeInsets,
       child: Row(
-        mainAxisSize: MainAxisSize.max,
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Flexible(

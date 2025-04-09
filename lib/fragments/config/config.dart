@@ -61,7 +61,6 @@ class _ConfigFragmentState extends State<ConfigFragment> {
                 if (res != true) {
                   return;
                 }
-
                 ref.read(patchClashConfigProvider.notifier).updateState(
                       (state) => state.copyWith(
                         dns: defaultDns,

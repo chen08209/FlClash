@@ -83,6 +83,17 @@ class UpdateConfigParams with _$UpdateConfigParams {
 }
 
 @freezed
+class InitParams with _$InitParams {
+  const factory InitParams({
+    @JsonKey(name: "home-dir") required String homeDir,
+    required int version,
+  }) = _InitParams;
+
+  factory InitParams.fromJson(Map<String, Object?> json) =>
+      _$InitParamsFromJson(json);
+}
+
+@freezed
 class ChangeProxyParams with _$ChangeProxyParams {
   const factory ChangeProxyParams({
     @JsonKey(name: "group-name") required String groupName,

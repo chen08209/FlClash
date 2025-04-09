@@ -8,6 +8,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'models.dart';
 
 part 'generated/config.freezed.dart';
+
 part 'generated/config.g.dart';
 
 const defaultBypassDomain = [
@@ -36,10 +37,7 @@ const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyle = ProxiesStyle();
 const defaultWindowProps = WindowProps();
 const defaultAccessControl = AccessControl();
-final defaultThemeProps = ThemeProps().copyWith(
-  primaryColor: defaultPrimaryColor.toARGB32(),
-  themeMode: ThemeMode.dark,
-);
+const defaultThemeProps = ThemeProps();
 
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
@@ -75,7 +73,7 @@ class AppSettingProps with _$AppSettingProps {
     @Default(false) bool autoLaunch,
     @Default(false) bool silentLaunch,
     @Default(false) bool autoRun,
-    @Default(false) bool openLogs,
+    @Default(true) bool openLogs,
     @Default(true) bool closeConnections,
     @Default(defaultTestUrl) String testUrl,
     @Default(true) bool isAnimateToPage,
@@ -142,7 +140,7 @@ class VpnProps with _$VpnProps {
   }) = _VpnProps;
 
   factory VpnProps.fromJson(Map<String, Object?>? json) =>
-      json == null ? const VpnProps() : _$VpnPropsFromJson(json);
+      json == null ? defaultVpnProps : _$VpnPropsFromJson(json);
 }
 
 @freezed
@@ -175,24 +173,15 @@ class ProxiesStyle with _$ProxiesStyle {
 @freezed
 class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
-    int? primaryColor,
-    @Default(ThemeMode.system) ThemeMode themeMode,
+    @Default(defaultPrimaryColor) int? primaryColor,
+    @Default(defaultPrimaryColors) List<int> primaryColors,
+    @Default(ThemeMode.dark) ThemeMode themeMode,
+    @Default(DynamicSchemeVariant.tonalSpot) DynamicSchemeVariant schemeVariant,
     @Default(false) bool pureBlack,
   }) = _ThemeProps;
 
-  factory ThemeProps.fromJson(Map<String, Object?> json) =>
-      _$ThemePropsFromJson(json);
-
-  factory ThemeProps.safeFromJson(Map<String, Object?>? json) {
-    if (json == null) {
-      return defaultThemeProps;
-    }
-    try {
-      return ThemeProps.fromJson(json);
-    } catch (_) {
-      return defaultThemeProps;
-    }
-  }
+  factory ThemeProps.fromJson(Map<String, Object?>? json) =>
+      json == null ? defaultThemeProps : _$ThemePropsFromJson(json);
 }
 
 @freezed
@@ -208,7 +197,7 @@ class Config with _$Config {
     DAV? dav,
     @Default(defaultNetworkProps) NetworkProps networkProps,
     @Default(defaultVpnProps) VpnProps vpnProps,
-    @JsonKey(fromJson: ThemeProps.safeFromJson) required ThemeProps themeProps,
+    @Default(defaultThemeProps) ThemeProps themeProps,
     @Default(defaultProxiesStyle) ProxiesStyle proxiesStyle,
     @Default(defaultWindowProps) WindowProps windowProps,
     @Default(defaultClashConfig) ClashConfig patchClashConfig,

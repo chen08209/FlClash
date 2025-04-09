@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_clash/common/utils.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -10,7 +11,6 @@ import 'package:tray_manager/tray_manager.dart';
 
 import 'app_localizations.dart';
 import 'constant.dart';
-import 'other.dart';
 import 'window.dart';
 
 class Tray {
@@ -25,7 +25,7 @@ class Tray {
       await trayManager.destroy();
     }
     await trayManager.setIcon(
-      other.getTrayIconPath(
+      utils.getTrayIconPath(
         brightness: brightness ??
             WidgetsBinding.instance.platformDispatcher.platformBrightness,
       ),

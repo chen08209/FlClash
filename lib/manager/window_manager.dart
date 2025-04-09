@@ -60,13 +60,8 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   @override
   void onWindowFocus() {
     super.onWindowFocus();
+    commonPrint.log("focus");
     render?.resume();
-  }
-
-  @override
-  void onWindowBlur() {
-    super.onWindowBlur();
-    render?.pause();
   }
 
   @override
@@ -102,6 +97,8 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   @override
   void onWindowMinimize() async {
     globalState.appController.savePreferencesDebounce();
+    commonPrint.log("minimize");
+    render?.pause();
     super.onWindowMinimize();
   }
 

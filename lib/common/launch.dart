@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 
 import 'constant.dart';
@@ -34,6 +35,9 @@ class AutoLaunch {
   }
 
   updateStatus(bool isAutoLaunch) async {
+    if(kDebugMode){
+      return;
+    }
     if (await isEnable == isAutoLaunch) return;
     if (isAutoLaunch == true) {
       enable();

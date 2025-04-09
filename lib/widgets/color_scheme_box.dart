@@ -1,6 +1,6 @@
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'card.dart';
 import 'grid.dart';
 
@@ -11,33 +11,17 @@ class ColorSchemeBox extends StatelessWidget {
 
   const ColorSchemeBox({
     super.key,
-    this.primaryColor,
+    required this.primaryColor,
     this.onPressed,
     this.isSelected,
   });
-
-  ThemeData _getTheme(BuildContext context) {
-    if (primaryColor != null) {
-      return Theme.of(context).copyWith(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: primaryColor!,
-          brightness: Theme.of(context).brightness,
-        ),
-      );
-    } else {
-      return Theme.of(context).copyWith(
-        colorScheme: globalState.appState.colorSchemes
-            .getColorSchemeForBrightness(Theme.of(context).brightness),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 1,
-      child: Theme(
-        data: _getTheme(context),
+      child: PrimaryColorBox(
+        primaryColor: primaryColor,
         child: Builder(
           builder: (context) {
             final colorScheme = Theme.of(context).colorScheme;
@@ -98,6 +82,35 @@ class ColorSchemeBox extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class PrimaryColorBox extends ConsumerWidget {
+  final Color? primaryColor;
+  final Widget child;
+
+  const PrimaryColorBox({
+    super.key,
+    required this.primaryColor,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final themeData = Theme.of(context);
+    final colorScheme = ref.watch(
+      genColorSchemeProvider(
+        themeData.brightness,
+        color: primaryColor,
+        isOverride: true,
+      ),
+    );
+    return Theme(
+      data: themeData.copyWith(
+        colorScheme: colorScheme,
+      ),
+      child: child,
     );
   }
 }

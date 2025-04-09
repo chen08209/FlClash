@@ -2904,6 +2904,106 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Are you sure you want to delete the current color?`
+  String get deleteColorTip {
+    return Intl.message(
+      'Are you sure you want to delete the current color?',
+      name: 'deleteColorTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current color already exists`
+  String get colorExists {
+    return Intl.message(
+      'Current color already exists',
+      name: 'colorExists',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Color schemes`
+  String get colorSchemes {
+    return Intl.message(
+      'Color schemes',
+      name: 'colorSchemes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Palette`
+  String get palette {
+    return Intl.message('Palette', name: 'palette', desc: '', args: []);
+  }
+
+  /// `TonalSpot`
+  String get tonalSpotScheme {
+    return Intl.message(
+      'TonalSpot',
+      name: 'tonalSpotScheme',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fidelity`
+  String get fidelityScheme {
+    return Intl.message('Fidelity', name: 'fidelityScheme', desc: '', args: []);
+  }
+
+  /// `Monochrome`
+  String get monochromeScheme {
+    return Intl.message(
+      'Monochrome',
+      name: 'monochromeScheme',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Neutral`
+  String get neutralScheme {
+    return Intl.message('Neutral', name: 'neutralScheme', desc: '', args: []);
+  }
+
+  /// `Vibrant`
+  String get vibrantScheme {
+    return Intl.message('Vibrant', name: 'vibrantScheme', desc: '', args: []);
+  }
+
+  /// `Expressive`
+  String get expressiveScheme {
+    return Intl.message(
+      'Expressive',
+      name: 'expressiveScheme',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Content`
+  String get contentScheme {
+    return Intl.message('Content', name: 'contentScheme', desc: '', args: []);
+  }
+
+  /// `Rainbow`
+  String get rainbowScheme {
+    return Intl.message('Rainbow', name: 'rainbowScheme', desc: '', args: []);
+  }
+
+  /// `FruitSalad`
+  String get fruitSaladScheme {
+    return Intl.message(
+      'FruitSalad',
+      name: 'fruitSaladScheme',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -75,7 +75,7 @@ class BackupAndRecovery extends ConsumerWidget {
       () async {
         final backupData = await globalState.appController.backupData();
         final value = await picker.saveFile(
-          other.getBackupFileName(),
+          utils.getBackupFileName(),
           Uint8List.fromList(backupData),
         );
         if (value == null) return false;

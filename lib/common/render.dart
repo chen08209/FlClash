@@ -54,4 +54,4 @@ class Render {
   }
 }
 
-final render = system.isDesktop ? Render() : null;
+final Render? render = system.isDesktop ? Render() : null;

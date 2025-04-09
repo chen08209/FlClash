@@ -120,7 +120,7 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
             (element) => element.label == realLabel && element.id != id) !=
         -1;
     if (hasDup) {
-      return _getLabel(other.getOverwriteLabel(realLabel), id);
+      return _getLabel(utils.getOverwriteLabel(realLabel), id);
     } else {
       return label;
     }

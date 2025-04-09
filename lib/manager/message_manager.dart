@@ -36,7 +36,7 @@ class MessageManagerState extends State<MessageManager> {
 
   Future<void> message(String text) async {
     final commonMessage = CommonMessage(
-      id: other.uuidV4,
+      id: utils.uuidV4,
       text: text,
     );
     _bufferMessages.add(commonMessage);
@@ -91,7 +91,7 @@ class MessageManagerState extends State<MessageManager> {
                           ),
                           elevation: 10,
                           margin: EdgeInsets.only(
-                            top: kToolbarHeight,
+                            top: kToolbarHeight + 8,
                             left: 12,
                             right: 12,
                           ),

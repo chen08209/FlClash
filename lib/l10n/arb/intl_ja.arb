@@ -372,5 +372,18 @@
   "generalDesc": "一般設定を変更",
   "findProcessModeDesc": "有効化するとパフォーマンスが若干低下します",
   "tabAnimationDesc": "モバイル表示でのみ有効",
-  "saveTip": "保存してもよろしいですか？"
+  "saveTip": "保存してもよろしいですか？",
+  "deleteColorTip": "現在の色を削除しますか？",
+  "colorExists": "この色は既に存在します",
+  "colorSchemes": "カラースキーム",
+  "palette": "パレット",
+  "tonalSpotScheme": "トーンスポット",
+  "fidelityScheme": "ハイファイデリティー",
+  "monochromeScheme": "モノクローム",
+  "neutralScheme": "ニュートラル",
+  "vibrantScheme": "ビブラント",
+  "expressiveScheme": "エクスプレッシブ",
+  "contentScheme": "コンテンツテーマ",
+  "rainbowScheme": "レインボー",
+  "fruitSaladScheme": "フルーツサラダ"
 }

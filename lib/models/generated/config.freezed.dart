@@ -301,7 +301,7 @@ class _$AppSettingPropsImpl implements _AppSettingProps {
       this.autoLaunch = false,
       this.silentLaunch = false,
       this.autoRun = false,
-      this.openLogs = false,
+      this.openLogs = true,
       this.closeConnections = true,
       this.testUrl = defaultTestUrl,
       this.isAnimateToPage = true,
@@ -1724,7 +1724,9 @@ ThemeProps _$ThemePropsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ThemeProps {
   int? get primaryColor => throw _privateConstructorUsedError;
+  List<int> get primaryColors => throw _privateConstructorUsedError;
   ThemeMode get themeMode => throw _privateConstructorUsedError;
+  DynamicSchemeVariant get schemeVariant => throw _privateConstructorUsedError;
   bool get pureBlack => throw _privateConstructorUsedError;
 
   /// Serializes this ThemeProps to a JSON map.
@@ -1743,7 +1745,12 @@ abstract class $ThemePropsCopyWith<$Res> {
           ThemeProps value, $Res Function(ThemeProps) then) =
       _$ThemePropsCopyWithImpl<$Res, ThemeProps>;
   @useResult
-  $Res call({int? primaryColor, ThemeMode themeMode, bool pureBlack});
+  $Res call(
+      {int? primaryColor,
+      List<int> primaryColors,
+      ThemeMode themeMode,
+      DynamicSchemeVariant schemeVariant,
+      bool pureBlack});
 }
 
 /// @nodoc
@@ -1762,7 +1769,9 @@ class _$ThemePropsCopyWithImpl<$Res, $Val extends ThemeProps>
   @override
   $Res call({
     Object? primaryColor = freezed,
+    Object? primaryColors = null,
     Object? themeMode = null,
+    Object? schemeVariant = null,
     Object? pureBlack = null,
   }) {
     return _then(_value.copyWith(
@@ -1770,10 +1779,18 @@ class _$ThemePropsCopyWithImpl<$Res, $Val extends ThemeProps>
           ? _value.primaryColor
           : primaryColor // ignore: cast_nullable_to_non_nullable
               as int?,
+      primaryColors: null == primaryColors
+          ? _value.primaryColors
+          : primaryColors // ignore: cast_nullable_to_non_nullable
+              as List<int>,
       themeMode: null == themeMode
           ? _value.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
               as ThemeMode,
+      schemeVariant: null == schemeVariant
+          ? _value.schemeVariant
+          : schemeVariant // ignore: cast_nullable_to_non_nullable
+              as DynamicSchemeVariant,
       pureBlack: null == pureBlack
           ? _value.pureBlack
           : pureBlack // ignore: cast_nullable_to_non_nullable
@@ -1790,7 +1807,12 @@ abstract class _$$ThemePropsImplCopyWith<$Res>
       __$$ThemePropsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int? primaryColor, ThemeMode themeMode, bool pureBlack});
+  $Res call(
+      {int? primaryColor,
+      List<int> primaryColors,
+      ThemeMode themeMode,
+      DynamicSchemeVariant schemeVariant,
+      bool pureBlack});
 }
 
 /// @nodoc
@@ -1807,7 +1829,9 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? primaryColor = freezed,
+    Object? primaryColors = null,
     Object? themeMode = null,
+    Object? schemeVariant = null,
     Object? pureBlack = null,
   }) {
     return _then(_$ThemePropsImpl(
@@ -1815,10 +1839,18 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
           ? _value.primaryColor
           : primaryColor // ignore: cast_nullable_to_non_nullable
               as int?,
+      primaryColors: null == primaryColors
+          ? _value._primaryColors
+          : primaryColors // ignore: cast_nullable_to_non_nullable
+              as List<int>,
       themeMode: null == themeMode
           ? _value.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
               as ThemeMode,
+      schemeVariant: null == schemeVariant
+          ? _value.schemeVariant
+          : schemeVariant // ignore: cast_nullable_to_non_nullable
+              as DynamicSchemeVariant,
       pureBlack: null == pureBlack
           ? _value.pureBlack
           : pureBlack // ignore: cast_nullable_to_non_nullable
@@ -1831,25 +1863,41 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ThemePropsImpl implements _ThemeProps {
   const _$ThemePropsImpl(
-      {this.primaryColor,
-      this.themeMode = ThemeMode.system,
-      this.pureBlack = false});
+      {this.primaryColor = defaultPrimaryColor,
+      final List<int> primaryColors = defaultPrimaryColors,
+      this.themeMode = ThemeMode.dark,
+      this.schemeVariant = DynamicSchemeVariant.tonalSpot,
+      this.pureBlack = false})
+      : _primaryColors = primaryColors;
 
   factory _$ThemePropsImpl.fromJson(Map<String, dynamic> json) =>
       _$$ThemePropsImplFromJson(json);
 
   @override
+  @JsonKey()
   final int? primaryColor;
+  final List<int> _primaryColors;
+  @override
+  @JsonKey()
+  List<int> get primaryColors {
+    if (_primaryColors is EqualUnmodifiableListView) return _primaryColors;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_primaryColors);
+  }
+
   @override
   @JsonKey()
   final ThemeMode themeMode;
+  @override
+  @JsonKey()
+  final DynamicSchemeVariant schemeVariant;
   @override
   @JsonKey()
   final bool pureBlack;
 
   @override
   String toString() {
-    return 'ThemeProps(primaryColor: $primaryColor, themeMode: $themeMode, pureBlack: $pureBlack)';
+    return 'ThemeProps(primaryColor: $primaryColor, primaryColors: $primaryColors, themeMode: $themeMode, schemeVariant: $schemeVariant, pureBlack: $pureBlack)';
   }
 
   @override
@@ -1859,16 +1907,25 @@ class _$ThemePropsImpl implements _ThemeProps {
             other is _$ThemePropsImpl &&
             (identical(other.primaryColor, primaryColor) ||
                 other.primaryColor == primaryColor) &&
+            const DeepCollectionEquality()
+                .equals(other._primaryColors, _primaryColors) &&
             (identical(other.themeMode, themeMode) ||
                 other.themeMode == themeMode) &&
+            (identical(other.schemeVariant, schemeVariant) ||
+                other.schemeVariant == schemeVariant) &&
             (identical(other.pureBlack, pureBlack) ||
                 other.pureBlack == pureBlack));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, primaryColor, themeMode, pureBlack);
+  int get hashCode => Object.hash(
+      runtimeType,
+      primaryColor,
+      const DeepCollectionEquality().hash(_primaryColors),
+      themeMode,
+      schemeVariant,
+      pureBlack);
 
   /// Create a copy of ThemeProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1889,7 +1946,9 @@ class _$ThemePropsImpl implements _ThemeProps {
 abstract class _ThemeProps implements ThemeProps {
   const factory _ThemeProps(
       {final int? primaryColor,
+      final List<int> primaryColors,
       final ThemeMode themeMode,
+      final DynamicSchemeVariant schemeVariant,
       final bool pureBlack}) = _$ThemePropsImpl;
 
   factory _ThemeProps.fromJson(Map<String, dynamic> json) =
@@ -1898,7 +1957,11 @@ abstract class _ThemeProps implements ThemeProps {
   @override
   int? get primaryColor;
   @override
+  List<int> get primaryColors;
+  @override
   ThemeMode get themeMode;
+  @override
+  DynamicSchemeVariant get schemeVariant;
   @override
   bool get pureBlack;
 
@@ -1925,7 +1988,6 @@ mixin _$Config {
   DAV? get dav => throw _privateConstructorUsedError;
   NetworkProps get networkProps => throw _privateConstructorUsedError;
   VpnProps get vpnProps => throw _privateConstructorUsedError;
-  @JsonKey(fromJson: ThemeProps.safeFromJson)
   ThemeProps get themeProps => throw _privateConstructorUsedError;
   ProxiesStyle get proxiesStyle => throw _privateConstructorUsedError;
   WindowProps get windowProps => throw _privateConstructorUsedError;
@@ -1955,7 +2017,7 @@ abstract class $ConfigCopyWith<$Res> {
       DAV? dav,
       NetworkProps networkProps,
       VpnProps vpnProps,
-      @JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps,
+      ThemeProps themeProps,
       ProxiesStyle proxiesStyle,
       WindowProps windowProps,
       ClashConfig patchClashConfig});
@@ -2152,7 +2214,7 @@ abstract class _$$ConfigImplCopyWith<$Res> implements $ConfigCopyWith<$Res> {
       DAV? dav,
       NetworkProps networkProps,
       VpnProps vpnProps,
-      @JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps,
+      ThemeProps themeProps,
       ProxiesStyle proxiesStyle,
       WindowProps windowProps,
       ClashConfig patchClashConfig});
@@ -2267,7 +2329,7 @@ class _$ConfigImpl implements _Config {
       this.dav,
       this.networkProps = defaultNetworkProps,
       this.vpnProps = defaultVpnProps,
-      @JsonKey(fromJson: ThemeProps.safeFromJson) required this.themeProps,
+      this.themeProps = defaultThemeProps,
       this.proxiesStyle = defaultProxiesStyle,
       this.windowProps = defaultWindowProps,
       this.patchClashConfig = defaultClashConfig})
@@ -2312,7 +2374,7 @@ class _$ConfigImpl implements _Config {
   @JsonKey()
   final VpnProps vpnProps;
   @override
-  @JsonKey(fromJson: ThemeProps.safeFromJson)
+  @JsonKey()
   final ThemeProps themeProps;
   @override
   @JsonKey()
@@ -2402,8 +2464,7 @@ abstract class _Config implements Config {
       final DAV? dav,
       final NetworkProps networkProps,
       final VpnProps vpnProps,
-      @JsonKey(fromJson: ThemeProps.safeFromJson)
-      required final ThemeProps themeProps,
+      final ThemeProps themeProps,
       final ProxiesStyle proxiesStyle,
       final WindowProps windowProps,
       final ClashConfig patchClashConfig}) = _$ConfigImpl;
@@ -2428,7 +2489,6 @@ abstract class _Config implements Config {
   @override
   VpnProps get vpnProps;
   @override
-  @JsonKey(fromJson: ThemeProps.safeFromJson)
   ThemeProps get themeProps;
   @override
   ProxiesStyle get proxiesStyle;

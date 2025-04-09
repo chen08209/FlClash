@@ -372,5 +372,18 @@
   "generalDesc": "修改通用设置",
   "findProcessModeDesc": "开启后会有一定性能损耗",
   "tabAnimationDesc": "仅在移动视图中有效",
-  "saveTip": "确定要保存吗？"
+  "saveTip": "确定要保存吗？",
+  "deleteColorTip": "确定删除当前颜色吗？",
+  "colorExists": "该颜色已存在",
+  "colorSchemes": "配色方案",
+  "palette": "调色板",
+  "tonalSpotScheme": "调性点缀",
+  "fidelityScheme": "高保真",
+  "monochromeScheme": "单色",
+  "neutralScheme": "中性",
+  "vibrantScheme": "活力",
+  "expressiveScheme": "表现力",
+  "contentScheme": "内容主题",
+  "rainbowScheme": "彩虹",
+  "fruitSaladScheme": "果缤纷"
 }
