@@ -35,6 +35,7 @@ mixin _$AppState {
   FixedList<Log> get logs => throw _privateConstructorUsedError;
   FixedList<Traffic> get traffics => throw _privateConstructorUsedError;
   Traffic get totalTraffic => throw _privateConstructorUsedError;
+  bool get needApply => throw _privateConstructorUsedError;
 
   /// Create a copy of AppState
   /// with the given fields replaced by the non-null parameter values.
@@ -66,7 +67,8 @@ abstract class $AppStateCopyWith<$Res> {
       int version,
       FixedList<Log> logs,
       FixedList<Traffic> traffics,
-      Traffic totalTraffic});
+      Traffic totalTraffic,
+      bool needApply});
 
   $ColorSchemesCopyWith<$Res> get colorSchemes;
 }
@@ -104,6 +106,7 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
     Object? logs = null,
     Object? traffics = null,
     Object? totalTraffic = null,
+    Object? needApply = null,
   }) {
     return _then(_value.copyWith(
       isInit: null == isInit
@@ -178,6 +181,10 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
           ? _value.totalTraffic
           : totalTraffic // ignore: cast_nullable_to_non_nullable
               as Traffic,
+      needApply: null == needApply
+          ? _value.needApply
+          : needApply // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -218,7 +225,8 @@ abstract class _$$AppStateImplCopyWith<$Res>
       int version,
       FixedList<Log> logs,
       FixedList<Traffic> traffics,
-      Traffic totalTraffic});
+      Traffic totalTraffic,
+      bool needApply});
 
   @override
   $ColorSchemesCopyWith<$Res> get colorSchemes;
@@ -255,6 +263,7 @@ class __$$AppStateImplCopyWithImpl<$Res>
     Object? logs = null,
     Object? traffics = null,
     Object? totalTraffic = null,
+    Object? needApply = null,
   }) {
     return _then(_$AppStateImpl(
       isInit: null == isInit
@@ -329,6 +338,10 @@ class __$$AppStateImplCopyWithImpl<$Res>
           ? _value.totalTraffic
           : totalTraffic // ignore: cast_nullable_to_non_nullable
               as Traffic,
+      needApply: null == needApply
+          ? _value.needApply
+          : needApply // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -354,7 +367,8 @@ class _$AppStateImpl implements _AppState {
       required this.version,
       required this.logs,
       required this.traffics,
-      required this.totalTraffic})
+      required this.totalTraffic,
+      this.needApply = false})
       : _packages = packages,
         _delayMap = delayMap,
         _groups = groups,
@@ -429,10 +443,13 @@ class _$AppStateImpl implements _AppState {
   final FixedList<Traffic> traffics;
   @override
   final Traffic totalTraffic;
+  @override
+  @JsonKey()
+  final bool needApply;
 
   @override
   String toString() {
-    return 'AppState(isInit: $isInit, pageLabel: $pageLabel, packages: $packages, colorSchemes: $colorSchemes, sortNum: $sortNum, viewSize: $viewSize, delayMap: $delayMap, groups: $groups, checkIpNum: $checkIpNum, brightness: $brightness, runTime: $runTime, providers: $providers, localIp: $localIp, requests: $requests, version: $version, logs: $logs, traffics: $traffics, totalTraffic: $totalTraffic)';
+    return 'AppState(isInit: $isInit, pageLabel: $pageLabel, packages: $packages, colorSchemes: $colorSchemes, sortNum: $sortNum, viewSize: $viewSize, delayMap: $delayMap, groups: $groups, checkIpNum: $checkIpNum, brightness: $brightness, runTime: $runTime, providers: $providers, localIp: $localIp, requests: $requests, version: $version, logs: $logs, traffics: $traffics, totalTraffic: $totalTraffic, needApply: $needApply)';
   }
 
   @override
@@ -466,30 +483,34 @@ class _$AppStateImpl implements _AppState {
             (identical(other.traffics, traffics) ||
                 other.traffics == traffics) &&
             (identical(other.totalTraffic, totalTraffic) ||
-                other.totalTraffic == totalTraffic));
+                other.totalTraffic == totalTraffic) &&
+            (identical(other.needApply, needApply) ||
+                other.needApply == needApply));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isInit,
-      pageLabel,
-      const DeepCollectionEquality().hash(_packages),
-      colorSchemes,
-      sortNum,
-      viewSize,
-      const DeepCollectionEquality().hash(_delayMap),
-      const DeepCollectionEquality().hash(_groups),
-      checkIpNum,
-      brightness,
-      runTime,
-      const DeepCollectionEquality().hash(_providers),
-      localIp,
-      requests,
-      version,
-      logs,
-      traffics,
-      totalTraffic);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        isInit,
+        pageLabel,
+        const DeepCollectionEquality().hash(_packages),
+        colorSchemes,
+        sortNum,
+        viewSize,
+        const DeepCollectionEquality().hash(_delayMap),
+        const DeepCollectionEquality().hash(_groups),
+        checkIpNum,
+        brightness,
+        runTime,
+        const DeepCollectionEquality().hash(_providers),
+        localIp,
+        requests,
+        version,
+        logs,
+        traffics,
+        totalTraffic,
+        needApply
+      ]);
 
   /// Create a copy of AppState
   /// with the given fields replaced by the non-null parameter values.
@@ -519,7 +540,8 @@ abstract class _AppState implements AppState {
       required final int version,
       required final FixedList<Log> logs,
       required final FixedList<Traffic> traffics,
-      required final Traffic totalTraffic}) = _$AppStateImpl;
+      required final Traffic totalTraffic,
+      final bool needApply}) = _$AppStateImpl;
 
   @override
   bool get isInit;
@@ -557,6 +579,8 @@ abstract class _AppState implements AppState {
   FixedList<Traffic> get traffics;
   @override
   Traffic get totalTraffic;
+  @override
+  bool get needApply;
 
   /// Create a copy of AppState
   /// with the given fields replaced by the non-null parameter values.

@@ -437,7 +437,7 @@ class BuildCommand extends Command {
     await Build.exec(
       name: name,
       Build.getExecutable(
-        "flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose $args --build-dart-define=APP_ENV=$env",
+        "flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose$args --build-dart-define=APP_ENV=$env",
       ),
     );
   }
@@ -485,7 +485,7 @@ class BuildCommand extends Command {
         _buildDistributor(
           target: target,
           targets: "exe,zip",
-          args: "--description $archName",
+          args: " --description $archName",
           env: env,
         );
         return;
@@ -507,7 +507,7 @@ class BuildCommand extends Command {
           target: target,
           targets: targets,
           args:
-              "--description $archName --build-target-platform $defaultTarget",
+              " --description $archName --build-target-platform $defaultTarget",
           env: env,
         );
         return;
@@ -526,7 +526,7 @@ class BuildCommand extends Command {
           target: target,
           targets: "apk",
           args:
-              "--flutter-build-args split-per-abi --build-target-platform ${defaultTargets.join(",")}",
+              ",split-per-abi --build-target-platform ${defaultTargets.join(",")}",
           env: env,
         );
         return;
@@ -535,7 +535,7 @@ class BuildCommand extends Command {
         _buildDistributor(
           target: target,
           targets: "dmg",
-          args: "--description $archName",
+          args: " --description $archName",
           env: env,
         );
         return;

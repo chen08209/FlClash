@@ -41,6 +41,7 @@ func splitByMultipleSeparators(s string) interface{} {
 }
 
 var (
+	version   = 0
 	isRunning = false
 	runLock   sync.Mutex
 	ips       = []string{"ipwho.is", "api.ip.sb", "ipapi.co", "ipinfo.io"}
@@ -274,7 +275,6 @@ func patchConfig() {
 	dialer.DefaultInterface.Store(general.Interface)
 	adapter.UnifiedDelay.Store(general.UnifiedDelay)
 	tunnel.SetMode(general.Mode)
-	tunnel.UpdateRules(currentConfig.Rules, currentConfig.SubRules, currentConfig.RuleProviders)
 	log.SetLevel(general.LogLevel)
 	resolver.DisableIPv6 = !general.IPv6
 

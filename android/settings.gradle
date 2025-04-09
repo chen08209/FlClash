@@ -24,3 +24,4 @@ plugins {
 }
 
 include ":app"
+include ':core'
