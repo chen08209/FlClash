@@ -398,15 +398,18 @@ class MapInputPage extends StatelessWidget {
   }
 
   _handleDelete(MapEntry<String, String> item) {
-    final index = items.indexWhere(
+    final entries = List<MapEntry<String, String>>.from(
+      items,
+    );
+    final index = entries.indexWhere(
       (entry) {
-        return entry.key == item.key;
+        return entry.key == item.key && item.value == entry.value;
       },
     );
     if (index != -1) {
-      items.removeAt(index);
+      entries.removeAt(index);
     }
-    onChange(Map.fromEntries(items));
+    onChange(Map.fromEntries(entries));
   }
 
   @override
