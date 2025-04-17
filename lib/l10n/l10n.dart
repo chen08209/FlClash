@@ -280,10 +280,10 @@ class AppLocalizations {
     return Intl.message('Theme', name: 'theme', desc: '', args: []);
   }
 
-  /// `Set dark mode,adjust the color`
+  /// `Set dark mode, adjust the color`
   String get themeDesc {
     return Intl.message(
-      'Set dark mode,adjust the color',
+      'Set dark mode, adjust the color',
       name: 'themeDesc',
       desc: '',
       args: [],
@@ -540,9 +540,9 @@ class AppLocalizations {
     return Intl.message(' Ago', name: 'ago', desc: '', args: []);
   }
 
-  /// `Just`
-  String get just {
-    return Intl.message('Just', name: 'just', desc: '', args: []);
+  /// `Just now`
+  String get justNow {
+    return Intl.message('Just now', name: 'justNow', desc: '', args: []);
   }
 
   /// `QR code`
@@ -1110,10 +1110,10 @@ class AppLocalizations {
     return Intl.message('Bind', name: 'bind', desc: '', args: []);
   }
 
-  /// `Connectivity：`
+  /// `Connectivity:`
   String get connectivity {
     return Intl.message(
-      'Connectivity：',
+      'Connectivity:',
       name: 'connectivity',
       desc: '',
       args: [],

@@ -88,7 +88,7 @@ Support the following actions
 
         1. You need a windows client
 
-        2. Install  `Gcc`，`Inno Setup`
+        2. Install  `Gcc`, `Inno Setup`
 
         3. Run build script
 

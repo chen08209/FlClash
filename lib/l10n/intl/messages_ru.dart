@@ -164,7 +164,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "connectionsDesc": MessageLookupByLibrary.simpleMessage(
       "Просмотр текущих данных о соединениях",
     ),
-    "connectivity": MessageLookupByLibrary.simpleMessage("Связь："),
+    "connectivity": MessageLookupByLibrary.simpleMessage("Связь:"),
     "content": MessageLookupByLibrary.simpleMessage("Содержание"),
     "contentEmptyTip": MessageLookupByLibrary.simpleMessage(
       "Содержание не может быть пустым",
@@ -340,7 +340,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Разрешить входящий IPv6",
     ),
     "ja": MessageLookupByLibrary.simpleMessage("Японский"),
-    "just": MessageLookupByLibrary.simpleMessage("Только что"),
+    "justNow": MessageLookupByLibrary.simpleMessage("Только что"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "Интервал поддержания TCP-соединения",
     ),

@@ -158,7 +158,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "connectionsDesc": MessageLookupByLibrary.simpleMessage(
       "View current connections data",
     ),
-    "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
+    "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity:"),
     "content": MessageLookupByLibrary.simpleMessage("Content"),
     "contentEmptyTip": MessageLookupByLibrary.simpleMessage(
       "Content cannot be empty",
@@ -318,7 +318,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Allow IPv6 inbound",
     ),
     "ja": MessageLookupByLibrary.simpleMessage("Japanese"),
-    "just": MessageLookupByLibrary.simpleMessage("Just"),
+    "justNow": MessageLookupByLibrary.simpleMessage("Just now"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "Tcp keep alive interval",
     ),
@@ -615,7 +615,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),
     "themeDesc": MessageLookupByLibrary.simpleMessage(
-      "Set dark mode,adjust the color",
+      "Set dark mode, adjust the color",
     ),
     "themeMode": MessageLookupByLibrary.simpleMessage("Theme mode"),
     "threeColumns": MessageLookupByLibrary.simpleMessage("Three columns"),
