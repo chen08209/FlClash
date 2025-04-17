@@ -41,9 +41,16 @@ on Mobile:
 ⚠️ 使用前请确保安装以下依赖
 
    ```bash
-    sudo apt-get install libayatana-appindicator3-1 libayatana-appindicator3-dev
+    # Debian/Ubuntu
+    sudo apt-get install libayatana-appindicator3-1
     sudo apt-get install libkeybinder-3.0-0
+
+    # Fedora/CentOS
+    sudo dnf install libayatana-appindicator-gtk3
+    sudo dnf install keybinder3
    ```
+
+在使用 GNOME 桌面时, 可能需要安装 [AppIndicator](https://github.com/ubuntu/gnome-shell-extension-appindicator) 扩展以显示系统托盘图标
 
 ### Android
 
