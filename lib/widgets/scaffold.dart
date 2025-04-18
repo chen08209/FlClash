@@ -439,8 +439,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
       floatingActionButton: ValueListenableBuilder<Widget?>(
         valueListenable: _floatingActionButton,
         builder: (_, value, __) {
-          return FadeScaleBox(
-            child: value ?? SizedBox(),
+          return IntrinsicWidth(
+            child: IntrinsicHeight(
+              child: FadeScaleBox(
+                child: value ?? SizedBox(),
+              ),
+            ),
           );
         },
       ),

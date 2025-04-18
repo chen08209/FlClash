@@ -1,6 +1,8 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -511,7 +513,7 @@ ColorScheme genColorScheme(
   Ref ref,
   Brightness brightness, {
   Color? color,
-  bool isOverride = false,
+  bool ignoreConfig = false,
 }) {
   final vm2 = ref.watch(
     themeSettingProvider.select(
@@ -521,11 +523,17 @@ ColorScheme genColorScheme(
       ),
     ),
   );
-  if (color == null && (isOverride == true || vm2.a == null)) {
-    final colorSchemes = ref.watch(appSchemesProvider);
-    return colorSchemes.getColorSchemeForBrightness(
-      brightness,
-      vm2.b,
+  if (color == null && (ignoreConfig == true || vm2.a == null)) {
+    // if (globalState.corePalette != null) {
+    //   return globalState.corePalette!.toColorScheme(brightness: brightness);
+    // }
+    return ColorScheme.fromSeed(
+      seedColor: globalState.corePalette
+              ?.toColorScheme(brightness: brightness)
+              .primary ??
+          globalState.accentColor,
+      brightness: brightness,
+      dynamicSchemeVariant: vm2.b,
     );
   }
   return ColorScheme.fromSeed(

@@ -1,12 +1,8 @@
 package com.follow.clash.services
 
 import android.annotation.SuppressLint
-import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.net.ProxyInfo
 import android.net.VpnService
 import android.os.Binder
@@ -17,18 +13,13 @@ import android.os.RemoteException
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.follow.clash.GlobalState
-import com.follow.clash.MainActivity
-import com.follow.clash.R
-import com.follow.clash.extensions.getActionPendingIntent
 import com.follow.clash.extensions.getIpv4RouteAddress
 import com.follow.clash.extensions.getIpv6RouteAddress
 import com.follow.clash.extensions.toCIDR
 import com.follow.clash.models.AccessControlMode
 import com.follow.clash.models.VpnOptions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 
@@ -128,82 +119,22 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
         }
     }
 
-    private val CHANNEL = "FlClash"
+    private var cachedBuilder: NotificationCompat.Builder? = null
 
-    private val notificationId: Int = 1
-
-    private val notificationBuilderDeferred: Deferred<NotificationCompat.Builder> by lazy {
-        CoroutineScope(Dispatchers.Main).async {
-            val stopText = GlobalState.getText("stop")
-            val intent = Intent(this@FlClashVpnService, MainActivity::class.java)
-
-            val pendingIntent = if (Build.VERSION.SDK_INT >= 31) {
-                PendingIntent.getActivity(
-                    this@FlClashVpnService,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            } else {
-                PendingIntent.getActivity(
-                    this@FlClashVpnService,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            }
-
-            with(NotificationCompat.Builder(this@FlClashVpnService, CHANNEL)) {
-                setSmallIcon(R.drawable.ic_stat_name)
-                setContentTitle("FlClash")
-                setContentIntent(pendingIntent)
-                setCategory(NotificationCompat.CATEGORY_SERVICE)
-                priority = NotificationCompat.PRIORITY_MIN
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
-                }
-                setOngoing(true)
-                addAction(
-                    0,
-                    stopText,
-                    getActionPendingIntent("STOP")
-                )
-                setShowWhen(false)
-                setOnlyAlertOnce(true)
-                setAutoCancel(true)
-            }
+    private suspend fun notificationBuilder(): NotificationCompat.Builder {
+        if (cachedBuilder == null) {
+            cachedBuilder = createFlClashNotificationBuilder().await()
         }
-    }
-
-    private suspend fun getNotificationBuilder(): NotificationCompat.Builder {
-        return notificationBuilderDeferred.await()
+        return cachedBuilder!!
     }
 
     @SuppressLint("ForegroundServiceType")
     override suspend fun startForeground(title: String, content: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = getSystemService(NotificationManager::class.java)
-            var channel = manager?.getNotificationChannel(CHANNEL)
-            if (channel == null) {
-                channel =
-                    NotificationChannel(CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW)
-                manager?.createNotificationChannel(channel)
-            }
-        }
-        val notification =
-            getNotificationBuilder()
+        startForeground(
+            notificationBuilder()
                 .setContentTitle(title)
-                .setContentText(content)
-                .build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            try {
-                startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-            } catch (_: Exception) {
-                startForeground(notificationId, notification)
-            }
-        } else {
-            startForeground(notificationId, notification)
-        }
+                .setContentText(content).build()
+        )
     }
 
     override fun onTrimMemory(level: Int) {

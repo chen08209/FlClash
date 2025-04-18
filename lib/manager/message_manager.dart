@@ -21,7 +21,7 @@ class MessageManager extends StatefulWidget {
 class MessageManagerState extends State<MessageManager> {
   final _messagesNotifier = ValueNotifier<List<CommonMessage>>([]);
   final List<CommonMessage> _bufferMessages = [];
-  Completer<bool>? _messageIngCompleter;
+  bool _pushing = false;
 
   @override
   void initState() {
@@ -40,26 +40,27 @@ class MessageManagerState extends State<MessageManager> {
       text: text,
     );
     _bufferMessages.add(commonMessage);
-    _showMessage();
+    await _showMessage();
   }
 
   _showMessage() async {
-    if (_messageIngCompleter?.isCompleted == false) {
+    if (_pushing == true) {
       return;
     }
+    _pushing = true;
     while (_bufferMessages.isNotEmpty) {
       final commonMessage = _bufferMessages.removeAt(0);
       _messagesNotifier.value = List.from(_messagesNotifier.value)
         ..add(
           commonMessage,
         );
-
-      _messageIngCompleter = Completer();
       await Future.delayed(Duration(seconds: 1));
       Future.delayed(commonMessage.duration, () {
         _handleRemove(commonMessage);
       });
-      _messageIngCompleter?.complete(true);
+      if (_bufferMessages.isEmpty) {
+        _pushing = false;
+      }
     }
   }
 
@@ -77,41 +78,41 @@ class MessageManagerState extends State<MessageManager> {
           valueListenable: _messagesNotifier,
           builder: (_, messages, __) {
             return FadeThroughBox(
+              margin: EdgeInsets.only(
+                top: kToolbarHeight + 8,
+                left: 12,
+                right: 12,
+              ),
               alignment: Alignment.topRight,
               child: messages.isEmpty
                   ? SizedBox()
                   : LayoutBuilder(
-                      key: Key(messages.last.id),
-                      builder: (_, constraints) {
-                        return Card(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(12.0),
-                            ),
-                          ),
-                          elevation: 10,
-                          margin: EdgeInsets.only(
-                            top: kToolbarHeight + 8,
-                            left: 12,
-                            right: 12,
-                          ),
-                          color: context.colorScheme.surfaceContainerHigh,
-                          child: Container(
-                            width: min(
-                              constraints.maxWidth,
-                              400,
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 16,
-                            ),
-                            child: Text(
-                              messages.last.text,
-                            ),
-                          ),
-                        );
-                      },
+                key: Key(messages.last.id),
+                builder: (_, constraints) {
+                  return Card(
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(12.0),
+                      ),
                     ),
+                    elevation: 10,
+                    color: context.colorScheme.surfaceContainerHigh,
+                    child: Container(
+                      width: min(
+                        constraints.maxWidth,
+                        500,
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
+                      child: Text(
+                        messages.last.text,
+                      ),
+                    ),
+                  );
+                },
+              ),
             );
           },
         ),

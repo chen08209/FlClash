@@ -214,6 +214,7 @@ class _EditProfileState extends State<EditProfile> {
     final items = [
       ListItem(
         title: TextFormField(
+          textInputAction: TextInputAction.next,
           controller: labelController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
@@ -230,6 +231,8 @@ class _EditProfileState extends State<EditProfile> {
       if (widget.profile.type == ProfileType.url) ...[
         ListItem(
           title: TextFormField(
+            textInputAction: TextInputAction.next,
+            keyboardType: TextInputType.url,
             controller: urlController,
             maxLines: 5,
             minLines: 1,
@@ -258,6 +261,7 @@ class _EditProfileState extends State<EditProfile> {
         if (autoUpdate)
           ListItem(
             title: TextFormField(
+              textInputAction: TextInputAction.next,
               controller: autoUpdateDurationController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),

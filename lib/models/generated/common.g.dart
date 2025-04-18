@@ -22,6 +22,7 @@ const _$LogLevelEnumMap = {
   LogLevel.warning: 'warning',
   LogLevel.error: 'error',
   LogLevel.silent: 'silent',
+  LogLevel.app: 'app',
 };
 
 _$PackageImpl _$$PackageImplFromJson(Map<String, dynamic> json) =>

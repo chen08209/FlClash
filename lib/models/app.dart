@@ -16,7 +16,6 @@ class AppState with _$AppState {
     @Default(false) bool isInit,
     @Default(PageLabel.dashboard) PageLabel pageLabel,
     @Default([]) List<Package> packages,
-    @Default(ColorSchemes()) ColorSchemes colorSchemes,
     @Default(0) int sortNum,
     required Size viewSize,
     @Default({}) DelayMap delayMap,

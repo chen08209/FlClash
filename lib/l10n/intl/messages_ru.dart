@@ -148,6 +148,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Текущее приложение уже является последней версией",
     ),
     "checking": MessageLookupByLibrary.simpleMessage("Проверка..."),
+    "clearData": MessageLookupByLibrary.simpleMessage("Очистить данные"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage(
       "Экспорт в буфер обмена",
     ),
@@ -183,6 +184,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "core": MessageLookupByLibrary.simpleMessage("Ядро"),
     "coreInfo": MessageLookupByLibrary.simpleMessage("Информация о ядре"),
     "country": MessageLookupByLibrary.simpleMessage("Страна"),
+    "crashTest": MessageLookupByLibrary.simpleMessage("Тест на сбои"),
     "create": MessageLookupByLibrary.simpleMessage("Создать"),
     "cut": MessageLookupByLibrary.simpleMessage("Вырезать"),
     "dark": MessageLookupByLibrary.simpleMessage("Темный"),
@@ -215,6 +217,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "detectionTip": MessageLookupByLibrary.simpleMessage(
       "Опирается на сторонний API, только для справки",
+    ),
+    "developerMode": MessageLookupByLibrary.simpleMessage("Режим разработчика"),
+    "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
+      "Режим разработчика активирован.",
     ),
     "direct": MessageLookupByLibrary.simpleMessage("Прямой"),
     "disclaimer": MessageLookupByLibrary.simpleMessage(
@@ -386,6 +392,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "loose": MessageLookupByLibrary.simpleMessage("Свободный"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Информация о памяти"),
+    "messageTest": MessageLookupByLibrary.simpleMessage(
+      "Тестирование сообщения",
+    ),
+    "messageTestTip": MessageLookupByLibrary.simpleMessage("Это сообщение."),
     "min": MessageLookupByLibrary.simpleMessage("Мин"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage(
       "Свернуть при выходе",

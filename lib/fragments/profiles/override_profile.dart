@@ -873,6 +873,8 @@ class _AddRuleDialogState extends State<AddRuleDialog> {
                           builder: (filed) {
                             return DropdownMenu(
                               width: 200,
+                              enableFilter: false,
+                              enableSearch: false,
                               controller: _subRuleController,
                               label: Text(appLocalizations.subRule),
                               menuHeight: 250,
@@ -890,11 +892,11 @@ class _AddRuleDialogState extends State<AddRuleDialog> {
                           builder: (filed) {
                             return DropdownMenu(
                               controller: _ruleTargetController,
-                              initialSelection: filed.value,
                               label: Text(appLocalizations.ruleTarget),
                               width: 200,
                               menuHeight: 250,
-                              enableFilter: true,
+                              enableFilter: false,
+                              enableSearch: false,
                               dropdownMenuEntries: _targetItems,
                               errorText: filed.errorText,
                             );

@@ -104,6 +104,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "checkUpdate": MessageLookupByLibrary.simpleMessage("更新を確認"),
     "checkUpdateError": MessageLookupByLibrary.simpleMessage("アプリは最新版です"),
     "checking": MessageLookupByLibrary.simpleMessage("確認中..."),
+    "clearData": MessageLookupByLibrary.simpleMessage("データを消去"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("クリップボードにエクスポート"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("クリップボードからインポート"),
     "colorExists": MessageLookupByLibrary.simpleMessage("この色は既に存在します"),
@@ -127,6 +128,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "core": MessageLookupByLibrary.simpleMessage("コア"),
     "coreInfo": MessageLookupByLibrary.simpleMessage("コア情報"),
     "country": MessageLookupByLibrary.simpleMessage("国"),
+    "crashTest": MessageLookupByLibrary.simpleMessage("クラッシュテスト"),
     "create": MessageLookupByLibrary.simpleMessage("作成"),
     "cut": MessageLookupByLibrary.simpleMessage("切り取り"),
     "dark": MessageLookupByLibrary.simpleMessage("ダーク"),
@@ -150,6 +152,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "ClashMetaベースのマルチプラットフォームプロキシクライアント。シンプルで使いやすく、オープンソースで広告なし。",
     ),
     "detectionTip": MessageLookupByLibrary.simpleMessage("サードパーティAPIに依存（参考値）"),
+    "developerMode": MessageLookupByLibrary.simpleMessage("デベロッパーモード"),
+    "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
+      "デベロッパーモードが有効になりました。",
+    ),
     "direct": MessageLookupByLibrary.simpleMessage("ダイレクト"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("免責事項"),
     "disclaimerDesc": MessageLookupByLibrary.simpleMessage(
@@ -258,6 +264,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "loopbackDesc": MessageLookupByLibrary.simpleMessage("UWPループバック解除用"),
     "loose": MessageLookupByLibrary.simpleMessage("疎"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("メモリ情報"),
+    "messageTest": MessageLookupByLibrary.simpleMessage("メッセージテスト"),
+    "messageTestTip": MessageLookupByLibrary.simpleMessage("これはメッセージです。"),
     "min": MessageLookupByLibrary.simpleMessage("最小化"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("終了時に最小化"),
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(

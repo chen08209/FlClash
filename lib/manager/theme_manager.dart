@@ -16,10 +16,15 @@ class ThemeManager extends StatelessWidget {
   Widget build(BuildContext context) {
     globalState.measure = Measure.of(context);
     globalState.theme = CommonTheme.of(context);
+    final padding = MediaQuery.of(context).padding;
+    final height = MediaQuery.of(context).size.height;
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(
         textScaler: TextScaler.linear(
           textScaleFactor,
+        ),
+        padding: padding.copyWith(
+          top: padding.top > height * 0.3 ? 0.0 : padding.top,
         ),
       ),
       child: LayoutBuilder(

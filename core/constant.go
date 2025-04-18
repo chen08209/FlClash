@@ -82,6 +82,7 @@ const (
 	getRunTimeMethod               Method = "getRunTime"
 	getCurrentProfileNameMethod    Method = "getCurrentProfileName"
 	getProfileMethod               Method = "getProfile"
+	crashMethod                    Method = "crash"
 )
 
 type Method string

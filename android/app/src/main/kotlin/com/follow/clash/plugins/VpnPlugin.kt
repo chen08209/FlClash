@@ -168,8 +168,10 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         try {
             if (GlobalState.runState.value != RunState.START) return
             val data = flutterMethodChannel.awaitResult<String>("getStartForegroundParams")
-            val startForegroundParams = Gson().fromJson(
+            val startForegroundParams = if (data != null) Gson().fromJson(
                 data, StartForegroundParams::class.java
+            ) else StartForegroundParams(
+                title = "", content = ""
             )
             if (lastStartForegroundParams != startForegroundParams) {
                 lastStartForegroundParams = startForegroundParams

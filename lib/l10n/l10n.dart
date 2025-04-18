@@ -3004,6 +3004,56 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Developer mode`
+  String get developerMode {
+    return Intl.message(
+      'Developer mode',
+      name: 'developerMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Developer mode is enabled.`
+  String get developerModeEnableTip {
+    return Intl.message(
+      'Developer mode is enabled.',
+      name: 'developerModeEnableTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Message test`
+  String get messageTest {
+    return Intl.message(
+      'Message test',
+      name: 'messageTest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This is a message.`
+  String get messageTestTip {
+    return Intl.message(
+      'This is a message.',
+      name: 'messageTestTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Crash test`
+  String get crashTest {
+    return Intl.message('Crash test', name: 'crashTest', desc: '', args: []);
+  }
+
+  /// `Clear Data`
+  String get clearData {
+    return Intl.message('Clear Data', name: 'clearData', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -21,7 +21,7 @@ class CommonPrint {
     }
     globalState.appController.addLog(
       Log(
-        logLevel: LogLevel.info,
+        logLevel: LogLevel.app,
         payload: payload,
       ),
     );

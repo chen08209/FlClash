@@ -345,12 +345,16 @@ class AppController {
   }
 
   Future<void> updateGroups() async {
-    _ref.read(groupsProvider.notifier).value = await retry(
-      task: () async {
-        return await clashCore.getProxiesGroups();
-      },
-      retryIf: (res) => res.isEmpty,
-    );
+    try {
+      _ref.read(groupsProvider.notifier).value = await retry(
+        task: () async {
+          return await clashCore.getProxiesGroups();
+        },
+        retryIf: (res) => res.isEmpty,
+      );
+    } catch (_) {
+      _ref.read(groupsProvider.notifier).value = [];
+    }
   }
 
   updateProfiles() async {
@@ -360,10 +364,6 @@ class AppController {
       }
       await updateProfile(profile);
     }
-  }
-
-  updateSystemColorSchemes(ColorSchemes colorSchemes) {
-    _ref.read(appSchemesProvider.notifier).value = colorSchemes;
   }
 
   savePreferences() async {
@@ -408,6 +408,14 @@ class AppController {
     } finally {
       system.exit();
     }
+  }
+
+  Future handleClear() async {
+    await preferences.clearPreferences();
+    commonPrint.log("clear preferences");
+    globalState.config = Config(
+      themeProps: defaultThemeProps,
+    );
   }
 
   autoCheckUpdate() async {

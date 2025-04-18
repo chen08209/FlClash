@@ -253,21 +253,6 @@ class CurrentPageLabel extends _$CurrentPageLabel
 }
 
 @riverpod
-class AppSchemes extends _$AppSchemes with AutoDisposeNotifierMixin {
-  @override
-  ColorSchemes build() {
-    return globalState.appState.colorSchemes;
-  }
-
-  @override
-  onUpdate(value) {
-    globalState.appState = globalState.appState.copyWith(
-      colorSchemes: value,
-    );
-  }
-}
-
-@riverpod
 class SortNum extends _$SortNum with AutoDisposeNotifierMixin {
   @override
   int build() {

@@ -37,7 +37,9 @@ const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyle = ProxiesStyle();
 const defaultWindowProps = WindowProps();
 const defaultAccessControl = AccessControl();
-const defaultThemeProps = ThemeProps();
+final defaultThemeProps = ThemeProps(
+  primaryColor: defaultPrimaryColor,
+);
 
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
@@ -82,6 +84,7 @@ class AppSettingProps with _$AppSettingProps {
     @Default(false) bool disclaimerAccepted,
     @Default(true) bool minimizeOnExit,
     @Default(false) bool hidden,
+    @Default(false) bool developerMode,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>
@@ -173,15 +176,26 @@ class ProxiesStyle with _$ProxiesStyle {
 @freezed
 class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
-    @Default(defaultPrimaryColor) int? primaryColor,
+    int? primaryColor,
     @Default(defaultPrimaryColors) List<int> primaryColors,
     @Default(ThemeMode.dark) ThemeMode themeMode,
     @Default(DynamicSchemeVariant.tonalSpot) DynamicSchemeVariant schemeVariant,
     @Default(false) bool pureBlack,
   }) = _ThemeProps;
 
-  factory ThemeProps.fromJson(Map<String, Object?>? json) =>
-      json == null ? defaultThemeProps : _$ThemePropsFromJson(json);
+  factory ThemeProps.fromJson(Map<String, Object?> json) =>
+      _$ThemePropsFromJson(json);
+
+  factory ThemeProps.safeFromJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return defaultThemeProps;
+    }
+    try {
+      return ThemeProps.fromJson(json);
+    } catch (_) {
+      return defaultThemeProps;
+    }
+  }
 }
 
 @freezed
@@ -197,7 +211,7 @@ class Config with _$Config {
     DAV? dav,
     @Default(defaultNetworkProps) NetworkProps networkProps,
     @Default(defaultVpnProps) VpnProps vpnProps,
-    @Default(defaultThemeProps) ThemeProps themeProps,
+    @JsonKey(fromJson: ThemeProps.safeFromJson) required ThemeProps themeProps,
     @Default(defaultProxiesStyle) ProxiesStyle proxiesStyle,
     @Default(defaultWindowProps) WindowProps windowProps,
     @Default(defaultClashConfig) ClashConfig patchClashConfig,

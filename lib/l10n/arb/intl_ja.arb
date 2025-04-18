@@ -385,5 +385,11 @@
   "expressiveScheme": "エクスプレッシブ",
   "contentScheme": "コンテンツテーマ",
   "rainbowScheme": "レインボー",
-  "fruitSaladScheme": "フルーツサラダ"
+  "fruitSaladScheme": "フルーツサラダ",
+  "developerMode": "デベロッパーモード",
+  "developerModeEnableTip": "デベロッパーモードが有効になりました。",
+  "messageTest": "メッセージテスト",
+  "messageTestTip": "これはメッセージです。",
+  "crashTest": "クラッシュテスト",
+  "clearData": "データを消去"
 }

@@ -37,6 +37,7 @@ mixin _$AppSettingProps {
   bool get disclaimerAccepted => throw _privateConstructorUsedError;
   bool get minimizeOnExit => throw _privateConstructorUsedError;
   bool get hidden => throw _privateConstructorUsedError;
+  bool get developerMode => throw _privateConstructorUsedError;
 
   /// Serializes this AppSettingProps to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -70,7 +71,8 @@ abstract class $AppSettingPropsCopyWith<$Res> {
       bool showLabel,
       bool disclaimerAccepted,
       bool minimizeOnExit,
-      bool hidden});
+      bool hidden,
+      bool developerMode});
 }
 
 /// @nodoc
@@ -103,6 +105,7 @@ class _$AppSettingPropsCopyWithImpl<$Res, $Val extends AppSettingProps>
     Object? disclaimerAccepted = null,
     Object? minimizeOnExit = null,
     Object? hidden = null,
+    Object? developerMode = null,
   }) {
     return _then(_value.copyWith(
       locale: freezed == locale
@@ -165,6 +168,10 @@ class _$AppSettingPropsCopyWithImpl<$Res, $Val extends AppSettingProps>
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
               as bool,
+      developerMode: null == developerMode
+          ? _value.developerMode
+          : developerMode // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -193,7 +200,8 @@ abstract class _$$AppSettingPropsImplCopyWith<$Res>
       bool showLabel,
       bool disclaimerAccepted,
       bool minimizeOnExit,
-      bool hidden});
+      bool hidden,
+      bool developerMode});
 }
 
 /// @nodoc
@@ -224,6 +232,7 @@ class __$$AppSettingPropsImplCopyWithImpl<$Res>
     Object? disclaimerAccepted = null,
     Object? minimizeOnExit = null,
     Object? hidden = null,
+    Object? developerMode = null,
   }) {
     return _then(_$AppSettingPropsImpl(
       locale: freezed == locale
@@ -286,6 +295,10 @@ class __$$AppSettingPropsImplCopyWithImpl<$Res>
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
               as bool,
+      developerMode: null == developerMode
+          ? _value.developerMode
+          : developerMode // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -309,7 +322,8 @@ class _$AppSettingPropsImpl implements _AppSettingProps {
       this.showLabel = false,
       this.disclaimerAccepted = false,
       this.minimizeOnExit = true,
-      this.hidden = false})
+      this.hidden = false,
+      this.developerMode = false})
       : _dashboardWidgets = dashboardWidgets;
 
   factory _$AppSettingPropsImpl.fromJson(Map<String, dynamic> json) =>
@@ -366,10 +380,13 @@ class _$AppSettingPropsImpl implements _AppSettingProps {
   @override
   @JsonKey()
   final bool hidden;
+  @override
+  @JsonKey()
+  final bool developerMode;
 
   @override
   String toString() {
-    return 'AppSettingProps(locale: $locale, dashboardWidgets: $dashboardWidgets, onlyStatisticsProxy: $onlyStatisticsProxy, autoLaunch: $autoLaunch, silentLaunch: $silentLaunch, autoRun: $autoRun, openLogs: $openLogs, closeConnections: $closeConnections, testUrl: $testUrl, isAnimateToPage: $isAnimateToPage, autoCheckUpdate: $autoCheckUpdate, showLabel: $showLabel, disclaimerAccepted: $disclaimerAccepted, minimizeOnExit: $minimizeOnExit, hidden: $hidden)';
+    return 'AppSettingProps(locale: $locale, dashboardWidgets: $dashboardWidgets, onlyStatisticsProxy: $onlyStatisticsProxy, autoLaunch: $autoLaunch, silentLaunch: $silentLaunch, autoRun: $autoRun, openLogs: $openLogs, closeConnections: $closeConnections, testUrl: $testUrl, isAnimateToPage: $isAnimateToPage, autoCheckUpdate: $autoCheckUpdate, showLabel: $showLabel, disclaimerAccepted: $disclaimerAccepted, minimizeOnExit: $minimizeOnExit, hidden: $hidden, developerMode: $developerMode)';
   }
 
   @override
@@ -402,7 +419,9 @@ class _$AppSettingPropsImpl implements _AppSettingProps {
                 other.disclaimerAccepted == disclaimerAccepted) &&
             (identical(other.minimizeOnExit, minimizeOnExit) ||
                 other.minimizeOnExit == minimizeOnExit) &&
-            (identical(other.hidden, hidden) || other.hidden == hidden));
+            (identical(other.hidden, hidden) || other.hidden == hidden) &&
+            (identical(other.developerMode, developerMode) ||
+                other.developerMode == developerMode));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -423,7 +442,8 @@ class _$AppSettingPropsImpl implements _AppSettingProps {
       showLabel,
       disclaimerAccepted,
       minimizeOnExit,
-      hidden);
+      hidden,
+      developerMode);
 
   /// Create a copy of AppSettingProps
   /// with the given fields replaced by the non-null parameter values.
@@ -459,7 +479,8 @@ abstract class _AppSettingProps implements AppSettingProps {
       final bool showLabel,
       final bool disclaimerAccepted,
       final bool minimizeOnExit,
-      final bool hidden}) = _$AppSettingPropsImpl;
+      final bool hidden,
+      final bool developerMode}) = _$AppSettingPropsImpl;
 
   factory _AppSettingProps.fromJson(Map<String, dynamic> json) =
       _$AppSettingPropsImpl.fromJson;
@@ -495,6 +516,8 @@ abstract class _AppSettingProps implements AppSettingProps {
   bool get minimizeOnExit;
   @override
   bool get hidden;
+  @override
+  bool get developerMode;
 
   /// Create a copy of AppSettingProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1863,7 +1886,7 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ThemePropsImpl implements _ThemeProps {
   const _$ThemePropsImpl(
-      {this.primaryColor = defaultPrimaryColor,
+      {this.primaryColor,
       final List<int> primaryColors = defaultPrimaryColors,
       this.themeMode = ThemeMode.dark,
       this.schemeVariant = DynamicSchemeVariant.tonalSpot,
@@ -1874,7 +1897,6 @@ class _$ThemePropsImpl implements _ThemeProps {
       _$$ThemePropsImplFromJson(json);
 
   @override
-  @JsonKey()
   final int? primaryColor;
   final List<int> _primaryColors;
   @override
@@ -1988,6 +2010,7 @@ mixin _$Config {
   DAV? get dav => throw _privateConstructorUsedError;
   NetworkProps get networkProps => throw _privateConstructorUsedError;
   VpnProps get vpnProps => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: ThemeProps.safeFromJson)
   ThemeProps get themeProps => throw _privateConstructorUsedError;
   ProxiesStyle get proxiesStyle => throw _privateConstructorUsedError;
   WindowProps get windowProps => throw _privateConstructorUsedError;
@@ -2017,7 +2040,7 @@ abstract class $ConfigCopyWith<$Res> {
       DAV? dav,
       NetworkProps networkProps,
       VpnProps vpnProps,
-      ThemeProps themeProps,
+      @JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps,
       ProxiesStyle proxiesStyle,
       WindowProps windowProps,
       ClashConfig patchClashConfig});
@@ -2214,7 +2237,7 @@ abstract class _$$ConfigImplCopyWith<$Res> implements $ConfigCopyWith<$Res> {
       DAV? dav,
       NetworkProps networkProps,
       VpnProps vpnProps,
-      ThemeProps themeProps,
+      @JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps,
       ProxiesStyle proxiesStyle,
       WindowProps windowProps,
       ClashConfig patchClashConfig});
@@ -2329,7 +2352,7 @@ class _$ConfigImpl implements _Config {
       this.dav,
       this.networkProps = defaultNetworkProps,
       this.vpnProps = defaultVpnProps,
-      this.themeProps = defaultThemeProps,
+      @JsonKey(fromJson: ThemeProps.safeFromJson) required this.themeProps,
       this.proxiesStyle = defaultProxiesStyle,
       this.windowProps = defaultWindowProps,
       this.patchClashConfig = defaultClashConfig})
@@ -2374,7 +2397,7 @@ class _$ConfigImpl implements _Config {
   @JsonKey()
   final VpnProps vpnProps;
   @override
-  @JsonKey()
+  @JsonKey(fromJson: ThemeProps.safeFromJson)
   final ThemeProps themeProps;
   @override
   @JsonKey()
@@ -2464,7 +2487,8 @@ abstract class _Config implements Config {
       final DAV? dav,
       final NetworkProps networkProps,
       final VpnProps vpnProps,
-      final ThemeProps themeProps,
+      @JsonKey(fromJson: ThemeProps.safeFromJson)
+      required final ThemeProps themeProps,
       final ProxiesStyle proxiesStyle,
       final WindowProps windowProps,
       final ClashConfig patchClashConfig}) = _$ConfigImpl;
@@ -2489,6 +2513,7 @@ abstract class _Config implements Config {
   @override
   VpnProps get vpnProps;
   @override
+  @JsonKey(fromJson: ThemeProps.safeFromJson)
   ThemeProps get themeProps;
   @override
   ProxiesStyle get proxiesStyle;

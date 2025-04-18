@@ -146,6 +146,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "The current application is already the latest version",
     ),
     "checking": MessageLookupByLibrary.simpleMessage("Checking..."),
+    "clearData": MessageLookupByLibrary.simpleMessage("Clear Data"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("Export clipboard"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("Clipboard import"),
     "colorExists": MessageLookupByLibrary.simpleMessage(
@@ -177,6 +178,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "core": MessageLookupByLibrary.simpleMessage("Core"),
     "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
     "country": MessageLookupByLibrary.simpleMessage("Country"),
+    "crashTest": MessageLookupByLibrary.simpleMessage("Crash test"),
     "create": MessageLookupByLibrary.simpleMessage("Create"),
     "cut": MessageLookupByLibrary.simpleMessage("Cut"),
     "dark": MessageLookupByLibrary.simpleMessage("Dark"),
@@ -207,6 +209,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "detectionTip": MessageLookupByLibrary.simpleMessage(
       "Relying on third-party api is for reference only",
+    ),
+    "developerMode": MessageLookupByLibrary.simpleMessage("Developer mode"),
+    "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
+      "Developer mode is enabled.",
     ),
     "direct": MessageLookupByLibrary.simpleMessage("Direct"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("Disclaimer"),
@@ -362,6 +368,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "loose": MessageLookupByLibrary.simpleMessage("Loose"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory info"),
+    "messageTest": MessageLookupByLibrary.simpleMessage("Message test"),
+    "messageTestTip": MessageLookupByLibrary.simpleMessage(
+      "This is a message.",
+    ),
     "min": MessageLookupByLibrary.simpleMessage("Min"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("Minimize on exit"),
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(

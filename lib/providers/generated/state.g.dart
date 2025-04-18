@@ -1765,7 +1765,7 @@ class _GetProfileOverrideDataProviderElement
   String get profileId => (origin as GetProfileOverrideDataProvider).profileId;
 }
 
-String _$genColorSchemeHash() => r'a27ccae9b5c11d47cd46804f42f8e9dc7946a6c2';
+String _$genColorSchemeHash() => r'b18f15c938a8132ee4ed02cdfc02f3b9f01724e2';
 
 /// See also [genColorScheme].
 @ProviderFor(genColorScheme)
@@ -1780,12 +1780,12 @@ class GenColorSchemeFamily extends Family<ColorScheme> {
   GenColorSchemeProvider call(
     Brightness brightness, {
     Color? color,
-    bool isOverride = false,
+    bool ignoreConfig = false,
   }) {
     return GenColorSchemeProvider(
       brightness,
       color: color,
-      isOverride: isOverride,
+      ignoreConfig: ignoreConfig,
     );
   }
 
@@ -1796,7 +1796,7 @@ class GenColorSchemeFamily extends Family<ColorScheme> {
     return call(
       provider.brightness,
       color: provider.color,
-      isOverride: provider.isOverride,
+      ignoreConfig: provider.ignoreConfig,
     );
   }
 
@@ -1821,13 +1821,13 @@ class GenColorSchemeProvider extends AutoDisposeProvider<ColorScheme> {
   GenColorSchemeProvider(
     Brightness brightness, {
     Color? color,
-    bool isOverride = false,
+    bool ignoreConfig = false,
   }) : this._internal(
           (ref) => genColorScheme(
             ref as GenColorSchemeRef,
             brightness,
             color: color,
-            isOverride: isOverride,
+            ignoreConfig: ignoreConfig,
           ),
           from: genColorSchemeProvider,
           name: r'genColorSchemeProvider',
@@ -1840,7 +1840,7 @@ class GenColorSchemeProvider extends AutoDisposeProvider<ColorScheme> {
               GenColorSchemeFamily._allTransitiveDependencies,
           brightness: brightness,
           color: color,
-          isOverride: isOverride,
+          ignoreConfig: ignoreConfig,
         );
 
   GenColorSchemeProvider._internal(
@@ -1852,12 +1852,12 @@ class GenColorSchemeProvider extends AutoDisposeProvider<ColorScheme> {
     required super.from,
     required this.brightness,
     required this.color,
-    required this.isOverride,
+    required this.ignoreConfig,
   }) : super.internal();
 
   final Brightness brightness;
   final Color? color;
-  final bool isOverride;
+  final bool ignoreConfig;
 
   @override
   Override overrideWith(
@@ -1874,7 +1874,7 @@ class GenColorSchemeProvider extends AutoDisposeProvider<ColorScheme> {
         debugGetCreateSourceHash: null,
         brightness: brightness,
         color: color,
-        isOverride: isOverride,
+        ignoreConfig: ignoreConfig,
       ),
     );
   }
@@ -1889,7 +1889,7 @@ class GenColorSchemeProvider extends AutoDisposeProvider<ColorScheme> {
     return other is GenColorSchemeProvider &&
         other.brightness == brightness &&
         other.color == color &&
-        other.isOverride == isOverride;
+        other.ignoreConfig == ignoreConfig;
   }
 
   @override
@@ -1897,7 +1897,7 @@ class GenColorSchemeProvider extends AutoDisposeProvider<ColorScheme> {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, brightness.hashCode);
     hash = _SystemHash.combine(hash, color.hashCode);
-    hash = _SystemHash.combine(hash, isOverride.hashCode);
+    hash = _SystemHash.combine(hash, ignoreConfig.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -1912,8 +1912,8 @@ mixin GenColorSchemeRef on AutoDisposeProviderRef<ColorScheme> {
   /// The parameter `color` of this provider.
   Color? get color;
 
-  /// The parameter `isOverride` of this provider.
-  bool get isOverride;
+  /// The parameter `ignoreConfig` of this provider.
+  bool get ignoreConfig;
 }
 
 class _GenColorSchemeProviderElement
@@ -1925,7 +1925,7 @@ class _GenColorSchemeProviderElement
   @override
   Color? get color => (origin as GenColorSchemeProvider).color;
   @override
-  bool get isOverride => (origin as GenColorSchemeProvider).isOverride;
+  bool get ignoreConfig => (origin as GenColorSchemeProvider).ignoreConfig;
 }
 
 String _$profileOverrideStateHash() =>

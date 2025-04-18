@@ -442,6 +442,10 @@ func handleSetState(params string) {
 	_ = json.Unmarshal([]byte(params), state.CurrentState)
 }
 
+func handleCrash() {
+	panic("handle invoke crash")
+}
+
 func init() {
 	adapter.UrlTestHook = func(url string, name string, delay uint16) {
 		delayData := &Delay{

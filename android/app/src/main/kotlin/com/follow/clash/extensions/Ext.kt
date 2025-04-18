@@ -27,7 +27,6 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-
 suspend fun Drawable.getBase64(): String {
     val drawable = this
     return withContext(Dispatchers.IO) {

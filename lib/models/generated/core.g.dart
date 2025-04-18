@@ -345,6 +345,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.getCountryCode: 'getCountryCode',
   ActionMethod.getMemory: 'getMemory',
   ActionMethod.getProfile: 'getProfile',
+  ActionMethod.crash: 'crash',
   ActionMethod.setFdMap: 'setFdMap',
   ActionMethod.setProcessMap: 'setProcessMap',
   ActionMethod.setState: 'setState',

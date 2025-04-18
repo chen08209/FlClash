@@ -91,7 +91,14 @@ enum Mode { rule, global, direct }
 
 enum ViewMode { mobile, laptop, desktop }
 
-enum LogLevel { debug, info, warning, error, silent }
+enum LogLevel {
+  debug,
+  info,
+  warning,
+  error,
+  silent,
+  app,
+}
 
 enum TransportProtocol { udp, tcp }
 
@@ -262,6 +269,7 @@ enum ActionMethod {
   getCountryCode,
   getMemory,
   getProfile,
+  crash,
 
   ///Android,
   setFdMap,
@@ -306,6 +314,12 @@ enum DashboardWidget {
     GridItem(
       crossAxisCellCount: 8,
       child: NetworkSpeed(),
+    ),
+  ),
+  outboundModeV2(
+    GridItem(
+      crossAxisCellCount: 8,
+      child: OutboundModeV2(),
     ),
   ),
   outboundMode(

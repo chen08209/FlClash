@@ -1,4 +1,4 @@
-import 'package:fl_clash/manager/manager.dart';
+import 'package:fl_clash/manager/message_manager.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 
@@ -9,6 +9,36 @@ extension BuildContextExtension on BuildContext {
 
   showNotifier(String text) {
     return findAncestorStateOfType<MessageManagerState>()?.message(text);
+  }
+
+  showSnackBar(
+    String message, {
+    SnackBarAction? action,
+  }) {
+    final width = viewWidth;
+    EdgeInsets margin;
+    if (width < 600) {
+      margin = const EdgeInsets.only(
+        bottom: 16,
+        right: 16,
+        left: 16,
+      );
+    } else {
+      margin = EdgeInsets.only(
+        bottom: 16,
+        left: 16,
+        right: width - 316,
+      );
+    }
+    ScaffoldMessenger.of(this).showSnackBar(
+      SnackBar(
+        action: action,
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(milliseconds: 1500),
+        margin: margin,
+      ),
+    );
   }
 
   Size get appSize {
@@ -27,10 +57,10 @@ extension BuildContextExtension on BuildContext {
     T? state;
 
     visitor(Element element) {
-      if(!element.mounted){
+      if (!element.mounted) {
         return;
       }
-      if(element is StatefulElement){
+      if (element is StatefulElement) {
         if (element.state is T) {
           state = element.state as T;
         }

@@ -30,3 +30,5 @@ export 'scroll.dart';
 export 'dialog.dart';
 export 'effect.dart';
 export 'palette.dart';
+export 'tab.dart';
+export 'container.dart';

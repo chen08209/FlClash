@@ -385,5 +385,11 @@
   "expressiveScheme": "表现力",
   "contentScheme": "内容主题",
   "rainbowScheme": "彩虹",
-  "fruitSaladScheme": "果缤纷"
+  "fruitSaladScheme": "果缤纷",
+  "developerMode": "开发者模式",
+  "developerModeEnableTip": "开发者模式已启用。",
+  "messageTest": "消息测试",
+  "messageTestTip": "这是一条消息。",
+  "crashTest": "崩溃测试",
+  "clearData": "清除数据"
 }

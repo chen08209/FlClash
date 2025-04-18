@@ -385,5 +385,11 @@
   "expressiveScheme": "Expressive",
   "contentScheme": "Content",
   "rainbowScheme": "Rainbow",
-  "fruitSaladScheme": "FruitSalad"
+  "fruitSaladScheme": "FruitSalad",
+  "developerMode": "Developer mode",
+  "developerModeEnableTip": "Developer mode is enabled.",
+  "messageTest": "Message test",
+  "messageTestTip": "This is a message.",
+  "crashTest": "Crash test",
+  "clearData": "Clear Data"
 }

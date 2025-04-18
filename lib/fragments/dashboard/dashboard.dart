@@ -93,7 +93,7 @@ class _DashboardFragmentState extends ConsumerState<DashboardFragment>
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardStateProvider);
-    final columns = max(4 * ((dashboardState.viewWidth / 350).ceil()), 8);
+    final columns = max(4 * ((dashboardState.viewWidth / 320).ceil()), 8);
     return Align(
       alignment: Alignment.topCenter,
       child: SingleChildScrollView(

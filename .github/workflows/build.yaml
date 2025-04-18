@@ -211,6 +211,14 @@ jobs:
           version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
           sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
 
+      - name: Generate sha256
+        if: env.IS_STABLE == 'true'
+        run: |
+          cd ./dist
+          for file in $(find . -type f -not -name "*.sha256"); do
+            sha256sum "$file" > "${file}.sha256"
+          done  
+
       - name: Release
         if: ${{ env.IS_STABLE == 'true' }}
         uses: softprops/action-gh-release@v2

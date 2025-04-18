@@ -466,6 +466,32 @@ List<Widget> generateSection({
   ];
 }
 
+Widget generateSectionV2({
+  String? title,
+  required Iterable<Widget> items,
+  List<Widget>? actions,
+  bool separated = true,
+}) {
+  return Column(
+    children: [
+      if (items.isNotEmpty && title != null)
+        ListHeader(
+          title: title,
+          actions: actions,
+        ),
+      CommonCard(
+        radius: 18,
+        type: CommonCardType.filled,
+        child: Column(
+          children: [
+            ...items,
+          ],
+        ),
+      )
+    ],
+  );
+}
+
 List<Widget> generateInfoSection({
   required Info info,
   required Iterable<Widget> items,

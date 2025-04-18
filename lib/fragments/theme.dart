@@ -309,124 +309,138 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     final primaryColors = [null, ...vm3.b];
     final schemeVariant = vm3.c;
 
-    return ItemCard(
-      info: Info(
-        label: appLocalizations.themeColor,
-        iconData: Icons.palette,
-      ),
-      actions: genActions(
-        [
-          if (_removablePrimaryColor == null)
-            FilledButton(
-              style: ButtonStyle(
-                visualDensity: VisualDensity.compact,
-              ),
-              onPressed: _handleChangeSchemeVariant,
-              child: Text(Intl.message("${schemeVariant.name}Scheme")),
-            ),
-          _removablePrimaryColor != null
-              ? FilledButton(
-                  style: ButtonStyle(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _removablePrimaryColor = null;
-                    });
-                  },
-                  child: Text(appLocalizations.cancel),
-                )
-              : IconButton.filledTonal(
-                  iconSize: 20,
-                  padding: EdgeInsets.all(4),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: _handleReset,
-                  icon: Icon(Icons.replay),
-                )
-        ],
-        space: 8,
-      ),
-      child: Container(
-        margin: const EdgeInsets.only(
-          left: 16,
-          right: 16,
-          bottom: 16,
+    return CommonPopScope(
+      onPop: () {
+        if (_removablePrimaryColor != null) {
+          setState(() {
+            _removablePrimaryColor = null;
+          });
+          return false;
+        }
+        return true;
+      },
+      child: ItemCard(
+        info: Info(
+          label: appLocalizations.themeColor,
+          iconData: Icons.palette,
         ),
-        child: LayoutBuilder(
-          builder: (_, constraints) {
-            final columns = _calcColumns(constraints.maxWidth);
-            final itemWidth =
-                (constraints.maxWidth - (columns - 1) * 16) / columns;
-            return Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                for (final color in primaryColors)
-                  Container(
-                    clipBehavior: Clip.none,
-                    width: itemWidth,
-                    height: itemWidth,
-                    child: Stack(
-                      alignment: Alignment.center,
+        actions: genActions(
+          [
+            if (_removablePrimaryColor == null)
+              FilledButton(
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: _handleChangeSchemeVariant,
+                child: Text(Intl.message("${schemeVariant.name}Scheme")),
+              ),
+            _removablePrimaryColor != null
+                ? FilledButton(
+                    style: ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _removablePrimaryColor = null;
+                      });
+                    },
+                    child: Text(appLocalizations.cancel),
+                  )
+                : IconButton.filledTonal(
+                    iconSize: 20,
+                    padding: EdgeInsets.all(4),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: _handleReset,
+                    icon: Icon(Icons.replay),
+                  )
+          ],
+          space: 8,
+        ),
+        child: Container(
+          margin: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: 16,
+          ),
+          child: LayoutBuilder(
+            builder: (_, constraints) {
+              final columns = _calcColumns(constraints.maxWidth);
+              final itemWidth =
+                  (constraints.maxWidth - (columns - 1) * 16) / columns;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  for (final color in primaryColors)
+                    Container(
                       clipBehavior: Clip.none,
-                      children: [
-                        EffectGestureDetector(
-                          child: ColorSchemeBox(
-                            isSelected: color == primaryColor,
-                            primaryColor: color != null ? Color(color) : null,
-                            onPressed: () {
-                              ref
-                                  .read(themeSettingProvider.notifier)
-                                  .updateState(
-                                    (state) => state.copyWith(
-                                      primaryColor: color,
-                                    ),
-                                  );
+                      width: itemWidth,
+                      height: itemWidth,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        clipBehavior: Clip.none,
+                        children: [
+                          EffectGestureDetector(
+                            child: ColorSchemeBox(
+                              isSelected: color == primaryColor,
+                              primaryColor: color != null ? Color(color) : null,
+                              onPressed: () {
+                                setState(() {
+                                  _removablePrimaryColor = null;
+                                });
+                                ref
+                                    .read(themeSettingProvider.notifier)
+                                    .updateState(
+                                      (state) => state.copyWith(
+                                        primaryColor: color,
+                                      ),
+                                    );
+                              },
+                            ),
+                            onLongPress: () {
+                              setState(() {
+                                _removablePrimaryColor = color;
+                              });
                             },
                           ),
-                          onLongPress: () {
-                            setState(() {
-                              _removablePrimaryColor = color;
-                            });
-                          },
-                        ),
-                        if (_removablePrimaryColor != null &&
-                            _removablePrimaryColor == color)
-                          Container(
-                            color: Colors.white.opacity0,
-                            padding: EdgeInsets.all(8),
-                            child: IconButton.filledTonal(
-                              onPressed: _handleDel,
-                              padding: EdgeInsets.all(12),
-                              iconSize: 30,
-                              icon: Icon(
-                                color: context.colorScheme.primary,
-                                Icons.delete,
+                          if (_removablePrimaryColor != null &&
+                              _removablePrimaryColor == color)
+                            Container(
+                              color: Colors.white.opacity0,
+                              padding: EdgeInsets.all(8),
+                              child: IconButton.filledTonal(
+                                onPressed: _handleDel,
+                                padding: EdgeInsets.all(12),
+                                iconSize: 30,
+                                icon: Icon(
+                                  color: context.colorScheme.primary,
+                                  Icons.delete,
+                                ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
-                if (_removablePrimaryColor == null)
-                  Container(
-                    width: itemWidth,
-                    height: itemWidth,
-                    padding: EdgeInsets.all(
-                      4,
-                    ),
-                    child: IconButton.filledTonal(
-                      onPressed: _handleAdd,
-                      iconSize: 32,
-                      icon: Icon(
-                        color: context.colorScheme.primary,
-                        Icons.add,
+                        ],
                       ),
                     ),
-                  )
-              ],
-            );
-          },
+                  if (_removablePrimaryColor == null)
+                    Container(
+                      width: itemWidth,
+                      height: itemWidth,
+                      padding: EdgeInsets.all(
+                        4,
+                      ),
+                      child: IconButton.filledTonal(
+                        onPressed: _handleAdd,
+                        iconSize: 32,
+                        icon: Icon(
+                          color: context.colorScheme.primary,
+                          Icons.add,
+                        ),
+                      ),
+                    )
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
