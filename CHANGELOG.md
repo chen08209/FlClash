@@ -1,3 +1,17 @@
+## v0.8.82
+
+- Optimize android vpn performance
+
+- Add custom primary color and color scheme
+
+- Add linux nad windows arm release
+
+- Optimize requests and logs page
+
+- Fix map input page delete issues
+
+- Update changelog
+
 ## v0.8.81
 
 - Add rule override
