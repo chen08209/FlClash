@@ -146,6 +146,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "The current application is already the latest version",
     ),
     "checking": MessageLookupByLibrary.simpleMessage("Checking..."),
+    "clearData": MessageLookupByLibrary.simpleMessage("Clear Data"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("Export clipboard"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("Clipboard import"),
     "colorExists": MessageLookupByLibrary.simpleMessage(
@@ -163,6 +164,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "View current connections data",
     ),
     "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
+    "contactMe": MessageLookupByLibrary.simpleMessage("Contact me"),
     "content": MessageLookupByLibrary.simpleMessage("Content"),
     "contentEmptyTip": MessageLookupByLibrary.simpleMessage(
       "Content cannot be empty",
@@ -177,6 +179,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "core": MessageLookupByLibrary.simpleMessage("Core"),
     "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
     "country": MessageLookupByLibrary.simpleMessage("Country"),
+    "crashTest": MessageLookupByLibrary.simpleMessage("Crash test"),
     "create": MessageLookupByLibrary.simpleMessage("Create"),
     "cut": MessageLookupByLibrary.simpleMessage("Cut"),
     "dark": MessageLookupByLibrary.simpleMessage("Dark"),
@@ -207,6 +210,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "detectionTip": MessageLookupByLibrary.simpleMessage(
       "Relying on third-party api is for reference only",
+    ),
+    "developerMode": MessageLookupByLibrary.simpleMessage("Developer mode"),
+    "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
+      "Developer mode is enabled.",
     ),
     "direct": MessageLookupByLibrary.simpleMessage("Direct"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("Disclaimer"),
@@ -320,6 +327,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "intelligentSelected": MessageLookupByLibrary.simpleMessage(
       "Intelligent selection",
     ),
+    "internet": MessageLookupByLibrary.simpleMessage("Internet"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("Intranet IP"),
     "ipcidr": MessageLookupByLibrary.simpleMessage("Ipcidr"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
@@ -356,12 +364,17 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logs": MessageLookupByLibrary.simpleMessage("Logs"),
     "logsDesc": MessageLookupByLibrary.simpleMessage("Log capture records"),
+    "logsTest": MessageLookupByLibrary.simpleMessage("Logs test"),
     "loopback": MessageLookupByLibrary.simpleMessage("Loopback unlock tool"),
     "loopbackDesc": MessageLookupByLibrary.simpleMessage(
       "Used for UWP loopback unlocking",
     ),
     "loose": MessageLookupByLibrary.simpleMessage("Loose"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory info"),
+    "messageTest": MessageLookupByLibrary.simpleMessage("Message test"),
+    "messageTestTip": MessageLookupByLibrary.simpleMessage(
+      "This is a message.",
+    ),
     "min": MessageLookupByLibrary.simpleMessage("Min"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("Minimize on exit"),
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
@@ -399,6 +412,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noInfo": MessageLookupByLibrary.simpleMessage("No info"),
     "noMoreInfoDesc": MessageLookupByLibrary.simpleMessage("No more info"),
     "noNetwork": MessageLookupByLibrary.simpleMessage("No network"),
+    "noNetworkApp": MessageLookupByLibrary.simpleMessage("No network APP"),
     "noProxy": MessageLookupByLibrary.simpleMessage("No proxy"),
     "noProxyDesc": MessageLookupByLibrary.simpleMessage(
       "Please create a profile or add a valid profile",
@@ -526,6 +540,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "recoveryProfiles": MessageLookupByLibrary.simpleMessage(
       "Only recovery profiles",
     ),
+    "recoveryStrategy": MessageLookupByLibrary.simpleMessage(
+      "Recovery strategy",
+    ),
+    "recoveryStrategy_compatible": MessageLookupByLibrary.simpleMessage(
+      "Compatible",
+    ),
+    "recoveryStrategy_override": MessageLookupByLibrary.simpleMessage(
+      "Override",
+    ),
     "recoverySuccess": MessageLookupByLibrary.simpleMessage("Recovery success"),
     "redo": MessageLookupByLibrary.simpleMessage("redo"),
     "regExp": MessageLookupByLibrary.simpleMessage("RegExp"),
@@ -612,6 +635,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "submit": MessageLookupByLibrary.simpleMessage("Submit"),
     "sync": MessageLookupByLibrary.simpleMessage("Sync"),
     "system": MessageLookupByLibrary.simpleMessage("System"),
+    "systemApp": MessageLookupByLibrary.simpleMessage("System APP"),
     "systemFont": MessageLookupByLibrary.simpleMessage("System font"),
     "systemProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage(
@@ -627,6 +651,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Enabling it will allow TCP concurrency",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test url"),
+    "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),
     "themeDesc": MessageLookupByLibrary.simpleMessage(

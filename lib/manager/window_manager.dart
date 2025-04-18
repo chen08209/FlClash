@@ -25,7 +25,6 @@ class WindowManager extends ConsumerStatefulWidget {
 
 class _WindowContainerState extends ConsumerState<WindowManager>
     with WindowListener, WindowExtListener {
-
   @override
   Widget build(BuildContext context) {
     return widget.child;
@@ -183,19 +182,23 @@ class _WindowHeaderState extends State<WindowHeader> {
     super.dispose();
   }
 
-  _updateMaximized() {
-    isMaximizedNotifier.value = !isMaximizedNotifier.value;
-    switch (isMaximizedNotifier.value) {
+  _updateMaximized() async {
+    final isMaximized = await windowManager.isMaximized();
+    switch (isMaximized) {
       case true:
-        windowManager.maximize();
+        await windowManager.unmaximize();
+        break;
       case false:
-        windowManager.unmaximize();
+        await windowManager.maximize();
+        break;
     }
+    isMaximizedNotifier.value = await windowManager.isMaximized();
   }
 
-  _updatePin() {
-    isPinNotifier.value = !isPinNotifier.value;
-    windowManager.setAlwaysOnTop(isPinNotifier.value);
+  _updatePin() async {
+    final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
+    await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
+    isPinNotifier.value = await windowManager.isAlwaysOnTop();
   }
 
   _buildActions() {

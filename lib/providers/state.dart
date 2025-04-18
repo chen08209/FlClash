@@ -1,6 +1,8 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -73,13 +75,15 @@ CoreState coreState(Ref ref) {
 ClashConfigState clashConfigState(Ref ref) {
   final clashConfig = ref.watch(patchClashConfigProvider);
   final overrideDns = ref.watch(overrideDnsProvider);
-  final overrideData = ref.watch(currentProfileProvider.select(
-    (state) => state?.overrideData,
-  ));
+  final overrideData =
+      ref.watch(currentProfileProvider.select((state) => state?.overrideData));
+  final routeMode =
+      ref.watch(networkSettingProvider.select((state) => state.routeMode));
   return ClashConfigState(
     overrideDns: overrideDns,
     clashConfig: clashConfig,
     overrideData: overrideData ?? OverrideData(),
+    routeMode: routeMode,
   );
 }
 
@@ -507,11 +511,22 @@ OverrideData? getProfileOverrideData(Ref ref, String profileId) {
 }
 
 @riverpod
+VM2? layoutChange(Ref ref) {
+  final viewWidth = ref.watch(viewWidthProvider);
+  final textScale =
+      ref.watch(themeSettingProvider.select((state) => state.textScale));
+  return VM2(
+    a: viewWidth,
+    b: textScale,
+  );
+}
+
+@riverpod
 ColorScheme genColorScheme(
   Ref ref,
   Brightness brightness, {
   Color? color,
-  bool isOverride = false,
+  bool ignoreConfig = false,
 }) {
   final vm2 = ref.watch(
     themeSettingProvider.select(
@@ -521,11 +536,17 @@ ColorScheme genColorScheme(
       ),
     ),
   );
-  if (color == null && (isOverride == true || vm2.a == null)) {
-    final colorSchemes = ref.watch(appSchemesProvider);
-    return colorSchemes.getColorSchemeForBrightness(
-      brightness,
-      vm2.b,
+  if (color == null && (ignoreConfig == true || vm2.a == null)) {
+    // if (globalState.corePalette != null) {
+    //   return globalState.corePalette!.toColorScheme(brightness: brightness);
+    // }
+    return ColorScheme.fromSeed(
+      seedColor: globalState.corePalette
+              ?.toColorScheme(brightness: brightness)
+              .primary ??
+          globalState.accentColor,
+      brightness: brightness,
+      dynamicSchemeVariant: vm2.b,
     );
   }
   return ColorScheme.fromSeed(

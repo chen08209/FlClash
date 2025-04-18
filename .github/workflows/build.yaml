@@ -19,7 +19,7 @@ jobs:
             os: windows-latest
             arch: amd64
           - platform: linux
-            os: ubuntu-latest
+            os: ubuntu-22.04
             arch: amd64
           - platform: macos
             os: macos-13
@@ -201,6 +201,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TAG: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           python -m pip install --upgrade pip
           pip install requests
@@ -210,6 +211,14 @@ jobs:
         run: |
           version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
           sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
+
+      - name: Generate sha256
+        if: env.IS_STABLE == 'true'
+        run: |
+          cd ./dist
+          for file in $(find . -type f -not -name "*.sha256"); do
+            sha256sum "$file" > "${file}.sha256"
+          done  
 
       - name: Release
         if: ${{ env.IS_STABLE == 'true' }}

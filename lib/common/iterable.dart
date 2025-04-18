@@ -38,6 +38,43 @@ extension IterableExt<T> on Iterable<T> {
       count++;
     }
   }
+
+  Iterable<T> takeLast({int count = 50}) {
+    if (count <= 0) return Iterable.empty();
+    return count >= length ? this : toList().skip(length - count);
+  }
+}
+
+extension ListExt<T> on List<T> {
+  void truncate(int maxLength) {
+    assert(maxLength > 0);
+    if (length > maxLength) {
+      removeRange(0, length - maxLength);
+    }
+  }
+
+  List<T> intersection(List<T> list) {
+    return where((item) => list.contains(item)).toList();
+  }
+
+  List<List<T>> batch(int maxConcurrent) {
+    final batches = (length / maxConcurrent).ceil();
+    final List<List<T>> res = [];
+    for (int i = 0; i < batches; i++) {
+      if (i != batches - 1) {
+        res.add(sublist(i * maxConcurrent, maxConcurrent * (i + 1)));
+      } else {
+        res.add(sublist(i * maxConcurrent, length));
+      }
+    }
+    return res;
+  }
+
+  List<T> safeSublist(int start) {
+    if (start <= 0) return this;
+    if (start > length) return [];
+    return sublist(start);
+  }
 }
 
 extension DoubleListExt on List<double> {
@@ -67,9 +104,9 @@ extension DoubleListExt on List<double> {
 }
 
 extension MapExt<K, V> on Map<K, V> {
-  getCacheValue(K key, V defaultValue) {
+  updateCacheValue(K key, V Function() callback) {
     if (this[key] == null) {
-      this[key] = defaultValue;
+      this[key] = callback();
     }
     return this[key];
   }

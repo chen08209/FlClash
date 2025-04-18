@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'chip.dart';
 
 class CommonScaffold extends StatefulWidget {
-  final PreferredSizeWidget? appBar;
+  final AppBar? appBar;
   final Widget body;
   final Widget? bottomNavigationBar;
   final Widget? sideNavigationBar;
@@ -125,25 +125,25 @@ class CommonScaffoldState extends State<CommonScaffold> {
     }
   }
 
-  ThemeData _appBarTheme(BuildContext context) {
+  Widget _buildSearchingAppBarTheme(Widget child) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
-    return theme.copyWith(
-      appBarTheme: AppBarTheme(
-        systemOverlayStyle: colorScheme.brightness == Brightness.dark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
-        backgroundColor: colorScheme.brightness == Brightness.dark
-            ? Colors.grey[900]
-            : Colors.white,
-        iconTheme: theme.primaryIconTheme.copyWith(color: Colors.grey),
-        titleTextStyle: theme.textTheme.titleLarge,
-        toolbarTextStyle: theme.textTheme.bodyMedium,
+    return Theme(
+      data: theme.copyWith(
+        appBarTheme: theme.appBarTheme.copyWith(
+          backgroundColor: colorScheme.brightness == Brightness.dark
+              ? Colors.grey[900]
+              : Colors.white,
+          iconTheme: theme.primaryIconTheme.copyWith(color: Colors.grey),
+          titleTextStyle: theme.textTheme.titleLarge,
+          toolbarTextStyle: theme.textTheme.bodyMedium,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          hintStyle: theme.inputDecorationTheme.hintStyle,
+          border: InputBorder.none,
+        ),
       ),
-      inputDecorationTheme: InputDecorationTheme(
-        hintStyle: theme.inputDecorationTheme.hintStyle,
-        border: InputBorder.none,
-      ),
+      child: child,
     );
   }
 
@@ -318,72 +318,66 @@ class CommonScaffoldState extends State<CommonScaffold> {
         child: appBar,
       );
     }
-    return _isSearch
-        ? Theme(
-            data: _appBarTheme(context),
-            child: CommonPopScope(
-              onPop: () {
-                if (_isSearch) {
-                  _handleExitSearching();
-                  return false;
-                }
-                return true;
-              },
-              child: appBar,
-            ),
-          )
-        : appBar;
+    return _isSearch ? _buildSearchingAppBarTheme(appBar) : appBar;
   }
 
   PreferredSizeWidget _buildAppBar() {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          ValueListenableBuilder<AppBarState>(
-            valueListenable: _appBarState,
-            builder: (_, state, __) {
-              return _buildAppBarWrap(
-                AppBar(
-                  centerTitle: widget.centerTitle ?? false,
-                  systemOverlayStyle: SystemUiOverlayStyle(
-                    statusBarColor: Colors.transparent,
-                    statusBarIconBrightness:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? Brightness.light
-                            : Brightness.dark,
-                    systemNavigationBarIconBrightness:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? Brightness.light
-                            : Brightness.dark,
-                    systemNavigationBarColor: widget.bottomNavigationBar != null
-                        ? context.colorScheme.surfaceContainer
-                        : context.colorScheme.surface,
-                    systemNavigationBarDividerColor: Colors.transparent,
-                  ),
-                  automaticallyImplyLeading: widget.automaticallyImplyLeading,
-                  leading: _buildLeading(),
-                  title: _buildTitle(state.searchState),
-                  actions: _buildActions(
-                    state.searchState != null,
-                    state.actions.isNotEmpty
-                        ? state.actions
-                        : widget.actions ?? [],
-                  ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          appBarTheme: AppBarTheme(
+            systemOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Brightness.light
+                      : Brightness.dark,
+              systemNavigationBarIconBrightness:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Brightness.light
+                      : Brightness.dark,
+              systemNavigationBarColor: widget.bottomNavigationBar != null
+                  ? context.colorScheme.surfaceContainer
+                  : context.colorScheme.surface,
+              systemNavigationBarDividerColor: Colors.transparent,
+            ),
+          ),
+        ),
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            widget.appBar ??
+                ValueListenableBuilder<AppBarState>(
+                  valueListenable: _appBarState,
+                  builder: (_, state, __) {
+                    return _buildAppBarWrap(
+                      AppBar(
+                        centerTitle: widget.centerTitle ?? false,
+                        automaticallyImplyLeading:
+                            widget.automaticallyImplyLeading,
+                        leading: _buildLeading(),
+                        title: _buildTitle(state.searchState),
+                        actions: _buildActions(
+                          state.searchState != null,
+                          state.actions.isNotEmpty
+                              ? state.actions
+                              : widget.actions ?? [],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-          ValueListenableBuilder(
-            valueListenable: _loading,
-            builder: (_, value, __) {
-              return value == true
-                  ? const LinearProgressIndicator()
-                  : Container();
-            },
-          ),
-        ],
+            ValueListenableBuilder(
+              valueListenable: _loading,
+              builder: (_, value, __) {
+                return value == true
+                    ? const LinearProgressIndicator()
+                    : Container();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -391,56 +385,62 @@ class CommonScaffoldState extends State<CommonScaffold> {
   @override
   Widget build(BuildContext context) {
     assert(widget.appBar != null || widget.title != null);
-    final body = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ValueListenableBuilder(
-          valueListenable: _keywordsNotifier,
-          builder: (_, keywords, __) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (_onKeywordsUpdate != null) {
-                _onKeywordsUpdate!(keywords);
+    final body = SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ValueListenableBuilder(
+            valueListenable: _keywordsNotifier,
+            builder: (_, keywords, __) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_onKeywordsUpdate != null) {
+                  _onKeywordsUpdate!(keywords);
+                }
+              });
+              if (keywords.isEmpty) {
+                return SizedBox();
               }
-            });
-            if (keywords.isEmpty) {
-              return SizedBox();
-            }
-            return Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              child: Wrap(
-                runSpacing: 8,
-                spacing: 8,
-                children: [
-                  for (final keyword in keywords)
-                    CommonChip(
-                      label: keyword,
-                      type: ChipType.delete,
-                      onPressed: () {
-                        _deleteKeyword(keyword);
-                      },
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
-        Expanded(
-          child: widget.body,
-        ),
-      ],
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                child: Wrap(
+                  runSpacing: 8,
+                  spacing: 8,
+                  children: [
+                    for (final keyword in keywords)
+                      CommonChip(
+                        label: keyword,
+                        type: ChipType.delete,
+                        onPressed: () {
+                          _deleteKeyword(keyword);
+                        },
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+          Expanded(
+            child: widget.body,
+          ),
+        ],
+      ),
     );
     final scaffold = Scaffold(
-      appBar: widget.appBar ?? _buildAppBar(),
+      appBar: _buildAppBar(),
       body: body,
       backgroundColor: widget.backgroundColor,
       floatingActionButton: ValueListenableBuilder<Widget?>(
         valueListenable: _floatingActionButton,
         builder: (_, value, __) {
-          return FadeScaleBox(
-            child: value ?? SizedBox(),
+          return IntrinsicWidth(
+            child: IntrinsicHeight(
+              child: FadeScaleBox(
+                child: value ?? SizedBox(),
+              ),
+            ),
           );
         },
       ),

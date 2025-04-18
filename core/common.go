@@ -78,7 +78,6 @@ func getRawConfigWithId(id string) *config.RawConfig {
 	path := getProfilePath(id)
 	bytes, err := readFile(path)
 	if err != nil {
-		log.Errorln("profile is not exist")
 		return config.DefaultRawConfig()
 	}
 	prof, err := config.UnmarshalRawConfig(bytes)

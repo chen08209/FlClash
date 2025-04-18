@@ -71,22 +71,22 @@ class _ClashContainerState extends ConsumerState<ClashManager>
 
   @override
   void onLog(Log log) {
-    ref.watch(logsProvider.notifier).addLog(log);
+    ref.read(logsProvider.notifier).addLog(log);
     if (log.logLevel == LogLevel.error) {
-      globalState.showNotifier(log.payload ?? '');
+      globalState.showNotifier(log.payload);
     }
     super.onLog(log);
   }
 
   @override
   void onRequest(Connection connection) async {
-    ref.watch(requestsProvider.notifier).addRequest(connection);
+    ref.read(requestsProvider.notifier).addRequest(connection);
     super.onRequest(connection);
   }
 
   @override
   Future<void> onLoaded(String providerName) async {
-    ref.watch(providersProvider.notifier).setProvider(
+    ref.read(providersProvider.notifier).setProvider(
           await clashCore.getExternalProvider(
             providerName,
           ),

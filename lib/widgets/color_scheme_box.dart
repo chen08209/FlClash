@@ -103,7 +103,7 @@ class PrimaryColorBox extends ConsumerWidget {
       genColorSchemeProvider(
         themeData.brightness,
         color: primaryColor,
-        isOverride: true,
+        ignoreConfig: true,
       ),
     );
     return Theme(

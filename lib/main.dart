@@ -21,12 +21,16 @@ import 'common/common.dart';
 Future<void> main() async {
   globalState.isService = false;
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    commonPrint.log(details.stack.toString());
+  };
   final version = await system.version;
   await clashCore.preload();
   await globalState.initApp(version);
   await android?.init();
   await window?.init(version);
   globalState.isPre = const String.fromEnvironment("APP_ENV") != 'stable';
+  globalState.coreSHA256 = const String.fromEnvironment("CORE_SHA256");
   HttpOverrides.global = FlClashHttpOverrides();
   runApp(ProviderScope(
     child: const Application(),

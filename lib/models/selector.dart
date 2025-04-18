@@ -25,6 +25,17 @@ class VM3<A, B, C> with _$VM3<A, B, C> {
 }
 
 @freezed
+class VM4<A, B, C,D> with _$VM4<A, B, C,D> {
+  const factory VM4({
+    required A a,
+    required B b,
+    required C c,
+    required D d,
+  }) = _VM4;
+}
+
+
+@freezed
 class StartButtonSelectorState with _$StartButtonSelectorState {
   const factory StartButtonSelectorState({
     required bool isInit,
@@ -146,12 +157,21 @@ class PackageListSelectorState with _$PackageListSelectorState {
 }
 
 extension PackageListSelectorStateExt on PackageListSelectorState {
-  List<Package> getList(List<String> selectedList) {
+  List<Package> get list {
     final isFilterSystemApp = accessControl.isFilterSystemApp;
-    final sort = accessControl.sort;
+    final isFilterNonInternetApp = accessControl.isFilterNonInternetApp;
     return packages
-        .where((item) => isFilterSystemApp ? item.isSystem == false : true)
-        .sorted(
+        .where(
+          (item) =>
+              (isFilterSystemApp ? item.system == false : true) &&
+              (isFilterNonInternetApp ? item.internet == true : true),
+        )
+        .toList();
+  }
+
+  List<Package> getSortList(List<String> selectedList) {
+    final sort = accessControl.sort;
+    return list.sorted(
       (a, b) {
         return switch (sort) {
           AccessSortType.none => 0,
@@ -208,6 +228,7 @@ class ClashConfigState with _$ClashConfigState {
     required bool overrideDns,
     required ClashConfig clashConfig,
     required OverrideData overrideData,
+    required RouteMode routeMode,
   }) = _ClashConfigState;
 }
 

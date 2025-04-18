@@ -166,6 +166,9 @@ func handleAction(action *Action, result func(data interface{})) {
 		data := action.Data.(string)
 		handleSetState(data)
 		result(true)
+	case crashMethod:
+		result(true)
+		handleCrash()
 	default:
 		handle := nextHandle(action, result)
 		if handle {

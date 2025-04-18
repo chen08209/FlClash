@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
@@ -57,37 +58,43 @@ class _MemoryInfoState extends State<MemoryInfo> {
         onPressed: () {
           clashCore.requestGc();
         },
-        child: Column(
-          children: [
-            ValueListenableBuilder(
-              valueListenable: _memoryInfoStateNotifier,
-              builder: (_, trafficValue, __) {
-                return Padding(
-                  padding: baseInfoEdgeInsets.copyWith(
-                    bottom: 0,
-                    top: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        trafficValue.showValue,
-                        style:
-                            context.textTheme.bodyMedium?.toLight.adjustSize(1),
-                      ),
-                      SizedBox(
-                        width: 8,
-                      ),
-                      Text(
-                        trafficValue.showUnit,
-                        style:
-                            context.textTheme.bodyMedium?.toLight.adjustSize(1),
-                      )
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
+        child: Container(
+          padding: baseInfoEdgeInsets.copyWith(
+            top: 0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: globalState.measure.bodyMediumHeight + 2,
+                child: ValueListenableBuilder(
+                  valueListenable: _memoryInfoStateNotifier,
+                  builder: (_, trafficValue, __) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          trafficValue.showValue,
+                          style: context.textTheme.bodyMedium?.toLight
+                              .adjustSize(1),
+                        ),
+                        SizedBox(
+                          width: 8,
+                        ),
+                        Text(
+                          trafficValue.showUnit,
+                          style: context.textTheme.bodyMedium?.toLight
+                              .adjustSize(1),
+                        )
+                      ],
+                    );
+                  },
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

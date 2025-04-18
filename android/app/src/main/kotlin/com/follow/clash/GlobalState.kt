@@ -20,6 +20,10 @@ enum class RunState {
 object GlobalState {
     val runLock = ReentrantLock()
 
+    const val NOTIFICATION_CHANNEL = "FlClash"
+
+    const val NOTIFICATION_ID = 1
+
     val runState: MutableLiveData<RunState> = MutableLiveData<RunState>(RunState.STOP)
     var flutterEngine: FlutterEngine? = null
     private var serviceEngine: FlutterEngine? = null

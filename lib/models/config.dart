@@ -37,7 +37,9 @@ const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyle = ProxiesStyle();
 const defaultWindowProps = WindowProps();
 const defaultAccessControl = AccessControl();
-const defaultThemeProps = ThemeProps();
+final defaultThemeProps = ThemeProps(
+  primaryColor: defaultPrimaryColor,
+);
 
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
@@ -73,7 +75,7 @@ class AppSettingProps with _$AppSettingProps {
     @Default(false) bool autoLaunch,
     @Default(false) bool silentLaunch,
     @Default(false) bool autoRun,
-    @Default(true) bool openLogs,
+    @Default(false) bool openLogs,
     @Default(true) bool closeConnections,
     @Default(defaultTestUrl) String testUrl,
     @Default(true) bool isAnimateToPage,
@@ -82,6 +84,8 @@ class AppSettingProps with _$AppSettingProps {
     @Default(false) bool disclaimerAccepted,
     @Default(true) bool minimizeOnExit,
     @Default(false) bool hidden,
+    @Default(false) bool developerMode,
+    @Default(RecoveryStrategy.compatible) RecoveryStrategy recoveryStrategy,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>
@@ -103,6 +107,7 @@ class AccessControl with _$AccessControl {
     @Default([]) List<String> rejectList,
     @Default(AccessSortType.none) AccessSortType sort,
     @Default(true) bool isFilterSystemApp,
+    @Default(true) bool isFilterNonInternetApp,
   }) = _AccessControl;
 
   factory AccessControl.fromJson(Map<String, Object?> json) =>
@@ -171,17 +176,40 @@ class ProxiesStyle with _$ProxiesStyle {
 }
 
 @freezed
+class TextScale with _$TextScale {
+  const factory TextScale({
+    @Default(false) enable,
+    @Default(1.0) scale,
+  }) = _TextScale;
+
+  factory TextScale.fromJson(Map<String, Object?> json) =>
+      _$TextScaleFromJson(json);
+}
+
+@freezed
 class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
-    @Default(defaultPrimaryColor) int? primaryColor,
+    int? primaryColor,
     @Default(defaultPrimaryColors) List<int> primaryColors,
     @Default(ThemeMode.dark) ThemeMode themeMode,
-    @Default(DynamicSchemeVariant.tonalSpot) DynamicSchemeVariant schemeVariant,
+    @Default(DynamicSchemeVariant.content) DynamicSchemeVariant schemeVariant,
     @Default(false) bool pureBlack,
+    @Default(TextScale()) TextScale textScale,
   }) = _ThemeProps;
 
-  factory ThemeProps.fromJson(Map<String, Object?>? json) =>
-      json == null ? defaultThemeProps : _$ThemePropsFromJson(json);
+  factory ThemeProps.fromJson(Map<String, Object?> json) =>
+      _$ThemePropsFromJson(json);
+
+  factory ThemeProps.safeFromJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return defaultThemeProps;
+    }
+    try {
+      return ThemeProps.fromJson(json);
+    } catch (_) {
+      return defaultThemeProps;
+    }
+  }
 }
 
 @freezed
@@ -197,7 +225,7 @@ class Config with _$Config {
     DAV? dav,
     @Default(defaultNetworkProps) NetworkProps networkProps,
     @Default(defaultVpnProps) VpnProps vpnProps,
-    @Default(defaultThemeProps) ThemeProps themeProps,
+    @JsonKey(fromJson: ThemeProps.safeFromJson) required ThemeProps themeProps,
     @Default(defaultProxiesStyle) ProxiesStyle proxiesStyle,
     @Default(defaultWindowProps) WindowProps windowProps,
     @Default(defaultClashConfig) ClashConfig patchClashConfig,

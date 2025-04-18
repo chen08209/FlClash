@@ -58,6 +58,8 @@ mixin ClashInterface {
 
   stopLog();
 
+  Future<bool> crash();
+
   FutureOr<String> getConnections();
 
   FutureOr<bool> closeConnection(String id);
@@ -104,6 +106,7 @@ abstract class ClashHandlerInterface with ClashInterface {
         case ActionMethod.closeConnection:
         case ActionMethod.stopListener:
         case ActionMethod.setState:
+        case ActionMethod.crash:
           completer?.complete(result.data as bool);
           return;
         case ActionMethod.changeProxy:
@@ -239,6 +242,13 @@ abstract class ClashHandlerInterface with ClashInterface {
       method: ActionMethod.updateConfig,
       data: json.encode(updateConfigParams),
       timeout: Duration(minutes: 2),
+    );
+  }
+
+  @override
+  Future<bool> crash() {
+    return invoke<bool>(
+      method: ActionMethod.crash,
     );
   }
 

@@ -78,7 +78,7 @@ class _ProxiesFragmentState extends ConsumerState<ProxiesFragment>
                 return AdaptiveSheetScaffold(
                   type: type,
                   body: const ProxiesSetting(),
-                  title: appLocalizations.proxiesSetting,
+                  title: appLocalizations.settings,
                 );
               },
             );
@@ -123,8 +123,13 @@ class _ProxiesFragmentState extends ConsumerState<ProxiesFragment>
 
   @override
   Widget build(BuildContext context) {
-    final proxiesType =
-        ref.watch(proxiesStyleSettingProvider.select((state) => state.type));
+    final proxiesType = ref.watch(
+      proxiesStyleSettingProvider.select(
+        (state) => state.type,
+      ),
+    );
+
+    ref.watch(themeSettingProvider.select((state) => state.textScale));
     return switch (proxiesType) {
       ProxiesType.tab => ProxiesTabFragment(
           key: _proxiesTabKey,

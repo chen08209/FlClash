@@ -1,6 +1,6 @@
 import 'dart:async';
-
 import 'package:animations/animations.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -9,6 +9,7 @@ import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,17 +21,21 @@ typedef UpdateTasks = List<FutureOr Function()>;
 
 class GlobalState {
   static GlobalState? _instance;
-  Map<Key, double> cacheScrollPosition = {};
+  Map<CacheTag, double> cacheScrollPosition = {};
+  Map<CacheTag, FixedMap<String, double>> cacheHeightMap = {};
   bool isService = false;
   Timer? timer;
   Timer? groupsUpdateTimer;
   late Config config;
   late AppState appState;
   bool isPre = true;
+  String? coreSHA256;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;
   late CommonTheme theme;
+  late Color accentColor;
+  CorePalette? corePalette;
   DateTime? startTime;
   UpdateTasks tasks = [];
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -50,12 +55,21 @@ class GlobalState {
     appState = AppState(
       version: version,
       viewSize: Size.zero,
-      requests: FixedList(1000),
-      logs: FixedList(1000),
+      requests: FixedList(maxLength),
+      logs: FixedList(maxLength),
       traffics: FixedList(30),
       totalTraffic: Traffic(),
     );
+    await _initDynamicColor();
     await init();
+  }
+
+  _initDynamicColor() async {
+    try {
+      corePalette = await DynamicColorPlugin.getCorePalette();
+      accentColor = await DynamicColorPlugin.getAccentColor() ??
+          Color(defaultPrimaryColor);
+    } catch (_) {}
   }
 
   init() async {
@@ -244,14 +258,17 @@ class GlobalState {
   getUpdateConfigParams([bool? isPatch]) {
     final currentProfile = config.currentProfile;
     final clashConfig = config.patchClashConfig;
+    final routeAddress =
+        config.networkProps.routeMode == RouteMode.bypassPrivate
+            ? defaultBypassPrivateRouteAddress
+            : clashConfig.tun.routeAddress;
     return UpdateConfigParams(
       profileId: config.currentProfileId ?? "",
       config: clashConfig.copyWith(
         globalUa: ua,
         tun: clashConfig.tun.copyWith(
-          routeAddress: config.networkProps.routeMode == RouteMode.bypassPrivate
-              ? defaultBypassPrivateRouteAddress
-              : clashConfig.tun.routeAddress,
+          autoRoute: routeAddress.isEmpty ? true : false,
+          routeAddress: routeAddress,
         ),
         rule: currentProfile?.overrideData.runningRule ?? [],
       ),

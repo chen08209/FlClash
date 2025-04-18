@@ -24,7 +24,6 @@ type AccessControl struct {
 	Mode              string   `json:"mode"`
 	AcceptList        []string `json:"acceptList"`
 	RejectList        []string `json:"rejectList"`
-	IsFilterSystemApp bool     `json:"isFilterSystemApp"`
 }
 
 type AndroidVpnRawOptions struct {

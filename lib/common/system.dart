@@ -55,18 +55,24 @@ class System {
   }
 
   Future<AuthorizeCode> authorizeCore() async {
+    if (Platform.isAndroid) {
+      return AuthorizeCode.none;
+    }
     final corePath = appPath.corePath.replaceAll(' ', '\\\\ ');
     final isAdmin = await checkIsAdmin();
     if (isAdmin) {
       return AuthorizeCode.none;
     }
+
     if (Platform.isWindows) {
       final result = await windows?.registerService();
       if (result == true) {
         return AuthorizeCode.success;
       }
       return AuthorizeCode.error;
-    } else if (Platform.isMacOS) {
+    }
+
+    if (Platform.isMacOS) {
       final shell = 'chown root:admin $corePath; chmod +sx $corePath';
       final arguments = [
         "-e",

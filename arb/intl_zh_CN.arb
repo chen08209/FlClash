@@ -385,5 +385,21 @@
   "expressiveScheme": "表现力",
   "contentScheme": "内容主题",
   "rainbowScheme": "彩虹",
-  "fruitSaladScheme": "果缤纷"
+  "fruitSaladScheme": "果缤纷",
+  "developerMode": "开发者模式",
+  "developerModeEnableTip": "开发者模式已启用。",
+  "messageTest": "消息测试",
+  "messageTestTip": "这是一条消息。",
+  "crashTest": "崩溃测试",
+  "clearData": "清除数据",
+  "zoom": "缩放",
+  "textScale": "文本缩放",
+  "internet": "互联网",
+  "systemApp": "系统应用",
+  "noNetworkApp": "无网络应用",
+  "contactMe": "联系我",
+  "recoveryStrategy": "恢复策略",
+  "recoveryStrategy_override": "覆盖",
+  "recoveryStrategy_compatible": "兼容",
+  "logsTest": "日志测试"
 }

@@ -127,6 +127,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                 );
               },
               popup: CommonPopupMenu(
+                minWidth: 180,
                 items: [
                   PopupMenuItemData(
                     icon: Icons.search,
@@ -189,7 +190,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
           shortcutsActivatorsBuilder: DefaultCodeShortcutsActivatorsBuilder(),
           controller: _controller,
           style: CodeEditorStyle(
-            fontSize: 14,
+            fontSize: 14.ap,
             fontFamily: FontFamily.jetBrainsMono.value,
             codeTheme: CodeHighlightTheme(
               languages: {

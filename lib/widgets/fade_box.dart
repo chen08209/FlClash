@@ -36,11 +36,13 @@ class FadeBox extends StatelessWidget {
 class FadeThroughBox extends StatelessWidget {
   final Widget child;
   final Alignment? alignment;
+  final EdgeInsets? margin;
 
   const FadeThroughBox({
     super.key,
     required this.child,
     this.alignment,
+    this.margin
   });
 
   @override
@@ -52,6 +54,7 @@ class FadeThroughBox extends StatelessWidget {
         secondaryAnimation,
       ) {
         return Container(
+          margin: margin,
           alignment: alignment ?? Alignment.centerLeft,
           child: FadeThroughTransition(
             animation: animation,

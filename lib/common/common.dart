@@ -12,7 +12,7 @@ export 'iterable.dart';
 export 'keyboard.dart';
 export 'launch.dart';
 export 'link.dart';
-export 'list.dart';
+export 'fixed.dart';
 export 'lock.dart';
 export 'measure.dart';
 export 'navigation.dart';

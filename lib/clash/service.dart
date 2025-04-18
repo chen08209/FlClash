@@ -71,9 +71,9 @@ class ClashService extends ClashHandlerInterface {
       }
     }, (error, stack) {
       commonPrint.log(error.toString());
-      if(error is SocketException){
+      if (error is SocketException) {
         globalState.showNotifier(error.toString());
-        globalState.appController.restartCore();
+        // globalState.appController.restartCore();
       }
     });
   }
@@ -92,12 +92,11 @@ class ClashService extends ClashHandlerInterface {
     final arg = Platform.isWindows
         ? "${serverSocket.port}"
         : serverSocket.address.address;
-    bool isSuccess = false;
     if (Platform.isWindows && await system.checkIsAdmin()) {
-      isSuccess = await request.startCoreByHelper(arg);
-    }
-    if (isSuccess) {
-      return;
+      final isSuccess = await request.startCoreByHelper(arg);
+      if (isSuccess) {
+        return;
+      }
     }
     process = await Process.start(
       appPath.corePath,

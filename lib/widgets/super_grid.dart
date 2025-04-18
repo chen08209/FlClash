@@ -369,6 +369,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
   }
 
   _handleDelete(int index) async {
+    await _transformCompleter?.future;
     _preTransformState();
     final indexWhere = _tempIndexList.indexWhere((i) => i == index);
     _tempIndexList.removeAt(indexWhere);
@@ -484,9 +485,24 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
   Widget _draggableWrap({
     required Widget childWhenDragging,
     required Widget feedback,
-    required Widget target,
+    required Widget item,
     required int index,
   }) {
+    final target = DragTarget<int>(
+      builder: (_, __, ___) {
+        return AbsorbPointer(
+          child: item,
+        );
+      },
+      onWillAcceptWithDetails: (_) {
+        debouncer.call(
+          DebounceTag.handleWill,
+          _handleWill,
+          args: [index],
+        );
+        return false;
+      },
+    );
     final shakeTarget = ValueListenableBuilder(
       valueListenable: _dragIndexNotifier,
       builder: (_, dragIndex, child) {
@@ -539,7 +555,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       valueListenable: isEditNotifier,
       builder: (_, isEdit, child) {
         if (!isEdit) {
-          return target;
+          return item;
         }
         return child!;
       },
@@ -558,12 +574,10 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
           _itemContexts[index] = context;
           final childWhenDragging = ActivateBox(
             child: Opacity(
-              opacity: 0.3,
+              opacity: 0.6,
               child: _sizeBoxWrap(
                 CommonCard(
-                  child: Container(
-                    color: context.colorScheme.secondaryContainer,
-                  ),
+                  child: child,
                 ),
                 index,
               ),
@@ -580,25 +594,11 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
               index,
             ),
           );
-          final target = DragTarget<int>(
-            builder: (_, __, ___) {
-              return child;
-            },
-            onWillAcceptWithDetails: (_) {
-              debouncer.call(
-                DebounceTag.handleWill,
-                _handleWill,
-                args: [index],
-              );
-              return false;
-            },
-          );
-
           return _wrapTransform(
             _draggableWrap(
               childWhenDragging: childWhenDragging,
               feedback: feedback,
-              target: target,
+              item: child,
               index: index,
             ),
             index,
@@ -666,8 +666,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
                   crossAxisSpacing: widget.crossAxisSpacing,
                   mainAxisSpacing: widget.mainAxisSpacing,
                   children: [
-                    for (int i = 0; i < children.length; i++)
-                      _builderItem(i),
+                    for (int i = 0; i < children.length; i++) _builderItem(i),
                   ],
                 );
               },

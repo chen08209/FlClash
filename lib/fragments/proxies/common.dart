@@ -6,7 +6,7 @@ import 'package:fl_clash/state.dart';
 
 double get listHeaderHeight {
   final measure = globalState.measure;
-  return 24 + measure.titleMediumHeight + 4 + measure.bodyMediumHeight;
+  return 28 + measure.titleMediumHeight + 4 + measure.bodyMediumHeight;
 }
 
 double getItemHeight(ProxyCardType proxyCardType) {

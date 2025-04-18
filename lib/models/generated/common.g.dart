@@ -6,29 +6,12 @@ part of '../common.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Log _$LogFromJson(Map<String, dynamic> json) => Log(
-      logLevel: $enumDecode(_$LogLevelEnumMap, json['LogLevel']),
-      payload: json['Payload'] as String?,
-    );
-
-Map<String, dynamic> _$LogToJson(Log instance) => <String, dynamic>{
-      'LogLevel': _$LogLevelEnumMap[instance.logLevel]!,
-      'Payload': instance.payload,
-    };
-
-const _$LogLevelEnumMap = {
-  LogLevel.debug: 'debug',
-  LogLevel.info: 'info',
-  LogLevel.warning: 'warning',
-  LogLevel.error: 'error',
-  LogLevel.silent: 'silent',
-};
-
 _$PackageImpl _$$PackageImplFromJson(Map<String, dynamic> json) =>
     _$PackageImpl(
       packageName: json['packageName'] as String,
       label: json['label'] as String,
-      isSystem: json['isSystem'] as bool,
+      system: json['system'] as bool,
+      internet: json['internet'] as bool,
       lastUpdateTime: (json['lastUpdateTime'] as num).toInt(),
     );
 
@@ -36,7 +19,8 @@ Map<String, dynamic> _$$PackageImplToJson(_$PackageImpl instance) =>
     <String, dynamic>{
       'packageName': instance.packageName,
       'label': instance.label,
-      'isSystem': instance.isSystem,
+      'system': instance.system,
+      'internet': instance.internet,
       'lastUpdateTime': instance.lastUpdateTime,
     };
 
@@ -86,6 +70,28 @@ Map<String, dynamic> _$$ConnectionImplToJson(_$ConnectionImpl instance) =>
       'metadata': instance.metadata,
       'chains': instance.chains,
     };
+
+_$LogImpl _$$LogImplFromJson(Map<String, dynamic> json) => _$LogImpl(
+      logLevel: $enumDecodeNullable(_$LogLevelEnumMap, json['LogLevel']) ??
+          LogLevel.app,
+      payload: json['Payload'] as String? ?? "",
+      dateTime: _logDateTime(json['dateTime']),
+    );
+
+Map<String, dynamic> _$$LogImplToJson(_$LogImpl instance) => <String, dynamic>{
+      'LogLevel': _$LogLevelEnumMap[instance.logLevel]!,
+      'Payload': instance.payload,
+      'dateTime': instance.dateTime,
+    };
+
+const _$LogLevelEnumMap = {
+  LogLevel.debug: 'debug',
+  LogLevel.info: 'info',
+  LogLevel.warning: 'warning',
+  LogLevel.error: 'error',
+  LogLevel.silent: 'silent',
+  LogLevel.app: 'app',
+};
 
 _$DAVImpl _$$DAVImplFromJson(Map<String, dynamic> json) => _$DAVImpl(
       uri: json['uri'] as String,
@@ -192,3 +198,23 @@ const _$KeyboardModifierEnumMap = {
   KeyboardModifier.meta: 'meta',
   KeyboardModifier.shift: 'shift',
 };
+
+_$TextPainterParamsImpl _$$TextPainterParamsImplFromJson(
+        Map<String, dynamic> json) =>
+    _$TextPainterParamsImpl(
+      text: json['text'] as String?,
+      fontSize: (json['fontSize'] as num?)?.toDouble(),
+      textScaleFactor: (json['textScaleFactor'] as num).toDouble(),
+      maxWidth: (json['maxWidth'] as num?)?.toDouble() ?? double.infinity,
+      maxLines: (json['maxLines'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$$TextPainterParamsImplToJson(
+        _$TextPainterParamsImpl instance) =>
+    <String, dynamic>{
+      'text': instance.text,
+      'fontSize': instance.fontSize,
+      'textScaleFactor': instance.textScaleFactor,
+      'maxWidth': instance.maxWidth,
+      'maxLines': instance.maxLines,
+    };

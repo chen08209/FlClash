@@ -247,21 +247,6 @@ final currentPageLabelProvider =
 );
 
 typedef _$CurrentPageLabel = AutoDisposeNotifier<PageLabel>;
-String _$appSchemesHash() => r'748f48f23539a879a92f318a21e1266b1df56aae';
-
-/// See also [AppSchemes].
-@ProviderFor(AppSchemes)
-final appSchemesProvider =
-    AutoDisposeNotifierProvider<AppSchemes, ColorSchemes>.internal(
-  AppSchemes.new,
-  name: r'appSchemesProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$appSchemesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$AppSchemes = AutoDisposeNotifier<ColorSchemes>;
 String _$sortNumHash() => r'0f85ebbc77124020eaccf988c6ac9d86a7f34d7e';
 
 /// See also [SortNum].

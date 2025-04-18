@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'backup_and_recovery.dart';
+import 'developer.dart';
 import 'theme.dart';
 import 'package:path/path.dart' show dirname, join;
 
@@ -54,11 +55,12 @@ class _ToolboxFragmentState extends ConsumerState<ToolsFragment> {
     );
   }
 
-  List<Widget> _getOtherList() {
+  List<Widget> _getOtherList(bool enableDeveloperMode) {
     return generateSection(
       title: appLocalizations.other,
       items: [
         _DisclaimerItem(),
+        if (enableDeveloperMode) _DeveloperItem(),
         _InfoItem(),
       ],
     );
@@ -82,7 +84,11 @@ class _ToolboxFragmentState extends ConsumerState<ToolsFragment> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(appSettingProvider.select((state) => state.locale));
+    final vm2 = ref.watch(
+      appSettingProvider.select(
+        (state) => VM2(a: state.locale, b: state.developerMode),
+      ),
+    );
     final items = [
       Consumer(
         builder: (_, ref, __) {
@@ -99,7 +105,7 @@ class _ToolboxFragmentState extends ConsumerState<ToolsFragment> {
         },
       ),
       ..._getSettingList(),
-      ..._getOtherList(),
+      ..._getOtherList(vm2.b),
     ];
     return ListView.builder(
       itemCount: items.length,
@@ -293,6 +299,22 @@ class _InfoItem extends StatelessWidget {
       delegate: OpenDelegate(
         title: appLocalizations.about,
         widget: const AboutFragment(),
+      ),
+    );
+  }
+}
+
+class _DeveloperItem extends StatelessWidget {
+  const _DeveloperItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const Icon(Icons.developer_board),
+      title: Text(appLocalizations.developerMode),
+      delegate: OpenDelegate(
+        title: appLocalizations.developerMode,
+        widget: const DeveloperView(),
       ),
     );
   }

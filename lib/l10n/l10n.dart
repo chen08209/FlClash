@@ -3004,6 +3004,121 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Developer mode`
+  String get developerMode {
+    return Intl.message(
+      'Developer mode',
+      name: 'developerMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Developer mode is enabled.`
+  String get developerModeEnableTip {
+    return Intl.message(
+      'Developer mode is enabled.',
+      name: 'developerModeEnableTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Message test`
+  String get messageTest {
+    return Intl.message(
+      'Message test',
+      name: 'messageTest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This is a message.`
+  String get messageTestTip {
+    return Intl.message(
+      'This is a message.',
+      name: 'messageTestTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Crash test`
+  String get crashTest {
+    return Intl.message('Crash test', name: 'crashTest', desc: '', args: []);
+  }
+
+  /// `Clear Data`
+  String get clearData {
+    return Intl.message('Clear Data', name: 'clearData', desc: '', args: []);
+  }
+
+  /// `Text Scaling`
+  String get textScale {
+    return Intl.message('Text Scaling', name: 'textScale', desc: '', args: []);
+  }
+
+  /// `Internet`
+  String get internet {
+    return Intl.message('Internet', name: 'internet', desc: '', args: []);
+  }
+
+  /// `System APP`
+  String get systemApp {
+    return Intl.message('System APP', name: 'systemApp', desc: '', args: []);
+  }
+
+  /// `No network APP`
+  String get noNetworkApp {
+    return Intl.message(
+      'No network APP',
+      name: 'noNetworkApp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Contact me`
+  String get contactMe {
+    return Intl.message('Contact me', name: 'contactMe', desc: '', args: []);
+  }
+
+  /// `Recovery strategy`
+  String get recoveryStrategy {
+    return Intl.message(
+      'Recovery strategy',
+      name: 'recoveryStrategy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Override`
+  String get recoveryStrategy_override {
+    return Intl.message(
+      'Override',
+      name: 'recoveryStrategy_override',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Compatible`
+  String get recoveryStrategy_compatible {
+    return Intl.message(
+      'Compatible',
+      name: 'recoveryStrategy_compatible',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Logs test`
+  String get logsTest {
+    return Intl.message('Logs test', name: 'logsTest', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

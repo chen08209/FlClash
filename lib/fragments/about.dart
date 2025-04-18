@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
 class Contributor {
@@ -41,6 +45,15 @@ class AboutFragment extends StatelessWidget {
           title: Text(appLocalizations.checkUpdate),
           onTap: () {
             _checkUpdate(context);
+          },
+        ),
+        ListItem(
+          title: Text(appLocalizations.contactMe),
+          onTap: () {
+            globalState.showMessage(
+              title: appLocalizations.contactMe,
+              message: TextSpan(text: "chen08209@gmail.com"),
+            );
           },
         ),
         ListItem(
@@ -116,33 +129,43 @@ class AboutFragment extends StatelessWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Wrap(
-              spacing: 16,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Image.asset(
-                    'assets/images/icon.png',
-                    width: 64,
-                    height: 64,
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            Consumer(builder: (_, ref, ___) {
+              return _DeveloperModeDetector(
+                child: Wrap(
+                  spacing: 16,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text(
-                      appName,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Image.asset(
+                        'assets/images/icon.png',
+                        width: 64,
+                        height: 64,
+                      ),
                     ),
-                    Text(
-                      globalState.packageInfo.version,
-                      style: Theme.of(context).textTheme.labelLarge,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          appName,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        Text(
+                          globalState.packageInfo.version,
+                          style: Theme.of(context).textTheme.labelLarge,
+                        )
+                      ],
                     )
                   ],
-                )
-              ],
-            ),
+                ),
+                onEnterDeveloperMode: () {
+                  ref.read(appSettingProvider.notifier).updateState(
+                        (state) => state.copyWith(developerMode: true),
+                      );
+                  context.showNotifier(appLocalizations.developerModeEnableTip);
+                },
+              );
+            }),
             const SizedBox(
               height: 24,
             ),
@@ -206,6 +229,55 @@ class Avatar extends StatelessWidget {
       onTap: () {
         globalState.openUrl(contributor.link);
       },
+    );
+  }
+}
+
+class _DeveloperModeDetector extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onEnterDeveloperMode;
+
+  const _DeveloperModeDetector({
+    required this.child,
+    required this.onEnterDeveloperMode,
+  });
+
+  @override
+  State<_DeveloperModeDetector> createState() => _DeveloperModeDetectorState();
+}
+
+class _DeveloperModeDetectorState extends State<_DeveloperModeDetector> {
+  int _counter = 0;
+  Timer? _timer;
+
+  void _handleTap() {
+    _counter++;
+    if (_counter >= 5) {
+      widget.onEnterDeveloperMode();
+      _resetCounter();
+    } else {
+      _timer?.cancel();
+      _timer = Timer(Duration(seconds: 1), _resetCounter);
+    }
+  }
+
+  void _resetCounter() {
+    _counter = 0;
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      child: widget.child,
     );
   }
 }

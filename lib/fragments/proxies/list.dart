@@ -414,7 +414,10 @@ class _ListHeaderState extends State<ListHeader>
     return Consumer(
       builder: (_, ref, child) {
         final iconStyle = ref.watch(
-            proxiesStyleSettingProvider.select((state) => state.iconStyle));
+          proxiesStyleSettingProvider.select(
+            (state) => state.iconStyle,
+          ),
+        );
         final icon = ref.watch(proxiesStyleSettingProvider.select((state) {
           final iconMapEntryList = state.iconMap.entries.toList();
           final index = iconMapEntryList.indexWhere((item) {
@@ -430,30 +433,44 @@ class _ListHeaderState extends State<ListHeader>
           return this.icon;
         }));
         return switch (iconStyle) {
-          ProxiesIconStyle.standard => Container(
-              height: 48,
-              width: 48,
-              margin: const EdgeInsets.only(
-                right: 16,
-              ),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: context.colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: CommonTargetIcon(
-                src: icon,
-                size: 32,
-              ),
+          ProxiesIconStyle.standard => LayoutBuilder(
+              builder: (_, constraints) {
+                return Container(
+                  margin: const EdgeInsets.only(
+                    right: 16,
+                  ),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Container(
+                      height: constraints.maxHeight,
+                      width: constraints.maxWidth,
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(6.ap),
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: CommonTargetIcon(
+                        src: icon,
+                        size: constraints.maxHeight - 12.ap,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ProxiesIconStyle.icon => Container(
               margin: const EdgeInsets.only(
                 right: 16,
               ),
-              child: CommonTargetIcon(
-                src: icon,
-                size: 42,
+              child: LayoutBuilder(
+                builder: (_, constraints) {
+                  return CommonTargetIcon(
+                    src: icon,
+                    size: constraints.maxHeight - 8,
+                  );
+                },
               ),
             ),
           ProxiesIconStyle.none => Container(),

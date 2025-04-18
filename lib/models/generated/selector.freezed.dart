@@ -328,6 +328,193 @@ abstract class _VM3<A, B, C> implements VM3<A, B, C> {
 }
 
 /// @nodoc
+mixin _$VM4<A, B, C, D> {
+  A get a => throw _privateConstructorUsedError;
+  B get b => throw _privateConstructorUsedError;
+  C get c => throw _privateConstructorUsedError;
+  D get d => throw _privateConstructorUsedError;
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $VM4CopyWith<A, B, C, D, VM4<A, B, C, D>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $VM4CopyWith<A, B, C, D, $Res> {
+  factory $VM4CopyWith(
+          VM4<A, B, C, D> value, $Res Function(VM4<A, B, C, D>) then) =
+      _$VM4CopyWithImpl<A, B, C, D, $Res, VM4<A, B, C, D>>;
+  @useResult
+  $Res call({A a, B b, C c, D d});
+}
+
+/// @nodoc
+class _$VM4CopyWithImpl<A, B, C, D, $Res, $Val extends VM4<A, B, C, D>>
+    implements $VM4CopyWith<A, B, C, D, $Res> {
+  _$VM4CopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? a = freezed,
+    Object? b = freezed,
+    Object? c = freezed,
+    Object? d = freezed,
+  }) {
+    return _then(_value.copyWith(
+      a: freezed == a
+          ? _value.a
+          : a // ignore: cast_nullable_to_non_nullable
+              as A,
+      b: freezed == b
+          ? _value.b
+          : b // ignore: cast_nullable_to_non_nullable
+              as B,
+      c: freezed == c
+          ? _value.c
+          : c // ignore: cast_nullable_to_non_nullable
+              as C,
+      d: freezed == d
+          ? _value.d
+          : d // ignore: cast_nullable_to_non_nullable
+              as D,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$VM4ImplCopyWith<A, B, C, D, $Res>
+    implements $VM4CopyWith<A, B, C, D, $Res> {
+  factory _$$VM4ImplCopyWith(_$VM4Impl<A, B, C, D> value,
+          $Res Function(_$VM4Impl<A, B, C, D>) then) =
+      __$$VM4ImplCopyWithImpl<A, B, C, D, $Res>;
+  @override
+  @useResult
+  $Res call({A a, B b, C c, D d});
+}
+
+/// @nodoc
+class __$$VM4ImplCopyWithImpl<A, B, C, D, $Res>
+    extends _$VM4CopyWithImpl<A, B, C, D, $Res, _$VM4Impl<A, B, C, D>>
+    implements _$$VM4ImplCopyWith<A, B, C, D, $Res> {
+  __$$VM4ImplCopyWithImpl(
+      _$VM4Impl<A, B, C, D> _value, $Res Function(_$VM4Impl<A, B, C, D>) _then)
+      : super(_value, _then);
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? a = freezed,
+    Object? b = freezed,
+    Object? c = freezed,
+    Object? d = freezed,
+  }) {
+    return _then(_$VM4Impl<A, B, C, D>(
+      a: freezed == a
+          ? _value.a
+          : a // ignore: cast_nullable_to_non_nullable
+              as A,
+      b: freezed == b
+          ? _value.b
+          : b // ignore: cast_nullable_to_non_nullable
+              as B,
+      c: freezed == c
+          ? _value.c
+          : c // ignore: cast_nullable_to_non_nullable
+              as C,
+      d: freezed == d
+          ? _value.d
+          : d // ignore: cast_nullable_to_non_nullable
+              as D,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$VM4Impl<A, B, C, D> implements _VM4<A, B, C, D> {
+  const _$VM4Impl(
+      {required this.a, required this.b, required this.c, required this.d});
+
+  @override
+  final A a;
+  @override
+  final B b;
+  @override
+  final C c;
+  @override
+  final D d;
+
+  @override
+  String toString() {
+    return 'VM4<$A, $B, $C, $D>(a: $a, b: $b, c: $c, d: $d)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$VM4Impl<A, B, C, D> &&
+            const DeepCollectionEquality().equals(other.a, a) &&
+            const DeepCollectionEquality().equals(other.b, b) &&
+            const DeepCollectionEquality().equals(other.c, c) &&
+            const DeepCollectionEquality().equals(other.d, d));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(a),
+      const DeepCollectionEquality().hash(b),
+      const DeepCollectionEquality().hash(c),
+      const DeepCollectionEquality().hash(d));
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$VM4ImplCopyWith<A, B, C, D, _$VM4Impl<A, B, C, D>> get copyWith =>
+      __$$VM4ImplCopyWithImpl<A, B, C, D, _$VM4Impl<A, B, C, D>>(
+          this, _$identity);
+}
+
+abstract class _VM4<A, B, C, D> implements VM4<A, B, C, D> {
+  const factory _VM4(
+      {required final A a,
+      required final B b,
+      required final C c,
+      required final D d}) = _$VM4Impl<A, B, C, D>;
+
+  @override
+  A get a;
+  @override
+  B get b;
+  @override
+  C get c;
+  @override
+  D get d;
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$VM4ImplCopyWith<A, B, C, D, _$VM4Impl<A, B, C, D>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$StartButtonSelectorState {
   bool get isInit => throw _privateConstructorUsedError;
   bool get hasProfile => throw _privateConstructorUsedError;
@@ -3335,6 +3522,7 @@ mixin _$ClashConfigState {
   bool get overrideDns => throw _privateConstructorUsedError;
   ClashConfig get clashConfig => throw _privateConstructorUsedError;
   OverrideData get overrideData => throw _privateConstructorUsedError;
+  RouteMode get routeMode => throw _privateConstructorUsedError;
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.
@@ -3350,7 +3538,10 @@ abstract class $ClashConfigStateCopyWith<$Res> {
       _$ClashConfigStateCopyWithImpl<$Res, ClashConfigState>;
   @useResult
   $Res call(
-      {bool overrideDns, ClashConfig clashConfig, OverrideData overrideData});
+      {bool overrideDns,
+      ClashConfig clashConfig,
+      OverrideData overrideData,
+      RouteMode routeMode});
 
   $ClashConfigCopyWith<$Res> get clashConfig;
   $OverrideDataCopyWith<$Res> get overrideData;
@@ -3374,6 +3565,7 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
     Object? overrideDns = null,
     Object? clashConfig = null,
     Object? overrideData = null,
+    Object? routeMode = null,
   }) {
     return _then(_value.copyWith(
       overrideDns: null == overrideDns
@@ -3388,6 +3580,10 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
           ? _value.overrideData
           : overrideData // ignore: cast_nullable_to_non_nullable
               as OverrideData,
+      routeMode: null == routeMode
+          ? _value.routeMode
+          : routeMode // ignore: cast_nullable_to_non_nullable
+              as RouteMode,
     ) as $Val);
   }
 
@@ -3421,7 +3617,10 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {bool overrideDns, ClashConfig clashConfig, OverrideData overrideData});
+      {bool overrideDns,
+      ClashConfig clashConfig,
+      OverrideData overrideData,
+      RouteMode routeMode});
 
   @override
   $ClashConfigCopyWith<$Res> get clashConfig;
@@ -3445,6 +3644,7 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
     Object? overrideDns = null,
     Object? clashConfig = null,
     Object? overrideData = null,
+    Object? routeMode = null,
   }) {
     return _then(_$ClashConfigStateImpl(
       overrideDns: null == overrideDns
@@ -3459,6 +3659,10 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
           ? _value.overrideData
           : overrideData // ignore: cast_nullable_to_non_nullable
               as OverrideData,
+      routeMode: null == routeMode
+          ? _value.routeMode
+          : routeMode // ignore: cast_nullable_to_non_nullable
+              as RouteMode,
     ));
   }
 }
@@ -3469,7 +3673,8 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   const _$ClashConfigStateImpl(
       {required this.overrideDns,
       required this.clashConfig,
-      required this.overrideData});
+      required this.overrideData,
+      required this.routeMode});
 
   @override
   final bool overrideDns;
@@ -3477,10 +3682,12 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   final ClashConfig clashConfig;
   @override
   final OverrideData overrideData;
+  @override
+  final RouteMode routeMode;
 
   @override
   String toString() {
-    return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, overrideData: $overrideData)';
+    return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, overrideData: $overrideData, routeMode: $routeMode)';
   }
 
   @override
@@ -3493,12 +3700,14 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
             (identical(other.clashConfig, clashConfig) ||
                 other.clashConfig == clashConfig) &&
             (identical(other.overrideData, overrideData) ||
-                other.overrideData == overrideData));
+                other.overrideData == overrideData) &&
+            (identical(other.routeMode, routeMode) ||
+                other.routeMode == routeMode));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, overrideDns, clashConfig, overrideData);
+  int get hashCode => Object.hash(
+      runtimeType, overrideDns, clashConfig, overrideData, routeMode);
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.
@@ -3514,7 +3723,8 @@ abstract class _ClashConfigState implements ClashConfigState {
   const factory _ClashConfigState(
       {required final bool overrideDns,
       required final ClashConfig clashConfig,
-      required final OverrideData overrideData}) = _$ClashConfigStateImpl;
+      required final OverrideData overrideData,
+      required final RouteMode routeMode}) = _$ClashConfigStateImpl;
 
   @override
   bool get overrideDns;
@@ -3522,6 +3732,8 @@ abstract class _ClashConfigState implements ClashConfigState {
   ClashConfig get clashConfig;
   @override
   OverrideData get overrideData;
+  @override
+  RouteMode get routeMode;
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.

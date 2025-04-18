@@ -147,22 +147,21 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
             FutureBuilder<FileInfo>(
               future: _getGeoFileLastModified(geoItem.fileName),
               builder: (_, snapshot) {
+                final height = globalState.measure.bodyMediumHeight;
                 return SizedBox(
-                  height: 24,
-                  child: FadeThroughBox(
-                    key: Key("fade_box_${geoItem.label}"),
-                    child: snapshot.data == null
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            snapshot.data!.desc,
+                  height: height,
+                  child: snapshot.data == null
+                      ? SizedBox(
+                          width: height,
+                          height: height,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
                           ),
-                  ),
+                        )
+                      : Text(
+                          snapshot.data!.desc,
+                          style: context.textTheme.bodyMedium,
+                        ),
                 );
               },
             ),

@@ -385,5 +385,21 @@
   "expressiveScheme": "Экспрессивные",
   "contentScheme": "Контентная тема",
   "rainbowScheme": "Радужные",
-  "fruitSaladScheme": "Фруктовый микс"
+  "fruitSaladScheme": "Фруктовый микс",
+  "developerMode": "Режим разработчика",
+  "developerModeEnableTip": "Режим разработчика активирован.",
+  "messageTest": "Тестирование сообщения",
+  "messageTestTip": "Это сообщение.",
+  "crashTest": "Тест на сбои",
+  "clearData": "Очистить данные",
+  "zoom": "Масштаб",
+  "textScale": "Масштабирование текста",
+  "internet": "Интернет",
+  "systemApp": "Системное приложение",
+  "noNetworkApp": "Приложение без сети",
+  "contactMe": "Свяжитесь со мной",
+  "recoveryStrategy": "Стратегия восстановления",
+  "recoveryStrategy_override": "Переопределение",
+  "recoveryStrategy_compatible": "Совместимый",
+  "logsTest": "Тест журналов"
 }

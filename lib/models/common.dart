@@ -30,7 +30,8 @@ class Package with _$Package {
   const factory Package({
     required String packageName,
     required String label,
-    required bool isSystem,
+    required bool system,
+    required bool internet,
     required int lastUpdateTime,
   }) = _Package;
 
@@ -84,33 +85,33 @@ extension ConnectionExt on Connection {
   }
 }
 
-@JsonSerializable()
-class Log {
-  @JsonKey(name: "LogLevel")
-  LogLevel logLevel;
-  @JsonKey(name: "Payload")
-  String? payload;
-  DateTime _dateTime;
+String _logDateTime(_) {
+  return DateTime.now().toString();
+}
 
-  Log({
-    required this.logLevel,
-    this.payload,
-  }) : _dateTime = DateTime.now();
+// String _logId(_) {
+//   return utils.id;
+// }
 
-  DateTime get dateTime => _dateTime;
+@freezed
+class Log with _$Log {
+  const factory Log({
+    @JsonKey(name: "LogLevel") @Default(LogLevel.app) LogLevel logLevel,
+    @JsonKey(name: "Payload") @Default("") String payload,
+    @JsonKey(fromJson: _logDateTime) required String dateTime,
+  }) = _Log;
 
-  factory Log.fromJson(Map<String, dynamic> json) {
-    return _$LogFromJson(json);
+  factory Log.app(
+    String payload,
+  ) {
+    return Log(
+      payload: payload,
+      dateTime: _logDateTime(null),
+      // id: _logId(null),
+    );
   }
 
-  Map<String, dynamic> toJson() {
-    return _$LogToJson(this);
-  }
-
-  @override
-  String toString() {
-    return 'Log{logLevel: $logLevel, payload: $payload, dateTime: $dateTime}';
-  }
+  factory Log.fromJson(Map<String, Object?> json) => _$LogFromJson(json);
 }
 
 @freezed
@@ -119,6 +120,7 @@ class LogsState with _$LogsState {
     @Default([]) List<Log> logs,
     @Default([]) List<String> keywords,
     @Default("") String query,
+    @Default(false) bool loading,
   }) = _LogsState;
 }
 
@@ -127,11 +129,10 @@ extension LogsStateExt on LogsState {
     final lowQuery = query.toLowerCase();
     return logs.where(
       (log) {
-        final payload = log.payload?.toLowerCase();
+        final payload = log.payload.toLowerCase();
         final logLevelName = log.logLevel.name;
         return {logLevelName}.containsAll(keywords) &&
-            ((payload?.contains(lowQuery) ?? false) ||
-                logLevelName.contains(lowQuery));
+            ((payload.contains(lowQuery)) || logLevelName.contains(lowQuery));
       },
     ).toList();
   }
@@ -143,6 +144,7 @@ class ConnectionsState with _$ConnectionsState {
     @Default([]) List<Connection> connections,
     @Default([]) List<String> keywords,
     @Default("") String query,
+    @Default(false) bool loading,
   }) = _ConnectionsState;
 }
 
@@ -511,4 +513,18 @@ class PopupMenuItemData {
   final VoidCallback? onPressed;
   final IconData? icon;
   final PopupMenuItemType? type;
+}
+
+@freezed
+class TextPainterParams with _$TextPainterParams {
+  const factory TextPainterParams({
+    required String? text,
+    required double? fontSize,
+    required double textScaleFactor,
+    @Default(double.infinity) double maxWidth,
+    int? maxLines,
+  }) = _TextPainterParams;
+
+  factory TextPainterParams.fromJson(Map<String, Object?> json) =>
+      _$TextPainterParamsFromJson(json);
 }

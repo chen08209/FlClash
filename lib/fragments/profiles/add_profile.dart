@@ -104,8 +104,13 @@ class _URLFormDialogState extends State<URLFormDialog> {
           runSpacing: 16,
           children: [
             TextField(
-              maxLines: 5,
+              keyboardType: TextInputType.url,
               minLines: 1,
+              maxLines: 5,
+              onSubmitted: (_) {
+                _handleAddProfileFormURL();
+              },
+              onEditingComplete: _handleAddProfileFormURL,
               controller: urlController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),

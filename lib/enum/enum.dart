@@ -91,7 +91,14 @@ enum Mode { rule, global, direct }
 
 enum ViewMode { mobile, laptop, desktop }
 
-enum LogLevel { debug, info, warning, error, silent }
+enum LogLevel {
+  debug,
+  info,
+  warning,
+  error,
+  silent,
+  app,
+}
 
 enum TransportProtocol { udp, tcp }
 
@@ -262,6 +269,7 @@ enum ActionMethod {
   getCountryCode,
   getMemory,
   getProfile,
+  crash,
 
   ///Android,
   setFdMap,
@@ -285,6 +293,7 @@ enum WindowsHelperServiceStatus {
 
 enum DebounceTag {
   updateClashConfig,
+  updateStatus,
   updateGroups,
   addCheckIpNum,
   applyProfile,
@@ -306,6 +315,12 @@ enum DashboardWidget {
     GridItem(
       crossAxisCellCount: 8,
       child: NetworkSpeed(),
+    ),
+  ),
+  outboundModeV2(
+    GridItem(
+      crossAxisCellCount: 8,
+      child: OutboundModeV2(),
     ),
   ),
   outboundMode(
@@ -332,6 +347,15 @@ enum DashboardWidget {
       child: TUNButton(),
     ),
     platforms: desktopPlatforms,
+  ),
+  vpnButton(
+    GridItem(
+      crossAxisCellCount: 4,
+      child: VpnButton(),
+    ),
+    platforms: [
+      SupportPlatform.Android,
+    ],
   ),
   systemProxyButton(
     GridItem(
@@ -446,4 +470,15 @@ enum OverrideRuleType {
 enum RuleTarget {
   DIRECT,
   REJECT,
+}
+
+enum RecoveryStrategy {
+  compatible,
+  override,
+}
+
+enum CacheTag {
+  logs,
+  rules,
+  requests,
 }

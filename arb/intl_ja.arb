@@ -385,5 +385,21 @@
   "expressiveScheme": "エクスプレッシブ",
   "contentScheme": "コンテンツテーマ",
   "rainbowScheme": "レインボー",
-  "fruitSaladScheme": "フルーツサラダ"
+  "fruitSaladScheme": "フルーツサラダ",
+  "developerMode": "デベロッパーモード",
+  "developerModeEnableTip": "デベロッパーモードが有効になりました。",
+  "messageTest": "メッセージテスト",
+  "messageTestTip": "これはメッセージです。",
+  "crashTest": "クラッシュテスト",
+  "clearData": "データを消去",
+  "zoom": "ズーム",
+  "textScale": "テキストスケーリング",
+  "internet": "インターネット",
+  "systemApp": "システムアプリ",
+  "noNetworkApp": "ネットワークなしアプリ",
+  "contactMe": "連絡する",
+  "recoveryStrategy": "リカバリー戦略",
+  "recoveryStrategy_override": "オーバーライド",
+  "recoveryStrategy_compatible": "互換性",
+  "logsTest": "ログテスト"
 }

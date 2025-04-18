@@ -16,16 +16,14 @@ const browserUa =
 const packageName = "com.follow.clash";
 final unixSocketPath = "/tmp/FlClashSocket_${Random().nextInt(10000)}.sock";
 const helperPort = 47890;
-const helperTag = "2024125";
-const baseInfoEdgeInsets = EdgeInsets.symmetric(
-  vertical: 16,
-  horizontal: 16,
+const maxTextScale = 1.4;
+const minTextScale = 0.8;
+final baseInfoEdgeInsets = EdgeInsets.symmetric(
+  vertical: 16.ap,
+  horizontal: 16.ap,
 );
 
-double textScaleFactor = min(
-  WidgetsBinding.instance.platformDispatcher.textScaleFactor,
-  1.2,
-);
+final defaultTextScaleFactor = WidgetsBinding.instance.platformDispatcher.textScaleFactor;
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
@@ -44,7 +42,6 @@ const profilesDirectoryName = "profiles";
 const localhost = "127.0.0.1";
 const clashConfigKey = "clash_config";
 const configKey = "config";
-const listItemPadding = EdgeInsets.symmetric(horizontal: 16);
 const double dialogCommonWidth = 300;
 const repository = "chen08209/FlClash";
 const defaultExternalController = "127.0.0.1:9090";
@@ -60,6 +57,7 @@ final commonFilter = ImageFilter.blur(
 const navigationItemListEquality = ListEquality<NavigationItem>();
 const connectionListEquality = ListEquality<Connection>();
 const stringListEquality = ListEquality<String>();
+const intListEquality = ListEquality<int>();
 const logListEquality = ListEquality<Log>();
 const groupListEquality = ListEquality<Group>();
 const externalProviderListEquality = ListEquality<ExternalProvider>();
@@ -78,22 +76,24 @@ const viewModeColumnsMap = {
   ViewMode.desktop: [4, 3],
 };
 
-const defaultPrimaryColor = 0xFF795548;
+const defaultPrimaryColor = 0XFFD8C0C3;
 
 double getWidgetHeight(num lines) {
-  return max(lines * 84 * textScaleFactor + (lines - 1) * 16, 0);
+  return max(lines * 84 + (lines - 1) * 16, 0).ap;
 }
+
+const maxLength = 150;
 
 final mainIsolate = "FlClashMainIsolate";
 
 final serviceIsolate = "FlClashServiceIsolate";
 
 const defaultPrimaryColors = [
-  defaultPrimaryColor,
+  0xFF795548,
   0xFF03A9F4,
   0xFFFFFF00,
   0XFFBBC9CC,
   0XFFABD397,
-  0XFFD8C0C3,
+  defaultPrimaryColor,
   0XFF665390,
 ];
