@@ -23,3 +23,7 @@ categories:
   - Network
 
 startup_notify: true
+
+dependencies:
+  - libayatana-appindicator3-1
+  - libkeybinder-3.0-0
