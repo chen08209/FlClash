@@ -70,7 +70,7 @@
   "minutes": "分钟",
   "seconds": "秒",
   "ago": "前",
-  "just": "刚刚",
+  "justNow": "刚刚",
   "qrcode": "二维码",
   "qrcodeDesc": "扫描二维码获取配置文件",
   "url": "URL",
