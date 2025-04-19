@@ -1,0 +1,42 @@
+name: 功能请求 / Feature request
+title: "[Feature] "
+description: 提出你的功能请求 / Propose your feature request
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 在提交问题之前，请确认以下事项：
+        1. 请务必给issue填写一个简洁明了的标题，以便他人快速检索
+        2. 请确保[已有的问题](https://github.com/chen08209/FlClash/issues?q=is%3Aissue) 中没有人提交过相似issue，否则请在已有的issue下进行讨论
+        3. 请务必按照模板规范详细描述问题，否则issue将会被直接关闭
+        ## Before submitting the issue, please make sure of the following checklist:
+        1. Please be sure to fill in a concise and clear title for the issue so that others can quickly search
+        2. Please make sure there is no similar issue in the [existing issues](https://github.com/chen08209/FlClash/issues?q=is%3Aissue), otherwise please discuss under the existing issue
+        3. Please describe the problem in detail according to the template specification, otherwise issue will be closed directly.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 功能描述 / Feature description
+      description: 详细清晰地描述你的功能请求 / A clear and concise description of what the feature is
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 使用场景 / Use case
+      description: 请描述你的功能请求的使用场景 / Please describe the use case of your feature request
+    validations:
+      required: true
+  - type: checkboxes
+    id: os-labels
+    attributes:
+      label: 适用系统 / Target OS
+      description: 请选择该功能适用的操作系统（至少选择一个） / Please select the operating system(s) for this feature request (select at least one)
+      options:
+        - label: Android
+        - label: Windows
+        - label: MacOS
+        - label: Linux
+    validations:
+      required: true

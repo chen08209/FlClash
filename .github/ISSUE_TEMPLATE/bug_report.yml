@@ -1,0 +1,57 @@
+name: 问题反馈 / Bug report
+title: "[BUG] "
+description: 反馈你遇到的问题 / Report the issue you are experiencing
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 在提交问题之前，请确认以下事项：
+        1. 请务必给issue填写一个简洁明了的标题，以便他人快速检索
+        2. 请确保[已有的问题](https://github.com/chen08209/FlClash/issues?q=is%3Aissue) 中没有人提交过相似issue，否则请在已有的issue下进行讨论
+        3. 请务必按照模板规范详细描述问题，否则issue将会被直接关闭
+        ## Before submitting the issue, please make sure of the following checklist:
+        1. Please be sure to fill in a concise and clear title for the issue so that others can quickly search
+        2. Please make sure there is no similar issue in the [existing issues](https://github.com/chen08209/FlClash/issues?q=is%3Aissue), otherwise please discuss under the existing issue
+        3. Please describe the problem in detail according to the template specification, otherwise issue will be closed directly.
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述 / Describe the bug
+      description: 详细清晰地描述你遇到的问题，并配合截图 / Describe the problem you encountered in detail and clearly, and provide screenshots
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 软件版本 / Version
+      description: 请提供FlClash的具体版本 / Please provide the specific version of FlClash.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 复现步骤 / To Reproduce
+      description: 请提供复现问题的步骤 / Steps to reproduce the behavior
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: 操作系统 / OS
+      options:
+        - Android
+        - Windows
+        - MacOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: 操作系统版本 / OS Version
+      description: 请提供你的操作系统版本，Linux请额外提供桌面环境及窗口系统 / Please provide your OS version, for Linux, please also provide the desktop environment and window system
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 日志(勿上传日志文件，请粘贴日志内容) / Log (Do not upload the log file, paste the log content directly)
+      description: 请提供完整或相关部分的Debug日志（请在“软件左侧菜单”->“设置”->“日志等级”调整到debug / Please provide a complete or relevant Debug log (please adjust it to debug in the left menu of software-> Settings-> Log Level)
+    validations:
+      required: true
