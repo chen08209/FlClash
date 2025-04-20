@@ -21,3 +21,7 @@ generic_name: FlClash
 group: Applications/Internet
 
 startup_notify: true
+
+requires:
+  - keybinder3
+  - libayatana-appindicator-gtk3

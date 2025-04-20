@@ -38,12 +38,19 @@ on Mobile:
 
 ### Linux
 
-⚠️ Make sure to install the following dependencies before using them
+⚠️ Make sure to install the following dependencies before use
 
    ```bash
-    sudo apt-get install appindicator3-0.1 libappindicator3-dev
-    sudo apt-get install keybinder-3.0
+    # Debian/Ubuntu
+    sudo apt-get install libayatana-appindicator3-1
+    sudo apt-get install libkeybinder-3.0-0
+
+    # Fedora/CentOS
+    sudo dnf install libayatana-appindicator-gtk3
+    sudo dnf install keybinder3
    ```
+
+In GNOME desktop environment, the [AppIndicator](https://github.com/ubuntu/gnome-shell-extension-appindicator) extension may be required to display systray icon
 
 ### Android
 
