@@ -33,7 +33,7 @@ extension DateTimeExtension on DateTime {
     if (minutes >= 1) {
       return "$minutes ${appLocalizations.minutes}${appLocalizations.ago}";
     }
-    return appLocalizations.just;
+    return appLocalizations.justNow;
   }
 
   String get show {

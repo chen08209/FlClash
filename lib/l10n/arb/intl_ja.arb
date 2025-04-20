@@ -70,7 +70,7 @@
   "minutes": "分",
   "seconds": "秒",
   "ago": "前",
-  "just": "たった今",
+  "justNow": "たった今",
   "qrcode": "QRコード",
   "qrcodeDesc": "QRコードをスキャンしてプロファイルを取得",
   "url": "URL",
