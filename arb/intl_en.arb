@@ -391,5 +391,9 @@
   "messageTest": "Message test",
   "messageTestTip": "This is a message.",
   "crashTest": "Crash test",
-  "clearData": "Clear Data"
+  "clearData": "Clear Data",
+  "textScale": "Text Scaling",
+  "internet": "Internet",
+  "systemApp": "System APP",
+  "noNetworkApp": "No network App"
 }

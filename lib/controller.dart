@@ -334,12 +334,7 @@ class AppController {
       try {
         await updateProfile(profile);
       } catch (e) {
-        _ref.read(logsProvider.notifier).addLog(
-              Log(
-                logLevel: LogLevel.info,
-                payload: e.toString(),
-              ),
-            );
+        commonPrint.log(e.toString());
       }
     }
   }

@@ -106,6 +106,7 @@ class AccessControl with _$AccessControl {
     @Default([]) List<String> rejectList,
     @Default(AccessSortType.none) AccessSortType sort,
     @Default(true) bool isFilterSystemApp,
+    @Default(true) bool isFilterNonInternetApp,
   }) = _AccessControl;
 
   factory AccessControl.fromJson(Map<String, Object?> json) =>
@@ -174,6 +175,17 @@ class ProxiesStyle with _$ProxiesStyle {
 }
 
 @freezed
+class TextScale with _$TextScale {
+  const factory TextScale({
+    @Default(false) enable,
+    @Default(1.0) scale,
+  }) = _TextScale;
+
+  factory TextScale.fromJson(Map<String, Object?> json) =>
+      _$TextScaleFromJson(json);
+}
+
+@freezed
 class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
     int? primaryColor,
@@ -181,6 +193,7 @@ class ThemeProps with _$ThemeProps {
     @Default(ThemeMode.dark) ThemeMode themeMode,
     @Default(DynamicSchemeVariant.tonalSpot) DynamicSchemeVariant schemeVariant,
     @Default(false) bool pureBlack,
+    @Default(TextScale()) TextScale textScale,
   }) = _ThemeProps;
 
   factory ThemeProps.fromJson(Map<String, Object?> json) =>

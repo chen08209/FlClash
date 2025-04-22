@@ -293,19 +293,17 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         if (packages.isNotEmpty()) return packages
         packageManager?.getInstalledPackages(PackageManager.GET_META_DATA or PackageManager.GET_PERMISSIONS)
             ?.filter {
-                it.packageName != FlClashApplication.getAppContext().packageName && (
-                        it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
-                                || it.packageName == "android"
-                        )
+                it.packageName != FlClashApplication.getAppContext().packageName || it.packageName == "android"
 
             }?.map {
-            Package(
-                packageName = it.packageName,
-                label = it.applicationInfo?.loadLabel(packageManager).toString(),
-                isSystem = (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM)) == 1,
-                lastUpdateTime = it.lastUpdateTime
-            )
-        }?.let { packages.addAll(it) }
+                Package(
+                    packageName = it.packageName,
+                    label = it.applicationInfo?.loadLabel(packageManager).toString(),
+                    system = (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM)) == 1,
+                    lastUpdateTime = it.lastUpdateTime,
+                    internet = it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
+                )
+            }?.let { packages.addAll(it) }
         return packages
     }
 

@@ -206,7 +206,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                             );
                           },
                           icon: Icon(
-                            size: 16,
+                            size: 16.ap,
                             Icons.info_outline,
                             color: context.colorScheme.onSurfaceVariant,
                           ),

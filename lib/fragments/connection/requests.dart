@@ -73,7 +73,6 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
           updateRequestsThrottler();
         }
       },
-      fireImmediately: true,
     );
   }
 
@@ -149,72 +148,77 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
             _handleTryClearCache(constraints.maxWidth - 40 - (value ? 60 : 0));
             return child!;
           },
-          child: ValueListenableBuilder<ConnectionsState>(
-            valueListenable: _requestsStateNotifier,
-            builder: (_, state, __) {
-              final connections = state.list;
-              if (connections.isEmpty) {
-                return NullStatus(
-                  label: appLocalizations.nullRequestsDesc,
-                );
-              }
-              final items = connections
-                  .map<Widget>(
-                    (connection) => ConnectionItem(
-                      key: Key(connection.id),
-                      connection: connection,
-                      onClickKeyword: (value) {
-                        context.commonScaffoldState?.addKeyword(value);
-                      },
-                    ),
-                  )
-                  .separated(
-                    const Divider(
-                      height: 0,
-                    ),
-                  )
-                  .toList();
-              return Align(
-                alignment: Alignment.topCenter,
-                child: ScrollToEndBox(
-                  controller: _scrollController,
-                  cacheKey: _cacheKey,
-                  dataSource: connections,
-                  child: CommonScrollBar(
+          child: TextScaleNotification(
+            child: ValueListenableBuilder<ConnectionsState>(
+              valueListenable: _requestsStateNotifier,
+              builder: (_, state, __) {
+                final connections = state.list;
+                if (connections.isEmpty) {
+                  return NullStatus(
+                    label: appLocalizations.nullRequestsDesc,
+                  );
+                }
+                final items = connections
+                    .map<Widget>(
+                      (connection) => ConnectionItem(
+                        key: Key(connection.id),
+                        connection: connection,
+                        onClickKeyword: (value) {
+                          context.commonScaffoldState?.addKeyword(value);
+                        },
+                      ),
+                    )
+                    .separated(
+                      const Divider(
+                        height: 0,
+                      ),
+                    )
+                    .toList();
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: ScrollToEndBox(
                     controller: _scrollController,
-                    child: CacheItemExtentListView(
-                      key: _key,
-                      reverse: true,
-                      shrinkWrap: true,
-                      physics: NextClampingScrollPhysics(),
+                    cacheKey: _cacheKey,
+                    dataSource: connections,
+                    child: CommonScrollBar(
                       controller: _scrollController,
-                      itemExtentBuilder: (index) {
-                        final widget = items[index];
-                        if (widget.runtimeType == Divider) {
-                          return 0;
-                        }
-                        final measure = globalState.measure;
-                        final bodyMediumHeight = measure.bodyMediumHeight;
-                        final connection = connections[(index / 2).floor()];
-                        final height = _calcCacheHeight(connection);
-                        return height + bodyMediumHeight + 32;
-                      },
-                      itemBuilder: (_, index) {
-                        return items[index];
-                      },
-                      itemCount: items.length,
-                      keyBuilder: (int index) {
-                        final widget = items[index];
-                        if (widget.runtimeType == Divider) {
-                          return "divider";
-                        }
-                        final connection = connections[(index / 2).floor()];
-                        return connection.id;
-                      },
+                      child: CacheItemExtentListView(
+                        key: _key,
+                        reverse: true,
+                        shrinkWrap: true,
+                        physics: NextClampingScrollPhysics(),
+                        controller: _scrollController,
+                        itemExtentBuilder: (index) {
+                          final widget = items[index];
+                          if (widget.runtimeType == Divider) {
+                            return 0;
+                          }
+                          final measure = globalState.measure;
+                          final bodyMediumHeight = measure.bodyMediumHeight;
+                          final connection = connections[(index / 2).floor()];
+                          final height = _calcCacheHeight(connection);
+                          return height + bodyMediumHeight + 32;
+                        },
+                        itemBuilder: (_, index) {
+                          return items[index];
+                        },
+                        itemCount: items.length,
+                        keyBuilder: (int index) {
+                          final widget = items[index];
+                          if (widget.runtimeType == Divider) {
+                            return "divider";
+                          }
+                          final connection = connections[(index / 2).floor()];
+                          return connection.id;
+                        },
+                      ),
                     ),
                   ),
-                ),
-              );
+                );
+              },
+            ),
+            onNotification: (_) {
+              _key.currentState?.clearCache();
             },
           ),
         );

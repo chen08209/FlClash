@@ -289,7 +289,8 @@ Package _$PackageFromJson(Map<String, dynamic> json) {
 mixin _$Package {
   String get packageName => throw _privateConstructorUsedError;
   String get label => throw _privateConstructorUsedError;
-  bool get isSystem => throw _privateConstructorUsedError;
+  bool get system => throw _privateConstructorUsedError;
+  bool get internet => throw _privateConstructorUsedError;
   int get lastUpdateTime => throw _privateConstructorUsedError;
 
   /// Serializes this Package to a JSON map.
@@ -307,7 +308,11 @@ abstract class $PackageCopyWith<$Res> {
       _$PackageCopyWithImpl<$Res, Package>;
   @useResult
   $Res call(
-      {String packageName, String label, bool isSystem, int lastUpdateTime});
+      {String packageName,
+      String label,
+      bool system,
+      bool internet,
+      int lastUpdateTime});
 }
 
 /// @nodoc
@@ -327,7 +332,8 @@ class _$PackageCopyWithImpl<$Res, $Val extends Package>
   $Res call({
     Object? packageName = null,
     Object? label = null,
-    Object? isSystem = null,
+    Object? system = null,
+    Object? internet = null,
     Object? lastUpdateTime = null,
   }) {
     return _then(_value.copyWith(
@@ -339,9 +345,13 @@ class _$PackageCopyWithImpl<$Res, $Val extends Package>
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
               as String,
-      isSystem: null == isSystem
-          ? _value.isSystem
-          : isSystem // ignore: cast_nullable_to_non_nullable
+      system: null == system
+          ? _value.system
+          : system // ignore: cast_nullable_to_non_nullable
+              as bool,
+      internet: null == internet
+          ? _value.internet
+          : internet // ignore: cast_nullable_to_non_nullable
               as bool,
       lastUpdateTime: null == lastUpdateTime
           ? _value.lastUpdateTime
@@ -359,7 +369,11 @@ abstract class _$$PackageImplCopyWith<$Res> implements $PackageCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String packageName, String label, bool isSystem, int lastUpdateTime});
+      {String packageName,
+      String label,
+      bool system,
+      bool internet,
+      int lastUpdateTime});
 }
 
 /// @nodoc
@@ -377,7 +391,8 @@ class __$$PackageImplCopyWithImpl<$Res>
   $Res call({
     Object? packageName = null,
     Object? label = null,
-    Object? isSystem = null,
+    Object? system = null,
+    Object? internet = null,
     Object? lastUpdateTime = null,
   }) {
     return _then(_$PackageImpl(
@@ -389,9 +404,13 @@ class __$$PackageImplCopyWithImpl<$Res>
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
               as String,
-      isSystem: null == isSystem
-          ? _value.isSystem
-          : isSystem // ignore: cast_nullable_to_non_nullable
+      system: null == system
+          ? _value.system
+          : system // ignore: cast_nullable_to_non_nullable
+              as bool,
+      internet: null == internet
+          ? _value.internet
+          : internet // ignore: cast_nullable_to_non_nullable
               as bool,
       lastUpdateTime: null == lastUpdateTime
           ? _value.lastUpdateTime
@@ -407,7 +426,8 @@ class _$PackageImpl implements _Package {
   const _$PackageImpl(
       {required this.packageName,
       required this.label,
-      required this.isSystem,
+      required this.system,
+      required this.internet,
       required this.lastUpdateTime});
 
   factory _$PackageImpl.fromJson(Map<String, dynamic> json) =>
@@ -418,13 +438,15 @@ class _$PackageImpl implements _Package {
   @override
   final String label;
   @override
-  final bool isSystem;
+  final bool system;
+  @override
+  final bool internet;
   @override
   final int lastUpdateTime;
 
   @override
   String toString() {
-    return 'Package(packageName: $packageName, label: $label, isSystem: $isSystem, lastUpdateTime: $lastUpdateTime)';
+    return 'Package(packageName: $packageName, label: $label, system: $system, internet: $internet, lastUpdateTime: $lastUpdateTime)';
   }
 
   @override
@@ -435,16 +457,17 @@ class _$PackageImpl implements _Package {
             (identical(other.packageName, packageName) ||
                 other.packageName == packageName) &&
             (identical(other.label, label) || other.label == label) &&
-            (identical(other.isSystem, isSystem) ||
-                other.isSystem == isSystem) &&
+            (identical(other.system, system) || other.system == system) &&
+            (identical(other.internet, internet) ||
+                other.internet == internet) &&
             (identical(other.lastUpdateTime, lastUpdateTime) ||
                 other.lastUpdateTime == lastUpdateTime));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, packageName, label, isSystem, lastUpdateTime);
+  int get hashCode => Object.hash(
+      runtimeType, packageName, label, system, internet, lastUpdateTime);
 
   /// Create a copy of Package
   /// with the given fields replaced by the non-null parameter values.
@@ -466,7 +489,8 @@ abstract class _Package implements Package {
   const factory _Package(
       {required final String packageName,
       required final String label,
-      required final bool isSystem,
+      required final bool system,
+      required final bool internet,
       required final int lastUpdateTime}) = _$PackageImpl;
 
   factory _Package.fromJson(Map<String, dynamic> json) = _$PackageImpl.fromJson;
@@ -476,7 +500,9 @@ abstract class _Package implements Package {
   @override
   String get label;
   @override
-  bool get isSystem;
+  bool get system;
+  @override
+  bool get internet;
   @override
   int get lastUpdateTime;
 
@@ -1089,6 +1115,203 @@ abstract class _Connection implements Connection {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ConnectionImplCopyWith<_$ConnectionImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+Log _$LogFromJson(Map<String, dynamic> json) {
+  return _Log.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Log {
+  @JsonKey(name: "LogLevel")
+  LogLevel get logLevel => throw _privateConstructorUsedError;
+  @JsonKey(name: "Payload")
+  String get payload => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _logDateTime)
+  String get dateTime => throw _privateConstructorUsedError;
+
+  /// Serializes this Log to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Log
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $LogCopyWith<Log> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $LogCopyWith<$Res> {
+  factory $LogCopyWith(Log value, $Res Function(Log) then) =
+      _$LogCopyWithImpl<$Res, Log>;
+  @useResult
+  $Res call(
+      {@JsonKey(name: "LogLevel") LogLevel logLevel,
+      @JsonKey(name: "Payload") String payload,
+      @JsonKey(fromJson: _logDateTime) String dateTime});
+}
+
+/// @nodoc
+class _$LogCopyWithImpl<$Res, $Val extends Log> implements $LogCopyWith<$Res> {
+  _$LogCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Log
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? logLevel = null,
+    Object? payload = null,
+    Object? dateTime = null,
+  }) {
+    return _then(_value.copyWith(
+      logLevel: null == logLevel
+          ? _value.logLevel
+          : logLevel // ignore: cast_nullable_to_non_nullable
+              as LogLevel,
+      payload: null == payload
+          ? _value.payload
+          : payload // ignore: cast_nullable_to_non_nullable
+              as String,
+      dateTime: null == dateTime
+          ? _value.dateTime
+          : dateTime // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$LogImplCopyWith<$Res> implements $LogCopyWith<$Res> {
+  factory _$$LogImplCopyWith(_$LogImpl value, $Res Function(_$LogImpl) then) =
+      __$$LogImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(name: "LogLevel") LogLevel logLevel,
+      @JsonKey(name: "Payload") String payload,
+      @JsonKey(fromJson: _logDateTime) String dateTime});
+}
+
+/// @nodoc
+class __$$LogImplCopyWithImpl<$Res> extends _$LogCopyWithImpl<$Res, _$LogImpl>
+    implements _$$LogImplCopyWith<$Res> {
+  __$$LogImplCopyWithImpl(_$LogImpl _value, $Res Function(_$LogImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Log
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? logLevel = null,
+    Object? payload = null,
+    Object? dateTime = null,
+  }) {
+    return _then(_$LogImpl(
+      logLevel: null == logLevel
+          ? _value.logLevel
+          : logLevel // ignore: cast_nullable_to_non_nullable
+              as LogLevel,
+      payload: null == payload
+          ? _value.payload
+          : payload // ignore: cast_nullable_to_non_nullable
+              as String,
+      dateTime: null == dateTime
+          ? _value.dateTime
+          : dateTime // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$LogImpl implements _Log {
+  const _$LogImpl(
+      {@JsonKey(name: "LogLevel") this.logLevel = LogLevel.app,
+      @JsonKey(name: "Payload") this.payload = "",
+      @JsonKey(fromJson: _logDateTime) required this.dateTime});
+
+  factory _$LogImpl.fromJson(Map<String, dynamic> json) =>
+      _$$LogImplFromJson(json);
+
+  @override
+  @JsonKey(name: "LogLevel")
+  final LogLevel logLevel;
+  @override
+  @JsonKey(name: "Payload")
+  final String payload;
+  @override
+  @JsonKey(fromJson: _logDateTime)
+  final String dateTime;
+
+  @override
+  String toString() {
+    return 'Log(logLevel: $logLevel, payload: $payload, dateTime: $dateTime)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$LogImpl &&
+            (identical(other.logLevel, logLevel) ||
+                other.logLevel == logLevel) &&
+            (identical(other.payload, payload) || other.payload == payload) &&
+            (identical(other.dateTime, dateTime) ||
+                other.dateTime == dateTime));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, logLevel, payload, dateTime);
+
+  /// Create a copy of Log
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$LogImplCopyWith<_$LogImpl> get copyWith =>
+      __$$LogImplCopyWithImpl<_$LogImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$LogImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Log implements Log {
+  const factory _Log(
+          {@JsonKey(name: "LogLevel") final LogLevel logLevel,
+          @JsonKey(name: "Payload") final String payload,
+          @JsonKey(fromJson: _logDateTime) required final String dateTime}) =
+      _$LogImpl;
+
+  factory _Log.fromJson(Map<String, dynamic> json) = _$LogImpl.fromJson;
+
+  @override
+  @JsonKey(name: "LogLevel")
+  LogLevel get logLevel;
+  @override
+  @JsonKey(name: "Payload")
+  String get payload;
+  @override
+  @JsonKey(fromJson: _logDateTime)
+  String get dateTime;
+
+  /// Create a copy of Log
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$LogImplCopyWith<_$LogImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

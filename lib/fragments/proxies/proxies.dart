@@ -78,7 +78,7 @@ class _ProxiesFragmentState extends ConsumerState<ProxiesFragment>
                 return AdaptiveSheetScaffold(
                   type: type,
                   body: const ProxiesSetting(),
-                  title: appLocalizations.proxiesSetting,
+                  title: appLocalizations.settings,
                 );
               },
             );

@@ -113,15 +113,11 @@ class _AccessFragmentState extends ConsumerState<AccessFragment> {
   }
 
   _intelligentSelected() async {
-    final appState = globalState.appState;
-    final config = globalState.config;
-    final accessControl = config.vpnProps.accessControl;
-    final packageNames = appState.packages
-        .where(
-          (item) =>
-              accessControl.isFilterSystemApp ? item.isSystem == false : true,
-        )
-        .map((item) => item.packageName);
+    final packageNames = ref.read(
+      packageListSelectorStateProvider.select(
+        (state) => state.list.map((item) => item.packageName),
+      ),
+    );
     final commonScaffoldState = context.commonScaffoldState;
     if (commonScaffoldState?.mounted != true) return;
     final selectedPackageNames =
@@ -194,7 +190,7 @@ class _AccessFragmentState extends ConsumerState<AccessFragment> {
     final state = ref.watch(packageListSelectorStateProvider);
     final accessControl = state.accessControl;
     final accessControlMode = accessControl.mode;
-    final packages = state.getList(
+    final packages = state.getSortList(
       accessControlMode == AccessControlMode.acceptSelected
           ? acceptList
           : rejectList,
@@ -482,14 +478,20 @@ class AccessControlSearchDelegate extends SearchDelegate {
     final lowQuery = query.toLowerCase();
     return Consumer(
       builder: (context, ref, __) {
-        final state = ref.watch(packageListSelectorStateProvider);
-        final accessControl = state.accessControl;
-        final accessControlMode = accessControl.mode;
-        final packages = state.getList(
-          accessControlMode == AccessControlMode.acceptSelected
-              ? acceptList
-              : rejectList,
+        final vm3 = ref.watch(
+          packageListSelectorStateProvider.select(
+            (state) => VM3(
+              a: state.getSortList(
+                state.accessControl.mode == AccessControlMode.acceptSelected
+                    ? acceptList
+                    : rejectList,
+              ),
+              b: state.accessControl.enable,
+              c: state.accessControl.currentList,
+            ),
+          ),
         );
+        final packages = vm3.a;
         final queryPackages = packages
             .where(
               (package) =>
@@ -497,8 +499,8 @@ class AccessControlSearchDelegate extends SearchDelegate {
                   package.packageName.contains(lowQuery),
             )
             .toList();
-        final isAccessControl = state.accessControl.enable;
-        final currentList = accessControl.currentList;
+        final isAccessControl = vm3.b;
+        final currentList = vm3.c;
         final packageNameList = packages.map((e) => e.packageName).toList();
         final valueList = currentList.intersection(packageNameList);
         return DisabledMask(
@@ -576,13 +578,6 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
       AccessSortType.none => Icons.sort,
       AccessSortType.name => Icons.sort_by_alpha,
       AccessSortType.time => Icons.timeline,
-    };
-  }
-
-  String _getTextWithIsFilterSystemApp(bool isFilterSystemApp) {
-    return switch (isFilterSystemApp) {
-      true => appLocalizations.onlyOtherApps,
-      false => appLocalizations.allApps,
     };
   }
 
@@ -673,25 +668,39 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
           scrollDirection: Axis.horizontal,
           child: Consumer(
             builder: (_, ref, __) {
-              final isFilterSystemApp = ref.watch(
-                vpnSettingProvider
-                    .select((state) => state.accessControl.isFilterSystemApp),
+              final vm2 = ref.watch(
+                vpnSettingProvider.select(
+                  (state) => VM2(
+                    a: state.accessControl.isFilterSystemApp,
+                    b: state.accessControl.isFilterNonInternetApp,
+                  ),
+                ),
               );
               return Wrap(
                 spacing: 16,
                 children: [
-                  for (final item in [false, true])
-                    SettingTextCard(
-                      _getTextWithIsFilterSystemApp(item),
-                      isSelected: isFilterSystemApp == item,
-                      onPressed: () {
-                        ref.read(vpnSettingProvider.notifier).updateState(
-                              (state) => state.copyWith.accessControl(
-                                isFilterSystemApp: item,
-                              ),
-                            );
-                      },
-                    )
+                  SettingTextCard(
+                    appLocalizations.systemApp,
+                    isSelected: vm2.a == false,
+                    onPressed: () {
+                      ref.read(vpnSettingProvider.notifier).updateState(
+                            (state) => state.copyWith.accessControl(
+                              isFilterSystemApp: !vm2.a,
+                            ),
+                          );
+                    },
+                  ),
+                  SettingTextCard(
+                    appLocalizations.noNetworkApp,
+                    isSelected: vm2.b == false,
+                    onPressed: () {
+                      ref.read(vpnSettingProvider.notifier).updateState(
+                            (state) => state.copyWith.accessControl(
+                              isFilterNonInternetApp: !vm2.b,
+                            ),
+                          );
+                    },
+                  )
                 ],
               );
             },

@@ -84,7 +84,6 @@ fun Service.startForeground(notification: Notification) {
         }
     }
 
-    Log.d("[FlClash]","startForeground===>")
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
         try {
             startForeground(

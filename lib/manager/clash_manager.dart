@@ -73,7 +73,7 @@ class _ClashContainerState extends ConsumerState<ClashManager>
   void onLog(Log log) {
     ref.watch(logsProvider.notifier).addLog(log);
     if (log.logLevel == LogLevel.error) {
-      globalState.showNotifier(log.payload ?? '');
+      globalState.showNotifier(log.payload);
     }
     super.onLog(log);
   }

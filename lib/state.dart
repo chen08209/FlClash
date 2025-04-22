@@ -23,6 +23,7 @@ typedef UpdateTasks = List<FutureOr Function()>;
 class GlobalState {
   static GlobalState? _instance;
   Map<Key, double> cacheScrollPosition = {};
+  Map<Key, FixedMap<String, double>> cacheHeightMap = {};
   bool isService = false;
   Timer? timer;
   Timer? groupsUpdateTimer;
@@ -66,7 +67,8 @@ class GlobalState {
   _initDynamicColor() async {
     try {
       corePalette = await DynamicColorPlugin.getCorePalette();
-      accentColor = await DynamicColorPlugin.getAccentColor() ?? Color(defaultPrimaryColor);
+      accentColor = await DynamicColorPlugin.getAccentColor() ??
+          Color(defaultPrimaryColor);
     } catch (_) {}
   }
 
