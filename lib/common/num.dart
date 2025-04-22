@@ -1,3 +1,4 @@
+import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,10 @@ extension NumExt on num {
       }
     }
     return formatted;
+  }
+
+  double get ap {
+    return this * (1 + (globalState.theme.textScaleFactor - 1) * 0.5);
   }
 }
 

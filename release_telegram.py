@@ -4,6 +4,7 @@ import requests
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TAG = os.getenv("TAG")
+RUN_ID = os.getenv("RUN_ID")
 
 IS_STABLE = "-" not in TAG
 
@@ -45,7 +46,8 @@ if TAG:
 
 if IS_STABLE:
     text += f"\nhttps://github.com/chen08209/FlClash/releases/tag/{TAG}\n"
-
+else:
+    text += f"\nhttps://github.com/chen08209/FlClash/actions/runs/{RUN_ID}\n"
 
 if os.path.exists(release):
     text += "\n"

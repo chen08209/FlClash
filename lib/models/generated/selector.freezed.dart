@@ -328,6 +328,193 @@ abstract class _VM3<A, B, C> implements VM3<A, B, C> {
 }
 
 /// @nodoc
+mixin _$VM4<A, B, C, D> {
+  A get a => throw _privateConstructorUsedError;
+  B get b => throw _privateConstructorUsedError;
+  C get c => throw _privateConstructorUsedError;
+  D get d => throw _privateConstructorUsedError;
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $VM4CopyWith<A, B, C, D, VM4<A, B, C, D>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $VM4CopyWith<A, B, C, D, $Res> {
+  factory $VM4CopyWith(
+          VM4<A, B, C, D> value, $Res Function(VM4<A, B, C, D>) then) =
+      _$VM4CopyWithImpl<A, B, C, D, $Res, VM4<A, B, C, D>>;
+  @useResult
+  $Res call({A a, B b, C c, D d});
+}
+
+/// @nodoc
+class _$VM4CopyWithImpl<A, B, C, D, $Res, $Val extends VM4<A, B, C, D>>
+    implements $VM4CopyWith<A, B, C, D, $Res> {
+  _$VM4CopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? a = freezed,
+    Object? b = freezed,
+    Object? c = freezed,
+    Object? d = freezed,
+  }) {
+    return _then(_value.copyWith(
+      a: freezed == a
+          ? _value.a
+          : a // ignore: cast_nullable_to_non_nullable
+              as A,
+      b: freezed == b
+          ? _value.b
+          : b // ignore: cast_nullable_to_non_nullable
+              as B,
+      c: freezed == c
+          ? _value.c
+          : c // ignore: cast_nullable_to_non_nullable
+              as C,
+      d: freezed == d
+          ? _value.d
+          : d // ignore: cast_nullable_to_non_nullable
+              as D,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$VM4ImplCopyWith<A, B, C, D, $Res>
+    implements $VM4CopyWith<A, B, C, D, $Res> {
+  factory _$$VM4ImplCopyWith(_$VM4Impl<A, B, C, D> value,
+          $Res Function(_$VM4Impl<A, B, C, D>) then) =
+      __$$VM4ImplCopyWithImpl<A, B, C, D, $Res>;
+  @override
+  @useResult
+  $Res call({A a, B b, C c, D d});
+}
+
+/// @nodoc
+class __$$VM4ImplCopyWithImpl<A, B, C, D, $Res>
+    extends _$VM4CopyWithImpl<A, B, C, D, $Res, _$VM4Impl<A, B, C, D>>
+    implements _$$VM4ImplCopyWith<A, B, C, D, $Res> {
+  __$$VM4ImplCopyWithImpl(
+      _$VM4Impl<A, B, C, D> _value, $Res Function(_$VM4Impl<A, B, C, D>) _then)
+      : super(_value, _then);
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? a = freezed,
+    Object? b = freezed,
+    Object? c = freezed,
+    Object? d = freezed,
+  }) {
+    return _then(_$VM4Impl<A, B, C, D>(
+      a: freezed == a
+          ? _value.a
+          : a // ignore: cast_nullable_to_non_nullable
+              as A,
+      b: freezed == b
+          ? _value.b
+          : b // ignore: cast_nullable_to_non_nullable
+              as B,
+      c: freezed == c
+          ? _value.c
+          : c // ignore: cast_nullable_to_non_nullable
+              as C,
+      d: freezed == d
+          ? _value.d
+          : d // ignore: cast_nullable_to_non_nullable
+              as D,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$VM4Impl<A, B, C, D> implements _VM4<A, B, C, D> {
+  const _$VM4Impl(
+      {required this.a, required this.b, required this.c, required this.d});
+
+  @override
+  final A a;
+  @override
+  final B b;
+  @override
+  final C c;
+  @override
+  final D d;
+
+  @override
+  String toString() {
+    return 'VM4<$A, $B, $C, $D>(a: $a, b: $b, c: $c, d: $d)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$VM4Impl<A, B, C, D> &&
+            const DeepCollectionEquality().equals(other.a, a) &&
+            const DeepCollectionEquality().equals(other.b, b) &&
+            const DeepCollectionEquality().equals(other.c, c) &&
+            const DeepCollectionEquality().equals(other.d, d));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(a),
+      const DeepCollectionEquality().hash(b),
+      const DeepCollectionEquality().hash(c),
+      const DeepCollectionEquality().hash(d));
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$VM4ImplCopyWith<A, B, C, D, _$VM4Impl<A, B, C, D>> get copyWith =>
+      __$$VM4ImplCopyWithImpl<A, B, C, D, _$VM4Impl<A, B, C, D>>(
+          this, _$identity);
+}
+
+abstract class _VM4<A, B, C, D> implements VM4<A, B, C, D> {
+  const factory _VM4(
+      {required final A a,
+      required final B b,
+      required final C c,
+      required final D d}) = _$VM4Impl<A, B, C, D>;
+
+  @override
+  A get a;
+  @override
+  B get b;
+  @override
+  C get c;
+  @override
+  D get d;
+
+  /// Create a copy of VM4
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$VM4ImplCopyWith<A, B, C, D, _$VM4Impl<A, B, C, D>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$StartButtonSelectorState {
   bool get isInit => throw _privateConstructorUsedError;
   bool get hasProfile => throw _privateConstructorUsedError;

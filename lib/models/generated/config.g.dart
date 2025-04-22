@@ -59,6 +59,7 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.trafficUsage: 'trafficUsage',
   DashboardWidget.networkDetection: 'networkDetection',
   DashboardWidget.tunButton: 'tunButton',
+  DashboardWidget.vpnButton: 'vpnButton',
   DashboardWidget.systemProxyButton: 'systemProxyButton',
   DashboardWidget.intranetIp: 'intranetIp',
   DashboardWidget.memoryInfo: 'memoryInfo',
@@ -80,6 +81,7 @@ _$AccessControlImpl _$$AccessControlImplFromJson(Map<String, dynamic> json) =>
       sort: $enumDecodeNullable(_$AccessSortTypeEnumMap, json['sort']) ??
           AccessSortType.none,
       isFilterSystemApp: json['isFilterSystemApp'] as bool? ?? true,
+      isFilterNonInternetApp: json['isFilterNonInternetApp'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$$AccessControlImplToJson(_$AccessControlImpl instance) =>
@@ -90,6 +92,7 @@ Map<String, dynamic> _$$AccessControlImplToJson(_$AccessControlImpl instance) =>
       'rejectList': instance.rejectList,
       'sort': _$AccessSortTypeEnumMap[instance.sort]!,
       'isFilterSystemApp': instance.isFilterSystemApp,
+      'isFilterNonInternetApp': instance.isFilterNonInternetApp,
     };
 
 const _$AccessControlModeEnumMap = {
@@ -222,6 +225,18 @@ const _$ProxyCardTypeEnumMap = {
   ProxyCardType.min: 'min',
 };
 
+_$TextScaleImpl _$$TextScaleImplFromJson(Map<String, dynamic> json) =>
+    _$TextScaleImpl(
+      enable: json['enable'] ?? false,
+      scale: json['scale'] ?? 1.0,
+    );
+
+Map<String, dynamic> _$$TextScaleImplToJson(_$TextScaleImpl instance) =>
+    <String, dynamic>{
+      'enable': instance.enable,
+      'scale': instance.scale,
+    };
+
 _$ThemePropsImpl _$$ThemePropsImplFromJson(Map<String, dynamic> json) =>
     _$ThemePropsImpl(
       primaryColor: (json['primaryColor'] as num?)?.toInt(),
@@ -235,6 +250,9 @@ _$ThemePropsImpl _$$ThemePropsImplFromJson(Map<String, dynamic> json) =>
               _$DynamicSchemeVariantEnumMap, json['schemeVariant']) ??
           DynamicSchemeVariant.tonalSpot,
       pureBlack: json['pureBlack'] as bool? ?? false,
+      textScale: json['textScale'] == null
+          ? const TextScale()
+          : TextScale.fromJson(json['textScale'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$ThemePropsImplToJson(_$ThemePropsImpl instance) =>
@@ -244,6 +262,7 @@ Map<String, dynamic> _$$ThemePropsImplToJson(_$ThemePropsImpl instance) =>
       'themeMode': _$ThemeModeEnumMap[instance.themeMode]!,
       'schemeVariant': _$DynamicSchemeVariantEnumMap[instance.schemeVariant]!,
       'pureBlack': instance.pureBlack,
+      'textScale': instance.textScale,
     };
 
 const _$ThemeModeEnumMap = {

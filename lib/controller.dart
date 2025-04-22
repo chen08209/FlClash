@@ -334,12 +334,7 @@ class AppController {
       try {
         await updateProfile(profile);
       } catch (e) {
-        _ref.read(logsProvider.notifier).addLog(
-              Log(
-                logLevel: LogLevel.info,
-                payload: e.toString(),
-              ),
-            );
+        commonPrint.log(e.toString());
       }
     }
   }
@@ -946,29 +941,34 @@ class AppController {
 
   _recovery(Config config, RecoveryOption recoveryOption) {
     final profiles = config.profiles;
-    for (final profile in profiles) {
-      _ref.read(profilesProvider.notifier).setProfile(profile);
+    final oldProfiles = List.from(globalState.config.profiles);
+    _ref.read(profilesProvider.notifier).value = profiles;
+    for (final profile in oldProfiles) {
+      _ref.read(profilesProvider.notifier).setProfile(
+            profile,
+            force: false,
+          );
     }
     final onlyProfiles = recoveryOption == RecoveryOption.onlyProfiles;
-    if (onlyProfiles) {
-      final currentProfile = _ref.read(currentProfileProvider);
-      if (currentProfile != null) {
-        _ref.read(currentProfileIdProvider.notifier).value = profiles.first.id;
-      }
-      return;
+    if (!onlyProfiles) {
+      _ref.read(patchClashConfigProvider.notifier).value =
+          config.patchClashConfig;
+      _ref.read(appSettingProvider.notifier).value = config.appSetting;
+      _ref.read(currentProfileIdProvider.notifier).value =
+          config.currentProfileId;
+      _ref.read(appDAVSettingProvider.notifier).value = config.dav;
+      _ref.read(themeSettingProvider.notifier).value = config.themeProps;
+      _ref.read(windowSettingProvider.notifier).value = config.windowProps;
+      _ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
+      _ref.read(proxiesStyleSettingProvider.notifier).value =
+          config.proxiesStyle;
+      _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
+      _ref.read(networkSettingProvider.notifier).value = config.networkProps;
+      _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
     }
-    _ref.read(patchClashConfigProvider.notifier).value =
-        config.patchClashConfig;
-    _ref.read(appSettingProvider.notifier).value = config.appSetting;
-    _ref.read(currentProfileIdProvider.notifier).value =
-        config.currentProfileId;
-    _ref.read(appDAVSettingProvider.notifier).value = config.dav;
-    _ref.read(themeSettingProvider.notifier).value = config.themeProps;
-    _ref.read(windowSettingProvider.notifier).value = config.windowProps;
-    _ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
-    _ref.read(proxiesStyleSettingProvider.notifier).value = config.proxiesStyle;
-    _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
-    _ref.read(networkSettingProvider.notifier).value = config.networkProps;
-    _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
+    final currentProfile = _ref.read(currentProfileProvider);
+    if (currentProfile == null) {
+      _ref.read(currentProfileIdProvider.notifier).value = profiles.first.id;
+    }
   }
 }

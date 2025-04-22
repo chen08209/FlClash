@@ -3054,6 +3054,31 @@ class AppLocalizations {
   String get clearData {
     return Intl.message('Clear Data', name: 'clearData', desc: '', args: []);
   }
+
+  /// `Text Scaling`
+  String get textScale {
+    return Intl.message('Text Scaling', name: 'textScale', desc: '', args: []);
+  }
+
+  /// `Internet`
+  String get internet {
+    return Intl.message('Internet', name: 'internet', desc: '', args: []);
+  }
+
+  /// `System APP`
+  String get systemApp {
+    return Intl.message('System APP', name: 'systemApp', desc: '', args: []);
+  }
+
+  /// `No network App`
+  String get noNetworkApp {
+    return Intl.message(
+      'No network App',
+      name: 'noNetworkApp',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

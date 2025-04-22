@@ -391,5 +391,10 @@
   "messageTest": "消息测试",
   "messageTestTip": "这是一条消息。",
   "crashTest": "崩溃测试",
-  "clearData": "清除数据"
+  "clearData": "清除数据",
+  "zoom": "缩放",
+  "textScale": "文本缩放",
+  "internet": "互联网",
+  "systemApp": "系统应用",
+  "noNetworkApp": "无网络应用"
 }

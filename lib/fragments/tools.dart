@@ -310,7 +310,7 @@ class _DeveloperItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const Icon(Icons.developer_mode),
+      leading: const Icon(Icons.developer_board),
       title: Text(appLocalizations.developerMode),
       delegate: OpenDelegate(
         title: appLocalizations.developerMode,

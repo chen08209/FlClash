@@ -190,43 +190,46 @@ class CommonNavigationBar extends ConsumerWidget {
       child: Column(
         children: [
           Expanded(
-            child: SingleChildScrollView(
-              child: IntrinsicHeight(
-                child: NavigationRail(
-                  backgroundColor: context.colorScheme.surfaceContainer,
-                  selectedIconTheme: IconThemeData(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                  unselectedIconTheme: IconThemeData(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                  selectedLabelTextStyle:
-                      context.textTheme.labelLarge!.copyWith(
-                    color: context.colorScheme.onSurface,
-                  ),
-                  unselectedLabelTextStyle:
-                      context.textTheme.labelLarge!.copyWith(
-                    color: context.colorScheme.onSurface,
-                  ),
-                  destinations: navigationItems
-                      .map(
-                        (e) => NavigationRailDestination(
-                          icon: e.icon,
-                          label: Text(
-                            Intl.message(e.label.name),
+            child: ScrollConfiguration(
+              behavior: HiddenBarScrollBehavior(),
+              child: SingleChildScrollView(
+                child: IntrinsicHeight(
+                  child: NavigationRail(
+                    backgroundColor: context.colorScheme.surfaceContainer,
+                    selectedIconTheme: IconThemeData(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                    unselectedIconTheme: IconThemeData(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                    selectedLabelTextStyle:
+                        context.textTheme.labelLarge!.copyWith(
+                      color: context.colorScheme.onSurface,
+                    ),
+                    unselectedLabelTextStyle:
+                        context.textTheme.labelLarge!.copyWith(
+                      color: context.colorScheme.onSurface,
+                    ),
+                    destinations: navigationItems
+                        .map(
+                          (e) => NavigationRailDestination(
+                            icon: e.icon,
+                            label: Text(
+                              Intl.message(e.label.name),
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                  onDestinationSelected: (index) {
-                    globalState.appController
-                        .toPage(navigationItems[index].label);
-                  },
-                  extended: false,
-                  selectedIndex: currentIndex,
-                  labelType: showLabel
-                      ? NavigationRailLabelType.all
-                      : NavigationRailLabelType.none,
+                        )
+                        .toList(),
+                    onDestinationSelected: (index) {
+                      globalState.appController
+                          .toPage(navigationItems[index].label);
+                    },
+                    extended: false,
+                    selectedIndex: currentIndex,
+                    labelType: showLabel
+                        ? NavigationRailLabelType.all
+                        : NavigationRailLabelType.none,
+                  ),
                 ),
               ),
             ),

@@ -103,8 +103,8 @@ class _DashboardFragmentState extends ConsumerState<DashboardFragment>
         child: SuperGrid(
           key: key,
           crossAxisCount: columns,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
+          crossAxisSpacing: 16.ap,
+          mainAxisSpacing: 16.ap,
           children: [
             ...dashboardState.dashboardWidgets
                 .where(

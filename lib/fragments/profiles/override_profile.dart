@@ -228,7 +228,7 @@ class _OverrideProfileState extends State<OverrideProfile> {
                               message: TextSpan(
                                 text: appLocalizations.saveTip,
                               ),
-                              confirmText: appLocalizations.tip,
+                              confirmText: appLocalizations.save,
                             );
                             if (res != true) {
                               return;

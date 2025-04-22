@@ -3,6 +3,7 @@ package com.follow.clash.models
 data class Package(
     val packageName: String,
     val label: String,
-    val isSystem: Boolean,
+    val system: Boolean,
+    val internet: Boolean,
     val lastUpdateTime: Long,
 )

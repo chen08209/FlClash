@@ -35,19 +35,6 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
       logs: globalState.appState.logs.list,
     );
     ref.listenManual(
-      logsProvider.select((state) => state.list),
-      (prev, next) {
-        if (prev != next) {
-          final isEquality = logListEquality.equals(prev, next);
-          if (!isEquality) {
-            _logs = next;
-            updateLogsThrottler();
-          }
-        }
-      },
-      fireImmediately: true,
-    );
-    ref.listenManual(
       isCurrentPageProvider(
         PageLabel.logs,
         handler: (pageLabel, viewMode) =>
@@ -59,6 +46,18 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
         }
       },
       fireImmediately: true,
+    );
+    ref.listenManual(
+      logsProvider.select((state) => state.list),
+      (prev, next) {
+        if (prev != next) {
+          final isEquality = logListEquality.equals(prev, next);
+          if (!isEquality) {
+            _logs = next;
+            updateLogsThrottler();
+          }
+        }
+      },
     );
   }
 
@@ -123,7 +122,7 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
     final height = globalState.measure
         .computeTextSize(
           Text(
-            log.payload ?? "",
+            log.payload,
             style: globalState.appController.context.textTheme.bodyLarge,
           ),
           maxWidth: _currentMaxWidth,
@@ -154,8 +153,7 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
     return LayoutBuilder(
       builder: (_, constraints) {
         _handleTryClearCache(constraints.maxWidth - 40);
-        return Align(
-          alignment: Alignment.topCenter,
+        return TextScaleNotification(
           child: ValueListenableBuilder<LogsState>(
             valueListenable: _logsStateNotifier,
             builder: (_, state, __) {
@@ -168,7 +166,7 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
               final items = logs
                   .map<Widget>(
                     (log) => LogItem(
-                      key: Key(log.dateTime.toString()),
+                      key: Key(log.dateTime),
                       log: log,
                       onClick: (value) {
                         context.commonScaffoldState?.addKeyword(value);
@@ -181,43 +179,49 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
                     ),
                   )
                   .toList();
-              return ScrollToEndBox<Log>(
-                controller: _scrollController,
-                cacheKey: _cacheKey,
-                dataSource: logs,
-                child: CommonScrollBar(
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ScrollToEndBox<Log>(
                   controller: _scrollController,
-                  child: CacheItemExtentListView(
-                    key: _key,
-                    reverse: true,
-                    shrinkWrap: true,
-                    physics: NextClampingScrollPhysics(),
+                  cacheKey: _cacheKey,
+                  dataSource: logs,
+                  child: CommonScrollBar(
                     controller: _scrollController,
-                    itemBuilder: (_, index) {
-                      return items[index];
-                    },
-                    itemExtentBuilder: (index) {
-                      final item = items[index];
-                      if (item.runtimeType == Divider) {
-                        return 0;
-                      }
-                      final log = logs[(index / 2).floor()];
-                      return _getItemHeight(log);
-                    },
-                    itemCount: items.length,
-                    keyBuilder: (int index) {
-                      final item = items[index];
-                      if (item.runtimeType == Divider) {
-                        return "divider";
-                      }
-                      final log = logs[(index / 2).floor()];
-                      return log.payload ?? "";
-                    },
+                    child: CacheItemExtentListView(
+                      key: _key,
+                      reverse: true,
+                      shrinkWrap: true,
+                      physics: NextClampingScrollPhysics(),
+                      controller: _scrollController,
+                      itemBuilder: (_, index) {
+                        return items[index];
+                      },
+                      itemExtentBuilder: (index) {
+                        final item = items[index];
+                        if (item.runtimeType == Divider) {
+                          return 0;
+                        }
+                        final log = logs[(index / 2).floor()];
+                        return _getItemHeight(log);
+                      },
+                      itemCount: items.length,
+                      keyBuilder: (int index) {
+                        final item = items[index];
+                        if (item.runtimeType == Divider) {
+                          return "divider";
+                        }
+                        final log = logs[(index / 2).floor()];
+                        return log.payload;
+                      },
+                    ),
                   ),
                 ),
               );
             },
           ),
+          onNotification: (_) {
+            _key.currentState?.clearCache();
+          },
         );
       },
     );
@@ -242,14 +246,14 @@ class LogItem extends StatelessWidget {
         vertical: 4,
       ),
       title: SelectableText(
-        log.payload ?? '',
+        log.payload,
         style: context.textTheme.bodyLarge,
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SelectableText(
-            "${log.dateTime}",
+            log.dateTime,
             style: context.textTheme.bodySmall?.copyWith(
               color: context.colorScheme.primary,
             ),

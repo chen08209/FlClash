@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 class CommonTheme {
   final BuildContext context;
   final Map<String, Color> _colorMap;
+  final double textScaleFactor;
 
-  CommonTheme.of(this.context) : _colorMap = {};
+  CommonTheme.of(
+    this.context,
+    this.textScaleFactor,
+  ) : _colorMap = {};
 
   Color get darkenSecondaryContainer {
     return _colorMap.getCacheValue(
