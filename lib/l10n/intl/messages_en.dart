@@ -637,6 +637,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Enabling it will allow TCP concurrency",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test url"),
+    "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),
     "themeDesc": MessageLookupByLibrary.simpleMessage(

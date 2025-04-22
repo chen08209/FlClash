@@ -1740,6 +1740,170 @@ abstract class _ProxiesStyle implements ProxiesStyle {
       throw _privateConstructorUsedError;
 }
 
+TextScale _$TextScaleFromJson(Map<String, dynamic> json) {
+  return _TextScale.fromJson(json);
+}
+
+/// @nodoc
+mixin _$TextScale {
+  dynamic get enable => throw _privateConstructorUsedError;
+  dynamic get scale => throw _privateConstructorUsedError;
+
+  /// Serializes this TextScale to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of TextScale
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $TextScaleCopyWith<TextScale> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TextScaleCopyWith<$Res> {
+  factory $TextScaleCopyWith(TextScale value, $Res Function(TextScale) then) =
+      _$TextScaleCopyWithImpl<$Res, TextScale>;
+  @useResult
+  $Res call({dynamic enable, dynamic scale});
+}
+
+/// @nodoc
+class _$TextScaleCopyWithImpl<$Res, $Val extends TextScale>
+    implements $TextScaleCopyWith<$Res> {
+  _$TextScaleCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of TextScale
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? enable = freezed,
+    Object? scale = freezed,
+  }) {
+    return _then(_value.copyWith(
+      enable: freezed == enable
+          ? _value.enable
+          : enable // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      scale: freezed == scale
+          ? _value.scale
+          : scale // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$TextScaleImplCopyWith<$Res>
+    implements $TextScaleCopyWith<$Res> {
+  factory _$$TextScaleImplCopyWith(
+          _$TextScaleImpl value, $Res Function(_$TextScaleImpl) then) =
+      __$$TextScaleImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({dynamic enable, dynamic scale});
+}
+
+/// @nodoc
+class __$$TextScaleImplCopyWithImpl<$Res>
+    extends _$TextScaleCopyWithImpl<$Res, _$TextScaleImpl>
+    implements _$$TextScaleImplCopyWith<$Res> {
+  __$$TextScaleImplCopyWithImpl(
+      _$TextScaleImpl _value, $Res Function(_$TextScaleImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of TextScale
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? enable = freezed,
+    Object? scale = freezed,
+  }) {
+    return _then(_$TextScaleImpl(
+      enable: freezed == enable ? _value.enable! : enable,
+      scale: freezed == scale ? _value.scale! : scale,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$TextScaleImpl implements _TextScale {
+  const _$TextScaleImpl({this.enable = false, this.scale = 1.0});
+
+  factory _$TextScaleImpl.fromJson(Map<String, dynamic> json) =>
+      _$$TextScaleImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final dynamic enable;
+  @override
+  @JsonKey()
+  final dynamic scale;
+
+  @override
+  String toString() {
+    return 'TextScale(enable: $enable, scale: $scale)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TextScaleImpl &&
+            const DeepCollectionEquality().equals(other.enable, enable) &&
+            const DeepCollectionEquality().equals(other.scale, scale));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(enable),
+      const DeepCollectionEquality().hash(scale));
+
+  /// Create a copy of TextScale
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TextScaleImplCopyWith<_$TextScaleImpl> get copyWith =>
+      __$$TextScaleImplCopyWithImpl<_$TextScaleImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$TextScaleImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _TextScale implements TextScale {
+  const factory _TextScale({final dynamic enable, final dynamic scale}) =
+      _$TextScaleImpl;
+
+  factory _TextScale.fromJson(Map<String, dynamic> json) =
+      _$TextScaleImpl.fromJson;
+
+  @override
+  dynamic get enable;
+  @override
+  dynamic get scale;
+
+  /// Create a copy of TextScale
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TextScaleImplCopyWith<_$TextScaleImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 ThemeProps _$ThemePropsFromJson(Map<String, dynamic> json) {
   return _ThemeProps.fromJson(json);
 }
@@ -1751,6 +1915,7 @@ mixin _$ThemeProps {
   ThemeMode get themeMode => throw _privateConstructorUsedError;
   DynamicSchemeVariant get schemeVariant => throw _privateConstructorUsedError;
   bool get pureBlack => throw _privateConstructorUsedError;
+  TextScale get textScale => throw _privateConstructorUsedError;
 
   /// Serializes this ThemeProps to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1773,7 +1938,10 @@ abstract class $ThemePropsCopyWith<$Res> {
       List<int> primaryColors,
       ThemeMode themeMode,
       DynamicSchemeVariant schemeVariant,
-      bool pureBlack});
+      bool pureBlack,
+      TextScale textScale});
+
+  $TextScaleCopyWith<$Res> get textScale;
 }
 
 /// @nodoc
@@ -1796,6 +1964,7 @@ class _$ThemePropsCopyWithImpl<$Res, $Val extends ThemeProps>
     Object? themeMode = null,
     Object? schemeVariant = null,
     Object? pureBlack = null,
+    Object? textScale = null,
   }) {
     return _then(_value.copyWith(
       primaryColor: freezed == primaryColor
@@ -1818,7 +1987,21 @@ class _$ThemePropsCopyWithImpl<$Res, $Val extends ThemeProps>
           ? _value.pureBlack
           : pureBlack // ignore: cast_nullable_to_non_nullable
               as bool,
+      textScale: null == textScale
+          ? _value.textScale
+          : textScale // ignore: cast_nullable_to_non_nullable
+              as TextScale,
     ) as $Val);
+  }
+
+  /// Create a copy of ThemeProps
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $TextScaleCopyWith<$Res> get textScale {
+    return $TextScaleCopyWith<$Res>(_value.textScale, (value) {
+      return _then(_value.copyWith(textScale: value) as $Val);
+    });
   }
 }
 
@@ -1835,7 +2018,11 @@ abstract class _$$ThemePropsImplCopyWith<$Res>
       List<int> primaryColors,
       ThemeMode themeMode,
       DynamicSchemeVariant schemeVariant,
-      bool pureBlack});
+      bool pureBlack,
+      TextScale textScale});
+
+  @override
+  $TextScaleCopyWith<$Res> get textScale;
 }
 
 /// @nodoc
@@ -1856,6 +2043,7 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
     Object? themeMode = null,
     Object? schemeVariant = null,
     Object? pureBlack = null,
+    Object? textScale = null,
   }) {
     return _then(_$ThemePropsImpl(
       primaryColor: freezed == primaryColor
@@ -1878,6 +2066,10 @@ class __$$ThemePropsImplCopyWithImpl<$Res>
           ? _value.pureBlack
           : pureBlack // ignore: cast_nullable_to_non_nullable
               as bool,
+      textScale: null == textScale
+          ? _value.textScale
+          : textScale // ignore: cast_nullable_to_non_nullable
+              as TextScale,
     ));
   }
 }
@@ -1890,7 +2082,8 @@ class _$ThemePropsImpl implements _ThemeProps {
       final List<int> primaryColors = defaultPrimaryColors,
       this.themeMode = ThemeMode.dark,
       this.schemeVariant = DynamicSchemeVariant.tonalSpot,
-      this.pureBlack = false})
+      this.pureBlack = false,
+      this.textScale = const TextScale()})
       : _primaryColors = primaryColors;
 
   factory _$ThemePropsImpl.fromJson(Map<String, dynamic> json) =>
@@ -1916,10 +2109,13 @@ class _$ThemePropsImpl implements _ThemeProps {
   @override
   @JsonKey()
   final bool pureBlack;
+  @override
+  @JsonKey()
+  final TextScale textScale;
 
   @override
   String toString() {
-    return 'ThemeProps(primaryColor: $primaryColor, primaryColors: $primaryColors, themeMode: $themeMode, schemeVariant: $schemeVariant, pureBlack: $pureBlack)';
+    return 'ThemeProps(primaryColor: $primaryColor, primaryColors: $primaryColors, themeMode: $themeMode, schemeVariant: $schemeVariant, pureBlack: $pureBlack, textScale: $textScale)';
   }
 
   @override
@@ -1936,7 +2132,9 @@ class _$ThemePropsImpl implements _ThemeProps {
             (identical(other.schemeVariant, schemeVariant) ||
                 other.schemeVariant == schemeVariant) &&
             (identical(other.pureBlack, pureBlack) ||
-                other.pureBlack == pureBlack));
+                other.pureBlack == pureBlack) &&
+            (identical(other.textScale, textScale) ||
+                other.textScale == textScale));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1947,7 +2145,8 @@ class _$ThemePropsImpl implements _ThemeProps {
       const DeepCollectionEquality().hash(_primaryColors),
       themeMode,
       schemeVariant,
-      pureBlack);
+      pureBlack,
+      textScale);
 
   /// Create a copy of ThemeProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1971,7 +2170,8 @@ abstract class _ThemeProps implements ThemeProps {
       final List<int> primaryColors,
       final ThemeMode themeMode,
       final DynamicSchemeVariant schemeVariant,
-      final bool pureBlack}) = _$ThemePropsImpl;
+      final bool pureBlack,
+      final TextScale textScale}) = _$ThemePropsImpl;
 
   factory _ThemeProps.fromJson(Map<String, dynamic> json) =
       _$ThemePropsImpl.fromJson;
@@ -1986,6 +2186,8 @@ abstract class _ThemeProps implements ThemeProps {
   DynamicSchemeVariant get schemeVariant;
   @override
   bool get pureBlack;
+  @override
+  TextScale get textScale;
 
   /// Create a copy of ThemeProps
   /// with the given fields replaced by the non-null parameter values.

@@ -84,33 +84,33 @@ extension ConnectionExt on Connection {
   }
 }
 
-@JsonSerializable()
-class Log {
-  @JsonKey(name: "LogLevel")
-  LogLevel logLevel;
-  @JsonKey(name: "Payload")
-  String? payload;
-  DateTime _dateTime;
+String _logDateTime(_) {
+  return DateTime.now().toString();
+}
 
-  Log({
-    required this.logLevel,
-    this.payload,
-  }) : _dateTime = DateTime.now();
+// String _logId(_) {
+//   return utils.id;
+// }
 
-  DateTime get dateTime => _dateTime;
+@freezed
+class Log with _$Log {
+  const factory Log({
+    @JsonKey(name: "LogLevel") @Default(LogLevel.app) LogLevel logLevel,
+    @JsonKey(name: "Payload") @Default("") String payload,
+    @JsonKey(fromJson: _logDateTime) required String dateTime,
+  }) = _Log;
 
-  factory Log.fromJson(Map<String, dynamic> json) {
-    return _$LogFromJson(json);
+  factory Log.app(
+    String payload,
+  ) {
+    return Log(
+      payload: payload,
+      dateTime: _logDateTime(null),
+      // id: _logId(null),
+    );
   }
 
-  Map<String, dynamic> toJson() {
-    return _$LogToJson(this);
-  }
-
-  @override
-  String toString() {
-    return 'Log{logLevel: $logLevel, payload: $payload, dateTime: $dateTime}';
-  }
+  factory Log.fromJson(Map<String, Object?> json) => _$LogFromJson(json);
 }
 
 @freezed
@@ -127,11 +127,10 @@ extension LogsStateExt on LogsState {
     final lowQuery = query.toLowerCase();
     return logs.where(
       (log) {
-        final payload = log.payload?.toLowerCase();
+        final payload = log.payload.toLowerCase();
         final logLevelName = log.logLevel.name;
         return {logLevelName}.containsAll(keywords) &&
-            ((payload?.contains(lowQuery) ?? false) ||
-                logLevelName.contains(lowQuery));
+            ((payload.contains(lowQuery)) || logLevelName.contains(lowQuery));
       },
     ).toList();
   }

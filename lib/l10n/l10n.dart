@@ -3054,6 +3054,11 @@ class AppLocalizations {
   String get clearData {
     return Intl.message('Clear Data', name: 'clearData', desc: '', args: []);
   }
+
+  /// `Text Scaling`
+  String get textScale {
+    return Intl.message('Text Scaling', name: 'textScale', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

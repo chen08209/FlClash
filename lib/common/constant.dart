@@ -17,15 +17,12 @@ const packageName = "com.follow.clash";
 final unixSocketPath = "/tmp/FlClashSocket_${Random().nextInt(10000)}.sock";
 const helperPort = 47890;
 const helperTag = "2024125";
-const baseInfoEdgeInsets = EdgeInsets.symmetric(
-  vertical: 16,
-  horizontal: 16,
+final baseInfoEdgeInsets = EdgeInsets.symmetric(
+  vertical: 16.ap,
+  horizontal: 16.ap,
 );
 
-double textScaleFactor = min(
-  WidgetsBinding.instance.platformDispatcher.textScaleFactor,
-  1.2,
-);
+final defaultTextScaleFactor = WidgetsBinding.instance.platformDispatcher.textScaleFactor;
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
@@ -44,7 +41,6 @@ const profilesDirectoryName = "profiles";
 const localhost = "127.0.0.1";
 const clashConfigKey = "clash_config";
 const configKey = "config";
-const listItemPadding = EdgeInsets.symmetric(horizontal: 16);
 const double dialogCommonWidth = 300;
 const repository = "chen08209/FlClash";
 const defaultExternalController = "127.0.0.1:9090";
@@ -81,7 +77,7 @@ const viewModeColumnsMap = {
 const defaultPrimaryColor = 0xFF795548;
 
 double getWidgetHeight(num lines) {
-  return max(lines * 84 * textScaleFactor + (lines - 1) * 16, 0);
+  return max(lines * 84 + (lines - 1) * 16, 0).ap;
 }
 
 final mainIsolate = "FlClashMainIsolate";

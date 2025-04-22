@@ -391,5 +391,7 @@
   "messageTest": "メッセージテスト",
   "messageTestTip": "これはメッセージです。",
   "crashTest": "クラッシュテスト",
-  "clearData": "データを消去"
+  "clearData": "データを消去",
+  "zoom": "ズーム",
+  "textScale": "テキストスケーリング"
 }

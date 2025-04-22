@@ -413,6 +413,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP并发"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("开启后允许TCP并发"),
     "testUrl": MessageLookupByLibrary.simpleMessage("测速链接"),
+    "textScale": MessageLookupByLibrary.simpleMessage("文本缩放"),
     "theme": MessageLookupByLibrary.simpleMessage("主题"),
     "themeColor": MessageLookupByLibrary.simpleMessage("主题色彩"),
     "themeDesc": MessageLookupByLibrary.simpleMessage("设置深色模式，调整色彩"),

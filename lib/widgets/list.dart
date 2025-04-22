@@ -62,6 +62,22 @@ class OpenDelegate extends Delegate {
   });
 }
 
+class NextDelegate extends Delegate {
+  final Widget widget;
+  final String title;
+  final double? maxWidth;
+  final Widget? action;
+  final bool blur;
+
+  const NextDelegate({
+    required this.title,
+    required this.widget,
+    this.maxWidth,
+    this.action,
+    this.blur = true,
+  });
+}
+
 class OptionsDelegate<T> extends Delegate {
   final List<T> options;
   final String title;
@@ -131,6 +147,21 @@ class ListItem<T> extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 16),
     this.trailing,
     required OpenDelegate this.delegate,
+    this.horizontalTitleGap,
+    this.dense,
+    this.titleTextStyle,
+    this.subtitleTextStyle,
+    this.tileTitleAlignment = ListTileTitleAlignment.center,
+  }) : onTap = null;
+
+  const ListItem.next({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.trailing,
+    required NextDelegate this.delegate,
     this.horizontalTitleGap,
     this.dense,
     this.titleTextStyle,
@@ -285,6 +316,34 @@ class ListItem<T> extends StatelessWidget {
         },
       );
     }
+    if (delegate is NextDelegate) {
+      final nextDelegate = delegate as NextDelegate;
+      final child = SafeArea(
+        child: nextDelegate.widget,
+      );
+
+      return _buildListTile(
+        onTap: () {
+          showExtend(
+            context,
+            props: ExtendProps(
+              blur: nextDelegate.blur,
+              maxWidth: nextDelegate.maxWidth,
+            ),
+            builder: (_, type) {
+              return AdaptiveSheetScaffold(
+                actions: [
+                  if (nextDelegate.action != null) nextDelegate.action!,
+                ],
+                type: type,
+                body: child,
+                title: nextDelegate.title,
+              );
+            },
+          );
+        },
+      );
+    }
     if (delegate is OptionsDelegate) {
       final optionsDelegate = delegate as OptionsDelegate<T>;
       return _buildListTile(
@@ -353,14 +412,11 @@ class ListItem<T> extends StatelessWidget {
             radioDelegate.onChanged!(radioDelegate.value);
           }
         },
-        leading: SizedBox(
-          width: 32,
-          height: 32,
-          child: Radio<T>(
-            value: radioDelegate.value,
-            groupValue: radioDelegate.groupValue,
-            onChanged: radioDelegate.onChanged,
-          ),
+        leading: Radio<T>(
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          value: radioDelegate.value,
+          groupValue: radioDelegate.groupValue,
+          onChanged: radioDelegate.onChanged,
         ),
         trailing: trailing,
       );

@@ -675,6 +675,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Включение позволит использовать параллелизм TCP",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Тест URL"),
+    "textScale": MessageLookupByLibrary.simpleMessage("Масштабирование текста"),
     "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),
     "themeDesc": MessageLookupByLibrary.simpleMessage(
