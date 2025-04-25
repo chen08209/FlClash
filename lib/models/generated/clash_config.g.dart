@@ -66,6 +66,7 @@ Map<String, dynamic> _$$RuleProviderImplToJson(_$RuleProviderImpl instance) =>
 _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
       enable: json['enable'] as bool? ?? false,
       device: json['device'] as String? ?? appName,
+      autoRoute: json['auto-route'] as bool? ?? false,
       stack: $enumDecodeNullable(_$TunStackEnumMap, json['stack']) ??
           TunStack.gvisor,
       dnsHijack: (json['dns-hijack'] as List<dynamic>?)
@@ -81,6 +82,7 @@ _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
 Map<String, dynamic> _$$TunImplToJson(_$TunImpl instance) => <String, dynamic>{
       'enable': instance.enable,
       'device': instance.device,
+      'auto-route': instance.autoRoute,
       'stack': _$TunStackEnumMap[instance.stack]!,
       'dns-hijack': instance.dnsHijack,
       'route-address': instance.routeAddress,

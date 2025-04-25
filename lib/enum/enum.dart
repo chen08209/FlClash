@@ -293,6 +293,7 @@ enum WindowsHelperServiceStatus {
 
 enum DebounceTag {
   updateClashConfig,
+  updateStatus,
   updateGroups,
   addCheckIpNum,
   applyProfile,

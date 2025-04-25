@@ -526,8 +526,8 @@ class _TextScaleFactorItem extends ConsumerWidget {
                       data: _SliderDefaultsM3(context),
                       child: Slider(
                         padding: EdgeInsets.zero,
-                        min: 0.8,
-                        max: 1.2,
+                        min: minTextScale,
+                        max: maxTextScale,
                         value: textScale.scale,
                         onChanged: (value) {
                           ref.read(themeSettingProvider.notifier).updateState(

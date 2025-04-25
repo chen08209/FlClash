@@ -301,8 +301,11 @@ class RouteAddressItem extends ConsumerWidget {
         title: appLocalizations.routeAddress,
         widget: Consumer(
           builder: (_, ref, __) {
-            final routeAddress = ref.watch(patchClashConfigProvider
-                .select((state) => state.tun.routeAddress));
+            final routeAddress = ref.watch(
+              patchClashConfigProvider.select(
+                (state) => state.tun.routeAddress,
+              ),
+            );
             return ListInputPage(
               title: appLocalizations.routeAddress,
               items: routeAddress,
@@ -371,7 +374,9 @@ class NetworkListView extends ConsumerWidget {
               return;
             }
             ref.read(vpnSettingProvider.notifier).updateState(
-                  (state) => defaultVpnProps,
+                  (state) => defaultVpnProps.copyWith(
+                    accessControl: state.accessControl,
+                  ),
                 );
             ref.read(patchClashConfigProvider.notifier).updateState(
                   (state) => state.copyWith(

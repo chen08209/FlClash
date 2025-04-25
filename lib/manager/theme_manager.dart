@@ -23,9 +23,9 @@ class ThemeManager extends ConsumerWidget {
     final double textScaleFactor = max(
       min(
         textScale.enable ? textScale.scale : defaultTextScaleFactor,
-        1.2,
+        maxTextScale,
       ),
-      0.8,
+      minTextScale,
     );
 
     globalState.measure = Measure.of(context, textScaleFactor);

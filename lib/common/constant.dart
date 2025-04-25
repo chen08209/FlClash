@@ -17,6 +17,8 @@ const packageName = "com.follow.clash";
 final unixSocketPath = "/tmp/FlClashSocket_${Random().nextInt(10000)}.sock";
 const helperPort = 47890;
 const helperTag = "2024125";
+const maxTextScale = 1.4;
+const minTextScale = 0.8;
 final baseInfoEdgeInsets = EdgeInsets.symmetric(
   vertical: 16.ap,
   horizontal: 16.ap,

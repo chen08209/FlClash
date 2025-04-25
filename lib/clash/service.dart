@@ -71,9 +71,9 @@ class ClashService extends ClashHandlerInterface {
       }
     }, (error, stack) {
       commonPrint.log(error.toString());
-      if(error is SocketException){
+      if (error is SocketException) {
         globalState.showNotifier(error.toString());
-        globalState.appController.restartCore();
+        // globalState.appController.restartCore();
       }
     });
   }

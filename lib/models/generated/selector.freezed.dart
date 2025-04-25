@@ -3522,6 +3522,7 @@ mixin _$ClashConfigState {
   bool get overrideDns => throw _privateConstructorUsedError;
   ClashConfig get clashConfig => throw _privateConstructorUsedError;
   OverrideData get overrideData => throw _privateConstructorUsedError;
+  RouteMode get routeMode => throw _privateConstructorUsedError;
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.
@@ -3537,7 +3538,10 @@ abstract class $ClashConfigStateCopyWith<$Res> {
       _$ClashConfigStateCopyWithImpl<$Res, ClashConfigState>;
   @useResult
   $Res call(
-      {bool overrideDns, ClashConfig clashConfig, OverrideData overrideData});
+      {bool overrideDns,
+      ClashConfig clashConfig,
+      OverrideData overrideData,
+      RouteMode routeMode});
 
   $ClashConfigCopyWith<$Res> get clashConfig;
   $OverrideDataCopyWith<$Res> get overrideData;
@@ -3561,6 +3565,7 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
     Object? overrideDns = null,
     Object? clashConfig = null,
     Object? overrideData = null,
+    Object? routeMode = null,
   }) {
     return _then(_value.copyWith(
       overrideDns: null == overrideDns
@@ -3575,6 +3580,10 @@ class _$ClashConfigStateCopyWithImpl<$Res, $Val extends ClashConfigState>
           ? _value.overrideData
           : overrideData // ignore: cast_nullable_to_non_nullable
               as OverrideData,
+      routeMode: null == routeMode
+          ? _value.routeMode
+          : routeMode // ignore: cast_nullable_to_non_nullable
+              as RouteMode,
     ) as $Val);
   }
 
@@ -3608,7 +3617,10 @@ abstract class _$$ClashConfigStateImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {bool overrideDns, ClashConfig clashConfig, OverrideData overrideData});
+      {bool overrideDns,
+      ClashConfig clashConfig,
+      OverrideData overrideData,
+      RouteMode routeMode});
 
   @override
   $ClashConfigCopyWith<$Res> get clashConfig;
@@ -3632,6 +3644,7 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
     Object? overrideDns = null,
     Object? clashConfig = null,
     Object? overrideData = null,
+    Object? routeMode = null,
   }) {
     return _then(_$ClashConfigStateImpl(
       overrideDns: null == overrideDns
@@ -3646,6 +3659,10 @@ class __$$ClashConfigStateImplCopyWithImpl<$Res>
           ? _value.overrideData
           : overrideData // ignore: cast_nullable_to_non_nullable
               as OverrideData,
+      routeMode: null == routeMode
+          ? _value.routeMode
+          : routeMode // ignore: cast_nullable_to_non_nullable
+              as RouteMode,
     ));
   }
 }
@@ -3656,7 +3673,8 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   const _$ClashConfigStateImpl(
       {required this.overrideDns,
       required this.clashConfig,
-      required this.overrideData});
+      required this.overrideData,
+      required this.routeMode});
 
   @override
   final bool overrideDns;
@@ -3664,10 +3682,12 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
   final ClashConfig clashConfig;
   @override
   final OverrideData overrideData;
+  @override
+  final RouteMode routeMode;
 
   @override
   String toString() {
-    return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, overrideData: $overrideData)';
+    return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, overrideData: $overrideData, routeMode: $routeMode)';
   }
 
   @override
@@ -3680,12 +3700,14 @@ class _$ClashConfigStateImpl implements _ClashConfigState {
             (identical(other.clashConfig, clashConfig) ||
                 other.clashConfig == clashConfig) &&
             (identical(other.overrideData, overrideData) ||
-                other.overrideData == overrideData));
+                other.overrideData == overrideData) &&
+            (identical(other.routeMode, routeMode) ||
+                other.routeMode == routeMode));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, overrideDns, clashConfig, overrideData);
+  int get hashCode => Object.hash(
+      runtimeType, overrideDns, clashConfig, overrideData, routeMode);
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.
@@ -3701,7 +3723,8 @@ abstract class _ClashConfigState implements ClashConfigState {
   const factory _ClashConfigState(
       {required final bool overrideDns,
       required final ClashConfig clashConfig,
-      required final OverrideData overrideData}) = _$ClashConfigStateImpl;
+      required final OverrideData overrideData,
+      required final RouteMode routeMode}) = _$ClashConfigStateImpl;
 
   @override
   bool get overrideDns;
@@ -3709,6 +3732,8 @@ abstract class _ClashConfigState implements ClashConfigState {
   ClashConfig get clashConfig;
   @override
   OverrideData get overrideData;
+  @override
+  RouteMode get routeMode;
 
   /// Create a copy of ClashConfigState
   /// with the given fields replaced by the non-null parameter values.

@@ -245,7 +245,6 @@ abstract class ClashHandlerInterface with ClashInterface {
     );
   }
 
-
   @override
   Future<bool> crash() {
     return invoke<bool>(

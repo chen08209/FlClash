@@ -396,9 +396,9 @@ class AppController {
   handleExit() async {
     try {
       await updateStatus(false);
+      await proxy?.stopProxy();
       await clashCore.shutdown();
       await clashService?.destroy();
-      await proxy?.stopProxy();
       await savePreferences();
     } finally {
       system.exit();
@@ -487,10 +487,10 @@ class AppController {
   Future<void> _initCore() async {
     final isInit = await clashCore.isInit;
     if (!isInit) {
+     await clashCore.init();
       await clashCore.setState(
         globalState.getCoreState(),
       );
-      await clashCore.init();
     }
     await applyProfile();
   }
