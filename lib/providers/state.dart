@@ -75,13 +75,15 @@ CoreState coreState(Ref ref) {
 ClashConfigState clashConfigState(Ref ref) {
   final clashConfig = ref.watch(patchClashConfigProvider);
   final overrideDns = ref.watch(overrideDnsProvider);
-  final overrideData = ref.watch(currentProfileProvider.select(
-    (state) => state?.overrideData,
-  ));
+  final overrideData =
+      ref.watch(currentProfileProvider.select((state) => state?.overrideData));
+  final routeMode =
+      ref.watch(networkSettingProvider.select((state) => state.routeMode));
   return ClashConfigState(
     overrideDns: overrideDns,
     clashConfig: clashConfig,
     overrideData: overrideData ?? OverrideData(),
+    routeMode: routeMode,
   );
 }
 

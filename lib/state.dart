@@ -258,14 +258,17 @@ class GlobalState {
   getUpdateConfigParams([bool? isPatch]) {
     final currentProfile = config.currentProfile;
     final clashConfig = config.patchClashConfig;
+    final routeAddress =
+        config.networkProps.routeMode == RouteMode.bypassPrivate
+            ? defaultBypassPrivateRouteAddress
+            : clashConfig.tun.routeAddress;
     return UpdateConfigParams(
       profileId: config.currentProfileId ?? "",
       config: clashConfig.copyWith(
         globalUa: ua,
         tun: clashConfig.tun.copyWith(
-          routeAddress: config.networkProps.routeMode == RouteMode.bypassPrivate
-              ? defaultBypassPrivateRouteAddress
-              : clashConfig.tun.routeAddress,
+          autoRoute: routeAddress.isEmpty ? true : false,
+          routeAddress: routeAddress,
         ),
         rule: currentProfile?.overrideData.runningRule ?? [],
       ),

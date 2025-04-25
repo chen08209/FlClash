@@ -228,6 +228,7 @@ class ClashConfigState with _$ClashConfigState {
     required bool overrideDns,
     required ClashConfig clashConfig,
     required OverrideData overrideData,
+    required RouteMode routeMode,
   }) = _ClashConfigState;
 }
 
