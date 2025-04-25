@@ -98,13 +98,13 @@ func handleStopTun() {
 	}
 }
 
-func handleStartTun(fd int, callback unsafe.Pointer) bool {
+func handleStartTun(fd int, callback unsafe.Pointer) {
 	handleStopTun()
+	tunLock.Lock()
+	defer tunLock.Unlock()
 	now := time.Now()
 	runTime = &now
 	if fd != 0 {
-		tunLock.Lock()
-		defer tunLock.Unlock()
 		tunHandler = &TunHandler{
 			callback: callback,
 			limit:    semaphore.NewWeighted(4),
@@ -113,13 +113,11 @@ func handleStartTun(fd int, callback unsafe.Pointer) bool {
 		tunListener, _ := t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
 		if tunListener != nil {
 			log.Infoln("TUN address: %v", tunListener.Address())
+			tunHandler.listener = tunListener
 		} else {
 			removeTunHook()
-			return false
 		}
-		tunHandler.listener = tunListener
 	}
-	return true
 }
 
 func handleGetRunTime() string {
@@ -228,7 +226,10 @@ func quickStart(initParamsChar *C.char, paramsChar *C.char, stateParamsChar *C.c
 
 //export startTUN
 func startTUN(fd C.int, callback unsafe.Pointer) bool {
-	return handleStartTun(int(fd), callback)
+	go func() {
+		handleStartTun(int(fd), callback)
+	}()
+	return true
 }
 
 //export getRunTime
@@ -238,7 +239,9 @@ func getRunTime() *C.char {
 
 //export stopTun
 func stopTun() {
-	handleStopTun()
+	go func() {
+		handleStopTun()
+	}()
 }
 
 //export getCurrentProfileName

@@ -78,7 +78,7 @@ final coreStateProvider = AutoDisposeProvider<CoreState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CoreStateRef = AutoDisposeProviderRef<CoreState>;
-String _$clashConfigStateHash() => r'848f6b2f734d99fb11ec05f73d614be415e9658f';
+String _$clashConfigStateHash() => r'fbbcd7221b0b9b18db523e59c9021e8e56e119ca';
 
 /// See also [clashConfigState].
 @ProviderFor(clashConfigState)

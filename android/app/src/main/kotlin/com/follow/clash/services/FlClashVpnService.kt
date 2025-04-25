@@ -34,6 +34,10 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
             if (options.ipv4Address.isNotEmpty()) {
                 val cidr = options.ipv4Address.toCIDR()
                 addAddress(cidr.address, cidr.prefixLength)
+                Log.d(
+                    "addAddress",
+                    "address: ${cidr.address} prefixLength:${cidr.prefixLength}"
+                )
                 val routeAddress = options.getIpv4RouteAddress()
                 if (routeAddress.isNotEmpty()) {
                     try {
@@ -50,26 +54,39 @@ class FlClashVpnService : VpnService(), BaseServiceInterface {
                 } else {
                     addRoute("0.0.0.0", 0)
                 }
+            } else {
+                addRoute("0.0.0.0", 0)
             }
-            if (options.ipv6Address.isNotEmpty()) {
-                val cidr = options.ipv6Address.toCIDR()
-                addAddress(cidr.address, cidr.prefixLength)
-                val routeAddress = options.getIpv6RouteAddress()
-                if (routeAddress.isNotEmpty()) {
-                    try {
-                        routeAddress.forEach { i ->
-                            Log.d(
-                                "addRoute6",
-                                "address: ${i.address} prefixLength:${i.prefixLength}"
-                            )
-                            addRoute(i.address, i.prefixLength)
+            try {
+                if (options.ipv6Address.isNotEmpty()) {
+                    val cidr = options.ipv6Address.toCIDR()
+                    Log.d(
+                        "addAddress6",
+                        "address: ${cidr.address} prefixLength:${cidr.prefixLength}"
+                    )
+                    addAddress(cidr.address, cidr.prefixLength)
+                    val routeAddress = options.getIpv6RouteAddress()
+                    if (routeAddress.isNotEmpty()) {
+                        try {
+                            routeAddress.forEach { i ->
+                                Log.d(
+                                    "addRoute6",
+                                    "address: ${i.address} prefixLength:${i.prefixLength}"
+                                )
+                                addRoute(i.address, i.prefixLength)
+                            }
+                        } catch (_: Exception) {
+                            addRoute("::", 0)
                         }
-                    } catch (_: Exception) {
+                    } else {
                         addRoute("::", 0)
                     }
-                } else {
-                    addRoute("::", 0)
                 }
+            }catch (_:Exception){
+                Log.d(
+                    "addAddress6",
+                    "IPv6 is not supported."
+                )
             }
             addDnsServer(options.dnsServerAddress)
             setMtu(9000)
