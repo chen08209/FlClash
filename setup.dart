@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart';
+import 'package:crypto/crypto.dart';
 
 enum Target {
   windows,
@@ -195,7 +196,16 @@ class Build {
     if (exitCode != 0 && name != null) throw "$name error";
   }
 
-  static buildCore({
+  static Future<String?> calcSha256(String filePath) async {
+    final file = File(filePath);
+    if (!await file.exists()) {
+      return null;
+    }
+    final stream = file.openRead();
+    return sha256.convert(await stream.reduce((a, b) => a + b)).toString();
+  }
+
+  static Future<List<String>> buildCore({
     required Mode mode,
     required Target target,
     Arch? arch,
@@ -208,6 +218,8 @@ class Build {
             (arch == null ? true : element.arch == arch);
       },
     ).toList();
+
+    final List<String> corePaths = [];
 
     for (final item in items) {
       final outFileDir = join(
@@ -228,6 +240,7 @@ class Build {
         outFileDir,
         fileName,
       );
+      corePaths.add(outPath);
 
       final Map<String, String> env = {};
       env["GOOS"] = item.target.os;
@@ -258,9 +271,11 @@ class Build {
         workingDirectory: _coreDir,
       );
     }
+
+    return corePaths;
   }
 
-  static buildHelper(Target target) async {
+  static buildHelper(Target target, String token) async {
     await exec(
       [
         "cargo",
@@ -269,6 +284,9 @@ class Build {
         "--features",
         "windows-service",
       ],
+      environment: {
+        "TOKEN": token,
+      },
       name: "build helper",
       workingDirectory: _servicesDir,
     );
@@ -278,13 +296,15 @@ class Build {
       "release",
       "helper${target.executableExtensionName}",
     );
-    final targetPath = join(outDir, target.name,
-        "FlClashHelperService${target.executableExtensionName}");
+    final targetPath = join(
+      outDir,
+      target.name,
+      "FlClashHelperService${target.executableExtensionName}",
+    );
     await File(outPath).copy(targetPath);
   }
 
   static List<String> getExecutable(String command) {
-    print(command);
     return command.split(" ");
   }
 
@@ -466,15 +486,11 @@ class BuildCommand extends Command {
       throw "Invalid arch parameter";
     }
 
-    await Build.buildCore(
+    final corePaths = await Build.buildCore(
       target: target,
       arch: arch,
       mode: mode,
     );
-
-    if (target == Target.windows) {
-      await Build.buildHelper(target);
-    }
 
     if (out != "app") {
       return;
@@ -482,10 +498,16 @@ class BuildCommand extends Command {
 
     switch (target) {
       case Target.windows:
+        final token = await Build.calcSha256(corePaths.first);
+        if (token == null) {
+          throw "Core not exists";
+        }
+        Build.buildHelper(target, token);
         _buildDistributor(
           target: target,
           targets: "exe,zip",
-          args: " --description $archName",
+          args:
+              " --description $archName --build-dart-define=HELPER_TOKEN=$token",
           env: env,
         );
         return;

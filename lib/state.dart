@@ -30,6 +30,7 @@ class GlobalState {
   late Config config;
   late AppState appState;
   bool isPre = true;
+  String? helperToken;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;

@@ -1,11 +1,13 @@
+use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::VecDeque;
-use std::{io, thread};
-use std::io::BufRead;
+use std::fs::File;
+use std::io::{BufRead, Error, Read};
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
+use std::{io, thread};
 use warp::{Filter, Reply};
-use serde::{Deserialize, Serialize};
-use once_cell::sync::Lazy;
 
 const LISTEN_PORT: u16 = 47890;
 
@@ -15,10 +17,31 @@ pub struct StartParams {
     pub arg: String,
 }
 
-static LOGS: Lazy<Arc<Mutex<VecDeque<String>>>> = Lazy::new(|| Arc::new(Mutex::new(VecDeque::with_capacity(100))));
-static PROCESS: Lazy<Arc<Mutex<Option<std::process::Child>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
+fn sha256_file(path: &str) -> Result<String, Error> {
+    let mut file = File::open(path)?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0; 4096];
+
+    loop {
+        let bytes_read = file.read(&mut buffer)?;
+        if bytes_read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..bytes_read]);
+    }
+
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
+static LOGS: Lazy<Arc<Mutex<VecDeque<String>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(VecDeque::with_capacity(100))));
+static PROCESS: Lazy<Arc<Mutex<Option<std::process::Child>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(None)));
 
 fn start(start_params: StartParams) -> impl Reply {
+    if sha256_file(start_params.path.as_str()).unwrap_or("".to_string()) != env!("TOKEN") {
+        return "Only FlClashCore is allowed to run.".to_string();
+    }
     stop();
     let mut process = PROCESS.lock().unwrap();
     match Command::new(&start_params.path)
@@ -73,36 +96,27 @@ fn log_message(message: String) {
 
 fn get_logs() -> impl Reply {
     let log_buffer = LOGS.lock().unwrap();
-    let value = log_buffer.iter().cloned().collect::<Vec<String>>().join("\n");
+    let value = log_buffer
+        .iter()
+        .cloned()
+        .collect::<Vec<String>>()
+        .join("\n");
     warp::reply::with_header(value, "Content-Type", "text/plain")
 }
 
 pub async fn run_service() -> anyhow::Result<()> {
-    let api_ping = warp::get()
-        .and(warp::path("ping"))
-        .map(|| "2024125");
+    let api_ping = warp::get().and(warp::path("ping")).map(|| env!("TOKEN"));
 
     let api_start = warp::post()
         .and(warp::path("start"))
         .and(warp::body::json())
-        .map(|start_params: StartParams| {
-            start(start_params)
-        });
+        .map(|start_params: StartParams| start(start_params));
 
-    let api_stop = warp::post()
-        .and(warp::path("stop"))
-        .map(|| stop());
+    let api_stop = warp::post().and(warp::path("stop")).map(|| stop());
 
-    let api_logs = warp::get()
-        .and(warp::path("logs"))
-        .map(|| get_logs());
+    let api_logs = warp::get().and(warp::path("logs")).map(|| get_logs());
 
-    warp::serve(
-        api_ping
-            .or(api_start)
-            .or(api_stop)
-            .or(api_logs)
-    )
+    warp::serve(api_ping.or(api_start).or(api_stop).or(api_logs))
         .run(([127, 0, 0, 1], LISTEN_PORT))
         .await;
 

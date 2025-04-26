@@ -27,6 +27,7 @@ Future<void> main() async {
   await android?.init();
   await window?.init(version);
   globalState.isPre = const String.fromEnvironment("APP_ENV") != 'stable';
+  globalState.helperToken = const String.fromEnvironment("HELPER_TOKEN");
   HttpOverrides.global = FlClashHttpOverrides();
   runApp(ProviderScope(
     child: const Application(),
