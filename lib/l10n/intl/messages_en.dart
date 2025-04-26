@@ -164,6 +164,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "View current connections data",
     ),
     "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
+    "contactMe": MessageLookupByLibrary.simpleMessage("Contact me"),
     "content": MessageLookupByLibrary.simpleMessage("Content"),
     "contentEmptyTip": MessageLookupByLibrary.simpleMessage(
       "Content cannot be empty",
@@ -363,6 +364,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logs": MessageLookupByLibrary.simpleMessage("Logs"),
     "logsDesc": MessageLookupByLibrary.simpleMessage("Log capture records"),
+    "logsTest": MessageLookupByLibrary.simpleMessage("Logs test"),
     "loopback": MessageLookupByLibrary.simpleMessage("Loopback unlock tool"),
     "loopbackDesc": MessageLookupByLibrary.simpleMessage(
       "Used for UWP loopback unlocking",
@@ -410,7 +412,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noInfo": MessageLookupByLibrary.simpleMessage("No info"),
     "noMoreInfoDesc": MessageLookupByLibrary.simpleMessage("No more info"),
     "noNetwork": MessageLookupByLibrary.simpleMessage("No network"),
-    "noNetworkApp": MessageLookupByLibrary.simpleMessage("No network App"),
+    "noNetworkApp": MessageLookupByLibrary.simpleMessage("No network APP"),
     "noProxy": MessageLookupByLibrary.simpleMessage("No proxy"),
     "noProxyDesc": MessageLookupByLibrary.simpleMessage(
       "Please create a profile or add a valid profile",
@@ -537,6 +539,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "recoveryAll": MessageLookupByLibrary.simpleMessage("Recovery all data"),
     "recoveryProfiles": MessageLookupByLibrary.simpleMessage(
       "Only recovery profiles",
+    ),
+    "recoveryStrategy": MessageLookupByLibrary.simpleMessage(
+      "Recovery strategy",
+    ),
+    "recoveryStrategy_compatible": MessageLookupByLibrary.simpleMessage(
+      "Compatible",
+    ),
+    "recoveryStrategy_override": MessageLookupByLibrary.simpleMessage(
+      "Override",
     ),
     "recoverySuccess": MessageLookupByLibrary.simpleMessage("Recovery success"),
     "redo": MessageLookupByLibrary.simpleMessage("redo"),

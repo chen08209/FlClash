@@ -126,7 +126,7 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
     }
   }
 
-  setProfile(Profile profile, {bool force = true}) {
+  setProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(state);
     final index =
         profilesTemp.indexWhere((element) => element.id == profile.id);
@@ -135,7 +135,7 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
     );
     if (index == -1) {
       profilesTemp.add(updateProfile);
-    } else if (force == true) {
+    } else {
       profilesTemp[index] = updateProfile;
     }
     state = profilesTemp;

@@ -1,6 +1,5 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/list.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 
@@ -83,12 +82,6 @@ class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
         );
       }
     });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    globalState.cacheScrollPosition[widget.cacheKey] = -1;
   }
 
   @override

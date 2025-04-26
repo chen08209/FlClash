@@ -34,7 +34,7 @@ class Measure {
   double get bodyMediumHeight {
     return _measureMap.getCacheValue(
       "bodyMediumHeight",
-      computeTextSize(
+      () => computeTextSize(
         Text(
           "X",
           style: context.textTheme.bodyMedium,
@@ -43,10 +43,22 @@ class Measure {
     );
   }
 
+  double get bodyLargeHeight {
+    return _measureMap.getCacheValue(
+      "bodyLargeHeight",
+      () => computeTextSize(
+        Text(
+          "X",
+          style: context.textTheme.bodyLarge,
+        ),
+      ).height,
+    );
+  }
+
   double get bodySmallHeight {
     return _measureMap.getCacheValue(
       "bodySmallHeight",
-      computeTextSize(
+      () => computeTextSize(
         Text(
           "X",
           style: context.textTheme.bodySmall,
@@ -58,7 +70,7 @@ class Measure {
   double get labelSmallHeight {
     return _measureMap.getCacheValue(
       "labelSmallHeight",
-      computeTextSize(
+      () => computeTextSize(
         Text(
           "X",
           style: context.textTheme.labelSmall,
@@ -70,7 +82,7 @@ class Measure {
   double get labelMediumHeight {
     return _measureMap.getCacheValue(
       "labelMediumHeight",
-      computeTextSize(
+      () => computeTextSize(
         Text(
           "X",
           style: context.textTheme.labelMedium,
@@ -82,7 +94,7 @@ class Measure {
   double get titleLargeHeight {
     return _measureMap.getCacheValue(
       "titleLargeHeight",
-      computeTextSize(
+      () => computeTextSize(
         Text(
           "X",
           style: context.textTheme.titleLarge,
@@ -94,7 +106,7 @@ class Measure {
   double get titleMediumHeight {
     return _measureMap.getCacheValue(
       "titleMediumHeight",
-      computeTextSize(
+      () => computeTextSize(
         Text(
           "X",
           style: context.textTheme.titleMedium,

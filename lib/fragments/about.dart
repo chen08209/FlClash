@@ -48,6 +48,15 @@ class AboutFragment extends StatelessWidget {
           },
         ),
         ListItem(
+          title: Text(appLocalizations.contactMe),
+          onTap: () {
+            globalState.showMessage(
+              title: appLocalizations.contactMe,
+              message: TextSpan(text: "chen08209@gmail.com"),
+            );
+          },
+        ),
+        ListItem(
           title: const Text("Telegram"),
           onTap: () {
             globalState.openUrl(

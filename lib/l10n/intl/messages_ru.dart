@@ -170,6 +170,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Просмотр текущих данных о соединениях",
     ),
     "connectivity": MessageLookupByLibrary.simpleMessage("Связь："),
+    "contactMe": MessageLookupByLibrary.simpleMessage("Свяжитесь со мной"),
     "content": MessageLookupByLibrary.simpleMessage("Содержание"),
     "contentEmptyTip": MessageLookupByLibrary.simpleMessage(
       "Содержание не может быть пустым",
@@ -385,6 +386,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logs": MessageLookupByLibrary.simpleMessage("Логи"),
     "logsDesc": MessageLookupByLibrary.simpleMessage("Записи захвата логов"),
+    "logsTest": MessageLookupByLibrary.simpleMessage("Тест журналов"),
     "loopback": MessageLookupByLibrary.simpleMessage(
       "Инструмент разблокировки Loopback",
     ),
@@ -571,6 +573,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "recoveryProfiles": MessageLookupByLibrary.simpleMessage(
       "Только восстановление профилей",
+    ),
+    "recoveryStrategy": MessageLookupByLibrary.simpleMessage(
+      "Стратегия восстановления",
+    ),
+    "recoveryStrategy_compatible": MessageLookupByLibrary.simpleMessage(
+      "Совместимый",
+    ),
+    "recoveryStrategy_override": MessageLookupByLibrary.simpleMessage(
+      "Переопределение",
     ),
     "recoverySuccess": MessageLookupByLibrary.simpleMessage(
       "Восстановление успешно",

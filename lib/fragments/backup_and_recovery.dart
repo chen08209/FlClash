@@ -8,10 +8,12 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/fade_box.dart';
+import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 class BackupAndRecovery extends ConsumerWidget {
   const BackupAndRecovery({super.key});
@@ -130,6 +132,30 @@ class BackupAndRecovery extends ConsumerWidget {
     ref.read(appDAVSettingProvider.notifier).updateState(
           (state) => state?.copyWith(
             fileName: value,
+          ),
+        );
+  }
+
+  _handleUpdateRecoveryStrategy(WidgetRef ref) async {
+    final recoveryStrategy = ref.read(appSettingProvider.select(
+      (state) => state.recoveryStrategy,
+    ));
+    final res = await globalState.showCommonDialog(
+      child: OptionsDialog<RecoveryStrategy>(
+        title: appLocalizations.recoveryStrategy,
+        options: RecoveryStrategy.values,
+        textBuilder: (mode) => Intl.message(
+          "recoveryStrategy_${mode.name}",
+        ),
+        value: recoveryStrategy,
+      ),
+    );
+    if (res == null) {
+      return;
+    }
+    ref.read(appSettingProvider.notifier).updateState(
+          (state) => state.copyWith(
+            recoveryStrategy: res,
           ),
         );
   }
@@ -256,6 +282,26 @@ class BackupAndRecovery extends ConsumerWidget {
           title: Text(appLocalizations.recovery),
           subtitle: Text(appLocalizations.localRecoveryDesc),
         ),
+        ListHeader(title: appLocalizations.options),
+        Consumer(builder: (_, ref, __) {
+          final recoveryStrategy = ref.watch(appSettingProvider.select(
+            (state) => state.recoveryStrategy,
+          ));
+          return ListItem(
+            onTap: () {
+              _handleUpdateRecoveryStrategy(ref);
+            },
+            title: Text(appLocalizations.recoveryStrategy),
+            trailing: FilledButton(
+              onPressed: () {
+                _handleUpdateRecoveryStrategy(ref);
+              },
+              child: Text(
+                Intl.message("recoveryStrategy_${recoveryStrategy.name}"),
+              ),
+            ),
+          );
+        }),
       ],
     );
   }

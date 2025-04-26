@@ -471,3 +471,9 @@ enum RuleTarget {
   DIRECT,
   REJECT,
 }
+
+
+enum RecoveryStrategy {
+  compatible,
+  override,
+}

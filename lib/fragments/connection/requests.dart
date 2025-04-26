@@ -97,7 +97,7 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
     final lines = (chainSize.height / baseHeight).round();
     final computerHeight =
         size.height + chainSize.height + 24 + 24 * (lines - 1);
-    return computerHeight;
+    return computerHeight + 8;
   }
 
   _handleTryClearCache(double maxWidth) {

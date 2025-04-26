@@ -130,7 +130,7 @@ class Request {
       if (response.statusCode != HttpStatus.ok) {
         return false;
       }
-      return (response.data as String) == helperTag;
+      return (response.data as String) == globalState.coreSHA256;
     } catch (_) {
       return false;
     }

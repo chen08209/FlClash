@@ -67,9 +67,9 @@ extension DoubleListExt on List<double> {
 }
 
 extension MapExt<K, V> on Map<K, V> {
-  getCacheValue(K key, V defaultValue) {
+  getCacheValue(K key, V Function() callback) {
     if (this[key] == null) {
-      this[key] = defaultValue;
+      this[key] = callback();
     }
     return this[key];
   }

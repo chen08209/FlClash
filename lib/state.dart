@@ -30,6 +30,7 @@ class GlobalState {
   late Config config;
   late AppState appState;
   bool isPre = true;
+  String? coreSHA256;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;
@@ -55,8 +56,8 @@ class GlobalState {
     appState = AppState(
       version: version,
       viewSize: Size.zero,
-      requests: FixedList(1000),
-      logs: FixedList(1000),
+      requests: FixedList(500),
+      logs: FixedList(500),
       traffics: FixedList(30),
       totalTraffic: Traffic(),
     );
