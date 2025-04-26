@@ -395,5 +395,10 @@
   "textScale": "Text Scaling",
   "internet": "Internet",
   "systemApp": "System APP",
-  "noNetworkApp": "No network App"
+  "noNetworkApp": "No network APP",
+  "contactMe": "Contact me",
+  "recoveryStrategy": "Recovery strategy",
+  "recoveryStrategy_override": "Override",
+  "recoveryStrategy_compatible": "Compatible",
+  "logsTest": "Logs test"
 }

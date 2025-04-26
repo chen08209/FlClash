@@ -396,5 +396,10 @@
   "textScale": "文本缩放",
   "internet": "互联网",
   "systemApp": "系统应用",
-  "noNetworkApp": "无网络应用"
+  "noNetworkApp": "无网络应用",
+  "contactMe": "联系我",
+  "recoveryStrategy": "恢复策略",
+  "recoveryStrategy_override": "覆盖",
+  "recoveryStrategy_compatible": "兼容",
+  "logsTest": "日志测试"
 }

@@ -1,6 +1,7 @@
 import 'package:fl_clash/clash/core.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -15,7 +16,6 @@ class DeveloperView extends ConsumerWidget {
       title: appLocalizations.options,
       items: [
         ListItem(
-          leading: Icon(Icons.ac_unit),
           title: Text(appLocalizations.messageTest),
           onTap: () {
             context.showNotifier(
@@ -24,14 +24,27 @@ class DeveloperView extends ConsumerWidget {
           },
         ),
         ListItem(
-          leading: Icon(Icons.heart_broken),
+          title: Text(appLocalizations.logsTest),
+          onTap: () {
+            for (int i = 0; i < 1000; i++) {
+              globalState.appController.addLog(
+                Log.app(
+                  utils.generateRandomString(
+                    maxLength: 1000,
+                    minLength: 20,
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+        ListItem(
           title: Text(appLocalizations.crashTest),
           onTap: () {
             clashCore.clashInterface.crash();
           },
         ),
         ListItem(
-          leading: Icon(Icons.delete_forever),
           title: Text(appLocalizations.clearData),
           onTap: () async {
             await globalState.appController.handleClear();

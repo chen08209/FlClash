@@ -260,9 +260,7 @@ class AppController {
     final patchConfig = _ref.read(patchClashConfigProvider);
     final appSetting = _ref.read(appSettingProvider);
     bool enableTun = patchConfig.tun.enable;
-    if (enableTun != lastTunEnable &&
-        lastTunEnable == false &&
-        !Platform.isAndroid) {
+    if (enableTun != lastTunEnable && lastTunEnable == false) {
       final code = await system.authorizeCore();
       switch (code) {
         case AuthorizeCode.none:
@@ -487,7 +485,7 @@ class AppController {
   Future<void> _initCore() async {
     final isInit = await clashCore.isInit;
     if (!isInit) {
-     await clashCore.init();
+      await clashCore.init();
       await clashCore.setState(
         globalState.getCoreState(),
       );
@@ -940,14 +938,18 @@ class AppController {
   }
 
   _recovery(Config config, RecoveryOption recoveryOption) {
+    final recoveryStrategy = _ref.read(appSettingProvider.select(
+      (state) => state.recoveryStrategy,
+    ));
     final profiles = config.profiles;
-    final oldProfiles = List.from(globalState.config.profiles);
-    _ref.read(profilesProvider.notifier).value = profiles;
-    for (final profile in oldProfiles) {
-      _ref.read(profilesProvider.notifier).setProfile(
-            profile,
-            force: false,
-          );
+    if (recoveryStrategy == RecoveryStrategy.override) {
+      _ref.read(profilesProvider.notifier).value = profiles;
+    } else {
+      for (final profile in profiles) {
+        _ref.read(profilesProvider.notifier).setProfile(
+              profile,
+            );
+      }
     }
     final onlyProfiles = recoveryOption == RecoveryOption.onlyProfiles;
     if (!onlyProfiles) {

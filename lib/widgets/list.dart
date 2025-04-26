@@ -257,6 +257,7 @@ class ListItem<T> extends StatelessWidget {
       leading: leading ?? this.leading,
       horizontalTitleGap: horizontalTitleGap,
       title: title,
+      minTileHeight: 52,
       subtitle: subtitle,
       titleAlignment: tileTitleAlignment,
       onTap: onTap,

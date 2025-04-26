@@ -396,5 +396,10 @@
   "textScale": "Масштабирование текста",
   "internet": "Интернет",
   "systemApp": "Системное приложение",
-  "noNetworkApp": "Приложение без сети"
+  "noNetworkApp": "Приложение без сети",
+  "contactMe": "Свяжитесь со мной",
+  "recoveryStrategy": "Стратегия восстановления",
+  "recoveryStrategy_override": "Переопределение",
+  "recoveryStrategy_compatible": "Совместимый",
+  "logsTest": "Тест журналов"
 }

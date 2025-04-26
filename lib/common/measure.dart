@@ -43,6 +43,18 @@ class Measure {
     );
   }
 
+  double get bodyLargeHeight {
+    return _measureMap.getCacheValue(
+      "bodyLargeHeight",
+      computeTextSize(
+        Text(
+          "X",
+          style: context.textTheme.bodyLarge,
+        ),
+      ).height,
+    );
+  }
+
   double get bodySmallHeight {
     return _measureMap.getCacheValue(
       "bodySmallHeight",

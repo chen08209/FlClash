@@ -396,5 +396,10 @@
   "textScale": "テキストスケーリング",
   "internet": "インターネット",
   "systemApp": "システムアプリ",
-  "noNetworkApp": "ネットワークなしアプリ"
+  "noNetworkApp": "ネットワークなしアプリ",
+  "contactMe": "連絡する",
+  "recoveryStrategy": "リカバリー戦略",
+  "recoveryStrategy_override": "オーバーライド",
+  "recoveryStrategy_compatible": "互換性",
+  "logsTest": "ログテスト"
 }

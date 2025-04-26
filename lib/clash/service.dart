@@ -92,12 +92,11 @@ class ClashService extends ClashHandlerInterface {
     final arg = Platform.isWindows
         ? "${serverSocket.port}"
         : serverSocket.address.address;
-    bool isSuccess = false;
     if (Platform.isWindows && await system.checkIsAdmin()) {
-      isSuccess = await request.startCoreByHelper(arg);
-    }
-    if (isSuccess) {
-      return;
+      final isSuccess = await request.startCoreByHelper(arg);
+      if (isSuccess) {
+        return;
+      }
     }
     process = await Process.start(
       appPath.corePath,

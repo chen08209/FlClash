@@ -3070,14 +3070,54 @@ class AppLocalizations {
     return Intl.message('System APP', name: 'systemApp', desc: '', args: []);
   }
 
-  /// `No network App`
+  /// `No network APP`
   String get noNetworkApp {
     return Intl.message(
-      'No network App',
+      'No network APP',
       name: 'noNetworkApp',
       desc: '',
       args: [],
     );
+  }
+
+  /// `Contact me`
+  String get contactMe {
+    return Intl.message('Contact me', name: 'contactMe', desc: '', args: []);
+  }
+
+  /// `Recovery strategy`
+  String get recoveryStrategy {
+    return Intl.message(
+      'Recovery strategy',
+      name: 'recoveryStrategy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Override`
+  String get recoveryStrategy_override {
+    return Intl.message(
+      'Override',
+      name: 'recoveryStrategy_override',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Compatible`
+  String get recoveryStrategy_compatible {
+    return Intl.message(
+      'Compatible',
+      name: 'recoveryStrategy_compatible',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Logs test`
+  String get logsTest {
+    return Intl.message('Logs test', name: 'logsTest', desc: '', args: []);
   }
 }
 

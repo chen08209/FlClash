@@ -21,6 +21,8 @@ if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
             -Wl,--strip-all
             -Wl,--exclude-libs=ALL
     )
+
+    add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
 endif ()
 
 set(LIB_CLASH_PATH "${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libclash.so")

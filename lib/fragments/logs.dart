@@ -29,7 +29,9 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
     super.initState();
     final preOffset = globalState.cacheScrollPosition[_cacheKey] ?? -1;
     _scrollController = ScrollController(
-      initialScrollOffset: preOffset > 0 ? preOffset : double.maxFinite,
+      initialScrollOffset: preOffset > 0
+          ? preOffset
+          : double.maxFinite,
     );
     _logsStateNotifier.value = _logsStateNotifier.value.copyWith(
       logs: globalState.appState.logs.list,
