@@ -27,7 +27,7 @@ dependencies:
   mobile_scanner: ^6.0.2
   app_links: ^6.4.0
   win32_registry: ^2.0.0
-  tray_manager: ^0.4.0
+  tray_manager: ^0.5.0
   collection: ^1.18.0
   animations: ^2.0.11
   package_info_plus: ^8.0.0
