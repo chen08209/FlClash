@@ -810,7 +810,7 @@ class _$TunImpl implements _Tun {
       {this.enable = false,
       this.device = appName,
       @JsonKey(name: "auto-route") this.autoRoute = false,
-      this.stack = TunStack.gvisor,
+      this.stack = TunStack.mixed,
       @JsonKey(name: "dns-hijack")
       final List<String> dnsHijack = const ["any:53"],
       @JsonKey(name: "route-address")

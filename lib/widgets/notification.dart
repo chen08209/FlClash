@@ -16,7 +16,7 @@ class TextScaleNotification extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer(
-      builder: (_, ref, __) {
+      builder: (_, ref, child) {
         ref.listen(
           themeSettingProvider.select((state) => state.textScale),
           (prev, next) {
@@ -25,7 +25,7 @@ class TextScaleNotification extends StatelessWidget {
             }
           },
         );
-        return child;
+        return child!;
       },
       child: child,
     );

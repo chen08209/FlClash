@@ -1320,6 +1320,7 @@ mixin _$LogsState {
   List<Log> get logs => throw _privateConstructorUsedError;
   List<String> get keywords => throw _privateConstructorUsedError;
   String get query => throw _privateConstructorUsedError;
+  bool get loading => throw _privateConstructorUsedError;
 
   /// Create a copy of LogsState
   /// with the given fields replaced by the non-null parameter values.
@@ -1333,7 +1334,8 @@ abstract class $LogsStateCopyWith<$Res> {
   factory $LogsStateCopyWith(LogsState value, $Res Function(LogsState) then) =
       _$LogsStateCopyWithImpl<$Res, LogsState>;
   @useResult
-  $Res call({List<Log> logs, List<String> keywords, String query});
+  $Res call(
+      {List<Log> logs, List<String> keywords, String query, bool loading});
 }
 
 /// @nodoc
@@ -1354,6 +1356,7 @@ class _$LogsStateCopyWithImpl<$Res, $Val extends LogsState>
     Object? logs = null,
     Object? keywords = null,
     Object? query = null,
+    Object? loading = null,
   }) {
     return _then(_value.copyWith(
       logs: null == logs
@@ -1368,6 +1371,10 @@ class _$LogsStateCopyWithImpl<$Res, $Val extends LogsState>
           ? _value.query
           : query // ignore: cast_nullable_to_non_nullable
               as String,
+      loading: null == loading
+          ? _value.loading
+          : loading // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -1380,7 +1387,8 @@ abstract class _$$LogsStateImplCopyWith<$Res>
       __$$LogsStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<Log> logs, List<String> keywords, String query});
+  $Res call(
+      {List<Log> logs, List<String> keywords, String query, bool loading});
 }
 
 /// @nodoc
@@ -1399,6 +1407,7 @@ class __$$LogsStateImplCopyWithImpl<$Res>
     Object? logs = null,
     Object? keywords = null,
     Object? query = null,
+    Object? loading = null,
   }) {
     return _then(_$LogsStateImpl(
       logs: null == logs
@@ -1413,6 +1422,10 @@ class __$$LogsStateImplCopyWithImpl<$Res>
           ? _value.query
           : query // ignore: cast_nullable_to_non_nullable
               as String,
+      loading: null == loading
+          ? _value.loading
+          : loading // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -1423,7 +1436,8 @@ class _$LogsStateImpl implements _LogsState {
   const _$LogsStateImpl(
       {final List<Log> logs = const [],
       final List<String> keywords = const [],
-      this.query = ""})
+      this.query = "",
+      this.loading = false})
       : _logs = logs,
         _keywords = keywords;
 
@@ -1448,10 +1462,13 @@ class _$LogsStateImpl implements _LogsState {
   @override
   @JsonKey()
   final String query;
+  @override
+  @JsonKey()
+  final bool loading;
 
   @override
   String toString() {
-    return 'LogsState(logs: $logs, keywords: $keywords, query: $query)';
+    return 'LogsState(logs: $logs, keywords: $keywords, query: $query, loading: $loading)';
   }
 
   @override
@@ -1461,7 +1478,8 @@ class _$LogsStateImpl implements _LogsState {
             other is _$LogsStateImpl &&
             const DeepCollectionEquality().equals(other._logs, _logs) &&
             const DeepCollectionEquality().equals(other._keywords, _keywords) &&
-            (identical(other.query, query) || other.query == query));
+            (identical(other.query, query) || other.query == query) &&
+            (identical(other.loading, loading) || other.loading == loading));
   }
 
   @override
@@ -1469,7 +1487,8 @@ class _$LogsStateImpl implements _LogsState {
       runtimeType,
       const DeepCollectionEquality().hash(_logs),
       const DeepCollectionEquality().hash(_keywords),
-      query);
+      query,
+      loading);
 
   /// Create a copy of LogsState
   /// with the given fields replaced by the non-null parameter values.
@@ -1484,7 +1503,8 @@ abstract class _LogsState implements LogsState {
   const factory _LogsState(
       {final List<Log> logs,
       final List<String> keywords,
-      final String query}) = _$LogsStateImpl;
+      final String query,
+      final bool loading}) = _$LogsStateImpl;
 
   @override
   List<Log> get logs;
@@ -1492,6 +1512,8 @@ abstract class _LogsState implements LogsState {
   List<String> get keywords;
   @override
   String get query;
+  @override
+  bool get loading;
 
   /// Create a copy of LogsState
   /// with the given fields replaced by the non-null parameter values.
@@ -1506,6 +1528,7 @@ mixin _$ConnectionsState {
   List<Connection> get connections => throw _privateConstructorUsedError;
   List<String> get keywords => throw _privateConstructorUsedError;
   String get query => throw _privateConstructorUsedError;
+  bool get loading => throw _privateConstructorUsedError;
 
   /// Create a copy of ConnectionsState
   /// with the given fields replaced by the non-null parameter values.
@@ -1521,7 +1544,10 @@ abstract class $ConnectionsStateCopyWith<$Res> {
       _$ConnectionsStateCopyWithImpl<$Res, ConnectionsState>;
   @useResult
   $Res call(
-      {List<Connection> connections, List<String> keywords, String query});
+      {List<Connection> connections,
+      List<String> keywords,
+      String query,
+      bool loading});
 }
 
 /// @nodoc
@@ -1542,6 +1568,7 @@ class _$ConnectionsStateCopyWithImpl<$Res, $Val extends ConnectionsState>
     Object? connections = null,
     Object? keywords = null,
     Object? query = null,
+    Object? loading = null,
   }) {
     return _then(_value.copyWith(
       connections: null == connections
@@ -1556,6 +1583,10 @@ class _$ConnectionsStateCopyWithImpl<$Res, $Val extends ConnectionsState>
           ? _value.query
           : query // ignore: cast_nullable_to_non_nullable
               as String,
+      loading: null == loading
+          ? _value.loading
+          : loading // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -1569,7 +1600,10 @@ abstract class _$$ConnectionsStateImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {List<Connection> connections, List<String> keywords, String query});
+      {List<Connection> connections,
+      List<String> keywords,
+      String query,
+      bool loading});
 }
 
 /// @nodoc
@@ -1588,6 +1622,7 @@ class __$$ConnectionsStateImplCopyWithImpl<$Res>
     Object? connections = null,
     Object? keywords = null,
     Object? query = null,
+    Object? loading = null,
   }) {
     return _then(_$ConnectionsStateImpl(
       connections: null == connections
@@ -1602,6 +1637,10 @@ class __$$ConnectionsStateImplCopyWithImpl<$Res>
           ? _value.query
           : query // ignore: cast_nullable_to_non_nullable
               as String,
+      loading: null == loading
+          ? _value.loading
+          : loading // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -1612,7 +1651,8 @@ class _$ConnectionsStateImpl implements _ConnectionsState {
   const _$ConnectionsStateImpl(
       {final List<Connection> connections = const [],
       final List<String> keywords = const [],
-      this.query = ""})
+      this.query = "",
+      this.loading = false})
       : _connections = connections,
         _keywords = keywords;
 
@@ -1637,10 +1677,13 @@ class _$ConnectionsStateImpl implements _ConnectionsState {
   @override
   @JsonKey()
   final String query;
+  @override
+  @JsonKey()
+  final bool loading;
 
   @override
   String toString() {
-    return 'ConnectionsState(connections: $connections, keywords: $keywords, query: $query)';
+    return 'ConnectionsState(connections: $connections, keywords: $keywords, query: $query, loading: $loading)';
   }
 
   @override
@@ -1651,7 +1694,8 @@ class _$ConnectionsStateImpl implements _ConnectionsState {
             const DeepCollectionEquality()
                 .equals(other._connections, _connections) &&
             const DeepCollectionEquality().equals(other._keywords, _keywords) &&
-            (identical(other.query, query) || other.query == query));
+            (identical(other.query, query) || other.query == query) &&
+            (identical(other.loading, loading) || other.loading == loading));
   }
 
   @override
@@ -1659,7 +1703,8 @@ class _$ConnectionsStateImpl implements _ConnectionsState {
       runtimeType,
       const DeepCollectionEquality().hash(_connections),
       const DeepCollectionEquality().hash(_keywords),
-      query);
+      query,
+      loading);
 
   /// Create a copy of ConnectionsState
   /// with the given fields replaced by the non-null parameter values.
@@ -1675,7 +1720,8 @@ abstract class _ConnectionsState implements ConnectionsState {
   const factory _ConnectionsState(
       {final List<Connection> connections,
       final List<String> keywords,
-      final String query}) = _$ConnectionsStateImpl;
+      final String query,
+      final bool loading}) = _$ConnectionsStateImpl;
 
   @override
   List<Connection> get connections;
@@ -1683,6 +1729,8 @@ abstract class _ConnectionsState implements ConnectionsState {
   List<String> get keywords;
   @override
   String get query;
+  @override
+  bool get loading;
 
   /// Create a copy of ConnectionsState
   /// with the given fields replaced by the non-null parameter values.
@@ -3176,5 +3224,245 @@ abstract class _Field implements Field {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$FieldImplCopyWith<_$FieldImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+TextPainterParams _$TextPainterParamsFromJson(Map<String, dynamic> json) {
+  return _TextPainterParams.fromJson(json);
+}
+
+/// @nodoc
+mixin _$TextPainterParams {
+  String? get text => throw _privateConstructorUsedError;
+  double? get fontSize => throw _privateConstructorUsedError;
+  double get textScaleFactor => throw _privateConstructorUsedError;
+  double get maxWidth => throw _privateConstructorUsedError;
+  int? get maxLines => throw _privateConstructorUsedError;
+
+  /// Serializes this TextPainterParams to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of TextPainterParams
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $TextPainterParamsCopyWith<TextPainterParams> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TextPainterParamsCopyWith<$Res> {
+  factory $TextPainterParamsCopyWith(
+          TextPainterParams value, $Res Function(TextPainterParams) then) =
+      _$TextPainterParamsCopyWithImpl<$Res, TextPainterParams>;
+  @useResult
+  $Res call(
+      {String? text,
+      double? fontSize,
+      double textScaleFactor,
+      double maxWidth,
+      int? maxLines});
+}
+
+/// @nodoc
+class _$TextPainterParamsCopyWithImpl<$Res, $Val extends TextPainterParams>
+    implements $TextPainterParamsCopyWith<$Res> {
+  _$TextPainterParamsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of TextPainterParams
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? text = freezed,
+    Object? fontSize = freezed,
+    Object? textScaleFactor = null,
+    Object? maxWidth = null,
+    Object? maxLines = freezed,
+  }) {
+    return _then(_value.copyWith(
+      text: freezed == text
+          ? _value.text
+          : text // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fontSize: freezed == fontSize
+          ? _value.fontSize
+          : fontSize // ignore: cast_nullable_to_non_nullable
+              as double?,
+      textScaleFactor: null == textScaleFactor
+          ? _value.textScaleFactor
+          : textScaleFactor // ignore: cast_nullable_to_non_nullable
+              as double,
+      maxWidth: null == maxWidth
+          ? _value.maxWidth
+          : maxWidth // ignore: cast_nullable_to_non_nullable
+              as double,
+      maxLines: freezed == maxLines
+          ? _value.maxLines
+          : maxLines // ignore: cast_nullable_to_non_nullable
+              as int?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$TextPainterParamsImplCopyWith<$Res>
+    implements $TextPainterParamsCopyWith<$Res> {
+  factory _$$TextPainterParamsImplCopyWith(_$TextPainterParamsImpl value,
+          $Res Function(_$TextPainterParamsImpl) then) =
+      __$$TextPainterParamsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String? text,
+      double? fontSize,
+      double textScaleFactor,
+      double maxWidth,
+      int? maxLines});
+}
+
+/// @nodoc
+class __$$TextPainterParamsImplCopyWithImpl<$Res>
+    extends _$TextPainterParamsCopyWithImpl<$Res, _$TextPainterParamsImpl>
+    implements _$$TextPainterParamsImplCopyWith<$Res> {
+  __$$TextPainterParamsImplCopyWithImpl(_$TextPainterParamsImpl _value,
+      $Res Function(_$TextPainterParamsImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of TextPainterParams
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? text = freezed,
+    Object? fontSize = freezed,
+    Object? textScaleFactor = null,
+    Object? maxWidth = null,
+    Object? maxLines = freezed,
+  }) {
+    return _then(_$TextPainterParamsImpl(
+      text: freezed == text
+          ? _value.text
+          : text // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fontSize: freezed == fontSize
+          ? _value.fontSize
+          : fontSize // ignore: cast_nullable_to_non_nullable
+              as double?,
+      textScaleFactor: null == textScaleFactor
+          ? _value.textScaleFactor
+          : textScaleFactor // ignore: cast_nullable_to_non_nullable
+              as double,
+      maxWidth: null == maxWidth
+          ? _value.maxWidth
+          : maxWidth // ignore: cast_nullable_to_non_nullable
+              as double,
+      maxLines: freezed == maxLines
+          ? _value.maxLines
+          : maxLines // ignore: cast_nullable_to_non_nullable
+              as int?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$TextPainterParamsImpl implements _TextPainterParams {
+  const _$TextPainterParamsImpl(
+      {required this.text,
+      required this.fontSize,
+      required this.textScaleFactor,
+      this.maxWidth = double.infinity,
+      this.maxLines});
+
+  factory _$TextPainterParamsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$TextPainterParamsImplFromJson(json);
+
+  @override
+  final String? text;
+  @override
+  final double? fontSize;
+  @override
+  final double textScaleFactor;
+  @override
+  @JsonKey()
+  final double maxWidth;
+  @override
+  final int? maxLines;
+
+  @override
+  String toString() {
+    return 'TextPainterParams(text: $text, fontSize: $fontSize, textScaleFactor: $textScaleFactor, maxWidth: $maxWidth, maxLines: $maxLines)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TextPainterParamsImpl &&
+            (identical(other.text, text) || other.text == text) &&
+            (identical(other.fontSize, fontSize) ||
+                other.fontSize == fontSize) &&
+            (identical(other.textScaleFactor, textScaleFactor) ||
+                other.textScaleFactor == textScaleFactor) &&
+            (identical(other.maxWidth, maxWidth) ||
+                other.maxWidth == maxWidth) &&
+            (identical(other.maxLines, maxLines) ||
+                other.maxLines == maxLines));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, text, fontSize, textScaleFactor, maxWidth, maxLines);
+
+  /// Create a copy of TextPainterParams
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TextPainterParamsImplCopyWith<_$TextPainterParamsImpl> get copyWith =>
+      __$$TextPainterParamsImplCopyWithImpl<_$TextPainterParamsImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$TextPainterParamsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _TextPainterParams implements TextPainterParams {
+  const factory _TextPainterParams(
+      {required final String? text,
+      required final double? fontSize,
+      required final double textScaleFactor,
+      final double maxWidth,
+      final int? maxLines}) = _$TextPainterParamsImpl;
+
+  factory _TextPainterParams.fromJson(Map<String, dynamic> json) =
+      _$TextPainterParamsImpl.fromJson;
+
+  @override
+  String? get text;
+  @override
+  double? get fontSize;
+  @override
+  double get textScaleFactor;
+  @override
+  double get maxWidth;
+  @override
+  int? get maxLines;
+
+  /// Create a copy of TextPainterParams
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TextPainterParamsImplCopyWith<_$TextPainterParamsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

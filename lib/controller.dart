@@ -312,6 +312,10 @@ class AppController {
   handleChangeProfile() {
     _ref.read(delayDataSourceProvider.notifier).value = {};
     applyProfile();
+    _ref.read(logsProvider.notifier).value = FixedList(500);
+    _ref.read(requestsProvider.notifier).value = FixedList(500);
+    globalState.cacheHeightMap = {};
+    globalState.cacheScrollPosition = {};
   }
 
   updateBrightness(Brightness brightness) {

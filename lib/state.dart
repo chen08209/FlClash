@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:animations/animations.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/clash/clash.dart';
@@ -22,8 +21,8 @@ typedef UpdateTasks = List<FutureOr Function()>;
 
 class GlobalState {
   static GlobalState? _instance;
-  Map<Key, double> cacheScrollPosition = {};
-  Map<Key, FixedMap<String, double>> cacheHeightMap = {};
+  Map<CacheTag, double> cacheScrollPosition = {};
+  Map<CacheTag, FixedMap<String, double>> cacheHeightMap = {};
   bool isService = false;
   Timer? timer;
   Timer? groupsUpdateTimer;
@@ -56,8 +55,8 @@ class GlobalState {
     appState = AppState(
       version: version,
       viewSize: Size.zero,
-      requests: FixedList(500),
-      logs: FixedList(500),
+      requests: FixedList(maxLength),
+      logs: FixedList(maxLength),
       traffics: FixedList(30),
       totalTraffic: Traffic(),
     );

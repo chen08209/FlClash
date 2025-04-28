@@ -32,7 +32,7 @@ class Measure {
   }
 
   double get bodyMediumHeight {
-    return _measureMap.getCacheValue(
+    return _measureMap.updateCacheValue(
       "bodyMediumHeight",
       () => computeTextSize(
         Text(
@@ -44,7 +44,7 @@ class Measure {
   }
 
   double get bodyLargeHeight {
-    return _measureMap.getCacheValue(
+    return _measureMap.updateCacheValue(
       "bodyLargeHeight",
       () => computeTextSize(
         Text(
@@ -56,7 +56,7 @@ class Measure {
   }
 
   double get bodySmallHeight {
-    return _measureMap.getCacheValue(
+    return _measureMap.updateCacheValue(
       "bodySmallHeight",
       () => computeTextSize(
         Text(
@@ -68,7 +68,7 @@ class Measure {
   }
 
   double get labelSmallHeight {
-    return _measureMap.getCacheValue(
+    return _measureMap.updateCacheValue(
       "labelSmallHeight",
       () => computeTextSize(
         Text(
@@ -80,7 +80,7 @@ class Measure {
   }
 
   double get labelMediumHeight {
-    return _measureMap.getCacheValue(
+    return _measureMap.updateCacheValue(
       "labelMediumHeight",
       () => computeTextSize(
         Text(
@@ -92,7 +92,7 @@ class Measure {
   }
 
   double get titleLargeHeight {
-    return _measureMap.getCacheValue(
+    return _measureMap.updateCacheValue(
       "titleLargeHeight",
       () => computeTextSize(
         Text(
@@ -104,7 +104,7 @@ class Measure {
   }
 
   double get titleMediumHeight {
-    return _measureMap.getCacheValue(
+    return _measureMap.updateCacheValue(
       "titleMediumHeight",
       () => computeTextSize(
         Text(

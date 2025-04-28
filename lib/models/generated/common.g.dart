@@ -198,3 +198,23 @@ const _$KeyboardModifierEnumMap = {
   KeyboardModifier.meta: 'meta',
   KeyboardModifier.shift: 'shift',
 };
+
+_$TextPainterParamsImpl _$$TextPainterParamsImplFromJson(
+        Map<String, dynamic> json) =>
+    _$TextPainterParamsImpl(
+      text: json['text'] as String?,
+      fontSize: (json['fontSize'] as num?)?.toDouble(),
+      textScaleFactor: (json['textScaleFactor'] as num).toDouble(),
+      maxWidth: (json['maxWidth'] as num?)?.toDouble() ?? double.infinity,
+      maxLines: (json['maxLines'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$$TextPainterParamsImplToJson(
+        _$TextPainterParamsImpl instance) =>
+    <String, dynamic>{
+      'text': instance.text,
+      'fontSize': instance.fontSize,
+      'textScaleFactor': instance.textScaleFactor,
+      'maxWidth': instance.maxWidth,
+      'maxLines': instance.maxLines,
+    };

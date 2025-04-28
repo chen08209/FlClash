@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AppStateManager extends StatefulWidget {
+class AppStateManager extends ConsumerStatefulWidget {
   final Widget child;
 
   const AppStateManager({
@@ -14,15 +16,22 @@ class AppStateManager extends StatefulWidget {
   });
 
   @override
-  State<AppStateManager> createState() => _AppStateManagerState();
+  ConsumerState<AppStateManager> createState() => _AppStateManagerState();
 }
 
-class _AppStateManagerState extends State<AppStateManager>
+class _AppStateManagerState extends ConsumerState<AppStateManager>
     with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ref.listenManual(layoutChangeProvider, (prev, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (prev != next) {
+          globalState.cacheHeightMap = {};
+        }
+      });
+    });
   }
 
   @override

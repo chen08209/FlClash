@@ -1765,6 +1765,22 @@ class _GetProfileOverrideDataProviderElement
   String get profileId => (origin as GetProfileOverrideDataProvider).profileId;
 }
 
+String _$layoutChangeHash() => r'f25182e1dfaf3c70000404d7635bb1e1db09efbb';
+
+/// See also [layoutChange].
+@ProviderFor(layoutChange)
+final layoutChangeProvider = AutoDisposeProvider<VM2?>.internal(
+  layoutChange,
+  name: r'layoutChangeProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$layoutChangeHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef LayoutChangeRef = AutoDisposeProviderRef<VM2?>;
 String _$genColorSchemeHash() => r'b18f15c938a8132ee4ed02cdfc02f3b9f01724e2';
 
 /// See also [genColorScheme].

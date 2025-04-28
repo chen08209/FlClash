@@ -120,6 +120,7 @@ class LogsState with _$LogsState {
     @Default([]) List<Log> logs,
     @Default([]) List<String> keywords,
     @Default("") String query,
+    @Default(false) bool loading,
   }) = _LogsState;
 }
 
@@ -143,6 +144,7 @@ class ConnectionsState with _$ConnectionsState {
     @Default([]) List<Connection> connections,
     @Default([]) List<String> keywords,
     @Default("") String query,
+    @Default(false) bool loading,
   }) = _ConnectionsState;
 }
 
@@ -511,4 +513,18 @@ class PopupMenuItemData {
   final VoidCallback? onPressed;
   final IconData? icon;
   final PopupMenuItemType? type;
+}
+
+@freezed
+class TextPainterParams with _$TextPainterParams {
+  const factory TextPainterParams({
+    required String? text,
+    required double? fontSize,
+    required double textScaleFactor,
+    @Default(double.infinity) double maxWidth,
+    int? maxLines,
+  }) = _TextPainterParams;
+
+  factory TextPainterParams.fromJson(Map<String, Object?> json) =>
+      _$TextPainterParamsFromJson(json);
 }

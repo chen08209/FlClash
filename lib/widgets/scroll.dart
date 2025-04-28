@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 
@@ -53,13 +54,13 @@ class ScrollToEndBox<T> extends StatefulWidget {
   final ScrollController controller;
   final List<T> dataSource;
   final Widget child;
-  final Key cacheKey;
+  final CacheTag tag;
 
   const ScrollToEndBox({
     super.key,
     required this.child,
     required this.controller,
-    required this.cacheKey,
+    required this.tag,
     required this.dataSource,
   });
 
@@ -72,8 +73,7 @@ class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
 
   _handleTryToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final double offset =
-          globalState.cacheScrollPosition[widget.cacheKey] ?? -1;
+      final double offset = globalState.cacheScrollPosition[widget.tag] ?? -1;
       if (offset < 0) {
         widget.controller.animateTo(
           duration: kThemeAnimationDuration,
@@ -96,11 +96,10 @@ class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
   Widget build(BuildContext context) {
     return NotificationListener<ScrollNotification>(
       onNotification: (details) {
-        double offset =
+        globalState.cacheScrollPosition[widget.tag] =
             details.metrics.pixels == details.metrics.maxScrollExtent
                 ? -1
                 : details.metrics.pixels;
-        globalState.cacheScrollPosition[widget.cacheKey] = offset;
         return false;
       },
       child: widget.child,
@@ -117,6 +116,7 @@ class CacheItemExtentListView extends StatefulWidget {
   final bool shrinkWrap;
   final bool reverse;
   final ScrollController controller;
+  final CacheTag tag;
 
   const CacheItemExtentListView({
     super.key,
@@ -128,6 +128,7 @@ class CacheItemExtentListView extends StatefulWidget {
     required this.keyBuilder,
     required this.itemCount,
     required this.itemExtentBuilder,
+    required this.tag,
   });
 
   @override
@@ -136,21 +137,19 @@ class CacheItemExtentListView extends StatefulWidget {
 }
 
 class CacheItemExtentListViewState extends State<CacheItemExtentListView> {
-  late final FixedMap<String, double> _cacheHeightMap;
-
   @override
   void initState() {
     super.initState();
-    _cacheHeightMap = FixedMap(widget.itemCount);
+    _updateCacheHeightMap();
   }
 
-  clearCache() {
-    _cacheHeightMap.clear();
+  _updateCacheHeightMap() {
+    globalState.cacheHeightMap[widget.tag]?.updateMaxLength(widget.itemCount);
+    globalState.cacheHeightMap[widget.tag] ??= FixedMap(widget.itemCount);
   }
 
   @override
   Widget build(BuildContext context) {
-    _cacheHeightMap.updateMaxSize(widget.itemCount);
     return ListView.builder(
       itemBuilder: widget.itemBuilder,
       itemCount: widget.itemCount,
@@ -159,19 +158,13 @@ class CacheItemExtentListViewState extends State<CacheItemExtentListView> {
       shrinkWrap: widget.shrinkWrap,
       controller: widget.controller,
       itemExtentBuilder: (index, __) {
-        final key = widget.keyBuilder(index);
-        if (_cacheHeightMap.containsKey(key)) {
-          return _cacheHeightMap.get(key);
-        }
-        return _cacheHeightMap.put(key, widget.itemExtentBuilder(index));
+        _updateCacheHeightMap();
+        return globalState.cacheHeightMap[widget.tag]?.updateCacheValue(
+          widget.keyBuilder(index),
+          () => widget.itemExtentBuilder(index),
+        );
       },
     );
-  }
-
-  @override
-  void dispose() {
-    _cacheHeightMap.clear();
-    super.dispose();
   }
 }
 
@@ -182,6 +175,7 @@ class CacheItemExtentSliverReorderableList extends StatefulWidget {
   final double Function(int index) itemExtentBuilder;
   final ReorderCallback onReorder;
   final ReorderItemProxyDecorator? proxyDecorator;
+  final CacheTag tag;
 
   const CacheItemExtentSliverReorderableList({
     super.key,
@@ -191,6 +185,7 @@ class CacheItemExtentSliverReorderableList extends StatefulWidget {
     required this.itemExtentBuilder,
     required this.onReorder,
     this.proxyDecorator,
+    required this.tag,
   });
 
   @override
@@ -200,30 +195,24 @@ class CacheItemExtentSliverReorderableList extends StatefulWidget {
 
 class CacheItemExtentSliverReorderableListState
     extends State<CacheItemExtentSliverReorderableList> {
-  late final FixedMap<String, double> _cacheHeightMap;
-
   @override
   void initState() {
     super.initState();
-    _cacheHeightMap = FixedMap(widget.itemCount);
-  }
-
-  clearCache() {
-    _cacheHeightMap.clear();
+    globalState.cacheHeightMap[widget.tag]?.updateMaxLength(widget.itemCount);
+    globalState.cacheHeightMap[widget.tag] ??= FixedMap(widget.itemCount);
   }
 
   @override
   Widget build(BuildContext context) {
-    _cacheHeightMap.updateMaxSize(widget.itemCount);
+    globalState.cacheHeightMap[widget.tag]?.updateMaxLength(widget.itemCount);
     return SliverReorderableList(
       itemBuilder: widget.itemBuilder,
       itemCount: widget.itemCount,
       itemExtentBuilder: (index, __) {
-        final key = widget.keyBuilder(index);
-        if (_cacheHeightMap.containsKey(key)) {
-          return _cacheHeightMap.get(key);
-        }
-        return _cacheHeightMap.put(key, widget.itemExtentBuilder(index));
+        return globalState.cacheHeightMap[widget.tag]?.updateCacheValue(
+          widget.keyBuilder(index),
+          () => widget.itemExtentBuilder(index),
+        );
       },
       onReorder: widget.onReorder,
       proxyDecorator: widget.proxyDecorator,
@@ -232,7 +221,6 @@ class CacheItemExtentSliverReorderableListState
 
   @override
   void dispose() {
-    _cacheHeightMap.clear();
     super.dispose();
   }
 }

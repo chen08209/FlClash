@@ -21,6 +21,9 @@ import 'common/common.dart';
 Future<void> main() async {
   globalState.isService = false;
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    commonPrint.log(details.stack.toString());
+  };
   final version = await system.version;
   await clashCore.preload();
   await globalState.initApp(version);

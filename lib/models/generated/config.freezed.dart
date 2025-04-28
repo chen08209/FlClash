@@ -327,7 +327,7 @@ class _$AppSettingPropsImpl implements _AppSettingProps {
       this.autoLaunch = false,
       this.silentLaunch = false,
       this.autoRun = false,
-      this.openLogs = true,
+      this.openLogs = false,
       this.closeConnections = true,
       this.testUrl = defaultTestUrl,
       this.isAnimateToPage = true,
@@ -2127,7 +2127,7 @@ class _$ThemePropsImpl implements _ThemeProps {
       {this.primaryColor,
       final List<int> primaryColors = defaultPrimaryColors,
       this.themeMode = ThemeMode.dark,
-      this.schemeVariant = DynamicSchemeVariant.tonalSpot,
+      this.schemeVariant = DynamicSchemeVariant.content,
       this.pureBlack = false,
       this.textScale = const TextScale()})
       : _primaryColors = primaryColors;

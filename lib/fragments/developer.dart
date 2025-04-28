@@ -8,10 +8,12 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/app.dart';
+
 class DeveloperView extends ConsumerWidget {
   const DeveloperView({super.key});
 
-  Widget _getDeveloperList(BuildContext context) {
+  Widget _getDeveloperList(BuildContext context, WidgetRef ref) {
     return generateSectionV2(
       title: appLocalizations.options,
       items: [
@@ -27,10 +29,29 @@ class DeveloperView extends ConsumerWidget {
           title: Text(appLocalizations.logsTest),
           onTap: () {
             for (int i = 0; i < 1000; i++) {
+              ref.read(requestsProvider.notifier).addRequest(Connection(
+                    id: utils.id,
+                    start: DateTime.now(),
+                    metadata: Metadata(
+                      uid: i * i,
+                      network: utils.generateRandomString(
+                        maxLength: 1000,
+                        minLength: 20,
+                      ),
+                      sourceIP: '',
+                      sourcePort: '',
+                      destinationIP: '',
+                      destinationPort: '',
+                      host: '',
+                      process: '',
+                      remoteDestination: "",
+                    ),
+                    chains: ["chains"],
+                  ));
               globalState.appController.addLog(
                 Log.app(
                   utils.generateRandomString(
-                    maxLength: 1000,
+                    maxLength: 200,
                     minLength: 20,
                   ),
                 ),
@@ -91,7 +112,7 @@ class DeveloperView extends ConsumerWidget {
           SizedBox(
             height: 16,
           ),
-          _getDeveloperList(context)
+          _getDeveloperList(context, ref)
         ],
       ),
     );

@@ -68,7 +68,7 @@ _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
       device: json['device'] as String? ?? appName,
       autoRoute: json['auto-route'] as bool? ?? false,
       stack: $enumDecodeNullable(_$TunStackEnumMap, json['stack']) ??
-          TunStack.gvisor,
+          TunStack.mixed,
       dnsHijack: (json['dns-hijack'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
