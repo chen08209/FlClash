@@ -8,7 +8,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'models.dart';
 
 part 'generated/config.freezed.dart';
-
 part 'generated/config.g.dart';
 
 const defaultBypassDomain = [
@@ -213,6 +212,35 @@ class ThemeProps with _$ThemeProps {
 }
 
 @freezed
+class ScriptProps with _$ScriptProps {
+  const factory ScriptProps({
+    String? currentId,
+    @Default([]) List<Script> scripts,
+  }) = _ScriptProps;
+
+  factory ScriptProps.fromJson(Map<String, Object?> json) =>
+      _$ScriptPropsFromJson(json);
+}
+
+extension ScriptPropsExt on ScriptProps {
+  String? get realId {
+    final index = scripts.indexWhere((script) => script.id == currentId);
+    if (index != -1) {
+      return currentId;
+    }
+    return null;
+  }
+
+  Script? get currentScript {
+    final index = scripts.indexWhere((script) => script.id == currentId);
+    if (index != -1) {
+      return scripts[index];
+    }
+    return null;
+  }
+}
+
+@freezed
 class Config with _$Config {
   const factory Config({
     @JsonKey(fromJson: AppSettingProps.safeFromJson)
@@ -229,6 +257,7 @@ class Config with _$Config {
     @Default(defaultProxiesStyle) ProxiesStyle proxiesStyle,
     @Default(defaultWindowProps) WindowProps windowProps,
     @Default(defaultClashConfig) ClashConfig patchClashConfig,
+    @Default(ScriptProps()) ScriptProps scriptProps,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);
