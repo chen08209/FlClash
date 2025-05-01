@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 
 class System {
   static System? _instance;
+  List<String>? originDns;
 
   System._internal();
 
@@ -56,7 +57,7 @@ class System {
 
   Future<AuthorizeCode> authorizeCore() async {
     if (Platform.isAndroid) {
-      return AuthorizeCode.none;
+      return AuthorizeCode.error;
     }
     final corePath = appPath.corePath.replaceAll(' ', '\\\\ ');
     final isAdmin = await checkIsAdmin();
@@ -102,6 +103,100 @@ class System {
       return AuthorizeCode.success;
     }
     return AuthorizeCode.error;
+  }
+
+  Future<String?> getMacOSDefaultServiceName() async {
+    if (!Platform.isMacOS) {
+      return null;
+    }
+    final result = await Process.run('route', ['-n', 'get', 'default']);
+    final output = result.stdout.toString();
+    final deviceLine = output
+        .split('\n')
+        .firstWhere((s) => s.contains('interface:'), orElse: () => "");
+    final lineSplits = deviceLine.trim().split(' ');
+    if (lineSplits.length != 2) {
+      return null;
+    }
+    final device = lineSplits[1];
+    final serviceResult = await Process.run(
+      'networksetup',
+      ['-listnetworkserviceorder'],
+    );
+    final serviceResultOutput = serviceResult.stdout.toString();
+    final currentService = serviceResultOutput.split('\n\n').firstWhere(
+          (s) => s.contains("Device: $device"),
+          orElse: () => "",
+        );
+    if (currentService.isEmpty) {
+      return null;
+    }
+    final currentServiceNameLine = currentService.split("\n").firstWhere(
+        (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
+        orElse: () => "");
+    final currentServiceNameLineSplits =
+        currentServiceNameLine.trim().split(' ');
+    if (currentServiceNameLineSplits.length < 2) {
+      return null;
+    }
+    return currentServiceNameLineSplits[1];
+  }
+
+  Future<List<String>?> getMacOSOriginDns() async {
+    if (!Platform.isMacOS) {
+      return null;
+    }
+    final deviceServiceName = await getMacOSDefaultServiceName();
+    if (deviceServiceName == null) {
+      return null;
+    }
+    final result = await Process.run(
+      'networksetup',
+      ['-getdnsservers', deviceServiceName],
+    );
+    final output = result.stdout.toString().trim();
+    if (output.startsWith("There aren't any DNS Servers set on")) {
+      originDns = [];
+    } else {
+      originDns = output.split("\n");
+    }
+    return originDns;
+  }
+
+  setMacOSDns(bool restore) async {
+    if (!Platform.isMacOS) {
+      return;
+    }
+    final serviceName = await getMacOSDefaultServiceName();
+    if (serviceName == null) {
+      return;
+    }
+    List<String>? nextDns;
+    if (restore) {
+      nextDns = originDns;
+    } else {
+      final originDns = await system.getMacOSOriginDns();
+      if (originDns == null) {
+        return;
+      }
+      final needAddDns = "223.5.5.5";
+      if (originDns.contains(needAddDns)) {
+        return;
+      }
+      nextDns = List.from(originDns)..add(needAddDns);
+    }
+    if (nextDns == null) {
+      return;
+    }
+    await Process.run(
+      'networksetup',
+      [
+        '-setdnsservers',
+        serviceName,
+        if (nextDns.isNotEmpty) ...nextDns,
+        if (nextDns.isEmpty) "Empty",
+      ],
+    );
   }
 
   back() async {

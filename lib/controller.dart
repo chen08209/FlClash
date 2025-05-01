@@ -8,6 +8,7 @@ import 'package:archive/archive.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/dialog.dart';
@@ -17,11 +18,10 @@ import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
-import 'fragments/profiles/override_profile.dart';
 import 'models/models.dart';
+import 'views/profiles/override_profile.dart';
 
 class AppController {
-  bool lastTunEnable = false;
   int? lastProfileModified;
 
   final BuildContext context;
@@ -29,19 +29,24 @@ class AppController {
 
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
+  setupClashConfigDebounce() {
+    debouncer.call(FunctionTag.setupClashConfig, () async {
+      await setupClashConfig();
+    });
+  }
+
   updateClashConfigDebounce() {
-    debouncer.call(DebounceTag.updateClashConfig, () async {
-      final isPatch = globalState.appState.needApply ? false : true;
-      await updateClashConfig(isPatch);
+    debouncer.call(FunctionTag.updateClashConfig, () async {
+      await updateClashConfig();
     });
   }
 
   updateGroupsDebounce() {
-    debouncer.call(DebounceTag.updateGroups, updateGroups);
+    debouncer.call(FunctionTag.updateGroups, updateGroups);
   }
 
   addCheckIpNumDebounce() {
-    debouncer.call(DebounceTag.addCheckIpNum, () {
+    debouncer.call(FunctionTag.addCheckIpNum, () {
       _ref.read(checkIpNumProvider.notifier).add();
     });
   }
@@ -49,17 +54,17 @@ class AppController {
   applyProfileDebounce({
     bool silence = false,
   }) {
-    debouncer.call(DebounceTag.applyProfile, (silence) {
+    debouncer.call(FunctionTag.applyProfile, (silence) {
       applyProfile(silence: silence);
     }, args: [silence]);
   }
 
   savePreferencesDebounce() {
-    debouncer.call(DebounceTag.savePreferences, savePreferences);
+    debouncer.call(FunctionTag.savePreferences, savePreferences);
   }
 
   changeProxyDebounce(String groupName, String proxyName) {
-    debouncer.call(DebounceTag.changeProxy,
+    debouncer.call(FunctionTag.changeProxy,
         (String groupName, String proxyName) async {
       await changeProxy(
         groupName: groupName,
@@ -70,9 +75,9 @@ class AppController {
   }
 
   restartCore() async {
+    commonPrint.log("restart core");
     await clashService?.reStart();
     await _initCore();
-
     if (_ref.read(runTimeProvider.notifier).isStart) {
       await globalState.handleStart();
     }
@@ -243,55 +248,82 @@ class AppController {
     );
   }
 
-  Future<void> updateClashConfig([bool? isPatch]) async {
-    commonPrint.log("update clash patch: ${isPatch ?? false}");
+  Future<void> updateClashConfig() async {
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
     await commonScaffoldState?.loadingRun(() async {
-      await _updateClashConfig(
-        isPatch,
-      );
+      await _updateClashConfig();
     });
   }
 
-  Future<void> _updateClashConfig([bool? isPatch]) async {
-    final profile = _ref.watch(currentProfileProvider);
-    await _ref.read(currentProfileProvider)?.checkAndUpdate();
-    final patchConfig = _ref.read(patchClashConfigProvider);
-    final appSetting = _ref.read(appSettingProvider);
-    bool enableTun = patchConfig.tun.enable;
-    if (enableTun != lastTunEnable && lastTunEnable == false) {
+  Future<void> _updateClashConfig() async {
+    final updateParams = _ref.read(updateParamsProvider);
+    final res = await _requestAdmin(updateParams.tun.enable);
+    if (res.isError) {
+      return;
+    }
+    final realTunEnable = _ref.read(realTunEnableProvider);
+    final message = await clashCore.updateConfig(
+      updateParams.copyWith.tun(
+        enable: realTunEnable,
+      ),
+    );
+    if (message.isNotEmpty) throw message;
+  }
+
+  Future<Result<bool>> _requestAdmin(bool enableTun) async {
+    final realTunEnable = _ref.read(realTunEnableProvider);
+    if (enableTun != realTunEnable && realTunEnable == false) {
       final code = await system.authorizeCore();
       switch (code) {
+        case AuthorizeCode.success:
+          await restartCore();
+          return Result.error("");
         case AuthorizeCode.none:
           break;
-        case AuthorizeCode.success:
-          lastTunEnable = enableTun;
-          await restartCore();
-          return;
         case AuthorizeCode.error:
           enableTun = false;
+          break;
       }
     }
-    if (appSetting.openLogs) {
-      clashCore.startLog();
-    } else {
-      clashCore.stopLog();
+    _ref.read(realTunEnableProvider.notifier).value = enableTun;
+    return Result.success(enableTun);
+  }
+
+  Future<void> setupClashConfig() async {
+    final commonScaffoldState = globalState.homeScaffoldKey.currentState;
+    if (commonScaffoldState?.mounted != true) return;
+    await commonScaffoldState?.loadingRun(() async {
+      await _setupClashConfig();
+    });
+  }
+
+  _setupClashConfig() async {
+    await _ref.read(currentProfileProvider)?.checkAndUpdate();
+    final patchConfig = _ref.read(patchClashConfigProvider);
+    final res = await _requestAdmin(patchConfig.tun.enable);
+    if (res.isError) {
+      return;
     }
-    final res = await clashCore.updateConfig(
-      globalState.getUpdateConfigParams(isPatch),
+    final realTunEnable = _ref.read(realTunEnableProvider);
+    final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
+    final params = await globalState.getSetupParams(
+      pathConfig: realPatchConfig,
     );
-    if (isPatch == false) {
-      _ref.read(needApplyProvider.notifier).value = false;
+    final message = await clashCore.setupConfig(params);
+    lastProfileModified = await _ref.read(
+      currentProfileProvider.select(
+        (state) => state?.profileLastModified,
+      ),
+    );
+    if (message.isNotEmpty) {
+      throw message;
     }
-    if (res.isNotEmpty) throw res;
-    lastTunEnable = enableTun;
-    lastProfileModified = await profile?.profileLastModified;
   }
 
   Future _applyProfile() async {
     await clashCore.requestGc();
-    await updateClashConfig();
+    await setupClashConfig();
     await updateGroups();
     await updateProviders();
   }
@@ -385,6 +417,9 @@ class AppController {
   }
 
   handleBackOrExit() async {
+    if (_ref.read(backBlockProvider)) {
+      return;
+    }
     if (_ref.read(appSettingProvider).minimizeOnExit) {
       if (system.isDesktop) {
         await savePreferencesDebounce();
@@ -395,13 +430,24 @@ class AppController {
     }
   }
 
+  backBlock() {
+    _ref.read(backBlockProvider.notifier).value = true;
+  }
+
+  unBackBlock() {
+    _ref.read(backBlockProvider.notifier).value = false;
+  }
+
   handleExit() async {
+    Future.delayed(commonDuration, () {
+      system.exit();
+    });
     try {
-      await updateStatus(false);
+      await savePreferences();
+      await system.setMacOSDns(true);
       await proxy?.stopProxy();
       await clashCore.shutdown();
       await clashService?.destroy();
-      await savePreferences();
     } finally {
       system.exit();
     }
@@ -498,11 +544,12 @@ class AppController {
   }
 
   init() async {
-    await _handlePreference();
-    await _handlerDisclaimer();
+    FlutterError.onError = (details) {
+      commonPrint.log(details.stack.toString());
+    };
+    updateTray(true);
     await _initCore();
     await _initStatus();
-    updateTray(true);
     autoLaunch?.updateStatus(
       _ref.read(appSettingProvider).autoLaunch,
     );
@@ -513,6 +560,8 @@ class AppController {
     } else {
       window?.hide();
     }
+    await _handlePreference();
+    await _handlerDisclaimer();
     _ref.read(initProvider.notifier).value = true;
   }
 
@@ -690,10 +739,16 @@ class AppController {
     return List.of(proxies)
       ..sort(
         (a, b) {
-          final aDelay =
-              _ref.read(getDelayProvider(proxyName: a.name, testUrl: testUrl));
-          final bDelay =
-              _ref.read(getDelayProvider(proxyName: b.name, testUrl: testUrl));
+          final aDelay = _ref.read(getDelayProvider(
+            proxyName: a.name,
+            testUrl: testUrl,
+          ));
+          final bDelay = _ref.read(
+            getDelayProvider(
+              proxyName: b.name,
+              testUrl: testUrl,
+            ),
+          );
           if (aDelay == null && bDelay == null) {
             return 0;
           }
@@ -721,21 +776,17 @@ class AppController {
 
   clearEffect(String profileId) async {
     final profilePath = await appPath.getProfilePath(profileId);
-    final providersPath = await appPath.getProvidersPath(profileId);
+    final providersDirPath = await appPath.getProvidersDirPath(profileId);
     return await Isolate.run(() async {
-      if (profilePath != null) {
-        final profileFile = File(profilePath);
-        final isExists = await profileFile.exists();
-        if (isExists) {
-          profileFile.delete(recursive: true);
-        }
+      final profileFile = File(profilePath);
+      final isExists = await profileFile.exists();
+      if (isExists) {
+        profileFile.delete(recursive: true);
       }
-      if (providersPath != null) {
-        final providersFileDir = File(providersPath);
-        final isExists = await providersFileDir.exists();
-        if (isExists) {
-          providersFileDir.delete(recursive: true);
-        }
+      final providersFileDir = File(providersDirPath);
+      final providersFileIsExists = await providersFileDir.exists();
+      if (providersFileIsExists) {
+        providersFileDir.delete(recursive: true);
       }
     });
   }
@@ -752,6 +803,17 @@ class AppController {
             systemProxy: !state.systemProxy,
           ),
         );
+  }
+
+  Future<List<Package>> getPackages() async {
+    if (_ref.read(isMobileViewProvider)) {
+      await Future.delayed(commonDuration);
+    }
+    if (_ref.read(packagesProvider).isEmpty) {
+      _ref.read(packagesProvider.notifier).value =
+          await app?.getPackages() ?? [];
+    }
+    return _ref.read(packagesProvider);
   }
 
   updateStart() {
@@ -971,6 +1033,7 @@ class AppController {
       _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
       _ref.read(networkSettingProvider.notifier).value = config.networkProps;
       _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
+      _ref.read(scriptStateProvider.notifier).value = config.scriptProps;
     }
     final currentProfile = _ref.read(currentProfileProvider);
     if (currentProfile == null) {

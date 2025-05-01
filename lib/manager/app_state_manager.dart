@@ -32,10 +32,43 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
         }
       });
     });
+    ref.listenManual(
+      checkIpProvider,
+      (prev, next) {
+        if (prev != next && next.b) {
+          detectionState.startCheck();
+        }
+      },
+      fireImmediately: true,
+    );
+    ref.listenManual(configStateProvider, (prev, next) {
+      if (prev != next) {
+        globalState.appController.savePreferencesDebounce();
+      }
+    });
+    ref.listenManual(
+      autoSetSystemDnsStateProvider,
+      (prev, next) async {
+        if (prev == next) {
+          return;
+        }
+        if (next.a == true && next.b == true) {
+          system.setMacOSDns(false);
+        } else {
+          system.setMacOSDns(true);
+        }
+      },
+    );
   }
 
   @override
-  void dispose() {
+  reassemble() {
+    super.reassemble();
+  }
+
+  @override
+  void dispose() async {
+    await system.setMacOSDns(true);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

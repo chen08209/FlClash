@@ -1,7 +1,7 @@
 name: fl_clash
 description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
-version: 0.8.84+202505013
+version: 0.8.85+202506071
 environment:
   sdk: '>=3.1.0 <4.0.0'
 
@@ -13,21 +13,20 @@ dependencies:
   intl: any
   path_provider: ^2.1.0
   path: ^1.9.0
-  shared_preferences: ^2.5.1
-  window_manager: ^0.4.3
+  shared_preferences: ^2.5.3
+  window_manager: ^0.5.0
   dynamic_color: ^1.7.0
   proxy:
     path: plugins/proxy
   window_ext:
     path: plugins/window_ext
   launch_at_startup: ^0.5.1
-  windows_single_instance: ^1.0.1
   json_annotation: ^4.9.0
   file_picker: ^8.0.3
-  mobile_scanner: ^6.0.2
+  mobile_scanner: ^7.0.0
   app_links: ^6.4.0
   win32_registry: ^2.0.0
-  tray_manager: ^0.4.0
+  tray_manager: ^0.5.0
   collection: ^1.18.0
   animations: ^2.0.11
   package_info_plus: ^8.0.0
@@ -43,7 +42,6 @@ dependencies:
   archive: ^3.6.1
   lpinyin: ^2.0.3
   emoji_regex: ^0.0.5
-  cached_network_image: ^3.4.0
   hotkey_manager: ^0.2.3
   uni_platform: ^0.1.3
   device_info_plus: ^11.3.3
@@ -54,19 +52,26 @@ dependencies:
   riverpod_annotation: ^2.6.1
   riverpod: ^2.6.1
   material_color_utilities: ^0.11.1
+  flutter_js:
+    git:
+      url: https://github.com/chen08209/flutter_js
+      ref: master
+  #  yaml: ^3.1.3
+  flutter_svg: ^2.1.0
+  flutter_cache_manager: ^3.4.1
+  crypto: ^3.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  ffigen: ^15.0.0
+  ffigen: ^18.1.0
   json_serializable: ^6.7.1
   build_runner: ^2.4.13
   args: ^2.4.2
   freezed: ^2.5.1
   riverpod_generator: ^2.6.3
-  custom_lint: ^0.7.0
   riverpod_lint: ^2.6.3
-  crypto: ^3.0.3
+  custom_lint: ^0.7.0
 
 flutter:
   uses-material-design: true

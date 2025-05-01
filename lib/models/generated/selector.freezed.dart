@@ -515,6 +515,215 @@ abstract class _VM4<A, B, C, D> implements VM4<A, B, C, D> {
 }
 
 /// @nodoc
+mixin _$VM5<A, B, C, D, E> {
+  A get a => throw _privateConstructorUsedError;
+  B get b => throw _privateConstructorUsedError;
+  C get c => throw _privateConstructorUsedError;
+  D get d => throw _privateConstructorUsedError;
+  E get e => throw _privateConstructorUsedError;
+
+  /// Create a copy of VM5
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $VM5CopyWith<A, B, C, D, E, VM5<A, B, C, D, E>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $VM5CopyWith<A, B, C, D, E, $Res> {
+  factory $VM5CopyWith(
+          VM5<A, B, C, D, E> value, $Res Function(VM5<A, B, C, D, E>) then) =
+      _$VM5CopyWithImpl<A, B, C, D, E, $Res, VM5<A, B, C, D, E>>;
+  @useResult
+  $Res call({A a, B b, C c, D d, E e});
+}
+
+/// @nodoc
+class _$VM5CopyWithImpl<A, B, C, D, E, $Res, $Val extends VM5<A, B, C, D, E>>
+    implements $VM5CopyWith<A, B, C, D, E, $Res> {
+  _$VM5CopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of VM5
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? a = freezed,
+    Object? b = freezed,
+    Object? c = freezed,
+    Object? d = freezed,
+    Object? e = freezed,
+  }) {
+    return _then(_value.copyWith(
+      a: freezed == a
+          ? _value.a
+          : a // ignore: cast_nullable_to_non_nullable
+              as A,
+      b: freezed == b
+          ? _value.b
+          : b // ignore: cast_nullable_to_non_nullable
+              as B,
+      c: freezed == c
+          ? _value.c
+          : c // ignore: cast_nullable_to_non_nullable
+              as C,
+      d: freezed == d
+          ? _value.d
+          : d // ignore: cast_nullable_to_non_nullable
+              as D,
+      e: freezed == e
+          ? _value.e
+          : e // ignore: cast_nullable_to_non_nullable
+              as E,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$VM5ImplCopyWith<A, B, C, D, E, $Res>
+    implements $VM5CopyWith<A, B, C, D, E, $Res> {
+  factory _$$VM5ImplCopyWith(_$VM5Impl<A, B, C, D, E> value,
+          $Res Function(_$VM5Impl<A, B, C, D, E>) then) =
+      __$$VM5ImplCopyWithImpl<A, B, C, D, E, $Res>;
+  @override
+  @useResult
+  $Res call({A a, B b, C c, D d, E e});
+}
+
+/// @nodoc
+class __$$VM5ImplCopyWithImpl<A, B, C, D, E, $Res>
+    extends _$VM5CopyWithImpl<A, B, C, D, E, $Res, _$VM5Impl<A, B, C, D, E>>
+    implements _$$VM5ImplCopyWith<A, B, C, D, E, $Res> {
+  __$$VM5ImplCopyWithImpl(_$VM5Impl<A, B, C, D, E> _value,
+      $Res Function(_$VM5Impl<A, B, C, D, E>) _then)
+      : super(_value, _then);
+
+  /// Create a copy of VM5
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? a = freezed,
+    Object? b = freezed,
+    Object? c = freezed,
+    Object? d = freezed,
+    Object? e = freezed,
+  }) {
+    return _then(_$VM5Impl<A, B, C, D, E>(
+      a: freezed == a
+          ? _value.a
+          : a // ignore: cast_nullable_to_non_nullable
+              as A,
+      b: freezed == b
+          ? _value.b
+          : b // ignore: cast_nullable_to_non_nullable
+              as B,
+      c: freezed == c
+          ? _value.c
+          : c // ignore: cast_nullable_to_non_nullable
+              as C,
+      d: freezed == d
+          ? _value.d
+          : d // ignore: cast_nullable_to_non_nullable
+              as D,
+      e: freezed == e
+          ? _value.e
+          : e // ignore: cast_nullable_to_non_nullable
+              as E,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$VM5Impl<A, B, C, D, E> implements _VM5<A, B, C, D, E> {
+  const _$VM5Impl(
+      {required this.a,
+      required this.b,
+      required this.c,
+      required this.d,
+      required this.e});
+
+  @override
+  final A a;
+  @override
+  final B b;
+  @override
+  final C c;
+  @override
+  final D d;
+  @override
+  final E e;
+
+  @override
+  String toString() {
+    return 'VM5<$A, $B, $C, $D, $E>(a: $a, b: $b, c: $c, d: $d, e: $e)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$VM5Impl<A, B, C, D, E> &&
+            const DeepCollectionEquality().equals(other.a, a) &&
+            const DeepCollectionEquality().equals(other.b, b) &&
+            const DeepCollectionEquality().equals(other.c, c) &&
+            const DeepCollectionEquality().equals(other.d, d) &&
+            const DeepCollectionEquality().equals(other.e, e));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(a),
+      const DeepCollectionEquality().hash(b),
+      const DeepCollectionEquality().hash(c),
+      const DeepCollectionEquality().hash(d),
+      const DeepCollectionEquality().hash(e));
+
+  /// Create a copy of VM5
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$VM5ImplCopyWith<A, B, C, D, E, _$VM5Impl<A, B, C, D, E>> get copyWith =>
+      __$$VM5ImplCopyWithImpl<A, B, C, D, E, _$VM5Impl<A, B, C, D, E>>(
+          this, _$identity);
+}
+
+abstract class _VM5<A, B, C, D, E> implements VM5<A, B, C, D, E> {
+  const factory _VM5(
+      {required final A a,
+      required final B b,
+      required final C c,
+      required final D d,
+      required final E e}) = _$VM5Impl<A, B, C, D, E>;
+
+  @override
+  A get a;
+  @override
+  B get b;
+  @override
+  C get c;
+  @override
+  D get d;
+  @override
+  E get e;
+
+  /// Create a copy of VM5
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$VM5ImplCopyWith<A, B, C, D, E, _$VM5Impl<A, B, C, D, E>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$StartButtonSelectorState {
   bool get isInit => throw _privateConstructorUsedError;
   bool get hasProfile => throw _privateConstructorUsedError;
@@ -2142,6 +2351,7 @@ mixin _$ProxiesListSelectorState {
   ProxyCardType get proxyCardType => throw _privateConstructorUsedError;
   num get sortNum => throw _privateConstructorUsedError;
   int get columns => throw _privateConstructorUsedError;
+  String get query => throw _privateConstructorUsedError;
 
   /// Create a copy of ProxiesListSelectorState
   /// with the given fields replaced by the non-null parameter values.
@@ -2162,7 +2372,8 @@ abstract class $ProxiesListSelectorStateCopyWith<$Res> {
       ProxiesSortType proxiesSortType,
       ProxyCardType proxyCardType,
       num sortNum,
-      int columns});
+      int columns,
+      String query});
 }
 
 /// @nodoc
@@ -2187,6 +2398,7 @@ class _$ProxiesListSelectorStateCopyWithImpl<$Res,
     Object? proxyCardType = null,
     Object? sortNum = null,
     Object? columns = null,
+    Object? query = null,
   }) {
     return _then(_value.copyWith(
       groupNames: null == groupNames
@@ -2213,6 +2425,10 @@ class _$ProxiesListSelectorStateCopyWithImpl<$Res,
           ? _value.columns
           : columns // ignore: cast_nullable_to_non_nullable
               as int,
+      query: null == query
+          ? _value.query
+          : query // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 }
@@ -2232,7 +2448,8 @@ abstract class _$$ProxiesListSelectorStateImplCopyWith<$Res>
       ProxiesSortType proxiesSortType,
       ProxyCardType proxyCardType,
       num sortNum,
-      int columns});
+      int columns,
+      String query});
 }
 
 /// @nodoc
@@ -2256,6 +2473,7 @@ class __$$ProxiesListSelectorStateImplCopyWithImpl<$Res>
     Object? proxyCardType = null,
     Object? sortNum = null,
     Object? columns = null,
+    Object? query = null,
   }) {
     return _then(_$ProxiesListSelectorStateImpl(
       groupNames: null == groupNames
@@ -2282,6 +2500,10 @@ class __$$ProxiesListSelectorStateImplCopyWithImpl<$Res>
           ? _value.columns
           : columns // ignore: cast_nullable_to_non_nullable
               as int,
+      query: null == query
+          ? _value.query
+          : query // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -2295,7 +2517,8 @@ class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
       required this.proxiesSortType,
       required this.proxyCardType,
       required this.sortNum,
-      required this.columns})
+      required this.columns,
+      required this.query})
       : _groupNames = groupNames,
         _currentUnfoldSet = currentUnfoldSet;
 
@@ -2323,10 +2546,12 @@ class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
   final num sortNum;
   @override
   final int columns;
+  @override
+  final String query;
 
   @override
   String toString() {
-    return 'ProxiesListSelectorState(groupNames: $groupNames, currentUnfoldSet: $currentUnfoldSet, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, columns: $columns)';
+    return 'ProxiesListSelectorState(groupNames: $groupNames, currentUnfoldSet: $currentUnfoldSet, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, columns: $columns, query: $query)';
   }
 
   @override
@@ -2343,7 +2568,8 @@ class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
             (identical(other.proxyCardType, proxyCardType) ||
                 other.proxyCardType == proxyCardType) &&
             (identical(other.sortNum, sortNum) || other.sortNum == sortNum) &&
-            (identical(other.columns, columns) || other.columns == columns));
+            (identical(other.columns, columns) || other.columns == columns) &&
+            (identical(other.query, query) || other.query == query));
   }
 
   @override
@@ -2354,7 +2580,8 @@ class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
       proxiesSortType,
       proxyCardType,
       sortNum,
-      columns);
+      columns,
+      query);
 
   /// Create a copy of ProxiesListSelectorState
   /// with the given fields replaced by the non-null parameter values.
@@ -2373,7 +2600,8 @@ abstract class _ProxiesListSelectorState implements ProxiesListSelectorState {
       required final ProxiesSortType proxiesSortType,
       required final ProxyCardType proxyCardType,
       required final num sortNum,
-      required final int columns}) = _$ProxiesListSelectorStateImpl;
+      required final int columns,
+      required final String query}) = _$ProxiesListSelectorStateImpl;
 
   @override
   List<String> get groupNames;
@@ -2387,6 +2615,8 @@ abstract class _ProxiesListSelectorState implements ProxiesListSelectorState {
   num get sortNum;
   @override
   int get columns;
+  @override
+  String get query;
 
   /// Create a copy of ProxiesListSelectorState
   /// with the given fields replaced by the non-null parameter values.
@@ -4216,7 +4446,6 @@ abstract class _VpnState implements VpnState {
 /// @nodoc
 mixin _$ProfileOverrideStateModel {
   ClashConfigSnippet? get snippet => throw _privateConstructorUsedError;
-  bool get isEdit => throw _privateConstructorUsedError;
   Set<String> get selectedRules => throw _privateConstructorUsedError;
   OverrideData? get overrideData => throw _privateConstructorUsedError;
 
@@ -4235,7 +4464,6 @@ abstract class $ProfileOverrideStateModelCopyWith<$Res> {
   @useResult
   $Res call(
       {ClashConfigSnippet? snippet,
-      bool isEdit,
       Set<String> selectedRules,
       OverrideData? overrideData});
 
@@ -4260,7 +4488,6 @@ class _$ProfileOverrideStateModelCopyWithImpl<$Res,
   @override
   $Res call({
     Object? snippet = freezed,
-    Object? isEdit = null,
     Object? selectedRules = null,
     Object? overrideData = freezed,
   }) {
@@ -4269,10 +4496,6 @@ class _$ProfileOverrideStateModelCopyWithImpl<$Res,
           ? _value.snippet
           : snippet // ignore: cast_nullable_to_non_nullable
               as ClashConfigSnippet?,
-      isEdit: null == isEdit
-          ? _value.isEdit
-          : isEdit // ignore: cast_nullable_to_non_nullable
-              as bool,
       selectedRules: null == selectedRules
           ? _value.selectedRules
           : selectedRules // ignore: cast_nullable_to_non_nullable
@@ -4324,7 +4547,6 @@ abstract class _$$ProfileOverrideStateModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {ClashConfigSnippet? snippet,
-      bool isEdit,
       Set<String> selectedRules,
       OverrideData? overrideData});
 
@@ -4350,7 +4572,6 @@ class __$$ProfileOverrideStateModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? snippet = freezed,
-    Object? isEdit = null,
     Object? selectedRules = null,
     Object? overrideData = freezed,
   }) {
@@ -4359,10 +4580,6 @@ class __$$ProfileOverrideStateModelImplCopyWithImpl<$Res>
           ? _value.snippet
           : snippet // ignore: cast_nullable_to_non_nullable
               as ClashConfigSnippet?,
-      isEdit: null == isEdit
-          ? _value.isEdit
-          : isEdit // ignore: cast_nullable_to_non_nullable
-              as bool,
       selectedRules: null == selectedRules
           ? _value._selectedRules
           : selectedRules // ignore: cast_nullable_to_non_nullable
@@ -4380,15 +4597,12 @@ class __$$ProfileOverrideStateModelImplCopyWithImpl<$Res>
 class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
   const _$ProfileOverrideStateModelImpl(
       {this.snippet,
-      required this.isEdit,
       required final Set<String> selectedRules,
       this.overrideData})
       : _selectedRules = selectedRules;
 
   @override
   final ClashConfigSnippet? snippet;
-  @override
-  final bool isEdit;
   final Set<String> _selectedRules;
   @override
   Set<String> get selectedRules {
@@ -4402,7 +4616,7 @@ class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
 
   @override
   String toString() {
-    return 'ProfileOverrideStateModel(snippet: $snippet, isEdit: $isEdit, selectedRules: $selectedRules, overrideData: $overrideData)';
+    return 'ProfileOverrideStateModel(snippet: $snippet, selectedRules: $selectedRules, overrideData: $overrideData)';
   }
 
   @override
@@ -4411,7 +4625,6 @@ class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
         (other.runtimeType == runtimeType &&
             other is _$ProfileOverrideStateModelImpl &&
             (identical(other.snippet, snippet) || other.snippet == snippet) &&
-            (identical(other.isEdit, isEdit) || other.isEdit == isEdit) &&
             const DeepCollectionEquality()
                 .equals(other._selectedRules, _selectedRules) &&
             (identical(other.overrideData, overrideData) ||
@@ -4419,7 +4632,7 @@ class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, snippet, isEdit,
+  int get hashCode => Object.hash(runtimeType, snippet,
       const DeepCollectionEquality().hash(_selectedRules), overrideData);
 
   /// Create a copy of ProfileOverrideStateModel
@@ -4435,14 +4648,11 @@ class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
 abstract class _ProfileOverrideStateModel implements ProfileOverrideStateModel {
   const factory _ProfileOverrideStateModel(
       {final ClashConfigSnippet? snippet,
-      required final bool isEdit,
       required final Set<String> selectedRules,
       final OverrideData? overrideData}) = _$ProfileOverrideStateModelImpl;
 
   @override
   ClashConfigSnippet? get snippet;
-  @override
-  bool get isEdit;
   @override
   Set<String> get selectedRules;
   @override

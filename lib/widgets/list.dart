@@ -99,6 +99,8 @@ class InputDelegate extends Delegate {
   final String value;
   final String? suffixText;
   final Function(String? value) onChanged;
+  final FormFieldValidator<String>? validator;
+
   final String? resetValue;
 
   const InputDelegate({
@@ -107,6 +109,7 @@ class InputDelegate extends Delegate {
     this.suffixText,
     required this.onChanged,
     this.resetValue,
+    this.validator,
   });
 }
 
@@ -371,6 +374,7 @@ class ListItem<T> extends StatelessWidget {
               value: inputDelegate.value,
               suffixText: inputDelegate.suffixText,
               resetValue: inputDelegate.resetValue,
+              validator: inputDelegate.validator,
             ),
           );
           inputDelegate.onChanged(value);
@@ -418,6 +422,7 @@ class ListItem<T> extends StatelessWidget {
           value: radioDelegate.value,
           groupValue: radioDelegate.groupValue,
           onChanged: radioDelegate.onChanged,
+          toggleable: true,
         ),
         trailing: trailing,
       );

@@ -1325,6 +1325,7 @@ mixin _$NetworkProps {
   bool get systemProxy => throw _privateConstructorUsedError;
   List<String> get bypassDomain => throw _privateConstructorUsedError;
   RouteMode get routeMode => throw _privateConstructorUsedError;
+  bool get autoSetSystemDns => throw _privateConstructorUsedError;
 
   /// Serializes this NetworkProps to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1342,7 +1343,11 @@ abstract class $NetworkPropsCopyWith<$Res> {
           NetworkProps value, $Res Function(NetworkProps) then) =
       _$NetworkPropsCopyWithImpl<$Res, NetworkProps>;
   @useResult
-  $Res call({bool systemProxy, List<String> bypassDomain, RouteMode routeMode});
+  $Res call(
+      {bool systemProxy,
+      List<String> bypassDomain,
+      RouteMode routeMode,
+      bool autoSetSystemDns});
 }
 
 /// @nodoc
@@ -1363,6 +1368,7 @@ class _$NetworkPropsCopyWithImpl<$Res, $Val extends NetworkProps>
     Object? systemProxy = null,
     Object? bypassDomain = null,
     Object? routeMode = null,
+    Object? autoSetSystemDns = null,
   }) {
     return _then(_value.copyWith(
       systemProxy: null == systemProxy
@@ -1377,6 +1383,10 @@ class _$NetworkPropsCopyWithImpl<$Res, $Val extends NetworkProps>
           ? _value.routeMode
           : routeMode // ignore: cast_nullable_to_non_nullable
               as RouteMode,
+      autoSetSystemDns: null == autoSetSystemDns
+          ? _value.autoSetSystemDns
+          : autoSetSystemDns // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -1389,7 +1399,11 @@ abstract class _$$NetworkPropsImplCopyWith<$Res>
       __$$NetworkPropsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool systemProxy, List<String> bypassDomain, RouteMode routeMode});
+  $Res call(
+      {bool systemProxy,
+      List<String> bypassDomain,
+      RouteMode routeMode,
+      bool autoSetSystemDns});
 }
 
 /// @nodoc
@@ -1408,6 +1422,7 @@ class __$$NetworkPropsImplCopyWithImpl<$Res>
     Object? systemProxy = null,
     Object? bypassDomain = null,
     Object? routeMode = null,
+    Object? autoSetSystemDns = null,
   }) {
     return _then(_$NetworkPropsImpl(
       systemProxy: null == systemProxy
@@ -1422,6 +1437,10 @@ class __$$NetworkPropsImplCopyWithImpl<$Res>
           ? _value.routeMode
           : routeMode // ignore: cast_nullable_to_non_nullable
               as RouteMode,
+      autoSetSystemDns: null == autoSetSystemDns
+          ? _value.autoSetSystemDns
+          : autoSetSystemDns // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -1432,7 +1451,8 @@ class _$NetworkPropsImpl implements _NetworkProps {
   const _$NetworkPropsImpl(
       {this.systemProxy = true,
       final List<String> bypassDomain = defaultBypassDomain,
-      this.routeMode = RouteMode.bypassPrivate})
+      this.routeMode = RouteMode.config,
+      this.autoSetSystemDns = true})
       : _bypassDomain = bypassDomain;
 
   factory _$NetworkPropsImpl.fromJson(Map<String, dynamic> json) =>
@@ -1453,10 +1473,13 @@ class _$NetworkPropsImpl implements _NetworkProps {
   @override
   @JsonKey()
   final RouteMode routeMode;
+  @override
+  @JsonKey()
+  final bool autoSetSystemDns;
 
   @override
   String toString() {
-    return 'NetworkProps(systemProxy: $systemProxy, bypassDomain: $bypassDomain, routeMode: $routeMode)';
+    return 'NetworkProps(systemProxy: $systemProxy, bypassDomain: $bypassDomain, routeMode: $routeMode, autoSetSystemDns: $autoSetSystemDns)';
   }
 
   @override
@@ -1469,13 +1492,19 @@ class _$NetworkPropsImpl implements _NetworkProps {
             const DeepCollectionEquality()
                 .equals(other._bypassDomain, _bypassDomain) &&
             (identical(other.routeMode, routeMode) ||
-                other.routeMode == routeMode));
+                other.routeMode == routeMode) &&
+            (identical(other.autoSetSystemDns, autoSetSystemDns) ||
+                other.autoSetSystemDns == autoSetSystemDns));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, systemProxy,
-      const DeepCollectionEquality().hash(_bypassDomain), routeMode);
+  int get hashCode => Object.hash(
+      runtimeType,
+      systemProxy,
+      const DeepCollectionEquality().hash(_bypassDomain),
+      routeMode,
+      autoSetSystemDns);
 
   /// Create a copy of NetworkProps
   /// with the given fields replaced by the non-null parameter values.
@@ -1497,7 +1526,8 @@ abstract class _NetworkProps implements NetworkProps {
   const factory _NetworkProps(
       {final bool systemProxy,
       final List<String> bypassDomain,
-      final RouteMode routeMode}) = _$NetworkPropsImpl;
+      final RouteMode routeMode,
+      final bool autoSetSystemDns}) = _$NetworkPropsImpl;
 
   factory _NetworkProps.fromJson(Map<String, dynamic> json) =
       _$NetworkPropsImpl.fromJson;
@@ -1508,6 +1538,8 @@ abstract class _NetworkProps implements NetworkProps {
   List<String> get bypassDomain;
   @override
   RouteMode get routeMode;
+  @override
+  bool get autoSetSystemDns;
 
   /// Create a copy of NetworkProps
   /// with the given fields replaced by the non-null parameter values.
@@ -2243,6 +2275,183 @@ abstract class _ThemeProps implements ThemeProps {
       throw _privateConstructorUsedError;
 }
 
+ScriptProps _$ScriptPropsFromJson(Map<String, dynamic> json) {
+  return _ScriptProps.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ScriptProps {
+  String? get currentId => throw _privateConstructorUsedError;
+  List<Script> get scripts => throw _privateConstructorUsedError;
+
+  /// Serializes this ScriptProps to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of ScriptProps
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ScriptPropsCopyWith<ScriptProps> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ScriptPropsCopyWith<$Res> {
+  factory $ScriptPropsCopyWith(
+          ScriptProps value, $Res Function(ScriptProps) then) =
+      _$ScriptPropsCopyWithImpl<$Res, ScriptProps>;
+  @useResult
+  $Res call({String? currentId, List<Script> scripts});
+}
+
+/// @nodoc
+class _$ScriptPropsCopyWithImpl<$Res, $Val extends ScriptProps>
+    implements $ScriptPropsCopyWith<$Res> {
+  _$ScriptPropsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ScriptProps
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? currentId = freezed,
+    Object? scripts = null,
+  }) {
+    return _then(_value.copyWith(
+      currentId: freezed == currentId
+          ? _value.currentId
+          : currentId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scripts: null == scripts
+          ? _value.scripts
+          : scripts // ignore: cast_nullable_to_non_nullable
+              as List<Script>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ScriptPropsImplCopyWith<$Res>
+    implements $ScriptPropsCopyWith<$Res> {
+  factory _$$ScriptPropsImplCopyWith(
+          _$ScriptPropsImpl value, $Res Function(_$ScriptPropsImpl) then) =
+      __$$ScriptPropsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String? currentId, List<Script> scripts});
+}
+
+/// @nodoc
+class __$$ScriptPropsImplCopyWithImpl<$Res>
+    extends _$ScriptPropsCopyWithImpl<$Res, _$ScriptPropsImpl>
+    implements _$$ScriptPropsImplCopyWith<$Res> {
+  __$$ScriptPropsImplCopyWithImpl(
+      _$ScriptPropsImpl _value, $Res Function(_$ScriptPropsImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ScriptProps
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? currentId = freezed,
+    Object? scripts = null,
+  }) {
+    return _then(_$ScriptPropsImpl(
+      currentId: freezed == currentId
+          ? _value.currentId
+          : currentId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scripts: null == scripts
+          ? _value._scripts
+          : scripts // ignore: cast_nullable_to_non_nullable
+              as List<Script>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ScriptPropsImpl implements _ScriptProps {
+  const _$ScriptPropsImpl(
+      {this.currentId, final List<Script> scripts = const []})
+      : _scripts = scripts;
+
+  factory _$ScriptPropsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ScriptPropsImplFromJson(json);
+
+  @override
+  final String? currentId;
+  final List<Script> _scripts;
+  @override
+  @JsonKey()
+  List<Script> get scripts {
+    if (_scripts is EqualUnmodifiableListView) return _scripts;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_scripts);
+  }
+
+  @override
+  String toString() {
+    return 'ScriptProps(currentId: $currentId, scripts: $scripts)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ScriptPropsImpl &&
+            (identical(other.currentId, currentId) ||
+                other.currentId == currentId) &&
+            const DeepCollectionEquality().equals(other._scripts, _scripts));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, currentId, const DeepCollectionEquality().hash(_scripts));
+
+  /// Create a copy of ScriptProps
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ScriptPropsImplCopyWith<_$ScriptPropsImpl> get copyWith =>
+      __$$ScriptPropsImplCopyWithImpl<_$ScriptPropsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ScriptPropsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ScriptProps implements ScriptProps {
+  const factory _ScriptProps(
+      {final String? currentId,
+      final List<Script> scripts}) = _$ScriptPropsImpl;
+
+  factory _ScriptProps.fromJson(Map<String, dynamic> json) =
+      _$ScriptPropsImpl.fromJson;
+
+  @override
+  String? get currentId;
+  @override
+  List<Script> get scripts;
+
+  /// Create a copy of ScriptProps
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ScriptPropsImplCopyWith<_$ScriptPropsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Config _$ConfigFromJson(Map<String, dynamic> json) {
   return _Config.fromJson(json);
 }
@@ -2263,6 +2472,7 @@ mixin _$Config {
   ProxiesStyle get proxiesStyle => throw _privateConstructorUsedError;
   WindowProps get windowProps => throw _privateConstructorUsedError;
   ClashConfig get patchClashConfig => throw _privateConstructorUsedError;
+  ScriptProps get scriptProps => throw _privateConstructorUsedError;
 
   /// Serializes this Config to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -2291,7 +2501,8 @@ abstract class $ConfigCopyWith<$Res> {
       @JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps,
       ProxiesStyle proxiesStyle,
       WindowProps windowProps,
-      ClashConfig patchClashConfig});
+      ClashConfig patchClashConfig,
+      ScriptProps scriptProps});
 
   $AppSettingPropsCopyWith<$Res> get appSetting;
   $DAVCopyWith<$Res>? get dav;
@@ -2301,6 +2512,7 @@ abstract class $ConfigCopyWith<$Res> {
   $ProxiesStyleCopyWith<$Res> get proxiesStyle;
   $WindowPropsCopyWith<$Res> get windowProps;
   $ClashConfigCopyWith<$Res> get patchClashConfig;
+  $ScriptPropsCopyWith<$Res> get scriptProps;
 }
 
 /// @nodoc
@@ -2330,6 +2542,7 @@ class _$ConfigCopyWithImpl<$Res, $Val extends Config>
     Object? proxiesStyle = null,
     Object? windowProps = null,
     Object? patchClashConfig = null,
+    Object? scriptProps = null,
   }) {
     return _then(_value.copyWith(
       appSetting: null == appSetting
@@ -2380,6 +2593,10 @@ class _$ConfigCopyWithImpl<$Res, $Val extends Config>
           ? _value.patchClashConfig
           : patchClashConfig // ignore: cast_nullable_to_non_nullable
               as ClashConfig,
+      scriptProps: null == scriptProps
+          ? _value.scriptProps
+          : scriptProps // ignore: cast_nullable_to_non_nullable
+              as ScriptProps,
     ) as $Val);
   }
 
@@ -2466,6 +2683,16 @@ class _$ConfigCopyWithImpl<$Res, $Val extends Config>
       return _then(_value.copyWith(patchClashConfig: value) as $Val);
     });
   }
+
+  /// Create a copy of Config
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ScriptPropsCopyWith<$Res> get scriptProps {
+    return $ScriptPropsCopyWith<$Res>(_value.scriptProps, (value) {
+      return _then(_value.copyWith(scriptProps: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -2488,7 +2715,8 @@ abstract class _$$ConfigImplCopyWith<$Res> implements $ConfigCopyWith<$Res> {
       @JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps,
       ProxiesStyle proxiesStyle,
       WindowProps windowProps,
-      ClashConfig patchClashConfig});
+      ClashConfig patchClashConfig,
+      ScriptProps scriptProps});
 
   @override
   $AppSettingPropsCopyWith<$Res> get appSetting;
@@ -2506,6 +2734,8 @@ abstract class _$$ConfigImplCopyWith<$Res> implements $ConfigCopyWith<$Res> {
   $WindowPropsCopyWith<$Res> get windowProps;
   @override
   $ClashConfigCopyWith<$Res> get patchClashConfig;
+  @override
+  $ScriptPropsCopyWith<$Res> get scriptProps;
 }
 
 /// @nodoc
@@ -2533,6 +2763,7 @@ class __$$ConfigImplCopyWithImpl<$Res>
     Object? proxiesStyle = null,
     Object? windowProps = null,
     Object? patchClashConfig = null,
+    Object? scriptProps = null,
   }) {
     return _then(_$ConfigImpl(
       appSetting: null == appSetting
@@ -2583,6 +2814,10 @@ class __$$ConfigImplCopyWithImpl<$Res>
           ? _value.patchClashConfig
           : patchClashConfig // ignore: cast_nullable_to_non_nullable
               as ClashConfig,
+      scriptProps: null == scriptProps
+          ? _value.scriptProps
+          : scriptProps // ignore: cast_nullable_to_non_nullable
+              as ScriptProps,
     ));
   }
 }
@@ -2603,7 +2838,8 @@ class _$ConfigImpl implements _Config {
       @JsonKey(fromJson: ThemeProps.safeFromJson) required this.themeProps,
       this.proxiesStyle = defaultProxiesStyle,
       this.windowProps = defaultWindowProps,
-      this.patchClashConfig = defaultClashConfig})
+      this.patchClashConfig = defaultClashConfig,
+      this.scriptProps = const ScriptProps()})
       : _profiles = profiles,
         _hotKeyActions = hotKeyActions;
 
@@ -2656,10 +2892,13 @@ class _$ConfigImpl implements _Config {
   @override
   @JsonKey()
   final ClashConfig patchClashConfig;
+  @override
+  @JsonKey()
+  final ScriptProps scriptProps;
 
   @override
   String toString() {
-    return 'Config(appSetting: $appSetting, profiles: $profiles, hotKeyActions: $hotKeyActions, currentProfileId: $currentProfileId, overrideDns: $overrideDns, dav: $dav, networkProps: $networkProps, vpnProps: $vpnProps, themeProps: $themeProps, proxiesStyle: $proxiesStyle, windowProps: $windowProps, patchClashConfig: $patchClashConfig)';
+    return 'Config(appSetting: $appSetting, profiles: $profiles, hotKeyActions: $hotKeyActions, currentProfileId: $currentProfileId, overrideDns: $overrideDns, dav: $dav, networkProps: $networkProps, vpnProps: $vpnProps, themeProps: $themeProps, proxiesStyle: $proxiesStyle, windowProps: $windowProps, patchClashConfig: $patchClashConfig, scriptProps: $scriptProps)';
   }
 
   @override
@@ -2688,7 +2927,9 @@ class _$ConfigImpl implements _Config {
             (identical(other.windowProps, windowProps) ||
                 other.windowProps == windowProps) &&
             (identical(other.patchClashConfig, patchClashConfig) ||
-                other.patchClashConfig == patchClashConfig));
+                other.patchClashConfig == patchClashConfig) &&
+            (identical(other.scriptProps, scriptProps) ||
+                other.scriptProps == scriptProps));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2706,7 +2947,8 @@ class _$ConfigImpl implements _Config {
       themeProps,
       proxiesStyle,
       windowProps,
-      patchClashConfig);
+      patchClashConfig,
+      scriptProps);
 
   /// Create a copy of Config
   /// with the given fields replaced by the non-null parameter values.
@@ -2739,7 +2981,8 @@ abstract class _Config implements Config {
       required final ThemeProps themeProps,
       final ProxiesStyle proxiesStyle,
       final WindowProps windowProps,
-      final ClashConfig patchClashConfig}) = _$ConfigImpl;
+      final ClashConfig patchClashConfig,
+      final ScriptProps scriptProps}) = _$ConfigImpl;
 
   factory _Config.fromJson(Map<String, dynamic> json) = _$ConfigImpl.fromJson;
 
@@ -2769,6 +3012,8 @@ abstract class _Config implements Config {
   WindowProps get windowProps;
   @override
   ClashConfig get patchClashConfig;
+  @override
+  ScriptProps get scriptProps;
 
   /// Create a copy of Config
   /// with the given fields replaced by the non-null parameter values.

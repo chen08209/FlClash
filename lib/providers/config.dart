@@ -241,6 +241,57 @@ class ProxiesStyleSetting extends _$ProxiesStyleSetting
 }
 
 @riverpod
+class ScriptState extends _$ScriptState with AutoDisposeNotifierMixin {
+  @override
+  ScriptProps build() {
+    return globalState.config.scriptProps;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.config = globalState.config.copyWith(
+      scriptProps: value,
+    );
+  }
+
+  setScript(Script script) {
+    final list = List<Script>.from(state.scripts);
+    final index = list.indexWhere((item) => item.id == script.id);
+    if (index != -1) {
+      list[index] = script;
+    } else {
+      list.add(script);
+    }
+    state = state.copyWith(
+      scripts: list,
+    );
+  }
+
+  setId(String id) {
+    state = state.copyWith(
+      currentId: state.currentId != id ? id : null,
+    );
+  }
+
+  del(String id) {
+    final list = List<Script>.from(state.scripts);
+    final index = list.indexWhere((item) => item.label == id);
+    if (index != -1) {
+      list.removeAt(index);
+    }
+    final nextId = id == state.currentId ? null : state.currentId;
+    state = state.copyWith(
+      scripts: list,
+      currentId: nextId,
+    );
+  }
+
+  isExits(String label) {
+    return state.scripts.indexWhere((item) => item.label == label) != -1;
+  }
+}
+
+@riverpod
 class PatchClashConfig extends _$PatchClashConfig
     with AutoDisposeNotifierMixin {
   @override

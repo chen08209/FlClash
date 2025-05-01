@@ -7,10 +7,11 @@ import 'package:fl_clash/widgets/null_status.dart';
 import 'package:flutter/material.dart';
 
 import 'card.dart';
+import 'effect.dart';
 import 'float_layout.dart';
 import 'list.dart';
 
-class OptionsDialog<T> extends StatefulWidget {
+class OptionsDialog<T> extends StatelessWidget {
   final String title;
   final List<T> options;
   final T value;
@@ -25,47 +26,34 @@ class OptionsDialog<T> extends StatefulWidget {
   });
 
   @override
-  State<OptionsDialog<T>> createState() => _OptionsDialogState();
-}
-
-class _OptionsDialogState<T> extends State<OptionsDialog<T>> {
-  final _defaultValue = "";
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context =
-          GlobalObjectKey(widget.value ?? _defaultValue).currentContext;
-      if (context != null) {
-        Scrollable.ensureVisible(context);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return CommonDialog(
-      title: widget.title,
+      title: title,
       padding: const EdgeInsets.symmetric(
         horizontal: 8,
         vertical: 16,
       ),
       child: Wrap(
         children: [
-          for (final option in widget.options)
-            ListItem.radio(
-              key: GlobalObjectKey(option ?? _defaultValue),
-              delegate: RadioDelegate(
-                value: option,
-                groupValue: widget.value,
-                onChanged: (T? value) {
-                  Navigator.of(context).pop(value);
-                },
-              ),
-              title: Text(
-                widget.textBuilder(option),
-              ),
+          for (final option in options)
+            Builder(
+              builder: (context) {
+                if (value == option) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Scrollable.ensureVisible(context);
+                  });
+                }
+                return ListItem.radio(
+                  delegate: RadioDelegate(
+                    value: option,
+                    groupValue: value,
+                    onChanged: (T? value) {
+                      Navigator.of(context).pop(value);
+                    },
+                  ),
+                  title: Text(textBuilder(option)),
+                );
+              },
             ),
         ],
       ),
@@ -99,7 +87,11 @@ class InputDialog extends StatefulWidget {
   final String title;
   final String value;
   final String? suffixText;
+  final String? labelText;
   final String? resetValue;
+  final String? hintText;
+  final FormFieldValidator<String>? validator;
+  final AutovalidateMode? autovalidateMode;
 
   const InputDialog({
     super.key,
@@ -107,6 +99,10 @@ class InputDialog extends StatefulWidget {
     required this.value,
     this.suffixText,
     this.resetValue,
+    this.hintText,
+    this.validator,
+    this.labelText,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
   });
 
   @override
@@ -114,6 +110,8 @@ class InputDialog extends StatefulWidget {
 }
 
 class _InputDialogState extends State<InputDialog> {
+  final _formKey = GlobalKey<FormState>();
+
   late TextEditingController textController;
 
   String get value => widget.value;
@@ -131,6 +129,7 @@ class _InputDialogState extends State<InputDialog> {
   }
 
   _handleUpdate() async {
+    if (_formKey.currentState?.validate() == false) return;
     final text = textController.value.text;
     Navigator.of(context).pop<String>(text);
   }
@@ -162,22 +161,30 @@ class _InputDialogState extends State<InputDialog> {
           child: Text(appLocalizations.submit),
         )
       ],
-      child: Wrap(
-        runSpacing: 16,
-        children: [
-          TextField(
-            maxLines: 1,
-            minLines: 1,
-            controller: textController,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              suffixText: suffixText,
+      child: Form(
+        autovalidateMode: widget.autovalidateMode,
+        key: _formKey,
+        child: Wrap(
+          runSpacing: 16,
+          children: [
+            TextFormField(
+              keyboardType: TextInputType.url,
+              maxLines: 5,
+              minLines: 1,
+              controller: textController,
+              onFieldSubmitted: (_) {
+                _handleUpdate();
+              },
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                suffixText: suffixText,
+                hintText: widget.hintText,
+                labelText: widget.labelText,
+              ),
+              validator: widget.validator,
             ),
-            onSubmitted: (_) {
-              _handleUpdate();
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -212,7 +219,7 @@ class ListInputPage extends StatelessWidget {
       );
       final current = item == value;
       if (index != -1 && !current) {
-        return appLocalizations.valueExists;
+        return appLocalizations.existsTip(appLocalizations.value);
       }
       return null;
     }
@@ -274,17 +281,14 @@ class ListInputPage extends StatelessWidget {
           : ReorderableListView.builder(
               padding: const EdgeInsets.only(
                 bottom: 16 + 64,
-                left: 16,
-                right: 16,
               ),
               buildDefaultDragHandles: false,
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final e = items[index];
-                return Padding(
+                return _InputItem(
                   key: ValueKey(e),
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: ReorderableDragStartListener(
+                  ReorderableDelayedDragStartListener(
                     index: index,
                     child: CommonCard(
                       child: ListItem(
@@ -358,7 +362,7 @@ class MapInputPage extends StatelessWidget {
       );
       final current = item?.key == value;
       if (index != -1 && !current) {
-        return appLocalizations.keyExists;
+        return appLocalizations.existsTip(appLocalizations.key);
       }
       return null;
     }
@@ -428,17 +432,15 @@ class MapInputPage extends StatelessWidget {
           : ReorderableListView.builder(
               padding: const EdgeInsets.only(
                 bottom: 16 + 64,
-                left: 16,
-                right: 16,
               ),
+              proxyDecorator: proxyDecorator,
               buildDefaultDragHandles: false,
               itemCount: items.length,
               itemBuilder: (_, index) {
                 final e = items[index];
-                return Padding(
+                return _InputItem(
                   key: ValueKey(e.key),
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: ReorderableDragStartListener(
+                  ReorderableDelayedDragStartListener(
                     index: index,
                     child: CommonCard(
                       child: ListItem(
@@ -541,6 +543,7 @@ class _AddDialogState extends State<AddDialog> {
         )
       ],
       child: Form(
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         key: _formKey,
         child: Wrap(
           runSpacing: 16,
@@ -555,11 +558,15 @@ class _AddDialogState extends State<AddDialog> {
                   labelText: keyField!.label,
                 ),
                 validator: (String? value) {
+                  String? res;
                   if (keyField!.validator != null) {
-                    return keyField!.validator!(value);
+                    res = keyField!.validator!(value);
+                  }
+                  if (res != null) {
+                    return res;
                   }
                   if (value == null || value.isEmpty) {
-                    return appLocalizations.notEmpty;
+                    return appLocalizations.emptyTip(appLocalizations.key);
                   }
                   return null;
                 },
@@ -573,17 +580,41 @@ class _AddDialogState extends State<AddDialog> {
                 labelText: valueField.label,
               ),
               validator: (String? value) {
+                String? res;
                 if (valueField.validator != null) {
-                  return valueField.validator!(value);
+                  res = valueField.validator!(value);
+                }
+                if (res != null) {
+                  return res;
                 }
                 if (value == null || value.isEmpty) {
-                  return appLocalizations.notEmpty;
+                  return appLocalizations.emptyTip(appLocalizations.value);
                 }
                 return null;
               },
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InputItem extends StatelessWidget {
+  final Widget child;
+
+  const _InputItem(this.child, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      elevation: 0,
+      key: key,
+      color: Colors.transparent,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        margin: EdgeInsets.symmetric(vertical: 8),
+        child: child,
       ),
     );
   }

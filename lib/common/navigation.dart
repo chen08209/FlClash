@@ -1,6 +1,6 @@
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/fragments/fragments.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/views/views.dart';
 import 'package:flutter/material.dart';
 
 class Navigation {
@@ -12,16 +12,17 @@ class Navigation {
   }) {
     return [
       const NavigationItem(
+        keep: false,
         icon: Icon(Icons.space_dashboard),
         label: PageLabel.dashboard,
-        fragment: DashboardFragment(
+        view: DashboardView(
           key: GlobalObjectKey(PageLabel.dashboard),
         ),
       ),
       NavigationItem(
         icon: const Icon(Icons.article),
         label: PageLabel.proxies,
-        fragment: const ProxiesFragment(
+        view: const ProxiesView(
           key: GlobalObjectKey(
             PageLabel.proxies,
           ),
@@ -33,7 +34,7 @@ class Navigation {
       const NavigationItem(
         icon: Icon(Icons.folder),
         label: PageLabel.profiles,
-        fragment: ProfilesFragment(
+        view: ProfilesView(
           key: GlobalObjectKey(
             PageLabel.profiles,
           ),
@@ -42,7 +43,7 @@ class Navigation {
       const NavigationItem(
         icon: Icon(Icons.view_timeline),
         label: PageLabel.requests,
-        fragment: RequestsFragment(
+        view: RequestsView(
           key: GlobalObjectKey(
             PageLabel.requests,
           ),
@@ -53,7 +54,7 @@ class Navigation {
       const NavigationItem(
         icon: Icon(Icons.ballot),
         label: PageLabel.connections,
-        fragment: ConnectionsFragment(
+        view: ConnectionsView(
           key: GlobalObjectKey(
             PageLabel.connections,
           ),
@@ -65,8 +66,7 @@ class Navigation {
         icon: Icon(Icons.storage),
         label: PageLabel.resources,
         description: "resourcesDesc",
-        keep: false,
-        fragment: Resources(
+        view: ResourcesView(
           key: GlobalObjectKey(
             PageLabel.resources,
           ),
@@ -76,7 +76,7 @@ class Navigation {
       NavigationItem(
         icon: const Icon(Icons.adb),
         label: PageLabel.logs,
-        fragment: const LogsFragment(
+        view: const LogsView(
           key: GlobalObjectKey(
             PageLabel.logs,
           ),
@@ -89,7 +89,7 @@ class Navigation {
       const NavigationItem(
         icon: Icon(Icons.construction),
         label: PageLabel.tools,
-        fragment: ToolsFragment(
+        view: ToolsView(
           key: GlobalObjectKey(
             PageLabel.tools,
           ),
