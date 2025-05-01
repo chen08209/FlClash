@@ -1,20 +1,19 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 
 class ClashMessage {
-  final controller = StreamController<String>();
+  final controller = StreamController<Map<String, Object?>>();
 
   ClashMessage._() {
     controller.stream.listen(
       (message) {
-        if(message.isEmpty){
+        if (message.isEmpty) {
           return;
         }
-        final m = AppMessage.fromJson(json.decode(message));
+        final m = AppMessage.fromJson(message);
         for (final AppMessageListener listener in _listeners) {
           switch (m.type) {
             case AppMessageType.log:

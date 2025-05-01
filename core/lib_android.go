@@ -58,7 +58,7 @@ func (t *TunHandler) handleProtect(fd int) {
 		return
 	}
 
-	protect(t.callback, fd)
+	Protect(t.callback, fd)
 }
 
 func (t *TunHandler) handleResolveProcess(source, target net.Addr) string {
@@ -79,7 +79,7 @@ func (t *TunHandler) handleResolveProcess(source, target net.Addr) string {
 	if version < 29 {
 		uid = platform.QuerySocketUidFromProcFs(source, target)
 	}
-	return resolveProcess(t.callback, protocol, source.String(), target.String(), uid)
+	return ResolveProcess(t.callback, protocol, source.String(), target.String(), uid)
 }
 
 var (
@@ -188,21 +188,21 @@ func handleGetCurrentProfileName() string {
 	return state.CurrentState.CurrentProfileName
 }
 
-func nextHandle(action *Action, result func(data interface{})) bool {
+func nextHandle(action *Action, result ActionResult) bool {
 	switch action.Method {
 	case getAndroidVpnOptionsMethod:
-		result(handleGetAndroidVpnOptions())
+		result.success(handleGetAndroidVpnOptions())
 		return true
 	case updateDnsMethod:
 		data := action.Data.(string)
 		handleUpdateDns(data)
-		result(true)
+		result.success(true)
 		return true
 	case getRunTimeMethod:
-		result(handleGetRunTime())
+		result.success(handleGetRunTime())
 		return true
 	case getCurrentProfileNameMethod:
-		result(handleGetCurrentProfileName())
+		result.success(handleGetCurrentProfileName())
 		return true
 	}
 	return false
@@ -220,7 +220,7 @@ func quickStart(initParamsChar *C.char, paramsChar *C.char, stateParamsChar *C.c
 			bridge.SendToPort(i, "init error")
 		}
 		handleSetState(stateParams)
-		bridge.SendToPort(i, handleUpdateConfig(bytes))
+		bridge.SendToPort(i, handleSetupConfig(bytes))
 	}()
 }
 
