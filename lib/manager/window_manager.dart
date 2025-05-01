@@ -102,12 +102,6 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   }
 
   @override
-  Future<void> onTaskbarCreated() async {
-    globalState.appController.updateTray(true);
-    super.onTaskbarCreated();
-  }
-
-  @override
   Future<void> dispose() async {
     windowManager.removeListener(this);
     windowExtManager.removeListener(this);

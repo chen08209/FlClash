@@ -32,7 +32,6 @@ class WindowExtPlugin : public flutter::Plugin {
               LPARAM lparam);
 
   int window_proc_id = -1;
-  UINT WM_TASKBARCREATED = 0;
   flutter::PluginRegistrarWindows *registrar;
 };
 

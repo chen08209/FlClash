@@ -42,7 +42,6 @@ void WindowExtPlugin::RegisterWithRegistrar(
 
 WindowExtPlugin::WindowExtPlugin(flutter::PluginRegistrarWindows* registrar)
     : registrar(registrar) {
-  WM_TASKBARCREATED = RegisterWindowMessage(TEXT("TaskbarCreated"));
   window_proc_id = registrar->RegisterTopLevelWindowProcDelegate(
       [this](HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
         return HandleWindowProc(hwnd, message, wparam, lparam);
@@ -58,9 +57,6 @@ std::optional<LRESULT> WindowExtPlugin::HandleWindowProc(HWND hWnd,
                                                            WPARAM wParam,
                                                            LPARAM lParam) {
   std::optional<LRESULT> result;
-  if(message == WM_TASKBARCREATED){
-    channel -> InvokeMethod("taskbarCreated", std::make_unique<flutter::EncodableValue>());
-  }
   return result;
 }
 
