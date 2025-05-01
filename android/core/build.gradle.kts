@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.argumentsWithVarargAsSingleArray
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
@@ -10,11 +12,11 @@ android {
 
     defaultConfig {
         minSdk = 21
-        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
         release {
+            isJniDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -32,6 +32,15 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
         }
       });
     });
+    ref.listenManual(
+      checkIpProvider,
+      (prev, next) {
+        if (prev != next && next.b) {
+          detectionState.startCheck();
+        }
+      },
+      fireImmediately: true,
+    );
   }
 
   @override

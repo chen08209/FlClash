@@ -2,31 +2,40 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/pop_scope.dart';
-import 'package:fl_clash/widgets/popup.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:fl_clash/widgets/scroll.dart';
+import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:re_editor/re_editor.dart';
+import 'package:re_highlight/languages/javascript.dart';
 import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 
 typedef EditingValueChangeBuilder = Widget Function(CodeLineEditingValue value);
+typedef TextEditingValueChangeBuilder = Widget Function(TextEditingValue value);
 
 class EditorPage extends ConsumerStatefulWidget {
   final String title;
   final String content;
-  final Function(BuildContext context, String text)? onSave;
-  final Future<bool> Function(BuildContext context, String text)? onPop;
+  final List<Language> languages;
+  final bool supportRemoteDownload;
+  final bool titleEditable;
+  final Function(BuildContext context, String title, String content)? onSave;
+  final Future<bool> Function(
+      BuildContext context, String title, String content)? onPop;
 
   const EditorPage({
     super.key,
     required this.title,
     required this.content,
+    this.titleEditable = false,
     this.onSave,
     this.onPop,
+    this.supportRemoteDownload = false,
+    this.languages = const [
+      Language.yaml,
+    ],
   });
 
   @override
@@ -36,6 +45,7 @@ class EditorPage extends ConsumerStatefulWidget {
 class _EditorPageState extends ConsumerState<EditorPage> {
   late CodeLineEditingController _controller;
   late CodeFindController _findController;
+  late TextEditingController _titleController;
   final _focusNode = FocusNode();
 
   @override
@@ -43,6 +53,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     super.initState();
     _controller = CodeLineEditingController.fromText(widget.content);
     _findController = CodeFindController(_controller);
+    _titleController = TextEditingController(text: widget.title);
     if (system.isDesktop) {
       return;
     }
@@ -87,8 +98,41 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     );
   }
 
+  Widget _wrapTitleController(TextEditingValueChangeBuilder builder) {
+    return ValueListenableBuilder(
+      valueListenable: _titleController,
+      builder: (_, value, ___) {
+        return builder(value);
+      },
+    );
+  }
+
   _handleSearch() {
     _findController.findMode();
+  }
+
+  _handleRemoteDownload() async {
+    final url = await globalState.showCommonDialog(
+      child: InputDialog(
+        title: appLocalizations.download,
+        value: "",
+        labelText: appLocalizations.url,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return appLocalizations.emptyTip(appLocalizations.value);
+          }
+          if (!value.isUrl) {
+            return appLocalizations.urlTip(appLocalizations.value);
+          }
+          return null;
+        },
+      ),
+    );
+    if (url == null) {
+      return;
+    }
+    final res = await request.getTextResponseForUrl(url);
+    _controller.text = res.data;
   }
 
   @override
@@ -99,56 +143,89 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         if (widget.onPop == null) {
           return true;
         }
-        final res = await widget.onPop!(context, _controller.text);
+        final res = await widget.onPop!(
+          context,
+          _titleController.text,
+          _controller.text,
+        );
         if (res && context.mounted) {
           return true;
         }
         return false;
       },
       child: CommonScaffold(
-        actions: [
-          if (widget.onSave != null)
-            _wrapController(
-              (value) => IconButton(
-                onPressed: _controller.text == widget.content
-                    ? null
-                    : () {
-                        widget.onSave!(context, _controller.text);
-                      },
-                icon: const Icon(Icons.save_sharp),
-              ),
+        appBar: AppBar(
+          title: TextField(
+            enabled: widget.titleEditable,
+            controller: _titleController,
+            decoration: InputDecoration(
+              border: _NoInputBorder(),
+              hintText: appLocalizations.unnamed,
             ),
-          _wrapController(
-            (value) => CommonPopupBox(
-              targetBuilder: (open) {
-                return IconButton(
-                  onPressed: open,
-                  icon: const Icon(Icons.more_vert),
-                );
-              },
-              popup: CommonPopupMenu(
-                minWidth: 180,
-                items: [
-                  PopupMenuItemData(
-                    icon: Icons.search,
-                    label: appLocalizations.search,
-                    onPressed: _handleSearch,
-                  ),
-                  PopupMenuItemData(
-                    icon: Icons.undo,
-                    label: appLocalizations.undo,
-                    onPressed: _controller.canUndo ? _controller.undo : null,
-                  ),
-                  PopupMenuItemData(
-                    icon: Icons.redo,
-                    label: appLocalizations.redo,
-                    onPressed: _controller.canRedo ? _controller.redo : null,
-                  ),
-                ],
-              ),
-            ),
+            style: context.textTheme.titleLarge,
+            autofocus: false,
           ),
-        ],
+          actions: genActions([
+            if (widget.onSave != null)
+              _wrapController(
+                (value) => _wrapTitleController(
+                  (value) => IconButton(
+                    onPressed: _controller.text != widget.content ||
+                            _titleController.text != widget.title
+                        ? () {
+                            widget.onSave!(
+                              context,
+                              _titleController.text,
+                              _controller.text,
+                            );
+                          }
+                        : null,
+                    icon: const Icon(Icons.save_sharp),
+                  ),
+                ),
+              ),
+            if (widget.supportRemoteDownload)
+              IconButton(
+                onPressed: _handleRemoteDownload,
+                icon: Icon(
+                  Icons.arrow_downward,
+                ),
+              ),
+            _wrapController(
+              (value) => CommonPopupBox(
+                targetBuilder: (open) {
+                  return IconButton(
+                    onPressed: () {
+                      open(
+                        offset: Offset(-20, 20),
+                      );
+                    },
+                    icon: const Icon(Icons.more_vert),
+                  );
+                },
+                popup: CommonPopupMenu(
+                  items: [
+                    PopupMenuItemData(
+                      icon: Icons.search,
+                      label: appLocalizations.search,
+                      onPressed: _handleSearch,
+                    ),
+                    PopupMenuItemData(
+                      icon: Icons.undo,
+                      label: appLocalizations.undo,
+                      onPressed: _controller.canUndo ? _controller.undo : null,
+                    ),
+                    PopupMenuItemData(
+                      icon: Icons.redo,
+                      label: appLocalizations.redo,
+                      onPressed: _controller.canRedo ? _controller.redo : null,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ]),
+        ),
         body: CodeEditor(
           findController: _findController,
           findBuilder: (context, controller, readOnly) => FindPanel(
@@ -190,19 +267,23 @@ class _EditorPageState extends ConsumerState<EditorPage> {
           shortcutsActivatorsBuilder: DefaultCodeShortcutsActivatorsBuilder(),
           controller: _controller,
           style: CodeEditorStyle(
-            fontSize: 14.ap,
+            fontSize: context.textTheme.bodyLarge?.fontSize?.ap,
             fontFamily: FontFamily.jetBrainsMono.value,
             codeTheme: CodeHighlightTheme(
               languages: {
-                'yaml': CodeHighlightThemeMode(
-                  mode: langYaml,
-                )
+                if (widget.languages.contains(Language.yaml))
+                  'yaml': CodeHighlightThemeMode(
+                    mode: langYaml,
+                  ),
+                if (widget.languages.contains(Language.javaScript))
+                  "javascript": CodeHighlightThemeMode(
+                    mode: langJavascript,
+                  ),
               },
               theme: atomOneLightTheme,
             ),
           ),
         ),
-        title: widget.title,
       ),
     );
   }
@@ -536,5 +617,52 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
       ),
     );
     Overlay.of(context).insert(_overlayEntry!);
+  }
+}
+
+class _NoInputBorder extends InputBorder {
+  const _NoInputBorder() : super(borderSide: BorderSide.none);
+
+  @override
+  _NoInputBorder copyWith({BorderSide? borderSide}) => const _NoInputBorder();
+
+  @override
+  bool get isOutline => false;
+
+  @override
+  EdgeInsetsGeometry get dimensions => EdgeInsets.zero;
+
+  @override
+  _NoInputBorder scale(double t) => const _NoInputBorder();
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) {
+    return Path()..addRect(rect);
+  }
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    return Path()..addRect(rect);
+  }
+
+  @override
+  void paintInterior(Canvas canvas, Rect rect, Paint paint,
+      {TextDirection? textDirection}) {
+    canvas.drawRect(rect, paint);
+  }
+
+  @override
+  bool get preferPaintInterior => true;
+
+  @override
+  void paint(
+    Canvas canvas,
+    Rect rect, {
+    double? gapStart,
+    double gapExtent = 0.0,
+    double gapPercentage = 0.0,
+    TextDirection? textDirection,
+  }) {
+    // Do not paint.
   }
 }
