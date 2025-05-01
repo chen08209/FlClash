@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/common.freezed.dart';
-
 part 'generated/common.g.dart';
 
 @freezed
@@ -17,7 +16,7 @@ class NavigationItem with _$NavigationItem {
     required Icon icon,
     required PageLabel label,
     final String? description,
-    required Widget fragment,
+    required Widget view,
     @Default(true) bool keep,
     String? path,
     @Default([NavigationItemMode.mobile, NavigationItemMode.desktop])
@@ -129,10 +128,10 @@ extension LogsStateExt on LogsState {
     final lowQuery = query.toLowerCase();
     return logs.where(
       (log) {
-        final payload = log.payload.toLowerCase();
         final logLevelName = log.logLevel.name;
         return {logLevelName}.containsAll(keywords) &&
-            ((payload.contains(lowQuery)) || logLevelName.contains(lowQuery));
+            ((log.payload.toLowerCase().contains(lowQuery)) ||
+                logLevelName.contains(lowQuery));
       },
     ).toList();
   }
@@ -504,15 +503,11 @@ class PopupMenuItemData {
     this.icon,
     required this.label,
     required this.onPressed,
-    this.type,
-    this.iconSize,
   });
 
-  final double? iconSize;
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
-  final PopupMenuItemType? type;
 }
 
 @freezed
@@ -527,4 +522,57 @@ class TextPainterParams with _$TextPainterParams {
 
   factory TextPainterParams.fromJson(Map<String, Object?> json) =>
       _$TextPainterParamsFromJson(json);
+}
+
+class CloseWindowIntent extends Intent {
+  const CloseWindowIntent();
+}
+
+@freezed
+class Result<T> with _$Result<T> {
+  const factory Result({
+    required T? data,
+    required ResultType type,
+    required String message,
+  }) = _Result;
+
+  factory Result.success(T data) => Result(
+        data: data,
+        type: ResultType.success,
+        message: "",
+      );
+
+  factory Result.error(String message) => Result(
+        data: null,
+        type: ResultType.error,
+        message: message,
+      );
+}
+
+extension ResultExt on Result {
+  bool get isError => type == ResultType.error;
+
+  bool get isSuccess => type == ResultType.success;
+}
+
+@freezed
+class Script with _$Script {
+  const factory Script({
+    required String id,
+    required String label,
+    required String content,
+  }) = _Script;
+
+  factory Script.create({
+    required String label,
+    required String content,
+  }) {
+    return Script(
+      id: utils.uuidV4,
+      label: label,
+      content: content,
+    );
+  }
+
+  factory Script.fromJson(Map<String, Object?> json) => _$ScriptFromJson(json);
 }

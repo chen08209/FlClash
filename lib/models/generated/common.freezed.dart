@@ -19,7 +19,7 @@ mixin _$NavigationItem {
   Icon get icon => throw _privateConstructorUsedError;
   PageLabel get label => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
-  Widget get fragment => throw _privateConstructorUsedError;
+  Widget get view => throw _privateConstructorUsedError;
   bool get keep => throw _privateConstructorUsedError;
   String? get path => throw _privateConstructorUsedError;
   List<NavigationItemMode> get modes => throw _privateConstructorUsedError;
@@ -41,7 +41,7 @@ abstract class $NavigationItemCopyWith<$Res> {
       {Icon icon,
       PageLabel label,
       String? description,
-      Widget fragment,
+      Widget view,
       bool keep,
       String? path,
       List<NavigationItemMode> modes});
@@ -65,7 +65,7 @@ class _$NavigationItemCopyWithImpl<$Res, $Val extends NavigationItem>
     Object? icon = null,
     Object? label = null,
     Object? description = freezed,
-    Object? fragment = null,
+    Object? view = null,
     Object? keep = null,
     Object? path = freezed,
     Object? modes = null,
@@ -83,9 +83,9 @@ class _$NavigationItemCopyWithImpl<$Res, $Val extends NavigationItem>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      fragment: null == fragment
-          ? _value.fragment
-          : fragment // ignore: cast_nullable_to_non_nullable
+      view: null == view
+          ? _value.view
+          : view // ignore: cast_nullable_to_non_nullable
               as Widget,
       keep: null == keep
           ? _value.keep
@@ -115,7 +115,7 @@ abstract class _$$NavigationItemImplCopyWith<$Res>
       {Icon icon,
       PageLabel label,
       String? description,
-      Widget fragment,
+      Widget view,
       bool keep,
       String? path,
       List<NavigationItemMode> modes});
@@ -137,7 +137,7 @@ class __$$NavigationItemImplCopyWithImpl<$Res>
     Object? icon = null,
     Object? label = null,
     Object? description = freezed,
-    Object? fragment = null,
+    Object? view = null,
     Object? keep = null,
     Object? path = freezed,
     Object? modes = null,
@@ -155,9 +155,9 @@ class __$$NavigationItemImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      fragment: null == fragment
-          ? _value.fragment
-          : fragment // ignore: cast_nullable_to_non_nullable
+      view: null == view
+          ? _value.view
+          : view // ignore: cast_nullable_to_non_nullable
               as Widget,
       keep: null == keep
           ? _value.keep
@@ -182,7 +182,7 @@ class _$NavigationItemImpl implements _NavigationItem {
       {required this.icon,
       required this.label,
       this.description,
-      required this.fragment,
+      required this.view,
       this.keep = true,
       this.path,
       final List<NavigationItemMode> modes = const [
@@ -198,7 +198,7 @@ class _$NavigationItemImpl implements _NavigationItem {
   @override
   final String? description;
   @override
-  final Widget fragment;
+  final Widget view;
   @override
   @JsonKey()
   final bool keep;
@@ -215,7 +215,7 @@ class _$NavigationItemImpl implements _NavigationItem {
 
   @override
   String toString() {
-    return 'NavigationItem(icon: $icon, label: $label, description: $description, fragment: $fragment, keep: $keep, path: $path, modes: $modes)';
+    return 'NavigationItem(icon: $icon, label: $label, description: $description, view: $view, keep: $keep, path: $path, modes: $modes)';
   }
 
   @override
@@ -227,16 +227,15 @@ class _$NavigationItemImpl implements _NavigationItem {
             (identical(other.label, label) || other.label == label) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.fragment, fragment) ||
-                other.fragment == fragment) &&
+            (identical(other.view, view) || other.view == view) &&
             (identical(other.keep, keep) || other.keep == keep) &&
             (identical(other.path, path) || other.path == path) &&
             const DeepCollectionEquality().equals(other._modes, _modes));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, icon, label, description,
-      fragment, keep, path, const DeepCollectionEquality().hash(_modes));
+  int get hashCode => Object.hash(runtimeType, icon, label, description, view,
+      keep, path, const DeepCollectionEquality().hash(_modes));
 
   /// Create a copy of NavigationItem
   /// with the given fields replaced by the non-null parameter values.
@@ -253,7 +252,7 @@ abstract class _NavigationItem implements NavigationItem {
       {required final Icon icon,
       required final PageLabel label,
       final String? description,
-      required final Widget fragment,
+      required final Widget view,
       final bool keep,
       final String? path,
       final List<NavigationItemMode> modes}) = _$NavigationItemImpl;
@@ -265,7 +264,7 @@ abstract class _NavigationItem implements NavigationItem {
   @override
   String? get description;
   @override
-  Widget get fragment;
+  Widget get view;
   @override
   bool get keep;
   @override
@@ -3464,5 +3463,350 @@ abstract class _TextPainterParams implements TextPainterParams {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$TextPainterParamsImplCopyWith<_$TextPainterParamsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$Result<T> {
+  T? get data => throw _privateConstructorUsedError;
+  ResultType get type => throw _privateConstructorUsedError;
+  String get message => throw _privateConstructorUsedError;
+
+  /// Create a copy of Result
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ResultCopyWith<T, Result<T>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ResultCopyWith<T, $Res> {
+  factory $ResultCopyWith(Result<T> value, $Res Function(Result<T>) then) =
+      _$ResultCopyWithImpl<T, $Res, Result<T>>;
+  @useResult
+  $Res call({T? data, ResultType type, String message});
+}
+
+/// @nodoc
+class _$ResultCopyWithImpl<T, $Res, $Val extends Result<T>>
+    implements $ResultCopyWith<T, $Res> {
+  _$ResultCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Result
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = freezed,
+    Object? type = null,
+    Object? message = null,
+  }) {
+    return _then(_value.copyWith(
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as T?,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as ResultType,
+      message: null == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ResultImplCopyWith<T, $Res>
+    implements $ResultCopyWith<T, $Res> {
+  factory _$$ResultImplCopyWith(
+          _$ResultImpl<T> value, $Res Function(_$ResultImpl<T>) then) =
+      __$$ResultImplCopyWithImpl<T, $Res>;
+  @override
+  @useResult
+  $Res call({T? data, ResultType type, String message});
+}
+
+/// @nodoc
+class __$$ResultImplCopyWithImpl<T, $Res>
+    extends _$ResultCopyWithImpl<T, $Res, _$ResultImpl<T>>
+    implements _$$ResultImplCopyWith<T, $Res> {
+  __$$ResultImplCopyWithImpl(
+      _$ResultImpl<T> _value, $Res Function(_$ResultImpl<T>) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Result
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = freezed,
+    Object? type = null,
+    Object? message = null,
+  }) {
+    return _then(_$ResultImpl<T>(
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as T?,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as ResultType,
+      message: null == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ResultImpl<T> implements _Result<T> {
+  const _$ResultImpl(
+      {required this.data, required this.type, required this.message});
+
+  @override
+  final T? data;
+  @override
+  final ResultType type;
+  @override
+  final String message;
+
+  @override
+  String toString() {
+    return 'Result<$T>(data: $data, type: $type, message: $message)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ResultImpl<T> &&
+            const DeepCollectionEquality().equals(other.data, data) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.message, message) || other.message == message));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(data), type, message);
+
+  /// Create a copy of Result
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ResultImplCopyWith<T, _$ResultImpl<T>> get copyWith =>
+      __$$ResultImplCopyWithImpl<T, _$ResultImpl<T>>(this, _$identity);
+}
+
+abstract class _Result<T> implements Result<T> {
+  const factory _Result(
+      {required final T? data,
+      required final ResultType type,
+      required final String message}) = _$ResultImpl<T>;
+
+  @override
+  T? get data;
+  @override
+  ResultType get type;
+  @override
+  String get message;
+
+  /// Create a copy of Result
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ResultImplCopyWith<T, _$ResultImpl<T>> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+Script _$ScriptFromJson(Map<String, dynamic> json) {
+  return _Script.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Script {
+  String get id => throw _privateConstructorUsedError;
+  String get label => throw _privateConstructorUsedError;
+  String get content => throw _privateConstructorUsedError;
+
+  /// Serializes this Script to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Script
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ScriptCopyWith<Script> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ScriptCopyWith<$Res> {
+  factory $ScriptCopyWith(Script value, $Res Function(Script) then) =
+      _$ScriptCopyWithImpl<$Res, Script>;
+  @useResult
+  $Res call({String id, String label, String content});
+}
+
+/// @nodoc
+class _$ScriptCopyWithImpl<$Res, $Val extends Script>
+    implements $ScriptCopyWith<$Res> {
+  _$ScriptCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Script
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? label = null,
+    Object? content = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      label: null == label
+          ? _value.label
+          : label // ignore: cast_nullable_to_non_nullable
+              as String,
+      content: null == content
+          ? _value.content
+          : content // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ScriptImplCopyWith<$Res> implements $ScriptCopyWith<$Res> {
+  factory _$$ScriptImplCopyWith(
+          _$ScriptImpl value, $Res Function(_$ScriptImpl) then) =
+      __$$ScriptImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String id, String label, String content});
+}
+
+/// @nodoc
+class __$$ScriptImplCopyWithImpl<$Res>
+    extends _$ScriptCopyWithImpl<$Res, _$ScriptImpl>
+    implements _$$ScriptImplCopyWith<$Res> {
+  __$$ScriptImplCopyWithImpl(
+      _$ScriptImpl _value, $Res Function(_$ScriptImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Script
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? label = null,
+    Object? content = null,
+  }) {
+    return _then(_$ScriptImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      label: null == label
+          ? _value.label
+          : label // ignore: cast_nullable_to_non_nullable
+              as String,
+      content: null == content
+          ? _value.content
+          : content // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ScriptImpl implements _Script {
+  const _$ScriptImpl(
+      {required this.id, required this.label, required this.content});
+
+  factory _$ScriptImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ScriptImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  final String label;
+  @override
+  final String content;
+
+  @override
+  String toString() {
+    return 'Script(id: $id, label: $label, content: $content)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ScriptImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.label, label) || other.label == label) &&
+            (identical(other.content, content) || other.content == content));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, label, content);
+
+  /// Create a copy of Script
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ScriptImplCopyWith<_$ScriptImpl> get copyWith =>
+      __$$ScriptImplCopyWithImpl<_$ScriptImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ScriptImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Script implements Script {
+  const factory _Script(
+      {required final String id,
+      required final String label,
+      required final String content}) = _$ScriptImpl;
+
+  factory _Script.fromJson(Map<String, dynamic> json) = _$ScriptImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  String get label;
+  @override
+  String get content;
+
+  /// Create a copy of Script
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ScriptImplCopyWith<_$ScriptImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

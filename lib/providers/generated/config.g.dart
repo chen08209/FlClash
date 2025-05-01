@@ -178,6 +178,21 @@ final proxiesStyleSettingProvider =
 );
 
 typedef _$ProxiesStyleSetting = AutoDisposeNotifier<ProxiesStyle>;
+String _$scriptStateHash() => r'16d669009ffb233d95b2cb206cf771342ebc1cc1';
+
+/// See also [ScriptState].
+@ProviderFor(ScriptState)
+final scriptStateProvider =
+    AutoDisposeNotifierProvider<ScriptState, ScriptProps>.internal(
+  ScriptState.new,
+  name: r'scriptStateProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$scriptStateHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ScriptState = AutoDisposeNotifier<ScriptProps>;
 String _$patchClashConfigHash() => r'52906195d85525d6688aec231da8b38c24364494';
 
 /// See also [PatchClashConfig].

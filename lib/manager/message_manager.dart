@@ -39,6 +39,7 @@ class MessageManagerState extends State<MessageManager> {
       id: utils.uuidV4,
       text: text,
     );
+    commonPrint.log(text);
     _bufferMessages.add(commonMessage);
     await _showMessage();
   }
@@ -87,32 +88,32 @@ class MessageManagerState extends State<MessageManager> {
               child: messages.isEmpty
                   ? SizedBox()
                   : LayoutBuilder(
-                key: Key(messages.last.id),
-                builder: (_, constraints) {
-                  return Card(
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(12.0),
-                      ),
+                      key: Key(messages.last.id),
+                      builder: (_, constraints) {
+                        return Card(
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(12.0),
+                            ),
+                          ),
+                          elevation: 10,
+                          color: context.colorScheme.surfaceContainerHigh,
+                          child: Container(
+                            width: min(
+                              constraints.maxWidth,
+                              500,
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 16,
+                            ),
+                            child: Text(
+                              messages.last.text,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    elevation: 10,
-                    color: context.colorScheme.surfaceContainerHigh,
-                    child: Container(
-                      width: min(
-                        constraints.maxWidth,
-                        500,
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 16,
-                      ),
-                      child: Text(
-                        messages.last.text,
-                      ),
-                    ),
-                  );
-                },
-              ),
             );
           },
         ),

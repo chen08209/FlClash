@@ -10,6 +10,7 @@ import (
 	"github.com/metacubex/mihomo/common/observable"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/mmdb"
+	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
@@ -28,10 +29,8 @@ import (
 
 var (
 	isInit            = false
-	configParams      = ConfigExtendedParams{}
 	externalProviders = map[string]cp.Provider{}
 	logSubscriber     observable.Subscription[log.Event]
-	currentConfig     *config.Config
 )
 
 func handleInitClash(paramsString string) bool {
@@ -52,7 +51,8 @@ func handleStartListener() bool {
 	runLock.Lock()
 	defer runLock.Unlock()
 	isRunning = true
-	updateListeners(true)
+	updateListeners()
+	resolver.ResetConnection()
 	return true
 }
 
@@ -91,30 +91,10 @@ func handleValidateConfig(bytes []byte) string {
 	return ""
 }
 
-func handleUpdateConfig(bytes []byte) string {
-	var params = &GenerateConfigParams{}
-	err := json.Unmarshal(bytes, params)
-	if err != nil {
-		return err.Error()
-	}
-
-	configParams = params.Params
-	prof := decorationConfig(params.ProfileId, params.Config)
-	err = applyConfig(prof)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
-}
-
-func handleGetProxies() string {
+func handleGetProxies() map[string]constant.Proxy {
 	runLock.Lock()
 	defer runLock.Unlock()
-	data, err := json.Marshal(tunnel.ProxiesWithProviders())
-	if err != nil {
-		return ""
-	}
-	return string(data)
+	return tunnel.ProxiesWithProviders()
 }
 
 func handleChangeProxy(data string, fn func(string string)) {
@@ -184,21 +164,12 @@ func handleGetTotalTraffic() string {
 	return string(data)
 }
 
-func handleGetProfile(profileId string) string {
-	prof := getRawConfigWithId(profileId)
-	data, err := json.Marshal(prof)
-	if err != nil {
-		return ""
-	}
-	return string(data)
-}
-
 func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
 }
 
 func handleAsyncTestDelay(paramsString string, fn func(string)) {
-	b.Go(paramsString, func() (bool, error) {
+	mBatch.Go(paramsString, func() (bool, error) {
 		var params = &TestDelayParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
 		if err != nil {
@@ -266,6 +237,11 @@ func handleGetConnections() string {
 func handleCloseConnections() bool {
 	runLock.Lock()
 	defer runLock.Unlock()
+	closeConnections()
+	return true
+}
+
+func closeConnections() {
 	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
 		err := c.Close()
 		if err != nil {
@@ -273,6 +249,12 @@ func handleCloseConnections() bool {
 		}
 		return true
 	})
+}
+
+func handleResetConnections() bool {
+	runLock.Lock()
+	defer runLock.Unlock()
+	resolver.ResetConnection()
 	return true
 }
 
@@ -442,8 +424,45 @@ func handleSetState(params string) {
 	_ = json.Unmarshal([]byte(params), state.CurrentState)
 }
 
+func handleGetConfig(path string) (*config.RawConfig, error) {
+	bytes, err := readFile(path)
+	if err != nil {
+		return nil, err
+	}
+	prof, err := config.UnmarshalRawConfig(bytes)
+	if err != nil {
+		return nil, err
+	}
+	return prof, nil
+}
+
 func handleCrash() {
 	panic("handle invoke crash")
+}
+
+func handleUpdateConfig(bytes []byte) string {
+	var params = &UpdateParams{}
+	err := json.Unmarshal(bytes, params)
+	if err != nil {
+		return err.Error()
+	}
+	updateConfig(params)
+	return ""
+}
+
+func handleSetupConfig(bytes []byte) string {
+	var params = defaultSetupParams()
+	err := UnmarshalJson(bytes, params)
+	if err != nil {
+		log.Errorln("unmarshalRawConfig error %v", err)
+		_ = setupConfig(defaultSetupParams())
+		return err.Error()
+	}
+	err = setupConfig(params)
+	if err != nil {
+		return err.Error()
+	}
+	return ""
 }
 
 func init() {

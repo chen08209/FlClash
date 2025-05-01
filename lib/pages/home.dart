@@ -144,7 +144,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
         return KeepScope(
           keep: navigationItem.keep,
           key: Key(navigationItem.label.name),
-          child: navigationItem.fragment,
+          child: navigationItem.view,
         );
       },
     );

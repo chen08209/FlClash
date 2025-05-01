@@ -200,6 +200,13 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         timerJob = null
     }
 
+
+    suspend fun getStatus(): Boolean? {
+        return withContext(Dispatchers.Default) {
+            flutterMethodChannel.awaitResult<Boolean>("status", null)
+        }
+    }
+
     private fun handleStartService() {
         if (flClashService == null) {
             bindService()
@@ -248,9 +255,9 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         GlobalState.runLock.withLock {
             if (GlobalState.runState.value == RunState.STOP) return
             GlobalState.runState.value = RunState.STOP
+            flClashService?.stop()
             stopForegroundJob()
             Core.stopTun()
-            flClashService?.stop()
             GlobalState.handleTryDestroy()
         }
     }

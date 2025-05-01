@@ -25,7 +25,7 @@ class VM3<A, B, C> with _$VM3<A, B, C> {
 }
 
 @freezed
-class VM4<A, B, C,D> with _$VM4<A, B, C,D> {
+class VM4<A, B, C, D> with _$VM4<A, B, C, D> {
   const factory VM4({
     required A a,
     required B b,
@@ -33,7 +33,6 @@ class VM4<A, B, C,D> with _$VM4<A, B, C,D> {
     required D d,
   }) = _VM4;
 }
-
 
 @freezed
 class StartButtonSelectorState with _$StartButtonSelectorState {
@@ -125,6 +124,7 @@ class ProxiesListSelectorState with _$ProxiesListSelectorState {
     required ProxyCardType proxyCardType,
     required num sortNum,
     required int columns,
+    required String query,
   }) = _ProxiesListSelectorState;
 }
 
@@ -260,7 +260,6 @@ class VpnState with _$VpnState {
 class ProfileOverrideStateModel with _$ProfileOverrideStateModel {
   const factory ProfileOverrideStateModel({
     ClashConfigSnippet? snippet,
-    required bool isEdit,
     required Set<String> selectedRules,
     OverrideData? overrideData,
   }) = _ProfileOverrideStateModel;

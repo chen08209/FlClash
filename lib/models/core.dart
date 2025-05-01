@@ -5,7 +5,6 @@ import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/core.freezed.dart';
-
 part 'generated/core.g.dart';
 
 abstract mixin class AppMessageListener {
@@ -18,10 +17,52 @@ abstract mixin class AppMessageListener {
   void onLoaded(String providerName) {}
 }
 
-abstract mixin class ServiceMessageListener {
-  onProtect(Fd fd) {}
+// abstract mixin class ServiceMessageListener {
+//   onProtect(Fd fd) {}
+//
+//   onProcess(ProcessData process) {}
+// }
 
-  onProcess(ProcessData process) {}
+@freezed
+class SetupParams with _$SetupParams {
+  const factory SetupParams({
+    @JsonKey(name: "config") required Map<String, dynamic> config,
+    @JsonKey(name: "selected-map") required Map<String, String> selectedMap,
+    @JsonKey(name: "test-url") required String testUrl,
+  }) = _SetupParams;
+
+  factory SetupParams.fromJson(Map<String, dynamic> json) =>
+      _$SetupParamsFromJson(json);
+}
+
+// extension SetupParamsExt on SetupParams {
+//   Map<String, dynamic> get json {
+//     final json = Map<String, dynamic>.from(config);
+//     json["selected-map"] = selectedMap;
+//     json["test-url"] = testUrl;
+//     return json;
+//   }
+// }
+
+@freezed
+class UpdateParams with _$UpdateParams {
+  const factory UpdateParams({
+    required Tun tun,
+    @JsonKey(name: 'mixed-port') required int mixedPort,
+    @JsonKey(name: 'allow-lan') required bool allowLan,
+    @JsonKey(name: 'find-process-mode')
+    required FindProcessMode findProcessMode,
+    required Mode mode,
+    @JsonKey(name: 'log-level') required LogLevel logLevel,
+    required bool ipv6,
+    @JsonKey(name: 'tcp-concurrent') required bool tcpConcurrent,
+    @JsonKey(name: 'external-controller')
+    required ExternalControllerStatus externalController,
+    @JsonKey(name: 'unified-delay') required bool unifiedDelay,
+  }) = _UpdateParams;
+
+  factory UpdateParams.fromJson(Map<String, dynamic> json) =>
+      _$UpdateParamsFromJson(json);
 }
 
 @freezed
@@ -54,32 +95,6 @@ class AndroidVpnOptions with _$AndroidVpnOptions {
 
   factory AndroidVpnOptions.fromJson(Map<String, Object?> json) =>
       _$AndroidVpnOptionsFromJson(json);
-}
-
-@freezed
-class ConfigExtendedParams with _$ConfigExtendedParams {
-  const factory ConfigExtendedParams({
-    @JsonKey(name: "is-patch") required bool isPatch,
-    @JsonKey(name: "selected-map") required SelectedMap selectedMap,
-    @JsonKey(name: "override-dns") required bool overrideDns,
-    @JsonKey(name: "override-rule") required bool overrideRule,
-    @JsonKey(name: "test-url") required String testUrl,
-  }) = _ConfigExtendedParams;
-
-  factory ConfigExtendedParams.fromJson(Map<String, Object?> json) =>
-      _$ConfigExtendedParamsFromJson(json);
-}
-
-@freezed
-class UpdateConfigParams with _$UpdateConfigParams {
-  const factory UpdateConfigParams({
-    @JsonKey(name: "profile-id") required String profileId,
-    required ClashConfig config,
-    required ConfigExtendedParams params,
-  }) = _UpdateConfigParams;
-
-  factory UpdateConfigParams.fromJson(Map<String, Object?> json) =>
-      _$UpdateConfigParamsFromJson(json);
 }
 
 @freezed
@@ -158,37 +173,26 @@ class Now with _$Now {
   factory Now.fromJson(Map<String, Object?> json) => _$NowFromJson(json);
 }
 
-@freezed
-class ProcessData with _$ProcessData {
-  const factory ProcessData({
-    required String id,
-    required Metadata metadata,
-  }) = _ProcessData;
-
-  factory ProcessData.fromJson(Map<String, Object?> json) =>
-      _$ProcessDataFromJson(json);
-}
-
-@freezed
-class Fd with _$Fd {
-  const factory Fd({
-    required String id,
-    required int value,
-  }) = _Fd;
-
-  factory Fd.fromJson(Map<String, Object?> json) => _$FdFromJson(json);
-}
-
-@freezed
-class ProcessMapItem with _$ProcessMapItem {
-  const factory ProcessMapItem({
-    required String id,
-    required String value,
-  }) = _ProcessMapItem;
-
-  factory ProcessMapItem.fromJson(Map<String, Object?> json) =>
-      _$ProcessMapItemFromJson(json);
-}
+// @freezed
+// class ProcessData with _$ProcessData {
+//   const factory ProcessData({
+//     required String id,
+//     required Metadata metadata,
+//   }) = _ProcessData;
+//
+//   factory ProcessData.fromJson(Map<String, Object?> json) =>
+//       _$ProcessDataFromJson(json);
+// }
+//
+// @freezed
+// class Fd with _$Fd {
+//   const factory Fd({
+//     required String id,
+//     required int value,
+//   }) = _Fd;
+//
+//   factory Fd.fromJson(Map<String, Object?> json) => _$FdFromJson(json);
+// }
 
 @freezed
 class ProviderSubscriptionInfo with _$ProviderSubscriptionInfo {
@@ -232,27 +236,10 @@ class ExternalProvider with _$ExternalProvider {
 }
 
 @freezed
-class TunProps with _$TunProps {
-  const factory TunProps({
-    required int fd,
-    required String gateway,
-    required String gateway6,
-    required String portal,
-    required String portal6,
-    required String dns,
-    required String dns6,
-  }) = _TunProps;
-
-  factory TunProps.fromJson(Map<String, Object?> json) =>
-      _$TunPropsFromJson(json);
-}
-
-@freezed
 class Action with _$Action {
   const factory Action({
     required ActionMethod method,
     required dynamic data,
-    @JsonKey(name: "default-value") required dynamic defaultValue,
     required String id,
   }) = _Action;
 
@@ -265,8 +252,19 @@ class ActionResult with _$ActionResult {
     required ActionMethod method,
     required dynamic data,
     String? id,
+    @Default(ResultType.success) ResultType code,
   }) = _ActionResult;
 
   factory ActionResult.fromJson(Map<String, Object?> json) =>
       _$ActionResultFromJson(json);
+}
+
+extension ActionResultExt on ActionResult {
+  Result get toResult {
+    if (code == ResultType.success) {
+      return Result.success(data);
+    } else {
+      return Result.error(data);
+    }
+  }
 }

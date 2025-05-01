@@ -2142,6 +2142,7 @@ mixin _$ProxiesListSelectorState {
   ProxyCardType get proxyCardType => throw _privateConstructorUsedError;
   num get sortNum => throw _privateConstructorUsedError;
   int get columns => throw _privateConstructorUsedError;
+  String get query => throw _privateConstructorUsedError;
 
   /// Create a copy of ProxiesListSelectorState
   /// with the given fields replaced by the non-null parameter values.
@@ -2162,7 +2163,8 @@ abstract class $ProxiesListSelectorStateCopyWith<$Res> {
       ProxiesSortType proxiesSortType,
       ProxyCardType proxyCardType,
       num sortNum,
-      int columns});
+      int columns,
+      String query});
 }
 
 /// @nodoc
@@ -2187,6 +2189,7 @@ class _$ProxiesListSelectorStateCopyWithImpl<$Res,
     Object? proxyCardType = null,
     Object? sortNum = null,
     Object? columns = null,
+    Object? query = null,
   }) {
     return _then(_value.copyWith(
       groupNames: null == groupNames
@@ -2213,6 +2216,10 @@ class _$ProxiesListSelectorStateCopyWithImpl<$Res,
           ? _value.columns
           : columns // ignore: cast_nullable_to_non_nullable
               as int,
+      query: null == query
+          ? _value.query
+          : query // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 }
@@ -2232,7 +2239,8 @@ abstract class _$$ProxiesListSelectorStateImplCopyWith<$Res>
       ProxiesSortType proxiesSortType,
       ProxyCardType proxyCardType,
       num sortNum,
-      int columns});
+      int columns,
+      String query});
 }
 
 /// @nodoc
@@ -2256,6 +2264,7 @@ class __$$ProxiesListSelectorStateImplCopyWithImpl<$Res>
     Object? proxyCardType = null,
     Object? sortNum = null,
     Object? columns = null,
+    Object? query = null,
   }) {
     return _then(_$ProxiesListSelectorStateImpl(
       groupNames: null == groupNames
@@ -2282,6 +2291,10 @@ class __$$ProxiesListSelectorStateImplCopyWithImpl<$Res>
           ? _value.columns
           : columns // ignore: cast_nullable_to_non_nullable
               as int,
+      query: null == query
+          ? _value.query
+          : query // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -2295,7 +2308,8 @@ class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
       required this.proxiesSortType,
       required this.proxyCardType,
       required this.sortNum,
-      required this.columns})
+      required this.columns,
+      required this.query})
       : _groupNames = groupNames,
         _currentUnfoldSet = currentUnfoldSet;
 
@@ -2323,10 +2337,12 @@ class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
   final num sortNum;
   @override
   final int columns;
+  @override
+  final String query;
 
   @override
   String toString() {
-    return 'ProxiesListSelectorState(groupNames: $groupNames, currentUnfoldSet: $currentUnfoldSet, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, columns: $columns)';
+    return 'ProxiesListSelectorState(groupNames: $groupNames, currentUnfoldSet: $currentUnfoldSet, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, columns: $columns, query: $query)';
   }
 
   @override
@@ -2343,7 +2359,8 @@ class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
             (identical(other.proxyCardType, proxyCardType) ||
                 other.proxyCardType == proxyCardType) &&
             (identical(other.sortNum, sortNum) || other.sortNum == sortNum) &&
-            (identical(other.columns, columns) || other.columns == columns));
+            (identical(other.columns, columns) || other.columns == columns) &&
+            (identical(other.query, query) || other.query == query));
   }
 
   @override
@@ -2354,7 +2371,8 @@ class _$ProxiesListSelectorStateImpl implements _ProxiesListSelectorState {
       proxiesSortType,
       proxyCardType,
       sortNum,
-      columns);
+      columns,
+      query);
 
   /// Create a copy of ProxiesListSelectorState
   /// with the given fields replaced by the non-null parameter values.
@@ -2373,7 +2391,8 @@ abstract class _ProxiesListSelectorState implements ProxiesListSelectorState {
       required final ProxiesSortType proxiesSortType,
       required final ProxyCardType proxyCardType,
       required final num sortNum,
-      required final int columns}) = _$ProxiesListSelectorStateImpl;
+      required final int columns,
+      required final String query}) = _$ProxiesListSelectorStateImpl;
 
   @override
   List<String> get groupNames;
@@ -2387,6 +2406,8 @@ abstract class _ProxiesListSelectorState implements ProxiesListSelectorState {
   num get sortNum;
   @override
   int get columns;
+  @override
+  String get query;
 
   /// Create a copy of ProxiesListSelectorState
   /// with the given fields replaced by the non-null parameter values.
@@ -4216,7 +4237,6 @@ abstract class _VpnState implements VpnState {
 /// @nodoc
 mixin _$ProfileOverrideStateModel {
   ClashConfigSnippet? get snippet => throw _privateConstructorUsedError;
-  bool get isEdit => throw _privateConstructorUsedError;
   Set<String> get selectedRules => throw _privateConstructorUsedError;
   OverrideData? get overrideData => throw _privateConstructorUsedError;
 
@@ -4235,7 +4255,6 @@ abstract class $ProfileOverrideStateModelCopyWith<$Res> {
   @useResult
   $Res call(
       {ClashConfigSnippet? snippet,
-      bool isEdit,
       Set<String> selectedRules,
       OverrideData? overrideData});
 
@@ -4260,7 +4279,6 @@ class _$ProfileOverrideStateModelCopyWithImpl<$Res,
   @override
   $Res call({
     Object? snippet = freezed,
-    Object? isEdit = null,
     Object? selectedRules = null,
     Object? overrideData = freezed,
   }) {
@@ -4269,10 +4287,6 @@ class _$ProfileOverrideStateModelCopyWithImpl<$Res,
           ? _value.snippet
           : snippet // ignore: cast_nullable_to_non_nullable
               as ClashConfigSnippet?,
-      isEdit: null == isEdit
-          ? _value.isEdit
-          : isEdit // ignore: cast_nullable_to_non_nullable
-              as bool,
       selectedRules: null == selectedRules
           ? _value.selectedRules
           : selectedRules // ignore: cast_nullable_to_non_nullable
@@ -4324,7 +4338,6 @@ abstract class _$$ProfileOverrideStateModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {ClashConfigSnippet? snippet,
-      bool isEdit,
       Set<String> selectedRules,
       OverrideData? overrideData});
 
@@ -4350,7 +4363,6 @@ class __$$ProfileOverrideStateModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? snippet = freezed,
-    Object? isEdit = null,
     Object? selectedRules = null,
     Object? overrideData = freezed,
   }) {
@@ -4359,10 +4371,6 @@ class __$$ProfileOverrideStateModelImplCopyWithImpl<$Res>
           ? _value.snippet
           : snippet // ignore: cast_nullable_to_non_nullable
               as ClashConfigSnippet?,
-      isEdit: null == isEdit
-          ? _value.isEdit
-          : isEdit // ignore: cast_nullable_to_non_nullable
-              as bool,
       selectedRules: null == selectedRules
           ? _value._selectedRules
           : selectedRules // ignore: cast_nullable_to_non_nullable
@@ -4380,15 +4388,12 @@ class __$$ProfileOverrideStateModelImplCopyWithImpl<$Res>
 class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
   const _$ProfileOverrideStateModelImpl(
       {this.snippet,
-      required this.isEdit,
       required final Set<String> selectedRules,
       this.overrideData})
       : _selectedRules = selectedRules;
 
   @override
   final ClashConfigSnippet? snippet;
-  @override
-  final bool isEdit;
   final Set<String> _selectedRules;
   @override
   Set<String> get selectedRules {
@@ -4402,7 +4407,7 @@ class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
 
   @override
   String toString() {
-    return 'ProfileOverrideStateModel(snippet: $snippet, isEdit: $isEdit, selectedRules: $selectedRules, overrideData: $overrideData)';
+    return 'ProfileOverrideStateModel(snippet: $snippet, selectedRules: $selectedRules, overrideData: $overrideData)';
   }
 
   @override
@@ -4411,7 +4416,6 @@ class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
         (other.runtimeType == runtimeType &&
             other is _$ProfileOverrideStateModelImpl &&
             (identical(other.snippet, snippet) || other.snippet == snippet) &&
-            (identical(other.isEdit, isEdit) || other.isEdit == isEdit) &&
             const DeepCollectionEquality()
                 .equals(other._selectedRules, _selectedRules) &&
             (identical(other.overrideData, overrideData) ||
@@ -4419,7 +4423,7 @@ class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, snippet, isEdit,
+  int get hashCode => Object.hash(runtimeType, snippet,
       const DeepCollectionEquality().hash(_selectedRules), overrideData);
 
   /// Create a copy of ProfileOverrideStateModel
@@ -4435,14 +4439,11 @@ class _$ProfileOverrideStateModelImpl implements _ProfileOverrideStateModel {
 abstract class _ProfileOverrideStateModel implements ProfileOverrideStateModel {
   const factory _ProfileOverrideStateModel(
       {final ClashConfigSnippet? snippet,
-      required final bool isEdit,
       required final Set<String> selectedRules,
       final OverrideData? overrideData}) = _$ProfileOverrideStateModelImpl;
 
   @override
   ClashConfigSnippet? get snippet;
-  @override
-  bool get isEdit;
   @override
   Set<String> get selectedRules;
   @override

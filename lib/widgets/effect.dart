@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class EffectGestureDetector extends StatefulWidget {
@@ -56,4 +58,23 @@ class _EffectGestureDetectorState extends State<EffectGestureDetector>
       ),
     );
   }
+}
+
+Widget proxyDecorator(
+  Widget child,
+  int index,
+  Animation<double> animation,
+) {
+  return AnimatedBuilder(
+    animation: animation,
+    builder: (_, Widget? child) {
+      final double animValue = Curves.easeInOut.transform(animation.value);
+      final double scale = lerpDouble(1, 1.02, animValue)!;
+      return Transform.scale(
+        scale: scale,
+        child: child,
+      );
+    },
+    child: child,
+  );
 }
