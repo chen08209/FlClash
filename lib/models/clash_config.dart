@@ -1,12 +1,10 @@
 // ignore_for_file: invalid_annotation_target
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../enum/enum.dart';
-
 part 'generated/clash_config.freezed.dart';
-
 part 'generated/clash_config.g.dart';
 
 typedef HostsMap = Map<String, String>;
@@ -140,6 +138,41 @@ class RuleProvider with _$RuleProvider {
 
   factory RuleProvider.fromJson(Map<String, Object?> json) =>
       _$RuleProviderFromJson(json);
+}
+
+@freezed
+class Sniffer with _$Sniffer {
+  const factory Sniffer({
+    @Default(false) bool enable,
+    @Default(true) @JsonKey(name: "override-destination") bool overrideDest,
+    @Default([]) List<String> sniffing,
+    @Default([]) @JsonKey(name: "force-domain") List<String> forceDomain,
+    @Default([]) @JsonKey(name: "skip-src-address") List<String> skipSrcAddress,
+    @Default([]) @JsonKey(name: "skip-dst-address") List<String> skipDstAddress,
+    @Default([]) @JsonKey(name: "skip-domain") List<String> skipDomain,
+    @Default([]) @JsonKey(name: "port-whitelist") List<String> port,
+    @Default(true) @JsonKey(name: "force-dns-mapping") bool forceDnsMapping,
+    @Default(true) @JsonKey(name: "parse-pure-ip") bool parsePureIp,
+    @Default({}) Map<String, SnifferConfig> sniff,
+  }) = _Sniffer;
+
+  factory Sniffer.fromJson(Map<String, Object?> json) =>
+      _$SnifferFromJson(json);
+}
+
+List<String> _formJsonPorts(List? ports) {
+  return ports?.map((item) => item.toString()).toList() ?? [];
+}
+
+@freezed
+class SnifferConfig with _$SnifferConfig {
+  const factory SnifferConfig({
+    @Default([]) @JsonKey(fromJson: _formJsonPorts) List<String> ports,
+    @JsonKey(name: "override-destination") bool? overrideDest,
+  }) = _SnifferConfig;
+
+  factory SnifferConfig.fromJson(Map<String, Object?> json) =>
+      _$SnifferConfigFromJson(json);
 }
 
 @freezed
@@ -408,7 +441,7 @@ List<SubRule> _genSubRules(Map<String, dynamic> json) {
 class ClashConfigSnippet with _$ClashConfigSnippet {
   const factory ClashConfigSnippet({
     @Default([]) @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-    @JsonKey(fromJson: _genRule) @Default([]) List<Rule> rule,
+    @JsonKey(fromJson: _genRule, name: "rules") @Default([]) List<Rule> rule,
     @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
     @Default([])
     List<RuleProvider> ruleProvider,
@@ -425,6 +458,10 @@ class ClashConfigSnippet with _$ClashConfigSnippet {
 class ClashConfig with _$ClashConfig {
   const factory ClashConfig({
     @Default(defaultMixedPort) @JsonKey(name: "mixed-port") int mixedPort,
+    @Default(0) @JsonKey(name: "socks-port") int socksPort,
+    @Default(0) @JsonKey(name: "port") int port,
+    @Default(0) @JsonKey(name: "redir-port") int redirPort,
+    @Default(0) @JsonKey(name: "tproxy-port") int tproxyPort,
     @Default(Mode.rule) Mode mode,
     @Default(false) @JsonKey(name: "allow-lan") bool allowLan,
     @Default(LogLevel.error) @JsonKey(name: "log-level") LogLevel logLevel,

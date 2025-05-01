@@ -56,6 +56,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
   final ValueNotifier<bool> _animating = ValueNotifier(false);
 
   final _dragWidgetSizeNotifier = ValueNotifier(Size.zero);
+
   final _dragIndexNotifier = ValueNotifier(-1);
 
   late AnimationController _transformController;
@@ -304,7 +305,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
   }
 
   _handleDragEnd(DraggableDetails details) async {
-    debouncer.cancel(DebounceTag.handleWill);
+    debouncer.cancel(FunctionTag.handleWill);
     if (_targetIndex == -1) {
       return;
     }
@@ -313,7 +314,12 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       stiffness: 100,
       damping: 10,
     );
-    final simulation = SpringSimulation(spring, 0, 1, 0);
+    final simulation = SpringSimulation(
+      spring,
+      0,
+      1,
+      0,
+    );
     _fakeDragWidgetAnimation = Tween(
       begin: details.offset - _parentOffset,
       end: _targetOffset,
@@ -369,7 +375,6 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
   }
 
   _handleDelete(int index) async {
-    await _transformCompleter?.future;
     _preTransformState();
     final indexWhere = _tempIndexList.indexWhere((i) => i == index);
     _tempIndexList.removeAt(indexWhere);
@@ -496,7 +501,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       },
       onWillAcceptWithDetails: (_) {
         debouncer.call(
-          DebounceTag.handleWill,
+          FunctionTag.handleWill,
           _handleWill,
           args: [index],
         );
@@ -504,21 +509,31 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       },
     );
     final shakeTarget = ValueListenableBuilder(
-      valueListenable: _dragIndexNotifier,
-      builder: (_, dragIndex, child) {
-        if (dragIndex == index) {
+      valueListenable: _animating,
+      builder: (_, animating, child) {
+        if (animating) {
+          return target;
+        } else {
           return child!;
         }
-        return _shakeWrap(
-          _DeletableContainer(
-            onDelete: () {
-              _handleDelete(index);
-            },
-            child: child!,
-          ),
-        );
       },
-      child: target,
+      child: ValueListenableBuilder(
+        valueListenable: _dragIndexNotifier,
+        builder: (_, dragIndex, child) {
+          if (dragIndex == index) {
+            return child!;
+          }
+          return _shakeWrap(
+            _DeletableContainer(
+              onDelete: () {
+                _handleDelete(index);
+              },
+              child: child!,
+            ),
+          );
+        },
+        child: target,
+      ),
     );
     final draggableChild = system.isDesktop
         ? Draggable(

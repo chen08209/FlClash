@@ -5,7 +5,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
-import 'package:fl_clash/models/core.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/tile.dart';
 import 'package:fl_clash/plugins/vpn.dart';
@@ -17,13 +16,11 @@ import 'application.dart';
 import 'clash/core.dart';
 import 'clash/lib.dart';
 import 'common/common.dart';
+import 'models/models.dart';
 
 Future<void> main() async {
   globalState.isService = false;
   WidgetsFlutterBinding.ensureInitialized();
-  FlutterError.onError = (details) {
-    commonPrint.log(details.stack.toString());
-  };
   final version = await system.version;
   await clashCore.preload();
   await globalState.initApp(version);
@@ -77,27 +74,35 @@ Future<void> _service(List<String> flags) async {
     app?.tip(appLocalizations.startVpn);
     final homeDirPath = await appPath.homeDirPath;
     final version = await system.version;
-    clashLibHandler
-        .quickStart(
-      InitParams(
-        homeDir: homeDirPath,
-        version: version,
-      ),
-      globalState.getUpdateConfigParams(),
-      globalState.getCoreState(),
-    )
-        .then(
-      (res) async {
-        if (res.isNotEmpty) {
-          await vpn?.stop();
-          exit(0);
-        }
-        await vpn?.start(
-          clashLibHandler.getAndroidVpnOptions(),
-        );
-        clashLibHandler.startListener();
-      },
+    final clashConfig = globalState.config.patchClashConfig.copyWith.tun(
+      enable: false,
     );
+    Future(() async {
+      final profileId = globalState.config.currentProfileId;
+      if (profileId == null) {
+        return;
+      }
+      final params = await globalState.getSetupParams(
+        pathConfig: clashConfig,
+      );
+      final res = await clashLibHandler.quickStart(
+        InitParams(
+          homeDir: homeDirPath,
+          version: version,
+        ),
+        params,
+        globalState.getCoreState(),
+      );
+      debugPrint(res);
+      if (res.isNotEmpty) {
+        await vpn?.stop();
+        exit(0);
+      }
+      await vpn?.start(
+        clashLibHandler.getAndroidVpnOptions(),
+      );
+      clashLibHandler.startListener();
+    });
   }
 }
 

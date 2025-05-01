@@ -43,6 +43,16 @@ class Request {
     return response;
   }
 
+  Future<Response> getTextResponseForUrl(String url) async {
+    final response = await _clashDio.get(
+      url,
+      options: Options(
+        responseType: ResponseType.plain,
+      ),
+    );
+    return response;
+  }
+
   Future<MemoryImage?> getImage(String url) async {
     if (url.isEmpty) return null;
     final response = await _dio.get<Uint8List>(

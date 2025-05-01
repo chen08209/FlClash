@@ -33,6 +33,7 @@ class FlClashTileService : TileService() {
 
     override fun onStartListening() {
         super.onStartListening()
+        GlobalState.syncStatus()
         GlobalState.runState.value?.let { updateTile(it) }
         GlobalState.runState.observeForever(observer)
     }

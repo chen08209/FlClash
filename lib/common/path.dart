@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-
-import 'constant.dart';
 
 class AppPath {
   static AppPath? _instance;
@@ -73,16 +72,33 @@ class AppPath {
     return join(directory.path, profilesDirectoryName);
   }
 
-  Future<String?> getProfilePath(String? id) async {
-    if (id == null) return null;
+  Future<String> getProfilePath(String id) async {
     final directory = await profilesPath;
     return join(directory, "$id.yaml");
   }
 
-  Future<String?> getProvidersPath(String? id) async {
-    if (id == null) return null;
+  Future<String> getProvidersDirPath(String id) async {
     final directory = await profilesPath;
-    return join(directory, "providers", id);
+    return join(
+      directory,
+      "providers",
+      id,
+    );
+  }
+
+  Future<String> getProvidersFilePath(
+    String id,
+    String type,
+    String url,
+  ) async {
+    final directory = await profilesPath;
+    return join(
+      directory,
+      "providers",
+      id,
+      type,
+      url.toMd5(),
+    );
   }
 
   Future<String> get tempPath async {

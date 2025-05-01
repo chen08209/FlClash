@@ -48,3 +48,28 @@ class CommonDialog extends ConsumerWidget {
     );
   }
 }
+
+class CommonModal extends ConsumerWidget {
+  final Widget? child;
+
+  const CommonModal({
+    super.key,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final size = ref.watch(viewSizeProvider);
+    return Center(
+      child: Container(
+        width: size.width * 0.85,
+        height: size.height * 0.85,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      ),
+    );
+  }
+}

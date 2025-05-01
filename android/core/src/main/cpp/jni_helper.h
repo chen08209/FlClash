@@ -1,9 +1,6 @@
 #pragma once
 
 #include <jni.h>
-#include <cstdint>
-#include <cstdlib>
-#include <malloc.h>
 
 struct scoped_jni {
     JNIEnv *env;
@@ -18,14 +15,14 @@ extern char *jni_get_string(JNIEnv *env, jstring str);
 
 extern int jni_catch_exception(JNIEnv *env);
 
-extern void jni_attach_thread(struct scoped_jni *jni);
+extern void jni_attach_thread(scoped_jni *jni);
 
-extern void jni_detach_thread(struct scoped_jni *env);
+extern void jni_detach_thread(const scoped_jni *env);
 
 extern void release_string(char **str);
 
 #define ATTACH_JNI() __attribute__((unused, cleanup(jni_detach_thread))) \
-                    struct scoped_jni _jni; \
+                    scoped_jni _jni{}; \
                     jni_attach_thread(&_jni); \
                     JNIEnv *env = _jni.env
 

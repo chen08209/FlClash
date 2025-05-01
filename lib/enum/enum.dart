@@ -2,7 +2,7 @@
 
 import 'dart:io';
 
-import 'package:fl_clash/fragments/dashboard/widgets/widgets.dart';
+import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -118,7 +118,12 @@ enum AccessSortType { none, name, time }
 
 enum ProfileType { file, url }
 
-enum ResultType { success, error }
+enum ResultType {
+  @JsonValue(0)
+  success,
+  @JsonValue(-1)
+  error,
+}
 
 enum AppMessageType {
   log,
@@ -164,9 +169,13 @@ enum DnsMode {
 
 enum ExternalControllerStatus {
   @JsonValue("")
-  close,
+  close(""),
   @JsonValue("127.0.0.1:9090")
-  open
+  open("127.0.0.1:9090");
+
+  final String value;
+
+  const ExternalControllerStatus(this.value);
 }
 
 enum KeyboardModifier {
@@ -248,6 +257,7 @@ enum ActionMethod {
   shutdown,
   validateConfig,
   updateConfig,
+  getConfig,
   getProxies,
   changeProxy,
   getTraffic,
@@ -256,6 +266,7 @@ enum ActionMethod {
   asyncTestDelay,
   getConnections,
   closeConnections,
+  resetConnections,
   closeConnection,
   getExternalProviders,
   getExternalProvider,
@@ -268,12 +279,10 @@ enum ActionMethod {
   stopListener,
   getCountryCode,
   getMemory,
-  getProfile,
   crash,
+  setupConfig,
 
   ///Android,
-  setFdMap,
-  setProcessMap,
   setState,
   startTun,
   stopTun,
@@ -291,8 +300,9 @@ enum WindowsHelperServiceStatus {
   running,
 }
 
-enum DebounceTag {
+enum FunctionTag {
   updateClashConfig,
+  setupClashConfig,
   updateStatus,
   updateGroups,
   addCheckIpNum,
@@ -308,6 +318,8 @@ enum DebounceTag {
   updatePageIndex,
   pageChange,
   proxiesTabChange,
+  logs,
+  requests,
 }
 
 enum DashboardWidget {
@@ -481,4 +493,14 @@ enum CacheTag {
   logs,
   rules,
   requests,
+}
+
+enum Language {
+  yaml,
+  javaScript,
+}
+
+enum ImportOption {
+  file,
+  url,
 }

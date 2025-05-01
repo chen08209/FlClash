@@ -12,14 +12,20 @@ import (
 
 var conn net.Conn
 
-func sendMessage(message Message) {
-	res, err := message.Json()
+func (result ActionResult) send() {
+	data, err := result.Json()
 	if err != nil {
 		return
 	}
-	send(Action{
+	send(data)
+}
+
+func sendMessage(message Message) {
+	result := ActionResult{
 		Method: messageMethod,
-	}.getResult(res))
+		Data:   message,
+	}
+	result.send()
 }
 
 func send(data []byte) {
@@ -61,12 +67,15 @@ func startServer(arg string) {
 			return
 		}
 
-		go handleAction(action, func(data interface{}) {
-			send(action.getResult(data))
-		})
+		result := ActionResult{
+			Id:     action.Id,
+			Method: action.Method,
+		}
+
+		go handleAction(action, result)
 	}
 }
 
-func nextHandle(action *Action, result func(data interface{})) bool {
+func nextHandle(action *Action, result ActionResult) bool {
 	return false
 }
