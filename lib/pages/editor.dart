@@ -122,12 +122,15 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             (value) => CommonPopupBox(
               targetBuilder: (open) {
                 return IconButton(
-                  onPressed: open,
+                  onPressed: () {
+                    open(
+                      offset: Offset(0, 20),
+                    );
+                  },
                   icon: const Icon(Icons.more_vert),
                 );
               },
               popup: CommonPopupMenu(
-                minWidth: 180,
                 items: [
                   PopupMenuItemData(
                     icon: Icons.search,
@@ -151,6 +154,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         ],
         body: CodeEditor(
           findController: _findController,
+          maxLengthSingleLineRendering: 200,
           findBuilder: (context, controller, readOnly) => FindPanel(
             controller: controller,
             readOnly: readOnly,
@@ -190,7 +194,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
           shortcutsActivatorsBuilder: DefaultCodeShortcutsActivatorsBuilder(),
           controller: _controller,
           style: CodeEditorStyle(
-            fontSize: 14.ap,
+            fontSize: context.textTheme.bodyLarge?.fontSize?.ap,
             fontFamily: FontFamily.jetBrainsMono.value,
             codeTheme: CodeHighlightTheme(
               languages: {

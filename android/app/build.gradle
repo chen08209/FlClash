@@ -73,6 +73,7 @@ android {
             applicationIdSuffix '.debug'
         }
         release {
+            debuggable false
             if (isRelease) {
                 signingConfig signingConfigs.release
             } else {

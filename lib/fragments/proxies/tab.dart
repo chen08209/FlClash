@@ -164,7 +164,7 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
         if (prev == next) {
           return;
         }
-        if (prev?.groupNames.length != next.groupNames.length) {
+        if (!stringListEquality.equals(prev?.groupNames, next.groupNames)) {
           _destroyTabController();
           final index = next.groupNames.indexWhere(
             (item) => item == next.currentGroupName,
@@ -178,6 +178,7 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeSettingProvider.select((state) => state.textScale));
     final state = ref.watch(groupNamesStateProvider);
     final groupNames = state.groupNames;
     if (groupNames.isEmpty) {

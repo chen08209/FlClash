@@ -100,7 +100,8 @@ class ApplicationState extends ConsumerState<Application> {
     return AppStateManager(
       child: ClashManager(
         child: ConnectivityManager(
-          onConnectivityChanged: () {
+          onConnectivityChanged: () async {
+            await clashCore.closeConnections();
             globalState.appController.updateLocalIp();
             globalState.appController.addCheckIpNumDebounce();
           },

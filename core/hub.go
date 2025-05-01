@@ -53,6 +53,7 @@ func handleStartListener() bool {
 	defer runLock.Unlock()
 	isRunning = true
 	updateListeners(true)
+	closeConnections()
 	return true
 }
 
@@ -274,6 +275,16 @@ func handleCloseConnections() bool {
 		return true
 	})
 	return true
+}
+
+func closeConnections() {
+	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+		err := c.Close()
+		if err != nil {
+			return false
+		}
+		return true
+	})
 }
 
 func handleCloseConnection(connectionId string) bool {

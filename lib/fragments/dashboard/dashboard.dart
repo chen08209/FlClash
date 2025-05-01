@@ -6,6 +6,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'widgets/start_button.dart';
 
 class DashboardFragment extends ConsumerStatefulWidget {
@@ -66,7 +67,16 @@ class _DashboardFragmentState extends ConsumerState<DashboardFragment>
             valueListenable: key.currentState!.isEditNotifier,
             builder: (_, isEdit, ___) {
               return isEdit
-                  ? Icon(Icons.save)
+                  ? SystemBackBlock(
+                      child: CommonPopScope(
+                        child: Icon(Icons.save),
+                        onPop: () {
+                          key.currentState!.isEditNotifier.value =
+                              !key.currentState!.isEditNotifier.value;
+                          return false;
+                        },
+                      ),
+                    )
                   : Icon(
                       Icons.edit,
                     );

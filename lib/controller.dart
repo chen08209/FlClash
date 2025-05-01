@@ -8,6 +8,7 @@ import 'package:archive/archive.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/dialog.dart';
@@ -30,18 +31,18 @@ class AppController {
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
   updateClashConfigDebounce() {
-    debouncer.call(DebounceTag.updateClashConfig, () async {
+    debouncer.call(FunctionTag.updateClashConfig, () async {
       final isPatch = globalState.appState.needApply ? false : true;
       await updateClashConfig(isPatch);
     });
   }
 
   updateGroupsDebounce() {
-    debouncer.call(DebounceTag.updateGroups, updateGroups);
+    debouncer.call(FunctionTag.updateGroups, updateGroups);
   }
 
   addCheckIpNumDebounce() {
-    debouncer.call(DebounceTag.addCheckIpNum, () {
+    debouncer.call(FunctionTag.addCheckIpNum, () {
       _ref.read(checkIpNumProvider.notifier).add();
     });
   }
@@ -49,17 +50,17 @@ class AppController {
   applyProfileDebounce({
     bool silence = false,
   }) {
-    debouncer.call(DebounceTag.applyProfile, (silence) {
+    debouncer.call(FunctionTag.applyProfile, (silence) {
       applyProfile(silence: silence);
     }, args: [silence]);
   }
 
   savePreferencesDebounce() {
-    debouncer.call(DebounceTag.savePreferences, savePreferences);
+    debouncer.call(FunctionTag.savePreferences, savePreferences);
   }
 
   changeProxyDebounce(String groupName, String proxyName) {
-    debouncer.call(DebounceTag.changeProxy,
+    debouncer.call(FunctionTag.changeProxy,
         (String groupName, String proxyName) async {
       await changeProxy(
         groupName: groupName,
@@ -385,6 +386,9 @@ class AppController {
   }
 
   handleBackOrExit() async {
+    if (_ref.read(backBlockProvider)) {
+      return;
+    }
     if (_ref.read(appSettingProvider).minimizeOnExit) {
       if (system.isDesktop) {
         await savePreferencesDebounce();
@@ -393,6 +397,14 @@ class AppController {
     } else {
       await handleExit();
     }
+  }
+
+  backBlock() {
+    _ref.read(backBlockProvider.notifier).value = true;
+  }
+
+  unBackBlock() {
+    _ref.read(backBlockProvider.notifier).value = false;
   }
 
   handleExit() async {
@@ -498,8 +510,9 @@ class AppController {
   }
 
   init() async {
-    await _handlePreference();
-    await _handlerDisclaimer();
+    FlutterError.onError = (details) {
+      commonPrint.log(details.stack.toString());
+    };
     await _initCore();
     await _initStatus();
     updateTray(true);
@@ -513,6 +526,8 @@ class AppController {
     } else {
       window?.hide();
     }
+    await _handlePreference();
+    await _handlerDisclaimer();
     _ref.read(initProvider.notifier).value = true;
   }
 
@@ -690,10 +705,16 @@ class AppController {
     return List.of(proxies)
       ..sort(
         (a, b) {
-          final aDelay =
-              _ref.read(getDelayProvider(proxyName: a.name, testUrl: testUrl));
-          final bDelay =
-              _ref.read(getDelayProvider(proxyName: b.name, testUrl: testUrl));
+          final aDelay = _ref.read(getDelayProvider(
+            proxyName: a.name,
+            testUrl: testUrl,
+          ));
+          final bDelay = _ref.read(
+            getDelayProvider(
+              proxyName: b.name,
+              testUrl: testUrl,
+            ),
+          );
           if (aDelay == null && bDelay == null) {
             return 0;
           }
@@ -752,6 +773,17 @@ class AppController {
             systemProxy: !state.systemProxy,
           ),
         );
+  }
+
+  Future<List<Package>> getPackages() async {
+    if (_ref.read(isMobileViewProvider)) {
+      await Future.delayed(commonDuration);
+    }
+    if (_ref.read(packagesProvider).isEmpty) {
+      _ref.read(packagesProvider.notifier).value =
+          await app?.getPackages() ?? [];
+    }
+    return _ref.read(packagesProvider);
   }
 
   updateStart() {

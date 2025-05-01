@@ -38,7 +38,7 @@ class _StartButtonState extends State<StartButton>
     isStart = !isStart;
     updateController();
     debouncer.call(
-      DebounceTag.updateStatus,
+      FunctionTag.updateStatus,
       () {
         globalState.appController.updateStatus(isStart);
       },

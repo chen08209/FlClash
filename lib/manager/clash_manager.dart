@@ -61,7 +61,7 @@ class _ClashContainerState extends ConsumerState<ClashManager>
     final appController = globalState.appController;
     appController.setDelay(delay);
     debouncer.call(
-      DebounceTag.updateDelay,
+      FunctionTag.updateDelay,
       () async {
         await appController.updateGroupsDebounce();
       },

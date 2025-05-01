@@ -291,7 +291,7 @@ enum WindowsHelperServiceStatus {
   running,
 }
 
-enum DebounceTag {
+enum FunctionTag {
   updateClashConfig,
   updateStatus,
   updateGroups,
@@ -308,6 +308,9 @@ enum DebounceTag {
   updatePageIndex,
   pageChange,
   proxiesTabChange,
+  logs,
+  requests,
+
 }
 
 enum DashboardWidget {

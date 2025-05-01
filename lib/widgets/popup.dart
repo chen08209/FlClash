@@ -201,12 +201,16 @@ class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
 
 class CommonPopupMenu extends StatelessWidget {
   final List<PopupMenuItemData> items;
-  final double? minWidth;
+  final double minWidth;
+  final double minItemVerticalPadding;
+  final double fontSize;
 
   const CommonPopupMenu({
     super.key,
     required this.items,
-    this.minWidth,
+    this.minWidth = 160,
+    this.minItemVerticalPadding = 16,
+    this.fontSize = 15,
   });
 
   Widget _popupMenuItem(
@@ -214,16 +218,11 @@ class CommonPopupMenu extends StatelessWidget {
     required PopupMenuItemData item,
     required int index,
   }) {
-    final isDanger = item.type == PopupMenuItemType.danger;
     final onPressed = item.onPressed;
     final disabled = onPressed == null;
-    final color = isDanger
-        ? disabled
-            ? context.colorScheme.error.opacity30
-            : context.colorScheme.error
-        : disabled
-            ? context.colorScheme.onSurface.opacity30
-            : context.colorScheme.onSurface;
+    final color = disabled
+        ? context.colorScheme.onSurface.opacity30
+        : context.colorScheme.onSurface;
     return InkWell(
       onTap: onPressed != null
           ? () {
@@ -233,13 +232,13 @@ class CommonPopupMenu extends StatelessWidget {
           : null,
       child: Container(
         constraints: BoxConstraints(
-          minWidth: minWidth ?? 120,
+          minWidth: minWidth,
         ),
         padding: EdgeInsets.only(
           left: 16,
           right: 64,
-          top: 14,
-          bottom: 14,
+          top: minItemVerticalPadding,
+          bottom: minItemVerticalPadding,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.max,
@@ -247,7 +246,7 @@ class CommonPopupMenu extends StatelessWidget {
             if (item.icon != null) ...[
               Icon(
                 item.icon,
-                size: item.iconSize ?? 18,
+                size: fontSize + 4,
                 color: color,
               ),
               SizedBox(
@@ -259,6 +258,7 @@ class CommonPopupMenu extends StatelessWidget {
                 item.label,
                 style: context.textTheme.bodyMedium?.copyWith(
                   color: color,
+                  fontSize: fontSize,
                 ),
               ),
             ),

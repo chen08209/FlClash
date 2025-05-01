@@ -236,7 +236,7 @@ final profilesSelectorStateProvider =
 typedef ProfilesSelectorStateRef
     = AutoDisposeProviderRef<ProfilesSelectorState>;
 String _$proxiesListSelectorStateHash() =>
-    r'0e63ea2fb141e086156a2ed8452584e2375c5aa5';
+    r'5e6bbe1a0cecbdea6c9c62e6ccf314968deac264';
 
 /// See also [proxiesListSelectorState].
 @ProviderFor(proxiesListSelectorState)
@@ -292,7 +292,7 @@ final groupNamesStateProvider = AutoDisposeProvider<GroupNamesState>.internal(
 // ignore: unused_element
 typedef GroupNamesStateRef = AutoDisposeProviderRef<GroupNamesState>;
 String _$proxyGroupSelectorStateHash() =>
-    r'5bc86d13286c6c859f0b874235a281122cc612ba';
+    r'50940ff452859b02af0095cb7c4bcda813847645';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -1781,6 +1781,22 @@ final layoutChangeProvider = AutoDisposeProvider<VM2?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LayoutChangeRef = AutoDisposeProviderRef<VM2?>;
+String _$checkIpHash() => r'07ebf8d032349e2b3adda483e68b1936ffbed68d';
+
+/// See also [checkIp].
+@ProviderFor(checkIp)
+final checkIpProvider = AutoDisposeProvider<VM2<int, bool>>.internal(
+  checkIp,
+  name: r'checkIpProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$checkIpHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CheckIpRef = AutoDisposeProviderRef<VM2<int, bool>>;
 String _$genColorSchemeHash() => r'b18f15c938a8132ee4ed02cdfc02f3b9f01724e2';
 
 /// See also [genColorScheme].

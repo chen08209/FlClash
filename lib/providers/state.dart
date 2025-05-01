@@ -210,7 +210,10 @@ ProfilesSelectorState profilesSelectorState(Ref ref) {
   final currentProfileId = ref.watch(currentProfileIdProvider);
   final profiles = ref.watch(profilesProvider);
   final columns = ref.watch(
-      viewWidthProvider.select((state) => utils.getProfilesColumns(state)));
+    viewWidthProvider.select(
+      (state) => utils.getProfilesColumns(state),
+    ),
+  );
   return ProfilesSelectorState(
     profiles: profiles,
     currentProfileId: currentProfileId,
@@ -227,6 +230,8 @@ ProxiesListSelectorState proxiesListSelectorState(Ref ref) {
   final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
   final sortNum = ref.watch(sortNumProvider);
   final columns = ref.watch(getProxiesColumnsProvider);
+  final query =
+      ref.watch(proxiesQueryProvider.select((state) => state.toLowerCase()));
   return ProxiesListSelectorState(
     groupNames: groupNames,
     currentUnfoldSet: currentUnfoldSet,
@@ -234,6 +239,7 @@ ProxiesListSelectorState proxiesListSelectorState(Ref ref) {
     proxyCardType: proxiesStyle.cardType,
     sortNum: sortNum,
     columns: columns,
+    query: query,
   );
 }
 
@@ -280,13 +286,19 @@ ProxyGroupSelectorState proxyGroupSelectorState(Ref ref, String groupName) {
   );
   final sortNum = ref.watch(sortNumProvider);
   final columns = ref.watch(getProxiesColumnsProvider);
+  final query =
+      ref.watch(proxiesQueryProvider.select((state) => state.toLowerCase()));
+  final proxies = group?.all.where((item) {
+        return item.name.contains(query);
+      }).toList() ??
+      [];
   return ProxyGroupSelectorState(
     testUrl: group?.testUrl,
     proxiesSortType: proxiesStyle.sortType,
     proxyCardType: proxiesStyle.cardType,
     sortNum: sortNum,
     groupType: group?.type ?? GroupType.Selector,
-    proxies: group?.all ?? [],
+    proxies: proxies,
     columns: columns,
   );
 }
@@ -518,6 +530,21 @@ VM2? layoutChange(Ref ref) {
   return VM2(
     a: viewWidth,
     b: textScale,
+  );
+}
+
+@riverpod
+VM2<int, bool> checkIp(Ref ref) {
+  final checkIpNum = ref.watch(checkIpNumProvider);
+  final containsDetection = ref.watch(
+    dashboardStateProvider.select(
+      (state) =>
+          state.dashboardWidgets.contains(DashboardWidget.networkDetection),
+    ),
+  );
+  return VM2(
+    a: checkIpNum,
+    b: containsDetection,
   );
 }
 

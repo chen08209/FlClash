@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:animations/animations.dart';
+import 'package:dio/dio.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/theme.dart';
@@ -289,3 +290,94 @@ class GlobalState {
 }
 
 final globalState = GlobalState();
+
+class DetectionState {
+  static DetectionState? _instance;
+  bool? _preIsStart;
+  Timer? _setTimeoutTimer;
+  CancelToken? cancelToken;
+
+  final state = ValueNotifier<NetworkDetectionState>(
+    const NetworkDetectionState(
+      isTesting: false,
+      isLoading: true,
+      ipInfo: null,
+    ),
+  );
+
+  DetectionState._internal();
+
+  factory DetectionState() {
+    _instance ??= DetectionState._internal();
+    return _instance!;
+  }
+
+  startCheck() {
+    debouncer.call(
+      FunctionTag.checkIp,
+      _checkIp,
+    );
+  }
+
+  _checkIp() async {
+    final appState = globalState.appState;
+    final isInit = appState.isInit;
+    if (!isInit) return;
+    final isStart = appState.runTime != null;
+    if (_preIsStart == false &&
+        _preIsStart == isStart &&
+        state.value.ipInfo != null) {
+      return;
+    }
+    _clearSetTimeoutTimer();
+    state.value = state.value.copyWith(
+      isLoading: true,
+      ipInfo: null,
+    );
+    _preIsStart = isStart;
+    if (cancelToken != null) {
+      cancelToken!.cancel();
+      cancelToken = null;
+    }
+    cancelToken = CancelToken();
+    try {
+      state.value = state.value.copyWith(
+        isTesting: true,
+      );
+      final ipInfo = await request.checkIp(cancelToken: cancelToken);
+      state.value = state.value.copyWith(
+        isTesting: false,
+      );
+      if (ipInfo != null) {
+        state.value = state.value.copyWith(
+          isLoading: false,
+          ipInfo: ipInfo,
+        );
+        return;
+      }
+      _clearSetTimeoutTimer();
+      _setTimeoutTimer = Timer(const Duration(milliseconds: 300), () {
+        state.value = state.value.copyWith(
+          isLoading: false,
+          ipInfo: null,
+        );
+      });
+    } catch (e) {
+      if (e.toString() == "cancelled") {
+        state.value = state.value.copyWith(
+          isLoading: true,
+          ipInfo: null,
+        );
+      }
+    }
+  }
+
+  _clearSetTimeoutTimer() {
+    if (_setTimeoutTimer != null) {
+      _setTimeoutTimer?.cancel();
+      _setTimeoutTimer = null;
+    }
+  }
+}
+
+final detectionState = DetectionState();

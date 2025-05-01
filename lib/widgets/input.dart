@@ -10,7 +10,7 @@ import 'card.dart';
 import 'float_layout.dart';
 import 'list.dart';
 
-class OptionsDialog<T> extends StatefulWidget {
+class OptionsDialog<T> extends StatelessWidget {
   final String title;
   final List<T> options;
   final T value;
@@ -25,47 +25,34 @@ class OptionsDialog<T> extends StatefulWidget {
   });
 
   @override
-  State<OptionsDialog<T>> createState() => _OptionsDialogState();
-}
-
-class _OptionsDialogState<T> extends State<OptionsDialog<T>> {
-  final _defaultValue = "";
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context =
-          GlobalObjectKey(widget.value ?? _defaultValue).currentContext;
-      if (context != null) {
-        Scrollable.ensureVisible(context);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return CommonDialog(
-      title: widget.title,
+      title: title,
       padding: const EdgeInsets.symmetric(
         horizontal: 8,
         vertical: 16,
       ),
       child: Wrap(
         children: [
-          for (final option in widget.options)
-            ListItem.radio(
-              key: GlobalObjectKey(option ?? _defaultValue),
-              delegate: RadioDelegate(
-                value: option,
-                groupValue: widget.value,
-                onChanged: (T? value) {
-                  Navigator.of(context).pop(value);
-                },
-              ),
-              title: Text(
-                widget.textBuilder(option),
-              ),
+          for (final option in options)
+            Builder(
+              builder: (context) {
+                if (value == option) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Scrollable.ensureVisible(context);
+                  });
+                }
+                return ListItem.radio(
+                  delegate: RadioDelegate(
+                    value: option,
+                    groupValue: value,
+                    onChanged: (T? value) {
+                      Navigator.of(context).pop(value);
+                    },
+                  ),
+                  title: Text(textBuilder(option)),
+                );
+              },
             ),
         ],
       ),

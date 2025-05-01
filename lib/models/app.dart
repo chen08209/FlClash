@@ -14,6 +14,7 @@ typedef DelayMap = Map<String, Map<String, int?>>;
 class AppState with _$AppState {
   const factory AppState({
     @Default(false) bool isInit,
+    @Default(false) bool backBlock,
     @Default(PageLabel.dashboard) PageLabel pageLabel,
     @Default([]) List<Package> packages,
     @Default(0) int sortNum,
@@ -30,6 +31,7 @@ class AppState with _$AppState {
     required FixedList<Log> logs,
     required FixedList<Traffic> traffics,
     required Traffic totalTraffic,
+    @Default("") String proxiesQuery,
     @Default(false) bool needApply,
   }) = _AppState;
 }

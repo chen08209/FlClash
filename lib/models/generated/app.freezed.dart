@@ -17,6 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$AppState {
   bool get isInit => throw _privateConstructorUsedError;
+  bool get backBlock => throw _privateConstructorUsedError;
   PageLabel get pageLabel => throw _privateConstructorUsedError;
   List<Package> get packages => throw _privateConstructorUsedError;
   int get sortNum => throw _privateConstructorUsedError;
@@ -34,6 +35,7 @@ mixin _$AppState {
   FixedList<Log> get logs => throw _privateConstructorUsedError;
   FixedList<Traffic> get traffics => throw _privateConstructorUsedError;
   Traffic get totalTraffic => throw _privateConstructorUsedError;
+  String get proxiesQuery => throw _privateConstructorUsedError;
   bool get needApply => throw _privateConstructorUsedError;
 
   /// Create a copy of AppState
@@ -50,6 +52,7 @@ abstract class $AppStateCopyWith<$Res> {
   @useResult
   $Res call(
       {bool isInit,
+      bool backBlock,
       PageLabel pageLabel,
       List<Package> packages,
       int sortNum,
@@ -66,6 +69,7 @@ abstract class $AppStateCopyWith<$Res> {
       FixedList<Log> logs,
       FixedList<Traffic> traffics,
       Traffic totalTraffic,
+      String proxiesQuery,
       bool needApply});
 }
 
@@ -85,6 +89,7 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
   @override
   $Res call({
     Object? isInit = null,
+    Object? backBlock = null,
     Object? pageLabel = null,
     Object? packages = null,
     Object? sortNum = null,
@@ -101,12 +106,17 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
     Object? logs = null,
     Object? traffics = null,
     Object? totalTraffic = null,
+    Object? proxiesQuery = null,
     Object? needApply = null,
   }) {
     return _then(_value.copyWith(
       isInit: null == isInit
           ? _value.isInit
           : isInit // ignore: cast_nullable_to_non_nullable
+              as bool,
+      backBlock: null == backBlock
+          ? _value.backBlock
+          : backBlock // ignore: cast_nullable_to_non_nullable
               as bool,
       pageLabel: null == pageLabel
           ? _value.pageLabel
@@ -172,6 +182,10 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
           ? _value.totalTraffic
           : totalTraffic // ignore: cast_nullable_to_non_nullable
               as Traffic,
+      proxiesQuery: null == proxiesQuery
+          ? _value.proxiesQuery
+          : proxiesQuery // ignore: cast_nullable_to_non_nullable
+              as String,
       needApply: null == needApply
           ? _value.needApply
           : needApply // ignore: cast_nullable_to_non_nullable
@@ -190,6 +204,7 @@ abstract class _$$AppStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool isInit,
+      bool backBlock,
       PageLabel pageLabel,
       List<Package> packages,
       int sortNum,
@@ -206,6 +221,7 @@ abstract class _$$AppStateImplCopyWith<$Res>
       FixedList<Log> logs,
       FixedList<Traffic> traffics,
       Traffic totalTraffic,
+      String proxiesQuery,
       bool needApply});
 }
 
@@ -223,6 +239,7 @@ class __$$AppStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? isInit = null,
+    Object? backBlock = null,
     Object? pageLabel = null,
     Object? packages = null,
     Object? sortNum = null,
@@ -239,12 +256,17 @@ class __$$AppStateImplCopyWithImpl<$Res>
     Object? logs = null,
     Object? traffics = null,
     Object? totalTraffic = null,
+    Object? proxiesQuery = null,
     Object? needApply = null,
   }) {
     return _then(_$AppStateImpl(
       isInit: null == isInit
           ? _value.isInit
           : isInit // ignore: cast_nullable_to_non_nullable
+              as bool,
+      backBlock: null == backBlock
+          ? _value.backBlock
+          : backBlock // ignore: cast_nullable_to_non_nullable
               as bool,
       pageLabel: null == pageLabel
           ? _value.pageLabel
@@ -310,6 +332,10 @@ class __$$AppStateImplCopyWithImpl<$Res>
           ? _value.totalTraffic
           : totalTraffic // ignore: cast_nullable_to_non_nullable
               as Traffic,
+      proxiesQuery: null == proxiesQuery
+          ? _value.proxiesQuery
+          : proxiesQuery // ignore: cast_nullable_to_non_nullable
+              as String,
       needApply: null == needApply
           ? _value.needApply
           : needApply // ignore: cast_nullable_to_non_nullable
@@ -323,6 +349,7 @@ class __$$AppStateImplCopyWithImpl<$Res>
 class _$AppStateImpl implements _AppState {
   const _$AppStateImpl(
       {this.isInit = false,
+      this.backBlock = false,
       this.pageLabel = PageLabel.dashboard,
       final List<Package> packages = const [],
       this.sortNum = 0,
@@ -339,6 +366,7 @@ class _$AppStateImpl implements _AppState {
       required this.logs,
       required this.traffics,
       required this.totalTraffic,
+      this.proxiesQuery = "",
       this.needApply = false})
       : _packages = packages,
         _delayMap = delayMap,
@@ -348,6 +376,9 @@ class _$AppStateImpl implements _AppState {
   @override
   @JsonKey()
   final bool isInit;
+  @override
+  @JsonKey()
+  final bool backBlock;
   @override
   @JsonKey()
   final PageLabel pageLabel;
@@ -413,11 +444,14 @@ class _$AppStateImpl implements _AppState {
   final Traffic totalTraffic;
   @override
   @JsonKey()
+  final String proxiesQuery;
+  @override
+  @JsonKey()
   final bool needApply;
 
   @override
   String toString() {
-    return 'AppState(isInit: $isInit, pageLabel: $pageLabel, packages: $packages, sortNum: $sortNum, viewSize: $viewSize, delayMap: $delayMap, groups: $groups, checkIpNum: $checkIpNum, brightness: $brightness, runTime: $runTime, providers: $providers, localIp: $localIp, requests: $requests, version: $version, logs: $logs, traffics: $traffics, totalTraffic: $totalTraffic, needApply: $needApply)';
+    return 'AppState(isInit: $isInit, backBlock: $backBlock, pageLabel: $pageLabel, packages: $packages, sortNum: $sortNum, viewSize: $viewSize, delayMap: $delayMap, groups: $groups, checkIpNum: $checkIpNum, brightness: $brightness, runTime: $runTime, providers: $providers, localIp: $localIp, requests: $requests, version: $version, logs: $logs, traffics: $traffics, totalTraffic: $totalTraffic, proxiesQuery: $proxiesQuery, needApply: $needApply)';
   }
 
   @override
@@ -426,6 +460,8 @@ class _$AppStateImpl implements _AppState {
         (other.runtimeType == runtimeType &&
             other is _$AppStateImpl &&
             (identical(other.isInit, isInit) || other.isInit == isInit) &&
+            (identical(other.backBlock, backBlock) ||
+                other.backBlock == backBlock) &&
             (identical(other.pageLabel, pageLabel) ||
                 other.pageLabel == pageLabel) &&
             const DeepCollectionEquality().equals(other._packages, _packages) &&
@@ -450,31 +486,36 @@ class _$AppStateImpl implements _AppState {
                 other.traffics == traffics) &&
             (identical(other.totalTraffic, totalTraffic) ||
                 other.totalTraffic == totalTraffic) &&
+            (identical(other.proxiesQuery, proxiesQuery) ||
+                other.proxiesQuery == proxiesQuery) &&
             (identical(other.needApply, needApply) ||
                 other.needApply == needApply));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isInit,
-      pageLabel,
-      const DeepCollectionEquality().hash(_packages),
-      sortNum,
-      viewSize,
-      const DeepCollectionEquality().hash(_delayMap),
-      const DeepCollectionEquality().hash(_groups),
-      checkIpNum,
-      brightness,
-      runTime,
-      const DeepCollectionEquality().hash(_providers),
-      localIp,
-      requests,
-      version,
-      logs,
-      traffics,
-      totalTraffic,
-      needApply);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        isInit,
+        backBlock,
+        pageLabel,
+        const DeepCollectionEquality().hash(_packages),
+        sortNum,
+        viewSize,
+        const DeepCollectionEquality().hash(_delayMap),
+        const DeepCollectionEquality().hash(_groups),
+        checkIpNum,
+        brightness,
+        runTime,
+        const DeepCollectionEquality().hash(_providers),
+        localIp,
+        requests,
+        version,
+        logs,
+        traffics,
+        totalTraffic,
+        proxiesQuery,
+        needApply
+      ]);
 
   /// Create a copy of AppState
   /// with the given fields replaced by the non-null parameter values.
@@ -488,6 +529,7 @@ class _$AppStateImpl implements _AppState {
 abstract class _AppState implements AppState {
   const factory _AppState(
       {final bool isInit,
+      final bool backBlock,
       final PageLabel pageLabel,
       final List<Package> packages,
       final int sortNum,
@@ -504,10 +546,13 @@ abstract class _AppState implements AppState {
       required final FixedList<Log> logs,
       required final FixedList<Traffic> traffics,
       required final Traffic totalTraffic,
+      final String proxiesQuery,
       final bool needApply}) = _$AppStateImpl;
 
   @override
   bool get isInit;
+  @override
+  bool get backBlock;
   @override
   PageLabel get pageLabel;
   @override
@@ -540,6 +585,8 @@ abstract class _AppState implements AppState {
   FixedList<Traffic> get traffics;
   @override
   Traffic get totalTraffic;
+  @override
+  String get proxiesQuery;
   @override
   bool get needApply;
 

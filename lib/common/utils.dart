@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lpinyin/lpinyin.dart';
 
 class Utils {
@@ -230,7 +231,7 @@ class Utils {
   }
 
   int getProfilesColumns(double viewWidth) {
-    return max((viewWidth / 350).floor(), 1);
+    return max((viewWidth / 320).floor(), 1);
   }
 
   final _indexPrimary = [
@@ -322,6 +323,15 @@ class Utils {
       return addresses.first.address;
     }
     return "";
+  }
+
+  SingleActivator controlSingleActivator(LogicalKeyboardKey trigger) {
+    final control = Platform.isMacOS ? false : true;
+    return SingleActivator(
+      trigger,
+      control: control,
+      meta: !control,
+    );
   }
 }
 
