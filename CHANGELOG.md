@@ -1,3 +1,9 @@
+## v0.8.84
+
+- Fix windows service verify issues
+
+- Update changelog
+
 ## v0.8.83
 
 - Add windows server mode start process verify
