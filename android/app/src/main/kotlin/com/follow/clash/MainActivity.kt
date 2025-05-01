@@ -17,6 +17,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         GlobalState.flutterEngine = null
+        GlobalState.runState.value = RunState.STOP
         super.onDestroy()
     }
 }

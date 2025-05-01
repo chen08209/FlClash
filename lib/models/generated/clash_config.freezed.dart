@@ -652,6 +652,640 @@ abstract class _RuleProvider implements RuleProvider {
       throw _privateConstructorUsedError;
 }
 
+Sniffer _$SnifferFromJson(Map<String, dynamic> json) {
+  return _Sniffer.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Sniffer {
+  bool get enable => throw _privateConstructorUsedError;
+  @JsonKey(name: "override-destination")
+  bool get overrideDest => throw _privateConstructorUsedError;
+  List<String> get sniffing => throw _privateConstructorUsedError;
+  @JsonKey(name: "force-domain")
+  List<String> get forceDomain => throw _privateConstructorUsedError;
+  @JsonKey(name: "skip-src-address")
+  List<String> get skipSrcAddress => throw _privateConstructorUsedError;
+  @JsonKey(name: "skip-dst-address")
+  List<String> get skipDstAddress => throw _privateConstructorUsedError;
+  @JsonKey(name: "skip-domain")
+  List<String> get skipDomain => throw _privateConstructorUsedError;
+  @JsonKey(name: "port-whitelist")
+  List<String> get port => throw _privateConstructorUsedError;
+  @JsonKey(name: "force-dns-mapping")
+  bool get forceDnsMapping => throw _privateConstructorUsedError;
+  @JsonKey(name: "parse-pure-ip")
+  bool get parsePureIp => throw _privateConstructorUsedError;
+  Map<String, SnifferConfig> get sniff => throw _privateConstructorUsedError;
+
+  /// Serializes this Sniffer to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Sniffer
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $SnifferCopyWith<Sniffer> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $SnifferCopyWith<$Res> {
+  factory $SnifferCopyWith(Sniffer value, $Res Function(Sniffer) then) =
+      _$SnifferCopyWithImpl<$Res, Sniffer>;
+  @useResult
+  $Res call(
+      {bool enable,
+      @JsonKey(name: "override-destination") bool overrideDest,
+      List<String> sniffing,
+      @JsonKey(name: "force-domain") List<String> forceDomain,
+      @JsonKey(name: "skip-src-address") List<String> skipSrcAddress,
+      @JsonKey(name: "skip-dst-address") List<String> skipDstAddress,
+      @JsonKey(name: "skip-domain") List<String> skipDomain,
+      @JsonKey(name: "port-whitelist") List<String> port,
+      @JsonKey(name: "force-dns-mapping") bool forceDnsMapping,
+      @JsonKey(name: "parse-pure-ip") bool parsePureIp,
+      Map<String, SnifferConfig> sniff});
+}
+
+/// @nodoc
+class _$SnifferCopyWithImpl<$Res, $Val extends Sniffer>
+    implements $SnifferCopyWith<$Res> {
+  _$SnifferCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Sniffer
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? enable = null,
+    Object? overrideDest = null,
+    Object? sniffing = null,
+    Object? forceDomain = null,
+    Object? skipSrcAddress = null,
+    Object? skipDstAddress = null,
+    Object? skipDomain = null,
+    Object? port = null,
+    Object? forceDnsMapping = null,
+    Object? parsePureIp = null,
+    Object? sniff = null,
+  }) {
+    return _then(_value.copyWith(
+      enable: null == enable
+          ? _value.enable
+          : enable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      overrideDest: null == overrideDest
+          ? _value.overrideDest
+          : overrideDest // ignore: cast_nullable_to_non_nullable
+              as bool,
+      sniffing: null == sniffing
+          ? _value.sniffing
+          : sniffing // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      forceDomain: null == forceDomain
+          ? _value.forceDomain
+          : forceDomain // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      skipSrcAddress: null == skipSrcAddress
+          ? _value.skipSrcAddress
+          : skipSrcAddress // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      skipDstAddress: null == skipDstAddress
+          ? _value.skipDstAddress
+          : skipDstAddress // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      skipDomain: null == skipDomain
+          ? _value.skipDomain
+          : skipDomain // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      port: null == port
+          ? _value.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      forceDnsMapping: null == forceDnsMapping
+          ? _value.forceDnsMapping
+          : forceDnsMapping // ignore: cast_nullable_to_non_nullable
+              as bool,
+      parsePureIp: null == parsePureIp
+          ? _value.parsePureIp
+          : parsePureIp // ignore: cast_nullable_to_non_nullable
+              as bool,
+      sniff: null == sniff
+          ? _value.sniff
+          : sniff // ignore: cast_nullable_to_non_nullable
+              as Map<String, SnifferConfig>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$SnifferImplCopyWith<$Res> implements $SnifferCopyWith<$Res> {
+  factory _$$SnifferImplCopyWith(
+          _$SnifferImpl value, $Res Function(_$SnifferImpl) then) =
+      __$$SnifferImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {bool enable,
+      @JsonKey(name: "override-destination") bool overrideDest,
+      List<String> sniffing,
+      @JsonKey(name: "force-domain") List<String> forceDomain,
+      @JsonKey(name: "skip-src-address") List<String> skipSrcAddress,
+      @JsonKey(name: "skip-dst-address") List<String> skipDstAddress,
+      @JsonKey(name: "skip-domain") List<String> skipDomain,
+      @JsonKey(name: "port-whitelist") List<String> port,
+      @JsonKey(name: "force-dns-mapping") bool forceDnsMapping,
+      @JsonKey(name: "parse-pure-ip") bool parsePureIp,
+      Map<String, SnifferConfig> sniff});
+}
+
+/// @nodoc
+class __$$SnifferImplCopyWithImpl<$Res>
+    extends _$SnifferCopyWithImpl<$Res, _$SnifferImpl>
+    implements _$$SnifferImplCopyWith<$Res> {
+  __$$SnifferImplCopyWithImpl(
+      _$SnifferImpl _value, $Res Function(_$SnifferImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Sniffer
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? enable = null,
+    Object? overrideDest = null,
+    Object? sniffing = null,
+    Object? forceDomain = null,
+    Object? skipSrcAddress = null,
+    Object? skipDstAddress = null,
+    Object? skipDomain = null,
+    Object? port = null,
+    Object? forceDnsMapping = null,
+    Object? parsePureIp = null,
+    Object? sniff = null,
+  }) {
+    return _then(_$SnifferImpl(
+      enable: null == enable
+          ? _value.enable
+          : enable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      overrideDest: null == overrideDest
+          ? _value.overrideDest
+          : overrideDest // ignore: cast_nullable_to_non_nullable
+              as bool,
+      sniffing: null == sniffing
+          ? _value._sniffing
+          : sniffing // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      forceDomain: null == forceDomain
+          ? _value._forceDomain
+          : forceDomain // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      skipSrcAddress: null == skipSrcAddress
+          ? _value._skipSrcAddress
+          : skipSrcAddress // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      skipDstAddress: null == skipDstAddress
+          ? _value._skipDstAddress
+          : skipDstAddress // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      skipDomain: null == skipDomain
+          ? _value._skipDomain
+          : skipDomain // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      port: null == port
+          ? _value._port
+          : port // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      forceDnsMapping: null == forceDnsMapping
+          ? _value.forceDnsMapping
+          : forceDnsMapping // ignore: cast_nullable_to_non_nullable
+              as bool,
+      parsePureIp: null == parsePureIp
+          ? _value.parsePureIp
+          : parsePureIp // ignore: cast_nullable_to_non_nullable
+              as bool,
+      sniff: null == sniff
+          ? _value._sniff
+          : sniff // ignore: cast_nullable_to_non_nullable
+              as Map<String, SnifferConfig>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$SnifferImpl implements _Sniffer {
+  const _$SnifferImpl(
+      {this.enable = false,
+      @JsonKey(name: "override-destination") this.overrideDest = true,
+      final List<String> sniffing = const [],
+      @JsonKey(name: "force-domain") final List<String> forceDomain = const [],
+      @JsonKey(name: "skip-src-address")
+      final List<String> skipSrcAddress = const [],
+      @JsonKey(name: "skip-dst-address")
+      final List<String> skipDstAddress = const [],
+      @JsonKey(name: "skip-domain") final List<String> skipDomain = const [],
+      @JsonKey(name: "port-whitelist") final List<String> port = const [],
+      @JsonKey(name: "force-dns-mapping") this.forceDnsMapping = true,
+      @JsonKey(name: "parse-pure-ip") this.parsePureIp = true,
+      final Map<String, SnifferConfig> sniff = const {}})
+      : _sniffing = sniffing,
+        _forceDomain = forceDomain,
+        _skipSrcAddress = skipSrcAddress,
+        _skipDstAddress = skipDstAddress,
+        _skipDomain = skipDomain,
+        _port = port,
+        _sniff = sniff;
+
+  factory _$SnifferImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SnifferImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final bool enable;
+  @override
+  @JsonKey(name: "override-destination")
+  final bool overrideDest;
+  final List<String> _sniffing;
+  @override
+  @JsonKey()
+  List<String> get sniffing {
+    if (_sniffing is EqualUnmodifiableListView) return _sniffing;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_sniffing);
+  }
+
+  final List<String> _forceDomain;
+  @override
+  @JsonKey(name: "force-domain")
+  List<String> get forceDomain {
+    if (_forceDomain is EqualUnmodifiableListView) return _forceDomain;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_forceDomain);
+  }
+
+  final List<String> _skipSrcAddress;
+  @override
+  @JsonKey(name: "skip-src-address")
+  List<String> get skipSrcAddress {
+    if (_skipSrcAddress is EqualUnmodifiableListView) return _skipSrcAddress;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_skipSrcAddress);
+  }
+
+  final List<String> _skipDstAddress;
+  @override
+  @JsonKey(name: "skip-dst-address")
+  List<String> get skipDstAddress {
+    if (_skipDstAddress is EqualUnmodifiableListView) return _skipDstAddress;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_skipDstAddress);
+  }
+
+  final List<String> _skipDomain;
+  @override
+  @JsonKey(name: "skip-domain")
+  List<String> get skipDomain {
+    if (_skipDomain is EqualUnmodifiableListView) return _skipDomain;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_skipDomain);
+  }
+
+  final List<String> _port;
+  @override
+  @JsonKey(name: "port-whitelist")
+  List<String> get port {
+    if (_port is EqualUnmodifiableListView) return _port;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_port);
+  }
+
+  @override
+  @JsonKey(name: "force-dns-mapping")
+  final bool forceDnsMapping;
+  @override
+  @JsonKey(name: "parse-pure-ip")
+  final bool parsePureIp;
+  final Map<String, SnifferConfig> _sniff;
+  @override
+  @JsonKey()
+  Map<String, SnifferConfig> get sniff {
+    if (_sniff is EqualUnmodifiableMapView) return _sniff;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_sniff);
+  }
+
+  @override
+  String toString() {
+    return 'Sniffer(enable: $enable, overrideDest: $overrideDest, sniffing: $sniffing, forceDomain: $forceDomain, skipSrcAddress: $skipSrcAddress, skipDstAddress: $skipDstAddress, skipDomain: $skipDomain, port: $port, forceDnsMapping: $forceDnsMapping, parsePureIp: $parsePureIp, sniff: $sniff)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SnifferImpl &&
+            (identical(other.enable, enable) || other.enable == enable) &&
+            (identical(other.overrideDest, overrideDest) ||
+                other.overrideDest == overrideDest) &&
+            const DeepCollectionEquality().equals(other._sniffing, _sniffing) &&
+            const DeepCollectionEquality()
+                .equals(other._forceDomain, _forceDomain) &&
+            const DeepCollectionEquality()
+                .equals(other._skipSrcAddress, _skipSrcAddress) &&
+            const DeepCollectionEquality()
+                .equals(other._skipDstAddress, _skipDstAddress) &&
+            const DeepCollectionEquality()
+                .equals(other._skipDomain, _skipDomain) &&
+            const DeepCollectionEquality().equals(other._port, _port) &&
+            (identical(other.forceDnsMapping, forceDnsMapping) ||
+                other.forceDnsMapping == forceDnsMapping) &&
+            (identical(other.parsePureIp, parsePureIp) ||
+                other.parsePureIp == parsePureIp) &&
+            const DeepCollectionEquality().equals(other._sniff, _sniff));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      enable,
+      overrideDest,
+      const DeepCollectionEquality().hash(_sniffing),
+      const DeepCollectionEquality().hash(_forceDomain),
+      const DeepCollectionEquality().hash(_skipSrcAddress),
+      const DeepCollectionEquality().hash(_skipDstAddress),
+      const DeepCollectionEquality().hash(_skipDomain),
+      const DeepCollectionEquality().hash(_port),
+      forceDnsMapping,
+      parsePureIp,
+      const DeepCollectionEquality().hash(_sniff));
+
+  /// Create a copy of Sniffer
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SnifferImplCopyWith<_$SnifferImpl> get copyWith =>
+      __$$SnifferImplCopyWithImpl<_$SnifferImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$SnifferImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Sniffer implements Sniffer {
+  const factory _Sniffer(
+      {final bool enable,
+      @JsonKey(name: "override-destination") final bool overrideDest,
+      final List<String> sniffing,
+      @JsonKey(name: "force-domain") final List<String> forceDomain,
+      @JsonKey(name: "skip-src-address") final List<String> skipSrcAddress,
+      @JsonKey(name: "skip-dst-address") final List<String> skipDstAddress,
+      @JsonKey(name: "skip-domain") final List<String> skipDomain,
+      @JsonKey(name: "port-whitelist") final List<String> port,
+      @JsonKey(name: "force-dns-mapping") final bool forceDnsMapping,
+      @JsonKey(name: "parse-pure-ip") final bool parsePureIp,
+      final Map<String, SnifferConfig> sniff}) = _$SnifferImpl;
+
+  factory _Sniffer.fromJson(Map<String, dynamic> json) = _$SnifferImpl.fromJson;
+
+  @override
+  bool get enable;
+  @override
+  @JsonKey(name: "override-destination")
+  bool get overrideDest;
+  @override
+  List<String> get sniffing;
+  @override
+  @JsonKey(name: "force-domain")
+  List<String> get forceDomain;
+  @override
+  @JsonKey(name: "skip-src-address")
+  List<String> get skipSrcAddress;
+  @override
+  @JsonKey(name: "skip-dst-address")
+  List<String> get skipDstAddress;
+  @override
+  @JsonKey(name: "skip-domain")
+  List<String> get skipDomain;
+  @override
+  @JsonKey(name: "port-whitelist")
+  List<String> get port;
+  @override
+  @JsonKey(name: "force-dns-mapping")
+  bool get forceDnsMapping;
+  @override
+  @JsonKey(name: "parse-pure-ip")
+  bool get parsePureIp;
+  @override
+  Map<String, SnifferConfig> get sniff;
+
+  /// Create a copy of Sniffer
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$SnifferImplCopyWith<_$SnifferImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+SnifferConfig _$SnifferConfigFromJson(Map<String, dynamic> json) {
+  return _SnifferConfig.fromJson(json);
+}
+
+/// @nodoc
+mixin _$SnifferConfig {
+  @JsonKey(fromJson: _formJsonPorts)
+  List<String> get ports => throw _privateConstructorUsedError;
+  @JsonKey(name: "override-destination")
+  bool? get overrideDest => throw _privateConstructorUsedError;
+
+  /// Serializes this SnifferConfig to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of SnifferConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $SnifferConfigCopyWith<SnifferConfig> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $SnifferConfigCopyWith<$Res> {
+  factory $SnifferConfigCopyWith(
+          SnifferConfig value, $Res Function(SnifferConfig) then) =
+      _$SnifferConfigCopyWithImpl<$Res, SnifferConfig>;
+  @useResult
+  $Res call(
+      {@JsonKey(fromJson: _formJsonPorts) List<String> ports,
+      @JsonKey(name: "override-destination") bool? overrideDest});
+}
+
+/// @nodoc
+class _$SnifferConfigCopyWithImpl<$Res, $Val extends SnifferConfig>
+    implements $SnifferConfigCopyWith<$Res> {
+  _$SnifferConfigCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of SnifferConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? ports = null,
+    Object? overrideDest = freezed,
+  }) {
+    return _then(_value.copyWith(
+      ports: null == ports
+          ? _value.ports
+          : ports // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      overrideDest: freezed == overrideDest
+          ? _value.overrideDest
+          : overrideDest // ignore: cast_nullable_to_non_nullable
+              as bool?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$SnifferConfigImplCopyWith<$Res>
+    implements $SnifferConfigCopyWith<$Res> {
+  factory _$$SnifferConfigImplCopyWith(
+          _$SnifferConfigImpl value, $Res Function(_$SnifferConfigImpl) then) =
+      __$$SnifferConfigImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(fromJson: _formJsonPorts) List<String> ports,
+      @JsonKey(name: "override-destination") bool? overrideDest});
+}
+
+/// @nodoc
+class __$$SnifferConfigImplCopyWithImpl<$Res>
+    extends _$SnifferConfigCopyWithImpl<$Res, _$SnifferConfigImpl>
+    implements _$$SnifferConfigImplCopyWith<$Res> {
+  __$$SnifferConfigImplCopyWithImpl(
+      _$SnifferConfigImpl _value, $Res Function(_$SnifferConfigImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of SnifferConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? ports = null,
+    Object? overrideDest = freezed,
+  }) {
+    return _then(_$SnifferConfigImpl(
+      ports: null == ports
+          ? _value._ports
+          : ports // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      overrideDest: freezed == overrideDest
+          ? _value.overrideDest
+          : overrideDest // ignore: cast_nullable_to_non_nullable
+              as bool?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$SnifferConfigImpl implements _SnifferConfig {
+  const _$SnifferConfigImpl(
+      {@JsonKey(fromJson: _formJsonPorts) final List<String> ports = const [],
+      @JsonKey(name: "override-destination") this.overrideDest})
+      : _ports = ports;
+
+  factory _$SnifferConfigImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SnifferConfigImplFromJson(json);
+
+  final List<String> _ports;
+  @override
+  @JsonKey(fromJson: _formJsonPorts)
+  List<String> get ports {
+    if (_ports is EqualUnmodifiableListView) return _ports;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_ports);
+  }
+
+  @override
+  @JsonKey(name: "override-destination")
+  final bool? overrideDest;
+
+  @override
+  String toString() {
+    return 'SnifferConfig(ports: $ports, overrideDest: $overrideDest)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SnifferConfigImpl &&
+            const DeepCollectionEquality().equals(other._ports, _ports) &&
+            (identical(other.overrideDest, overrideDest) ||
+                other.overrideDest == overrideDest));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(_ports), overrideDest);
+
+  /// Create a copy of SnifferConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SnifferConfigImplCopyWith<_$SnifferConfigImpl> get copyWith =>
+      __$$SnifferConfigImplCopyWithImpl<_$SnifferConfigImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$SnifferConfigImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _SnifferConfig implements SnifferConfig {
+  const factory _SnifferConfig(
+          {@JsonKey(fromJson: _formJsonPorts) final List<String> ports,
+          @JsonKey(name: "override-destination") final bool? overrideDest}) =
+      _$SnifferConfigImpl;
+
+  factory _SnifferConfig.fromJson(Map<String, dynamic> json) =
+      _$SnifferConfigImpl.fromJson;
+
+  @override
+  @JsonKey(fromJson: _formJsonPorts)
+  List<String> get ports;
+  @override
+  @JsonKey(name: "override-destination")
+  bool? get overrideDest;
+
+  /// Create a copy of SnifferConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$SnifferConfigImplCopyWith<_$SnifferConfigImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Tun _$TunFromJson(Map<String, dynamic> json) {
   return _Tun.fromJson(json);
 }
@@ -2582,7 +3216,7 @@ ClashConfigSnippet _$ClashConfigSnippetFromJson(Map<String, dynamic> json) {
 mixin _$ClashConfigSnippet {
   @JsonKey(name: "proxy-groups")
   List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
-  @JsonKey(fromJson: _genRule)
+  @JsonKey(fromJson: _genRule, name: "rules")
   List<Rule> get rule => throw _privateConstructorUsedError;
   @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
   List<RuleProvider> get ruleProvider => throw _privateConstructorUsedError;
@@ -2607,7 +3241,7 @@ abstract class $ClashConfigSnippetCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-      @JsonKey(fromJson: _genRule) List<Rule> rule,
+      @JsonKey(fromJson: _genRule, name: "rules") List<Rule> rule,
       @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
       List<RuleProvider> ruleProvider,
       @JsonKey(name: "sub-rules", fromJson: _genSubRules)
@@ -2665,7 +3299,7 @@ abstract class _$$ClashConfigSnippetImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-      @JsonKey(fromJson: _genRule) List<Rule> rule,
+      @JsonKey(fromJson: _genRule, name: "rules") List<Rule> rule,
       @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
       List<RuleProvider> ruleProvider,
       @JsonKey(name: "sub-rules", fromJson: _genSubRules)
@@ -2717,7 +3351,8 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
   const _$ClashConfigSnippetImpl(
       {@JsonKey(name: "proxy-groups")
       final List<ProxyGroup> proxyGroups = const [],
-      @JsonKey(fromJson: _genRule) final List<Rule> rule = const [],
+      @JsonKey(fromJson: _genRule, name: "rules")
+      final List<Rule> rule = const [],
       @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
       final List<RuleProvider> ruleProvider = const [],
       @JsonKey(name: "sub-rules", fromJson: _genSubRules)
@@ -2741,7 +3376,7 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
 
   final List<Rule> _rule;
   @override
-  @JsonKey(fromJson: _genRule)
+  @JsonKey(fromJson: _genRule, name: "rules")
   List<Rule> get rule {
     if (_rule is EqualUnmodifiableListView) return _rule;
     // ignore: implicit_dynamic_type
@@ -2813,7 +3448,7 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
 abstract class _ClashConfigSnippet implements ClashConfigSnippet {
   const factory _ClashConfigSnippet(
       {@JsonKey(name: "proxy-groups") final List<ProxyGroup> proxyGroups,
-      @JsonKey(fromJson: _genRule) final List<Rule> rule,
+      @JsonKey(fromJson: _genRule, name: "rules") final List<Rule> rule,
       @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
       final List<RuleProvider> ruleProvider,
       @JsonKey(name: "sub-rules", fromJson: _genSubRules)
@@ -2826,7 +3461,7 @@ abstract class _ClashConfigSnippet implements ClashConfigSnippet {
   @JsonKey(name: "proxy-groups")
   List<ProxyGroup> get proxyGroups;
   @override
-  @JsonKey(fromJson: _genRule)
+  @JsonKey(fromJson: _genRule, name: "rules")
   List<Rule> get rule;
   @override
   @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
@@ -2851,6 +3486,14 @@ ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) {
 mixin _$ClashConfig {
   @JsonKey(name: "mixed-port")
   int get mixedPort => throw _privateConstructorUsedError;
+  @JsonKey(name: "socks-port")
+  int get socksPort => throw _privateConstructorUsedError;
+  @JsonKey(name: "port")
+  int get port => throw _privateConstructorUsedError;
+  @JsonKey(name: "redir-port")
+  int get redirPort => throw _privateConstructorUsedError;
+  @JsonKey(name: "tproxy-port")
+  int get tproxyPort => throw _privateConstructorUsedError;
   Mode get mode => throw _privateConstructorUsedError;
   @JsonKey(name: "allow-lan")
   bool get allowLan => throw _privateConstructorUsedError;
@@ -2901,6 +3544,10 @@ abstract class $ClashConfigCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: "mixed-port") int mixedPort,
+      @JsonKey(name: "socks-port") int socksPort,
+      @JsonKey(name: "port") int port,
+      @JsonKey(name: "redir-port") int redirPort,
+      @JsonKey(name: "tproxy-port") int tproxyPort,
       Mode mode,
       @JsonKey(name: "allow-lan") bool allowLan,
       @JsonKey(name: "log-level") LogLevel logLevel,
@@ -2944,6 +3591,10 @@ class _$ClashConfigCopyWithImpl<$Res, $Val extends ClashConfig>
   @override
   $Res call({
     Object? mixedPort = null,
+    Object? socksPort = null,
+    Object? port = null,
+    Object? redirPort = null,
+    Object? tproxyPort = null,
     Object? mode = null,
     Object? allowLan = null,
     Object? logLevel = null,
@@ -2966,6 +3617,22 @@ class _$ClashConfigCopyWithImpl<$Res, $Val extends ClashConfig>
       mixedPort: null == mixedPort
           ? _value.mixedPort
           : mixedPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      socksPort: null == socksPort
+          ? _value.socksPort
+          : socksPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      port: null == port
+          ? _value.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as int,
+      redirPort: null == redirPort
+          ? _value.redirPort
+          : redirPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      tproxyPort: null == tproxyPort
+          ? _value.tproxyPort
+          : tproxyPort // ignore: cast_nullable_to_non_nullable
               as int,
       mode: null == mode
           ? _value.mode
@@ -3079,6 +3746,10 @@ abstract class _$$ClashConfigImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: "mixed-port") int mixedPort,
+      @JsonKey(name: "socks-port") int socksPort,
+      @JsonKey(name: "port") int port,
+      @JsonKey(name: "redir-port") int redirPort,
+      @JsonKey(name: "tproxy-port") int tproxyPort,
       Mode mode,
       @JsonKey(name: "allow-lan") bool allowLan,
       @JsonKey(name: "log-level") LogLevel logLevel,
@@ -3123,6 +3794,10 @@ class __$$ClashConfigImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? mixedPort = null,
+    Object? socksPort = null,
+    Object? port = null,
+    Object? redirPort = null,
+    Object? tproxyPort = null,
     Object? mode = null,
     Object? allowLan = null,
     Object? logLevel = null,
@@ -3145,6 +3820,22 @@ class __$$ClashConfigImplCopyWithImpl<$Res>
       mixedPort: null == mixedPort
           ? _value.mixedPort
           : mixedPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      socksPort: null == socksPort
+          ? _value.socksPort
+          : socksPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      port: null == port
+          ? _value.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as int,
+      redirPort: null == redirPort
+          ? _value.redirPort
+          : redirPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      tproxyPort: null == tproxyPort
+          ? _value.tproxyPort
+          : tproxyPort // ignore: cast_nullable_to_non_nullable
               as int,
       mode: null == mode
           ? _value.mode
@@ -3223,6 +3914,10 @@ class __$$ClashConfigImplCopyWithImpl<$Res>
 class _$ClashConfigImpl implements _ClashConfig {
   const _$ClashConfigImpl(
       {@JsonKey(name: "mixed-port") this.mixedPort = defaultMixedPort,
+      @JsonKey(name: "socks-port") this.socksPort = 0,
+      @JsonKey(name: "port") this.port = 0,
+      @JsonKey(name: "redir-port") this.redirPort = 0,
+      @JsonKey(name: "tproxy-port") this.tproxyPort = 0,
       this.mode = Mode.rule,
       @JsonKey(name: "allow-lan") this.allowLan = false,
       @JsonKey(name: "log-level") this.logLevel = LogLevel.error,
@@ -3257,6 +3952,18 @@ class _$ClashConfigImpl implements _ClashConfig {
   @override
   @JsonKey(name: "mixed-port")
   final int mixedPort;
+  @override
+  @JsonKey(name: "socks-port")
+  final int socksPort;
+  @override
+  @JsonKey(name: "port")
+  final int port;
+  @override
+  @JsonKey(name: "redir-port")
+  final int redirPort;
+  @override
+  @JsonKey(name: "tproxy-port")
+  final int tproxyPort;
   @override
   @JsonKey()
   final Mode mode;
@@ -3328,7 +4035,7 @@ class _$ClashConfigImpl implements _ClashConfig {
 
   @override
   String toString() {
-    return 'ClashConfig(mixedPort: $mixedPort, mode: $mode, allowLan: $allowLan, logLevel: $logLevel, ipv6: $ipv6, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, geodataLoader: $geodataLoader, proxyGroups: $proxyGroups, rule: $rule, globalUa: $globalUa, externalController: $externalController, hosts: $hosts)';
+    return 'ClashConfig(mixedPort: $mixedPort, socksPort: $socksPort, port: $port, redirPort: $redirPort, tproxyPort: $tproxyPort, mode: $mode, allowLan: $allowLan, logLevel: $logLevel, ipv6: $ipv6, findProcessMode: $findProcessMode, keepAliveInterval: $keepAliveInterval, unifiedDelay: $unifiedDelay, tcpConcurrent: $tcpConcurrent, tun: $tun, dns: $dns, geoXUrl: $geoXUrl, geodataLoader: $geodataLoader, proxyGroups: $proxyGroups, rule: $rule, globalUa: $globalUa, externalController: $externalController, hosts: $hosts)';
   }
 
   @override
@@ -3338,6 +4045,13 @@ class _$ClashConfigImpl implements _ClashConfig {
             other is _$ClashConfigImpl &&
             (identical(other.mixedPort, mixedPort) ||
                 other.mixedPort == mixedPort) &&
+            (identical(other.socksPort, socksPort) ||
+                other.socksPort == socksPort) &&
+            (identical(other.port, port) || other.port == port) &&
+            (identical(other.redirPort, redirPort) ||
+                other.redirPort == redirPort) &&
+            (identical(other.tproxyPort, tproxyPort) ||
+                other.tproxyPort == tproxyPort) &&
             (identical(other.mode, mode) || other.mode == mode) &&
             (identical(other.allowLan, allowLan) ||
                 other.allowLan == allowLan) &&
@@ -3369,26 +4083,31 @@ class _$ClashConfigImpl implements _ClashConfig {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      mixedPort,
-      mode,
-      allowLan,
-      logLevel,
-      ipv6,
-      findProcessMode,
-      keepAliveInterval,
-      unifiedDelay,
-      tcpConcurrent,
-      tun,
-      dns,
-      geoXUrl,
-      geodataLoader,
-      const DeepCollectionEquality().hash(_proxyGroups),
-      const DeepCollectionEquality().hash(_rule),
-      globalUa,
-      externalController,
-      const DeepCollectionEquality().hash(_hosts));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        mixedPort,
+        socksPort,
+        port,
+        redirPort,
+        tproxyPort,
+        mode,
+        allowLan,
+        logLevel,
+        ipv6,
+        findProcessMode,
+        keepAliveInterval,
+        unifiedDelay,
+        tcpConcurrent,
+        tun,
+        dns,
+        geoXUrl,
+        geodataLoader,
+        const DeepCollectionEquality().hash(_proxyGroups),
+        const DeepCollectionEquality().hash(_rule),
+        globalUa,
+        externalController,
+        const DeepCollectionEquality().hash(_hosts)
+      ]);
 
   /// Create a copy of ClashConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -3409,6 +4128,10 @@ class _$ClashConfigImpl implements _ClashConfig {
 abstract class _ClashConfig implements ClashConfig {
   const factory _ClashConfig(
       {@JsonKey(name: "mixed-port") final int mixedPort,
+      @JsonKey(name: "socks-port") final int socksPort,
+      @JsonKey(name: "port") final int port,
+      @JsonKey(name: "redir-port") final int redirPort,
+      @JsonKey(name: "tproxy-port") final int tproxyPort,
       final Mode mode,
       @JsonKey(name: "allow-lan") final bool allowLan,
       @JsonKey(name: "log-level") final LogLevel logLevel,
@@ -3437,6 +4160,18 @@ abstract class _ClashConfig implements ClashConfig {
   @override
   @JsonKey(name: "mixed-port")
   int get mixedPort;
+  @override
+  @JsonKey(name: "socks-port")
+  int get socksPort;
+  @override
+  @JsonKey(name: "port")
+  int get port;
+  @override
+  @JsonKey(name: "redir-port")
+  int get redirPort;
+  @override
+  @JsonKey(name: "tproxy-port")
+  int get tproxyPort;
   @override
   Mode get mode;
   @override

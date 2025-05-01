@@ -68,6 +68,7 @@ jobs:
         with:
           channel: ${{ (startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm')) && 'master' || 'stable' }}
           cache: true
+          flutter-version: 3.29.3
 
       - name: Get Flutter Dependency
         run: flutter pub get

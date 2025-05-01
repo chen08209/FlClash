@@ -218,3 +218,16 @@ Map<String, dynamic> _$$TextPainterParamsImplToJson(
       'maxWidth': instance.maxWidth,
       'maxLines': instance.maxLines,
     };
+
+_$ScriptImpl _$$ScriptImplFromJson(Map<String, dynamic> json) => _$ScriptImpl(
+      id: json['id'] as String,
+      label: json['label'] as String,
+      content: json['content'] as String,
+    );
+
+Map<String, dynamic> _$$ScriptImplToJson(_$ScriptImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'label': instance.label,
+      'content': instance.content,
+    };

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class EffectGestureDetector extends StatefulWidget {
@@ -56,4 +58,85 @@ class _EffectGestureDetectorState extends State<EffectGestureDetector>
       ),
     );
   }
+}
+
+class CommonExpandIcon extends StatefulWidget {
+  final bool expand;
+
+  const CommonExpandIcon({
+    super.key,
+    this.expand = false,
+  });
+
+  @override
+  State<CommonExpandIcon> createState() => _CommonExpandIconState();
+}
+
+class _CommonExpandIconState extends State<CommonExpandIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _iconTurns;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _iconTurns = _animationController.drive(
+      Tween<double>(begin: 0.0, end: 0.5),
+    );
+    if (widget.expand) {
+      _animationController.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CommonExpandIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.expand != widget.expand) {
+      if (widget.expand) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController.view,
+      builder: (_, child) {
+        return RotationTransition(
+          turns: _iconTurns,
+          child: child!,
+        );
+      },
+      child: const Icon(
+        Icons.expand_more,
+      ),
+    );
+  }
+}
+
+Widget proxyDecorator(
+  Widget child,
+  int index,
+  Animation<double> animation,
+) {
+  return AnimatedBuilder(
+    animation: animation,
+    builder: (_, Widget? child) {
+      final double animValue = Curves.easeInOut.transform(animation.value);
+      final double scale = lerpDouble(1, 1.02, animValue)!;
+      return Transform.scale(
+        scale: scale,
+        child: child,
+      );
+    },
+    child: child,
+  );
 }

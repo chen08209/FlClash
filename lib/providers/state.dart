@@ -72,18 +72,22 @@ CoreState coreState(Ref ref) {
 }
 
 @riverpod
-ClashConfigState clashConfigState(Ref ref) {
-  final clashConfig = ref.watch(patchClashConfigProvider);
-  final overrideDns = ref.watch(overrideDnsProvider);
-  final overrideData =
-      ref.watch(currentProfileProvider.select((state) => state?.overrideData));
-  final routeMode =
-      ref.watch(networkSettingProvider.select((state) => state.routeMode));
-  return ClashConfigState(
-    overrideDns: overrideDns,
-    clashConfig: clashConfig,
-    overrideData: overrideData ?? OverrideData(),
-    routeMode: routeMode,
+UpdateParams updateParams(Ref ref) {
+  return ref.watch(
+    patchClashConfigProvider.select(
+      (state) => UpdateParams(
+        tun: state.tun,
+        allowLan: state.allowLan,
+        findProcessMode: state.findProcessMode,
+        mode: state.mode,
+        logLevel: state.logLevel,
+        ipv6: state.ipv6,
+        tcpConcurrent: state.tcpConcurrent,
+        externalController: state.externalController,
+        unifiedDelay: state.unifiedDelay,
+        mixedPort: state.mixedPort,
+      ),
+    ),
   );
 }
 
@@ -210,7 +214,10 @@ ProfilesSelectorState profilesSelectorState(Ref ref) {
   final currentProfileId = ref.watch(currentProfileIdProvider);
   final profiles = ref.watch(profilesProvider);
   final columns = ref.watch(
-      viewWidthProvider.select((state) => utils.getProfilesColumns(state)));
+    viewWidthProvider.select(
+      (state) => utils.getProfilesColumns(state),
+    ),
+  );
   return ProfilesSelectorState(
     profiles: profiles,
     currentProfileId: currentProfileId,
@@ -227,6 +234,11 @@ ProxiesListSelectorState proxiesListSelectorState(Ref ref) {
   final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
   final sortNum = ref.watch(sortNumProvider);
   final columns = ref.watch(getProxiesColumnsProvider);
+  final query = ref.watch(
+    proxiesQueryProvider.select(
+      (state) => state.toLowerCase(),
+    ),
+  );
   return ProxiesListSelectorState(
     groupNames: groupNames,
     currentUnfoldSet: currentUnfoldSet,
@@ -234,6 +246,7 @@ ProxiesListSelectorState proxiesListSelectorState(Ref ref) {
     proxyCardType: proxiesStyle.cardType,
     sortNum: sortNum,
     columns: columns,
+    query: query,
   );
 }
 
@@ -280,13 +293,19 @@ ProxyGroupSelectorState proxyGroupSelectorState(Ref ref, String groupName) {
   );
   final sortNum = ref.watch(sortNumProvider);
   final columns = ref.watch(getProxiesColumnsProvider);
+  final query =
+      ref.watch(proxiesQueryProvider.select((state) => state.toLowerCase()));
+  final proxies = group?.all.where((item) {
+        return item.name.toLowerCase().contains(query);
+      }).toList() ??
+      [];
   return ProxyGroupSelectorState(
     testUrl: group?.testUrl,
     proxiesSortType: proxiesStyle.sortType,
     proxyCardType: proxiesStyle.cardType,
     sortNum: sortNum,
     groupType: group?.type ?? GroupType.Selector,
-    proxies: group?.all ?? [],
+    proxies: proxies,
     columns: columns,
   );
 }
@@ -484,7 +503,6 @@ class ProfileOverrideState extends _$ProfileOverrideState {
   @override
   ProfileOverrideStateModel build() {
     return ProfileOverrideStateModel(
-      isEdit: false,
       selectedRules: {},
     );
   }
@@ -522,6 +540,21 @@ VM2? layoutChange(Ref ref) {
 }
 
 @riverpod
+VM2<int, bool> checkIp(Ref ref) {
+  final checkIpNum = ref.watch(checkIpNumProvider);
+  final containsDetection = ref.watch(
+    dashboardStateProvider.select(
+      (state) =>
+          state.dashboardWidgets.contains(DashboardWidget.networkDetection),
+    ),
+  );
+  return VM2(
+    a: checkIpNum,
+    b: containsDetection,
+  );
+}
+
+@riverpod
 ColorScheme genColorScheme(
   Ref ref,
   Brightness brightness, {
@@ -554,4 +587,12 @@ ColorScheme genColorScheme(
     brightness: brightness,
     dynamicSchemeVariant: vm2.b,
   );
+}
+
+@riverpod
+VM2 needSetup(Ref ref) {
+  final profileId = ref.watch(currentProfileIdProvider);
+  final content = ref.watch(
+      scriptStateProvider.select((state) => state.currentScript?.content));
+  return VM2(a: profileId, b: content);
 }
