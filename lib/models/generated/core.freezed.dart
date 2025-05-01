@@ -14,6 +14,623 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+SetupParams _$SetupParamsFromJson(Map<String, dynamic> json) {
+  return _SetupParams.fromJson(json);
+}
+
+/// @nodoc
+mixin _$SetupParams {
+  @JsonKey(name: "config")
+  Map<String, dynamic> get config => throw _privateConstructorUsedError;
+  @JsonKey(name: "selected-map")
+  Map<String, String> get selectedMap => throw _privateConstructorUsedError;
+  @JsonKey(name: "test-url")
+  String get testUrl => throw _privateConstructorUsedError;
+
+  /// Serializes this SetupParams to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of SetupParams
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $SetupParamsCopyWith<SetupParams> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $SetupParamsCopyWith<$Res> {
+  factory $SetupParamsCopyWith(
+          SetupParams value, $Res Function(SetupParams) then) =
+      _$SetupParamsCopyWithImpl<$Res, SetupParams>;
+  @useResult
+  $Res call(
+      {@JsonKey(name: "config") Map<String, dynamic> config,
+      @JsonKey(name: "selected-map") Map<String, String> selectedMap,
+      @JsonKey(name: "test-url") String testUrl});
+}
+
+/// @nodoc
+class _$SetupParamsCopyWithImpl<$Res, $Val extends SetupParams>
+    implements $SetupParamsCopyWith<$Res> {
+  _$SetupParamsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of SetupParams
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? config = null,
+    Object? selectedMap = null,
+    Object? testUrl = null,
+  }) {
+    return _then(_value.copyWith(
+      config: null == config
+          ? _value.config
+          : config // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
+      selectedMap: null == selectedMap
+          ? _value.selectedMap
+          : selectedMap // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
+      testUrl: null == testUrl
+          ? _value.testUrl
+          : testUrl // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$SetupParamsImplCopyWith<$Res>
+    implements $SetupParamsCopyWith<$Res> {
+  factory _$$SetupParamsImplCopyWith(
+          _$SetupParamsImpl value, $Res Function(_$SetupParamsImpl) then) =
+      __$$SetupParamsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(name: "config") Map<String, dynamic> config,
+      @JsonKey(name: "selected-map") Map<String, String> selectedMap,
+      @JsonKey(name: "test-url") String testUrl});
+}
+
+/// @nodoc
+class __$$SetupParamsImplCopyWithImpl<$Res>
+    extends _$SetupParamsCopyWithImpl<$Res, _$SetupParamsImpl>
+    implements _$$SetupParamsImplCopyWith<$Res> {
+  __$$SetupParamsImplCopyWithImpl(
+      _$SetupParamsImpl _value, $Res Function(_$SetupParamsImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of SetupParams
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? config = null,
+    Object? selectedMap = null,
+    Object? testUrl = null,
+  }) {
+    return _then(_$SetupParamsImpl(
+      config: null == config
+          ? _value._config
+          : config // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
+      selectedMap: null == selectedMap
+          ? _value._selectedMap
+          : selectedMap // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
+      testUrl: null == testUrl
+          ? _value.testUrl
+          : testUrl // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$SetupParamsImpl implements _SetupParams {
+  const _$SetupParamsImpl(
+      {@JsonKey(name: "config") required final Map<String, dynamic> config,
+      @JsonKey(name: "selected-map")
+      required final Map<String, String> selectedMap,
+      @JsonKey(name: "test-url") required this.testUrl})
+      : _config = config,
+        _selectedMap = selectedMap;
+
+  factory _$SetupParamsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SetupParamsImplFromJson(json);
+
+  final Map<String, dynamic> _config;
+  @override
+  @JsonKey(name: "config")
+  Map<String, dynamic> get config {
+    if (_config is EqualUnmodifiableMapView) return _config;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_config);
+  }
+
+  final Map<String, String> _selectedMap;
+  @override
+  @JsonKey(name: "selected-map")
+  Map<String, String> get selectedMap {
+    if (_selectedMap is EqualUnmodifiableMapView) return _selectedMap;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_selectedMap);
+  }
+
+  @override
+  @JsonKey(name: "test-url")
+  final String testUrl;
+
+  @override
+  String toString() {
+    return 'SetupParams(config: $config, selectedMap: $selectedMap, testUrl: $testUrl)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SetupParamsImpl &&
+            const DeepCollectionEquality().equals(other._config, _config) &&
+            const DeepCollectionEquality()
+                .equals(other._selectedMap, _selectedMap) &&
+            (identical(other.testUrl, testUrl) || other.testUrl == testUrl));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(_config),
+      const DeepCollectionEquality().hash(_selectedMap),
+      testUrl);
+
+  /// Create a copy of SetupParams
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SetupParamsImplCopyWith<_$SetupParamsImpl> get copyWith =>
+      __$$SetupParamsImplCopyWithImpl<_$SetupParamsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$SetupParamsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _SetupParams implements SetupParams {
+  const factory _SetupParams(
+          {@JsonKey(name: "config") required final Map<String, dynamic> config,
+          @JsonKey(name: "selected-map")
+          required final Map<String, String> selectedMap,
+          @JsonKey(name: "test-url") required final String testUrl}) =
+      _$SetupParamsImpl;
+
+  factory _SetupParams.fromJson(Map<String, dynamic> json) =
+      _$SetupParamsImpl.fromJson;
+
+  @override
+  @JsonKey(name: "config")
+  Map<String, dynamic> get config;
+  @override
+  @JsonKey(name: "selected-map")
+  Map<String, String> get selectedMap;
+  @override
+  @JsonKey(name: "test-url")
+  String get testUrl;
+
+  /// Create a copy of SetupParams
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$SetupParamsImplCopyWith<_$SetupParamsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) {
+  return _UpdateParams.fromJson(json);
+}
+
+/// @nodoc
+mixin _$UpdateParams {
+  Tun get tun => throw _privateConstructorUsedError;
+  @JsonKey(name: 'mixed-port')
+  int get mixedPort => throw _privateConstructorUsedError;
+  @JsonKey(name: 'allow-lan')
+  bool get allowLan => throw _privateConstructorUsedError;
+  @JsonKey(name: 'find-process-mode')
+  FindProcessMode get findProcessMode => throw _privateConstructorUsedError;
+  Mode get mode => throw _privateConstructorUsedError;
+  @JsonKey(name: 'log-level')
+  LogLevel get logLevel => throw _privateConstructorUsedError;
+  bool get ipv6 => throw _privateConstructorUsedError;
+  @JsonKey(name: 'tcp-concurrent')
+  bool get tcpConcurrent => throw _privateConstructorUsedError;
+  @JsonKey(name: 'external-controller')
+  ExternalControllerStatus get externalController =>
+      throw _privateConstructorUsedError;
+  @JsonKey(name: 'unified-delay')
+  bool get unifiedDelay => throw _privateConstructorUsedError;
+
+  /// Serializes this UpdateParams to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of UpdateParams
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $UpdateParamsCopyWith<UpdateParams> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $UpdateParamsCopyWith<$Res> {
+  factory $UpdateParamsCopyWith(
+          UpdateParams value, $Res Function(UpdateParams) then) =
+      _$UpdateParamsCopyWithImpl<$Res, UpdateParams>;
+  @useResult
+  $Res call(
+      {Tun tun,
+      @JsonKey(name: 'mixed-port') int mixedPort,
+      @JsonKey(name: 'allow-lan') bool allowLan,
+      @JsonKey(name: 'find-process-mode') FindProcessMode findProcessMode,
+      Mode mode,
+      @JsonKey(name: 'log-level') LogLevel logLevel,
+      bool ipv6,
+      @JsonKey(name: 'tcp-concurrent') bool tcpConcurrent,
+      @JsonKey(name: 'external-controller')
+      ExternalControllerStatus externalController,
+      @JsonKey(name: 'unified-delay') bool unifiedDelay});
+
+  $TunCopyWith<$Res> get tun;
+}
+
+/// @nodoc
+class _$UpdateParamsCopyWithImpl<$Res, $Val extends UpdateParams>
+    implements $UpdateParamsCopyWith<$Res> {
+  _$UpdateParamsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of UpdateParams
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? tun = null,
+    Object? mixedPort = null,
+    Object? allowLan = null,
+    Object? findProcessMode = null,
+    Object? mode = null,
+    Object? logLevel = null,
+    Object? ipv6 = null,
+    Object? tcpConcurrent = null,
+    Object? externalController = null,
+    Object? unifiedDelay = null,
+  }) {
+    return _then(_value.copyWith(
+      tun: null == tun
+          ? _value.tun
+          : tun // ignore: cast_nullable_to_non_nullable
+              as Tun,
+      mixedPort: null == mixedPort
+          ? _value.mixedPort
+          : mixedPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      allowLan: null == allowLan
+          ? _value.allowLan
+          : allowLan // ignore: cast_nullable_to_non_nullable
+              as bool,
+      findProcessMode: null == findProcessMode
+          ? _value.findProcessMode
+          : findProcessMode // ignore: cast_nullable_to_non_nullable
+              as FindProcessMode,
+      mode: null == mode
+          ? _value.mode
+          : mode // ignore: cast_nullable_to_non_nullable
+              as Mode,
+      logLevel: null == logLevel
+          ? _value.logLevel
+          : logLevel // ignore: cast_nullable_to_non_nullable
+              as LogLevel,
+      ipv6: null == ipv6
+          ? _value.ipv6
+          : ipv6 // ignore: cast_nullable_to_non_nullable
+              as bool,
+      tcpConcurrent: null == tcpConcurrent
+          ? _value.tcpConcurrent
+          : tcpConcurrent // ignore: cast_nullable_to_non_nullable
+              as bool,
+      externalController: null == externalController
+          ? _value.externalController
+          : externalController // ignore: cast_nullable_to_non_nullable
+              as ExternalControllerStatus,
+      unifiedDelay: null == unifiedDelay
+          ? _value.unifiedDelay
+          : unifiedDelay // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+
+  /// Create a copy of UpdateParams
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $TunCopyWith<$Res> get tun {
+    return $TunCopyWith<$Res>(_value.tun, (value) {
+      return _then(_value.copyWith(tun: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$UpdateParamsImplCopyWith<$Res>
+    implements $UpdateParamsCopyWith<$Res> {
+  factory _$$UpdateParamsImplCopyWith(
+          _$UpdateParamsImpl value, $Res Function(_$UpdateParamsImpl) then) =
+      __$$UpdateParamsImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {Tun tun,
+      @JsonKey(name: 'mixed-port') int mixedPort,
+      @JsonKey(name: 'allow-lan') bool allowLan,
+      @JsonKey(name: 'find-process-mode') FindProcessMode findProcessMode,
+      Mode mode,
+      @JsonKey(name: 'log-level') LogLevel logLevel,
+      bool ipv6,
+      @JsonKey(name: 'tcp-concurrent') bool tcpConcurrent,
+      @JsonKey(name: 'external-controller')
+      ExternalControllerStatus externalController,
+      @JsonKey(name: 'unified-delay') bool unifiedDelay});
+
+  @override
+  $TunCopyWith<$Res> get tun;
+}
+
+/// @nodoc
+class __$$UpdateParamsImplCopyWithImpl<$Res>
+    extends _$UpdateParamsCopyWithImpl<$Res, _$UpdateParamsImpl>
+    implements _$$UpdateParamsImplCopyWith<$Res> {
+  __$$UpdateParamsImplCopyWithImpl(
+      _$UpdateParamsImpl _value, $Res Function(_$UpdateParamsImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of UpdateParams
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? tun = null,
+    Object? mixedPort = null,
+    Object? allowLan = null,
+    Object? findProcessMode = null,
+    Object? mode = null,
+    Object? logLevel = null,
+    Object? ipv6 = null,
+    Object? tcpConcurrent = null,
+    Object? externalController = null,
+    Object? unifiedDelay = null,
+  }) {
+    return _then(_$UpdateParamsImpl(
+      tun: null == tun
+          ? _value.tun
+          : tun // ignore: cast_nullable_to_non_nullable
+              as Tun,
+      mixedPort: null == mixedPort
+          ? _value.mixedPort
+          : mixedPort // ignore: cast_nullable_to_non_nullable
+              as int,
+      allowLan: null == allowLan
+          ? _value.allowLan
+          : allowLan // ignore: cast_nullable_to_non_nullable
+              as bool,
+      findProcessMode: null == findProcessMode
+          ? _value.findProcessMode
+          : findProcessMode // ignore: cast_nullable_to_non_nullable
+              as FindProcessMode,
+      mode: null == mode
+          ? _value.mode
+          : mode // ignore: cast_nullable_to_non_nullable
+              as Mode,
+      logLevel: null == logLevel
+          ? _value.logLevel
+          : logLevel // ignore: cast_nullable_to_non_nullable
+              as LogLevel,
+      ipv6: null == ipv6
+          ? _value.ipv6
+          : ipv6 // ignore: cast_nullable_to_non_nullable
+              as bool,
+      tcpConcurrent: null == tcpConcurrent
+          ? _value.tcpConcurrent
+          : tcpConcurrent // ignore: cast_nullable_to_non_nullable
+              as bool,
+      externalController: null == externalController
+          ? _value.externalController
+          : externalController // ignore: cast_nullable_to_non_nullable
+              as ExternalControllerStatus,
+      unifiedDelay: null == unifiedDelay
+          ? _value.unifiedDelay
+          : unifiedDelay // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$UpdateParamsImpl implements _UpdateParams {
+  const _$UpdateParamsImpl(
+      {required this.tun,
+      @JsonKey(name: 'mixed-port') required this.mixedPort,
+      @JsonKey(name: 'allow-lan') required this.allowLan,
+      @JsonKey(name: 'find-process-mode') required this.findProcessMode,
+      required this.mode,
+      @JsonKey(name: 'log-level') required this.logLevel,
+      required this.ipv6,
+      @JsonKey(name: 'tcp-concurrent') required this.tcpConcurrent,
+      @JsonKey(name: 'external-controller') required this.externalController,
+      @JsonKey(name: 'unified-delay') required this.unifiedDelay});
+
+  factory _$UpdateParamsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$UpdateParamsImplFromJson(json);
+
+  @override
+  final Tun tun;
+  @override
+  @JsonKey(name: 'mixed-port')
+  final int mixedPort;
+  @override
+  @JsonKey(name: 'allow-lan')
+  final bool allowLan;
+  @override
+  @JsonKey(name: 'find-process-mode')
+  final FindProcessMode findProcessMode;
+  @override
+  final Mode mode;
+  @override
+  @JsonKey(name: 'log-level')
+  final LogLevel logLevel;
+  @override
+  final bool ipv6;
+  @override
+  @JsonKey(name: 'tcp-concurrent')
+  final bool tcpConcurrent;
+  @override
+  @JsonKey(name: 'external-controller')
+  final ExternalControllerStatus externalController;
+  @override
+  @JsonKey(name: 'unified-delay')
+  final bool unifiedDelay;
+
+  @override
+  String toString() {
+    return 'UpdateParams(tun: $tun, mixedPort: $mixedPort, allowLan: $allowLan, findProcessMode: $findProcessMode, mode: $mode, logLevel: $logLevel, ipv6: $ipv6, tcpConcurrent: $tcpConcurrent, externalController: $externalController, unifiedDelay: $unifiedDelay)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$UpdateParamsImpl &&
+            (identical(other.tun, tun) || other.tun == tun) &&
+            (identical(other.mixedPort, mixedPort) ||
+                other.mixedPort == mixedPort) &&
+            (identical(other.allowLan, allowLan) ||
+                other.allowLan == allowLan) &&
+            (identical(other.findProcessMode, findProcessMode) ||
+                other.findProcessMode == findProcessMode) &&
+            (identical(other.mode, mode) || other.mode == mode) &&
+            (identical(other.logLevel, logLevel) ||
+                other.logLevel == logLevel) &&
+            (identical(other.ipv6, ipv6) || other.ipv6 == ipv6) &&
+            (identical(other.tcpConcurrent, tcpConcurrent) ||
+                other.tcpConcurrent == tcpConcurrent) &&
+            (identical(other.externalController, externalController) ||
+                other.externalController == externalController) &&
+            (identical(other.unifiedDelay, unifiedDelay) ||
+                other.unifiedDelay == unifiedDelay));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      tun,
+      mixedPort,
+      allowLan,
+      findProcessMode,
+      mode,
+      logLevel,
+      ipv6,
+      tcpConcurrent,
+      externalController,
+      unifiedDelay);
+
+  /// Create a copy of UpdateParams
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$UpdateParamsImplCopyWith<_$UpdateParamsImpl> get copyWith =>
+      __$$UpdateParamsImplCopyWithImpl<_$UpdateParamsImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$UpdateParamsImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _UpdateParams implements UpdateParams {
+  const factory _UpdateParams(
+          {required final Tun tun,
+          @JsonKey(name: 'mixed-port') required final int mixedPort,
+          @JsonKey(name: 'allow-lan') required final bool allowLan,
+          @JsonKey(name: 'find-process-mode')
+          required final FindProcessMode findProcessMode,
+          required final Mode mode,
+          @JsonKey(name: 'log-level') required final LogLevel logLevel,
+          required final bool ipv6,
+          @JsonKey(name: 'tcp-concurrent') required final bool tcpConcurrent,
+          @JsonKey(name: 'external-controller')
+          required final ExternalControllerStatus externalController,
+          @JsonKey(name: 'unified-delay') required final bool unifiedDelay}) =
+      _$UpdateParamsImpl;
+
+  factory _UpdateParams.fromJson(Map<String, dynamic> json) =
+      _$UpdateParamsImpl.fromJson;
+
+  @override
+  Tun get tun;
+  @override
+  @JsonKey(name: 'mixed-port')
+  int get mixedPort;
+  @override
+  @JsonKey(name: 'allow-lan')
+  bool get allowLan;
+  @override
+  @JsonKey(name: 'find-process-mode')
+  FindProcessMode get findProcessMode;
+  @override
+  Mode get mode;
+  @override
+  @JsonKey(name: 'log-level')
+  LogLevel get logLevel;
+  @override
+  bool get ipv6;
+  @override
+  @JsonKey(name: 'tcp-concurrent')
+  bool get tcpConcurrent;
+  @override
+  @JsonKey(name: 'external-controller')
+  ExternalControllerStatus get externalController;
+  @override
+  @JsonKey(name: 'unified-delay')
+  bool get unifiedDelay;
+
+  /// Create a copy of UpdateParams
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$UpdateParamsImplCopyWith<_$UpdateParamsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 CoreState _$CoreStateFromJson(Map<String, dynamic> json) {
   return _CoreState.fromJson(json);
 }
@@ -652,502 +1269,6 @@ abstract class _AndroidVpnOptions implements AndroidVpnOptions {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$AndroidVpnOptionsImplCopyWith<_$AndroidVpnOptionsImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-ConfigExtendedParams _$ConfigExtendedParamsFromJson(Map<String, dynamic> json) {
-  return _ConfigExtendedParams.fromJson(json);
-}
-
-/// @nodoc
-mixin _$ConfigExtendedParams {
-  @JsonKey(name: "is-patch")
-  bool get isPatch => throw _privateConstructorUsedError;
-  @JsonKey(name: "selected-map")
-  Map<String, String> get selectedMap => throw _privateConstructorUsedError;
-  @JsonKey(name: "override-dns")
-  bool get overrideDns => throw _privateConstructorUsedError;
-  @JsonKey(name: "override-rule")
-  bool get overrideRule => throw _privateConstructorUsedError;
-  @JsonKey(name: "test-url")
-  String get testUrl => throw _privateConstructorUsedError;
-
-  /// Serializes this ConfigExtendedParams to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ConfigExtendedParams
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $ConfigExtendedParamsCopyWith<ConfigExtendedParams> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ConfigExtendedParamsCopyWith<$Res> {
-  factory $ConfigExtendedParamsCopyWith(ConfigExtendedParams value,
-          $Res Function(ConfigExtendedParams) then) =
-      _$ConfigExtendedParamsCopyWithImpl<$Res, ConfigExtendedParams>;
-  @useResult
-  $Res call(
-      {@JsonKey(name: "is-patch") bool isPatch,
-      @JsonKey(name: "selected-map") Map<String, String> selectedMap,
-      @JsonKey(name: "override-dns") bool overrideDns,
-      @JsonKey(name: "override-rule") bool overrideRule,
-      @JsonKey(name: "test-url") String testUrl});
-}
-
-/// @nodoc
-class _$ConfigExtendedParamsCopyWithImpl<$Res,
-        $Val extends ConfigExtendedParams>
-    implements $ConfigExtendedParamsCopyWith<$Res> {
-  _$ConfigExtendedParamsCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of ConfigExtendedParams
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? isPatch = null,
-    Object? selectedMap = null,
-    Object? overrideDns = null,
-    Object? overrideRule = null,
-    Object? testUrl = null,
-  }) {
-    return _then(_value.copyWith(
-      isPatch: null == isPatch
-          ? _value.isPatch
-          : isPatch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      selectedMap: null == selectedMap
-          ? _value.selectedMap
-          : selectedMap // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
-      overrideDns: null == overrideDns
-          ? _value.overrideDns
-          : overrideDns // ignore: cast_nullable_to_non_nullable
-              as bool,
-      overrideRule: null == overrideRule
-          ? _value.overrideRule
-          : overrideRule // ignore: cast_nullable_to_non_nullable
-              as bool,
-      testUrl: null == testUrl
-          ? _value.testUrl
-          : testUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$ConfigExtendedParamsImplCopyWith<$Res>
-    implements $ConfigExtendedParamsCopyWith<$Res> {
-  factory _$$ConfigExtendedParamsImplCopyWith(_$ConfigExtendedParamsImpl value,
-          $Res Function(_$ConfigExtendedParamsImpl) then) =
-      __$$ConfigExtendedParamsImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {@JsonKey(name: "is-patch") bool isPatch,
-      @JsonKey(name: "selected-map") Map<String, String> selectedMap,
-      @JsonKey(name: "override-dns") bool overrideDns,
-      @JsonKey(name: "override-rule") bool overrideRule,
-      @JsonKey(name: "test-url") String testUrl});
-}
-
-/// @nodoc
-class __$$ConfigExtendedParamsImplCopyWithImpl<$Res>
-    extends _$ConfigExtendedParamsCopyWithImpl<$Res, _$ConfigExtendedParamsImpl>
-    implements _$$ConfigExtendedParamsImplCopyWith<$Res> {
-  __$$ConfigExtendedParamsImplCopyWithImpl(_$ConfigExtendedParamsImpl _value,
-      $Res Function(_$ConfigExtendedParamsImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of ConfigExtendedParams
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? isPatch = null,
-    Object? selectedMap = null,
-    Object? overrideDns = null,
-    Object? overrideRule = null,
-    Object? testUrl = null,
-  }) {
-    return _then(_$ConfigExtendedParamsImpl(
-      isPatch: null == isPatch
-          ? _value.isPatch
-          : isPatch // ignore: cast_nullable_to_non_nullable
-              as bool,
-      selectedMap: null == selectedMap
-          ? _value._selectedMap
-          : selectedMap // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
-      overrideDns: null == overrideDns
-          ? _value.overrideDns
-          : overrideDns // ignore: cast_nullable_to_non_nullable
-              as bool,
-      overrideRule: null == overrideRule
-          ? _value.overrideRule
-          : overrideRule // ignore: cast_nullable_to_non_nullable
-              as bool,
-      testUrl: null == testUrl
-          ? _value.testUrl
-          : testUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$ConfigExtendedParamsImpl implements _ConfigExtendedParams {
-  const _$ConfigExtendedParamsImpl(
-      {@JsonKey(name: "is-patch") required this.isPatch,
-      @JsonKey(name: "selected-map")
-      required final Map<String, String> selectedMap,
-      @JsonKey(name: "override-dns") required this.overrideDns,
-      @JsonKey(name: "override-rule") required this.overrideRule,
-      @JsonKey(name: "test-url") required this.testUrl})
-      : _selectedMap = selectedMap;
-
-  factory _$ConfigExtendedParamsImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ConfigExtendedParamsImplFromJson(json);
-
-  @override
-  @JsonKey(name: "is-patch")
-  final bool isPatch;
-  final Map<String, String> _selectedMap;
-  @override
-  @JsonKey(name: "selected-map")
-  Map<String, String> get selectedMap {
-    if (_selectedMap is EqualUnmodifiableMapView) return _selectedMap;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_selectedMap);
-  }
-
-  @override
-  @JsonKey(name: "override-dns")
-  final bool overrideDns;
-  @override
-  @JsonKey(name: "override-rule")
-  final bool overrideRule;
-  @override
-  @JsonKey(name: "test-url")
-  final String testUrl;
-
-  @override
-  String toString() {
-    return 'ConfigExtendedParams(isPatch: $isPatch, selectedMap: $selectedMap, overrideDns: $overrideDns, overrideRule: $overrideRule, testUrl: $testUrl)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ConfigExtendedParamsImpl &&
-            (identical(other.isPatch, isPatch) || other.isPatch == isPatch) &&
-            const DeepCollectionEquality()
-                .equals(other._selectedMap, _selectedMap) &&
-            (identical(other.overrideDns, overrideDns) ||
-                other.overrideDns == overrideDns) &&
-            (identical(other.overrideRule, overrideRule) ||
-                other.overrideRule == overrideRule) &&
-            (identical(other.testUrl, testUrl) || other.testUrl == testUrl));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isPatch,
-      const DeepCollectionEquality().hash(_selectedMap),
-      overrideDns,
-      overrideRule,
-      testUrl);
-
-  /// Create a copy of ConfigExtendedParams
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ConfigExtendedParamsImplCopyWith<_$ConfigExtendedParamsImpl>
-      get copyWith =>
-          __$$ConfigExtendedParamsImplCopyWithImpl<_$ConfigExtendedParamsImpl>(
-              this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ConfigExtendedParamsImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _ConfigExtendedParams implements ConfigExtendedParams {
-  const factory _ConfigExtendedParams(
-          {@JsonKey(name: "is-patch") required final bool isPatch,
-          @JsonKey(name: "selected-map")
-          required final Map<String, String> selectedMap,
-          @JsonKey(name: "override-dns") required final bool overrideDns,
-          @JsonKey(name: "override-rule") required final bool overrideRule,
-          @JsonKey(name: "test-url") required final String testUrl}) =
-      _$ConfigExtendedParamsImpl;
-
-  factory _ConfigExtendedParams.fromJson(Map<String, dynamic> json) =
-      _$ConfigExtendedParamsImpl.fromJson;
-
-  @override
-  @JsonKey(name: "is-patch")
-  bool get isPatch;
-  @override
-  @JsonKey(name: "selected-map")
-  Map<String, String> get selectedMap;
-  @override
-  @JsonKey(name: "override-dns")
-  bool get overrideDns;
-  @override
-  @JsonKey(name: "override-rule")
-  bool get overrideRule;
-  @override
-  @JsonKey(name: "test-url")
-  String get testUrl;
-
-  /// Create a copy of ConfigExtendedParams
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ConfigExtendedParamsImplCopyWith<_$ConfigExtendedParamsImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-UpdateConfigParams _$UpdateConfigParamsFromJson(Map<String, dynamic> json) {
-  return _UpdateConfigParams.fromJson(json);
-}
-
-/// @nodoc
-mixin _$UpdateConfigParams {
-  @JsonKey(name: "profile-id")
-  String get profileId => throw _privateConstructorUsedError;
-  ClashConfig get config => throw _privateConstructorUsedError;
-  ConfigExtendedParams get params => throw _privateConstructorUsedError;
-
-  /// Serializes this UpdateConfigParams to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of UpdateConfigParams
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $UpdateConfigParamsCopyWith<UpdateConfigParams> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $UpdateConfigParamsCopyWith<$Res> {
-  factory $UpdateConfigParamsCopyWith(
-          UpdateConfigParams value, $Res Function(UpdateConfigParams) then) =
-      _$UpdateConfigParamsCopyWithImpl<$Res, UpdateConfigParams>;
-  @useResult
-  $Res call(
-      {@JsonKey(name: "profile-id") String profileId,
-      ClashConfig config,
-      ConfigExtendedParams params});
-
-  $ClashConfigCopyWith<$Res> get config;
-  $ConfigExtendedParamsCopyWith<$Res> get params;
-}
-
-/// @nodoc
-class _$UpdateConfigParamsCopyWithImpl<$Res, $Val extends UpdateConfigParams>
-    implements $UpdateConfigParamsCopyWith<$Res> {
-  _$UpdateConfigParamsCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of UpdateConfigParams
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? profileId = null,
-    Object? config = null,
-    Object? params = null,
-  }) {
-    return _then(_value.copyWith(
-      profileId: null == profileId
-          ? _value.profileId
-          : profileId // ignore: cast_nullable_to_non_nullable
-              as String,
-      config: null == config
-          ? _value.config
-          : config // ignore: cast_nullable_to_non_nullable
-              as ClashConfig,
-      params: null == params
-          ? _value.params
-          : params // ignore: cast_nullable_to_non_nullable
-              as ConfigExtendedParams,
-    ) as $Val);
-  }
-
-  /// Create a copy of UpdateConfigParams
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $ClashConfigCopyWith<$Res> get config {
-    return $ClashConfigCopyWith<$Res>(_value.config, (value) {
-      return _then(_value.copyWith(config: value) as $Val);
-    });
-  }
-
-  /// Create a copy of UpdateConfigParams
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $ConfigExtendedParamsCopyWith<$Res> get params {
-    return $ConfigExtendedParamsCopyWith<$Res>(_value.params, (value) {
-      return _then(_value.copyWith(params: value) as $Val);
-    });
-  }
-}
-
-/// @nodoc
-abstract class _$$UpdateConfigParamsImplCopyWith<$Res>
-    implements $UpdateConfigParamsCopyWith<$Res> {
-  factory _$$UpdateConfigParamsImplCopyWith(_$UpdateConfigParamsImpl value,
-          $Res Function(_$UpdateConfigParamsImpl) then) =
-      __$$UpdateConfigParamsImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {@JsonKey(name: "profile-id") String profileId,
-      ClashConfig config,
-      ConfigExtendedParams params});
-
-  @override
-  $ClashConfigCopyWith<$Res> get config;
-  @override
-  $ConfigExtendedParamsCopyWith<$Res> get params;
-}
-
-/// @nodoc
-class __$$UpdateConfigParamsImplCopyWithImpl<$Res>
-    extends _$UpdateConfigParamsCopyWithImpl<$Res, _$UpdateConfigParamsImpl>
-    implements _$$UpdateConfigParamsImplCopyWith<$Res> {
-  __$$UpdateConfigParamsImplCopyWithImpl(_$UpdateConfigParamsImpl _value,
-      $Res Function(_$UpdateConfigParamsImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of UpdateConfigParams
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? profileId = null,
-    Object? config = null,
-    Object? params = null,
-  }) {
-    return _then(_$UpdateConfigParamsImpl(
-      profileId: null == profileId
-          ? _value.profileId
-          : profileId // ignore: cast_nullable_to_non_nullable
-              as String,
-      config: null == config
-          ? _value.config
-          : config // ignore: cast_nullable_to_non_nullable
-              as ClashConfig,
-      params: null == params
-          ? _value.params
-          : params // ignore: cast_nullable_to_non_nullable
-              as ConfigExtendedParams,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$UpdateConfigParamsImpl implements _UpdateConfigParams {
-  const _$UpdateConfigParamsImpl(
-      {@JsonKey(name: "profile-id") required this.profileId,
-      required this.config,
-      required this.params});
-
-  factory _$UpdateConfigParamsImpl.fromJson(Map<String, dynamic> json) =>
-      _$$UpdateConfigParamsImplFromJson(json);
-
-  @override
-  @JsonKey(name: "profile-id")
-  final String profileId;
-  @override
-  final ClashConfig config;
-  @override
-  final ConfigExtendedParams params;
-
-  @override
-  String toString() {
-    return 'UpdateConfigParams(profileId: $profileId, config: $config, params: $params)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$UpdateConfigParamsImpl &&
-            (identical(other.profileId, profileId) ||
-                other.profileId == profileId) &&
-            (identical(other.config, config) || other.config == config) &&
-            (identical(other.params, params) || other.params == params));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, profileId, config, params);
-
-  /// Create a copy of UpdateConfigParams
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$UpdateConfigParamsImplCopyWith<_$UpdateConfigParamsImpl> get copyWith =>
-      __$$UpdateConfigParamsImplCopyWithImpl<_$UpdateConfigParamsImpl>(
-          this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$UpdateConfigParamsImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _UpdateConfigParams implements UpdateConfigParams {
-  const factory _UpdateConfigParams(
-      {@JsonKey(name: "profile-id") required final String profileId,
-      required final ClashConfig config,
-      required final ConfigExtendedParams params}) = _$UpdateConfigParamsImpl;
-
-  factory _UpdateConfigParams.fromJson(Map<String, dynamic> json) =
-      _$UpdateConfigParamsImpl.fromJson;
-
-  @override
-  @JsonKey(name: "profile-id")
-  String get profileId;
-  @override
-  ClashConfig get config;
-  @override
-  ConfigExtendedParams get params;
-
-  /// Create a copy of UpdateConfigParams
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$UpdateConfigParamsImplCopyWith<_$UpdateConfigParamsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -2361,515 +2482,6 @@ abstract class _Now implements Now {
       throw _privateConstructorUsedError;
 }
 
-ProcessData _$ProcessDataFromJson(Map<String, dynamic> json) {
-  return _ProcessData.fromJson(json);
-}
-
-/// @nodoc
-mixin _$ProcessData {
-  String get id => throw _privateConstructorUsedError;
-  Metadata get metadata => throw _privateConstructorUsedError;
-
-  /// Serializes this ProcessData to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ProcessData
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $ProcessDataCopyWith<ProcessData> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ProcessDataCopyWith<$Res> {
-  factory $ProcessDataCopyWith(
-          ProcessData value, $Res Function(ProcessData) then) =
-      _$ProcessDataCopyWithImpl<$Res, ProcessData>;
-  @useResult
-  $Res call({String id, Metadata metadata});
-
-  $MetadataCopyWith<$Res> get metadata;
-}
-
-/// @nodoc
-class _$ProcessDataCopyWithImpl<$Res, $Val extends ProcessData>
-    implements $ProcessDataCopyWith<$Res> {
-  _$ProcessDataCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of ProcessData
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? metadata = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Metadata,
-    ) as $Val);
-  }
-
-  /// Create a copy of ProcessData
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $MetadataCopyWith<$Res> get metadata {
-    return $MetadataCopyWith<$Res>(_value.metadata, (value) {
-      return _then(_value.copyWith(metadata: value) as $Val);
-    });
-  }
-}
-
-/// @nodoc
-abstract class _$$ProcessDataImplCopyWith<$Res>
-    implements $ProcessDataCopyWith<$Res> {
-  factory _$$ProcessDataImplCopyWith(
-          _$ProcessDataImpl value, $Res Function(_$ProcessDataImpl) then) =
-      __$$ProcessDataImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String id, Metadata metadata});
-
-  @override
-  $MetadataCopyWith<$Res> get metadata;
-}
-
-/// @nodoc
-class __$$ProcessDataImplCopyWithImpl<$Res>
-    extends _$ProcessDataCopyWithImpl<$Res, _$ProcessDataImpl>
-    implements _$$ProcessDataImplCopyWith<$Res> {
-  __$$ProcessDataImplCopyWithImpl(
-      _$ProcessDataImpl _value, $Res Function(_$ProcessDataImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of ProcessData
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? metadata = null,
-  }) {
-    return _then(_$ProcessDataImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Metadata,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$ProcessDataImpl implements _ProcessData {
-  const _$ProcessDataImpl({required this.id, required this.metadata});
-
-  factory _$ProcessDataImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProcessDataImplFromJson(json);
-
-  @override
-  final String id;
-  @override
-  final Metadata metadata;
-
-  @override
-  String toString() {
-    return 'ProcessData(id: $id, metadata: $metadata)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ProcessDataImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.metadata, metadata) ||
-                other.metadata == metadata));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, id, metadata);
-
-  /// Create a copy of ProcessData
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ProcessDataImplCopyWith<_$ProcessDataImpl> get copyWith =>
-      __$$ProcessDataImplCopyWithImpl<_$ProcessDataImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ProcessDataImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _ProcessData implements ProcessData {
-  const factory _ProcessData(
-      {required final String id,
-      required final Metadata metadata}) = _$ProcessDataImpl;
-
-  factory _ProcessData.fromJson(Map<String, dynamic> json) =
-      _$ProcessDataImpl.fromJson;
-
-  @override
-  String get id;
-  @override
-  Metadata get metadata;
-
-  /// Create a copy of ProcessData
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProcessDataImplCopyWith<_$ProcessDataImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-Fd _$FdFromJson(Map<String, dynamic> json) {
-  return _Fd.fromJson(json);
-}
-
-/// @nodoc
-mixin _$Fd {
-  String get id => throw _privateConstructorUsedError;
-  int get value => throw _privateConstructorUsedError;
-
-  /// Serializes this Fd to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Fd
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $FdCopyWith<Fd> get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $FdCopyWith<$Res> {
-  factory $FdCopyWith(Fd value, $Res Function(Fd) then) =
-      _$FdCopyWithImpl<$Res, Fd>;
-  @useResult
-  $Res call({String id, int value});
-}
-
-/// @nodoc
-class _$FdCopyWithImpl<$Res, $Val extends Fd> implements $FdCopyWith<$Res> {
-  _$FdCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of Fd
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? value = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      value: null == value
-          ? _value.value
-          : value // ignore: cast_nullable_to_non_nullable
-              as int,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$FdImplCopyWith<$Res> implements $FdCopyWith<$Res> {
-  factory _$$FdImplCopyWith(_$FdImpl value, $Res Function(_$FdImpl) then) =
-      __$$FdImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String id, int value});
-}
-
-/// @nodoc
-class __$$FdImplCopyWithImpl<$Res> extends _$FdCopyWithImpl<$Res, _$FdImpl>
-    implements _$$FdImplCopyWith<$Res> {
-  __$$FdImplCopyWithImpl(_$FdImpl _value, $Res Function(_$FdImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of Fd
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? value = null,
-  }) {
-    return _then(_$FdImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      value: null == value
-          ? _value.value
-          : value // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$FdImpl implements _Fd {
-  const _$FdImpl({required this.id, required this.value});
-
-  factory _$FdImpl.fromJson(Map<String, dynamic> json) =>
-      _$$FdImplFromJson(json);
-
-  @override
-  final String id;
-  @override
-  final int value;
-
-  @override
-  String toString() {
-    return 'Fd(id: $id, value: $value)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$FdImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.value, value) || other.value == value));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, id, value);
-
-  /// Create a copy of Fd
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$FdImplCopyWith<_$FdImpl> get copyWith =>
-      __$$FdImplCopyWithImpl<_$FdImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$FdImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _Fd implements Fd {
-  const factory _Fd({required final String id, required final int value}) =
-      _$FdImpl;
-
-  factory _Fd.fromJson(Map<String, dynamic> json) = _$FdImpl.fromJson;
-
-  @override
-  String get id;
-  @override
-  int get value;
-
-  /// Create a copy of Fd
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$FdImplCopyWith<_$FdImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-ProcessMapItem _$ProcessMapItemFromJson(Map<String, dynamic> json) {
-  return _ProcessMapItem.fromJson(json);
-}
-
-/// @nodoc
-mixin _$ProcessMapItem {
-  String get id => throw _privateConstructorUsedError;
-  String get value => throw _privateConstructorUsedError;
-
-  /// Serializes this ProcessMapItem to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ProcessMapItem
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $ProcessMapItemCopyWith<ProcessMapItem> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ProcessMapItemCopyWith<$Res> {
-  factory $ProcessMapItemCopyWith(
-          ProcessMapItem value, $Res Function(ProcessMapItem) then) =
-      _$ProcessMapItemCopyWithImpl<$Res, ProcessMapItem>;
-  @useResult
-  $Res call({String id, String value});
-}
-
-/// @nodoc
-class _$ProcessMapItemCopyWithImpl<$Res, $Val extends ProcessMapItem>
-    implements $ProcessMapItemCopyWith<$Res> {
-  _$ProcessMapItemCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of ProcessMapItem
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? value = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      value: null == value
-          ? _value.value
-          : value // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$ProcessMapItemImplCopyWith<$Res>
-    implements $ProcessMapItemCopyWith<$Res> {
-  factory _$$ProcessMapItemImplCopyWith(_$ProcessMapItemImpl value,
-          $Res Function(_$ProcessMapItemImpl) then) =
-      __$$ProcessMapItemImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String id, String value});
-}
-
-/// @nodoc
-class __$$ProcessMapItemImplCopyWithImpl<$Res>
-    extends _$ProcessMapItemCopyWithImpl<$Res, _$ProcessMapItemImpl>
-    implements _$$ProcessMapItemImplCopyWith<$Res> {
-  __$$ProcessMapItemImplCopyWithImpl(
-      _$ProcessMapItemImpl _value, $Res Function(_$ProcessMapItemImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of ProcessMapItem
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? value = null,
-  }) {
-    return _then(_$ProcessMapItemImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      value: null == value
-          ? _value.value
-          : value // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$ProcessMapItemImpl implements _ProcessMapItem {
-  const _$ProcessMapItemImpl({required this.id, required this.value});
-
-  factory _$ProcessMapItemImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProcessMapItemImplFromJson(json);
-
-  @override
-  final String id;
-  @override
-  final String value;
-
-  @override
-  String toString() {
-    return 'ProcessMapItem(id: $id, value: $value)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ProcessMapItemImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.value, value) || other.value == value));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, id, value);
-
-  /// Create a copy of ProcessMapItem
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ProcessMapItemImplCopyWith<_$ProcessMapItemImpl> get copyWith =>
-      __$$ProcessMapItemImplCopyWithImpl<_$ProcessMapItemImpl>(
-          this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ProcessMapItemImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _ProcessMapItem implements ProcessMapItem {
-  const factory _ProcessMapItem(
-      {required final String id,
-      required final String value}) = _$ProcessMapItemImpl;
-
-  factory _ProcessMapItem.fromJson(Map<String, dynamic> json) =
-      _$ProcessMapItemImpl.fromJson;
-
-  @override
-  String get id;
-  @override
-  String get value;
-
-  /// Create a copy of ProcessMapItem
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProcessMapItemImplCopyWith<_$ProcessMapItemImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
 ProviderSubscriptionInfo _$ProviderSubscriptionInfoFromJson(
     Map<String, dynamic> json) {
   return _ProviderSubscriptionInfo.fromJson(json);
@@ -3436,280 +3048,6 @@ abstract class _ExternalProvider implements ExternalProvider {
       throw _privateConstructorUsedError;
 }
 
-TunProps _$TunPropsFromJson(Map<String, dynamic> json) {
-  return _TunProps.fromJson(json);
-}
-
-/// @nodoc
-mixin _$TunProps {
-  int get fd => throw _privateConstructorUsedError;
-  String get gateway => throw _privateConstructorUsedError;
-  String get gateway6 => throw _privateConstructorUsedError;
-  String get portal => throw _privateConstructorUsedError;
-  String get portal6 => throw _privateConstructorUsedError;
-  String get dns => throw _privateConstructorUsedError;
-  String get dns6 => throw _privateConstructorUsedError;
-
-  /// Serializes this TunProps to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TunProps
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $TunPropsCopyWith<TunProps> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $TunPropsCopyWith<$Res> {
-  factory $TunPropsCopyWith(TunProps value, $Res Function(TunProps) then) =
-      _$TunPropsCopyWithImpl<$Res, TunProps>;
-  @useResult
-  $Res call(
-      {int fd,
-      String gateway,
-      String gateway6,
-      String portal,
-      String portal6,
-      String dns,
-      String dns6});
-}
-
-/// @nodoc
-class _$TunPropsCopyWithImpl<$Res, $Val extends TunProps>
-    implements $TunPropsCopyWith<$Res> {
-  _$TunPropsCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of TunProps
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? fd = null,
-    Object? gateway = null,
-    Object? gateway6 = null,
-    Object? portal = null,
-    Object? portal6 = null,
-    Object? dns = null,
-    Object? dns6 = null,
-  }) {
-    return _then(_value.copyWith(
-      fd: null == fd
-          ? _value.fd
-          : fd // ignore: cast_nullable_to_non_nullable
-              as int,
-      gateway: null == gateway
-          ? _value.gateway
-          : gateway // ignore: cast_nullable_to_non_nullable
-              as String,
-      gateway6: null == gateway6
-          ? _value.gateway6
-          : gateway6 // ignore: cast_nullable_to_non_nullable
-              as String,
-      portal: null == portal
-          ? _value.portal
-          : portal // ignore: cast_nullable_to_non_nullable
-              as String,
-      portal6: null == portal6
-          ? _value.portal6
-          : portal6 // ignore: cast_nullable_to_non_nullable
-              as String,
-      dns: null == dns
-          ? _value.dns
-          : dns // ignore: cast_nullable_to_non_nullable
-              as String,
-      dns6: null == dns6
-          ? _value.dns6
-          : dns6 // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$TunPropsImplCopyWith<$Res>
-    implements $TunPropsCopyWith<$Res> {
-  factory _$$TunPropsImplCopyWith(
-          _$TunPropsImpl value, $Res Function(_$TunPropsImpl) then) =
-      __$$TunPropsImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {int fd,
-      String gateway,
-      String gateway6,
-      String portal,
-      String portal6,
-      String dns,
-      String dns6});
-}
-
-/// @nodoc
-class __$$TunPropsImplCopyWithImpl<$Res>
-    extends _$TunPropsCopyWithImpl<$Res, _$TunPropsImpl>
-    implements _$$TunPropsImplCopyWith<$Res> {
-  __$$TunPropsImplCopyWithImpl(
-      _$TunPropsImpl _value, $Res Function(_$TunPropsImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of TunProps
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? fd = null,
-    Object? gateway = null,
-    Object? gateway6 = null,
-    Object? portal = null,
-    Object? portal6 = null,
-    Object? dns = null,
-    Object? dns6 = null,
-  }) {
-    return _then(_$TunPropsImpl(
-      fd: null == fd
-          ? _value.fd
-          : fd // ignore: cast_nullable_to_non_nullable
-              as int,
-      gateway: null == gateway
-          ? _value.gateway
-          : gateway // ignore: cast_nullable_to_non_nullable
-              as String,
-      gateway6: null == gateway6
-          ? _value.gateway6
-          : gateway6 // ignore: cast_nullable_to_non_nullable
-              as String,
-      portal: null == portal
-          ? _value.portal
-          : portal // ignore: cast_nullable_to_non_nullable
-              as String,
-      portal6: null == portal6
-          ? _value.portal6
-          : portal6 // ignore: cast_nullable_to_non_nullable
-              as String,
-      dns: null == dns
-          ? _value.dns
-          : dns // ignore: cast_nullable_to_non_nullable
-              as String,
-      dns6: null == dns6
-          ? _value.dns6
-          : dns6 // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$TunPropsImpl implements _TunProps {
-  const _$TunPropsImpl(
-      {required this.fd,
-      required this.gateway,
-      required this.gateway6,
-      required this.portal,
-      required this.portal6,
-      required this.dns,
-      required this.dns6});
-
-  factory _$TunPropsImpl.fromJson(Map<String, dynamic> json) =>
-      _$$TunPropsImplFromJson(json);
-
-  @override
-  final int fd;
-  @override
-  final String gateway;
-  @override
-  final String gateway6;
-  @override
-  final String portal;
-  @override
-  final String portal6;
-  @override
-  final String dns;
-  @override
-  final String dns6;
-
-  @override
-  String toString() {
-    return 'TunProps(fd: $fd, gateway: $gateway, gateway6: $gateway6, portal: $portal, portal6: $portal6, dns: $dns, dns6: $dns6)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$TunPropsImpl &&
-            (identical(other.fd, fd) || other.fd == fd) &&
-            (identical(other.gateway, gateway) || other.gateway == gateway) &&
-            (identical(other.gateway6, gateway6) ||
-                other.gateway6 == gateway6) &&
-            (identical(other.portal, portal) || other.portal == portal) &&
-            (identical(other.portal6, portal6) || other.portal6 == portal6) &&
-            (identical(other.dns, dns) || other.dns == dns) &&
-            (identical(other.dns6, dns6) || other.dns6 == dns6));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(
-      runtimeType, fd, gateway, gateway6, portal, portal6, dns, dns6);
-
-  /// Create a copy of TunProps
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$TunPropsImplCopyWith<_$TunPropsImpl> get copyWith =>
-      __$$TunPropsImplCopyWithImpl<_$TunPropsImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$TunPropsImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _TunProps implements TunProps {
-  const factory _TunProps(
-      {required final int fd,
-      required final String gateway,
-      required final String gateway6,
-      required final String portal,
-      required final String portal6,
-      required final String dns,
-      required final String dns6}) = _$TunPropsImpl;
-
-  factory _TunProps.fromJson(Map<String, dynamic> json) =
-      _$TunPropsImpl.fromJson;
-
-  @override
-  int get fd;
-  @override
-  String get gateway;
-  @override
-  String get gateway6;
-  @override
-  String get portal;
-  @override
-  String get portal6;
-  @override
-  String get dns;
-  @override
-  String get dns6;
-
-  /// Create a copy of TunProps
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$TunPropsImplCopyWith<_$TunPropsImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
 Action _$ActionFromJson(Map<String, dynamic> json) {
   return _Action.fromJson(json);
 }
@@ -3718,8 +3056,6 @@ Action _$ActionFromJson(Map<String, dynamic> json) {
 mixin _$Action {
   ActionMethod get method => throw _privateConstructorUsedError;
   dynamic get data => throw _privateConstructorUsedError;
-  @JsonKey(name: "default-value")
-  dynamic get defaultValue => throw _privateConstructorUsedError;
   String get id => throw _privateConstructorUsedError;
 
   /// Serializes this Action to a JSON map.
@@ -3736,11 +3072,7 @@ abstract class $ActionCopyWith<$Res> {
   factory $ActionCopyWith(Action value, $Res Function(Action) then) =
       _$ActionCopyWithImpl<$Res, Action>;
   @useResult
-  $Res call(
-      {ActionMethod method,
-      dynamic data,
-      @JsonKey(name: "default-value") dynamic defaultValue,
-      String id});
+  $Res call({ActionMethod method, dynamic data, String id});
 }
 
 /// @nodoc
@@ -3760,7 +3092,6 @@ class _$ActionCopyWithImpl<$Res, $Val extends Action>
   $Res call({
     Object? method = null,
     Object? data = freezed,
-    Object? defaultValue = freezed,
     Object? id = null,
   }) {
     return _then(_value.copyWith(
@@ -3771,10 +3102,6 @@ class _$ActionCopyWithImpl<$Res, $Val extends Action>
       data: freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
-              as dynamic,
-      defaultValue: freezed == defaultValue
-          ? _value.defaultValue
-          : defaultValue // ignore: cast_nullable_to_non_nullable
               as dynamic,
       id: null == id
           ? _value.id
@@ -3791,11 +3118,7 @@ abstract class _$$ActionImplCopyWith<$Res> implements $ActionCopyWith<$Res> {
       __$$ActionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {ActionMethod method,
-      dynamic data,
-      @JsonKey(name: "default-value") dynamic defaultValue,
-      String id});
+  $Res call({ActionMethod method, dynamic data, String id});
 }
 
 /// @nodoc
@@ -3813,7 +3136,6 @@ class __$$ActionImplCopyWithImpl<$Res>
   $Res call({
     Object? method = null,
     Object? data = freezed,
-    Object? defaultValue = freezed,
     Object? id = null,
   }) {
     return _then(_$ActionImpl(
@@ -3824,10 +3146,6 @@ class __$$ActionImplCopyWithImpl<$Res>
       data: freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
-              as dynamic,
-      defaultValue: freezed == defaultValue
-          ? _value.defaultValue
-          : defaultValue // ignore: cast_nullable_to_non_nullable
               as dynamic,
       id: null == id
           ? _value.id
@@ -3841,10 +3159,7 @@ class __$$ActionImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ActionImpl implements _Action {
   const _$ActionImpl(
-      {required this.method,
-      required this.data,
-      @JsonKey(name: "default-value") required this.defaultValue,
-      required this.id});
+      {required this.method, required this.data, required this.id});
 
   factory _$ActionImpl.fromJson(Map<String, dynamic> json) =>
       _$$ActionImplFromJson(json);
@@ -3854,14 +3169,11 @@ class _$ActionImpl implements _Action {
   @override
   final dynamic data;
   @override
-  @JsonKey(name: "default-value")
-  final dynamic defaultValue;
-  @override
   final String id;
 
   @override
   String toString() {
-    return 'Action(method: $method, data: $data, defaultValue: $defaultValue, id: $id)';
+    return 'Action(method: $method, data: $data, id: $id)';
   }
 
   @override
@@ -3871,19 +3183,13 @@ class _$ActionImpl implements _Action {
             other is _$ActionImpl &&
             (identical(other.method, method) || other.method == method) &&
             const DeepCollectionEquality().equals(other.data, data) &&
-            const DeepCollectionEquality()
-                .equals(other.defaultValue, defaultValue) &&
             (identical(other.id, id) || other.id == id));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      method,
-      const DeepCollectionEquality().hash(data),
-      const DeepCollectionEquality().hash(defaultValue),
-      id);
+      runtimeType, method, const DeepCollectionEquality().hash(data), id);
 
   /// Create a copy of Action
   /// with the given fields replaced by the non-null parameter values.
@@ -3905,7 +3211,6 @@ abstract class _Action implements Action {
   const factory _Action(
       {required final ActionMethod method,
       required final dynamic data,
-      @JsonKey(name: "default-value") required final dynamic defaultValue,
       required final String id}) = _$ActionImpl;
 
   factory _Action.fromJson(Map<String, dynamic> json) = _$ActionImpl.fromJson;
@@ -3914,9 +3219,6 @@ abstract class _Action implements Action {
   ActionMethod get method;
   @override
   dynamic get data;
-  @override
-  @JsonKey(name: "default-value")
-  dynamic get defaultValue;
   @override
   String get id;
 
@@ -3937,6 +3239,7 @@ mixin _$ActionResult {
   ActionMethod get method => throw _privateConstructorUsedError;
   dynamic get data => throw _privateConstructorUsedError;
   String? get id => throw _privateConstructorUsedError;
+  ResultType get code => throw _privateConstructorUsedError;
 
   /// Serializes this ActionResult to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -3954,7 +3257,7 @@ abstract class $ActionResultCopyWith<$Res> {
           ActionResult value, $Res Function(ActionResult) then) =
       _$ActionResultCopyWithImpl<$Res, ActionResult>;
   @useResult
-  $Res call({ActionMethod method, dynamic data, String? id});
+  $Res call({ActionMethod method, dynamic data, String? id, ResultType code});
 }
 
 /// @nodoc
@@ -3975,6 +3278,7 @@ class _$ActionResultCopyWithImpl<$Res, $Val extends ActionResult>
     Object? method = null,
     Object? data = freezed,
     Object? id = freezed,
+    Object? code = null,
   }) {
     return _then(_value.copyWith(
       method: null == method
@@ -3989,6 +3293,10 @@ class _$ActionResultCopyWithImpl<$Res, $Val extends ActionResult>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String?,
+      code: null == code
+          ? _value.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as ResultType,
     ) as $Val);
   }
 }
@@ -4001,7 +3309,7 @@ abstract class _$$ActionResultImplCopyWith<$Res>
       __$$ActionResultImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({ActionMethod method, dynamic data, String? id});
+  $Res call({ActionMethod method, dynamic data, String? id, ResultType code});
 }
 
 /// @nodoc
@@ -4020,6 +3328,7 @@ class __$$ActionResultImplCopyWithImpl<$Res>
     Object? method = null,
     Object? data = freezed,
     Object? id = freezed,
+    Object? code = null,
   }) {
     return _then(_$ActionResultImpl(
       method: null == method
@@ -4034,6 +3343,10 @@ class __$$ActionResultImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String?,
+      code: null == code
+          ? _value.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as ResultType,
     ));
   }
 }
@@ -4041,7 +3354,11 @@ class __$$ActionResultImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ActionResultImpl implements _ActionResult {
-  const _$ActionResultImpl({required this.method, required this.data, this.id});
+  const _$ActionResultImpl(
+      {required this.method,
+      required this.data,
+      this.id,
+      this.code = ResultType.success});
 
   factory _$ActionResultImpl.fromJson(Map<String, dynamic> json) =>
       _$$ActionResultImplFromJson(json);
@@ -4052,10 +3369,13 @@ class _$ActionResultImpl implements _ActionResult {
   final dynamic data;
   @override
   final String? id;
+  @override
+  @JsonKey()
+  final ResultType code;
 
   @override
   String toString() {
-    return 'ActionResult(method: $method, data: $data, id: $id)';
+    return 'ActionResult(method: $method, data: $data, id: $id, code: $code)';
   }
 
   @override
@@ -4065,13 +3385,14 @@ class _$ActionResultImpl implements _ActionResult {
             other is _$ActionResultImpl &&
             (identical(other.method, method) || other.method == method) &&
             const DeepCollectionEquality().equals(other.data, data) &&
-            (identical(other.id, id) || other.id == id));
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.code, code) || other.code == code));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, method, const DeepCollectionEquality().hash(data), id);
+      runtimeType, method, const DeepCollectionEquality().hash(data), id, code);
 
   /// Create a copy of ActionResult
   /// with the given fields replaced by the non-null parameter values.
@@ -4093,7 +3414,8 @@ abstract class _ActionResult implements ActionResult {
   const factory _ActionResult(
       {required final ActionMethod method,
       required final dynamic data,
-      final String? id}) = _$ActionResultImpl;
+      final String? id,
+      final ResultType code}) = _$ActionResultImpl;
 
   factory _ActionResult.fromJson(Map<String, dynamic> json) =
       _$ActionResultImpl.fromJson;
@@ -4104,6 +3426,8 @@ abstract class _ActionResult implements ActionResult {
   dynamic get data;
   @override
   String? get id;
+  @override
+  ResultType get code;
 
   /// Create a copy of ActionResult
   /// with the given fields replaced by the non-null parameter values.

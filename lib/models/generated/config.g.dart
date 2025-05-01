@@ -160,7 +160,8 @@ _$NetworkPropsImpl _$$NetworkPropsImplFromJson(Map<String, dynamic> json) =>
               .toList() ??
           defaultBypassDomain,
       routeMode: $enumDecodeNullable(_$RouteModeEnumMap, json['routeMode']) ??
-          RouteMode.bypassPrivate,
+          RouteMode.config,
+      autoSetSystemDns: json['autoSetSystemDns'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$$NetworkPropsImplToJson(_$NetworkPropsImpl instance) =>
@@ -168,6 +169,7 @@ Map<String, dynamic> _$$NetworkPropsImplToJson(_$NetworkPropsImpl instance) =>
       'systemProxy': instance.systemProxy,
       'bypassDomain': instance.bypassDomain,
       'routeMode': _$RouteModeEnumMap[instance.routeMode]!,
+      'autoSetSystemDns': instance.autoSetSystemDns,
     };
 
 const _$RouteModeEnumMap = {
@@ -292,6 +294,21 @@ const _$DynamicSchemeVariantEnumMap = {
   DynamicSchemeVariant.fruitSalad: 'fruitSalad',
 };
 
+_$ScriptPropsImpl _$$ScriptPropsImplFromJson(Map<String, dynamic> json) =>
+    _$ScriptPropsImpl(
+      currentId: json['currentId'] as String?,
+      scripts: (json['scripts'] as List<dynamic>?)
+              ?.map((e) => Script.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+
+Map<String, dynamic> _$$ScriptPropsImplToJson(_$ScriptPropsImpl instance) =>
+    <String, dynamic>{
+      'currentId': instance.currentId,
+      'scripts': instance.scripts,
+    };
+
 _$ConfigImpl _$$ConfigImplFromJson(Map<String, dynamic> json) => _$ConfigImpl(
       appSetting: json['appSetting'] == null
           ? defaultAppSettingProps
@@ -330,6 +347,9 @@ _$ConfigImpl _$$ConfigImplFromJson(Map<String, dynamic> json) => _$ConfigImpl(
           ? defaultClashConfig
           : ClashConfig.fromJson(
               json['patchClashConfig'] as Map<String, dynamic>),
+      scriptProps: json['scriptProps'] == null
+          ? const ScriptProps()
+          : ScriptProps.fromJson(json['scriptProps'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$ConfigImplToJson(_$ConfigImpl instance) =>
@@ -346,4 +366,5 @@ Map<String, dynamic> _$$ConfigImplToJson(_$ConfigImpl instance) =>
       'proxiesStyle': instance.proxiesStyle,
       'windowProps': instance.windowProps,
       'patchClashConfig': instance.patchClashConfig,
+      'scriptProps': instance.scriptProps,
     };

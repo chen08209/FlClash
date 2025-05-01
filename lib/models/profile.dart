@@ -11,7 +11,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'clash_config.dart';
 
 part 'generated/profile.freezed.dart';
-
 part 'generated/profile.g.dart';
 
 typedef SelectedMap = Map<String, String>;
@@ -150,12 +149,12 @@ extension ProfileExtension on Profile {
 
   Future<bool> check() async {
     final profilePath = await appPath.getProfilePath(id);
-    return await File(profilePath!).exists();
+    return await File(profilePath).exists();
   }
 
   Future<File> getFile() async {
     final path = await appPath.getProfilePath(id);
-    final file = File(path!);
+    final file = File(path);
     final isExists = await file.exists();
     if (!isExists) {
       await file.create(recursive: true);

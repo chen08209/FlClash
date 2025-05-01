@@ -4,7 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 class ConnectivityManager extends StatefulWidget {
-  final VoidCallback? onConnectivityChanged;
+  final Function(List<ConnectivityResult> results)? onConnectivityChanged;
   final Widget child;
 
   const ConnectivityManager({
@@ -23,9 +23,9 @@ class _ConnectivityManagerState extends State<ConnectivityManager> {
   @override
   void initState() {
     super.initState();
-    subscription = Connectivity().onConnectivityChanged.listen((_) async {
+    subscription = Connectivity().onConnectivityChanged.listen((results) async {
       if (widget.onConnectivityChanged != null) {
-        widget.onConnectivityChanged!();
+        widget.onConnectivityChanged!(results);
       }
     });
   }

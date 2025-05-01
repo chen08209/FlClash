@@ -6,6 +6,22 @@ part of '../state.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+String _$configStateHash() => r'1f4ea3cc8f6461ba734e7e0c5d7295bfa4fd5afb';
+
+/// See also [configState].
+@ProviderFor(configState)
+final configStateProvider = AutoDisposeProvider<Config>.internal(
+  configState,
+  name: r'configStateProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$configStateHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ConfigStateRef = AutoDisposeProviderRef<Config>;
 String _$currentGroupsStateHash() =>
     r'6222c006e1970e7435268d32903b9019cf1a4351';
 
@@ -78,23 +94,22 @@ final coreStateProvider = AutoDisposeProvider<CoreState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CoreStateRef = AutoDisposeProviderRef<CoreState>;
-String _$clashConfigStateHash() => r'fbbcd7221b0b9b18db523e59c9021e8e56e119ca';
+String _$updateParamsHash() => r'79fd7a5a8650fabac3a2ca7ce903c1d9eb363ed2';
 
-/// See also [clashConfigState].
-@ProviderFor(clashConfigState)
-final clashConfigStateProvider = AutoDisposeProvider<ClashConfigState>.internal(
-  clashConfigState,
-  name: r'clashConfigStateProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$clashConfigStateHash,
+/// See also [updateParams].
+@ProviderFor(updateParams)
+final updateParamsProvider = AutoDisposeProvider<UpdateParams>.internal(
+  updateParams,
+  name: r'updateParamsProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$updateParamsHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef ClashConfigStateRef = AutoDisposeProviderRef<ClashConfigState>;
+typedef UpdateParamsRef = AutoDisposeProviderRef<UpdateParams>;
 String _$proxyStateHash() => r'22478fb593aaca11dfe2cf64472013190475a5bc';
 
 /// See also [proxyState].
@@ -236,7 +251,7 @@ final profilesSelectorStateProvider =
 typedef ProfilesSelectorStateRef
     = AutoDisposeProviderRef<ProfilesSelectorState>;
 String _$proxiesListSelectorStateHash() =>
-    r'0e63ea2fb141e086156a2ed8452584e2375c5aa5';
+    r'5e6bbe1a0cecbdea6c9c62e6ccf314968deac264';
 
 /// See also [proxiesListSelectorState].
 @ProviderFor(proxiesListSelectorState)
@@ -292,7 +307,7 @@ final groupNamesStateProvider = AutoDisposeProvider<GroupNamesState>.internal(
 // ignore: unused_element
 typedef GroupNamesStateRef = AutoDisposeProviderRef<GroupNamesState>;
 String _$proxyGroupSelectorStateHash() =>
-    r'5bc86d13286c6c859f0b874235a281122cc612ba';
+    r'27d42af16ed77f2d22017edbb34ab60f45566be3';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -1781,6 +1796,22 @@ final layoutChangeProvider = AutoDisposeProvider<VM2?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LayoutChangeRef = AutoDisposeProviderRef<VM2?>;
+String _$checkIpHash() => r'07ebf8d032349e2b3adda483e68b1936ffbed68d';
+
+/// See also [checkIp].
+@ProviderFor(checkIp)
+final checkIpProvider = AutoDisposeProvider<VM2<int, bool>>.internal(
+  checkIp,
+  name: r'checkIpProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$checkIpHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CheckIpRef = AutoDisposeProviderRef<VM2<int, bool>>;
 String _$genColorSchemeHash() => r'b18f15c938a8132ee4ed02cdfc02f3b9f01724e2';
 
 /// See also [genColorScheme].
@@ -1944,8 +1975,44 @@ class _GenColorSchemeProviderElement
   bool get ignoreConfig => (origin as GenColorSchemeProvider).ignoreConfig;
 }
 
+String _$needSetupHash() => r'3668e8dc9f40a9bea45c94321804eb3afa0e7c51';
+
+/// See also [needSetup].
+@ProviderFor(needSetup)
+final needSetupProvider =
+    AutoDisposeProvider<VM3<String?, String?, Dns?>>.internal(
+  needSetup,
+  name: r'needSetupProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$needSetupHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef NeedSetupRef = AutoDisposeProviderRef<VM3<String?, String?, Dns?>>;
+String _$autoSetSystemDnsStateHash() =>
+    r'2e0976e079100325b1ca797285df48a94c2c066c';
+
+/// See also [autoSetSystemDnsState].
+@ProviderFor(autoSetSystemDnsState)
+final autoSetSystemDnsStateProvider =
+    AutoDisposeProvider<VM2<bool, bool>>.internal(
+  autoSetSystemDnsState,
+  name: r'autoSetSystemDnsStateProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$autoSetSystemDnsStateHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AutoSetSystemDnsStateRef = AutoDisposeProviderRef<VM2<bool, bool>>;
 String _$profileOverrideStateHash() =>
-    r'16d7c75849ed077d60553e5d2bba4ed54b307971';
+    r'fa26570a355ab39e27b1f93d1d2f358717065592';
 
 /// See also [ProfileOverrideState].
 @ProviderFor(ProfileOverrideState)

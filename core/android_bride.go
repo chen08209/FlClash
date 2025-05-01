@@ -43,13 +43,13 @@ var (
 	}
 )
 
-func protect(callback unsafe.Pointer, fd int) {
+func Protect(callback unsafe.Pointer, fd int) {
 	if globalCallbacks.protectFunc != nil {
 		C.protect(globalCallbacks.protectFunc, callback, C.int(fd))
 	}
 }
 
-func resolveProcess(callback unsafe.Pointer, protocol int, source, target string, uid int) string {
+func ResolveProcess(callback unsafe.Pointer, protocol int, source, target string, uid int) string {
 	if globalCallbacks.resolveProcessFunc == nil {
 		return ""
 	}

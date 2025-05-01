@@ -32,7 +32,7 @@ class _ClashContainerState extends ConsumerState<ClashManager>
   void initState() {
     super.initState();
     clashMessage.addListener(this);
-    ref.listenManual(currentProfileIdProvider, (prev, next) {
+    ref.listenManual(needSetupProvider, (prev, next) {
       if (prev != next) {
         globalState.appController.handleChangeProfile();
       }
@@ -42,11 +42,22 @@ class _ClashContainerState extends ConsumerState<ClashManager>
         await clashCore.setState(next);
       }
     });
-    ref.listenManual(clashConfigStateProvider, (prev, next) {
+    ref.listenManual(updateParamsProvider, (prev, next) {
       if (prev != next) {
         globalState.appController.updateClashConfigDebounce();
       }
     });
+
+    ref.listenManual(
+      appSettingProvider.select((state) => state.openLogs),
+      (prev, next) {
+        if (next) {
+          clashCore.startLog();
+        } else {
+          clashCore.stopLog();
+        }
+      },
+    );
   }
 
   @override
@@ -61,7 +72,7 @@ class _ClashContainerState extends ConsumerState<ClashManager>
     final appController = globalState.appController;
     appController.setDelay(delay);
     debouncer.call(
-      DebounceTag.updateDelay,
+      FunctionTag.updateDelay,
       () async {
         await appController.updateGroupsDebounce();
       },

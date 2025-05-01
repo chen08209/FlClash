@@ -70,6 +70,22 @@ final viewHeightProvider = AutoDisposeProvider<double>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ViewHeightRef = AutoDisposeProviderRef<double>;
+String _$realTunEnableHash() => r'a4e995c86deca4c8307966470e69d93d64a40df6';
+
+/// See also [RealTunEnable].
+@ProviderFor(RealTunEnable)
+final realTunEnableProvider =
+    AutoDisposeNotifierProvider<RealTunEnable, bool>.internal(
+  RealTunEnable.new,
+  name: r'realTunEnableProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$realTunEnableHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$RealTunEnable = AutoDisposeNotifier<bool>;
 String _$logsHash() => r'56fb8aa9d62a97b026b749d204576a7384084737';
 
 /// See also [Logs].
@@ -276,6 +292,20 @@ final checkIpNumProvider =
 );
 
 typedef _$CheckIpNum = AutoDisposeNotifier<int>;
+String _$backBlockHash() => r'c0223e0776b72d3a8c8842fc32fdb5287353999f';
+
+/// See also [BackBlock].
+@ProviderFor(BackBlock)
+final backBlockProvider = AutoDisposeNotifierProvider<BackBlock, bool>.internal(
+  BackBlock.new,
+  name: r'backBlockProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$backBlockHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$BackBlock = AutoDisposeNotifier<bool>;
 String _$versionHash() => r'8c0ee019d20df3f112c38ae4dc4abd61148d3809';
 
 /// See also [Version].
@@ -321,19 +351,20 @@ final delayDataSourceProvider =
 );
 
 typedef _$DelayDataSource = AutoDisposeNotifier<DelayMap>;
-String _$needApplyHash() => r'62ff248d67b0525c6a55e556fbd29a2044e97766';
+String _$proxiesQueryHash() => r'9f3907e06534b6882684bec47ca3ba2988297e19';
 
-/// See also [NeedApply].
-@ProviderFor(NeedApply)
-final needApplyProvider = AutoDisposeNotifierProvider<NeedApply, bool>.internal(
-  NeedApply.new,
-  name: r'needApplyProvider',
+/// See also [ProxiesQuery].
+@ProviderFor(ProxiesQuery)
+final proxiesQueryProvider =
+    AutoDisposeNotifierProvider<ProxiesQuery, String>.internal(
+  ProxiesQuery.new,
+  name: r'proxiesQueryProvider',
   debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$needApplyHash,
+      const bool.fromEnvironment('dart.vm.product') ? null : _$proxiesQueryHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$NeedApply = AutoDisposeNotifier<bool>;
+typedef _$ProxiesQuery = AutoDisposeNotifier<String>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

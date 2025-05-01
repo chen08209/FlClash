@@ -15,7 +15,7 @@ class CommonPrint {
   log(String? text) {
     final payload = "[FlClash] $text";
     debugPrint(payload);
-    if (globalState.isService) {
+    if (!globalState.isInit) {
       return;
     }
     globalState.appController.addLog(

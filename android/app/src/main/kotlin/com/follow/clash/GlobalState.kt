@@ -7,6 +7,10 @@ import com.follow.clash.plugins.VpnPlugin
 import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -31,6 +35,15 @@ object GlobalState {
     fun getCurrentAppPlugin(): AppPlugin? {
         val currentEngine = if (flutterEngine != null) flutterEngine else serviceEngine
         return currentEngine?.plugins?.get(AppPlugin::class.java) as AppPlugin?
+    }
+
+    fun syncStatus() {
+        CoroutineScope(Dispatchers.Default).launch {
+            val status = getCurrentVPNPlugin()?.getStatus() ?: false
+            withContext(Dispatchers.Main){
+                runState.value = if (status) RunState.START else RunState.STOP
+            }
+        }
     }
 
     suspend fun getText(text: String): String {

@@ -16,7 +16,6 @@ import com.follow.clash.MainActivity
 import com.follow.clash.R
 import com.follow.clash.extensions.getActionPendingIntent
 import com.follow.clash.models.VpnOptions
-import io.flutter.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +53,7 @@ fun Service.createFlClashNotificationBuilder(): Deferred<NotificationCompat.Buil
                 this@createFlClashNotificationBuilder, GlobalState.NOTIFICATION_CHANNEL
             )
         ) {
-            setSmallIcon(R.drawable.ic_stat_name)
+            setSmallIcon(R.drawable.ic)
             setContentTitle("FlClash")
             setContentIntent(pendingIntent)
             setCategory(NotificationCompat.CATEGORY_SERVICE)
@@ -76,9 +75,8 @@ fun Service.startForeground(notification: Notification) {
         val manager = getSystemService(NotificationManager::class.java)
         var channel = manager?.getNotificationChannel(GlobalState.NOTIFICATION_CHANNEL)
         if (channel == null) {
-            Log.d("[FlClash]","createNotificationChannel===>")
             channel = NotificationChannel(
-                GlobalState.NOTIFICATION_CHANNEL, "FlClash", NotificationManager.IMPORTANCE_LOW
+                GlobalState.NOTIFICATION_CHANNEL, "SERVICE_CHANNEL", NotificationManager.IMPORTANCE_LOW
             )
             manager?.createNotificationChannel(channel)
         }

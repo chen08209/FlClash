@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:fl_clash/clash/message.dart';
 import 'package:fl_clash/common/common.dart';
@@ -19,11 +20,15 @@ mixin ClashInterface {
 
   FutureOr<String> validateConfig(String data);
 
+  FutureOr<Result> getConfig(String path);
+
   Future<String> asyncTestDelay(String url, String proxyName);
 
-  FutureOr<String> updateConfig(UpdateConfigParams updateConfigParams);
+  FutureOr<String> updateConfig(UpdateParams updateParams);
 
-  FutureOr<String> getProxies();
+  FutureOr<String> setupConfig(SetupParams setupParams);
+
+  FutureOr<Map> getProxies();
 
   FutureOr<String> changeProxy(ChangeProxyParams changeProxyParams);
 
@@ -66,18 +71,12 @@ mixin ClashInterface {
 
   FutureOr<bool> closeConnections();
 
-  FutureOr<String> getProfile(String id);
+  FutureOr<bool> resetConnections();
 
   Future<bool> setState(CoreState state);
 }
 
 mixin AndroidClashInterface {
-  Future<bool> setFdMap(int fd);
-
-  Future<bool> setProcessMap(ProcessMapItem item);
-
-  // Future<bool> stopTun();
-
   Future<bool> updateDns(String value);
 
   Future<AndroidVpnOptions?> getAndroidVpnOptions();
@@ -90,55 +89,23 @@ mixin AndroidClashInterface {
 abstract class ClashHandlerInterface with ClashInterface {
   Map<String, Completer> callbackCompleterMap = {};
 
-  Future<bool> nextHandleResult(ActionResult result, Completer? completer) =>
-      Future.value(false);
-
   handleResult(ActionResult result) async {
     final completer = callbackCompleterMap[result.id];
     try {
       switch (result.method) {
-        case ActionMethod.initClash:
-        case ActionMethod.shutdown:
-        case ActionMethod.getIsInit:
-        case ActionMethod.startListener:
-        case ActionMethod.resetTraffic:
-        case ActionMethod.closeConnections:
-        case ActionMethod.closeConnection:
-        case ActionMethod.stopListener:
-        case ActionMethod.setState:
-        case ActionMethod.crash:
-          completer?.complete(result.data as bool);
-          return;
-        case ActionMethod.changeProxy:
-        case ActionMethod.getProxies:
-        case ActionMethod.getTraffic:
-        case ActionMethod.getTotalTraffic:
-        case ActionMethod.asyncTestDelay:
-        case ActionMethod.getConnections:
-        case ActionMethod.getExternalProviders:
-        case ActionMethod.getExternalProvider:
-        case ActionMethod.validateConfig:
-        case ActionMethod.updateConfig:
-        case ActionMethod.updateGeoData:
-        case ActionMethod.updateExternalProvider:
-        case ActionMethod.sideLoadExternalProvider:
-        case ActionMethod.getCountryCode:
-        case ActionMethod.getMemory:
-          completer?.complete(result.data as String);
-          return;
         case ActionMethod.message:
-          clashMessage.controller.add(result.data as String);
+          clashMessage.controller.add(result.data);
           completer?.complete(true);
           return;
+        case ActionMethod.getConfig:
+          completer?.complete(result.toResult);
+          return;
         default:
-          final isHandled = await nextHandleResult(result, completer);
-          if (isHandled) {
-            return;
-          }
           completer?.complete(result.data);
+          return;
       }
-    } catch (_) {
-      commonPrint.log(result.id);
+    } catch (e) {
+      commonPrint.log("${result.id} error $e");
     }
   }
 
@@ -153,18 +120,21 @@ abstract class ClashHandlerInterface with ClashInterface {
     dynamic data,
     Duration? timeout,
     FutureOr<T> Function()? onTimeout,
+    T? defaultValue,
   }) async {
     final id = "${method.name}#${utils.id}";
 
     callbackCompleterMap[id] = Completer<T>();
 
-    dynamic defaultValue;
-
-    if (T == String) {
-      defaultValue = "";
-    }
-    if (T == bool) {
-      defaultValue = false;
+    dynamic mDefaultValue = defaultValue;
+    if (mDefaultValue == null) {
+      if (T == String) {
+        mDefaultValue = "";
+      } else if (T == bool) {
+        mDefaultValue = false;
+      } else if (T == Map) {
+        mDefaultValue = {};
+      }
     }
 
     sendMessage(
@@ -173,7 +143,6 @@ abstract class ClashHandlerInterface with ClashInterface {
           id: id,
           method: method,
           data: data,
-          defaultValue: defaultValue,
         ),
       ),
     );
@@ -185,7 +154,7 @@ abstract class ClashHandlerInterface with ClashInterface {
       },
       onTimeout: onTimeout ??
           () {
-            return defaultValue;
+            return mDefaultValue;
           },
       functionName: id,
     );
@@ -211,6 +180,7 @@ abstract class ClashHandlerInterface with ClashInterface {
   shutdown() async {
     return await invoke<bool>(
       method: ActionMethod.shutdown,
+      timeout: Duration(seconds: 1),
     );
   }
 
@@ -237,10 +207,31 @@ abstract class ClashHandlerInterface with ClashInterface {
   }
 
   @override
-  Future<String> updateConfig(UpdateConfigParams updateConfigParams) async {
+  Future<String> updateConfig(UpdateParams updateParams) async {
     return await invoke<String>(
       method: ActionMethod.updateConfig,
-      data: json.encode(updateConfigParams),
+      data: json.encode(updateParams),
+      timeout: Duration(minutes: 2),
+    );
+  }
+
+  @override
+  Future<Result> getConfig(String path) async {
+    final res = await invoke<Result>(
+      method: ActionMethod.getConfig,
+      data: path,
+      timeout: Duration(minutes: 2),
+      defaultValue: Result.success({}),
+    );
+    return res;
+  }
+
+  @override
+  Future<String> setupConfig(SetupParams setupParams) async {
+    final data = await Isolate.run(() => json.encode(setupParams));
+    return await invoke<String>(
+      method: ActionMethod.setupConfig,
+      data: data,
       timeout: Duration(minutes: 2),
     );
   }
@@ -253,8 +244,8 @@ abstract class ClashHandlerInterface with ClashInterface {
   }
 
   @override
-  Future<String> getProxies() {
-    return invoke<String>(
+  Future<Map> getProxies() {
+    return invoke<Map>(
       method: ActionMethod.getProxies,
       timeout: Duration(seconds: 5),
     );
@@ -329,17 +320,16 @@ abstract class ClashHandlerInterface with ClashInterface {
   }
 
   @override
-  Future<bool> closeConnection(String id) {
+  Future<bool> resetConnections() {
     return invoke<bool>(
-      method: ActionMethod.closeConnection,
-      data: id,
+      method: ActionMethod.resetConnections,
     );
   }
 
   @override
-  Future<String> getProfile(String id) {
-    return invoke<String>(
-      method: ActionMethod.getProfile,
+  Future<bool> closeConnection(String id) {
+    return invoke<bool>(
+      method: ActionMethod.closeConnection,
       data: id,
     );
   }

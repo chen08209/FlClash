@@ -20,7 +20,24 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'ru';
 
-  static String m0(count) => "Выбрано ${count} элементов";
+  static String m0(label) =>
+      "Вы уверены, что хотите удалить выбранные ${label}?";
+
+  static String m1(label) => "Вы уверены, что хотите удалить текущий ${label}?";
+
+  static String m2(label) => "${label} не может быть пустым";
+
+  static String m3(label) => "Текущий ${label} уже существует";
+
+  static String m4(label) => "Сейчас ${label} нет";
+
+  static String m5(label) => "${label} должно быть числом";
+
+  static String m6(label) => "${label} должен быть числом от 1024 до 49151";
+
+  static String m7(count) => "Выбрано ${count} элементов";
+
+  static String m8(label) => "${label} должен быть URL";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -36,9 +53,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Выбранные приложения будут исключены из VPN",
     ),
     "account": MessageLookupByLibrary.simpleMessage("Аккаунт"),
-    "accountTip": MessageLookupByLibrary.simpleMessage(
-      "Аккаунт не может быть пустым",
-    ),
     "action": MessageLookupByLibrary.simpleMessage("Действие"),
     "action_mode": MessageLookupByLibrary.simpleMessage("Переключить режим"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
@@ -106,6 +120,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoRunDesc": MessageLookupByLibrary.simpleMessage(
       "Автоматический запуск при открытии приложения",
     ),
+    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage(
+      "Автоматическая настройка системного DNS",
+    ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Автообновление"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал автообновления (минуты)",
@@ -155,9 +172,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardImport": MessageLookupByLibrary.simpleMessage(
       "Импорт из буфера обмена",
     ),
-    "colorExists": MessageLookupByLibrary.simpleMessage(
-      "Этот цвет уже существует",
-    ),
+    "color": MessageLookupByLibrary.simpleMessage("Цвет"),
     "colorSchemes": MessageLookupByLibrary.simpleMessage("Цветовые схемы"),
     "columns": MessageLookupByLibrary.simpleMessage("Столбцы"),
     "compatible": MessageLookupByLibrary.simpleMessage("Режим совместимости"),
@@ -172,9 +187,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "connectivity": MessageLookupByLibrary.simpleMessage("Связь："),
     "contactMe": MessageLookupByLibrary.simpleMessage("Свяжитесь со мной"),
     "content": MessageLookupByLibrary.simpleMessage("Содержание"),
-    "contentEmptyTip": MessageLookupByLibrary.simpleMessage(
-      "Содержание не может быть пустым",
-    ),
     "contentScheme": MessageLookupByLibrary.simpleMessage("Контентная тема"),
     "copy": MessageLookupByLibrary.simpleMessage("Копировать"),
     "copyEnvVar": MessageLookupByLibrary.simpleMessage(
@@ -204,15 +216,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "delay": MessageLookupByLibrary.simpleMessage("Задержка"),
     "delaySort": MessageLookupByLibrary.simpleMessage("Сортировка по задержке"),
     "delete": MessageLookupByLibrary.simpleMessage("Удалить"),
-    "deleteColorTip": MessageLookupByLibrary.simpleMessage(
-      "Удалить текущий цвет?",
-    ),
-    "deleteProfileTip": MessageLookupByLibrary.simpleMessage(
-      "Вы уверены, что хотите удалить текущий профиль?",
-    ),
-    "deleteRuleTip": MessageLookupByLibrary.simpleMessage(
-      "Вы уверены, что хотите удалить выбранное правило?",
-    ),
+    "deleteMultipTip": m0,
+    "deleteTip": m1,
     "desc": MessageLookupByLibrary.simpleMessage(
       "Многоплатформенный прокси-клиент на основе ClashMeta, простой и удобный в использовании, с открытым исходным кодом и без рекламы.",
     ),
@@ -246,6 +251,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "download": MessageLookupByLibrary.simpleMessage("Скачивание"),
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
+    "emptyTip": m2,
     "en": MessageLookupByLibrary.simpleMessage("Английский"),
     "enableOverride": MessageLookupByLibrary.simpleMessage(
       "Включить переопределение",
@@ -257,6 +263,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "excludeDesc": MessageLookupByLibrary.simpleMessage(
       "Когда приложение находится в фоновом режиме, оно скрыто из последних задач",
     ),
+    "existsTip": m3,
     "exit": MessageLookupByLibrary.simpleMessage("Выход"),
     "expand": MessageLookupByLibrary.simpleMessage("Стандартный"),
     "expirationTime": MessageLookupByLibrary.simpleMessage("Время истечения"),
@@ -338,7 +345,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Конфигурация иконки",
     ),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Стиль иконки"),
+    "import": MessageLookupByLibrary.simpleMessage("Импорт"),
+    "importFile": MessageLookupByLibrary.simpleMessage("Импорт из файла"),
     "importFromURL": MessageLookupByLibrary.simpleMessage("Импорт из URL"),
+    "importUrl": MessageLookupByLibrary.simpleMessage("Импорт по URL"),
     "infiniteTime": MessageLookupByLibrary.simpleMessage(
       "Долгосрочное действие",
     ),
@@ -350,6 +360,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Интеллектуальный выбор",
     ),
     "internet": MessageLookupByLibrary.simpleMessage("Интернет"),
+    "interval": MessageLookupByLibrary.simpleMessage("Интервал"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("Внутренний IP"),
     "ipcidr": MessageLookupByLibrary.simpleMessage("IPCIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
@@ -364,9 +375,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Интервал поддержания TCP-соединения",
     ),
     "key": MessageLookupByLibrary.simpleMessage("Ключ"),
-    "keyExists": MessageLookupByLibrary.simpleMessage(
-      "Текущий ключ уже существует",
-    ),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
     "layout": MessageLookupByLibrary.simpleMessage("Макет"),
     "light": MessageLookupByLibrary.simpleMessage("Светлый"),
@@ -407,6 +415,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Изменить стандартное событие выхода из системы",
     ),
     "minutes": MessageLookupByLibrary.simpleMessage("Минут"),
+    "mixedPort": MessageLookupByLibrary.simpleMessage("Смешанный порт"),
     "mode": MessageLookupByLibrary.simpleMessage("Режим"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Монохром"),
     "months": MessageLookupByLibrary.simpleMessage("Месяцев"),
@@ -447,22 +456,14 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "noResolve": MessageLookupByLibrary.simpleMessage("Не разрешать IP"),
     "none": MessageLookupByLibrary.simpleMessage("Нет"),
-    "notEmpty": MessageLookupByLibrary.simpleMessage("Не может быть пустым"),
     "notSelectedTip": MessageLookupByLibrary.simpleMessage(
       "Текущая группа прокси не может быть выбрана.",
     ),
-    "nullConnectionsDesc": MessageLookupByLibrary.simpleMessage(
-      "Нет соединений",
-    ),
-    "nullCoreInfoDesc": MessageLookupByLibrary.simpleMessage(
-      "Не удалось получить информацию о ядре",
-    ),
-    "nullLogsDesc": MessageLookupByLibrary.simpleMessage("Нет логов"),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "Нет профиля, пожалуйста, добавьте профиль",
     ),
-    "nullProxies": MessageLookupByLibrary.simpleMessage("Нет прокси"),
-    "nullRequestsDesc": MessageLookupByLibrary.simpleMessage("Нет запросов"),
+    "nullTip": m4,
+    "numberTip": m5,
     "oneColumn": MessageLookupByLibrary.simpleMessage("Один столбец"),
     "onlyIcon": MessageLookupByLibrary.simpleMessage("Только иконка"),
     "onlyOtherApps": MessageLookupByLibrary.simpleMessage(
@@ -490,17 +491,20 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideDnsDesc": MessageLookupByLibrary.simpleMessage(
       "Включение переопределит настройки DNS в профиле",
     ),
+    "overrideInvalidTip": MessageLookupByLibrary.simpleMessage(
+      "В скриптовом режиме не действует",
+    ),
     "overrideOriginRules": MessageLookupByLibrary.simpleMessage(
       "Переопределить оригинальное правило",
     ),
     "palette": MessageLookupByLibrary.simpleMessage("Палитра"),
     "password": MessageLookupByLibrary.simpleMessage("Пароль"),
-    "passwordTip": MessageLookupByLibrary.simpleMessage(
-      "Пароль не может быть пустым",
-    ),
     "paste": MessageLookupByLibrary.simpleMessage("Вставить"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Пожалуйста, привяжите WebDAV",
+    ),
+    "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage(
+      "Пожалуйста, введите название скрипта",
     ),
     "pleaseInputAdminPassword": MessageLookupByLibrary.simpleMessage(
       "Пожалуйста, введите пароль администратора",
@@ -512,6 +516,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Пожалуйста, загрузите действительный QR-код",
     ),
     "port": MessageLookupByLibrary.simpleMessage("Порт"),
+    "portConflictTip": MessageLookupByLibrary.simpleMessage(
+      "Введите другой порт",
+    ),
+    "portTip": m6,
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Приоритетное использование HTTP/3 для DOH",
     ),
@@ -586,6 +594,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "recoverySuccess": MessageLookupByLibrary.simpleMessage(
       "Восстановление успешно",
     ),
+    "redirPort": MessageLookupByLibrary.simpleMessage("Redir-порт"),
     "redo": MessageLookupByLibrary.simpleMessage("Повторить"),
     "regExp": MessageLookupByLibrary.simpleMessage("Регулярное выражение"),
     "remote": MessageLookupByLibrary.simpleMessage("Удаленный"),
@@ -596,6 +605,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Восстановление данных с WebDAV",
     ),
     "remove": MessageLookupByLibrary.simpleMessage("Удалить"),
+    "rename": MessageLookupByLibrary.simpleMessage("Переименовать"),
     "requests": MessageLookupByLibrary.simpleMessage("Запросы"),
     "requestsDesc": MessageLookupByLibrary.simpleMessage(
       "Просмотр последних записей запросов",
@@ -626,24 +636,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "ru": MessageLookupByLibrary.simpleMessage("Русский"),
     "rule": MessageLookupByLibrary.simpleMessage("Правило"),
     "ruleName": MessageLookupByLibrary.simpleMessage("Название правила"),
-    "ruleProviderEmptyTip": MessageLookupByLibrary.simpleMessage(
-      "Поставщик правил не может быть пустым",
-    ),
     "ruleProviders": MessageLookupByLibrary.simpleMessage("Провайдеры правил"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Цель правила"),
-    "ruleTargetEmptyTip": MessageLookupByLibrary.simpleMessage(
-      "Цель правила не может быть пустой",
-    ),
     "save": MessageLookupByLibrary.simpleMessage("Сохранить"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения?"),
     "saveTip": MessageLookupByLibrary.simpleMessage(
       "Вы уверены, что хотите сохранить?",
     ),
+    "script": MessageLookupByLibrary.simpleMessage("Скрипт"),
     "search": MessageLookupByLibrary.simpleMessage("Поиск"),
     "seconds": MessageLookupByLibrary.simpleMessage("Секунд"),
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
-    "selectedCountTitle": m0,
+    "selectedCountTitle": m7,
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "shrink": MessageLookupByLibrary.simpleMessage("Сжать"),
@@ -652,6 +657,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Запуск в фоновом режиме",
     ),
     "size": MessageLookupByLibrary.simpleMessage("Размер"),
+    "socksPort": MessageLookupByLibrary.simpleMessage("Socks-порт"),
     "sort": MessageLookupByLibrary.simpleMessage("Сортировка"),
     "source": MessageLookupByLibrary.simpleMessage("Источник"),
     "sourceIp": MessageLookupByLibrary.simpleMessage("Исходный IP"),
@@ -667,9 +673,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "stopVpn": MessageLookupByLibrary.simpleMessage("Остановка VPN..."),
     "style": MessageLookupByLibrary.simpleMessage("Стиль"),
     "subRule": MessageLookupByLibrary.simpleMessage("Подправило"),
-    "subRuleEmptyTip": MessageLookupByLibrary.simpleMessage(
-      "Содержание подправила не может быть пустым",
-    ),
     "submit": MessageLookupByLibrary.simpleMessage("Отправить"),
     "sync": MessageLookupByLibrary.simpleMessage("Синхронизация"),
     "system": MessageLookupByLibrary.simpleMessage("Система"),
@@ -703,6 +706,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("Тональный акцент"),
     "tools": MessageLookupByLibrary.simpleMessage("Инструменты"),
+    "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxy-порт"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage(
       "Использование трафика",
     ),
@@ -722,20 +726,19 @@ class MessageLookup extends MessageLookupByLibrary {
       "Убрать дополнительные задержки, такие как рукопожатие",
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("Неизвестно"),
+    "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),
     "upload": MessageLookupByLibrary.simpleMessage("Загрузка"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "Получить профиль через URL",
     ),
+    "urlTip": m8,
     "useHosts": MessageLookupByLibrary.simpleMessage("Использовать hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Использовать системные hosts",
     ),
     "value": MessageLookupByLibrary.simpleMessage("Значение"),
-    "valueExists": MessageLookupByLibrary.simpleMessage(
-      "Текущее значение уже существует",
-    ),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("Яркие"),
     "view": MessageLookupByLibrary.simpleMessage("Просмотр"),
     "vpnDesc": MessageLookupByLibrary.simpleMessage(
