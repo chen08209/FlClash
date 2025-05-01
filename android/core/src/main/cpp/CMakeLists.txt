@@ -4,6 +4,8 @@ project("core")
 
 message("CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
 
+message("CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}")
+
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     add_compile_options(-O3)
 

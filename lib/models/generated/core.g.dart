@@ -6,6 +6,76 @@ part of '../core.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$SetupParamsImpl _$$SetupParamsImplFromJson(Map<String, dynamic> json) =>
+    _$SetupParamsImpl(
+      config: json['config'] as Map<String, dynamic>,
+      selectedMap: Map<String, String>.from(json['selected-map'] as Map),
+      testUrl: json['test-url'] as String,
+    );
+
+Map<String, dynamic> _$$SetupParamsImplToJson(_$SetupParamsImpl instance) =>
+    <String, dynamic>{
+      'config': instance.config,
+      'selected-map': instance.selectedMap,
+      'test-url': instance.testUrl,
+    };
+
+_$UpdateParamsImpl _$$UpdateParamsImplFromJson(Map<String, dynamic> json) =>
+    _$UpdateParamsImpl(
+      tun: Tun.fromJson(json['tun'] as Map<String, dynamic>),
+      mixedPort: (json['mixed-port'] as num).toInt(),
+      allowLan: json['allow-lan'] as bool,
+      findProcessMode:
+          $enumDecode(_$FindProcessModeEnumMap, json['find-process-mode']),
+      mode: $enumDecode(_$ModeEnumMap, json['mode']),
+      logLevel: $enumDecode(_$LogLevelEnumMap, json['log-level']),
+      ipv6: json['ipv6'] as bool,
+      tcpConcurrent: json['tcp-concurrent'] as bool,
+      externalController: $enumDecode(
+          _$ExternalControllerStatusEnumMap, json['external-controller']),
+      unifiedDelay: json['unified-delay'] as bool,
+    );
+
+Map<String, dynamic> _$$UpdateParamsImplToJson(_$UpdateParamsImpl instance) =>
+    <String, dynamic>{
+      'tun': instance.tun,
+      'mixed-port': instance.mixedPort,
+      'allow-lan': instance.allowLan,
+      'find-process-mode': _$FindProcessModeEnumMap[instance.findProcessMode]!,
+      'mode': _$ModeEnumMap[instance.mode]!,
+      'log-level': _$LogLevelEnumMap[instance.logLevel]!,
+      'ipv6': instance.ipv6,
+      'tcp-concurrent': instance.tcpConcurrent,
+      'external-controller':
+          _$ExternalControllerStatusEnumMap[instance.externalController]!,
+      'unified-delay': instance.unifiedDelay,
+    };
+
+const _$FindProcessModeEnumMap = {
+  FindProcessMode.always: 'always',
+  FindProcessMode.off: 'off',
+};
+
+const _$ModeEnumMap = {
+  Mode.rule: 'rule',
+  Mode.global: 'global',
+  Mode.direct: 'direct',
+};
+
+const _$LogLevelEnumMap = {
+  LogLevel.debug: 'debug',
+  LogLevel.info: 'info',
+  LogLevel.warning: 'warning',
+  LogLevel.error: 'error',
+  LogLevel.silent: 'silent',
+  LogLevel.app: 'app',
+};
+
+const _$ExternalControllerStatusEnumMap = {
+  ExternalControllerStatus.close: '',
+  ExternalControllerStatus.open: '127.0.0.1:9090',
+};
+
 _$CoreStateImpl _$$CoreStateImplFromJson(Map<String, dynamic> json) =>
     _$CoreStateImpl(
       vpnProps: VpnProps.fromJson(json['vpn-props'] as Map<String, dynamic>?),
@@ -61,43 +131,6 @@ Map<String, dynamic> _$$AndroidVpnOptionsImplToJson(
       'ipv6Address': instance.ipv6Address,
       'routeAddress': instance.routeAddress,
       'dnsServerAddress': instance.dnsServerAddress,
-    };
-
-_$ConfigExtendedParamsImpl _$$ConfigExtendedParamsImplFromJson(
-        Map<String, dynamic> json) =>
-    _$ConfigExtendedParamsImpl(
-      isPatch: json['is-patch'] as bool,
-      selectedMap: Map<String, String>.from(json['selected-map'] as Map),
-      overrideDns: json['override-dns'] as bool,
-      overrideRule: json['override-rule'] as bool,
-      testUrl: json['test-url'] as String,
-    );
-
-Map<String, dynamic> _$$ConfigExtendedParamsImplToJson(
-        _$ConfigExtendedParamsImpl instance) =>
-    <String, dynamic>{
-      'is-patch': instance.isPatch,
-      'selected-map': instance.selectedMap,
-      'override-dns': instance.overrideDns,
-      'override-rule': instance.overrideRule,
-      'test-url': instance.testUrl,
-    };
-
-_$UpdateConfigParamsImpl _$$UpdateConfigParamsImplFromJson(
-        Map<String, dynamic> json) =>
-    _$UpdateConfigParamsImpl(
-      profileId: json['profile-id'] as String,
-      config: ClashConfig.fromJson(json['config'] as Map<String, dynamic>),
-      params:
-          ConfigExtendedParams.fromJson(json['params'] as Map<String, dynamic>),
-    );
-
-Map<String, dynamic> _$$UpdateConfigParamsImplToJson(
-        _$UpdateConfigParamsImpl instance) =>
-    <String, dynamic>{
-      'profile-id': instance.profileId,
-      'config': instance.config,
-      'params': instance.params,
     };
 
 _$InitParamsImpl _$$InitParamsImplFromJson(Map<String, dynamic> json) =>
@@ -199,41 +232,6 @@ Map<String, dynamic> _$$NowImplToJson(_$NowImpl instance) => <String, dynamic>{
       'value': instance.value,
     };
 
-_$ProcessDataImpl _$$ProcessDataImplFromJson(Map<String, dynamic> json) =>
-    _$ProcessDataImpl(
-      id: json['id'] as String,
-      metadata: Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
-    );
-
-Map<String, dynamic> _$$ProcessDataImplToJson(_$ProcessDataImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'metadata': instance.metadata,
-    };
-
-_$FdImpl _$$FdImplFromJson(Map<String, dynamic> json) => _$FdImpl(
-      id: json['id'] as String,
-      value: (json['value'] as num).toInt(),
-    );
-
-Map<String, dynamic> _$$FdImplToJson(_$FdImpl instance) => <String, dynamic>{
-      'id': instance.id,
-      'value': instance.value,
-    };
-
-_$ProcessMapItemImpl _$$ProcessMapItemImplFromJson(Map<String, dynamic> json) =>
-    _$ProcessMapItemImpl(
-      id: json['id'] as String,
-      value: json['value'] as String,
-    );
-
-Map<String, dynamic> _$$ProcessMapItemImplToJson(
-        _$ProcessMapItemImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'value': instance.value,
-    };
-
 _$ProviderSubscriptionInfoImpl _$$ProviderSubscriptionInfoImplFromJson(
         Map<String, dynamic> json) =>
     _$ProviderSubscriptionInfoImpl(
@@ -279,32 +277,9 @@ Map<String, dynamic> _$$ExternalProviderImplToJson(
       'update-at': instance.updateAt.toIso8601String(),
     };
 
-_$TunPropsImpl _$$TunPropsImplFromJson(Map<String, dynamic> json) =>
-    _$TunPropsImpl(
-      fd: (json['fd'] as num).toInt(),
-      gateway: json['gateway'] as String,
-      gateway6: json['gateway6'] as String,
-      portal: json['portal'] as String,
-      portal6: json['portal6'] as String,
-      dns: json['dns'] as String,
-      dns6: json['dns6'] as String,
-    );
-
-Map<String, dynamic> _$$TunPropsImplToJson(_$TunPropsImpl instance) =>
-    <String, dynamic>{
-      'fd': instance.fd,
-      'gateway': instance.gateway,
-      'gateway6': instance.gateway6,
-      'portal': instance.portal,
-      'portal6': instance.portal6,
-      'dns': instance.dns,
-      'dns6': instance.dns6,
-    };
-
 _$ActionImpl _$$ActionImplFromJson(Map<String, dynamic> json) => _$ActionImpl(
       method: $enumDecode(_$ActionMethodEnumMap, json['method']),
       data: json['data'],
-      defaultValue: json['default-value'],
       id: json['id'] as String,
     );
 
@@ -312,7 +287,6 @@ Map<String, dynamic> _$$ActionImplToJson(_$ActionImpl instance) =>
     <String, dynamic>{
       'method': _$ActionMethodEnumMap[instance.method]!,
       'data': instance.data,
-      'default-value': instance.defaultValue,
       'id': instance.id,
     };
 
@@ -324,6 +298,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.shutdown: 'shutdown',
   ActionMethod.validateConfig: 'validateConfig',
   ActionMethod.updateConfig: 'updateConfig',
+  ActionMethod.getConfig: 'getConfig',
   ActionMethod.getProxies: 'getProxies',
   ActionMethod.changeProxy: 'changeProxy',
   ActionMethod.getTraffic: 'getTraffic',
@@ -332,6 +307,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.asyncTestDelay: 'asyncTestDelay',
   ActionMethod.getConnections: 'getConnections',
   ActionMethod.closeConnections: 'closeConnections',
+  ActionMethod.resetConnections: 'resetConnections',
   ActionMethod.closeConnection: 'closeConnection',
   ActionMethod.getExternalProviders: 'getExternalProviders',
   ActionMethod.getExternalProvider: 'getExternalProvider',
@@ -344,10 +320,8 @@ const _$ActionMethodEnumMap = {
   ActionMethod.stopListener: 'stopListener',
   ActionMethod.getCountryCode: 'getCountryCode',
   ActionMethod.getMemory: 'getMemory',
-  ActionMethod.getProfile: 'getProfile',
   ActionMethod.crash: 'crash',
-  ActionMethod.setFdMap: 'setFdMap',
-  ActionMethod.setProcessMap: 'setProcessMap',
+  ActionMethod.setupConfig: 'setupConfig',
   ActionMethod.setState: 'setState',
   ActionMethod.startTun: 'startTun',
   ActionMethod.stopTun: 'stopTun',
@@ -362,6 +336,8 @@ _$ActionResultImpl _$$ActionResultImplFromJson(Map<String, dynamic> json) =>
       method: $enumDecode(_$ActionMethodEnumMap, json['method']),
       data: json['data'],
       id: json['id'] as String?,
+      code: $enumDecodeNullable(_$ResultTypeEnumMap, json['code']) ??
+          ResultType.success,
     );
 
 Map<String, dynamic> _$$ActionResultImplToJson(_$ActionResultImpl instance) =>
@@ -369,4 +345,10 @@ Map<String, dynamic> _$$ActionResultImplToJson(_$ActionResultImpl instance) =>
       'method': _$ActionMethodEnumMap[instance.method]!,
       'data': instance.data,
       'id': instance.id,
+      'code': _$ResultTypeEnumMap[instance.code]!,
     };
+
+const _$ResultTypeEnumMap = {
+  ResultType.success: 0,
+  ResultType.error: -1,
+};

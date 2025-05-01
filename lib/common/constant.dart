@@ -23,10 +23,12 @@ final baseInfoEdgeInsets = EdgeInsets.symmetric(
   horizontal: 16.ap,
 );
 
-final defaultTextScaleFactor = WidgetsBinding.instance.platformDispatcher.textScaleFactor;
+final defaultTextScaleFactor =
+    WidgetsBinding.instance.platformDispatcher.textScaleFactor;
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
+const midDuration = Duration(milliseconds: 200);
 const commonDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const mmdbFileName = "geoip.metadb";
@@ -76,6 +78,10 @@ const viewModeColumnsMap = {
   ViewMode.desktop: [4, 3],
 };
 
+// const proxiesStoreKey = PageStorageKey<String>('proxies');
+// const toolsStoreKey = PageStorageKey<String>('tools');
+// const profilesStoreKey = PageStorageKey<String>('profiles');
+
 const defaultPrimaryColor = 0XFFD8C0C3;
 
 double getWidgetHeight(num lines) {
@@ -97,3 +103,8 @@ const defaultPrimaryColors = [
   defaultPrimaryColor,
   0XFF665390,
 ];
+
+const scriptTemplate = """
+const main = (config) => {
+  return config;
+}""";

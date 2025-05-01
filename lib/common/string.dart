@@ -8,6 +8,13 @@ extension StringExtension on String {
     return RegExp(r'^(http|https|ftp)://').hasMatch(this);
   }
 
+  dynamic get splitByMultipleSeparators {
+    final parts =
+        split(RegExp(r'[, ;]+')).where((part) => part.isNotEmpty).toList();
+
+    return parts.length > 1 ? parts : this;
+  }
+
   int compareToLower(String other) {
     return toLowerCase().compareTo(
       other.toLowerCase(),
@@ -38,6 +45,10 @@ extension StringExtension on String {
     }
   }
 
+  bool get isSvg {
+    return endsWith(".svg");
+  }
+
   bool get isRegex {
     try {
       RegExp(this);
@@ -47,6 +58,10 @@ extension StringExtension on String {
       return false;
     }
   }
+
+// bool containsToLower(String target) {
+//   return toLowerCase().contains(target);
+// }
 }
 
 extension StringExtensionSafe on String? {

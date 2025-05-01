@@ -21,6 +21,7 @@ class CommonScaffold extends StatefulWidget {
   final bool automaticallyImplyLeading;
   final bool? centerTitle;
   final AppBarEditState? appBarEditState;
+  final FloatingActionButton? floatingActionButton;
 
   const CommonScaffold({
     super.key,
@@ -35,6 +36,7 @@ class CommonScaffold extends StatefulWidget {
     this.automaticallyImplyLeading = true,
     this.centerTitle,
     this.appBarEditState,
+    this.floatingActionButton,
   });
 
   CommonScaffold.open({
@@ -305,20 +307,24 @@ class CommonScaffoldState extends State<CommonScaffold> {
     );
   }
 
-  Widget _buildAppBarWrap(Widget appBar) {
-    if (_isEdit) {
-      return CommonPopScope(
-        onPop: () {
-          if (_isEdit) {
-            _appBarState.value.editState?.onExit();
-            return false;
-          }
-          return true;
-        },
-        child: appBar,
+  Widget _buildAppBarWrap(Widget child) {
+    final appBar = _isSearch ? _buildSearchingAppBarTheme(child) : child;
+    if (_isEdit || _isSearch) {
+      return SystemBackBlock(
+        child: CommonPopScope(
+          onPop: () {
+            if (_isEdit || _isSearch) {
+              _handleExitSearching();
+              _appBarState.value.editState?.onExit();
+              return false;
+            }
+            return true;
+          },
+          child: appBar,
+        ),
       );
     }
-    return _isSearch ? _buildSearchingAppBarTheme(appBar) : appBar;
+    return appBar;
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -431,19 +437,21 @@ class CommonScaffoldState extends State<CommonScaffold> {
     final scaffold = Scaffold(
       appBar: _buildAppBar(),
       body: body,
+      resizeToAvoidBottomInset: true,
       backgroundColor: widget.backgroundColor,
-      floatingActionButton: ValueListenableBuilder<Widget?>(
-        valueListenable: _floatingActionButton,
-        builder: (_, value, __) {
-          return IntrinsicWidth(
-            child: IntrinsicHeight(
-              child: FadeScaleBox(
-                child: value ?? SizedBox(),
-              ),
-            ),
-          );
-        },
-      ),
+      floatingActionButton: widget.floatingActionButton ??
+          ValueListenableBuilder<Widget?>(
+            valueListenable: _floatingActionButton,
+            builder: (_, value, __) {
+              return IntrinsicWidth(
+                child: IntrinsicHeight(
+                  child: FadeScaleBox(
+                    child: value ?? SizedBox(),
+                  ),
+                ),
+              );
+            },
+          ),
       bottomNavigationBar: widget.bottomNavigationBar,
     );
     return _sideNavigationBar != null

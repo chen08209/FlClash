@@ -23,14 +23,14 @@ class Render {
 
   pause() {
     throttler.call(
-      DebounceTag.renderPause,
+      FunctionTag.renderPause,
       _pause,
       duration: Duration(seconds: 5),
     );
   }
 
   resume() {
-    throttler.cancel(DebounceTag.renderPause);
+    throttler.cancel(FunctionTag.renderPause);
     _resume();
   }
 

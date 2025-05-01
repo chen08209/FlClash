@@ -39,6 +39,14 @@ func freeCString(s *C.char) {
 	C.free(unsafe.Pointer(s))
 }
 
+func (result ActionResult) send() {
+	data, err := result.Json()
+	if err != nil {
+		return
+	}
+	bridge.SendToPort(result.Port, string(data))
+}
+
 //export invokeAction
 func invokeAction(paramsChar *C.char, port C.longlong) {
 	params := C.GoString(paramsChar)
@@ -49,22 +57,38 @@ func invokeAction(paramsChar *C.char, port C.longlong) {
 		bridge.SendToPort(i, err.Error())
 		return
 	}
-	go handleAction(action, func(data interface{}) {
-		bridge.SendToPort(i, string(action.getResult(data)))
-	})
+	result := ActionResult{
+		Id:     action.Id,
+		Method: action.Method,
+		Port:   i,
+	}
+	go handleAction(action, result)
 }
 
 func sendMessage(message Message) {
 	if messagePort == -1 {
 		return
 	}
-	res, err := message.Json()
-	if err != nil {
-		return
-	}
-	bridge.SendToPort(messagePort, string(Action{
+	result := ActionResult{
 		Method: messageMethod,
-	}.getResult(res)))
+		Port:   messagePort,
+		Data:   message,
+	}
+	result.send()
+}
+
+//export getConfig
+func getConfig(s *C.char) *C.char {
+	path := C.GoString(s)
+	config, err := handleGetConfig(path)
+	if err != nil {
+		return C.CString("")
+	}
+	marshal, err := json.Marshal(config)
+	if err != nil {
+		return C.CString("")
+	}
+	return C.CString(string(marshal))
 }
 
 //export startListener
