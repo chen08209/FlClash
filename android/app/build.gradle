@@ -73,6 +73,9 @@ android {
             applicationIdSuffix '.debug'
         }
         release {
+            minifyEnabled true
+            debuggable false
+            
             if (isRelease) {
                 signingConfig signingConfigs.release
             } else {

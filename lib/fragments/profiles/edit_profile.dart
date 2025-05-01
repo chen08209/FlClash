@@ -47,7 +47,6 @@ class _EditProfileState extends State<EditProfile> {
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
     );
     appPath.getProfilePath(widget.profile.id).then((path) async {
-      if (path == null) return;
       fileInfoNotifier.value = await _getFileInfo(path);
     });
   }
@@ -143,9 +142,10 @@ class _EditProfileState extends State<EditProfile> {
   _editProfileFile() async {
     if (rawText == null) {
       final profilePath = await appPath.getProfilePath(widget.profile.id);
-      if (profilePath == null) return;
       final file = File(profilePath);
-      rawText = await file.readAsString();
+      if (await file.exists()) {
+        rawText = await file.readAsString();
+      }
     }
     if (!mounted) return;
     final title = widget.profile.label ?? widget.profile.id;

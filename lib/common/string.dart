@@ -47,6 +47,10 @@ extension StringExtension on String {
       return false;
     }
   }
+
+// bool containsToLower(String target) {
+//   return toLowerCase().contains(target);
+// }
 }
 
 extension StringExtensionSafe on String? {

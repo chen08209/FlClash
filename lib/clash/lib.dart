@@ -267,6 +267,15 @@ class ClashLibHandler {
     return true;
   }
 
+  DateTime? getRunTime() {
+    final runTimeRaw = clashFFI.getRunTime();
+    final runTimeString = runTimeRaw.cast<Utf8>().toDartString();
+    if (runTimeString.isEmpty) {
+      return null;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
+  }
+
   Future<String> quickStart(
     InitParams initParams,
     UpdateConfigParams updateConfigParams,
@@ -297,15 +306,10 @@ class ClashLibHandler {
     malloc.free(stateParamsChar);
     return completer.future;
   }
-
-  DateTime? getRunTime() {
-    final runTimeRaw = clashFFI.getRunTime();
-    final runTimeString = runTimeRaw.cast<Utf8>().toDartString();
-    clashFFI.freeCString(runTimeRaw);
-    if (runTimeString.isEmpty) return null;
-    return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
-  }
 }
 
 ClashLib? get clashLib =>
     Platform.isAndroid && !globalState.isService ? ClashLib() : null;
+
+ClashLibHandler? get clashLibHandler =>
+    Platform.isAndroid ? ClashLibHandler() : null;

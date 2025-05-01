@@ -287,6 +287,21 @@ class CheckIpNum extends _$CheckIpNum with AutoDisposeNotifierMixin {
 }
 
 @riverpod
+class BackBlock extends _$BackBlock with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return globalState.appState.backBlock;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.appState = globalState.appState.copyWith(
+      backBlock: value,
+    );
+  }
+}
+
+@riverpod
 class Version extends _$Version with AutoDisposeNotifierMixin {
   @override
   int build() {
@@ -353,6 +368,21 @@ class NeedApply extends _$NeedApply with AutoDisposeNotifierMixin {
   onUpdate(value) {
     globalState.appState = globalState.appState.copyWith(
       needApply: value,
+    );
+  }
+}
+
+@riverpod
+class ProxiesQuery extends _$ProxiesQuery with AutoDisposeNotifierMixin {
+  @override
+  String build() {
+    return globalState.appState.proxiesQuery;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.appState = globalState.appState.copyWith(
+      proxiesQuery: value,
     );
   }
 }

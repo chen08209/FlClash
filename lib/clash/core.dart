@@ -143,6 +143,10 @@ class ClashCore {
     clashInterface.closeConnections();
   }
 
+  resetConnections() {
+    clashInterface.resetConnections();
+  }
+
   Future<List<ExternalProvider>> getExternalProviders() async {
     final externalProvidersRawString =
         await clashInterface.getExternalProviders();

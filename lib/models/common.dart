@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/common.freezed.dart';
-
 part 'generated/common.g.dart';
 
 @freezed
@@ -129,10 +128,10 @@ extension LogsStateExt on LogsState {
     final lowQuery = query.toLowerCase();
     return logs.where(
       (log) {
-        final payload = log.payload.toLowerCase();
         final logLevelName = log.logLevel.name;
         return {logLevelName}.containsAll(keywords) &&
-            ((payload.contains(lowQuery)) || logLevelName.contains(lowQuery));
+            ((log.payload.toLowerCase().contains(lowQuery)) ||
+                logLevelName.contains(lowQuery));
       },
     ).toList();
   }
@@ -504,15 +503,11 @@ class PopupMenuItemData {
     this.icon,
     required this.label,
     required this.onPressed,
-    this.type,
-    this.iconSize,
   });
 
-  final double? iconSize;
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
-  final PopupMenuItemType? type;
 }
 
 @freezed
@@ -527,4 +522,8 @@ class TextPainterParams with _$TextPainterParams {
 
   factory TextPainterParams.fromJson(Map<String, Object?> json) =>
       _$TextPainterParamsFromJson(json);
+}
+
+class CloseWindowIntent extends Intent {
+  const CloseWindowIntent();
 }

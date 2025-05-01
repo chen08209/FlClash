@@ -131,7 +131,7 @@ class _LogsFragmentState extends ConsumerState<LogsFragment> with PageMixin {
   }
 
   updateLogsThrottler() {
-    throttler.call("logs", () {
+    throttler.call(FunctionTag.logs, () {
       final isEquality = logListEquality.equals(
         _logs,
         _logsStateNotifier.value.logs,

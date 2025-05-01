@@ -111,7 +111,7 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
   }
 
   updateRequestsThrottler() {
-    throttler.call("request", () {
+    throttler.call(FunctionTag.requests, () {
       final isEquality = connectionListEquality.equals(
         _requests,
         _requestsStateNotifier.value.connections,
@@ -120,9 +120,11 @@ class _RequestsFragmentState extends ConsumerState<RequestsFragment>
         return;
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
-          connections: _requests,
-        );
+        if(mounted){
+          _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
+            connections: _requests,
+          );
+        }
       });
     }, duration: commonDuration);
   }

@@ -73,14 +73,12 @@ class AppPath {
     return join(directory.path, profilesDirectoryName);
   }
 
-  Future<String?> getProfilePath(String? id) async {
-    if (id == null) return null;
+  Future<String> getProfilePath(String id) async {
     final directory = await profilesPath;
     return join(directory, "$id.yaml");
   }
 
-  Future<String?> getProvidersPath(String? id) async {
-    if (id == null) return null;
+  Future<String> getProvidersPath(String id) async {
     final directory = await profilesPath;
     return join(directory, "providers", id);
   }

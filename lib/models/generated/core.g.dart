@@ -332,6 +332,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.asyncTestDelay: 'asyncTestDelay',
   ActionMethod.getConnections: 'getConnections',
   ActionMethod.closeConnections: 'closeConnections',
+  ActionMethod.resetConnections: 'resetConnections',
   ActionMethod.closeConnection: 'closeConnection',
   ActionMethod.getExternalProviders: 'getExternalProviders',
   ActionMethod.getExternalProvider: 'getExternalProvider',

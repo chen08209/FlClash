@@ -78,113 +78,72 @@ class ConnectionItem extends ConsumerWidget {
     );
     return CommonPopupBox(
       targetBuilder: (open) {
-        return ListItem(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
-          ),
-          tileTitleAlignment: ListTileTitleAlignment.titleHeight,
-          leading: value
-              ? GestureDetector(
-            onTap: () {
-              if (onClickKeyword == null) return;
-              final process = connection.metadata.process;
-              if (process.isEmpty) return;
-              onClickKeyword!(process);
-            },
-            child: Container(
-              margin: const EdgeInsets.only(top: 4),
-              width: 48,
-              height: 48,
-              child: FutureBuilder<ImageProvider?>(
-                future: _getPackageIcon(connection),
-                builder: (_, snapshot) {
-                  if (!snapshot.hasData && snapshot.data == null) {
-                    return Container();
-                  } else {
-                    return Image(
-                      image: snapshot.data!,
-                      gaplessPlayback: true,
-                      width: 48,
-                      height: 48,
-                    );
-                  }
-                },
-              ),
+        openPopup(Offset offset) {
+          open(
+            offset: offset.translate(
+              0,
+              0,
             ),
-          )
-              : null,
-          title: title,
-          subtitle: subTitle,
-          trailing: trailing,
+          );
+        }
+
+        return InkWell(
+          child: GestureDetector(
+            onLongPressStart: (details) {
+              if (!system.isDesktop) {
+                return;
+              }
+              openPopup(details.localPosition);
+            },
+            onSecondaryTapDown: (details) {
+              if (!system.isDesktop) {
+                return;
+              }
+              openPopup(details.localPosition);
+            },
+            child: ListItem(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              tileTitleAlignment: ListTileTitleAlignment.titleHeight,
+              leading: value
+                  ? GestureDetector(
+                      onTap: () {
+                        if (onClickKeyword == null) return;
+                        final process = connection.metadata.process;
+                        if (process.isEmpty) return;
+                        onClickKeyword!(process);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        width: 48,
+                        height: 48,
+                        child: FutureBuilder<ImageProvider?>(
+                          future: _getPackageIcon(connection),
+                          builder: (_, snapshot) {
+                            if (!snapshot.hasData && snapshot.data == null) {
+                              return Container();
+                            } else {
+                              return Image(
+                                image: snapshot.data!,
+                                gaplessPlayback: true,
+                                width: 48,
+                                height: 48,
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    )
+                  : null,
+              title: title,
+              subtitle: subTitle,
+              trailing: trailing,
+            ),
+          ),
+          onTap: () {},
         );
-        // return InkWell(
-        //   child: GestureDetector(
-        //     onLongPressStart: (details) {
-        //       if (!system.isDesktop) {
-        //         return;
-        //       }
-        //       open(
-        //         offset: details.localPosition.translate(
-        //           0,
-        //           -12,
-        //         ),
-        //       );
-        //     },
-        //     onSecondaryTapDown: (details) {
-        //       if (!system.isDesktop) {
-        //         return;
-        //       }
-        //       open(
-        //         offset: details.localPosition.translate(
-        //           0,
-        //           -12,
-        //         ),
-        //       );
-        //     },
-        //     child: ListItem(
-        //       padding: const EdgeInsets.symmetric(
-        //         horizontal: 16,
-        //         vertical: 4,
-        //       ),
-        //       tileTitleAlignment: ListTileTitleAlignment.titleHeight,
-        //       leading: value
-        //           ? GestureDetector(
-        //               onTap: () {
-        //                 if (onClickKeyword == null) return;
-        //                 final process = connection.metadata.process;
-        //                 if (process.isEmpty) return;
-        //                 onClickKeyword!(process);
-        //               },
-        //               child: Container(
-        //                 margin: const EdgeInsets.only(top: 4),
-        //                 width: 48,
-        //                 height: 48,
-        //                 child: FutureBuilder<ImageProvider?>(
-        //                   future: _getPackageIcon(connection),
-        //                   builder: (_, snapshot) {
-        //                     if (!snapshot.hasData && snapshot.data == null) {
-        //                       return Container();
-        //                     } else {
-        //                       return Image(
-        //                         image: snapshot.data!,
-        //                         gaplessPlayback: true,
-        //                         width: 48,
-        //                         height: 48,
-        //                       );
-        //                     }
-        //                   },
-        //                 ),
-        //               ),
-        //             )
-        //           : null,
-        //       title: title,
-        //       subtitle: subTitle,
-        //       trailing: trailing,
-        //     ),
-        //   ),
-        //   onTap: () {},
-        // );
       },
       popup: CommonPopupMenu(
         minWidth: 160,

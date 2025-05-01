@@ -58,7 +58,7 @@ func (t *TunHandler) handleProtect(fd int) {
 		return
 	}
 
-	protect(t.callback, fd)
+	Protect(t.callback, fd)
 }
 
 func (t *TunHandler) handleResolveProcess(source, target net.Addr) string {
@@ -79,7 +79,7 @@ func (t *TunHandler) handleResolveProcess(source, target net.Addr) string {
 	if version < 29 {
 		uid = platform.QuerySocketUidFromProcFs(source, target)
 	}
-	return resolveProcess(t.callback, protocol, source.String(), target.String(), uid)
+	return ResolveProcess(t.callback, protocol, source.String(), target.String(), uid)
 }
 
 var (

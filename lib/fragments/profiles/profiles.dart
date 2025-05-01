@@ -349,12 +349,10 @@ class ProfileItem extends StatelessWidget {
                         ),
                         PopupMenuItemData(
                           icon: Icons.delete_outlined,
-                          iconSize: 20,
                           label: appLocalizations.delete,
                           onPressed: () {
                             _handleDeleteProfile(context);
                           },
-                          type: PopupMenuItemType.danger,
                         ),
                       ],
                     ),

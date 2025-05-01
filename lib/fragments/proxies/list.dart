@@ -114,12 +114,16 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
     required int columns,
     required Set<String> currentUnfoldSet,
     required ProxyCardType type,
+    required String query,
   }) {
     final items = <Widget>[];
     final GroupNameProxiesMap groupNameProxiesMap = {};
     for (final groupName in groupNames) {
-      final group =
-          ref.read(groupsProvider.select((state) => state.getGroup(groupName)));
+      final group = ref.read(
+        groupsProvider.select(
+          (state) => state.getGroup(groupName),
+        ),
+      );
       if (group == null) {
         continue;
       }
@@ -140,7 +144,9 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
       ]);
       if (isExpand) {
         final sortedProxies = globalState.appController.getSortProxies(
-          group.all,
+          group.all
+              .where((item) => item.name.toLowerCase().contains(query))
+              .toList(),
           group.testUrl,
         );
         groupNameProxiesMap[groupName] = sortedProxies;
@@ -250,6 +256,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
     return Consumer(
       builder: (_, ref, __) {
         final state = ref.watch(proxiesListSelectorStateProvider);
+        ref.watch(themeSettingProvider.select((state) => state.textScale));
         if (state.groupNames.isEmpty) {
           return NullStatus(
             label: appLocalizations.nullProxies,
@@ -261,6 +268,7 @@ class _ProxiesListFragmentState extends State<ProxiesListFragment> {
           currentUnfoldSet: state.currentUnfoldSet,
           columns: state.columns,
           type: state.proxyCardType,
+          query: state.query,
         );
         final itemsOffset = _getItemHeightList(items, state.proxyCardType);
         return CommonScrollBar(
@@ -484,7 +492,7 @@ class _ListHeaderState extends State<ListHeader>
     return CommonCard(
       enterAnimated: widget.enterAnimated,
       key: widget.key,
-      radius: 14,
+      radius: 16.ap,
       type: CommonCardType.filled,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -587,7 +595,10 @@ class _ListHeaderState extends State<ListHeader>
                   const SizedBox(
                     width: 6,
                   ),
-                ],
+                ] else
+                  SizedBox(
+                    width: 4,
+                  ),
                 AnimatedBuilder(
                   animation: _animationController.view,
                   builder: (_, __) {

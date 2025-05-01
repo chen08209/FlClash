@@ -256,6 +256,7 @@ enum ActionMethod {
   asyncTestDelay,
   getConnections,
   closeConnections,
+  resetConnections,
   closeConnection,
   getExternalProviders,
   getExternalProvider,
@@ -291,7 +292,7 @@ enum WindowsHelperServiceStatus {
   running,
 }
 
-enum DebounceTag {
+enum FunctionTag {
   updateClashConfig,
   updateStatus,
   updateGroups,
@@ -308,6 +309,8 @@ enum DebounceTag {
   updatePageIndex,
   pageChange,
   proxiesTabChange,
+  logs,
+  requests,
 }
 
 enum DashboardWidget {

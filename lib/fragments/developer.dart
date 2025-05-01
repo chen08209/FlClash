@@ -93,8 +93,6 @@ class DeveloperView extends ConsumerWidget {
               padding: const EdgeInsets.only(
                 left: 16,
                 right: 16,
-                top: 4,
-                bottom: 4,
               ),
               title: Text(appLocalizations.developerMode),
               delegate: SwitchDelegate(

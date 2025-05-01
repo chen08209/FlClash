@@ -10,6 +10,7 @@ import (
 	"github.com/metacubex/mihomo/common/observable"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/mmdb"
+	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
@@ -53,6 +54,7 @@ func handleStartListener() bool {
 	defer runLock.Unlock()
 	isRunning = true
 	updateListeners(true)
+	resolver.ResetConnection()
 	return true
 }
 
@@ -266,6 +268,11 @@ func handleGetConnections() string {
 func handleCloseConnections() bool {
 	runLock.Lock()
 	defer runLock.Unlock()
+	closeConnections()
+	return true
+}
+
+func closeConnections() {
 	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
 		err := c.Close()
 		if err != nil {
@@ -273,6 +280,12 @@ func handleCloseConnections() bool {
 		}
 		return true
 	})
+}
+
+func handleResetConnections() bool {
+	runLock.Lock()
+	defer runLock.Unlock()
+	resolver.ResetConnection()
 	return true
 }
 

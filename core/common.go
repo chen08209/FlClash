@@ -237,6 +237,7 @@ func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfi
 	targetConfig.Tun.DNSHijack = patchConfig.Tun.DNSHijack
 	targetConfig.Tun.Stack = patchConfig.Tun.Stack
 	targetConfig.Tun.RouteAddress = patchConfig.Tun.RouteAddress
+	targetConfig.Tun.AutoRoute = patchConfig.Tun.AutoRoute
 	targetConfig.GeodataLoader = patchConfig.GeodataLoader
 	targetConfig.Profile.StoreSelected = false
 	targetConfig.GeoXUrl = patchConfig.GeoXUrl
@@ -361,10 +362,11 @@ func applyConfig(rawConfig *config.RawConfig) error {
 	}
 	if configParams.IsPatch {
 		patchConfig()
+		updateListeners(false)
 	} else {
 		hub.ApplyConfig(currentConfig)
 		patchSelectGroup()
+		updateListeners(true)
 	}
-	updateListeners(false)
 	return err
 }

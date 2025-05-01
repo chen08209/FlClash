@@ -1,13 +1,13 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/common.dart';
 import 'card.dart';
 import 'common.dart';
 
@@ -127,8 +127,6 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
       return;
     }
     final currentGroup = currentGroups[groupIndex];
-    currentTabProxies = currentGroup.all;
-    currentTabTestUrl = currentGroup.testUrl;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       globalState.appController.updateCurrentGroupName(
         currentGroup.name,
@@ -164,7 +162,7 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
         if (prev == next) {
           return;
         }
-        if (prev?.groupNames.length != next.groupNames.length) {
+        if (!stringListEquality.equals(prev?.groupNames, next.groupNames)) {
           _destroyTabController();
           final index = next.groupNames.indexWhere(
             (item) => item == next.currentGroupName,
@@ -178,6 +176,7 @@ class ProxiesTabFragmentState extends ConsumerState<ProxiesTabFragment>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeSettingProvider.select((state) => state.textScale));
     final state = ref.watch(groupNamesStateProvider);
     final groupNames = state.groupNames;
     if (groupNames.isEmpty) {
@@ -294,17 +293,12 @@ class ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
     if (_controller.position.maxScrollExtent == 0) {
       return;
     }
-
-    final sortedProxies = globalState.appController.getSortProxies(
-      currentTabProxies,
-      currentTabTestUrl,
-    );
     _controller.animateTo(
       min(
         16 +
             getScrollToSelectedOffset(
               groupName: groupName,
-              proxies: sortedProxies,
+              proxies: currentTabProxies,
             ),
         _controller.position.maxScrollExtent,
       ),
@@ -323,6 +317,8 @@ class ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
       proxies,
       state.testUrl,
     );
+    currentTabProxies = sortedProxies;
+    currentTabTestUrl = state.testUrl;
     return Align(
       alignment: Alignment.topCenter,
       child: CommonAutoHiddenScrollBar(

@@ -66,6 +66,8 @@ mixin ClashInterface {
 
   FutureOr<bool> closeConnections();
 
+  FutureOr<bool> resetConnections();
+
   FutureOr<String> getProfile(String id);
 
   Future<bool> setState(CoreState state);
@@ -325,6 +327,13 @@ abstract class ClashHandlerInterface with ClashInterface {
   Future<bool> closeConnections() {
     return invoke<bool>(
       method: ActionMethod.closeConnections,
+    );
+  }
+
+  @override
+  Future<bool> resetConnections() {
+    return invoke<bool>(
+      method: ActionMethod.resetConnections,
     );
   }
 

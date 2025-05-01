@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:isolate';
+
 import 'package:animations/animations.dart';
+import 'package:dio/dio.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/theme.dart';
@@ -12,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:yaml/yaml.dart';
 
 import 'common/common.dart';
 import 'controller.dart';
@@ -39,10 +44,18 @@ class GlobalState {
   DateTime? startTime;
   UpdateTasks tasks = [];
   final navigatorKey = GlobalKey<NavigatorState>();
-  late AppController appController;
+  AppController? _appController;
   GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
+  bool isInit = false;
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
+
+  AppController get appController => _appController!;
+
+  set appController(AppController appController) {
+    _appController = appController;
+    isInit = true;
+  }
 
   GlobalState._internal();
 
@@ -178,6 +191,23 @@ class GlobalState {
     );
   }
 
+  Future<Map<String, dynamic>> getProfileData(String? id) async {
+    if (id == null || id.isEmpty) {
+      return {};
+    }
+    final profilePath = await appPath.getProfilePath(id);
+    try {
+      final data = await Isolate.run<dynamic>(() async {
+        final file = File(profilePath);
+        final value = await file.readAsString();
+        return loadYaml(value);
+      });
+      return utils.convertLoadYaml(data) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
   Future<T?> showCommonDialog<T>({
     required Widget child,
     bool dismissible = true,
@@ -289,3 +319,94 @@ class GlobalState {
 }
 
 final globalState = GlobalState();
+
+class DetectionState {
+  static DetectionState? _instance;
+  bool? _preIsStart;
+  Timer? _setTimeoutTimer;
+  CancelToken? cancelToken;
+
+  final state = ValueNotifier<NetworkDetectionState>(
+    const NetworkDetectionState(
+      isTesting: false,
+      isLoading: true,
+      ipInfo: null,
+    ),
+  );
+
+  DetectionState._internal();
+
+  factory DetectionState() {
+    _instance ??= DetectionState._internal();
+    return _instance!;
+  }
+
+  startCheck() {
+    debouncer.call(
+      FunctionTag.checkIp,
+      _checkIp,
+    );
+  }
+
+  _checkIp() async {
+    final appState = globalState.appState;
+    final isInit = appState.isInit;
+    if (!isInit) return;
+    final isStart = appState.runTime != null;
+    if (_preIsStart == false &&
+        _preIsStart == isStart &&
+        state.value.ipInfo != null) {
+      return;
+    }
+    _clearSetTimeoutTimer();
+    state.value = state.value.copyWith(
+      isLoading: true,
+      ipInfo: null,
+    );
+    _preIsStart = isStart;
+    if (cancelToken != null) {
+      cancelToken!.cancel();
+      cancelToken = null;
+    }
+    cancelToken = CancelToken();
+    try {
+      state.value = state.value.copyWith(
+        isTesting: true,
+      );
+      final ipInfo = await request.checkIp(cancelToken: cancelToken);
+      state.value = state.value.copyWith(
+        isTesting: false,
+      );
+      if (ipInfo != null) {
+        state.value = state.value.copyWith(
+          isLoading: false,
+          ipInfo: ipInfo,
+        );
+        return;
+      }
+      _clearSetTimeoutTimer();
+      _setTimeoutTimer = Timer(const Duration(milliseconds: 300), () {
+        state.value = state.value.copyWith(
+          isLoading: false,
+          ipInfo: null,
+        );
+      });
+    } catch (e) {
+      if (e.toString() == "cancelled") {
+        state.value = state.value.copyWith(
+          isLoading: true,
+          ipInfo: null,
+        );
+      }
+    }
+  }
+
+  _clearSetTimeoutTimer() {
+    if (_setTimeoutTimer != null) {
+      _setTimeoutTimer?.cancel();
+      _setTimeoutTimer = null;
+    }
+  }
+}
+
+final detectionState = DetectionState();

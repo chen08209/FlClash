@@ -87,6 +87,9 @@ func handleAction(action *Action, result func(data interface{})) {
 	case closeConnectionsMethod:
 		result(handleCloseConnections())
 		return
+	case resetConnectionsMethod:
+		result(handleResetConnections())
+		return
 	case closeConnectionMethod:
 		id := action.Data.(string)
 		result(handleCloseConnection(id))

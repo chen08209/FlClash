@@ -305,20 +305,24 @@ class CommonScaffoldState extends State<CommonScaffold> {
     );
   }
 
-  Widget _buildAppBarWrap(Widget appBar) {
-    if (_isEdit) {
-      return CommonPopScope(
-        onPop: () {
-          if (_isEdit) {
-            _appBarState.value.editState?.onExit();
-            return false;
-          }
-          return true;
-        },
-        child: appBar,
+  Widget _buildAppBarWrap(Widget child) {
+    final appBar = _isSearch ? _buildSearchingAppBarTheme(child) : child;
+    if (_isEdit || _isSearch) {
+      return SystemBackBlock(
+        child: CommonPopScope(
+          onPop: () {
+            if (_isEdit || _isSearch) {
+              _handleExitSearching();
+              _appBarState.value.editState?.onExit();
+              return false;
+            }
+            return true;
+          },
+          child: appBar,
+        ),
       );
     }
-    return _isSearch ? _buildSearchingAppBarTheme(appBar) : appBar;
+    return appBar;
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -431,6 +435,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     final scaffold = Scaffold(
       appBar: _buildAppBar(),
       body: body,
+      resizeToAvoidBottomInset: true,
       backgroundColor: widget.backgroundColor,
       floatingActionButton: ValueListenableBuilder<Widget?>(
         valueListenable: _floatingActionButton,

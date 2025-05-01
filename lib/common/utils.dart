@@ -5,7 +5,9 @@ import 'dart:ui';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lpinyin/lpinyin.dart';
+import 'package:yaml/yaml.dart';
 
 class Utils {
   Color? getDelayColor(int? delay) {
@@ -230,7 +232,7 @@ class Utils {
   }
 
   int getProfilesColumns(double viewWidth) {
-    return max((viewWidth / 350).floor(), 1);
+    return max((viewWidth / 320).floor(), 1);
   }
 
   final _indexPrimary = [
@@ -322,6 +324,40 @@ class Utils {
       return addresses.first.address;
     }
     return "";
+  }
+
+  SingleActivator controlSingleActivator(LogicalKeyboardKey trigger) {
+    final control = Platform.isMacOS ? false : true;
+    return SingleActivator(
+      trigger,
+      control: control,
+      meta: !control,
+    );
+  }
+
+  dynamic convertLoadYaml(dynamic node) {
+    if (node is YamlMap) {
+      final map = <String, dynamic>{};
+      node.nodes.forEach((key, value) {
+        String stringKey;
+        if (key is YamlScalar) {
+          stringKey = key.value.toString();
+        } else {
+          stringKey = key.toString();
+        }
+        map[stringKey] = convertLoadYaml(value.value);
+      });
+      return map;
+    } else if (node is YamlList) {
+      final list = <dynamic>[];
+      for (final item in node.nodes) {
+        list.add(convertLoadYaml(item.value));
+      }
+      return list;
+    } else if (node is YamlScalar) {
+      return node.value;
+    }
+    return node;
   }
 }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_clash/enum/enum.dart';
@@ -22,21 +23,14 @@ class _AccessFragmentState extends ConsumerState<AccessFragment> {
   List<String> acceptList = [];
   List<String> rejectList = [];
   late ScrollController _controller;
+  final _completer = Completer();
 
   @override
   void initState() {
     super.initState();
     _updateInitList();
     _controller = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final appState = globalState.appState;
-      if (appState.packages.isEmpty) {
-        Future.delayed(const Duration(milliseconds: 300), () async {
-          ref.read(packagesProvider.notifier).value =
-              await app?.getPackages() ?? [];
-        });
-      }
-    });
+    _completer.complete(globalState.appController.getPackages());
   }
 
   @override
@@ -319,31 +313,42 @@ class _AccessFragmentState extends ConsumerState<AccessFragment> {
                 ),
                 Expanded(
                   flex: 1,
-                  child: packages.isEmpty
-                      ? const Center(
-                          child: CircularProgressIndicator(),
-                        )
-                      : CommonScrollBar(
-                          controller: _controller,
-                          child: ListView.builder(
-                            controller: _controller,
-                            itemCount: packages.length,
-                            itemExtent: 72,
-                            itemBuilder: (_, index) {
-                              final package = packages[index];
-                              return PackageListItem(
-                                key: Key(package.packageName),
-                                package: package,
-                                value: valueList.contains(package.packageName),
-                                isActive: accessControl.enable,
-                                onChanged: (value) {
-                                  _handleSelected(valueList, package, value);
-                                },
+                  child: FutureBuilder(
+                      future: _completer.future,
+                      builder: (_, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        return packages.isEmpty
+                            ? NullStatus(
+                                label: appLocalizations.noData,
+                              )
+                            : CommonScrollBar(
+                                controller: _controller,
+                                child: ListView.builder(
+                                  controller: _controller,
+                                  itemCount: packages.length,
+                                  itemExtent: 72,
+                                  itemBuilder: (_, index) {
+                                    final package = packages[index];
+                                    return PackageListItem(
+                                      key: Key(package.packageName),
+                                      package: package,
+                                      value: valueList
+                                          .contains(package.packageName),
+                                      isActive: accessControl.enable,
+                                      onChanged: (value) {
+                                        _handleSelected(
+                                            valueList, package, value);
+                                      },
+                                    );
+                                  },
+                                ),
                               );
-                            },
-                          ),
-                        ),
-                ),
+                      }),
+                )
               ],
             ),
           ),

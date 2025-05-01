@@ -23,7 +23,8 @@ final baseInfoEdgeInsets = EdgeInsets.symmetric(
   horizontal: 16.ap,
 );
 
-final defaultTextScaleFactor = WidgetsBinding.instance.platformDispatcher.textScaleFactor;
+final defaultTextScaleFactor =
+    WidgetsBinding.instance.platformDispatcher.textScaleFactor;
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
@@ -75,6 +76,10 @@ const viewModeColumnsMap = {
   ViewMode.laptop: [3, 2],
   ViewMode.desktop: [4, 3],
 };
+
+// const proxiesStoreKey = PageStorageKey<String>('proxies');
+// const toolsStoreKey = PageStorageKey<String>('tools');
+// const profilesStoreKey = PageStorageKey<String>('profiles');
 
 const defaultPrimaryColor = 0XFFD8C0C3;
 

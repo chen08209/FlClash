@@ -202,25 +202,25 @@ class BackupAndRecovery extends ConsumerWidget {
                     builder: (_, snapshot) {
                       return Center(
                         child: FadeThroughBox(
-                          child: snapshot.connectionState ==
-                                  ConnectionState.waiting
-                              ? const SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 1,
-                                  ),
-                                )
-                              : Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: snapshot.data == true
-                                        ? Colors.green
-                                        : Colors.red,
-                                  ),
-                                  width: 12,
-                                  height: 12,
-                                ),
+                          child:
+                              snapshot.connectionState != ConnectionState.done
+                                  ? const SizedBox(
+                                      width: 12,
+                                      height: 12,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1,
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: snapshot.data == true
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                      width: 12,
+                                      height: 12,
+                                    ),
                         ),
                       );
                     },
