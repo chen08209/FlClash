@@ -39,8 +39,9 @@ static PROCESS: Lazy<Arc<Mutex<Option<std::process::Child>>>> =
     Lazy::new(|| Arc::new(Mutex::new(None)));
 
 fn start(start_params: StartParams) -> impl Reply {
-    if sha256_file(start_params.path.as_str()).unwrap_or("".to_string()) != env!("TOKEN") {
-        return "Only FlClashCore is allowed to run.".to_string();
+    let sha256 = sha256_file(start_params.path.as_str()).unwrap_or("".to_string());
+    if sha256 != env!("TOKEN") {
+        return format!("The SHA256 hash of the program requesting execution is: {}. The helper program only allows execution of applications with the SHA256 hash: {}.", sha256,  env!("TOKEN"),);
     }
     stop();
     let mut process = PROCESS.lock().unwrap();

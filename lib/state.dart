@@ -52,6 +52,8 @@ class GlobalState {
   }
 
   initApp(int version) async {
+    coreSHA256 = const String.fromEnvironment("CORE_SHA256");
+    isPre = const String.fromEnvironment("APP_ENV") != 'stable';
     appState = AppState(
       version: version,
       viewSize: Size.zero,
