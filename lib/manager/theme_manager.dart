@@ -38,7 +38,7 @@ class ThemeManager extends ConsumerWidget {
           textScaleFactor,
         ),
         padding: padding.copyWith(
-          top: padding.top > height * 0.3 ? 0.0 : padding.top,
+          top: padding.top > height * 0.3 ? 20.0 : padding.top,
         ),
       ),
       child: LayoutBuilder(

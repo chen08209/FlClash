@@ -1,9 +1,10 @@
 package main
 
 import (
+	b "bytes"
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
@@ -21,31 +22,16 @@ import (
 	"github.com/metacubex/mihomo/log"
 	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
-	"github.com/samber/lo"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 )
 
-func splitByMultipleSeparators(s string) interface{} {
-	isSeparator := func(r rune) bool {
-		return r == ',' || r == ' ' || r == ';'
-	}
-
-	parts := strings.FieldsFunc(s, isSeparator)
-	if len(parts) > 1 {
-		return parts
-	}
-	return s
-}
-
 var (
-	version   = 0
-	isRunning = false
-	runLock   sync.Mutex
-	ips       = []string{"ipwho.is", "api.ip.sb", "ipapi.co", "ipinfo.io"}
-	b, _      = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
+	currentConfig *config.Config
+	version       = 0
+	isRunning     = false
+	runLock       sync.Mutex
+	mBatch, _     = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 )
 
 type ExternalProviders []ExternalProvider
@@ -53,54 +39,6 @@ type ExternalProviders []ExternalProvider
 func (a ExternalProviders) Len() int           { return len(a) }
 func (a ExternalProviders) Less(i, j int) bool { return a[i].Name < a[j].Name }
 func (a ExternalProviders) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-
-func readFile(path string) ([]byte, error) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, err
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, err
-}
-
-func getProfilePath(id string) string {
-	return filepath.Join(constant.Path.HomeDir(), "profiles", id+".yaml")
-}
-
-func getProfileProvidersPath(id string) string {
-	return filepath.Join(constant.Path.HomeDir(), "providers", id)
-}
-
-func getRawConfigWithId(id string) *config.RawConfig {
-	path := getProfilePath(id)
-	bytes, err := readFile(path)
-	if err != nil {
-		return config.DefaultRawConfig()
-	}
-	prof, err := config.UnmarshalRawConfig(bytes)
-	if err != nil {
-		log.Errorln("unmarshalRawConfig error %v", err)
-		return config.DefaultRawConfig()
-	}
-	for _, mapping := range prof.ProxyProvider {
-		value, exist := mapping["path"].(string)
-		if !exist {
-			continue
-		}
-		mapping["path"] = filepath.Join(getProfileProvidersPath(id), value)
-	}
-	for _, mapping := range prof.RuleProvider {
-		value, exist := mapping["path"].(string)
-		if !exist {
-			continue
-		}
-		mapping["path"] = filepath.Join(getProfileProvidersPath(id), value)
-	}
-	return prof
-}
 
 func getExternalProvidersRaw() map[string]cp.Provider {
 	eps := make(map[string]cp.Provider)
@@ -166,143 +104,15 @@ func sideUpdateExternalProvider(p cp.Provider, bytes []byte) error {
 	}
 }
 
-func decorationConfig(profileId string, cfg config.RawConfig) *config.RawConfig {
-	prof := getRawConfigWithId(profileId)
-	overwriteConfig(prof, cfg)
-	return prof
-}
-
-func attachHosts(hosts, patchHosts map[string]any) {
-	for k, v := range patchHosts {
-		if str, ok := v.(string); ok {
-			hosts[k] = splitByMultipleSeparators(str)
-		}
-	}
-}
-
-func updatePatchDns(dns config.RawDNS) {
-	for pair := dns.NameServerPolicy.Oldest(); pair != nil; pair = pair.Next() {
-		if str, ok := pair.Value.(string); ok {
-			dns.NameServerPolicy.Set(pair.Key, splitByMultipleSeparators(str))
-		}
-	}
-}
-
-func trimArr(arr []string) (r []string) {
-	for _, e := range arr {
-		r = append(r, strings.Trim(e, " "))
-	}
-	return
-}
-
-func overrideRules(rules, patchRules []string) []string {
-	target := ""
-	for _, line := range rules {
-		rule := trimArr(strings.Split(line, ","))
-		if len(rule) != 2 {
-			continue
-		}
-		if strings.EqualFold(rule[0], "MATCH") {
-			target = rule[1]
-			break
-		}
-	}
-	if target == "" {
-		return rules
-	}
-	rulesExt := lo.Map(ips, func(ip string, _ int) string {
-		return fmt.Sprintf("DOMAIN,%s,%s", ip, target)
-	})
-	return append(append(rulesExt, patchRules...), rules...)
-}
-
-func overwriteConfig(targetConfig *config.RawConfig, patchConfig config.RawConfig) {
-	targetConfig.ExternalController = patchConfig.ExternalController
-	targetConfig.ExternalUI = ""
-	targetConfig.Interface = ""
-	targetConfig.ExternalUIURL = ""
-	targetConfig.TCPConcurrent = patchConfig.TCPConcurrent
-	targetConfig.UnifiedDelay = patchConfig.UnifiedDelay
-	targetConfig.IPv6 = patchConfig.IPv6
-	targetConfig.LogLevel = patchConfig.LogLevel
-	targetConfig.Port = 0
-	targetConfig.SocksPort = 0
-	targetConfig.KeepAliveInterval = patchConfig.KeepAliveInterval
-	targetConfig.MixedPort = patchConfig.MixedPort
-	targetConfig.FindProcessMode = patchConfig.FindProcessMode
-	targetConfig.AllowLan = patchConfig.AllowLan
-	targetConfig.Mode = patchConfig.Mode
-	targetConfig.Tun.Enable = patchConfig.Tun.Enable
-	targetConfig.Tun.Device = patchConfig.Tun.Device
-	targetConfig.Tun.DNSHijack = patchConfig.Tun.DNSHijack
-	targetConfig.Tun.Stack = patchConfig.Tun.Stack
-	targetConfig.Tun.RouteAddress = patchConfig.Tun.RouteAddress
-	targetConfig.GeodataLoader = patchConfig.GeodataLoader
-	targetConfig.Profile.StoreSelected = false
-	targetConfig.GeoXUrl = patchConfig.GeoXUrl
-	targetConfig.GlobalUA = patchConfig.GlobalUA
-	if configParams.TestURL != nil {
-		constant.DefaultTestURL = *configParams.TestURL
-	}
-	for idx := range targetConfig.ProxyGroup {
-		targetConfig.ProxyGroup[idx]["url"] = ""
-	}
-	attachHosts(targetConfig.Hosts, patchConfig.Hosts)
-	if configParams.OverrideDns {
-		updatePatchDns(patchConfig.DNS)
-		targetConfig.DNS = patchConfig.DNS
-	} else {
-		if targetConfig.DNS.Enable == false {
-			targetConfig.DNS.Enable = true
-		}
-	}
-	if configParams.OverrideRule {
-		targetConfig.Rule = overrideRules(patchConfig.Rule, []string{})
-	} else {
-		targetConfig.Rule = overrideRules(targetConfig.Rule, patchConfig.Rule)
-	}
-}
-
-func patchConfig() {
-	log.Infoln("[Apply] patch")
-	general := currentConfig.General
-	controller := currentConfig.Controller
-	tls := currentConfig.TLS
-	tunnel.SetSniffing(general.Sniffing)
-	tunnel.SetFindProcessMode(general.FindProcessMode)
-	dialer.SetTcpConcurrent(general.TCPConcurrent)
-	dialer.DefaultInterface.Store(general.Interface)
-	adapter.UnifiedDelay.Store(general.UnifiedDelay)
-	tunnel.SetMode(general.Mode)
-	log.SetLevel(general.LogLevel)
-	resolver.DisableIPv6 = !general.IPv6
-
-	route.ReCreateServer(&route.Config{
-		Addr:        controller.ExternalController,
-		TLSAddr:     controller.ExternalControllerTLS,
-		UnixAddr:    controller.ExternalControllerUnix,
-		PipeAddr:    controller.ExternalControllerPipe,
-		Secret:      controller.Secret,
-		Certificate: tls.Certificate,
-		PrivateKey:  tls.PrivateKey,
-		DohServer:   controller.ExternalDohServer,
-		IsDebug:     false,
-		Cors: route.Cors{
-			AllowOrigins:        controller.Cors.AllowOrigins,
-			AllowPrivateNetwork: controller.Cors.AllowPrivateNetwork,
-		},
-	})
-}
-
-func updateListeners(force bool) {
+func updateListeners() {
 	if !isRunning {
 		return
 	}
-	general := currentConfig.General
-	listeners := currentConfig.Listeners
-	if force == true {
-		stopListeners()
+	if currentConfig == nil {
+		return
 	}
+	listeners := currentConfig.Listeners
+	general := currentConfig.General
 	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
 	listener.SetAllowLan(general.AllowLan)
 	inbound.SetSkipAuthPrefixes(general.SkipAuthPrefixes)
@@ -326,11 +136,7 @@ func stopListeners() {
 	listener.StopListener()
 }
 
-func patchSelectGroup() {
-	mapping := configParams.SelectedMap
-	if mapping == nil {
-		return
-	}
+func patchSelectGroup(mapping map[string]string) {
 	for name, proxy := range tunnel.ProxiesWithProviders() {
 		outbound, ok := proxy.(*adapter.Proxy)
 		if !ok {
@@ -351,20 +157,102 @@ func patchSelectGroup() {
 	}
 }
 
-func applyConfig(rawConfig *config.RawConfig) error {
+func defaultSetupParams() *SetupParams {
+	return &SetupParams{
+		Config:      config.DefaultRawConfig(),
+		TestURL:     "https://www.gstatic.com/generate_204",
+		SelectedMap: map[string]string{},
+	}
+}
+
+func readFile(path string) ([]byte, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, err
+}
+
+func updateConfig(params *UpdateParams) {
+	runLock.Lock()
+	defer runLock.Unlock()
+	general := currentConfig.General
+	if params.MixedPort != nil {
+		general.MixedPort = *params.MixedPort
+	}
+	if params.Sniffing != nil {
+		general.Sniffing = *params.Sniffing
+		tunnel.SetSniffing(general.Sniffing)
+	}
+	if params.FindProcessMode != nil {
+		general.FindProcessMode = *params.FindProcessMode
+		tunnel.SetFindProcessMode(general.FindProcessMode)
+	}
+	if params.TCPConcurrent != nil {
+		general.TCPConcurrent = *params.TCPConcurrent
+		dialer.SetTcpConcurrent(general.TCPConcurrent)
+	}
+	if params.Interface != nil {
+		general.Interface = *params.Interface
+		dialer.DefaultInterface.Store(general.Interface)
+	}
+	if params.UnifiedDelay != nil {
+		general.UnifiedDelay = *params.UnifiedDelay
+		adapter.UnifiedDelay.Store(general.UnifiedDelay)
+	}
+	if params.Mode != nil {
+		general.Mode = *params.Mode
+		tunnel.SetMode(general.Mode)
+	}
+	if params.LogLevel != nil {
+		general.LogLevel = *params.LogLevel
+		log.SetLevel(general.LogLevel)
+	}
+	if params.IPv6 != nil {
+		general.IPv6 = *params.IPv6
+		resolver.DisableIPv6 = !general.IPv6
+	}
+	if params.ExternalController != nil {
+		currentConfig.Controller.ExternalController = *params.ExternalController
+		route.ReCreateServer(&route.Config{
+			Addr: currentConfig.Controller.ExternalController,
+		})
+	}
+
+	if params.Tun != nil {
+		general.Tun.Enable = params.Tun.Enable
+		general.Tun.AutoRoute = *params.Tun.AutoRoute
+		general.Tun.Device = *params.Tun.Device
+		general.Tun.RouteAddress = *params.Tun.RouteAddress
+		general.Tun.DNSHijack = *params.Tun.DNSHijack
+		general.Tun.Stack = *params.Tun.Stack
+	}
+
+	updateListeners()
+}
+
+func setupConfig(params *SetupParams) error {
 	runLock.Lock()
 	defer runLock.Unlock()
 	var err error
-	currentConfig, err = config.ParseRawConfig(rawConfig)
+	constant.DefaultTestURL = params.TestURL
+	currentConfig, err = config.ParseRawConfig(params.Config)
 	if err != nil {
 		currentConfig, _ = config.ParseRawConfig(config.DefaultRawConfig())
 	}
-	if configParams.IsPatch {
-		patchConfig()
-	} else {
-		hub.ApplyConfig(currentConfig)
-		patchSelectGroup()
-	}
-	updateListeners(false)
+	hub.ApplyConfig(currentConfig)
+	patchSelectGroup(params.SelectedMap)
+	updateListeners()
+	return err
+}
+
+func UnmarshalJson(data []byte, v any) error {
+	decoder := json.NewDecoder(b.NewReader(data))
+	decoder.UseNumber()
+	err := decoder.Decode(v)
 	return err
 }

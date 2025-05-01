@@ -7,6 +7,9 @@
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -22,6 +25,7 @@
 
     <application
         android:name=".FlClashApplication"
+        android:banner="@mipmap/ic_banner"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="FlClash">
@@ -88,7 +92,7 @@
         <service
             android:name=".services.FlClashTileService"
             android:exported="true"
-            android:icon="@drawable/ic_stat_name"
+            android:icon="@drawable/ic"
             android:label="FlClash"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             tools:targetApi="n">

@@ -38,7 +38,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
       (prev, next) {
         if (prev != next) {
           debouncer.call(
-            DebounceTag.autoLaunch,
+            FunctionTag.autoLaunch,
             () {
               autoLaunch?.updateStatus(next);
             },
@@ -102,9 +102,10 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   }
 
   @override
-  Future<void> onTaskbarCreated() async {
-    globalState.appController.updateTray(true);
-    super.onTaskbarCreated();
+  void onWindowRestore() {
+    commonPrint.log("restore");
+    render?.resume();
+    super.onWindowRestore();
   }
 
   @override

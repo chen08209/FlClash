@@ -29,7 +29,7 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
 
   showTip() {
     debouncer.call(
-      DebounceTag.vpnTip,
+      FunctionTag.vpnTip,
       () {
         if (ref.read(runTimeProvider.notifier).isStart) {
           globalState.showNotifier(

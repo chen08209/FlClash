@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   dynamic_color
   file_selector_windows
+  flutter_js
   hotkey_manager_windows
   proxy
   screen_retriever_windows
@@ -14,7 +15,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   url_launcher_windows
   window_ext
   window_manager
-  windows_single_instance
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

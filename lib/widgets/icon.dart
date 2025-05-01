@@ -1,6 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_svg/svg.dart';
 
 class CommonTargetIcon extends StatelessWidget {
   final String src;
@@ -33,11 +34,23 @@ class CommonTargetIcon extends StatelessWidget {
         },
       );
     }
-    return CachedNetworkImage(
-      imageUrl: src,
-      fadeInDuration: Duration.zero,
-      fadeOutDuration: Duration.zero,
-      errorWidget: (_, __, ___) => _defaultIcon(),
+    return FutureBuilder(
+      future: DefaultCacheManager().getSingleFile(src),
+      builder: (_, snapshot) {
+        final data = snapshot.data;
+        if (data == null) {
+          return SizedBox();
+        }
+        return src.isSvg
+            ? SvgPicture.file(
+                data,
+                errorBuilder: (_, __, ___) => _defaultIcon(),
+              )
+            : Image.file(
+                data,
+                errorBuilder: (_, __, ___) => _defaultIcon(),
+              );
+      },
     );
   }
 

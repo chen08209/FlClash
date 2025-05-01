@@ -144,7 +144,7 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
         ...widget.actions,
       ]),
     );
-    if (widget.type == SheetType.bottomSheet) {
+    if (bottomSheet) {
       final handleSize = Size(32, 4);
       return Container(
         clipBehavior: Clip.hardEdge,

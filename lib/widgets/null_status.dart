@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../common/common.dart';
 
 class NullStatus extends StatelessWidget {

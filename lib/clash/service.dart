@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fl_clash/clash/interface.dart';
 import 'package:fl_clash/common/common.dart';
@@ -51,23 +50,18 @@ class ClashService extends ClashHandlerInterface {
         await _destroySocket();
         socketCompleter.complete(socket);
         socket
-            .transform(
-              StreamTransformer<Uint8List, String>.fromHandlers(
-                handleData: (Uint8List data, EventSink<String> sink) {
-                  sink.add(utf8.decode(data, allowMalformed: true));
-                },
-              ),
-            )
+            .transform(uint8ListToListIntConverter)
+            .transform(utf8.decoder)
             .transform(LineSplitter())
             .listen(
-              (data) {
-                handleResult(
-                  ActionResult.fromJson(
-                    json.decode(data.trim()),
-                  ),
-                );
-              },
+          (data) {
+            handleResult(
+              ActionResult.fromJson(
+                json.decode(data.trim()),
+              ),
             );
+          },
+        );
       }
     }, (error, stack) {
       commonPrint.log(error.toString());
@@ -104,7 +98,13 @@ class ClashService extends ClashHandlerInterface {
         arg,
       ],
     );
-    process!.stdout.listen((_) {});
+    process?.stdout.listen((_) {});
+    process?.stderr.listen((e) {
+      final error = utf8.decode(e);
+      if (error.isNotEmpty) {
+        commonPrint.log(error);
+      }
+    });
     isStarting = false;
   }
 

@@ -27,6 +27,8 @@ class Vpn {
             return await handleGetStartForegroundParams!();
           }
           return "";
+        case "status":
+          return clashLibHandler?.getRunTime() != null;
         default:
           for (final VpnListener listener in _listeners) {
             switch (call.method) {

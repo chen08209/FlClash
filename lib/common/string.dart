@@ -1,11 +1,20 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+
 import 'print.dart';
 
 extension StringExtension on String {
   bool get isUrl {
     return RegExp(r'^(http|https|ftp)://').hasMatch(this);
+  }
+
+  dynamic get splitByMultipleSeparators {
+    final parts =
+        split(RegExp(r'[, ;]+')).where((part) => part.isNotEmpty).toList();
+
+    return parts.length > 1 ? parts : this;
   }
 
   int compareToLower(String other) {
@@ -38,6 +47,10 @@ extension StringExtension on String {
     }
   }
 
+  bool get isSvg {
+    return endsWith(".svg");
+  }
+
   bool get isRegex {
     try {
       RegExp(this);
@@ -47,6 +60,15 @@ extension StringExtension on String {
       return false;
     }
   }
+
+  String toMd5() {
+    final bytes = utf8.encode(this);
+    return md5.convert(bytes).toString();
+  }
+
+// bool containsToLower(String target) {
+//   return toLowerCase().contains(target);
+// }
 }
 
 extension StringExtensionSafe on String? {

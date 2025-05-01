@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lpinyin/lpinyin.dart';
 
 class Utils {
@@ -230,7 +233,7 @@ class Utils {
   }
 
   int getProfilesColumns(double viewWidth) {
-    return max((viewWidth / 350).floor(), 1);
+    return max((viewWidth / 320).floor(), 1);
   }
 
   final _indexPrimary = [
@@ -322,6 +325,72 @@ class Utils {
       return addresses.first.address;
     }
     return "";
+  }
+
+  SingleActivator controlSingleActivator(LogicalKeyboardKey trigger) {
+    final control = Platform.isMacOS ? false : true;
+    return SingleActivator(
+      trigger,
+      control: control,
+      meta: !control,
+    );
+  }
+
+  // dynamic convertYamlNode(dynamic node) {
+  //   if (node is YamlMap) {
+  //     final map = <String, dynamic>{};
+  //     YamlNode? mergeKeyNode;
+  //     for (final entry in node.nodes.entries) {
+  //       if (entry.key is YamlScalar &&
+  //           (entry.key as YamlScalar).value == '<<') {
+  //         mergeKeyNode = entry.value;
+  //         break;
+  //       }
+  //     }
+  //     if (mergeKeyNode != null) {
+  //       final mergeValue = mergeKeyNode.value;
+  //       if (mergeValue is YamlMap) {
+  //         map.addAll(convertYamlNode(mergeValue) as Map<String, dynamic>);
+  //       } else if (mergeValue is YamlList) {
+  //         for (final node in mergeValue.nodes) {
+  //           if (node.value is YamlMap) {
+  //             map.addAll(convertYamlNode(node.value) as Map<String, dynamic>);
+  //           }
+  //         }
+  //       }
+  //     }
+  //
+  //     node.nodes.forEach((key, value) {
+  //       String stringKey;
+  //       if (key is YamlScalar) {
+  //         stringKey = key.value.toString();
+  //       } else {
+  //         stringKey = key.toString();
+  //       }
+  //       map[stringKey] = convertYamlNode(value.value);
+  //     });
+  //     return map;
+  //   } else if (node is YamlList) {
+  //     final list = <dynamic>[];
+  //     for (final item in node.nodes) {
+  //       list.add(convertYamlNode(item.value));
+  //     }
+  //     return list;
+  //   } else if (node is YamlScalar) {
+  //     return node.value;
+  //   }
+  //   return node;
+  // }
+
+  FutureOr<T> handleWatch<T>(Function function) async {
+    if (kDebugMode) {
+      final stopwatch = Stopwatch()..start();
+      final res = await function();
+      stopwatch.stop();
+      commonPrint.log('耗时：${stopwatch.elapsedMilliseconds} ms');
+      return res;
+    }
+    return await function();
   }
 }
 
