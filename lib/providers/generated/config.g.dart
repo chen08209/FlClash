@@ -6,7 +6,7 @@ part of '../config.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appSettingHash() => r'99236f2cd5498f9af70b43e41faeb361d344f866';
+String _$appSettingHash() => r'13a93334e18b97f5d52eb3e05bbc7b0b8a5c453e';
 
 /// See also [AppSetting].
 @ProviderFor(AppSetting)
@@ -21,7 +21,7 @@ final appSettingProvider =
 );
 
 typedef _$AppSetting = AutoDisposeNotifier<AppSettingProps>;
-String _$windowSettingHash() => r'3dbbf3e169023b49e79b2fb983002687ce077e23';
+String _$windowSettingHash() => r'9bf31c7e08fab84213f31e249270f9d730bdf711';
 
 /// See also [WindowSetting].
 @ProviderFor(WindowSetting)
@@ -37,7 +37,7 @@ final windowSettingProvider =
 );
 
 typedef _$WindowSetting = AutoDisposeNotifier<WindowProps>;
-String _$vpnSettingHash() => r'e660cc71ed6677f136eb98885680aae66be74881';
+String _$vpnSettingHash() => r'3dae8b56504bfb906aca546c5a5389d79d259a5e';
 
 /// See also [VpnSetting].
 @ProviderFor(VpnSetting)
@@ -52,7 +52,7 @@ final vpnSettingProvider =
 );
 
 typedef _$VpnSetting = AutoDisposeNotifier<VpnProps>;
-String _$networkSettingHash() => r'689ce908662dfe64660557153a4244ae1fdf696e';
+String _$networkSettingHash() => r'5a30d4cbfaba94cc29ad08dc1771ebb368b4ba14';
 
 /// See also [NetworkSetting].
 @ProviderFor(NetworkSetting)
@@ -68,7 +68,7 @@ final networkSettingProvider =
 );
 
 typedef _$NetworkSetting = AutoDisposeNotifier<NetworkProps>;
-String _$themeSettingHash() => r'ae5eeaad9729627eaa1b3ccf0266c13bf2ce68d4';
+String _$themeSettingHash() => r'0b5620b696d73260d94f63cbfb65857acd2000f0';
 
 /// See also [ThemeSetting].
 @ProviderFor(ThemeSetting)
@@ -83,7 +83,7 @@ final themeSettingProvider =
 );
 
 typedef _$ThemeSetting = AutoDisposeNotifier<ThemeProps>;
-String _$profilesHash() => r'a6514c89064e4f42fc31fe7d525088fd26c51016';
+String _$profilesHash() => r'3203cc7de88b91fff86b79c75c2cacd8116fffb7';
 
 /// See also [Profiles].
 @ProviderFor(Profiles)
@@ -114,7 +114,7 @@ final currentProfileIdProvider =
 );
 
 typedef _$CurrentProfileId = AutoDisposeNotifier<String?>;
-String _$appDAVSettingHash() => r'20439d1f8cc0843a092766dc1cad68e8e8273dbb';
+String _$appDAVSettingHash() => r'4bf293ac0d1fba157f60df920b7ffd5afefaab26';
 
 /// See also [AppDAVSetting].
 @ProviderFor(AppDAVSetting)
@@ -162,7 +162,7 @@ final hotKeyActionsProvider =
 
 typedef _$HotKeyActions = AutoDisposeNotifier<List<HotKeyAction>>;
 String _$proxiesStyleSettingHash() =>
-    r'162e7320dff8063e7a2deca5071ef5024f4d3d04';
+    r'54ebf20a8d4455b2d7a65824f375c4c02a5fba28';
 
 /// See also [ProxiesStyleSetting].
 @ProviderFor(ProxiesStyleSetting)
@@ -178,7 +178,7 @@ final proxiesStyleSettingProvider =
 );
 
 typedef _$ProxiesStyleSetting = AutoDisposeNotifier<ProxiesStyle>;
-String _$scriptStateHash() => r'884581c71fd5afa3c9d34f31625d967cf561cdbe';
+String _$scriptStateHash() => r'afbb70d1dd7e577b2377ecd8ab35d0905c1d0e87';
 
 /// See also [ScriptState].
 @ProviderFor(ScriptState)
@@ -193,7 +193,7 @@ final scriptStateProvider =
 );
 
 typedef _$ScriptState = AutoDisposeNotifier<ScriptProps>;
-String _$patchClashConfigHash() => r'52906195d85525d6688aec231da8b38c24364494';
+String _$patchClashConfigHash() => r'd9acdd0ace673fc1c1460b63d7a27c5787713c14';
 
 /// See also [PatchClashConfig].
 @ProviderFor(PatchClashConfig)

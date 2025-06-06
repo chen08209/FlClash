@@ -2,8 +2,10 @@
 
 import 'dart:io';
 
+import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -15,16 +17,16 @@ enum SupportPlatform {
   Android;
 
   static SupportPlatform get currentPlatform {
-    if (Platform.isWindows) {
+    if (system.isWindows) {
       return SupportPlatform.Windows;
-    } else if (Platform.isMacOS) {
+    } else if (system.isMacOS) {
       return SupportPlatform.MacOS;
     } else if (Platform.isLinux) {
       return SupportPlatform.Linux;
-    } else if (Platform.isAndroid) {
+    } else if (system.isAndroid) {
       return SupportPlatform.Android;
     }
-    throw "invalid platform";
+    throw 'invalid platform';
   }
 }
 
@@ -43,11 +45,11 @@ enum GroupType {
 
   static GroupType parseProfileType(String type) {
     return switch (type) {
-      "url-test" => URLTest,
-      "select" => Selector,
-      "fallback" => Fallback,
-      "load-balance" => LoadBalance,
-      "relay" => Relay,
+      'url-test' => URLTest,
+      'select' => Selector,
+      'fallback' => Fallback,
+      'load-balance' => LoadBalance,
+      'relay' => Relay,
       String() => throw UnimplementedError(),
     };
   }
@@ -58,7 +60,7 @@ enum GroupName { GLOBAL, Proxy, Auto, Fallback }
 extension GroupTypeExtension on GroupType {
   static List<String> get valueList => GroupType.values
       .map(
-        (e) => e.toString().split(".").last,
+        (e) => e.toString().split('.').last,
       )
       .toList();
 
@@ -80,7 +82,7 @@ enum UsedProxy { GLOBAL, DIRECT, REJECT }
 extension UsedProxyExtension on UsedProxy {
   static List<String> get valueList => UsedProxy.values
       .map(
-        (e) => e.toString().split(".").last,
+        (e) => e.toString().split('.').last,
       )
       .toList();
 
@@ -97,7 +99,18 @@ enum LogLevel {
   warning,
   error,
   silent,
-  app,
+}
+
+extension LogLevelExt on LogLevel {
+  Color? get color {
+    return switch (this) {
+      LogLevel.silent => Colors.grey.shade700,
+      LogLevel.debug => Colors.grey.shade400,
+      LogLevel.info => null,
+      LogLevel.warning => Colors.yellowAccent,
+      LogLevel.error => Colors.redAccent,
+    };
+  }
 }
 
 enum TransportProtocol { udp, tcp }
@@ -160,18 +173,18 @@ enum ProxyCardType { expand, shrink, min }
 
 enum DnsMode {
   normal,
-  @JsonValue("fake-ip")
+  @JsonValue('fake-ip')
   fakeIp,
-  @JsonValue("redir-host")
+  @JsonValue('redir-host')
   redirHost,
   hosts
 }
 
 enum ExternalControllerStatus {
-  @JsonValue("")
-  close(""),
-  @JsonValue("127.0.0.1:9090")
-  open("127.0.0.1:9090");
+  @JsonValue('')
+  close(''),
+  @JsonValue('127.0.0.1:9090')
+  open('127.0.0.1:9090');
 
   final String value;
 
@@ -235,9 +248,9 @@ enum ProxiesIconStyle {
 }
 
 enum FontFamily {
-  twEmoji("Twemoji"),
-  jetBrainsMono("JetBrainsMono"),
-  icon("Icons");
+  twEmoji('Twemoji'),
+  jetBrainsMono('JetBrainsMono'),
+  icon('Icons');
 
   final String value;
 
@@ -320,6 +333,7 @@ enum FunctionTag {
   proxiesTabChange,
   logs,
   requests,
+  autoScrollToEnd,
 }
 
 enum DashboardWidget {
@@ -423,39 +437,39 @@ enum PageLabel {
 }
 
 enum RuleAction {
-  DOMAIN("DOMAIN"),
-  DOMAIN_SUFFIX("DOMAIN-SUFFIX"),
-  DOMAIN_KEYWORD("DOMAIN-KEYWORD"),
-  DOMAIN_REGEX("DOMAIN-REGEX"),
-  GEOSITE("GEOSITE"),
-  IP_CIDR("IP-CIDR"),
-  IP_CIDR6("IP-CIDR6"),
-  IP_SUFFIX("IP-SUFFIX"),
-  IP_ASN("IP-ASN"),
-  GEOIP("GEOIP"),
-  SRC_GEOIP("SRC-GEOIP"),
-  SRC_IP_ASN("SRC-IP-ASN"),
-  SRC_IP_CIDR("SRC-IP-CIDR"),
-  SRC_IP_SUFFIX("SRC-IP-SUFFIX"),
-  DST_PORT("DST-PORT"),
-  SRC_PORT("SRC-PORT"),
-  IN_PORT("IN-PORT"),
-  IN_TYPE("IN-TYPE"),
-  IN_USER("IN-USER"),
-  IN_NAME("IN-NAME"),
-  PROCESS_PATH("PROCESS-PATH"),
-  PROCESS_PATH_REGEX("PROCESS-PATH-REGEX"),
-  PROCESS_NAME("PROCESS-NAME"),
-  PROCESS_NAME_REGEX("PROCESS-NAME-REGEX"),
-  UID("UID"),
-  NETWORK("NETWORK"),
-  DSCP("DSCP"),
-  RULE_SET("RULE-SET"),
-  AND("AND"),
-  OR("OR"),
-  NOT("NOT"),
-  SUB_RULE("SUB-RULE"),
-  MATCH("MATCH");
+  DOMAIN('DOMAIN'),
+  DOMAIN_SUFFIX('DOMAIN-SUFFIX'),
+  DOMAIN_KEYWORD('DOMAIN-KEYWORD'),
+  DOMAIN_REGEX('DOMAIN-REGEX'),
+  GEOSITE('GEOSITE'),
+  IP_CIDR('IP-CIDR'),
+  IP_CIDR6('IP-CIDR6'),
+  IP_SUFFIX('IP-SUFFIX'),
+  IP_ASN('IP-ASN'),
+  GEOIP('GEOIP'),
+  SRC_GEOIP('SRC-GEOIP'),
+  SRC_IP_ASN('SRC-IP-ASN'),
+  SRC_IP_CIDR('SRC-IP-CIDR'),
+  SRC_IP_SUFFIX('SRC-IP-SUFFIX'),
+  DST_PORT('DST-PORT'),
+  SRC_PORT('SRC-PORT'),
+  IN_PORT('IN-PORT'),
+  IN_TYPE('IN-TYPE'),
+  IN_USER('IN-USER'),
+  IN_NAME('IN-NAME'),
+  PROCESS_PATH('PROCESS-PATH'),
+  PROCESS_PATH_REGEX('PROCESS-PATH-REGEX'),
+  PROCESS_NAME('PROCESS-NAME'),
+  PROCESS_NAME_REGEX('PROCESS-NAME-REGEX'),
+  UID('UID'),
+  NETWORK('NETWORK'),
+  DSCP('DSCP'),
+  RULE_SET('RULE-SET'),
+  AND('AND'),
+  OR('OR'),
+  NOT('NOT'),
+  SUB_RULE('SUB-RULE'),
+  MATCH('MATCH');
 
   final String value;
 
@@ -493,6 +507,7 @@ enum CacheTag {
   logs,
   rules,
   requests,
+  proxiesList,
 }
 
 enum Language {
@@ -503,4 +518,11 @@ enum Language {
 enum ImportOption {
   file,
   url,
+}
+
+enum ScrollPositionCacheKeys {
+  tools,
+  profiles,
+  proxiesList,
+  proxiesTabList,
 }

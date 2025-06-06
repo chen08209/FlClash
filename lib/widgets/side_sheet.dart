@@ -83,7 +83,7 @@ class _SideSheetState extends State<SideSheet> {
     final Color shadowColor = widget.shadowColor ?? Colors.transparent;
     final double elevation = widget.elevation ?? 0;
     final ShapeBorder shape = widget.shape ??
-        RoundedSuperellipseBorder(
+        RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(0),
         );
 

@@ -29,7 +29,7 @@ _$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       label: json['label'] as String?,
       currentGroupName: json['currentGroupName'] as String?,
-      url: json['url'] as String? ?? "",
+      url: json['url'] as String? ?? '',
       lastUpdateDate: json['lastUpdateDate'] == null
           ? null
           : DateTime.parse(json['lastUpdateDate'] as String),

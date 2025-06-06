@@ -36,7 +36,7 @@ Future<void> main() async {
 Future<void> _service(List<String> flags) async {
   globalState.isService = true;
   WidgetsFlutterBinding.ensureInitialized();
-  final quickStart = flags.contains("quick");
+  final quickStart = flags.contains('quick');
   final clashLibHandler = ClashLibHandler();
   await globalState.init();
 
@@ -54,15 +54,14 @@ Future<void> _service(List<String> flags) async {
   vpn?.handleGetStartForegroundParams = () {
     final traffic = clashLibHandler.getTraffic();
     return json.encode({
-      "title": clashLibHandler.getCurrentProfileName(),
-      "content": "$traffic"
+      'title': clashLibHandler.getCurrentProfileName(),
+      'content': '$traffic'
     });
   };
 
   vpn?.addListener(
     _VpnListenerWithService(
       onDnsChanged: (String dns) {
-        print("handle dns $dns");
         clashLibHandler.updateDns(dns);
       },
     ),
@@ -70,7 +69,7 @@ Future<void> _service(List<String> flags) async {
   if (!quickStart) {
     _handleMainIpc(clashLibHandler);
   } else {
-    commonPrint.log("quick start");
+    commonPrint.log('quick start');
     await ClashCore.initGeo();
     app?.tip(appLocalizations.startVpn);
     final homeDirPath = await appPath.homeDirPath;
@@ -107,7 +106,7 @@ Future<void> _service(List<String> flags) async {
   }
 }
 
-_handleMainIpc(ClashLibHandler clashLibHandler) {
+void _handleMainIpc(ClashLibHandler clashLibHandler) {
   final sendPort = IsolateNameServer.lookupPortByName(mainIsolate);
   if (sendPort == null) {
     return;

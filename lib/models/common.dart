@@ -16,7 +16,7 @@ class NavigationItem with _$NavigationItem {
     required Icon icon,
     required PageLabel label,
     final String? description,
-    required Widget view,
+    required WidgetBuilder builder,
     @Default(true) bool keep,
     String? path,
     @Default([NavigationItemMode.mobile, NavigationItemMode.desktop])
@@ -41,15 +41,23 @@ class Package with _$Package {
 @freezed
 class Metadata with _$Metadata {
   const factory Metadata({
-    required int uid,
-    required String network,
-    required String sourceIP,
-    required String sourcePort,
-    required String destinationIP,
-    required String destinationPort,
-    required String host,
-    required String process,
-    required String remoteDestination,
+    @Default(0) int uid,
+    @Default('') String network,
+    @Default('') String sourceIP,
+    @Default('') String sourcePort,
+    @Default('') String destinationIP,
+    @Default('') String destinationPort,
+    @Default('') String host,
+    DnsMode? dnsMode,
+    @Default('') String process,
+    @Default('') String processPath,
+    @Default('') String remoteDestination,
+    @Default([]) List<String> sourceGeoIP,
+    @Default([]) List<String> destinationGeoIP,
+    @Default('') String destinationIPASN,
+    @Default('') String sourceIPASN,
+    @Default('') String specialRules,
+    @Default('') String specialProxy,
   }) = _Metadata;
 
   factory Metadata.fromJson(Map<String, Object?> json) =>
@@ -57,35 +65,48 @@ class Metadata with _$Metadata {
 }
 
 @freezed
-class Connection with _$Connection {
-  const factory Connection({
+class TrackerInfo with _$TrackerInfo {
+  const factory TrackerInfo({
     required String id,
-    num? upload,
-    num? download,
+    @Default(0) int upload,
+    @Default(0) int download,
     required DateTime start,
     required Metadata metadata,
     required List<String> chains,
-  }) = _Connection;
+    required String rule,
+    required String rulePayload,
+    int? downloadSpeed,
+    int? uploadSpeed,
+  }) = _TrackerInfo;
 
-  factory Connection.fromJson(Map<String, Object?> json) =>
-      _$ConnectionFromJson(json);
+  factory TrackerInfo.fromJson(Map<String, Object?> json) =>
+      _$TrackerInfoFromJson(json);
 }
 
-extension ConnectionExt on Connection {
+extension TrackerInfoExt on TrackerInfo {
   String get desc {
-    var text = "${metadata.network}://";
+    var text = '${metadata.network}://';
     final ips = [
       metadata.host,
       metadata.destinationIP,
     ].where((ip) => ip.isNotEmpty);
-    text += ips.join("/");
-    text += ":${metadata.destinationPort}";
+    text += ips.join('/');
+    text += ':${metadata.destinationPort}';
     return text;
+  }
+
+  String get progressText {
+    final process = metadata.process;
+    final uid = metadata.uid;
+    if (uid != 0) {
+      return '$process($uid)';
+    }
+    return process;
   }
 }
 
-String _logDateTime(_) {
-  return DateTime.now().toString();
+String _logDateTime(dynamic _) {
+  return DateTime.now().showFull;
 }
 
 // String _logId(_) {
@@ -95,8 +116,9 @@ String _logDateTime(_) {
 @freezed
 class Log with _$Log {
   const factory Log({
-    @JsonKey(name: "LogLevel") @Default(LogLevel.app) LogLevel logLevel,
-    @JsonKey(name: "Payload") @Default("") String payload,
+    // @JsonKey(fromJson: _logId) required String id,
+    @JsonKey(name: 'LogLevel') @Default(LogLevel.info) LogLevel logLevel,
+    @JsonKey(name: 'Payload') @Default('') String payload,
     @JsonKey(fromJson: _logDateTime) required String dateTime,
   }) = _Log;
 
@@ -118,8 +140,8 @@ class LogsState with _$LogsState {
   const factory LogsState({
     @Default([]) List<Log> logs,
     @Default([]) List<String> keywords,
-    @Default("") String query,
-    @Default(false) bool loading,
+    @Default('') String query,
+    @Default(true) bool autoScrollToEnd,
   }) = _LogsState;
 }
 
@@ -138,27 +160,28 @@ extension LogsStateExt on LogsState {
 }
 
 @freezed
-class ConnectionsState with _$ConnectionsState {
-  const factory ConnectionsState({
-    @Default([]) List<Connection> connections,
+class TrackerInfosState with _$TrackerInfosState {
+  const factory TrackerInfosState({
+    @Default([]) List<TrackerInfo> trackerInfos,
     @Default([]) List<String> keywords,
-    @Default("") String query,
-    @Default(false) bool loading,
-  }) = _ConnectionsState;
+    @Default('') String query,
+    @Default(true) bool autoScrollToEnd,
+  }) = _TrackerInfosState;
 }
 
-extension ConnectionsStateExt on ConnectionsState {
-  List<Connection> get list {
+extension TrackerInfosStateExt on TrackerInfosState {
+  List<TrackerInfo> get list {
     final lowerQuery = query.toLowerCase().trim();
     final lowQuery = query.toLowerCase();
-    return connections.where((connection) {
-      final chains = connection.chains;
-      final process = connection.metadata.process;
-      final networkText = connection.metadata.network.toLowerCase();
-      final hostText = connection.metadata.host.toLowerCase();
-      final destinationIPText = connection.metadata.destinationIP.toLowerCase();
-      final processText = connection.metadata.process.toLowerCase();
-      final chainsText = chains.join("").toLowerCase();
+    return trackerInfos.where((trackerInfo) {
+      final chains = trackerInfo.chains;
+      final process = trackerInfo.metadata.process;
+      final networkText = trackerInfo.metadata.network.toLowerCase();
+      final hostText = trackerInfo.metadata.host.toLowerCase();
+      final destinationIPText =
+          trackerInfo.metadata.destinationIP.toLowerCase();
+      final processText = trackerInfo.metadata.process.toLowerCase();
+      final chainsText = chains.join('').toLowerCase();
       return {...chains, process}.containsAll(keywords) &&
           (networkText.contains(lowerQuery) ||
               hostText.contains(lowerQuery) ||
@@ -169,7 +192,7 @@ extension ConnectionsStateExt on ConnectionsState {
   }
 }
 
-const defaultDavFileName = "backup.zip";
+const defaultDavFileName = 'backup.zip';
 
 @freezed
 class DAV with _$DAV {
@@ -193,14 +216,14 @@ class FileInfo with _$FileInfo {
 
 extension FileInfoExt on FileInfo {
   String get desc =>
-      "${TrafficValue(value: size).show}  ·  ${lastModified.lastUpdateTimeDesc}";
+      '${TrafficValue(value: size).show}  ·  ${lastModified.lastUpdateTimeDesc}';
 }
 
 @freezed
 class VersionInfo with _$VersionInfo {
   const factory VersionInfo({
-    @Default("") String clashName,
-    @Default("") String version,
+    @Default('') String clashName,
+    @Default('') String version,
   }) = _VersionInfo;
 
   factory VersionInfo.fromJson(Map<String, Object?> json) =>
@@ -224,6 +247,10 @@ class Traffic {
       up: map['up'],
       down: map['down'],
     );
+  }
+
+  String toSpeedText() {
+    return '↑ $up/s   ↓ $down/s';
   }
 
   @override
@@ -274,7 +301,7 @@ class Group with _$Group {
     String? now,
     bool? hidden,
     String? testUrl,
-    @Default("") String icon,
+    @Default('') String icon,
     required String name,
   }) = _Group;
 
@@ -289,7 +316,7 @@ extension GroupsExt on List<Group> {
 }
 
 extension GroupExt on Group {
-  String get realNow => now ?? "";
+  String get realNow => now ?? '';
 
   String getCurrentSelectedName(String proxyName) {
     if (type.isComputedSelected) {
@@ -307,10 +334,10 @@ class TrafficValue {
 
   int get value => _value;
 
-  String get show => "$showValue $showUnit";
+  String get show => '$showValue $showUnit';
 
   String get shortShow =>
-      "${trafficValueShow.value.fixed(decimals: 1)} $showUnit";
+      '${trafficValueShow.value.fixed(decimals: 1)} $showUnit';
 
   String get showValue => trafficValueShow.value.fixed();
 
@@ -347,7 +374,7 @@ class TrafficValue {
 
   @override
   String toString() {
-    return "$showValue$showUnit";
+    return '$showValue$showUnit';
   }
 
   @override
@@ -411,56 +438,56 @@ class IpInfo {
   static IpInfo fromIpInfoIoJson(Map<String, dynamic> json) {
     return switch (json) {
       {
-        "ip": final String ip,
-        "country": final String country,
+        'ip': final String ip,
+        'country': final String country,
       } =>
         IpInfo(
           ip: ip,
           countryCode: country,
         ),
-      _ => throw const FormatException("invalid json"),
+      _ => throw const FormatException('invalid json'),
     };
   }
 
   static IpInfo fromIpApiCoJson(Map<String, dynamic> json) {
     return switch (json) {
       {
-        "ip": final String ip,
-        "country_code": final String countryCode,
+        'ip': final String ip,
+        'country_code': final String countryCode,
       } =>
         IpInfo(
           ip: ip,
           countryCode: countryCode,
         ),
-      _ => throw const FormatException("invalid json"),
+      _ => throw const FormatException('invalid json'),
     };
   }
 
   static IpInfo fromIpSbJson(Map<String, dynamic> json) {
     return switch (json) {
       {
-        "ip": final String ip,
-        "country_code": final String countryCode,
+        'ip': final String ip,
+        'country_code': final String countryCode,
       } =>
         IpInfo(
           ip: ip,
           countryCode: countryCode,
         ),
-      _ => throw const FormatException("invalid json"),
+      _ => throw const FormatException('invalid json'),
     };
   }
 
   static IpInfo fromIpwhoIsJson(Map<String, dynamic> json) {
     return switch (json) {
       {
-        "ip": final String ip,
-        "country_code": final String countryCode,
+        'ip': final String ip,
+        'country_code': final String countryCode,
       } =>
         IpInfo(
           ip: ip,
           countryCode: countryCode,
         ),
-      _ => throw const FormatException("invalid json"),
+      _ => throw const FormatException('invalid json'),
     };
   }
 
@@ -539,7 +566,7 @@ class Result<T> with _$Result<T> {
   factory Result.success(T data) => Result(
         data: data,
         type: ResultType.success,
-        message: "",
+        message: '',
       );
 
   factory Result.error(String message) => Result(

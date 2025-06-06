@@ -492,7 +492,7 @@ class _$ProfileImpl implements _Profile {
       {required this.id,
       this.label,
       this.currentGroupName,
-      this.url = "",
+      this.url = '',
       this.lastUpdateDate,
       required this.autoUpdateDuration,
       this.subscriptionInfo,

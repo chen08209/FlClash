@@ -406,5 +406,20 @@
   "import": "Import",
   "importFile": "Import from file",
   "importUrl": "Import from URL",
-  "autoSetSystemDns": "Auto set system DNS"
+  "autoSetSystemDns": "Auto set system DNS",
+  "details": "{label} details",
+  "creationTime": "Creation time",
+  "progress": "Progress",
+  "host": "Host",
+  "destination": "Destination",
+  "destinationGeoIP": "Destination GeoIP",
+  "destinationIPASN": "Destination IPASN",
+  "specialProxy": "Special proxy",
+  "specialRules": "special rules",
+  "remoteDestination": "Remote destination",
+  "networkType": "Network type",
+  "proxyChains": "Proxy chains",
+  "log": "Log",
+  "connection": "Connection",
+  "request": "Request"
 }

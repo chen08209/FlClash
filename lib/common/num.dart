@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 extension NumExt on num {
-  String fixed({decimals = 2}) {
+  String fixed({int decimals = 2}) {
     String formatted = toStringAsFixed(decimals);
     if (formatted.contains('.')) {
       formatted = formatted.replaceAll(RegExp(r'0*$'), '');
@@ -20,7 +20,7 @@ extension NumExt on num {
 }
 
 extension DoubleExt on double {
-  moreOrEqual(double value) {
+  bool moreOrEqual(double value) {
     return this > value || (value - this).abs() < precisionErrorTolerance + 1;
   }
 }
@@ -46,7 +46,7 @@ extension OffsetExt on Offset {
 }
 
 extension RectExt on Rect {
-  doRectIntersect(Rect rect) {
+  bool doRectIntersect(Rect rect) {
     return left < rect.right &&
         right > rect.left &&
         top < rect.bottom &&

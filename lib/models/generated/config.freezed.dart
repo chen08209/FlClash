@@ -1824,8 +1824,8 @@ TextScale _$TextScaleFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$TextScale {
-  dynamic get enable => throw _privateConstructorUsedError;
-  dynamic get scale => throw _privateConstructorUsedError;
+  bool get enable => throw _privateConstructorUsedError;
+  double get scale => throw _privateConstructorUsedError;
 
   /// Serializes this TextScale to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1842,7 +1842,7 @@ abstract class $TextScaleCopyWith<$Res> {
   factory $TextScaleCopyWith(TextScale value, $Res Function(TextScale) then) =
       _$TextScaleCopyWithImpl<$Res, TextScale>;
   @useResult
-  $Res call({dynamic enable, dynamic scale});
+  $Res call({bool enable, double scale});
 }
 
 /// @nodoc
@@ -1860,18 +1860,18 @@ class _$TextScaleCopyWithImpl<$Res, $Val extends TextScale>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? enable = freezed,
-    Object? scale = freezed,
+    Object? enable = null,
+    Object? scale = null,
   }) {
     return _then(_value.copyWith(
-      enable: freezed == enable
+      enable: null == enable
           ? _value.enable
           : enable // ignore: cast_nullable_to_non_nullable
-              as dynamic,
-      scale: freezed == scale
+              as bool,
+      scale: null == scale
           ? _value.scale
           : scale // ignore: cast_nullable_to_non_nullable
-              as dynamic,
+              as double,
     ) as $Val);
   }
 }
@@ -1884,7 +1884,7 @@ abstract class _$$TextScaleImplCopyWith<$Res>
       __$$TextScaleImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({dynamic enable, dynamic scale});
+  $Res call({bool enable, double scale});
 }
 
 /// @nodoc
@@ -1900,12 +1900,18 @@ class __$$TextScaleImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? enable = freezed,
-    Object? scale = freezed,
+    Object? enable = null,
+    Object? scale = null,
   }) {
     return _then(_$TextScaleImpl(
-      enable: freezed == enable ? _value.enable! : enable,
-      scale: freezed == scale ? _value.scale! : scale,
+      enable: null == enable
+          ? _value.enable
+          : enable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      scale: null == scale
+          ? _value.scale
+          : scale // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -1920,10 +1926,10 @@ class _$TextScaleImpl implements _TextScale {
 
   @override
   @JsonKey()
-  final dynamic enable;
+  final bool enable;
   @override
   @JsonKey()
-  final dynamic scale;
+  final double scale;
 
   @override
   String toString() {
@@ -1935,16 +1941,13 @@ class _$TextScaleImpl implements _TextScale {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$TextScaleImpl &&
-            const DeepCollectionEquality().equals(other.enable, enable) &&
-            const DeepCollectionEquality().equals(other.scale, scale));
+            (identical(other.enable, enable) || other.enable == enable) &&
+            (identical(other.scale, scale) || other.scale == scale));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(enable),
-      const DeepCollectionEquality().hash(scale));
+  int get hashCode => Object.hash(runtimeType, enable, scale);
 
   /// Create a copy of TextScale
   /// with the given fields replaced by the non-null parameter values.
@@ -1963,16 +1966,16 @@ class _$TextScaleImpl implements _TextScale {
 }
 
 abstract class _TextScale implements TextScale {
-  const factory _TextScale({final dynamic enable, final dynamic scale}) =
+  const factory _TextScale({final bool enable, final double scale}) =
       _$TextScaleImpl;
 
   factory _TextScale.fromJson(Map<String, dynamic> json) =
       _$TextScaleImpl.fromJson;
 
   @override
-  dynamic get enable;
+  bool get enable;
   @override
-  dynamic get scale;
+  double get scale;
 
   /// Create a copy of TextScale
   /// with the given fields replaced by the non-null parameter values.

@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:fl_clash/common/common.dart';
 
 extension CompleterExt<T> on Completer<T> {
-  safeFuture({
+  Future<T> safeFuture({
     Duration? timeout,
     VoidCallback? onLast,
     FutureOr<T> Function()? onTimeout,

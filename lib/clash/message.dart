@@ -23,7 +23,7 @@ class ClashMessage {
               listener.onDelay(Delay.fromJson(m.data));
               break;
             case AppMessageType.request:
-              listener.onRequest(Connection.fromJson(m.data));
+              listener.onRequest(TrackerInfo.fromJson(m.data));
               break;
             case AppMessageType.loaded:
               listener.onLoaded(m.data);

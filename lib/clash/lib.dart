@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
-import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -30,7 +29,7 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
     return _canSendCompleter.future;
   }
 
-  _initService() async {
+  Future<void> _initService() async {
     await service?.destroy();
     _registerMainPort(receiverPort.sendPort);
     receiverPort.listen((message) {
@@ -52,7 +51,7 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
     await service?.init();
   }
 
-  _registerMainPort(SendPort sendPort) {
+  void _registerMainPort(SendPort sendPort) {
     IsolateNameServer.removePortNameMapping(mainIsolate);
     IsolateNameServer.registerPortWithName(sendPort, mainIsolate);
   }
@@ -139,7 +138,7 @@ class ClashLibHandler {
   late final DynamicLibrary lib;
 
   ClashLibHandler._internal() {
-    lib = DynamicLibrary.open("libclash.so");
+    lib = DynamicLibrary.open('libclash.so');
     clashFFI = ClashFFI(lib);
     clashFFI.initNativeApiBridge(
       NativeApi.initializeApiDLData,
@@ -169,19 +168,19 @@ class ClashLibHandler {
     return completer.future;
   }
 
-  attachMessagePort(int messagePort) {
+  void attachMessagePort(int messagePort) {
     clashFFI.attachMessagePort(
       messagePort,
     );
   }
 
-  updateDns(String dns) {
+  void updateDns(String dns) {
     final dnsChar = dns.toNativeUtf8().cast<Char>();
     clashFFI.updateDns(dnsChar);
     malloc.free(dnsChar);
   }
 
-  setState(CoreState state) {
+  void setState(CoreState state) {
     final stateChar = json.encode(state).toNativeUtf8().cast<Char>();
     clashFFI.setState(stateChar);
     malloc.free(stateChar);
@@ -221,12 +220,12 @@ class ClashLibHandler {
     return Traffic.fromMap(json.decode(trafficString));
   }
 
-  startListener() async {
+  Future<bool> startListener() async {
     clashFFI.startListener();
     return true;
   }
 
-  stopListener() async {
+  Future<bool> stopListener() async {
     clashFFI.stopListener();
     return true;
   }
@@ -287,7 +286,7 @@ class ClashLibHandler {
 }
 
 ClashLib? get clashLib =>
-    Platform.isAndroid && !globalState.isService ? ClashLib() : null;
+    system.isAndroid && !globalState.isService ? ClashLib() : null;
 
 ClashLibHandler? get clashLibHandler =>
-    Platform.isAndroid && globalState.isService ? ClashLibHandler() : null;
+    system.isAndroid && globalState.isService ? ClashLibHandler() : null;

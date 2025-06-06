@@ -531,7 +531,7 @@ abstract class _AppBarState implements AppBarState {
 /// @nodoc
 mixin _$AppBarSearchState {
   dynamic Function(String) get onSearch => throw _privateConstructorUsedError;
-  bool get isSearch => throw _privateConstructorUsedError;
+  String? get query => throw _privateConstructorUsedError;
 
   /// Create a copy of AppBarSearchState
   /// with the given fields replaced by the non-null parameter values.
@@ -546,7 +546,7 @@ abstract class $AppBarSearchStateCopyWith<$Res> {
           AppBarSearchState value, $Res Function(AppBarSearchState) then) =
       _$AppBarSearchStateCopyWithImpl<$Res, AppBarSearchState>;
   @useResult
-  $Res call({dynamic Function(String) onSearch, bool isSearch});
+  $Res call({dynamic Function(String) onSearch, String? query});
 }
 
 /// @nodoc
@@ -565,17 +565,17 @@ class _$AppBarSearchStateCopyWithImpl<$Res, $Val extends AppBarSearchState>
   @override
   $Res call({
     Object? onSearch = null,
-    Object? isSearch = null,
+    Object? query = freezed,
   }) {
     return _then(_value.copyWith(
       onSearch: null == onSearch
           ? _value.onSearch
           : onSearch // ignore: cast_nullable_to_non_nullable
               as dynamic Function(String),
-      isSearch: null == isSearch
-          ? _value.isSearch
-          : isSearch // ignore: cast_nullable_to_non_nullable
-              as bool,
+      query: freezed == query
+          ? _value.query
+          : query // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -588,7 +588,7 @@ abstract class _$$AppBarSearchStateImplCopyWith<$Res>
       __$$AppBarSearchStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({dynamic Function(String) onSearch, bool isSearch});
+  $Res call({dynamic Function(String) onSearch, String? query});
 }
 
 /// @nodoc
@@ -605,17 +605,17 @@ class __$$AppBarSearchStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? onSearch = null,
-    Object? isSearch = null,
+    Object? query = freezed,
   }) {
     return _then(_$AppBarSearchStateImpl(
       onSearch: null == onSearch
           ? _value.onSearch
           : onSearch // ignore: cast_nullable_to_non_nullable
               as dynamic Function(String),
-      isSearch: null == isSearch
-          ? _value.isSearch
-          : isSearch // ignore: cast_nullable_to_non_nullable
-              as bool,
+      query: freezed == query
+          ? _value.query
+          : query // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -623,18 +623,17 @@ class __$$AppBarSearchStateImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$AppBarSearchStateImpl implements _AppBarSearchState {
-  const _$AppBarSearchStateImpl(
-      {required this.onSearch, this.isSearch = false});
+  const _$AppBarSearchStateImpl({required this.onSearch, this.query = null});
 
   @override
   final dynamic Function(String) onSearch;
   @override
   @JsonKey()
-  final bool isSearch;
+  final String? query;
 
   @override
   String toString() {
-    return 'AppBarSearchState(onSearch: $onSearch, isSearch: $isSearch)';
+    return 'AppBarSearchState(onSearch: $onSearch, query: $query)';
   }
 
   @override
@@ -644,12 +643,11 @@ class _$AppBarSearchStateImpl implements _AppBarSearchState {
             other is _$AppBarSearchStateImpl &&
             (identical(other.onSearch, onSearch) ||
                 other.onSearch == onSearch) &&
-            (identical(other.isSearch, isSearch) ||
-                other.isSearch == isSearch));
+            (identical(other.query, query) || other.query == query));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, onSearch, isSearch);
+  int get hashCode => Object.hash(runtimeType, onSearch, query);
 
   /// Create a copy of AppBarSearchState
   /// with the given fields replaced by the non-null parameter values.
@@ -664,12 +662,12 @@ class _$AppBarSearchStateImpl implements _AppBarSearchState {
 abstract class _AppBarSearchState implements AppBarSearchState {
   const factory _AppBarSearchState(
       {required final dynamic Function(String) onSearch,
-      final bool isSearch}) = _$AppBarSearchStateImpl;
+      final String? query}) = _$AppBarSearchStateImpl;
 
   @override
   dynamic Function(String) get onSearch;
   @override
-  bool get isSearch;
+  String? get query;
 
   /// Create a copy of AppBarSearchState
   /// with the given fields replaced by the non-null parameter values.
@@ -681,8 +679,7 @@ abstract class _AppBarSearchState implements AppBarSearchState {
 
 /// @nodoc
 mixin _$AppBarEditState {
-  dynamic get editCount => throw _privateConstructorUsedError;
-  bool get isEdit => throw _privateConstructorUsedError;
+  int get editCount => throw _privateConstructorUsedError;
   dynamic Function() get onExit => throw _privateConstructorUsedError;
 
   /// Create a copy of AppBarEditState
@@ -698,7 +695,7 @@ abstract class $AppBarEditStateCopyWith<$Res> {
           AppBarEditState value, $Res Function(AppBarEditState) then) =
       _$AppBarEditStateCopyWithImpl<$Res, AppBarEditState>;
   @useResult
-  $Res call({dynamic editCount, bool isEdit, dynamic Function() onExit});
+  $Res call({int editCount, dynamic Function() onExit});
 }
 
 /// @nodoc
@@ -716,19 +713,14 @@ class _$AppBarEditStateCopyWithImpl<$Res, $Val extends AppBarEditState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? editCount = freezed,
-    Object? isEdit = null,
+    Object? editCount = null,
     Object? onExit = null,
   }) {
     return _then(_value.copyWith(
-      editCount: freezed == editCount
+      editCount: null == editCount
           ? _value.editCount
           : editCount // ignore: cast_nullable_to_non_nullable
-              as dynamic,
-      isEdit: null == isEdit
-          ? _value.isEdit
-          : isEdit // ignore: cast_nullable_to_non_nullable
-              as bool,
+              as int,
       onExit: null == onExit
           ? _value.onExit
           : onExit // ignore: cast_nullable_to_non_nullable
@@ -745,7 +737,7 @@ abstract class _$$AppBarEditStateImplCopyWith<$Res>
       __$$AppBarEditStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({dynamic editCount, bool isEdit, dynamic Function() onExit});
+  $Res call({int editCount, dynamic Function() onExit});
 }
 
 /// @nodoc
@@ -761,16 +753,14 @@ class __$$AppBarEditStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? editCount = freezed,
-    Object? isEdit = null,
+    Object? editCount = null,
     Object? onExit = null,
   }) {
     return _then(_$AppBarEditStateImpl(
-      editCount: freezed == editCount ? _value.editCount! : editCount,
-      isEdit: null == isEdit
-          ? _value.isEdit
-          : isEdit // ignore: cast_nullable_to_non_nullable
-              as bool,
+      editCount: null == editCount
+          ? _value.editCount
+          : editCount // ignore: cast_nullable_to_non_nullable
+              as int,
       onExit: null == onExit
           ? _value.onExit
           : onExit // ignore: cast_nullable_to_non_nullable
@@ -782,21 +772,17 @@ class __$$AppBarEditStateImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$AppBarEditStateImpl implements _AppBarEditState {
-  const _$AppBarEditStateImpl(
-      {this.editCount = 0, this.isEdit = false, required this.onExit});
+  const _$AppBarEditStateImpl({this.editCount = 0, required this.onExit});
 
   @override
   @JsonKey()
-  final dynamic editCount;
-  @override
-  @JsonKey()
-  final bool isEdit;
+  final int editCount;
   @override
   final dynamic Function() onExit;
 
   @override
   String toString() {
-    return 'AppBarEditState(editCount: $editCount, isEdit: $isEdit, onExit: $onExit)';
+    return 'AppBarEditState(editCount: $editCount, onExit: $onExit)';
   }
 
   @override
@@ -804,14 +790,13 @@ class _$AppBarEditStateImpl implements _AppBarEditState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$AppBarEditStateImpl &&
-            const DeepCollectionEquality().equals(other.editCount, editCount) &&
-            (identical(other.isEdit, isEdit) || other.isEdit == isEdit) &&
+            (identical(other.editCount, editCount) ||
+                other.editCount == editCount) &&
             (identical(other.onExit, onExit) || other.onExit == onExit));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType,
-      const DeepCollectionEquality().hash(editCount), isEdit, onExit);
+  int get hashCode => Object.hash(runtimeType, editCount, onExit);
 
   /// Create a copy of AppBarEditState
   /// with the given fields replaced by the non-null parameter values.
@@ -825,14 +810,11 @@ class _$AppBarEditStateImpl implements _AppBarEditState {
 
 abstract class _AppBarEditState implements AppBarEditState {
   const factory _AppBarEditState(
-      {final dynamic editCount,
-      final bool isEdit,
+      {final int editCount,
       required final dynamic Function() onExit}) = _$AppBarEditStateImpl;
 
   @override
-  dynamic get editCount;
-  @override
-  bool get isEdit;
+  int get editCount;
   @override
   dynamic Function() get onExit;
 

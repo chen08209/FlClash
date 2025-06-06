@@ -33,10 +33,10 @@ class Measure {
 
   double get bodyMediumHeight {
     return _measureMap.updateCacheValue(
-      "bodyMediumHeight",
+      'bodyMediumHeight',
       () => computeTextSize(
         Text(
-          "X",
+          'X',
           style: context.textTheme.bodyMedium,
         ),
       ).height,
@@ -45,10 +45,10 @@ class Measure {
 
   double get bodyLargeHeight {
     return _measureMap.updateCacheValue(
-      "bodyLargeHeight",
+      'bodyLargeHeight',
       () => computeTextSize(
         Text(
-          "X",
+          'X',
           style: context.textTheme.bodyLarge,
         ),
       ).height,
@@ -57,10 +57,10 @@ class Measure {
 
   double get bodySmallHeight {
     return _measureMap.updateCacheValue(
-      "bodySmallHeight",
+      'bodySmallHeight',
       () => computeTextSize(
         Text(
-          "X",
+          'X',
           style: context.textTheme.bodySmall,
         ),
       ).height,
@@ -69,10 +69,10 @@ class Measure {
 
   double get labelSmallHeight {
     return _measureMap.updateCacheValue(
-      "labelSmallHeight",
+      'labelSmallHeight',
       () => computeTextSize(
         Text(
-          "X",
+          'X',
           style: context.textTheme.labelSmall,
         ),
       ).height,
@@ -81,10 +81,10 @@ class Measure {
 
   double get labelMediumHeight {
     return _measureMap.updateCacheValue(
-      "labelMediumHeight",
+      'labelMediumHeight',
       () => computeTextSize(
         Text(
-          "X",
+          'X',
           style: context.textTheme.labelMedium,
         ),
       ).height,
@@ -93,10 +93,10 @@ class Measure {
 
   double get titleLargeHeight {
     return _measureMap.updateCacheValue(
-      "titleLargeHeight",
+      'titleLargeHeight',
       () => computeTextSize(
         Text(
-          "X",
+          'X',
           style: context.textTheme.titleLarge,
         ),
       ).height,
@@ -105,10 +105,10 @@ class Measure {
 
   double get titleMediumHeight {
     return _measureMap.updateCacheValue(
-      "titleMediumHeight",
+      'titleMediumHeight',
       () => computeTextSize(
         Text(
-          "X",
+          'X',
           style: context.textTheme.titleMedium,
         ),
       ).height,

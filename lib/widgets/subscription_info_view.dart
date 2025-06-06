@@ -41,7 +41,7 @@ class SubscriptionInfoView extends StatelessWidget {
           height: 8,
         ),
         Text(
-          "$useShow / $totalShow · $expireShow",
+          '$useShow / $totalShow · $expireShow',
           style: context.textTheme.labelMedium?.toLight,
         ),
         const SizedBox(

@@ -20,11 +20,11 @@ SetupParams _$SetupParamsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$SetupParams {
-  @JsonKey(name: "config")
+  @JsonKey(name: 'config')
   Map<String, dynamic> get config => throw _privateConstructorUsedError;
-  @JsonKey(name: "selected-map")
+  @JsonKey(name: 'selected-map')
   Map<String, String> get selectedMap => throw _privateConstructorUsedError;
-  @JsonKey(name: "test-url")
+  @JsonKey(name: 'test-url')
   String get testUrl => throw _privateConstructorUsedError;
 
   /// Serializes this SetupParams to a JSON map.
@@ -44,9 +44,9 @@ abstract class $SetupParamsCopyWith<$Res> {
       _$SetupParamsCopyWithImpl<$Res, SetupParams>;
   @useResult
   $Res call(
-      {@JsonKey(name: "config") Map<String, dynamic> config,
-      @JsonKey(name: "selected-map") Map<String, String> selectedMap,
-      @JsonKey(name: "test-url") String testUrl});
+      {@JsonKey(name: 'config') Map<String, dynamic> config,
+      @JsonKey(name: 'selected-map') Map<String, String> selectedMap,
+      @JsonKey(name: 'test-url') String testUrl});
 }
 
 /// @nodoc
@@ -94,9 +94,9 @@ abstract class _$$SetupParamsImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "config") Map<String, dynamic> config,
-      @JsonKey(name: "selected-map") Map<String, String> selectedMap,
-      @JsonKey(name: "test-url") String testUrl});
+      {@JsonKey(name: 'config') Map<String, dynamic> config,
+      @JsonKey(name: 'selected-map') Map<String, String> selectedMap,
+      @JsonKey(name: 'test-url') String testUrl});
 }
 
 /// @nodoc
@@ -137,10 +137,10 @@ class __$$SetupParamsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$SetupParamsImpl implements _SetupParams {
   const _$SetupParamsImpl(
-      {@JsonKey(name: "config") required final Map<String, dynamic> config,
-      @JsonKey(name: "selected-map")
+      {@JsonKey(name: 'config') required final Map<String, dynamic> config,
+      @JsonKey(name: 'selected-map')
       required final Map<String, String> selectedMap,
-      @JsonKey(name: "test-url") required this.testUrl})
+      @JsonKey(name: 'test-url') required this.testUrl})
       : _config = config,
         _selectedMap = selectedMap;
 
@@ -149,7 +149,7 @@ class _$SetupParamsImpl implements _SetupParams {
 
   final Map<String, dynamic> _config;
   @override
-  @JsonKey(name: "config")
+  @JsonKey(name: 'config')
   Map<String, dynamic> get config {
     if (_config is EqualUnmodifiableMapView) return _config;
     // ignore: implicit_dynamic_type
@@ -158,7 +158,7 @@ class _$SetupParamsImpl implements _SetupParams {
 
   final Map<String, String> _selectedMap;
   @override
-  @JsonKey(name: "selected-map")
+  @JsonKey(name: 'selected-map')
   Map<String, String> get selectedMap {
     if (_selectedMap is EqualUnmodifiableMapView) return _selectedMap;
     // ignore: implicit_dynamic_type
@@ -166,7 +166,7 @@ class _$SetupParamsImpl implements _SetupParams {
   }
 
   @override
-  @JsonKey(name: "test-url")
+  @JsonKey(name: 'test-url')
   final String testUrl;
 
   @override
@@ -211,23 +211,23 @@ class _$SetupParamsImpl implements _SetupParams {
 
 abstract class _SetupParams implements SetupParams {
   const factory _SetupParams(
-          {@JsonKey(name: "config") required final Map<String, dynamic> config,
-          @JsonKey(name: "selected-map")
+          {@JsonKey(name: 'config') required final Map<String, dynamic> config,
+          @JsonKey(name: 'selected-map')
           required final Map<String, String> selectedMap,
-          @JsonKey(name: "test-url") required final String testUrl}) =
+          @JsonKey(name: 'test-url') required final String testUrl}) =
       _$SetupParamsImpl;
 
   factory _SetupParams.fromJson(Map<String, dynamic> json) =
       _$SetupParamsImpl.fromJson;
 
   @override
-  @JsonKey(name: "config")
+  @JsonKey(name: 'config')
   Map<String, dynamic> get config;
   @override
-  @JsonKey(name: "selected-map")
+  @JsonKey(name: 'selected-map')
   Map<String, String> get selectedMap;
   @override
-  @JsonKey(name: "test-url")
+  @JsonKey(name: 'test-url')
   String get testUrl;
 
   /// Create a copy of SetupParams
@@ -637,13 +637,13 @@ CoreState _$CoreStateFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$CoreState {
-  @JsonKey(name: "vpn-props")
+  @JsonKey(name: 'vpn-props')
   VpnProps get vpnProps => throw _privateConstructorUsedError;
-  @JsonKey(name: "only-statistics-proxy")
+  @JsonKey(name: 'only-statistics-proxy')
   bool get onlyStatisticsProxy => throw _privateConstructorUsedError;
-  @JsonKey(name: "current-profile-name")
+  @JsonKey(name: 'current-profile-name')
   String get currentProfileName => throw _privateConstructorUsedError;
-  @JsonKey(name: "bypass-domain")
+  @JsonKey(name: 'bypass-domain')
   List<String> get bypassDomain => throw _privateConstructorUsedError;
 
   /// Serializes this CoreState to a JSON map.
@@ -662,10 +662,10 @@ abstract class $CoreStateCopyWith<$Res> {
       _$CoreStateCopyWithImpl<$Res, CoreState>;
   @useResult
   $Res call(
-      {@JsonKey(name: "vpn-props") VpnProps vpnProps,
-      @JsonKey(name: "only-statistics-proxy") bool onlyStatisticsProxy,
-      @JsonKey(name: "current-profile-name") String currentProfileName,
-      @JsonKey(name: "bypass-domain") List<String> bypassDomain});
+      {@JsonKey(name: 'vpn-props') VpnProps vpnProps,
+      @JsonKey(name: 'only-statistics-proxy') bool onlyStatisticsProxy,
+      @JsonKey(name: 'current-profile-name') String currentProfileName,
+      @JsonKey(name: 'bypass-domain') List<String> bypassDomain});
 
   $VpnPropsCopyWith<$Res> get vpnProps;
 }
@@ -730,10 +730,10 @@ abstract class _$$CoreStateImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "vpn-props") VpnProps vpnProps,
-      @JsonKey(name: "only-statistics-proxy") bool onlyStatisticsProxy,
-      @JsonKey(name: "current-profile-name") String currentProfileName,
-      @JsonKey(name: "bypass-domain") List<String> bypassDomain});
+      {@JsonKey(name: 'vpn-props') VpnProps vpnProps,
+      @JsonKey(name: 'only-statistics-proxy') bool onlyStatisticsProxy,
+      @JsonKey(name: 'current-profile-name') String currentProfileName,
+      @JsonKey(name: 'bypass-domain') List<String> bypassDomain});
 
   @override
   $VpnPropsCopyWith<$Res> get vpnProps;
@@ -782,10 +782,10 @@ class __$$CoreStateImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$CoreStateImpl implements _CoreState {
   const _$CoreStateImpl(
-      {@JsonKey(name: "vpn-props") required this.vpnProps,
-      @JsonKey(name: "only-statistics-proxy") required this.onlyStatisticsProxy,
-      @JsonKey(name: "current-profile-name") required this.currentProfileName,
-      @JsonKey(name: "bypass-domain")
+      {@JsonKey(name: 'vpn-props') required this.vpnProps,
+      @JsonKey(name: 'only-statistics-proxy') required this.onlyStatisticsProxy,
+      @JsonKey(name: 'current-profile-name') required this.currentProfileName,
+      @JsonKey(name: 'bypass-domain')
       final List<String> bypassDomain = const []})
       : _bypassDomain = bypassDomain;
 
@@ -793,17 +793,17 @@ class _$CoreStateImpl implements _CoreState {
       _$$CoreStateImplFromJson(json);
 
   @override
-  @JsonKey(name: "vpn-props")
+  @JsonKey(name: 'vpn-props')
   final VpnProps vpnProps;
   @override
-  @JsonKey(name: "only-statistics-proxy")
+  @JsonKey(name: 'only-statistics-proxy')
   final bool onlyStatisticsProxy;
   @override
-  @JsonKey(name: "current-profile-name")
+  @JsonKey(name: 'current-profile-name')
   final String currentProfileName;
   final List<String> _bypassDomain;
   @override
-  @JsonKey(name: "bypass-domain")
+  @JsonKey(name: 'bypass-domain')
   List<String> get bypassDomain {
     if (_bypassDomain is EqualUnmodifiableListView) return _bypassDomain;
     // ignore: implicit_dynamic_type
@@ -853,28 +853,28 @@ class _$CoreStateImpl implements _CoreState {
 
 abstract class _CoreState implements CoreState {
   const factory _CoreState(
-          {@JsonKey(name: "vpn-props") required final VpnProps vpnProps,
-          @JsonKey(name: "only-statistics-proxy")
+          {@JsonKey(name: 'vpn-props') required final VpnProps vpnProps,
+          @JsonKey(name: 'only-statistics-proxy')
           required final bool onlyStatisticsProxy,
-          @JsonKey(name: "current-profile-name")
+          @JsonKey(name: 'current-profile-name')
           required final String currentProfileName,
-          @JsonKey(name: "bypass-domain") final List<String> bypassDomain}) =
+          @JsonKey(name: 'bypass-domain') final List<String> bypassDomain}) =
       _$CoreStateImpl;
 
   factory _CoreState.fromJson(Map<String, dynamic> json) =
       _$CoreStateImpl.fromJson;
 
   @override
-  @JsonKey(name: "vpn-props")
+  @JsonKey(name: 'vpn-props')
   VpnProps get vpnProps;
   @override
-  @JsonKey(name: "only-statistics-proxy")
+  @JsonKey(name: 'only-statistics-proxy')
   bool get onlyStatisticsProxy;
   @override
-  @JsonKey(name: "current-profile-name")
+  @JsonKey(name: 'current-profile-name')
   String get currentProfileName;
   @override
-  @JsonKey(name: "bypass-domain")
+  @JsonKey(name: 'bypass-domain')
   List<String> get bypassDomain;
 
   /// Create a copy of CoreState
@@ -1278,7 +1278,7 @@ InitParams _$InitParamsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$InitParams {
-  @JsonKey(name: "home-dir")
+  @JsonKey(name: 'home-dir')
   String get homeDir => throw _privateConstructorUsedError;
   int get version => throw _privateConstructorUsedError;
 
@@ -1298,7 +1298,7 @@ abstract class $InitParamsCopyWith<$Res> {
           InitParams value, $Res Function(InitParams) then) =
       _$InitParamsCopyWithImpl<$Res, InitParams>;
   @useResult
-  $Res call({@JsonKey(name: "home-dir") String homeDir, int version});
+  $Res call({@JsonKey(name: 'home-dir') String homeDir, int version});
 }
 
 /// @nodoc
@@ -1340,7 +1340,7 @@ abstract class _$$InitParamsImplCopyWith<$Res>
       __$$InitParamsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({@JsonKey(name: "home-dir") String homeDir, int version});
+  $Res call({@JsonKey(name: 'home-dir') String homeDir, int version});
 }
 
 /// @nodoc
@@ -1376,14 +1376,14 @@ class __$$InitParamsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$InitParamsImpl implements _InitParams {
   const _$InitParamsImpl(
-      {@JsonKey(name: "home-dir") required this.homeDir,
+      {@JsonKey(name: 'home-dir') required this.homeDir,
       required this.version});
 
   factory _$InitParamsImpl.fromJson(Map<String, dynamic> json) =>
       _$$InitParamsImplFromJson(json);
 
   @override
-  @JsonKey(name: "home-dir")
+  @JsonKey(name: 'home-dir')
   final String homeDir;
   @override
   final int version;
@@ -1424,14 +1424,14 @@ class _$InitParamsImpl implements _InitParams {
 
 abstract class _InitParams implements InitParams {
   const factory _InitParams(
-      {@JsonKey(name: "home-dir") required final String homeDir,
+      {@JsonKey(name: 'home-dir') required final String homeDir,
       required final int version}) = _$InitParamsImpl;
 
   factory _InitParams.fromJson(Map<String, dynamic> json) =
       _$InitParamsImpl.fromJson;
 
   @override
-  @JsonKey(name: "home-dir")
+  @JsonKey(name: 'home-dir')
   String get homeDir;
   @override
   int get version;
@@ -1450,9 +1450,9 @@ ChangeProxyParams _$ChangeProxyParamsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$ChangeProxyParams {
-  @JsonKey(name: "group-name")
+  @JsonKey(name: 'group-name')
   String get groupName => throw _privateConstructorUsedError;
-  @JsonKey(name: "proxy-name")
+  @JsonKey(name: 'proxy-name')
   String get proxyName => throw _privateConstructorUsedError;
 
   /// Serializes this ChangeProxyParams to a JSON map.
@@ -1472,8 +1472,8 @@ abstract class $ChangeProxyParamsCopyWith<$Res> {
       _$ChangeProxyParamsCopyWithImpl<$Res, ChangeProxyParams>;
   @useResult
   $Res call(
-      {@JsonKey(name: "group-name") String groupName,
-      @JsonKey(name: "proxy-name") String proxyName});
+      {@JsonKey(name: 'group-name') String groupName,
+      @JsonKey(name: 'proxy-name') String proxyName});
 }
 
 /// @nodoc
@@ -1516,8 +1516,8 @@ abstract class _$$ChangeProxyParamsImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "group-name") String groupName,
-      @JsonKey(name: "proxy-name") String proxyName});
+      {@JsonKey(name: 'group-name') String groupName,
+      @JsonKey(name: 'proxy-name') String proxyName});
 }
 
 /// @nodoc
@@ -1553,17 +1553,17 @@ class __$$ChangeProxyParamsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ChangeProxyParamsImpl implements _ChangeProxyParams {
   const _$ChangeProxyParamsImpl(
-      {@JsonKey(name: "group-name") required this.groupName,
-      @JsonKey(name: "proxy-name") required this.proxyName});
+      {@JsonKey(name: 'group-name') required this.groupName,
+      @JsonKey(name: 'proxy-name') required this.proxyName});
 
   factory _$ChangeProxyParamsImpl.fromJson(Map<String, dynamic> json) =>
       _$$ChangeProxyParamsImplFromJson(json);
 
   @override
-  @JsonKey(name: "group-name")
+  @JsonKey(name: 'group-name')
   final String groupName;
   @override
-  @JsonKey(name: "proxy-name")
+  @JsonKey(name: 'proxy-name')
   final String proxyName;
 
   @override
@@ -1605,18 +1605,18 @@ class _$ChangeProxyParamsImpl implements _ChangeProxyParams {
 
 abstract class _ChangeProxyParams implements ChangeProxyParams {
   const factory _ChangeProxyParams(
-          {@JsonKey(name: "group-name") required final String groupName,
-          @JsonKey(name: "proxy-name") required final String proxyName}) =
+          {@JsonKey(name: 'group-name') required final String groupName,
+          @JsonKey(name: 'proxy-name') required final String proxyName}) =
       _$ChangeProxyParamsImpl;
 
   factory _ChangeProxyParams.fromJson(Map<String, dynamic> json) =
       _$ChangeProxyParamsImpl.fromJson;
 
   @override
-  @JsonKey(name: "group-name")
+  @JsonKey(name: 'group-name')
   String get groupName;
   @override
-  @JsonKey(name: "proxy-name")
+  @JsonKey(name: 'proxy-name')
   String get proxyName;
 
   /// Create a copy of ChangeProxyParams
@@ -1633,9 +1633,9 @@ UpdateGeoDataParams _$UpdateGeoDataParamsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UpdateGeoDataParams {
-  @JsonKey(name: "geo-type")
+  @JsonKey(name: 'geo-type')
   String get geoType => throw _privateConstructorUsedError;
-  @JsonKey(name: "geo-name")
+  @JsonKey(name: 'geo-name')
   String get geoName => throw _privateConstructorUsedError;
 
   /// Serializes this UpdateGeoDataParams to a JSON map.
@@ -1655,8 +1655,8 @@ abstract class $UpdateGeoDataParamsCopyWith<$Res> {
       _$UpdateGeoDataParamsCopyWithImpl<$Res, UpdateGeoDataParams>;
   @useResult
   $Res call(
-      {@JsonKey(name: "geo-type") String geoType,
-      @JsonKey(name: "geo-name") String geoName});
+      {@JsonKey(name: 'geo-type') String geoType,
+      @JsonKey(name: 'geo-name') String geoName});
 }
 
 /// @nodoc
@@ -1699,8 +1699,8 @@ abstract class _$$UpdateGeoDataParamsImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "geo-type") String geoType,
-      @JsonKey(name: "geo-name") String geoName});
+      {@JsonKey(name: 'geo-type') String geoType,
+      @JsonKey(name: 'geo-name') String geoName});
 }
 
 /// @nodoc
@@ -1736,17 +1736,17 @@ class __$$UpdateGeoDataParamsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UpdateGeoDataParamsImpl implements _UpdateGeoDataParams {
   const _$UpdateGeoDataParamsImpl(
-      {@JsonKey(name: "geo-type") required this.geoType,
-      @JsonKey(name: "geo-name") required this.geoName});
+      {@JsonKey(name: 'geo-type') required this.geoType,
+      @JsonKey(name: 'geo-name') required this.geoName});
 
   factory _$UpdateGeoDataParamsImpl.fromJson(Map<String, dynamic> json) =>
       _$$UpdateGeoDataParamsImplFromJson(json);
 
   @override
-  @JsonKey(name: "geo-type")
+  @JsonKey(name: 'geo-type')
   final String geoType;
   @override
-  @JsonKey(name: "geo-name")
+  @JsonKey(name: 'geo-name')
   final String geoName;
 
   @override
@@ -1786,18 +1786,18 @@ class _$UpdateGeoDataParamsImpl implements _UpdateGeoDataParams {
 
 abstract class _UpdateGeoDataParams implements UpdateGeoDataParams {
   const factory _UpdateGeoDataParams(
-          {@JsonKey(name: "geo-type") required final String geoType,
-          @JsonKey(name: "geo-name") required final String geoName}) =
+          {@JsonKey(name: 'geo-type') required final String geoType,
+          @JsonKey(name: 'geo-name') required final String geoName}) =
       _$UpdateGeoDataParamsImpl;
 
   factory _UpdateGeoDataParams.fromJson(Map<String, dynamic> json) =
       _$UpdateGeoDataParamsImpl.fromJson;
 
   @override
-  @JsonKey(name: "geo-type")
+  @JsonKey(name: 'geo-type')
   String get geoType;
   @override
-  @JsonKey(name: "geo-name")
+  @JsonKey(name: 'geo-name')
   String get geoName;
 
   /// Create a copy of UpdateGeoDataParams
@@ -2489,13 +2489,13 @@ ProviderSubscriptionInfo _$ProviderSubscriptionInfoFromJson(
 
 /// @nodoc
 mixin _$ProviderSubscriptionInfo {
-  @JsonKey(name: "UPLOAD")
+  @JsonKey(name: 'UPLOAD')
   int get upload => throw _privateConstructorUsedError;
-  @JsonKey(name: "DOWNLOAD")
+  @JsonKey(name: 'DOWNLOAD')
   int get download => throw _privateConstructorUsedError;
-  @JsonKey(name: "TOTAL")
+  @JsonKey(name: 'TOTAL')
   int get total => throw _privateConstructorUsedError;
-  @JsonKey(name: "EXPIRE")
+  @JsonKey(name: 'EXPIRE')
   int get expire => throw _privateConstructorUsedError;
 
   /// Serializes this ProviderSubscriptionInfo to a JSON map.
@@ -2515,10 +2515,10 @@ abstract class $ProviderSubscriptionInfoCopyWith<$Res> {
       _$ProviderSubscriptionInfoCopyWithImpl<$Res, ProviderSubscriptionInfo>;
   @useResult
   $Res call(
-      {@JsonKey(name: "UPLOAD") int upload,
-      @JsonKey(name: "DOWNLOAD") int download,
-      @JsonKey(name: "TOTAL") int total,
-      @JsonKey(name: "EXPIRE") int expire});
+      {@JsonKey(name: 'UPLOAD') int upload,
+      @JsonKey(name: 'DOWNLOAD') int download,
+      @JsonKey(name: 'TOTAL') int total,
+      @JsonKey(name: 'EXPIRE') int expire});
 }
 
 /// @nodoc
@@ -2573,10 +2573,10 @@ abstract class _$$ProviderSubscriptionInfoImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "UPLOAD") int upload,
-      @JsonKey(name: "DOWNLOAD") int download,
-      @JsonKey(name: "TOTAL") int total,
-      @JsonKey(name: "EXPIRE") int expire});
+      {@JsonKey(name: 'UPLOAD') int upload,
+      @JsonKey(name: 'DOWNLOAD') int download,
+      @JsonKey(name: 'TOTAL') int total,
+      @JsonKey(name: 'EXPIRE') int expire});
 }
 
 /// @nodoc
@@ -2624,25 +2624,25 @@ class __$$ProviderSubscriptionInfoImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ProviderSubscriptionInfoImpl implements _ProviderSubscriptionInfo {
   const _$ProviderSubscriptionInfoImpl(
-      {@JsonKey(name: "UPLOAD") this.upload = 0,
-      @JsonKey(name: "DOWNLOAD") this.download = 0,
-      @JsonKey(name: "TOTAL") this.total = 0,
-      @JsonKey(name: "EXPIRE") this.expire = 0});
+      {@JsonKey(name: 'UPLOAD') this.upload = 0,
+      @JsonKey(name: 'DOWNLOAD') this.download = 0,
+      @JsonKey(name: 'TOTAL') this.total = 0,
+      @JsonKey(name: 'EXPIRE') this.expire = 0});
 
   factory _$ProviderSubscriptionInfoImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProviderSubscriptionInfoImplFromJson(json);
 
   @override
-  @JsonKey(name: "UPLOAD")
+  @JsonKey(name: 'UPLOAD')
   final int upload;
   @override
-  @JsonKey(name: "DOWNLOAD")
+  @JsonKey(name: 'DOWNLOAD')
   final int download;
   @override
-  @JsonKey(name: "TOTAL")
+  @JsonKey(name: 'TOTAL')
   final int total;
   @override
-  @JsonKey(name: "EXPIRE")
+  @JsonKey(name: 'EXPIRE')
   final int expire;
 
   @override
@@ -2685,26 +2685,26 @@ class _$ProviderSubscriptionInfoImpl implements _ProviderSubscriptionInfo {
 
 abstract class _ProviderSubscriptionInfo implements ProviderSubscriptionInfo {
   const factory _ProviderSubscriptionInfo(
-          {@JsonKey(name: "UPLOAD") final int upload,
-          @JsonKey(name: "DOWNLOAD") final int download,
-          @JsonKey(name: "TOTAL") final int total,
-          @JsonKey(name: "EXPIRE") final int expire}) =
+          {@JsonKey(name: 'UPLOAD') final int upload,
+          @JsonKey(name: 'DOWNLOAD') final int download,
+          @JsonKey(name: 'TOTAL') final int total,
+          @JsonKey(name: 'EXPIRE') final int expire}) =
       _$ProviderSubscriptionInfoImpl;
 
   factory _ProviderSubscriptionInfo.fromJson(Map<String, dynamic> json) =
       _$ProviderSubscriptionInfoImpl.fromJson;
 
   @override
-  @JsonKey(name: "UPLOAD")
+  @JsonKey(name: 'UPLOAD')
   int get upload;
   @override
-  @JsonKey(name: "DOWNLOAD")
+  @JsonKey(name: 'DOWNLOAD')
   int get download;
   @override
-  @JsonKey(name: "TOTAL")
+  @JsonKey(name: 'TOTAL')
   int get total;
   @override
-  @JsonKey(name: "EXPIRE")
+  @JsonKey(name: 'EXPIRE')
   int get expire;
 
   /// Create a copy of ProviderSubscriptionInfo
@@ -2725,12 +2725,12 @@ mixin _$ExternalProvider {
   String get type => throw _privateConstructorUsedError;
   String? get path => throw _privateConstructorUsedError;
   int get count => throw _privateConstructorUsedError;
-  @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+  @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
   SubscriptionInfo? get subscriptionInfo => throw _privateConstructorUsedError;
   bool get isUpdating => throw _privateConstructorUsedError;
-  @JsonKey(name: "vehicle-type")
+  @JsonKey(name: 'vehicle-type')
   String get vehicleType => throw _privateConstructorUsedError;
-  @JsonKey(name: "update-at")
+  @JsonKey(name: 'update-at')
   DateTime get updateAt => throw _privateConstructorUsedError;
 
   /// Serializes this ExternalProvider to a JSON map.
@@ -2754,11 +2754,11 @@ abstract class $ExternalProviderCopyWith<$Res> {
       String type,
       String? path,
       int count,
-      @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+      @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
       SubscriptionInfo? subscriptionInfo,
       bool isUpdating,
-      @JsonKey(name: "vehicle-type") String vehicleType,
-      @JsonKey(name: "update-at") DateTime updateAt});
+      @JsonKey(name: 'vehicle-type') String vehicleType,
+      @JsonKey(name: 'update-at') DateTime updateAt});
 
   $SubscriptionInfoCopyWith<$Res>? get subscriptionInfo;
 }
@@ -2851,11 +2851,11 @@ abstract class _$$ExternalProviderImplCopyWith<$Res>
       String type,
       String? path,
       int count,
-      @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+      @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
       SubscriptionInfo? subscriptionInfo,
       bool isUpdating,
-      @JsonKey(name: "vehicle-type") String vehicleType,
-      @JsonKey(name: "update-at") DateTime updateAt});
+      @JsonKey(name: 'vehicle-type') String vehicleType,
+      @JsonKey(name: 'update-at') DateTime updateAt});
 
   @override
   $SubscriptionInfoCopyWith<$Res>? get subscriptionInfo;
@@ -2928,11 +2928,11 @@ class _$ExternalProviderImpl implements _ExternalProvider {
       required this.type,
       this.path,
       required this.count,
-      @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+      @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
       this.subscriptionInfo,
       this.isUpdating = false,
-      @JsonKey(name: "vehicle-type") required this.vehicleType,
-      @JsonKey(name: "update-at") required this.updateAt});
+      @JsonKey(name: 'vehicle-type') required this.vehicleType,
+      @JsonKey(name: 'update-at') required this.updateAt});
 
   factory _$ExternalProviderImpl.fromJson(Map<String, dynamic> json) =>
       _$$ExternalProviderImplFromJson(json);
@@ -2946,16 +2946,16 @@ class _$ExternalProviderImpl implements _ExternalProvider {
   @override
   final int count;
   @override
-  @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+  @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
   final SubscriptionInfo? subscriptionInfo;
   @override
   @JsonKey()
   final bool isUpdating;
   @override
-  @JsonKey(name: "vehicle-type")
+  @JsonKey(name: 'vehicle-type')
   final String vehicleType;
   @override
-  @JsonKey(name: "update-at")
+  @JsonKey(name: 'update-at')
   final DateTime updateAt;
 
   @override
@@ -3010,11 +3010,11 @@ abstract class _ExternalProvider implements ExternalProvider {
       required final String type,
       final String? path,
       required final int count,
-      @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+      @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
       final SubscriptionInfo? subscriptionInfo,
       final bool isUpdating,
-      @JsonKey(name: "vehicle-type") required final String vehicleType,
-      @JsonKey(name: "update-at")
+      @JsonKey(name: 'vehicle-type') required final String vehicleType,
+      @JsonKey(name: 'update-at')
       required final DateTime updateAt}) = _$ExternalProviderImpl;
 
   factory _ExternalProvider.fromJson(Map<String, dynamic> json) =
@@ -3029,15 +3029,15 @@ abstract class _ExternalProvider implements ExternalProvider {
   @override
   int get count;
   @override
-  @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+  @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
   SubscriptionInfo? get subscriptionInfo;
   @override
   bool get isUpdating;
   @override
-  @JsonKey(name: "vehicle-type")
+  @JsonKey(name: 'vehicle-type')
   String get vehicleType;
   @override
-  @JsonKey(name: "update-at")
+  @JsonKey(name: 'update-at')
   DateTime get updateAt;
 
   /// Create a copy of ExternalProvider

@@ -50,15 +50,19 @@ class OpenDelegate extends Delegate {
   final Widget widget;
   final String title;
   final double? maxWidth;
-  final Widget? action;
+  final List<Widget> actions;
   final bool blur;
+  final bool wrap;
+  final bool forceFull;
 
   const OpenDelegate({
     required this.title,
     required this.widget,
     this.maxWidth,
-    this.action,
+    this.actions = const [],
     this.blur = true,
+    this.wrap = true,
+    this.forceFull = true,
   });
 }
 
@@ -66,15 +70,17 @@ class NextDelegate extends Delegate {
   final Widget widget;
   final String title;
   final double? maxWidth;
-  final Widget? action;
+  final List<Widget> actions;
   final bool blur;
+  final bool wrap;
 
   const NextDelegate({
     required this.title,
     required this.widget,
     this.maxWidth,
-    this.action,
+    this.actions = const [],
     this.blur = true,
+    this.wrap = true,
   });
 }
 
@@ -247,7 +253,7 @@ class ListItem<T> extends StatelessWidget {
   })  : leading = null,
         onTap = null;
 
-  _buildListTile({
+  Widget _buildListTile({
     void Function()? onTap,
     Widget? trailing,
     Widget? leading,
@@ -273,29 +279,28 @@ class ListItem<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     if (delegate is OpenDelegate) {
       final openDelegate = delegate as OpenDelegate;
-      final child = SafeArea(
-        child: openDelegate.widget,
-      );
+      final child = openDelegate.widget;
       return OpenContainer(
         closedBuilder: (_, action) {
           openAction() {
             final isMobile = globalState.appState.viewMode == ViewMode.mobile;
-            if (!isMobile) {
+            if (!isMobile || system.isDesktop) {
               showExtend(
                 context,
                 props: ExtendProps(
                   blur: openDelegate.blur,
                   maxWidth: openDelegate.maxWidth,
+                  forceFull: openDelegate.forceFull,
                 ),
                 builder: (_, type) {
-                  return AdaptiveSheetScaffold(
-                    actions: [
-                      if (openDelegate.action != null) openDelegate.action!,
-                    ],
-                    type: type,
-                    body: child,
-                    title: openDelegate.title,
-                  );
+                  return openDelegate.wrap
+                      ? AdaptiveSheetScaffold(
+                          actions: openDelegate.actions,
+                          type: type,
+                          body: child,
+                          title: openDelegate.title,
+                        )
+                      : child;
                 },
               );
               return;
@@ -308,23 +313,20 @@ class ListItem<T> extends StatelessWidget {
           );
         },
         openBuilder: (_, action) {
-          return CommonScaffold.open(
-            key: Key(openDelegate.title),
-            onBack: action,
-            title: openDelegate.title,
-            body: child,
-            actions: [
-              if (openDelegate.action != null) openDelegate.action!,
-            ],
-          );
+          return openDelegate.wrap
+              ? CommonScaffold(
+                  key: Key(openDelegate.title),
+                  title: openDelegate.title,
+                  body: child,
+                  actions: openDelegate.actions,
+                )
+              : child;
         },
       );
     }
     if (delegate is NextDelegate) {
       final nextDelegate = delegate as NextDelegate;
-      final child = SafeArea(
-        child: nextDelegate.widget,
-      );
+      final child = nextDelegate.widget;
 
       return _buildListTile(
         onTap: () {
@@ -335,14 +337,14 @@ class ListItem<T> extends StatelessWidget {
               maxWidth: nextDelegate.maxWidth,
             ),
             builder: (_, type) {
-              return AdaptiveSheetScaffold(
-                actions: [
-                  if (nextDelegate.action != null) nextDelegate.action!,
-                ],
-                type: type,
-                body: child,
-                title: nextDelegate.title,
-              );
+              return nextDelegate.wrap
+                  ? AdaptiveSheetScaffold(
+                      actions: nextDelegate.actions,
+                      type: type,
+                      body: child,
+                      title: nextDelegate.title,
+                    )
+                  : child;
             },
           );
         },

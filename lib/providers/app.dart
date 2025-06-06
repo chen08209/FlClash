@@ -2,7 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -30,7 +30,7 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
     return globalState.appState.logs;
   }
 
-  addLog(Log value) {
+  void addLog(Log value) {
     state = state.copyWith()..add(value);
   }
 
@@ -45,7 +45,7 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
 @riverpod
 class Requests extends _$Requests with AutoDisposeNotifierMixin {
   @override
-  FixedList<Connection> build() {
+  FixedList<TrackerInfo> build() {
     return globalState.appState.requests;
   }
 
@@ -56,7 +56,7 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
     );
   }
 
-  addRequest(Connection value) {
+  void addRequest(TrackerInfo value) {
     state = state.copyWith()..add(value);
   }
 }
@@ -75,7 +75,7 @@ class Providers extends _$Providers with AutoDisposeNotifierMixin {
     );
   }
 
-  setProvider(ExternalProvider? provider) {
+  void setProvider(ExternalProvider? provider) {
     if (provider == null) return;
     final index = state.indexWhere((item) => item.name == provider.name);
     if (index == -1) return;
@@ -99,9 +99,10 @@ class Packages extends _$Packages with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class AppBrightness extends _$AppBrightness with AutoDisposeNotifierMixin {
+class SystemBrightness extends _$SystemBrightness
+    with AutoDisposeNotifierMixin {
   @override
-  Brightness? build() {
+  Brightness build() {
     return globalState.appState.brightness;
   }
 
@@ -112,7 +113,7 @@ class AppBrightness extends _$AppBrightness with AutoDisposeNotifierMixin {
     );
   }
 
-  setState(Brightness? value) {
+  void setState(Brightness value) {
     state = value;
   }
 }
@@ -131,11 +132,11 @@ class Traffics extends _$Traffics with AutoDisposeNotifierMixin {
     );
   }
 
-  addTraffic(Traffic value) {
+  void addTraffic(Traffic value) {
     state = state.copyWith()..add(value);
   }
 
-  clear() {
+  void clear() {
     state = state.copyWith()..clear();
   }
 }
@@ -281,7 +282,7 @@ class SortNum extends _$SortNum with AutoDisposeNotifierMixin {
     );
   }
 
-  add() => state++;
+  int add() => state++;
 }
 
 @riverpod
@@ -298,7 +299,7 @@ class CheckIpNum extends _$CheckIpNum with AutoDisposeNotifierMixin {
     );
   }
 
-  add() => state++;
+  int add() => state++;
 }
 
 @riverpod
@@ -312,6 +313,21 @@ class BackBlock extends _$BackBlock with AutoDisposeNotifierMixin {
   onUpdate(value) {
     globalState.appState = globalState.appState.copyWith(
       backBlock: value,
+    );
+  }
+}
+
+@riverpod
+class Loading extends _$Loading with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return globalState.appState.loading;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.appState = globalState.appState.copyWith(
+      loading: value,
     );
   }
 }
@@ -360,7 +376,7 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
     );
   }
 
-  setDelay(Delay delay) {
+  void setDelay(Delay delay) {
     if (state[delay.url]?[delay.name] != delay.value) {
       final DelayMap newDelayMap = Map.from(state);
       if (newDelayMap[delay.url] == null) {
@@ -373,16 +389,17 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class ProxiesQuery extends _$ProxiesQuery with AutoDisposeNotifierMixin {
+class SystemUiOverlayStyleState extends _$SystemUiOverlayStyleState
+    with AutoDisposeNotifierMixin {
   @override
-  String build() {
-    return globalState.appState.proxiesQuery;
+  SystemUiOverlayStyle build() {
+    return globalState.appState.systemUiOverlayStyle;
   }
 
   @override
   onUpdate(value) {
     globalState.appState = globalState.appState.copyWith(
-      proxiesQuery: value,
+      systemUiOverlayStyle: value,
     );
   }
 }

@@ -14,7 +14,7 @@ class NetworkDetection extends ConsumerStatefulWidget {
 }
 
 class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
-  _countryCodeToEmoji(String countryCode) {
+  String _countryCodeToEmoji(String countryCode) {
     final String code = countryCode.toUpperCase();
     if (code.length != 2) {
       return countryCode;
@@ -128,7 +128,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                           : FadeThroughBox(
                               child: isLoading == false && ipInfo == null
                                   ? Text(
-                                      "timeout",
+                                      'timeout',
                                       style: context.textTheme.bodyMedium
                                           ?.copyWith(color: Colors.red)
                                           .adjustSize(1),

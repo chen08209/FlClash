@@ -47,14 +47,14 @@ class UaItem extends ConsumerWidget {
         ref.watch(patchClashConfigProvider.select((state) => state.globalUa));
     return ListItem<String?>.options(
       leading: const Icon(Icons.computer_outlined),
-      title: const Text("UA"),
+      title: const Text('UA'),
       subtitle: Text(globalUa ?? appLocalizations.defaultText),
       delegate: OptionsDelegate<String?>(
-        title: "UA",
+        title: 'UA',
         options: [
           null,
-          "clash-verge/v1.6.6",
-          "ClashforWindows/0.19.23",
+          'clash-verge/v1.6.6',
+          'ClashforWindows/0.19.23',
         ],
         value: globalUa,
         onChanged: (value) {
@@ -80,12 +80,12 @@ class KeepAliveIntervalItem extends ConsumerWidget {
     return ListItem.input(
       leading: const Icon(Icons.timer_outlined),
       title: Text(appLocalizations.keepAliveIntervalDesc),
-      subtitle: Text("$keepAliveInterval ${appLocalizations.seconds}"),
+      subtitle: Text('$keepAliveInterval ${appLocalizations.seconds}'),
       delegate: InputDelegate(
         title: appLocalizations.keepAliveIntervalDesc,
         suffixText: appLocalizations.seconds,
-        resetValue: "$defaultKeepAliveInterval",
-        value: "$keepAliveInterval",
+        resetValue: '$defaultKeepAliveInterval',
+        value: '$keepAliveInterval',
         validator: (String? value) {
           if (value == null || value.isEmpty) {
             return appLocalizations.emptyTip(appLocalizations.interval);
@@ -154,7 +154,7 @@ class TestUrlItem extends ConsumerWidget {
 class PortItem extends ConsumerWidget {
   const PortItem({super.key});
 
-  handleShowPortDialog() async {
+  Future<void> handleShowPortDialog() async {
     await globalState.showCommonDialog(
       child: _PortDialog(),
     );
@@ -168,7 +168,7 @@ class PortItem extends ConsumerWidget {
     return ListItem(
       leading: const Icon(Icons.adjust_outlined),
       title: Text(appLocalizations.port),
-      subtitle: Text("$mixedPort"),
+      subtitle: Text('$mixedPort'),
       onTap: () {
         handleShowPortDialog();
       },
@@ -212,17 +212,17 @@ class HostsItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListItem.open(
       leading: const Icon(Icons.view_list_outlined),
-      title: const Text("Hosts"),
+      title: const Text('Hosts'),
       subtitle: Text(appLocalizations.hostsDesc),
       delegate: OpenDelegate(
         blur: false,
-        title: "Hosts",
+        title: 'Hosts',
         widget: Consumer(
           builder: (_, ref, __) {
             final hosts = ref
                 .watch(patchClashConfigProvider.select((state) => state.hosts));
             return MapInputPage(
-              title: "Hosts",
+              title: 'Hosts',
               map: hosts,
               titleBuilder: (item) => Text(item.key),
               subtitleBuilder: (item) => Text(item.value),
@@ -250,7 +250,7 @@ class Ipv6Item extends ConsumerWidget {
         ref.watch(patchClashConfigProvider.select((state) => state.ipv6));
     return ListItem.switchItem(
       leading: const Icon(Icons.water_outlined),
-      title: const Text("IPv6"),
+      title: const Text('IPv6'),
       subtitle: Text(appLocalizations.ipv6Desc),
       delegate: SwitchDelegate(
         value: ipv6,
@@ -491,7 +491,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
     );
   }
 
-  _handleReset() async {
+  Future<void> _handleReset() async {
     final res = await globalState.showMessage(
       message: TextSpan(
         text: appLocalizations.resetTip,
@@ -514,7 +514,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
     }
   }
 
-  _handleUpdate() {
+  void _handleUpdate() {
     if (_formKey.currentState?.validate() == false) return;
     ref.read(patchClashConfigProvider.notifier).updateState(
           (state) => state.copyWith(
@@ -528,7 +528,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
     Navigator.of(context).pop();
   }
 
-  _handleMore() {
+  void _handleMore() {
     setState(() {
       _isMore = !_isMore;
     });

@@ -48,7 +48,7 @@ extension StringExtension on String {
   }
 
   bool get isSvg {
-    return endsWith(".svg");
+    return endsWith('.svg');
   }
 
   bool get isRegex {

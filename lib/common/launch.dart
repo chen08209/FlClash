@@ -34,8 +34,8 @@ class AutoLaunch {
     return await launchAtStartup.disable();
   }
 
-  updateStatus(bool isAutoLaunch) async {
-    if(kDebugMode){
+  Future<void> updateStatus(bool isAutoLaunch) async {
+    if (kDebugMode) {
       return;
     }
     if (await isEnable == isAutoLaunch) return;

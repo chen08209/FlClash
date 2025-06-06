@@ -35,7 +35,7 @@ class ShowBarScrollBehavior extends BaseScrollBehavior {
     Widget child,
     ScrollableDetails details,
   ) {
-    return CommonAutoHiddenScrollBar(
+    return CommonScrollBar(
       controller: details.controller,
       child: child,
     );
@@ -87,6 +87,54 @@ class NextClampingScrollPhysics extends ClampingScrollPhysics {
     );
   }
 }
+
+// class CacheScrollPositionController extends ScrollController {
+//   final String key;
+//
+//   CacheScrollPositionController({
+//     required this.key,
+//     double initialScrollOffset = 0.0,
+//     super.keepScrollOffset = true,
+//     super.debugLabel,
+//     super.onAttach,
+//     super.onDetach,
+//   });
+//
+//   @override
+//   ScrollPosition createScrollPosition(
+//     ScrollPhysics physics,
+//     ScrollContext context,
+//     ScrollPosition? oldPosition,
+//   ) {
+//     return ScrollPositionWithSingleContext(
+//       physics: physics,
+//       context: context,
+//       initialPixels:
+//           globalState.scrollPositionCache[key] ?? initialScrollOffset,
+//       keepScrollOffset: keepScrollOffset,
+//       oldPosition: oldPosition,
+//       debugLabel: debugLabel,
+//     );
+//   }
+//
+//   double? get cacheOffset => globalState.scrollPositionCache[key];
+//
+//   _handleScroll() {
+//     globalState.scrollPositionCache[key] = position.pixels;
+//   }
+//
+//   @override
+//   void attach(ScrollPosition position) {
+//     super.attach(position);
+//     addListener(_handleScroll);
+//   }
+//
+//   @override
+//   void detach(ScrollPosition position) {
+//     removeListener(_handleScroll);
+//     super.detach(position);
+//   }
+// }
 
 class ReverseScrollController extends ScrollController {
   ReverseScrollController({

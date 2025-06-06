@@ -14,7 +14,7 @@ class ProxyManager extends ConsumerStatefulWidget {
 }
 
 class _ProxyManagerState extends ConsumerState<ProxyManager> {
-  _updateProxy(ProxyState proxyState) async {
+  Future<void> _updateProxy(ProxyState proxyState) async {
     final isStart = proxyState.isStart;
     final systemProxy = proxyState.systemProxy;
     final port = proxyState.port;

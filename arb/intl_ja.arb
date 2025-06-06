@@ -407,5 +407,20 @@
   "import": "インポート",
   "importFile": "ファイルからインポート",
   "importUrl": "URLからインポート",
-  "autoSetSystemDns": "オートセットシステムDNS"
+  "autoSetSystemDns": "オートセットシステムDNS",
+  "details": "{label}詳細",
+  "creationTime": "作成時間",
+  "progress": "進捗",
+  "host": "ホスト",
+  "destination": "宛先",
+  "destinationGeoIP": "宛先地理情報",
+  "destinationIPASN": "宛先IP ASN",
+  "specialProxy": "特殊プロキシ",
+  "specialRules": "特殊ルール",
+  "remoteDestination": "リモート宛先",
+  "networkType": "ネットワーク種別",
+  "proxyChains": "プロキシチェーン",
+  "log": "ログ",
+  "connection": "接続",
+  "request": "リクエスト"
 }

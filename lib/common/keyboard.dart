@@ -1,7 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/services.dart';
 import 'package:uni_platform/uni_platform.dart';
+
+import 'system.dart';
 
 final Map<PhysicalKeyboardKey, String> _knownKeyLabels =
     <PhysicalKeyboardKey, String>{
@@ -79,14 +79,14 @@ final Map<PhysicalKeyboardKey, String> _knownKeyLabels =
   PhysicalKeyboardKey.arrowLeft: '←',
   PhysicalKeyboardKey.arrowDown: '↓',
   PhysicalKeyboardKey.arrowUp: '↑',
-  PhysicalKeyboardKey.controlLeft: "CTRL",
+  PhysicalKeyboardKey.controlLeft: 'CTRL',
   PhysicalKeyboardKey.shiftLeft: 'SHIFT',
-  PhysicalKeyboardKey.altLeft: "ALT",
-  PhysicalKeyboardKey.metaLeft: Platform.isMacOS ? '⌘' : 'WIN',
-  PhysicalKeyboardKey.controlRight: "CTRL",
+  PhysicalKeyboardKey.altLeft: 'ALT',
+  PhysicalKeyboardKey.metaLeft: system.isMacOS ? '⌘' : 'WIN',
+  PhysicalKeyboardKey.controlRight: 'CTRL',
   PhysicalKeyboardKey.shiftRight: 'SHIFT',
-  PhysicalKeyboardKey.altRight: "ALT",
-  PhysicalKeyboardKey.metaRight: Platform.isMacOS ? '⌘' : 'WIN',
+  PhysicalKeyboardKey.altRight: 'ALT',
+  PhysicalKeyboardKey.metaRight: system.isMacOS ? '⌘' : 'WIN',
   PhysicalKeyboardKey.fn: 'FN',
 };
 
@@ -101,6 +101,3 @@ extension KeyboardKeyExt on KeyboardKey {
     return _knownKeyLabels[physicalKey] ?? physicalKey?.debugName ?? 'Unknown';
   }
 }
-
-
-
