@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -17,6 +18,9 @@ class Window {
       protocol.register("clash");
       protocol.register("clashmeta");
       protocol.register("flclash");
+    }
+    if ((version > 10 && Platform.isMacOS) || Platform.isWindows) {
+      await acrylic.Window.initialize();
     }
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = WindowOptions(
@@ -60,6 +64,13 @@ class Window {
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.setPreventClose(true);
     });
+  }
+
+  updateMacOSBrightness(Brightness brightness) {
+    if (!Platform.isMacOS) {
+      return;
+    }
+    acrylic.Window.overrideMacOSBrightness(dark: brightness == Brightness.dark);
   }
 
   show() async {

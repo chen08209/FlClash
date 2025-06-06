@@ -350,8 +350,11 @@ class AppController {
     globalState.cacheScrollPosition = {};
   }
 
-  updateBrightness(Brightness brightness) {
-    _ref.read(appBrightnessProvider.notifier).value = brightness;
+  updateBrightness() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ref.read(systemBrightnessProvider.notifier).value =
+          WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    });
   }
 
   autoUpdateProfiles() async {
@@ -444,7 +447,7 @@ class AppController {
     });
     try {
       await savePreferences();
-      await system.setMacOSDns(true);
+      await macOS?.updateDns(true);
       await proxy?.stopProxy();
       await clashCore.shutdown();
       await clashService?.destroy();

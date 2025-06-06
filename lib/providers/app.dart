@@ -99,9 +99,10 @@ class Packages extends _$Packages with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class AppBrightness extends _$AppBrightness with AutoDisposeNotifierMixin {
+class SystemBrightness extends _$SystemBrightness
+    with AutoDisposeNotifierMixin {
   @override
-  Brightness? build() {
+  Brightness build() {
     return globalState.appState.brightness;
   }
 
@@ -112,7 +113,7 @@ class AppBrightness extends _$AppBrightness with AutoDisposeNotifierMixin {
     );
   }
 
-  setState(Brightness? value) {
+  setState(Brightness value) {
     state = value;
   }
 }

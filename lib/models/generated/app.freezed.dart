@@ -26,7 +26,7 @@ mixin _$AppState {
       throw _privateConstructorUsedError;
   List<Group> get groups => throw _privateConstructorUsedError;
   int get checkIpNum => throw _privateConstructorUsedError;
-  Brightness? get brightness => throw _privateConstructorUsedError;
+  Brightness get brightness => throw _privateConstructorUsedError;
   int? get runTime => throw _privateConstructorUsedError;
   List<ExternalProvider> get providers => throw _privateConstructorUsedError;
   String? get localIp => throw _privateConstructorUsedError;
@@ -60,7 +60,7 @@ abstract class $AppStateCopyWith<$Res> {
       Map<String, Map<String, int?>> delayMap,
       List<Group> groups,
       int checkIpNum,
-      Brightness? brightness,
+      Brightness brightness,
       int? runTime,
       List<ExternalProvider> providers,
       String? localIp,
@@ -97,7 +97,7 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
     Object? delayMap = null,
     Object? groups = null,
     Object? checkIpNum = null,
-    Object? brightness = freezed,
+    Object? brightness = null,
     Object? runTime = freezed,
     Object? providers = null,
     Object? localIp = freezed,
@@ -146,10 +146,10 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
           ? _value.checkIpNum
           : checkIpNum // ignore: cast_nullable_to_non_nullable
               as int,
-      brightness: freezed == brightness
+      brightness: null == brightness
           ? _value.brightness
           : brightness // ignore: cast_nullable_to_non_nullable
-              as Brightness?,
+              as Brightness,
       runTime: freezed == runTime
           ? _value.runTime
           : runTime // ignore: cast_nullable_to_non_nullable
@@ -212,7 +212,7 @@ abstract class _$$AppStateImplCopyWith<$Res>
       Map<String, Map<String, int?>> delayMap,
       List<Group> groups,
       int checkIpNum,
-      Brightness? brightness,
+      Brightness brightness,
       int? runTime,
       List<ExternalProvider> providers,
       String? localIp,
@@ -247,7 +247,7 @@ class __$$AppStateImplCopyWithImpl<$Res>
     Object? delayMap = null,
     Object? groups = null,
     Object? checkIpNum = null,
-    Object? brightness = freezed,
+    Object? brightness = null,
     Object? runTime = freezed,
     Object? providers = null,
     Object? localIp = freezed,
@@ -296,10 +296,10 @@ class __$$AppStateImplCopyWithImpl<$Res>
           ? _value.checkIpNum
           : checkIpNum // ignore: cast_nullable_to_non_nullable
               as int,
-      brightness: freezed == brightness
+      brightness: null == brightness
           ? _value.brightness
           : brightness // ignore: cast_nullable_to_non_nullable
-              as Brightness?,
+              as Brightness,
       runTime: freezed == runTime
           ? _value.runTime
           : runTime // ignore: cast_nullable_to_non_nullable
@@ -357,7 +357,7 @@ class _$AppStateImpl implements _AppState {
       final Map<String, Map<String, int?>> delayMap = const {},
       final List<Group> groups = const [],
       this.checkIpNum = 0,
-      this.brightness,
+      required this.brightness,
       this.runTime,
       final List<ExternalProvider> providers = const [],
       this.localIp,
@@ -418,7 +418,7 @@ class _$AppStateImpl implements _AppState {
   @JsonKey()
   final int checkIpNum;
   @override
-  final Brightness? brightness;
+  final Brightness brightness;
   @override
   final int? runTime;
   final List<ExternalProvider> _providers;
@@ -537,7 +537,7 @@ abstract class _AppState implements AppState {
       final Map<String, Map<String, int?>> delayMap,
       final List<Group> groups,
       final int checkIpNum,
-      final Brightness? brightness,
+      required final Brightness brightness,
       final int? runTime,
       final List<ExternalProvider> providers,
       final String? localIp,
@@ -568,7 +568,7 @@ abstract class _AppState implements AppState {
   @override
   int get checkIpNum;
   @override
-  Brightness? get brightness;
+  Brightness get brightness;
   @override
   int? get runTime;
   @override

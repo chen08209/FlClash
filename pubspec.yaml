@@ -60,6 +60,7 @@ dependencies:
   flutter_svg: ^2.1.0
   flutter_cache_manager: ^3.4.1
   crypto: ^3.0.3
+  flutter_acrylic: ^1.1.4
 dev_dependencies:
   flutter_test:
     sdk: flutter

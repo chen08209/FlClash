@@ -145,22 +145,22 @@ final packagesProvider =
 );
 
 typedef _$Packages = AutoDisposeNotifier<List<Package>>;
-String _$appBrightnessHash() => r'bc893bacdc2645c985037d3754bad4e651587771';
+String _$systemBrightnessHash() => r'72f78a2a307075dcf525f933e8be79d92d26c6a2';
 
-/// See also [AppBrightness].
-@ProviderFor(AppBrightness)
-final appBrightnessProvider =
-    AutoDisposeNotifierProvider<AppBrightness, Brightness?>.internal(
-  AppBrightness.new,
-  name: r'appBrightnessProvider',
+/// See also [SystemBrightness].
+@ProviderFor(SystemBrightness)
+final systemBrightnessProvider =
+    AutoDisposeNotifierProvider<SystemBrightness, Brightness>.internal(
+  SystemBrightness.new,
+  name: r'systemBrightnessProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$appBrightnessHash,
+      : _$systemBrightnessHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$AppBrightness = AutoDisposeNotifier<Brightness?>;
+typedef _$SystemBrightness = AutoDisposeNotifier<Brightness>;
 String _$trafficsHash() => r'c3f33e9be5ae399562a380156280406fdeeb72aa';
 
 /// See also [Traffics].

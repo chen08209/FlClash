@@ -68,6 +68,7 @@ class GlobalState {
     coreSHA256 = const String.fromEnvironment("CORE_SHA256");
     isPre = const String.fromEnvironment("APP_ENV") != 'stable';
     appState = AppState(
+      brightness: WidgetsBinding.instance.platformDispatcher.platformBrightness,
       version: version,
       viewSize: Size.zero,
       requests: FixedList(maxLength),

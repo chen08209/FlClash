@@ -7,6 +7,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/widgets/transparent_macos_sidebar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -64,7 +65,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   late PageController _pageController;
 
   @override
-  void initState() {
+  initState() {
     super.initState();
     _pageController = PageController(
       initialPage: _pageIndex,
@@ -80,6 +81,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
         _updatePageController();
       }
     });
+    // acrylic.Window.setEffect(effect: WindowEffect.transparent);
   }
 
   int get _pageIndex {
@@ -185,72 +187,77 @@ class CommonNavigationBar extends ConsumerWidget {
       );
     }
     final showLabel = ref.watch(appSettingProvider).showLabel;
-    return Material(
-      color: context.colorScheme.surfaceContainer,
-      child: Column(
-        children: [
-          Expanded(
-            child: ScrollConfiguration(
-              behavior: HiddenBarScrollBehavior(),
-              child: SingleChildScrollView(
-                child: IntrinsicHeight(
-                  child: NavigationRail(
-                    backgroundColor: context.colorScheme.surfaceContainer,
-                    selectedIconTheme: IconThemeData(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                    unselectedIconTheme: IconThemeData(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                    selectedLabelTextStyle:
-                        context.textTheme.labelLarge!.copyWith(
-                      color: context.colorScheme.onSurface,
-                    ),
-                    unselectedLabelTextStyle:
-                        context.textTheme.labelLarge!.copyWith(
-                      color: context.colorScheme.onSurface,
-                    ),
-                    destinations: navigationItems
-                        .map(
-                          (e) => NavigationRailDestination(
-                            icon: e.icon,
-                            label: Text(
-                              Intl.message(e.label.name),
+    final version = ref.watch(versionProvider);
+    final backgroundColor = Colors.transparent;
+    return TransparentMacOSSidebar(
+      child: Material(
+        color: backgroundColor,
+        child: Column(
+          children: [
+            if (version > 10 && Platform.isMacOS)
+              SizedBox(
+                height: 36,
+              ),
+            Expanded(
+              child: ScrollConfiguration(
+                behavior: HiddenBarScrollBehavior(),
+                child: SingleChildScrollView(
+                  child: IntrinsicHeight(
+                    child: NavigationRail(
+                      backgroundColor: backgroundColor,
+                      selectedLabelTextStyle:
+                          context.textTheme.labelLarge!.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
+                      unselectedLabelTextStyle:
+                          context.textTheme.labelLarge!.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
+                      destinations: navigationItems
+                          .map(
+                            (e) => NavigationRailDestination(
+                              icon: e.icon,
+                              label: Text(
+                                Intl.message(e.label.name),
+                              ),
                             ),
-                          ),
-                        )
-                        .toList(),
-                    onDestinationSelected: (index) {
-                      globalState.appController
-                          .toPage(navigationItems[index].label);
-                    },
-                    extended: false,
-                    selectedIndex: currentIndex,
-                    labelType: showLabel
-                        ? NavigationRailLabelType.all
-                        : NavigationRailLabelType.none,
+                          )
+                          .toList(),
+                      onDestinationSelected: (index) {
+                        globalState.appController
+                            .toPage(navigationItems[index].label);
+                      },
+                      extended: false,
+                      selectedIndex: currentIndex,
+                      labelType: showLabel
+                          ? NavigationRailLabelType.all
+                          : NavigationRailLabelType.none,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(
-            height: 16,
-          ),
-          IconButton(
-            onPressed: () {
-              ref.read(appSettingProvider.notifier).updateState(
-                    (state) => state.copyWith(
-                      showLabel: !state.showLabel,
-                    ),
-                  );
-            },
-            icon: const Icon(Icons.menu),
-          ),
-          const SizedBox(
-            height: 16,
-          ),
-        ],
+            const SizedBox(
+              height: 16,
+            ),
+            IconButton(
+              onPressed: () {
+                ref.read(appSettingProvider.notifier).updateState(
+                      (state) => state.copyWith(
+                        showLabel: !state.showLabel,
+                      ),
+                    );
+              },
+              icon: Icon(
+                Icons.menu,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(
+              height: 16,
+            ),
+          ],
+        ),
       ),
     );
   }

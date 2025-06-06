@@ -1,6 +1,7 @@
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'card.dart';
 import 'grid.dart';
 
@@ -89,11 +90,15 @@ class ColorSchemeBox extends StatelessWidget {
 class PrimaryColorBox extends ConsumerWidget {
   final Color? primaryColor;
   final Widget child;
+  final Brightness? brightness;
+  final bool ignoreConfig;
 
   const PrimaryColorBox({
     super.key,
     required this.primaryColor,
     required this.child,
+    this.brightness,
+    this.ignoreConfig = true,
   });
 
   @override
@@ -101,9 +106,9 @@ class PrimaryColorBox extends ConsumerWidget {
     final themeData = Theme.of(context);
     final colorScheme = ref.watch(
       genColorSchemeProvider(
-        themeData.brightness,
+        brightness ?? themeData.brightness,
         color: primaryColor,
-        ignoreConfig: true,
+        ignoreConfig: ignoreConfig,
       ),
     );
     return Theme(

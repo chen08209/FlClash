@@ -22,7 +22,7 @@ class AppState with _$AppState {
     @Default({}) DelayMap delayMap,
     @Default([]) List<Group> groups,
     @Default(0) int checkIpNum,
-    Brightness? brightness,
+    required Brightness brightness,
     int? runTime,
     @Default([]) List<ExternalProvider> providers,
     String? localIp,

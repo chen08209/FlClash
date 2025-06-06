@@ -53,22 +53,29 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
           return;
         }
         if (next.a == true && next.b == true) {
-          system.setMacOSDns(false);
+          macOS?.updateDns(false);
         } else {
-          system.setMacOSDns(true);
+          macOS?.updateDns(true);
         }
       },
+    );
+    if (window == null) {
+      return;
+    }
+    ref.listenManual(
+      currentBrightnessProvider,
+      (prev, next) {
+        if (prev == next) {
+          return;
+        }
+        window?.updateMacOSBrightness(next);
+      },
+      fireImmediately: true,
     );
   }
 
   @override
-  reassemble() {
-    super.reassemble();
-  }
-
-  @override
-  void dispose() async {
-    await system.setMacOSDns(true);
+  void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -86,9 +93,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
 
   @override
   void didChangePlatformBrightness() {
-    globalState.appController.updateBrightness(
-      WidgetsBinding.instance.platformDispatcher.platformBrightness,
-    );
+    globalState.appController.updateBrightness();
   }
 
   @override
