@@ -70,7 +70,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
 
   int get crossCount => widget.crossAxisCount;
 
-  _onChildrenChange() {
+  void _onChildrenChange() {
     _tempIndexList = List.generate(length, (index) => index);
     _itemContexts = List.filled(
       length,
@@ -78,7 +78,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     );
   }
 
-  _preTransformState() {
+  void _preTransformState() {
     _sizes = _itemContexts.map((item) => item!.size!).toList();
     _parentOffset =
         (context.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
@@ -90,7 +90,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     _containerSize = context.size!;
   }
 
-  _initState() {
+  void _initState() {
     _transformController.value = 0;
     _sizes = List.generate(length, (index) => Size.zero);
     _offsets = [];
@@ -145,7 +145,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     _initState();
   }
 
-  handleAdd(GridItem gridItem) {
+  void handleAdd(GridItem gridItem) {
     _childrenNotifier.value = List.from(_childrenNotifier.value)
       ..add(
         gridItem,
@@ -171,7 +171,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     }
   }
 
-  _transform() async {
+  Future _transform() async {
     List<Offset> layoutOffsets = [
       Offset(_containerSize.width, 0),
     ];
@@ -248,7 +248,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     return _transformController.forward(from: 0);
   }
 
-  _handleDragStarted(int index) {
+  void _handleDragStarted(int index) {
     _initState();
     _preTransformState();
     _dragIndexNotifier.value = index;
@@ -263,7 +263,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     );
   }
 
-  _handleDragEnd(DraggableDetails details) async {
+  Future<void> _handleDragEnd(DraggableDetails details) async {
     final children = List<GridItem>.from(_childrenNotifier.value);
     children.insert(_targetIndex, children.removeAt(_dragIndexNotifier.value));
     this.children = children;
@@ -300,7 +300,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     _initState();
   }
 
-  _handleDragUpdate(DragUpdateDetails details) {
+  void _handleDragUpdate(DragUpdateDetails details) {
     _dragRect = _dragRect.translate(
       0,
       details.delta.dy,
@@ -308,7 +308,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     _edgeDraggingAutoScroller?.startAutoScrollIfNecessary(_dragRect);
   }
 
-  _handleWill(int index) async {
+  Future<void> _handleWill(int index) async {
     final dragIndex = _dragIndexNotifier.value;
     if (dragIndex < 0 || dragIndex > _offsets.length - 1) {
       return;
@@ -334,7 +334,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     await _transform();
   }
 
-  _handleDelete(int index) async {
+  Future<void> _handleDelete(int index) async {
     _preTransformState();
     final indexWhere = _tempIndexList.indexWhere((i) => i == index);
     _tempIndexList.removeAt(indexWhere);
@@ -692,7 +692,7 @@ class _DeletableContainerState extends State<_DeletableContainer>
     }
   }
 
-  _handleDel() async {
+  Future<void> _handleDel() async {
     setState(() {
       _deleteButtonVisible = false;
     });

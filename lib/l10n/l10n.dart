@@ -3139,6 +3139,126 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `{label} details`
+  String details(Object label) {
+    return Intl.message(
+      '$label details',
+      name: 'details',
+      desc: '',
+      args: [label],
+    );
+  }
+
+  /// `Creation time`
+  String get creationTime {
+    return Intl.message(
+      'Creation time',
+      name: 'creationTime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Progress`
+  String get progress {
+    return Intl.message('Progress', name: 'progress', desc: '', args: []);
+  }
+
+  /// `Host`
+  String get host {
+    return Intl.message('Host', name: 'host', desc: '', args: []);
+  }
+
+  /// `Destination`
+  String get destination {
+    return Intl.message('Destination', name: 'destination', desc: '', args: []);
+  }
+
+  /// `Destination GeoIP`
+  String get destinationGeoIP {
+    return Intl.message(
+      'Destination GeoIP',
+      name: 'destinationGeoIP',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Destination IPASN`
+  String get destinationIPASN {
+    return Intl.message(
+      'Destination IPASN',
+      name: 'destinationIPASN',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Special proxy`
+  String get specialProxy {
+    return Intl.message(
+      'Special proxy',
+      name: 'specialProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `special rules`
+  String get specialRules {
+    return Intl.message(
+      'special rules',
+      name: 'specialRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remote destination`
+  String get remoteDestination {
+    return Intl.message(
+      'Remote destination',
+      name: 'remoteDestination',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Network type`
+  String get networkType {
+    return Intl.message(
+      'Network type',
+      name: 'networkType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy chains`
+  String get proxyChains {
+    return Intl.message(
+      'Proxy chains',
+      name: 'proxyChains',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Log`
+  String get log {
+    return Intl.message('Log', name: 'log', desc: '', args: []);
+  }
+
+  /// `Connection`
+  String get connection {
+    return Intl.message('Connection', name: 'connection', desc: '', args: []);
+  }
+
+  /// `Request`
+  String get request {
+    return Intl.message('Request', name: 'request', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

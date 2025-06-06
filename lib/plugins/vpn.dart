@@ -17,22 +17,22 @@ class Vpn {
   FutureOr<String> Function()? handleGetStartForegroundParams;
 
   Vpn._internal() {
-    methodChannel = const MethodChannel("vpn");
+    methodChannel = const MethodChannel('vpn');
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
-        case "gc":
+        case 'gc':
           clashCore.requestGc();
-        case "getStartForegroundParams":
+        case 'getStartForegroundParams':
           if (handleGetStartForegroundParams != null) {
             return await handleGetStartForegroundParams!();
           }
-          return "";
-        case "status":
+          return '';
+        case 'status':
           return clashLibHandler?.getRunTime() != null;
         default:
           for (final VpnListener listener in _listeners) {
             switch (call.method) {
-              case "dnsChanged":
+              case 'dnsChanged':
                 final dns = call.arguments as String;
                 listener.onDnsChanged(dns);
             }
@@ -49,13 +49,13 @@ class Vpn {
   final ObserverList<VpnListener> _listeners = ObserverList<VpnListener>();
 
   Future<bool?> start(AndroidVpnOptions options) async {
-    return await methodChannel.invokeMethod<bool>("start", {
+    return await methodChannel.invokeMethod<bool>('start', {
       'data': json.encode(options),
     });
   }
 
   Future<bool?> stop() async {
-    return await methodChannel.invokeMethod<bool>("stop");
+    return await methodChannel.invokeMethod<bool>('stop');
   }
 
   void addListener(VpnListener listener) {

@@ -138,7 +138,7 @@ _$TunImpl _$$TunImplFromJson(Map<String, dynamic> json) => _$TunImpl(
       dnsHijack: (json['dns-hijack'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const ["any:53"],
+          const ['any:53'],
       routeAddress: (json['route-address'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
@@ -163,19 +163,19 @@ const _$TunStackEnumMap = {
 _$FallbackFilterImpl _$$FallbackFilterImplFromJson(Map<String, dynamic> json) =>
     _$FallbackFilterImpl(
       geoip: json['geoip'] as bool? ?? true,
-      geoipCode: json['geoip-code'] as String? ?? "CN",
+      geoipCode: json['geoip-code'] as String? ?? 'CN',
       geosite: (json['geosite'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const ["gfw"],
+          const ['gfw'],
       ipcidr: (json['ipcidr'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const ["240.0.0.0/4"],
+          const ['240.0.0.0/4'],
       domain: (json['domain'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const ["+.google.com", "+.facebook.com", "+.youtube.com"],
+          const ['+.google.com', '+.facebook.com', '+.youtube.com'],
     );
 
 Map<String, dynamic> _$$FallbackFilterImplToJson(
@@ -190,7 +190,7 @@ Map<String, dynamic> _$$FallbackFilterImplToJson(
 
 _$DnsImpl _$$DnsImplFromJson(Map<String, dynamic> json) => _$DnsImpl(
       enable: json['enable'] as bool? ?? true,
-      listen: json['listen'] as String? ?? "0.0.0.0:1053",
+      listen: json['listen'] as String? ?? '0.0.0.0:1053',
       preferH3: json['prefer-h3'] as bool? ?? false,
       useHosts: json['use-hosts'] as bool? ?? true,
       useSystemHosts: json['use-system-hosts'] as bool? ?? true,
@@ -199,39 +199,39 @@ _$DnsImpl _$$DnsImplFromJson(Map<String, dynamic> json) => _$DnsImpl(
       defaultNameserver: (json['default-nameserver'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const ["223.5.5.5"],
+          const ['223.5.5.5'],
       enhancedMode:
           $enumDecodeNullable(_$DnsModeEnumMap, json['enhanced-mode']) ??
               DnsMode.fakeIp,
-      fakeIpRange: json['fake-ip-range'] as String? ?? "198.18.0.1/16",
+      fakeIpRange: json['fake-ip-range'] as String? ?? '198.18.0.1/16',
       fakeIpFilter: (json['fake-ip-filter'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const ["*.lan", "localhost.ptlogin2.qq.com"],
+          const ['*.lan', 'localhost.ptlogin2.qq.com'],
       nameserverPolicy:
           (json['nameserver-policy'] as Map<String, dynamic>?)?.map(
                 (k, e) => MapEntry(k, e as String),
               ) ??
               const {
-                "www.baidu.com": "114.114.114.114",
-                "+.internal.crop.com": "10.0.0.1",
-                "geosite:cn": "https://doh.pub/dns-query"
+                'www.baidu.com': '114.114.114.114',
+                '+.internal.crop.com': '10.0.0.1',
+                'geosite:cn': 'https://doh.pub/dns-query'
               },
       nameserver: (json['nameserver'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [
-            "https://doh.pub/dns-query",
-            "https://dns.alidns.com/dns-query"
+            'https://doh.pub/dns-query',
+            'https://dns.alidns.com/dns-query'
           ],
       fallback: (json['fallback'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const ["tls://8.8.4.4", "tls://1.1.1.1"],
+          const ['tls://8.8.4.4', 'tls://1.1.1.1'],
       proxyServerNameserver: (json['proxy-server-nameserver'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const ["https://doh.pub/dns-query"],
+          const ['https://doh.pub/dns-query'],
       fallbackFilter: json['fallback-filter'] == null
           ? const FallbackFilter()
           : FallbackFilter.fromJson(
@@ -267,13 +267,13 @@ const _$DnsModeEnumMap = {
 _$GeoXUrlImpl _$$GeoXUrlImplFromJson(Map<String, dynamic> json) =>
     _$GeoXUrlImpl(
       mmdb: json['mmdb'] as String? ??
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+          'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
       asn: json['asn'] as String? ??
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
+          'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb',
       geoip: json['geoip'] as String? ??
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
+          'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat',
       geosite: json['geosite'] as String? ??
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
+          'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
     );
 
 Map<String, dynamic> _$$GeoXUrlImplToJson(_$GeoXUrlImpl instance) =>
@@ -418,7 +418,6 @@ const _$LogLevelEnumMap = {
   LogLevel.warning: 'warning',
   LogLevel.error: 'error',
   LogLevel.silent: 'silent',
-  LogLevel.app: 'app',
 };
 
 const _$FindProcessModeEnumMap = {

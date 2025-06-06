@@ -28,9 +28,9 @@ class ClashService extends ClashHandlerInterface {
     reStart();
   }
 
-  _initServer() async {
+  Future<void> _initServer() async {
     runZonedGuarded(() async {
-      final address = !Platform.isWindows
+      final address = !system.isWindows
           ? InternetAddress(
               unixSocketPath,
               type: InternetAddressType.unix,
@@ -83,10 +83,10 @@ class ClashService extends ClashHandlerInterface {
       await shutdown();
     }
     final serverSocket = await serverCompleter.future;
-    final arg = Platform.isWindows
-        ? "${serverSocket.port}"
+    final arg = system.isWindows
+        ? '${serverSocket.port}'
         : serverSocket.address.address;
-    if (Platform.isWindows && await system.checkIsAdmin()) {
+    if (system.isWindows && await system.checkIsAdmin()) {
       final isSuccess = await request.startCoreByHelper(arg);
       if (isSuccess) {
         return;
@@ -122,8 +122,8 @@ class ClashService extends ClashHandlerInterface {
     socket.writeln(message);
   }
 
-  _deleteSocketFile() async {
-    if (!Platform.isWindows) {
+  Future<void> _deleteSocketFile() async {
+    if (!system.isWindows) {
       final file = File(unixSocketPath);
       if (await file.exists()) {
         await file.delete();
@@ -131,7 +131,7 @@ class ClashService extends ClashHandlerInterface {
     }
   }
 
-  _destroySocket() async {
+  Future<void> _destroySocket() async {
     if (socketCompleter.isCompleted) {
       final lastSocket = await socketCompleter.future;
       await lastSocket.close();
@@ -141,7 +141,7 @@ class ClashService extends ClashHandlerInterface {
 
   @override
   shutdown() async {
-    if (Platform.isWindows) {
+    if (system.isWindows) {
       await request.stopCoreByHelper();
     }
     await _destroySocket();

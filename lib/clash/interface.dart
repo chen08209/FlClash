@@ -57,11 +57,11 @@ mixin ClashInterface {
 
   FutureOr<String> getMemory();
 
-  resetTraffic();
+  FutureOr<void> resetTraffic();
 
-  startLog();
+  FutureOr<void> startLog();
 
-  stopLog();
+  FutureOr<void> stopLog();
 
   Future<bool> crash();
 
@@ -89,7 +89,7 @@ mixin AndroidClashInterface {
 abstract class ClashHandlerInterface with ClashInterface {
   Map<String, Completer> callbackCompleterMap = {};
 
-  handleResult(ActionResult result) async {
+  Future<void> handleResult(ActionResult result) async {
     final completer = callbackCompleterMap[result.id];
     try {
       switch (result.method) {
@@ -105,13 +105,13 @@ abstract class ClashHandlerInterface with ClashInterface {
           return;
       }
     } catch (e) {
-      commonPrint.log("${result.id} error $e");
+      commonPrint.log('${result.id} error $e');
     }
   }
 
-  sendMessage(String message);
+  void sendMessage(String message);
 
-  reStart();
+  FutureOr<void> reStart();
 
   FutureOr<bool> destroy();
 
@@ -122,14 +122,14 @@ abstract class ClashHandlerInterface with ClashInterface {
     FutureOr<T> Function()? onTimeout,
     T? defaultValue,
   }) async {
-    final id = "${method.name}#${utils.id}";
+    final id = '${method.name}#${utils.id}';
 
     callbackCompleterMap[id] = Completer<T>();
 
     dynamic mDefaultValue = defaultValue;
     if (mDefaultValue == null) {
       if (T == String) {
-        mDefaultValue = "";
+        mDefaultValue = '';
       } else if (T == bool) {
         mDefaultValue = false;
       } else if (T == Map) {
@@ -290,8 +290,8 @@ abstract class ClashHandlerInterface with ClashInterface {
     return invoke<String>(
       method: ActionMethod.sideLoadExternalProvider,
       data: json.encode({
-        "providerName": providerName,
-        "data": data,
+        'providerName': providerName,
+        'data': data,
       }),
     );
   }
@@ -382,9 +382,9 @@ abstract class ClashHandlerInterface with ClashInterface {
   @override
   Future<String> asyncTestDelay(String url, String proxyName) {
     final delayParams = {
-      "proxy-name": proxyName,
-      "timeout": httpTimeoutDuration.inMilliseconds,
-      "test-url": url,
+      'proxy-name': proxyName,
+      'timeout': httpTimeoutDuration.inMilliseconds,
+      'test-url': url,
     };
     return invoke<String>(
       method: ActionMethod.asyncTestDelay,

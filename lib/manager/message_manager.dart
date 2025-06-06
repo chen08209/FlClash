@@ -44,7 +44,7 @@ class MessageManagerState extends State<MessageManager> {
     await _showMessage();
   }
 
-  _showMessage() async {
+  Future<void> _showMessage() async {
     if (_pushing == true) {
       return;
     }
@@ -65,7 +65,7 @@ class MessageManagerState extends State<MessageManager> {
     }
   }
 
-  _handleRemove(CommonMessage commonMessage) async {
+  Future<void> _handleRemove(CommonMessage commonMessage) async {
     _messagesNotifier.value = List<CommonMessage>.from(_messagesNotifier.value)
       ..remove(commonMessage);
   }
@@ -91,7 +91,7 @@ class MessageManagerState extends State<MessageManager> {
                       key: Key(messages.last.id),
                       builder: (_, constraints) {
                         return Card(
-                          shape: const RoundedSuperellipseBorder(
+                          shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.all(
                               Radius.circular(12.0),
                             ),

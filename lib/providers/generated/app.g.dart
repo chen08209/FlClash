@@ -86,7 +86,7 @@ final realTunEnableProvider =
 );
 
 typedef _$RealTunEnable = AutoDisposeNotifier<bool>;
-String _$logsHash() => r'56fb8aa9d62a97b026b749d204576a7384084737';
+String _$logsHash() => r'0a32e067292d449d61af59a689cb26691f4afe44';
 
 /// See also [Logs].
 @ProviderFor(Logs)
@@ -100,12 +100,12 @@ final logsProvider = AutoDisposeNotifierProvider<Logs, FixedList<Log>>.internal(
 );
 
 typedef _$Logs = AutoDisposeNotifier<FixedList<Log>>;
-String _$requestsHash() => r'51c9dbba18649206b22dd0ba86c58ab986fc0939';
+String _$requestsHash() => r'526f2c1da1347fd2e6e3e23aac0335fcfe0cb28a';
 
 /// See also [Requests].
 @ProviderFor(Requests)
 final requestsProvider =
-    AutoDisposeNotifierProvider<Requests, FixedList<Connection>>.internal(
+    AutoDisposeNotifierProvider<Requests, FixedList<TrackerInfo>>.internal(
   Requests.new,
   name: r'requestsProvider',
   debugGetCreateSourceHash:
@@ -114,8 +114,8 @@ final requestsProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$Requests = AutoDisposeNotifier<FixedList<Connection>>;
-String _$providersHash() => r'69e480ef409837596937d233e45b9995a83b3949';
+typedef _$Requests = AutoDisposeNotifier<FixedList<TrackerInfo>>;
+String _$providersHash() => r'4292240629a99470b2e72426dde3b9049b9b57e0';
 
 /// See also [Providers].
 @ProviderFor(Providers)
@@ -145,23 +145,23 @@ final packagesProvider =
 );
 
 typedef _$Packages = AutoDisposeNotifier<List<Package>>;
-String _$appBrightnessHash() => r'bc893bacdc2645c985037d3754bad4e651587771';
+String _$systemBrightnessHash() => r'46eb2d23b05405723efc29480e8f258bf2d8138b';
 
-/// See also [AppBrightness].
-@ProviderFor(AppBrightness)
-final appBrightnessProvider =
-    AutoDisposeNotifierProvider<AppBrightness, Brightness?>.internal(
-  AppBrightness.new,
-  name: r'appBrightnessProvider',
+/// See also [SystemBrightness].
+@ProviderFor(SystemBrightness)
+final systemBrightnessProvider =
+    AutoDisposeNotifierProvider<SystemBrightness, Brightness>.internal(
+  SystemBrightness.new,
+  name: r'systemBrightnessProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$appBrightnessHash,
+      : _$systemBrightnessHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$AppBrightness = AutoDisposeNotifier<Brightness?>;
-String _$trafficsHash() => r'c3f33e9be5ae399562a380156280406fdeeb72aa';
+typedef _$SystemBrightness = AutoDisposeNotifier<Brightness>;
+String _$trafficsHash() => r'8b86eb718fed5776de174c51fd5b231957011fe6';
 
 /// See also [Traffics].
 @ProviderFor(Traffics)
@@ -263,7 +263,7 @@ final currentPageLabelProvider =
 );
 
 typedef _$CurrentPageLabel = AutoDisposeNotifier<PageLabel>;
-String _$sortNumHash() => r'0f85ebbc77124020eaccf988c6ac9d86a7f34d7e';
+String _$sortNumHash() => r'b67bee9fdfbb74b484190fbc6e5c3da7d773bed0';
 
 /// See also [SortNum].
 @ProviderFor(SortNum)
@@ -277,7 +277,7 @@ final sortNumProvider = AutoDisposeNotifierProvider<SortNum, int>.internal(
 );
 
 typedef _$SortNum = AutoDisposeNotifier<int>;
-String _$checkIpNumHash() => r'794de8e31e98ee4fde10509dc8f433699bff18b4';
+String _$checkIpNumHash() => r'4d8b32ed9c0013c056f90c9d5483f11fa5fddec5';
 
 /// See also [CheckIpNum].
 @ProviderFor(CheckIpNum)
@@ -306,6 +306,20 @@ final backBlockProvider = AutoDisposeNotifierProvider<BackBlock, bool>.internal(
 );
 
 typedef _$BackBlock = AutoDisposeNotifier<bool>;
+String _$loadingHash() => r'a0a09132a78495616785461cdc2a8b412c19b51b';
+
+/// See also [Loading].
+@ProviderFor(Loading)
+final loadingProvider = AutoDisposeNotifierProvider<Loading, bool>.internal(
+  Loading.new,
+  name: r'loadingProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$loadingHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$Loading = AutoDisposeNotifier<bool>;
 String _$versionHash() => r'8c0ee019d20df3f112c38ae4dc4abd61148d3809';
 
 /// See also [Version].
@@ -335,7 +349,7 @@ final groupsProvider =
 );
 
 typedef _$Groups = AutoDisposeNotifier<List<Group>>;
-String _$delayDataSourceHash() => r'9731553fb48dd89840767bf5508547d90562eb55';
+String _$delayDataSourceHash() => r'1b94dcfdb9e1eb4c0b7ca69d933f2299d1f94ed5';
 
 /// See also [DelayDataSource].
 @ProviderFor(DelayDataSource)
@@ -351,20 +365,22 @@ final delayDataSourceProvider =
 );
 
 typedef _$DelayDataSource = AutoDisposeNotifier<DelayMap>;
-String _$proxiesQueryHash() => r'9f3907e06534b6882684bec47ca3ba2988297e19';
+String _$systemUiOverlayStyleStateHash() =>
+    r'4420d92227ae617ce685c8943dda64f29f57d5d1';
 
-/// See also [ProxiesQuery].
-@ProviderFor(ProxiesQuery)
-final proxiesQueryProvider =
-    AutoDisposeNotifierProvider<ProxiesQuery, String>.internal(
-  ProxiesQuery.new,
-  name: r'proxiesQueryProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$proxiesQueryHash,
+/// See also [SystemUiOverlayStyleState].
+@ProviderFor(SystemUiOverlayStyleState)
+final systemUiOverlayStyleStateProvider = AutoDisposeNotifierProvider<
+    SystemUiOverlayStyleState, SystemUiOverlayStyle>.internal(
+  SystemUiOverlayStyleState.new,
+  name: r'systemUiOverlayStyleStateProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$systemUiOverlayStyleStateHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$ProxiesQuery = AutoDisposeNotifier<String>;
+typedef _$SystemUiOverlayStyleState = AutoDisposeNotifier<SystemUiOverlayStyle>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

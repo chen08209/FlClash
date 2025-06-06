@@ -39,7 +39,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
     super.dispose();
   }
 
-  _updateInitList() {
+  void _updateInitList() {
     acceptList = globalState.config.vpnProps.accessControl.acceptList;
     rejectList = globalState.config.vpnProps.accessControl.rejectList;
   }
@@ -106,7 +106,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
     );
   }
 
-  _intelligentSelected() async {
+  Future<void> _intelligentSelected() async {
     final packageNames = ref.read(
       packageListSelectorStateProvider.select(
         (state) => state.list.map((item) => item.packageName),
@@ -115,7 +115,8 @@ class _AccessViewState extends ConsumerState<AccessView> {
     final commonScaffoldState = context.commonScaffoldState;
     if (commonScaffoldState?.mounted != true) return;
     final selectedPackageNames =
-        (await commonScaffoldState?.loadingRun<List<String>>(
+        (await globalState.appController.safeRun<List<String>>(
+              needLoading: true,
               () async {
                 return await app?.getChinaPackageNames() ?? [];
               },
@@ -160,7 +161,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
     );
   }
 
-  _handleSelected(List<String> valueList, Package package, bool? value) {
+  void _handleSelected(List<String> valueList, Package package, bool? value) {
     if (value == true) {
       valueList.add(package.packageName);
     } else {
@@ -267,7 +268,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
                                       ),
                                       Flexible(
                                         child: Text(
-                                          "${valueList.length}",
+                                          '${valueList.length}',
                                           style: Theme.of(context)
                                               .textTheme
                                               .labelLarge
@@ -459,7 +460,7 @@ class AccessControlSearchDelegate extends SearchDelegate {
     );
   }
 
-  _handleSelected(
+  void _handleSelected(
       WidgetRef ref, List<String> valueList, Package package, bool? value) {
     if (value == true) {
       valueList.add(package.packageName);
@@ -715,8 +716,8 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
     );
   }
 
-  _copyToClipboard() async {
-    await globalState.safeRun(() {
+  Future<void> _copyToClipboard() async {
+    await globalState.appController.safeRun(() {
       final data = globalState.config.vpnProps.accessControl.toJson();
       Clipboard.setData(
         ClipboardData(
@@ -728,8 +729,8 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
     Navigator.of(context).pop();
   }
 
-  _pasteToClipboard() async {
-    await globalState.safeRun(
+  Future<void> _pasteToClipboard() async {
+    await globalState.appController.safeRun(
       () async {
         final data = await Clipboard.getData('text/plain');
         final text = data?.text;

@@ -27,7 +27,7 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
     });
   }
 
-  showTip() {
+  void showTip() {
     debouncer.call(
       FunctionTag.vpnTip,
       () {

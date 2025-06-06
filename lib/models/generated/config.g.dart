@@ -238,8 +238,8 @@ const _$ProxyCardTypeEnumMap = {
 
 _$TextScaleImpl _$$TextScaleImplFromJson(Map<String, dynamic> json) =>
     _$TextScaleImpl(
-      enable: json['enable'] ?? false,
-      scale: json['scale'] ?? 1.0,
+      enable: json['enable'] as bool? ?? false,
+      scale: (json['scale'] as num?)?.toDouble() ?? 1.0,
     );
 
 Map<String, dynamic> _$$TextScaleImplToJson(_$TextScaleImpl instance) =>

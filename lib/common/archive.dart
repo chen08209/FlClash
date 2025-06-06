@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart';
 
 extension ArchiveExt on Archive {
-  addDirectoryToArchive(String dirPath, String parentPath) {
+  void addDirectoryToArchive(String dirPath, String parentPath) {
     final dir = Directory(dirPath);
     final entities = dir.listSync(recursive: false);
     for (final entity in entities) {
@@ -19,7 +20,7 @@ extension ArchiveExt on Archive {
     }
   }
 
-  add<T>(String name, T raw) {
+  void add<T>(String name, T raw) {
     final data = json.encode(raw);
     addFile(
       ArchiveFile(name, data.length, data),

@@ -12,15 +12,15 @@ class AddProfileView extends StatelessWidget {
     required this.context,
   });
 
-  _handleAddProfileFormFile() async {
+  Future<void> _handleAddProfileFormFile() async {
     globalState.appController.addProfileFormFile();
   }
 
-  _handleAddProfileFormURL(String url) async {
+  Future<void> _handleAddProfileFormURL(String url) async {
     globalState.appController.addProfileFormURL(url);
   }
 
-  _toScan() async {
+  Future<void> _toScan() async {
     if (system.isDesktop) {
       globalState.appController.addProfileFormQrCode();
       return;
@@ -36,7 +36,7 @@ class AddProfileView extends StatelessWidget {
     }
   }
 
-  _toAdd() async {
+  Future<void> _toAdd() async {
     final url = await globalState.showCommonDialog<String>(
       child: InputDialog(
         autovalidateMode: AutovalidateMode.onUnfocus,
@@ -45,10 +45,10 @@ class AddProfileView extends StatelessWidget {
         value: '',
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return appLocalizations.emptyTip("").trim();
+            return appLocalizations.emptyTip('').trim();
           }
           if (!value.isUrl) {
-            return appLocalizations.urlTip("").trim();
+            return appLocalizations.urlTip('').trim();
           }
           return null;
         },
@@ -96,7 +96,7 @@ class URLFormDialog extends StatefulWidget {
 class _URLFormDialogState extends State<URLFormDialog> {
   final urlController = TextEditingController();
 
-  _handleAddProfileFormURL() async {
+  Future<void> _handleAddProfileFormURL() async {
     final url = urlController.value.text;
     if (url.isEmpty) return;
     Navigator.of(context).pop<String>(url);

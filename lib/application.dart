@@ -62,7 +62,7 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  _autoUpdateGroupTask() {
+  void _autoUpdateGroupTask() {
     _autoUpdateGroupTaskTimer = Timer(const Duration(milliseconds: 20000), () {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         globalState.appController.updateGroupsDebounce();
@@ -71,14 +71,14 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  _autoUpdateProfilesTask() {
+  void _autoUpdateProfilesTask() {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
       await globalState.appController.autoUpdateProfiles();
       _autoUpdateProfilesTask();
     });
   }
 
-  _buildPlatformState(Widget child) {
+  Widget _buildPlatformState(Widget child) {
     if (system.isDesktop) {
       return WindowManager(
         child: TrayManager(
@@ -97,13 +97,13 @@ class ApplicationState extends ConsumerState<Application> {
     );
   }
 
-  _buildState(Widget child) {
+  Widget _buildState(Widget child) {
     return AppStateManager(
       child: ClashManager(
         child: ConnectivityManager(
           onConnectivityChanged: (results) async {
             if (!results.contains(ConnectivityResult.vpn)) {
-              await clashCore.closeConnections();
+              clashCore.closeConnections();
             }
             globalState.appController.updateLocalIp();
             globalState.appController.addCheckIpNumDebounce();
@@ -114,7 +114,7 @@ class ApplicationState extends ConsumerState<Application> {
     );
   }
 
-  _buildPlatformApp(Widget child) {
+  Widget _buildPlatformApp(Widget child) {
     if (system.isDesktop) {
       return WindowHeaderContainer(
         child: child,
@@ -125,7 +125,7 @@ class ApplicationState extends ConsumerState<Application> {
     );
   }
 
-  _buildApp(Widget child) {
+  Widget _buildApp(Widget child) {
     return MessageManager(
       child: ThemeManager(
         child: child,
@@ -153,8 +153,12 @@ class ApplicationState extends ConsumerState<Application> {
               ],
               builder: (_, child) {
                 return AppEnvManager(
-                  child: _buildPlatformApp(
-                    _buildApp(child!),
+                  child: _buildApp(
+                    AppSidebarContainer(
+                      child: _buildPlatformApp(
+                        child!,
+                      ),
+                    ),
                   ),
                 );
               },
@@ -179,7 +183,7 @@ class ApplicationState extends ConsumerState<Application> {
                   primaryColor: themeProps.primaryColor,
                 ).toPureBlack(themeProps.pureBlack),
               ),
-              home: child,
+              home: child!,
             );
           },
           child: const HomePage(),

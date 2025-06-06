@@ -407,5 +407,20 @@
   "import": "导入",
   "importFile": "通过文件导入",
   "importUrl": "通过URL导入",
-  "autoSetSystemDns": "自动设置系统DNS"
+  "autoSetSystemDns": "自动设置系统DNS",
+  "details": "{label}详情",
+  "creationTime": "创建时间",
+  "progress": "进度",
+  "host": "主机",
+  "destination": "目标地址",
+  "destinationGeoIP": "目标地理定位",
+  "destinationIPASN": "目标IP ASN",
+  "specialProxy": "特殊代理",
+  "specialRules": "特殊规则",
+  "remoteDestination": "远程目标",
+  "networkType": "网络类型",
+  "proxyChains": "代理链",
+  "log": "日志",
+  "connection": "连接",
+  "request": "请求"
 }

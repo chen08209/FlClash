@@ -1,5 +1,7 @@
 import 'iterable.dart';
 
+typedef ValueCallback<T> = T Function();
+
 class FixedList<T> {
   final int maxLength;
   final List<T> _list;
@@ -7,12 +9,12 @@ class FixedList<T> {
   FixedList(this.maxLength, {List<T>? list})
       : _list = (list ?? [])..truncate(maxLength);
 
-  add(T item) {
+  void add(T item) {
     _list.add(item);
     _list.truncate(maxLength);
   }
 
-  clear() {
+  void clear() {
     _list.clear();
   }
 
@@ -38,7 +40,7 @@ class FixedMap<K, V> {
     _map = map ?? {};
   }
 
-  updateCacheValue(K key, V Function() callback) {
+  V updateCacheValue(K key, ValueCallback<V> callback) {
     final realValue = _map.updateCacheValue(
       key,
       callback,
@@ -47,21 +49,21 @@ class FixedMap<K, V> {
     return realValue;
   }
 
-  clear() {
+  void clear() {
     _map.clear();
   }
 
-  updateMaxLength(int size) {
+  void updateMaxLength(int size) {
     maxLength = size;
     _adjustMap();
   }
 
-  updateMap(Map<K, V> map) {
+  void updateMap(Map<K, V> map) {
     _map = map;
     _adjustMap();
   }
 
-  _adjustMap() {
+  void _adjustMap() {
     if (_map.length > maxLength) {
       _map = Map.fromEntries(
         map.entries.toList()..truncate(maxLength),

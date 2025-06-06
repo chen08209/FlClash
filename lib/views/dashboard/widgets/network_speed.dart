@@ -78,7 +78,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
                       -20,
                     ),
                     child: Text(
-                      "${_getLastTraffic(traffics).up}↑   ${_getLastTraffic(traffics).down}↓",
+                      _getLastTraffic(traffics).toSpeedText(),
                       style: context.textTheme.bodySmall?.copyWith(
                         color: color,
                       ),

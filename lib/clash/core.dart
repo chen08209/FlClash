@@ -17,7 +17,7 @@ class ClashCore {
   late ClashHandlerInterface clashInterface;
 
   ClashCore._internal() {
-    if (Platform.isAndroid) {
+    if (system.isAndroid) {
       clashInterface = clashLib!;
     } else {
       clashInterface = clashService!;
@@ -84,7 +84,7 @@ class ClashCore {
     return await clashInterface.setState(state);
   }
 
-  shutdown() async {
+  Future<void> shutdown() async {
     await clashInterface.shutdown();
   }
 
@@ -107,14 +107,14 @@ class ClashCore {
     if (proxies.isEmpty) return [];
     final groupNames = [
       UsedProxy.GLOBAL.name,
-      ...(proxies[UsedProxy.GLOBAL.name]["all"] as List).where((e) {
+      ...(proxies[UsedProxy.GLOBAL.name]['all'] as List).where((e) {
         final proxy = proxies[e] ?? {};
         return GroupTypeExtension.valueList.contains(proxy['type']);
       })
     ];
     final groupsRaw = groupNames.map((groupName) {
       final group = proxies[groupName];
-      group["all"] = ((group["all"] ?? []) as List)
+      group['all'] = ((group['all'] ?? []) as List)
           .map(
             (name) => proxies[name],
           )
@@ -133,22 +133,22 @@ class ClashCore {
     return await clashInterface.changeProxy(changeProxyParams);
   }
 
-  Future<List<Connection>> getConnections() async {
+  Future<List<TrackerInfo>> getConnections() async {
     final res = await clashInterface.getConnections();
     final connectionsData = json.decode(res) as Map;
     final connectionsRaw = connectionsData['connections'] as List? ?? [];
-    return connectionsRaw.map((e) => Connection.fromJson(e)).toList();
+    return connectionsRaw.map((e) => TrackerInfo.fromJson(e)).toList();
   }
 
-  closeConnection(String id) {
+  void closeConnection(String id) {
     clashInterface.closeConnection(id);
   }
 
-  closeConnections() {
+  void closeConnections() {
     clashInterface.closeConnections();
   }
 
-  resetConnections() {
+  void resetConnections() {
     clashInterface.resetConnections();
   }
 
@@ -202,11 +202,11 @@ class ClashCore {
     return clashInterface.updateExternalProvider(providerName);
   }
 
-  startListener() async {
+  Future<void> startListener() async {
     await clashInterface.startListener();
   }
 
-  stopListener() async {
+  Future<void> stopListener() async {
     await clashInterface.stopListener();
   }
 
@@ -260,23 +260,23 @@ class ClashCore {
     return int.parse(value);
   }
 
-  resetTraffic() {
+  void resetTraffic() {
     clashInterface.resetTraffic();
   }
 
-  startLog() {
+  void startLog() {
     clashInterface.startLog();
   }
 
-  stopLog() {
+  void stopLog() {
     clashInterface.stopLog();
   }
 
-  requestGc() {
-    clashInterface.forceGc();
+  Future<void> requestGc() async {
+    await clashInterface.forceGc();
   }
 
-  destroy() async {
+  Future<void> destroy() async {
     await clashInterface.destroy();
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/views/config/network.dart';
@@ -25,7 +23,7 @@ class TUNButton extends StatelessWidget {
                   generateSection(
                     items: [
                       if (system.isDesktop) const TUNItem(),
-                      if (Platform.isMacOS) const AutoSetSystemDnsItem(),
+                      if (system.isMacOS) const AutoSetSystemDnsItem(),
                       const TunStackItem(),
                     ],
                   ),
@@ -192,13 +190,13 @@ class VpnButton extends StatelessWidget {
                     ],
                   ),
                 ),
-                title: "VPN",
+                title: 'VPN',
               );
             },
           );
         },
         info: Info(
-          label: "VPN",
+          label: 'VPN',
           iconData: Icons.stacked_line_chart,
         ),
         child: Container(
