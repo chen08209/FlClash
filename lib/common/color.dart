@@ -23,6 +23,10 @@ extension ColorExtension on Color {
     return withAlpha(77);
   }
 
+  Color get opacity12 {
+    return withAlpha(31);
+  }
+
   Color get opacity15 {
     return withAlpha(38);
   }

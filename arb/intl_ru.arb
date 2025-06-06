@@ -407,5 +407,20 @@
   "import": "Импорт",
   "importFile": "Импорт из файла",
   "importUrl": "Импорт по URL",
-  "autoSetSystemDns": "Автоматическая настройка системного DNS"
+  "autoSetSystemDns": "Автоматическая настройка системного DNS",
+  "details": "Детали {}",
+  "creationTime": "Время создания",
+  "progress": "Прогресс",
+  "host": "Хост",
+  "destination": "Назначение",
+  "destinationGeoIP": "Геолокация назначения",
+  "destinationIPASN": "ASN назначения",
+  "specialProxy": "Специальный прокси",
+  "specialRules": "Специальные правила",
+  "remoteDestination": "Удалённое назначение",
+  "networkType": "Тип сети",
+  "proxyChains": "Цепочки прокси",
+  "log": "Журнал",
+  "connection": "Соединение",
+  "request": "Запрос"
 }

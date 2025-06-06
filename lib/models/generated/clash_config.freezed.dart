@@ -29,14 +29,14 @@ mixin _$ProxyGroup {
   bool? get lazy => throw _privateConstructorUsedError;
   String? get url => throw _privateConstructorUsedError;
   int? get timeout => throw _privateConstructorUsedError;
-  @JsonKey(name: "max-failed-times")
+  @JsonKey(name: 'max-failed-times')
   int? get maxFailedTimes => throw _privateConstructorUsedError;
   String? get filter => throw _privateConstructorUsedError;
-  @JsonKey(name: "expected-filter")
+  @JsonKey(name: 'expected-filter')
   String? get excludeFilter => throw _privateConstructorUsedError;
-  @JsonKey(name: "exclude-type")
+  @JsonKey(name: 'exclude-type')
   String? get excludeType => throw _privateConstructorUsedError;
-  @JsonKey(name: "expected-status")
+  @JsonKey(name: 'expected-status')
   dynamic get expectedStatus => throw _privateConstructorUsedError;
   bool? get hidden => throw _privateConstructorUsedError;
   String? get icon => throw _privateConstructorUsedError;
@@ -66,11 +66,11 @@ abstract class $ProxyGroupCopyWith<$Res> {
       bool? lazy,
       String? url,
       int? timeout,
-      @JsonKey(name: "max-failed-times") int? maxFailedTimes,
+      @JsonKey(name: 'max-failed-times') int? maxFailedTimes,
       String? filter,
-      @JsonKey(name: "expected-filter") String? excludeFilter,
-      @JsonKey(name: "exclude-type") String? excludeType,
-      @JsonKey(name: "expected-status") dynamic expectedStatus,
+      @JsonKey(name: 'expected-filter') String? excludeFilter,
+      @JsonKey(name: 'exclude-type') String? excludeType,
+      @JsonKey(name: 'expected-status') dynamic expectedStatus,
       bool? hidden,
       String? icon});
 }
@@ -188,11 +188,11 @@ abstract class _$$ProxyGroupImplCopyWith<$Res>
       bool? lazy,
       String? url,
       int? timeout,
-      @JsonKey(name: "max-failed-times") int? maxFailedTimes,
+      @JsonKey(name: 'max-failed-times') int? maxFailedTimes,
       String? filter,
-      @JsonKey(name: "expected-filter") String? excludeFilter,
-      @JsonKey(name: "exclude-type") String? excludeType,
-      @JsonKey(name: "expected-status") dynamic expectedStatus,
+      @JsonKey(name: 'expected-filter') String? excludeFilter,
+      @JsonKey(name: 'exclude-type') String? excludeType,
+      @JsonKey(name: 'expected-status') dynamic expectedStatus,
       bool? hidden,
       String? icon});
 }
@@ -303,11 +303,11 @@ class _$ProxyGroupImpl implements _ProxyGroup {
       this.lazy,
       this.url,
       this.timeout,
-      @JsonKey(name: "max-failed-times") this.maxFailedTimes,
+      @JsonKey(name: 'max-failed-times') this.maxFailedTimes,
       this.filter,
-      @JsonKey(name: "expected-filter") this.excludeFilter,
-      @JsonKey(name: "exclude-type") this.excludeType,
-      @JsonKey(name: "expected-status") this.expectedStatus,
+      @JsonKey(name: 'expected-filter') this.excludeFilter,
+      @JsonKey(name: 'exclude-type') this.excludeType,
+      @JsonKey(name: 'expected-status') this.expectedStatus,
       this.hidden,
       this.icon})
       : _proxies = proxies,
@@ -350,18 +350,18 @@ class _$ProxyGroupImpl implements _ProxyGroup {
   @override
   final int? timeout;
   @override
-  @JsonKey(name: "max-failed-times")
+  @JsonKey(name: 'max-failed-times')
   final int? maxFailedTimes;
   @override
   final String? filter;
   @override
-  @JsonKey(name: "expected-filter")
+  @JsonKey(name: 'expected-filter')
   final String? excludeFilter;
   @override
-  @JsonKey(name: "exclude-type")
+  @JsonKey(name: 'exclude-type')
   final String? excludeType;
   @override
-  @JsonKey(name: "expected-status")
+  @JsonKey(name: 'expected-status')
   final dynamic expectedStatus;
   @override
   final bool? hidden;
@@ -447,11 +447,11 @@ abstract class _ProxyGroup implements ProxyGroup {
       final bool? lazy,
       final String? url,
       final int? timeout,
-      @JsonKey(name: "max-failed-times") final int? maxFailedTimes,
+      @JsonKey(name: 'max-failed-times') final int? maxFailedTimes,
       final String? filter,
-      @JsonKey(name: "expected-filter") final String? excludeFilter,
-      @JsonKey(name: "exclude-type") final String? excludeType,
-      @JsonKey(name: "expected-status") final dynamic expectedStatus,
+      @JsonKey(name: 'expected-filter') final String? excludeFilter,
+      @JsonKey(name: 'exclude-type') final String? excludeType,
+      @JsonKey(name: 'expected-status') final dynamic expectedStatus,
       final bool? hidden,
       final String? icon}) = _$ProxyGroupImpl;
 
@@ -476,18 +476,18 @@ abstract class _ProxyGroup implements ProxyGroup {
   @override
   int? get timeout;
   @override
-  @JsonKey(name: "max-failed-times")
+  @JsonKey(name: 'max-failed-times')
   int? get maxFailedTimes;
   @override
   String? get filter;
   @override
-  @JsonKey(name: "expected-filter")
+  @JsonKey(name: 'expected-filter')
   String? get excludeFilter;
   @override
-  @JsonKey(name: "exclude-type")
+  @JsonKey(name: 'exclude-type')
   String? get excludeType;
   @override
-  @JsonKey(name: "expected-status")
+  @JsonKey(name: 'expected-status')
   dynamic get expectedStatus;
   @override
   bool? get hidden;
@@ -659,22 +659,22 @@ Sniffer _$SnifferFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Sniffer {
   bool get enable => throw _privateConstructorUsedError;
-  @JsonKey(name: "override-destination")
+  @JsonKey(name: 'override-destination')
   bool get overrideDest => throw _privateConstructorUsedError;
   List<String> get sniffing => throw _privateConstructorUsedError;
-  @JsonKey(name: "force-domain")
+  @JsonKey(name: 'force-domain')
   List<String> get forceDomain => throw _privateConstructorUsedError;
-  @JsonKey(name: "skip-src-address")
+  @JsonKey(name: 'skip-src-address')
   List<String> get skipSrcAddress => throw _privateConstructorUsedError;
-  @JsonKey(name: "skip-dst-address")
+  @JsonKey(name: 'skip-dst-address')
   List<String> get skipDstAddress => throw _privateConstructorUsedError;
-  @JsonKey(name: "skip-domain")
+  @JsonKey(name: 'skip-domain')
   List<String> get skipDomain => throw _privateConstructorUsedError;
-  @JsonKey(name: "port-whitelist")
+  @JsonKey(name: 'port-whitelist')
   List<String> get port => throw _privateConstructorUsedError;
-  @JsonKey(name: "force-dns-mapping")
+  @JsonKey(name: 'force-dns-mapping')
   bool get forceDnsMapping => throw _privateConstructorUsedError;
-  @JsonKey(name: "parse-pure-ip")
+  @JsonKey(name: 'parse-pure-ip')
   bool get parsePureIp => throw _privateConstructorUsedError;
   Map<String, SnifferConfig> get sniff => throw _privateConstructorUsedError;
 
@@ -694,15 +694,15 @@ abstract class $SnifferCopyWith<$Res> {
   @useResult
   $Res call(
       {bool enable,
-      @JsonKey(name: "override-destination") bool overrideDest,
+      @JsonKey(name: 'override-destination') bool overrideDest,
       List<String> sniffing,
-      @JsonKey(name: "force-domain") List<String> forceDomain,
-      @JsonKey(name: "skip-src-address") List<String> skipSrcAddress,
-      @JsonKey(name: "skip-dst-address") List<String> skipDstAddress,
-      @JsonKey(name: "skip-domain") List<String> skipDomain,
-      @JsonKey(name: "port-whitelist") List<String> port,
-      @JsonKey(name: "force-dns-mapping") bool forceDnsMapping,
-      @JsonKey(name: "parse-pure-ip") bool parsePureIp,
+      @JsonKey(name: 'force-domain') List<String> forceDomain,
+      @JsonKey(name: 'skip-src-address') List<String> skipSrcAddress,
+      @JsonKey(name: 'skip-dst-address') List<String> skipDstAddress,
+      @JsonKey(name: 'skip-domain') List<String> skipDomain,
+      @JsonKey(name: 'port-whitelist') List<String> port,
+      @JsonKey(name: 'force-dns-mapping') bool forceDnsMapping,
+      @JsonKey(name: 'parse-pure-ip') bool parsePureIp,
       Map<String, SnifferConfig> sniff});
 }
 
@@ -791,15 +791,15 @@ abstract class _$$SnifferImplCopyWith<$Res> implements $SnifferCopyWith<$Res> {
   @useResult
   $Res call(
       {bool enable,
-      @JsonKey(name: "override-destination") bool overrideDest,
+      @JsonKey(name: 'override-destination') bool overrideDest,
       List<String> sniffing,
-      @JsonKey(name: "force-domain") List<String> forceDomain,
-      @JsonKey(name: "skip-src-address") List<String> skipSrcAddress,
-      @JsonKey(name: "skip-dst-address") List<String> skipDstAddress,
-      @JsonKey(name: "skip-domain") List<String> skipDomain,
-      @JsonKey(name: "port-whitelist") List<String> port,
-      @JsonKey(name: "force-dns-mapping") bool forceDnsMapping,
-      @JsonKey(name: "parse-pure-ip") bool parsePureIp,
+      @JsonKey(name: 'force-domain') List<String> forceDomain,
+      @JsonKey(name: 'skip-src-address') List<String> skipSrcAddress,
+      @JsonKey(name: 'skip-dst-address') List<String> skipDstAddress,
+      @JsonKey(name: 'skip-domain') List<String> skipDomain,
+      @JsonKey(name: 'port-whitelist') List<String> port,
+      @JsonKey(name: 'force-dns-mapping') bool forceDnsMapping,
+      @JsonKey(name: 'parse-pure-ip') bool parsePureIp,
       Map<String, SnifferConfig> sniff});
 }
 
@@ -882,17 +882,17 @@ class __$$SnifferImplCopyWithImpl<$Res>
 class _$SnifferImpl implements _Sniffer {
   const _$SnifferImpl(
       {this.enable = false,
-      @JsonKey(name: "override-destination") this.overrideDest = true,
+      @JsonKey(name: 'override-destination') this.overrideDest = true,
       final List<String> sniffing = const [],
-      @JsonKey(name: "force-domain") final List<String> forceDomain = const [],
-      @JsonKey(name: "skip-src-address")
+      @JsonKey(name: 'force-domain') final List<String> forceDomain = const [],
+      @JsonKey(name: 'skip-src-address')
       final List<String> skipSrcAddress = const [],
-      @JsonKey(name: "skip-dst-address")
+      @JsonKey(name: 'skip-dst-address')
       final List<String> skipDstAddress = const [],
-      @JsonKey(name: "skip-domain") final List<String> skipDomain = const [],
-      @JsonKey(name: "port-whitelist") final List<String> port = const [],
-      @JsonKey(name: "force-dns-mapping") this.forceDnsMapping = true,
-      @JsonKey(name: "parse-pure-ip") this.parsePureIp = true,
+      @JsonKey(name: 'skip-domain') final List<String> skipDomain = const [],
+      @JsonKey(name: 'port-whitelist') final List<String> port = const [],
+      @JsonKey(name: 'force-dns-mapping') this.forceDnsMapping = true,
+      @JsonKey(name: 'parse-pure-ip') this.parsePureIp = true,
       final Map<String, SnifferConfig> sniff = const {}})
       : _sniffing = sniffing,
         _forceDomain = forceDomain,
@@ -909,7 +909,7 @@ class _$SnifferImpl implements _Sniffer {
   @JsonKey()
   final bool enable;
   @override
-  @JsonKey(name: "override-destination")
+  @JsonKey(name: 'override-destination')
   final bool overrideDest;
   final List<String> _sniffing;
   @override
@@ -922,7 +922,7 @@ class _$SnifferImpl implements _Sniffer {
 
   final List<String> _forceDomain;
   @override
-  @JsonKey(name: "force-domain")
+  @JsonKey(name: 'force-domain')
   List<String> get forceDomain {
     if (_forceDomain is EqualUnmodifiableListView) return _forceDomain;
     // ignore: implicit_dynamic_type
@@ -931,7 +931,7 @@ class _$SnifferImpl implements _Sniffer {
 
   final List<String> _skipSrcAddress;
   @override
-  @JsonKey(name: "skip-src-address")
+  @JsonKey(name: 'skip-src-address')
   List<String> get skipSrcAddress {
     if (_skipSrcAddress is EqualUnmodifiableListView) return _skipSrcAddress;
     // ignore: implicit_dynamic_type
@@ -940,7 +940,7 @@ class _$SnifferImpl implements _Sniffer {
 
   final List<String> _skipDstAddress;
   @override
-  @JsonKey(name: "skip-dst-address")
+  @JsonKey(name: 'skip-dst-address')
   List<String> get skipDstAddress {
     if (_skipDstAddress is EqualUnmodifiableListView) return _skipDstAddress;
     // ignore: implicit_dynamic_type
@@ -949,7 +949,7 @@ class _$SnifferImpl implements _Sniffer {
 
   final List<String> _skipDomain;
   @override
-  @JsonKey(name: "skip-domain")
+  @JsonKey(name: 'skip-domain')
   List<String> get skipDomain {
     if (_skipDomain is EqualUnmodifiableListView) return _skipDomain;
     // ignore: implicit_dynamic_type
@@ -958,7 +958,7 @@ class _$SnifferImpl implements _Sniffer {
 
   final List<String> _port;
   @override
-  @JsonKey(name: "port-whitelist")
+  @JsonKey(name: 'port-whitelist')
   List<String> get port {
     if (_port is EqualUnmodifiableListView) return _port;
     // ignore: implicit_dynamic_type
@@ -966,10 +966,10 @@ class _$SnifferImpl implements _Sniffer {
   }
 
   @override
-  @JsonKey(name: "force-dns-mapping")
+  @JsonKey(name: 'force-dns-mapping')
   final bool forceDnsMapping;
   @override
-  @JsonKey(name: "parse-pure-ip")
+  @JsonKey(name: 'parse-pure-ip')
   final bool parsePureIp;
   final Map<String, SnifferConfig> _sniff;
   @override
@@ -1045,15 +1045,15 @@ class _$SnifferImpl implements _Sniffer {
 abstract class _Sniffer implements Sniffer {
   const factory _Sniffer(
       {final bool enable,
-      @JsonKey(name: "override-destination") final bool overrideDest,
+      @JsonKey(name: 'override-destination') final bool overrideDest,
       final List<String> sniffing,
-      @JsonKey(name: "force-domain") final List<String> forceDomain,
-      @JsonKey(name: "skip-src-address") final List<String> skipSrcAddress,
-      @JsonKey(name: "skip-dst-address") final List<String> skipDstAddress,
-      @JsonKey(name: "skip-domain") final List<String> skipDomain,
-      @JsonKey(name: "port-whitelist") final List<String> port,
-      @JsonKey(name: "force-dns-mapping") final bool forceDnsMapping,
-      @JsonKey(name: "parse-pure-ip") final bool parsePureIp,
+      @JsonKey(name: 'force-domain') final List<String> forceDomain,
+      @JsonKey(name: 'skip-src-address') final List<String> skipSrcAddress,
+      @JsonKey(name: 'skip-dst-address') final List<String> skipDstAddress,
+      @JsonKey(name: 'skip-domain') final List<String> skipDomain,
+      @JsonKey(name: 'port-whitelist') final List<String> port,
+      @JsonKey(name: 'force-dns-mapping') final bool forceDnsMapping,
+      @JsonKey(name: 'parse-pure-ip') final bool parsePureIp,
       final Map<String, SnifferConfig> sniff}) = _$SnifferImpl;
 
   factory _Sniffer.fromJson(Map<String, dynamic> json) = _$SnifferImpl.fromJson;
@@ -1061,30 +1061,30 @@ abstract class _Sniffer implements Sniffer {
   @override
   bool get enable;
   @override
-  @JsonKey(name: "override-destination")
+  @JsonKey(name: 'override-destination')
   bool get overrideDest;
   @override
   List<String> get sniffing;
   @override
-  @JsonKey(name: "force-domain")
+  @JsonKey(name: 'force-domain')
   List<String> get forceDomain;
   @override
-  @JsonKey(name: "skip-src-address")
+  @JsonKey(name: 'skip-src-address')
   List<String> get skipSrcAddress;
   @override
-  @JsonKey(name: "skip-dst-address")
+  @JsonKey(name: 'skip-dst-address')
   List<String> get skipDstAddress;
   @override
-  @JsonKey(name: "skip-domain")
+  @JsonKey(name: 'skip-domain')
   List<String> get skipDomain;
   @override
-  @JsonKey(name: "port-whitelist")
+  @JsonKey(name: 'port-whitelist')
   List<String> get port;
   @override
-  @JsonKey(name: "force-dns-mapping")
+  @JsonKey(name: 'force-dns-mapping')
   bool get forceDnsMapping;
   @override
-  @JsonKey(name: "parse-pure-ip")
+  @JsonKey(name: 'parse-pure-ip')
   bool get parsePureIp;
   @override
   Map<String, SnifferConfig> get sniff;
@@ -1105,7 +1105,7 @@ SnifferConfig _$SnifferConfigFromJson(Map<String, dynamic> json) {
 mixin _$SnifferConfig {
   @JsonKey(fromJson: _formJsonPorts)
   List<String> get ports => throw _privateConstructorUsedError;
-  @JsonKey(name: "override-destination")
+  @JsonKey(name: 'override-destination')
   bool? get overrideDest => throw _privateConstructorUsedError;
 
   /// Serializes this SnifferConfig to a JSON map.
@@ -1126,7 +1126,7 @@ abstract class $SnifferConfigCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(fromJson: _formJsonPorts) List<String> ports,
-      @JsonKey(name: "override-destination") bool? overrideDest});
+      @JsonKey(name: 'override-destination') bool? overrideDest});
 }
 
 /// @nodoc
@@ -1170,7 +1170,7 @@ abstract class _$$SnifferConfigImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(fromJson: _formJsonPorts) List<String> ports,
-      @JsonKey(name: "override-destination") bool? overrideDest});
+      @JsonKey(name: 'override-destination') bool? overrideDest});
 }
 
 /// @nodoc
@@ -1207,7 +1207,7 @@ class __$$SnifferConfigImplCopyWithImpl<$Res>
 class _$SnifferConfigImpl implements _SnifferConfig {
   const _$SnifferConfigImpl(
       {@JsonKey(fromJson: _formJsonPorts) final List<String> ports = const [],
-      @JsonKey(name: "override-destination") this.overrideDest})
+      @JsonKey(name: 'override-destination') this.overrideDest})
       : _ports = ports;
 
   factory _$SnifferConfigImpl.fromJson(Map<String, dynamic> json) =>
@@ -1223,7 +1223,7 @@ class _$SnifferConfigImpl implements _SnifferConfig {
   }
 
   @override
-  @JsonKey(name: "override-destination")
+  @JsonKey(name: 'override-destination')
   final bool? overrideDest;
 
   @override
@@ -1265,7 +1265,7 @@ class _$SnifferConfigImpl implements _SnifferConfig {
 abstract class _SnifferConfig implements SnifferConfig {
   const factory _SnifferConfig(
           {@JsonKey(fromJson: _formJsonPorts) final List<String> ports,
-          @JsonKey(name: "override-destination") final bool? overrideDest}) =
+          @JsonKey(name: 'override-destination') final bool? overrideDest}) =
       _$SnifferConfigImpl;
 
   factory _SnifferConfig.fromJson(Map<String, dynamic> json) =
@@ -1275,7 +1275,7 @@ abstract class _SnifferConfig implements SnifferConfig {
   @JsonKey(fromJson: _formJsonPorts)
   List<String> get ports;
   @override
-  @JsonKey(name: "override-destination")
+  @JsonKey(name: 'override-destination')
   bool? get overrideDest;
 
   /// Create a copy of SnifferConfig
@@ -1294,12 +1294,12 @@ Tun _$TunFromJson(Map<String, dynamic> json) {
 mixin _$Tun {
   bool get enable => throw _privateConstructorUsedError;
   String get device => throw _privateConstructorUsedError;
-  @JsonKey(name: "auto-route")
+  @JsonKey(name: 'auto-route')
   bool get autoRoute => throw _privateConstructorUsedError;
   TunStack get stack => throw _privateConstructorUsedError;
-  @JsonKey(name: "dns-hijack")
+  @JsonKey(name: 'dns-hijack')
   List<String> get dnsHijack => throw _privateConstructorUsedError;
-  @JsonKey(name: "route-address")
+  @JsonKey(name: 'route-address')
   List<String> get routeAddress => throw _privateConstructorUsedError;
 
   /// Serializes this Tun to a JSON map.
@@ -1319,10 +1319,10 @@ abstract class $TunCopyWith<$Res> {
   $Res call(
       {bool enable,
       String device,
-      @JsonKey(name: "auto-route") bool autoRoute,
+      @JsonKey(name: 'auto-route') bool autoRoute,
       TunStack stack,
-      @JsonKey(name: "dns-hijack") List<String> dnsHijack,
-      @JsonKey(name: "route-address") List<String> routeAddress});
+      @JsonKey(name: 'dns-hijack') List<String> dnsHijack,
+      @JsonKey(name: 'route-address') List<String> routeAddress});
 }
 
 /// @nodoc
@@ -1384,10 +1384,10 @@ abstract class _$$TunImplCopyWith<$Res> implements $TunCopyWith<$Res> {
   $Res call(
       {bool enable,
       String device,
-      @JsonKey(name: "auto-route") bool autoRoute,
+      @JsonKey(name: 'auto-route') bool autoRoute,
       TunStack stack,
-      @JsonKey(name: "dns-hijack") List<String> dnsHijack,
-      @JsonKey(name: "route-address") List<String> routeAddress});
+      @JsonKey(name: 'dns-hijack') List<String> dnsHijack,
+      @JsonKey(name: 'route-address') List<String> routeAddress});
 }
 
 /// @nodoc
@@ -1443,11 +1443,11 @@ class _$TunImpl implements _Tun {
   const _$TunImpl(
       {this.enable = false,
       this.device = appName,
-      @JsonKey(name: "auto-route") this.autoRoute = false,
+      @JsonKey(name: 'auto-route') this.autoRoute = false,
       this.stack = TunStack.mixed,
-      @JsonKey(name: "dns-hijack")
-      final List<String> dnsHijack = const ["any:53"],
-      @JsonKey(name: "route-address")
+      @JsonKey(name: 'dns-hijack')
+      final List<String> dnsHijack = const ['any:53'],
+      @JsonKey(name: 'route-address')
       final List<String> routeAddress = const []})
       : _dnsHijack = dnsHijack,
         _routeAddress = routeAddress;
@@ -1462,14 +1462,14 @@ class _$TunImpl implements _Tun {
   @JsonKey()
   final String device;
   @override
-  @JsonKey(name: "auto-route")
+  @JsonKey(name: 'auto-route')
   final bool autoRoute;
   @override
   @JsonKey()
   final TunStack stack;
   final List<String> _dnsHijack;
   @override
-  @JsonKey(name: "dns-hijack")
+  @JsonKey(name: 'dns-hijack')
   List<String> get dnsHijack {
     if (_dnsHijack is EqualUnmodifiableListView) return _dnsHijack;
     // ignore: implicit_dynamic_type
@@ -1478,7 +1478,7 @@ class _$TunImpl implements _Tun {
 
   final List<String> _routeAddress;
   @override
-  @JsonKey(name: "route-address")
+  @JsonKey(name: 'route-address')
   List<String> get routeAddress {
     if (_routeAddress is EqualUnmodifiableListView) return _routeAddress;
     // ignore: implicit_dynamic_type
@@ -1537,10 +1537,10 @@ abstract class _Tun implements Tun {
   const factory _Tun(
           {final bool enable,
           final String device,
-          @JsonKey(name: "auto-route") final bool autoRoute,
+          @JsonKey(name: 'auto-route') final bool autoRoute,
           final TunStack stack,
-          @JsonKey(name: "dns-hijack") final List<String> dnsHijack,
-          @JsonKey(name: "route-address") final List<String> routeAddress}) =
+          @JsonKey(name: 'dns-hijack') final List<String> dnsHijack,
+          @JsonKey(name: 'route-address') final List<String> routeAddress}) =
       _$TunImpl;
 
   factory _Tun.fromJson(Map<String, dynamic> json) = _$TunImpl.fromJson;
@@ -1550,15 +1550,15 @@ abstract class _Tun implements Tun {
   @override
   String get device;
   @override
-  @JsonKey(name: "auto-route")
+  @JsonKey(name: 'auto-route')
   bool get autoRoute;
   @override
   TunStack get stack;
   @override
-  @JsonKey(name: "dns-hijack")
+  @JsonKey(name: 'dns-hijack')
   List<String> get dnsHijack;
   @override
-  @JsonKey(name: "route-address")
+  @JsonKey(name: 'route-address')
   List<String> get routeAddress;
 
   /// Create a copy of Tun
@@ -1576,7 +1576,7 @@ FallbackFilter _$FallbackFilterFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$FallbackFilter {
   bool get geoip => throw _privateConstructorUsedError;
-  @JsonKey(name: "geoip-code")
+  @JsonKey(name: 'geoip-code')
   String get geoipCode => throw _privateConstructorUsedError;
   List<String> get geosite => throw _privateConstructorUsedError;
   List<String> get ipcidr => throw _privateConstructorUsedError;
@@ -1600,7 +1600,7 @@ abstract class $FallbackFilterCopyWith<$Res> {
   @useResult
   $Res call(
       {bool geoip,
-      @JsonKey(name: "geoip-code") String geoipCode,
+      @JsonKey(name: 'geoip-code') String geoipCode,
       List<String> geosite,
       List<String> ipcidr,
       List<String> domain});
@@ -1662,7 +1662,7 @@ abstract class _$$FallbackFilterImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool geoip,
-      @JsonKey(name: "geoip-code") String geoipCode,
+      @JsonKey(name: 'geoip-code') String geoipCode,
       List<String> geosite,
       List<String> ipcidr,
       List<String> domain});
@@ -1717,13 +1717,13 @@ class __$$FallbackFilterImplCopyWithImpl<$Res>
 class _$FallbackFilterImpl implements _FallbackFilter {
   const _$FallbackFilterImpl(
       {this.geoip = true,
-      @JsonKey(name: "geoip-code") this.geoipCode = "CN",
-      final List<String> geosite = const ["gfw"],
-      final List<String> ipcidr = const ["240.0.0.0/4"],
+      @JsonKey(name: 'geoip-code') this.geoipCode = 'CN',
+      final List<String> geosite = const ['gfw'],
+      final List<String> ipcidr = const ['240.0.0.0/4'],
       final List<String> domain = const [
-        "+.google.com",
-        "+.facebook.com",
-        "+.youtube.com"
+        '+.google.com',
+        '+.facebook.com',
+        '+.youtube.com'
       ]})
       : _geosite = geosite,
         _ipcidr = ipcidr,
@@ -1736,7 +1736,7 @@ class _$FallbackFilterImpl implements _FallbackFilter {
   @JsonKey()
   final bool geoip;
   @override
-  @JsonKey(name: "geoip-code")
+  @JsonKey(name: 'geoip-code')
   final String geoipCode;
   final List<String> _geosite;
   @override
@@ -1813,7 +1813,7 @@ class _$FallbackFilterImpl implements _FallbackFilter {
 abstract class _FallbackFilter implements FallbackFilter {
   const factory _FallbackFilter(
       {final bool geoip,
-      @JsonKey(name: "geoip-code") final String geoipCode,
+      @JsonKey(name: 'geoip-code') final String geoipCode,
       final List<String> geosite,
       final List<String> ipcidr,
       final List<String> domain}) = _$FallbackFilterImpl;
@@ -1824,7 +1824,7 @@ abstract class _FallbackFilter implements FallbackFilter {
   @override
   bool get geoip;
   @override
-  @JsonKey(name: "geoip-code")
+  @JsonKey(name: 'geoip-code')
   String get geoipCode;
   @override
   List<String> get geosite;
@@ -1849,31 +1849,31 @@ Dns _$DnsFromJson(Map<String, dynamic> json) {
 mixin _$Dns {
   bool get enable => throw _privateConstructorUsedError;
   String get listen => throw _privateConstructorUsedError;
-  @JsonKey(name: "prefer-h3")
+  @JsonKey(name: 'prefer-h3')
   bool get preferH3 => throw _privateConstructorUsedError;
-  @JsonKey(name: "use-hosts")
+  @JsonKey(name: 'use-hosts')
   bool get useHosts => throw _privateConstructorUsedError;
-  @JsonKey(name: "use-system-hosts")
+  @JsonKey(name: 'use-system-hosts')
   bool get useSystemHosts => throw _privateConstructorUsedError;
-  @JsonKey(name: "respect-rules")
+  @JsonKey(name: 'respect-rules')
   bool get respectRules => throw _privateConstructorUsedError;
   bool get ipv6 => throw _privateConstructorUsedError;
-  @JsonKey(name: "default-nameserver")
+  @JsonKey(name: 'default-nameserver')
   List<String> get defaultNameserver => throw _privateConstructorUsedError;
-  @JsonKey(name: "enhanced-mode")
+  @JsonKey(name: 'enhanced-mode')
   DnsMode get enhancedMode => throw _privateConstructorUsedError;
-  @JsonKey(name: "fake-ip-range")
+  @JsonKey(name: 'fake-ip-range')
   String get fakeIpRange => throw _privateConstructorUsedError;
-  @JsonKey(name: "fake-ip-filter")
+  @JsonKey(name: 'fake-ip-filter')
   List<String> get fakeIpFilter => throw _privateConstructorUsedError;
-  @JsonKey(name: "nameserver-policy")
+  @JsonKey(name: 'nameserver-policy')
   Map<String, String> get nameserverPolicy =>
       throw _privateConstructorUsedError;
   List<String> get nameserver => throw _privateConstructorUsedError;
   List<String> get fallback => throw _privateConstructorUsedError;
-  @JsonKey(name: "proxy-server-nameserver")
+  @JsonKey(name: 'proxy-server-nameserver')
   List<String> get proxyServerNameserver => throw _privateConstructorUsedError;
-  @JsonKey(name: "fallback-filter")
+  @JsonKey(name: 'fallback-filter')
   FallbackFilter get fallbackFilter => throw _privateConstructorUsedError;
 
   /// Serializes this Dns to a JSON map.
@@ -1893,21 +1893,21 @@ abstract class $DnsCopyWith<$Res> {
   $Res call(
       {bool enable,
       String listen,
-      @JsonKey(name: "prefer-h3") bool preferH3,
-      @JsonKey(name: "use-hosts") bool useHosts,
-      @JsonKey(name: "use-system-hosts") bool useSystemHosts,
-      @JsonKey(name: "respect-rules") bool respectRules,
+      @JsonKey(name: 'prefer-h3') bool preferH3,
+      @JsonKey(name: 'use-hosts') bool useHosts,
+      @JsonKey(name: 'use-system-hosts') bool useSystemHosts,
+      @JsonKey(name: 'respect-rules') bool respectRules,
       bool ipv6,
-      @JsonKey(name: "default-nameserver") List<String> defaultNameserver,
-      @JsonKey(name: "enhanced-mode") DnsMode enhancedMode,
-      @JsonKey(name: "fake-ip-range") String fakeIpRange,
-      @JsonKey(name: "fake-ip-filter") List<String> fakeIpFilter,
-      @JsonKey(name: "nameserver-policy") Map<String, String> nameserverPolicy,
+      @JsonKey(name: 'default-nameserver') List<String> defaultNameserver,
+      @JsonKey(name: 'enhanced-mode') DnsMode enhancedMode,
+      @JsonKey(name: 'fake-ip-range') String fakeIpRange,
+      @JsonKey(name: 'fake-ip-filter') List<String> fakeIpFilter,
+      @JsonKey(name: 'nameserver-policy') Map<String, String> nameserverPolicy,
       List<String> nameserver,
       List<String> fallback,
-      @JsonKey(name: "proxy-server-nameserver")
+      @JsonKey(name: 'proxy-server-nameserver')
       List<String> proxyServerNameserver,
-      @JsonKey(name: "fallback-filter") FallbackFilter fallbackFilter});
+      @JsonKey(name: 'fallback-filter') FallbackFilter fallbackFilter});
 
   $FallbackFilterCopyWith<$Res> get fallbackFilter;
 }
@@ -2031,21 +2031,21 @@ abstract class _$$DnsImplCopyWith<$Res> implements $DnsCopyWith<$Res> {
   $Res call(
       {bool enable,
       String listen,
-      @JsonKey(name: "prefer-h3") bool preferH3,
-      @JsonKey(name: "use-hosts") bool useHosts,
-      @JsonKey(name: "use-system-hosts") bool useSystemHosts,
-      @JsonKey(name: "respect-rules") bool respectRules,
+      @JsonKey(name: 'prefer-h3') bool preferH3,
+      @JsonKey(name: 'use-hosts') bool useHosts,
+      @JsonKey(name: 'use-system-hosts') bool useSystemHosts,
+      @JsonKey(name: 'respect-rules') bool respectRules,
       bool ipv6,
-      @JsonKey(name: "default-nameserver") List<String> defaultNameserver,
-      @JsonKey(name: "enhanced-mode") DnsMode enhancedMode,
-      @JsonKey(name: "fake-ip-range") String fakeIpRange,
-      @JsonKey(name: "fake-ip-filter") List<String> fakeIpFilter,
-      @JsonKey(name: "nameserver-policy") Map<String, String> nameserverPolicy,
+      @JsonKey(name: 'default-nameserver') List<String> defaultNameserver,
+      @JsonKey(name: 'enhanced-mode') DnsMode enhancedMode,
+      @JsonKey(name: 'fake-ip-range') String fakeIpRange,
+      @JsonKey(name: 'fake-ip-filter') List<String> fakeIpFilter,
+      @JsonKey(name: 'nameserver-policy') Map<String, String> nameserverPolicy,
       List<String> nameserver,
       List<String> fallback,
-      @JsonKey(name: "proxy-server-nameserver")
+      @JsonKey(name: 'proxy-server-nameserver')
       List<String> proxyServerNameserver,
-      @JsonKey(name: "fallback-filter") FallbackFilter fallbackFilter});
+      @JsonKey(name: 'fallback-filter') FallbackFilter fallbackFilter});
 
   @override
   $FallbackFilterCopyWith<$Res> get fallbackFilter;
@@ -2153,36 +2153,36 @@ class __$$DnsImplCopyWithImpl<$Res> extends _$DnsCopyWithImpl<$Res, _$DnsImpl>
 class _$DnsImpl implements _Dns {
   const _$DnsImpl(
       {this.enable = true,
-      this.listen = "0.0.0.0:1053",
-      @JsonKey(name: "prefer-h3") this.preferH3 = false,
-      @JsonKey(name: "use-hosts") this.useHosts = true,
-      @JsonKey(name: "use-system-hosts") this.useSystemHosts = true,
-      @JsonKey(name: "respect-rules") this.respectRules = false,
+      this.listen = '0.0.0.0:1053',
+      @JsonKey(name: 'prefer-h3') this.preferH3 = false,
+      @JsonKey(name: 'use-hosts') this.useHosts = true,
+      @JsonKey(name: 'use-system-hosts') this.useSystemHosts = true,
+      @JsonKey(name: 'respect-rules') this.respectRules = false,
       this.ipv6 = false,
-      @JsonKey(name: "default-nameserver")
-      final List<String> defaultNameserver = const ["223.5.5.5"],
-      @JsonKey(name: "enhanced-mode") this.enhancedMode = DnsMode.fakeIp,
-      @JsonKey(name: "fake-ip-range") this.fakeIpRange = "198.18.0.1/16",
-      @JsonKey(name: "fake-ip-filter") final List<String> fakeIpFilter = const [
-        "*.lan",
-        "localhost.ptlogin2.qq.com"
+      @JsonKey(name: 'default-nameserver')
+      final List<String> defaultNameserver = const ['223.5.5.5'],
+      @JsonKey(name: 'enhanced-mode') this.enhancedMode = DnsMode.fakeIp,
+      @JsonKey(name: 'fake-ip-range') this.fakeIpRange = '198.18.0.1/16',
+      @JsonKey(name: 'fake-ip-filter') final List<String> fakeIpFilter = const [
+        '*.lan',
+        'localhost.ptlogin2.qq.com'
       ],
-      @JsonKey(name: "nameserver-policy")
+      @JsonKey(name: 'nameserver-policy')
       final Map<String, String> nameserverPolicy = const {
-        "www.baidu.com": "114.114.114.114",
-        "+.internal.crop.com": "10.0.0.1",
-        "geosite:cn": "https://doh.pub/dns-query"
+        'www.baidu.com': '114.114.114.114',
+        '+.internal.crop.com': '10.0.0.1',
+        'geosite:cn': 'https://doh.pub/dns-query'
       },
       final List<String> nameserver = const [
-        "https://doh.pub/dns-query",
-        "https://dns.alidns.com/dns-query"
+        'https://doh.pub/dns-query',
+        'https://dns.alidns.com/dns-query'
       ],
-      final List<String> fallback = const ["tls://8.8.4.4", "tls://1.1.1.1"],
-      @JsonKey(name: "proxy-server-nameserver")
+      final List<String> fallback = const ['tls://8.8.4.4', 'tls://1.1.1.1'],
+      @JsonKey(name: 'proxy-server-nameserver')
       final List<String> proxyServerNameserver = const [
-        "https://doh.pub/dns-query"
+        'https://doh.pub/dns-query'
       ],
-      @JsonKey(name: "fallback-filter")
+      @JsonKey(name: 'fallback-filter')
       this.fallbackFilter = const FallbackFilter()})
       : _defaultNameserver = defaultNameserver,
         _fakeIpFilter = fakeIpFilter,
@@ -2201,23 +2201,23 @@ class _$DnsImpl implements _Dns {
   @JsonKey()
   final String listen;
   @override
-  @JsonKey(name: "prefer-h3")
+  @JsonKey(name: 'prefer-h3')
   final bool preferH3;
   @override
-  @JsonKey(name: "use-hosts")
+  @JsonKey(name: 'use-hosts')
   final bool useHosts;
   @override
-  @JsonKey(name: "use-system-hosts")
+  @JsonKey(name: 'use-system-hosts')
   final bool useSystemHosts;
   @override
-  @JsonKey(name: "respect-rules")
+  @JsonKey(name: 'respect-rules')
   final bool respectRules;
   @override
   @JsonKey()
   final bool ipv6;
   final List<String> _defaultNameserver;
   @override
-  @JsonKey(name: "default-nameserver")
+  @JsonKey(name: 'default-nameserver')
   List<String> get defaultNameserver {
     if (_defaultNameserver is EqualUnmodifiableListView)
       return _defaultNameserver;
@@ -2226,14 +2226,14 @@ class _$DnsImpl implements _Dns {
   }
 
   @override
-  @JsonKey(name: "enhanced-mode")
+  @JsonKey(name: 'enhanced-mode')
   final DnsMode enhancedMode;
   @override
-  @JsonKey(name: "fake-ip-range")
+  @JsonKey(name: 'fake-ip-range')
   final String fakeIpRange;
   final List<String> _fakeIpFilter;
   @override
-  @JsonKey(name: "fake-ip-filter")
+  @JsonKey(name: 'fake-ip-filter')
   List<String> get fakeIpFilter {
     if (_fakeIpFilter is EqualUnmodifiableListView) return _fakeIpFilter;
     // ignore: implicit_dynamic_type
@@ -2242,7 +2242,7 @@ class _$DnsImpl implements _Dns {
 
   final Map<String, String> _nameserverPolicy;
   @override
-  @JsonKey(name: "nameserver-policy")
+  @JsonKey(name: 'nameserver-policy')
   Map<String, String> get nameserverPolicy {
     if (_nameserverPolicy is EqualUnmodifiableMapView) return _nameserverPolicy;
     // ignore: implicit_dynamic_type
@@ -2269,7 +2269,7 @@ class _$DnsImpl implements _Dns {
 
   final List<String> _proxyServerNameserver;
   @override
-  @JsonKey(name: "proxy-server-nameserver")
+  @JsonKey(name: 'proxy-server-nameserver')
   List<String> get proxyServerNameserver {
     if (_proxyServerNameserver is EqualUnmodifiableListView)
       return _proxyServerNameserver;
@@ -2278,7 +2278,7 @@ class _$DnsImpl implements _Dns {
   }
 
   @override
-  @JsonKey(name: "fallback-filter")
+  @JsonKey(name: 'fallback-filter')
   final FallbackFilter fallbackFilter;
 
   @override
@@ -2362,22 +2362,22 @@ abstract class _Dns implements Dns {
   const factory _Dns(
       {final bool enable,
       final String listen,
-      @JsonKey(name: "prefer-h3") final bool preferH3,
-      @JsonKey(name: "use-hosts") final bool useHosts,
-      @JsonKey(name: "use-system-hosts") final bool useSystemHosts,
-      @JsonKey(name: "respect-rules") final bool respectRules,
+      @JsonKey(name: 'prefer-h3') final bool preferH3,
+      @JsonKey(name: 'use-hosts') final bool useHosts,
+      @JsonKey(name: 'use-system-hosts') final bool useSystemHosts,
+      @JsonKey(name: 'respect-rules') final bool respectRules,
       final bool ipv6,
-      @JsonKey(name: "default-nameserver") final List<String> defaultNameserver,
-      @JsonKey(name: "enhanced-mode") final DnsMode enhancedMode,
-      @JsonKey(name: "fake-ip-range") final String fakeIpRange,
-      @JsonKey(name: "fake-ip-filter") final List<String> fakeIpFilter,
-      @JsonKey(name: "nameserver-policy")
+      @JsonKey(name: 'default-nameserver') final List<String> defaultNameserver,
+      @JsonKey(name: 'enhanced-mode') final DnsMode enhancedMode,
+      @JsonKey(name: 'fake-ip-range') final String fakeIpRange,
+      @JsonKey(name: 'fake-ip-filter') final List<String> fakeIpFilter,
+      @JsonKey(name: 'nameserver-policy')
       final Map<String, String> nameserverPolicy,
       final List<String> nameserver,
       final List<String> fallback,
-      @JsonKey(name: "proxy-server-nameserver")
+      @JsonKey(name: 'proxy-server-nameserver')
       final List<String> proxyServerNameserver,
-      @JsonKey(name: "fallback-filter")
+      @JsonKey(name: 'fallback-filter')
       final FallbackFilter fallbackFilter}) = _$DnsImpl;
 
   factory _Dns.fromJson(Map<String, dynamic> json) = _$DnsImpl.fromJson;
@@ -2387,43 +2387,43 @@ abstract class _Dns implements Dns {
   @override
   String get listen;
   @override
-  @JsonKey(name: "prefer-h3")
+  @JsonKey(name: 'prefer-h3')
   bool get preferH3;
   @override
-  @JsonKey(name: "use-hosts")
+  @JsonKey(name: 'use-hosts')
   bool get useHosts;
   @override
-  @JsonKey(name: "use-system-hosts")
+  @JsonKey(name: 'use-system-hosts')
   bool get useSystemHosts;
   @override
-  @JsonKey(name: "respect-rules")
+  @JsonKey(name: 'respect-rules')
   bool get respectRules;
   @override
   bool get ipv6;
   @override
-  @JsonKey(name: "default-nameserver")
+  @JsonKey(name: 'default-nameserver')
   List<String> get defaultNameserver;
   @override
-  @JsonKey(name: "enhanced-mode")
+  @JsonKey(name: 'enhanced-mode')
   DnsMode get enhancedMode;
   @override
-  @JsonKey(name: "fake-ip-range")
+  @JsonKey(name: 'fake-ip-range')
   String get fakeIpRange;
   @override
-  @JsonKey(name: "fake-ip-filter")
+  @JsonKey(name: 'fake-ip-filter')
   List<String> get fakeIpFilter;
   @override
-  @JsonKey(name: "nameserver-policy")
+  @JsonKey(name: 'nameserver-policy')
   Map<String, String> get nameserverPolicy;
   @override
   List<String> get nameserver;
   @override
   List<String> get fallback;
   @override
-  @JsonKey(name: "proxy-server-nameserver")
+  @JsonKey(name: 'proxy-server-nameserver')
   List<String> get proxyServerNameserver;
   @override
-  @JsonKey(name: "fallback-filter")
+  @JsonKey(name: 'fallback-filter')
   FallbackFilter get fallbackFilter;
 
   /// Create a copy of Dns
@@ -2557,13 +2557,13 @@ class __$$GeoXUrlImplCopyWithImpl<$Res>
 class _$GeoXUrlImpl implements _GeoXUrl {
   const _$GeoXUrlImpl(
       {this.mmdb =
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
+          'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
       this.asn =
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
+          'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb',
       this.geoip =
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
+          'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat',
       this.geosite =
-          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"});
+          'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat'});
 
   factory _$GeoXUrlImpl.fromJson(Map<String, dynamic> json) =>
       _$$GeoXUrlImplFromJson(json);
@@ -3214,13 +3214,13 @@ ClashConfigSnippet _$ClashConfigSnippetFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$ClashConfigSnippet {
-  @JsonKey(name: "proxy-groups")
+  @JsonKey(name: 'proxy-groups')
   List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
-  @JsonKey(fromJson: _genRule, name: "rules")
+  @JsonKey(fromJson: _genRule, name: 'rules')
   List<Rule> get rule => throw _privateConstructorUsedError;
-  @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+  @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
   List<RuleProvider> get ruleProvider => throw _privateConstructorUsedError;
-  @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+  @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
   List<SubRule> get subRules => throw _privateConstructorUsedError;
 
   /// Serializes this ClashConfigSnippet to a JSON map.
@@ -3240,11 +3240,11 @@ abstract class $ClashConfigSnippetCopyWith<$Res> {
       _$ClashConfigSnippetCopyWithImpl<$Res, ClashConfigSnippet>;
   @useResult
   $Res call(
-      {@JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-      @JsonKey(fromJson: _genRule, name: "rules") List<Rule> rule,
-      @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+      {@JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
+      @JsonKey(fromJson: _genRule, name: 'rules') List<Rule> rule,
+      @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
       List<RuleProvider> ruleProvider,
-      @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+      @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
       List<SubRule> subRules});
 }
 
@@ -3298,11 +3298,11 @@ abstract class _$$ClashConfigSnippetImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
-      @JsonKey(fromJson: _genRule, name: "rules") List<Rule> rule,
-      @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+      {@JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
+      @JsonKey(fromJson: _genRule, name: 'rules') List<Rule> rule,
+      @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
       List<RuleProvider> ruleProvider,
-      @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+      @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
       List<SubRule> subRules});
 }
 
@@ -3349,13 +3349,13 @@ class __$$ClashConfigSnippetImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
   const _$ClashConfigSnippetImpl(
-      {@JsonKey(name: "proxy-groups")
+      {@JsonKey(name: 'proxy-groups')
       final List<ProxyGroup> proxyGroups = const [],
-      @JsonKey(fromJson: _genRule, name: "rules")
+      @JsonKey(fromJson: _genRule, name: 'rules')
       final List<Rule> rule = const [],
-      @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+      @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
       final List<RuleProvider> ruleProvider = const [],
-      @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+      @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
       final List<SubRule> subRules = const []})
       : _proxyGroups = proxyGroups,
         _rule = rule,
@@ -3367,7 +3367,7 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
 
   final List<ProxyGroup> _proxyGroups;
   @override
-  @JsonKey(name: "proxy-groups")
+  @JsonKey(name: 'proxy-groups')
   List<ProxyGroup> get proxyGroups {
     if (_proxyGroups is EqualUnmodifiableListView) return _proxyGroups;
     // ignore: implicit_dynamic_type
@@ -3376,7 +3376,7 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
 
   final List<Rule> _rule;
   @override
-  @JsonKey(fromJson: _genRule, name: "rules")
+  @JsonKey(fromJson: _genRule, name: 'rules')
   List<Rule> get rule {
     if (_rule is EqualUnmodifiableListView) return _rule;
     // ignore: implicit_dynamic_type
@@ -3385,7 +3385,7 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
 
   final List<RuleProvider> _ruleProvider;
   @override
-  @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+  @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
   List<RuleProvider> get ruleProvider {
     if (_ruleProvider is EqualUnmodifiableListView) return _ruleProvider;
     // ignore: implicit_dynamic_type
@@ -3394,7 +3394,7 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
 
   final List<SubRule> _subRules;
   @override
-  @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+  @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
   List<SubRule> get subRules {
     if (_subRules is EqualUnmodifiableListView) return _subRules;
     // ignore: implicit_dynamic_type
@@ -3447,27 +3447,27 @@ class _$ClashConfigSnippetImpl implements _ClashConfigSnippet {
 
 abstract class _ClashConfigSnippet implements ClashConfigSnippet {
   const factory _ClashConfigSnippet(
-      {@JsonKey(name: "proxy-groups") final List<ProxyGroup> proxyGroups,
-      @JsonKey(fromJson: _genRule, name: "rules") final List<Rule> rule,
-      @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+      {@JsonKey(name: 'proxy-groups') final List<ProxyGroup> proxyGroups,
+      @JsonKey(fromJson: _genRule, name: 'rules') final List<Rule> rule,
+      @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
       final List<RuleProvider> ruleProvider,
-      @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+      @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
       final List<SubRule> subRules}) = _$ClashConfigSnippetImpl;
 
   factory _ClashConfigSnippet.fromJson(Map<String, dynamic> json) =
       _$ClashConfigSnippetImpl.fromJson;
 
   @override
-  @JsonKey(name: "proxy-groups")
+  @JsonKey(name: 'proxy-groups')
   List<ProxyGroup> get proxyGroups;
   @override
-  @JsonKey(fromJson: _genRule, name: "rules")
+  @JsonKey(fromJson: _genRule, name: 'rules')
   List<Rule> get rule;
   @override
-  @JsonKey(name: "rule-providers", fromJson: _genRuleProviders)
+  @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
   List<RuleProvider> get ruleProvider;
   @override
-  @JsonKey(name: "sub-rules", fromJson: _genSubRules)
+  @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
   List<SubRule> get subRules;
 
   /// Create a copy of ClashConfigSnippet
@@ -3484,44 +3484,44 @@ ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$ClashConfig {
-  @JsonKey(name: "mixed-port")
+  @JsonKey(name: 'mixed-port')
   int get mixedPort => throw _privateConstructorUsedError;
-  @JsonKey(name: "socks-port")
+  @JsonKey(name: 'socks-port')
   int get socksPort => throw _privateConstructorUsedError;
-  @JsonKey(name: "port")
+  @JsonKey(name: 'port')
   int get port => throw _privateConstructorUsedError;
-  @JsonKey(name: "redir-port")
+  @JsonKey(name: 'redir-port')
   int get redirPort => throw _privateConstructorUsedError;
-  @JsonKey(name: "tproxy-port")
+  @JsonKey(name: 'tproxy-port')
   int get tproxyPort => throw _privateConstructorUsedError;
   Mode get mode => throw _privateConstructorUsedError;
-  @JsonKey(name: "allow-lan")
+  @JsonKey(name: 'allow-lan')
   bool get allowLan => throw _privateConstructorUsedError;
-  @JsonKey(name: "log-level")
+  @JsonKey(name: 'log-level')
   LogLevel get logLevel => throw _privateConstructorUsedError;
   bool get ipv6 => throw _privateConstructorUsedError;
-  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
+  @JsonKey(name: 'find-process-mode', unknownEnumValue: FindProcessMode.always)
   FindProcessMode get findProcessMode => throw _privateConstructorUsedError;
-  @JsonKey(name: "keep-alive-interval")
+  @JsonKey(name: 'keep-alive-interval')
   int get keepAliveInterval => throw _privateConstructorUsedError;
-  @JsonKey(name: "unified-delay")
+  @JsonKey(name: 'unified-delay')
   bool get unifiedDelay => throw _privateConstructorUsedError;
-  @JsonKey(name: "tcp-concurrent")
+  @JsonKey(name: 'tcp-concurrent')
   bool get tcpConcurrent => throw _privateConstructorUsedError;
   @JsonKey(fromJson: Tun.safeFormJson)
   Tun get tun => throw _privateConstructorUsedError;
   @JsonKey(fromJson: Dns.safeDnsFromJson)
   Dns get dns => throw _privateConstructorUsedError;
-  @JsonKey(name: "geox-url", fromJson: GeoXUrl.safeFormJson)
+  @JsonKey(name: 'geox-url', fromJson: GeoXUrl.safeFormJson)
   GeoXUrl get geoXUrl => throw _privateConstructorUsedError;
-  @JsonKey(name: "geodata-loader")
+  @JsonKey(name: 'geodata-loader')
   GeodataLoader get geodataLoader => throw _privateConstructorUsedError;
-  @JsonKey(name: "proxy-groups")
+  @JsonKey(name: 'proxy-groups')
   List<ProxyGroup> get proxyGroups => throw _privateConstructorUsedError;
   List<String> get rule => throw _privateConstructorUsedError;
-  @JsonKey(name: "global-ua")
+  @JsonKey(name: 'global-ua')
   String? get globalUa => throw _privateConstructorUsedError;
-  @JsonKey(name: "external-controller")
+  @JsonKey(name: 'external-controller')
   ExternalControllerStatus get externalController =>
       throw _privateConstructorUsedError;
   Map<String, String> get hosts => throw _privateConstructorUsedError;
@@ -3543,30 +3543,30 @@ abstract class $ClashConfigCopyWith<$Res> {
       _$ClashConfigCopyWithImpl<$Res, ClashConfig>;
   @useResult
   $Res call(
-      {@JsonKey(name: "mixed-port") int mixedPort,
-      @JsonKey(name: "socks-port") int socksPort,
-      @JsonKey(name: "port") int port,
-      @JsonKey(name: "redir-port") int redirPort,
-      @JsonKey(name: "tproxy-port") int tproxyPort,
+      {@JsonKey(name: 'mixed-port') int mixedPort,
+      @JsonKey(name: 'socks-port') int socksPort,
+      @JsonKey(name: 'port') int port,
+      @JsonKey(name: 'redir-port') int redirPort,
+      @JsonKey(name: 'tproxy-port') int tproxyPort,
       Mode mode,
-      @JsonKey(name: "allow-lan") bool allowLan,
-      @JsonKey(name: "log-level") LogLevel logLevel,
+      @JsonKey(name: 'allow-lan') bool allowLan,
+      @JsonKey(name: 'log-level') LogLevel logLevel,
       bool ipv6,
       @JsonKey(
-          name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
+          name: 'find-process-mode', unknownEnumValue: FindProcessMode.always)
       FindProcessMode findProcessMode,
-      @JsonKey(name: "keep-alive-interval") int keepAliveInterval,
-      @JsonKey(name: "unified-delay") bool unifiedDelay,
-      @JsonKey(name: "tcp-concurrent") bool tcpConcurrent,
+      @JsonKey(name: 'keep-alive-interval') int keepAliveInterval,
+      @JsonKey(name: 'unified-delay') bool unifiedDelay,
+      @JsonKey(name: 'tcp-concurrent') bool tcpConcurrent,
       @JsonKey(fromJson: Tun.safeFormJson) Tun tun,
       @JsonKey(fromJson: Dns.safeDnsFromJson) Dns dns,
-      @JsonKey(name: "geox-url", fromJson: GeoXUrl.safeFormJson)
+      @JsonKey(name: 'geox-url', fromJson: GeoXUrl.safeFormJson)
       GeoXUrl geoXUrl,
-      @JsonKey(name: "geodata-loader") GeodataLoader geodataLoader,
-      @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
+      @JsonKey(name: 'geodata-loader') GeodataLoader geodataLoader,
+      @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
       List<String> rule,
-      @JsonKey(name: "global-ua") String? globalUa,
-      @JsonKey(name: "external-controller")
+      @JsonKey(name: 'global-ua') String? globalUa,
+      @JsonKey(name: 'external-controller')
       ExternalControllerStatus externalController,
       Map<String, String> hosts});
 
@@ -3745,30 +3745,30 @@ abstract class _$$ClashConfigImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "mixed-port") int mixedPort,
-      @JsonKey(name: "socks-port") int socksPort,
-      @JsonKey(name: "port") int port,
-      @JsonKey(name: "redir-port") int redirPort,
-      @JsonKey(name: "tproxy-port") int tproxyPort,
+      {@JsonKey(name: 'mixed-port') int mixedPort,
+      @JsonKey(name: 'socks-port') int socksPort,
+      @JsonKey(name: 'port') int port,
+      @JsonKey(name: 'redir-port') int redirPort,
+      @JsonKey(name: 'tproxy-port') int tproxyPort,
       Mode mode,
-      @JsonKey(name: "allow-lan") bool allowLan,
-      @JsonKey(name: "log-level") LogLevel logLevel,
+      @JsonKey(name: 'allow-lan') bool allowLan,
+      @JsonKey(name: 'log-level') LogLevel logLevel,
       bool ipv6,
       @JsonKey(
-          name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
+          name: 'find-process-mode', unknownEnumValue: FindProcessMode.always)
       FindProcessMode findProcessMode,
-      @JsonKey(name: "keep-alive-interval") int keepAliveInterval,
-      @JsonKey(name: "unified-delay") bool unifiedDelay,
-      @JsonKey(name: "tcp-concurrent") bool tcpConcurrent,
+      @JsonKey(name: 'keep-alive-interval') int keepAliveInterval,
+      @JsonKey(name: 'unified-delay') bool unifiedDelay,
+      @JsonKey(name: 'tcp-concurrent') bool tcpConcurrent,
       @JsonKey(fromJson: Tun.safeFormJson) Tun tun,
       @JsonKey(fromJson: Dns.safeDnsFromJson) Dns dns,
-      @JsonKey(name: "geox-url", fromJson: GeoXUrl.safeFormJson)
+      @JsonKey(name: 'geox-url', fromJson: GeoXUrl.safeFormJson)
       GeoXUrl geoXUrl,
-      @JsonKey(name: "geodata-loader") GeodataLoader geodataLoader,
-      @JsonKey(name: "proxy-groups") List<ProxyGroup> proxyGroups,
+      @JsonKey(name: 'geodata-loader') GeodataLoader geodataLoader,
+      @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
       List<String> rule,
-      @JsonKey(name: "global-ua") String? globalUa,
-      @JsonKey(name: "external-controller")
+      @JsonKey(name: 'global-ua') String? globalUa,
+      @JsonKey(name: 'external-controller')
       ExternalControllerStatus externalController,
       Map<String, String> hosts});
 
@@ -3913,33 +3913,33 @@ class __$$ClashConfigImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ClashConfigImpl implements _ClashConfig {
   const _$ClashConfigImpl(
-      {@JsonKey(name: "mixed-port") this.mixedPort = defaultMixedPort,
-      @JsonKey(name: "socks-port") this.socksPort = 0,
-      @JsonKey(name: "port") this.port = 0,
-      @JsonKey(name: "redir-port") this.redirPort = 0,
-      @JsonKey(name: "tproxy-port") this.tproxyPort = 0,
+      {@JsonKey(name: 'mixed-port') this.mixedPort = defaultMixedPort,
+      @JsonKey(name: 'socks-port') this.socksPort = 0,
+      @JsonKey(name: 'port') this.port = 0,
+      @JsonKey(name: 'redir-port') this.redirPort = 0,
+      @JsonKey(name: 'tproxy-port') this.tproxyPort = 0,
       this.mode = Mode.rule,
-      @JsonKey(name: "allow-lan") this.allowLan = false,
-      @JsonKey(name: "log-level") this.logLevel = LogLevel.error,
+      @JsonKey(name: 'allow-lan') this.allowLan = false,
+      @JsonKey(name: 'log-level') this.logLevel = LogLevel.error,
       this.ipv6 = false,
       @JsonKey(
-          name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
+          name: 'find-process-mode', unknownEnumValue: FindProcessMode.always)
       this.findProcessMode = FindProcessMode.off,
-      @JsonKey(name: "keep-alive-interval")
+      @JsonKey(name: 'keep-alive-interval')
       this.keepAliveInterval = defaultKeepAliveInterval,
-      @JsonKey(name: "unified-delay") this.unifiedDelay = true,
-      @JsonKey(name: "tcp-concurrent") this.tcpConcurrent = true,
+      @JsonKey(name: 'unified-delay') this.unifiedDelay = true,
+      @JsonKey(name: 'tcp-concurrent') this.tcpConcurrent = true,
       @JsonKey(fromJson: Tun.safeFormJson) this.tun = defaultTun,
       @JsonKey(fromJson: Dns.safeDnsFromJson) this.dns = defaultDns,
-      @JsonKey(name: "geox-url", fromJson: GeoXUrl.safeFormJson)
+      @JsonKey(name: 'geox-url', fromJson: GeoXUrl.safeFormJson)
       this.geoXUrl = defaultGeoXUrl,
-      @JsonKey(name: "geodata-loader")
+      @JsonKey(name: 'geodata-loader')
       this.geodataLoader = GeodataLoader.memconservative,
-      @JsonKey(name: "proxy-groups")
+      @JsonKey(name: 'proxy-groups')
       final List<ProxyGroup> proxyGroups = const [],
       final List<String> rule = const [],
-      @JsonKey(name: "global-ua") this.globalUa,
-      @JsonKey(name: "external-controller")
+      @JsonKey(name: 'global-ua') this.globalUa,
+      @JsonKey(name: 'external-controller')
       this.externalController = ExternalControllerStatus.close,
       final Map<String, String> hosts = const {}})
       : _proxyGroups = proxyGroups,
@@ -3950,43 +3950,43 @@ class _$ClashConfigImpl implements _ClashConfig {
       _$$ClashConfigImplFromJson(json);
 
   @override
-  @JsonKey(name: "mixed-port")
+  @JsonKey(name: 'mixed-port')
   final int mixedPort;
   @override
-  @JsonKey(name: "socks-port")
+  @JsonKey(name: 'socks-port')
   final int socksPort;
   @override
-  @JsonKey(name: "port")
+  @JsonKey(name: 'port')
   final int port;
   @override
-  @JsonKey(name: "redir-port")
+  @JsonKey(name: 'redir-port')
   final int redirPort;
   @override
-  @JsonKey(name: "tproxy-port")
+  @JsonKey(name: 'tproxy-port')
   final int tproxyPort;
   @override
   @JsonKey()
   final Mode mode;
   @override
-  @JsonKey(name: "allow-lan")
+  @JsonKey(name: 'allow-lan')
   final bool allowLan;
   @override
-  @JsonKey(name: "log-level")
+  @JsonKey(name: 'log-level')
   final LogLevel logLevel;
   @override
   @JsonKey()
   final bool ipv6;
   @override
-  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
+  @JsonKey(name: 'find-process-mode', unknownEnumValue: FindProcessMode.always)
   final FindProcessMode findProcessMode;
   @override
-  @JsonKey(name: "keep-alive-interval")
+  @JsonKey(name: 'keep-alive-interval')
   final int keepAliveInterval;
   @override
-  @JsonKey(name: "unified-delay")
+  @JsonKey(name: 'unified-delay')
   final bool unifiedDelay;
   @override
-  @JsonKey(name: "tcp-concurrent")
+  @JsonKey(name: 'tcp-concurrent')
   final bool tcpConcurrent;
   @override
   @JsonKey(fromJson: Tun.safeFormJson)
@@ -3995,14 +3995,14 @@ class _$ClashConfigImpl implements _ClashConfig {
   @JsonKey(fromJson: Dns.safeDnsFromJson)
   final Dns dns;
   @override
-  @JsonKey(name: "geox-url", fromJson: GeoXUrl.safeFormJson)
+  @JsonKey(name: 'geox-url', fromJson: GeoXUrl.safeFormJson)
   final GeoXUrl geoXUrl;
   @override
-  @JsonKey(name: "geodata-loader")
+  @JsonKey(name: 'geodata-loader')
   final GeodataLoader geodataLoader;
   final List<ProxyGroup> _proxyGroups;
   @override
-  @JsonKey(name: "proxy-groups")
+  @JsonKey(name: 'proxy-groups')
   List<ProxyGroup> get proxyGroups {
     if (_proxyGroups is EqualUnmodifiableListView) return _proxyGroups;
     // ignore: implicit_dynamic_type
@@ -4019,10 +4019,10 @@ class _$ClashConfigImpl implements _ClashConfig {
   }
 
   @override
-  @JsonKey(name: "global-ua")
+  @JsonKey(name: 'global-ua')
   final String? globalUa;
   @override
-  @JsonKey(name: "external-controller")
+  @JsonKey(name: 'external-controller')
   final ExternalControllerStatus externalController;
   final Map<String, String> _hosts;
   @override
@@ -4127,30 +4127,30 @@ class _$ClashConfigImpl implements _ClashConfig {
 
 abstract class _ClashConfig implements ClashConfig {
   const factory _ClashConfig(
-      {@JsonKey(name: "mixed-port") final int mixedPort,
-      @JsonKey(name: "socks-port") final int socksPort,
-      @JsonKey(name: "port") final int port,
-      @JsonKey(name: "redir-port") final int redirPort,
-      @JsonKey(name: "tproxy-port") final int tproxyPort,
+      {@JsonKey(name: 'mixed-port') final int mixedPort,
+      @JsonKey(name: 'socks-port') final int socksPort,
+      @JsonKey(name: 'port') final int port,
+      @JsonKey(name: 'redir-port') final int redirPort,
+      @JsonKey(name: 'tproxy-port') final int tproxyPort,
       final Mode mode,
-      @JsonKey(name: "allow-lan") final bool allowLan,
-      @JsonKey(name: "log-level") final LogLevel logLevel,
+      @JsonKey(name: 'allow-lan') final bool allowLan,
+      @JsonKey(name: 'log-level') final LogLevel logLevel,
       final bool ipv6,
       @JsonKey(
-          name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
+          name: 'find-process-mode', unknownEnumValue: FindProcessMode.always)
       final FindProcessMode findProcessMode,
-      @JsonKey(name: "keep-alive-interval") final int keepAliveInterval,
-      @JsonKey(name: "unified-delay") final bool unifiedDelay,
-      @JsonKey(name: "tcp-concurrent") final bool tcpConcurrent,
+      @JsonKey(name: 'keep-alive-interval') final int keepAliveInterval,
+      @JsonKey(name: 'unified-delay') final bool unifiedDelay,
+      @JsonKey(name: 'tcp-concurrent') final bool tcpConcurrent,
       @JsonKey(fromJson: Tun.safeFormJson) final Tun tun,
       @JsonKey(fromJson: Dns.safeDnsFromJson) final Dns dns,
-      @JsonKey(name: "geox-url", fromJson: GeoXUrl.safeFormJson)
+      @JsonKey(name: 'geox-url', fromJson: GeoXUrl.safeFormJson)
       final GeoXUrl geoXUrl,
-      @JsonKey(name: "geodata-loader") final GeodataLoader geodataLoader,
-      @JsonKey(name: "proxy-groups") final List<ProxyGroup> proxyGroups,
+      @JsonKey(name: 'geodata-loader') final GeodataLoader geodataLoader,
+      @JsonKey(name: 'proxy-groups') final List<ProxyGroup> proxyGroups,
       final List<String> rule,
-      @JsonKey(name: "global-ua") final String? globalUa,
-      @JsonKey(name: "external-controller")
+      @JsonKey(name: 'global-ua') final String? globalUa,
+      @JsonKey(name: 'external-controller')
       final ExternalControllerStatus externalController,
       final Map<String, String> hosts}) = _$ClashConfigImpl;
 
@@ -4158,41 +4158,41 @@ abstract class _ClashConfig implements ClashConfig {
       _$ClashConfigImpl.fromJson;
 
   @override
-  @JsonKey(name: "mixed-port")
+  @JsonKey(name: 'mixed-port')
   int get mixedPort;
   @override
-  @JsonKey(name: "socks-port")
+  @JsonKey(name: 'socks-port')
   int get socksPort;
   @override
-  @JsonKey(name: "port")
+  @JsonKey(name: 'port')
   int get port;
   @override
-  @JsonKey(name: "redir-port")
+  @JsonKey(name: 'redir-port')
   int get redirPort;
   @override
-  @JsonKey(name: "tproxy-port")
+  @JsonKey(name: 'tproxy-port')
   int get tproxyPort;
   @override
   Mode get mode;
   @override
-  @JsonKey(name: "allow-lan")
+  @JsonKey(name: 'allow-lan')
   bool get allowLan;
   @override
-  @JsonKey(name: "log-level")
+  @JsonKey(name: 'log-level')
   LogLevel get logLevel;
   @override
   bool get ipv6;
   @override
-  @JsonKey(name: "find-process-mode", unknownEnumValue: FindProcessMode.always)
+  @JsonKey(name: 'find-process-mode', unknownEnumValue: FindProcessMode.always)
   FindProcessMode get findProcessMode;
   @override
-  @JsonKey(name: "keep-alive-interval")
+  @JsonKey(name: 'keep-alive-interval')
   int get keepAliveInterval;
   @override
-  @JsonKey(name: "unified-delay")
+  @JsonKey(name: 'unified-delay')
   bool get unifiedDelay;
   @override
-  @JsonKey(name: "tcp-concurrent")
+  @JsonKey(name: 'tcp-concurrent')
   bool get tcpConcurrent;
   @override
   @JsonKey(fromJson: Tun.safeFormJson)
@@ -4201,21 +4201,21 @@ abstract class _ClashConfig implements ClashConfig {
   @JsonKey(fromJson: Dns.safeDnsFromJson)
   Dns get dns;
   @override
-  @JsonKey(name: "geox-url", fromJson: GeoXUrl.safeFormJson)
+  @JsonKey(name: 'geox-url', fromJson: GeoXUrl.safeFormJson)
   GeoXUrl get geoXUrl;
   @override
-  @JsonKey(name: "geodata-loader")
+  @JsonKey(name: 'geodata-loader')
   GeodataLoader get geodataLoader;
   @override
-  @JsonKey(name: "proxy-groups")
+  @JsonKey(name: 'proxy-groups')
   List<ProxyGroup> get proxyGroups;
   @override
   List<String> get rule;
   @override
-  @JsonKey(name: "global-ua")
+  @JsonKey(name: 'global-ua')
   String? get globalUa;
   @override
-  @JsonKey(name: "external-controller")
+  @JsonKey(name: 'external-controller')
   ExternalControllerStatus get externalController;
   @override
   Map<String, String> get hosts;

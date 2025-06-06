@@ -87,11 +87,11 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
 class PopupController extends ValueNotifier<bool> {
   PopupController() : super(false);
 
-  open() {
+  void open() {
     value = true;
   }
 
-  close() {
+  void close() {
     value = false;
   }
 }
@@ -119,7 +119,7 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
   final _targetOffsetValueNotifier = ValueNotifier<Offset>(Offset.zero);
   Offset _offset = Offset.zero;
 
-  _open({Offset offset = Offset.zero}) {
+  void _open({Offset offset = Offset.zero}) {
     _offset = offset;
     _updateOffset();
     _isOpen = true;
@@ -138,7 +138,7 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
     });
   }
 
-  _updateOffset() {
+  void _updateOffset() {
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) {
       return;
@@ -279,7 +279,7 @@ class CommonPopupMenu extends StatelessWidget {
           elevation: 12,
           color: context.colorScheme.surfaceContainer,
           clipBehavior: Clip.antiAlias,
-          shape: RoundedSuperellipseBorder(
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(

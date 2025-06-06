@@ -1,11 +1,14 @@
 import 'dart:math';
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/measure.dart';
+
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/state.dart';
 
 class ThemeManager extends ConsumerWidget {
   final Widget child;
@@ -14,6 +17,54 @@ class ThemeManager extends ConsumerWidget {
     super.key,
     required this.child,
   });
+
+  Widget _buildSystemUi(Widget child) {
+    if (!system.isAndroid) {
+      return child;
+    }
+    return AnnotatedRegion<SystemUiMode>(
+      sized: false,
+      value: SystemUiMode.edgeToEdge,
+      child: Consumer(
+        builder: (context, ref, _) {
+          final brightness = ref.watch(currentBrightnessProvider);
+          final iconBrightness = brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light;
+          globalState.appState = globalState.appState.copyWith(
+            systemUiOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: iconBrightness,
+              systemNavigationBarIconBrightness: iconBrightness,
+              systemNavigationBarColor: context.colorScheme.surface,
+              systemNavigationBarDividerColor: Colors.transparent,
+            ),
+          );
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: globalState.appState.systemUiOverlayStyle,
+            sized: false,
+            child: child,
+          );
+        },
+      ),
+    );
+  }
+
+  // _buildScrollbar(Widget child) {
+  //   return Consumer(
+  //     builder: (_, ref, child) {
+  //       final isMobileView = ref.read(isMobileViewProvider);
+  //       if (isMobileView) {
+  //         return ScrollConfiguration(
+  //           behavior: HiddenBarScrollBehavior(),
+  //           child: child!,
+  //         );
+  //       }
+  //       return child!;
+  //     },
+  //     child: child,
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context, ref) {
@@ -49,7 +100,7 @@ class ThemeManager extends ConsumerWidget {
               container.maxHeight,
             ),
           );
-          return child;
+          return _buildSystemUi(child);
         },
       ),
     );

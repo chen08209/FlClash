@@ -86,7 +86,7 @@ class PreferH3Item extends ConsumerWidget {
     final preferH3 = ref
         .watch(patchClashConfigProvider.select((state) => state.dns.preferH3));
     return ListItem.switchItem(
-      title: const Text("PreferH3"),
+      title: const Text('PreferH3'),
       subtitle: Text(appLocalizations.preferH3Desc),
       delegate: SwitchDelegate(
         value: preferH3,
@@ -109,7 +109,7 @@ class IPv6Item extends ConsumerWidget {
       patchClashConfigProvider.select((state) => state.dns.ipv6),
     );
     return ListItem.switchItem(
-      title: const Text("IPv6"),
+      title: const Text('IPv6'),
       delegate: SwitchDelegate(
         value: ipv6,
         onChanged: (bool value) async {
@@ -469,7 +469,7 @@ class GeoipItem extends ConsumerWidget {
           .select((state) => state.dns.fallbackFilter.geoip),
     );
     return ListItem.switchItem(
-      title: const Text("Geoip"),
+      title: const Text('Geoip'),
       delegate: SwitchDelegate(
         value: geoip,
         onChanged: (bool value) async {
@@ -526,17 +526,17 @@ class GeositeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      title: const Text("Geosite"),
+      title: const Text('Geosite'),
       delegate: OpenDelegate(
         blur: false,
-        title: "Geosite",
+        title: 'Geosite',
         widget: Consumer(builder: (_, ref, __) {
           final geosite = ref.watch(
             patchClashConfigProvider
                 .select((state) => state.dns.fallbackFilter.geosite),
           );
           return ListInputPage(
-            title: "Geosite",
+            title: 'Geosite',
             items: geosite,
             titleBuilder: (item) => Text(item),
             onChange: (items) {

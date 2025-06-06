@@ -29,17 +29,17 @@ class SubscriptionInfo with _$SubscriptionInfo {
 
   factory SubscriptionInfo.formHString(String? info) {
     if (info == null) return const SubscriptionInfo();
-    final list = info.split(";");
+    final list = info.split(';');
     Map<String, int?> map = {};
     for (final i in list) {
-      final keyValue = i.trim().split("=");
+      final keyValue = i.trim().split('=');
       map[keyValue[0]] = int.tryParse(keyValue[1]);
     }
     return SubscriptionInfo(
-      upload: map["upload"] ?? 0,
-      download: map["download"] ?? 0,
-      total: map["total"] ?? 0,
-      expire: map["expire"] ?? 0,
+      upload: map['upload'] ?? 0,
+      download: map['download'] ?? 0,
+      total: map['total'] ?? 0,
+      expire: map['expire'] ?? 0,
     );
   }
 }
@@ -50,7 +50,7 @@ class Profile with _$Profile {
     required String id,
     String? label,
     String? currentGroupName,
-    @Default("") String url,
+    @Default('') String url,
     DateTime? lastUpdateDate,
     required Duration autoUpdateDuration,
     SubscriptionInfo? subscriptionInfo,
@@ -169,7 +169,7 @@ extension ProfileExtension on Profile {
 
   Future<Profile> update() async {
     final response = await request.getFileResponseForUrl(url);
-    final disposition = response.headers.value("content-disposition");
+    final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
     return await copyWith(
       label: label ?? utils.getFileNameForDisposition(disposition) ?? id,

@@ -30,40 +30,43 @@ class ResourcesView extends StatelessWidget {
   Widget build(BuildContext context) {
     const geoItems = <GeoItem>[
       GeoItem(
-        label: "GeoIp",
+        label: 'GeoIp',
         fileName: geoIpFileName,
-        key: "geoip",
+        key: 'geoip',
       ),
       GeoItem(
-        label: "GeoSite",
+        label: 'GeoSite',
         fileName: geoSiteFileName,
-        key: "geosite",
+        key: 'geosite',
       ),
       GeoItem(
-        label: "MMDB",
+        label: 'MMDB',
         fileName: mmdbFileName,
-        key: "mmdb",
+        key: 'mmdb',
       ),
       GeoItem(
-        label: "ASN",
+        label: 'ASN',
         fileName: asnFileName,
-        key: "asn",
+        key: 'asn',
       ),
     ];
 
-    return ListView.separated(
-      itemBuilder: (_, index) {
-        final geoItem = geoItems[index];
-        return GeoDataListItem(
-          geoItem: geoItem,
-        );
-      },
-      separatorBuilder: (BuildContext context, int index) {
-        return const Divider(
-          height: 0,
-        );
-      },
-      itemCount: geoItems.length,
+    return CommonScaffold(
+      title: appLocalizations.resources,
+      body: ListView.separated(
+        itemBuilder: (_, index) {
+          final geoItem = geoItems[index];
+          return GeoDataListItem(
+            geoItem: geoItem,
+          );
+        },
+        separatorBuilder: (BuildContext context, int index) {
+          return const Divider(
+            height: 0,
+          );
+        },
+        itemCount: geoItems.length,
+      ),
     );
   }
 }
@@ -85,7 +88,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
 
   GeoItem get geoItem => widget.geoItem;
 
-  _updateUrl(String url, WidgetRef ref) async {
+  Future<void> _updateUrl(String url, WidgetRef ref) async {
     final defaultMap = defaultGeoXUrl.toJson();
     final newUrl = await globalState.showCommonDialog<String>(
       child: UpdateGeoUrlFormDialog(
@@ -97,7 +100,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
     if (newUrl != null && newUrl != url && mounted) {
       try {
         if (!newUrl.isUrl) {
-          throw "Invalid url";
+          throw 'Invalid url';
         }
         ref.read(patchClashConfigProvider.notifier).updateState((state) {
           final map = state.geoXUrl.toJson();
@@ -142,7 +145,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(
-              height: 4,
+              height: 6,
             ),
             FutureBuilder<FileInfo>(
               future: _getGeoFileLastModified(geoItem.fileName),
@@ -154,9 +157,6 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
                       ? SizedBox(
                           width: height,
                           height: height,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
                         )
                       : Text(
                           snapshot.data!.desc,
@@ -165,16 +165,20 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
                 );
               },
             ),
+            const SizedBox(
+              height: 4,
+            ),
             Text(
               url,
               style: context.textTheme.bodyMedium?.toLight,
             ),
             const SizedBox(
-              height: 8,
+              height: 12,
             ),
             Wrap(
               runSpacing: 6,
               spacing: 12,
+              runAlignment: WrapAlignment.center,
               children: [
                 CommonChip(
                   avatar: const Icon(Icons.edit),
@@ -183,13 +187,34 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
                     _updateUrl(url, ref);
                   },
                 ),
-                CommonChip(
-                  avatar: const Icon(Icons.sync),
-                  label: appLocalizations.sync,
-                  onPressed: () {
-                    _handleUpdateGeoDataItem();
-                  },
-                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      child: ValueListenableBuilder(
+                        valueListenable: isUpdating,
+                        builder: (_, isUpdating, ___) {
+                          return isUpdating
+                              ? SizedBox(
+                                  height: 30,
+                                  width: 30,
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(2),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              : CommonChip(
+                                  avatar: const Icon(Icons.sync),
+                                  label: appLocalizations.sync,
+                                  onPressed: () {
+                                    _handleUpdateGeoDataItem();
+                                  },
+                                );
+                        },
+                      ),
+                    )
+                  ],
+                )
               ],
             ),
           ],
@@ -198,17 +223,18 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
     );
   }
 
-  _handleUpdateGeoDataItem() async {
-    await globalState.safeRun<void>(
+  Future<void> _handleUpdateGeoDataItem() async {
+    await globalState.appController.safeRun<void>(
       () async {
         await updateGeoDateItem();
       },
       silence: false,
+      needLoading: false,
     );
     setState(() {});
   }
 
-  updateGeoDateItem() async {
+  Future<void> updateGeoDateItem() async {
     isUpdating.value = true;
     try {
       final message = await clashCore.updateGeoData(
@@ -223,7 +249,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
       rethrow;
     }
     isUpdating.value = false;
-    return null;
+    return;
   }
 
   @override
@@ -241,23 +267,6 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
       ),
       title: Text(geoItem.label),
       subtitle: _buildSubtitle(),
-      trailing: SizedBox(
-        height: 48,
-        width: 48,
-        child: ValueListenableBuilder(
-          valueListenable: isUpdating,
-          builder: (_, isUpdating, ___) {
-            return FadeThroughBox(
-              child: isUpdating
-                  ? const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: CircularProgressIndicator(),
-                    )
-                  : const SizedBox(),
-            );
-          },
-        ),
-      ),
     );
   }
 }
@@ -267,8 +276,12 @@ class UpdateGeoUrlFormDialog extends StatefulWidget {
   final String url;
   final String? defaultValue;
 
-  const UpdateGeoUrlFormDialog(
-      {super.key, required this.title, required this.url, this.defaultValue});
+  const UpdateGeoUrlFormDialog({
+    super.key,
+    required this.title,
+    required this.url,
+    this.defaultValue,
+  });
 
   @override
   State<UpdateGeoUrlFormDialog> createState() => _UpdateGeoUrlFormDialogState();
@@ -283,14 +296,14 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
     urlController = TextEditingController(text: widget.url);
   }
 
-  _handleReset() async {
+  Future<void> _handleReset() async {
     if (widget.defaultValue == null) {
       return;
     }
     Navigator.of(context).pop<String>(widget.defaultValue);
   }
 
-  _handleUpdate() async {
+  Future<void> _handleUpdate() async {
     final url = urlController.value.text;
     if (url.isEmpty) return;
     Navigator.of(context).pop<String>(url);

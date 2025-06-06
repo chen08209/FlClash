@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'package:fl_clash/common/system.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -9,13 +9,10 @@ abstract mixin class TileListener {
 
   void onStop() {}
 
-  void onDetached(){
-
-  }
+  void onDetached() {}
 }
 
 class Tile {
-
   final MethodChannel _channel = const MethodChannel('tile');
 
   Tile._() {
@@ -29,13 +26,13 @@ class Tile {
   Future<void> _methodCallHandler(MethodCall call) async {
     for (final TileListener listener in _listeners) {
       switch (call.method) {
-        case "start":
+        case 'start':
           listener.onStart();
           break;
-        case "stop":
+        case 'stop':
           listener.onStop();
           break;
-        case "detached":
+        case 'detached':
           listener.onDetached();
           break;
       }
@@ -55,4 +52,4 @@ class Tile {
   }
 }
 
-final tile =  Platform.isAndroid ? Tile.instance : null;
+final tile = system.isAndroid ? Tile.instance : null;

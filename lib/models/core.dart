@@ -12,7 +12,7 @@ abstract mixin class AppMessageListener {
 
   void onDelay(Delay delay) {}
 
-  void onRequest(Connection connection) {}
+  void onRequest(TrackerInfo connection) {}
 
   void onLoaded(String providerName) {}
 }
@@ -26,9 +26,9 @@ abstract mixin class AppMessageListener {
 @freezed
 class SetupParams with _$SetupParams {
   const factory SetupParams({
-    @JsonKey(name: "config") required Map<String, dynamic> config,
-    @JsonKey(name: "selected-map") required Map<String, String> selectedMap,
-    @JsonKey(name: "test-url") required String testUrl,
+    @JsonKey(name: 'config') required Map<String, dynamic> config,
+    @JsonKey(name: 'selected-map') required Map<String, String> selectedMap,
+    @JsonKey(name: 'test-url') required String testUrl,
   }) = _SetupParams;
 
   factory SetupParams.fromJson(Map<String, dynamic> json) =>
@@ -68,10 +68,10 @@ class UpdateParams with _$UpdateParams {
 @freezed
 class CoreState with _$CoreState {
   const factory CoreState({
-    @JsonKey(name: "vpn-props") required VpnProps vpnProps,
-    @JsonKey(name: "only-statistics-proxy") required bool onlyStatisticsProxy,
-    @JsonKey(name: "current-profile-name") required String currentProfileName,
-    @JsonKey(name: "bypass-domain") @Default([]) List<String> bypassDomain,
+    @JsonKey(name: 'vpn-props') required VpnProps vpnProps,
+    @JsonKey(name: 'only-statistics-proxy') required bool onlyStatisticsProxy,
+    @JsonKey(name: 'current-profile-name') required String currentProfileName,
+    @JsonKey(name: 'bypass-domain') @Default([]) List<String> bypassDomain,
   }) = _CoreState;
 
   factory CoreState.fromJson(Map<String, Object?> json) =>
@@ -100,7 +100,7 @@ class AndroidVpnOptions with _$AndroidVpnOptions {
 @freezed
 class InitParams with _$InitParams {
   const factory InitParams({
-    @JsonKey(name: "home-dir") required String homeDir,
+    @JsonKey(name: 'home-dir') required String homeDir,
     required int version,
   }) = _InitParams;
 
@@ -111,8 +111,8 @@ class InitParams with _$InitParams {
 @freezed
 class ChangeProxyParams with _$ChangeProxyParams {
   const factory ChangeProxyParams({
-    @JsonKey(name: "group-name") required String groupName,
-    @JsonKey(name: "proxy-name") required String proxyName,
+    @JsonKey(name: 'group-name') required String groupName,
+    @JsonKey(name: 'proxy-name') required String proxyName,
   }) = _ChangeProxyParams;
 
   factory ChangeProxyParams.fromJson(Map<String, Object?> json) =>
@@ -122,8 +122,8 @@ class ChangeProxyParams with _$ChangeProxyParams {
 @freezed
 class UpdateGeoDataParams with _$UpdateGeoDataParams {
   const factory UpdateGeoDataParams({
-    @JsonKey(name: "geo-type") required String geoType,
-    @JsonKey(name: "geo-name") required String geoName,
+    @JsonKey(name: 'geo-type') required String geoType,
+    @JsonKey(name: 'geo-name') required String geoName,
   }) = _UpdateGeoDataParams;
 
   factory UpdateGeoDataParams.fromJson(Map<String, Object?> json) =>
@@ -197,10 +197,10 @@ class Now with _$Now {
 @freezed
 class ProviderSubscriptionInfo with _$ProviderSubscriptionInfo {
   const factory ProviderSubscriptionInfo({
-    @JsonKey(name: "UPLOAD") @Default(0) int upload,
-    @JsonKey(name: "DOWNLOAD") @Default(0) int download,
-    @JsonKey(name: "TOTAL") @Default(0) int total,
-    @JsonKey(name: "EXPIRE") @Default(0) int expire,
+    @JsonKey(name: 'UPLOAD') @Default(0) int upload,
+    @JsonKey(name: 'DOWNLOAD') @Default(0) int download,
+    @JsonKey(name: 'TOTAL') @Default(0) int total,
+    @JsonKey(name: 'EXPIRE') @Default(0) int expire,
   }) = _ProviderSubscriptionInfo;
 
   factory ProviderSubscriptionInfo.fromJson(Map<String, Object?> json) =>
@@ -224,11 +224,11 @@ class ExternalProvider with _$ExternalProvider {
     required String type,
     String? path,
     required int count,
-    @JsonKey(name: "subscription-info", fromJson: subscriptionInfoFormCore)
+    @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
     SubscriptionInfo? subscriptionInfo,
     @Default(false) bool isUpdating,
-    @JsonKey(name: "vehicle-type") required String vehicleType,
-    @JsonKey(name: "update-at") required DateTime updateAt,
+    @JsonKey(name: 'vehicle-type') required String vehicleType,
+    @JsonKey(name: 'update-at') required DateTime updateAt,
   }) = _ExternalProvider;
 
   factory ExternalProvider.fromJson(Map<String, Object?> json) =>

@@ -26,7 +26,7 @@ class ProxyCard extends StatelessWidget {
 
   Measure get measure => globalState.measure;
 
-  _handleTestCurrentDelay() {
+  void _handleTestCurrentDelay() {
     proxyDelayTest(
       proxy,
       testUrl,
@@ -60,7 +60,7 @@ class ProxyCard extends StatelessWidget {
               : GestureDetector(
                   onTap: _handleTestCurrentDelay,
                   child: Text(
-                    delay > 0 ? '$delay ms' : "Timeout",
+                    delay > 0 ? '$delay ms' : 'Timeout',
                     style: context.textTheme.labelSmall?.copyWith(
                       overflow: TextOverflow.ellipsis,
                       color: utils.getDelayColor(
@@ -98,13 +98,13 @@ class ProxyCard extends StatelessWidget {
     }
   }
 
-  _changeProxy(WidgetRef ref) async {
+  Future<void> _changeProxy(WidgetRef ref) async {
     final isComputedSelected = groupType.isComputedSelected;
     final isSelector = groupType == GroupType.Selector;
     if (isComputedSelected || isSelector) {
       final currentProxyName = ref.read(getProxyNameProvider(groupName));
       final nextProxyName = switch (isComputedSelected) {
-        true => currentProxyName == proxy.name ? "" : proxy.name,
+        true => currentProxyName == proxy.name ? '' : proxy.name,
         false => proxy.name,
       };
       final appController = globalState.appController;
@@ -112,7 +112,7 @@ class ProxyCard extends StatelessWidget {
         groupName,
         nextProxyName,
       );
-      await appController.changeProxyDebounce(groupName, nextProxyName);
+      appController.changeProxyDebounce(groupName, nextProxyName);
       return;
     }
     globalState.showNotifier(

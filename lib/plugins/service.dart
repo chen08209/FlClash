@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:isolate';
+
+import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
 
@@ -13,7 +14,7 @@ class Service {
   ReceivePort? receiver;
 
   Service._internal() {
-    methodChannel = const MethodChannel("service");
+    methodChannel = const MethodChannel('service');
   }
 
   factory Service() {
@@ -22,23 +23,24 @@ class Service {
   }
 
   Future<bool?> init() async {
-    return await methodChannel.invokeMethod<bool>("init");
+    return await methodChannel.invokeMethod<bool>('init');
   }
 
   Future<bool?> destroy() async {
-    return await methodChannel.invokeMethod<bool>("destroy");
+    return await methodChannel.invokeMethod<bool>('destroy');
   }
 
   Future<bool?> startVpn() async {
     final options = await clashLib?.getAndroidVpnOptions();
-    return await methodChannel.invokeMethod<bool>("startVpn", {
+    return await methodChannel.invokeMethod<bool>('startVpn', {
       'data': json.encode(options),
     });
   }
 
   Future<bool?> stopVpn() async {
-    return await methodChannel.invokeMethod<bool>("stopVpn");
+    return await methodChannel.invokeMethod<bool>('stopVpn');
   }
 }
 
-Service? get service => Platform.isAndroid && !globalState.isService ? Service() : null;
+Service? get service =>
+    system.isAndroid && !globalState.isService ? Service() : null;

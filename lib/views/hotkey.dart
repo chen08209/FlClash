@@ -12,8 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 extension IntlExt on Intl {
-  static actionMessage(String messageText) =>
-      Intl.message("action_$messageText");
+  static String actionMessage(String messageText) =>
+      Intl.message('action_$messageText');
 }
 
 class HotKeyView extends StatelessWidget {
@@ -26,7 +26,7 @@ class HotKeyView extends StatelessWidget {
     }
     final modifierLabels =
         hotKeyAction.modifiers.map((item) => item.physicalKeys.first.label);
-    var text = "";
+    var text = '';
     if (modifierLabels.isNotEmpty) {
       text += "${modifierLabels.join(" ")}+";
     }
@@ -112,7 +112,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
     super.dispose();
   }
 
-  _handleRemove() {
+  void _handleRemove() {
     Navigator.of(context).pop();
     globalState.appController.updateOrAddHotKeyAction(
       hotKeyActionNotifier.value.copyWith(
@@ -122,7 +122,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
     );
   }
 
-  _handleConfirm() {
+  void _handleConfirm() {
     Navigator.of(context).pop();
     final config = globalState.config;
     final currentHotkeyAction = hotKeyActionNotifier.value;
@@ -201,7 +201,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
                           ),
                         if (modifiers.isNotEmpty)
                           Text(
-                            "+",
+                            '+',
                             style: context.textTheme.titleMedium,
                           ),
                         KeyboardKeyBox(

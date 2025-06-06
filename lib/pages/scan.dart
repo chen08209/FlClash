@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:fl_clash/common/color.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
@@ -29,7 +30,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     unawaited(controller.start());
   }
 
-  _handleBarcode(BarcodeCapture barcodeCapture) {
+  void _handleBarcode(BarcodeCapture barcodeCapture) {
     final barcode = barcodeCapture.barcodes.first;
     if (barcode.type == BarcodeType.url) {
       Navigator.pop<String>(

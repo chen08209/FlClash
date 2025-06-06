@@ -15,8 +15,9 @@ class LinkManager {
     _appLinks = AppLinks();
   }
 
-  initAppLinksListen(installConfigCallBack) async {
-    commonPrint.log("initAppLinksListen");
+  Future<void> initAppLinksListen(
+      Function(String url) installConfigCallBack) async {
+    commonPrint.log('initAppLinksListen');
     destroy();
     subscription = _appLinks.uriLinkStream.listen(
       (uri) {
@@ -32,7 +33,7 @@ class LinkManager {
     );
   }
 
-  destroy() {
+  void destroy() {
     if (subscription != null) {
       subscription?.cancel();
       subscription = null;

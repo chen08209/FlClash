@@ -128,13 +128,13 @@ class _InputDialogState extends State<InputDialog> {
     );
   }
 
-  _handleUpdate() async {
+  Future<void> _handleUpdate() async {
     if (_formKey.currentState?.validate() == false) return;
     final text = textController.value.text;
     Navigator.of(context).pop<String>(text);
   }
 
-  _handleReset() async {
+  Future<void> _handleReset() async {
     if (widget.resetValue == null) {
       return;
     }
@@ -210,7 +210,7 @@ class ListInputPage extends StatelessWidget {
     this.subtitleBuilder,
   });
 
-  _handleAddOrEdit([String? item]) async {
+  Future<void> _handleAddOrEdit([String? item]) async {
     uniqueValidator(String? value) {
       final index = items.indexWhere(
         (entry) {
@@ -226,7 +226,7 @@ class ListInputPage extends StatelessWidget {
 
     final valueField = Field(
       label: valueLabel ?? appLocalizations.value,
-      value: item ?? "",
+      value: item ?? '',
       validator: uniqueValidator,
     );
     final value = await globalState.showCommonDialog<String>(
@@ -250,7 +250,7 @@ class ListInputPage extends StatelessWidget {
     onChange(nextItems);
   }
 
-  _handleDelete(String? item) {
+  void _handleDelete(String? item) {
     final entries = List<String>.from(
       items,
     );
@@ -353,7 +353,7 @@ class MapInputPage extends StatelessWidget {
         map.entries,
       );
 
-  _handleAddOrEdit([MapEntry<String, String>? item]) async {
+  Future<void> _handleAddOrEdit([MapEntry<String, String>? item]) async {
     uniqueValidator(String? value) {
       final index = items.indexWhere(
         (entry) {
@@ -369,13 +369,13 @@ class MapInputPage extends StatelessWidget {
 
     final keyField = Field(
       label: keyLabel ?? appLocalizations.key,
-      value: item == null ? "" : item.key,
+      value: item == null ? '' : item.key,
       validator: uniqueValidator,
     );
 
     final valueField = Field(
       label: valueLabel ?? appLocalizations.value,
-      value: item == null ? "" : item.value,
+      value: item == null ? '' : item.value,
     );
 
     final value = await globalState.showCommonDialog<MapEntry<String, String>>(
@@ -401,7 +401,7 @@ class MapInputPage extends StatelessWidget {
     onChange(Map.fromEntries(nextItems));
   }
 
-  _handleDelete(MapEntry<String, String> item) {
+  void _handleDelete(MapEntry<String, String> item) {
     final entries = List<MapEntry<String, String>>.from(
       items,
     );
@@ -516,7 +516,7 @@ class _AddDialogState extends State<AddDialog> {
     );
   }
 
-  _submit() {
+  void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (keyField != null) {
       Navigator.of(context).pop<MapEntry<String, String>>(

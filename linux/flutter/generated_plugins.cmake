@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   dynamic_color
   file_selector_linux
+  flutter_acrylic
   flutter_js
   gtk
   hotkey_manager_linux

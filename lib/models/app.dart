@@ -1,6 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'common.dart';
@@ -22,17 +22,18 @@ class AppState with _$AppState {
     @Default({}) DelayMap delayMap,
     @Default([]) List<Group> groups,
     @Default(0) int checkIpNum,
-    Brightness? brightness,
+    required Brightness brightness,
     int? runTime,
     @Default([]) List<ExternalProvider> providers,
     String? localIp,
-    required FixedList<Connection> requests,
+    required FixedList<TrackerInfo> requests,
     required int version,
     required FixedList<Log> logs,
     required FixedList<Traffic> traffics,
     required Traffic totalTraffic,
-    @Default("") String proxiesQuery,
     @Default(false) bool realTunEnable,
+    @Default(false) bool loading,
+    required SystemUiOverlayStyle systemUiOverlayStyle,
   }) = _AppState;
 }
 

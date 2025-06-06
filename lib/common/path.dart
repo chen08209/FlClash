@@ -31,7 +31,7 @@ class AppPath {
   }
 
   String get executableExtension {
-    return Platform.isWindows ? ".exe" : "";
+    return system.isWindows ? '.exe' : '';
   }
 
   String get executableDirPath {
@@ -40,11 +40,11 @@ class AppPath {
   }
 
   String get corePath {
-    return join(executableDirPath, "FlClashCore$executableExtension");
+    return join(executableDirPath, 'FlClashCore$executableExtension');
   }
 
   String get helperPath {
-    return join(executableDirPath, "$appHelperService$executableExtension");
+    return join(executableDirPath, '$appHelperService$executableExtension');
   }
 
   Future<String> get downloadDirPath async {
@@ -59,12 +59,12 @@ class AppPath {
 
   Future<String> get lockFilePath async {
     final directory = await dataDir.future;
-    return join(directory.path, "FlClash.lock");
+    return join(directory.path, 'FlClash.lock');
   }
 
   Future<String> get sharedPreferencesPath async {
     final directory = await dataDir.future;
-    return join(directory.path, "shared_preferences.json");
+    return join(directory.path, 'shared_preferences.json');
   }
 
   Future<String> get profilesPath async {
@@ -74,14 +74,14 @@ class AppPath {
 
   Future<String> getProfilePath(String id) async {
     final directory = await profilesPath;
-    return join(directory, "$id.yaml");
+    return join(directory, '$id.yaml');
   }
 
   Future<String> getProvidersDirPath(String id) async {
     final directory = await profilesPath;
     return join(
       directory,
-      "providers",
+      'providers',
       id,
     );
   }
@@ -94,7 +94,7 @@ class AppPath {
     final directory = await profilesPath;
     return join(
       directory,
-      "providers",
+      'providers',
       id,
       type,
       url.toMd5(),

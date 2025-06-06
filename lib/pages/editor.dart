@@ -107,11 +107,11 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     );
   }
 
-  _handleSearch() {
+  void _handleSearch() {
     _findController.findMode();
   }
 
-  _handleImport() async {
+  Future<void> _handleImport() async {
     final option = await globalState.showCommonDialog<ImportOption>(
       child: _ImportOptionsDialog(),
     );
@@ -129,8 +129,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     }
     final url = await globalState.showCommonDialog(
       child: InputDialog(
-        title: "导入",
-        value: "",
+        title: '导入',
+        value: '',
         labelText: appLocalizations.url,
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -292,7 +292,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                     mode: langYaml,
                   ),
                 if (widget.languages.contains(Language.javaScript))
-                  "javascript": CodeHighlightThemeMode(
+                  'javascript': CodeHighlightThemeMode(
                     mode: langJavascript,
                   ),
               },
@@ -433,7 +433,7 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     return bar;
   }
 
-  _buildFindInput(BuildContext context, CodeFindValue value) {
+  Stack _buildFindInput(BuildContext context, CodeFindValue value) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -550,7 +550,7 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
   OverlayEntry? _overlayEntry;
   bool _isFirstRender = true;
 
-  _removeOverLayEntry() {
+  void _removeOverLayEntry() {
     _overlayEntry?.remove();
     _overlayEntry = null;
     _isFirstRender = true;
@@ -689,7 +689,7 @@ class _ImportOptionsDialog extends StatefulWidget {
 }
 
 class _ImportOptionsDialogState extends State<_ImportOptionsDialog> {
-  _handleOnTab(ImportOption value) {
+  void _handleOnTab(ImportOption value) {
     Navigator.of(context).pop(value);
   }
 

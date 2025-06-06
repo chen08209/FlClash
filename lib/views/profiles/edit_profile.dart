@@ -51,7 +51,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     });
   }
 
-  _handleConfirm() async {
+  Future<void> _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
     final appController = globalState.appController;
     Profile profile = this.profile.copyWith(
@@ -83,7 +83,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     } else if (!hasUpdate) {
       appController.setProfileAndAutoApply(profile);
     } else {
-      globalState.homeScaffoldKey.currentState?.loadingRun(
+      globalState.appController.safeRun(
         () async {
           await Future.delayed(
             commonDuration,
@@ -99,14 +99,14 @@ class _EditProfileViewState extends State<EditProfileView> {
     }
   }
 
-  _setAutoUpdate(bool value) {
+  void _setAutoUpdate(bool value) {
     if (autoUpdate == value) return;
     setState(() {
       autoUpdate = value;
     });
   }
 
-  Future<FileInfo?> _getFileInfo(path) async {
+  Future<FileInfo?> _getFileInfo(String path) async {
     final file = File(path);
     if (!await file.exists()) {
       return null;
@@ -119,8 +119,8 @@ class _EditProfileViewState extends State<EditProfileView> {
     );
   }
 
-  _handleSaveEdit(BuildContext context, String data) async {
-    final message = await globalState.safeRun<String>(
+  Future<void> _handleSaveEdit(BuildContext context, String data) async {
+    final message = await globalState.appController.safeRun<String>(
       () async {
         final message = await clashCore.validateConfig(data);
         return message;
@@ -139,7 +139,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     }
   }
 
-  _editProfileFile() async {
+  Future<void> _editProfileFile() async {
     if (rawText == null) {
       final profilePath = await appPath.getProfilePath(widget.profile.id);
       final file = File(profilePath);
@@ -173,8 +173,8 @@ class _EditProfileViewState extends State<EditProfileView> {
         return false;
       },
     );
-    final data = await BaseNavigator.modal<String>(
-      globalState.homeScaffoldKey.currentContext!,
+    final data = await BaseNavigator.push<String>(
+      context,
       editorPage,
     );
     if (data == null) {
@@ -188,8 +188,9 @@ class _EditProfileViewState extends State<EditProfileView> {
     );
   }
 
-  _uploadProfileFile() async {
-    final platformFile = await globalState.safeRun(picker.pickerFile);
+  Future<void> _uploadProfileFile() async {
+    final platformFile =
+        await globalState.appController.safeRun(picker.pickerFile);
     if (platformFile?.bytes == null) return;
     fileData = platformFile?.bytes;
     fileInfoNotifier.value = fileInfoNotifier.value?.copyWith(
@@ -198,7 +199,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     );
   }
 
-  _handleBack() async {
+  Future<void> _handleBack() async {
     final res = await globalState.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(text: appLocalizations.fileIsUpdate),
