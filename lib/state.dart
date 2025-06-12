@@ -315,19 +315,9 @@ class GlobalState {
     final profileId = profile.id;
     final configMap = await getProfileConfig(profileId);
     final rawConfig = await handleEvaluate(configMap);
-    final routeAddress =
-        config.networkProps.routeMode == RouteMode.bypassPrivate
-            ? defaultBypassPrivateRouteAddress
-            : patchConfig.tun.routeAddress;
-    final realPatchConfig = !system.isDesktop
-        ? patchConfig.copyWith.tun(
-            autoRoute: routeAddress.isEmpty ? true : false,
-            routeAddress: routeAddress,
-          )
-        : patchConfig.copyWith.tun(
-            autoRoute: true,
-            routeAddress: [],
-          );
+    final realPatchConfig = patchConfig.copyWith(
+      tun: patchConfig.tun.getRealTun(config.networkProps.routeMode),
+    );
     rawConfig["external-controller"] = realPatchConfig.externalController.value;
     rawConfig["external-ui"] = "";
     rawConfig["interface-name"] = "";
@@ -411,20 +401,22 @@ class GlobalState {
     for (final host in realPatchConfig.hosts.entries) {
       rawConfig["hosts"][host.key] = host.value.splitByMultipleSeparators;
     }
+    if (rawConfig["dns"] == null) {
+      rawConfig["dns"] = {};
+    }
+    final isEnableDns = rawConfig["dns"]["enable"] == true;
     final overrideDns = globalState.config.overrideDns;
-    if (overrideDns) {
-      rawConfig["dns"] = realPatchConfig.dns.toJson();
+    if (overrideDns || !isEnableDns) {
+      final dns = switch (!isEnableDns) {
+        true => realPatchConfig.dns.copyWith(
+            nameserver: [...realPatchConfig.dns.nameserver, "system://"]),
+        false => realPatchConfig.dns,
+      };
+      rawConfig["dns"] = dns.toJson();
       rawConfig["dns"]["nameserver-policy"] = {};
-      for (final entry in realPatchConfig.dns.nameserverPolicy.entries) {
+      for (final entry in dns.nameserverPolicy.entries) {
         rawConfig["dns"]["nameserver-policy"][entry.key] =
             entry.value.splitByMultipleSeparators;
-      }
-    } else {
-      if (rawConfig["dns"] == null) {
-        rawConfig["dns"] = {};
-      }
-      if (rawConfig["dns"]["enable"] != false) {
-        rawConfig["dns"]["enable"] = true;
       }
     }
     var rules = [];
