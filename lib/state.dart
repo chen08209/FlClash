@@ -315,19 +315,9 @@ class GlobalState {
     final profileId = profile.id;
     final configMap = await getProfileConfig(profileId);
     final rawConfig = await handleEvaluate(configMap);
-    final routeAddress =
-        config.networkProps.routeMode == RouteMode.bypassPrivate
-            ? defaultBypassPrivateRouteAddress
-            : patchConfig.tun.routeAddress;
-    final realPatchConfig = !system.isDesktop
-        ? patchConfig.copyWith.tun(
-            autoRoute: routeAddress.isEmpty ? true : false,
-            routeAddress: routeAddress,
-          )
-        : patchConfig.copyWith.tun(
-            autoRoute: true,
-            routeAddress: [],
-          );
+    final realPatchConfig = patchConfig.copyWith(
+      tun: patchConfig.tun.getRealTun(config.networkProps.routeMode),
+    );
     rawConfig["external-controller"] = realPatchConfig.externalController.value;
     rawConfig["external-ui"] = "";
     rawConfig["interface-name"] = "";
