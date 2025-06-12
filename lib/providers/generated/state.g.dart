@@ -94,7 +94,7 @@ final coreStateProvider = AutoDisposeProvider<CoreState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CoreStateRef = AutoDisposeProviderRef<CoreState>;
-String _$updateParamsHash() => r'79fd7a5a8650fabac3a2ca7ce903c1d9eb363ed2';
+String _$updateParamsHash() => r'012df72ab0e769a51c573f4692031506d7b1f1b4';
 
 /// See also [updateParams].
 @ProviderFor(updateParams)
@@ -126,7 +126,7 @@ final proxyStateProvider = AutoDisposeProvider<ProxyState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ProxyStateRef = AutoDisposeProviderRef<ProxyState>;
-String _$trayStateHash() => r'39ff84c50ad9c9cc666fa2538fe13ec0d7236b2e';
+String _$trayStateHash() => r'61c99bbae2cb7ed69dc9ee0f2149510eb6a87df4';
 
 /// See also [trayState].
 @ProviderFor(trayState)

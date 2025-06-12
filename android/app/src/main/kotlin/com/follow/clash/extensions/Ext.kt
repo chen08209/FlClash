@@ -104,7 +104,7 @@ fun ConnectivityManager.resolveDns(network: Network?): List<String> {
 fun InetAddress.asSocketAddressText(port: Int): String {
     return when (this) {
         is Inet6Address ->
-            "[${numericToTextFormat(this.address)}]:$port"
+            "[${numericToTextFormat(this)}]:$port"
 
         is Inet4Address ->
             "${this.hostAddress}:$port"
@@ -141,7 +141,8 @@ fun Context.getActionPendingIntent(action: String): PendingIntent {
     }
 }
 
-private fun numericToTextFormat(src: ByteArray): String {
+private fun numericToTextFormat(address: Inet6Address): String {
+    val src = address.address
     val sb = StringBuilder(39)
     for (i in 0 until 8) {
         sb.append(
@@ -153,6 +154,10 @@ private fun numericToTextFormat(src: ByteArray): String {
         if (i < 7) {
             sb.append(":")
         }
+    }
+    if (address.scopeId > 0) {
+        sb.append("%")
+        sb.append(address.scopeId)
     }
     return sb.toString()
 }

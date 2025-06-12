@@ -75,7 +75,7 @@ jobs:
         with:
           channel: 'stable'
           cache: true
-          flutter-version: 3.29.3
+      #          flutter-version: 3.29.3
 
       - name: Get Flutter Dependency
         run: flutter pub get

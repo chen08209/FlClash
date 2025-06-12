@@ -418,9 +418,11 @@ class _ListHeaderState extends State<ListHeader> {
                       width: constraints.maxWidth,
                       alignment: Alignment.center,
                       padding: EdgeInsets.all(6.ap),
-                      decoration: BoxDecoration(
+                      decoration: ShapeDecoration(
+                        shape: RoundedSuperellipseBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         color: context.colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(12),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: CommonTargetIcon(

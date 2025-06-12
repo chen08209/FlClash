@@ -135,10 +135,12 @@ class TrafficUsage extends StatelessWidget {
                                         Container(
                                           width: 20,
                                           height: 8,
-                                          decoration: BoxDecoration(
+                                          decoration: ShapeDecoration(
                                             color: primaryColor,
-                                            borderRadius:
-                                                BorderRadius.circular(2),
+                                            shape: RoundedSuperellipseBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(3),
+                                            ),
                                           ),
                                         ),
                                         SizedBox(
@@ -161,10 +163,12 @@ class TrafficUsage extends StatelessWidget {
                                         Container(
                                           width: 20,
                                           height: 8,
-                                          decoration: BoxDecoration(
+                                          decoration: ShapeDecoration(
                                             color: secondaryColor,
-                                            borderRadius:
-                                                BorderRadius.circular(2),
+                                            shape: RoundedSuperellipseBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(3),
+                                            ),
                                           ),
                                         ),
                                         SizedBox(

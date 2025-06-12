@@ -373,8 +373,10 @@ class _CommonTabBarState<T extends Object> extends State<CommonTabBar<T>>
       child: Container(
         clipBehavior: Clip.antiAlias,
         padding: widget.padding.resolve(Directionality.of(context)),
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.all(_kCornerRadius),
+        decoration: ShapeDecoration(
+          shape: RoundedSuperellipseBorder(
+            borderRadius: const BorderRadius.all(_kCornerRadius),
+          ),
           color: widget.backgroundColor,
         ),
         child: AnimatedBuilder(

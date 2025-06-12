@@ -200,6 +200,24 @@ class Tun with _$Tun {
   }
 }
 
+extension TunExt on Tun {
+  Tun getRealTun(RouteMode routeMode) {
+    final mRouteAddress = routeMode == RouteMode.bypassPrivate
+        ? defaultBypassPrivateRouteAddress
+        : routeAddress;
+    return switch (system.isDesktop) {
+      true => copyWith(
+          autoRoute: true,
+          routeAddress: [],
+        ),
+      false => copyWith(
+          autoRoute: mRouteAddress.isEmpty ? true : false,
+          routeAddress: mRouteAddress,
+        ),
+    };
+  }
+}
+
 @freezed
 class FallbackFilter with _$FallbackFilter {
   const factory FallbackFilter({

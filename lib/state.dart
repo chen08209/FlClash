@@ -315,19 +315,9 @@ class GlobalState {
     final profileId = profile.id;
     final configMap = await getProfileConfig(profileId);
     final rawConfig = await handleEvaluate(configMap);
-    final routeAddress =
-        config.networkProps.routeMode == RouteMode.bypassPrivate
-            ? defaultBypassPrivateRouteAddress
-            : patchConfig.tun.routeAddress;
-    final realPatchConfig = !system.isDesktop
-        ? patchConfig.copyWith.tun(
-            autoRoute: routeAddress.isEmpty ? true : false,
-            routeAddress: routeAddress,
-          )
-        : patchConfig.copyWith.tun(
-            autoRoute: true,
-            routeAddress: [],
-          );
+    final realPatchConfig = patchConfig.copyWith(
+      tun: patchConfig.tun.getRealTun(config.networkProps.routeMode),
+    );
     rawConfig["external-controller"] = realPatchConfig.externalController.value;
     rawConfig["external-ui"] = "";
     rawConfig["interface-name"] = "";
@@ -411,20 +401,22 @@ class GlobalState {
     for (final host in realPatchConfig.hosts.entries) {
       rawConfig["hosts"][host.key] = host.value.splitByMultipleSeparators;
     }
+    if (rawConfig["dns"] == null) {
+      rawConfig["dns"] = {};
+    }
+    final isEnableDns = rawConfig["dns"]["enable"] == true;
     final overrideDns = globalState.config.overrideDns;
-    if (overrideDns) {
-      rawConfig["dns"] = realPatchConfig.dns.toJson();
+    if (overrideDns || !isEnableDns) {
+      final dns = switch (!isEnableDns) {
+        true => realPatchConfig.dns.copyWith(
+            nameserver: [...realPatchConfig.dns.nameserver, "system://"]),
+        false => realPatchConfig.dns,
+      };
+      rawConfig["dns"] = dns.toJson();
       rawConfig["dns"]["nameserver-policy"] = {};
-      for (final entry in realPatchConfig.dns.nameserverPolicy.entries) {
+      for (final entry in dns.nameserverPolicy.entries) {
         rawConfig["dns"]["nameserver-policy"][entry.key] =
             entry.value.splitByMultipleSeparators;
-      }
-    } else {
-      if (rawConfig["dns"] == null) {
-        rawConfig["dns"] = {};
-      }
-      if (rawConfig["dns"]["enable"] != false) {
-        rawConfig["dns"]["enable"] = true;
       }
     }
     var rules = [];
@@ -509,6 +501,9 @@ class DetectionState {
     debouncer.call(
       FunctionTag.checkIp,
       _checkIp,
+      duration: Duration(
+        milliseconds: 1200,
+      ),
     );
   }
 
@@ -533,36 +528,35 @@ class DetectionState {
       cancelToken = null;
     }
     cancelToken = CancelToken();
-    try {
+    state.value = state.value.copyWith(
+      isTesting: true,
+    );
+    final res = await request.checkIp(cancelToken: cancelToken);
+    if (res.isError) {
       state.value = state.value.copyWith(
-        isTesting: true,
+        isLoading: true,
+        ipInfo: null,
       );
-      final ipInfo = await request.checkIp(cancelToken: cancelToken);
-      state.value = state.value.copyWith(
-        isTesting: false,
-      );
-      if (ipInfo != null) {
-        state.value = state.value.copyWith(
-          isLoading: false,
-          ipInfo: ipInfo,
-        );
-        return;
-      }
-      _clearSetTimeoutTimer();
-      _setTimeoutTimer = Timer(const Duration(milliseconds: 300), () {
-        state.value = state.value.copyWith(
-          isLoading: false,
-          ipInfo: null,
-        );
-      });
-    } catch (e) {
-      if (e.toString() == "cancelled") {
-        state.value = state.value.copyWith(
-          isLoading: true,
-          ipInfo: null,
-        );
-      }
+      return;
     }
+    final ipInfo = res.data;
+    state.value = state.value.copyWith(
+      isTesting: false,
+    );
+    if (ipInfo != null) {
+      state.value = state.value.copyWith(
+        isLoading: false,
+        ipInfo: ipInfo,
+      );
+      return;
+    }
+    _clearSetTimeoutTimer();
+    _setTimeoutTimer = Timer(const Duration(milliseconds: 300), () {
+      state.value = state.value.copyWith(
+        isLoading: false,
+        ipInfo: null,
+      );
+    });
   }
 
   _clearSetTimeoutTimer() {

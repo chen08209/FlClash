@@ -1,7 +1,7 @@
 name: fl_clash
 description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
-version: 0.8.85+202506071
+version: 0.8.86+2025061501
 environment:
   sdk: '>=3.1.0 <4.0.0'
 
@@ -37,7 +37,10 @@ dependencies:
   dio: ^5.8.0+1
   win32: ^5.5.1
   ffi: ^2.1.2
-  re_editor: ^0.7.0
+  re_editor:
+    git:
+      url: https://github.com/chen08209/re-editor.git
+      ref: main
   re_highlight: ^0.0.3
   archive: ^3.6.1
   lpinyin: ^2.0.3
