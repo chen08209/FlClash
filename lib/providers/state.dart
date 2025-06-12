@@ -105,10 +105,15 @@ CoreState coreState(Ref ref) {
 
 @riverpod
 UpdateParams updateParams(Ref ref) {
+  final routeMode = ref.watch(
+    networkSettingProvider.select(
+      (state) => state.routeMode,
+    ),
+  );
   return ref.watch(
     patchClashConfigProvider.select(
       (state) => UpdateParams(
-        tun: state.tun,
+        tun: state.tun.getRealTun(routeMode),
         allowLan: state.allowLan,
         findProcessMode: state.findProcessMode,
         mode: state.mode,
@@ -153,9 +158,11 @@ TrayState trayState(Ref ref) {
   final appSetting = ref.watch(
     appSettingProvider,
   );
-  final groups = ref.watch(
-    groupsProvider,
-  );
+  final groups = ref
+      .watch(
+        currentGroupsStateProvider,
+      )
+      .value;
   final brightness = ref.watch(
     appBrightnessProvider,
   );

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -90,37 +91,37 @@ class Request {
     "https://ipinfo.io/json/": IpInfo.fromIpInfoIoJson,
   };
 
-  Future<IpInfo?> checkIp({CancelToken? cancelToken}) async {
-    for (final source in _ipInfoSources.entries) {
-      try {
-        final response = await Dio()
-            .get<Map<String, dynamic>>(
-              source.key,
-              cancelToken: cancelToken,
-              options: Options(
-                responseType: ResponseType.json,
-              ),
-            )
-            .timeout(
-              Duration(
-                seconds: 30,
-              ),
-            );
-        if (response.statusCode != 200 || response.data == null) {
-          continue;
+  Future<Result<IpInfo?>> checkIp({CancelToken? cancelToken}) async {
+    var failureCount = 0;
+    final futures = _ipInfoSources.entries.map((source) async {
+      final Completer<Result<IpInfo?>> completer = Completer();
+      final future = Dio().get<Map<String, dynamic>>(
+        source.key,
+        cancelToken: cancelToken,
+        options: Options(
+          responseType: ResponseType.json,
+        ),
+      );
+      future.then((res) {
+        if (res.statusCode == HttpStatus.ok && res.data != null) {
+          completer.complete(Result.success(source.value(res.data!)));
+        } else {
+          failureCount++;
+          if (failureCount == _ipInfoSources.length) {
+            completer.complete(Result.success(null));
+          }
         }
-        if (response.data == null) {
-          continue;
+      }).catchError((e) {
+        failureCount++;
+        if (e == DioExceptionType.cancel) {
+          completer.complete(Result.error("cancelled"));
         }
-        return source.value(response.data!);
-      } catch (e) {
-        commonPrint.log("checkIp error ===> $e");
-        if (e is DioException && e.type == DioExceptionType.cancel) {
-          throw "cancelled";
-        }
-      }
-    }
-    return null;
+      });
+      return completer.future;
+    });
+    final res = await Future.any(futures);
+    cancelToken?.cancel();
+    return res;
   }
 
   Future<bool> pingHelper() async {

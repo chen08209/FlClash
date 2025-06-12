@@ -100,6 +100,7 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     fun handleStart(options: VpnOptions): Boolean {
+        onUpdateNetwork();
         if (options.enable != this.options?.enable) {
             this.flClashService = null
         }
