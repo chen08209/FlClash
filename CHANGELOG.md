@@ -1,3 +1,13 @@
+## v0.8.86
+
+- Fix windows tun issues
+
+- Optimize android get system dns
+
+- Optimize more details
+
+- Update changelog
+
 ## v0.8.85
 
 - Support override script
