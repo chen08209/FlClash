@@ -89,6 +89,10 @@ object GlobalState {
         }
     }
 
+    fun handleChangeMode(modeKey: String) {
+        getCurrentAppPlugin()?.changeMode(modeKey)
+    }
+
     fun handleTryDestroy() {
         if (flutterEngine == null) {
             destroyServiceEngine()

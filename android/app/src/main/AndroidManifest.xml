@@ -89,6 +89,16 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".ChangeModeReceiver"
+            android:enabled="true"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="${applicationId}.action.CHANGE_MODE" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".services.FlClashTileService"
             android:exported="true"
