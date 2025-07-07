@@ -427,6 +427,10 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         return false
     }
 
+    fun changeMode(modeKey: String) {
+        channel.invokeMethod("changeMode", modeKey)
+    }
+
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activityRef = WeakReference(binding.activity)
         binding.addActivityResultListener(::onActivityResult)

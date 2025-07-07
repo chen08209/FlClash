@@ -4,7 +4,10 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/common/print.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -28,6 +31,14 @@ class App {
           } catch (_) {
             return "";
           }
+        case "changeMode":
+          if (call.arguments is String) {
+            commonPrint.log("change mode to ${call.arguments}");
+            globalState.appController
+                .changeMode(Mode.fromString(call.arguments as String));
+            await globalState.appController.savePreferences();
+          }
+          break;
         default:
           throw MissingPluginException();
       }
