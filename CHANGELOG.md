@@ -1,3 +1,17 @@
+## v0.8.87
+
+- Optimize desktop view
+
+- Optimize logs, requests, connection pages
+
+- Optimize windows tray auto hide
+
+- Optimize some details
+
+- Update core
+
+- Update changelog
+
 ## v0.8.86
 
 - Fix windows tun issues
