@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
@@ -29,26 +29,10 @@ class ResourcesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const geoItems = <GeoItem>[
-      GeoItem(
-        label: 'GeoIp',
-        fileName: geoIpFileName,
-        key: 'geoip',
-      ),
-      GeoItem(
-        label: 'GeoSite',
-        fileName: geoSiteFileName,
-        key: 'geosite',
-      ),
-      GeoItem(
-        label: 'MMDB',
-        fileName: mmdbFileName,
-        key: 'mmdb',
-      ),
-      GeoItem(
-        label: 'ASN',
-        fileName: asnFileName,
-        key: 'asn',
-      ),
+      GeoItem(label: 'GeoIp', fileName: geoIpFileName, key: 'geoip'),
+      GeoItem(label: 'GeoSite', fileName: geoSiteFileName, key: 'geosite'),
+      GeoItem(label: 'MMDB', fileName: mmdbFileName, key: 'mmdb'),
+      GeoItem(label: 'ASN', fileName: asnFileName, key: 'asn'),
     ];
 
     return CommonScaffold(
@@ -56,14 +40,10 @@ class ResourcesView extends StatelessWidget {
       body: ListView.separated(
         itemBuilder: (_, index) {
           final geoItem = geoItems[index];
-          return GeoDataListItem(
-            geoItem: geoItem,
-          );
+          return GeoDataListItem(geoItem: geoItem);
         },
         separatorBuilder: (BuildContext context, int index) {
-          return const Divider(
-            height: 0,
-          );
+          return const Divider(height: 0);
         },
         itemCount: geoItems.length,
       ),
@@ -74,10 +54,7 @@ class ResourcesView extends StatelessWidget {
 class GeoDataListItem extends StatefulWidget {
   final GeoItem geoItem;
 
-  const GeoDataListItem({
-    super.key,
-    required this.geoItem,
-  });
+  const GeoDataListItem({super.key, required this.geoItem});
 
   @override
   State<GeoDataListItem> createState() => _GeoDataListItemState();
@@ -105,16 +82,12 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         ref.read(patchClashConfigProvider.notifier).updateState((state) {
           final map = state.geoXUrl.toJson();
           map[geoItem.key] = newUrl;
-          return state.copyWith(
-            geoXUrl: GeoXUrl.fromJson(map),
-          );
+          return state.copyWith(geoXUrl: GeoXUrl.fromJson(map));
         });
       } catch (e) {
         globalState.showMessage(
           title: geoItem.label,
-          message: TextSpan(
-            text: e.toString(),
-          ),
+          message: TextSpan(text: e.toString()),
         );
       }
     }
@@ -125,18 +98,16 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
     final file = File(join(homePath, fileName));
     final lastModified = await file.lastModified();
     final size = await file.length();
-    return FileInfo(
-      size: size,
-      lastModified: lastModified,
-    );
+    return FileInfo(size: size, lastModified: lastModified);
   }
 
   Widget _buildSubtitle() {
     return Consumer(
-      builder: (_, ref, __) {
+      builder: (_, ref, _) {
         final url = ref.watch(
-          patchClashConfigProvider
-              .select((state) => state.geoXUrl.toJson()[geoItem.key]),
+          patchClashConfigProvider.select(
+            (state) => state.geoXUrl.toJson()[geoItem.key],
+          ),
         );
         if (url == null) {
           return SizedBox();
@@ -144,9 +115,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(
-              height: 6,
-            ),
+            const SizedBox(height: 6),
             FutureBuilder<FileInfo>(
               future: _getGeoFileLastModified(geoItem.fileName),
               builder: (_, snapshot) {
@@ -154,10 +123,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
                 return SizedBox(
                   height: height,
                   child: snapshot.data == null
-                      ? SizedBox(
-                          width: height,
-                          height: height,
-                        )
+                      ? SizedBox(width: height, height: height)
                       : Text(
                           snapshot.data!.desc,
                           style: context.textTheme.bodyMedium,
@@ -165,16 +131,9 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
                 );
               },
             ),
-            const SizedBox(
-              height: 4,
-            ),
-            Text(
-              url,
-              style: context.textTheme.bodyMedium?.toLight,
-            ),
-            const SizedBox(
-              height: 12,
-            ),
+            const SizedBox(height: 4),
+            Text(url, style: context.textTheme.bodyMedium?.toLight),
+            const SizedBox(height: 12),
             Wrap(
               runSpacing: 6,
               spacing: 12,
@@ -193,7 +152,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
                     SizedBox(
                       child: ValueListenableBuilder(
                         valueListenable: isUpdating,
-                        builder: (_, isUpdating, ___) {
+                        builder: (_, isUpdating, _) {
                           return isUpdating
                               ? SizedBox(
                                   height: 30,
@@ -212,11 +171,12 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
                                 );
                         },
                       ),
-                    )
+                    ),
                   ],
-                )
+                ),
               ],
             ),
+            const SizedBox(height: 6),
           ],
         );
       },
@@ -231,17 +191,16 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
       silence: false,
       needLoading: false,
     );
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> updateGeoDateItem() async {
     isUpdating.value = true;
     try {
-      final message = await clashCore.updateGeoData(
-        UpdateGeoDataParams(
-          geoName: geoItem.fileName,
-          geoType: geoItem.label,
-        ),
+      final message = await coreController.updateGeoData(
+        UpdateGeoDataParams(geoName: geoItem.fileName, geoType: geoItem.label),
       );
       if (message.isNotEmpty) throw message;
     } catch (e) {
@@ -261,10 +220,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       title: Text(geoItem.label),
       subtitle: _buildSubtitle(),
     );
@@ -320,14 +276,12 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
             onPressed: _handleReset,
             child: Text(appLocalizations.reset),
           ),
-          const SizedBox(
-            width: 4,
-          ),
+          const SizedBox(width: 4),
         ],
         TextButton(
           onPressed: _handleUpdate,
           child: Text(appLocalizations.submit),
-        )
+        ),
       ],
       child: Wrap(
         runSpacing: 16,
@@ -336,9 +290,7 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
             maxLines: 5,
             minLines: 1,
             controller: urlController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(border: OutlineInputBorder()),
           ),
         ],
       ),
