@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
@@ -17,9 +17,7 @@ import 'controller.dart';
 import 'pages/pages.dart';
 
 class Application extends ConsumerStatefulWidget {
-  const Application({
-    super.key,
-  });
+  const Application({super.key});
 
   @override
   ConsumerState<Application> createState() => ApplicationState();
@@ -48,7 +46,6 @@ class ApplicationState extends ConsumerState<Application> {
   @override
   void initState() {
     super.initState();
-    _autoUpdateGroupTask();
     _autoUpdateProfilesTask();
     globalState.appController = AppController(context, ref);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
@@ -59,15 +56,6 @@ class ApplicationState extends ConsumerState<Application> {
       await globalState.appController.init();
       globalState.appController.initLink();
       app?.initShortcuts();
-    });
-  }
-
-  void _autoUpdateGroupTask() {
-    _autoUpdateGroupTaskTimer = Timer(const Duration(milliseconds: 20000), () {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        globalState.appController.updateGroupsDebounce();
-        _autoUpdateGroupTask();
-      });
     });
   }
 
@@ -82,28 +70,20 @@ class ApplicationState extends ConsumerState<Application> {
     if (system.isDesktop) {
       return WindowManager(
         child: TrayManager(
-          child: HotKeyManager(
-            child: ProxyManager(
-              child: child,
-            ),
-          ),
+          child: HotKeyManager(child: ProxyManager(child: child)),
         ),
       );
     }
-    return AndroidManager(
-      child: TileManager(
-        child: child,
-      ),
-    );
+    return AndroidManager(child: TileManager(child: child));
   }
 
   Widget _buildState(Widget child) {
     return AppStateManager(
-      child: ClashManager(
+      child: CoreManager(
         child: ConnectivityManager(
           onConnectivityChanged: (results) async {
             if (!results.contains(ConnectivityResult.vpn)) {
-              clashCore.closeConnections();
+              coreController.closeConnections();
             }
             globalState.appController.updateLocalIp();
             globalState.appController.addCheckIpNumDebounce();
@@ -116,21 +96,13 @@ class ApplicationState extends ConsumerState<Application> {
 
   Widget _buildPlatformApp(Widget child) {
     if (system.isDesktop) {
-      return WindowHeaderContainer(
-        child: child,
-      );
+      return WindowHeaderContainer(child: child);
     }
-    return VpnManager(
-      child: child,
-    );
+    return VpnManager(child: child);
   }
 
   Widget _buildApp(Widget child) {
-    return MessageManager(
-      child: ThemeManager(
-        child: child,
-      ),
-    );
+    return MessageManager(child: ThemeManager(child: child));
   }
 
   @override
@@ -139,8 +111,9 @@ class ApplicationState extends ConsumerState<Application> {
       _buildState(
         Consumer(
           builder: (_, ref, child) {
-            final locale =
-                ref.watch(appSettingProvider.select((state) => state.locale));
+            final locale = ref.watch(
+              appSettingProvider.select((state) => state.locale),
+            );
             final themeProps = ref.watch(themeSettingProvider);
             return MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -149,16 +122,12 @@ class ApplicationState extends ConsumerState<Application> {
                 AppLocalizations.delegate,
                 GlobalMaterialLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate
+                GlobalWidgetsLocalizations.delegate,
               ],
               builder: (_, child) {
                 return AppEnvManager(
                   child: _buildApp(
-                    AppSidebarContainer(
-                      child: _buildPlatformApp(
-                        child!,
-                      ),
-                    ),
+                    AppSidebarContainer(child: _buildPlatformApp(child!)),
                   ),
                 );
               },
@@ -197,7 +166,7 @@ class ApplicationState extends ConsumerState<Application> {
     linkManager.destroy();
     _autoUpdateGroupTaskTimer?.cancel();
     _autoUpdateProfilesTaskTimer?.cancel();
-    await clashCore.destroy();
+    await coreController.destroy();
     await globalState.appController.savePreferences();
     await globalState.appController.handleExit();
     super.dispose();

@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +28,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
     return [
       IconButton(
         onPressed: () async {
-          clashCore.closeConnections();
+          coreController.closeConnections();
           await _updateConnections();
         },
         icon: const Icon(Icons.delete_sweep_outlined),
@@ -43,8 +43,9 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
   }
 
   void _onKeywordsUpdate(List<String> keywords) {
-    _connectionsStateNotifier.value =
-        _connectionsStateNotifier.value.copyWith(keywords: keywords);
+    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
+      keywords: keywords,
+    );
   }
 
   Future<void> _updateConnectionsTask() async {
@@ -66,12 +67,12 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
 
   Future<void> _updateConnections() async {
     _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      trackerInfos: await clashCore.getConnections(),
+      trackerInfos: await coreController.getConnections(),
     );
   }
 
   Future<void> _handleBlockConnection(String id) async {
-    clashCore.closeConnection(id);
+    coreController.closeConnection(id);
     await _updateConnections();
   }
 
@@ -93,7 +94,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
       actions: _buildActions(),
       body: ValueListenableBuilder<TrackerInfosState>(
         valueListenable: _connectionsStateNotifier,
-        builder: (context, state, __) {
+        builder: (context, state, _) {
           final connections = state.list;
           if (connections.isEmpty) {
             return NullStatus(
@@ -111,9 +112,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
                   trailing: IconButton(
                     padding: EdgeInsets.zero,
                     visualDensity: VisualDensity.compact,
-                    style: ButtonStyle(
-                      minimumSize: WidgetStatePropertyAll(Size.zero),
-                    ),
+                    style: IconButton.styleFrom(minimumSize: Size.zero),
                     icon: const Icon(Icons.block),
                     onPressed: () {
                       _handleBlockConnection(trackerInfo.id);
@@ -124,11 +123,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
                   ),
                 ),
               )
-              .separated(
-                const Divider(
-                  height: 0,
-                ),
-              )
+              .separated(const Divider(height: 0))
               .toList();
           return ListView.builder(
             controller: _scrollController,
