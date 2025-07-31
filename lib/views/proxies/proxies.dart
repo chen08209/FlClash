@@ -31,22 +31,15 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           onPressed: () {
             _proxiesTabKey.currentState?.scrollToGroupSelected();
           },
-          icon: Icon(
-            Icons.adjust,
-            weight: 1,
-          ),
+          icon: Icon(Icons.adjust, weight: 1),
         ),
       CommonPopupBox(
         targetBuilder: (open) {
           return IconButton(
             onPressed: () {
-              open(
-                offset: Offset(0, 20),
-              );
+              open(offset: Offset(0, 20));
             },
-            icon: Icon(
-              Icons.more_vert,
-            ),
+            icon: Icon(Icons.more_vert),
           );
         },
         popup: CommonPopupMenu(
@@ -57,9 +50,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
               onPressed: () {
                 showSheet(
                   context: context,
-                  props: SheetProps(
-                    isScrollControlled: true,
-                  ),
+                  props: SheetProps(isScrollControlled: true),
                   builder: (_, type) {
                     return AdaptiveSheetScaffold(
                       type: type,
@@ -78,9 +69,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
                   showExtend(
                     context,
                     builder: (_, type) {
-                      return ProvidersView(
-                        type: type,
-                      );
+                      return ProvidersView(type: type);
                     },
                   );
                 },
@@ -104,7 +93,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
               ),
           ],
         ),
-      )
+      ),
     ];
   }
 
@@ -119,14 +108,16 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
   }
 
   void _onSearch(String value) {
-    ref.read(queryProvider.notifier).value = value;
+    ref.read(queryMapProvider.notifier).updateQuery(QueryTag.proxies, value);
   }
 
   @override
   void initState() {
     super.initState();
-    ref.listenManual(providersProvider.select((state) => state.isNotEmpty),
-        (prev, next) {
+    ref.listenManual(providersProvider.select((state) => state.isNotEmpty), (
+      prev,
+      next,
+    ) {
       if (prev != next) {
         setState(() {
           _hasProviders = next;
@@ -134,22 +125,24 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       }
     }, fireImmediately: true);
     ref.listenManual(
-        proxiesStyleSettingProvider
-            .select((state) => state.type == ProxiesType.tab), (prev, next) {
-      if (prev != next) {
-        setState(() {
-          _isTab = next;
-        });
-      }
-    }, fireImmediately: true);
+      proxiesStyleSettingProvider.select(
+        (state) => state.type == ProxiesType.tab,
+      ),
+      (prev, next) {
+        if (prev != next) {
+          setState(() {
+            _isTab = next;
+          });
+        }
+      },
+      fireImmediately: true,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final proxiesType = ref.watch(
-      proxiesStyleSettingProvider.select(
-        (state) => state.type,
-      ),
+      proxiesStyleSettingProvider.select((state) => state.type),
     );
     return CommonScaffold(
       floatingActionButton: _buildFAB(),
@@ -157,9 +150,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       title: appLocalizations.proxies,
       searchState: AppBarSearchState(onSearch: _onSearch),
       body: switch (proxiesType) {
-        ProxiesType.tab => ProxiesTabView(
-            key: _proxiesTabKey,
-          ),
+        ProxiesType.tab => ProxiesTabView(key: _proxiesTabKey),
         ProxiesType.list => const ProxiesListView(),
       },
     );
@@ -171,9 +162,9 @@ class _IconConfigView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final iconMap = ref.watch(proxiesStyleSettingProvider.select(
-      (state) => state.iconMap,
-    ));
+    final iconMap = ref.watch(
+      proxiesStyleSettingProvider.select((state) => state.iconMap),
+    );
     return MapInputPage(
       title: appLocalizations.iconConfiguration,
       map: iconMap,
@@ -181,26 +172,16 @@ class _IconConfigView extends ConsumerWidget {
       valueLabel: appLocalizations.icon,
       titleBuilder: (item) => Text(item.key),
       leadingBuilder: (item) => Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
         clipBehavior: Clip.antiAlias,
-        child: CommonTargetIcon(
-          src: item.value,
-          size: 42,
-        ),
+        child: CommonTargetIcon(src: item.value, size: 42),
       ),
-      subtitleBuilder: (item) => Text(
-        item.value,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
+      subtitleBuilder: (item) =>
+          Text(item.value, maxLines: 2, overflow: TextOverflow.ellipsis),
       onChange: (value) {
-        ref.read(proxiesStyleSettingProvider.notifier).updateState(
-              (state) => state.copyWith(
-                iconMap: value,
-              ),
-            );
+        ref
+            .read(proxiesStyleSettingProvider.notifier)
+            .updateState((state) => state.copyWith(iconMap: value));
       },
     );
   }

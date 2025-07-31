@@ -54,7 +54,7 @@ Support the following actions
     
     com.follow.clash.action.STOP
     
-    com.follow.clash.action.CHANGE
+    com.follow.clash.action.TOGGLE
    ```
 
 ## Download

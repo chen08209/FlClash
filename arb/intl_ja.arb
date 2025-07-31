@@ -410,7 +410,7 @@
   "autoSetSystemDns": "オートセットシステムDNS",
   "details": "{label}詳細",
   "creationTime": "作成時間",
-  "progress": "進捗",
+  "process": "プロセス",
   "host": "ホスト",
   "destination": "宛先",
   "destinationGeoIP": "宛先地理情報",
@@ -422,5 +422,12 @@
   "proxyChains": "プロキシチェーン",
   "log": "ログ",
   "connection": "接続",
-  "request": "リクエスト"
+  "request": "リクエスト",
+  "connected": "接続済み",
+  "disconnected": "切断済み",
+  "connecting": "接続中...",
+  "restartCoreTip": "コアを再起動してもよろしいですか？",
+  "forceRestartCoreTip": "コアを強制再起動してもよろしいですか？",
+  "dnsHijacking": "DNSハイジャッキング",
+  "coreStatus": "コアステータス"
 }

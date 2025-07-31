@@ -410,7 +410,7 @@
   "autoSetSystemDns": "自动设置系统DNS",
   "details": "{label}详情",
   "creationTime": "创建时间",
-  "progress": "进度",
+  "process": "进程",
   "host": "主机",
   "destination": "目标地址",
   "destinationGeoIP": "目标地理定位",
@@ -422,5 +422,12 @@
   "proxyChains": "代理链",
   "log": "日志",
   "connection": "连接",
-  "request": "请求"
+  "request": "请求",
+  "connected": "已连接",
+  "disconnected": "已断开",
+  "connecting": "连接中...",
+  "restartCoreTip": "您确定要重启核心吗？",
+  "forceRestartCoreTip": "您确定要强制重启核心吗？",
+  "dnsHijacking": "DNS劫持",
+  "coreStatus": "核心状态"
 }

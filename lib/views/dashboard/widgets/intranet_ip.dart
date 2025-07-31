@@ -13,15 +13,10 @@ class IntranetIP extends StatelessWidget {
     return SizedBox(
       height: getWidgetHeight(1),
       child: CommonCard(
-        info: Info(
-          label: appLocalizations.intranetIP,
-          iconData: Icons.devices,
-        ),
+        info: Info(label: appLocalizations.intranetIP, iconData: Icons.devices),
         onPressed: () {},
         child: Container(
-          padding: baseInfoEdgeInsets.copyWith(
-            top: 0,
-          ),
+          padding: baseInfoEdgeInsets.copyWith(top: 0),
           child: Column(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.end,
@@ -29,7 +24,7 @@ class IntranetIP extends StatelessWidget {
               SizedBox(
                 height: globalState.measure.bodyMediumHeight + 2,
                 child: Consumer(
-                  builder: (_, ref, __) {
+                  builder: (_, ref, _) {
                     final localIp = ref.watch(localIpProvider);
                     return FadeThroughBox(
                       child: localIp != null
@@ -56,7 +51,7 @@ class IntranetIP extends StatelessWidget {
                     );
                   },
                 ),
-              )
+              ),
             ],
           ),
         ),
