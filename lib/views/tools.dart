@@ -49,11 +49,9 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         for (final navigationItem in navigationItems) ...[
           _buildNavigationMenuItem(navigationItem),
           navigationItems.last != navigationItem
-              ? const Divider(
-                  height: 0,
-                )
+              ? const Divider(height: 0)
               : Container(),
-        ]
+        ],
       ],
     );
   }
@@ -94,7 +92,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
     final items = [
       Consumer(
-        builder: (_, ref, __) {
+        builder: (_, ref, _) {
           final state = ref.watch(moreToolsSelectorStateProvider);
           if (state.navigationItems.isEmpty) {
             return Container();
@@ -102,7 +100,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           return Column(
             children: [
               ListHeader(title: appLocalizations.more),
-              _buildNavigationMenu(state.navigationItems)
+              _buildNavigationMenu(state.navigationItems),
             ],
           );
         },
@@ -132,8 +130,9 @@ class _LocaleItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final locale =
-        ref.watch(appSettingProvider.select((state) => state.locale));
+    final locale = ref.watch(
+      appSettingProvider.select((state) => state.locale),
+    );
     final subTitle = locale ?? appLocalizations.defaultText;
     final currentLocale = utils.getLocaleForString(locale);
     return ListItem<Locale?>.options(
@@ -144,7 +143,9 @@ class _LocaleItem extends ConsumerWidget {
         title: appLocalizations.language,
         options: [null, ...AppLocalizations.delegate.supportedLocales],
         onChanged: (Locale? locale) {
-          ref.read(appSettingProvider.notifier).updateState(
+          ref
+              .read(appSettingProvider.notifier)
+              .updateState(
                 (state) => state.copyWith(locale: locale?.toString()),
               );
         },
@@ -285,8 +286,8 @@ class _DisclaimerItem extends StatelessWidget {
       leading: const Icon(Icons.gavel),
       title: Text(appLocalizations.disclaimer),
       onTap: () async {
-        final isDisclaimerAccepted =
-            await globalState.appController.showDisclaimer();
+        final isDisclaimerAccepted = await globalState.appController
+            .showDisclaimer();
         if (!isDisclaimerAccepted) {
           globalState.appController.handleExit();
         }

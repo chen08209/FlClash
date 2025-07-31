@@ -30,8 +30,9 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
   }
 
   void _onKeywordsUpdate(List<String> keywords) {
-    _requestsStateNotifier.value =
-        _requestsStateNotifier.value.copyWith(keywords: keywords);
+    _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
+      keywords: keywords,
+    );
   }
 
   @override
@@ -44,12 +45,13 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
     _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
       trackerInfos: _requests,
     );
-    ref.listenManual(
-      requestsProvider.select((state) => state.list),
-      (prev, next) {
-        _requests = next;
-      },
-    );
+    ref.listenManual(requestsProvider.select((state) => state.list), (
+      prev,
+      next,
+    ) {
+      _requests = next;
+      updateRequestsThrottler();
+    });
   }
 
   @override
@@ -60,54 +62,46 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
   }
 
   void updateRequestsThrottler() {
-    throttler.call(
-      FunctionTag.requests,
-      () {
-        if (!mounted) {
-          return;
+    throttler.call(FunctionTag.requests, () {
+      if (!mounted) {
+        return;
+      }
+      final isEquality = trackerInfoListEquality.equals(
+        _requests,
+        _requestsStateNotifier.value.trackerInfos,
+      );
+      if (isEquality) {
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
+            trackerInfos: _requests,
+          );
         }
-        final isEquality = trackerInfoListEquality.equals(
-          _requests,
-          _requestsStateNotifier.value.trackerInfos,
-        );
-        if (isEquality) {
-          return;
-        }
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _requestsStateNotifier.value =
-                _requestsStateNotifier.value.copyWith(
-              trackerInfos: _requests,
-            );
-          }
-        });
-      },
-      duration: commonDuration,
-    );
+      });
+    }, duration: commonDuration);
   }
 
   List<Widget> _buildActions() {
     return [
       ValueListenableBuilder(
         valueListenable: _requestsStateNotifier,
-        builder: (_, state, __) {
+        builder: (_, state, _) {
           return IconButton(
             style: state.autoScrollToEnd
-                ? ButtonStyle(
-                    backgroundColor: WidgetStatePropertyAll(
-                      context.colorScheme.secondaryContainer,
-                    ),
+                ? IconButton.styleFrom(
+                    backgroundColor: context.colorScheme.secondaryContainer,
                   )
                 : null,
             onPressed: () {
-              _requestsStateNotifier.value =
-                  _requestsStateNotifier.value.copyWith(
-                autoScrollToEnd: !_requestsStateNotifier.value.autoScrollToEnd,
-              );
+              _requestsStateNotifier.value = _requestsStateNotifier.value
+                  .copyWith(
+                    autoScrollToEnd:
+                        !_requestsStateNotifier.value.autoScrollToEnd,
+                  );
             },
-            icon: const Icon(
-              Icons.vertical_align_top_outlined,
-            ),
+            icon: const Icon(Icons.vertical_align_top_outlined),
           );
         },
       ),
@@ -123,7 +117,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
       onKeywordsUpdate: _onKeywordsUpdate,
       body: ValueListenableBuilder<TrackerInfosState>(
         valueListenable: _requestsStateNotifier,
-        builder: (context, state, __) {
+        builder: (context, state, _) {
           final requests = state.list;
           if (requests.isEmpty) {
             return NullStatus(
@@ -143,11 +137,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                   ),
                 ),
               )
-              .separated(
-                const Divider(
-                  height: 0,
-                ),
-              )
+              .separated(const Divider(height: 0))
               .toList();
           return Align(
             alignment: Alignment.topCenter,
@@ -159,10 +149,8 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                 dataSource: requests,
                 enable: state.autoScrollToEnd,
                 onCancelToEnd: () {
-                  _requestsStateNotifier.value =
-                      _requestsStateNotifier.value.copyWith(
-                    autoScrollToEnd: false,
-                  );
+                  _requestsStateNotifier.value = _requestsStateNotifier.value
+                      .copyWith(autoScrollToEnd: false);
                 },
                 child: ListView.builder(
                   reverse: true,
