@@ -1,5 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
+    <permission
+        android:name="${applicationId}.permission.RECEIVE_BROADCASTS"
+        android:protectionLevel="signature" />
 
     <uses-feature
         android:name="android.hardware.touchscreen"
@@ -13,19 +18,19 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:name=".FlClashApplication"
+        android:name=".Application"
         android:banner="@mipmap/ic_banner"
+        android:extractNativeLibs="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="FlClash">
@@ -47,6 +52,7 @@
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
@@ -67,12 +73,9 @@
             </intent-filter>
         </activity>
 
-        <meta-data
-            android:name="io.flutter.embedding.android.EnableImpeller"
-            android:value="false" />
-
         <activity
             android:name=".TempActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:theme="@style/TransparentTheme">
             <intent-filter>
@@ -85,17 +88,16 @@
             </intent-filter>
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
-                <action android:name="${applicationId}.action.CHANGE" />
+                <action android:name="${applicationId}.action.TOGGLE" />
             </intent-filter>
         </activity>
 
         <service
-            android:name=".services.FlClashTileService"
+            android:name=".TileService"
             android:exported="true"
             android:icon="@drawable/ic"
             android:label="FlClash"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
-            tools:targetApi="n">
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
@@ -103,6 +105,19 @@
                 android:name="android.service.quicksettings.TOGGLEABLE_TILE"
                 android:value="true" />
         </service>
+
+        <receiver
+            android:name=".BroadcastReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="${applicationId}.permission.RECEIVE_BROADCASTS">
+            <intent-filter>
+                <action android:name="${applicationId}.intent.action.START" />
+                <action android:name="${applicationId}.intent.action.STOP" />
+                <action android:name="${applicationId}.intent.action.TOGGLE" />
+            </intent-filter>
+        </receiver>
+
 
         <provider
             android:name=".FilesProvider"
@@ -125,28 +140,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
-        <service
-            android:name=".services.FlClashVpnService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync"
-            android:permission="android.permission.BIND_VPN_SERVICE">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="vpn" />
-        </service>
-
-        <service
-            android:name=".services.FlClashService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="service" />
-        </service>
 
         <meta-data
             android:name="flutterEmbedding"

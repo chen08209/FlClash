@@ -7,17 +7,10 @@ class CommonTargetIcon extends StatelessWidget {
   final String src;
   final double size;
 
-  const CommonTargetIcon({
-    super.key,
-    required this.src,
-    required this.size,
-  });
+  const CommonTargetIcon({super.key, required this.src, required this.size});
 
   Widget _defaultIcon() {
-    return Icon(
-      IconsExt.target,
-      size: size,
-    );
+    return Icon(IconsExt.target, size: size);
   }
 
   Widget _buildIcon() {
@@ -29,7 +22,7 @@ class CommonTargetIcon extends StatelessWidget {
       return Image.memory(
         base64,
         gaplessPlayback: true,
-        errorBuilder: (_, error, ___) {
+        errorBuilder: (_, error, _) {
           return _defaultIcon();
         },
       );
@@ -42,24 +35,14 @@ class CommonTargetIcon extends StatelessWidget {
           return SizedBox();
         }
         return src.isSvg
-            ? SvgPicture.file(
-                data,
-                errorBuilder: (_, __, ___) => _defaultIcon(),
-              )
-            : Image.file(
-                data,
-                errorBuilder: (_, __, ___) => _defaultIcon(),
-              );
+            ? SvgPicture.file(data, errorBuilder: (_, _, _) => _defaultIcon())
+            : Image.file(data, errorBuilder: (_, _, _) => _defaultIcon());
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: _buildIcon(),
-    );
+    return SizedBox(width: size, height: size, child: _buildIcon());
   }
 }

@@ -12,8 +12,9 @@ class LogLevelItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final logLevel =
-        ref.watch(patchClashConfigProvider.select((state) => state.logLevel));
+    final logLevel = ref.watch(
+      patchClashConfigProvider.select((state) => state.logLevel),
+    );
     return ListItem<LogLevel>.options(
       leading: const Icon(Icons.info_outline),
       title: Text(appLocalizations.logLevel),
@@ -25,11 +26,9 @@ class LogLevelItem extends ConsumerWidget {
           if (value == null) {
             return;
           }
-          ref.read(patchClashConfigProvider.notifier).updateState(
-                (state) => state.copyWith(
-                  logLevel: value,
-                ),
-              );
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith(logLevel: value));
         },
         textBuilder: (logLevel) => logLevel.name,
         value: logLevel,
@@ -43,26 +42,21 @@ class UaItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final globalUa =
-        ref.watch(patchClashConfigProvider.select((state) => state.globalUa));
+    final globalUa = ref.watch(
+      patchClashConfigProvider.select((state) => state.globalUa),
+    );
     return ListItem<String?>.options(
       leading: const Icon(Icons.computer_outlined),
       title: const Text('UA'),
       subtitle: Text(globalUa ?? appLocalizations.defaultText),
       delegate: OptionsDelegate<String?>(
         title: 'UA',
-        options: [
-          null,
-          'clash-verge/v1.6.6',
-          'ClashforWindows/0.19.23',
-        ],
+        options: [null, 'clash-verge/v1.6.6', 'ClashforWindows/0.19.23'],
         value: globalUa,
         onChanged: (value) {
-          ref.read(patchClashConfigProvider.notifier).updateState(
-                (state) => state.copyWith(
-                  globalUa: value,
-                ),
-              );
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith(globalUa: value));
         },
         textBuilder: (ua) => ua ?? appLocalizations.defaultText,
       ),
@@ -76,7 +70,8 @@ class KeepAliveIntervalItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final keepAliveInterval = ref.watch(
-        patchClashConfigProvider.select((state) => state.keepAliveInterval));
+      patchClashConfigProvider.select((state) => state.keepAliveInterval),
+    );
     return ListItem.input(
       leading: const Icon(Icons.timer_outlined),
       title: Text(appLocalizations.keepAliveIntervalDesc),
@@ -101,10 +96,10 @@ class KeepAliveIntervalItem extends ConsumerWidget {
             return;
           }
           final intValue = int.parse(value);
-          ref.read(patchClashConfigProvider.notifier).updateState(
-                (state) => state.copyWith(
-                  keepAliveInterval: intValue,
-                ),
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState(
+                (state) => state.copyWith(keepAliveInterval: intValue),
               );
         },
       ),
@@ -117,8 +112,9 @@ class TestUrlItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final testUrl =
-        ref.watch(appSettingProvider.select((state) => state.testUrl));
+    final testUrl = ref.watch(
+      appSettingProvider.select((state) => state.testUrl),
+    );
     return ListItem.input(
       leading: const Icon(Icons.timeline),
       title: Text(appLocalizations.testUrl),
@@ -140,11 +136,9 @@ class TestUrlItem extends ConsumerWidget {
           if (value == null) {
             return;
           }
-          ref.read(appSettingProvider.notifier).updateState(
-                (state) => state.copyWith(
-                  testUrl: value,
-                ),
-              );
+          ref
+              .read(appSettingProvider.notifier)
+              .updateState((state) => state.copyWith(testUrl: value));
         },
       ),
     );
@@ -155,16 +149,15 @@ class PortItem extends ConsumerWidget {
   const PortItem({super.key});
 
   Future<void> handleShowPortDialog() async {
-    await globalState.showCommonDialog(
-      child: _PortDialog(),
-    );
+    await globalState.showCommonDialog(child: _PortDialog());
     // inputDelegate.onChanged(value);
   }
 
   @override
   Widget build(BuildContext context, ref) {
-    final mixedPort =
-        ref.watch(patchClashConfigProvider.select((state) => state.mixedPort));
+    final mixedPort = ref.watch(
+      patchClashConfigProvider.select((state) => state.mixedPort),
+    );
     return ListItem(
       leading: const Icon(Icons.adjust_outlined),
       title: Text(appLocalizations.port),
@@ -218,20 +211,19 @@ class HostsItem extends StatelessWidget {
         blur: false,
         title: 'Hosts',
         widget: Consumer(
-          builder: (_, ref, __) {
-            final hosts = ref
-                .watch(patchClashConfigProvider.select((state) => state.hosts));
+          builder: (_, ref, _) {
+            final hosts = ref.watch(
+              patchClashConfigProvider.select((state) => state.hosts),
+            );
             return MapInputPage(
               title: 'Hosts',
               map: hosts,
               titleBuilder: (item) => Text(item.key),
               subtitleBuilder: (item) => Text(item.value),
               onChange: (value) {
-                ref.read(patchClashConfigProvider.notifier).updateState(
-                      (state) => state.copyWith(
-                        hosts: value,
-                      ),
-                    );
+                ref
+                    .read(patchClashConfigProvider.notifier)
+                    .updateState((state) => state.copyWith(hosts: value));
               },
             );
           },
@@ -246,8 +238,9 @@ class Ipv6Item extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final ipv6 =
-        ref.watch(patchClashConfigProvider.select((state) => state.ipv6));
+    final ipv6 = ref.watch(
+      patchClashConfigProvider.select((state) => state.ipv6),
+    );
     return ListItem.switchItem(
       leading: const Icon(Icons.water_outlined),
       title: const Text('IPv6'),
@@ -255,11 +248,9 @@ class Ipv6Item extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: ipv6,
         onChanged: (bool value) async {
-          ref.read(patchClashConfigProvider.notifier).updateState(
-                (state) => state.copyWith(
-                  ipv6: value,
-                ),
-              );
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith(ipv6: value));
         },
       ),
     );
@@ -271,8 +262,9 @@ class AllowLanItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final allowLan =
-        ref.watch(patchClashConfigProvider.select((state) => state.allowLan));
+    final allowLan = ref.watch(
+      patchClashConfigProvider.select((state) => state.allowLan),
+    );
     return ListItem.switchItem(
       leading: const Icon(Icons.device_hub),
       title: Text(appLocalizations.allowLan),
@@ -280,11 +272,9 @@ class AllowLanItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: allowLan,
         onChanged: (bool value) async {
-          ref.read(patchClashConfigProvider.notifier).updateState(
-                (state) => state.copyWith(
-                  allowLan: value,
-                ),
-              );
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith(allowLan: value));
         },
       ),
     );
@@ -296,8 +286,9 @@ class UnifiedDelayItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final unifiedDelay = ref
-        .watch(patchClashConfigProvider.select((state) => state.unifiedDelay));
+    final unifiedDelay = ref.watch(
+      patchClashConfigProvider.select((state) => state.unifiedDelay),
+    );
 
     return ListItem.switchItem(
       leading: const Icon(Icons.compress_outlined),
@@ -306,11 +297,9 @@ class UnifiedDelayItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: unifiedDelay,
         onChanged: (bool value) async {
-          ref.read(patchClashConfigProvider.notifier).updateState(
-                (state) => state.copyWith(
-                  unifiedDelay: value,
-                ),
-              );
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith(unifiedDelay: value));
         },
       ),
     );
@@ -322,8 +311,11 @@ class FindProcessItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final findProcess = ref.watch(patchClashConfigProvider
-        .select((state) => state.findProcessMode == FindProcessMode.always));
+    final findProcess = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => state.findProcessMode == FindProcessMode.always,
+      ),
+    );
 
     return ListItem.switchItem(
       leading: const Icon(Icons.polymer_outlined),
@@ -332,10 +324,13 @@ class FindProcessItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: findProcess,
         onChanged: (bool value) async {
-          ref.read(patchClashConfigProvider.notifier).updateState(
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState(
                 (state) => state.copyWith(
-                  findProcessMode:
-                      value ? FindProcessMode.always : FindProcessMode.off,
+                  findProcessMode: value
+                      ? FindProcessMode.always
+                      : FindProcessMode.off,
                 ),
               );
         },
@@ -349,8 +344,9 @@ class TcpConcurrentItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final tcpConcurrent = ref
-        .watch(patchClashConfigProvider.select((state) => state.tcpConcurrent));
+    final tcpConcurrent = ref.watch(
+      patchClashConfigProvider.select((state) => state.tcpConcurrent),
+    );
     return ListItem.switchItem(
       leading: const Icon(Icons.double_arrow_outlined),
       title: Text(appLocalizations.tcpConcurrent),
@@ -358,11 +354,9 @@ class TcpConcurrentItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: tcpConcurrent,
         onChanged: (value) async {
-          ref.read(patchClashConfigProvider.notifier).updateState(
-                (state) => state.copyWith(
-                  tcpConcurrent: value,
-                ),
-              );
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith(tcpConcurrent: value));
         },
       ),
     );
@@ -374,8 +368,11 @@ class GeodataLoaderItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final isMemconservative = ref.watch(patchClashConfigProvider.select(
-        (state) => state.geodataLoader == GeodataLoader.memconservative));
+    final isMemconservative = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => state.geodataLoader == GeodataLoader.memconservative,
+      ),
+    );
     return ListItem.switchItem(
       leading: const Icon(Icons.memory),
       title: Text(appLocalizations.geodataLoader),
@@ -383,7 +380,9 @@ class GeodataLoaderItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: isMemconservative,
         onChanged: (bool value) async {
-          ref.read(patchClashConfigProvider.notifier).updateState(
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState(
                 (state) => state.copyWith(
                   geodataLoader: value
                       ? GeodataLoader.memconservative
@@ -401,8 +400,11 @@ class ExternalControllerItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final hasExternalController = ref.watch(patchClashConfigProvider.select(
-        (state) => state.externalController == ExternalControllerStatus.open));
+    final hasExternalController = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => state.externalController == ExternalControllerStatus.open,
+      ),
+    );
     return ListItem.switchItem(
       leading: const Icon(Icons.api_outlined),
       title: Text(appLocalizations.externalController),
@@ -410,7 +412,9 @@ class ExternalControllerItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: hasExternalController,
         onChanged: (bool value) async {
-          ref.read(patchClashConfigProvider.notifier).updateState(
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState(
                 (state) => state.copyWith(
                   externalController: value
                       ? ExternalControllerStatus.open
@@ -437,13 +441,7 @@ final generalItems = <Widget>[
   TcpConcurrentItem(),
   GeodataLoaderItem(),
   ExternalControllerItem(),
-]
-    .separated(
-      const Divider(
-        height: 0,
-      ),
-    )
-    .toList();
+].separated(const Divider(height: 0)).toList();
 
 class _PortDialog extends ConsumerStatefulWidget {
   const _PortDialog();
@@ -465,42 +463,34 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
   @override
   void initState() {
     super.initState();
-    final vm5 = ref.read(patchClashConfigProvider.select((state) {
-      return VM5(
-        a: state.mixedPort,
-        b: state.port,
-        c: state.socksPort,
-        d: state.redirPort,
-        e: state.tproxyPort,
-      );
-    }));
-    _mixedPortController = TextEditingController(
-      text: vm5.a.toString(),
+    final vm5 = ref.read(
+      patchClashConfigProvider.select((state) {
+        return VM5(
+          a: state.mixedPort,
+          b: state.port,
+          c: state.socksPort,
+          d: state.redirPort,
+          e: state.tproxyPort,
+        );
+      }),
     );
-    _portController = TextEditingController(
-      text: vm5.b.toString(),
-    );
-    _socksPortController = TextEditingController(
-      text: vm5.c.toString(),
-    );
-    _redirPortController = TextEditingController(
-      text: vm5.d.toString(),
-    );
-    _tProxyPortController = TextEditingController(
-      text: vm5.e.toString(),
-    );
+    _mixedPortController = TextEditingController(text: vm5.a.toString());
+    _portController = TextEditingController(text: vm5.b.toString());
+    _socksPortController = TextEditingController(text: vm5.c.toString());
+    _redirPortController = TextEditingController(text: vm5.d.toString());
+    _tProxyPortController = TextEditingController(text: vm5.e.toString());
   }
 
   Future<void> _handleReset() async {
     final res = await globalState.showMessage(
-      message: TextSpan(
-        text: appLocalizations.resetTip,
-      ),
+      message: TextSpan(text: appLocalizations.resetTip),
     );
     if (res != true) {
       return;
     }
-    ref.read(patchClashConfigProvider.notifier).updateState(
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .updateState(
           (state) => state.copyWith(
             mixedPort: 7890,
             port: 0,
@@ -516,7 +506,9 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
 
   void _handleUpdate() {
     if (_formKey.currentState?.validate() == false) return;
-    ref.read(patchClashConfigProvider.notifier).updateState(
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .updateState(
           (state) => state.copyWith(
             mixedPort: int.parse(_mixedPortController.text),
             port: int.parse(_portController.text),
@@ -544,9 +536,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
           children: [
             IconButton.filledTonal(
               onPressed: _handleMore,
-              icon: CommonExpandIcon(
-                expand: _isMore,
-              ),
+              icon: CommonExpandIcon(expand: _isMore),
             ),
             Row(
               children: [
@@ -554,17 +544,15 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
                   onPressed: _handleReset,
                   child: Text(appLocalizations.reset),
                 ),
-                const SizedBox(
-                  width: 4,
-                ),
+                const SizedBox(width: 4),
                 TextButton(
                   onPressed: _handleUpdate,
                   child: Text(appLocalizations.submit),
-                )
+                ),
               ],
-            )
+            ),
           ],
-        )
+        ),
       ],
       child: Form(
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -592,23 +580,26 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return appLocalizations
-                          .emptyTip(appLocalizations.mixedPort);
+                      return appLocalizations.emptyTip(
+                        appLocalizations.mixedPort,
+                      );
                     }
                     final port = int.tryParse(value);
                     if (port == null) {
-                      return appLocalizations
-                          .numberTip(appLocalizations.mixedPort);
+                      return appLocalizations.numberTip(
+                        appLocalizations.mixedPort,
+                      );
                     }
                     if (port < 1024 || port > 49151) {
-                      return appLocalizations
-                          .portTip(appLocalizations.mixedPort);
+                      return appLocalizations.portTip(
+                        appLocalizations.mixedPort,
+                      );
                     }
                     final ports = [
                       _portController.text,
                       _socksPortController.text,
                       _tProxyPortController.text,
-                      _redirPortController.text
+                      _redirPortController.text,
                     ].map((item) => item.trim());
                     if (ports.contains(value.trim())) {
                       return appLocalizations.portConflictTip;
@@ -649,7 +640,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
                         _mixedPortController.text,
                         _socksPortController.text,
                         _tProxyPortController.text,
-                        _redirPortController.text
+                        _redirPortController.text,
                       ].map((item) => item.trim());
                       if (ports.contains(value.trim())) {
                         return appLocalizations.portConflictTip;
@@ -671,26 +662,29 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return appLocalizations
-                            .emptyTip(appLocalizations.socksPort);
+                        return appLocalizations.emptyTip(
+                          appLocalizations.socksPort,
+                        );
                       }
                       final port = int.tryParse(value);
                       if (port == null) {
-                        return appLocalizations
-                            .numberTip(appLocalizations.socksPort);
+                        return appLocalizations.numberTip(
+                          appLocalizations.socksPort,
+                        );
                       }
                       if (port == 0) {
                         return null;
                       }
                       if (port < 1024 || port > 49151) {
-                        return appLocalizations
-                            .portTip(appLocalizations.socksPort);
+                        return appLocalizations.portTip(
+                          appLocalizations.socksPort,
+                        );
                       }
                       final ports = [
                         _portController.text,
                         _mixedPortController.text,
                         _tProxyPortController.text,
-                        _redirPortController.text
+                        _redirPortController.text,
                       ].map((item) => item.trim());
                       if (ports.contains(value.trim())) {
                         return appLocalizations.portConflictTip;
@@ -712,26 +706,29 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return appLocalizations
-                            .emptyTip(appLocalizations.redirPort);
+                        return appLocalizations.emptyTip(
+                          appLocalizations.redirPort,
+                        );
                       }
                       final port = int.tryParse(value);
                       if (port == null) {
-                        return appLocalizations
-                            .numberTip(appLocalizations.redirPort);
+                        return appLocalizations.numberTip(
+                          appLocalizations.redirPort,
+                        );
                       }
                       if (port == 0) {
                         return null;
                       }
                       if (port < 1024 || port > 49151) {
-                        return appLocalizations
-                            .portTip(appLocalizations.redirPort);
+                        return appLocalizations.portTip(
+                          appLocalizations.redirPort,
+                        );
                       }
                       final ports = [
                         _portController.text,
                         _socksPortController.text,
                         _tProxyPortController.text,
-                        _mixedPortController.text
+                        _mixedPortController.text,
                       ].map((item) => item.trim());
                       if (ports.contains(value.trim())) {
                         return appLocalizations.portConflictTip;
@@ -753,13 +750,15 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return appLocalizations
-                            .emptyTip(appLocalizations.tproxyPort);
+                        return appLocalizations.emptyTip(
+                          appLocalizations.tproxyPort,
+                        );
                       }
                       final port = int.tryParse(value);
                       if (port == null) {
-                        return appLocalizations
-                            .numberTip(appLocalizations.tproxyPort);
+                        return appLocalizations.numberTip(
+                          appLocalizations.tproxyPort,
+                        );
                       }
                       if (port == 0) {
                         return null;
@@ -773,7 +772,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
                         _portController.text,
                         _socksPortController.text,
                         _mixedPortController.text,
-                        _redirPortController.text
+                        _redirPortController.text,
                       ].map((item) => item.trim());
                       if (ports.contains(value.trim())) {
                         return appLocalizations.portConflictTip;
@@ -782,7 +781,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
                       return null;
                     },
                   ),
-                ]
+                ],
               ],
             ),
           ),

@@ -154,10 +154,12 @@ class CacheItemExtentListViewState extends State<CacheItemExtentListView> {
   }
 
   void _updateCacheHeightMap() {
-    globalState.computeHeightMapCache[widget.tag]
-        ?.updateMaxLength(widget.itemCount);
-    globalState.computeHeightMapCache[widget.tag] ??=
-        FixedMap(widget.itemCount);
+    globalState.computeHeightMapCache[widget.tag]?.updateMaxLength(
+      widget.itemCount,
+    );
+    globalState.computeHeightMapCache[widget.tag] ??= FixedMap(
+      widget.itemCount,
+    );
   }
 
   @override
@@ -169,7 +171,7 @@ class CacheItemExtentListViewState extends State<CacheItemExtentListView> {
       reverse: widget.reverse,
       shrinkWrap: widget.shrinkWrap,
       controller: widget.controller,
-      itemExtentBuilder: (index, __) {
+      itemExtentBuilder: (index, _) {
         _updateCacheHeightMap();
         return globalState.computeHeightMapCache[widget.tag]?.updateCacheValue(
           widget.keyBuilder(index),
@@ -210,20 +212,23 @@ class CacheItemExtentSliverReorderableListState
   @override
   void initState() {
     super.initState();
-    globalState.computeHeightMapCache[widget.tag]
-        ?.updateMaxLength(widget.itemCount);
-    globalState.computeHeightMapCache[widget.tag] ??=
-        FixedMap(widget.itemCount);
+    globalState.computeHeightMapCache[widget.tag]?.updateMaxLength(
+      widget.itemCount,
+    );
+    globalState.computeHeightMapCache[widget.tag] ??= FixedMap(
+      widget.itemCount,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    globalState.computeHeightMapCache[widget.tag]
-        ?.updateMaxLength(widget.itemCount);
+    globalState.computeHeightMapCache[widget.tag]?.updateMaxLength(
+      widget.itemCount,
+    );
     return SliverReorderableList(
       itemBuilder: widget.itemBuilder,
       itemCount: widget.itemCount,
-      itemExtentBuilder: (index, __) {
+      itemExtentBuilder: (index, _) {
         return globalState.computeHeightMapCache[widget.tag]?.updateCacheValue(
           widget.keyBuilder(index),
           () => widget.itemExtentBuilder(index),

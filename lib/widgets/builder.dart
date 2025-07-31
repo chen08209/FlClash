@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class ScrollOverBuilder extends StatefulWidget {
   final Widget Function(bool isOver) builder;
 
-  const ScrollOverBuilder({
-    super.key,
-    required this.builder,
-  });
+  const ScrollOverBuilder({super.key, required this.builder});
 
   @override
   State<ScrollOverBuilder> createState() => _ScrollOverBuilderState();
@@ -30,7 +27,7 @@ class _ScrollOverBuilderState extends State<ScrollOverBuilder> {
       },
       child: ValueListenableBuilder<bool>(
         valueListenable: isOverNotifier,
-        builder: (_, isOver, __) {
+        builder: (_, isOver, _) {
           return widget.builder(isOver);
         },
       ),
