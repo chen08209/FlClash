@@ -13,10 +13,7 @@ import '../providers/state.dart';
 class ThemeManager extends ConsumerWidget {
   final Widget child;
 
-  const ThemeManager({
-    super.key,
-    required this.child,
-  });
+  const ThemeManager({super.key, required this.child});
 
   Widget _buildSystemUi(Widget child) {
     if (!system.isAndroid) {
@@ -85,23 +82,28 @@ class ThemeManager extends ConsumerWidget {
     final height = MediaQuery.of(context).size.height;
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(
-        textScaler: TextScaler.linear(
-          textScaleFactor,
-        ),
+        textScaler: TextScaler.linear(textScaleFactor),
         padding: padding.copyWith(
           top: padding.top > height * 0.3 ? 20.0 : padding.top,
         ),
       ),
-      child: LayoutBuilder(
-        builder: (_, container) {
-          globalState.appController.updateViewSize(
-            Size(
-              container.maxWidth,
-              container.maxHeight,
-            ),
-          );
-          return _buildSystemUi(child);
-        },
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          floatingActionButtonTheme: Theme.of(context).floatingActionButtonTheme
+              .copyWith(
+                shape: const RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(16.0)),
+                ),
+              ),
+        ),
+        child: LayoutBuilder(
+          builder: (_, container) {
+            globalState.appController.updateViewSize(
+              Size(container.maxWidth, container.maxHeight),
+            );
+            return _buildSystemUi(child);
+          },
+        ),
       ),
     );
   }

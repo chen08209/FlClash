@@ -30,7 +30,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
       height: getWidgetHeight(1),
       child: ValueListenableBuilder<NetworkDetectionState>(
         valueListenable: detectionState.state,
-        builder: (_, state, __) {
+        builder: (_, state, _) {
           final ipInfo = state.ipInfo;
           final isLoading = state.isLoading;
           return CommonCard(
@@ -40,17 +40,13 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
               children: [
                 Container(
                   height: globalState.measure.titleMediumHeight + 16,
-                  padding: baseInfoEdgeInsets.copyWith(
-                    bottom: 0,
-                  ),
+                  padding: baseInfoEdgeInsets.copyWith(bottom: 0),
                   child: Row(
                     mainAxisSize: MainAxisSize.max,
                     children: [
                       ipInfo != null
                           ? Text(
-                              _countryCodeToEmoji(
-                                ipInfo.countryCode,
-                              ),
+                              _countryCodeToEmoji(ipInfo.countryCode),
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -61,13 +57,11 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                             )
                           : Icon(
                               Icons.network_check,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
-                      const SizedBox(
-                        width: 8,
-                      ),
+                      const SizedBox(width: 8),
                       Flexible(
                         flex: 1,
                         child: TooltipText(
@@ -75,9 +69,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                             appLocalizations.networkDetection,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
+                            style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   color: context.colorScheme.onSurfaceVariant,
                                 ),
@@ -104,14 +96,12 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                             color: context.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: baseInfoEdgeInsets.copyWith(
-                    top: 0,
-                  ),
+                  padding: baseInfoEdgeInsets.copyWith(top: 0),
                   child: SizedBox(
                     height: globalState.measure.bodyMediumHeight + 2,
                     child: FadeThroughBox(
@@ -125,29 +115,27 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             )
-                          : FadeThroughBox(
-                              child: isLoading == false && ipInfo == null
-                                  ? Text(
-                                      'timeout',
-                                      style: context.textTheme.bodyMedium
-                                          ?.copyWith(color: Colors.red)
-                                          .adjustSize(1),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    )
-                                  : Container(
-                                      padding: const EdgeInsets.all(2),
-                                      child: const AspectRatio(
-                                        aspectRatio: 1,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    ),
+                          : isLoading == false && ipInfo == null
+                          ? Text(
+                              'timeout',
+                              style: context.textTheme.bodyMedium
+                                  ?.copyWith(color: Colors.red)
+                                  .adjustSize(1),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            )
+                          : Container(
+                              padding: const EdgeInsets.all(2),
+                              child: const AspectRatio(
+                                aspectRatio: 1,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
                             ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
           );

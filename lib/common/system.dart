@@ -37,7 +37,7 @@ class System {
       'macos' => (deviceInfo as MacOsDeviceInfo).majorVersion,
       'android' => (deviceInfo as AndroidDeviceInfo).version.sdkInt,
       'windows' => (deviceInfo as WindowsDeviceInfo).majorVersion,
-      String() => 0
+      String() => 0,
     };
   }
 
@@ -104,7 +104,7 @@ class System {
       );
       final arguments = [
         '-c',
-        'echo "$password" | sudo -S chown root:root "$corePath" && echo "$password" | sudo -S chmod +sx "$corePath"'
+        'echo "$password" | sudo -S chown root:root "$corePath" && echo "$password" | sudo -S chmod +sx "$corePath"',
       ];
       final result = await Process.run(shell, arguments);
       if (result.exitCode != 0) {
@@ -148,21 +148,25 @@ class Windows {
     final argumentsPtr = arguments.toNativeUtf16();
     final operationPtr = 'runas'.toNativeUtf16();
 
-    final shellExecute = _shell32.lookupFunction<
-        Int32 Function(
+    final shellExecute = _shell32
+        .lookupFunction<
+          Int32 Function(
             Pointer<Utf16> hwnd,
             Pointer<Utf16> lpOperation,
             Pointer<Utf16> lpFile,
             Pointer<Utf16> lpParameters,
             Pointer<Utf16> lpDirectory,
-            Int32 nShowCmd),
-        int Function(
+            Int32 nShowCmd,
+          ),
+          int Function(
             Pointer<Utf16> hwnd,
             Pointer<Utf16> lpOperation,
             Pointer<Utf16> lpFile,
             Pointer<Utf16> lpParameters,
             Pointer<Utf16> lpDirectory,
-            int nShowCmd)>('ShellExecuteW');
+            int nShowCmd,
+          )
+        >('ShellExecuteW');
 
     final result = shellExecute(
       nullptr,
@@ -177,7 +181,10 @@ class Windows {
     calloc.free(argumentsPtr);
     calloc.free(operationPtr);
 
-    commonPrint.log('windows runas: $command $arguments resultCode:$result');
+    commonPrint.log(
+      'windows runas: $command $arguments resultCode:$result',
+      logLevel: LogLevel.warning,
+    );
 
     if (result < 42) {
       return false;
@@ -248,15 +255,14 @@ class Windows {
 
     final res = runas('cmd.exe', command);
 
-    await Future.delayed(
-      Duration(milliseconds: 300),
-    );
+    await Future.delayed(Duration(milliseconds: 300));
 
     return res;
   }
 
   Future<bool> registerTask(String appName) async {
-    final taskXml = '''
+    final taskXml =
+        '''
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.3" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <Principals>
@@ -295,8 +301,9 @@ class Windows {
 </Task>''';
     final taskPath = join(await appPath.tempPath, 'task.xml');
     await File(taskPath).create(recursive: true);
-    await File(taskPath)
-        .writeAsBytes(taskXml.encodeUtf16LeWithBom, flush: true);
+    await File(
+      taskPath,
+    ).writeAsBytes(taskXml.encodeUtf16LeWithBom, flush: true);
     final commandLine = [
       '/Create',
       '/TN',
@@ -305,10 +312,7 @@ class Windows {
       '%s',
       '/F',
     ].join(' ');
-    return runas(
-      'schtasks',
-      commandLine.replaceFirst('%s', taskPath),
-    );
+    return runas('schtasks', commandLine.replaceFirst('%s', taskPath));
   }
 }
 
@@ -337,23 +341,25 @@ class MacOS {
       return null;
     }
     final device = lineSplits[1];
-    final serviceResult = await Process.run(
-      'networksetup',
-      ['-listnetworkserviceorder'],
-    );
+    final serviceResult = await Process.run('networksetup', [
+      '-listnetworkserviceorder',
+    ]);
     final serviceResultOutput = serviceResult.stdout.toString();
-    final currentService = serviceResultOutput.split('\n\n').firstWhere(
-          (s) => s.contains('Device: $device'),
-          orElse: () => '',
-        );
+    final currentService = serviceResultOutput
+        .split('\n\n')
+        .firstWhere((s) => s.contains('Device: $device'), orElse: () => '');
     if (currentService.isEmpty) {
       return null;
     }
-    final currentServiceNameLine = currentService.split('\n').firstWhere(
-        (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
-        orElse: () => '');
-    final currentServiceNameLineSplits =
-        currentServiceNameLine.trim().split(' ');
+    final currentServiceNameLine = currentService
+        .split('\n')
+        .firstWhere(
+          (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
+          orElse: () => '',
+        );
+    final currentServiceNameLineSplits = currentServiceNameLine.trim().split(
+      ' ',
+    );
     if (currentServiceNameLineSplits.length < 2) {
       return null;
     }
@@ -365,10 +371,10 @@ class MacOS {
     if (deviceServiceName == null) {
       return null;
     }
-    final result = await Process.run(
-      'networksetup',
-      ['-getdnsservers', deviceServiceName],
-    );
+    final result = await Process.run('networksetup', [
+      '-getdnsservers',
+      deviceServiceName,
+    ]);
     final output = result.stdout.toString().trim();
     if (output.startsWith("There aren't any DNS Servers set on")) {
       originDns = [];
@@ -400,15 +406,12 @@ class MacOS {
     if (nextDns == null) {
       return;
     }
-    await Process.run(
-      'networksetup',
-      [
-        '-setdnsservers',
-        serviceName,
-        if (nextDns.isNotEmpty) ...nextDns,
-        if (nextDns.isEmpty) 'Empty',
-      ],
-    );
+    await Process.run('networksetup', [
+      '-setdnsservers',
+      serviceName,
+      if (nextDns.isNotEmpty) ...nextDns,
+      if (nextDns.isEmpty) 'Empty',
+    ]);
   }
 }
 

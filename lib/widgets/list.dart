@@ -16,34 +16,23 @@ class Delegate {
 
 class RadioDelegate<T> extends Delegate {
   final T value;
-  final T groupValue;
-  final void Function(T?)? onChanged;
+  final void Function()? onTab;
 
-  const RadioDelegate({
-    required this.value,
-    required this.groupValue,
-    this.onChanged,
-  });
+  const RadioDelegate({required this.value, this.onTab});
 }
 
 class SwitchDelegate<T> extends Delegate {
   final bool value;
   final ValueChanged<bool>? onChanged;
 
-  const SwitchDelegate({
-    required this.value,
-    this.onChanged,
-  });
+  const SwitchDelegate({required this.value, this.onChanged});
 }
 
 class CheckboxDelegate<T> extends Delegate {
   final bool value;
   final ValueChanged<bool?>? onChanged;
 
-  const CheckboxDelegate({
-    this.value = false,
-    this.onChanged,
-  });
+  const CheckboxDelegate({this.value = false, this.onChanged});
 }
 
 class OpenDelegate extends Delegate {
@@ -131,6 +120,7 @@ class ListItem<T> extends StatelessWidget {
   final double? horizontalTitleGap;
   final TextStyle? titleTextStyle;
   final TextStyle? subtitleTextStyle;
+  final double minVerticalPadding;
   final void Function()? onTap;
 
   const ListItem({
@@ -145,6 +135,7 @@ class ListItem<T> extends StatelessWidget {
     this.onTap,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : delegate = const Delegate();
 
@@ -160,6 +151,7 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
 
@@ -175,6 +167,7 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
 
@@ -190,6 +183,7 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
 
@@ -205,6 +199,7 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
 
@@ -219,9 +214,10 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  })  : trailing = null,
-        onTap = null;
+  }) : trailing = null,
+       onTap = null;
 
   const ListItem.switchItem({
     super.key,
@@ -234,9 +230,10 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  })  : trailing = null,
-        onTap = null;
+  }) : trailing = null,
+       onTap = null;
 
   const ListItem.radio({
     super.key,
@@ -249,9 +246,10 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  })  : leading = null,
-        onTap = null;
+  }) : leading = null,
+       onTap = null;
 
   Widget _buildListTile({
     void Function()? onTap,
@@ -266,7 +264,7 @@ class ListItem<T> extends StatelessWidget {
       leading: leading ?? this.leading,
       horizontalTitleGap: horizontalTitleGap,
       title: title,
-      minVerticalPadding: 12,
+      minVerticalPadding: minVerticalPadding,
       subtitle: subtitle,
       titleAlignment: tileTitleAlignment,
       onTap: onTap,
@@ -284,7 +282,7 @@ class ListItem<T> extends StatelessWidget {
         closedBuilder: (_, action) {
           openAction() {
             final isMobile = globalState.appState.viewMode == ViewMode.mobile;
-            if (!isMobile || system.isDesktop) {
+            if (!isMobile) {
               showExtend(
                 context,
                 props: ExtendProps(
@@ -308,9 +306,7 @@ class ListItem<T> extends StatelessWidget {
             action();
           }
 
-          return _buildListTile(
-            onTap: openAction,
-          );
+          return _buildListTile(onTap: openAction);
         },
         openBuilder: (_, action) {
           return openDelegate.wrap
@@ -414,25 +410,17 @@ class ListItem<T> extends StatelessWidget {
     if (delegate is RadioDelegate) {
       final radioDelegate = delegate as RadioDelegate<T>;
       return _buildListTile(
-        onTap: () {
-          if (radioDelegate.onChanged != null) {
-            radioDelegate.onChanged!(radioDelegate.value);
-          }
-        },
+        onTap: radioDelegate.onTab,
         leading: Radio<T>(
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           value: radioDelegate.value,
-          groupValue: radioDelegate.groupValue,
-          onChanged: radioDelegate.onChanged,
           toggleable: true,
         ),
         trailing: trailing,
       );
     }
 
-    return _buildListTile(
-      onTap: onTap,
-    );
+    return _buildListTile(onTap: onTap);
   }
 }
 
@@ -456,13 +444,9 @@ class ListHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.centerLeft,
-      padding: padding ??
-          const EdgeInsets.only(
-            left: 16,
-            right: 8,
-            top: 24,
-            bottom: 8,
-          ),
+      padding:
+          padding ??
+          const EdgeInsets.only(left: 16, right: 8, top: 24, bottom: 8),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -474,19 +458,18 @@ class ListHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .opacity80,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.opacity80,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 if (subTitle != null)
                   Text(
                     subTitle!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
               ],
             ),
@@ -494,12 +477,7 @@ class ListHeader extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ...genActions(
-                actions,
-                space: space,
-              ),
-            ],
+            children: [...genActions(actions, space: space)],
           ),
         ],
       ),
@@ -514,18 +492,11 @@ List<Widget> generateSection({
   bool separated = true,
 }) {
   final genItems = separated
-      ? items.separated(
-          const Divider(
-            height: 0,
-          ),
-        )
+      ? items.separated(const Divider(height: 0))
       : items;
   return [
     if (items.isNotEmpty && title != null)
-      ListHeader(
-        title: title,
-        actions: actions,
-      ),
+      ListHeader(title: title, actions: actions),
     ...genItems,
   ];
 }
@@ -536,22 +507,26 @@ Widget generateSectionV2({
   List<Widget>? actions,
   bool separated = true,
 }) {
+  final genItems = items
+      .map<Widget>((item) {
+        return ClipRSuperellipse(
+          borderRadius: BorderRadius.circular(4),
+          child: CommonCard(
+            type: CommonCardType.filled,
+            radius: 0,
+            child: item,
+          ),
+        );
+      })
+      .separated(const Divider(height: 2, color: Colors.transparent));
   return Column(
     children: [
       if (items.isNotEmpty && title != null)
-        ListHeader(
-          title: title,
-          actions: actions,
-        ),
-      CommonCard(
-        radius: 18,
-        type: CommonCardType.filled,
-        child: Column(
-          children: [
-            ...items,
-          ],
-        ),
-      )
+        ListHeader(title: title, actions: actions),
+      ClipRSuperellipse(
+        borderRadius: BorderRadius.circular(14),
+        child: Column(children: [...genItems]),
+      ),
     ],
   );
 }
@@ -563,18 +538,10 @@ List<Widget> generateInfoSection({
   bool separated = true,
 }) {
   final genItems = separated
-      ? items.separated(
-          const Divider(
-            height: 0,
-          ),
-        )
+      ? items.separated(const Divider(height: 0))
       : items;
   return [
-    if (items.isNotEmpty)
-      InfoHeader(
-        info: info,
-        actions: actions,
-      ),
+    if (items.isNotEmpty) InfoHeader(info: info, actions: actions),
     ...genItems,
   ];
 }
@@ -583,8 +550,6 @@ Widget generateListView(List<Widget> items) {
   return ListView.builder(
     itemCount: items.length,
     itemBuilder: (_, index) => items[index],
-    padding: const EdgeInsets.only(
-      bottom: 16,
-    ),
+    padding: const EdgeInsets.only(bottom: 16),
   );
 }

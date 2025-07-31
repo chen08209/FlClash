@@ -5,12 +5,14 @@ import 'package:flutter/widgets.dart';
 
 class CommonPopScope extends StatelessWidget {
   final Widget child;
-  final FutureOr<bool> Function()? onPop;
+  final FutureOr<bool> Function(BuildContext context)? onPop;
+  final FutureOr<void> Function()? onPopSuccess;
 
   const CommonPopScope({
     super.key,
     required this.child,
     this.onPop,
+    this.onPopSuccess,
   });
 
   @override
@@ -19,11 +21,11 @@ class CommonPopScope extends StatelessWidget {
       canPop: onPop == null ? true : false,
       onPopInvokedWithResult: onPop == null
           ? null
-          : (didPop, __) async {
+          : (didPop, _) async {
               if (didPop) {
                 return;
               }
-              final res = await onPop!();
+              final res = await onPop!(context);
               if (!context.mounted) {
                 return;
               }
@@ -31,6 +33,9 @@ class CommonPopScope extends StatelessWidget {
                 return;
               }
               Navigator.of(context).pop();
+              if (onPopSuccess != null) {
+                await onPopSuccess!();
+              }
             },
       child: child,
     );
@@ -40,10 +45,7 @@ class CommonPopScope extends StatelessWidget {
 class SystemBackBlock extends StatefulWidget {
   final Widget child;
 
-  const SystemBackBlock({
-    super.key,
-    required this.child,
-  });
+  const SystemBackBlock({super.key, required this.child});
 
   @override
   State<SystemBackBlock> createState() => _SystemBackBlockState();
