@@ -2,7 +2,6 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/pop_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,8 +10,8 @@ import 'chip.dart';
 
 typedef OnKeywordsUpdateCallback = void Function(List<String> keywords);
 
-typedef AppBarSearchStateBuilder = AppBarSearchState? Function(
-    AppBarSearchState? state);
+typedef AppBarSearchStateBuilder =
+    AppBarSearchState? Function(AppBarSearchState? state);
 
 class CommonScaffold extends StatefulWidget {
   final AppBar? appBar;
@@ -68,20 +67,13 @@ class CommonScaffoldState extends State<CommonScaffold> {
   void initState() {
     super.initState();
     _appBarState = ValueNotifier(
-      AppBarState(
-        editState: widget.editState,
-        searchState: widget.searchState,
-      ),
+      AppBarState(editState: widget.editState, searchState: widget.searchState),
     );
   }
 
-  Future<void> _updateSearchState(
-    AppBarSearchStateBuilder builder,
-  ) async {
+  Future<void> _updateSearchState(AppBarSearchStateBuilder builder) async {
     _appBarState.value = _appBarState.value.copyWith(
-      searchState: builder(
-        _appBarState.value.searchState,
-      ),
+      searchState: builder(_appBarState.value.searchState),
     );
   }
 
@@ -140,20 +132,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
       _handleClearInput();
       return;
     }
-    _updateSearchState(
-      (state) => state?.copyWith(
-        query: null,
-      ),
-    );
+    _updateSearchState((state) => state?.copyWith(query: null));
   }
 
   void _handleExitSearching() {
     _handleClearInput();
-    _updateSearchState(
-      (state) => state?.copyWith(
-        query: null,
-      ),
-    );
+    _updateSearchState((state) => state?.copyWith(query: null));
   }
 
   @override
@@ -206,9 +190,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
                 startState.onSearch(value);
               }
             },
-            decoration: InputDecoration(
-              hintText: appLocalizations.search,
-            ),
+            decoration: InputDecoration(hintText: appLocalizations.search),
           )
         : Text(
             !_isEdit
@@ -219,34 +201,22 @@ class CommonScaffoldState extends State<CommonScaffold> {
           );
   }
 
-  List<Widget> _buildActions(
-    bool hasSearch,
-    List<Widget> actions,
-  ) {
+  List<Widget> _buildActions(bool hasSearch, List<Widget> actions) {
     if (_isSearch) {
       return genActions([
-        IconButton(
-          onPressed: _handleClear,
-          icon: Icon(Icons.close),
-        ),
+        IconButton(onPressed: _handleClear, icon: Icon(Icons.close)),
       ]);
     }
-    return genActions(
-      [
-        if (hasSearch)
-          IconButton(
-            onPressed: () {
-              _updateSearchState(
-                (state) => state?.copyWith(
-                  query: '',
-                ),
-              );
-            },
-            icon: Icon(Icons.search),
-          ),
-        ...actions
-      ],
-    );
+    return genActions([
+      if (hasSearch)
+        IconButton(
+          onPressed: () {
+            _updateSearchState((state) => state?.copyWith(query: ''));
+          },
+          icon: Icon(Icons.search),
+        ),
+      ...actions,
+    ]);
   }
 
   Widget _buildAppBarWrap(Widget child) {
@@ -254,7 +224,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     if (_isEdit || _isSearch) {
       return SystemBackBlock(
         child: CommonPopScope(
-          onPop: () {
+          onPop: (context) {
             if (_isEdit || _isSearch) {
               _handleExitSearching();
               _appBarState.value.editState?.onExit();
@@ -271,7 +241,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
 
   Widget _buildLoading() {
     return Consumer(
-      builder: (_, ref, __) {
+      builder: (_, ref, _) {
         final loading = ref.watch(loadingProvider);
         final isMobileView = ref.watch(isMobileViewProvider);
         return loading && isMobileView
@@ -290,7 +260,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
           widget.appBar ??
               ValueListenableBuilder<AppBarState>(
                 valueListenable: _appBarState,
-                builder: (_, state, __) {
+                builder: (_, state, _) {
                   return _buildAppBarWrap(
                     AppBar(
                       centerTitle: widget.centerTitle ?? false,
@@ -321,7 +291,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         children: [
           ValueListenableBuilder(
             valueListenable: _keywordsNotifier,
-            builder: (_, keywords, __) {
+            builder: (_, keywords, _) {
               if (widget.onKeywordsUpdate != null) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   widget.onKeywordsUpdate!(keywords);
@@ -352,9 +322,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
               );
             },
           ),
-          Expanded(
-            child: widget.body,
-          ),
+          Expanded(child: widget.body),
         ],
       ),
     );
@@ -363,17 +331,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
       body: body,
       resizeToAvoidBottomInset: true,
       backgroundColor: widget.backgroundColor,
-      floatingActionButton: widget.floatingActionButton ??
+      floatingActionButton:
+          widget.floatingActionButton ??
           ValueListenableBuilder<Widget?>(
             valueListenable: _floatingActionButton,
-            builder: (_, value, __) {
-              return IntrinsicWidth(
-                child: IntrinsicHeight(
-                  child: FadeScaleBox(
-                    child: value ?? SizedBox(),
-                  ),
-                ),
-              );
+            builder: (_, value, _) {
+              return value ?? SizedBox();
             },
           ),
     );
@@ -382,13 +345,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
 
 List<Widget> genActions(List<Widget> actions, {double? space}) {
   return <Widget>[
-    ...actions.separated(
-      SizedBox(
-        width: space ?? 4,
-      ),
-    ),
-    SizedBox(
-      width: 8,
-    )
+    ...actions.separated(SizedBox(width: space ?? 4)),
+    SizedBox(width: 8),
   ];
 }

@@ -1,9 +1,9 @@
 name: fl_clash
 description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
-version: 0.8.87+2025072902
+version: 0.8.88+2025090501
 environment:
-  sdk: '>=3.1.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -15,14 +15,14 @@ dependencies:
   path: ^1.9.0
   shared_preferences: ^2.5.3
   window_manager: ^0.5.0
-  dynamic_color: ^1.7.0
+  dynamic_color: ^1.8.1
   proxy:
     path: plugins/proxy
   window_ext:
     path: plugins/window_ext
   launch_at_startup: ^0.5.1
   json_annotation: ^4.9.0
-  file_picker: ^8.0.3
+  file_picker: ^10.3.1
   mobile_scanner: ^7.0.0
   app_links: ^6.4.0
   win32_registry: ^2.0.0
@@ -31,19 +31,18 @@ dependencies:
   animations: ^2.0.11
   package_info_plus: ^8.0.0
   url_launcher: ^6.2.6
-  freezed_annotation: ^2.4.1
+  freezed_annotation: ^3.1.0
   image_picker: ^1.1.2
+  ffi: ^2.1.4
   webdav_client: ^1.2.2
   dio: ^5.8.0+1
   win32: ^5.5.1
-  ffi: ^2.1.2
   re_editor:
     git:
       url: https://github.com/chen08209/re-editor.git
       ref: main
   re_highlight: ^0.0.3
-  archive: ^3.6.1
-  lpinyin: ^2.0.3
+  archive: ^4.0.7
   emoji_regex: ^0.0.5
   hotkey_manager: ^0.2.3
   uni_platform: ^0.1.3
@@ -51,31 +50,27 @@ dependencies:
   connectivity_plus: ^6.1.0
   screen_retriever: ^0.2.0
   defer_pointer: ^0.0.2
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
-  riverpod: ^2.6.1
+  flutter_riverpod: ^3.0.0-dev.17
+  riverpod_annotation: ^3.0.0-dev.17
+  riverpod: ^3.0.0-dev.17
   material_color_utilities: ^0.11.1
   flutter_js:
     git:
       url: https://github.com/chen08209/flutter_js
       ref: master
-  #  yaml: ^3.1.3
   flutter_svg: ^2.1.0
   flutter_cache_manager: ^3.4.1
   crypto: ^3.0.3
-  flutter_acrylic: ^1.1.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  ffigen: ^18.1.0
   json_serializable: ^6.7.1
-  build_runner: ^2.4.13
+  build_runner: ^2.7.0
   args: ^2.4.2
-  freezed: ^2.5.1
-  riverpod_generator: ^2.6.3
-  riverpod_lint: ^2.6.3
-  custom_lint: ^0.7.0
+  freezed: ^3.2.0
+  riverpod_generator: ^3.0.0-dev.17
+  riverpod_lint: ^3.0.0-dev.17
 
 flutter:
   uses-material-design: true
@@ -94,12 +89,6 @@ flutter:
     - family: Icons
       fonts:
         - asset: assets/fonts/Icons.ttf
-ffigen:
-  name: "ClashFFI"
-  output: 'lib/clash/generated/clash_ffi.dart'
-  headers:
-    entry-points:
-      - 'libclash/android/arm64-v8a/libclash.h'
 flutter_intl:
   enabled: true
   class_name: AppLocalizations

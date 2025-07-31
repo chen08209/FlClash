@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 
 @immutable
 class Palette extends StatefulWidget {
-  const Palette({
-    super.key,
-    required this.controller,
-  });
+  const Palette({super.key, required this.controller});
 
   final ValueNotifier<Color> controller;
 
@@ -74,15 +71,19 @@ class _PaletteState extends State<Palette> {
     final center = Offset(size.width / 2, size.height / 2);
     final vector = offset - startPosition - center;
     final vectorLength = _Computer.vectorLength(vector);
-    isSquare = vector.dx.abs() < effectiveSquareRadius &&
+    isSquare =
+        vector.dx.abs() < effectiveSquareRadius &&
         vector.dy.abs() < effectiveSquareRadius;
     isTrack = vectorLength >= radius && vectorLength <= radiusOuter;
     if (isSquare) {
-      colorSaturation =
-          _Computer.vectorToSaturation(vector.dx, effectiveSquareRadius)
-              .clamp(0.0, 1.0);
-      colorValue = _Computer.vectorToValue(vector.dy, effectiveSquareRadius)
-          .clamp(0.0, 1.0);
+      colorSaturation = _Computer.vectorToSaturation(
+        vector.dx,
+        effectiveSquareRadius,
+      ).clamp(0.0, 1.0);
+      colorValue = _Computer.vectorToValue(
+        vector.dy,
+        effectiveSquareRadius,
+      ).clamp(0.0, 1.0);
       _handleChange();
     } else if (isTrack) {
       colorHue = _Computer.vectorToHue(vector);
@@ -104,11 +105,14 @@ class _PaletteState extends State<Palette> {
     final vector = offset - startPosition - center;
     if (isSquare) {
       isTrack = false;
-      colorSaturation =
-          _Computer.vectorToSaturation(vector.dx, effectiveSquareRadius)
-              .clamp(0.0, 1.0);
-      colorValue = _Computer.vectorToValue(vector.dy, effectiveSquareRadius)
-          .clamp(0.0, 1.0);
+      colorSaturation = _Computer.vectorToSaturation(
+        vector.dx,
+        effectiveSquareRadius,
+      ).clamp(0.0, 1.0);
+      colorValue = _Computer.vectorToValue(
+        vector.dy,
+        effectiveSquareRadius,
+      ).clamp(0.0, 1.0);
 
       _handleChange();
     } else if (isTrack) {
@@ -130,7 +134,7 @@ class _PaletteState extends State<Palette> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: widget.controller,
-      builder: (_, __, ___) {
+      builder: (_, _, _) {
         return GestureDetector(
           dragStartBehavior: DragStartBehavior.down,
           onVerticalDragDown: (DragDownDetails details) =>
@@ -218,8 +222,10 @@ class _ShadePainter extends CustomPainter {
       math.min(size.width, size.height) / 2 - trackWidth / 2;
 
   static double squareRadius(
-          double radius, double trackWidth, double padding) =>
-      (radius - trackWidth / 2 - padding) / math.sqrt(2);
+    double radius,
+    double trackWidth,
+    double padding,
+  ) => (radius - trackWidth / 2 - padding) / math.sqrt(2);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -232,10 +238,11 @@ class _ShadePainter extends CustomPainter {
     );
 
     final Rect rectBox = Rect.fromLTWH(
-        center.dx - effectiveSquareRadius,
-        center.dy - effectiveSquareRadius,
-        effectiveSquareRadius * 2,
-        effectiveSquareRadius * 2);
+      center.dx - effectiveSquareRadius,
+      center.dy - effectiveSquareRadius,
+      effectiveSquareRadius * 2,
+      effectiveSquareRadius * 2,
+    );
     final RRect rRect = RRect.fromRectAndRadius(
       rectBox,
       Radius.circular(trackBorderRadius),
@@ -244,14 +251,15 @@ class _ShadePainter extends CustomPainter {
     final Shader horizontal = LinearGradient(
       colors: <Color>[
         Colors.white,
-        HSVColor.fromAHSV(1, colorHue, 1, 1).toColor()
+        HSVColor.fromAHSV(1, colorHue, 1, 1).toColor(),
       ],
     ).createShader(rectBox);
     canvas.drawRRect(
-        rRect,
-        Paint()
-          ..style = PaintingStyle.fill
-          ..shader = horizontal);
+      rRect,
+      Paint()
+        ..style = PaintingStyle.fill
+        ..shader = horizontal,
+    );
 
     final Shader vertical = const LinearGradient(
       begin: Alignment.topCenter,
@@ -259,10 +267,11 @@ class _ShadePainter extends CustomPainter {
       colors: <Color>[Colors.transparent, Colors.black],
     ).createShader(rectBox);
     canvas.drawRRect(
-        rRect,
-        Paint()
-          ..style = PaintingStyle.fill
-          ..shader = vertical);
+      rRect,
+      Paint()
+        ..style = PaintingStyle.fill
+        ..shader = vertical,
+    );
   }
 
   @override
@@ -277,10 +286,7 @@ class _ShadePainter extends CustomPainter {
 }
 
 class _TrackPainter extends CustomPainter {
-  const _TrackPainter({
-    this.ticks = 360,
-    required this.thickness,
-  }) : super();
+  const _TrackPainter({this.ticks = 360, required this.thickness}) : super();
   final int ticks;
   final double thickness;
 
@@ -307,13 +313,7 @@ class _TrackPainter extends CustomPainter {
         ..color = HSVColor.fromAHSV(1, i.toDouble(), 1, 1).toColor()
         ..style = PaintingStyle.stroke
         ..strokeWidth = thickness;
-      canvas.drawArc(
-        rectCircle,
-        sRad,
-        sRad - eRad,
-        false,
-        segmentPaint,
-      );
+      canvas.drawArc(rectCircle, sRad, sRad - eRad, false, segmentPaint);
     }
   }
 
@@ -340,15 +340,20 @@ class _ShadeThumbPainter extends CustomPainter {
       math.min(size.width, size.height) / 2 - thickness / 2;
 
   static double squareRadius(
-          double radius, double thickness, double trackSquarePadding) =>
-      (radius - thickness / 2 - trackSquarePadding) / math.sqrt(2);
+    double radius,
+    double thickness,
+    double trackSquarePadding,
+  ) => (radius - thickness / 2 - trackSquarePadding) / math.sqrt(2);
 
   @override
   void paint(Canvas canvas, Size size) {
     final Offset center = Offset(size.width / 2, size.height / 2);
     final double radius = trackRadius(size, thickness);
-    final double effectiveSquareRadius =
-        squareRadius(radius, thickness, padding);
+    final double effectiveSquareRadius = squareRadius(
+      radius,
+      thickness,
+      padding,
+    );
 
     final Paint paintBlack = Paint()
       ..color = Colors.black
@@ -360,9 +365,15 @@ class _ShadeThumbPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final double paletteX = _Computer.saturationToVector(
-        colorSaturation, effectiveSquareRadius, center.dx);
-    final double paletteY =
-        _Computer.valueToVector(colorValue, effectiveSquareRadius, center.dy);
+      colorSaturation,
+      effectiveSquareRadius,
+      center.dx,
+    );
+    final double paletteY = _Computer.valueToVector(
+      colorValue,
+      effectiveSquareRadius,
+      center.dy,
+    );
     final Offset paletteVector = Offset(paletteX, paletteY);
     canvas.drawCircle(paletteVector, 12, paintBlack);
     canvas.drawCircle(paletteVector, 12, paintWhite);
@@ -378,10 +389,8 @@ class _ShadeThumbPainter extends CustomPainter {
 }
 
 class _TrackThumbPainter extends CustomPainter {
-  const _TrackThumbPainter({
-    required this.colorHue,
-    required this.thickness,
-  }) : super();
+  const _TrackThumbPainter({required this.colorHue, required this.thickness})
+    : super();
 
   final double colorHue;
   final double thickness;
@@ -431,11 +440,15 @@ class _Computer {
       0.5 - vectorY * 0.5 / squareRadius;
 
   static Offset hueToVector(double h, double radius, Offset center) => Offset(
-      math.cos(h) * radius + center.dx, math.sin(h) * radius + center.dy);
+    math.cos(h) * radius + center.dx,
+    math.sin(h) * radius + center.dy,
+  );
 
   static double saturationToVector(
-          double s, double squareRadius, double centerX) =>
-      (s - 0.5) * squareRadius / 0.5 + centerX;
+    double s,
+    double squareRadius,
+    double centerX,
+  ) => (s - 0.5) * squareRadius / 0.5 + centerX;
 
   static double valueToVector(double l, double squareRadius, double centerY) =>
       (0.5 - l) * squareRadius / 0.5 + centerY;

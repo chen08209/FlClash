@@ -422,5 +422,12 @@
   "proxyChains": "Цепочки прокси",
   "log": "Журнал",
   "connection": "Соединение",
-  "request": "Запрос"
+  "request": "Запрос",
+  "connected": "Подключено",
+  "disconnected": "Отключено",
+  "connecting": "Подключение...",
+  "restartCoreTip": "Вы уверены, что хотите перезапустить ядро?",
+  "forceRestartCoreTip": "Вы уверены, что хотите принудительно перезапустить ядро?",
+  "dnsHijacking": "DNS-перехват",
+  "coreStatus": "Основной статус"
 }

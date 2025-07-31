@@ -23,7 +23,11 @@ class EditorPage extends ConsumerStatefulWidget {
   final bool titleEditable;
   final Function(BuildContext context, String title, String content)? onSave;
   final Future<bool> Function(
-      BuildContext context, String title, String content)? onPop;
+    BuildContext context,
+    String title,
+    String content,
+  )?
+  onPop;
 
   const EditorPage({
     super.key,
@@ -33,9 +37,7 @@ class EditorPage extends ConsumerStatefulWidget {
     this.onSave,
     this.onPop,
     this.supportRemoteDownload = false,
-    this.languages = const [
-      Language.yaml,
-    ],
+    this.languages = const [Language.yaml],
   });
 
   @override
@@ -92,7 +94,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   Widget _wrapController(EditingValueChangeBuilder builder) {
     return ValueListenableBuilder(
       valueListenable: _controller,
-      builder: (_, value, ___) {
+      builder: (_, value, _) {
         return builder(value);
       },
     );
@@ -101,7 +103,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   Widget _wrapTitleController(TextEditingValueChangeBuilder builder) {
     return ValueListenableBuilder(
       valueListenable: _titleController,
-      builder: (_, value, ___) {
+      builder: (_, value, _) {
         return builder(value);
       },
     );
@@ -154,7 +156,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   Widget build(BuildContext context) {
     final isMobileView = ref.watch(isMobileViewProvider);
     return CommonPopScope(
-      onPop: () async {
+      onPop: (context) async {
         if (widget.onPop == null) {
           return true;
         }
@@ -185,7 +187,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               _wrapController(
                 (value) => _wrapTitleController(
                   (value) => IconButton(
-                    onPressed: _controller.text != widget.content ||
+                    onPressed:
+                        _controller.text != widget.content ||
                             _titleController.text != widget.title
                         ? () {
                             widget.onSave!(
@@ -202,18 +205,14 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             if (widget.supportRemoteDownload)
               IconButton(
                 onPressed: _handleImport,
-                icon: Icon(
-                  Icons.arrow_downward,
-                ),
+                icon: Icon(Icons.arrow_downward),
               ),
             _wrapController(
               (value) => CommonPopupBox(
                 targetBuilder: (open) {
                   return IconButton(
                     onPressed: () {
-                      open(
-                        offset: Offset(-20, 20),
-                      );
+                      open(offset: Offset(-20, 20));
                     },
                     icon: const Icon(Icons.more_vert),
                   );
@@ -248,9 +247,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             readOnly: readOnly,
             isMobileView: isMobileView,
           ),
-          padding: EdgeInsets.only(
-            right: 16,
-          ),
+          padding: EdgeInsets.only(right: 16),
           autocompleteSymbols: true,
           focusNode: _focusNode,
           scrollbarBuilder: (context, child, details) {
@@ -260,26 +257,22 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             );
           },
           toolbarController: ContextMenuControllerImpl(),
-          indicatorBuilder: (
-            context,
-            editingController,
-            chunkController,
-            notifier,
-          ) {
-            return Row(
-              children: [
-                DefaultCodeLineNumber(
-                  controller: editingController,
-                  notifier: notifier,
-                ),
-                DefaultCodeChunkIndicator(
-                  width: 20,
-                  controller: chunkController,
-                  notifier: notifier,
-                )
-              ],
-            );
-          },
+          indicatorBuilder:
+              (context, editingController, chunkController, notifier) {
+                return Row(
+                  children: [
+                    DefaultCodeLineNumber(
+                      controller: editingController,
+                      notifier: notifier,
+                    ),
+                    DefaultCodeChunkIndicator(
+                      width: 20,
+                      controller: chunkController,
+                      notifier: notifier,
+                    ),
+                  ],
+                );
+              },
           shortcutsActivatorsBuilder: DefaultCodeShortcutsActivatorsBuilder(),
           controller: _controller,
           style: CodeEditorStyle(
@@ -288,13 +281,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             codeTheme: CodeHighlightTheme(
               languages: {
                 if (widget.languages.contains(Language.yaml))
-                  'yaml': CodeHighlightThemeMode(
-                    mode: langYaml,
-                  ),
+                  'yaml': CodeHighlightThemeMode(mode: langYaml),
                 if (widget.languages.contains(Language.javaScript))
-                  'javascript': CodeHighlightThemeMode(
-                    mode: langJavascript,
-                  ),
+                  'javascript': CodeHighlightThemeMode(mode: langJavascript),
               },
               theme: atomOneLightTheme,
             ),
@@ -318,33 +307,24 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     required this.controller,
     required this.readOnly,
     required this.isMobileView,
-  }) : height = (isMobileView
-                ? _kDefaultFindPanelHeight * 2
-                : _kDefaultFindPanelHeight) +
-            8;
+  }) : height =
+           (isMobileView
+               ? _kDefaultFindPanelHeight * 2
+               : _kDefaultFindPanelHeight) +
+           8;
 
   @override
-  Size get preferredSize => Size(
-        double.infinity,
-        controller.value == null ? 0 : height,
-      );
+  Size get preferredSize =>
+      Size(double.infinity, controller.value == null ? 0 : height);
 
   @override
   Widget build(BuildContext context) {
     if (controller.value == null) {
-      return const SizedBox(
-        width: 0,
-        height: 0,
-      );
+      return const SizedBox(width: 0, height: 0);
     }
     return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: 12,
-        horizontal: 16,
-      ),
-      margin: EdgeInsets.only(
-        bottom: 8,
-      ),
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      margin: EdgeInsets.only(bottom: 8),
       color: context.colorScheme.surface,
       alignment: Alignment.centerLeft,
       height: height,
@@ -368,18 +348,13 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
             constraints: BoxConstraints(maxWidth: 360),
             child: _buildFindInput(context, value),
           ),
-          SizedBox(
-            width: 12,
-          ),
+          SizedBox(width: 12),
         ],
-        Text(
-          result,
-          style: context.textTheme.bodyMedium,
-        ),
+        Text(result, style: context.textTheme.bodyMedium),
         Expanded(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
-            spacing: 8,
+            spacing: 6,
             children: [
               _buildIconButton(
                 onPressed: value.result == null
@@ -397,21 +372,12 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
                       },
                 icon: Icons.arrow_downward,
               ),
-              SizedBox(
-                width: 2,
-              ),
+              SizedBox(width: 2),
               IconButton.filledTonal(
                 visualDensity: VisualDensity.compact,
                 onPressed: controller.close,
-                style: ButtonStyle(
-                  padding: WidgetStatePropertyAll(
-                    EdgeInsets.all(0),
-                  ),
-                ),
-                icon: Icon(
-                  Icons.close,
-                  size: 16,
-                ),
+                style: IconButton.styleFrom(padding: EdgeInsets.zero),
+                icon: Icon(Icons.close, size: 16),
               ),
             ],
           ),
@@ -421,13 +387,7 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     if (isMobileView) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          bar,
-          SizedBox(
-            height: 4,
-          ),
-          _buildFindInput(context, value),
-        ],
+        children: [bar, SizedBox(height: 4), _buildFindInput(context, value)],
       );
     }
     return bar;
@@ -469,11 +429,9 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
                 controller.toggleRegex();
               },
             ),
-            SizedBox(
-              width: 4,
-            ),
+            SizedBox(width: 4),
           ],
-        )
+        ),
       ],
     );
   }
@@ -490,9 +448,7 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
       style: context.textTheme.bodyMedium,
       decoration: InputDecoration(
         border: OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 12,
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12),
       ),
       onSubmitted: (_) {
         onSubmitted();
@@ -521,27 +477,18 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
             : IconButton(
                 onPressed: onPressed,
                 padding: EdgeInsets.all(2),
-                icon: Text(
-                  text,
-                  style: context.textTheme.bodySmall,
-                ),
+                icon: Text(text, style: context.textTheme.bodySmall),
               ),
       ),
     );
   }
 
-  Widget _buildIconButton({
-    required IconData icon,
-    VoidCallback? onPressed,
-  }) {
+  Widget _buildIconButton({required IconData icon, VoidCallback? onPressed}) {
     return IconButton(
       visualDensity: VisualDensity.compact,
       onPressed: onPressed,
-      style: ButtonStyle(padding: WidgetStatePropertyAll(EdgeInsets.all(0))),
-      icon: Icon(
-        icon,
-        size: 16,
-      ),
+      style: IconButton.styleFrom(padding: EdgeInsets.all(0)),
+      icon: Icon(icon, size: 16),
     );
   }
 }
@@ -575,7 +522,7 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
       builder: (context) => CodeEditorTapRegion(
         child: ValueListenableBuilder(
           valueListenable: controller,
-          builder: (_, __, child) {
+          builder: (_, _, child) {
             final isNotEmpty = controller.selectedText.isNotEmpty;
             final isAllSelected = controller.isAllSelected;
             final hasSelected = controller.selectedText.isNotEmpty;
@@ -608,25 +555,25 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
             return TextSelectionToolbar(
               anchorAbove: anchors.primaryAnchor,
               anchorBelow: anchors.secondaryAnchor ?? Offset.zero,
-              children: menus.asMap().entries.map(
-                (MapEntry<int, PopupMenuItemData> entry) {
-                  return TextSelectionToolbarTextButton(
-                    padding: TextSelectionToolbarTextButton.getPadding(
-                      entry.key,
-                      menus.length,
-                    ),
-                    alignment: AlignmentDirectional.centerStart,
-                    onPressed: () {
-                      if (entry.value.onPressed == null) {
-                        return;
-                      }
-                      entry.value.onPressed!();
-                      _removeOverLayEntry();
-                    },
-                    child: Text(entry.value.label),
-                  );
-                },
-              ).toList(),
+              children: menus.asMap().entries.map((
+                MapEntry<int, PopupMenuItemData> entry,
+              ) {
+                return TextSelectionToolbarTextButton(
+                  padding: TextSelectionToolbarTextButton.getPadding(
+                    entry.key,
+                    menus.length,
+                  ),
+                  alignment: AlignmentDirectional.centerStart,
+                  onPressed: () {
+                    if (entry.value.onPressed == null) {
+                      return;
+                    }
+                    entry.value.onPressed!();
+                    _removeOverLayEntry();
+                  },
+                  child: Text(entry.value.label),
+                );
+              }).toList(),
             );
           },
         ),
@@ -662,8 +609,12 @@ class _NoInputBorder extends InputBorder {
   }
 
   @override
-  void paintInterior(Canvas canvas, Rect rect, Paint paint,
-      {TextDirection? textDirection}) {
+  void paintInterior(
+    Canvas canvas,
+    Rect rect,
+    Paint paint, {
+    TextDirection? textDirection,
+  }) {
     canvas.drawRect(rect, paint);
   }
 
@@ -697,10 +648,7 @@ class _ImportOptionsDialogState extends State<_ImportOptionsDialog> {
   Widget build(BuildContext context) {
     return CommonDialog(
       title: appLocalizations.import,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 16,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: Wrap(
         children: [
           ListItem(
@@ -714,7 +662,7 @@ class _ImportOptionsDialogState extends State<_ImportOptionsDialog> {
               _handleOnTab(ImportOption.file);
             },
             title: Text(appLocalizations.importFile),
-          )
+          ),
         ],
       ),
     );

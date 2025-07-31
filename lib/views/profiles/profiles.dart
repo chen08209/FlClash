@@ -42,24 +42,18 @@ class _ProfilesViewState extends State<ProfilesView> {
   Future<void> _updateProfiles() async {
     final profiles = globalState.config.profiles;
     final messages = [];
-    final updateProfiles = profiles.map<Future>(
-      (profile) async {
-        if (profile.type == ProfileType.file) return;
+    final updateProfiles = profiles.map<Future>((profile) async {
+      if (profile.type == ProfileType.file) return;
+      globalState.appController.setProfile(profile.copyWith(isUpdating: true));
+      try {
+        await globalState.appController.updateProfile(profile);
+      } catch (e) {
+        messages.add('${profile.label ?? profile.id}: $e \n');
         globalState.appController.setProfile(
-          profile.copyWith(isUpdating: true),
+          profile.copyWith(isUpdating: false),
         );
-        try {
-          await globalState.appController.updateProfile(profile);
-        } catch (e) {
-          messages.add('${profile.label ?? profile.id}: $e \n');
-          globalState.appController.setProfile(
-            profile.copyWith(
-              isUpdating: false,
-            ),
-          );
-        }
-      },
-    );
+      }
+    });
     final titleMedium = context.textTheme.titleMedium;
     await Future.wait(updateProfiles);
     if (messages.isNotEmpty) {
@@ -68,7 +62,7 @@ class _ProfilesViewState extends State<ProfilesView> {
         message: TextSpan(
           children: [
             for (final message in messages)
-              TextSpan(text: message, style: titleMedium)
+              TextSpan(text: message, style: titleMedium),
           ],
         ),
       );
@@ -93,9 +87,10 @@ class _ProfilesViewState extends State<ProfilesView> {
           );
         },
         icon: Consumer(
-          builder: (context, ref, __) {
+          builder: (context, ref, _) {
             final isScriptMode = ref.watch(
-                scriptStateProvider.select((state) => state.realId != null));
+              scriptStateProvider.select((state) => state.realId != null),
+            );
             return Icon(
               Icons.functions,
               color: isScriptMode ? context.colorScheme.primary : null,
@@ -109,10 +104,7 @@ class _ProfilesViewState extends State<ProfilesView> {
           showSheet(
             context: context,
             builder: (_, type) {
-              return ReorderableProfilesSheet(
-                type: type,
-                profiles: profiles,
-              );
+              return ReorderableProfilesSheet(type: type, profiles: profiles);
             },
           );
         },
@@ -126,9 +118,7 @@ class _ProfilesViewState extends State<ProfilesView> {
     return FloatingActionButton(
       heroTag: null,
       onPressed: _handleShowAddExtendPage,
-      child: const Icon(
-        Icons.add,
-      ),
+      child: const Icon(Icons.add),
     );
   }
 
@@ -139,13 +129,12 @@ class _ProfilesViewState extends State<ProfilesView> {
       floatingActionButton: _buildFAB(),
       actions: _buildActions(),
       body: Consumer(
-        builder: (_, ref, __) {
-          final profilesSelectorState =
-              ref.watch(profilesSelectorStateProvider);
+        builder: (_, ref, _) {
+          final profilesSelectorState = ref.watch(
+            profilesSelectorStateProvider,
+          );
           if (profilesSelectorState.profiles.isEmpty) {
-            return NullStatus(
-              label: appLocalizations.nullProfileDesc,
-            );
+            return NullStatus(label: appLocalizations.nullProfileDesc);
           }
           return Align(
             alignment: Alignment.topCenter,
@@ -162,9 +151,11 @@ class _ProfilesViewState extends State<ProfilesView> {
                 crossAxisSpacing: 16,
                 crossAxisCount: profilesSelectorState.columns,
                 children: [
-                  for (int i = 0;
-                      i < profilesSelectorState.profiles.length;
-                      i++)
+                  for (
+                    int i = 0;
+                    i < profilesSelectorState.profiles.length;
+                    i++
+                  )
                     GridItem(
                       child: ProfileItem(
                         key: Key(profilesSelectorState.profiles[i].id),
@@ -216,18 +207,10 @@ class ProfileItem extends StatelessWidget {
     if (profile.type == ProfileType.file) return;
     await globalState.appController.safeRun(silence: false, () async {
       try {
-        appController.setProfile(
-          profile.copyWith(
-            isUpdating: true,
-          ),
-        );
+        appController.setProfile(profile.copyWith(isUpdating: true));
         await appController.updateProfile(profile);
       } catch (e) {
-        appController.setProfile(
-          profile.copyWith(
-            isUpdating: false,
-          ),
-        );
+        appController.setProfile(profile.copyWith(isUpdating: false));
         rethrow;
       }
     });
@@ -239,10 +222,7 @@ class ProfileItem extends StatelessWidget {
       builder: (_, type) {
         return AdaptiveSheetScaffold(
           type: type,
-          body: EditProfileView(
-            profile: profile,
-            context: context,
-          ),
+          body: EditProfileView(profile: profile, context: context),
           title: '${appLocalizations.edit}${appLocalizations.profile}',
         );
       },
@@ -252,25 +232,19 @@ class ProfileItem extends StatelessWidget {
   List<Widget> _buildUrlProfileInfo(BuildContext context) {
     final subscriptionInfo = profile.subscriptionInfo;
     return [
-      const SizedBox(
-        height: 8,
-      ),
+      const SizedBox(height: 8),
       if (subscriptionInfo != null)
-        SubscriptionInfoView(
-          subscriptionInfo: subscriptionInfo,
-        ),
+        SubscriptionInfoView(subscriptionInfo: subscriptionInfo),
       Text(
         profile.lastUpdateDate?.lastUpdateTimeDesc ?? '',
-        style: context.textTheme.labelMedium?.toLight,
+        style: context.textTheme.labelMedium?.toLighter,
       ),
     ];
   }
 
   List<Widget> _buildFileProfileInfo(BuildContext context) {
     return [
-      const SizedBox(
-        height: 8,
-      ),
+      const SizedBox(height: 8),
       Text(
         profile.lastUpdateDate?.lastUpdateTimeDesc ?? '',
         style: context.textTheme.labelMedium?.toLight,
@@ -309,13 +283,8 @@ class ProfileItem extends StatelessWidget {
   }
 
   void _handlePushGenProfilePage(BuildContext context, String id) {
-    final overrideProfileView = OverrideProfileView(
-      profileId: id,
-    );
-    BaseNavigator.push(
-      context,
-      overrideProfileView,
-    );
+    final overrideProfileView = OverrideProfileView(profileId: id);
+    BaseNavigator.push(context, overrideProfileView);
   }
 
   @override
@@ -335,10 +304,12 @@ class ProfileItem extends StatelessWidget {
           child: FadeThroughBox(
             child: profile.isUpdating
                 ? const Padding(
+                    key: ValueKey('loading'),
                     padding: EdgeInsets.all(8),
                     child: CircularProgressIndicator(),
                   )
                 : CommonPopupBox(
+                    key: ValueKey('menu'),
                     popup: CommonPopupMenu(
                       items: [
                         PopupMenuItemData(
@@ -372,6 +343,7 @@ class ProfileItem extends StatelessWidget {
                           },
                         ),
                         PopupMenuItemData(
+                          danger: true,
                           icon: Icons.delete_outlined,
                           label: appLocalizations.delete,
                           onPressed: () {
@@ -447,21 +419,14 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
     profiles = List.from(widget.profiles);
   }
 
-  Widget proxyDecorator(
-    Widget child,
-    int index,
-    Animation<double> animation,
-  ) {
+  Widget proxyDecorator(Widget child, int index, Animation<double> animation) {
     final profile = profiles[index];
     return AnimatedBuilder(
       animation: animation,
       builder: (_, Widget? child) {
         final double animValue = Curves.easeInOut.transform(animation.value);
         final double scale = lerpDouble(1, 1.02, animValue)!;
-        return Transform.scale(
-          scale: scale,
-          child: child,
-        );
+        return Transform.scale(scale: scale, child: child);
       },
       child: Container(
         key: Key(profile.id),
@@ -469,10 +434,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
         child: CommonCard(
           type: CommonCardType.filled,
           child: ListTile(
-            contentPadding: const EdgeInsets.only(
-              right: 44,
-              left: 16,
-            ),
+            contentPadding: const EdgeInsets.only(right: 44, left: 16),
             title: Text(profile.label ?? profile.id),
           ),
         ),
@@ -490,21 +452,14 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
             Navigator.of(context).pop();
             globalState.appController.setProfiles(profiles);
           },
-          icon: Icon(
-            Icons.save,
-          ),
-        )
+          icon: Icon(Icons.save),
+        ),
       ],
       body: Padding(
-        padding: EdgeInsets.only(
-          bottom: 32,
-          top: 16,
-        ),
+        padding: EdgeInsets.only(bottom: 32, top: 16),
         child: ReorderableListView.builder(
           buildDefaultDragHandles: false,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           proxyDecorator: proxyDecorator,
           onReorder: (oldIndex, newIndex) {
             setState(() {
@@ -523,10 +478,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
               child: CommonCard(
                 type: CommonCardType.filled,
                 child: ListTile(
-                  contentPadding: const EdgeInsets.only(
-                    right: 16,
-                    left: 16,
-                  ),
+                  contentPadding: const EdgeInsets.only(right: 16, left: 16),
                   title: Text(profile.label ?? profile.id),
                   trailing: ReorderableDragStartListener(
                     index: index,
