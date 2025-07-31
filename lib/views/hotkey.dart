@@ -24,8 +24,9 @@ class HotKeyView extends StatelessWidget {
     if (key == null) {
       return appLocalizations.noHotKey;
     }
-    final modifierLabels =
-        hotKeyAction.modifiers.map((item) => item.physicalKeys.first.label);
+    final modifierLabels = hotKeyAction.modifiers.map(
+      (item) => item.physicalKeys.first.label,
+    );
     var text = '';
     if (modifierLabels.isNotEmpty) {
       text += "${modifierLabels.join(" ")}+";
@@ -41,20 +42,19 @@ class HotKeyView extends StatelessWidget {
       itemBuilder: (_, index) {
         final hotAction = HotAction.values[index];
         return Consumer(
-          builder: (_, ref, __) {
+          builder: (_, ref, _) {
             final hotKeyAction = ref.watch(getHotKeyActionProvider(hotAction));
             return ListItem(
               title: Text(IntlExt.actionMessage(hotAction.name)),
               subtitle: Text(
                 getSubtitle(hotKeyAction),
-                style: context.textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.primary),
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.primary,
+                ),
               ),
               onTap: () {
                 globalState.showCommonDialog(
-                  child: HotKeyRecorder(
-                    hotKeyAction: hotKeyAction,
-                  ),
+                  child: HotKeyRecorder(hotKeyAction: hotKeyAction),
                 );
               },
             );
@@ -68,10 +68,7 @@ class HotKeyView extends StatelessWidget {
 class HotKeyRecorder extends StatefulWidget {
   final HotKeyAction hotKeyAction;
 
-  const HotKeyRecorder({
-    super.key,
-    required this.hotKeyAction,
-  });
+  const HotKeyRecorder({super.key, required this.hotKeyAction});
 
   @override
   State<HotKeyRecorder> createState() => _HotKeyRecorderState();
@@ -96,8 +93,11 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
     final key = keyEvent.physicalKey;
 
     final modifiers = KeyboardModifier.values
-        .where((e) =>
-            e.physicalKeys.any(keys.contains) && !e.physicalKeys.contains(key))
+        .where(
+          (e) =>
+              e.physicalKeys.any(keys.contains) &&
+              !e.physicalKeys.contains(key),
+        )
         .toSet();
     hotKeyActionNotifier.value = hotKeyActionNotifier.value.copyWith(
       modifiers: modifiers,
@@ -115,10 +115,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
   void _handleRemove() {
     Navigator.of(context).pop();
     globalState.appController.updateOrAddHotKeyAction(
-      hotKeyActionNotifier.value.copyWith(
-        modifiers: {},
-        key: null,
-      ),
+      hotKeyActionNotifier.value.copyWith(modifiers: {}, key: null),
     );
   }
 
@@ -150,15 +147,13 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
       );
       return;
     }
-    globalState.appController.updateOrAddHotKeyAction(
-      currentHotkeyAction,
-    );
+    globalState.appController.updateOrAddHotKeyAction(currentHotkeyAction);
   }
 
   @override
   Widget build(BuildContext context) {
     return Focus(
-      onKeyEvent: (_, __) {
+      onKeyEvent: (_, _) {
         return KeyEventResult.handled;
       },
       autofocus: true,
@@ -171,21 +166,17 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
             },
             child: Text(appLocalizations.remove),
           ),
-          const SizedBox(
-            width: 8,
-          ),
+          const SizedBox(width: 8),
           TextButton(
             onPressed: () {
               _handleConfirm();
             },
-            child: Text(
-              appLocalizations.confirm,
-            ),
+            child: Text(appLocalizations.confirm),
           ),
         ],
         child: ValueListenableBuilder(
           valueListenable: hotKeyActionNotifier,
-          builder: (_, hotKeyAction, ___) {
+          builder: (_, hotKeyAction, _) {
             final key = hotKeyAction.key;
             final modifiers = hotKeyAction.modifiers;
             return SizedBox(
@@ -200,13 +191,8 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
                             keyboardKey: modifier.physicalKeys.first,
                           ),
                         if (modifiers.isNotEmpty)
-                          Text(
-                            '+',
-                            style: context.textTheme.titleMedium,
-                          ),
-                        KeyboardKeyBox(
-                          keyboardKey: PhysicalKeyboardKey(key),
-                        ),
+                          Text('+', style: context.textTheme.titleMedium),
+                        KeyboardKeyBox(keyboardKey: PhysicalKeyboardKey(key)),
                       ],
                     )
                   : Text(
@@ -224,10 +210,7 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
 class KeyboardKeyBox extends StatelessWidget {
   final KeyboardKey keyboardKey;
 
-  const KeyboardKeyBox({
-    super.key,
-    required this.keyboardKey,
-  });
+  const KeyboardKeyBox({super.key, required this.keyboardKey});
 
   @override
   Widget build(BuildContext context) {
@@ -235,12 +218,7 @@ class KeyboardKeyBox extends StatelessWidget {
       type: CommonCardType.filled,
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Text(
-          keyboardKey.label,
-          style: const TextStyle(
-            fontSize: 16,
-          ),
-        ),
+        child: Text(keyboardKey.label, style: const TextStyle(fontSize: 16)),
       ),
       onPressed: () {},
     );
