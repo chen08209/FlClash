@@ -1,5 +1,5 @@
-import 'package:fl_clash/clash/clash.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -23,25 +23,12 @@ double getItemHeight(ProxyCardType proxyCardType) {
 Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   final appController = globalState.appController;
   final state = appController.getProxyCardState(proxy.name);
-  final url = state.testUrl.getSafeValue(
-    appController.getRealTestUrl(testUrl),
-  );
+  final url = state.testUrl.getSafeValue(appController.getRealTestUrl(testUrl));
   if (state.proxyName.isEmpty) {
     return;
   }
-  appController.setDelay(
-    Delay(
-      url: url,
-      name: state.proxyName,
-      value: 0,
-    ),
-  );
-  appController.setDelay(
-    await clashCore.getDelay(
-      url,
-      state.proxyName,
-    ),
-  );
+  appController.setDelay(Delay(url: url, name: state.proxyName, value: 0));
+  appController.setDelay(await coreController.getDelay(url, state.proxyName));
 }
 
 Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
@@ -57,19 +44,8 @@ Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
     if (name.isEmpty) {
       return;
     }
-    appController.setDelay(
-      Delay(
-        url: url,
-        name: name,
-        value: 0,
-      ),
-    );
-    appController.setDelay(
-      await clashCore.getDelay(
-        url,
-        name,
-      ),
-    );
+    appController.setDelay(Delay(url: url, name: name, value: 0));
+    appController.setDelay(await coreController.getDelay(url, name));
   }).toList();
 
   final batchesDelayProxies = delayProxies.batch(100);

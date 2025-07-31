@@ -28,34 +28,28 @@ class _LogsViewState extends ConsumerState<LogsView> {
     _scrollController = ScrollController(
       initialScrollOffset: _logs.length * LogItem.height,
     );
-    _logsStateNotifier.value = _logsStateNotifier.value.copyWith(
-      logs: _logs,
-    );
-    ref.listenManual(
-      logsProvider.select((state) => state.list),
-      (prev, next) {
-        if (prev != next) {
-          final isEquality = logListEquality.equals(prev, next);
-          if (!isEquality) {
-            _logs = next;
-            updateLogsThrottler();
-          }
+    _logsStateNotifier.value = _logsStateNotifier.value.copyWith(logs: _logs);
+    ref.listenManual(logsProvider.select((state) => state.list), (prev, next) {
+      if (prev != next) {
+        final isEquality = logListEquality.equals(prev, next);
+        if (!isEquality) {
+          _logs = next;
+          updateLogsThrottler();
         }
-      },
-    );
+      }
+    });
   }
 
   List<Widget> _buildActions() {
     return [
       ValueListenableBuilder(
         valueListenable: _logsStateNotifier,
-        builder: (_, state, __) {
+        builder: (_, state, _) {
           return IconButton(
             style: state.autoScrollToEnd
-                ? ButtonStyle(
-                    backgroundColor: WidgetStatePropertyAll(
-                      context.colorScheme.secondaryContainer,
-                    ),
+                ? IconButton.styleFrom(
+                    backgroundColor: context.colorScheme.secondaryContainer,
+                    foregroundColor: context.colorScheme.onSecondaryContainer,
                   )
                 : null,
             onPressed: () {
@@ -63,9 +57,7 @@ class _LogsViewState extends ConsumerState<LogsView> {
                 autoScrollToEnd: !_logsStateNotifier.value.autoScrollToEnd,
               );
             },
-            icon: const Icon(
-              Icons.vertical_align_top_outlined,
-            ),
+            icon: const Icon(Icons.vertical_align_top_outlined),
           );
         },
       ),
@@ -73,22 +65,19 @@ class _LogsViewState extends ConsumerState<LogsView> {
         onPressed: () {
           _handleExport();
         },
-        icon: const Icon(
-          Icons.save_as_outlined,
-        ),
+        icon: const Icon(Icons.save_as_outlined),
       ),
     ];
   }
 
   void _onSearch(String value) {
-    _logsStateNotifier.value = _logsStateNotifier.value.copyWith(
-      query: value,
-    );
+    _logsStateNotifier.value = _logsStateNotifier.value.copyWith(query: value);
   }
 
   void _onKeywordsUpdate(List<String> keywords) {
-    _logsStateNotifier.value =
-        _logsStateNotifier.value.copyWith(keywords: keywords);
+    _logsStateNotifier.value = _logsStateNotifier.value.copyWith(
+      keywords: keywords,
+    );
   }
 
   @override
@@ -144,13 +133,11 @@ class _LogsViewState extends ConsumerState<LogsView> {
       title: appLocalizations.logs,
       body: ValueListenableBuilder<LogsState>(
         valueListenable: _logsStateNotifier,
-        builder: (context, state, __) {
+        builder: (context, state, _) {
           final logs = state.list;
           if (logs.isEmpty) {
             return NullStatus(
-              label: appLocalizations.nullTip(
-                appLocalizations.logs,
-              ),
+              label: appLocalizations.nullTip(appLocalizations.logs),
             );
           }
           final items = logs
@@ -163,11 +150,7 @@ class _LogsViewState extends ConsumerState<LogsView> {
                   },
                 ),
               )
-              .separated(
-                const Divider(
-                  height: 0,
-                ),
-              )
+              .separated(const Divider(height: 0))
               .toList();
           return Align(
             alignment: Alignment.topCenter,
@@ -218,28 +201,17 @@ class LogItem extends StatelessWidget {
         24 +
         globalState.measure.labelMediumHeight +
         16 +
-        16;
+        20;
   }
 
-  const LogItem({
-    super.key,
-    required this.log,
-    this.onClick,
-  });
+  const LogItem({super.key, required this.log, this.onClick});
 
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: () {
-        globalState.showCommonDialog(
-          child: LogDetailDialog(
-            log: log,
-          ),
-        );
+        globalState.showCommonDialog(child: LogDetailDialog(log: log));
       },
       title: SizedBox(
         height: globalState.measure.bodyLargeHeight * 2,
@@ -254,9 +226,7 @@ class LogItem extends StatelessWidget {
       ),
       subtitle: Column(
         children: [
-          SizedBox(
-            height: 16,
-          ),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -274,7 +244,7 @@ class LogItem extends StatelessWidget {
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -284,10 +254,7 @@ class LogItem extends StatelessWidget {
 class LogDetailDialog extends StatelessWidget {
   final Log log;
 
-  const LogDetailDialog({
-    super.key,
-    required this.log,
-  });
+  const LogDetailDialog({super.key, required this.log});
 
   @override
   Widget build(BuildContext context) {
@@ -298,10 +265,8 @@ class LogDetailDialog extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).pop(true);
           },
-          child: Text(
-            appLocalizations.confirm,
-          ),
-        )
+          child: Text(appLocalizations.confirm),
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,7 +283,7 @@ class LogDetailDialog extends StatelessWidget {
             style: context.textTheme.bodySmall?.copyWith(
               color: context.colorScheme.onSurfaceVariant,
             ),
-          )
+          ),
         ],
       ),
     );

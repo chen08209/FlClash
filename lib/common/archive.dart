@@ -20,10 +20,10 @@ extension ArchiveExt on Archive {
     }
   }
 
-  void add<T>(String name, T raw) {
+  void addTextFile<T>(String name, T raw) {
     final data = json.encode(raw);
     addFile(
-      ArchiveFile(name, data.length, data),
+      ArchiveFile.string(name, data),
     );
   }
 }

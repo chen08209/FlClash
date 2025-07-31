@@ -104,7 +104,7 @@ const defaultBypassPrivateRouteAddress = [
 ];
 
 @freezed
-class ProxyGroup with _$ProxyGroup {
+abstract class ProxyGroup with _$ProxyGroup {
   const factory ProxyGroup({
     required String name,
     @JsonKey(
@@ -131,7 +131,7 @@ class ProxyGroup with _$ProxyGroup {
 }
 
 @freezed
-class RuleProvider with _$RuleProvider {
+abstract class RuleProvider with _$RuleProvider {
   const factory RuleProvider({
     required String name,
   }) = _RuleProvider;
@@ -141,7 +141,7 @@ class RuleProvider with _$RuleProvider {
 }
 
 @freezed
-class Sniffer with _$Sniffer {
+abstract class Sniffer with _$Sniffer {
   const factory Sniffer({
     @Default(false) bool enable,
     @Default(true) @JsonKey(name: 'override-destination') bool overrideDest,
@@ -165,7 +165,7 @@ List<String> _formJsonPorts(List? ports) {
 }
 
 @freezed
-class SnifferConfig with _$SnifferConfig {
+abstract class SnifferConfig with _$SnifferConfig {
   const factory SnifferConfig({
     @Default([]) @JsonKey(fromJson: _formJsonPorts) List<String> ports,
     @JsonKey(name: 'override-destination') bool? overrideDest,
@@ -176,7 +176,7 @@ class SnifferConfig with _$SnifferConfig {
 }
 
 @freezed
-class Tun with _$Tun {
+abstract class Tun with _$Tun {
   const factory Tun({
     @Default(false) bool enable,
     @Default(appName) String device,
@@ -219,7 +219,7 @@ extension TunExt on Tun {
 }
 
 @freezed
-class FallbackFilter with _$FallbackFilter {
+abstract class FallbackFilter with _$FallbackFilter {
   const factory FallbackFilter({
     @Default(true) bool geoip,
     @Default('CN') @JsonKey(name: 'geoip-code') String geoipCode,
@@ -238,7 +238,7 @@ class FallbackFilter with _$FallbackFilter {
 }
 
 @freezed
-class Dns with _$Dns {
+abstract class Dns with _$Dns {
   const factory Dns({
     @Default(true) bool enable,
     @Default('0.0.0.0:1053') String listen,
@@ -301,7 +301,7 @@ class Dns with _$Dns {
 }
 
 @freezed
-class GeoXUrl with _$GeoXUrl {
+abstract class GeoXUrl with _$GeoXUrl {
   const factory GeoXUrl({
     @Default(
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
@@ -337,7 +337,7 @@ class GeoXUrl with _$GeoXUrl {
 }
 
 @freezed
-class ParsedRule with _$ParsedRule {
+abstract class ParsedRule with _$ParsedRule {
   const factory ParsedRule({
     required RuleAction ruleAction,
     String? content,
@@ -404,7 +404,7 @@ extension ParsedRuleExt on ParsedRule {
 }
 
 @freezed
-class Rule with _$Rule {
+abstract class Rule with _$Rule {
   const factory Rule({
     required String id,
     required String value,
@@ -421,7 +421,7 @@ class Rule with _$Rule {
 }
 
 @freezed
-class SubRule with _$SubRule {
+abstract class SubRule with _$SubRule {
   const factory SubRule({
     required String name,
   }) = _SubRule;
@@ -456,7 +456,7 @@ List<SubRule> _genSubRules(Map<String, dynamic> json) {
 }
 
 @freezed
-class ClashConfigSnippet with _$ClashConfigSnippet {
+abstract class ClashConfigSnippet with _$ClashConfigSnippet {
   const factory ClashConfigSnippet({
     @Default([]) @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
     @JsonKey(fromJson: _genRule, name: 'rules') @Default([]) List<Rule> rule,
@@ -473,7 +473,7 @@ class ClashConfigSnippet with _$ClashConfigSnippet {
 }
 
 @freezed
-class ClashConfig with _$ClashConfig {
+abstract class ClashConfig with _$ClashConfig {
   const factory ClashConfig({
     @Default(defaultMixedPort) @JsonKey(name: 'mixed-port') int mixedPort,
     @Default(0) @JsonKey(name: 'socks-port') int socksPort,
