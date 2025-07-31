@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/selector.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -11,7 +12,7 @@ part 'generated/app.freezed.dart';
 typedef DelayMap = Map<String, Map<String, int?>>;
 
 @freezed
-class AppState with _$AppState {
+abstract class AppState with _$AppState {
   const factory AppState({
     @Default(false) bool isInit,
     @Default(false) bool backBlock,
@@ -34,6 +35,9 @@ class AppState with _$AppState {
     @Default(false) bool realTunEnable,
     @Default(false) bool loading,
     required SystemUiOverlayStyle systemUiOverlayStyle,
+    ProfileOverrideModel? profileOverrideModel,
+    @Default({}) Map<QueryTag, String> queryMap,
+    @Default(CoreStatus.connecting) CoreStatus coreStatus,
   }) = _AppState;
 }
 

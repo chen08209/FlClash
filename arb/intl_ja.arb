@@ -422,5 +422,12 @@
   "proxyChains": "プロキシチェーン",
   "log": "ログ",
   "connection": "接続",
-  "request": "リクエスト"
+  "request": "リクエスト",
+  "connected": "接続済み",
+  "disconnected": "切断済み",
+  "connecting": "接続中...",
+  "restartCoreTip": "コアを再起動してもよろしいですか？",
+  "forceRestartCoreTip": "コアを強制再起動してもよろしいですか？",
+  "dnsHijacking": "DNSハイジャッキング",
+  "coreStatus": "コアステータス"
 }

@@ -8,13 +8,14 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../models/common.dart';
 import 'card.dart';
 import 'common.dart';
 
-typedef ProxyGroupViewKeyMap
-    = Map<String, GlobalObjectKey<_ProxyGroupViewState>>;
+typedef ProxyGroupViewKeyMap =
+    Map<String, GlobalObjectKey<_ProxyGroupViewState>>;
 
 class ProxiesTabView extends ConsumerStatefulWidget {
   const ProxiesTabView({super.key});
@@ -34,22 +35,16 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   @override
   void initState() {
     super.initState();
-    ref.listenManual(
-      proxiesTabControllerStateProvider,
-      (prev, next) {
-        if (prev == next) {
-          return;
-        }
-        if (!stringListEquality.equals(prev?.a, next.a)) {
-          _destroyTabController();
-          final index = next.a.indexWhere(
-            (item) => item == next.b,
-          );
-          _updateTabController(next.a.length, index);
-        }
-      },
-      fireImmediately: true,
-    );
+    ref.listenManual(proxiesTabControllerStateProvider, (prev, next) {
+      if (prev == next) {
+        return;
+      }
+      if (!stringListEquality.equals(prev?.a, next.a)) {
+        _destroyTabController();
+        final index = next.a.indexWhere((item) => item == next.b);
+        _updateTabController(next.a.length, index);
+      }
+    }, fireImmediately: true);
   }
 
   @override
@@ -66,25 +61,18 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   Future<void> delayTestCurrentGroup() async {
     final currentGroupName = globalState.appController.getCurrentGroupName();
     final currentState = _keyMap[currentGroupName]?.currentState;
-    await delayTest(
-      currentState?.proxies ?? [],
-      currentState?.testUrl,
-    );
+    await delayTest(currentState?.proxies ?? [], currentState?.testUrl);
   }
 
   Widget _buildMoreButton() {
     return Consumer(
-      builder: (_, ref, ___) {
+      builder: (_, ref, _) {
         final isMobileView = ref.watch(isMobileViewProvider);
         return IconButton(
           onPressed: _showMoreMenu,
           icon: isMobileView
-              ? const Icon(
-                  Icons.expand_more,
-                )
-              : const Icon(
-                  Icons.chevron_right,
-                ),
+              ? const Icon(Icons.expand_more)
+              : const Icon(Icons.chevron_right),
         );
       },
     );
@@ -93,16 +81,14 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   void _showMoreMenu() {
     showSheet(
       context: context,
-      props: SheetProps(
-        isScrollControlled: false,
-      ),
+      props: SheetProps(isScrollControlled: false),
       builder: (_, type) {
         return AdaptiveSheetScaffold(
           type: type,
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Consumer(
-              builder: (_, ref, __) {
+              builder: (_, ref, _) {
                 final state = ref.watch(proxiesTabControllerStateProvider);
                 final groupNames = state.a;
                 final currentGroupName = state.b;
@@ -122,12 +108,13 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                             );
                             if (index == -1) return;
                             _tabController?.animateTo(index);
-                            globalState.appController
-                                .updateCurrentGroupName(groupName);
+                            globalState.appController.updateCurrentGroupName(
+                              groupName,
+                            );
                             Navigator.of(context).pop();
                           },
                           isSelected: groupName == currentGroupName,
-                        )
+                        ),
                     ],
                   ),
                 );
@@ -156,9 +143,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     }
     final currentGroup = currentGroups[groupIndex];
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      globalState.appController.updateCurrentGroupName(
-        currentGroup.name,
-      );
+      globalState.appController.updateCurrentGroupName(currentGroup.name);
     });
   }
 
@@ -234,52 +219,40 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                     dividerColor: Colors.transparent,
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
-                    overlayColor:
-                        const WidgetStatePropertyAll(Colors.transparent),
-                    tabs: [
-                      for (final group in groups)
-                        Tab(
-                          text: group.name,
-                        ),
-                    ],
-                  ),
-                  if (value)
-                    Positioned(
-                      right: 0,
-                      child: child!,
+                    overlayColor: const WidgetStatePropertyAll(
+                      Colors.transparent,
                     ),
+                    tabs: [for (final group in groups) Tab(text: group.name)],
+                  ),
+                  if (value) Positioned(right: 0, child: child!),
                 ],
               );
             },
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      context.colorScheme.surface.opacity10,
-                      context.colorScheme.surface,
-                    ],
-                    stops: const [
-                      0.0,
-                      0.1
-                    ]),
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    context.colorScheme.surface.opacity10,
+                    context.colorScheme.surface,
+                  ],
+                  stops: const [0.0, 0.1],
+                ),
               ),
               child: _buildMoreButton(),
             ),
           ),
         ),
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: children,
-          ),
-        )
+          child: TabBarView(controller: _tabController, children: children),
+        ),
       ],
     );
   }
 }
 
+@Dependencies([proxiesTabState, proxiesTabControllerState])
 class ProxyGroupView extends ConsumerStatefulWidget {
   final Group group;
   final int columns;
@@ -313,7 +286,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   PageStorageKey _getPageStorageKey() {
     final profile = globalState.config.currentProfile;
     final key =
-        '${profile?.id}_${ScrollPositionCacheKeys.proxiesTabList.name}_${widget.group.name}';
+        '${profile?.id}_${ScrollPositionCacheKey.proxiesTabList.name}_${widget.group.name}';
     return ProxiesTabView.pageListStoreMap.updateCacheValue(
       key,
       () => PageStorageKey(key),
@@ -395,10 +368,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
 class DelayTestButton extends StatefulWidget {
   final Future Function() onClick;
 
-  const DelayTestButton({
-    super.key,
-    required this.onClick,
-  });
+  const DelayTestButton({super.key, required this.onClick});
 
   @override
   State<DelayTestButton> createState() => _DelayTestButtonState();
@@ -425,21 +395,10 @@ class _DelayTestButtonState extends State<DelayTestButton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(
-        milliseconds: 200,
-      ),
+      duration: const Duration(milliseconds: 200),
     );
-    _scale = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(
-          0,
-          1,
-        ),
-      ),
+    _scale = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0, 1)),
     );
   }
 
@@ -457,10 +416,7 @@ class _DelayTestButtonState extends State<DelayTestButton>
         return SizedBox(
           width: 56,
           height: 56,
-          child: Transform.scale(
-            scale: _scale.value,
-            child: child,
-          ),
+          child: Transform.scale(scale: _scale.value, child: child),
         );
       },
       child: FloatingActionButton(

@@ -4,7 +4,6 @@ package tun
 
 import "C"
 import (
-	"core/state"
 	"github.com/metacubex/mihomo/constant"
 	LC "github.com/metacubex/mihomo/listener/config"
 	"github.com/metacubex/mihomo/listener/sing_tun"
@@ -12,38 +11,37 @@ import (
 	"github.com/metacubex/mihomo/tunnel"
 	"net"
 	"net/netip"
+	"strings"
 )
 
-type Props struct {
-	Fd       int    `json:"fd"`
-	Gateway  string `json:"gateway"`
-	Gateway6 string `json:"gateway6"`
-	Portal   string `json:"portal"`
-	Portal6  string `json:"portal6"`
-	Dns      string `json:"dns"`
-	Dns6     string `json:"dns6"`
-}
-
-func Start(fd int, device string, stack constant.TUNStack) (*sing_tun.Listener, error) {
+func Start(fd int, device string, stack constant.TUNStack, address, dns string) *sing_tun.Listener {
 	var prefix4 []netip.Prefix
-	tempPrefix4, err := netip.ParsePrefix(state.DefaultIpv4Address)
-	if err != nil {
-		log.Errorln("startTUN error:", err)
-		return nil, err
-	}
-	prefix4 = append(prefix4, tempPrefix4)
 	var prefix6 []netip.Prefix
-	if state.CurrentState.VpnProps.Ipv6 {
-		tempPrefix6, err := netip.ParsePrefix(state.DefaultIpv6Address)
-		if err != nil {
-			log.Errorln("startTUN error:", err)
-			return nil, err
+	for _, a := range strings.Split(address, ",") {
+		a = strings.TrimSpace(a)
+		if len(a) == 0 {
+			continue
 		}
-		prefix6 = append(prefix6, tempPrefix6)
+		prefix, err := netip.ParsePrefix(a)
+		if err != nil {
+			log.Errorln("TUN:", err)
+			return nil
+		}
+		if prefix.Addr().Is4() {
+			prefix4 = append(prefix4, prefix)
+		} else {
+			prefix6 = append(prefix6, prefix)
+		}
 	}
 
 	var dnsHijack []string
-	dnsHijack = append(dnsHijack, net.JoinHostPort(state.GetDnsServerAddress(), "53"))
+	for _, d := range strings.Split(dns, ",") {
+		d = strings.TrimSpace(d)
+		if len(d) == 0 {
+			continue
+		}
+		dnsHijack = append(dnsHijack, net.JoinHostPort(d, "53"))
+	}
 
 	options := LC.Tun{
 		Enable:              true,
@@ -61,9 +59,9 @@ func Start(fd int, device string, stack constant.TUNStack) (*sing_tun.Listener, 
 	listener, err := sing_tun.New(options, tunnel.Tunnel)
 
 	if err != nil {
-		log.Errorln("startTUN error:", err)
-		return nil, err
+		log.Errorln("TUN:", err)
+		return nil
 	}
 
-	return listener, nil
+	return listener
 }

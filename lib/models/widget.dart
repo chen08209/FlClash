@@ -4,14 +4,14 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/widget.freezed.dart';
 
 @freezed
-class ActivateState with _$ActivateState {
+abstract class ActivateState with _$ActivateState {
   const factory ActivateState({
     required bool active,
   }) = _ActivateState;
 }
 
 @freezed
-class CommonMessage with _$CommonMessage {
+abstract class CommonMessage with _$CommonMessage {
   const factory CommonMessage({
     required String id,
     required String text,
@@ -20,7 +20,7 @@ class CommonMessage with _$CommonMessage {
 }
 
 @freezed
-class AppBarState with _$AppBarState {
+abstract class AppBarState with _$AppBarState {
   const factory AppBarState({
     @Default([]) List<Widget> actions,
     AppBarSearchState? searchState,
@@ -29,7 +29,7 @@ class AppBarState with _$AppBarState {
 }
 
 @freezed
-class AppBarSearchState with _$AppBarSearchState {
+abstract class AppBarSearchState with _$AppBarSearchState {
   const factory AppBarSearchState({
     required Function(String) onSearch,
     @Default(null) String? query,
@@ -37,7 +37,7 @@ class AppBarSearchState with _$AppBarSearchState {
 }
 
 @freezed
-class AppBarEditState with _$AppBarEditState {
+abstract class AppBarEditState with _$AppBarEditState {
   const factory AppBarEditState({
     @Default(0) int editCount,
     required Function() onExit,
