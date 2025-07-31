@@ -410,7 +410,7 @@
   "autoSetSystemDns": "自动设置系统DNS",
   "details": "{label}详情",
   "creationTime": "创建时间",
-  "progress": "进度",
+  "process": "进程",
   "host": "主机",
   "destination": "目标地址",
   "destinationGeoIP": "目标地理定位",
@@ -422,5 +422,16 @@
   "proxyChains": "代理链",
   "log": "日志",
   "connection": "连接",
-  "request": "请求"
+  "request": "请求",
+  "connected": "已连接",
+  "disconnected": "已断开",
+  "connecting": "连接中...",
+  "restartCoreTip": "您确定要重启核心吗？",
+  "forceRestartCoreTip": "您确定要强制重启核心吗？",
+  "dnsHijacking": "DNS劫持",
+  "coreStatus": "核心状态",
+  "dataCollectionTip": "数据收集说明",
+  "dataCollectionContent": "本应用使用 Firebase Crashlytics 收集崩溃信息以改进应用稳定性。\n收集的数据包括设备信息和崩溃详情，不包含个人敏感数据。\n您可以在设置中关闭此功能。",
+  "crashlytics": "崩溃分析",
+  "crashlyticsTip": "开启后，应用崩溃时自动上传不包含敏感信息的崩溃日志"
 }

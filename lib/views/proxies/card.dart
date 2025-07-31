@@ -27,48 +27,45 @@ class ProxyCard extends StatelessWidget {
   Measure get measure => globalState.measure;
 
   void _handleTestCurrentDelay() {
-    proxyDelayTest(
-      proxy,
-      testUrl,
-    );
+    proxyDelayTest(proxy, testUrl);
   }
 
   Widget _buildDelayText() {
     return SizedBox(
       height: measure.labelSmallHeight,
       child: Consumer(
-        builder: (context, ref, __) {
-          final delay = ref.watch(getDelayProvider(
-            proxyName: proxy.name,
-            testUrl: testUrl,
-          ));
-          return delay == 0 || delay == null
-              ? SizedBox(
-                  height: measure.labelSmallHeight,
-                  width: measure.labelSmallHeight,
-                  child: delay == 0
-                      ? const CircularProgressIndicator(
-                          strokeWidth: 2,
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.bolt),
-                          iconSize: globalState.measure.labelSmallHeight,
-                          padding: EdgeInsets.zero,
-                          onPressed: _handleTestCurrentDelay,
-                        ),
-                )
-              : GestureDetector(
-                  onTap: _handleTestCurrentDelay,
-                  child: Text(
-                    delay > 0 ? '$delay ms' : 'Timeout',
-                    style: context.textTheme.labelSmall?.copyWith(
-                      overflow: TextOverflow.ellipsis,
-                      color: utils.getDelayColor(
-                        delay,
+        builder: (context, ref, _) {
+          final delay = ref.watch(
+            getDelayProvider(proxyName: proxy.name, testUrl: testUrl),
+          );
+          return FadeThroughBox(
+            alignment: type == ProxyCardType.expand
+                ? Alignment.centerLeft
+                : Alignment.centerRight,
+            child: delay == 0 || delay == null
+                ? SizedBox(
+                    height: measure.labelSmallHeight,
+                    width: measure.labelSmallHeight,
+                    child: delay == 0
+                        ? const CircularProgressIndicator(strokeWidth: 2)
+                        : IconButton(
+                            icon: const Icon(Icons.bolt),
+                            iconSize: globalState.measure.labelSmallHeight,
+                            padding: EdgeInsets.zero,
+                            onPressed: _handleTestCurrentDelay,
+                          ),
+                  )
+                : GestureDetector(
+                    onTap: _handleTestCurrentDelay,
+                    child: Text(
+                      delay > 0 ? '$delay ms' : 'Timeout',
+                      style: context.textTheme.labelSmall?.copyWith(
+                        overflow: TextOverflow.ellipsis,
+                        color: utils.getDelayColor(delay),
                       ),
                     ),
                   ),
-                );
+          );
         },
       ),
     );
@@ -108,16 +105,11 @@ class ProxyCard extends StatelessWidget {
         false => proxy.name,
       };
       final appController = globalState.appController;
-      appController.updateCurrentSelectedMap(
-        groupName,
-        nextProxyName,
-      );
+      appController.updateCurrentSelectedMap(groupName, nextProxyName);
       appController.changeProxyDebounce(groupName, nextProxyName);
       return;
     }
-    globalState.showNotifier(
-      appLocalizations.notSelectedTip,
-    );
+    globalState.showNotifier(appLocalizations.notSelectedTip);
   }
 
   @override
@@ -129,8 +121,9 @@ class ProxyCard extends StatelessWidget {
       children: [
         Consumer(
           builder: (_, ref, child) {
-            final selectedProxyName =
-                ref.watch(getSelectedProxyNameProvider(groupName));
+            final selectedProxyName = ref.watch(
+              getSelectedProxyNameProvider(groupName),
+            );
             return CommonCard(
               key: key,
               onPressed: () {
@@ -148,19 +141,13 @@ class ProxyCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 proxyNameText,
-                const SizedBox(
-                  height: 8,
-                ),
+                const SizedBox(height: 8),
                 if (type == ProxyCardType.expand) ...[
                   SizedBox(
                     height: measure.bodySmallHeight,
-                    child: _ProxyDesc(
-                      proxy: proxy,
-                    ),
+                    child: _ProxyDesc(proxy: proxy),
                   ),
-                  const SizedBox(
-                    height: 6,
-                  ),
+                  const SizedBox(height: 6),
                   delayText,
                 ] else
                   SizedBox(
@@ -177,7 +164,10 @@ class ProxyCard extends StatelessWidget {
                               style: context.textTheme.bodySmall?.copyWith(
                                 overflow: TextOverflow.ellipsis,
                                 color: context
-                                    .textTheme.bodySmall?.color?.opacity80,
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color
+                                    ?.opacity80,
                               ),
                             ),
                           ),
@@ -194,11 +184,8 @@ class ProxyCard extends StatelessWidget {
           Positioned(
             top: 0,
             right: 0,
-            child: _ProxyComputedMark(
-              groupName: groupName,
-              proxy: proxy,
-            ),
-          )
+            child: _ProxyComputedMark(groupName: groupName, proxy: proxy),
+          ),
       ],
     );
   }
@@ -207,15 +194,11 @@ class ProxyCard extends StatelessWidget {
 class _ProxyDesc extends ConsumerWidget {
   final Proxy proxy;
 
-  const _ProxyDesc({
-    required this.proxy,
-  });
+  const _ProxyDesc({required this.proxy});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final desc = ref.watch(
-      getProxyDescProvider(proxy),
-    );
+    final desc = ref.watch(getProxyDescProvider(proxy));
     return EmojiText(
       desc,
       overflow: TextOverflow.ellipsis,
@@ -230,16 +213,11 @@ class _ProxyComputedMark extends ConsumerWidget {
   final String groupName;
   final Proxy proxy;
 
-  const _ProxyComputedMark({
-    required this.groupName,
-    required this.proxy,
-  });
+  const _ProxyComputedMark({required this.groupName, required this.proxy});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final proxyName = ref.watch(
-      getProxyNameProvider(groupName),
-    );
+    final proxyName = ref.watch(getProxyNameProvider(groupName));
     if (proxyName != proxy.name) {
       return SizedBox();
     }

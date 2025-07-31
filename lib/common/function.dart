@@ -9,23 +9,17 @@ class Debouncer {
     FunctionTag tag,
     Function func, {
     List<dynamic>? args,
-    Duration duration = const Duration(milliseconds: 600),
+    Duration? duration,
   }) {
     final timer = _operations[tag];
     if (timer != null) {
       timer.cancel();
     }
-    _operations[tag] = Timer(
-      duration,
-      () {
-        _operations[tag]?.cancel();
-        _operations.remove(tag);
-        Function.apply(
-          func,
-          args,
-        );
-      },
-    );
+    _operations[tag] = Timer(duration ?? const Duration(milliseconds: 600), () {
+      _operations[tag]?.cancel();
+      _operations.remove(tag);
+      Function.apply(func, args);
+    });
   }
 
   void cancel(dynamic tag) {
@@ -42,22 +36,25 @@ class Throttler {
     Function func, {
     List<dynamic>? args,
     Duration duration = const Duration(milliseconds: 600),
+    bool fire = false,
   }) {
     final timer = _operations[tag];
     if (timer != null) {
       return true;
     }
-    _operations[tag] = Timer(
-      duration,
-      () {
+    if (fire) {
+      Function.apply(func, args);
+      _operations[tag] = Timer(duration, () {
         _operations[tag]?.cancel();
         _operations.remove(tag);
-        Function.apply(
-          func,
-          args,
-        );
-      },
-    );
+      });
+    } else {
+      _operations[tag] = Timer(duration, () {
+        Function.apply(func, args);
+        _operations[tag]?.cancel();
+        _operations.remove(tag);
+      });
+    }
     return false;
   }
 

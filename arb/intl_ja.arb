@@ -410,7 +410,7 @@
   "autoSetSystemDns": "オートセットシステムDNS",
   "details": "{label}詳細",
   "creationTime": "作成時間",
-  "progress": "進捗",
+  "process": "プロセス",
   "host": "ホスト",
   "destination": "宛先",
   "destinationGeoIP": "宛先地理情報",
@@ -422,5 +422,16 @@
   "proxyChains": "プロキシチェーン",
   "log": "ログ",
   "connection": "接続",
-  "request": "リクエスト"
+  "request": "リクエスト",
+  "connected": "接続済み",
+  "disconnected": "切断済み",
+  "connecting": "接続中...",
+  "restartCoreTip": "コアを再起動してもよろしいですか？",
+  "forceRestartCoreTip": "コアを強制再起動してもよろしいですか？",
+  "dnsHijacking": "DNSハイジャッキング",
+  "coreStatus": "コアステータス",
+  "dataCollectionTip": "データ収集説明",
+  "dataCollectionContent": "本アプリはFirebase Crashlyticsを使用してクラッシュ情報を収集し、アプリの安定性を向上させます。\n収集されるデータにはデバイス情報とクラッシュ詳細が含まれますが、個人の機密データは含まれません。\n設定でこの機能を無効にすることができます。",
+  "crashlytics": "クラッシュ分析",
+  "crashlyticsTip": "有効にすると、アプリがクラッシュした際に機密情報を含まないクラッシュログを自動的にアップロードします"
 }

@@ -14,7 +14,7 @@ class StartButton extends ConsumerStatefulWidget {
 
 class _StartButtonState extends ConsumerState<StartButton>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  AnimationController? _controller;
   late Animation<double> _animation;
   bool isStart = false;
 
@@ -28,45 +28,41 @@ class _StartButtonState extends ConsumerState<StartButton>
       duration: const Duration(milliseconds: 200),
     );
     _animation = CurvedAnimation(
-      parent: _controller,
+      parent: _controller!,
       curve: Curves.easeOutBack,
     );
-    ref.listenManual(
-      runTimeProvider.select((state) => state != null),
-      (prev, next) {
-        if (next != isStart) {
-          isStart = next;
-          updateController();
-        }
-      },
-      fireImmediately: true,
-    );
+    ref.listenManual(runTimeProvider.select((state) => state != null), (
+      prev,
+      next,
+    ) {
+      if (next != isStart) {
+        isStart = next;
+        updateController();
+      }
+    }, fireImmediately: true);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
+    _controller = null;
     super.dispose();
   }
 
   void handleSwitchStart() {
     isStart = !isStart;
     updateController();
-    debouncer.call(
-      FunctionTag.updateStatus,
-      () {
-        globalState.appController.updateStatus(isStart);
-      },
-      duration: commonDuration,
-    );
+    debouncer.call(FunctionTag.updateStatus, () {
+      globalState.appController.updateStatus(isStart);
+    }, duration: commonDuration);
   }
 
   void updateController() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (isStart) {
-        _controller.forward();
+      if (isStart && mounted) {
+        _controller?.forward();
       } else {
-        _controller.reverse();
+        _controller?.reverse();
       }
     });
   }
@@ -79,22 +75,19 @@ class _StartButtonState extends ConsumerState<StartButton>
     }
     return Theme(
       data: Theme.of(context).copyWith(
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          sizeConstraints: BoxConstraints(
-            minWidth: 56,
-            maxWidth: 200,
-          ),
-        ),
+        floatingActionButtonTheme: Theme.of(context).floatingActionButtonTheme
+            .copyWith(
+              sizeConstraints: BoxConstraints(minWidth: 56, maxWidth: 200),
+            ),
       ),
       child: AnimatedBuilder(
-        animation: _controller.view,
+        animation: _controller!.view,
         builder: (_, child) {
-          final textWidth = globalState.measure
+          final textWidth =
+              globalState.measure
                   .computeTextSize(
                     Text(
-                      utils.getTimeDifference(
-                        DateTime.now(),
-                      ),
+                      utils.getTimeDifference(DateTime.now()),
                       style: context.textTheme.titleMedium?.toSoftBold,
                     ),
                   )
@@ -119,26 +112,21 @@ class _StartButtonState extends ConsumerState<StartButton>
                     progress: _animation,
                   ),
                 ),
-                SizedBox(
-                  width: textWidth * _animation.value,
-                  child: child!,
-                )
+                SizedBox(width: textWidth * _animation.value, child: child!),
               ],
             ),
           );
         },
         child: Consumer(
-          builder: (_, ref, __) {
+          builder: (_, ref, _) {
             final runTime = ref.watch(runTimeProvider);
             final text = utils.getTimeText(runTime);
             return Text(
               text,
               maxLines: 1,
               overflow: TextOverflow.visible,
-              style:
-                  Theme.of(context).textTheme.titleMedium?.toSoftBold.copyWith(
-                        color: context.colorScheme.onPrimaryContainer,
-                      ),
+              style: Theme.of(context).textTheme.titleMedium?.toSoftBold
+                  .copyWith(color: context.colorScheme.onPrimaryContainer),
             );
           },
         ),

@@ -39,11 +39,7 @@ class ExtendProps {
   });
 }
 
-enum SheetType {
-  page,
-  bottomSheet,
-  sideSheet,
-}
+enum SheetType { page, bottomSheet, sideSheet }
 
 typedef SheetBuilder = Widget Function(BuildContext context, SheetType type);
 
@@ -55,28 +51,24 @@ Future<T?> showSheet<T>({
   final isMobile = globalState.appState.viewMode == ViewMode.mobile;
   return switch (isMobile) {
     true => showModalBottomSheet<T>(
-        context: context,
-        isScrollControlled: props.isScrollControlled,
-        builder: (_) {
-          return SafeArea(
-            child: builder(context, SheetType.bottomSheet),
-          );
-        },
-        showDragHandle: false,
-        useSafeArea: props.useSafeArea,
-      ),
+      context: context,
+      isScrollControlled: props.isScrollControlled,
+      builder: (_) {
+        return SafeArea(child: builder(context, SheetType.bottomSheet));
+      },
+      showDragHandle: false,
+      useSafeArea: props.useSafeArea,
+    ),
     false => showModalSideSheet<T>(
-        useSafeArea: props.useSafeArea,
-        isScrollControlled: props.isScrollControlled,
-        context: context,
-        constraints: BoxConstraints(
-          maxWidth: props.maxWidth ?? 360,
-        ),
-        filter: props.blur ? commonFilter : null,
-        builder: (_) {
-          return builder(context, SheetType.sideSheet);
-        },
-      ),
+      useSafeArea: props.useSafeArea,
+      isScrollControlled: props.isScrollControlled,
+      context: context,
+      constraints: BoxConstraints(maxWidth: props.maxWidth ?? 360),
+      filter: props.blur ? commonFilter : null,
+      builder: (_) {
+        return builder(context, SheetType.sideSheet);
+      },
+    ),
   };
 }
 
@@ -87,21 +79,16 @@ Future<T?> showExtend<T>(
 }) {
   final isMobile = globalState.appState.viewMode == ViewMode.mobile;
   return switch (isMobile || props.forceFull) {
-    true => BaseNavigator.push(
-        context,
-        builder(context, SheetType.page),
-      ),
+    true => BaseNavigator.push(context, builder(context, SheetType.page)),
     false => showModalSideSheet<T>(
-        useSafeArea: props.useSafeArea,
-        context: context,
-        constraints: BoxConstraints(
-          maxWidth: props.maxWidth ?? 360,
-        ),
-        filter: props.blur ? commonFilter : null,
-        builder: (context) {
-          return builder(context, SheetType.sideSheet);
-        },
-      ),
+      useSafeArea: props.useSafeArea,
+      context: context,
+      constraints: BoxConstraints(maxWidth: props.maxWidth ?? 360),
+      filter: props.blur ? commonFilter : null,
+      builder: (context) {
+        return builder(context, SheetType.sideSheet);
+      },
+    ),
   };
 }
 
@@ -134,13 +121,11 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
       automaticallyImplyLeading: bottomSheet
           ? false
           : widget.actions.isEmpty && sideSheet
-              ? false
-              : true,
+          ? false
+          : true,
       centerTitle: bottomSheet,
       backgroundColor: backgroundColor,
-      title: Text(
-        widget.title,
-      ),
+      title: Text(widget.title),
       actions: genActions([
         if (widget.actions.isEmpty && sideSheet) CloseButton(),
         ...widget.actions,
@@ -150,9 +135,11 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
       final handleSize = Size(32, 4);
       return Container(
         clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -163,17 +150,16 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
                 alignment: Alignment.center,
                 height: handleSize.height,
                 width: handleSize.width,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(handleSize.height / 2),
+                decoration: ShapeDecoration(
                   color: context.colorScheme.onSurfaceVariant,
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(handleSize.height / 2),
+                  ),
                 ),
               ),
             ),
             appBar,
-            Flexible(
-              flex: 1,
-              child: widget.body,
-            )
+            Flexible(flex: 1, child: widget.body),
           ],
         ),
       );

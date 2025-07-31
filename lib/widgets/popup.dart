@@ -27,19 +27,20 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    return builder(
-      context,
-    );
+    return builder(context);
   }
 
   @override
-  Widget buildTransitions(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation, Widget child) {
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
     final align = Alignment.topRight;
-    final animationValue = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeIn,
-    ).value;
+    final curveAnimation = animation
+        .drive(Tween(begin: 0.0, end: 1.0))
+        .drive(CurveTween(curve: Curves.easeOutBack));
     return SafeArea(
       child: ValueListenableBuilder(
         valueListenable: offsetNotifier,
@@ -48,10 +49,7 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
             alignment: align,
             child: CustomSingleChildLayout(
               delegate: OverflowAwareLayoutDelegate(
-                offset: value.translate(
-                  48,
-                  -8,
-                ),
+                offset: value.translate(48, -8),
               ),
               child: child,
             ),
@@ -59,29 +57,29 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
         },
         child: AnimatedBuilder(
           animation: animation,
-          builder: (_, Widget? child) {
-            return Opacity(
-              opacity: 0.1 + 0.9 * animationValue,
-              child: Transform.scale(
+          builder: (_, child) {
+            return FadeTransition(
+              opacity: curveAnimation,
+              child: ScaleTransition(
                 alignment: align,
-                scale: 0.7 + 0.3 * animationValue,
-                child: Transform.translate(
-                  offset: Offset(0, -10) * (1 - animationValue),
-                  child: child!,
+                scale: curveAnimation,
+                child: SlideTransition(
+                  position: curveAnimation.drive(
+                    Tween(begin: const Offset(0, -0.02), end: Offset.zero),
+                  ),
+                  child: child,
                 ),
               ),
             );
           },
-          child: builder(
-            context,
-          ),
+          child: builder(context),
         ),
       ),
     );
   }
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 150);
+  Duration get transitionDuration => const Duration(milliseconds: 250);
 }
 
 class PopupController extends ValueNotifier<bool> {
@@ -96,9 +94,7 @@ class PopupController extends ValueNotifier<bool> {
   }
 }
 
-typedef PopupOpen = Function({
-  Offset offset,
-});
+typedef PopupOpen = Function({Offset offset});
 
 class CommonPopupBox extends StatefulWidget {
   final Widget Function(PopupOpen open) targetBuilder;
@@ -125,17 +121,17 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
     _isOpen = true;
     Navigator.of(context)
         .push(
-      CommonPopupRoute(
-        barrierLabel: utils.id,
-        builder: (BuildContext context) {
-          return widget.popup;
-        },
-        offsetNotifier: _targetOffsetValueNotifier,
-      ),
-    )
+          CommonPopupRoute(
+            barrierLabel: utils.id,
+            builder: (BuildContext context) {
+              return widget.popup;
+            },
+            offsetNotifier: _targetOffsetValueNotifier,
+          ),
+        )
         .then((_) {
-      _isOpen = false;
-    });
+          _isOpen = false;
+        });
   }
 
   void _updateOffset() {
@@ -146,36 +142,30 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
     final viewPadding = MediaQuery.of(context).viewPadding;
     _targetOffsetValueNotifier.value = renderBox
         .localToGlobal(
-          Offset.zero.translate(
-            viewPadding.right,
-            viewPadding.top,
-          ),
+          Offset.zero.translate(viewPadding.right, viewPadding.top),
         )
-        .translate(
-          _offset.dx,
-          _offset.dy,
-        );
+        .translate(_offset.dx, _offset.dy);
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, __) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_isOpen) {
-          _updateOffset();
-        }
-      });
-      return widget.targetBuilder(_open);
-    });
+    return LayoutBuilder(
+      builder: (_, _) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_isOpen) {
+            _updateOffset();
+          }
+        });
+        return widget.targetBuilder(_open);
+      },
+    );
   }
 }
 
 class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
   final Offset offset;
 
-  OverflowAwareLayoutDelegate({
-    required this.offset,
-  });
+  OverflowAwareLayoutDelegate({required this.offset});
 
   @override
   Size getSize(BoxConstraints constraints) {
@@ -223,20 +213,28 @@ class CommonPopupMenu extends StatelessWidget {
   }) {
     final onPressed = item.onPressed;
     final disabled = onPressed == null;
-    final color = disabled
-        ? context.colorScheme.onSurface.opacity30
+    final color = item.danger
+        ? context.colorScheme.onError
         : context.colorScheme.onSurface;
-    return InkWell(
-      onTap: onPressed != null
+    final foregroundColor = disabled ? color.opacity30 : color;
+    final backgroundColor = item.danger
+        ? context.colorScheme.error
+        : context.colorScheme.surfaceContainer;
+    return TextButton(
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        shape: LinearBorder.none,
+        foregroundColor: foregroundColor,
+        backgroundColor: backgroundColor,
+      ),
+      onPressed: onPressed != null
           ? () {
               Navigator.of(context).pop();
               onPressed();
             }
           : null,
       child: Container(
-        constraints: BoxConstraints(
-          minWidth: minWidth,
-        ),
+        constraints: BoxConstraints(minWidth: minWidth),
         padding: EdgeInsets.only(
           left: 16,
           right: 64,
@@ -247,20 +245,14 @@ class CommonPopupMenu extends StatelessWidget {
           mainAxisSize: MainAxisSize.max,
           children: [
             if (item.icon != null) ...[
-              Icon(
-                item.icon,
-                size: fontSize + 4,
-                color: color,
-              ),
-              SizedBox(
-                width: 16,
-              ),
+              Icon(item.icon, size: fontSize + 4, color: foregroundColor),
+              SizedBox(width: 16),
             ],
             Flexible(
               child: Text(
                 item.label,
                 style: context.textTheme.bodyMedium?.copyWith(
-                  color: color,
+                  color: foregroundColor,
                   fontSize: fontSize,
                 ),
               ),
@@ -279,23 +271,16 @@ class CommonPopupMenu extends StatelessWidget {
           elevation: 12,
           color: context.colorScheme.surfaceContainer,
           clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (final item in items.asMap().entries) ...[
-                _popupMenuItem(
-                  context,
-                  item: item.value,
-                  index: item.key,
-                ),
-                if (item.value != items.last)
-                  Divider(
-                    height: 0,
-                  ),
+                _popupMenuItem(context, item: item.value, index: item.key),
+                if (item.value != items.last) Divider(height: 0),
               ],
             ],
           ),
