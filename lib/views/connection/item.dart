@@ -44,11 +44,8 @@ class TrackerInfoItem extends ConsumerWidget {
     final progress = trackerInfo.progressText.isNotEmpty
         ? '${trackerInfo.progressText} · '
         : '';
-    final traffic = Traffic(
-      up: trackerInfo.upload,
-      down: trackerInfo.download,
-    );
-    return '$progress${traffic.toString()}';
+    final traffic = Traffic(up: trackerInfo.upload, down: trackerInfo.download);
+    return '$progress${traffic.desc}';
   }
 
   @override
@@ -83,9 +80,7 @@ class TrackerInfoItem extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(
-          height: 6,
-        ),
+        const SizedBox(height: 6),
         Text(
           _getSourceText(trackerInfo),
           maxLines: 1,
@@ -105,9 +100,7 @@ class TrackerInfoItem extends ConsumerWidget {
         children: [
           Flexible(
             child: ListView.separated(
-              separatorBuilder: (_, __) => SizedBox(
-                width: 6,
-              ),
+              separatorBuilder: (_, _) => SizedBox(width: 6),
               padding: EdgeInsets.zero,
               scrollDirection: Axis.horizontal,
               itemCount: trackerInfo.chains.length,
@@ -161,19 +154,14 @@ class TrackerInfoItem extends ConsumerWidget {
           )
         : null;
     return ListItem(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: () {
         showExtend(
           context,
           builder: (_, type) {
             return AdaptiveSheetScaffold(
               type: type,
-              body: TrackerInfoDetailView(
-                trackerInfo: trackerInfo,
-              ),
+              body: TrackerInfoDetailView(trackerInfo: trackerInfo),
               title: detailTitle,
             );
           },
@@ -189,14 +177,10 @@ class TrackerInfoItem extends ConsumerWidget {
             spacing: 12,
             children: [
               if (icon != null) icon,
-              Flexible(
-                child: title,
-              )
+              Flexible(child: title),
             ],
           ),
-          const SizedBox(
-            height: 8,
-          ),
+          const SizedBox(height: 8),
           subTitle,
         ],
       ),
@@ -207,10 +191,7 @@ class TrackerInfoItem extends ConsumerWidget {
 class TrackerInfoDetailView extends StatelessWidget {
   final TrackerInfo trackerInfo;
 
-  const TrackerInfoDetailView({
-    super.key,
-    required this.trackerInfo,
-  });
+  const TrackerInfoDetailView({super.key, required this.trackerInfo});
 
   String _getRuleText() {
     final rule = trackerInfo.rule;
@@ -221,7 +202,7 @@ class TrackerInfoDetailView extends StatelessWidget {
     return rule;
   }
 
-  String _getProgressText() {
+  String _getProcessText() {
     final process = trackerInfo.metadata.process;
     final uid = trackerInfo.metadata.uid;
     if (uid != 0) {
@@ -261,10 +242,7 @@ class TrackerInfoDetailView extends StatelessWidget {
       alignment: WrapAlignment.end,
       children: [
         for (final chain in trackerInfo.chains)
-          CommonChip(
-            label: chain,
-            onPressed: () {},
-          )
+          CommonChip(label: chain, onPressed: () {}),
       ],
     );
     return ListItem(
@@ -273,9 +251,7 @@ class TrackerInfoDetailView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(appLocalizations.proxyChains),
-          Flexible(
-            child: chains,
-          )
+          Flexible(child: chains),
         ],
       ),
     );
@@ -302,21 +278,13 @@ class TrackerInfoDetailView extends StatelessWidget {
                   child: IconButton(
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
-                    icon: Icon(
-                      Icons.content_copy,
-                      size: 18,
-                    ),
+                    icon: Icon(Icons.content_copy, size: 18),
                     onPressed: () {},
                   ),
-                )
+                ),
             ],
           ),
-          Flexible(
-            child: Text(
-              desc,
-              textAlign: TextAlign.end,
-            ),
-          )
+          Flexible(child: Text(desc, textAlign: TextAlign.end)),
         ],
       ),
     );
@@ -329,29 +297,20 @@ class TrackerInfoDetailView extends StatelessWidget {
         title: appLocalizations.creationTime,
         desc: trackerInfo.start.showFull,
       ),
-      if (_getProgressText().isNotEmpty)
-        _buildItem(
-          title: appLocalizations.progress,
-          desc: _getProgressText(),
-        ),
+      if (_getProcessText().isNotEmpty)
+        _buildItem(title: appLocalizations.process, desc: _getProcessText()),
       _buildItem(
         title: appLocalizations.networkType,
         desc: trackerInfo.metadata.network,
       ),
-      _buildItem(
-        title: appLocalizations.rule,
-        desc: _getRuleText(),
-      ),
+      _buildItem(title: appLocalizations.rule, desc: _getRuleText()),
       if (trackerInfo.metadata.host.isNotEmpty)
         _buildItem(
           title: appLocalizations.host,
           desc: trackerInfo.metadata.host,
         ),
       if (_getSourceText().isNotEmpty)
-        _buildItem(
-          title: appLocalizations.source,
-          desc: _getSourceText(),
-        ),
+        _buildItem(title: appLocalizations.source, desc: _getSourceText()),
       if (_getDestinationText().isNotEmpty)
         _buildItem(
           title: appLocalizations.destination,
@@ -359,11 +318,11 @@ class TrackerInfoDetailView extends StatelessWidget {
         ),
       _buildItem(
         title: appLocalizations.upload,
-        desc: TrafficValue(value: trackerInfo.upload).show,
+        desc: trackerInfo.upload.traffic.show,
       ),
       _buildItem(
         title: appLocalizations.download,
-        desc: TrafficValue(value: trackerInfo.download).show,
+        desc: trackerInfo.download.traffic.show,
       ),
       if (trackerInfo.metadata.destinationGeoIP.isNotEmpty)
         _buildItem(
@@ -399,9 +358,7 @@ class TrackerInfoDetailView extends StatelessWidget {
     ];
     return SelectionArea(
       child: ListView.builder(
-        padding: EdgeInsets.symmetric(
-          vertical: 12,
-        ),
+        padding: EdgeInsets.symmetric(vertical: 12),
         itemCount: items.length,
         itemBuilder: (_, index) {
           return items[index];

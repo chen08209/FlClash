@@ -12,10 +12,7 @@ import 'package:window_manager/window_manager.dart';
 class WindowManager extends ConsumerStatefulWidget {
   final Widget child;
 
-  const WindowManager({
-    super.key,
-    required this.child,
-  });
+  const WindowManager({super.key, required this.child});
 
   @override
   ConsumerState<WindowManager> createState() => _WindowContainerState();
@@ -31,19 +28,16 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   @override
   void initState() {
     super.initState();
-    ref.listenManual(
-      appSettingProvider.select((state) => state.autoLaunch),
-      (prev, next) {
-        if (prev != next) {
-          debouncer.call(
-            FunctionTag.autoLaunch,
-            () {
-              autoLaunch?.updateStatus(next);
-            },
-          );
-        }
-      },
-    );
+    ref.listenManual(appSettingProvider.select((state) => state.autoLaunch), (
+      prev,
+      next,
+    ) {
+      if (prev != next) {
+        debouncer.call(FunctionTag.autoLaunch, () {
+          autoLaunch?.updateStatus(next);
+        });
+      }
+    });
     windowExtManager.addListener(this);
     windowManager.addListener(this);
   }
@@ -71,11 +65,10 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   Future<void> onWindowMoved() async {
     super.onWindowMoved();
     final offset = await windowManager.getPosition();
-    ref.read(windowSettingProvider.notifier).updateState(
-          (state) => state.copyWith(
-            top: offset.dy,
-            left: offset.dx,
-          ),
+    ref
+        .read(windowSettingProvider.notifier)
+        .updateState(
+          (state) => state.copyWith(top: offset.dy, left: offset.dx),
         );
   }
 
@@ -83,11 +76,10 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   Future<void> onWindowResized() async {
     super.onWindowResized();
     final size = await windowManager.getSize();
-    ref.read(windowSettingProvider.notifier).updateState(
-          (state) => state.copyWith(
-            width: size.width,
-            height: size.height,
-          ),
+    ref
+        .read(windowSettingProvider.notifier)
+        .updateState(
+          (state) => state.copyWith(width: size.width, height: size.height),
         );
   }
 
@@ -117,10 +109,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 class WindowHeaderContainer extends StatelessWidget {
   final Widget child;
 
-  const WindowHeaderContainer({
-    super.key,
-    required this.child,
-  });
+  const WindowHeaderContainer({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -135,13 +124,8 @@ class WindowHeaderContainer extends StatelessWidget {
           children: [
             Column(
               children: [
-                SizedBox(
-                  height: kHeaderHeight,
-                ),
-                Expanded(
-                  flex: 1,
-                  child: child!,
-                ),
+                SizedBox(height: kHeaderHeight),
+                Expanded(flex: 1, child: child!),
               ],
             ),
             const WindowHeader(),
@@ -210,14 +194,10 @@ class _WindowHeaderState extends State<WindowHeader> {
           },
           icon: ValueListenableBuilder(
             valueListenable: isPinNotifier,
-            builder: (_, value, ___) {
+            builder: (_, value, _) {
               return value
-                  ? const Icon(
-                      Icons.push_pin,
-                    )
-                  : const Icon(
-                      Icons.push_pin_outlined,
-                    );
+                  ? const Icon(Icons.push_pin)
+                  : const Icon(Icons.push_pin_outlined);
             },
           ),
         ),
@@ -233,15 +213,10 @@ class _WindowHeaderState extends State<WindowHeader> {
           },
           icon: ValueListenableBuilder(
             valueListenable: isMaximizedNotifier,
-            builder: (_, value, ___) {
+            builder: (_, value, _) {
               return value
-                  ? const Icon(
-                      Icons.filter_none,
-                      size: 20,
-                    )
-                  : const Icon(
-                      Icons.crop_square,
-                    );
+                  ? const Icon(Icons.filter_none, size: 20)
+                  : const Icon(Icons.crop_square);
             },
           ),
         ),
@@ -280,15 +255,10 @@ class _WindowHeaderState extends State<WindowHeader> {
             ),
           ),
           if (system.isMacOS)
-            const Text(
-              appName,
-            )
+            const Text(appName)
           else ...[
-            Positioned(
-              right: 0,
-              child: _buildActions(),
-            ),
-          ]
+            Positioned(right: 0, child: _buildActions()),
+          ],
         ],
       ),
     );

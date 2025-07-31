@@ -22,10 +22,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
         .map(
           (index, e) => MapEntry(
             index,
-            Point(
-              (index + initPoints.length).toDouble(),
-              e.speed.toDouble(),
-            ),
+            Point((index + initPoints.length).toDouble(), e.speed.toDouble()),
           ),
         )
         .values
@@ -51,17 +48,15 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
           iconData: Icons.speed_sharp,
         ),
         child: Consumer(
-          builder: (_, ref, __) {
+          builder: (_, ref, _) {
             final traffics = ref.watch(trafficsProvider).list;
             return Stack(
               children: [
                 Positioned.fill(
                   child: Padding(
-                    padding: EdgeInsets.all(16).copyWith(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                    ),
+                    padding: EdgeInsets.all(
+                      16,
+                    ).copyWith(bottom: 0, left: 0, right: 0),
                     child: LineChart(
                       gradient: true,
                       color: Theme.of(context).colorScheme.primary,
@@ -73,12 +68,9 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
                   top: 0,
                   right: 0,
                   child: Transform.translate(
-                    offset: Offset(
-                      -16,
-                      -20,
-                    ),
+                    offset: Offset(-16, -20),
                     child: Text(
-                      _getLastTraffic(traffics).toSpeedText(),
+                      _getLastTraffic(traffics).speedText,
                       style: context.textTheme.bodySmall?.copyWith(
                         color: color,
                       ),

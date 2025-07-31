@@ -16,28 +16,32 @@ class OutboundMode extends StatelessWidget {
     return SizedBox(
       height: height,
       child: Consumer(
-        builder: (_, ref, __) {
+        builder: (_, ref, _) {
           final mode = ref.watch(
-            patchClashConfigProvider.select(
-              (state) => state.mode,
-            ),
+            patchClashConfigProvider.select((state) => state.mode),
           );
           return Theme(
-              data: Theme.of(context).copyWith(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  hoverColor: Colors.transparent),
-              child: CommonCard(
-                onPressed: () {},
-                info: Info(
-                  label: appLocalizations.outboundMode,
-                  iconData: Icons.call_split_sharp,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    top: 12,
-                    bottom: 16,
-                  ),
+            data: Theme.of(context).copyWith(
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+            ),
+            child: CommonCard(
+              onPressed: () {},
+              info: Info(
+                label: appLocalizations.outboundMode,
+                iconData: Icons.call_split_sharp,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 16),
+                child: RadioGroup<Mode>(
+                  groupValue: mode,
+                  onChanged: (value) {
+                    if (value == null) {
+                      return;
+                    }
+                    globalState.appController.changeMode(value);
+                  },
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,33 +53,27 @@ class OutboundMode extends StatelessWidget {
                           child: ListItem.radio(
                             dense: true,
                             horizontalTitleGap: 4,
-                            padding: EdgeInsets.only(
-                              left: 12.ap,
-                              right: 16.ap,
-                            ),
+                            padding: EdgeInsets.only(left: 12.ap, right: 16.ap),
                             delegate: RadioDelegate(
-                              value: item,
-                              groupValue: mode,
-                              onChanged: (value) async {
-                                if (value == null) {
-                                  return;
-                                }
-                                globalState.appController.changeMode(value);
+                              onTab: () {
+                                globalState.appController.changeMode(item);
                               },
+                              value: item,
                             ),
                             title: Text(
                               Intl.message(item.name),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.toSoftBold,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.toSoftBold,
                             ),
                           ),
                         ),
                     ],
                   ),
                 ),
-              ));
+              ),
+            ),
+          );
         },
       ),
     );
@@ -95,64 +93,90 @@ class OutboundModeV2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = getWidgetHeight(0.72);
+    final height = getWidgetHeight(1);
     return SizedBox(
       height: height,
       child: CommonCard(
         padding: EdgeInsets.zero,
         child: Consumer(
-          builder: (_, ref, __) {
+          builder: (_, ref, _) {
             final mode = ref.watch(
-              patchClashConfigProvider.select(
-                (state) => state.mode,
-              ),
+              patchClashConfigProvider.select((state) => state.mode),
             );
             final thumbColor = switch (mode) {
               Mode.rule => context.colorScheme.secondaryContainer,
               Mode.global => globalState.theme.darken3PrimaryContainer,
               Mode.direct => context.colorScheme.tertiaryContainer,
             };
-            return Container(
-              constraints: BoxConstraints.expand(),
-              child: CommonTabBar<Mode>(
-                children: Map.fromEntries(
-                  Mode.values.map(
-                    (item) => MapEntry(
-                      item,
-                      Container(
-                        clipBehavior: Clip.antiAlias,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(),
-                        height: height - 16,
-                        child: Text(
-                          Intl.message(item.name),
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
-                              ?.adjustSize(1)
-                              .copyWith(
-                                color: item == mode
-                                    ? _getTextColor(
-                                        context,
-                                        item,
-                                      )
-                                    : null,
+            return LayoutBuilder(
+              builder: (_, constraints) {
+                return Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        constraints: BoxConstraints.expand(),
+                        child: CommonTabBar<Mode>(
+                          children: Map.fromEntries(
+                            Mode.values.map(
+                              (item) => MapEntry(
+                                item,
+                                Container(
+                                  clipBehavior: Clip.antiAlias,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(),
+                                  height: height - 8.ap - 24,
+                                  padding: EdgeInsets.all(4),
+                                  child: Text(
+                                    Intl.message(item.name),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.adjustSize(1)
+                                        .copyWith(
+                                          color: item == mode
+                                              ? _getTextColor(context, item)
+                                              : null,
+                                        ),
+                                  ),
+                                ),
                               ),
+                            ),
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 0),
+                          groupValue: mode,
+                          onValueChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            globalState.appController.changeMode(value);
+                          },
+                          thumbColor: thumbColor,
                         ),
                       ),
                     ),
-                  ),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                groupValue: mode,
-                onValueChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  globalState.appController.changeMode(value);
-                },
-                thumbColor: thumbColor,
-              ),
+                    Container(
+                      color: thumbColor.opacity50,
+                      height: 8.ap,
+                      width: constraints.maxWidth,
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      // child: Row(
+                      //   children: [
+                      //     Container(
+                      //       width: (constraints.maxWidth - 32) / 3,
+                      //       height: 3,
+                      //       decoration: BoxDecoration(
+                      //         color: _getTextColor(context, mode),
+                      //         borderRadius: BorderRadius.circular(2),
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                    ),
+                  ],
+                );
+              },
             );
           },
         ),

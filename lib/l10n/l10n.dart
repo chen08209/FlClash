@@ -28,10 +28,9 @@ class AppLocalizations {
   static const AppLocalizationDelegate delegate = AppLocalizationDelegate();
 
   static Future<AppLocalizations> load(Locale locale) {
-    final name =
-        (locale.countryCode?.isEmpty ?? false)
-            ? locale.languageCode
-            : locale.toString();
+    final name = (locale.countryCode?.isEmpty ?? false)
+        ? locale.languageCode
+        : locale.toString();
     final localeName = Intl.canonicalizedLocale(name);
     return initializeMessages(localeName).then((_) {
       Intl.defaultLocale = localeName;
@@ -3160,9 +3159,9 @@ class AppLocalizations {
     );
   }
 
-  /// `Progress`
-  String get progress {
-    return Intl.message('Progress', name: 'progress', desc: '', args: []);
+  /// `Process`
+  String get process {
+    return Intl.message('Process', name: 'process', desc: '', args: []);
   }
 
   /// `Host`
@@ -3258,6 +3257,66 @@ class AppLocalizations {
   /// `Request`
   String get request {
     return Intl.message('Request', name: 'request', desc: '', args: []);
+  }
+
+  /// `Connected`
+  String get connected {
+    return Intl.message('Connected', name: 'connected', desc: '', args: []);
+  }
+
+  /// `Disconnected`
+  String get disconnected {
+    return Intl.message(
+      'Disconnected',
+      name: 'disconnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connecting...`
+  String get connecting {
+    return Intl.message(
+      'Connecting...',
+      name: 'connecting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to restart the core?`
+  String get restartCoreTip {
+    return Intl.message(
+      'Are you sure you want to restart the core?',
+      name: 'restartCoreTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to force restart the core?`
+  String get forceRestartCoreTip {
+    return Intl.message(
+      'Are you sure you want to force restart the core?',
+      name: 'forceRestartCoreTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS hijacking`
+  String get dnsHijacking {
+    return Intl.message(
+      'DNS hijacking',
+      name: 'dnsHijacking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core status`
+  String get coreStatus {
+    return Intl.message('Core status', name: 'coreStatus', desc: '', args: []);
   }
 }
 
