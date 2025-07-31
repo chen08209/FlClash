@@ -1,5 +1,3 @@
-// ignore_for_file: invalid_annotation_target
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +25,7 @@ const defaultBypassDomain = [
   '172.2*',
   '172.30.*',
   '172.31.*',
-  '192.168.*'
+  '192.168.*',
 ];
 
 const defaultAppSettingProps = AppSettingProps();
@@ -36,9 +34,7 @@ const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyle = ProxiesStyle();
 const defaultWindowProps = WindowProps();
 const defaultAccessControl = AccessControl();
-final defaultThemeProps = ThemeProps(
-  primaryColor: defaultPrimaryColor,
-);
+final defaultThemeProps = ThemeProps(primaryColor: defaultPrimaryColor);
 
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
@@ -64,7 +60,7 @@ List<DashboardWidget> dashboardWidgetsSafeFormJson(
 }
 
 @freezed
-class AppSettingProps with _$AppSettingProps {
+abstract class AppSettingProps with _$AppSettingProps {
   const factory AppSettingProps({
     String? locale,
     @Default(defaultDashboardWidgets)
@@ -98,7 +94,7 @@ class AppSettingProps with _$AppSettingProps {
 }
 
 @freezed
-class AccessControl with _$AccessControl {
+abstract class AccessControl with _$AccessControl {
   const factory AccessControl({
     @Default(false) bool enable,
     @Default(AccessControlMode.rejectSelected) AccessControlMode mode,
@@ -115,13 +111,13 @@ class AccessControl with _$AccessControl {
 
 extension AccessControlExt on AccessControl {
   List<String> get currentList => switch (mode) {
-        AccessControlMode.acceptSelected => acceptList,
-        AccessControlMode.rejectSelected => rejectList,
-      };
+    AccessControlMode.acceptSelected => acceptList,
+    AccessControlMode.rejectSelected => rejectList,
+  };
 }
 
 @freezed
-class WindowProps with _$WindowProps {
+abstract class WindowProps with _$WindowProps {
   const factory WindowProps({
     @Default(750) double width,
     @Default(600) double height,
@@ -134,12 +130,13 @@ class WindowProps with _$WindowProps {
 }
 
 @freezed
-class VpnProps with _$VpnProps {
+abstract class VpnProps with _$VpnProps {
   const factory VpnProps({
     @Default(true) bool enable,
     @Default(true) bool systemProxy,
     @Default(false) bool ipv6,
     @Default(true) bool allowBypass,
+    @Default(false) bool dnsHijacking,
     @Default(defaultAccessControl) AccessControl accessControl,
   }) = _VpnProps;
 
@@ -148,7 +145,7 @@ class VpnProps with _$VpnProps {
 }
 
 @freezed
-class NetworkProps with _$NetworkProps {
+abstract class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
     @Default(true) bool systemProxy,
     @Default(defaultBypassDomain) List<String> bypassDomain,
@@ -161,7 +158,7 @@ class NetworkProps with _$NetworkProps {
 }
 
 @freezed
-class ProxiesStyle with _$ProxiesStyle {
+abstract class ProxiesStyle with _$ProxiesStyle {
   const factory ProxiesStyle({
     @Default(ProxiesType.tab) ProxiesType type,
     @Default(ProxiesSortType.none) ProxiesSortType sortType,
@@ -176,7 +173,7 @@ class ProxiesStyle with _$ProxiesStyle {
 }
 
 @freezed
-class TextScale with _$TextScale {
+abstract class TextScale with _$TextScale {
   const factory TextScale({
     @Default(false) bool enable,
     @Default(1.0) double scale,
@@ -187,7 +184,7 @@ class TextScale with _$TextScale {
 }
 
 @freezed
-class ThemeProps with _$ThemeProps {
+abstract class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
     int? primaryColor,
     @Default(defaultPrimaryColors) List<int> primaryColors,
@@ -213,7 +210,7 @@ class ThemeProps with _$ThemeProps {
 }
 
 @freezed
-class ScriptProps with _$ScriptProps {
+abstract class ScriptProps with _$ScriptProps {
   const factory ScriptProps({
     String? currentId,
     @Default([]) List<Script> scripts,
@@ -242,7 +239,7 @@ extension ScriptPropsExt on ScriptProps {
 }
 
 @freezed
-class Config with _$Config {
+abstract class Config with _$Config {
   const factory Config({
     @JsonKey(fromJson: AppSettingProps.safeFromJson)
     @Default(defaultAppSettingProps)

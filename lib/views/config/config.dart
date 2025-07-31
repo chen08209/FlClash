@@ -27,9 +27,7 @@ class _ConfigViewState extends State<ConfigView> {
         leading: const Icon(Icons.build),
         delegate: OpenDelegate(
           title: appLocalizations.general,
-          widget: generateListView(
-            generalItems,
-          ),
+          widget: generateListView(generalItems),
           blur: false,
         ),
       ),
@@ -41,35 +39,35 @@ class _ConfigViewState extends State<ConfigView> {
           title: appLocalizations.network,
           blur: false,
           actions: [
-            Consumer(builder: (_, ref, __) {
-              return IconButton(
-                onPressed: () async {
-                  final res = await globalState.showMessage(
-                    title: appLocalizations.reset,
-                    message: TextSpan(
-                      text: appLocalizations.resetTip,
-                    ),
-                  );
-                  if (res != true) {
-                    return;
-                  }
-                  ref.read(vpnSettingProvider.notifier).updateState(
-                        (state) => defaultVpnProps.copyWith(
-                          accessControl: state.accessControl,
-                        ),
-                      );
-                  ref.read(patchClashConfigProvider.notifier).updateState(
-                        (state) => state.copyWith(
-                          tun: defaultTun,
-                        ),
-                      );
-                },
-                tooltip: appLocalizations.reset,
-                icon: const Icon(
-                  Icons.replay,
-                ),
-              );
-            })
+            Consumer(
+              builder: (_, ref, _) {
+                return IconButton(
+                  onPressed: () async {
+                    final res = await globalState.showMessage(
+                      title: appLocalizations.reset,
+                      message: TextSpan(text: appLocalizations.resetTip),
+                    );
+                    if (res != true) {
+                      return;
+                    }
+                    ref
+                        .read(vpnSettingProvider.notifier)
+                        .updateState(
+                          (state) => defaultVpnProps.copyWith(
+                            accessControl: state.accessControl,
+                          ),
+                        );
+                    ref
+                        .read(patchClashConfigProvider.notifier)
+                        .updateState(
+                          (state) => state.copyWith(tun: defaultTun),
+                        );
+                  },
+                  tooltip: appLocalizations.reset,
+                  icon: const Icon(Icons.replay),
+                );
+              },
+            ),
           ],
           widget: const NetworkListView(),
         ),
@@ -81,44 +79,34 @@ class _ConfigViewState extends State<ConfigView> {
         delegate: OpenDelegate(
           title: 'DNS',
           actions: [
-            Consumer(builder: (_, ref, __) {
-              return IconButton(
-                onPressed: () async {
-                  final res = await globalState.showMessage(
-                    title: appLocalizations.reset,
-                    message: TextSpan(
-                      text: appLocalizations.resetTip,
-                    ),
-                  );
-                  if (res != true) {
-                    return;
-                  }
-                  ref.read(patchClashConfigProvider.notifier).updateState(
-                        (state) => state.copyWith(
-                          dns: defaultDns,
-                        ),
-                      );
-                },
-                tooltip: appLocalizations.reset,
-                icon: const Icon(
-                  Icons.replay,
-                ),
-              );
-            })
+            Consumer(
+              builder: (_, ref, _) {
+                return IconButton(
+                  onPressed: () async {
+                    final res = await globalState.showMessage(
+                      title: appLocalizations.reset,
+                      message: TextSpan(text: appLocalizations.resetTip),
+                    );
+                    if (res != true) {
+                      return;
+                    }
+                    ref
+                        .read(patchClashConfigProvider.notifier)
+                        .updateState(
+                          (state) => state.copyWith(dns: defaultDns),
+                        );
+                  },
+                  tooltip: appLocalizations.reset,
+                  icon: const Icon(Icons.replay),
+                );
+              },
+            ),
           ],
           widget: const DnsListView(),
           blur: false,
         ),
-      )
+      ),
     ];
-    return generateListView(
-      items
-          .separated(
-            const Divider(
-              height: 0,
-            ),
-          )
-          .toList(),
-    );
+    return generateListView(items.separated(const Divider(height: 0)).toList());
   }
 }
