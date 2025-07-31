@@ -9,9 +9,8 @@
         android:label="FlClash Debug"
         tools:replace="android:label">
         <service
-            android:name=".services.FlClashTileService"
+            android:name=".TileService"
             android:label="FlClash Debug"
-            tools:replace="android:label"
-            tools:targetApi="24" />
+            tools:replace="android:label" />
     </application>
 </manifest>

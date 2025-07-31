@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:fl_clash/common/color.dart';
 import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -58,11 +59,8 @@ enum GroupType {
 enum GroupName { GLOBAL, Proxy, Auto, Fallback }
 
 extension GroupTypeExtension on GroupType {
-  static List<String> get valueList => GroupType.values
-      .map(
-        (e) => e.toString().split('.').last,
-      )
-      .toList();
+  static List<String> get valueList =>
+      GroupType.values.map((e) => e.toString().split('.').last).toList();
 
   bool get isComputedSelected {
     return [GroupType.URLTest, GroupType.Fallback].contains(this);
@@ -80,11 +78,8 @@ extension GroupTypeExtension on GroupType {
 enum UsedProxy { GLOBAL, DIRECT, REJECT }
 
 extension UsedProxyExtension on UsedProxy {
-  static List<String> get valueList => UsedProxy.values
-      .map(
-        (e) => e.toString().split('.').last,
-      )
-      .toList();
+  static List<String> get valueList =>
+      UsedProxy.values.map((e) => e.toString().split('.').last).toList();
 
   String get value => UsedProxyExtension.valueList[index];
 }
@@ -93,13 +88,7 @@ enum Mode { rule, global, direct }
 
 enum ViewMode { mobile, laptop, desktop }
 
-enum LogLevel {
-  debug,
-  info,
-  warning,
-  error,
-  silent,
-}
+enum LogLevel { debug, info, warning, error, silent }
 
 extension LogLevelExt on LogLevel {
   Color? get color {
@@ -107,7 +96,7 @@ extension LogLevelExt on LogLevel {
       LogLevel.silent => Colors.grey.shade700,
       LogLevel.debug => Colors.grey.shade400,
       LogLevel.info => null,
-      LogLevel.warning => Colors.yellowAccent,
+      LogLevel.warning => Colors.orangeAccent.darken(),
       LogLevel.error => Colors.redAccent,
     };
   }
@@ -138,24 +127,13 @@ enum ResultType {
   error,
 }
 
-enum AppMessageType {
-  log,
-  delay,
-  request,
-  loaded,
-}
+enum CoreEventType { log, delay, request, loaded, crash }
 
-enum InvokeMessageType {
-  protect,
-  process,
-}
+enum InvokeMessageType { protect, process }
 
 enum FindProcessMode { always, off }
 
-enum RecoveryOption {
-  all,
-  onlyProfiles,
-}
+enum RecoveryOption { all, onlyProfiles }
 
 enum ChipType { action, delete }
 
@@ -177,7 +155,7 @@ enum DnsMode {
   fakeIp,
   @JsonValue('redir-host')
   redirHost,
-  hosts
+  hosts,
 }
 
 enum ExternalControllerStatus {
@@ -192,28 +170,12 @@ enum ExternalControllerStatus {
 }
 
 enum KeyboardModifier {
-  alt([
-    PhysicalKeyboardKey.altLeft,
-    PhysicalKeyboardKey.altRight,
-  ]),
-  capsLock([
-    PhysicalKeyboardKey.capsLock,
-  ]),
-  control([
-    PhysicalKeyboardKey.controlLeft,
-    PhysicalKeyboardKey.controlRight,
-  ]),
-  fn([
-    PhysicalKeyboardKey.fn,
-  ]),
-  meta([
-    PhysicalKeyboardKey.metaLeft,
-    PhysicalKeyboardKey.metaRight,
-  ]),
-  shift([
-    PhysicalKeyboardKey.shiftLeft,
-    PhysicalKeyboardKey.shiftRight,
-  ]);
+  alt([PhysicalKeyboardKey.altLeft, PhysicalKeyboardKey.altRight]),
+  capsLock([PhysicalKeyboardKey.capsLock]),
+  control([PhysicalKeyboardKey.controlLeft, PhysicalKeyboardKey.controlRight]),
+  fn([PhysicalKeyboardKey.fn]),
+  meta([PhysicalKeyboardKey.metaLeft, PhysicalKeyboardKey.metaRight]),
+  shift([PhysicalKeyboardKey.shiftLeft, PhysicalKeyboardKey.shiftRight]);
 
   final List<PhysicalKeyboardKey> physicalKeys;
 
@@ -233,19 +195,9 @@ extension KeyboardModifierExt on KeyboardModifier {
   }
 }
 
-enum HotAction {
-  start,
-  view,
-  mode,
-  proxy,
-  tun,
-}
+enum HotAction { start, view, mode, proxy, tun }
 
-enum ProxiesIconStyle {
-  standard,
-  none,
-  icon,
-}
+enum ProxiesIconStyle { standard, none, icon }
 
 enum FontFamily {
   twEmoji('Twemoji'),
@@ -257,10 +209,7 @@ enum FontFamily {
   const FontFamily(this.value);
 }
 
-enum RouteMode {
-  bypassPrivate,
-  config,
-}
+enum RouteMode { bypassPrivate, config }
 
 enum ActionMethod {
   message,
@@ -294,6 +243,7 @@ enum ActionMethod {
   getMemory,
   crash,
   setupConfig,
+  deleteFile,
 
   ///Android,
   setState,
@@ -307,11 +257,7 @@ enum ActionMethod {
 
 enum AuthorizeCode { none, success, error }
 
-enum WindowsHelperServiceStatus {
-  none,
-  presence,
-  running,
-}
+enum WindowsHelperServiceStatus { none, presence, running }
 
 enum FunctionTag {
   updateClashConfig,
@@ -337,79 +283,30 @@ enum FunctionTag {
 }
 
 enum DashboardWidget {
-  networkSpeed(
-    GridItem(
-      crossAxisCellCount: 8,
-      child: NetworkSpeed(),
-    ),
-  ),
-  outboundModeV2(
-    GridItem(
-      crossAxisCellCount: 8,
-      child: OutboundModeV2(),
-    ),
-  ),
-  outboundMode(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: OutboundMode(),
-    ),
-  ),
-  trafficUsage(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: TrafficUsage(),
-    ),
-  ),
-  networkDetection(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: NetworkDetection(),
-    ),
-  ),
+  networkSpeed(GridItem(crossAxisCellCount: 8, child: NetworkSpeed())),
+  outboundModeV2(GridItem(crossAxisCellCount: 8, child: OutboundModeV2())),
+  outboundMode(GridItem(crossAxisCellCount: 4, child: OutboundMode())),
+  trafficUsage(GridItem(crossAxisCellCount: 4, child: TrafficUsage())),
+  networkDetection(GridItem(crossAxisCellCount: 4, child: NetworkDetection())),
   tunButton(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: TUNButton(),
-    ),
+    GridItem(crossAxisCellCount: 4, child: TUNButton()),
     platforms: desktopPlatforms,
   ),
   vpnButton(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: VpnButton(),
-    ),
-    platforms: [
-      SupportPlatform.Android,
-    ],
+    GridItem(crossAxisCellCount: 4, child: VpnButton()),
+    platforms: [SupportPlatform.Android],
   ),
   systemProxyButton(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: SystemProxyButton(),
-    ),
+    GridItem(crossAxisCellCount: 4, child: SystemProxyButton()),
     platforms: desktopPlatforms,
   ),
-  intranetIp(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: IntranetIP(),
-    ),
-  ),
-  memoryInfo(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: MemoryInfo(),
-    ),
-  );
+  intranetIp(GridItem(crossAxisCellCount: 4, child: IntranetIP())),
+  memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo()));
 
   final GridItem widget;
   final List<SupportPlatform> platforms;
 
-  const DashboardWidget(
-    this.widget, {
-    this.platforms = SupportPlatform.values,
-  });
+  const DashboardWidget(this.widget, {this.platforms = SupportPlatform.values});
 
   static DashboardWidget getDashboardWidget(GridItem gridItem) {
     final dashboardWidgets = DashboardWidget.values;
@@ -420,10 +317,7 @@ enum DashboardWidget {
   }
 }
 
-enum GeodataLoader {
-  standard,
-  memconservative,
-}
+enum GeodataLoader { standard, memconservative }
 
 enum PageLabel {
   dashboard,
@@ -478,51 +372,30 @@ enum RuleAction {
 
 extension RuleActionExt on RuleAction {
   bool get hasParams => [
-        RuleAction.GEOIP,
-        RuleAction.IP_ASN,
-        RuleAction.SRC_IP_ASN,
-        RuleAction.IP_CIDR,
-        RuleAction.IP_CIDR6,
-        RuleAction.IP_SUFFIX,
-        RuleAction.RULE_SET,
-      ].contains(this);
+    RuleAction.GEOIP,
+    RuleAction.IP_ASN,
+    RuleAction.SRC_IP_ASN,
+    RuleAction.IP_CIDR,
+    RuleAction.IP_CIDR6,
+    RuleAction.IP_SUFFIX,
+    RuleAction.RULE_SET,
+  ].contains(this);
 }
 
-enum OverrideRuleType {
-  override,
-  added,
-}
+enum OverrideRuleType { override, added }
 
-enum RuleTarget {
-  DIRECT,
-  REJECT,
-}
+enum RuleTarget { DIRECT, REJECT }
 
-enum RecoveryStrategy {
-  compatible,
-  override,
-}
+enum RecoveryStrategy { compatible, override }
 
-enum CacheTag {
-  logs,
-  rules,
-  requests,
-  proxiesList,
-}
+enum CacheTag { logs, rules, requests, proxiesList }
 
-enum Language {
-  yaml,
-  javaScript,
-}
+enum Language { yaml, javaScript }
 
-enum ImportOption {
-  file,
-  url,
-}
+enum ImportOption { file, url }
 
-enum ScrollPositionCacheKeys {
-  tools,
-  profiles,
-  proxiesList,
-  proxiesTabList,
-}
+enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }
+
+enum QueryTag { proxies }
+
+enum CoreStatus { connecting, connected, disconnected }
