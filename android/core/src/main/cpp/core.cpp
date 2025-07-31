@@ -1,5 +1,7 @@
-#ifdef LIBCLASH
 #include <jni.h>
+
+#ifdef LIBCLASH
+
 #include "jni_helper.h"
 #include "libclash.h"
 
@@ -40,11 +42,11 @@ call_tun_interface_resolve_process_impl(void *tun_interface, int protocol,
                                         const int uid) {
     ATTACH_JNI();
     const auto packageName = reinterpret_cast<jstring>(env->CallObjectMethod(static_cast<jobject>(tun_interface),
-                                                                       m_tun_interface_resolve_process,
-                                                                       protocol,
-                                                                       new_string(source),
-                                                                       new_string(target),
-                                                                       uid));
+                                                                             m_tun_interface_resolve_process,
+                                                                             protocol,
+                                                                             new_string(source),
+                                                                             new_string(target),
+                                                                             uid));
     return get_string(packageName);
 }
 
@@ -68,5 +70,20 @@ JNI_OnLoad(JavaVM *vm, void *) {
                       &call_tun_interface_resolve_process_impl,
                       &release_jni_object_impl);
     return JNI_VERSION_1_6;
+}
+#else
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_startTun(JNIEnv *env, jobject thiz, jint fd, jobject cb) {
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_stopTun(JNIEnv *env, jobject thiz) {
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz) {
 }
 #endif

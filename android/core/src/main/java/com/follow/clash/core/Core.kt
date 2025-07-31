@@ -21,25 +21,46 @@ data object Core {
         protect: (Int) -> Boolean,
         resolverProcess: (protocol: Int, source: InetSocketAddress, target: InetSocketAddress, uid: Int) -> String
     ) {
-        startTun(fd, object : TunInterface {
-            override fun protect(fd: Int) {
-                protect(fd)
-            }
+        startTun(
+            fd,
+            object : TunInterface {
+                override fun protect(fd: Int) {
+                    protect(fd)
+                }
 
-            override fun resolverProcess(
-                protocol: Int,
-                source: String,
-                target: String,
-                uid: Int
-            ): String {
-                return resolverProcess(
-                    protocol,
-                    parseInetSocketAddress(source),
-                    parseInetSocketAddress(target),
-                    uid,
-                )
-            }
-        });
+                override fun resolverProcess(
+                    protocol: Int,
+                    source: String,
+                    target: String,
+                    uid: Int
+                ): String {
+                    return resolverProcess(
+                        protocol,
+                        parseInetSocketAddress(source),
+                        parseInetSocketAddress(target),
+                        uid,
+                    )
+                }
+            },
+        )
+    }
+
+    private external fun invokeAction(
+        data: String,
+        cb: InvokeInterface
+    )
+
+    fun invokeAction(
+        data: String,
+    ) {
+        invokeAction(
+            data,
+            object : InvokeInterface {
+                override fun onResult(result: String?) {
+
+                }
+            },
+        )
     }
 
     external fun stopTun()

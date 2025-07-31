@@ -11,7 +11,7 @@ import com.follow.clash.GlobalState
 import com.follow.clash.models.VpnOptions
 
 
-class FlClashService : Service(), BaseServiceInterface {
+class FlClashService : Service(), wBaseServiceInterface {
 
     override fun start(options: VpnOptions) = 0
 

@@ -7,17 +7,11 @@ package main
 */
 import "C"
 import (
-	bridge "core/dart-bridge"
 	"encoding/json"
 	"unsafe"
 )
 
 var messagePort int64 = -1
-
-//export initNativeApiBridge
-func initNativeApiBridge(api unsafe.Pointer) {
-	bridge.InitDartApi(api)
-}
 
 //export attachMessagePort
 func attachMessagePort(mPort C.longlong) {
@@ -40,17 +34,16 @@ func freeCString(s *C.char) {
 }
 
 func (result ActionResult) send() {
-	data, err := result.Json()
-	if err != nil {
-		return
-	}
-	bridge.SendToPort(result.Port, string(data))
+	//data, err := result.Json()
+	//if err != nil {
+	//	return
+	//}
+	//bridge.SendToPort(result.Port, string(data))
 }
 
 //export invokeAction
-func invokeAction(paramsChar *C.char, port C.longlong) {
+func invokeAction(paramsChar *C.char, callback unsafe.Pointer) {
 	params := C.GoString(paramsChar)
-	i := int64(port)
 	var action = &Action{}
 	err := json.Unmarshal([]byte(params), action)
 	if err != nil {
