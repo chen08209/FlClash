@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"core/state"
 	"encoding/json"
-	"fmt"
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/common/observable"
@@ -21,6 +19,7 @@ import (
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 	"net"
+	"os"
 	"runtime"
 	"sort"
 	"strconv"
@@ -61,6 +60,7 @@ func handleStopListener() bool {
 	defer runLock.Unlock()
 	isRunning = false
 	listener.StopListener()
+	resolver.ResetConnection()
 	return true
 }
 
@@ -68,7 +68,7 @@ func handleGetIsInit() bool {
 	return isInit
 }
 
-func handleForceGc() {
+func handleForceGC() {
 	go func() {
 		log.Infoln("[APP] request force GC")
 		runtime.GC()
@@ -136,29 +136,29 @@ func handleChangeProxy(data string, fn func(string string)) {
 	}()
 }
 
-func handleGetTraffic() string {
-	up, down := statistic.DefaultManager.Current(state.CurrentState.OnlyStatisticsProxy)
+func handleGetTraffic(onlyStatisticsProxy bool) string {
+	up, down := statistic.DefaultManager.Current(onlyStatisticsProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
 	}
 	data, err := json.Marshal(traffic)
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Errorln("Error: %s", err)
 		return ""
 	}
 	return string(data)
 }
 
-func handleGetTotalTraffic() string {
-	up, down := statistic.DefaultManager.Total(state.CurrentState.OnlyStatisticsProxy)
+func handleGetTotalTraffic(onlyStatisticsProxy bool) string {
+	up, down := statistic.DefaultManager.Total(onlyStatisticsProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
 	}
 	data, err := json.Marshal(traffic)
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Errorln("Error: %s", err)
 		return ""
 	}
 	return string(data)
@@ -228,7 +228,7 @@ func handleGetConnections() string {
 	snapshot := statistic.DefaultManager.Snapshot()
 	data, err := json.Marshal(snapshot)
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Errorln("Error: %s", err)
 		return ""
 	}
 	return string(data)
@@ -323,13 +323,13 @@ func handleUpdateGeoData(geoType string, geoName string, fn func(value string)) 
 				fn(err.Error())
 				return
 			}
-		case "GeoIp":
+		case "GEOIP":
 			err := updater.UpdateGeoIpWithPath(path)
 			if err != nil {
 				fn(err.Error())
 				return
 			}
-		case "GeoSite":
+		case "GEOSITE":
 			err := updater.UpdateGeoSiteWithPath(path)
 			if err != nil {
 				fn(err.Error())
@@ -372,6 +372,15 @@ func handleSideLoadExternalProvider(providerName string, data []byte, fn func(va
 		}
 		fn("")
 	}()
+}
+
+func handleSuspend(suspended bool) bool {
+	if suspended {
+		tunnel.OnSuspend()
+	} else {
+		tunnel.OnRunning()
+	}
+	return true
 }
 
 func handleStartLog() {
@@ -420,10 +429,6 @@ func handleGetMemory(fn func(value string)) {
 	}()
 }
 
-func handleSetState(params string) {
-	_ = json.Unmarshal([]byte(params), state.CurrentState)
-}
-
 func handleGetConfig(path string) (*config.RawConfig, error) {
 	bytes, err := readFile(path)
 	if err != nil {
@@ -448,6 +453,33 @@ func handleUpdateConfig(bytes []byte) string {
 	}
 	updateConfig(params)
 	return ""
+}
+
+func handleDelFile(path string, result ActionResult) {
+	go func() {
+		fileInfo, err := os.Stat(path)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				result.success(err.Error())
+			}
+			result.success("")
+			return
+		}
+		if fileInfo.IsDir() {
+			err = os.RemoveAll(path)
+			if err != nil {
+				result.success(err.Error())
+				return
+			}
+		} else {
+			err = os.Remove(path)
+			if err != nil {
+				result.success(err.Error())
+				return
+			}
+		}
+		result.success("")
+	}()
 }
 
 func handleSetupConfig(bytes []byte) string {

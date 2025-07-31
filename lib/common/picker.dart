@@ -35,9 +35,10 @@ class Picker {
       return null;
     }
     final controller = MobileScannerController();
-    final capture = await controller.analyzeImage(xFile.path, formats: [
-      BarcodeFormat.qrCode,
-    ]);
+    final capture = await controller.analyzeImage(
+      xFile.path,
+      formats: [BarcodeFormat.qrCode],
+    );
     final result = capture?.barcodes.first.rawValue;
     if (result == null || !result.isUrl) {
       throw appLocalizations.pleaseUploadValidQrcode;
