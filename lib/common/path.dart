@@ -10,6 +10,7 @@ class AppPath {
   Completer<Directory> dataDir = Completer();
   Completer<Directory> downloadDir = Completer();
   Completer<Directory> tempDir = Completer();
+  Completer<Directory> cacheDir = Completer();
   late String appDirPath;
 
   AppPath._internal() {
@@ -22,6 +23,9 @@ class AppPath {
     });
     getDownloadsDirectory().then((value) {
       downloadDir.complete(value);
+    });
+    getApplicationCacheDirectory().then((value) {
+      cacheDir.complete(value);
     });
   }
 
@@ -58,8 +62,13 @@ class AppPath {
   }
 
   Future<String> get lockFilePath async {
-    final directory = await dataDir.future;
-    return join(directory.path, 'FlClash.lock');
+    final homeDirPath = await appPath.homeDirPath;
+    return join(homeDirPath, 'FlClash.lock');
+  }
+
+  Future<String> get configFilePath async {
+    final homeDirPath = await appPath.homeDirPath;
+    return join(homeDirPath, 'config.json');
   }
 
   Future<String> get sharedPreferencesPath async {
@@ -77,13 +86,19 @@ class AppPath {
     return join(directory, '$id.yaml');
   }
 
+  Future<String> getIconsCacheDir() async {
+    final directory = await cacheDir.future;
+    return join(directory.path, 'icons');
+  }
+
+  Future<String> getProvidersRootPath() async {
+    final directory = await profilesPath;
+    return join(directory, 'providers');
+  }
+
   Future<String> getProvidersDirPath(String id) async {
     final directory = await profilesPath;
-    return join(
-      directory,
-      'providers',
-      id,
-    );
+    return join(directory, 'providers', id);
   }
 
   Future<String> getProvidersFilePath(
@@ -92,13 +107,7 @@ class AppPath {
     String url,
   ) async {
     final directory = await profilesPath;
-    return join(
-      directory,
-      'providers',
-      id,
-      type,
-      url.toMd5(),
-    );
+    return join(directory, 'providers', id, type, url.toMd5());
   }
 
   Future<String> get tempPath async {

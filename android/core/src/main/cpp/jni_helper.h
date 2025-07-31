@@ -19,7 +19,7 @@ extern void jni_attach_thread(scoped_jni *jni);
 
 extern void jni_detach_thread(const scoped_jni *env);
 
-extern void release_string(char **str);
+extern void release_string( char **str);
 
 #define ATTACH_JNI() __attribute__((unused, cleanup(jni_detach_thread))) \
                     scoped_jni _jni{}; \

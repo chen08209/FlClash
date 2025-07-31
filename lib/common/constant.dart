@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:math';
 import 'dart:ui';
 
@@ -30,14 +32,14 @@ const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);
 const commonDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
-const mmdbFileName = 'geoip.metadb';
-const asnFileName = 'ASN.mmdb';
-const geoIpFileName = 'GeoIP.dat';
-const geoSiteFileName = 'GeoSite.dat';
+const MMDB = 'GEOIP.metadb';
+const ASN = 'ASN.mmdb';
+const GEOIP = 'GEOIP.dat';
+const GEOSITE = 'GEOSITE.dat';
 final double kHeaderHeight = system.isDesktop
     ? !system.isMacOS
-        ? 40
-        : 28
+          ? 40
+          : 28
     : 0;
 const profilesDirectoryName = 'profiles';
 const localhost = '127.0.0.1';
@@ -84,7 +86,7 @@ const profilesStoreKey = PageStorageKey<String>('profiles');
 const defaultPrimaryColor = 0XFFD8C0C3;
 
 double getWidgetHeight(num lines) {
-  return max(lines * 84 + (lines - 1) * 16, 0).ap;
+  return max(lines * 80 + (lines - 1) * 16, 0).ap;
 }
 
 const maxLength = 1000;
