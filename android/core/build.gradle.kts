@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.argumentsWithVarargAsSingleArray
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
@@ -7,22 +7,13 @@ plugins {
 
 android {
     namespace = "com.follow.clash.core"
-    compileSdk = 35
-    ndkVersion = "28.0.13004108"
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    ndkVersion = libs.versions.ndkVersion.get()
 
     defaultConfig {
-        minSdk = 21
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
-    buildTypes {
-        release {
-            isJniDebuggable = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
 
     sourceSets {
         getByName("main") {
@@ -37,17 +28,30 @@ android {
         }
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    buildTypes {
+        release {
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
 }
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+
 dependencies {
-    implementation("androidx.annotation:annotation-jvm:1.9.1")
+    implementation(libs.annotation.jvm)
 }
 
 val copyNativeLibs by tasks.register<Copy>("copyNativeLibs") {
@@ -56,6 +60,18 @@ val copyNativeLibs by tasks.register<Copy>("copyNativeLibs") {
     }
     from("../../libclash/android")
     into("src/main/jniLibs")
+
+    doLast {
+        val includesDir = file("src/main/jniLibs/includes")
+        val targetDir = file("src/main/cpp/includes")
+        if (includesDir.exists()) {
+            copy {
+                from(includesDir)
+                into(targetDir)
+            }
+            delete(includesDir)
+        }
+    }
 }
 
 afterEvaluate {

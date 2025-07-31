@@ -19,9 +19,6 @@ class Tray {
     required Brightness? brightness,
     bool force = false,
   }) async {
-    if (system.isAndroid) {
-      return;
-    }
     if (Platform.isLinux || force) {
       await trayManager.destroy();
     }
@@ -197,4 +194,4 @@ class Tray {
   }
 }
 
-final tray = Tray();
+final tray = system.isDesktop ? Tray() : null;

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -14,7 +13,7 @@ class TrafficUsage extends StatelessWidget {
   Widget _buildTrafficDataItem(
     BuildContext context,
     Icon icon,
-    TrafficValue trafficValue,
+    num trafficValue,
   ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -27,13 +26,11 @@ class TrafficUsage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               icon,
-              const SizedBox(
-                width: 8,
-              ),
+              const SizedBox(width: 8),
               Flexible(
                 flex: 1,
                 child: Text(
-                  trafficValue.showValue,
+                  trafficValue.traffic.value,
                   style: context.textTheme.bodySmall,
                   maxLines: 1,
                 ),
@@ -42,7 +39,7 @@ class TrafficUsage extends StatelessWidget {
           ),
         ),
         Text(
-          trafficValue.showUnit,
+          trafficValue.traffic.unit,
           style: context.textTheme.bodySmall?.toLighter,
         ),
       ],
@@ -62,14 +59,12 @@ class TrafficUsage extends StatelessWidget {
         ),
         onPressed: () {},
         child: Consumer(
-          builder: (_, ref, __) {
+          builder: (_, ref, _) {
             final totalTraffic = ref.watch(totalTrafficProvider);
             final upTotalTrafficValue = totalTraffic.up;
             final downTotalTrafficValue = totalTraffic.down;
             return Padding(
-              padding: baseInfoEdgeInsets.copyWith(
-                top: 0,
-              ),
+              padding: baseInfoEdgeInsets.copyWith(top: 0),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -77,9 +72,7 @@ class TrafficUsage extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Container(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 12,
-                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
                       child: Row(
                         mainAxisSize: MainAxisSize.max,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -89,19 +82,17 @@ class TrafficUsage extends StatelessWidget {
                             child: DonutChart(
                               data: [
                                 DonutChartData(
-                                  value: upTotalTrafficValue.value.toDouble(),
+                                  value: upTotalTrafficValue.toDouble(),
                                   color: primaryColor,
                                 ),
                                 DonutChartData(
-                                  value: downTotalTrafficValue.value.toDouble(),
+                                  value: downTotalTrafficValue.toDouble(),
                                   color: secondaryColor,
                                 ),
                               ],
                             ),
                           ),
-                          SizedBox(
-                            width: 8,
-                          ),
+                          SizedBox(width: 8),
                           Flexible(
                             child: LayoutBuilder(
                               builder: (_, container) {
@@ -121,8 +112,10 @@ class TrafficUsage extends StatelessWidget {
                                     .computeTextSize(uploadText);
                                 final downloadTextSize = globalState.measure
                                     .computeTextSize(downloadText);
-                                final maxTextWidth = max(uploadTextSize.width,
-                                    downloadTextSize.width);
+                                final maxTextWidth = max(
+                                  uploadTextSize.width,
+                                  downloadTextSize.width,
+                                );
                                 if (maxTextWidth + 24 > container.maxWidth) {
                                   return Container();
                                 }
@@ -137,13 +130,12 @@ class TrafficUsage extends StatelessWidget {
                                           height: 8,
                                           decoration: BoxDecoration(
                                             color: primaryColor,
-                                            borderRadius:
-                                                BorderRadius.circular(3),
+                                            borderRadius: BorderRadius.circular(
+                                              3,
+                                            ),
                                           ),
                                         ),
-                                        SizedBox(
-                                          width: 4,
-                                        ),
+                                        SizedBox(width: 4),
                                         Text(
                                           maxLines: 1,
                                           appLocalizations.upload,
@@ -152,9 +144,7 @@ class TrafficUsage extends StatelessWidget {
                                         ),
                                       ],
                                     ),
-                                    SizedBox(
-                                      height: 4,
-                                    ),
+                                    SizedBox(height: 4),
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -163,13 +153,12 @@ class TrafficUsage extends StatelessWidget {
                                           height: 8,
                                           decoration: BoxDecoration(
                                             color: secondaryColor,
-                                            borderRadius:
-                                                BorderRadius.circular(3),
+                                            borderRadius: BorderRadius.circular(
+                                              3,
+                                            ),
                                           ),
                                         ),
-                                        SizedBox(
-                                          width: 4,
-                                        ),
+                                        SizedBox(width: 4),
                                         Text(
                                           maxLines: 1,
                                           appLocalizations.download,
@@ -189,25 +178,15 @@ class TrafficUsage extends StatelessWidget {
                   ),
                   _buildTrafficDataItem(
                     context,
-                    Icon(
-                      Icons.arrow_upward,
-                      color: primaryColor,
-                      size: 14,
-                    ),
+                    Icon(Icons.arrow_upward, color: primaryColor, size: 14),
                     upTotalTrafficValue,
                   ),
-                  const SizedBox(
-                    height: 8,
-                  ),
+                  const SizedBox(height: 8),
                   _buildTrafficDataItem(
                     context,
-                    Icon(
-                      Icons.arrow_downward,
-                      color: secondaryColor,
-                      size: 14,
-                    ),
+                    Icon(Icons.arrow_downward, color: secondaryColor, size: 14),
                     downTotalTrafficValue,
-                  )
+                  ),
                 ],
               ),
             );
