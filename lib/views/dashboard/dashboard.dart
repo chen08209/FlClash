@@ -4,6 +4,7 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,44 +35,143 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   Widget _buildIsEdit(_IsEditWidgetBuilder builder) {
     return ValueListenableBuilder(
       valueListenable: _isEditNotifier,
-      builder: (_, isEdit, ___) {
+      builder: (_, isEdit, _) {
         return builder(isEdit);
       },
     );
   }
 
-  List<Widget> _buildActions() {
+  Future<void> _handleConnection() async {
+    final coreStatus = ref.read(coreStatusProvider);
+    if (coreStatus == CoreStatus.connecting) {
+      return;
+    }
+    final tip = coreStatus == CoreStatus.connected
+        ? appLocalizations.forceRestartCoreTip
+        : appLocalizations.restartCoreTip;
+    final res = await globalState.showMessage(message: TextSpan(text: tip));
+    if (res != true) {
+      return;
+    }
+    await Future.delayed(commonDuration);
+    globalState.appController.restartCore();
+  }
+
+  List<Widget> _buildActions(bool isEdit) {
     return [
-      _buildIsEdit((isEdit) {
-        return isEdit
-            ? ValueListenableBuilder(
-                valueListenable: _addedWidgetsNotifier,
-                builder: (_, addedChildren, child) {
-                  if (addedChildren.isEmpty) {
-                    return Container();
-                  }
-                  return child!;
-                },
-                child: IconButton(
-                  onPressed: () {
-                    _showAddWidgetsModal();
-                  },
-                  icon: Icon(
-                    Icons.add_circle,
-                  ),
-                ),
+      if (!isEdit)
+        Consumer(
+          builder: (_, ref, _) {
+            final coreStatus = ref.watch(coreStatusProvider);
+            return Tooltip(
+              message: appLocalizations.coreStatus,
+              child: FadeScaleBox(
+                alignment: Alignment.centerRight,
+                child: coreStatus == CoreStatus.connected
+                    ? IconButton.filled(
+                        visualDensity: VisualDensity.compact,
+                        iconSize: 20,
+                        padding: EdgeInsets.zero,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.greenAccent,
+                          foregroundColor: switch (Theme.brightnessOf(
+                            context,
+                          )) {
+                            Brightness.light =>
+                              context.colorScheme.onSurfaceVariant,
+                            Brightness.dark =>
+                              context.colorScheme.onPrimaryFixedVariant,
+                          },
+                        ),
+                        onPressed: _handleConnection,
+                        icon: Icon(Icons.check, fontWeight: FontWeight.w900),
+                      )
+                    : FilledButton.icon(
+                        key: ValueKey(coreStatus),
+                        onPressed: _handleConnection,
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          backgroundColor: switch (coreStatus) {
+                            CoreStatus.connecting => null,
+                            CoreStatus.connected => Colors.greenAccent,
+                            CoreStatus.disconnected =>
+                              context.colorScheme.error,
+                          },
+                          foregroundColor: switch (coreStatus) {
+                            CoreStatus.connecting => null,
+                            CoreStatus.connected => switch (Theme.brightnessOf(
+                              context,
+                            )) {
+                              Brightness.light =>
+                                context.colorScheme.onSurfaceVariant,
+                              Brightness.dark => null,
+                            },
+                            CoreStatus.disconnected =>
+                              context.colorScheme.onError,
+                          },
+                        ),
+                        icon: SizedBox(
+                          height: globalState.measure.bodyMediumHeight,
+                          width: globalState.measure.bodyMediumHeight,
+                          child: switch (coreStatus) {
+                            CoreStatus.connecting => Padding(
+                              padding: EdgeInsets.all(2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: context.colorScheme.onPrimary,
+                                backgroundColor: Colors.transparent,
+                              ),
+                            ),
+                            CoreStatus.connected => Icon(
+                              Icons.check_sharp,
+                              fontWeight: FontWeight.w900,
+                            ),
+                            CoreStatus.disconnected => Icon(
+                              Icons.restart_alt_sharp,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          },
+                        ),
+                        label: Text(switch (coreStatus) {
+                          CoreStatus.connecting => appLocalizations.connecting,
+                          CoreStatus.connected => appLocalizations.connected,
+                          CoreStatus.disconnected =>
+                            appLocalizations.disconnected,
+                        }),
+                      ),
+              ),
+            );
+          },
+        ),
+      if (isEdit)
+        ValueListenableBuilder(
+          valueListenable: _addedWidgetsNotifier,
+          builder: (_, addedChildren, child) {
+            if (addedChildren.isEmpty) {
+              return Container();
+            }
+            return child!;
+          },
+          child: IconButton(
+            onPressed: () {
+              _showAddWidgetsModal();
+            },
+            icon: Icon(Icons.add_circle),
+          ),
+        ),
+      FadeRotationScaleBox(
+        child: isEdit
+            ? IconButton(
+                key: ValueKey(true),
+                icon: Icon(Icons.save, key: ValueKey('save-icon')),
+                onPressed: _handleUpdateIsEdit,
               )
-            : SizedBox();
-      }),
-      IconButton(
-        icon: _buildIsEdit((isEdit) {
-          return isEdit
-              ? Icon(Icons.save)
-              : Icon(
-                  Icons.edit,
-                );
-        }),
-        onPressed: _handleUpdateIsEdit,
+            : IconButton(
+                key: ValueKey(false),
+                icon: Icon(Icons.edit, key: ValueKey('edit-icon')),
+                onPressed: _handleUpdateIsEdit,
+              ),
       ),
     ];
   }
@@ -81,7 +181,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       builder: (_, type) {
         return ValueListenableBuilder(
           valueListenable: _addedWidgetsNotifier,
-          builder: (_, value, __) {
+          builder: (_, value, _) {
             return AdaptiveSheetScaffold(
               type: type,
               body: _AddDashboardWidgetModal(
@@ -99,105 +199,97 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     );
   }
 
-  void _handleUpdateIsEdit() {
+  Future<void> _handleUpdateIsEdit() async {
     if (_isEditNotifier.value == true) {
-      _handleSave();
+      await _handleSave();
     }
     _isEditNotifier.value = !_isEditNotifier.value;
   }
 
-  void _handleSave() {
-    final children = key.currentState?.children;
-    if (children == null) {
+  Future<void> _handleSave() async {
+    final currentState = key.currentState;
+    if (currentState == null) {
       return;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final dashboardWidgets = children
-          .map(
-            (item) => DashboardWidget.getDashboardWidget(item),
-          )
+    if (mounted) {
+      await currentState.isTransformCompleter;
+      final dashboardWidgets = currentState.children
+          .map((item) => DashboardWidget.getDashboardWidget(item))
           .toList();
-      ref.read(appSettingProvider.notifier).updateState(
+      ref
+          .read(appSettingProvider.notifier)
+          .updateState(
             (state) => state.copyWith(dashboardWidgets: dashboardWidgets),
           );
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardStateProvider);
-    final columns = max(4 * ((dashboardState.viewWidth / 320).ceil()), 8);
+    final columns = max(4 * ((dashboardState.contentWidth / 300).ceil()), 8);
     final spacing = 16.ap;
     final children = [
       ...dashboardState.dashboardWidgets
           .where(
-            (item) => item.platforms.contains(
-              SupportPlatform.currentPlatform,
-            ),
+            (item) => item.platforms.contains(SupportPlatform.currentPlatform),
           )
-          .map(
-            (item) => item.widget,
-          ),
+          .map((item) => item.widget),
     ];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _addedWidgetsNotifier.value = DashboardWidget.values
           .where(
             (item) =>
                 !children.contains(item.widget) &&
-                item.platforms.contains(
-                  SupportPlatform.currentPlatform,
-                ),
+                item.platforms.contains(SupportPlatform.currentPlatform),
           )
           .map((item) => item.widget)
           .toList();
     });
-    return CommonScaffold(
-      title: appLocalizations.dashboard,
-      actions: _buildActions(),
-      floatingActionButton: const StartButton(),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16).copyWith(
-              bottom: 88,
-            ),
-            child: _buildIsEdit((isEdit) {
-              return isEdit
-                  ? SystemBackBlock(
-                      child: CommonPopScope(
-                        child: SuperGrid(
-                          key: key,
-                          crossAxisCount: columns,
-                          crossAxisSpacing: spacing,
-                          mainAxisSpacing: spacing,
-                          children: [
-                            ...dashboardState.dashboardWidgets
-                                .where(
-                                  (item) => item.platforms.contains(
-                                    SupportPlatform.currentPlatform,
-                                  ),
-                                )
-                                .map(
-                                  (item) => item.widget,
+    return _buildIsEdit(
+      (isEdit) => CommonScaffold(
+        title: appLocalizations.dashboard,
+        actions: _buildActions(isEdit),
+        floatingActionButton: const StartButton(),
+        body: Align(
+          alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16).copyWith(bottom: 88),
+            child: isEdit
+                ? SystemBackBlock(
+                    child: CommonPopScope(
+                      child: SuperGrid(
+                        key: key,
+                        crossAxisCount: columns,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        children: [
+                          ...dashboardState.dashboardWidgets
+                              .where(
+                                (item) => item.platforms.contains(
+                                  SupportPlatform.currentPlatform,
                                 ),
-                          ],
-                          onUpdate: () {
-                            _handleSave();
-                          },
-                        ),
-                        onPop: () {
-                          _handleUpdateIsEdit();
-                          return false;
+                              )
+                              .map((item) => item.widget),
+                        ],
+                        onUpdate: () {
+                          _handleSave();
                         },
                       ),
-                    )
-                  : Grid(
-                      crossAxisCount: columns,
-                      crossAxisSpacing: spacing,
-                      mainAxisSpacing: spacing,
-                      children: children,
-                    );
-            })),
+                      onPop: (context) {
+                        _handleUpdateIsEdit();
+                        return false;
+                      },
+                    ),
+                  )
+                : Grid(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                    children: children,
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -207,18 +299,13 @@ class _AddDashboardWidgetModal extends StatelessWidget {
   final List<GridItem> items;
   final Function(GridItem item) onAdd;
 
-  const _AddDashboardWidgetModal({
-    required this.items,
-    required this.onAdd,
-  });
+  const _AddDashboardWidgetModal({required this.items, required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
     return DeferredPointerHandler(
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(
-          16,
-        ),
+        padding: EdgeInsets.all(16),
         child: Grid(
           crossAxisCount: 8,
           crossAxisSpacing: 16,
@@ -247,10 +334,7 @@ class _AddedContainer extends StatefulWidget {
   final Widget child;
   final VoidCallback onAdd;
 
-  const _AddedContainer({
-    required this.child,
-    required this.onAdd,
-  });
+  const _AddedContainer({required this.child, required this.onAdd});
 
   @override
   State<_AddedContainer> createState() => _AddedContainerState();
@@ -282,9 +366,7 @@ class _AddedContainerState extends State<_AddedContainer> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        ActivateBox(
-          child: widget.child,
-        ),
+        ActivateBox(child: widget.child),
         Positioned(
           top: -8,
           right: -8,
@@ -296,13 +378,11 @@ class _AddedContainerState extends State<_AddedContainer> {
                 iconSize: 20,
                 padding: EdgeInsets.all(2),
                 onPressed: _handleAdd,
-                icon: Icon(
-                  Icons.add,
-                ),
+                icon: Icon(Icons.add),
               ),
             ),
           ),
-        )
+        ),
       ],
     );
   }

@@ -1,5 +1,3 @@
-// ignore_for_file: invalid_annotation_target
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -100,17 +98,14 @@ const defaultBypassPrivateRouteAddress = [
   'f000::/5',
   'f800::/6',
   'fe00::/9',
-  'fec0::/10'
+  'fec0::/10',
 ];
 
 @freezed
-class ProxyGroup with _$ProxyGroup {
+abstract class ProxyGroup with _$ProxyGroup {
   const factory ProxyGroup({
     required String name,
-    @JsonKey(
-      fromJson: GroupType.parseProfileType,
-    )
-    required GroupType type,
+    @JsonKey(fromJson: GroupType.parseProfileType) required GroupType type,
     List<String>? proxies,
     List<String>? use,
     int? interval,
@@ -131,17 +126,15 @@ class ProxyGroup with _$ProxyGroup {
 }
 
 @freezed
-class RuleProvider with _$RuleProvider {
-  const factory RuleProvider({
-    required String name,
-  }) = _RuleProvider;
+abstract class RuleProvider with _$RuleProvider {
+  const factory RuleProvider({required String name}) = _RuleProvider;
 
   factory RuleProvider.fromJson(Map<String, Object?> json) =>
       _$RuleProviderFromJson(json);
 }
 
 @freezed
-class Sniffer with _$Sniffer {
+abstract class Sniffer with _$Sniffer {
   const factory Sniffer({
     @Default(false) bool enable,
     @Default(true) @JsonKey(name: 'override-destination') bool overrideDest,
@@ -165,7 +158,7 @@ List<String> _formJsonPorts(List? ports) {
 }
 
 @freezed
-class SnifferConfig with _$SnifferConfig {
+abstract class SnifferConfig with _$SnifferConfig {
   const factory SnifferConfig({
     @Default([]) @JsonKey(fromJson: _formJsonPorts) List<String> ports,
     @JsonKey(name: 'override-destination') bool? overrideDest,
@@ -176,7 +169,7 @@ class SnifferConfig with _$SnifferConfig {
 }
 
 @freezed
-class Tun with _$Tun {
+abstract class Tun with _$Tun {
   const factory Tun({
     @Default(false) bool enable,
     @Default(appName) String device,
@@ -206,30 +199,23 @@ extension TunExt on Tun {
         ? defaultBypassPrivateRouteAddress
         : routeAddress;
     return switch (system.isDesktop) {
-      true => copyWith(
-          autoRoute: true,
-          routeAddress: [],
-        ),
+      true => copyWith(autoRoute: true, routeAddress: []),
       false => copyWith(
-          autoRoute: mRouteAddress.isEmpty ? true : false,
-          routeAddress: mRouteAddress,
-        ),
+        autoRoute: mRouteAddress.isEmpty ? true : false,
+        routeAddress: mRouteAddress,
+      ),
     };
   }
 }
 
 @freezed
-class FallbackFilter with _$FallbackFilter {
+abstract class FallbackFilter with _$FallbackFilter {
   const factory FallbackFilter({
     @Default(true) bool geoip,
     @Default('CN') @JsonKey(name: 'geoip-code') String geoipCode,
     @Default(['gfw']) List<String> geosite,
     @Default(['240.0.0.0/4']) List<String> ipcidr,
-    @Default([
-      '+.google.com',
-      '+.facebook.com',
-      '+.youtube.com',
-    ])
+    @Default(['+.google.com', '+.facebook.com', '+.youtube.com'])
     List<String> domain,
   }) = _FallbackFilter;
 
@@ -238,7 +224,7 @@ class FallbackFilter with _$FallbackFilter {
 }
 
 @freezed
-class Dns with _$Dns {
+abstract class Dns with _$Dns {
   const factory Dns({
     @Default(true) bool enable,
     @Default('0.0.0.0:1053') String listen,
@@ -256,32 +242,20 @@ class Dns with _$Dns {
     @Default('198.18.0.1/16')
     @JsonKey(name: 'fake-ip-range')
     String fakeIpRange,
-    @Default([
-      '*.lan',
-      'localhost.ptlogin2.qq.com',
-    ])
+    @Default(['*.lan', 'localhost.ptlogin2.qq.com'])
     @JsonKey(name: 'fake-ip-filter')
     List<String> fakeIpFilter,
     @Default({
       'www.baidu.com': '114.114.114.114',
       '+.internal.crop.com': '10.0.0.1',
-      'geosite:cn': 'https://doh.pub/dns-query'
+      'geosite:cn': 'https://doh.pub/dns-query',
     })
     @JsonKey(name: 'nameserver-policy')
     Map<String, String> nameserverPolicy,
-    @Default([
-      'https://doh.pub/dns-query',
-      'https://dns.alidns.com/dns-query',
-    ])
+    @Default(['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'])
     List<String> nameserver,
-    @Default([
-      'tls://8.8.4.4',
-      'tls://1.1.1.1',
-    ])
-    List<String> fallback,
-    @Default([
-      'https://doh.pub/dns-query',
-    ])
+    @Default(['tls://8.8.4.4', 'tls://1.1.1.1']) List<String> fallback,
+    @Default(['https://doh.pub/dns-query'])
     @JsonKey(name: 'proxy-server-nameserver')
     List<String> proxyServerNameserver,
     @Default(FallbackFilter())
@@ -301,7 +275,7 @@ class Dns with _$Dns {
 }
 
 @freezed
-class GeoXUrl with _$GeoXUrl {
+abstract class GeoXUrl with _$GeoXUrl {
   const factory GeoXUrl({
     @Default(
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
@@ -337,7 +311,7 @@ class GeoXUrl with _$GeoXUrl {
 }
 
 @freezed
-class ParsedRule with _$ParsedRule {
+abstract class ParsedRule with _$ParsedRule {
   const factory ParsedRule({
     required RuleAction ruleAction,
     String? content,
@@ -351,9 +325,7 @@ class ParsedRule with _$ParsedRule {
   factory ParsedRule.parseString(String value) {
     final splits = value.split(',');
     final shortSplits = splits
-        .where(
-          (item) => !item.contains('src') && !item.contains('no-resolve'),
-        )
+        .where((item) => !item.contains('src') && !item.contains('no-resolve'))
         .toList();
     final ruleAction = RuleAction.values.firstWhere(
       (item) => item.value == shortSplits.first,
@@ -398,33 +370,25 @@ extension ParsedRuleExt on ParsedRule {
       if (ruleAction.hasParams) ...[
         if (src) 'src',
         if (noResolve) 'no-resolve',
-      ]
+      ],
     ].join(',');
   }
 }
 
 @freezed
-class Rule with _$Rule {
-  const factory Rule({
-    required String id,
-    required String value,
-  }) = _Rule;
+abstract class Rule with _$Rule {
+  const factory Rule({required String id, required String value}) = _Rule;
 
   factory Rule.value(String value) {
-    return Rule(
-      value: value,
-      id: utils.uuidV4,
-    );
+    return Rule(value: value, id: utils.uuidV4);
   }
 
   factory Rule.fromJson(Map<String, Object?> json) => _$RuleFromJson(json);
 }
 
 @freezed
-class SubRule with _$SubRule {
-  const factory SubRule({
-    required String name,
-  }) = _SubRule;
+abstract class SubRule with _$SubRule {
+  const factory SubRule({required String name}) = _SubRule;
 
   factory SubRule.fromJson(Map<String, Object?> json) =>
       _$SubRuleFromJson(json);
@@ -434,11 +398,7 @@ List<Rule> _genRule(List<dynamic>? rules) {
   if (rules == null) {
     return [];
   }
-  return rules
-      .map(
-        (item) => Rule.value(item),
-      )
-      .toList();
+  return rules.map((item) => Rule.value(item)).toList();
 }
 
 List<RuleProvider> _genRuleProviders(Map<String, dynamic> json) {
@@ -446,17 +406,11 @@ List<RuleProvider> _genRuleProviders(Map<String, dynamic> json) {
 }
 
 List<SubRule> _genSubRules(Map<String, dynamic> json) {
-  return json.entries
-      .map(
-        (entry) => SubRule(
-          name: entry.key,
-        ),
-      )
-      .toList();
+  return json.entries.map((entry) => SubRule(name: entry.key)).toList();
 }
 
 @freezed
-class ClashConfigSnippet with _$ClashConfigSnippet {
+abstract class ClashConfigSnippet with _$ClashConfigSnippet {
   const factory ClashConfigSnippet({
     @Default([]) @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
     @JsonKey(fromJson: _genRule, name: 'rules') @Default([]) List<Rule> rule,
@@ -473,7 +427,7 @@ class ClashConfigSnippet with _$ClashConfigSnippet {
 }
 
 @freezed
-class ClashConfig with _$ClashConfig {
+abstract class ClashConfig with _$ClashConfig {
   const factory ClashConfig({
     @Default(defaultMixedPort) @JsonKey(name: 'mixed-port') int mixedPort,
     @Default(0) @JsonKey(name: 'socks-port') int socksPort,
@@ -484,7 +438,7 @@ class ClashConfig with _$ClashConfig {
     @Default(false) @JsonKey(name: 'allow-lan') bool allowLan,
     @Default(LogLevel.error) @JsonKey(name: 'log-level') LogLevel logLevel,
     @Default(false) bool ipv6,
-    @Default(FindProcessMode.off)
+    @Default(FindProcessMode.always)
     @JsonKey(
       name: 'find-process-mode',
       unknownEnumValue: FindProcessMode.always,
