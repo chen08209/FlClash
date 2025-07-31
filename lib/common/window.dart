@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -18,9 +17,6 @@ class Window {
       protocol.register('clash');
       protocol.register('clashmeta');
       protocol.register('flclash');
-    }
-    if ((version > 10 && system.isMacOS)) {
-      await acrylic.Window.initialize();
     }
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = WindowOptions(
@@ -39,38 +35,24 @@ class Window {
         await windowManager.setAlignment(Alignment.center);
       } else {
         final displays = await screenRetriever.getAllDisplays();
-        final isPositionValid = displays.any(
-          (display) {
-            final displayBounds = Rect.fromLTWH(
-              display.visiblePosition!.dx,
-              display.visiblePosition!.dy,
-              display.size.width,
-              display.size.height,
-            );
-            return displayBounds.contains(Offset(left, top)) ||
-                displayBounds.contains(Offset(right, bottom));
-          },
-        );
-        if (isPositionValid) {
-          await windowManager.setPosition(
-            Offset(
-              left,
-              top,
-            ),
+        final isPositionValid = displays.any((display) {
+          final displayBounds = Rect.fromLTWH(
+            display.visiblePosition!.dx,
+            display.visiblePosition!.dy,
+            display.size.width,
+            display.size.height,
           );
+          return displayBounds.contains(Offset(left, top)) ||
+              displayBounds.contains(Offset(right, bottom));
+        });
+        if (isPositionValid) {
+          await windowManager.setPosition(Offset(left, top));
         }
       }
     }
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.setPreventClose(true);
     });
-  }
-
-  void updateMacOSBrightness(Brightness brightness) {
-    if (!system.isMacOS) {
-      return;
-    }
-    acrylic.Window.overrideMacOSBrightness(dark: brightness == Brightness.dark);
   }
 
   Future<void> show() async {

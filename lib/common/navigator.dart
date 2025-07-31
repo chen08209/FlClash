@@ -7,17 +7,13 @@ import 'package:flutter/material.dart';
 class BaseNavigator {
   static Future<T?> push<T>(BuildContext context, Widget child) async {
     if (globalState.appState.viewMode != ViewMode.mobile) {
-      return await Navigator.of(context).push<T>(
-        CommonDesktopRoute(
-          builder: (context) => child,
-        ),
-      );
+      return await Navigator.of(
+        context,
+      ).push<T>(CommonDesktopRoute(builder: (context) => child));
     }
-    return await Navigator.of(context).push<T>(
-      CommonRoute(
-        builder: (context) => child,
-      ),
-    );
+    return await Navigator.of(
+      context,
+    ).push<T>(CommonRoute(builder: (context) => child));
   }
 
   // static Future<T?> modal<T>(BuildContext context, Widget child) async {
@@ -39,9 +35,7 @@ class BaseNavigator {
 class CommonDesktopRoute<T> extends PageRoute<T> {
   final Widget Function(BuildContext context) builder;
 
-  CommonDesktopRoute({
-    required this.builder,
-  });
+  CommonDesktopRoute({required this.builder});
 
   @override
   Color? get barrierColor => null;
@@ -59,10 +53,7 @@ class CommonDesktopRoute<T> extends PageRoute<T> {
     return Semantics(
       scopesRoute: true,
       explicitChildNodes: true,
-      child: FadeTransition(
-        opacity: animation,
-        child: result,
-      ),
+      child: FadeTransition(opacity: animation, child: result),
     );
   }
 
@@ -77,9 +68,7 @@ class CommonDesktopRoute<T> extends PageRoute<T> {
 }
 
 class CommonRoute<T> extends MaterialPageRoute<T> {
-  CommonRoute({
-    required super.builder,
-  });
+  CommonRoute({required super.builder});
 
   @override
   Duration get transitionDuration => const Duration(milliseconds: 500);
@@ -139,11 +128,12 @@ class CommonPageTransition extends StatefulWidget {
   final bool linearTransition;
 
   static Widget? delegatedTransition(
-      BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      bool allowSnapshotting,
-      Widget? child) {
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    bool allowSnapshotting,
+    Widget? child,
+  ) {
     final Animation<Offset> delegatedPositionAnimation = CurvedAnimation(
       parent: secondaryAnimation,
       curve: Curves.linearToEaseOut,
@@ -222,23 +212,23 @@ class _CommonPageTransitionState extends State<CommonPageTransition> {
       );
     }
     _primaryPositionAnimation =
-        (_primaryPositionCurve ?? widget.primaryRouteAnimation)
-            .drive(_kRightMiddleTween);
+        (_primaryPositionCurve ?? widget.primaryRouteAnimation).drive(
+          _kRightMiddleTween,
+        );
     _secondaryPositionAnimation =
-        (_secondaryPositionCurve ?? widget.secondaryRouteAnimation)
-            .drive(_kMiddleLeftTween);
+        (_secondaryPositionCurve ?? widget.secondaryRouteAnimation).drive(
+          _kMiddleLeftTween,
+        );
     _primaryShadowAnimation =
         (_primaryShadowCurve ?? widget.primaryRouteAnimation).drive(
-      DecorationTween(
-        begin: const _CommonEdgeShadowDecoration(),
-        end: _CommonEdgeShadowDecoration(
-          <Color>[
-            widget.context.colorScheme.inverseSurface.withValues(alpha: 0.02),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
+          DecorationTween(
+            begin: const _CommonEdgeShadowDecoration(),
+            end: _CommonEdgeShadowDecoration(<Color>[
+              widget.context.colorScheme.inverseSurface.withValues(alpha: 0.02),
+              Colors.transparent,
+            ]),
+          ),
+        );
   }
 
   @override
@@ -273,10 +263,8 @@ class _CommonEdgeShadowDecoration extends Decoration {
 }
 
 class _CommonEdgeShadowPainter extends BoxPainter {
-  _CommonEdgeShadowPainter(
-    this._decoration,
-    super.onChanged,
-  ) : assert(_decoration._colors == null || _decoration._colors!.length > 1);
+  _CommonEdgeShadowPainter(this._decoration, super.onChanged)
+    : assert(_decoration._colors == null || _decoration._colors.length > 1);
 
   final _CommonEdgeShadowDecoration _decoration;
 
@@ -304,11 +292,16 @@ class _CommonEdgeShadowPainter extends BoxPainter {
         bandColorIndex += 1;
       }
       final Paint paint = Paint()
-        ..color = Color.lerp(colors[bandColorIndex], colors[bandColorIndex + 1],
-            (dx % bandWidth) / bandWidth)!;
+        ..color = Color.lerp(
+          colors[bandColorIndex],
+          colors[bandColorIndex + 1],
+          (dx % bandWidth) / bandWidth,
+        )!;
       final double x = start + shadowDirection * dx;
       canvas.drawRect(
-          Rect.fromLTWH(x - 1.0, offset.dy, 1.0, shadowHeight), paint);
+        Rect.fromLTWH(x - 1.0, offset.dy, 1.0, shadowHeight),
+        paint,
+      );
     }
   }
 }

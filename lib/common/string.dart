@@ -11,16 +11,15 @@ extension StringExtension on String {
   }
 
   dynamic get splitByMultipleSeparators {
-    final parts =
-        split(RegExp(r'[, ;]+')).where((part) => part.isNotEmpty).toList();
+    final parts = split(
+      RegExp(r'[, ;]+'),
+    ).where((part) => part.isNotEmpty).toList();
 
     return parts.length > 1 ? parts : this;
   }
 
   int compareToLower(String other) {
-    return toLowerCase().compareTo(
-      other.toLowerCase(),
-    );
+    return toLowerCase().compareTo(other.toLowerCase());
   }
 
   List<int> get encodeUtf16LeWithBom {
@@ -66,9 +65,9 @@ extension StringExtension on String {
     return md5.convert(bytes).toString();
   }
 
-// bool containsToLower(String target) {
-//   return toLowerCase().contains(target);
-// }
+  // bool containsToLower(String target) {
+  //   return toLowerCase().contains(target);
+  // }
 }
 
 extension StringExtensionSafe on String? {

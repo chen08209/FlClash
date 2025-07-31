@@ -409,7 +409,7 @@
   "autoSetSystemDns": "Auto set system DNS",
   "details": "{label} details",
   "creationTime": "Creation time",
-  "progress": "Progress",
+  "process": "Process",
   "host": "Host",
   "destination": "Destination",
   "destinationGeoIP": "Destination GeoIP",
@@ -421,5 +421,16 @@
   "proxyChains": "Proxy chains",
   "log": "Log",
   "connection": "Connection",
-  "request": "Request"
+  "request": "Request",
+  "connected": "Connected",
+  "disconnected": "Disconnected",
+  "connecting": "Connecting...",
+  "restartCoreTip": "Are you sure you want to restart the core?",
+  "forceRestartCoreTip": "Are you sure you want to force restart the core?",
+  "dnsHijacking": "DNS hijacking",
+  "coreStatus": "Core status",
+  "dataCollectionTip": "Data Collection Notice",
+  "dataCollectionContent": "This app uses Firebase Crashlytics to collect crash information to improve app stability.\nThe collected data includes device information and crash details, but does not contain personal sensitive data.\nYou can disable this feature in settings.",
+  "crashlytics": "Crash Analysis",
+  "crashlyticsTip": "When enabled, automatically uploads crash logs without sensitive information when the app crashes"
 }

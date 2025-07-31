@@ -24,10 +24,11 @@ class ProxiesListView extends StatefulWidget {
 
 class _ProxiesListViewState extends State<ProxiesListView> {
   final _controller = ScrollController();
-  final _headerStateNotifier =
-      ValueNotifier<ProxiesListHeaderSelectorState?>(null);
+  final _headerStateNotifier = ValueNotifier<ProxiesListHeaderSelectorState?>(
+    null,
+  );
   List<double> _headerOffset = [];
-  GroupNameProxiesMap _lastGroupNameProxiesMap = {};
+  double containerHeight = 0;
 
   @override
   void initState() {
@@ -39,10 +40,18 @@ class _ProxiesListViewState extends State<ProxiesListView> {
   }
 
   ProxiesListHeaderSelectorState _getProxiesListHeaderSelectorState(
-      double initOffset) {
+    double initOffset,
+  ) {
     final index = _headerOffset.findInterval(initOffset);
     final currentIndex = index;
     double headerOffset = 0.0;
+    if (index + 1 <= _headerOffset.length - 1) {
+      final endOffset = _headerOffset[index + 1];
+      final startOffset = endOffset - listHeaderHeight - 8;
+      if (initOffset > startOffset && initOffset < endOffset) {
+        headerOffset = initOffset - startOffset;
+      }
+    }
     return ProxiesListHeaderSelectorState(
       offset: max(headerOffset, 0),
       currentIndex: currentIndex,
@@ -72,15 +81,14 @@ class _ProxiesListViewState extends State<ProxiesListView> {
   }
 
   void _handleChange(Set<String> currentUnfoldSet, String groupName) {
+    _autoScrollToGroup(groupName);
     final tempUnfoldSet = Set<String>.from(currentUnfoldSet);
     if (tempUnfoldSet.contains(groupName)) {
       tempUnfoldSet.remove(groupName);
     } else {
       tempUnfoldSet.add(groupName);
     }
-    globalState.appController.updateCurrentUnfoldSet(
-      tempUnfoldSet,
-    );
+    globalState.appController.updateCurrentUnfoldSet(tempUnfoldSet);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _adjustHeader();
     });
@@ -111,10 +119,8 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     required int columns,
     required Set<String> currentUnfoldSet,
     required ProxyCardType cardType,
-    required ProxiesSortType sortType,
   }) {
     final items = <Widget>[];
-    final GroupNameProxiesMap groupNameProxiesMap = {};
     for (final group in groups) {
       final groupName = group.name;
       final isExpand = currentUnfoldSet.contains(groupName);
@@ -127,63 +133,41 @@ class _ProxiesListViewState extends State<ProxiesListView> {
             _handleChange(currentUnfoldSet, groupName);
           },
         ),
-        const SizedBox(
-          height: 8,
-        ),
+        const SizedBox(height: 8),
       ]);
       if (isExpand) {
-        final sortedProxies = globalState.appController.getSortProxies(
-          proxies: group.all,
-          sortType: sortType,
-          testUrl: group.testUrl,
-        );
-        groupNameProxiesMap[groupName] = sortedProxies;
-        final chunks = sortedProxies.chunks(columns);
-        final rows = chunks.map<Widget>((proxies) {
-          final children = proxies
-              .map<Widget>(
-                (proxy) => Flexible(
-                  child: ProxyCard(
-                    testUrl: group.testUrl,
-                    type: cardType,
-                    groupType: group.type,
-                    key: ValueKey('$groupName.${proxy.name}'),
-                    proxy: proxy,
-                    groupName: groupName,
-                  ),
-                ),
-              )
-              .fill(
-                columns,
-                filler: (_) => const Flexible(
-                  child: SizedBox(),
-                ),
-              )
-              .separated(
-                const SizedBox(
-                  width: 8,
-                ),
-              );
+        final proxies = group.all;
+        final chunks = proxies.chunks(columns);
+        final rows = chunks
+            .map<Widget>((proxies) {
+              final children = proxies
+                  .map<Widget>(
+                    (proxy) => Flexible(
+                      child: SizedBox(
+                        height: getItemHeight(cardType),
+                        child: ProxyCard(
+                          testUrl: group.testUrl,
+                          type: cardType,
+                          groupType: group.type,
+                          key: ValueKey('$groupName.${proxy.name}'),
+                          proxy: proxy,
+                          groupName: groupName,
+                        ),
+                      ),
+                    ),
+                  )
+                  .fill(
+                    columns,
+                    filler: (_) => const Flexible(child: SizedBox()),
+                  )
+                  .separated(const SizedBox(width: 8));
 
-          return Row(
-            children: children.toList(),
-          );
-        }).separated(
-          const SizedBox(
-            height: 8,
-          ),
-        );
-        items.addAll(
-          [
-            ...rows,
-            const SizedBox(
-              height: 8,
-            ),
-          ],
-        );
+              return Row(children: children.toList());
+            })
+            .separated(const SizedBox(height: 8));
+        items.addAll([...rows, const SizedBox(height: 8)]);
       }
     }
-    _lastGroupNameProxiesMap = groupNameProxiesMap;
     return items;
   }
 
@@ -209,36 +193,99 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     );
   }
 
-  void _scrollToGroupSelected(String groupName) {
+  double _getGroupOffset(String groupName) {
     if (_controller.position.maxScrollExtent == 0) {
+      return 0;
+    }
+    final currentGroups = globalState.appController.getCurrentGroups();
+    final findIndex = currentGroups.indexWhere(
+      (item) => item.name == groupName,
+    );
+    final index = findIndex != -1 ? findIndex : 0;
+    return _headerOffset[index];
+  }
+
+  void _scrollToMakeVisibleWithPadding({
+    required double containerHeight,
+    required double pixels,
+    required double start,
+    required double end,
+    double padding = 24,
+  }) {
+    final visibleStart = pixels;
+    final visibleEnd = pixels + containerHeight;
+
+    final isElementVisible = start >= visibleStart && end <= visibleEnd;
+    if (isElementVisible) {
       return;
     }
-    final appController = globalState.appController;
-    final currentGroups = appController.getCurrentGroups();
-    final groupNames = currentGroups.map((e) => e.name).toList();
-    final findIndex = groupNames.indexWhere((item) => item == groupName);
-    final index = findIndex != -1 ? findIndex : 0;
-    final currentInitOffset = _headerOffset[index];
-    final proxies = _lastGroupNameProxiesMap[groupName];
-    _controller.animateTo(
-      min(
-        currentInitOffset +
-            8 +
-            getScrollToSelectedOffset(
-              groupName: groupName,
-              proxies: proxies ?? [],
-            ),
-        _controller.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeIn,
+
+    double targetScrollOffset;
+
+    if (end <= visibleStart) {
+      targetScrollOffset = start;
+    } else if (start >= visibleEnd) {
+      targetScrollOffset = end - containerHeight + padding;
+    } else {
+      final visibleTopPart = end - visibleStart;
+      final visibleBottomPart = visibleEnd - start;
+      if (visibleTopPart.abs() >= visibleBottomPart.abs()) {
+        targetScrollOffset = end - containerHeight + padding;
+      } else {
+        targetScrollOffset = start;
+      }
+    }
+
+    targetScrollOffset = targetScrollOffset.clamp(
+      _controller.position.minScrollExtent,
+      _controller.position.maxScrollExtent,
     );
+
+    _controller.jumpTo(targetScrollOffset);
+  }
+
+  void _autoScrollToGroup(String groupName) {
+    final pixels = _controller.position.pixels;
+    final offset = _getGroupOffset(groupName);
+    _scrollToMakeVisibleWithPadding(
+      containerHeight: containerHeight,
+      pixels: pixels,
+      start: offset,
+      end: offset + listHeaderHeight,
+    );
+  }
+
+  void _scrollToGroupSelected(String groupName) {
+    final currentInitOffset = _getGroupOffset(groupName);
+    final currentGroups = globalState.appController.getCurrentGroups();
+    final proxies = currentGroups.getGroup(groupName)?.all;
+    _jumpTo(
+      currentInitOffset +
+          8 +
+          getScrollToSelectedOffset(
+            groupName: groupName,
+            proxies: proxies ?? [],
+          ),
+    );
+  }
+
+  void _jumpTo(double offset) {
+    if (mounted && _controller.hasClients) {
+      _controller.animateTo(
+        offset.clamp(
+          _controller.position.minScrollExtent,
+          _controller.position.maxScrollExtent,
+        ),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer(
-      builder: (_, ref, __) {
+      builder: (_, ref, _) {
         final state = ref.watch(proxiesListStateProvider);
         ref.watch(themeSettingProvider.select((state) => state.textScale));
         if (state.groups.isEmpty) {
@@ -252,7 +299,6 @@ class _ProxiesListViewState extends State<ProxiesListView> {
           currentUnfoldSet: state.currentUnfoldSet,
           columns: state.columns,
           cardType: state.proxyCardType,
-          sortType: state.proxiesSortType,
         );
         final itemsOffset = _getItemHeightList(items, state.proxyCardType);
         return CommonScrollBar(
@@ -268,7 +314,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
                     key: proxiesListStoreKey,
                     padding: const EdgeInsets.all(16),
                     controller: _controller,
-                    itemExtentBuilder: (index, __) {
+                    itemExtentBuilder: (index, _) {
                       return itemsOffset[index];
                     },
                     itemCount: items.length,
@@ -278,45 +324,48 @@ class _ProxiesListViewState extends State<ProxiesListView> {
                   ),
                 ),
               ),
-              LayoutBuilder(builder: (_, container) {
-                return ValueListenableBuilder(
-                  valueListenable: _headerStateNotifier,
-                  builder: (_, headerState, ___) {
-                    if (headerState == null) {
-                      return SizedBox();
-                    }
-                    final index =
-                        headerState.currentIndex > state.groups.length - 1
-                            ? 0
-                            : headerState.currentIndex;
-                    if (index < 0 || state.groups.isEmpty) {
-                      return Container();
-                    }
-                    return Stack(
-                      children: [
-                        Positioned(
-                          top: -headerState.offset,
-                          child: Container(
-                            width: container.maxWidth,
-                            color: context.colorScheme.surface,
-                            padding: const EdgeInsets.only(
-                              top: 16,
-                              left: 16,
-                              right: 16,
-                              bottom: 8,
-                            ),
-                            child: _buildHeader(
-                              ref,
-                              group: state.groups[index],
-                              currentUnfoldSet: state.currentUnfoldSet,
+              LayoutBuilder(
+                builder: (_, container) {
+                  containerHeight = container.maxHeight;
+                  return ValueListenableBuilder(
+                    valueListenable: _headerStateNotifier,
+                    builder: (_, headerState, _) {
+                      if (headerState == null) {
+                        return SizedBox();
+                      }
+                      final index =
+                          headerState.currentIndex > state.groups.length - 1
+                          ? 0
+                          : headerState.currentIndex;
+                      if (index < 0 || state.groups.isEmpty) {
+                        return Container();
+                      }
+                      return Stack(
+                        children: [
+                          Positioned(
+                            top: -headerState.offset,
+                            child: Container(
+                              width: container.maxWidth,
+                              color: context.colorScheme.surface,
+                              padding: const EdgeInsets.only(
+                                top: 16,
+                                left: 16,
+                                right: 16,
+                                bottom: 8,
+                              ),
+                              child: _buildHeader(
+                                ref,
+                                group: state.groups[index],
+                                currentUnfoldSet: state.currentUnfoldSet,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
             ],
           ),
         );
@@ -361,10 +410,7 @@ class _ListHeaderState extends State<ListHeader> {
   Future<void> _delayTest() async {
     if (isLock) return;
     isLock = true;
-    await delayTest(
-      widget.group.all,
-      widget.group.testUrl,
-    );
+    await delayTest(widget.group.all, widget.group.testUrl);
     isLock = false;
   }
 
@@ -376,65 +422,61 @@ class _ListHeaderState extends State<ListHeader> {
     return Consumer(
       builder: (_, ref, child) {
         final iconStyle = ref.watch(
-          proxiesStyleSettingProvider.select(
-            (state) => state.iconStyle,
-          ),
+          proxiesStyleSettingProvider.select((state) => state.iconStyle),
         );
-        final icon = ref.watch(proxiesStyleSettingProvider.select((state) {
-          final iconMapEntryList = state.iconMap.entries.toList();
-          final index = iconMapEntryList.indexWhere((item) {
-            try {
-              return RegExp(item.key).hasMatch(groupName);
-            } catch (_) {
-              return false;
+        final icon = ref.watch(
+          proxiesStyleSettingProvider.select((state) {
+            final iconMapEntryList = state.iconMap.entries.toList();
+            final index = iconMapEntryList.indexWhere((item) {
+              try {
+                return RegExp(item.key).hasMatch(groupName);
+              } catch (_) {
+                return false;
+              }
+            });
+            if (index != -1) {
+              return iconMapEntryList[index].value;
             }
-          });
-          if (index != -1) {
-            return iconMapEntryList[index].value;
-          }
-          return this.icon;
-        }));
+            return this.icon;
+          }),
+        );
         return switch (iconStyle) {
           ProxiesIconStyle.standard => LayoutBuilder(
-              builder: (_, constraints) {
-                return Container(
-                  margin: const EdgeInsets.only(
-                    right: 16,
-                  ),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Container(
-                      height: constraints.maxHeight,
-                      width: constraints.maxWidth,
-                      alignment: Alignment.center,
-                      padding: EdgeInsets.all(6.ap),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: context.colorScheme.secondaryContainer,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: CommonTargetIcon(
-                        src: icon,
-                        size: constraints.maxHeight - 12.ap,
-                      ),
+            builder: (_, constraints) {
+              return Container(
+                margin: const EdgeInsets.only(right: 16),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    height: constraints.maxHeight,
+                    width: constraints.maxWidth,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.all(6.ap),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: context.colorScheme.secondaryContainer,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: CommonTargetIcon(
+                      src: icon,
+                      size: constraints.maxHeight - 12.ap,
                     ),
                   ),
+                ),
+              );
+            },
+          ),
+          ProxiesIconStyle.icon => Container(
+            margin: const EdgeInsets.only(right: 16),
+            child: LayoutBuilder(
+              builder: (_, constraints) {
+                return CommonTargetIcon(
+                  src: icon,
+                  size: constraints.maxHeight - 8,
                 );
               },
             ),
-          ProxiesIconStyle.icon => Container(
-              margin: const EdgeInsets.only(
-                right: 16,
-              ),
-              child: LayoutBuilder(
-                builder: (_, constraints) {
-                  return CommonTargetIcon(
-                    src: icon,
-                    size: constraints.maxHeight - 8,
-                  );
-                },
-              ),
-            ),
+          ),
           ProxiesIconStyle.none => Container(),
         };
       },
@@ -449,10 +491,7 @@ class _ListHeaderState extends State<ListHeader> {
       radius: 16.ap,
       type: CommonCardType.filled,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -465,13 +504,8 @@ class _ListHeaderState extends State<ListHeader> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          groupName,
-                          style: context.textTheme.titleMedium,
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
+                        Text(groupName, style: context.textTheme.titleMedium),
+                        const SizedBox(height: 4),
                         Flexible(
                           flex: 1,
                           child: Row(
@@ -486,11 +520,13 @@ class _ListHeaderState extends State<ListHeader> {
                               Flexible(
                                 flex: 1,
                                 child: Consumer(
-                                  builder: (_, ref, __) {
+                                  builder: (_, ref, _) {
                                     final proxyName = ref
-                                        .watch(getSelectedProxyNameProvider(
-                                          groupName,
-                                        ))
+                                        .watch(
+                                          getSelectedProxyNameProvider(
+                                            groupName,
+                                          ),
+                                        )
                                         .getSafeValue('');
                                     return Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -505,11 +541,13 @@ class _ListHeaderState extends State<ListHeader> {
                                             child: EmojiText(
                                               overflow: TextOverflow.ellipsis,
                                               ' · $proxyName',
-                                              style: context.textTheme
-                                                  .labelMedium?.toLight,
+                                              style: context
+                                                  .textTheme
+                                                  .labelMedium
+                                                  ?.toLight,
                                             ),
                                           ),
-                                        ]
+                                        ],
                                       ],
                                     );
                                   },
@@ -518,12 +556,10 @@ class _ListHeaderState extends State<ListHeader> {
                             ],
                           ),
                         ),
-                        const SizedBox(
-                          width: 4,
-                        ),
+                        const SizedBox(width: 4),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -531,38 +567,36 @@ class _ListHeaderState extends State<ListHeader> {
               children: [
                 if (isExpand) ...[
                   IconButton(
-                    visualDensity: VisualDensity.standard,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.all(2),
                     onPressed: () {
                       widget.onScrollToSelected(groupName);
                     },
-                    icon: const Icon(
-                      Icons.adjust,
-                    ),
+                    iconSize: 19,
+                    icon: const Icon(Icons.adjust),
                   ),
+                  const SizedBox(width: 2),
                   IconButton(
+                    iconSize: 20,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.all(2),
                     onPressed: _delayTest,
-                    visualDensity: VisualDensity.standard,
-                    icon: const Icon(
-                      Icons.network_ping,
-                    ),
+                    icon: const Icon(Icons.network_ping),
                   ),
-                  const SizedBox(
-                    width: 6,
-                  ),
+                  const SizedBox(width: 6),
                 ] else
-                  SizedBox(
-                    width: 4,
-                  ),
+                  SizedBox(width: 6),
                 IconButton.filledTonal(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.all(2),
+                  iconSize: 24,
                   onPressed: () {
                     _handleChange(groupName);
                   },
-                  icon: CommonExpandIcon(
-                    expand: isExpand,
-                  ),
-                )
+                  icon: CommonExpandIcon(expand: isExpand),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),

@@ -7,17 +7,13 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_acrylic/widgets/transparent_macos_sidebar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 class AppStateManager extends ConsumerStatefulWidget {
   final Widget child;
 
-  const AppStateManager({
-    super.key,
-    required this.child,
-  });
+  const AppStateManager({super.key, required this.child});
 
   @override
   ConsumerState<AppStateManager> createState() => _AppStateManagerState();
@@ -36,46 +32,34 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
         }
       });
     });
-    ref.listenManual(
-      checkIpProvider,
-      (prev, next) {
-        if (prev != next && next.b) {
-          detectionState.startCheck();
-        }
-      },
-      fireImmediately: true,
-    );
+    ref.listenManual(checkIpProvider, (prev, next) {
+      if (prev != next && next.b) {
+        detectionState.startCheck();
+      }
+    }, fireImmediately: true);
     ref.listenManual(configStateProvider, (prev, next) {
       if (prev != next) {
         globalState.appController.savePreferencesDebounce();
       }
     });
+    ref.listenManual(needUpdateGroupsProvider, (prev, next) {
+      if (prev != next) {
+        globalState.appController.updateGroupsDebounce();
+      }
+    });
     if (window == null) {
       return;
     }
-    ref.listenManual(
-      autoSetSystemDnsStateProvider,
-      (prev, next) async {
-        if (prev == next) {
-          return;
-        }
-        if (next.a == true && next.b == true) {
-          macOS?.updateDns(false);
-        } else {
-          macOS?.updateDns(true);
-        }
-      },
-    );
-    ref.listenManual(
-      currentBrightnessProvider,
-      (prev, next) {
-        if (prev == next) {
-          return;
-        }
-        window?.updateMacOSBrightness(next);
-      },
-      fireImmediately: true,
-    );
+    ref.listenManual(autoSetSystemDnsStateProvider, (prev, next) async {
+      if (prev == next) {
+        return;
+      }
+      if (next.a == true && next.b == true) {
+        macOS?.updateDns(false);
+      } else {
+        macOS?.updateDns(true);
+      }
+    });
   }
 
   @override
@@ -119,10 +103,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
 class AppEnvManager extends StatelessWidget {
   final Widget child;
 
-  const AppEnvManager({
-    super.key,
-    required this.child,
-  });
+  const AppEnvManager({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -149,14 +130,11 @@ class AppEnvManager extends StatelessWidget {
 class AppSidebarContainer extends ConsumerWidget {
   final Widget child;
 
-  const AppSidebarContainer({
-    super.key,
-    required this.child,
-  });
+  const AppSidebarContainer({super.key, required this.child});
 
   Widget _buildLoading() {
     return Consumer(
-      builder: (_, ref, __) {
+      builder: (_, ref, _) {
         final loading = ref.watch(loadingProvider);
         final isMobileView = ref.watch(isMobileViewProvider);
         return loading && !isMobileView
@@ -173,18 +151,25 @@ class AppSidebarContainer extends ConsumerWidget {
     required BuildContext context,
     required Widget child,
   }) {
-    if (!system.isMacOS) {
-      return Material(
-        color: context.colorScheme.surfaceContainer,
-        child: child,
-      );
-    }
-    return TransparentMacOSSidebar(
-      child: Material(
-        color: Colors.transparent,
-        child: child,
-      ),
-    );
+    return Material(color: context.colorScheme.surfaceContainer, child: child);
+    // if (!system.isMacOS) {
+    //   return Material(
+    //     color: context.colorScheme.surfaceContainer,
+    //     child: child,
+    //   );
+    // }
+    // return child;
+    // return TransparentMacOSSidebar(
+    //   child: Material(color: Colors.transparent, child: child),
+    // );
+  }
+
+  void _updateSideBarWidth(WidgetRef ref, double contentWidth) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(sideWidthProvider.notifier).value =
+          ref.read(viewSizeProvider.select((state) => state.width)) -
+          contentWidth;
+    });
   }
 
   @override
@@ -199,92 +184,102 @@ class AppSidebarContainer extends ConsumerWidget {
     final showLabel = ref.watch(appSettingProvider).showLabel;
     return Row(
       children: [
-        Stack(
-          alignment: Alignment.topRight,
-          children: [
-            _buildBackground(
-              context: context,
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 32,
-                  ),
-                  if (!system.isMacOS) ...[
-                    AppIcon(),
-                    SizedBox(
-                      height: 12,
-                    ),
-                  ],
-                  Expanded(
-                    child: ScrollConfiguration(
-                      behavior: HiddenBarScrollBehavior(),
-                      child: SingleChildScrollView(
-                        child: IntrinsicHeight(
-                          child: NavigationRail(
-                            backgroundColor: Colors.transparent,
-                            selectedLabelTextStyle:
-                                context.textTheme.labelLarge!.copyWith(
-                              color: context.colorScheme.onSurface,
-                            ),
-                            unselectedLabelTextStyle:
-                                context.textTheme.labelLarge!.copyWith(
-                              color: context.colorScheme.onSurface,
-                            ),
-                            destinations: navigationItems
-                                .map(
-                                  (e) => NavigationRailDestination(
-                                    icon: e.icon,
-                                    label: Text(
-                                      Intl.message(e.label.name),
+        _buildBackground(
+          context: context,
+          child: SafeArea(
+            child: Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (system.isMacOS) SizedBox(height: 22),
+                    SizedBox(height: 10),
+                    if (!system.isMacOS) ...[
+                      ClipRect(child: AppIcon()),
+                      SizedBox(height: 12),
+                    ],
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: HiddenBarScrollBehavior(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: NavigationRail(
+                                scrollable: true,
+                                minExtendedWidth: 200,
+                                backgroundColor: Colors.transparent,
+                                selectedLabelTextStyle: context
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(
+                                      color: context.colorScheme.onSurface,
                                     ),
-                                  ),
-                                )
-                                .toList(),
-                            onDestinationSelected: (index) {
-                              globalState.appController
-                                  .toPage(navigationItems[index].label);
-                            },
-                            extended: false,
-                            selectedIndex: currentIndex,
-                            labelType: showLabel
-                                ? NavigationRailLabelType.all
-                                : NavigationRailLabelType.none,
-                          ),
+                                unselectedLabelTextStyle: context
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(
+                                      color: context.colorScheme.onSurface,
+                                    ),
+                                destinations: navigationItems
+                                    .map(
+                                      (e) => NavigationRailDestination(
+                                        icon: e.icon,
+                                        label: Text(Intl.message(e.label.name)),
+                                      ),
+                                    )
+                                    .toList(),
+                                onDestinationSelected: (index) {
+                                  globalState.appController.toPage(
+                                    navigationItems[index].label,
+                                  );
+                                },
+                                extended: false,
+                                selectedIndex: currentIndex,
+                                labelType: showLabel
+                                    ? NavigationRailLabelType.all
+                                    : NavigationRailLabelType.none,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      ref.read(appSettingProvider.notifier).updateState(
-                            (state) => state.copyWith(
-                              showLabel: !state.showLabel,
-                            ),
-                          );
-                    },
-                    icon: Icon(
-                      Icons.menu,
-                      color: context.colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 16),
+                    IconButton(
+                      onPressed: () {
+                        ref
+                            .read(appSettingProvider.notifier)
+                            .updateState(
+                              (state) =>
+                                  state.copyWith(showLabel: !state.showLabel),
+                            );
+                      },
+                      icon: Icon(
+                        Icons.menu,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+                _buildLoading(),
+              ],
             ),
-            _buildLoading(),
-          ],
+          ),
         ),
         Expanded(
           flex: 1,
           child: ClipRect(
-            child: child,
+            child: LayoutBuilder(
+              builder: (_, constraints) {
+                _updateSideBarWidth(ref, constraints.maxWidth);
+                return child;
+              },
+            ),
           ),
-        )
+        ),
       ],
     );
   }

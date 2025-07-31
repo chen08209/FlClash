@@ -82,12 +82,12 @@ class _SideSheetState extends State<SideSheet> {
     final Color surfaceTintColor = colorScheme.surfaceTint;
     final Color shadowColor = widget.shadowColor ?? Colors.transparent;
     final double elevation = widget.elevation ?? 0;
-    final ShapeBorder shape = widget.shape ??
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0),
-        );
+    final ShapeBorder shape =
+        widget.shape ??
+        RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(0));
 
-    final BoxConstraints constraints = widget.constraints ??
+    final BoxConstraints constraints =
+        widget.constraints ??
         const BoxConstraints(maxWidth: 320, minWidth: 320);
 
     final Clip clipBehavior = widget.clipBehavior ?? Clip.none;
@@ -103,10 +103,7 @@ class _SideSheetState extends State<SideSheet> {
       child: widget.builder(context),
     );
 
-    return ConstrainedBox(
-      constraints: constraints,
-      child: sideSheet,
-    );
+    return ConstrainedBox(constraints: constraints, child: sideSheet);
   }
 }
 
@@ -128,7 +125,8 @@ class _SideSheetLayoutWithSizeListener extends SingleChildRenderObjectWidget {
 
   @override
   _RenderSideSheetLayoutWithSizeListener createRenderObject(
-      BuildContext context) {
+    BuildContext context,
+  ) {
     return _RenderSideSheetLayoutWithSizeListener(
       onChildSizeChanged: onChildSizeChanged,
       animationValue: animationValue,
@@ -138,8 +136,10 @@ class _SideSheetLayoutWithSizeListener extends SingleChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context,
-      _RenderSideSheetLayoutWithSizeListener renderObject) {
+  void updateRenderObject(
+    BuildContext context,
+    _RenderSideSheetLayoutWithSizeListener renderObject,
+  ) {
     renderObject.onChildSizeChanged = onChildSizeChanged;
     renderObject.animationValue = animationValue;
     renderObject.isScrollControlled = isScrollControlled;
@@ -155,12 +155,12 @@ class _RenderSideSheetLayoutWithSizeListener extends RenderShiftedBox {
     required double animationValue,
     required bool isScrollControlled,
     required double scrollControlDisabledMaxHeightRatio,
-  })  : _onChildSizeChanged = onChildSizeChanged,
-        _animationValue = animationValue,
-        _isScrollControlled = isScrollControlled,
-        _scrollControlDisabledMaxHeightRatio =
-            scrollControlDisabledMaxHeightRatio,
-        super(child);
+  }) : _onChildSizeChanged = onChildSizeChanged,
+       _animationValue = animationValue,
+       _isScrollControlled = isScrollControlled,
+       _scrollControlDisabledMaxHeightRatio =
+           scrollControlDisabledMaxHeightRatio,
+       super(child);
 
   Size _lastSize = Size.zero;
 
@@ -219,8 +219,9 @@ class _RenderSideSheetLayoutWithSizeListener extends RenderShiftedBox {
 
   @override
   double computeMinIntrinsicWidth(double height) {
-    final double width =
-        _getSize(BoxConstraints.tightForFinite(height: height)).width;
+    final double width = _getSize(
+      BoxConstraints.tightForFinite(height: height),
+    ).width;
     if (width.isFinite) {
       return width;
     }
@@ -229,8 +230,9 @@ class _RenderSideSheetLayoutWithSizeListener extends RenderShiftedBox {
 
   @override
   double computeMaxIntrinsicWidth(double height) {
-    final double width =
-        _getSize(BoxConstraints.tightForFinite(height: height)).width;
+    final double width = _getSize(
+      BoxConstraints.tightForFinite(height: height),
+    ).width;
     if (width.isFinite) {
       return width;
     }
@@ -239,8 +241,9 @@ class _RenderSideSheetLayoutWithSizeListener extends RenderShiftedBox {
 
   @override
   double computeMinIntrinsicHeight(double width) {
-    final double height =
-        _getSize(BoxConstraints.tightForFinite(width: width)).height;
+    final double height = _getSize(
+      BoxConstraints.tightForFinite(width: width),
+    ).height;
     if (height.isFinite) {
       return height;
     }
@@ -249,8 +252,9 @@ class _RenderSideSheetLayoutWithSizeListener extends RenderShiftedBox {
 
   @override
   double computeMaxIntrinsicHeight(double width) {
-    final double height =
-        _getSize(BoxConstraints.tightForFinite(width: width)).height;
+    final double height = _getSize(
+      BoxConstraints.tightForFinite(width: width),
+    ).height;
     if (height.isFinite) {
       return height;
     }
@@ -263,9 +267,7 @@ class _RenderSideSheetLayoutWithSizeListener extends RenderShiftedBox {
   }
 
   BoxConstraints _getConstraintsForChild(BoxConstraints constraints) {
-    return BoxConstraints(
-      maxHeight: constraints.maxHeight,
-    );
+    return BoxConstraints(maxHeight: constraints.maxHeight);
   }
 
   Offset _getPositionForChild(Size size, Size childSize) {
@@ -276,8 +278,9 @@ class _RenderSideSheetLayoutWithSizeListener extends RenderShiftedBox {
   void performLayout() {
     size = _getSize(constraints);
     if (child != null) {
-      final BoxConstraints childConstraints =
-          _getConstraintsForChild(constraints);
+      final BoxConstraints childConstraints = _getConstraintsForChild(
+        constraints,
+      );
       assert(childConstraints.debugAssertIsValid(isAppliedConstraint: true));
       child!.layout(
         childConstraints,
@@ -288,8 +291,9 @@ class _RenderSideSheetLayoutWithSizeListener extends RenderShiftedBox {
         size,
         childConstraints.isTight ? childConstraints.smallest : child!.size,
       );
-      final Size childSize =
-          childConstraints.isTight ? childConstraints.smallest : child!.size;
+      final Size childSize = childConstraints.isTight
+          ? childConstraints.smallest
+          : child!.size;
 
       if (_lastSize != childSize) {
         _lastSize = childSize;
@@ -354,8 +358,9 @@ class _ModalSideSheetState<T> extends State<_ModalSideSheet<T>> {
   Widget build(BuildContext context) {
     assert(debugCheckHasMediaQuery(context));
     assert(debugCheckHasMaterialLocalizations(context));
-    final MaterialLocalizations localizations =
-        MaterialLocalizations.of(context);
+    final MaterialLocalizations localizations = MaterialLocalizations.of(
+      context,
+    );
     final String routeLabel = _getRouteLabel(localizations);
 
     return AnimatedBuilder(
@@ -406,26 +411,27 @@ class _ModalSideSheetState<T> extends State<_ModalSideSheet<T>> {
 }
 
 class ModalSideSheetRoute<T> extends PopupRoute<T> {
-  ModalSideSheetRoute(
-      {required this.builder,
-      this.capturedThemes,
-      this.barrierLabel,
-      this.barrierOnTapHint,
-      this.backgroundColor,
-      this.elevation,
-      this.shape,
-      this.clipBehavior,
-      this.constraints,
-      this.modalBarrierColor,
-      this.isDismissible = true,
-      this.isScrollControlled = false,
-      this.scrollControlDisabledMaxHeightRatio =
-          _defaultScrollControlDisabledMaxHeightRatio,
-      super.settings,
-      this.transitionAnimationController,
-      this.anchorPoint,
-      this.useSafeArea = false,
-      super.filter});
+  ModalSideSheetRoute({
+    required this.builder,
+    this.capturedThemes,
+    this.barrierLabel,
+    this.barrierOnTapHint,
+    this.backgroundColor,
+    this.elevation,
+    this.shape,
+    this.clipBehavior,
+    this.constraints,
+    this.modalBarrierColor,
+    this.isDismissible = true,
+    this.isScrollControlled = false,
+    this.scrollControlDisabledMaxHeightRatio =
+        _defaultScrollControlDisabledMaxHeightRatio,
+    super.settings,
+    this.transitionAnimationController,
+    this.anchorPoint,
+    this.useSafeArea = false,
+    super.filter,
+  });
 
   final WidgetBuilder builder;
 
@@ -504,8 +510,11 @@ class ModalSideSheetRoute<T> extends PopupRoute<T> {
   }
 
   @override
-  Widget buildPage(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation) {
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
     final Widget content = DisplayFeatureSubScreen(
       anchorPoint: anchorPoint,
       child: Builder(
@@ -539,9 +548,7 @@ class ModalSideSheetRoute<T> extends PopupRoute<T> {
         ColorTween(
           begin: barrierColor.opacity0,
           end: barrierColor,
-        ).chain(
-          CurveTween(curve: barrierCurve),
-        ),
+        ).chain(CurveTween(curve: barrierCurve)),
       );
       return AnimatedModalBarrier(
         color: color,
@@ -587,32 +594,39 @@ Future<T?> showModalSideSheet<T>({
   assert(debugCheckHasMediaQuery(context));
   assert(debugCheckHasMaterialLocalizations(context));
 
-  final NavigatorState navigator =
-      Navigator.of(context, rootNavigator: useRootNavigator);
+  final NavigatorState navigator = Navigator.of(
+    context,
+    rootNavigator: useRootNavigator,
+  );
   final MaterialLocalizations localizations = MaterialLocalizations.of(context);
-  return navigator.push(ModalSideSheetRoute<T>(
-    builder: builder,
-    filter: filter,
-    capturedThemes:
-        InheritedTheme.capture(from: context, to: navigator.context),
-    isScrollControlled: isScrollControlled,
-    scrollControlDisabledMaxHeightRatio: scrollControlDisabledMaxHeightRatio,
-    barrierLabel: barrierLabel ?? localizations.scrimLabel,
-    barrierOnTapHint:
-        localizations.scrimOnTapHint(localizations.bottomSheetLabel),
-    backgroundColor: backgroundColor,
-    elevation: elevation,
-    shape: shape,
-    clipBehavior: clipBehavior,
-    constraints: constraints,
-    isDismissible: isDismissible,
-    modalBarrierColor:
-        barrierColor ?? Theme.of(context).bottomSheetTheme.modalBarrierColor,
-    settings: routeSettings,
-    transitionAnimationController: transitionAnimationController,
-    anchorPoint: anchorPoint,
-    useSafeArea: useSafeArea,
-  ));
+  return navigator.push(
+    ModalSideSheetRoute<T>(
+      builder: builder,
+      filter: filter,
+      capturedThemes: InheritedTheme.capture(
+        from: context,
+        to: navigator.context,
+      ),
+      isScrollControlled: isScrollControlled,
+      scrollControlDisabledMaxHeightRatio: scrollControlDisabledMaxHeightRatio,
+      barrierLabel: barrierLabel ?? localizations.scrimLabel,
+      barrierOnTapHint: localizations.scrimOnTapHint(
+        localizations.bottomSheetLabel,
+      ),
+      backgroundColor: backgroundColor,
+      elevation: elevation,
+      shape: shape,
+      clipBehavior: clipBehavior,
+      constraints: constraints,
+      isDismissible: isDismissible,
+      modalBarrierColor:
+          barrierColor ?? Theme.of(context).bottomSheetTheme.modalBarrierColor,
+      settings: routeSettings,
+      transitionAnimationController: transitionAnimationController,
+      anchorPoint: anchorPoint,
+      useSafeArea: useSafeArea,
+    ),
+  );
 }
 
 // class ModalAppBar extends StatelessWidget {

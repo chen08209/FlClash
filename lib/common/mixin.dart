@@ -1,8 +1,13 @@
 import 'package:riverpod/riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-mixin AutoDisposeNotifierMixin<T> on AutoDisposeNotifier<T> {
+mixin AutoDisposeNotifierMixin<T> on AnyNotifier<T, T> {
   set value(T value) {
-    state = value;
+    if (ref.mounted) {
+      state = value;
+    } else {
+      onUpdate(value);
+    }
   }
 
   @override
@@ -17,28 +22,25 @@ mixin AutoDisposeNotifierMixin<T> on AutoDisposeNotifier<T> {
   void onUpdate(T value) {}
 }
 
-// mixin PageMixin<T extends StatefulWidget> on State<T> {
-//   initPageState() {
-//     WidgetsBinding.instance.addPostFrameCallback((_) {
-//       final commonScaffoldState = context.commonScaffoldState;
-//       commonScaffoldState?.actions = actions;
-//       commonScaffoldState?.floatingActionButton = floatingActionButton;
-//       commonScaffoldState?.onKeywordsUpdate = onKeywordsUpdate;
-//       commonScaffoldState?.updateSearchState(
-//         (_) => onSearch != null
-//             ? AppBarSearchState(
-//                 onSearch: onSearch!,
-//               )
-//             : null,
-//       );
-//     });
-//   }
-//
-//   List<Widget> get actions => [];
-//
-//   Widget? get floatingActionButton => null;
-//
-//   Function(String)? get onSearch => null;
-//
-//   Function(List<String>)? get onKeywordsUpdate => null;
-// }
+mixin AnyNotifierMixin<T> on AnyNotifier<T, T> {
+  T get value;
+
+  set value(T value) {
+    if (ref.mounted) {
+      state = value;
+    } else {
+      onUpdate(value);
+    }
+  }
+
+  @override
+  bool updateShouldNotify(previous, next) {
+    final res = super.updateShouldNotify(previous, next);
+    if (res) {
+      onUpdate(next);
+    }
+    return res;
+  }
+
+  void onUpdate(T value) {}
+}
