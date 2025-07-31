@@ -23,6 +23,7 @@ import (
 	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -159,7 +160,6 @@ func patchSelectGroup(mapping map[string]string) {
 
 func defaultSetupParams() *SetupParams {
 	return &SetupParams{
-		Config:      config.DefaultRawConfig(),
 		TestURL:     "https://www.gstatic.com/generate_204",
 		SelectedMap: map[string]string{},
 	}
@@ -235,12 +235,30 @@ func updateConfig(params *UpdateParams) {
 	updateListeners()
 }
 
+func parseWithPath(path string) (*config.Config, error) {
+	buf, err := readFile(path)
+	if err != nil {
+		return nil, err
+	}
+	rawConfig := config.DefaultRawConfig()
+	err = UnmarshalJson(buf, rawConfig)
+	if err != nil {
+		return nil, err
+	}
+	parseRawConfig, err := config.ParseRawConfig(rawConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseRawConfig, nil
+}
+
 func setupConfig(params *SetupParams) error {
 	runLock.Lock()
 	defer runLock.Unlock()
 	var err error
 	constant.DefaultTestURL = params.TestURL
-	currentConfig, err = config.ParseRawConfig(params.Config)
+	currentConfig, err = parseWithPath(filepath.Join(constant.Path.HomeDir(), "config.json"))
 	if err != nil {
 		currentConfig, _ = config.ParseRawConfig(config.DefaultRawConfig())
 	}

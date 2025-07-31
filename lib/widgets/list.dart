@@ -16,13 +16,11 @@ class Delegate {
 
 class RadioDelegate<T> extends Delegate {
   final T value;
-  final T groupValue;
-  final void Function(T?)? onChanged;
+  final void Function()? onTab;
 
   const RadioDelegate({
     required this.value,
-    required this.groupValue,
-    this.onChanged,
+    this.onTab,
   });
 }
 
@@ -414,16 +412,10 @@ class ListItem<T> extends StatelessWidget {
     if (delegate is RadioDelegate) {
       final radioDelegate = delegate as RadioDelegate<T>;
       return _buildListTile(
-        onTap: () {
-          if (radioDelegate.onChanged != null) {
-            radioDelegate.onChanged!(radioDelegate.value);
-          }
-        },
+        onTap: radioDelegate.onTab,
         leading: Radio<T>(
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           value: radioDelegate.value,
-          groupValue: radioDelegate.groupValue,
-          onChanged: radioDelegate.onChanged,
           toggleable: true,
         ),
         trailing: trailing,
