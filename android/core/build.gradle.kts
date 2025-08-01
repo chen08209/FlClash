@@ -56,6 +56,18 @@ val copyNativeLibs by tasks.register<Copy>("copyNativeLibs") {
     }
     from("../../libclash/android")
     into("src/main/jniLibs")
+
+    doLast {
+        val includesDir = file("src/main/jniLibs/includes")
+        val targetDir = file("src/main/cpp/includes")
+        if (includesDir.exists()) {
+            copy {
+                from(includesDir)
+                into(targetDir)
+            }
+            delete(includesDir)
+        }
+    }
 }
 
 afterEvaluate {
