@@ -296,19 +296,20 @@ class Build {
       includesPath,
       archName,
     );
-    await Directory(includesPath).create(recursive: true);
-    final targetOutFiles = Directory(targetOutFilePath).listSync();
+    await Directory(realOutPath).create(recursive: true);
+    final targetOutFiles = Directory(outFilePath).listSync();
     final coreFiles = Directory(_coreDir).listSync();
     for (final file in [...targetOutFiles, ...coreFiles]) {
       if (!file.path.endsWith('.h')) {
         continue;
       }
-      final targetFile = join(realOutPath, basename(file.path));
+      print(file.path);
+      final targetFilePath = join(realOutPath, basename(file.path));
       final realFile = File(file.path);
       await realFile.copy(
-        targetFile,
+        targetFilePath,
       );
-      if (!coreFiles.contains(file)) {
+      if (coreFiles.contains(file)) {
         continue;
       }
       await realFile.delete();

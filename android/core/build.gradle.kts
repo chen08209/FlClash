@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.argumentsWithVarargAsSingleArray
-
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
@@ -23,6 +21,7 @@ android {
             )
         }
     }
+
 
     sourceSets {
         getByName("main") {

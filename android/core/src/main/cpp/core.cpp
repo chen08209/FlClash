@@ -1,7 +1,6 @@
 #include <jni.h>
 
 #ifdef LIBCLASH
-
 #include "jni_helper.h"
 #include "libclash.h"
 #include "bride.h"
@@ -10,7 +9,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_follow_clash_core_Core_startTun(JNIEnv *env, jobject, const jint fd, jobject cb) {
     const auto interface = new_global(cb);
-    startTUN(fd, interface);
+    startTUN(interface, fd);
 }
 
 extern "C"
@@ -21,7 +20,10 @@ Java_com_follow_clash_core_Core_stopTun(JNIEnv *) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz) {
+Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
+    const auto interface = new_global(cb);
+    scoped_string sd = get_string(data);
+    invokeAction(interface, sd);
 }
 
 
@@ -54,7 +56,8 @@ call_tun_interface_resolve_process_impl(void *tun_interface, int protocol,
                                                                              new_string(source),
                                                                              new_string(target),
                                                                              uid));
-    return get_string(packageName);
+    const scoped_string sp = get_string(packageName);
+    return sp;
 }
 
 static const char *
@@ -63,7 +66,8 @@ call_invoke_interface_result_impl(void *invoke_interface, const char *data) {
     const auto res = reinterpret_cast<jstring>(env->CallObjectMethod(static_cast<jobject>(invoke_interface),
                                                                      m_invoke_interface_result,
                                                                      new_string(data)));
-    return get_string(res);
+    const scoped_string sr = get_string(res);
+    return sr;
 }
 
 extern "C"
@@ -90,7 +94,6 @@ JNI_OnLoad(JavaVM *vm, void *) {
     protect_func = &call_tun_interface_protect_impl;
     resolve_process_func = &call_tun_interface_resolve_process_impl;
     result_func = &call_invoke_interface_result_impl;
-
     release_object_func = &release_jni_object_impl;
 
     return JNI_VERSION_1_6;
@@ -108,6 +111,7 @@ Java_com_follow_clash_core_Core_stopTun(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz) {
+Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
+    // TODO: implement invokeAction()
 }
 #endif

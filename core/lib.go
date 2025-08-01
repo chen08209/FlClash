@@ -7,8 +7,6 @@ package main
 */
 import "C"
 
-//var messagePort int64 = -1
-//
 ////export attachMessagePort
 //func attachMessagePort(mPort C.longlong) {
 //	messagePort = int64(mPort)
@@ -239,11 +237,11 @@ func handleGetCurrentProfileName() string {
 }
 
 func (result ActionResult) send() {
-	//data, err := result.Json()
-	//if err != nil {
-	//	return
-	//}
-	//bridge.SendToPort(result.Port, string(data))
+	data, err := result.Json()
+	if err != nil {
+		return
+	}
+	invokeResult(result.callback, string(data))
 }
 
 func nextHandle(action *Action, result ActionResult) bool {
@@ -267,20 +265,20 @@ func nextHandle(action *Action, result ActionResult) bool {
 }
 
 //export invokeAction
-func invokeAction(resultFunc unsafe.Pointer, paramsChar *C.char, callback unsafe.Pointer) {
-	//params := C.GoString(paramsChar)
-	//var action = &Action{}
-	//err := json.Unmarshal([]byte(params), action)
-	//if err != nil {
-	//	bridge.SendToPort(i, err.Error())
-	//	return
-	//}
-	//result := ActionResult{
-	//	Id:     action.Id,
-	//	Method: action.Method,
-	//	Port:   i,
-	//}
-	//go handleAction(action, result)
+func invokeAction(callback unsafe.Pointer, paramsChar *C.char) {
+	params := C.GoString(paramsChar)
+	var action = &Action{}
+	err := json.Unmarshal([]byte(params), action)
+	if err != nil {
+		invokeResult(callback, err.Error())
+		return
+	}
+	result := ActionResult{
+		Id:       action.Id,
+		Method:   action.Method,
+		callback: callback,
+	}
+	go handleAction(action, result)
 }
 
 //export quickStart
@@ -300,7 +298,7 @@ func quickStart(initParamsChar *C.char, paramsChar *C.char, stateParamsChar *C.c
 }
 
 //export startTUN
-func startTUN(fd C.int, callback unsafe.Pointer) bool {
+func startTUN(callback unsafe.Pointer, fd C.int) bool {
 	go func() {
 		handleStartTun(int(fd), callback)
 	}()
@@ -313,7 +311,7 @@ func sendMessage(message Message) {
 	//}
 	//result := ActionResult{
 	//	Method: messageMethod,
-	//	Port:   messagePort,
+	//	callback:  messagePort,
 	//	Data:   message,
 	//}
 	//result.send()
