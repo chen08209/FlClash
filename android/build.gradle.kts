@@ -4,7 +4,7 @@ buildscript {
     }
 }
 plugins {
-    id("com.android.library")
+    id("com.android.library") apply false
 }
 allprojects {
     repositories {
@@ -22,4 +22,8 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
 }
