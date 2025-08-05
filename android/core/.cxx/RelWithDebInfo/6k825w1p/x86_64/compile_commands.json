@@ -1,0 +1,12 @@
+[
+{
+  "directory": "F:/az/dev/FlClash/android/core/.cxx/RelWithDebInfo/6k825w1p/x86_64",
+  "command": "D:\\Android\\Sdk\\ndk\\28.0.13004108\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=x86_64-none-linux-android21 --sysroot=D:/Android/Sdk/ndk/28.0.13004108/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DLIBCLASH -Dcore_EXPORTS -IF:/az/dev/FlClash/android/core/src/main/cpp/../jniLibs/x86_64 -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -O2 -g -DNDEBUG -fPIC -O3 -flto -g0 -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -fvisibility=hidden -fvisibility-inlines-hidden -o CMakeFiles\\core.dir\\jni_helper.cpp.o -c F:\\az\\dev\\FlClash\\android\\core\\src\\main\\cpp\\jni_helper.cpp",
+  "file": "F:\\az\\dev\\FlClash\\android\\core\\src\\main\\cpp\\jni_helper.cpp"
+},
+{
+  "directory": "F:/az/dev/FlClash/android/core/.cxx/RelWithDebInfo/6k825w1p/x86_64",
+  "command": "D:\\Android\\Sdk\\ndk\\28.0.13004108\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=x86_64-none-linux-android21 --sysroot=D:/Android/Sdk/ndk/28.0.13004108/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DLIBCLASH -Dcore_EXPORTS -IF:/az/dev/FlClash/android/core/src/main/cpp/../jniLibs/x86_64 -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -O2 -g -DNDEBUG -fPIC -O3 -flto -g0 -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -fvisibility=hidden -fvisibility-inlines-hidden -o CMakeFiles\\core.dir\\core.cpp.o -c F:\\az\\dev\\FlClash\\android\\core\\src\\main\\cpp\\core.cpp",
+  "file": "F:\\az\\dev\\FlClash\\android\\core\\src\\main\\cpp\\core.cpp"
+}
+]

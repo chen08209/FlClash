@@ -1,0 +1,25 @@
+# Values used to calculate the hash in this folder name.
+# Should not depend on the absolute path of the project itself.
+#   - AGP: 8.9.2.
+#   - $NDK is the path to NDK 28.0.13004108.
+#   - $PROJECT is the path to the parent folder of the root Gradle build file.
+#   - $ABI is the ABI to be built with. The specific value doesn't contribute to the value of the hash.
+#   - $HASH is the hash value computed from this text.
+#   - $CMAKE is the path to CMake 3.22.1.
+#   - $NINJA is the path to Ninja.
+-H$PROJECT/core/src/main/cpp
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_SYSTEM_VERSION=21
+-DANDROID_PLATFORM=android-21
+-DANDROID_ABI=$ABI
+-DCMAKE_ANDROID_ARCH_ABI=$ABI
+-DANDROID_NDK=$NDK
+-DCMAKE_ANDROID_NDK=$NDK
+-DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake
+-DCMAKE_MAKE_PROGRAM=$NINJA
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=F:/az/dev/FlClash/build/core/intermediates/cxx/Debug/$HASH/obj/$ABI
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=F:/az/dev/FlClash/build/core/intermediates/cxx/Debug/$HASH/obj/$ABI
+-DCMAKE_BUILD_TYPE=Debug
+-B$PROJECT/core/.cxx/Debug/$HASH/$ABI
+-GNinja

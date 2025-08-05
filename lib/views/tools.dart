@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' show dirname, join;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'backup_and_recovery.dart';
 import 'developer.dart';
@@ -91,7 +92,43 @@ class _ToolboxViewState extends ConsumerState<ToolsView> {
         (state) => VM2(a: state.locale, b: state.developerMode),
       ),
     );
+
     final items = [
+      FutureBuilder<SharedPreferences>(
+        future: SharedPreferences.getInstance(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const CircularProgressIndicator();
+          }
+          final prefs = snapshot.data!;
+          final email = prefs.getString('user_email') ?? '未知邮箱';
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ListHeader(title: '账户信息'),
+              ListTile(
+                leading: const Icon(Icons.person),
+                title: Text(email),
+                subtitle: const Text('当前登录账户'),
+              ),
+              const Divider(),
+              ListTile(
+                title: const Text('客服中心'),
+                onTap: () {}
+              ),
+              const Divider(),
+              ListTile(
+                title: const Text('注销登录'),
+                onTap: () async {
+                  await prefs.clear();
+                  Navigator.pushReplacementNamed(context, '/');
+                }
+              ),
+            ],
+          );
+        },
+      ),
       Consumer(
         builder: (_, ref, __) {
           final state = ref.watch(moreToolsSelectorStateProvider);

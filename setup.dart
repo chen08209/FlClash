@@ -187,10 +187,18 @@ class Build {
       runInShell: runInShell,
     );
     process.stdout.listen((data) {
-      print(utf8.decode(data));
+      try {
+        print(utf8.decode(data));
+      } catch (e) {
+        print(utf8.decode(data, allowMalformed: true));
+      }
     });
     process.stderr.listen((data) {
-      print(utf8.decode(data));
+      try {
+        print(utf8.decode(data));
+      } catch (e) {
+        print(utf8.decode(data, allowMalformed: true));
+      }
     });
     final exitCode = await process.exitCode;
     if (exitCode != 0 && name != null) throw "$name error";
@@ -546,7 +554,7 @@ class BuildCommand extends Command {
           target: target,
           targets: "apk",
           args:
-              ",split-per-abi --build-target-platform ${defaultTargets.join(",")}",
+              " --build-target-platform ${defaultTargets.join(",")}",
           env: env,
         );
         return;

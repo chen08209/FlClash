@@ -1,6 +1,7 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/views.dart';
+import 'package:fl_clash/views/account_info.dart';
 import 'package:flutter/material.dart';
 
 class Navigation {
@@ -92,6 +93,16 @@ class Navigation {
         view: ToolsView(
           key: GlobalObjectKey(
             PageLabel.tools,
+          ),
+        ),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
+      ),
+      const NavigationItem(
+        icon: Icon(Icons.account_circle),
+        label: PageLabel.account,
+        view: AccountInfoPage(
+          key: GlobalObjectKey(
+            PageLabel.account,
           ),
         ),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
