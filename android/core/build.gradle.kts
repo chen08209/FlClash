@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace = "com.follow.clash.core"
-    compileSdk = 35
-    ndkVersion = "28.0.13004108"
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    ndkVersion = libs.versions.ndkVersion.get()
 
     defaultConfig {
-        minSdk = 21
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildTypes {
@@ -46,7 +46,7 @@ android {
     }
 }
 dependencies {
-    implementation("androidx.annotation:annotation-jvm:1.9.1")
+    implementation(libs.annotation.jvm)
 }
 
 val copyNativeLibs by tasks.register<Copy>("copyNativeLibs") {

@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:isolate';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/system.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
-
-import '../clash/lib.dart';
 
 class Service {
   static Service? _instance;
@@ -14,7 +11,7 @@ class Service {
   ReceivePort? receiver;
 
   Service._internal() {
-    methodChannel = const MethodChannel('service');
+    methodChannel = const MethodChannel('$packageName/service');
   }
 
   factory Service() {
@@ -22,25 +19,25 @@ class Service {
     return _instance!;
   }
 
-  Future<bool?> init() async {
-    return await methodChannel.invokeMethod<bool>('init');
+  Future<T?> invokeAction<T>(String data) async {
+    return await methodChannel.invokeMethod<T>('invokeAction', data);
   }
 
-  Future<bool?> destroy() async {
-    return await methodChannel.invokeMethod<bool>('destroy');
+  Future<bool> start<T>() async {
+    return await methodChannel.invokeMethod<bool>('start') ?? false;
   }
 
-  Future<bool?> startVpn() async {
-    final options = await clashLib?.getAndroidVpnOptions();
-    return await methodChannel.invokeMethod<bool>('startVpn', {
-      'data': json.encode(options),
-    });
+  Future<bool> stop<T>() async {
+    return await methodChannel.invokeMethod<bool>('stop') ?? false;
   }
 
-  Future<bool?> stopVpn() async {
-    return await methodChannel.invokeMethod<bool>('stopVpn');
+  Future<DateTime?> getRuntime<T>() async {
+    final ms = await methodChannel.invokeMethod<int>('getRuntime') ?? 0;
+    if (ms == 0) {
+      return null;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(ms);
   }
 }
 
-Service? get service =>
-    system.isAndroid && !globalState.isService ? Service() : null;
+Service? get service => system.isAndroid ? Service() : null;

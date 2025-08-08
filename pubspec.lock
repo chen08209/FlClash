@@ -385,14 +385,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.4"
-  ffigen:
-    dependency: "direct dev"
-    description:
-      name: ffigen
-      sha256: "72d732c33557fc0ca9b46379d3deff2dadbdc539696dc0b270189e2989be20ef"
-      url: "https://pub.dev"
-    source: hosted
-    version: "18.1.0"
   file:
     dependency: transitive
     description:
@@ -1029,14 +1021,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
-  quiver:
-    dependency: transitive
-    description:
-      name: quiver
-      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.2"
   re_editor:
     dependency: "direct main"
     description:
@@ -1610,14 +1594,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.3"
-  yaml_edit:
-    dependency: transitive
-    description:
-      name: yaml_edit
-      sha256: fb38626579fb345ad00e674e2af3a5c9b0cc4b9bfb8fd7f7ff322c7c9e62aef5
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.2"
 sdks:
   dart: ">=3.8.0 <4.0.0"
   flutter: ">=3.29.0"

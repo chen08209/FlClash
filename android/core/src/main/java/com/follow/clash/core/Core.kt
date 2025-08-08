@@ -10,6 +10,9 @@ data object Core {
         cb: TunInterface
     )
 
+    external fun forceGC(
+    )
+
     private fun parseInetSocketAddress(address: String): InetSocketAddress {
         val url = URL("https://$address")
 
@@ -52,12 +55,13 @@ data object Core {
 
     fun invokeAction(
         data: String,
+        cb: (result: String?) -> Unit
     ) {
         invokeAction(
             data,
             object : InvokeInterface {
                 override fun onResult(result: String?) {
-
+                    cb(result)
                 }
             },
         )

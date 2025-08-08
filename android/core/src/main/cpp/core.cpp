@@ -20,6 +20,12 @@ Java_com_follow_clash_core_Core_stopTun(JNIEnv *) {
 
 extern "C"
 JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_forceGC(JNIEnv *env, jobject thiz) {
+    // forceGC();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
 Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
     const auto interface = new_global(cb);
     scoped_string sd = get_string(data);
@@ -113,5 +119,11 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
     // TODO: implement invokeAction()
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_forceGC(JNIEnv *env, jobject thiz) {
+    // TODO: implement forceGC()
 }
 #endif
