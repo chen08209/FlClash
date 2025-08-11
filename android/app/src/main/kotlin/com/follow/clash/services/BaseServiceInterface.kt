@@ -66,6 +66,8 @@ fun Service.createFlClashNotificationBuilder(): Deferred<NotificationCompat.Buil
             )
             setShowWhen(false)
             setOnlyAlertOnce(true)
+            setVisibility(NotificationCompat.VISIBILITY_SECRET)
+            setSilent(true)
         }
     }
 
@@ -76,8 +78,15 @@ fun Service.startForeground(notification: Notification) {
         var channel = manager?.getNotificationChannel(GlobalState.NOTIFICATION_CHANNEL)
         if (channel == null) {
             channel = NotificationChannel(
-                GlobalState.NOTIFICATION_CHANNEL, "SERVICE_CHANNEL", NotificationManager.IMPORTANCE_LOW
+                GlobalState.NOTIFICATION_CHANNEL, "SERVICE_CHANNEL", NotificationManager.IMPORTANCE_MIN
             )
+            channel.setShowBadge(false)
+            channel.enableLights(false)
+            channel.enableVibration(false)
+            channel.setSound(null, null)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                channel.lockscreenVisibility = Notification.VISIBILITY_SECRET
+            }
             manager?.createNotificationChannel(channel)
         }
     }
