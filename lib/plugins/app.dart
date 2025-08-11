@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
 class App {
   static App? _instance;
@@ -15,18 +15,12 @@ class App {
   Function()? onExit;
 
   App._internal() {
-    methodChannel = const MethodChannel('app');
+    methodChannel = const MethodChannel('$packageName/app');
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'exit':
           if (onExit != null) {
             await onExit!();
-          }
-        case 'getText':
-          try {
-            return Intl.message(call.arguments as String);
-          } catch (_) {
-            return '';
           }
         default:
           throw MissingPluginException();

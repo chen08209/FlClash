@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"unsafe"
 )
 
 type Action struct {
@@ -11,11 +12,11 @@ type Action struct {
 }
 
 type ActionResult struct {
-	Id     string      `json:"id"`
-	Method Method      `json:"method"`
-	Data   interface{} `json:"data"`
-	Code   int         `json:"code"`
-	Port   int64
+	Id       string      `json:"id"`
+	Method   Method      `json:"method"`
+	Data     interface{} `json:"data"`
+	Code     int         `json:"code"`
+	callback unsafe.Pointer
 }
 
 func (result ActionResult) Json() ([]byte, error) {

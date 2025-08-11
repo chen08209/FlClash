@@ -1,49 +1,47 @@
 package com.follow.clash.plugins
 
-import com.follow.clash.GlobalState
-import com.follow.clash.models.VpnOptions
-import com.google.gson.Gson
+import com.follow.clash.AppState
+import com.follow.clash.Service
+import com.follow.clash.common.Components
+import com.follow.clash.common.GlobalState
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
 
-data object ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
+class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
+    private val service = Service(GlobalState.application)
     private lateinit var flutterMethodChannel: MethodChannel
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        flutterMethodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, "service")
+        flutterMethodChannel = MethodChannel(
+            flutterPluginBinding.binaryMessenger, "${Components.PACKAGE_NAME}/service"
+        )
         flutterMethodChannel.setMethodCallHandler(this)
+        service.bind()
     }
 
     override fun onDetachedFromEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         flutterMethodChannel.setMethodCallHandler(null)
+        service.unbind()
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) = when (call.method) {
-        "startVpn" -> {
-            val data = call.argument<String>("data")
-            val options = Gson().fromJson(data, VpnOptions::class.java)
-            GlobalState.getCurrentVPNPlugin()?.handleStart(options)
-            result.success(true)
+        "invokeAction" -> {
+            handleInvokeAction(call, result)
         }
 
-        "stopVpn" -> {
-            GlobalState.getCurrentVPNPlugin()?.handleStop()
-            result.success(true)
+        "getRunTime" -> {
+            handleGetRunTime(result)
         }
 
-        "init" -> {
-            GlobalState.getCurrentAppPlugin()
-                ?.requestNotificationsPermission()
-            GlobalState.initServiceEngine()
-            result.success(true)
+        "start" -> {
+            handleStart(result)
         }
 
-        "destroy" -> {
-            handleDestroy()
-            result.success(true)
+        "stop" -> {
+            handleStop(result)
         }
 
         else -> {
@@ -51,8 +49,24 @@ data object ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         }
     }
 
+    private fun handleInvokeAction(call: MethodCall, result: MethodChannel.Result) {
+        val data = call.arguments<String>()!!
+        service.invokeAction(data) {
+            result.success(it)
+        }
+    }
 
-    private fun handleDestroy() {
-        GlobalState.destroyServiceEngine()
+    private fun handleStart(result: MethodChannel.Result) {
+        AppState.handleStartService()
+        result.success(true)
+    }
+
+    private fun handleStop(result: MethodChannel.Result) {
+        AppState.handleStopService()
+        result.success(true)
+    }
+
+    private fun handleGetRunTime(result: MethodChannel.Result){
+        return result.success(AppState.runTime)
     }
 }
