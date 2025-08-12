@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:fl_clash/clash/interface.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/core.dart';
 import 'package:fl_clash/state.dart';
 
@@ -13,6 +14,8 @@ class ClashService extends ClashHandlerInterface {
   Completer<ServerSocket> serverCompleter = Completer();
 
   Completer<Socket> socketCompleter = Completer();
+
+  Map<String, Completer> callbackCompleterMap = {};
 
   bool isStarting = false;
 
@@ -26,6 +29,26 @@ class ClashService extends ClashHandlerInterface {
   ClashService._internal() {
     _initServer();
     reStart();
+  }
+
+  Future<void> handleResult(ActionResult result) async {
+    final completer = callbackCompleterMap[result.id];
+    try {
+      switch (result.method) {
+        case ActionMethod.message:
+          // clashMessage.controller.add(result.data);
+          completer?.complete(true);
+          return;
+        case ActionMethod.getConfig:
+          completer?.complete(result.toResult);
+          return;
+        default:
+          completer?.complete(result.data);
+          return;
+      }
+    } catch (e) {
+      commonPrint.log('${result.id} error $e');
+    }
   }
 
   Future<void> _initServer() async {
@@ -116,8 +139,7 @@ class ClashService extends ClashHandlerInterface {
     return true;
   }
 
-  @override
-  sendMessage(String message) async {
+  Future<void> sendMessage(String message) async {
     final socket = await socketCompleter.future;
     socket.writeln(message);
   }
@@ -154,6 +176,36 @@ class ClashService extends ClashHandlerInterface {
   Future<bool> preload() async {
     await serverCompleter.future;
     return true;
+  }
+
+  @override
+  Future<T?> invoke<T>({
+    required ActionMethod method,
+    String? data,
+    Duration? timeout,
+  }) {
+    final id = '${method.name}#${utils.id}';
+
+    callbackCompleterMap[id] = Completer<T?>();
+
+    sendMessage(
+      json.encode(
+        Action(
+          id: id,
+          method: method,
+          data: data,
+        ),
+      ),
+    );
+
+    return (callbackCompleterMap[id] as Completer<T?>).safeFuture(
+      timeout: timeout,
+      onLast: () {
+        callbackCompleterMap.remove(id);
+      },
+      functionName: id,
+      onTimeout: () => null,
+    );
   }
 }
 

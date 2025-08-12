@@ -27,10 +27,6 @@ typedef UpdateTasks = List<FutureOr Function()>;
 class GlobalState {
   static GlobalState? _instance;
   Map<CacheTag, FixedMap<String, double>> computeHeightMapCache = {};
-
-  // Map<CacheTag, double> computeScrollPositionCache = {};
-  // final Map<String, double> scrollPositionCache = {};
-  bool isService = false;
   Timer? timer;
   Timer? groupsUpdateTimer;
   late Config config;
@@ -47,8 +43,6 @@ class GlobalState {
   UpdateTasks tasks = [];
   final navigatorKey = GlobalKey<NavigatorState>();
   AppController? _appController;
-
-  // GlobalKey<CommonScaffoldState> homeScaffoldKey = GlobalKey();
   bool isInit = false;
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
@@ -134,18 +128,18 @@ class GlobalState {
   Future<void> handleStart([UpdateTasks? tasks]) async {
     startTime ??= DateTime.now();
     await clashCore.startListener();
-    await service?.startVpn();
+    await service?.start();
     startUpdateTasks(tasks);
   }
 
   Future updateStartTime() async {
-    startTime = await clashLib?.getRunTime();
+    startTime = await service?.getRuntime();
   }
 
   Future handleStop() async {
     startTime = null;
     await clashCore.stopListener();
-    await service?.stopVpn();
+    await service?.stop();
     stopUpdateTasks();
   }
 
@@ -419,10 +413,7 @@ class GlobalState {
   }
 
   Future<Map<String, dynamic>> getProfileConfig(String profileId) async {
-    final configMap = await switch (clashLibHandler != null) {
-      true => clashLibHandler!.getConfig(profileId),
-      false => clashCore.getConfig(profileId),
-    };
+    final configMap = await clashCore.getConfig(profileId);
     configMap['rules'] = configMap['rule'];
     configMap.remove('rule');
     return configMap;

@@ -7,8 +7,8 @@ extension CompleterExt<T> on Completer<T> {
   Future<T> safeFuture({
     Duration? timeout,
     VoidCallback? onLast,
-    FutureOr<T> Function()? onTimeout,
     required String functionName,
+    FutureOr<T> Function()? onTimeout,
   }) {
     final realTimeout = timeout ?? const Duration(seconds: 30);
     Timer(realTimeout + commonDuration, () {

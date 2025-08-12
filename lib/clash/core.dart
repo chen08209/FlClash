@@ -202,12 +202,12 @@ class ClashCore {
     return clashInterface.updateExternalProvider(providerName);
   }
 
-  Future<void> startListener() async {
-    await clashInterface.startListener();
+  Future<bool> startListener() async {
+    return await clashInterface.startListener();
   }
 
-  Future<void> stopListener() async {
-    await clashInterface.stopListener();
+  Future<bool> stopListener() async {
+    return await clashInterface.stopListener();
   }
 
   Future<Delay> getDelay(String url, String proxyName) async {
