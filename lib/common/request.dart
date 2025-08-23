@@ -34,11 +34,12 @@ class Request {
     });
   }
 
-  Future<Response> getFileResponseForUrl(String url) async {
+  Future<Response> getFileResponseForUrl(String url, {String? userAgent}) async {
     final response = await _clashDio.get(
       url,
       options: Options(
         responseType: ResponseType.bytes,
+        headers: userAgent != null ? {'User-Agent': userAgent} : null,
       ),
     );
     return response;

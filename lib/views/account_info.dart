@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:fl_clash/services/api_service_v2.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fl_clash/pages/login_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/widgets/widgets.dart';
+import 'package:fl_clash/views/theme.dart';
+import 'package:fl_clash/views/access.dart';
+import 'dart:io';
 
-class AccountInfoPage extends StatefulWidget {
+class AccountInfoPage extends ConsumerStatefulWidget {
   const AccountInfoPage({Key? key}) : super(key: key);
 
   @override
-  State<AccountInfoPage> createState() => _AccountInfoPageState();
+  ConsumerState<AccountInfoPage> createState() => _AccountInfoPageState();
 }
 
-class _AccountInfoPageState extends State<AccountInfoPage> {
+class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
   Map<String, dynamic>? _userInfo;
   Map<String, dynamic>? _subscriptionInfo;
   bool _isLoading = true;
@@ -66,9 +76,6 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('账户信息'),
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -184,6 +191,47 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '设置',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 16),
+                          _LocaleItem(),
+                          const Divider(),
+                          _ThemeItem(),
+                          if (Platform.isAndroid) ...[
+                            const Divider(),
+                            _AccessItem(),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.exit_to_app, color: Colors.red),
+                      title: const Text('退出账户'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () async {
+                        // Clear stored credentials
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.clear();
+                        // Navigate to login page by replacing the entire app
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                          (route) => false,
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -213,6 +261,73 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LocaleItem extends ConsumerWidget {
+  const _LocaleItem();
+
+  String _getLocaleString(Locale? locale) {
+    if (locale == null) return appLocalizations.defaultText;
+    return Intl.message(locale.toString());
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale =
+        ref.watch(appSettingProvider.select((state) => state.locale));
+    final subTitle = locale ?? appLocalizations.defaultText;
+    final currentLocale = utils.getLocaleForString(locale);
+    return ListItem<Locale?>.options(
+      leading: const Icon(Icons.language_outlined),
+      title: Text(appLocalizations.language),
+      subtitle: Text(Intl.message(subTitle)),
+      delegate: OptionsDelegate(
+        title: appLocalizations.language,
+        options: [null, ...AppLocalizations.delegate.supportedLocales],
+        onChanged: (Locale? locale) {
+          ref.read(appSettingProvider.notifier).updateState(
+                (state) => state.copyWith(locale: locale?.toString()),
+              );
+        },
+        textBuilder: (locale) => _getLocaleString(locale),
+        value: currentLocale,
+      ),
+    );
+  }
+}
+
+class _ThemeItem extends StatelessWidget {
+  const _ThemeItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const Icon(Icons.style),
+      title: Text(appLocalizations.theme),
+      subtitle: Text(appLocalizations.themeDesc),
+      delegate: OpenDelegate(
+        title: appLocalizations.theme,
+        widget: const ThemeView(),
+      ),
+    );
+  }
+}
+
+class _AccessItem extends StatelessWidget {
+  const _AccessItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const Icon(Icons.view_list),
+      title: Text(appLocalizations.accessControl),
+      subtitle: Text(appLocalizations.accessControlDesc),
+      delegate: OpenDelegate(
+        title: appLocalizations.appAccessControl,
+        widget: const AccessView(),
       ),
     );
   }

@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/request.dart';
+import 'package:fl_clash/models/profile.dart';
+import 'package:fl_clash/services/api_service_v2.dart';
+import 'package:fl_clash/state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
@@ -52,6 +55,9 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('user_email', email);
         await prefs.setBool('is_logged_in', true);
         
+        // 自动添加订阅配置
+        await _autoAddSubscription();
+        
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         // 显示服务器返回的错误信息
@@ -85,6 +91,56 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _autoAddSubscription() async {
+    try {
+      // 调用API获取订阅信息
+      final apiService = ApiServiceV2();
+      final subscriptionInfo = await apiService.getSubscriptionInfo();
+      
+      // 获取订阅链接
+      final subscribeUrl = subscriptionInfo['subscribe_url'];
+      if (subscribeUrl == null || subscribeUrl.isEmpty) {
+        print('未找到订阅链接');
+        return;
+      }
+      
+      // 检查是否已存在该订阅
+      final profiles = globalState.config.profiles;
+      final existingProfile = profiles.firstWhere(
+        (p) => p.url == subscribeUrl,
+        orElse: () => Profile.normal(url: ''),
+      );
+      
+      if (existingProfile.url == subscribeUrl) {
+        // 如果已存在，更新它
+        print('订阅已存在，更新中...');
+        await globalState.appController.updateProfile(existingProfile);
+      } else {
+        // 获取套餐名称作为配置名称
+        final planName = subscriptionInfo['plan']?['name'] ?? '订阅配置';
+        
+        // 创建并更新配置
+        final profile = await Profile.normal(
+          url: subscribeUrl,
+          label: planName,
+        ).update();
+        
+        // 添加到配置列表
+        await globalState.appController.addProfile(profile);
+        
+        // 如果是第一个配置，自动设置为当前配置
+        if (profiles.isEmpty) {
+          globalState.appController.applyProfileDebounce(silence: true);
+        }
+        
+        print('订阅添加成功: $planName');
+      }
+    } catch (e) {
+      print('自动添加订阅失败: $e');
+      // 不显示错误，让用户正常进入主页
     }
   }
 

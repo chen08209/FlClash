@@ -168,7 +168,11 @@ extension ProfileExtension on Profile {
   }
 
   Future<Profile> update() async {
-    final response = await request.getFileResponseForUrl(url);
+    // 为订阅链接添加特定的User-Agent
+    final response = await request.getFileResponseForUrl(
+      url,
+      userAgent: 'clashmeta_huanshen',
+    );
     final disposition = response.headers.value("content-disposition");
     final userinfo = response.headers.value('subscription-userinfo');
     return await copyWith(

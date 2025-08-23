@@ -64,6 +64,15 @@ class AddProfileView extends StatelessWidget {
     return ListView(
       children: [
         ListItem(
+          leading: const Icon(Icons.sync_alt),
+          title: const Text('自动获取订阅'),
+          subtitle: const Text('从服务器自动获取订阅链接并添加'),
+          onTap: () async {
+            globalState.appController.addProfileFromApi();
+            Navigator.of(context).pop();
+          },
+        ),
+        ListItem(
           leading: const Icon(Icons.qr_code_sharp),
           title: Text(appLocalizations.qrcode),
           subtitle: Text(appLocalizations.qrcodeDesc),

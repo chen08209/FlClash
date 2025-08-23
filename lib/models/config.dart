@@ -66,7 +66,7 @@ List<DashboardWidget> dashboardWidgetsSafeFormJson(
 @freezed
 class AppSettingProps with _$AppSettingProps {
   const factory AppSettingProps({
-    String? locale,
+    @Default('zh_CN') String? locale,
     @Default(defaultDashboardWidgets)
     @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
     List<DashboardWidget> dashboardWidgets,

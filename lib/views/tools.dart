@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' show dirname, join;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fl_clash/pages/login_page.dart';
 
 import 'backup_and_recovery.dart';
 import 'developer.dart';
@@ -73,12 +74,9 @@ class _ToolboxViewState extends ConsumerState<ToolsView> {
     return generateSection(
       title: appLocalizations.settings,
       items: [
-        _LocaleItem(),
-        _ThemeItem(),
         _BackupItem(),
         if (system.isDesktop) _HotkeyItem(),
         if (Platform.isWindows) _LoopbackItem(),
-        if (Platform.isAndroid) _AccessItem(),
         _ConfigItem(),
         _SettingItem(),
       ],
@@ -122,7 +120,10 @@ class _ToolboxViewState extends ConsumerState<ToolsView> {
                 title: const Text('注销登录'),
                 onTap: () async {
                   await prefs.clear();
-                  Navigator.pushReplacementNamed(context, '/');
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
                 }
               ),
             ],

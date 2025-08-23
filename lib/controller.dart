@@ -10,11 +10,13 @@ import 'package:fl_clash/common/archive.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/services/api_service_v2.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
@@ -554,6 +556,10 @@ class AppController {
       _ref.read(appSettingProvider).autoLaunch,
     );
     autoUpdateProfiles();
+    
+    // 在启动时自动更新服务器订阅
+    await _autoUpdateServerSubscription();
+    
     autoCheckUpdate();
     if (!_ref.read(appSettingProvider).silentLaunch) {
       window?.show();
@@ -663,6 +669,66 @@ class AppController {
     return;
   }
 
+  Future<void> _autoUpdateServerSubscription() async {
+    try {
+      // 检查是否已登录
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      if (authData == null) {
+        print('未登录，跳过自动更新订阅');
+        return;
+      }
+      
+      // 调用API获取订阅信息
+      final apiService = ApiServiceV2();
+      final subscriptionInfo = await apiService.getSubscriptionInfo();
+      
+      // 获取订阅链接
+      final subscribeUrl = subscriptionInfo['subscribe_url'];
+      if (subscribeUrl == null || subscribeUrl.isEmpty) {
+        print('未找到订阅链接');
+        return;
+      }
+      
+      // 检查是否已存在该订阅
+      final profiles = _ref.read(profilesProvider);
+      final existingProfile = profiles.firstWhere(
+        (p) => p.url == subscribeUrl,
+        orElse: () => Profile.normal(url: ''),
+      );
+      
+      if (existingProfile.url == subscribeUrl) {
+        // 如果已存在，更新它
+        print('自动更新服务器订阅: ${existingProfile.label}');
+        await updateProfile(existingProfile);
+        
+        // 如果这是当前激活的配置，应用更新
+        if (existingProfile.id == _ref.read(currentProfileIdProvider)) {
+          applyProfileDebounce(silence: true);
+        }
+      } else {
+        // 如果不存在，添加新的订阅
+        final planName = subscriptionInfo['plan']?['name'] ?? '订阅配置';
+        print('自动添加服务器订阅: $planName');
+        
+        final profile = await Profile.normal(
+          url: subscribeUrl,
+          label: planName,
+        ).update();
+        
+        await addProfile(profile);
+        
+        // 如果是第一个配置，自动设置为当前配置并应用
+        if (profiles.isEmpty) {
+          applyProfileDebounce(silence: true);
+        }
+      }
+    } catch (e) {
+      print('自动更新服务器订阅失败: $e');
+      // 不显示错误，静默处理
+    }
+  }
+
   addProfileFormURL(String url) async {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
@@ -710,6 +776,67 @@ class AppController {
     final url = await globalState.safeRun(picker.pickerConfigQRCode);
     if (url == null) return;
     addProfileFormURL(url);
+  }
+
+  addProfileFromApi() async {
+    if (globalState.navigatorKey.currentState?.canPop() ?? false) {
+      globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    }
+    toProfiles();
+    final commonScaffoldState = globalState.homeScaffoldKey.currentState;
+    if (commonScaffoldState?.mounted != true) return;
+    
+    final profile = await commonScaffoldState?.loadingRun<Profile?>(
+      () async {
+        try {
+          // 检查是否已登录
+          final prefs = await SharedPreferences.getInstance();
+          final authData = prefs.getString('auth_data');
+          if (authData == null) {
+            throw Exception('请先登录账户');
+          }
+          
+          // 调用API获取订阅信息
+          final apiService = ApiServiceV2();
+          final subscriptionInfo = await apiService.getSubscriptionInfo();
+          
+          // 获取订阅链接
+          final subscribeUrl = subscriptionInfo['subscribe_url'];
+          if (subscribeUrl == null || subscribeUrl.isEmpty) {
+            throw Exception('未找到订阅链接');
+          }
+          
+          // 获取套餐名称作为配置名称
+          final planName = subscriptionInfo['plan']?['name'] ?? '订阅配置';
+          
+          // 创建并更新配置
+          return await Profile.normal(
+            url: subscribeUrl,
+            label: planName,
+          ).update();
+        } catch (e) {
+          globalState.showMessage(
+            title: appLocalizations.tip,
+            message: TextSpan(
+              text: '获取订阅失败: $e',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          );
+          return null;
+        }
+      },
+      title: "自动获取订阅",
+    );
+    
+    if (profile != null) {
+      await addProfile(profile);
+      globalState.showMessage(
+        title: appLocalizations.tip,
+        message: const TextSpan(
+          text: '订阅添加成功',
+        ),
+      );
+    }
   }
 
   updateViewSize(Size size) {
