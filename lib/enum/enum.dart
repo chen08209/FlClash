@@ -323,6 +323,13 @@ enum FunctionTag {
 }
 
 enum DashboardWidget {
+  vpnControlPanel(
+    GridItem(
+      crossAxisCellCount: 8,
+      mainAxisCellCount: 4,
+      child: VpnControlPanel(),
+    ),
+  ),
   networkSpeed(
     GridItem(
       crossAxisCellCount: 8,
@@ -375,12 +382,6 @@ enum DashboardWidget {
       child: SystemProxyButton(),
     ),
     platforms: desktopPlatforms,
-  ),
-  intranetIp(
-    GridItem(
-      crossAxisCellCount: 4,
-      child: IntranetIP(),
-    ),
   ),
   memoryInfo(
     GridItem(

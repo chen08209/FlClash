@@ -320,7 +320,7 @@ class __$$AppSettingPropsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$AppSettingPropsImpl implements _AppSettingProps {
   const _$AppSettingPropsImpl(
-      {this.locale,
+      {this.locale = 'zh_CN',
       @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
       final List<DashboardWidget> dashboardWidgets = defaultDashboardWidgets,
       this.onlyStatisticsProxy = false,
@@ -344,6 +344,7 @@ class _$AppSettingPropsImpl implements _AppSettingProps {
       _$$AppSettingPropsImplFromJson(json);
 
   @override
+  @JsonKey()
   final String? locale;
   final List<DashboardWidget> _dashboardWidgets;
   @override

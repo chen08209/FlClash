@@ -9,7 +9,7 @@ part of '../config.dart';
 _$AppSettingPropsImpl _$$AppSettingPropsImplFromJson(
         Map<String, dynamic> json) =>
     _$AppSettingPropsImpl(
-      locale: json['locale'] as String?,
+      locale: json['locale'] as String? ?? 'zh_CN',
       dashboardWidgets: json['dashboardWidgets'] == null
           ? defaultDashboardWidgets
           : dashboardWidgetsSafeFormJson(json['dashboardWidgets'] as List?),
@@ -62,6 +62,7 @@ const _$RecoveryStrategyEnumMap = {
 };
 
 const _$DashboardWidgetEnumMap = {
+  DashboardWidget.vpnControlPanel: 'vpnControlPanel',
   DashboardWidget.networkSpeed: 'networkSpeed',
   DashboardWidget.outboundModeV2: 'outboundModeV2',
   DashboardWidget.outboundMode: 'outboundMode',
@@ -70,7 +71,6 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.tunButton: 'tunButton',
   DashboardWidget.vpnButton: 'vpnButton',
   DashboardWidget.systemProxyButton: 'systemProxyButton',
-  DashboardWidget.intranetIp: 'intranetIp',
   DashboardWidget.memoryInfo: 'memoryInfo',
 };
 
