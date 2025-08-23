@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/tech_theme.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -165,10 +166,30 @@ class CommonNavigationBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     if (viewMode == ViewMode.mobile) {
-      return NavigationBarTheme(
-        data: _NavigationBarDefaultsM3(context),
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark ? [
+              TechTheme.darkBackground,
+              TechTheme.cardBackground,
+            ] : [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+          border: Border(
+            top: BorderSide(
+              color: isDark ? TechTheme.primaryCyan.withOpacity(0.3) : Colors.grey.shade300,
+              width: 1,
+            ),
+          ),
+        ),
         child: NavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           destinations: navigationItems
               .map(
                 (e) => NavigationDestination(
@@ -185,8 +206,28 @@ class CommonNavigationBar extends ConsumerWidget {
       );
     }
     final showLabel = ref.watch(appSettingProvider).showLabel;
-    return Material(
-      color: context.colorScheme.surfaceContainer,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark ? [
+            TechTheme.darkBackground,
+            TechTheme.cardBackground,
+            TechTheme.darkBackground,
+          ] : [
+            Colors.white,
+            Colors.grey.shade50,
+            Colors.grey.shade100,
+          ],
+        ),
+        border: Border(
+          right: BorderSide(
+            color: isDark ? TechTheme.primaryCyan.withOpacity(0.3) : Colors.grey.shade300,
+            width: 1,
+          ),
+        ),
+      ),
       child: Column(
         children: [
           Expanded(
@@ -195,25 +236,49 @@ class CommonNavigationBar extends ConsumerWidget {
               child: SingleChildScrollView(
                 child: IntrinsicHeight(
                   child: NavigationRail(
-                    backgroundColor: context.colorScheme.surfaceContainer,
+                    backgroundColor: Colors.transparent,
                     selectedIconTheme: IconThemeData(
-                      color: context.colorScheme.onSurfaceVariant,
+                      color: isDark ? TechTheme.primaryCyan : Colors.blue,
+                      size: 26,
                     ),
                     unselectedIconTheme: IconThemeData(
-                      color: context.colorScheme.onSurfaceVariant,
+                      color: isDark ? Colors.white.withOpacity(0.7) : Colors.grey.shade600,
+                      size: 24,
                     ),
-                    selectedLabelTextStyle:
-                        context.textTheme.labelLarge!.copyWith(
-                      color: context.colorScheme.onSurface,
+                    selectedLabelTextStyle: TechTheme.techTextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? TechTheme.primaryCyan : Colors.blue,
                     ),
-                    unselectedLabelTextStyle:
-                        context.textTheme.labelLarge!.copyWith(
-                      color: context.colorScheme.onSurface,
+                    unselectedLabelTextStyle: TechTheme.techTextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white.withOpacity(0.7) : Colors.grey.shade600,
                     ),
                     destinations: navigationItems
                         .map(
                           (e) => NavigationRailDestination(
-                            icon: e.icon,
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: navigationItems[currentIndex] == e 
+                                  ? Border.all(
+                                      color: isDark ? TechTheme.primaryCyan.withOpacity(0.5) : Colors.blue.withOpacity(0.5),
+                                      width: 1,
+                                    ) 
+                                  : null,
+                                boxShadow: navigationItems[currentIndex] == e 
+                                  ? [
+                                      BoxShadow(
+                                        color: isDark ? TechTheme.primaryCyan.withOpacity(0.3) : Colors.blue.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        spreadRadius: 2,
+                                      ),
+                                    ] 
+                                  : null,
+                              ),
+                              child: e.icon,
+                            ),
                             label: Text(
                               Intl.message(e.label.name),
                             ),
@@ -234,22 +299,27 @@ class CommonNavigationBar extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(
-            height: 16,
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? TechTheme.primaryCyan.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              onPressed: () {
+                ref.read(appSettingProvider.notifier).updateState(
+                      (state) => state.copyWith(
+                        showLabel: !state.showLabel,
+                      ),
+                    );
+              },
+              icon: Icon(
+                Icons.menu,
+                color: isDark ? TechTheme.primaryCyan : Colors.blue,
+              ),
+            ),
           ),
-          IconButton(
-            onPressed: () {
-              ref.read(appSettingProvider.notifier).updateState(
-                    (state) => state.copyWith(
-                      showLabel: !state.showLabel,
-                    ),
-                  );
-            },
-            icon: const Icon(Icons.menu),
-          ),
-          const SizedBox(
-            height: 16,
-          ),
+          const SizedBox(height: 16),
         ],
       ),
     );

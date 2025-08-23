@@ -78,16 +78,17 @@ class Navigation {
             ? [NavigationItemMode.desktop, NavigationItemMode.more]
             : [],
       ),
-      const NavigationItem(
-        icon: Icon(Icons.construction),
-        label: PageLabel.tools,
-        view: ToolsView(
-          key: GlobalObjectKey(
-            PageLabel.tools,
-          ),
-        ),
-        modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
-      ),
+      // 工具页面已隐藏，通过账户页面特殊操作访问
+      // const NavigationItem(
+      //   icon: Icon(Icons.construction),
+      //   label: PageLabel.tools,
+      //   view: ToolsView(
+      //     key: GlobalObjectKey(
+      //       PageLabel.tools,
+      //     ),
+      //   ),
+      //   modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
+      // ),
       const NavigationItem(
         icon: Icon(Icons.account_circle),
         label: PageLabel.account,

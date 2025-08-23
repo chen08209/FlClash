@@ -33,3 +33,4 @@ export 'palette.dart';
 export 'tab.dart';
 export 'container.dart';
 export 'notification.dart';
+export 'tech_page_wrapper.dart';

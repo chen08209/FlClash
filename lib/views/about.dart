@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/tech_theme.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/list.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,45 +39,43 @@ class AboutView extends StatelessWidget {
   }
 
   List<Widget> _buildMoreSection(BuildContext context) {
-    return generateSection(
-      separated: false,
-      title: appLocalizations.more,
-      items: [
-        ListItem(
-          title: Text(appLocalizations.checkUpdate),
-          onTap: () {
-            _checkUpdate(context);
-          },
+    return [
+      Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          appLocalizations.more,
+          style: TechTheme.techTextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: TechTheme.primaryCyan,
+          ),
         ),
-        ListItem(
-          title: const Text("Telegram"),
-          onTap: () {
-            globalState.openUrl(
-              "https://t.me/FlClash",
-            );
-          },
-          trailing: const Icon(Icons.launch),
-        ),
-        ListItem(
-          title: Text(appLocalizations.project),
-          onTap: () {
-            globalState.openUrl(
-              "https://github.com/$repository",
-            );
-          },
-          trailing: const Icon(Icons.launch),
-        ),
-        ListItem(
-          title: Text(appLocalizations.core),
-          onTap: () {
-            globalState.openUrl(
-              "https://github.com/chen08209/Clash.Meta/tree/FlClash",
-            );
-          },
-          trailing: const Icon(Icons.launch),
-        ),
-      ],
-    );
+      ),
+      TechSettingItem(
+        icon: Icons.system_update,
+        title: appLocalizations.checkUpdate,
+        onTap: () => _checkUpdate(context),
+        accentColor: TechTheme.neonGreen,
+      ),
+      TechSettingItem(
+        icon: Icons.telegram,
+        title: "Telegram",
+        onTap: () => globalState.openUrl("https://t.me/FlClash"),
+        accentColor: TechTheme.primaryBlue,
+      ),
+      TechSettingItem(
+        icon: Icons.code,
+        title: appLocalizations.project,
+        onTap: () => globalState.openUrl("https://github.com/$repository"),
+        accentColor: TechTheme.primaryPurple,
+      ),
+      TechSettingItem(
+        icon: Icons.memory,
+        title: appLocalizations.core,
+        onTap: () => globalState.openUrl("https://github.com/chen08209/Clash.Meta/tree/FlClash"),
+        accentColor: TechTheme.neonOrange,
+      ),
+    ];
   }
 
   List<Widget> _buildContributorsSection() {
@@ -91,94 +91,128 @@ class AboutView extends StatelessWidget {
         link: "https://t.me/xrcm6868",
       ),
     ];
-    return generateSection(
-      separated: false,
-      title: appLocalizations.otherContributors,
-      items: [
-        ListItem(
-          title: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Wrap(
-              spacing: 24,
-              children: [
-                for (final contributor in contributors)
-                  Avatar(
-                    contributor: contributor,
-                  ),
-              ],
-            ),
+    return [
+      Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          appLocalizations.otherContributors,
+          style: TechTheme.techTextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: TechTheme.primaryCyan,
           ),
-        )
-      ],
-    );
+        ),
+      ),
+      TechTheme.techCard(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final contributor in contributors) ...[
+                Avatar(contributor: contributor),
+                if (contributor != contributors.last) 
+                  const SizedBox(width: 24),
+              ],
+            ],
+          ),
+        ),
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      ListTile(
-        title: Column(
+    return TechPageWrapper(
+      showAppBar: false,
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Consumer(builder: (_, ref, ___) {
-              return _DeveloperModeDetector(
-                child: Wrap(
-                  spacing: 16,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Image.asset(
-                        'assets/images/icon.png',
-                        width: 64,
-                        height: 64,
+            // 应用信息卡片
+            TechTheme.techCard(
+              animated: true,
+              accentColor: TechTheme.primaryCyan,
+              child: Consumer(builder: (_, ref, ___) {
+                return _DeveloperModeDetector(
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              gradient: TechTheme.primaryGradient,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Image.asset(
+                              'assets/images/icon.png',
+                              width: 48,
+                              height: 48,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  appName,
+                                  style: TechTheme.techTextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    glowing: true,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  globalState.packageInfo.version,
+                                  style: TechTheme.techTextStyle(
+                                    fontSize: 14,
+                                    color: TechTheme.primaryCyan,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          appName,
-                          style: Theme.of(context).textTheme.headlineSmall,
+                      const SizedBox(height: 16),
+                      Text(
+                        appLocalizations.desc,
+                        style: TechTheme.techTextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.8),
                         ),
-                        Text(
-                          globalState.packageInfo.version,
-                          style: Theme.of(context).textTheme.labelLarge,
-                        )
-                      ],
-                    )
-                  ],
-                ),
-                onEnterDeveloperMode: () {
-                  ref.read(appSettingProvider.notifier).updateState(
-                        (state) => state.copyWith(developerMode: true),
-                      );
-                  context.showNotifier(appLocalizations.developerModeEnableTip);
-                },
-              );
-            }),
-            const SizedBox(
-              height: 24,
+                      ),
+                    ],
+                  ),
+                  onEnterDeveloperMode: () {
+                    ref.read(appSettingProvider.notifier).updateState(
+                          (state) => state.copyWith(developerMode: true),
+                        );
+                    context.showNotifier(appLocalizations.developerModeEnableTip);
+                  },
+                );
+              }),
             ),
-            Text(
-              appLocalizations.desc,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            
+            const SizedBox(height: 24),
+            
+            // 贡献者部分
+            ..._buildContributorsSection(),
+            
+            const SizedBox(height: 24),
+            
+            // 更多部分
+            ..._buildMoreSection(context),
+            
+            const SizedBox(height: 16),
           ],
         ),
       ),
-      const SizedBox(
-        height: 12,
-      ),
-      ..._buildContributorsSection(),
-      ..._buildMoreSection(context),
-    ];
-    return Padding(
-      padding: kMaterialListPadding.copyWith(
-        top: 16,
-        bottom: 16,
-      ),
-      child: generateListView(items),
     );
   }
 }
@@ -196,22 +230,38 @@ class Avatar extends StatelessWidget {
     return GestureDetector(
       child: Column(
         children: [
-          SizedBox(
-            width: 36,
-            height: 36,
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: TechTheme.primaryCyan.withOpacity(0.5),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: TechTheme.primaryCyan.withOpacity(0.3),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
             child: CircleAvatar(
               foregroundImage: AssetImage(
                 contributor.avatar,
               ),
+              backgroundColor: TechTheme.cardBackground,
             ),
           ),
-          const SizedBox(
-            height: 4,
-          ),
+          const SizedBox(height: 8),
           Text(
             contributor.name,
-            style: context.textTheme.bodySmall,
-          )
+            style: TechTheme.techTextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
         ],
       ),
       onTap: () {
@@ -269,3 +319,4 @@ class _DeveloperModeDetectorState extends State<_DeveloperModeDetector> {
     );
   }
 }
+

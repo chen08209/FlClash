@@ -57,7 +57,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> with PageMixin {
       isCurrentPageProvider(
         PageLabel.requests,
         handler: (pageLabel, viewMode) =>
-            pageLabel == PageLabel.tools && viewMode == ViewMode.mobile,
+            pageLabel == PageLabel.account && viewMode == ViewMode.mobile, // 改为账户页面
       ),
       (prev, next) {
         if (prev != next && next == true) {

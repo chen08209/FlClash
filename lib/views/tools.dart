@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/tech_theme.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -60,27 +61,158 @@ class _ToolboxViewState extends ConsumerState<ToolsView> {
   }
 
   List<Widget> _getOtherList(bool enableDeveloperMode) {
-    return generateSection(
-      title: appLocalizations.other,
-      items: [
-        _DisclaimerItem(),
-        if (enableDeveloperMode) _DeveloperItem(),
-        _InfoItem(),
-      ],
-    );
+    return [
+      Text(
+        appLocalizations.other,
+        style: TechTheme.techTextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: TechTheme.primaryCyan,
+        ),
+      ),
+      const SizedBox(height: 16),
+      TechSettingItem(
+        icon: Icons.gavel,
+        title: appLocalizations.disclaimer,
+        onTap: () async {
+          final isDisclaimerAccepted =
+              await globalState.appController.showDisclaimer();
+          if (!isDisclaimerAccepted) {
+            globalState.appController.handleExit();
+          }
+        },
+        accentColor: TechTheme.neonOrange,
+      ),
+      if (enableDeveloperMode)
+        TechSettingItem(
+          icon: Icons.developer_board,
+          title: appLocalizations.developerMode,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: Text(appLocalizations.developerMode)),
+                  body: const DeveloperView(),
+                ),
+              ),
+            );
+          },
+          accentColor: TechTheme.neonPink,
+        ),
+      TechSettingItem(
+        icon: Icons.info,
+        title: appLocalizations.about,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Scaffold(
+                appBar: AppBar(title: Text(appLocalizations.about)),
+                body: const AboutView(),
+              ),
+            ),
+          );
+        },
+        accentColor: TechTheme.primaryBlue,
+      ),
+    ];
   }
 
-  _getSettingList() {
-    return generateSection(
-      title: appLocalizations.settings,
-      items: [
-        _BackupItem(),
-        if (system.isDesktop) _HotkeyItem(),
-        if (Platform.isWindows) _LoopbackItem(),
-        _ConfigItem(),
-        _SettingItem(),
-      ],
-    );
+  List<Widget> _getSettingList() {
+    return [
+      Text(
+        appLocalizations.settings,
+        style: TechTheme.techTextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: TechTheme.primaryCyan,
+        ),
+      ),
+      const SizedBox(height: 16),
+      TechSettingItem(
+        icon: Icons.cloud_sync,
+        title: appLocalizations.backupAndRecovery,
+        subtitle: appLocalizations.backupAndRecoveryDesc,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Scaffold(
+                appBar: AppBar(title: Text(appLocalizations.backupAndRecovery)),
+                body: const BackupAndRecovery(),
+              ),
+            ),
+          );
+        },
+        accentColor: TechTheme.neonGreen,
+      ),
+      if (system.isDesktop)
+        TechSettingItem(
+          icon: Icons.keyboard,
+          title: appLocalizations.hotkeyManagement,
+          subtitle: appLocalizations.hotkeyManagementDesc,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: Text(appLocalizations.hotkeyManagement)),
+                  body: const HotKeyView(),
+                ),
+              ),
+            );
+          },
+          accentColor: TechTheme.primaryBlue,
+        ),
+      if (Platform.isWindows)
+        TechSettingItem(
+          icon: Icons.lock,
+          title: appLocalizations.loopback,
+          subtitle: appLocalizations.loopbackDesc,
+          onTap: () {
+            windows?.runas(
+              '"${join(dirname(Platform.resolvedExecutable), "EnableLoopback.exe")}"',
+              "",
+            );
+          },
+          accentColor: TechTheme.neonYellow,
+        ),
+      TechSettingItem(
+        icon: Icons.edit,
+        title: appLocalizations.basicConfig,
+        subtitle: appLocalizations.basicConfigDesc,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Scaffold(
+                appBar: AppBar(title: Text(appLocalizations.override)),
+                body: const ConfigView(),
+              ),
+            ),
+          );
+        },
+        accentColor: TechTheme.primaryPurple,
+      ),
+      TechSettingItem(
+        icon: Icons.settings,
+        title: appLocalizations.application,
+        subtitle: appLocalizations.applicationDesc,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Scaffold(
+                appBar: AppBar(title: Text(appLocalizations.application)),
+                body: const ApplicationSettingView(),
+              ),
+            ),
+          );
+        },
+        accentColor: TechTheme.primaryCyan,
+      ),
+    ];
   }
 
   @override
@@ -91,66 +223,178 @@ class _ToolboxViewState extends ConsumerState<ToolsView> {
       ),
     );
 
-    final items = [
-      FutureBuilder<SharedPreferences>(
-        future: SharedPreferences.getInstance(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const CircularProgressIndicator();
-          }
-          final prefs = snapshot.data!;
-          final email = prefs.getString('user_email') ?? '未知邮箱';
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              ListHeader(title: '账户信息'),
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: Text(email),
-                subtitle: const Text('当前登录账户'),
-              ),
-              const Divider(),
-              ListTile(
-                title: const Text('客服中心'),
-                onTap: () {}
-              ),
-              const Divider(),
-              ListTile(
-                title: const Text('注销登录'),
-                onTap: () async {
-                  await prefs.clear();
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
+    return TechPageWrapper(
+      showAppBar: false,
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 账户信息区域
+            FutureBuilder<SharedPreferences>(
+              future: SharedPreferences.getInstance(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(TechTheme.primaryCyan),
+                    ),
                   );
                 }
-              ),
-            ],
-          );
-        },
+                final prefs = snapshot.data!;
+                final email = prefs.getString('user_email') ?? '未知邮箱';
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '账户信息',
+                      style: TechTheme.techTextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: TechTheme.primaryCyan,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TechTheme.techCard(
+                      animated: true,
+                      accentColor: TechTheme.primaryPurple,
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: TechTheme.primaryPurple.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.person,
+                                  color: TechTheme.primaryPurple,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      email,
+                                      style: TechTheme.techTextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '当前登录账户',
+                                      style: TechTheme.techTextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white.withOpacity(0.7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TechTheme.techButton(
+                                  text: '客服中心',
+                                  onPressed: () {},
+                                  color: TechTheme.primaryBlue,
+                                  height: 36,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TechTheme.techButton(
+                                  text: '注销登录',
+                                  onPressed: () async {
+                                    await prefs.clear();
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                                      (route) => false,
+                                    );
+                                  },
+                                  color: TechTheme.neonOrange,
+                                  height: 36,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // 更多工具区域
+            Consumer(
+              builder: (_, ref, __) {
+                final state = ref.watch(moreToolsSelectorStateProvider);
+                if (state.navigationItems.isEmpty) {
+                  return Container();
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      appLocalizations.more,
+                      style: TechTheme.techTextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: TechTheme.primaryCyan,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...state.navigationItems.map((item) => 
+                      TechSettingItem(
+                        icon: (item.icon as Icon).icon!,
+                        title: Intl.message(item.label.name),
+                        subtitle: item.description != null ? Intl.message(item.description!) : null,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Scaffold(
+                                appBar: AppBar(title: Text(Intl.message(item.label.name))),
+                                body: item.view,
+                              ),
+                            ),
+                          );
+                        },
+                        accentColor: TechTheme.primaryCyan,
+                      ),
+                    ).toList(),
+                    const SizedBox(height: 24),
+                  ],
+                );
+              },
+            ),
+            
+            // 设置区域
+            ..._getSettingList(),
+            
+            const SizedBox(height: 24),
+            
+            // 其他区域
+            ..._getOtherList(vm2.b),
+            
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
-      Consumer(
-        builder: (_, ref, __) {
-          final state = ref.watch(moreToolsSelectorStateProvider);
-          if (state.navigationItems.isEmpty) {
-            return Container();
-          }
-          return Column(
-            children: [
-              ListHeader(title: appLocalizations.more),
-              _buildNavigationMenu(state.navigationItems)
-            ],
-          );
-        },
-      ),
-      ..._getSettingList(),
-      ..._getOtherList(vm2.b),
-    ];
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (_, index) => items[index],
-      padding: const EdgeInsets.only(bottom: 20),
     );
   }
 }

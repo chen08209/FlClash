@@ -44,7 +44,7 @@ class _LogsViewState extends ConsumerState<LogsView> with PageMixin {
       isCurrentPageProvider(
         PageLabel.logs,
         handler: (pageLabel, viewMode) =>
-            pageLabel == PageLabel.tools && viewMode == ViewMode.mobile,
+            pageLabel == PageLabel.account && viewMode == ViewMode.mobile, // 改为账户页面
       ),
       (prev, next) {
         if (prev != next && next == true) {

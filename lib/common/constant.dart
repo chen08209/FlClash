@@ -82,7 +82,7 @@ const viewModeColumnsMap = {
 // const toolsStoreKey = PageStorageKey<String>('tools');
 // const profilesStoreKey = PageStorageKey<String>('profiles');
 
-const defaultPrimaryColor = 0XFFD8C0C3;
+const defaultPrimaryColor = 0xFF00D9FF;  // 主青色，与深蓝黑背景形成对比
 
 double getWidgetHeight(num lines) {
   return max(lines * 84 + (lines - 1) * 16, 0).ap;
@@ -94,14 +94,15 @@ final mainIsolate = "FlClashMainIsolate";
 
 final serviceIsolate = "FlClashServiceIsolate";
 
+// 科技感配色方案，与深蓝黑背景搭配
 const defaultPrimaryColors = [
-  0xFF795548,
-  0xFF03A9F4,
-  0xFFFFFF00,
-  0XFFBBC9CC,
-  0XFFABD397,
-  defaultPrimaryColor,
-  0XFF665390,
+  0xFF00D9FF,  // 青色
+  0xFF8B5CF6,  // 紫色
+  0xFF00FF88,  // 绿色
+  0xFFFF0080,  // 粉色
+  0xFFFFD700,  // 金色
+  0xFF3B82F6,  // 蓝色
+  0xFFFF6B35,  // 橙色
 ];
 
 const scriptTemplate = """
