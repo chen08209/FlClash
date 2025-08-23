@@ -14,9 +14,12 @@ class ModernDashboard extends ConsumerStatefulWidget {
 }
 
 class _ModernDashboardState extends ConsumerState<ModernDashboard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
+  late AnimationController _connectingController;
+  late Animation<double> _connectingRotation;
+  bool _isConnecting = false;
 
   @override
   void initState() {
@@ -32,11 +35,25 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
+    
+    // 连接中动画控制器
+    _connectingController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+    _connectingRotation = Tween<double>(
+      begin: 0,
+      end: 2 * math.pi,
+    ).animate(CurvedAnimation(
+      parent: _connectingController,
+      curve: Curves.linear,
+    ));
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _connectingController.dispose();
     super.dispose();
   }
 
@@ -44,7 +61,36 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
   Widget build(BuildContext context) {
     final isStart = ref.watch(runTimeProvider.notifier).isStart;
 
-    if (isStart) {
+    // 监听运行状态变化
+    ref.listen<int?>(runTimeProvider, (previous, next) {
+      if (previous == null && next != null) {
+        // 开始连接
+        setState(() {
+          _isConnecting = true;
+        });
+        _connectingController.repeat();
+        
+        // 模拟连接过程，2秒后显示已连接
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() {
+              _isConnecting = false;
+            });
+            _connectingController.stop();
+            _connectingController.reset();
+          }
+        });
+      } else if (previous != null && next == null) {
+        // 断开连接
+        setState(() {
+          _isConnecting = false;
+        });
+        _connectingController.stop();
+        _connectingController.reset();
+      }
+    });
+
+    if (isStart && !_isConnecting) {
       _animationController.repeat(reverse: true);
     } else {
       _animationController.stop();
@@ -66,8 +112,8 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
                 
                 Widget content = Column(
                   children: [
-                    // 顶部栏
-                    _buildTopBar(context),
+                    // 添加顶部间距
+                    SizedBox(height: isSmallScreen ? 10 : 20),
                     
                     // 出站模式选择
                     Padding(
@@ -133,29 +179,6 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'ACCELERATOR',
-            style: TextStyle(
-              color: Colors.cyan,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.cyan),
-            onPressed: () {},
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildModeSelector() {
     return Consumer(
@@ -285,66 +308,424 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
   }
 
   void _showNodeSelector(BuildContext context) {
-    // TODO: 实现节点选择器弹窗
+    final groups = ref.read(groupsProvider);
+    final selectedMap = ref.read(selectedMapProvider);
+    final delayDataSource = ref.read(delayDataSourceProvider);
+    
+    // 找到第一个 Selector 或 URLTest 类型的组
+    final proxyGroup = groups.firstWhere(
+      (g) => g.type == GroupType.Selector || g.type == GroupType.URLTest,
+      orElse: () => groups.isNotEmpty ? groups.first : Group(
+        name: 'Unknown',
+        type: GroupType.Selector,
+        all: [],
+        now: '',
+      ),
+    );
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1E3A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Column(
+            children: [
+              // 标题栏
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '选择节点',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white54),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(color: Colors.white24),
+              
+              // 节点列表
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  itemCount: proxyGroup.all.length,
+                  itemBuilder: (context, index) {
+                    final proxy = proxyGroup.all[index];
+                    final proxyName = proxy.name;
+                    final isSelected = proxyGroup.now == proxyName;
+                    // DelayMap is Map<String, Map<String, int?>>, need to find the delay for this proxy
+                    int? delay;
+                    for (final entry in delayDataSource.entries) {
+                      if (entry.value.containsKey(proxyName)) {
+                        delay = entry.value[proxyName];
+                        break;
+                      }
+                    }
+                    
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected 
+                          ? Colors.cyan.withOpacity(0.2)
+                          : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected 
+                            ? Colors.cyan.withOpacity(0.5)
+                            : Colors.transparent,
+                          width: 1,
+                        ),
+                      ),
+                      child: ListTile(
+                        onTap: () async {
+                          // 切换代理
+                          await globalState.appController.changeProxy(
+                            groupName: proxyGroup.name,
+                            proxyName: proxyName,
+                          );
+                          Navigator.pop(context);
+                        },
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: _getCountryColors(proxyName),
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              _getCountryEmoji(proxyName),
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          proxyName,
+                          style: TextStyle(
+                            color: isSelected ? Colors.cyan : Colors.white,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 延迟显示
+                            if (delay != null) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getDelayColor(delay).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  delay > 0 ? '${delay}ms' : 'timeout',
+                                  style: TextStyle(
+                                    color: _getDelayColor(delay),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            // 选中标记
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.cyan,
+                                size: 20,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  // 根据节点名称获取国家颜色
+  List<Color> _getCountryColors(String proxyName) {
+    final name = proxyName.toLowerCase();
+    if (name.contains('us') || name.contains('美国')) {
+      return [Colors.blue, Colors.red, Colors.white];
+    } else if (name.contains('jp') || name.contains('日本')) {
+      return [Colors.white, Colors.red, Colors.white];
+    } else if (name.contains('hk') || name.contains('香港')) {
+      return [Colors.red, Colors.white, Colors.red];
+    } else if (name.contains('sg') || name.contains('新加坡')) {
+      return [Colors.red, Colors.white];
+    } else if (name.contains('tw') || name.contains('台湾')) {
+      return [Colors.red, Colors.blue, Colors.white];
+    } else if (name.contains('kr') || name.contains('韩国')) {
+      return [Colors.white, Colors.red, Colors.blue];
+    } else if (name.contains('de') || name.contains('德国')) {
+      return [Colors.black, Colors.red, Colors.yellow];
+    } else if (name.contains('uk') || name.contains('英国')) {
+      return [Colors.blue, Colors.white, Colors.red];
+    } else if (name.contains('ca') || name.contains('加拿大')) {
+      return [Colors.red, Colors.white, Colors.red];
+    } else if (name.contains('au') || name.contains('澳大利亚')) {
+      return [Colors.blue, Colors.white, Colors.red];
+    }
+    return [Colors.grey, Colors.blueGrey];
+  }
+  
+  // 根据节点名称获取国家表情
+  String _getCountryEmoji(String proxyName) {
+    final name = proxyName.toLowerCase();
+    if (name.contains('us') || name.contains('美国')) return '🇺🇸';
+    if (name.contains('jp') || name.contains('日本')) return '🇯🇵';
+    if (name.contains('hk') || name.contains('香港')) return '🇭🇰';
+    if (name.contains('sg') || name.contains('新加坡')) return '🇸🇬';
+    if (name.contains('tw') || name.contains('台湾')) return '🇹🇼';
+    if (name.contains('kr') || name.contains('韩国')) return '🇰🇷';
+    if (name.contains('de') || name.contains('德国')) return '🇩🇪';
+    if (name.contains('uk') || name.contains('英国')) return '🇬🇧';
+    if (name.contains('ca') || name.contains('加拿大')) return '🇨🇦';
+    if (name.contains('au') || name.contains('澳大利亚')) return '🇦🇺';
+    if (name.contains('fr') || name.contains('法国')) return '🇫🇷';
+    if (name.contains('nl') || name.contains('荷兰')) return '🇳🇱';
+    if (name.contains('ru') || name.contains('俄罗斯')) return '🇷🇺';
+    if (name.contains('in') || name.contains('印度')) return '🇮🇳';
+    if (name.contains('br') || name.contains('巴西')) return '🇧🇷';
+    return '🌍';
+  }
+  
+  // 根据延迟获取颜色
+  Color _getDelayColor(int delay) {
+    if (delay <= 0) return Colors.red;
+    if (delay < 100) return Colors.green;
+    if (delay < 300) return Colors.yellow;
+    if (delay < 500) return Colors.orange;
+    return Colors.red;
   }
 
   Widget _buildConnectButton(BuildContext context, bool isStart, [bool isSmallScreen = false]) {
     return Center(
       child: GestureDetector(
-        onTap: () {
-          globalState.appController.updateStart();
+        onTap: _isConnecting ? null : () async {
+          if (!isStart) {
+            // 开始连接动画
+            setState(() {
+              _isConnecting = true;
+            });
+            _connectingController.repeat();
+          }
+          
+          // 执行连接/断开操作
+          await globalState.appController.updateStart();
+          
+          // 如果是断开操作，立即停止动画
+          if (isStart) {
+            setState(() {
+              _isConnecting = false;
+            });
+            _connectingController.stop();
+            _connectingController.reset();
+          }
         },
         child: AnimatedBuilder(
-          animation: _pulseAnimation,
+          animation: Listenable.merge([_pulseAnimation, _connectingRotation]),
           builder: (context, child) {
-            return Transform.scale(
-              scale: isStart ? _pulseAnimation.value : 1.0,
-              child: Container(
-                width: isSmallScreen ? 150 : 180,
-                height: isSmallScreen ? 150 : 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: isStart
-                        ? [
-                            Colors.cyan.withOpacity(0.3),
-                            Colors.cyan.withOpacity(0.1),
-                            Colors.transparent,
-                          ]
-                        : [
-                            Colors.transparent,
-                            Colors.transparent,
-                            Colors.transparent,
-                          ],
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // 脉冲效果背景
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: isSmallScreen ? 150 : 180,
+                  height: isSmallScreen ? 150 : 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: _isConnecting
+                          ? [
+                              Colors.orange.withOpacity(0.3),
+                              Colors.orange.withOpacity(0.1),
+                              Colors.transparent,
+                            ]
+                          : isStart
+                              ? [
+                                  Colors.green.withOpacity(0.3),
+                                  Colors.green.withOpacity(0.1),
+                                  Colors.transparent,
+                                ]
+                              : [
+                                  Colors.transparent,
+                                  Colors.transparent,
+                                  Colors.transparent,
+                                ],
+                    ),
                   ),
                 ),
-                child: Center(
+                
+                // 主按钮
+                Transform.scale(
+                  scale: isStart && !_isConnecting ? _pulseAnimation.value : 1.0,
                   child: Container(
                     width: isSmallScreen ? 120 : 150,
                     height: isSmallScreen ? 120 : 150,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.cyan,
-                        width: 2,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: _isConnecting
+                            ? [
+                                Colors.orange.withOpacity(0.8),
+                                Colors.deepOrange.withOpacity(0.8),
+                              ]
+                            : isStart
+                                ? [
+                                    Colors.green.withOpacity(0.8),
+                                    Colors.teal.withOpacity(0.8),
+                                  ]
+                                : [
+                                    Colors.cyan.withOpacity(0.8),
+                                    Colors.blue.withOpacity(0.8),
+                                  ],
                       ),
-                      color: isStart 
-                        ? Colors.cyan.withOpacity(0.1)
-                        : Colors.transparent,
+                      boxShadow: [
+                        BoxShadow(
+                          color: _isConnecting
+                              ? Colors.orange.withOpacity(0.5)
+                              : isStart
+                                  ? Colors.green.withOpacity(0.5)
+                                  : Colors.cyan.withOpacity(0.5),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
-                    child: Center(
-                      child: Text(
-                        isStart ? '断开' : '连接',
-                        style: TextStyle(
-                          color: Colors.cyan,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _isConnecting ? null : () async {
+                          if (!isStart) {
+                            setState(() {
+                              _isConnecting = true;
+                            });
+                            _connectingController.repeat();
+                          }
+                          await globalState.appController.updateStart();
+                          if (isStart) {
+                            setState(() {
+                              _isConnecting = false;
+                            });
+                            _connectingController.stop();
+                            _connectingController.reset();
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(100),
+                        child: Center(
+                          child: _isConnecting
+                              ? Transform.rotate(
+                                  angle: _connectingRotation.value,
+                                  child: Icon(
+                                    Icons.sync,
+                                    color: Colors.white,
+                                    size: isSmallScreen ? 40 : 50,
+                                  ),
+                                )
+                              : AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  transitionBuilder: (Widget child, Animation<double> animation) {
+                                    return ScaleTransition(
+                                      scale: animation,
+                                      child: FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: isStart
+                                      ? Column(
+                                          key: const ValueKey('disconnect'),
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.stop_circle_outlined,
+                                              color: Colors.white,
+                                              size: isSmallScreen ? 35 : 40,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '断开',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: isSmallScreen ? 16 : 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Column(
+                                          key: const ValueKey('connect'),
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.power_settings_new,
+                                              color: Colors.white,
+                                              size: isSmallScreen ? 35 : 40,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '连接',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: isSmallScreen ? 16 : 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
+                
+                // 连接中的进度环
+                if (_isConnecting)
+                  SizedBox(
+                    width: isSmallScreen ? 140 : 170,
+                    height: isSmallScreen ? 140 : 170,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.orange.withOpacity(0.8),
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
