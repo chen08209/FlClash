@@ -33,15 +33,6 @@ class Navigation {
             : [],
       ),
       const NavigationItem(
-        icon: Icon(Icons.folder),
-        label: PageLabel.profiles,
-        view: ProfilesView(
-          key: GlobalObjectKey(
-            PageLabel.profiles,
-          ),
-        ),
-      ),
-      const NavigationItem(
         icon: Icon(Icons.view_timeline),
         label: PageLabel.requests,
         view: RequestsView(

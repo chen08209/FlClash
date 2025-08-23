@@ -593,8 +593,8 @@ class AppController {
     _ref.read(currentPageLabelProvider.notifier).value = pageLabel;
   }
 
-  toProfiles() {
-    toPage(PageLabel.profiles);
+  toDashboard() {
+    toPage(PageLabel.dashboard);
   }
 
   initLink() {
@@ -733,7 +733,9 @@ class AppController {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     }
-    toProfiles();
+    toDashboard();
+
+
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
     final profile = await commonScaffoldState?.loadingRun<Profile>(
@@ -757,7 +759,7 @@ class AppController {
     }
     if (!context.mounted) return;
     globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
-    toProfiles();
+    toDashboard();
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
     final profile = await commonScaffoldState?.loadingRun<Profile?>(
@@ -782,7 +784,7 @@ class AppController {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     }
-    toProfiles();
+    toDashboard();
     final commonScaffoldState = globalState.homeScaffoldKey.currentState;
     if (commonScaffoldState?.mounted != true) return;
     

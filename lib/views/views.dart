@@ -1,7 +1,6 @@
 export 'proxies/proxies.dart';
 export 'dashboard/dashboard.dart';
 export 'tools.dart';
-export 'profiles/profiles.dart';
 export 'logs.dart';
 export 'access.dart';
 export 'config/config.dart';
