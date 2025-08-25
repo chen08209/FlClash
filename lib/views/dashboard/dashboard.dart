@@ -41,11 +41,20 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     );
   }
 
-  void _handleConnection() {
+  Future<void> _handleConnection() async {
     final coreStatus = ref.read(coreStatusProvider);
-    if (coreStatus == CoreStatus.disconnected) {
-      globalState.appController.restartCore();
+    if (coreStatus == CoreStatus.connecting) {
+      return;
     }
+    final tip = coreStatus == CoreStatus.connected
+        ? appLocalizations.forceRestartCoreTip
+        : appLocalizations.restartCoreTip;
+    final res = await globalState.showMessage(message: TextSpan(text: tip));
+    if (res != true) {
+      return;
+    }
+    await Future.delayed(commonDuration);
+    globalState.appController.restartCore();
   }
 
   List<Widget> _buildActions(bool isEdit) {
@@ -55,7 +64,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           builder: (_, ref, _) {
             final coreStatus = ref.watch(coreStatusProvider);
             return FilledButton.icon(
-              onPressed: _handleConnection,
+              onPressed: coreStatus != CoreStatus.disconnected
+                  ? () {}
+                  : _handleConnection,
+              onLongPress: coreStatus != CoreStatus.connected
+                  ? null
+                  : _handleConnection,
               style: FilledButton.styleFrom(
                 padding: EdgeInsets.symmetric(horizontal: 12),
                 backgroundColor: switch (coreStatus) {
@@ -97,7 +111,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 ),
               ),
               label: Text(switch (coreStatus) {
-                CoreStatus.connecting => '连接中',
+                CoreStatus.connecting => appLocalizations.connecting,
                 CoreStatus.connected => appLocalizations.connected,
                 CoreStatus.disconnected => appLocalizations.disconnected,
               }),

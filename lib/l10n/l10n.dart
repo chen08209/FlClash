@@ -3274,6 +3274,36 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Connecting...`
+  String get connecting {
+    return Intl.message(
+      'Connecting...',
+      name: 'connecting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to restart the core?`
+  String get restartCoreTip {
+    return Intl.message(
+      'Are you sure you want to restart the core?',
+      name: 'restartCoreTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to force restart the core?`
+  String get forceRestartCoreTip {
+    return Intl.message(
+      'Are you sure you want to force restart the core?',
+      name: 'forceRestartCoreTip',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -178,6 +178,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "connected": MessageLookupByLibrary.simpleMessage("Connected"),
+    "connecting": MessageLookupByLibrary.simpleMessage("Connecting..."),
     "connection": MessageLookupByLibrary.simpleMessage("Connection"),
     "connections": MessageLookupByLibrary.simpleMessage("Connections"),
     "connectionsDesc": MessageLookupByLibrary.simpleMessage(
@@ -303,6 +304,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "There is a certain performance loss after opening",
     ),
     "fontFamily": MessageLookupByLibrary.simpleMessage("FontFamily"),
+    "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage(
+      "Are you sure you want to force restart the core?",
+    ),
     "fourColumns": MessageLookupByLibrary.simpleMessage("Four columns"),
     "fruitSaladScheme": MessageLookupByLibrary.simpleMessage("FruitSalad"),
     "general": MessageLookupByLibrary.simpleMessage("General"),
@@ -607,6 +611,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "respectRules": MessageLookupByLibrary.simpleMessage("Respect rules"),
     "respectRulesDesc": MessageLookupByLibrary.simpleMessage(
       "DNS connection following rules, need to configure proxy-server-nameserver",
+    ),
+    "restartCoreTip": MessageLookupByLibrary.simpleMessage(
+      "Are you sure you want to restart the core?",
     ),
     "routeAddress": MessageLookupByLibrary.simpleMessage("Route address"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage(

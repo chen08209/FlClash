@@ -424,5 +424,8 @@
   "connection": "Соединение",
   "request": "Запрос",
   "connected": "Подключено",
-  "disconnected": "Отключено"
+  "disconnected": "Отключено",
+  "connecting": "Подключение...",
+  "restartCoreTip": "Вы уверены, что хотите перезапустить ядро?",
+  "forceRestartCoreTip": "Вы уверены, что хотите принудительно перезапустить ядро?"
 }

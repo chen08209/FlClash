@@ -9,15 +9,6 @@ import 'package:fl_clash/models/core.dart';
 
 import 'interface.dart';
 
-class ServiceDisconnectedException implements Exception {
-  ServiceDisconnectedException();
-
-  @override
-  String toString() {
-    return 'Service disconnected';
-  }
-}
-
 class CoreService extends CoreHandlerInterface {
   static CoreService? _instance;
 
@@ -77,12 +68,12 @@ class CoreService extends CoreHandlerInterface {
           handleResult(ActionResult.fromJson(json.decode(data.trim())));
         })
         .onDone(() {
-          _socketCompleter = Completer();
           _handleInvokeCrashEvent();
         });
   }
 
   void _handleInvokeCrashEvent() {
+    _socketCompleter = Completer();
     coreEventManager.sendEvent(CoreEvent(type: CoreEventType.crash));
   }
 

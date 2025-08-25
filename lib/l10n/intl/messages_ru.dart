@@ -183,6 +183,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "connected": MessageLookupByLibrary.simpleMessage("Подключено"),
+    "connecting": MessageLookupByLibrary.simpleMessage("Подключение..."),
     "connection": MessageLookupByLibrary.simpleMessage("Соединение"),
     "connections": MessageLookupByLibrary.simpleMessage("Соединения"),
     "connectionsDesc": MessageLookupByLibrary.simpleMessage(
@@ -318,6 +319,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "При включении возможны небольшие потери производительности",
     ),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Семейство шрифтов"),
+    "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage(
+      "Вы уверены, что хотите принудительно перезапустить ядро?",
+    ),
     "fourColumns": MessageLookupByLibrary.simpleMessage("Четыре столбца"),
     "fruitSaladScheme": MessageLookupByLibrary.simpleMessage("Фруктовый микс"),
     "general": MessageLookupByLibrary.simpleMessage("Общие"),
@@ -642,6 +646,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "respectRules": MessageLookupByLibrary.simpleMessage("Соблюдение правил"),
     "respectRulesDesc": MessageLookupByLibrary.simpleMessage(
       "DNS-соединение следует правилам, необходимо настроить proxy-server-nameserver",
+    ),
+    "restartCoreTip": MessageLookupByLibrary.simpleMessage(
+      "Вы уверены, что хотите перезапустить ядро?",
     ),
     "routeAddress": MessageLookupByLibrary.simpleMessage("Адрес маршрутизации"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage(

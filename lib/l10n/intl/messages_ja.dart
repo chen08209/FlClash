@@ -134,6 +134,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("確認"),
     "connected": MessageLookupByLibrary.simpleMessage("接続済み"),
+    "connecting": MessageLookupByLibrary.simpleMessage("接続中..."),
     "connection": MessageLookupByLibrary.simpleMessage("接続"),
     "connections": MessageLookupByLibrary.simpleMessage("接続"),
     "connectionsDesc": MessageLookupByLibrary.simpleMessage("現在の接続データを表示"),
@@ -231,6 +232,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "有効化するとパフォーマンスが若干低下します",
     ),
     "fontFamily": MessageLookupByLibrary.simpleMessage("フォントファミリー"),
+    "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage(
+      "コアを強制再起動してもよろしいですか？",
+    ),
     "fourColumns": MessageLookupByLibrary.simpleMessage("4列"),
     "fruitSaladScheme": MessageLookupByLibrary.simpleMessage("フルーツサラダ"),
     "general": MessageLookupByLibrary.simpleMessage("一般"),
@@ -462,6 +466,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "respectRulesDesc": MessageLookupByLibrary.simpleMessage(
       "DNS接続がルールに従う（proxy-server-nameserverの設定が必要）",
     ),
+    "restartCoreTip": MessageLookupByLibrary.simpleMessage("コアを再起動してもよろしいですか？"),
     "routeAddress": MessageLookupByLibrary.simpleMessage("ルートアドレス"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage("ルートアドレスを設定"),
     "routeMode": MessageLookupByLibrary.simpleMessage("ルートモード"),

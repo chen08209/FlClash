@@ -423,5 +423,8 @@
   "connection": "Connection",
   "request": "Request",
   "connected": "Connected",
-  "disconnected": "Disconnected"
+  "disconnected": "Disconnected",
+  "connecting": "Connecting...",
+  "restartCoreTip": "Are you sure you want to restart the core?",
+  "forceRestartCoreTip": "Are you sure you want to force restart the core?"
 }

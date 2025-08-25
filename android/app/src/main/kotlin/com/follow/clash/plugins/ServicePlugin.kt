@@ -4,7 +4,7 @@ import com.follow.clash.Service
 import com.follow.clash.State
 import com.follow.clash.awaitResult
 import com.follow.clash.common.Components
-import com.follow.clash.common.GlobalState
+import com.follow.clash.invokeMethodOnMainThread
 import com.follow.clash.models.AppState
 import com.follow.clash.service.models.NotificationParams
 import com.follow.clash.service.models.VpnOptions
@@ -107,9 +107,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
     }
 
     private fun onServiceCrash() {
-        launch {
-            flutterMethodChannel.invokeMethod("crash", null)
-        }
+        flutterMethodChannel.invokeMethodOnMainThread<Any>("crash", null)
     }
 
     private fun handleSyncState(call: MethodCall, result: MethodChannel.Result) {
@@ -132,9 +130,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
         launch {
             Service.bind()
             Service.setMessageCallback {
-                GlobalState.launch(Dispatchers.Main) {
-                    handleSendEvent(it)
-                }
+                handleSendEvent(it)
             }
             result.success(true)
         }

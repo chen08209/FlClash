@@ -424,5 +424,8 @@
   "connection": "接続",
   "request": "リクエスト",
   "connected": "接続済み",
-  "disconnected": "切断済み"
+  "disconnected": "切断済み",
+  "connecting": "接続中...",
+  "restartCoreTip": "コアを再起動してもよろしいですか？",
+  "forceRestartCoreTip": "コアを強制再起動してもよろしいですか？"
 }
