@@ -12,13 +12,13 @@ import 'interface.dart';
 class CoreService extends CoreHandlerInterface {
   static CoreService? _instance;
 
-  Completer<ServerSocket> serverCompleter = Completer();
+  final Completer<ServerSocket> _serverCompleter = Completer();
 
-  Completer<Socket> socketCompleter = Completer();
+  Completer<Socket> _socketCompleter = Completer();
 
-  Map<String, Completer> callbackCompleterMap = {};
+  final Map<String, Completer> _callbackCompleterMap = {};
 
-  Process? process;
+  Process? _process;
 
   factory CoreService() {
     _instance ??= CoreService._internal();
@@ -30,7 +30,7 @@ class CoreService extends CoreHandlerInterface {
   }
 
   Future<void> handleResult(ActionResult result) async {
-    final completer = callbackCompleterMap[result.id];
+    final completer = _callbackCompleterMap[result.id];
     final data = await parasResult(result);
     if (result.id?.isEmpty == true) {
       coreEventManager.sendEvent(CoreEvent.fromJson(result.data));
@@ -47,10 +47,10 @@ class CoreService extends CoreHandlerInterface {
             : InternetAddress(localhost, type: InternetAddressType.IPv4);
         await _deleteSocketFile();
         server = await ServerSocket.bind(address, 0, shared: true);
-        serverCompleter.complete(server);
+        _serverCompleter.complete(server);
         await for (final socket in server!) {
           await _destroySocket();
-          socketCompleter.complete(socket);
+          _socketCompleter.complete(socket);
           socket
               .transform(uint8ListToListIntConverter)
               .transform(utf8.decoder)
@@ -73,13 +73,11 @@ class CoreService extends CoreHandlerInterface {
     coreEventManager.sendEvent(CoreEvent(type: CoreEventType.crash));
   }
 
-  Future<Socket> get socket => socketCompleter.future;
-
   Future<void> start() async {
-    if (process != null) {
+    if (_process != null) {
       await shutdown();
     }
-    final serverSocket = await serverCompleter.future;
+    final serverSocket = await _serverCompleter.future;
     final arg = system.isWindows
         ? '${serverSocket.port}'
         : serverSocket.address.address;
@@ -89,9 +87,9 @@ class CoreService extends CoreHandlerInterface {
         return;
       }
     }
-    process = await Process.start(appPath.corePath, [arg]);
-    process?.stdout.listen((_) {});
-    process?.stderr.listen((e) {
+    _process = await Process.start(appPath.corePath, [arg]);
+    _process?.stdout.listen((_) {});
+    _process?.stderr.listen((e) {
       final error = utf8.decode(e);
       if (error.isNotEmpty) {
         commonPrint.log(error);
@@ -101,14 +99,14 @@ class CoreService extends CoreHandlerInterface {
 
   @override
   destroy() async {
-    final server = await serverCompleter.future;
+    final server = await _serverCompleter.future;
     await server.close();
     await _deleteSocketFile();
     return true;
   }
 
   Future<void> sendMessage(String message) async {
-    final socket = await socketCompleter.future;
+    final socket = await _socketCompleter.future;
     socket.writeln(message);
   }
 
@@ -122,9 +120,9 @@ class CoreService extends CoreHandlerInterface {
   }
 
   Future<void> _destroySocket() async {
-    if (socketCompleter.isCompleted) {
-      final lastSocket = await socketCompleter.future;
-      socketCompleter = Completer();
+    if (_socketCompleter.isCompleted) {
+      final lastSocket = await _socketCompleter.future;
+      _socketCompleter = Completer();
       lastSocket.close();
     }
   }
@@ -135,20 +133,20 @@ class CoreService extends CoreHandlerInterface {
     if (system.isWindows) {
       await request.stopCoreByHelper();
     }
-    process?.kill();
-    process = null;
+    _process?.kill();
+    _process = null;
     return true;
   }
 
   // void _clearCompleter() {
-  //   for (final completer in callbackCompleterMap.values) {
+  //   for (final completer in _callbackCompleterMap.values) {
   //     completer.safeCompleter(null);
   //   }
   // }
 
   @override
   Future<bool> preload() async {
-    await serverCompleter.future;
+    await _serverCompleter.future;
     await start();
     return true;
   }
@@ -160,22 +158,22 @@ class CoreService extends CoreHandlerInterface {
     Duration? timeout,
   }) async {
     final id = '${method.name}#${utils.id}';
-
-    callbackCompleterMap[id] = Completer<T?>();
-
+    _callbackCompleterMap[id] = Completer<T?>();
     sendMessage(json.encode(Action(id: id, method: method, data: data)));
-
-    return (callbackCompleterMap[id] as Completer<T?>).future.withTimeout(
+    return (_callbackCompleterMap[id] as Completer<T?>).future.withTimeout(
       timeout: timeout,
       onLast: () {
-        final completer = callbackCompleterMap[id];
+        final completer = _callbackCompleterMap[id];
         completer?.safeCompleter(null);
-        callbackCompleterMap.remove(id);
+        _callbackCompleterMap.remove(id);
       },
       tag: id,
       onTimeout: () => null,
     );
   }
+
+  @override
+  Future get connected => _socketCompleter.future;
 }
 
 final coreService = system.isDesktop ? CoreService() : null;

@@ -10,11 +10,14 @@ import 'interface.dart';
 class CoreLib extends CoreHandlerInterface {
   static CoreLib? _instance;
 
+  Completer<bool> _connectedCompleter = Completer();
+
   CoreLib._internal();
 
   @override
   Future<bool> preload() async {
     await service?.init();
+    _connectedCompleter.complete(true);
     return true;
   }
 
@@ -30,7 +33,7 @@ class CoreLib extends CoreHandlerInterface {
 
   @override
   Future<bool> shutdown() async {
-    destroy();
+    _connectedCompleter = Completer();
     return true;
   }
 
@@ -49,6 +52,9 @@ class CoreLib extends CoreHandlerInterface {
     }
     return parasResult<T>(result);
   }
+
+  @override
+  Future get connected => _connectedCompleter.future;
 }
 
 CoreLib? get coreLib => system.isAndroid ? CoreLib() : null;

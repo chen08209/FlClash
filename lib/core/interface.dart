@@ -74,7 +74,18 @@ mixin CoreInterface {
 }
 
 abstract class CoreHandlerInterface with CoreInterface {
+  Future get connected;
+
   FutureOr<bool> destroy();
+
+  Future<T?> _invoke<T>({
+    required ActionMethod method,
+    dynamic data,
+    Duration? timeout,
+  }) async {
+    await connected;
+    return invoke(method: method, data: data, timeout: timeout);
+  }
 
   Future<T?> invoke<T>({
     required ActionMethod method,
@@ -91,7 +102,7 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<bool> init(InitParams params) async {
-    return await invoke<bool>(
+    return await _invoke<bool>(
           method: ActionMethod.initClash,
           data: json.encode(params),
         ) ??
@@ -103,17 +114,17 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<bool> get isInit async {
-    return await invoke<bool>(method: ActionMethod.getIsInit) ?? false;
+    return await _invoke<bool>(method: ActionMethod.getIsInit) ?? false;
   }
 
   @override
   Future<bool> forceGc() async {
-    return await invoke<bool>(method: ActionMethod.forceGc) ?? false;
+    return await _invoke<bool>(method: ActionMethod.forceGc) ?? false;
   }
 
   @override
   Future<String> validateConfig(String data) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.validateConfig,
           data: data,
         ) ??
@@ -122,7 +133,7 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> updateConfig(UpdateParams updateParams) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.updateConfig,
           data: json.encode(updateParams),
         ) ??
@@ -131,31 +142,34 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<Result> getConfig(String path) async {
-    return await invoke<Result>(method: ActionMethod.getConfig, data: path) ??
+    return await _invoke<Result>(method: ActionMethod.getConfig, data: path) ??
         Result<Map<String, dynamic>>.success({});
   }
 
   @override
   Future<String> setupConfig(SetupParams setupParams) async {
     final data = await Isolate.run(() => json.encode(setupParams));
-    return await invoke<String>(method: ActionMethod.setupConfig, data: data) ??
+    return await _invoke<String>(
+          method: ActionMethod.setupConfig,
+          data: data,
+        ) ??
         '';
   }
 
   @override
   Future<bool> crash() async {
-    return await invoke<bool>(method: ActionMethod.crash) ?? false;
+    return await _invoke<bool>(method: ActionMethod.crash) ?? false;
   }
 
   @override
   Future<Map> getProxies() async {
-    var map = await invoke<Map>(method: ActionMethod.getProxies);
+    var map = await _invoke<Map>(method: ActionMethod.getProxies);
     return map ?? {};
   }
 
   @override
   Future<String> changeProxy(ChangeProxyParams changeProxyParams) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.changeProxy,
           data: json.encode(changeProxyParams),
         ) ??
@@ -164,13 +178,13 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> getExternalProviders() async {
-    return await invoke<String>(method: ActionMethod.getExternalProviders) ??
+    return await _invoke<String>(method: ActionMethod.getExternalProviders) ??
         '';
   }
 
   @override
   Future<String> getExternalProvider(String externalProviderName) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.getExternalProvider,
           data: externalProviderName,
         ) ??
@@ -179,7 +193,7 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> updateGeoData(UpdateGeoDataParams params) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.updateGeoData,
           data: json.encode(params),
         ) ??
@@ -191,7 +205,7 @@ abstract class CoreHandlerInterface with CoreInterface {
     required String providerName,
     required String data,
   }) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.sideLoadExternalProvider,
           data: json.encode({'providerName': providerName, 'data': data}),
         ) ??
@@ -200,7 +214,7 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> updateExternalProvider(String providerName) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.updateExternalProvider,
           data: providerName,
         ) ??
@@ -209,28 +223,31 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> getConnections() async {
-    return await invoke<String>(method: ActionMethod.getConnections) ?? '';
+    return await _invoke<String>(method: ActionMethod.getConnections) ?? '';
   }
 
   @override
   Future<bool> closeConnections() async {
-    return await invoke<bool>(method: ActionMethod.closeConnections) ?? false;
+    return await _invoke<bool>(method: ActionMethod.closeConnections) ?? false;
   }
 
   @override
   Future<bool> resetConnections() async {
-    return await invoke<bool>(method: ActionMethod.resetConnections) ?? false;
+    return await _invoke<bool>(method: ActionMethod.resetConnections) ?? false;
   }
 
   @override
   Future<bool> closeConnection(String id) async {
-    return await invoke<bool>(method: ActionMethod.closeConnection, data: id) ??
+    return await _invoke<bool>(
+          method: ActionMethod.closeConnection,
+          data: id,
+        ) ??
         false;
   }
 
   @override
   Future<String> getTotalTraffic(bool onlyStatisticsProxy) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.getTotalTraffic,
           data: onlyStatisticsProxy,
         ) ??
@@ -239,7 +256,7 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> getTraffic(bool onlyStatisticsProxy) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.getTraffic,
           data: onlyStatisticsProxy,
         ) ??
@@ -248,27 +265,27 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   resetTraffic() {
-    invoke(method: ActionMethod.resetTraffic);
+    _invoke(method: ActionMethod.resetTraffic);
   }
 
   @override
   startLog() {
-    invoke(method: ActionMethod.startLog);
+    _invoke(method: ActionMethod.startLog);
   }
 
   @override
   stopLog() {
-    invoke<bool>(method: ActionMethod.stopLog);
+    _invoke<bool>(method: ActionMethod.stopLog);
   }
 
   @override
   Future<bool> startListener() async {
-    return await invoke<bool>(method: ActionMethod.startListener) ?? false;
+    return await _invoke<bool>(method: ActionMethod.startListener) ?? false;
   }
 
   @override
   Future<bool> stopListener() async {
-    return await invoke<bool>(method: ActionMethod.stopListener) ?? false;
+    return await _invoke<bool>(method: ActionMethod.stopListener) ?? false;
   }
 
   @override
@@ -278,7 +295,7 @@ abstract class CoreHandlerInterface with CoreInterface {
       'timeout': httpTimeoutDuration.inMilliseconds,
       'test-url': url,
     };
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.asyncTestDelay,
           data: json.encode(delayParams),
         ) ??
@@ -287,7 +304,7 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> getCountryCode(String ip) async {
-    return await invoke<String>(
+    return await _invoke<String>(
           method: ActionMethod.getCountryCode,
           data: ip,
         ) ??
@@ -296,6 +313,6 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> getMemory() async {
-    return await invoke<String>(method: ActionMethod.getMemory) ?? '';
+    return await _invoke<String>(method: ActionMethod.getMemory) ?? '';
   }
 }
