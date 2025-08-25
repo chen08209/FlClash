@@ -2,13 +2,12 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../providers/app.dart';
 
 class DeveloperView extends ConsumerWidget {
   const DeveloperView({super.key});
@@ -48,9 +47,11 @@ class DeveloperView extends ConsumerWidget {
           },
         ),
         ListItem(
-          title: Text('loading'),
+          title: Text('Loading'),
           onTap: () {
-            ref.read(loadingProvider.notifier).value = true;
+            ref.read(loadingProvider.notifier).value = !ref.read(
+              loadingProvider,
+            );
           },
         ),
       ],

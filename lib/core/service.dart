@@ -9,6 +9,15 @@ import 'package:fl_clash/models/core.dart';
 
 import 'interface.dart';
 
+class ServiceDisconnectedException implements Exception {
+  ServiceDisconnectedException();
+
+  @override
+  String toString() {
+    return 'Service disconnected';
+  }
+}
+
 class CoreService extends CoreHandlerInterface {
   static CoreService? _instance;
 
@@ -39,34 +48,38 @@ class CoreService extends CoreHandlerInterface {
   }
 
   void _initServer() {
-    ServerSocket? server;
     runZonedGuarded(
       () async {
         final address = !system.isWindows
             ? InternetAddress(unixSocketPath, type: InternetAddressType.unix)
             : InternetAddress(localhost, type: InternetAddressType.IPv4);
         await _deleteSocketFile();
-        server = await ServerSocket.bind(address, 0, shared: true);
+        final server = await ServerSocket.bind(address, 0, shared: true);
         _serverCompleter.complete(server);
-        await for (final socket in server!) {
-          await _destroySocket();
-          _socketCompleter.complete(socket);
-          socket
-              .transform(uint8ListToListIntConverter)
-              .transform(utf8.decoder)
-              .transform(LineSplitter())
-              .listen((data) {
-                handleResult(ActionResult.fromJson(json.decode(data.trim())));
-              });
+        await for (final socket in server) {
+          await _attachSocket(socket);
         }
       },
       (error, stack) async {
         commonPrint.log('Service error: $error');
-        if (error is SocketException) {
-          _handleInvokeCrashEvent();
-        }
       },
     );
+  }
+
+  Future<void> _attachSocket(Socket socket) async {
+    await _destroySocket();
+    _socketCompleter.complete(socket);
+    socket
+        .transform(uint8ListToListIntConverter)
+        .transform(utf8.decoder)
+        .transform(LineSplitter())
+        .listen((data) {
+          handleResult(ActionResult.fromJson(json.decode(data.trim())));
+        })
+        .onDone(() {
+          _socketCompleter = Completer();
+          _handleInvokeCrashEvent();
+        });
   }
 
   void _handleInvokeCrashEvent() {
