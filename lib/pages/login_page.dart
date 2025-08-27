@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/models/profile.dart';
 import 'package:fl_clash/services/api_service_v2.dart';
+import 'package:fl_clash/services/auth_service.dart';
 import 'package:fl_clash/state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -27,66 +29,31 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
     try {
-      final dio = Dio();
-      final response = await dio.post(
-        'https://origin.huanshen.org/api/v1/passport/auth/login',
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
-        data: json.encode({
-          'email': _usernameController.text,
-          'password': _passwordController.text,
-        }),
+      // 使用AuthService进行登录
+      final result = await _authService.login(
+        email: _usernameController.text,
+        password: _passwordController.text,
       );
 
-      if (response.data['status'] == 'success') {
-        // Handle successful login
-        // 保存登录凭证
-        final token = response.data['data']['token'];
-        final authData = response.data['data']['auth_data'];
-        final email = _usernameController.text;
-        
-        // 保存到SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-        await prefs.setString('auth_data', authData);
-        await prefs.setString('user_email', email);
-        await prefs.setBool('is_logged_in', true);
-        
-        // 自动添加订阅配置
-        await _autoAddSubscription();
-        
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        // 显示服务器返回的错误信息
-        _showError(response.data['message'] ?? '登录失败');
-      }
-    } on DioException catch (e) {
-      // 处理网络错误
-      if (e.response != null) {
-        // 服务器返回了错误响应
-        try {
-          final errorData = e.response!.data;
-          if (errorData is Map && errorData['message'] != null) {
-            _showError(errorData['message']);
-          } else {
-            _showError('服务器错误：${e.response!.statusCode}');
-          }
-        } catch (_) {
-          _showError('服务器错误：${e.response!.statusCode}');
-        }
-      } else if (e.type == DioExceptionType.connectionTimeout) {
-        _showError('连接超时，请检查网络');
-      } else if (e.type == DioExceptionType.connectionError) {
-        _showError('网络连接失败，请检查网络设置');
-      } else {
-        _showError('网络错误：${e.message}');
-      }
+      // 保存登录凭证
+      final token = result['token'];
+      final authData = result['auth_data'];
+      final email = _usernameController.text;
+      
+      // 保存到SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      await prefs.setString('auth_data', authData);
+      await prefs.setString('user_email', email);
+      await prefs.setBool('is_logged_in', true);
+      
+      // 自动添加订阅配置
+      await _autoAddSubscription();
+      
+      Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
-      // 处理其他错误
-      _showError('登录失败：${e.toString()}');
+      // 显示错误信息
+      _showError('登录失败：${e.toString().replaceFirst('Exception: ', '')}');
     } finally {
       setState(() {
         _isLoading = false;
@@ -278,12 +245,40 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // 忘记密码链接
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/forgot_password');
+                    },
+                    child: const Text('忘记密码？'),
+                  ),
+                  const SizedBox(height: 16),
+                  // 注册链接
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '还没有账户？',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/register');
+                        },
+                        child: const Text('立即注册'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   // 提示文本
                   Text(
                     '请使用您的账户邮箱和密码登录',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.outline,
                         ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

@@ -201,6 +201,8 @@ class ApplicationState extends ConsumerState<Application> {
                   : (_isLoggedIn == true ? child! : LoginPage()),
               routes: {
                 '/home': (context) => child!,
+                '/register': (context) => const RegisterPage(),
+                '/forgot_password': (context) => const ForgotPasswordPage(),
               },
             );
           },
