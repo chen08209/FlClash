@@ -289,7 +289,14 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                                   Navigator.pushNamed(context, '/subscription_store');
                                 },
                               ),
-                              _buildTechServiceItem(Icons.receipt_long, '订单中心', TechTheme.primaryPurple),
+                              _buildTechServiceItem(
+                                Icons.receipt_long, 
+                                '订单中心', 
+                                TechTheme.primaryPurple,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/order_center');
+                                },
+                              ),
                               _buildTechServiceItem(Icons.support_agent, '工单列表', TechTheme.neonYellow),
                               _buildTechServiceItem(Icons.analytics, '流量明细', TechTheme.neonPink),
                             ],

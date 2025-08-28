@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_clash/models/subscription_plan.dart';
+import 'package:fl_clash/models/order.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
@@ -316,6 +317,108 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('获取套餐列表失败：${e.toString()}');
+    }
+  }
+
+  /// 获取用户订单列表
+  Future<List<Order>> getOrderList() async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.get(
+        '/user/order/fetch',
+        options: Options(
+          headers: {
+            'authorization': authData,
+          },
+        ),
+      );
+
+      if (response.data['status'] == 'success') {
+        final List<dynamic> ordersJson = response.data['data'] as List<dynamic>;
+        final orders = ordersJson
+            .map((json) => Order.fromJson(json as Map<String, dynamic>))
+            .toList();
+        
+        // 按创建时间倒序排序（最新的在前面）
+        orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        
+        return orders;
+      } else {
+        throw Exception(response.data['message'] ?? '获取订单列表失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('获取订单列表失败：${e.toString()}');
+    }
+  }
+
+  /// 获取订单详情
+  Future<Order> getOrderDetail(String tradeNo) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.get(
+        '/user/order/detail',
+        queryParameters: {
+          'trade_no': tradeNo,
+        },
+        options: Options(
+          headers: {
+            'authorization': authData,
+          },
+        ),
+      );
+
+      if (response.data['status'] == 'success') {
+        final orderJson = response.data['data'] as Map<String, dynamic>;
+        return Order.fromJson(orderJson);
+      } else {
+        throw Exception(response.data['message'] ?? '获取订单详情失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('获取订单详情失败：${e.toString()}');
     }
   }
 }

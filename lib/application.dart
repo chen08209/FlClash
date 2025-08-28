@@ -204,6 +204,7 @@ class ApplicationState extends ConsumerState<Application> {
                 '/register': (context) => const RegisterPage(),
                 '/forgot_password': (context) => const ForgotPasswordPage(),
                 '/subscription_store': (context) => const SubscriptionStorePage(),
+                '/order_center': (context) => const OrderCenterPage(),
               },
             );
           },
