@@ -281,7 +281,14 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              _buildTechServiceItem(Icons.shopping_cart, '订购中心', TechTheme.primaryBlue),
+                              _buildTechServiceItem(
+                                Icons.shopping_cart, 
+                                '订购中心', 
+                                TechTheme.primaryBlue,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/subscription_store');
+                                },
+                              ),
                               _buildTechServiceItem(Icons.receipt_long, '订单中心', TechTheme.primaryPurple),
                               _buildTechServiceItem(Icons.support_agent, '工单列表', TechTheme.neonYellow),
                               _buildTechServiceItem(Icons.analytics, '流量明细', TechTheme.neonPink),
@@ -504,14 +511,14 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
     return row;
   }
 
-  Widget _buildTechServiceItem(IconData icon, String title, Color color) {
+  Widget _buildTechServiceItem(IconData icon, String title, Color color, {VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: () {},
+          onTap: onTap ?? () {},
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: BoxDecoration(
