@@ -1,6 +1,7 @@
 export 'home.dart';
 export 'scan.dart';
 export 'editor.dart';
+export 'checkout_page.dart';
 export 'login_page.dart';
 export 'order_center_page.dart';
 export 'register_page.dart';

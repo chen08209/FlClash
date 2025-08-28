@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_clash/models/subscription_plan.dart';
 import 'package:fl_clash/models/order.dart';
+import 'package:fl_clash/models/coupon.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
@@ -419,6 +420,121 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('获取订单详情失败：${e.toString()}');
+    }
+  }
+
+  /// 验证优惠码
+  Future<Coupon> checkCoupon({
+    required String code,
+    required int planId,
+  }) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.post(
+        '/user/coupon/check',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'authorization': authData,
+          },
+        ),
+        data: json.encode({
+          'code': code,
+          'plan_id': planId,
+        }),
+      );
+
+      if (response.data['status'] == 'success') {
+        final couponJson = response.data['data'] as Map<String, dynamic>;
+        return Coupon.fromJson(couponJson);
+      } else {
+        throw Exception(response.data['message'] ?? '优惠码验证失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('优惠码验证失败：${e.toString()}');
+    }
+  }
+
+  /// 创建订单
+  Future<String> createOrder({
+    required String period,
+    required int planId,
+    String? couponCode,
+  }) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final requestData = {
+        'period': period,
+        'plan_id': planId,
+      };
+
+      // 只有在提供优惠码时才添加到请求数据中
+      if (couponCode != null && couponCode.isNotEmpty) {
+        requestData['coupon_code'] = couponCode;
+      }
+
+      final response = await _dio.post(
+        '/user/order/save',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'authorization': authData,
+          },
+        ),
+        data: json.encode(requestData),
+      );
+
+      if (response.data['status'] == 'success') {
+        return response.data['data'] as String; // 返回订单号
+      } else {
+        throw Exception(response.data['message'] ?? '创建订单失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('创建订单失败：${e.toString()}');
     }
   }
 }

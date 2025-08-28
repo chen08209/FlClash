@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fl_clash/services/auth_service.dart';
 import 'package:fl_clash/models/subscription_plan.dart';
+import 'package:fl_clash/pages/checkout_page.dart';
 
 class SubscriptionStorePage extends StatefulWidget {
   const SubscriptionStorePage({super.key});
@@ -95,6 +96,24 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
             child: const Text('确认购买'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _navigateToCheckout(SubscriptionPlan plan) {
+    final selectedPeriod = _selectedPeriods[plan.id];
+    if (selectedPeriod == null) return;
+    
+    final price = selectedPeriod.getPrice(plan);
+    if (price == null || price <= 0) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutPage(
+          plan: plan,
+          initialPeriod: selectedPeriod,
+        ),
       ),
     );
   }
@@ -253,7 +272,7 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: selectedPrice != null && selectedPrice > 0
-                    ? () => _showPurchaseDialog(plan)
+                    ? () => _navigateToCheckout(plan)
                     : null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
