@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../HiddifyWithPanels"
+		},
+		{
+			"path": "../v2board"
+		}
+	],
+	"settings": {},
+	"extensions": {
+		"recommendations": [
+			"augment.vscode-augment"
+		]
+	}
+}

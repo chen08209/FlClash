@@ -736,6 +736,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage(
       "WebDAV configuration",
     ),
+    "v2board": MessageLookupByLibrary.simpleMessage("V2Board"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
     "years": MessageLookupByLibrary.simpleMessage("Years"),
     "zh_CN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),

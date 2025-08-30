@@ -64,6 +64,8 @@ dependencies:
   flutter_cache_manager: ^3.4.1
   crypto: ^3.0.3
   flutter_acrylic: ^1.1.4
+  flutter_secure_storage: ^9.2.2
+  webview_flutter: ^4.4.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

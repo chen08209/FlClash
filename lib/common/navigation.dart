@@ -2,6 +2,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/views.dart';
+import 'package:fl_clash/views/v2board/v2board_dashboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -103,6 +104,17 @@ class Navigation {
             PageLabel.tools,
           ),
         ),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
+      ),
+      NavigationItem(
+        icon: Icon(Icons.vpn_key),
+        label: PageLabel.v2board,
+        builder: (_) => const V2BoardDashboardPage(
+          key: GlobalObjectKey(
+            PageLabel.v2board,
+          ),
+        ),
+        description: 'V2Board Panel Integration',
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
     ];

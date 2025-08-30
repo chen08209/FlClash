@@ -8,6 +8,7 @@ import 'dart:ui';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/tile.dart';
 import 'package:fl_clash/plugins/vpn.dart';
+import 'package:fl_clash/services/v2board/proxy_manager.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,15 @@ Future<void> main() async {
   await globalState.initApp(version);
   await android?.init();
   await window?.init(version);
+
+  // 初始化 V2Board 代理管理器
+  try {
+    await V2BoardProxyManager.instance.initialize();
+    commonPrint.log('V2Board proxy manager initialized successfully');
+  } catch (e) {
+    commonPrint.log('Failed to initialize V2Board proxy manager: $e');
+  }
+
   HttpOverrides.global = FlClashHttpOverrides();
   runApp(ProviderScope(
     child: const Application(),

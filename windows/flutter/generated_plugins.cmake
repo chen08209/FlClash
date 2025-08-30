@@ -9,6 +9,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_windows
   flutter_acrylic
   flutter_js
+  flutter_secure_storage_windows
   hotkey_manager_windows
   proxy
   screen_retriever_windows

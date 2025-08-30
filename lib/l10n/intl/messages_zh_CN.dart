@@ -490,6 +490,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlTip": m9,
     "useHosts": MessageLookupByLibrary.simpleMessage("使用Hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("使用系统Hosts"),
+    "v2board": MessageLookupByLibrary.simpleMessage("V2Board"),
     "value": MessageLookupByLibrary.simpleMessage("值"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("活力"),
     "view": MessageLookupByLibrary.simpleMessage("查看"),
