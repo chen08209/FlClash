@@ -634,4 +634,102 @@ class AuthService {
       throw Exception('订单结算失败：${e.toString()}');
     }
   }
+
+  // 检查订单状态
+  Future<OrderCheckStatus> checkOrderStatus(String tradeNo) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.get(
+        '/user/order/check',
+        queryParameters: {
+          'trade_no': tradeNo,
+        },
+        options: Options(
+          headers: {
+            'authorization': authData,
+          },
+        ),
+      );
+
+      if (response.data['status'] == 'success') {
+        final statusCode = response.data['data'] as int;
+        return OrderCheckStatusExtension.fromCode(statusCode);
+      } else {
+        throw Exception(response.data['message'] ?? '检查订单状态失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('检查订单状态失败：${e.toString()}');
+    }
+  }
+
+  // 关闭订单
+  Future<bool> cancelOrder(String tradeNo) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.post(
+        '/user/order/cancel',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'authorization': authData,
+          },
+        ),
+        data: json.encode({
+          'trade_no': tradeNo,
+        }),
+      );
+
+      if (response.data['status'] == 'success') {
+        return true;
+      } else {
+        throw Exception(response.data['message'] ?? '关闭订单失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('关闭订单失败：${e.toString()}');
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -33,12 +34,25 @@ class _PaymentPageState extends State<PaymentPage> {
   
   bool _isLoadingPaymentMethods = true;
   bool _isProcessingPayment = false;
+  bool _isCancellingOrder = false;
   String? _error;
+
+  // 订单状态轮询相关
+  Timer? _statusCheckTimer;
+  OrderCheckStatus _currentOrderStatus = OrderCheckStatus.pending;
+  bool _isOrderCompleted = false;
 
   @override
   void initState() {
     super.initState();
     _loadPaymentMethods();
+    _startOrderStatusPolling();
+  }
+
+  @override
+  void dispose() {
+    _statusCheckTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadPaymentMethods() async {
@@ -60,6 +74,172 @@ class _PaymentPageState extends State<PaymentPage> {
         _error = e.toString().replaceFirst('Exception: ', '');
         _isLoadingPaymentMethods = false;
       });
+    }
+  }
+
+  // 开始订单状态轮询
+  void _startOrderStatusPolling() {
+    // 立即检查一次状态
+    _checkOrderStatus();
+    
+    // 每5秒检查一次订单状态
+    _statusCheckTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_isOrderCompleted) {
+        timer.cancel();
+        return;
+      }
+      _checkOrderStatus();
+    });
+  }
+
+  // 检查订单状态
+  Future<void> _checkOrderStatus() async {
+    try {
+      final status = await _authService.checkOrderStatus(widget.order.tradeNo);
+      
+      if (mounted) {
+        setState(() {
+          _currentOrderStatus = status;
+        });
+
+        // 根据状态处理
+        switch (status) {
+          case OrderCheckStatus.completed:
+          case OrderCheckStatus.cancelled:
+          case OrderCheckStatus.refunded:
+            // 订单已完成或取消，停止轮询
+            _isOrderCompleted = true;
+            _statusCheckTimer?.cancel();
+            
+            if (status == OrderCheckStatus.completed) {
+              // 支付成功，显示成功提示
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('订单支付成功！'),
+                  backgroundColor: TechTheme.neonGreen,
+                  action: SnackBarAction(
+                    label: '查看订单',
+                    textColor: Colors.white,
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/order_center');
+                    },
+                  ),
+                ),
+              );
+            } else if (status == OrderCheckStatus.cancelled) {
+              // 订单已取消
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('订单已取消'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            break;
+          case OrderCheckStatus.processing:
+            // 订单处理中，继续轮询
+            break;
+          case OrderCheckStatus.pending:
+          default:
+            // 待支付状态，继续轮询
+            break;
+        }
+      }
+    } catch (e) {
+      // 静默处理错误，避免频繁弹出错误提示
+      if (mounted) {
+        print('检查订单状态失败：${e.toString()}');
+      }
+    }
+  }
+
+  // 关闭订单
+  Future<void> _cancelOrder() async {
+    // 显示确认对话框
+    final shouldCancel = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: TechTheme.darkBackground,
+        title: Text(
+          '确认关闭订单',
+          style: TechTheme.techTextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        content: Text(
+          '确定要关闭此订单吗？关闭后将无法继续支付。',
+          style: TechTheme.techTextStyle(
+            fontSize: 14,
+            color: Colors.white.withOpacity(0.8),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              '取消',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.6),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              '确认关闭',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldCancel != true) return;
+
+    try {
+      setState(() {
+        _isCancellingOrder = true;
+      });
+
+      await _authService.cancelOrder(widget.order.tradeNo);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('关闭订单成功'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // 停止状态轮询
+        _statusCheckTimer?.cancel();
+        _isOrderCompleted = true;
+
+        // 返回上一页面
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('关闭订单失败：${e.toString().replaceFirst('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCancellingOrder = false;
+        });
+      }
     }
   }
 
@@ -196,6 +376,12 @@ class _PaymentPageState extends State<PaymentPage> {
           ),
           
           _buildInfoRow('创建时间', widget.order.formattedCreatedAt),
+          
+          _buildInfoRow(
+            '订单状态',
+            _currentOrderStatus.statusText,
+            valueColor: _currentOrderStatus.statusColor,
+          ),
         ],
       ),
     );
@@ -529,6 +715,19 @@ class _PaymentPageState extends State<PaymentPage> {
                     text: _isProcessingPayment ? '处理中...' : '立即支付',
                     onPressed: _isProcessingPayment ? () {} : () => _processPayment(),
                     color: TechTheme.neonGreen,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              
+              // 关闭订单按钮 - 只有在待支付状态时显示
+              if (_currentOrderStatus == OrderCheckStatus.pending && !_isOrderCompleted) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: TechTheme.techButton(
+                    text: _isCancellingOrder ? '关闭中...' : '关闭订单',
+                    onPressed: _isCancellingOrder ? () {} : () => _cancelOrder(),
+                    color: Colors.red,
                   ),
                 ),
               ],

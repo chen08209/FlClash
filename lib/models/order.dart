@@ -1,4 +1,5 @@
 import 'package:fl_clash/models/subscription_plan.dart';
+import 'package:flutter/material.dart';
 
 enum OrderStatus {
   pending, // 待支付
@@ -12,6 +13,67 @@ enum OrderType {
   newOrder, // 新订单
   renewal, // 续费
   upgrade, // 升级
+}
+
+enum OrderCheckStatus {
+  pending,      // 0 待支付
+  processing,   // 1 开通中
+  cancelled,    // 2 已取消
+  completed,    // 3 已完成
+  refunded,     // 4 已折抵
+}
+
+// OrderCheckStatus 扩展方法
+extension OrderCheckStatusExtension on OrderCheckStatus {
+  // 解析状态码
+  static OrderCheckStatus fromCode(int code) {
+    switch (code) {
+      case 0:
+        return OrderCheckStatus.pending;
+      case 1:
+        return OrderCheckStatus.processing;
+      case 2:
+        return OrderCheckStatus.cancelled;
+      case 3:
+        return OrderCheckStatus.completed;
+      case 4:
+        return OrderCheckStatus.refunded;
+      default:
+        return OrderCheckStatus.pending;
+    }
+  }
+  
+  // 获取状态文本
+  String get statusText {
+    switch (this) {
+      case OrderCheckStatus.pending:
+        return '待支付';
+      case OrderCheckStatus.processing:
+        return '开通中';
+      case OrderCheckStatus.cancelled:
+        return '已取消';
+      case OrderCheckStatus.completed:
+        return '已完成';
+      case OrderCheckStatus.refunded:
+        return '已折抵';
+    }
+  }
+  
+  // 获取状态颜色
+  Color get statusColor {
+    switch (this) {
+      case OrderCheckStatus.pending:
+        return Colors.orange;
+      case OrderCheckStatus.processing:
+        return Colors.blue;
+      case OrderCheckStatus.cancelled:
+        return Colors.red;
+      case OrderCheckStatus.completed:
+        return Colors.green;
+      case OrderCheckStatus.refunded:
+        return Colors.purple;
+    }
+  }
 }
 
 class Order {
