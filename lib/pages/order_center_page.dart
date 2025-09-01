@@ -17,6 +17,7 @@ class _OrderCenterPageState extends State<OrderCenterPage> {
   List<Order> _orders = [];
   bool _isLoading = true;
   String? _errorMessage;
+  Set<String> _cancellingOrders = {}; // 正在取消的订单号集合
 
   @override
   void initState() {
@@ -521,10 +522,172 @@ class _OrderCenterPageState extends State<OrderCenterPage> {
                   ],
                 ),
               ],
+              
+              // 未支付订单的操作按钮
+              if (order.status == OrderStatus.pending) ...[
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white12),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TechTheme.techButton(
+                        text: '立即支付',
+                        onPressed: () => _navigateToPayment(order),
+                        color: TechTheme.neonGreen,
+                        height: 36,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TechTheme.techButton(
+                        text: _cancellingOrders.contains(order.tradeNo) ? '关闭中...' : '关闭订单',
+                        onPressed: _cancellingOrders.contains(order.tradeNo) 
+                            ? () {} 
+                            : () => _cancelOrder(order),
+                        color: Colors.red,
+                        height: 36,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  // 导航到支付页面
+  Future<void> _navigateToPayment(Order order) async {
+    try {
+      // 获取订单详情，确保有完整的套餐信息
+      final orderDetail = await _authService.getOrderDetail(order.tradeNo);
+      
+      if (mounted && orderDetail.plan != null) {
+        Navigator.pushNamed(
+          context,
+          '/payment',
+          arguments: {
+            'order': orderDetail,
+            'plan': orderDetail.plan!,
+            'discountAmount': orderDetail.discountAmount,
+          },
+        ).then((_) {
+          // 从支付页面返回后刷新订单列表
+          _fetchOrders();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('跳转支付页面失败：${e.toString().replaceFirst('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // 关闭订单
+  Future<void> _cancelOrder(Order order) async {
+    // 显示确认对话框
+    final shouldCancel = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: TechTheme.darkBackground,
+        title: Text(
+          '确认关闭订单',
+          style: TechTheme.techTextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '订单号：${order.tradeNo}',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: TechTheme.primaryCyan,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '确定要关闭此订单吗？关闭后将无法继续支付。',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              '取消',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.6),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              '确认关闭',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldCancel != true) return;
+
+    try {
+      setState(() {
+        _cancellingOrders.add(order.tradeNo);
+      });
+
+      await _authService.cancelOrder(order.tradeNo);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('订单 ${order.tradeNo} 关闭成功'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // 刷新订单列表
+        await _fetchOrders();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('关闭订单失败：${e.toString().replaceFirst('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _cancellingOrders.remove(order.tradeNo);
+        });
+      }
+    }
   }
 }
