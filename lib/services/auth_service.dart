@@ -5,6 +5,7 @@ import 'package:dio/io.dart';
 import 'package:fl_clash/models/subscription_plan.dart';
 import 'package:fl_clash/models/order.dart';
 import 'package:fl_clash/models/coupon.dart';
+import 'package:fl_clash/models/payment_method.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
@@ -535,6 +536,102 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('创建订单失败：${e.toString()}');
+    }
+  }
+
+  // 获取支付方式列表
+  Future<List<PaymentMethod>> getPaymentMethods() async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.get(
+        '/user/order/getPaymentMethod',
+        options: Options(
+          headers: {
+            'authorization': authData,
+          },
+        ),
+      );
+
+      if (response.data['status'] == 'success') {
+        final List<dynamic> methodsJson = response.data['data'] as List<dynamic>;
+        return methodsJson.map((json) => PaymentMethod.fromJson(json as Map<String, dynamic>)).toList();
+      } else {
+        throw Exception(response.data['message'] ?? '获取支付方式失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('获取支付方式失败：${e.toString()}');
+    }
+  }
+
+  // 结算订单
+  Future<PaymentResult> checkoutOrder({
+    required String tradeNo,
+    required int methodId,
+  }) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.post(
+        '/user/order/checkout',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'authorization': authData,
+          },
+        ),
+        data: json.encode({
+          'trade_no': tradeNo,
+          'method': methodId,
+        }),
+      );
+
+      // 结算订单接口返回的数据结构直接就是 PaymentResult 格式
+      return PaymentResult.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('订单结算失败：${e.toString()}');
     }
   }
 }

@@ -31,6 +31,7 @@ dependencies:
   animations: ^2.0.11
   package_info_plus: ^8.0.0
   url_launcher: ^6.2.6
+  qr_flutter: ^4.1.0
   freezed_annotation: ^2.4.1
   image_picker: ^1.1.2
   webdav_client: ^1.2.2

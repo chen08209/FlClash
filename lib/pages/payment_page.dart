@@ -1,0 +1,541 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../models/models.dart';
+import '../services/auth_service.dart';
+import '../common/tech_theme.dart';
+import '../widgets/tech_page_wrapper.dart';
+
+class PaymentPage extends StatefulWidget {
+  final Order order;
+  final SubscriptionPlan plan;
+  final int? discountAmount;
+
+  const PaymentPage({
+    super.key,
+    required this.order,
+    required this.plan,
+    this.discountAmount,
+  });
+
+  @override
+  State<PaymentPage> createState() => _PaymentPageState();
+}
+
+class _PaymentPageState extends State<PaymentPage> {
+  final AuthService _authService = AuthService();
+
+  List<PaymentMethod> _paymentMethods = [];
+  PaymentMethod? _selectedPaymentMethod;
+  PaymentResult? _paymentResult;
+  
+  bool _isLoadingPaymentMethods = true;
+  bool _isProcessingPayment = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPaymentMethods();
+  }
+
+  Future<void> _loadPaymentMethods() async {
+    try {
+      setState(() {
+        _isLoadingPaymentMethods = true;
+        _error = null;
+      });
+
+      final methods = await _authService.getPaymentMethods();
+      
+      setState(() {
+        _paymentMethods = methods;
+        _selectedPaymentMethod = methods.isNotEmpty ? methods.first : null;
+        _isLoadingPaymentMethods = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _isLoadingPaymentMethods = false;
+      });
+    }
+  }
+
+  Future<void> _processPayment() async {
+    if (_selectedPaymentMethod == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('请选择支付方式'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      setState(() {
+        _isProcessingPayment = true;
+        _error = null;
+      });
+
+      final result = await _authService.checkoutOrder(
+        tradeNo: widget.order.tradeNo,
+        methodId: _selectedPaymentMethod!.id,
+      );
+
+      setState(() {
+        _paymentResult = result;
+        _isProcessingPayment = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _isProcessingPayment = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('支付处理失败：$_error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _copyTradeNo() async {
+    await Clipboard.setData(ClipboardData(text: widget.order.tradeNo));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('订单号已复制到剪贴板'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<void> _openPaymentUrl() async {
+    if (_paymentResult?.type == PaymentResultType.url) {
+      final url = Uri.parse(_paymentResult!.data);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('无法打开支付链接'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String get _periodText {
+    switch (widget.order.period) {
+      case 'month_price':
+        return '月付';
+      case 'quarter_price':
+        return '季付';
+      case 'half_year_price':
+        return '半年付';
+      case 'year_price':
+        return '年付';
+      case 'two_year_price':
+        return '两年付';
+      case 'three_year_price':
+        return '三年付';
+      default:
+        return '未知周期';
+    }
+  }
+
+  Widget _buildOrderInfo() {
+    return TechTheme.techCard(
+      animated: true,
+      accentColor: TechTheme.primaryCyan,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '订单信息',
+            style: TechTheme.techTextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: TechTheme.primaryCyan,
+              glowing: true,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          _buildInfoRow('套餐名称', widget.plan.name),
+          _buildInfoRow('订阅周期', _periodText),
+          _buildInfoRow('流量额度', widget.plan.formattedTraffic),
+          
+          _buildInfoRowWithCopy(
+            '订单号', 
+            widget.order.tradeNo,
+            onCopy: _copyTradeNo,
+          ),
+          
+          _buildInfoRow(
+            '订单金额', 
+            '¥${(widget.order.totalAmount / 100).toStringAsFixed(2)}',
+          ),
+          
+          if (widget.discountAmount != null && widget.discountAmount! > 0)
+            _buildInfoRow(
+              '优惠金额',
+              '-¥${(widget.discountAmount! / 100).toStringAsFixed(2)}',
+              valueColor: Colors.green,
+            ),
+          
+          _buildInfoRow(
+            '实付金额',
+            '¥${((widget.order.totalAmount - (widget.discountAmount ?? 0)) / 100).toStringAsFixed(2)}',
+            valueColor: TechTheme.neonGreen,
+          ),
+          
+          _buildInfoRow('创建时间', widget.order.formattedCreatedAt),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label：',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: valueColor ?? Colors.white,
+                fontWeight: valueColor != null ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRowWithCopy(String label, String value, {VoidCallback? onCopy}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label：',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          if (onCopy != null)
+            IconButton(
+              onPressed: onCopy,
+              icon: const Icon(Icons.copy, size: 16),
+              color: TechTheme.primaryCyan,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethods() {
+    if (_isLoadingPaymentMethods) {
+      return TechTheme.techCard(
+        animated: true,
+        accentColor: TechTheme.primaryCyan,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_paymentMethods.isEmpty) {
+      return TechTheme.techCard(
+        animated: true,
+        accentColor: Colors.red,
+        child: Column(
+          children: [
+            Text(
+              '支付方式',
+              style: TechTheme.techTextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+                glowing: true,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '暂无可用的支付方式',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return TechTheme.techCard(
+      animated: true,
+      accentColor: TechTheme.primaryCyan,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '选择支付方式',
+            style: TechTheme.techTextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: TechTheme.primaryCyan,
+              glowing: true,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          ..._paymentMethods.map((method) => _buildPaymentMethodItem(method)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodItem(PaymentMethod method) {
+    final isSelected = _selectedPaymentMethod?.id == method.id;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _selectedPaymentMethod = method;
+            });
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isSelected ? TechTheme.neonGreen : Colors.white.withOpacity(0.3),
+                width: isSelected ? 2 : 1,
+              ),
+              color: isSelected 
+                ? TechTheme.neonGreen.withOpacity(0.1)
+                : Colors.transparent,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                  color: isSelected ? TechTheme.neonGreen : Colors.white.withOpacity(0.6),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        method.name,
+                        style: TechTheme.techTextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? TechTheme.neonGreen : Colors.white,
+                        ),
+                      ),
+                      Text(
+                        method.payment,
+                        style: TechTheme.techTextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.6),
+                        ),
+                      ),
+                      if (method.hasHandlingFee)
+                        Text(
+                          method.formattedHandlingFee,
+                          style: TechTheme.techTextStyle(
+                            fontSize: 12,
+                            color: Colors.orange,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentResult() {
+    if (_paymentResult == null) return const SizedBox.shrink();
+
+    return TechTheme.techCard(
+      animated: true,
+      accentColor: TechTheme.neonGreen,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '支付信息',
+            style: TechTheme.techTextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: TechTheme.neonGreen,
+              glowing: true,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          if (_paymentResult!.type == PaymentResultType.qrcode) ...[
+            Text(
+              '请使用${_selectedPaymentMethod?.name}扫描二维码支付',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: QrImageView(
+                  data: _paymentResult!.data,
+                  version: QrVersions.auto,
+                  size: 200.0,
+                ),
+              ),
+            ),
+          ] else ...[
+            Text(
+              '点击下方按钮跳转到支付页面',
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: TechTheme.techButton(
+                text: '跳转支付',
+                onPressed: _openPaymentUrl,
+                color: TechTheme.neonGreen,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: TechTheme.darkBackground,
+      appBar: AppBar(
+        title: Text(
+          '订单支付',
+          style: TechTheme.techTextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            glowing: true,
+          ),
+        ),
+        backgroundColor: TechTheme.darkBackground,
+        foregroundColor: Colors.white,
+      ),
+      body: TechPageWrapper(
+        showAppBar: false,
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildOrderInfo(),
+              const SizedBox(height: 16),
+              
+              _buildPaymentMethods(),
+              const SizedBox(height: 16),
+              
+              if (_error != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Text(
+                    _error!,
+                    style: TechTheme.techTextStyle(
+                      fontSize: 14,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              _buildPaymentResult(),
+              const SizedBox(height: 16),
+              
+              if (_paymentResult == null && _paymentMethods.isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: TechTheme.techButton(
+                    text: _isProcessingPayment ? '处理中...' : '立即支付',
+                    onPressed: _isProcessingPayment ? () {} : () => _processPayment(),
+                    color: TechTheme.neonGreen,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

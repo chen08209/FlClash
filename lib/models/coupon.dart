@@ -10,7 +10,7 @@ class Coupon {
   final CouponType type;
   final int value; // 折扣额度（固定金额为分，比例为百分比*100）
   final int show;
-  final int limitUse;
+  final int? limitUse;
   final int? limitUseWithUser;
   final String? limitPlanIds;
   final String? limitPeriod;
@@ -26,7 +26,7 @@ class Coupon {
     required this.type,
     required this.value,
     required this.show,
-    required this.limitUse,
+    this.limitUse,
     this.limitUseWithUser,
     this.limitPlanIds,
     this.limitPeriod,
@@ -44,7 +44,7 @@ class Coupon {
       type: _parseCouponType(json['type'] as int),
       value: json['value'] as int,
       show: json['show'] as int,
-      limitUse: json['limit_use'] as int,
+      limitUse: json['limit_use'] as int?,
       limitUseWithUser: json['limit_use_with_user'] as int?,
       limitPlanIds: json['limit_plan_ids'] as String?,
       limitPeriod: json['limit_period'] as String?,

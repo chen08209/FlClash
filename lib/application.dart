@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'controller.dart';
 import 'pages/pages.dart';
+import 'models/models.dart';
 
 class Application extends ConsumerStatefulWidget {
   const Application({
@@ -205,6 +206,34 @@ class ApplicationState extends ConsumerState<Application> {
                 '/forgot_password': (context) => const ForgotPasswordPage(),
                 '/subscription_store': (context) => const SubscriptionStorePage(),
                 '/order_center': (context) => const OrderCenterPage(),
+              },
+              onGenerateRoute: (settings) {
+                if (settings.name == '/checkout') {
+                  final args = settings.arguments as Map<String, dynamic>?;
+                  if (args != null) {
+                    final plan = args['plan'] as SubscriptionPlan;
+                    final initialPeriod = args['initialPeriod'] as SubscriptionPeriod? ?? 
+                                        SubscriptionPeriod.getAvailablePeriods(plan).first;
+                    return MaterialPageRoute(
+                      builder: (context) => CheckoutPage(
+                        plan: plan,
+                        initialPeriod: initialPeriod,
+                      ),
+                    );
+                  }
+                } else if (settings.name == '/payment') {
+                  final args = settings.arguments as Map<String, dynamic>?;
+                  if (args != null) {
+                    return MaterialPageRoute(
+                      builder: (context) => PaymentPage(
+                        order: args['order'] as Order,
+                        plan: args['plan'] as SubscriptionPlan,
+                        discountAmount: args['discountAmount'] as int?,
+                      ),
+                    );
+                  }
+                }
+                return null;
               },
             );
           },

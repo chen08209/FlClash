@@ -66,6 +66,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
+  int _getDiscountAmount() {
+    if (_currentPrice == null || _appliedCoupon == null) return 0;
+
+    switch (_appliedCoupon!.type) {
+      case CouponType.fixedAmount:
+        return _appliedCoupon!.value.clamp(0, _currentPrice!);
+      case CouponType.percentage:
+        // value 是百分比数值，如 value=20 表示 20%
+        final discount = (_currentPrice! * _appliedCoupon!.value / 100).round();
+        return discount.clamp(0, _currentPrice!);
+    }
+  }
+
   String _getPeriodName(SubscriptionPeriod period) {
     return period.label;
   }
@@ -136,30 +149,39 @@ class _CheckoutPageState extends State<CheckoutPage> {
         // 显示成功消息
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('订单创建成功！订单号：$orderNo'),
+            content: Text('订单创建成功！正在跳转到支付页面...'),
             backgroundColor: TechTheme.neonGreen,
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: '复制',
-              textColor: Colors.white,
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: orderNo));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('订单号已复制'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
-            ),
+            duration: const Duration(seconds: 2),
           ),
         );
 
-        // 返回到上一页面
-        Navigator.of(context).pop();
-        
-        // 如果需要，可以导航到订单详情页面
-        // Navigator.pushNamed(context, '/order_center');
+        // 获取订单详情并跳转到支付页面
+        try {
+          final orderDetail = await _authService.getOrderDetail(orderNo);
+          
+          if (mounted) {
+            Navigator.pushReplacementNamed(
+              context,
+              '/payment',
+              arguments: {
+                'order': orderDetail,
+                'plan': widget.plan,
+                'discountAmount': _appliedCoupon != null ? _getDiscountAmount() : null,
+              },
+            );
+          }
+        } catch (e) {
+          // 如果获取订单详情失败，显示错误但仍然返回
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('跳转支付页面失败：${e.toString().replaceFirst('Exception: ', '')}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            Navigator.of(context).pop();
+          }
+        }
       }
     } catch (e) {
       if (mounted) {

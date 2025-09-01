@@ -5,6 +5,7 @@ export 'config.dart';
 export 'core.dart';
 export 'coupon.dart';
 export 'order.dart';
+export 'payment_method.dart';
 export 'profile.dart';
 export 'selector.dart';
 export 'subscription_plan.dart';
