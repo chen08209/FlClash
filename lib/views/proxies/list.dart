@@ -28,6 +28,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     null,
   );
   List<double> _headerOffset = [];
+  double containerHeight = 0;
 
   @override
   void initState() {
@@ -80,10 +81,10 @@ class _ProxiesListViewState extends State<ProxiesListView> {
   }
 
   void _handleChange(Set<String> currentUnfoldSet, String groupName) {
+    _autoScrollToGroup(groupName);
     final tempUnfoldSet = Set<String>.from(currentUnfoldSet);
     if (tempUnfoldSet.contains(groupName)) {
       tempUnfoldSet.remove(groupName);
-      _autoScrollToGroup(groupName);
     } else {
       tempUnfoldSet.add(groupName);
     }
@@ -204,8 +205,54 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     return _headerOffset[index];
   }
 
+  void _scrollToMakeVisibleWithPadding({
+    required double containerHeight,
+    required double pixels,
+    required double start,
+    required double end,
+    double padding = 24,
+  }) {
+    final visibleStart = pixels;
+    final visibleEnd = pixels + containerHeight;
+
+    final isElementVisible = start >= visibleStart && end <= visibleEnd;
+    if (isElementVisible) {
+      return;
+    }
+
+    double targetScrollOffset;
+
+    if (end <= visibleStart) {
+      targetScrollOffset = start;
+    } else if (start >= visibleEnd) {
+      targetScrollOffset = end - containerHeight + padding;
+    } else {
+      final visibleTopPart = end - visibleStart;
+      final visibleBottomPart = visibleEnd - start;
+      if (visibleTopPart.abs() >= visibleBottomPart.abs()) {
+        targetScrollOffset = end - containerHeight + padding;
+      } else {
+        targetScrollOffset = start;
+      }
+    }
+
+    targetScrollOffset = targetScrollOffset.clamp(
+      _controller.position.minScrollExtent,
+      _controller.position.maxScrollExtent,
+    );
+
+    _controller.jumpTo(targetScrollOffset);
+  }
+
   void _autoScrollToGroup(String groupName) {
-    _controller.jumpTo(_getGroupOffset(groupName));
+    final pixels = _controller.position.pixels;
+    final offset = _getGroupOffset(groupName);
+    _scrollToMakeVisibleWithPadding(
+      containerHeight: containerHeight,
+      pixels: pixels,
+      start: offset,
+      end: offset + listHeaderHeight,
+    );
   }
 
   void _scrollToGroupSelected(String groupName) {
@@ -225,7 +272,10 @@ class _ProxiesListViewState extends State<ProxiesListView> {
   void _jumpTo(double offset) {
     if (mounted && _controller.hasClients) {
       _controller.animateTo(
-        min(offset, _controller.position.maxScrollExtent),
+        offset.clamp(
+          _controller.position.minScrollExtent,
+          _controller.position.maxScrollExtent,
+        ),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeIn,
       );
@@ -276,6 +326,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
               ),
               LayoutBuilder(
                 builder: (_, container) {
+                  containerHeight = container.maxHeight;
                   return ValueListenableBuilder(
                     valueListenable: _headerStateNotifier,
                     builder: (_, headerState, _) {
@@ -516,21 +567,29 @@ class _ListHeaderState extends State<ListHeader> {
               children: [
                 if (isExpand) ...[
                   IconButton(
-                    visualDensity: VisualDensity.standard,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.all(2),
                     onPressed: () {
                       widget.onScrollToSelected(groupName);
                     },
+                    iconSize: 18,
                     icon: const Icon(Icons.adjust),
                   ),
+                  const SizedBox(width: 4),
                   IconButton(
+                    iconSize: 20,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.all(2),
                     onPressed: _delayTest,
-                    visualDensity: VisualDensity.standard,
                     icon: const Icon(Icons.network_ping),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                 ] else
-                  SizedBox(width: 4),
+                  SizedBox(width: 6),
                 IconButton.filledTonal(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.all(4),
+                  iconSize: 22,
                   onPressed: () {
                     _handleChange(groupName);
                   },
