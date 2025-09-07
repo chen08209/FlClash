@@ -61,8 +61,9 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
 
   String _formatDate(int? timestamp) {
     if (timestamp == null) return '未知';
-    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-    return DateFormat('yyyy-MM-dd HH:mm:ss').format(date);
+    final utcTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000, isUtc: true);
+    final chineseTime = utcTime.add(const Duration(hours: 8));
+    return DateFormat('yyyy-MM-dd HH:mm:ss').format(chineseTime);
   }
 
   String _formatTraffic(num? bytes) {
@@ -297,8 +298,22 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                                   Navigator.pushNamed(context, '/order_center');
                                 },
                               ),
-                              _buildTechServiceItem(Icons.support_agent, '工单列表', TechTheme.neonYellow),
-                              _buildTechServiceItem(Icons.analytics, '流量明细', TechTheme.neonPink),
+                              _buildTechServiceItem(
+                                Icons.support_agent, 
+                                '工单中心', 
+                                TechTheme.neonYellow,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/ticket_list');
+                                },
+                              ),
+                              _buildTechServiceItem(
+                                Icons.analytics, 
+                                '流量明细', 
+                                TechTheme.neonPink,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/traffic_log');
+                                },
+                              ),
                             ],
                           ),
                         ),

@@ -206,6 +206,9 @@ class ApplicationState extends ConsumerState<Application> {
                 '/forgot_password': (context) => const ForgotPasswordPage(),
                 '/subscription_store': (context) => const SubscriptionStorePage(),
                 '/order_center': (context) => const OrderCenterPage(),
+                '/ticket_list': (context) => const TicketListPage(),
+                '/create_ticket': (context) => const CreateTicketPage(),
+                '/traffic_log': (context) => const TrafficLogPage(),
               },
               onGenerateRoute: (settings) {
                 if (settings.name == '/checkout') {
@@ -229,6 +232,15 @@ class ApplicationState extends ConsumerState<Application> {
                         order: args['order'] as Order,
                         plan: args['plan'] as SubscriptionPlan,
                         discountAmount: args['discountAmount'] as int?,
+                      ),
+                    );
+                  }
+                } else if (settings.name == '/ticket_detail') {
+                  final args = settings.arguments as Map<String, dynamic>?;
+                  if (args != null) {
+                    return MaterialPageRoute(
+                      builder: (context) => TicketDetailPage(
+                        ticketId: args['ticketId'] as int,
                       ),
                     );
                   }

@@ -37,6 +37,8 @@ extension DateTimeExtension on DateTime {
   }
 
   String get show {
-    return toIso8601String().substring(0, 10);
+    // 将时间转换为东8区时间再格式化
+    final chineseTime = isUtc ? add(const Duration(hours: 8)) : this;
+    return chineseTime.toIso8601String().substring(0, 10);
   }
 }

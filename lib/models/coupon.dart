@@ -86,10 +86,16 @@ class Coupon {
     }
   }
 
+  // 将时间戳转换为东8区时间
+  DateTime _toChineseTime(int timestamp) {
+    final utcTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000, isUtc: true);
+    return utcTime.add(const Duration(hours: 8));
+  }
+
   // 格式化有效期
   String get formattedValidPeriod {
-    final startDate = DateTime.fromMillisecondsSinceEpoch(startedAt * 1000);
-    final endDate = DateTime.fromMillisecondsSinceEpoch(endedAt * 1000);
+    final startDate = _toChineseTime(startedAt);
+    final endDate = _toChineseTime(endedAt);
     return '${_formatDate(startDate)} - ${_formatDate(endDate)}';
   }
 

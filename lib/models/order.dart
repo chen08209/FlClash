@@ -270,23 +270,34 @@ class Order {
     }
   }
 
+  // 将时间戳转换为东8区时间
+  DateTime _toChineseTime(int timestamp) {
+    final utcTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000, isUtc: true);
+    return utcTime.add(const Duration(hours: 8));
+  }
+
+  // 格式化时间为字符串
+  String _formatDateTime(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
   // 格式化创建时间
   String get formattedCreatedAt {
-    final date = DateTime.fromMillisecondsSinceEpoch(createdAt * 1000);
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final date = _toChineseTime(createdAt);
+    return _formatDateTime(date);
   }
 
   // 格式化更新时间
   String get formattedUpdatedAt {
-    final date = DateTime.fromMillisecondsSinceEpoch(updatedAt * 1000);
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final date = _toChineseTime(updatedAt);
+    return _formatDateTime(date);
   }
 
   // 格式化支付时间
   String? get formattedPaidAt {
     if (paidAt == null) return null;
-    final date = DateTime.fromMillisecondsSinceEpoch(paidAt! * 1000);
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final date = _toChineseTime(paidAt!);
+    return _formatDateTime(date);
   }
 
   // 是否显示余额支付金额

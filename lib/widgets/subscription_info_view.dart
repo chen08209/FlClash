@@ -26,7 +26,7 @@ class SubscriptionInfoView extends StatelessWidget {
     final totalShow = TrafficValue(value: total).show;
     final expireShow = subscriptionInfo?.expire != null &&
             subscriptionInfo!.expire != 0
-        ? DateTime.fromMillisecondsSinceEpoch(subscriptionInfo!.expire * 1000)
+        ? DateTime.fromMillisecondsSinceEpoch(subscriptionInfo!.expire * 1000, isUtc: true)
             .show
         : appLocalizations.infiniteTime;
     return Column(

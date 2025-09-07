@@ -6,6 +6,9 @@ import 'package:fl_clash/models/subscription_plan.dart';
 import 'package:fl_clash/models/order.dart';
 import 'package:fl_clash/models/coupon.dart';
 import 'package:fl_clash/models/payment_method.dart';
+import 'package:fl_clash/models/ticket.dart';
+import 'package:fl_clash/models/ticket_detail.dart';
+import 'package:fl_clash/models/traffic_log.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
@@ -730,6 +733,258 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('关闭订单失败：${e.toString()}');
+    }
+  }
+
+  // ===== 工单相关 API =====
+  
+  /// 获取工单列表
+  Future<List<Ticket>> getTicketList() async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.get(
+        '/user/ticket/fetch',
+        options: Options(
+          headers: {
+            'authorization': authData,
+          },
+        ),
+      );
+
+      if (response.data['status'] == 'success') {
+        List<dynamic> ticketsData = response.data['data'] ?? [];
+        return ticketsData.map((ticket) => Ticket.fromJson(ticket)).toList();
+      } else {
+        throw Exception(response.data['message'] ?? '获取工单列表失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('获取工单列表失败：${e.toString()}');
+    }
+  }
+
+  /// 创建工单
+  Future<bool> createTicket({
+    required String subject,
+    required TicketLevel level,
+    required String message,
+  }) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.post(
+        '/user/ticket/save',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'authorization': authData,
+          },
+        ),
+        data: json.encode({
+          'subject': subject,
+          'level': level.code,
+          'message': message,
+        }),
+      );
+
+      if (response.data['status'] == 'success') {
+        return response.data['data'] == true;
+      } else {
+        throw Exception(response.data['message'] ?? '创建工单失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('创建工单失败：${e.toString()}');
+    }
+  }
+
+  /// 获取工单详情
+  Future<TicketDetail> getTicketDetail(int ticketId) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.get(
+        '/user/ticket/fetch',
+        queryParameters: {
+          'id': ticketId,
+        },
+        options: Options(
+          headers: {
+            'authorization': authData,
+          },
+        ),
+      );
+
+      if (response.data['status'] == 'success') {
+        return TicketDetail.fromJson(response.data['data']);
+      } else {
+        throw Exception(response.data['message'] ?? '获取工单详情失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('获取工单详情失败：${e.toString()}');
+    }
+  }
+
+  /// 回复工单
+  Future<bool> replyTicket({
+    required int ticketId,
+    required String message,
+  }) async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.post(
+        '/user/ticket/reply',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'authorization': authData,
+          },
+        ),
+        data: json.encode({
+          'id': ticketId,
+          'message': message,
+        }),
+      );
+
+      if (response.data['status'] == 'success') {
+        return response.data['data'] == true;
+      } else {
+        throw Exception(response.data['message'] ?? '回复工单失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('回复工单失败：${e.toString()}');
+    }
+  }
+
+  // ===== 流量统计相关 API =====
+  
+  /// 获取流量明细列表
+  Future<List<TrafficLog>> getTrafficLogs() async {
+    try {
+      // 获取授权token
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      
+      if (authData == null) {
+        throw Exception('未登录，请先登录');
+      }
+
+      final response = await _dio.get(
+        '/user/stat/getTrafficLog',
+        options: Options(
+          headers: {
+            'authorization': authData,
+          },
+        ),
+      );
+
+      if (response.data['status'] == 'success') {
+        List<dynamic> trafficData = response.data['data'] ?? [];
+        return trafficData.map((traffic) => TrafficLog.fromJson(traffic)).toList();
+      } else {
+        throw Exception(response.data['message'] ?? '获取流量明细失败');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['message'] != null) {
+          throw Exception(errorData['message']);
+        } else {
+          throw Exception('服务器错误：${e.response!.statusCode}');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查网络');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('网络连接失败，请检查网络设置');
+      } else {
+        throw Exception('网络错误：${e.message ?? "未知网络错误"}');
+      }
+    } catch (e) {
+      throw Exception('获取流量明细失败：${e.toString()}');
     }
   }
 }
