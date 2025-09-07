@@ -36,6 +36,7 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
   }
 
   Future<void> _fetchData() async {
+    print('AccountInfoPage: Starting _fetchData');
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -43,19 +44,30 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
     
     final apiService = ApiServiceV2();
     try {
+      print('AccountInfoPage: Calling getUserInfo');
       final userInfo = await apiService.getUserInfo();
+      print('AccountInfoPage: getUserInfo success: $userInfo');
+      
+      print('AccountInfoPage: Calling getSubscriptionInfo');
       final subscriptionInfo = await apiService.getSubscriptionInfo();
+      print('AccountInfoPage: getSubscriptionInfo success: $subscriptionInfo');
+      
+      if (mounted) {
       setState(() {
         _userInfo = userInfo;
         _subscriptionInfo = subscriptionInfo;
         _isLoading = false;
       });
+        print('AccountInfoPage: State updated successfully');
+      }
     } catch (e) {
-      print('Error fetching data: $e');
+      print('AccountInfoPage: Error fetching data: $e');
+      if (mounted) {
       setState(() {
         _isLoading = false;
         _errorMessage = e.toString();
       });
+      }
     }
   }
 
@@ -89,7 +101,7 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_showToolsSection ? '工具页面已显示' : '工具页面已隐藏'),
-            backgroundColor: TechTheme.primaryCyan,
+            backgroundColor: const Color(0xFF00D9FF),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -99,32 +111,67 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return TechPageWrapper(
-      showAppBar: false,
+    print('AccountInfoPage: Building widget - loading: $_isLoading, error: $_errorMessage, userInfo: ${_userInfo != null}');
+    
+    // 简化版本测试 - 使用基础Scaffold
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0E27), // 深蓝黑色背景
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          '账户信息',
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SafeArea(
+        child: Padding(
       padding: const EdgeInsets.all(16),
       child: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(TechTheme.primaryCyan),
+              ? const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D9FF)),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        '加载账户信息...',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
               ),
             )
           : _errorMessage != null
               ? Center(
-                  child: TechTheme.techCard(
-                    animated: true,
-                    accentColor: TechTheme.neonOrange,
+                  child: Container(
+                    margin: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141A3C),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFFF6B35),
+                        width: 1,
+                      ),
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.error_outline,
                           size: 64,
-                          color: TechTheme.neonOrange,
+                          color: Color(0xFFFF6B35),
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          '加载失败',
-                          style: TechTheme.techTextStyle(
+                          _errorMessage!.contains('未登录') ? '请先登录' : '加载失败',
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -134,16 +181,40 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: TechTheme.techTextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             color: Colors.white.withOpacity(0.8),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        TechTheme.techButton(
-                          text: '重试',
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_errorMessage!.contains('未登录')) ...[
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF00FF88),
+                                  foregroundColor: Colors.black,
+                                ),
+                                child: const Text('去登录'),
+                              ),
+                              const SizedBox(width: 16),
+                            ],
+                            ElevatedButton(
                           onPressed: _fetchData,
-                          color: TechTheme.neonOrange,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF6B35),
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('重试'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -151,551 +222,377 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                 )
               : RefreshIndicator(
                   onRefresh: _fetchData,
-                  color: TechTheme.primaryCyan,
+                  color: const Color(0xFF00D9FF),
                   child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // 基本信息卡片
-                        TechTheme.techCard(
-                          animated: true,
-                          accentColor: TechTheme.primaryCyan,
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF141A3C),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFF00D9FF),
+                              width: 1,
+                            ),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 '账户信息',
-                                style: TechTheme.techTextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: TechTheme.primaryCyan,
-                                  glowing: true,
+                                  color: Color(0xFF00D9FF),
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              _buildTechInfoRow(
-                                Icons.email,
-                                '邮箱',
-                                _userInfo?['email'] ?? '未知',
-                                onTap: _handleEmailClick,
-                                clickable: true,
-                              ),
-                              _buildTechInfoRow(
-                                Icons.access_time,
-                                '过期时间',
-                                _formatDate(_userInfo?['expired_at']),
-                              ),
-                              _buildTechInfoRow(
-                                Icons.account_balance_wallet,
-                                '余额',
-                                '¥${_userInfo?['balance'] ?? '0'}',
-                              ),
+                              _buildInfoRow('邮箱', _userInfo?['email'] ?? '未知', clickable: true, onTap: _handleEmailClick),
+                              _buildInfoRow('余额', '¥${_userInfo?['balance'] ?? '0'}'),
+                              _buildExpireTimeRow(),
                             ],
                           ),
                         ),
-                        
-                        const SizedBox(height: 16),
                         
                         // 订阅信息卡片
-                        TechTheme.techCard(
-                          animated: true,
-                          accentColor: TechTheme.primaryPurple,
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF141A3C),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFF8B5CF6),
+                              width: 1,
+                            ),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 '订阅信息',
-                                style: TechTheme.techTextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: TechTheme.primaryPurple,
-                                  glowing: true,
+                                  color: Color(0xFF8B5CF6),
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              _buildTechInfoRow(
-                                Icons.card_membership,
-                                '套餐名称',
-                                _subscriptionInfo?['plan']?['name'] ?? '未知',
-                              ),
-                              _buildTechInfoRow(
-                                Icons.upload,
-                                '上传流量',
-                                _formatTraffic(_subscriptionInfo?['u']),
-                              ),
-                              _buildTechInfoRow(
-                                Icons.download,
-                                '下载流量',
-                                _formatTraffic(_subscriptionInfo?['d']),
-                              ),
-                              _buildTechInfoRow(
-                                Icons.data_usage,
-                                '总流量',
-                                _formatTraffic(_subscriptionInfo?['transfer_enable']),
-                              ),
-                              if (_subscriptionInfo != null && _subscriptionInfo!['transfer_enable'] != null) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
-                                    color: Colors.white.withOpacity(0.2),
-                                  ),
-                                  child: FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: ((_subscriptionInfo!['u'] ?? 0) + (_subscriptionInfo!['d'] ?? 0)) / _subscriptionInfo!['transfer_enable'],
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(4),
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            TechTheme.primaryPurple,
-                                            TechTheme.primaryCyan,
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              _buildInfoRow('套餐名称', _subscriptionInfo?['plan']?['name'] ?? '未知'),
+                              _buildInfoRow('上传流量', _formatTraffic(_subscriptionInfo?['u'])),
+                              _buildInfoRow('下载流量', _formatTraffic(_subscriptionInfo?['d'])),
+                              _buildInfoRow('总流量', _formatTraffic(_subscriptionInfo?['transfer_enable'])),
                             ],
                           ),
                         ),
                         
-                        const SizedBox(height: 16),
-                        
-                        // 功能服务卡片
-                        TechTheme.techCard(
-                          animated: true,
-                          accentColor: TechTheme.neonGreen,
+                        // 服务中心卡片
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF141A3C),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFF00FF88),
+                              width: 1,
+                            ),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 '服务中心',
-                                style: TechTheme.techTextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: TechTheme.neonGreen,
-                                  glowing: true,
+                                  color: Color(0xFF00FF88),
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              _buildTechServiceItem(
-                                Icons.shopping_cart, 
-                                '订购中心', 
-                                TechTheme.primaryBlue,
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/subscription_store');
-                                },
-                              ),
-                              _buildTechServiceItem(
-                                Icons.receipt_long, 
-                                '订单中心', 
-                                TechTheme.primaryPurple,
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/order_center');
-                                },
-                              ),
-                              _buildTechServiceItem(
-                                Icons.support_agent, 
-                                '工单中心', 
-                                TechTheme.neonYellow,
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/ticket_list');
-                                },
-                              ),
-                              _buildTechServiceItem(
-                                Icons.analytics, 
-                                '流量明细', 
-                                TechTheme.neonPink,
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/traffic_log');
-                                },
-                              ),
+                              _buildServiceItem('订购中心', Icons.shopping_cart, '/subscription_store'),
+                              _buildServiceItem('订单中心', Icons.receipt_long, '/order_center'),
+                              _buildServiceItem('工单中心', Icons.support_agent, '/ticket_list'),
+                              _buildServiceItem('流量明细', Icons.analytics, '/traffic_log'),
                             ],
                           ),
                         ),
                         
-                        const SizedBox(height: 16),
-                        
-                        // 设置卡片
-                        TechTheme.techCard(
-                          animated: true,
-                          accentColor: TechTheme.primaryBlue,
+                        // 设置区域
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF141A3C),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFF3B82F6),
+                              width: 1,
+                            ),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '设置',
-                                style: TechTheme.techTextStyle(
+                              const Text(
+                                '应用设置',
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: TechTheme.primaryBlue,
-                                  glowing: true,
+                                  color: Color(0xFF3B82F6),
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              _TechLocaleItem(),
-                              const SizedBox(height: 12),
-                              _TechThemeItem(),
-                              if (Platform.isAndroid) ...[
-                                const SizedBox(height: 12),
-                                _TechAccessItem(),
-                              ],
+                              _buildSettingItem('主题设置', Icons.palette, () {
+                                _showThemeDialog();
+                              }),
+                              _buildSettingItem('访问控制', Icons.security, () {
+                                _showAccessDialog();
+                              }),
+                              _buildSettingItem('退出登录', Icons.logout, () {
+                                _showLogoutDialog();
+                              }),
                             ],
                           ),
                         ),
                         
-                        // 工具页面 (条件显示)
+                        // 工具页面（隐藏，需要点击邮箱15次激活）
                         if (_showToolsSection) ...[
-                          const SizedBox(height: 16),
-                          TechTheme.techCard(
-                            animated: true,
-                            accentColor: TechTheme.neonOrange,
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF141A3C),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFFFD700),
+                                width: 1,
+                              ),
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.construction,
-                                      color: TechTheme.neonOrange,
-                                      size: 24,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      '开发者工具',
-                                      style: TechTheme.techTextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: TechTheme.neonOrange,
-                                        glowing: true,
-                                      ),
-                                    ),
-                                  ],
+                                const Text(
+                                  '开发者工具',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFFFD700),
+                                  ),
                                 ),
                                 const SizedBox(height: 16),
-                                TechTheme.techButton(
-                                  text: '打开工具页面',
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => Scaffold(
-                                          appBar: AppBar(
-                                            title: const Text('开发者工具'),
-                                            backgroundColor: TechTheme.darkBackground,
-                                            foregroundColor: Colors.white,
-                                          ),
-                                          body: const ToolsView(),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  color: TechTheme.neonOrange,
-                                  width: double.infinity,
-                                ),
+                                _buildSettingItem('网络日志', Icons.network_check, () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('网络日志功能')),
+                                  );
+                                }),
+                                _buildSettingItem('调试信息', Icons.bug_report, () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('调试信息功能')),
+                                  );
+                                }),
+                                _buildSettingItem('性能监控', Icons.speed, () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('性能监控功能')),
+                                  );
+                                }),
                               ],
                             ),
                           ),
                         ],
-                        
-                        const SizedBox(height: 16),
-                        
-                        // 退出账户
-                        TechTheme.techCard(
-                          animated: true,
-                          accentColor: TechTheme.neonOrange,
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.exit_to_app,
-                                color: TechTheme.neonOrange,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  '退出账户',
-                                  style: TechTheme.techTextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.white.withOpacity(0.5),
-                                size: 16,
-                              ),
-                            ],
-                          ),
-                          onTap: () async {
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.clear();
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (context) => const LoginPage()),
-                              (route) => false,
-                            );
-                          },
-                        ),
-                        
-                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
                 ),
+                  ),
+                ),
     );
   }
 
-  Widget _buildTechInfoRow(
-    IconData icon, 
-    String label, 
-    String value, {
-    VoidCallback? onTap,
-    bool clickable = false,
-  }) {
-    Widget row = Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: clickable 
-            ? TechTheme.primaryCyan.withOpacity(0.1)
-            : Colors.transparent,
-        border: clickable 
-            ? Border.all(
-                color: TechTheme.primaryCyan.withOpacity(0.3),
-                width: 1,
-              )
-            : null,
-      ),
+  Widget _buildInfoRow(String label, String value, {bool clickable = false, VoidCallback? onTap}) {
+    Widget row = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: TechTheme.primaryCyan.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon, 
-              size: 20, 
-              color: TechTheme.primaryCyan,
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  label,
-                  style: TechTheme.techTextStyle(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
+                    fontWeight: FontWeight.w500,
                   ),
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                Flexible(
-                  child: Text(
-                    value,
-                    style: TechTheme.techTextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.end,
-                  ),
+              ),
+              if (clickable) ...[
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.touch_app,
+                  size: 16,
+                  color: Color(0xFF00D9FF),
                 ),
               ],
-            ),
+            ],
           ),
-          if (clickable) ...[
-            const SizedBox(width: 8),
-            Icon(
-              Icons.touch_app,
-              size: 16,
-              color: TechTheme.primaryCyan.withOpacity(0.7),
-            ),
-          ],
         ],
       ),
     );
 
-    if (onTap != null) {
-      return GestureDetector(
+    if (clickable && onTap != null) {
+      return InkWell(
         onTap: onTap,
-        child: row,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: const Color(0xFF00D9FF).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: row,
+        ),
       );
     }
+
     return row;
   }
 
-  Widget _buildTechServiceItem(IconData icon, String title, Color color, {VoidCallback? onTap}) {
+  Widget _buildExpireTimeRow() {
+    final expiredAt = _userInfo?['expired_at'];
+    final expireText = _formatDate(expiredAt);
+    
+    // 检查是否过期
+    final isExpired = expiredAt != null && 
+        DateTime.fromMillisecondsSinceEpoch(expiredAt * 1000, isUtc: true)
+            .add(const Duration(hours: 8)) // 转换为东8区
+            .isBefore(DateTime.now());
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '过期时间',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  expireText,
+                  style: TextStyle(
+                    color: isExpired ? Colors.red : Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isExpired) ...[
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/subscription_store');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00FF88).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF00FF88),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Text(
+                      '续费',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF00FF88),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServiceItem(String title, IconData icon, String route) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.transparent,
         child: InkWell(
+        onTap: () {
+          Navigator.pushNamed(context, route);
+        },
           borderRadius: BorderRadius.circular(8),
-          onTap: onTap ?? () {},
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: color.withOpacity(0.3),
+              color: const Color(0xFF00FF88).withOpacity(0.3),
                 width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 20,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TechTheme.techTextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.white.withOpacity(0.5),
-                ),
-              ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TechLocaleItem extends ConsumerWidget {
-  const _TechLocaleItem();
-
-  String _getLocaleString(Locale? locale) {
-    if (locale == null) return appLocalizations.defaultText;
-    return Intl.message(locale.toString());
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final locale = ref.watch(appSettingProvider.select((state) => state.locale));
-    final subTitle = locale ?? appLocalizations.defaultText;
-    final currentLocale = utils.getLocaleForString(locale);
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: TechTheme.primaryBlue.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            // 显示语言选择对话框
-            showDialog<Locale?>(
-              context: context,
-              builder: (context) => AlertDialog(
-                backgroundColor: TechTheme.cardBackground,
-                title: Text(
-                  appLocalizations.language,
-                  style: TechTheme.techTextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: TechTheme.primaryBlue,
-                  ),
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final option in [null, ...AppLocalizations.delegate.supportedLocales])
-                      ListTile(
-                        title: Text(
-                          _getLocaleString(option),
-                          style: TechTheme.techTextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                        selected: option == currentLocale,
-                        selectedColor: TechTheme.primaryBlue,
-                        onTap: () {
-                          ref.read(appSettingProvider.notifier).updateState(
-                                (state) => state.copyWith(locale: option?.toString()),
-                              );
-                          Navigator.pop(context);
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            );
-          },
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: TechTheme.primaryBlue.withOpacity(0.2),
+                  color: const Color(0xFF00FF88).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  Icons.language_outlined,
+                  icon,
                   size: 20,
-                  color: TechTheme.primaryBlue,
+                  color: const Color(0xFF00FF88),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      appLocalizations.language,
-                      style: TechTheme.techTextStyle(
+                child: Text(
+                  title,
+                  style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
-                    ),
-                    Text(
-                      Intl.message(subTitle),
-                      style: TechTheme.techTextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
                 ),
               ),
               Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
+                Icons.chevron_right,
                 color: Colors.white.withOpacity(0.5),
+                  size: 20,
               ),
             ],
           ),
@@ -703,82 +600,51 @@ class _TechLocaleItem extends ConsumerWidget {
       ),
     );
   }
-}
 
-class _TechThemeItem extends StatelessWidget {
-  const _TechThemeItem();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSettingItem(String title, IconData icon, VoidCallback onTap) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: TechTheme.primaryPurple.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => Scaffold(
-                  appBar: AppBar(
-                    title: Text(appLocalizations.theme),
-                    backgroundColor: TechTheme.darkBackground,
-                    foregroundColor: Colors.white,
-                  ),
-                  body: const ThemeView(),
-                ),
-              ),
-            );
-          },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: const Color(0xFF3B82F6).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: TechTheme.primaryPurple.withOpacity(0.2),
+                  color: const Color(0xFF3B82F6).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  Icons.style,
+                  icon,
                   size: 20,
-                  color: TechTheme.primaryPurple,
+                  color: const Color(0xFF3B82F6),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      appLocalizations.theme,
-                      style: TechTheme.techTextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      appLocalizations.themeDesc,
-                      style: TechTheme.techTextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
+                Icons.chevron_right,
                 color: Colors.white.withOpacity(0.5),
+                size: 20,
               ),
             ],
           ),
@@ -786,88 +652,158 @@ class _TechThemeItem extends StatelessWidget {
       ),
     );
   }
-}
 
-class _TechAccessItem extends StatelessWidget {
-  const _TechAccessItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: TechTheme.neonGreen.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => Scaffold(
-                  appBar: AppBar(
-                    title: Text(appLocalizations.appAccessControl),
-                    backgroundColor: TechTheme.darkBackground,
-                    foregroundColor: Colors.white,
-                  ),
-                  body: const AccessView(),
-                ),
-              ),
-            );
-          },
-          child: Row(
+  void _showThemeDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF141A3C),
+          title: const Text(
+            '主题设置',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: TechTheme.neonGreen.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.view_list,
-                  size: 20,
-                  color: TechTheme.neonGreen,
-                ),
+              ListTile(
+                leading: const Icon(Icons.brightness_6, color: Color(0xFF3B82F6)),
+                title: const Text('跟随系统', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('已设置为跟随系统主题')),
+                  );
+                },
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      appLocalizations.accessControl,
-                      style: TechTheme.techTextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      appLocalizations.accessControlDesc,
-                      style: TechTheme.techTextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
+              ListTile(
+                leading: const Icon(Icons.light_mode, color: Color(0xFF3B82F6)),
+                title: const Text('浅色模式', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('已设置为浅色模式')),
+                  );
+                },
               ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.white.withOpacity(0.5),
+              ListTile(
+                leading: const Icon(Icons.dark_mode, color: Color(0xFF3B82F6)),
+                title: const Text('深色模式', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('已设置为深色模式')),
+                  );
+                },
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
+    );
+  }
+
+  void _showAccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF141A3C),
+          title: const Text(
+            '访问控制',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.vpn_key, color: Color(0xFF3B82F6)),
+                title: const Text('系统代理', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('系统代理设置')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.network_check, color: Color(0xFF3B82F6)),
+                title: const Text('TUN模式', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('TUN模式设置')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.security, color: Color(0xFF3B82F6)),
+                title: const Text('DNS设置', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('DNS设置')),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF141A3C),
+          title: const Text(
+            '退出登录',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            '确定要退出登录吗？',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                '取消',
+                style: TextStyle(color: Color(0xFF3B82F6)),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                
+                // 清除本地存储的登录信息
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('auth_token');
+                await prefs.remove('auth_data');
+                await prefs.remove('user_email');
+                await prefs.setBool('is_logged_in', false);
+                
+                // 跳转到登录页面
+                if (mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                  );
+                }
+              },
+              child: const Text(
+                '确定',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
-

@@ -3,6 +3,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/common/tech_theme.dart';
+import 'package:fl_clash/services/api_service_v2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
@@ -21,6 +22,10 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
   late AnimationController _connectingController;
   late Animation<double> _connectingRotation;
   bool _isConnecting = false;
+  
+  // 订阅信息相关状态
+  Map<String, dynamic>? _userInfo;
+  bool _isLoadingSubscription = false;
 
   @override
   void initState() {
@@ -49,6 +54,9 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
       parent: _connectingController,
       curve: Curves.linear,
     ));
+    
+    // 获取订阅信息
+    _fetchSubscriptionInfo();
   }
 
   @override
@@ -56,6 +64,34 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     _animationController.dispose();
     _connectingController.dispose();
     super.dispose();
+  }
+
+  // 获取订阅信息
+  Future<void> _fetchSubscriptionInfo() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingSubscription = true;
+    });
+    
+    try {
+      final apiService = ApiServiceV2();
+      final userInfo = await apiService.getUserInfo();
+      
+      if (mounted) {
+        setState(() {
+          _userInfo = userInfo;
+          _isLoadingSubscription = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingSubscription = false;
+        });
+      }
+      // 忽略错误，用户可能未登录
+    }
   }
 
   @override
@@ -171,6 +207,11 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
                     
                     // IP地址显示
                     _buildIpDisplay(context),
+                    
+                    SizedBox(height: isSmallScreen ? 10 : 15),
+                    
+                    // 订阅信息显示
+                    _buildSubscriptionDisplay(context),
                     
                     SizedBox(height: isSmallScreen ? 15 : 20),
                   ],
@@ -727,6 +768,111 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
         );
       },
     );
+  }
+
+  // 订阅信息显示
+  Widget _buildSubscriptionDisplay(BuildContext context) {
+    if (_userInfo == null && !_isLoadingSubscription) {
+      return Container(); // 未登录或无订阅信息时不显示
+    }
+
+    // 检查是否过期
+    final expiredAt = _userInfo?['expired_at'];
+    final isExpired = expiredAt != null && 
+        DateTime.fromMillisecondsSinceEpoch(expiredAt * 1000, isUtc: true)
+            .add(const Duration(hours: 8)) // 转换为东8区
+            .isBefore(DateTime.now());
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: isExpired ? Colors.red.withOpacity(0.5) : Colors.cyan.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '订阅状态',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+              ),
+              if (isExpired)
+                InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/subscription_store');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.red,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '续费',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_isLoadingSubscription) ...[
+            const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.cyan),
+              ),
+            ),
+          ] else if (_userInfo != null) ...[
+            Text(
+              isExpired ? '已过期' : '正常',
+              style: TextStyle(
+                color: isExpired ? Colors.red : Colors.green,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              '过期时间: ${_formatExpireDate(expiredAt)}',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // 格式化过期时间
+  String _formatExpireDate(int? timestamp) {
+    if (timestamp == null) return '未知';
+    final utcTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000, isUtc: true);
+    final chineseTime = utcTime.add(const Duration(hours: 8));
+    return '${chineseTime.year}-${chineseTime.month.toString().padLeft(2, '0')}-${chineseTime.day.toString().padLeft(2, '0')}';
   }
 }
 
