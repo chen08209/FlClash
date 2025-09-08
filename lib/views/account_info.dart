@@ -116,20 +116,11 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
     // 简化版本测试 - 使用基础Scaffold
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E27), // 深蓝黑色背景
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          '账户信息',
-          style: TextStyle(color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
       body: SafeArea(
         child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: _isLoading
-              ? const Center(
+          padding: const EdgeInsets.all(16),
+          child: _isLoading
+                  ? const Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -408,8 +399,8 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                     ),
                   ),
                 ),
-                  ),
-                ),
+        ),
+      ),
     );
   }
 
