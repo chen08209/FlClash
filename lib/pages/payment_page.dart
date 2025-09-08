@@ -269,6 +269,38 @@ class _PaymentPageState extends State<PaymentPage> {
         _paymentResult = result;
         _isProcessingPayment = false;
       });
+
+      // 处理订单已完成的情况
+      if (result.type == PaymentResultType.completed) {
+        if (result.completed == true) {
+          // 停止状态轮询，因为订单已经完成
+          _statusCheckTimer?.cancel();
+          _isOrderCompleted = true;
+          
+          // 显示支付成功提示
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('订单支付成功！优惠码已全额抵扣'),
+              backgroundColor: TechTheme.neonGreen,
+              action: SnackBarAction(
+                label: '查看订单',
+                textColor: Colors.white,
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/order_center');
+                },
+              ),
+            ),
+          );
+        } else {
+          // 支付失败
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('订单处理失败'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     } catch (e) {
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
@@ -295,8 +327,8 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Future<void> _openPaymentUrl() async {
-    if (_paymentResult?.type == PaymentResultType.url) {
-      final url = Uri.parse(_paymentResult!.data);
+    if (_paymentResult?.type == PaymentResultType.url && _paymentResult!.data != null) {
+      final url = Uri.parse(_paymentResult!.data!);
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
@@ -609,7 +641,69 @@ class _PaymentPageState extends State<PaymentPage> {
           ),
           const SizedBox(height: 16),
           
-          if (_paymentResult!.type == PaymentResultType.qrcode) ...[
+          if (_paymentResult!.type == PaymentResultType.completed) ...[
+            // 订单已完成支付
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: TechTheme.neonGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: TechTheme.neonGreen,
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    size: 80,
+                    color: TechTheme.neonGreen,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '支付成功！',
+                    style: TechTheme.techTextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: TechTheme.neonGreen,
+                      glowing: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '优惠码已全额抵扣订单金额',
+                    style: TechTheme.techTextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '订单已自动激活，请稍等片刻后刷新',
+                    style: TechTheme.techTextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TechTheme.techButton(
+                      text: '查看订单',
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/order_center');
+                      },
+                      color: TechTheme.neonGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (_paymentResult!.type == PaymentResultType.qrcode && _paymentResult!.data != null) ...[
             Text(
               '请使用${_selectedPaymentMethod?.name}扫描二维码支付',
               style: TechTheme.techTextStyle(
@@ -626,13 +720,13 @@ class _PaymentPageState extends State<PaymentPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: QrImageView(
-                  data: _paymentResult!.data,
+                  data: _paymentResult!.data!,
                   version: QrVersions.auto,
                   size: 200.0,
                 ),
               ),
             ),
-          ] else ...[
+          ] else if (_paymentResult!.type == PaymentResultType.url) ...[
             Text(
               '点击下方按钮跳转到支付页面',
               style: TechTheme.techTextStyle(
@@ -708,7 +802,8 @@ class _PaymentPageState extends State<PaymentPage> {
               _buildPaymentResult(),
               const SizedBox(height: 16),
               
-              if (_paymentResult == null && _paymentMethods.isNotEmpty) ...[
+              // 只有在订单未完成且未处理过支付时显示支付按钮
+              if (_paymentResult == null && _paymentMethods.isNotEmpty && !_isOrderCompleted) ...[
                 SizedBox(
                   width: double.infinity,
                   child: TechTheme.techButton(
@@ -720,8 +815,10 @@ class _PaymentPageState extends State<PaymentPage> {
                 const SizedBox(height: 12),
               ],
               
-              // 关闭订单按钮 - 只有在待支付状态时显示
-              if (_currentOrderStatus == OrderCheckStatus.pending && !_isOrderCompleted) ...[
+              // 关闭订单按钮 - 只有在待支付状态且未完成时显示
+              if (_currentOrderStatus == OrderCheckStatus.pending && 
+                  !_isOrderCompleted && 
+                  (_paymentResult == null || _paymentResult!.type != PaymentResultType.completed)) ...[
                 SizedBox(
                   width: double.infinity,
                   child: TechTheme.techButton(

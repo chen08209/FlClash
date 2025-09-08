@@ -45,24 +45,36 @@ class PaymentMethod {
 }
 
 enum PaymentResultType {
-  qrcode, // 二维码支付
-  url,    // URL跳转支付
+  qrcode,    // 二维码支付
+  url,       // URL跳转支付
+  completed, // 订单已完成支付（优惠码全额抵扣）
 }
 
 class PaymentResult {
   final PaymentResultType type;
-  final String data; // 二维码内容或支付URL
+  final String? data; // 二维码内容或支付URL，completed类型时为null
+  final bool? completed; // 当type为completed时表示是否成功
 
   PaymentResult({
     required this.type,
-    required this.data,
+    this.data,
+    this.completed,
   });
 
   factory PaymentResult.fromJson(Map<String, dynamic> json) {
-    return PaymentResult(
-      type: _parsePaymentResultType(json['type'] as int),
-      data: json['data'] as String,
-    );
+    final type = _parsePaymentResultType(json['type'] as int);
+    
+    if (type == PaymentResultType.completed) {
+      return PaymentResult(
+        type: type,
+        completed: json['data'] as bool? ?? false,
+      );
+    } else {
+      return PaymentResult(
+        type: type,
+        data: json['data'] as String,
+      );
+    }
   }
 
   static PaymentResultType _parsePaymentResultType(int type) {
@@ -71,6 +83,8 @@ class PaymentResult {
         return PaymentResultType.qrcode;
       case 1:
         return PaymentResultType.url;
+      case -1:
+        return PaymentResultType.completed;
       default:
         return PaymentResultType.qrcode;
     }
@@ -83,6 +97,8 @@ class PaymentResult {
         return '扫码支付';
       case PaymentResultType.url:
         return 'URL支付';
+      case PaymentResultType.completed:
+        return '支付完成';
     }
   }
 }
