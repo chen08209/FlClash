@@ -97,6 +97,23 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     }
   }
 
+  // 检查订阅是否过期
+  bool _isSubscriptionExpired() {
+    if (_userInfo == null) return false;
+    
+    final expiredAt = _userInfo!['expired_at'] as int? ?? 0;
+    if (expiredAt <= 0) return false;
+    
+    try {
+      final expireDate = DateTime.fromMillisecondsSinceEpoch(expiredAt * 1000);
+      final beijingTime = expireDate.add(const Duration(hours: 8)); // 转换为东8区
+      final now = DateTime.now();
+      return beijingTime.isBefore(now);
+    } catch (e) {
+      return false;
+    }
+  }
+
   // 处理连接按钮点击
   Future<void> _handleConnectTap() async {
     print('ModernDashboard: Connect button tapped');
@@ -754,52 +771,86 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
       final usedTraffic = uploadTraffic + downloadTraffic;
       final remainingTraffic = totalTraffic - usedTraffic;
       final expiredAt = _userInfo!['expired_at'] as int? ?? 0;
+      final isExpired = _isSubscriptionExpired();
       
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      return Column(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '剩余流量',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.white70 : Colors.black54,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '剩余流量',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                  Text(
+                    formatTraffic(remainingTraffic),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: remainingTraffic > 0 
+                          ? (isDark ? Colors.white : Colors.black87)
+                          : Colors.red,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                formatTraffic(remainingTraffic),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: remainingTraffic > 0 
-                      ? (isDark ? Colors.white : Colors.black87)
-                      : Colors.red,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '到期时间',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                  Text(
+                    formatExpireTime(expiredAt),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isExpired 
+                          ? Colors.red
+                          : (isDark ? Colors.white : Colors.black87),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '到期时间',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.white70 : Colors.black54,
+          // 如果过期，显示续费按钮
+          if (isExpired) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/subscription_store');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  '立即续费',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              Text(
-                formatExpireTime(expiredAt),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ],
       );
     } else {
@@ -1098,10 +1149,16 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     try {
       // 确定实际的连接状态（真实状态优先，否则使用简化状态）
       final effectiveIsStart = isStart || _isConnectedSimple;
+      final isExpired = _isSubscriptionExpired();
       
       return Center(
         child: GestureDetector(
-          onTap: _isConnecting ? null : _handleConnectTap,
+          onTap: isExpired 
+              ? () {
+                  // 订阅过期时跳转到续费页面
+                  Navigator.pushNamed(context, '/subscription_store');
+                }
+              : (_isConnecting ? null : _handleConnectTap),
           child: AnimatedBuilder(
             animation: Listenable.merge([_pulseAnimation, _connectingRotation]),
             builder: (context, child) {
@@ -1115,24 +1172,30 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
                     height: isSmallScreen ? 150 : 180,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: _isConnecting
+                        gradient: RadialGradient(
+                        colors: isExpired
                             ? [
-                                Colors.orange.withOpacity(0.3),
-                                Colors.orange.withOpacity(0.1),
+                                Colors.red.withOpacity(0.3),
+                                Colors.red.withOpacity(0.1),
                                 Colors.transparent,
                               ]
-                            : effectiveIsStart
+                            : _isConnecting
                                 ? [
-                                    Colors.green.withOpacity(0.3),
-                                    Colors.green.withOpacity(0.1),
+                                    Colors.orange.withOpacity(0.3),
+                                    Colors.orange.withOpacity(0.1),
                                     Colors.transparent,
                                   ]
-                                : [
-                                    Colors.transparent,
-                                    Colors.transparent,
-                                    Colors.transparent,
-                                  ],
+                                : effectiveIsStart
+                                    ? [
+                                        Colors.green.withOpacity(0.3),
+                                        Colors.green.withOpacity(0.1),
+                                        Colors.transparent,
+                                      ]
+                                    : [
+                                        Colors.transparent,
+                                        Colors.transparent,
+                                        Colors.transparent,
+                                      ],
                       ),
                     ),
                   ),
@@ -1148,28 +1211,35 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: _isConnecting
+                          colors: isExpired
                               ? [
-                                  Colors.orange.withOpacity(0.8),
-                                  Colors.deepOrange.withOpacity(0.8),
+                                  Colors.red.withOpacity(0.8),
+                                  Colors.redAccent.withOpacity(0.8),
                                 ]
-                              : effectiveIsStart
+                              : _isConnecting
                                   ? [
-                                      Colors.green.withOpacity(0.8),
-                                      Colors.teal.withOpacity(0.8),
+                                      Colors.orange.withOpacity(0.8),
+                                      Colors.deepOrange.withOpacity(0.8),
                                     ]
-                                  : [
-                                      Colors.cyan.withOpacity(0.8),
-                                      Colors.blue.withOpacity(0.8),
-                                    ],
+                                  : effectiveIsStart
+                                      ? [
+                                          Colors.green.withOpacity(0.8),
+                                          Colors.teal.withOpacity(0.8),
+                                        ]
+                                      : [
+                                          Colors.cyan.withOpacity(0.8),
+                                          Colors.blue.withOpacity(0.8),
+                                        ],
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _isConnecting
-                                ? Colors.orange.withOpacity(0.5)
-                                : effectiveIsStart
-                                    ? Colors.green.withOpacity(0.5)
-                                    : Colors.cyan.withOpacity(0.5),
+                            color: isExpired
+                                ? Colors.red.withOpacity(0.5)
+                                : _isConnecting
+                                    ? Colors.orange.withOpacity(0.5)
+                                    : effectiveIsStart
+                                        ? Colors.green.withOpacity(0.5)
+                                        : Colors.cyan.withOpacity(0.5),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
@@ -1201,19 +1271,19 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
                                         ),
                                       );
                                     },
-                                    child: effectiveIsStart
+                                    child: isExpired
                                         ? Column(
-                                            key: const ValueKey('disconnect'),
+                                            key: const ValueKey('renew'),
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
-                                                Icons.stop_circle_outlined,
+                                                Icons.payment,
                                                 color: Colors.white,
                                                 size: isSmallScreen ? 35 : 40,
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                '断开',
+                                                '续费',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: isSmallScreen ? 16 : 18,
@@ -1222,21 +1292,42 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
                                               ),
                                             ],
                                           )
-                                        : Column(
-                                            key: const ValueKey('connect'),
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.power_settings_new,
-                                                color: Colors.white,
-                                                size: isSmallScreen ? 35 : 40,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                '连接',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: isSmallScreen ? 16 : 18,
+                                        : effectiveIsStart
+                                            ? Column(
+                                                key: const ValueKey('disconnect'),
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.stop_circle_outlined,
+                                                    color: Colors.white,
+                                                    size: isSmallScreen ? 35 : 40,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    '断开',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: isSmallScreen ? 16 : 18,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            : Column(
+                                                key: const ValueKey('connect'),
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.power_settings_new,
+                                                    color: Colors.white,
+                                                    size: isSmallScreen ? 35 : 40,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    '连接',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: isSmallScreen ? 16 : 18,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
