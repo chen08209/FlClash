@@ -16,7 +16,7 @@ class ModernDashboard extends ConsumerStatefulWidget {
 }
 
 class _ModernDashboardState extends ConsumerState<ModernDashboard>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
   late AnimationController _connectingController;
@@ -33,6 +33,10 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
   @override
   void initState() {
     super.initState();
+    
+    // 注册生命周期监听器
+    WidgetsBinding.instance.addObserver(this);
+    
     _animationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -60,13 +64,43 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     
     // 获取订阅信息
     _fetchSubscriptionInfo();
+    
+    // 初始化时也确保获取订阅token
+    _initializeSubscriptionToken();
   }
 
   @override
   void dispose() {
+    // 移除生命周期监听器
+    WidgetsBinding.instance.removeObserver(this);
+    
     _animationController.dispose();
     _connectingController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // 当应用从后台回到前台时，刷新订阅信息
+    if (state == AppLifecycleState.resumed) {
+      print('ModernDashboard: App resumed, refreshing subscription info');
+      _fetchSubscriptionInfo();
+    }
+  }
+
+  // 初始化订阅token
+  Future<void> _initializeSubscriptionToken() async {
+    try {
+      final apiService = ApiServiceV2();
+      print('ModernDashboard: Initializing subscription token...');
+      await apiService.getSubscriptionInfo();
+      print('ModernDashboard: Subscription token initialized');
+    } catch (e) {
+      print('ModernDashboard: Failed to initialize subscription token: $e');
+      // 忽略错误，不影响主要功能
+    }
   }
 
   // 获取订阅信息
@@ -79,21 +113,78 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     
     try {
       final apiService = ApiServiceV2();
-      final userInfo = await apiService.getUserInfo();
+      
+      // 优先尝试获取最新订阅信息
+      Map<String, dynamic>? userInfo;
+      try {
+        print('ModernDashboard: Fetching latest subscription info...');
+        userInfo = await apiService.getLatestSubscriptionInfo();
+        print('ModernDashboard: Latest subscription info received: $userInfo');
+      } catch (e) {
+        print('ModernDashboard: Failed to get latest subscription info, falling back to user info: $e');
+        userInfo = await apiService.getUserInfo();
+      }
       
       if (mounted) {
         setState(() {
           _userInfo = userInfo;
           _isLoadingSubscription = false;
         });
+        print('ModernDashboard: Subscription info updated, isExpired: ${_isSubscriptionExpired()}');
       }
     } catch (e) {
+      print('ModernDashboard: Error fetching subscription info: $e');
       if (mounted) {
         setState(() {
           _isLoadingSubscription = false;
         });
       }
       // 忽略错误，用户可能未登录
+    }
+  }
+
+  // 强制刷新订阅信息（用于续费完成后）
+  Future<void> _forceRefreshSubscription() async {
+    print('ModernDashboard: Force refreshing subscription after renewal');
+    
+    // 延迟一下确保后端数据已更新
+    await Future.delayed(const Duration(seconds: 1));
+    
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingSubscription = true;
+    });
+    
+    try {
+      final apiService = ApiServiceV2();
+      
+      // 先更新服务器订阅
+      try {
+        print('ModernDashboard: Updating server subscription...');
+        await apiService.updateServerSubscription();
+        print('ModernDashboard: Server subscription updated');
+      } catch (e) {
+        print('ModernDashboard: Failed to update server subscription: $e');
+        // 继续尝试获取最新订阅信息
+      }
+      
+      // 强制获取最新订阅信息
+      print('ModernDashboard: Force fetching latest subscription info...');
+      final userInfo = await apiService.getLatestSubscriptionInfo();
+      print('ModernDashboard: Force refresh - Latest subscription info received: $userInfo');
+      
+      if (mounted) {
+        setState(() {
+          _userInfo = userInfo;
+          _isLoadingSubscription = false;
+        });
+        print('ModernDashboard: Force refresh completed, isExpired: ${_isSubscriptionExpired()}');
+      }
+    } catch (e) {
+      print('ModernDashboard: Force refresh failed, falling back to regular refresh: $e');
+      // 如果强制刷新失败，回退到常规刷新
+      await _fetchSubscriptionInfo();
     }
   }
 
@@ -831,7 +922,11 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/subscription_store');
+                  Navigator.pushNamed(context, '/subscription_store').then((_) {
+                    // 从续费页面返回时强制刷新订阅信息
+                    print('ModernDashboard: Returned from subscription store, force refreshing');
+                    _forceRefreshSubscription();
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
@@ -1156,7 +1251,11 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
           onTap: isExpired 
               ? () {
                   // 订阅过期时跳转到续费页面
-                  Navigator.pushNamed(context, '/subscription_store');
+                  Navigator.pushNamed(context, '/subscription_store').then((_) {
+                    // 从续费页面返回时强制刷新订阅信息
+                    print('ModernDashboard: Returned from subscription store (connect button), force refreshing');
+                    _forceRefreshSubscription();
+                  });
                 }
               : (_isConnecting ? null : _handleConnectTap),
           child: AnimatedBuilder(
@@ -1248,7 +1347,16 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: _isConnecting ? null : _handleConnectTap,
+                          onTap: isExpired 
+                              ? () {
+                                  // 订阅过期时跳转到续费页面
+                                  Navigator.pushNamed(context, '/subscription_store').then((_) {
+                                    // 从续费页面返回时强制刷新订阅信息
+                                    print('ModernDashboard: Returned from subscription store (inner button), force refreshing');
+                                    _forceRefreshSubscription();
+                                  });
+                                }
+                              : (_isConnecting ? null : _handleConnectTap),
                           borderRadius: BorderRadius.circular(100),
                           child: Center(
                             child: _isConnecting
@@ -1674,7 +1782,11 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
                   InkWell(
                     onTap: () {
                       try {
-                        Navigator.pushNamed(context, '/subscription_store');
+                        Navigator.pushNamed(context, '/subscription_store').then((_) {
+                          // 从续费页面返回时强制刷新订阅信息
+                          print('ModernDashboard: Returned from subscription store (status area), force refreshing');
+                          _forceRefreshSubscription();
+                        });
                       } catch (e) {
                         print('ModernDashboard: Error navigating to subscription store: $e');
                       }

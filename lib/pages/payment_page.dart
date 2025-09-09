@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/models.dart';
 import '../services/auth_service.dart';
+import '../services/api_service_v2.dart';
 import '../common/tech_theme.dart';
 import '../widgets/tech_page_wrapper.dart';
 
@@ -112,7 +113,9 @@ class _PaymentPageState extends State<PaymentPage> {
             _statusCheckTimer?.cancel();
             
             if (status == OrderCheckStatus.completed) {
-              // 支付成功，显示成功提示
+              // 支付成功，更新订阅并显示成功提示
+              await _updateSubscriptionAfterPayment();
+              
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('订单支付成功！'),
@@ -277,6 +280,9 @@ class _PaymentPageState extends State<PaymentPage> {
           _statusCheckTimer?.cancel();
           _isOrderCompleted = true;
           
+          // 支付成功，更新订阅
+          await _updateSubscriptionAfterPayment();
+          
           // 显示支付成功提示
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -324,6 +330,20 @@ class _PaymentPageState extends State<PaymentPage> {
         backgroundColor: Colors.green,
       ),
     );
+  }
+
+  // 支付完成后更新订阅
+  Future<void> _updateSubscriptionAfterPayment() async {
+    try {
+      print('PaymentPage: Updating subscription after payment...');
+      final apiService = ApiServiceV2();
+      await apiService.updateServerSubscription();
+      print('PaymentPage: Subscription updated successfully after payment');
+    } catch (e) {
+      print('PaymentPage: Failed to update subscription after payment: $e');
+      // 不显示错误给用户，静默处理
+      // 因为支付已经成功，订阅更新失败不影响主要流程
+    }
   }
 
   Future<void> _openPaymentUrl() async {

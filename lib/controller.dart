@@ -690,6 +690,14 @@ class AppController {
         return;
       }
       
+      await _updateSubscriptionProfile(subscribeUrl);
+    } catch (e) {
+      print('自动更新服务器订阅失败: $e');
+    }
+  }
+
+  Future<void> _updateSubscriptionProfile(String subscribeUrl) async {
+    try {
       // 检查是否已存在该订阅
       final profiles = _ref.read(profilesProvider);
       final existingProfile = profiles.firstWhere(
@@ -699,7 +707,7 @@ class AppController {
       
       if (existingProfile.url == subscribeUrl) {
         // 如果已存在，更新它
-        print('自动更新服务器订阅: ${existingProfile.label}');
+        print('更新服务器订阅: ${existingProfile.label}');
         await updateProfile(existingProfile);
         
         // 如果这是当前激活的配置，应用更新
@@ -708,12 +716,11 @@ class AppController {
         }
       } else {
         // 如果不存在，添加新的订阅
-        final planName = subscriptionInfo['plan']?['name'] ?? '订阅配置';
-        print('自动添加服务器订阅: $planName');
+        print('自动添加服务器订阅: $subscribeUrl');
         
         final profile = await Profile.normal(
           url: subscribeUrl,
-          label: planName,
+          label: '服务器订阅',
         ).update();
         
         await addProfile(profile);
@@ -724,8 +731,20 @@ class AppController {
         }
       }
     } catch (e) {
-      print('自动更新服务器订阅失败: $e');
+      print('更新订阅配置失败: $e');
       // 不显示错误，静默处理
+    }
+  }
+
+  // 支付完成后更新服务器订阅的公共方法
+  Future<void> updateServerSubscriptionAfterPayment(String subscribeUrl) async {
+    try {
+      print('AppController: Updating server subscription after payment');
+      await _updateSubscriptionProfile(subscribeUrl);
+      print('AppController: Server subscription updated successfully after payment');
+    } catch (e) {
+      print('AppController: Failed to update server subscription after payment: $e');
+      throw e;
     }
   }
 
