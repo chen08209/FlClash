@@ -309,6 +309,7 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                               _buildServiceItem('订购中心', Icons.shopping_cart, '/subscription_store'),
                               _buildServiceItem('订单中心', Icons.receipt_long, '/order_center'),
                               _buildServiceItem('工单中心', Icons.support_agent, '/ticket_list'),
+                              _buildServiceItem('我的邀请', Icons.person_add, '/invite'),
                               _buildServiceItem('流量明细', Icons.analytics, '/traffic_log'),
                             ],
                           ),

@@ -12,3 +12,4 @@ export 'ticket_list_page.dart';
 export 'create_ticket_page.dart';
 export 'ticket_detail_page.dart';
 export 'traffic_log_page.dart';
+export 'invite_page.dart';

@@ -12,4 +12,5 @@ export 'subscription_plan.dart';
 export 'ticket.dart';
 export 'ticket_detail.dart';
 export 'traffic_log.dart';
+export 'invite.dart';
 export 'widget.dart';

@@ -208,6 +208,7 @@ class ApplicationState extends ConsumerState<Application> {
                 '/order_center': (context) => const OrderCenterPage(),
                 '/ticket_list': (context) => const TicketListPage(),
                 '/create_ticket': (context) => const CreateTicketPage(),
+                '/invite': (context) => const InvitePage(),
                 '/traffic_log': (context) => const TrafficLogPage(),
               },
               onGenerateRoute: (settings) {
