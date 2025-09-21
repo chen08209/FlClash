@@ -674,6 +674,22 @@ class AppController {
     return;
   }
 
+  String _getLabelFromURL(String url) {
+    try {
+      final uri = Uri.parse(url);
+      final segments = uri.pathSegments;
+      if (segments.isNotEmpty) {
+        final fileName = segments.last;
+        // remove extension if any
+        final nameWithoutExt = fileName.contains('.') 
+            ? fileName.split('.').first 
+            : fileName;
+        return nameWithoutExt;
+      }
+    } catch (_) {}
+    return utils.id; // fallback
+  }
+  
   Future<void> addProfileFormURL(String url) async {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
@@ -684,6 +700,7 @@ class AppController {
       () async {
         return await Profile.normal(
           url: url,
+          label: _getLabelFromURL(url),  // new label from URL
         ).update();
       },
       needLoading: true,
