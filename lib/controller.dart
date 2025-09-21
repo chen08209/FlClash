@@ -674,20 +674,40 @@ class AppController {
     return;
   }
 
-  String _getLabelFromURL(String url) {
+  String _getLabelFromURL(String url, {int maxLength = 50}) {
+    String label;
     try {
       final uri = Uri.parse(url);
+  
+      // Case 1: if URL has query parameters with 'url'
+      if (uri.queryParameters.containsKey('url')) {
+        return _getLabelFromURL(uri.queryParameters['url']!, maxLength: maxLength);
+      }
+  
+      // Case 2: normal URL → use last segment
       final segments = uri.pathSegments;
       if (segments.isNotEmpty) {
         final fileName = segments.last;
-        // remove extension if any
-        final nameWithoutExt = fileName.contains('.') 
+        label = fileName.contains('.') 
             ? fileName.split('.').first 
             : fileName;
-        return nameWithoutExt;
+      } else {
+        label = url;
       }
-    } catch (_) {}
-    return utils.id; // fallback
+    } catch (_) {
+      // Case 3: fallback for short/opaque URLs → convert host+path into readable name
+      label = url
+          .replaceAll(RegExp(r'https?://'), '')  // remove protocol
+          .replaceAll(RegExp(r'[/\?&=]'), '-')  // replace special chars
+          .replaceAll(RegExp(r'[^0-9a-zA-Z\-_]'), ''); // remove unsafe chars
+    }
+  
+    // Truncate if longer than maxLength
+    if (label.length > maxLength) {
+      label = label.substring(0, maxLength);
+    }
+  
+    return label.isNotEmpty ? label : utils.id;
   }
   
   Future<void> addProfileFormURL(String url) async {
