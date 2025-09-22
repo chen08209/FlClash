@@ -674,6 +674,54 @@ class AppController {
     return;
   }
 
+  
+  String _getLabelFromURL(String url, {int maxLength = 50}) {
+    String label;
+    try {
+      final uri = Uri.parse(url);
+
+      // Case 1: if URL has query parameters with 'url'
+      if (uri.queryParameters.containsKey('url')) {
+        return _getLabelFromURL(uri.queryParameters['url']!, maxLength: maxLength);
+      }
+
+      final isShortLink = (uri.host.split('.').length <= 2 && uri.pathSegments.length <= 2) || url.length < 30;
+
+      if (uri.host.contains("githubusercontent.com") && uri.pathSegments.length > 1) {
+        // GitHub raw links → use repo owner + last filename
+        final owner = uri.pathSegments[0];
+        final file = uri.pathSegments.last;
+        label = "$owner-${file.split('.').first}";
+      } else if (isShortLink) {
+        // Short link → host + code
+        label = "${uri.host}-${uri.pathSegments.join('-')}";
+      } else {
+        // Default: host + last path segment (without extension)
+        if (uri.pathSegments.isNotEmpty) {
+          final fileName = uri.pathSegments.last;
+          label = "${uri.host}-${fileName.split('.').first}";
+        } else {
+          label = uri.host;
+        }
+      }
+    } catch (_) {
+      // Case 3: fallback for opaque/invalid URLs
+      label = url
+          .replaceAll(RegExp(r'https?://'), '') // remove protocol
+          .replaceAll(RegExp(r'[/\?&=]'), '-')  // replace separators
+          .replaceAll(RegExp(r'[^0-9a-zA-Z\-_]'), ''); // strip unsafe chars
+          .replaceAll(RegExp(r'-+'), '-'); // collapse repeated dashes
+    }
+  
+    // Truncate
+    if (label.length > maxLength) {
+      label = label.substring(0, maxLength);
+    }
+  
+    return label.isNotEmpty ? label : '';
+  }
+
+  
   Future<void> addProfileFormURL(String url) async {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
@@ -684,6 +732,7 @@ class AppController {
       () async {
         return await Profile.normal(
           url: url,
+          label: _getLabelFromURL(url),  // new label from URL
         ).update();
       },
       needLoading: true,
