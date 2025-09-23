@@ -17,8 +17,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.withLock
 import java.util.UUID
+import kotlin.coroutines.resume
 
 class RemoteService : Service(),
     CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.Default) {
@@ -75,11 +77,22 @@ class RemoteService : Service(),
     private val binder = object : IRemoteInterface.Stub() {
         override fun invokeAction(data: String, callback: ICallbackInterface) {
             Core.invokeAction(data) {
-                runCatching {
-                    val chunks = it?.chunkedForAidl() ?: listOf()
-                    val totalSize = chunks.size
-                    chunks.forEachIndexed { index, chunk ->
-                        callback.onResult(chunk, totalSize - 1 == index)
+                launch {
+                    runCatching {
+                        val chunks = it?.chunkedForAidl() ?: listOf()
+                        for ((index, chunk) in chunks.withIndex()) {
+                            suspendCancellableCoroutine { cont ->
+                                callback.onResult(
+                                    chunk,
+                                    index == chunks.lastIndex,
+                                    object : IAckInterface.Stub() {
+                                        override fun onAck() {
+                                            cont.resume(Unit)
+                                        }
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -88,6 +101,7 @@ class RemoteService : Service(),
         override fun updateNotificationParams(params: NotificationParams?) {
             State.notificationParamsFlow.tryEmit(params)
         }
+
 
         override fun startService(
             options: VpnOptions,
@@ -106,12 +120,24 @@ class RemoteService : Service(),
             GlobalState.log("RemoveEventListener ${eventListener == null}")
             when (eventListener != null) {
                 true -> Core.callSetEventListener {
-                    runCatching {
-                        val id = UUID.randomUUID().toString()
-                        val chunks = it?.chunkedForAidl() ?: listOf()
-                        val totalSize = chunks.size
-                        chunks.forEachIndexed { index, chunk ->
-                            eventListener.onEvent(id, chunk, totalSize - 1 == index)
+                    launch {
+                        runCatching {
+                            val id = UUID.randomUUID().toString()
+                            val chunks = it?.chunkedForAidl() ?: listOf()
+                            for ((index, chunk) in chunks.withIndex()) {
+                                suspendCancellableCoroutine { cont ->
+                                    eventListener.onEvent(
+                                        id,
+                                        chunk,
+                                        index == chunks.lastIndex,
+                                        object : IAckInterface.Stub() {
+                                            override fun onAck() {
+                                                cont.resume(Unit)
+                                            }
+                                        },
+                                    )
+                                }
+                            }
                         }
                     }
                 }

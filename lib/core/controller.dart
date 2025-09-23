@@ -71,8 +71,20 @@ class CoreController {
 
   FutureOr<bool> get isInit => _interface.isInit;
 
-  FutureOr<String> validateConfig(String data) {
-    return _interface.validateConfig(data);
+  Future<String> validateConfig(String data) async {
+    final path = await appPath.validateFilePath;
+    await globalState.genValidateFile(path, data);
+    final res = await _interface.validateConfig(path);
+    await File(path).delete();
+    return res;
+  }
+
+  Future<String> validateConfigFormBytes(Uint8List bytes) async {
+    final path = await appPath.validateFilePath;
+    await globalState.genValidateFileFormBytes(path, bytes);
+    final res = await _interface.validateConfig(path);
+    await File(path).delete();
+    return res;
   }
 
   Future<String> updateConfig(UpdateParams updateParams) async {

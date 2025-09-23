@@ -3,6 +3,7 @@ package com.follow.clash
 import com.follow.clash.common.ServiceDelegate
 import com.follow.clash.common.formatString
 import com.follow.clash.common.intent
+import com.follow.clash.service.IAckInterface
 import com.follow.clash.service.ICallbackInterface
 import com.follow.clash.service.IEventInterface
 import com.follow.clash.service.IRemoteInterface
@@ -44,8 +45,11 @@ object Service {
         return delegate.useService {
             it.invokeAction(
                 data, object : ICallbackInterface.Stub() {
-                    override fun onResult(result: ByteArray?, isSuccess: Boolean) {
+                    override fun onResult(
+                        result: ByteArray?, isSuccess: Boolean, ack: IAckInterface?
+                    ) {
                         res.add(result ?: byteArrayOf())
+                        ack?.onAck()
                         if (isSuccess) {
                             cb(res.formatString())
                         }
@@ -61,24 +65,24 @@ object Service {
         return delegate.useService {
             it.setEventListener(
                 when (cb != null) {
-                    true -> object : IEventInterface.Stub() {
-                        override fun onEvent(
-                            id: String, data: ByteArray?, isSuccess: Boolean
-                        ) {
-                            if (results[id] == null) {
-                                results[id] = mutableListOf()
-                            }
-                            results[id]?.add(data ?: byteArrayOf())
-                            if (isSuccess) {
-                                cb(results[id]?.formatString())
-                                results.remove(id)
-                            }
+                true -> object : IEventInterface.Stub() {
+                    override fun onEvent(
+                        id: String, data: ByteArray?, isSuccess: Boolean, ack: IAckInterface?
+                    ) {
+                        if (results[id] == null) {
+                            results[id] = mutableListOf()
+                        }
+                        results[id]?.add(data ?: byteArrayOf())
+                        ack?.onAck()
+                        if (isSuccess) {
+                            cb(results[id]?.formatString())
+                            results.remove(id)
                         }
                     }
-
-                    false -> null
                 }
-            )
+
+                false -> null
+            })
         }
     }
 

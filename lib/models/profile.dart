@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -174,22 +173,12 @@ extension ProfileExtension on Profile {
   }
 
   Future<Profile> saveFile(Uint8List bytes) async {
-    final message = await coreController.validateConfig(utf8.decode(bytes));
+    final message = await coreController.validateConfigFormBytes(bytes);
     if (message.isNotEmpty) {
       throw message;
     }
     final file = await getFile();
     await file.writeAsBytes(bytes);
-    return copyWith(lastUpdateDate: DateTime.now());
-  }
-
-  Future<Profile> saveFileWithString(String value) async {
-    final message = await coreController.validateConfig(value);
-    if (message.isNotEmpty) {
-      throw message;
-    }
-    final file = await getFile();
-    await file.writeAsString(value);
     return copyWith(lastUpdateDate: DateTime.now());
   }
 }
