@@ -239,7 +239,7 @@ class GlobalState {
     return VpnOptions(
       stack: config.patchClashConfig.tun.stack.name,
       enable: vpnProps.enable,
-      systemProxy: networkProps.systemProxy,
+      systemProxy: vpnProps.systemProxy,
       port: port,
       ipv6: vpnProps.ipv6,
       dnsHijacking: vpnProps.dnsHijacking,
@@ -313,6 +313,42 @@ class GlobalState {
           await file.create(recursive: true);
         }
         await file.writeAsString(res);
+        return '';
+      } catch (e) {
+        return e.toString();
+      }
+    });
+    if (res.isNotEmpty) {
+      throw res;
+    }
+  }
+
+  Future<void> genValidateFile(String path, String data) async {
+    final res = await Isolate.run<String>(() async {
+      try {
+        final file = File(path);
+        if (!await file.exists()) {
+          await file.create(recursive: true);
+        }
+        await file.writeAsString(data);
+        return '';
+      } catch (e) {
+        return e.toString();
+      }
+    });
+    if (res.isNotEmpty) {
+      throw res;
+    }
+  }
+
+  Future<void> genValidateFileFormBytes(String path, Uint8List bytes) async {
+    final res = await Isolate.run<String>(() async {
+      try {
+        final file = File(path);
+        if (!await file.exists()) {
+          await file.create(recursive: true);
+        }
+        await file.writeAsBytes(bytes);
         return '';
       } catch (e) {
         return e.toString();

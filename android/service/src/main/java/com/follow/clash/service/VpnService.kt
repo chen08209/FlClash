@@ -213,6 +213,7 @@ class VpnService : SystemVpnService(), IBaseService,
                 allowBypass()
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && options.systemProxy) {
+                GlobalState.log("Open http proxy")
                 setHttpProxy(
                     ProxyInfo.buildDirectProxy(
                         "127.0.0.1", options.port, options.bypassDomain

@@ -45,11 +45,19 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/**/.cxx
+/android/**/build
+/android/common/**/.**/
+/android/common/local.*
+/android/core/**/includes/
+/android/core/**/cmake-build-*/
+/android/core/**/jniLibs/
 
 
-
-#libclash
+#FlClash
 /libclash/
-
-#jniLibs
 /android/app/src/main/jniLibs/
+/services/helper/target
+/macos/**/Package.resolved
+devtools_options.yaml
+

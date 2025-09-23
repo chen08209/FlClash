@@ -45,8 +45,7 @@ class TileService : TileService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startActivityAndCollapse(pendingIntent)
         } else {
-            @Suppress("DEPRECATION")
-            startActivityAndCollapse(intent)
+            @Suppress("DEPRECATION") startActivityAndCollapse(intent)
         }
     }
 

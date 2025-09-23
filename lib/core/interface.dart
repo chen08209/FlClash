@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:flutter/foundation.dart';
 
 mixin CoreInterface {
   Future<bool> init(InitParams params);
@@ -17,7 +18,7 @@ mixin CoreInterface {
 
   Future<bool> forceGc();
 
-  Future<String> validateConfig(String data);
+  Future<String> validateConfig(String path);
 
   Future<Result> getConfig(String path);
 
@@ -86,7 +87,18 @@ abstract class CoreHandlerInterface with CoreInterface {
     Duration? timeout,
   }) async {
     await connected;
-    return invoke(method: method, data: data, timeout: timeout);
+    if (kDebugMode) {
+      commonPrint.log('Invoke ${method.name} ${DateTime.now()} $data');
+    }
+
+    return utils.handleWatch(
+      function: () async {
+        return await invoke(method: method, data: data, timeout: timeout);
+      },
+      onWatch: (data, elapsedMilliseconds) {
+        commonPrint.log('Invoke ${method.name} ${elapsedMilliseconds}ms');
+      },
+    );
   }
 
   Future<T?> invoke<T>({
@@ -125,10 +137,10 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<String> validateConfig(String data) async {
+  Future<String> validateConfig(String path) async {
     return await _invoke<String>(
           method: ActionMethod.validateConfig,
-          data: data,
+          data: path,
         ) ??
         '';
   }
