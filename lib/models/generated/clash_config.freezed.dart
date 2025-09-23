@@ -3924,7 +3924,7 @@ class _$ClashConfigImpl implements _ClashConfig {
       this.ipv6 = false,
       @JsonKey(
           name: 'find-process-mode', unknownEnumValue: FindProcessMode.always)
-      this.findProcessMode = FindProcessMode.off,
+      this.findProcessMode = FindProcessMode.always,
       @JsonKey(name: 'keep-alive-interval')
       this.keepAliveInterval = defaultKeepAliveInterval,
       @JsonKey(name: 'unified-delay') this.unifiedDelay = true,
