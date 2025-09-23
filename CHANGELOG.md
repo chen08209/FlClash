@@ -1,3 +1,19 @@
+## v0.8.88
+
+- Add android separates the core process
+
+- Support core status check and force restart
+
+- Optimize proxies page and access page
+
+- Update flutter and pub dependencies
+
+- Update go version
+
+- Optimize more details
+
+- Update changelog
+
 ## v0.8.87
 
 - Optimize desktop view
