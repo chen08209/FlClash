@@ -345,7 +345,7 @@ _$ClashConfigImpl _$$ClashConfigImplFromJson(Map<String, dynamic> json) =>
       findProcessMode: $enumDecodeNullable(
               _$FindProcessModeEnumMap, json['find-process-mode'],
               unknownValue: FindProcessMode.always) ??
-          FindProcessMode.off,
+          FindProcessMode.always,
       keepAliveInterval: (json['keep-alive-interval'] as num?)?.toInt() ??
           defaultKeepAliveInterval,
       unifiedDelay: json['unified-delay'] as bool? ?? true,
