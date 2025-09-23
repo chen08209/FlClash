@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 
 class Debouncer {
@@ -68,7 +69,7 @@ Future<T> retry<T>({
   required Future<T> Function() task,
   int maxAttempts = 3,
   required bool Function(T res) retryIf,
-  Duration delay = Duration.zero,
+  Duration delay = midDuration,
 }) async {
   int attempts = 0;
   while (attempts < maxAttempts) {
@@ -78,7 +79,7 @@ Future<T> retry<T>({
     }
     attempts++;
   }
-  throw 'unknown error';
+  throw 'retry error';
 }
 
 final debouncer = Debouncer();

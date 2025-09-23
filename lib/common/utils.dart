@@ -322,12 +322,15 @@ class Utils {
     return SingleActivator(trigger, control: control, meta: !control);
   }
 
-  FutureOr<T> handleWatch<T>(Function function) async {
+  FutureOr<T> handleWatch<T>({
+    required Function function,
+    required void Function(T data, int elapsedMilliseconds) onWatch,
+  }) async {
     if (kDebugMode) {
       final stopwatch = Stopwatch()..start();
       final res = await function();
       stopwatch.stop();
-      commonPrint.log('耗时：${stopwatch.elapsedMilliseconds} ms');
+      onWatch(res, stopwatch.elapsedMilliseconds);
       return res;
     }
     return await function();

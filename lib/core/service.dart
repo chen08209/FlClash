@@ -38,23 +38,29 @@ class CoreService extends CoreHandlerInterface {
     completer?.complete(data);
   }
 
-  void _initServer() {
-    runZonedGuarded(
-      () async {
-        final address = !system.isWindows
-            ? InternetAddress(unixSocketPath, type: InternetAddressType.unix)
-            : InternetAddress(localhost, type: InternetAddressType.IPv4);
-        await _deleteSocketFile();
-        final server = await ServerSocket.bind(address, 0, shared: true);
-        _serverCompleter.complete(server);
-        await for (final socket in server) {
-          await _attachSocket(socket);
+  Future<void> _initServer() async {
+    final server = await retry(
+      task: () async {
+        try {
+          final address = !system.isWindows
+              ? InternetAddress(unixSocketPath, type: InternetAddressType.unix)
+              : InternetAddress(localhost, type: InternetAddressType.IPv4);
+          await _deleteSocketFile();
+          final server = await ServerSocket.bind(address, 0, shared: true);
+          server.listen((socket) async {
+            await _attachSocket(socket);
+          });
+          return server;
+        } catch (_) {
+          return null;
         }
       },
-      (error, stack) async {
-        commonPrint.log('Service error: $error', logLevel: LogLevel.warning);
-      },
+      retryIf: (server) => server == null,
     );
+    if (server == null) {
+      exit(0);
+    }
+    _serverCompleter.complete(server);
   }
 
   Future<void> _attachSocket(Socket socket) async {

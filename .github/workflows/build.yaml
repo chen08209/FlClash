@@ -27,9 +27,9 @@ jobs:
           - platform: macos
             os: macos-latest
             arch: arm64
-          - platform: windows
-            os: windows-11-arm
-            arch: arm64
+          #          - platform: windows
+          #            os: windows-11-arm
+          #            arch: arm64
           - platform: linux
             os: ubuntu-24.04-arm
             arch: arm64

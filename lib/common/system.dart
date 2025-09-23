@@ -186,26 +186,26 @@ class Windows {
       logLevel: LogLevel.warning,
     );
 
-    if (result < 42) {
+    if (result <= 32) {
       return false;
     }
     return true;
   }
 
-  Future<void> _killProcess(int port) async {
-    final result = await Process.run('netstat', ['-ano']);
-    final lines = result.stdout.toString().trim().split('\n');
-    for (final line in lines) {
-      if (!line.contains(':$port') || !line.contains('LISTENING')) {
-        continue;
-      }
-      final parts = line.trim().split(RegExp(r'\s+'));
-      final pid = int.tryParse(parts.last);
-      if (pid != null) {
-        await Process.run('taskkill', ['/PID', pid.toString(), '/F']);
-      }
-    }
-  }
+  // Future<void> _killProcess(int port) async {
+  //   final result = await Process.run('netstat', ['-ano']);
+  //   final lines = result.stdout.toString().trim().split('\n');
+  //   for (final line in lines) {
+  //     if (!line.contains(':$port') || !line.contains('LISTENING')) {
+  //       continue;
+  //     }
+  //     final parts = line.trim().split(RegExp(r'\s+'));
+  //     final pid = int.tryParse(parts.last);
+  //     if (pid != null) {
+  //      await Process.run('taskkill', ['/PID', pid.toString(), '/F']);
+  //     }
+  //   }
+  // }
 
   Future<WindowsHelperServiceStatus> checkService() async {
     // final qcResult = await Process.run('sc', ['qc', appHelperService]);
@@ -231,16 +231,18 @@ class Windows {
       return true;
     }
 
-    await _killProcess(helperPort);
-
     final command = [
       '/c',
       if (status == WindowsHelperServiceStatus.presence) ...[
-        'sc',
+        'taskkill',
+        '/F',
+        '/IM',
+        '$appHelperService.exe'
+            ' & '
+            'sc',
         'delete',
         appHelperService,
-        '/force',
-        '&&',
+        '&',
       ],
       'sc',
       'create',
@@ -256,8 +258,12 @@ class Windows {
     final res = runas('cmd.exe', command);
 
     await Future.delayed(Duration(milliseconds: 300));
-
-    return res;
+    final retryStatus = await retry(
+      task: checkService,
+      retryIf: (status) => status == WindowsHelperServiceStatus.running,
+      delay: commonDuration,
+    );
+    return res && retryStatus == WindowsHelperServiceStatus.running;
   }
 
   Future<bool> registerTask(String appName) async {

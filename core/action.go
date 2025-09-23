@@ -53,8 +53,8 @@ func handleAction(action *Action, result ActionResult) {
 		result.success(handleShutdown())
 		return
 	case validateConfigMethod:
-		data := []byte(action.Data.(string))
-		result.success(handleValidateConfig(data))
+		path := action.Data.(string)
+		result.success(handleValidateConfig(path))
 		return
 	case updateConfigMethod:
 		data := []byte(action.Data.(string))
