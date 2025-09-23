@@ -71,6 +71,11 @@ class AppPath {
     return join(homeDirPath, 'config.json');
   }
 
+  Future<String> get validateFilePath async {
+    final homeDirPath = await appPath.homeDirPath;
+    return join(homeDirPath, 'temp', 'validate${utils.id}.yaml');
+  }
+
   Future<String> get sharedPreferencesPath async {
     final directory = await dataDir.future;
     return join(directory.path, 'shared_preferences.json');

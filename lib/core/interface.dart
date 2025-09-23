@@ -17,7 +17,7 @@ mixin CoreInterface {
 
   Future<bool> forceGc();
 
-  Future<String> validateConfig(String data);
+  Future<String> validateConfig(String path);
 
   Future<Result> getConfig(String path);
 
@@ -125,10 +125,10 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<String> validateConfig(String data) async {
+  Future<String> validateConfig(String path) async {
     return await _invoke<String>(
           method: ActionMethod.validateConfig,
-          data: data,
+          data: path,
         ) ??
         '';
   }

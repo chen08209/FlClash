@@ -83,8 +83,9 @@ func handleShutdown() bool {
 	return true
 }
 
-func handleValidateConfig(bytes []byte) string {
-	_, err := config.UnmarshalRawConfig(bytes)
+func handleValidateConfig(path string) string {
+	buf, err := readFile(path)
+	_, err = config.UnmarshalRawConfig(buf)
 	if err != nil {
 		return err.Error()
 	}

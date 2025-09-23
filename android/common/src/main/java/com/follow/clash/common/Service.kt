@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -59,7 +60,9 @@ class ServiceDelegate<T>(
             withTimeout(timeoutMillis) {
                 val state = serviceState.filterNotNull().first()
                 state.first?.let {
-                    block(it)
+                    withContext(Dispatchers.Default) {
+                        block(it)
+                    }
                 } ?: throw Exception(state.second)
             }
         }
