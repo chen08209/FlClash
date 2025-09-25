@@ -98,6 +98,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
 
     try {
+      // 确保AuthService已初始化
+      await _authService.initialize();
       final coupon = await _authService.checkCoupon(
         code: _couponController.text.trim(),
         planId: widget.plan.id,
@@ -139,6 +141,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
 
     try {
+      // 确保AuthService已初始化
+      await _authService.initialize();
       final orderNo = await _authService.createOrder(
         period: _periodKey,
         planId: widget.plan.id,
@@ -157,6 +161,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
         // 获取订单详情并跳转到支付页面
         try {
+          // 确保AuthService已初始化
+          await _authService.initialize();
           final orderDetail = await _authService.getOrderDetail(orderNo);
           
           if (mounted) {

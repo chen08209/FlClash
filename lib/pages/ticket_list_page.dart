@@ -29,6 +29,8 @@ class _TicketListPageState extends State<TicketListPage> {
       _errorMessage = null;
     });
     try {
+      // 确保AuthService已初始化
+      await _authService.initialize();
       final tickets = await _authService.getTicketList();
       setState(() {
         _tickets = tickets;

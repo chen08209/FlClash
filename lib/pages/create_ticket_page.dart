@@ -38,6 +38,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     });
 
     try {
+      // 确保AuthService已初始化
+      await _authService.initialize();
       final success = await _authService.createTicket(
         subject: _subjectController.text.trim(),
         level: _selectedLevel,

@@ -63,6 +63,8 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
     }
 
     try {
+      // 确保AuthService已初始化
+      await _authService.initialize();
       final ticketDetail = await _authService.getTicketDetail(widget.ticketId);
       if (mounted) {
         final wasAtBottom = _scrollController.hasClients && 
@@ -126,6 +128,8 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
     });
 
     try {
+      // 确保AuthService已初始化
+      await _authService.initialize();
       await _authService.replyTicket(
         ticketId: widget.ticketId,
         message: message,

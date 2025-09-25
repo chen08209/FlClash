@@ -29,6 +29,8 @@ class _TrafficLogPageState extends State<TrafficLogPage> {
       _errorMessage = null;
     });
     try {
+      // 确保AuthService已初始化
+      await _authService.initialize();
       final logs = await _authService.getTrafficLogs();
       // 按时间倒序排列（最新的在前面）
       logs.sort((a, b) => b.recordAt.compareTo(a.recordAt));
