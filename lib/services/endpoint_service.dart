@@ -5,6 +5,7 @@ import '../models/models.dart';
 
 class EndpointService {
   static const String _bestEndpointKey = 'best_endpoint';
+  static const String _cachedEndpointsKey = 'cached_endpoints';
   
   // 内置端点列表
   static const List<String> _builtInEndpoints = [
@@ -40,7 +41,10 @@ class EndpointService {
   Future<void> initialize() async {
     print('EndpointService: Initializing...');
     
-    // 每次启动都重新获取和测试端点
+    // 先尝试加载本地缓存的端点列表
+    await _loadCachedEndpoints();
+    
+    // 使用本地端点或内置端点获取最新的端点列表
     print('EndpointService: Fetching and testing endpoints...');
     await _fetchAndTestEndpoints();
   }
@@ -58,7 +62,7 @@ class EndpointService {
     try {
       print('EndpointService: Testing endpoint: $endpoint');
       final httpClient = HttpClient();
-      httpClient.findProxy = (uri) => 'DIRECT';
+      httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       httpClient.connectionTimeout = const Duration(seconds: 10);
       
@@ -97,20 +101,23 @@ class EndpointService {
   Future<void> _fetchAndTestEndpoints() async {
     final List<EndpointInfo> allEndpoints = [];
     
-    // 首先使用内置端点获取服务器端点列表
+    // 获取可用的端点来源（优先使用本地缓存的端点）
+    final List<String> sourceEndpoints = _getSourceEndpoints();
+    
+    // 使用端点来源获取服务器端点列表
     String? workingEndpoint;
-    for (final builtInEndpoint in _builtInEndpoints) {
+    for (final sourceEndpoint in sourceEndpoints) {
       try {
-        print('EndpointService: Trying to fetch endpoint list from: $builtInEndpoint');
-        final endpoints = await _fetchEndpointList(builtInEndpoint);
+        print('EndpointService: Trying to fetch endpoint list from: $sourceEndpoint');
+        final endpoints = await _fetchEndpointList(sourceEndpoint);
         if (endpoints.isNotEmpty) {
           allEndpoints.addAll(endpoints);
-          workingEndpoint = builtInEndpoint;
-          print('EndpointService: Successfully fetched ${endpoints.length} endpoints from $builtInEndpoint');
+          workingEndpoint = sourceEndpoint;
+          print('EndpointService: Successfully fetched ${endpoints.length} endpoints from $sourceEndpoint');
           break;
         }
       } catch (e) {
-        print('EndpointService: Failed to fetch from $builtInEndpoint: $e');
+        print('EndpointService: Failed to fetch from $sourceEndpoint: $e');
         continue;
       }
     }
@@ -157,13 +164,17 @@ class EndpointService {
     }
     
     _cachedEndpoints = testedEndpoints;
+    
+    // 保存最新的端点列表到本地
+    await _saveCachedEndpoints();
+    
     await _selectBestEndpoint();
   }
 
   /// 从指定端点获取端点列表
   Future<List<EndpointInfo>> _fetchEndpointList(String endpoint) async {
     final httpClient = HttpClient();
-    httpClient.findProxy = (uri) => 'DIRECT';
+    httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
     httpClient.badCertificateCallback = (cert, host, port) => true;
     httpClient.connectionTimeout = const Duration(seconds: 15);
     
@@ -222,7 +233,7 @@ class EndpointService {
       print('EndpointService: Submitting usage log for endpoint $endpointId');
       
       final httpClient = HttpClient();
-      httpClient.findProxy = (uri) => 'DIRECT';
+      httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
       final request = await httpClient.postUrl(Uri.parse('$_currentEndpoint/api/v2/open/endpoint/saveLog'));
@@ -284,10 +295,69 @@ class EndpointService {
     print('EndpointService: Manually set current endpoint to: $endpoint');
   }
 
+  /// 从本地存储加载缓存的端点列表
+  Future<void> _loadCachedEndpoints() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedData = prefs.getString(_cachedEndpointsKey);
+      
+      if (cachedData != null) {
+        final List<dynamic> endpointJsonList = json.decode(cachedData);
+        _cachedEndpoints = endpointJsonList
+            .map((json) => EndpointInfo.fromJson(json as Map<String, dynamic>))
+            .toList();
+        print('EndpointService: Loaded ${_cachedEndpoints.length} cached endpoints from local storage');
+      } else {
+        print('EndpointService: No cached endpoints found in local storage');
+      }
+    } catch (e) {
+      print('EndpointService: Failed to load cached endpoints: $e');
+      _cachedEndpoints = [];
+    }
+  }
+
+  /// 保存端点列表到本地存储
+  Future<void> _saveCachedEndpoints() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final endpointJsonList = _cachedEndpoints
+          .map((endpoint) => endpoint.toJson())
+          .toList();
+      await prefs.setString(_cachedEndpointsKey, json.encode(endpointJsonList));
+      print('EndpointService: Saved ${_cachedEndpoints.length} endpoints to local storage');
+    } catch (e) {
+      print('EndpointService: Failed to save cached endpoints: $e');
+    }
+  }
+
+  /// 获取端点来源列表（优先使用本地缓存的端点）
+  List<String> _getSourceEndpoints() {
+    final List<String> sourceEndpoints = [];
+    
+    // 优先使用本地缓存的在线端点
+    final onlineCachedEndpoints = _cachedEndpoints
+        .where((e) => e.isOnline)
+        .take(3) // 只取前3个最佳端点
+        .map((e) => e.point)
+        .toList();
+    
+    if (onlineCachedEndpoints.isNotEmpty) {
+      sourceEndpoints.addAll(onlineCachedEndpoints);
+      print('EndpointService: Using ${onlineCachedEndpoints.length} cached endpoints as source');
+    }
+    
+    // 然后添加内置端点作为fallback
+    sourceEndpoints.addAll(_builtInEndpoints);
+    
+    // 去重
+    return sourceEndpoints.toSet().toList();
+  }
+
   /// 清除状态
   Future<void> clearCache() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_bestEndpointKey);
+    await prefs.remove(_cachedEndpointsKey);
     _cachedEndpoints.clear();
     _currentEndpoint = null;
     print('EndpointService: State cleared');

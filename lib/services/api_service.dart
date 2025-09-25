@@ -20,11 +20,11 @@ class ApiService {
       },
     ));
     
-    // 绕过代理，直接连接
+    // 设置代理用于抓包调试
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
       client.findProxy = (uri) {
-        return 'DIRECT';
+        return 'PROXY 192.168.31.108:8888';
       };
       client.badCertificateCallback = (cert, host, port) => true;
       return client;
