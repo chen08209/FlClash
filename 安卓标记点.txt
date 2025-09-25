@@ -1,0 +1,9 @@
+return 'DIRECT';
+改为
+return 'DIRECT';
+
+'DIRECT'
+改为
+'DIRECT'
+
+标记位置

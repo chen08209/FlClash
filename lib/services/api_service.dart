@@ -24,7 +24,7 @@ class ApiService {
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
       client.findProxy = (uri) {
-        return 'PROXY 192.168.31.108:8888';
+        return 'DIRECT';
       };
       client.badCertificateCallback = (cert, host, port) => true;
       return client;

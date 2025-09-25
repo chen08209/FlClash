@@ -38,7 +38,7 @@ class ApiServiceV2 {
       print('Authorization: $authData');
 
       final httpClient = HttpClient();
-      httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+      httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
       final request = await httpClient.getUrl(Uri.parse('$_baseUrl$endpoint'));
@@ -175,7 +175,7 @@ class ApiServiceV2 {
       print('Authorization: $authData');
 
       final httpClient = HttpClient();
-      httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+      httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
       final request = await httpClient.getUrl(Uri.parse('$_baseUrl$endpoint'));
@@ -234,7 +234,7 @@ class ApiServiceV2 {
       print('Authorization: $authData');
 
       final httpClient = HttpClient();
-      httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+      httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
       final request = await httpClient.getUrl(Uri.parse('$_baseUrl$endpoint'));
@@ -287,7 +287,7 @@ class ApiServiceV2 {
       print('Data: $data');
 
       final httpClient = HttpClient();
-      httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+      httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
       final request = await httpClient.postUrl(Uri.parse('$_baseUrl$endpoint'));

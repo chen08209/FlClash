@@ -62,7 +62,7 @@ class EndpointService {
     try {
       print('EndpointService: Testing endpoint: $endpoint');
       final httpClient = HttpClient();
-      httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+      httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       httpClient.connectionTimeout = const Duration(seconds: 10);
       
@@ -174,7 +174,7 @@ class EndpointService {
   /// 从指定端点获取端点列表
   Future<List<EndpointInfo>> _fetchEndpointList(String endpoint) async {
     final httpClient = HttpClient();
-    httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+    httpClient.findProxy = (uri) => 'DIRECT';
     httpClient.badCertificateCallback = (cert, host, port) => true;
     httpClient.connectionTimeout = const Duration(seconds: 15);
     
@@ -233,7 +233,7 @@ class EndpointService {
       print('EndpointService: Submitting usage log for endpoint $endpointId');
       
       final httpClient = HttpClient();
-      httpClient.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+      httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
       final request = await httpClient.postUrl(Uri.parse('$_currentEndpoint/api/v2/open/endpoint/saveLog'));
