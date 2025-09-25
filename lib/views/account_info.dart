@@ -244,7 +244,7 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                               ),
                               const SizedBox(height: 16),
                               _buildInfoRow('邮箱', _userInfo?['email'] ?? '未知', clickable: true, onTap: _handleEmailClick),
-                              _buildInfoRow('余额', '¥${_userInfo?['balance'] ?? '0'}'),
+                              _buildInfoRow('余额', '¥${((_userInfo?['balance'] ?? 0) / 100).toStringAsFixed(2)}'),
                               _buildExpireTimeRow(),
                             ],
                           ),

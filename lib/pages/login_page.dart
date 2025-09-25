@@ -29,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
     try {
-      // 使用AuthService进行登录
+      // 使用AuthService进行登录（自动初始化端点）
       final result = await _authService.login(
         email: _usernameController.text,
         password: _passwordController.text,

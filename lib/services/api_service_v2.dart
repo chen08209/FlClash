@@ -3,9 +3,27 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/models/models.dart';
+import 'endpoint_service.dart';
 
 class ApiServiceV2 {
   static const String baseUrl = 'https://origin.huanshen.org/api/v1';
+  
+  final EndpointService _endpointService = EndpointService();
+  
+  /// 获取当前API基础URL
+  String get _baseUrl => '${_endpointService.currentEndpoint}/api/v1';
+  
+  /// 初始化API服务和端点服务
+  Future<void> initialize() async {
+    await _endpointService.initialize();
+    print('ApiServiceV2: Initialized with endpoint: ${_endpointService.currentEndpoint}');
+  }
+  
+  /// 刷新端点
+  Future<void> refreshEndpoints() async {
+    await _endpointService.refresh();
+    print('ApiServiceV2: Refreshed endpoint to: ${_endpointService.currentEndpoint}');
+  }
 
   Future<Map<String, dynamic>> _makeRequest(String endpoint) async {
     try {
@@ -16,14 +34,14 @@ class ApiServiceV2 {
         throw Exception('未找到授权信息，请重新登录');
       }
 
-      print('Making request to: $baseUrl$endpoint');
+      print('Making request to: $_baseUrl$endpoint');
       print('Authorization: $authData');
 
       final httpClient = HttpClient();
       httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
-      final request = await httpClient.getUrl(Uri.parse('$baseUrl$endpoint'));
+      final request = await httpClient.getUrl(Uri.parse('$_baseUrl$endpoint'));
       
       // 设置请求头
       request.headers.set('Accept', 'application/json');
@@ -153,14 +171,14 @@ class ApiServiceV2 {
         throw Exception('未找到授权信息，请重新登录');
       }
 
-      print('Making simple request to: $baseUrl$endpoint');
+      print('Making simple request to: $_baseUrl$endpoint');
       print('Authorization: $authData');
 
       final httpClient = HttpClient();
       httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
-      final request = await httpClient.getUrl(Uri.parse('$baseUrl$endpoint'));
+      final request = await httpClient.getUrl(Uri.parse('$_baseUrl$endpoint'));
       
       // 设置请求头
       request.headers.set('Accept', 'application/json');
@@ -212,14 +230,14 @@ class ApiServiceV2 {
         throw Exception('未找到授权信息，请重新登录');
       }
 
-      print('Making direct request to: $baseUrl$endpoint');
+      print('Making direct request to: $_baseUrl$endpoint');
       print('Authorization: $authData');
 
       final httpClient = HttpClient();
       httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
-      final request = await httpClient.getUrl(Uri.parse('$baseUrl$endpoint'));
+      final request = await httpClient.getUrl(Uri.parse('$_baseUrl$endpoint'));
       
       // 设置请求头
       request.headers.set('Accept', 'application/json');
@@ -264,7 +282,7 @@ class ApiServiceV2 {
         throw Exception('未找到授权信息，请重新登录');
       }
 
-      print('Making POST request to: $baseUrl$endpoint');
+      print('Making POST request to: $_baseUrl$endpoint');
       print('Authorization: $authData');
       print('Data: $data');
 
@@ -272,7 +290,7 @@ class ApiServiceV2 {
       httpClient.findProxy = (uri) => 'DIRECT';
       httpClient.badCertificateCallback = (cert, host, port) => true;
       
-      final request = await httpClient.postUrl(Uri.parse('$baseUrl$endpoint'));
+      final request = await httpClient.postUrl(Uri.parse('$_baseUrl$endpoint'));
       
       // 设置请求头
       request.headers.set('Accept', 'application/json');

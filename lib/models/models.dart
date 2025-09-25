@@ -13,4 +13,5 @@ export 'ticket.dart';
 export 'ticket_detail.dart';
 export 'traffic_log.dart';
 export 'invite.dart';
+export 'endpoint.dart';
 export 'widget.dart';

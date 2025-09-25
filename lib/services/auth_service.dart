@@ -10,14 +10,43 @@ import 'package:fl_clash/models/ticket.dart';
 import 'package:fl_clash/models/ticket_detail.dart';
 import 'package:fl_clash/models/traffic_log.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'endpoint_service.dart';
 
 class AuthService {
   late Dio _dio;
   static const String baseUrl = 'https://origin.huanshen.org/api/v1';
+  
+  final EndpointService _endpointService = EndpointService();
+  
+  /// 获取当前API基础URL
+  String get _baseUrl => '${_endpointService.currentEndpoint}/api/v1';
 
+  bool _isInitialized = false;
+  
   AuthService() {
+    // 不在构造函数中初始化Dio，等待端点服务初始化完成
+  }
+  
+  /// 初始化AuthService和端点服务
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+    
+    await _endpointService.initialize();
+    _initDio(); // 使用最优端点初始化Dio
+    _isInitialized = true;
+    print('AuthService: Initialized with endpoint: ${_endpointService.currentEndpoint}');
+  }
+  
+  /// 确保服务已初始化
+  Future<void> _ensureInitialized() async {
+    if (!_isInitialized) {
+      await initialize();
+    }
+  }
+  
+  void _initDio() {
     _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
+      baseUrl: _baseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
       headers: {
@@ -63,6 +92,7 @@ class AuthService {
 
   /// 获取注册配置信息
   Future<Map<String, dynamic>> getRegistrationConfig() async {
+    await _ensureInitialized();
     try {
       final response = await _dio.get('/guest/comm/config');
       
@@ -93,6 +123,7 @@ class AuthService {
 
   /// 发送邮箱验证码
   Future<bool> sendEmailVerificationCode(String email) async {
+    await _ensureInitialized();
     try {
       final response = await _dio.post(
         '/passport/comm/sendEmailVerify',
@@ -139,6 +170,7 @@ class AuthService {
     String inviteCode = '',
     String recaptchaData = '',
   }) async {
+    await _ensureInitialized();
     try {
       final response = await _dio.post(
         '/passport/auth/register',
@@ -187,6 +219,7 @@ class AuthService {
     required String password,
     required String emailCode,
   }) async {
+    await _ensureInitialized();
     try {
       final response = await _dio.post(
         '/passport/auth/forget',
@@ -232,6 +265,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    await _ensureInitialized();
     try {
       final response = await _dio.post(
         '/passport/auth/login',

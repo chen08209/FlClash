@@ -557,6 +557,9 @@ class AppController {
     );
     autoUpdateProfiles();
     
+    // 初始化端点服务
+    await _initializeEndpointService();
+    
     // 在启动时自动更新服务器订阅
     await _autoUpdateServerSubscription();
     
@@ -667,6 +670,19 @@ class AppController {
       await handleExit();
     }
     return;
+  }
+
+  /// 初始化端点服务
+  Future<void> _initializeEndpointService() async {
+    try {
+      print('AppController: Initializing endpoint service...');
+      final apiService = ApiServiceV2();
+      await apiService.initialize();
+      print('AppController: Endpoint service initialized successfully');
+    } catch (e) {
+      print('AppController: Failed to initialize endpoint service: $e');
+      // 不抛出异常，让应用继续启动
+    }
   }
 
   Future<void> _autoUpdateServerSubscription() async {
