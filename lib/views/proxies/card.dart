@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/tech_theme.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -34,68 +35,58 @@ class ProxyCard extends StatelessWidget {
   }
 
   Widget _buildDelayText() {
-    return SizedBox(
-      height: measure.labelSmallHeight,
-      child: Consumer(
-        builder: (context, ref, __) {
-          final delay = ref.watch(getDelayProvider(
-            proxyName: proxy.name,
-            testUrl: testUrl,
-          ));
-          return delay == 0 || delay == null
-              ? SizedBox(
-                  height: measure.labelSmallHeight,
-                  width: measure.labelSmallHeight,
-                  child: delay == 0
-                      ? const CircularProgressIndicator(
-                          strokeWidth: 2,
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.bolt),
-                          iconSize: globalState.measure.labelSmallHeight,
-                          padding: EdgeInsets.zero,
-                          onPressed: _handleTestCurrentDelay,
+    return Consumer(
+      builder: (context, ref, __) {
+        final delay = ref.watch(getDelayProvider(
+          proxyName: proxy.name,
+          testUrl: testUrl,
+        ));
+        return delay == 0 || delay == null
+            ? SizedBox(
+                height: 16,
+                width: 16,
+                child: delay == 0
+                    ? CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(TechTheme.primaryCyan),
+                      )
+                    : GestureDetector(
+                        onTap: _handleTestCurrentDelay,
+                        child: Icon(
+                          Icons.bolt,
+                          color: TechTheme.neonOrange,
+                          size: 12,
                         ),
-                )
-              : GestureDetector(
-                  onTap: _handleTestCurrentDelay,
-                  child: Text(
-                    delay > 0 ? '$delay ms' : "Timeout",
-                    style: context.textTheme.labelSmall?.copyWith(
-                      overflow: TextOverflow.ellipsis,
-                      color: utils.getDelayColor(
-                        delay,
                       ),
-                    ),
+              )
+            : GestureDetector(
+                onTap: _handleTestCurrentDelay,
+                child: Text(
+                  delay > 0 ? '${delay}ms' : "Timeout",
+                  style: TechTheme.techTextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                    color: utils.getDelayColor(delay) ?? TechTheme.neonOrange,
                   ),
-                );
-        },
-      ),
+                ),
+              );
+      },
     );
   }
 
   Widget _buildProxyNameText(BuildContext context) {
-    if (type == ProxyCardType.min) {
-      return SizedBox(
-        height: measure.bodyMediumHeight * 1,
-        child: EmojiText(
-          proxy.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.textTheme.bodyMedium,
+    return Flexible(
+      child: EmojiText(
+        proxy.name,
+        maxLines: 1, // 强制所有卡片都只显示一行
+        overflow: TextOverflow.ellipsis,
+        style: TechTheme.techTextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
-      );
-    } else {
-      return SizedBox(
-        height: measure.bodyMediumHeight * 2,
-        child: EmojiText(
-          proxy.name,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: context.textTheme.bodyMedium,
-        ),
-      );
-    }
+      ),
+    );
   }
 
   _changeProxy(WidgetRef ref) async {
@@ -131,76 +122,103 @@ class ProxyCard extends StatelessWidget {
           builder: (_, ref, child) {
             final selectedProxyName =
                 ref.watch(getSelectedProxyNameProvider(groupName));
-            return CommonCard(
-              key: key,
-              onPressed: () {
-                _changeProxy(ref);
-              },
-              isSelected: selectedProxyName == proxy.name,
-              child: child!,
-            );
-          },
-          child: Container(
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                proxyNameText,
-                const SizedBox(
-                  height: 8,
-                ),
-                if (type == ProxyCardType.expand) ...[
-                  SizedBox(
-                    height: measure.bodySmallHeight,
-                    child: _ProxyDesc(
-                      proxy: proxy,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  delayText,
-                ] else
-                  SizedBox(
-                    height: measure.bodySmallHeight,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          flex: 1,
-                          child: TooltipText(
-                            text: Text(
-                              proxy.type,
-                              style: context.textTheme.bodySmall?.copyWith(
-                                overflow: TextOverflow.ellipsis,
-                                color: context
-                                    .textTheme.bodySmall?.color?.opacity80,
+            final isSelected = selectedProxyName == proxy.name;
+            return TechTheme.techCard(
+              animated: true,
+              accentColor: isSelected ? TechTheme.primaryCyan : TechTheme.primaryPurple.withOpacity(0.6),
+              margin: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                onTap: () => _changeProxy(ref),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // 代理类型图标
+                          Icon(
+                            _getProxyTypeIcon(proxy.type),
+                            size: 12,
+                            color: isSelected ? TechTheme.primaryCyan : TechTheme.primaryPurple,
+                          ),
+                          const SizedBox(width: 6),
+                          proxyNameText,
+                          if (isSelected) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: TechTheme.primaryCyan.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: TechTheme.primaryCyan, width: 0.5),
+                              ),
+                              child: Text(
+                                '✓',
+                                style: TechTheme.techTextStyle(
+                                  fontSize: 8,
+                                  color: TechTheme.primaryCyan,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                        ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      if (type == ProxyCardType.expand) ...[
+                        _ProxyDesc(proxy: proxy),
+                        const SizedBox(height: 2),
                         delayText,
-                      ],
-                    ),
+                      ] else
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              proxy.type,
+                              style: TechTheme.techTextStyle(
+                                fontSize: 8,
+                                color: TechTheme.neonGreen,
+                              ),
+                            ),
+                            delayText,
+                          ],
+                        ),
+                    ],
                   ),
-              ],
-            ),
-          ),
+                ),
+              ),
+            );
+          },
         ),
-        if (groupType.isComputedSelected)
-          Positioned(
-            top: 0,
-            right: 0,
-            child: _ProxyComputedMark(
-              groupName: groupName,
-              proxy: proxy,
-            ),
-          )
       ],
     );
+  }
+
+  IconData _getProxyTypeIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'ss':
+      case 'shadowsocks':
+        return Icons.security;
+      case 'vmess':
+      case 'vless':
+        return Icons.vpn_lock;
+      case 'trojan':
+        return Icons.shield;
+      case 'hysteria':
+      case 'hysteria2':
+        return Icons.flash_on;
+      case 'direct':
+        return Icons.call_made;
+      case 'reject':
+        return Icons.block;
+      default:
+        return Icons.router;
+    }
   }
 }
 
@@ -219,8 +237,9 @@ class _ProxyDesc extends ConsumerWidget {
     return EmojiText(
       desc,
       overflow: TextOverflow.ellipsis,
-      style: context.textTheme.bodySmall?.copyWith(
-        color: context.textTheme.bodySmall?.color?.opacity80,
+      style: TechTheme.techTextStyle(
+        fontSize: 12,
+        color: Colors.white.withOpacity(0.8),
       ),
     );
   }
@@ -250,9 +269,17 @@ class _ProxyComputedMark extends ConsumerWidget {
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Theme.of(context).colorScheme.secondaryContainer,
+          color: TechTheme.primaryCyan.withOpacity(0.2),
+          border: Border.all(
+            color: TechTheme.primaryCyan,
+            width: 2,
+          ),
         ),
-        child: const SelectIcon(),
+        child: Icon(
+          Icons.check,
+          size: 12,
+          color: TechTheme.primaryCyan,
+        ),
       ),
     );
   }

@@ -124,19 +124,26 @@ class EndpointService {
       }
     }
     
-    // 测试所有端点的延迟
-    print('EndpointService: Testing ${allEndpoints.length} endpoints...');
-    final List<EndpointInfo> testedEndpoints = [];
+    // 并发测试所有端点的延迟
+    print('EndpointService: Testing ${allEndpoints.length} endpoints concurrently...');
     
-    for (final endpoint in allEndpoints) {
-      if (endpoint.isActive == 1) {
-        final latency = await testEndpointLatency(endpoint.point);
-        testedEndpoints.add(endpoint.copyWith(
-          latencyMs: latency,
-          isOnline: latency < 999999,
-          lastTestedAt: DateTime.now().toIso8601String(),
-        ));
-      }
+    final activeEndpoints = allEndpoints.where((e) => e.isActive == 1).toList();
+    final testFutures = activeEndpoints.map<Future<EndpointInfo>>((endpoint) async {
+      final latency = await testEndpointLatency(endpoint.point);
+      return endpoint.copyWith(
+        latencyMs: latency,
+        isOnline: latency < 999999,
+        lastTestedAt: DateTime.now().toIso8601String(),
+      );
+    }).toList();
+    
+    // 并发执行所有端点测试，最多同时测试10个以避免网络拥塞
+    final List<EndpointInfo> testedEndpoints = [];
+    final batchSize = 10;
+    for (int i = 0; i < testFutures.length; i += batchSize) {
+      final batch = testFutures.skip(i).take(batchSize).toList();
+      final batchResults = await Future.wait(batch, eagerError: false);
+      testedEndpoints.addAll(batchResults);
     }
     
     // 按延迟排序
@@ -225,16 +232,24 @@ class EndpointService {
       return;
     }
     
-    print('EndpointService: Retesting ${_cachedEndpoints.length} cached endpoints...');
-    final List<EndpointInfo> testedEndpoints = [];
+    print('EndpointService: Retesting ${_cachedEndpoints.length} cached endpoints concurrently...');
     
-    for (final endpoint in _cachedEndpoints) {
+    final testFutures = _cachedEndpoints.map<Future<EndpointInfo>>((endpoint) async {
       final latency = await testEndpointLatency(endpoint.point);
-      testedEndpoints.add(endpoint.copyWith(
+      return endpoint.copyWith(
         latencyMs: latency,
         isOnline: latency < 999999,
         lastTestedAt: DateTime.now().toIso8601String(),
-      ));
+      );
+    }).toList();
+    
+    // 并发执行端点重测，分批处理避免网络拥塞
+    final List<EndpointInfo> testedEndpoints = [];
+    final batchSize = 8; // 重测时使用较小的批处理大小
+    for (int i = 0; i < testFutures.length; i += batchSize) {
+      final batch = testFutures.skip(i).take(batchSize).toList();
+      final batchResults = await Future.wait(batch, eagerError: false);
+      testedEndpoints.addAll(batchResults);
     }
     
     // 按延迟排序

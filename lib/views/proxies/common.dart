@@ -48,6 +48,24 @@ delayTest(List<Proxy> proxies, [String? testUrl]) async {
   final appController = globalState.appController;
   final proxyNames = proxies.map((proxy) => proxy.name).toSet().toList();
 
+  // 立即设置所有代理为测试中状态（显示加载动画）
+  for (final proxyName in proxyNames) {
+    final state = appController.getProxyCardState(proxyName);
+    final url = state.testUrl.getSafeValue(
+      appController.getRealTestUrl(testUrl),
+    );
+    final name = state.proxyName;
+    if (name.isNotEmpty) {
+      appController.setDelay(
+        Delay(
+          url: url,
+          name: name,
+          value: 0, // 0表示正在测试中
+        ),
+      );
+    }
+  }
+
   final delayProxies = proxyNames.map<Future>((proxyName) async {
     final state = appController.getProxyCardState(proxyName);
     final url = state.testUrl.getSafeValue(
@@ -57,25 +75,20 @@ delayTest(List<Proxy> proxies, [String? testUrl]) async {
     if (name.isEmpty) {
       return;
     }
-    appController.setDelay(
-      Delay(
-        url: url,
-        name: name,
-        value: 0,
-      ),
-    );
-    appController.setDelay(
-      await clashCore.getDelay(
-        url,
-        name,
-      ),
-    );
+    
+    // 执行延迟测试
+    final result = await clashCore.getDelay(url, name);
+    appController.setDelay(result);
   }).toList();
 
-  final batchesDelayProxies = delayProxies.batch(100);
+  // 优化并发数：根据代理数量动态调整批处理大小
+  final batchSize = proxyNames.length > 50 ? 20 : 10; // 较多代理时减少并发数，避免网络拥塞
+  final batchesDelayProxies = delayProxies.batch(batchSize);
+  
   for (final batchDelayProxies in batchesDelayProxies) {
-    await Future.wait(batchDelayProxies);
+    await Future.wait(batchDelayProxies, eagerError: false); // eagerError: false 确保即使部分失败也继续
   }
+  
   appController.addSortNum();
 }
 
