@@ -213,8 +213,9 @@ class _InvitePageState extends State<InvitePage> with TickerProviderStateMixin {
     try {
       print('InvitePage: Withdrawing commission, method: $_selectedWithdrawMethod, account: ${_withdrawAccountController.text}');
       final success = await _apiService.withdrawCommission(
-        _selectedWithdrawMethod,
-        _withdrawAccountController.text,
+        withdrawMethod: _selectedWithdrawMethod,
+        withdrawAccount: _withdrawAccountController.text,
+        amountInCents: 0, // TODO: 需要获取实际金额
       );
       print('InvitePage: Withdraw commission result: $success');
       

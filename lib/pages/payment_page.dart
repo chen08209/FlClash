@@ -63,8 +63,6 @@ class _PaymentPageState extends State<PaymentPage> {
         _error = null;
       });
 
-      // 确保AuthService已初始化
-      await _authService.initialize();
       final methods = await _authService.getPaymentMethods();
       
       setState(() {
@@ -98,8 +96,6 @@ class _PaymentPageState extends State<PaymentPage> {
   // 检查订单状态
   Future<void> _checkOrderStatus() async {
     try {
-      // 确保AuthService已初始化
-      await _authService.initialize();
       final status = await _authService.checkOrderStatus(widget.order.tradeNo);
       
       if (mounted) {
@@ -215,8 +211,6 @@ class _PaymentPageState extends State<PaymentPage> {
         _isCancellingOrder = true;
       });
 
-      // 确保AuthService已初始化
-      await _authService.initialize();
       await _authService.cancelOrder(widget.order.tradeNo);
       
       if (mounted) {
@@ -269,8 +263,6 @@ class _PaymentPageState extends State<PaymentPage> {
         _error = null;
       });
 
-      // 确保AuthService已初始化
-      await _authService.initialize();
       final result = await _authService.checkoutOrder(
         tradeNo: widget.order.tradeNo,
         methodId: _selectedPaymentMethod!.id,

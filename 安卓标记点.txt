@@ -1,4 +1,4 @@
-return 'DIRECT';
+return 'PROXY 192.168.31.108:8888';
 改为
 return 'DIRECT';
 

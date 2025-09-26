@@ -31,8 +31,6 @@ class _OrderCenterPageState extends State<OrderCenterPage> {
       _errorMessage = null;
     });
     try {
-      // 确保AuthService已初始化
-      await _authService.initialize();
       final orders = await _authService.getOrderList();
       setState(() {
         _orders = orders;
@@ -86,8 +84,6 @@ class _OrderCenterPageState extends State<OrderCenterPage> {
     );
 
     try {
-      // 确保AuthService已初始化
-      await _authService.initialize();
       // 获取订单详情
       final detailOrder = await _authService.getOrderDetail(order.tradeNo);
       
@@ -566,8 +562,6 @@ class _OrderCenterPageState extends State<OrderCenterPage> {
   // 导航到支付页面
   Future<void> _navigateToPayment(Order order) async {
     try {
-      // 确保AuthService已初始化
-      await _authService.initialize();
       // 获取订单详情，确保有完整的套餐信息
       final orderDetail = await _authService.getOrderDetail(order.tradeNo);
       
@@ -666,8 +660,6 @@ class _OrderCenterPageState extends State<OrderCenterPage> {
         _cancellingOrders.add(order.tradeNo);
       });
 
-      // 确保AuthService已初始化
-      await _authService.initialize();
       await _authService.cancelOrder(order.tradeNo);
       
       if (mounted) {

@@ -16,7 +16,9 @@ import 'application.dart';
 import 'clash/core.dart';
 import 'clash/lib.dart';
 import 'common/common.dart';
+import 'common/http_client_util.dart';
 import 'models/models.dart';
+import 'pages/endpoint_initialization_page.dart';
 
 Future<void> main() async {
   globalState.isService = false;
@@ -24,11 +26,28 @@ Future<void> main() async {
   final version = await system.version;
   await clashCore.preload();
   await globalState.initApp(version);
+  
+  // 注意：HttpClientUtil的初始化移动到EndpointInitializationPage中进行
+  // 这样用户可以看到一个专门的过渡页面，而不是卡在启动页
+  
   await android?.init();
   await window?.init(version);
   HttpOverrides.global = FlClashHttpOverrides();
   runApp(ProviderScope(
-    child: const Application(),
+    child: MaterialApp(
+      title: 'FlClash',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      home: const EndpointInitializationPage(),
+      debugShowCheckedModeBanner: false,
+    ),
   ));
 }
 

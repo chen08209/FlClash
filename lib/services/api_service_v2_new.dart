@@ -4,12 +4,6 @@ import 'package:fl_clash/common/http_client_util.dart';
 class ApiServiceV2 {
   // 使用HttpClientUtil代替EndpointService和HttpClient
 
-  /// 初始化方法（为了兼容性，实际初始化在HttpClientUtil中完成）
-  Future<void> initialize() async {
-    // HttpClientUtil已在main.dart中初始化，这里无需操作
-    print('ApiServiceV2: Using HttpClientUtil (already initialized)');
-  }
-
   /// 获取用户信息
   Future<Map<String, dynamic>> getUserInfo() async {
     try {
@@ -44,27 +38,6 @@ class ApiServiceV2 {
     }
   }
 
-  /// 获取最新订阅信息（别名方法）
-  Future<Map<String, dynamic>> getLatestSubscriptionInfo() async {
-    return getSubscriptionInfo();
-  }
-
-  /// 更新服务器订阅
-  Future<void> updateServerSubscription() async {
-    try {
-      final response = await HttpClientUtil.post('/user/subscribe/update');
-      
-      if (response['status'] != 'success') {
-        throw Exception(response['message'] ?? '更新订阅失败');
-      }
-    } catch (e) {
-      if (e is Exception) {
-        rethrow;
-      }
-      throw Exception('更新订阅失败: $e');
-    }
-  }
-
   /// 获取邀请信息
   Future<InviteInfo> getInviteInfo() async {
     try {
@@ -96,23 +69,6 @@ class ApiServiceV2 {
         rethrow;
       }
       throw Exception('获取邀请详情失败: $e');
-    }
-  }
-
-  /// 生成邀请码
-  Future<bool> generateInviteCode() async {
-    try {
-      final response = await HttpClientUtil.post('/user/invite/generate');
-      
-      if (response['status'] == 'success') {
-        return response['data'] ?? true;
-      }
-      throw Exception(response['message'] ?? '生成邀请码失败');
-    } catch (e) {
-      if (e is Exception) {
-        rethrow;
-      }
-      throw Exception('生成邀请码失败: $e');
     }
   }
 
@@ -163,7 +119,6 @@ class ApiServiceV2 {
       throw Exception('提取佣金失败: $e');
     }
   }
-
 
   /// 刷新端点（委托给HttpClientUtil）
   Future<void> refreshEndpoints() async {

@@ -34,8 +34,6 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
         _error = null;
       });
       
-      // 确保AuthService已初始化
-      await _authService.initialize();
       final plans = await _authService.getSubscriptionPlans();
       
       setState(() {
