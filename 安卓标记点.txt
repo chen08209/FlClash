@@ -7,3 +7,4 @@ return 'DIRECT';
 'DIRECT'
 
 标记位置
+client.findProxy
