@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:fl_clash/services/auth_service.dart';
 import 'package:fl_clash/models/subscription_plan.dart';
 import 'package:fl_clash/pages/checkout_page.dart';
+import 'package:fl_clash/common/tech_theme.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 
 class SubscriptionStorePage extends StatefulWidget {
   const SubscriptionStorePage({super.key});
@@ -133,42 +135,77 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
     final selectedPeriod = _selectedPeriods[plan.id];
     final selectedPrice = selectedPeriod?.getPrice(plan);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    // 根据套餐等级确定重点色
+    Color accentColor = TechTheme.primaryCyan;
+    IconData planIcon = Icons.star_outline;
+    
+    if (plan.name.toLowerCase().contains('premium') || 
+        plan.name.toLowerCase().contains('高级') ||
+        plan.name.toLowerCase().contains('专业')) {
+      accentColor = TechTheme.primaryPurple;
+      planIcon = Icons.diamond_outlined;
+    } else if (plan.name.toLowerCase().contains('vip') || 
+               plan.name.toLowerCase().contains('至尊')) {
+      accentColor = TechTheme.neonOrange;
+      planIcon = Icons.workspace_premium_outlined;
+    }
+
+    return TechTheme.techCard(
+      animated: true,
+      accentColor: accentColor,
+      margin: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
+        onTap: () => _showPurchaseDialog(plan),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // 套餐头部信息
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: accentColor.withOpacity(0.3)),
+                  ),
+                  child: Icon(
+                    planIcon,
+                    color: accentColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         plan.name,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                        style: TechTheme.techTextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          glowing: true,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
+                          color: accentColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: accentColor.withOpacity(0.3)),
                         ),
                         child: Text(
                           plan.formattedTraffic,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          style: TechTheme.techTextStyle(
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
+                            color: accentColor,
                           ),
                         ),
                       ),
@@ -181,17 +218,20 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
                     children: [
                       Text(
                         plan.formatPrice(selectedPrice),
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                        style: TechTheme.techTextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: accentColor,
+                          glowing: true,
+                        ),
                       ),
                       if (selectedPeriod != null)
                         Text(
                           selectedPeriod.label,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
+                          style: TechTheme.techTextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
                         ),
                     ],
                   ),
@@ -202,20 +242,36 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
             
             // 套餐内容描述（简化显示）
             if (plan.content.isNotEmpty) ...[
-              Text(
-                '套餐特性：',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      accentColor.withOpacity(0.1),
+                      accentColor.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: accentColor.withOpacity(0.3)),
                 ),
-                child: _buildSimplifiedContent(plan),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '套餐特性',
+                      style: TechTheme.techTextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                        glowing: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSimplifiedContent(plan, accentColor),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
             ],
@@ -223,10 +279,13 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
             // 订阅周期选择
             if (availablePeriods.length > 1) ...[
               Text(
-                '选择周期：',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                '选择订阅周期',
+                style: TechTheme.techTextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  glowing: true,
+                ),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -270,22 +329,15 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
             // 购买按钮
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: selectedPrice != null && selectedPrice > 0
+              child: TechTheme.techButton(
+                text: selectedPrice != null && selectedPrice > 0
+                    ? '购买套餐 ${plan.formatPrice(selectedPrice)}'
+                    : '暂不可购买',
+                onPressed: (selectedPrice != null && selectedPrice > 0)
                     ? () => _navigateToCheckout(plan)
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  selectedPrice != null && selectedPrice > 0
-                      ? '购买套餐 ${plan.formatPrice(selectedPrice)}'
-                      : '暂不可购买',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                    : () {},
+                glowing: true,
+                color: accentColor,
               ),
             ),
             
@@ -316,40 +368,52 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
                 ),
               ),
             ],
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSimplifiedContent(SubscriptionPlan plan) {
+  Widget _buildSimplifiedContent(SubscriptionPlan plan, Color accentColor) {
     // 简化显示套餐内容，提取关键信息
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildFeatureItem(Icons.cloud_download, '每月${plan.formattedTraffic}流量'),
-        _buildFeatureItem(Icons.speed, 'IEPL专线隧道出口'),
-        _buildFeatureItem(Icons.devices, '最大同时4个设备在线'),
-        _buildFeatureItem(Icons.network_check, '端口限速1Gbps'),
+        _buildFeatureItem(Icons.cloud_download, '每月${plan.formattedTraffic}流量', accentColor),
+        _buildFeatureItem(Icons.speed, 'IEPL专线隧道出口', accentColor),
+        _buildFeatureItem(Icons.devices, '最大同时4个设备在线', accentColor),
+        _buildFeatureItem(Icons.network_check, '端口限速1Gbps', accentColor),
       ],
     );
   }
 
-  Widget _buildFeatureItem(IconData icon, String text) {
+  Widget _buildFeatureItem(IconData icon, String text, Color accentColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Theme.of(context).colorScheme.primary,
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: accentColor.withOpacity(0.3)),
+            ),
+            child: Icon(
+              icon,
+              size: 16,
+              color: accentColor,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               text,
-              style: Theme.of(context).textTheme.bodySmall,
+              style: TechTheme.techTextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.9),
+              ),
             ),
           ),
         ],
@@ -361,70 +425,125 @@ class _SubscriptionStorePageState extends State<SubscriptionStorePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('订阅商店'),
+        title: Text(
+          '订阅商店',
+          style: TechTheme.techTextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            glowing: true,
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: TechTheme.darkBackground,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(
+              Icons.refresh,
+              color: TechTheme.primaryCyan,
+            ),
             onPressed: _loadPlans,
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '加载失败',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _loadPlans,
-                        child: const Text('重试'),
-                      ),
-                    ],
-                  ),
-                )
-              : _plans.isEmpty
-                  ? const Center(
+      body: TechPageWrapper(
+        showAppBar: false,
+        padding: const EdgeInsets.all(16),
+        child: _isLoading
+            ? Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(TechTheme.primaryCyan),
+                ),
+              )
+            : _error != null
+                ? Center(
+                    child: TechTheme.techCard(
+                      animated: true,
+                      accentColor: TechTheme.neonOrange,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.shopping_bag_outlined, size: 64),
-                          SizedBox(height: 16),
-                          Text('暂无可用套餐'),
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: TechTheme.neonOrange,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            '加载失败',
+                            style: TechTheme.techTextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: TechTheme.techTextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          TechTheme.techButton(
+                            text: '重试',
+                            onPressed: _loadPlans,
+                            color: TechTheme.neonOrange,
+                          ),
                         ],
                       ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadPlans,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        itemCount: _plans.length,
-                        itemBuilder: (context, index) => _buildPlanCard(_plans[index]),
-                      ),
                     ),
+                  )
+                : _plans.isEmpty
+                    ? Center(
+                        child: TechTheme.techCard(
+                          animated: true,
+                          accentColor: TechTheme.primaryPurple,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.shopping_bag_outlined,
+                                size: 64,
+                                color: TechTheme.primaryPurple,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '暂无可用套餐',
+                                style: TechTheme.techTextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '请稍后再试或联系客服',
+                                textAlign: TextAlign.center,
+                                style: TechTheme.techTextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white.withOpacity(0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _loadPlans,
+                        color: TechTheme.primaryCyan,
+                        child: ListView.builder(
+                          itemCount: _plans.length,
+                          itemBuilder: (context, index) => _buildPlanCard(_plans[index]),
+                        ),
+                      ),
+      ),
     );
   }
 }
