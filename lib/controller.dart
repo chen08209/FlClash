@@ -707,6 +707,14 @@ class AppController {
       }
       
       await _updateSubscriptionProfile(subscribeUrl);
+      
+      // 立即更新订阅
+      try {
+        await apiService.updateServerSubscription();
+        print('自动更新订阅成功');
+      } catch (e) {
+        print('自动更新订阅失败: $e');
+      }
     } catch (e) {
       print('自动更新服务器订阅失败: $e');
     }

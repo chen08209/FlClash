@@ -90,17 +90,11 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     }
   }
 
-  // 初始化订阅token
+  // 初始化订阅token（已在AppController中完成，这里无需重复调用）
   Future<void> _initializeSubscriptionToken() async {
-    try {
-      final apiService = ApiServiceV2();
-      print('ModernDashboard: Initializing subscription token...');
-      await apiService.getSubscriptionInfo();
-      print('ModernDashboard: Subscription token initialized');
-    } catch (e) {
-      print('ModernDashboard: Failed to initialize subscription token: $e');
-      // 忽略错误，不影响主要功能
-    }
+    // 订阅信息的初始化已在AppController._autoUpdateServerSubscription()中完成
+    // 避免重复调用getSubscriptionInfo接口
+    print('ModernDashboard: Subscription token initialization skipped (already done in AppController)');
   }
 
   // 获取订阅信息
@@ -114,15 +108,16 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     try {
       final apiService = ApiServiceV2();
       
-      // 优先尝试获取最新订阅信息
+      // 获取用户信息（避免重复调用getSubscriptionInfo）
       Map<String, dynamic>? userInfo;
       try {
-        print('ModernDashboard: Fetching latest subscription info...');
-        userInfo = await apiService.getLatestSubscriptionInfo();
-        print('ModernDashboard: Latest subscription info received: $userInfo');
-      } catch (e) {
-        print('ModernDashboard: Failed to get latest subscription info, falling back to user info: $e');
+        print('ModernDashboard: Fetching user info...');
         userInfo = await apiService.getUserInfo();
+        print('ModernDashboard: User info received: $userInfo');
+      } catch (e) {
+        print('ModernDashboard: Failed to get user info: $e');
+        // 如果获取用户信息失败，设置为null
+        userInfo = null;
       }
       
       if (mounted) {
