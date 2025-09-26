@@ -570,7 +570,7 @@ class AppController {
       window?.hide();
     }
     await _handlePreference();
-    await _handlerDisclaimer();
+    // await _handlerDisclaimer(); // 已禁用免责声明弹窗
     _ref.read(initProvider.notifier).value = true;
   }
 
