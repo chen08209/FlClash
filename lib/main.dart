@@ -40,8 +40,8 @@ Future<void> _service(List<String> flags) async {
     final clashConfig = globalState.config.patchClashConfig.copyWith.tun(
       enable: false,
     );
-    await globalState.handleStart();
     await coreController.setupConfig(clashConfig);
+    await globalState.handleStart();
   });
 }
 
