@@ -1,3 +1,13 @@
+## v0.8.89
+
+- Fix some issues
+
+- Optimize Windows service mode
+
+- Update core
+
+- Update changelog
+
 ## v0.8.88
 
 - Add android separates the core process
