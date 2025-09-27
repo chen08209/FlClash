@@ -466,9 +466,6 @@ class AppController {
     Map<String, dynamic>? data,
     bool handleError = false,
   }) async {
-    if (globalState.isPre) {
-      return;
-    }
     if (data != null) {
       final tagName = data['tag_name'];
       final body = data['body'];
@@ -962,7 +959,7 @@ class AppController {
       final res = await futureFunction();
       return res;
     } catch (e) {
-      commonPrint.log('$futureFunction ===> $e', logLevel: LogLevel.warning);
+      commonPrint.log('$title===> $e', logLevel: LogLevel.warning);
       if (realSilence) {
         globalState.showNotifier(e.toString());
       } else {

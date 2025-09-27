@@ -157,7 +157,7 @@ abstract class CoreHandlerInterface with CoreInterface {
   @override
   Future<Result> getConfig(String path) async {
     return await _invoke<Result>(method: ActionMethod.getConfig, data: path) ??
-        Result<Map<String, dynamic>>.success({});
+        Result.success({});
   }
 
   @override

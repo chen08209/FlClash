@@ -92,6 +92,7 @@ object State {
 
     suspend fun destroyServiceEngine() {
         runLock.withLock {
+            GlobalState.log("Destroy service engine")
             withContext(Dispatchers.Main) {
                 runCatching {
                     serviceFlutterEngine?.destroy()
@@ -103,10 +104,12 @@ object State {
 
     suspend fun startServiceWithEngine() {
         runLock.withLock {
-            if (serviceFlutterEngine != null || runStateFlow.value == RunState.PENDING || runStateFlow.value == RunState.START) {
+            if (runStateFlow.value == RunState.PENDING || runStateFlow.value == RunState.START) {
                 return
             }
+            GlobalState.log("Create service engine")
             withContext(Dispatchers.Main) {
+                serviceFlutterEngine?.destroy()
                 serviceFlutterEngine = FlutterEngine(GlobalState.application)
                 serviceFlutterEngine?.plugins?.add(ServicePlugin())
                 serviceFlutterEngine?.plugins?.add(AppPlugin())

@@ -33,6 +33,8 @@ var (
 )
 
 func handleInitClash(paramsString string) bool {
+	runLock.Lock()
+	defer runLock.Unlock()
 	var params = InitParams{}
 	err := json.Unmarshal([]byte(paramsString), &params)
 	if err != nil {

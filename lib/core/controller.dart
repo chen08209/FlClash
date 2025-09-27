@@ -91,10 +91,17 @@ class CoreController {
     return await _interface.updateConfig(updateParams);
   }
 
-  Future<String> setupConfig(ClashConfig clashConfig) async {
+  Future<String> setupConfig(
+    ClashConfig clashConfig, {
+    VoidCallback? preloadInvoke,
+  }) async {
     await globalState.genConfigFile(clashConfig);
     final params = await globalState.getSetupParams();
-    return await _interface.setupConfig(params);
+    final res = _interface.setupConfig(params);
+    if (preloadInvoke != null) {
+      preloadInvoke();
+    }
+    return res;
   }
 
   Future<List<Group>> getProxiesGroups({

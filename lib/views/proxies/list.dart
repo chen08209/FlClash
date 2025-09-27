@@ -488,7 +488,7 @@ class _ListHeaderState extends State<ListHeader> {
     return CommonCard(
       enterAnimated: widget.enterAnimated,
       key: widget.key,
-      radius: 16.ap,
+      radius: 18.ap,
       type: CommonCardType.filled,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

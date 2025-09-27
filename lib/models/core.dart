@@ -192,7 +192,7 @@ extension ActionResultExt on ActionResult {
     if (code == ResultType.success) {
       return Result.success(data);
     } else {
-      return Result.error(data);
+      return Result.error('$data');
     }
   }
 }

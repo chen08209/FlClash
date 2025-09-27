@@ -147,7 +147,8 @@ class ProviderItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 4),
-          Text(_buildProviderDesc()),
+          if (provider.updateAt.microsecondsSinceEpoch > 0)
+            Text(_buildProviderDesc()),
           const SizedBox(height: 4),
           if (provider.subscriptionInfo != null)
             SubscriptionInfoView(subscriptionInfo: provider.subscriptionInfo),
