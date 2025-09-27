@@ -65,19 +65,30 @@ object State {
     }
 
     suspend fun handleStartServiceAction() {
-        tilePlugin?.handleStart()
-        if (flutterEngine != null) {
-            return
+        runLock.withLock {
+            if (runStateFlow.value != RunState.STOP) {
+                return
+            }
+            tilePlugin?.handleStart()
+            if (flutterEngine != null) {
+                return
+            }
+            startServiceWithEngine()
         }
-        startServiceWithEngine()
+
     }
 
-    fun handleStopServiceAction() {
-        tilePlugin?.handleStop()
-        if (flutterEngine != null || serviceFlutterEngine != null) {
-            return
+    suspend fun handleStopServiceAction() {
+        runLock.withLock {
+            if (runStateFlow.value != RunState.START) {
+                return
+            }
+            tilePlugin?.handleStop()
+            if (flutterEngine != null || serviceFlutterEngine != null) {
+                return
+            }
+            handleStopService()
         }
-        handleStopService()
     }
 
     fun handleStartService() {
@@ -90,8 +101,23 @@ object State {
         startService()
     }
 
+    fun handleStopService() {
+        GlobalState.launch {
+            runLock.withLock {
+                if (runStateFlow.value != RunState.START) {
+                    return@launch
+                }
+                runStateFlow.tryEmit(RunState.PENDING)
+                runTime = Service.stopService()
+                runStateFlow.tryEmit(RunState.STOP)
+            }
+            destroyServiceEngine()
+        }
+    }
+
     suspend fun destroyServiceEngine() {
         runLock.withLock {
+            GlobalState.log("Destroy service engine")
             withContext(Dispatchers.Main) {
                 runCatching {
                     serviceFlutterEngine?.destroy()
@@ -101,20 +127,24 @@ object State {
         }
     }
 
-    suspend fun startServiceWithEngine() {
-        runLock.withLock {
-            if (serviceFlutterEngine != null || runStateFlow.value == RunState.PENDING || runStateFlow.value == RunState.START) {
-                return
-            }
-            withContext(Dispatchers.Main) {
-                serviceFlutterEngine = FlutterEngine(GlobalState.application)
-                serviceFlutterEngine?.plugins?.add(ServicePlugin())
-                serviceFlutterEngine?.plugins?.add(AppPlugin())
-                serviceFlutterEngine?.plugins?.add(TilePlugin())
-                val dartEntrypoint = DartExecutor.DartEntrypoint(
-                    FlutterInjector.instance().flutterLoader().findAppBundlePath(), "_service"
-                )
-                serviceFlutterEngine?.dartExecutor?.executeDartEntrypoint(dartEntrypoint)
+    private fun startServiceWithEngine() {
+        GlobalState.launch {
+            runLock.withLock {
+                if (runStateFlow.value != RunState.STOP) {
+                    return@launch
+                }
+                GlobalState.log("Create service engine")
+                withContext(Dispatchers.Main) {
+                    serviceFlutterEngine?.destroy()
+                    serviceFlutterEngine = FlutterEngine(GlobalState.application)
+                    serviceFlutterEngine?.plugins?.add(ServicePlugin())
+                    serviceFlutterEngine?.plugins?.add(AppPlugin())
+                    serviceFlutterEngine?.plugins?.add(TilePlugin())
+                    val dartEntrypoint = DartExecutor.DartEntrypoint(
+                        FlutterInjector.instance().flutterLoader().findAppBundlePath(), "_service"
+                    )
+                    serviceFlutterEngine?.dartExecutor?.executeDartEntrypoint(dartEntrypoint)
+                }
             }
         }
     }
@@ -122,7 +152,7 @@ object State {
     private fun startService() {
         GlobalState.launch {
             runLock.withLock {
-                if (runStateFlow.value == RunState.PENDING || runStateFlow.value == RunState.START) {
+                if (runStateFlow.value != RunState.STOP) {
                     return@launch
                 }
                 runStateFlow.tryEmit(RunState.PENDING)
@@ -140,20 +170,6 @@ object State {
             }
         }
 
-    }
-
-    fun handleStopService() {
-        GlobalState.launch {
-            runLock.withLock {
-                if (runStateFlow.value == RunState.PENDING || runStateFlow.value == RunState.STOP) {
-                    return@launch
-                }
-                runStateFlow.tryEmit(RunState.PENDING)
-                runTime = Service.stopService()
-                runStateFlow.tryEmit(RunState.STOP)
-            }
-            destroyServiceEngine()
-        }
     }
 }
 

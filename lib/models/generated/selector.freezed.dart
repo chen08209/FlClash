@@ -732,7 +732,7 @@ return $default(_that.a,_that.b,_that.c,_that.d);case _:
 
 
 class _VM4<A,B,C,D> implements VM4<A, B, C, D> {
-  const _VM4({required this.a, required this.b, required this.c, required this.d});
+  const _VM4(this.a, this.b, this.c, this.d);
   
 
 @override final  A a;
@@ -789,10 +789,10 @@ class __$VM4CopyWithImpl<A,B,C,D,$Res>
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,Object? d = freezed,}) {
   return _then(_VM4<A, B, C, D>(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
-as C,d: freezed == d ? _self.d : d // ignore: cast_nullable_to_non_nullable
+freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
+as A,freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
+as B,freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
+as C,freezed == d ? _self.d : d // ignore: cast_nullable_to_non_nullable
 as D,
   ));
 }

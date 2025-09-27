@@ -18,8 +18,7 @@ abstract class VM3<A, B, C> with _$VM3<A, B, C> {
 
 @freezed
 abstract class VM4<A, B, C, D> with _$VM4<A, B, C, D> {
-  const factory VM4({required A a, required B b, required C c, required D d}) =
-      _VM4;
+  const factory VM4(A a, B b, C c, D d) = _VM4;
 }
 
 @freezed

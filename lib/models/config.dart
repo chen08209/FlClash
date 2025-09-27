@@ -153,6 +153,7 @@ abstract class NetworkProps with _$NetworkProps {
     @Default(defaultBypassDomain) List<String> bypassDomain,
     @Default(RouteMode.config) RouteMode routeMode,
     @Default(true) bool autoSetSystemDns,
+    @Default(false) bool appendSystemDns,
   }) = _NetworkProps;
 
   factory NetworkProps.fromJson(Map<String, Object?>? json) =>

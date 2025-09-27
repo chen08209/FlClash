@@ -2139,11 +2139,11 @@ const needSetupProvider = NeedSetupProvider._();
 final class NeedSetupProvider
     extends
         $FunctionalProvider<
-          VM3<String?, String?, Dns?>,
-          VM3<String?, String?, Dns?>,
-          VM3<String?, String?, Dns?>
+          VM4<String?, String?, Dns?, bool>,
+          VM4<String?, String?, Dns?, bool>,
+          VM4<String?, String?, Dns?, bool>
         >
-    with $Provider<VM3<String?, String?, Dns?>> {
+    with $Provider<VM4<String?, String?, Dns?, bool>> {
   const NeedSetupProvider._()
     : super(
         from: null,
@@ -2160,25 +2160,27 @@ final class NeedSetupProvider
 
   @$internal
   @override
-  $ProviderElement<VM3<String?, String?, Dns?>> $createElement(
+  $ProviderElement<VM4<String?, String?, Dns?, bool>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  VM3<String?, String?, Dns?> create(Ref ref) {
+  VM4<String?, String?, Dns?, bool> create(Ref ref) {
     return needSetup(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(VM3<String?, String?, Dns?> value) {
+  Override overrideWithValue(VM4<String?, String?, Dns?, bool> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<VM3<String?, String?, Dns?>>(value),
+      providerOverride: $SyncValueProvider<VM4<String?, String?, Dns?, bool>>(
+        value,
+      ),
     );
   }
 }
 
-String _$needSetupHash() => r'3668e8dc9f40a9bea45c94321804eb3afa0e7c51';
+String _$needSetupHash() => r'25352164c340a5fb02add21246062dd1287595fb';
 
 @ProviderFor(currentBrightness)
 const currentBrightnessProvider = CurrentBrightnessProvider._();

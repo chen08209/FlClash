@@ -304,7 +304,13 @@ class GlobalState {
 
   Future<void> genConfigFile(ClashConfig pathConfig) async {
     final configFilePath = await appPath.configFilePath;
-    final config = await patchRawConfig(patchConfig: pathConfig);
+    var config = {};
+    try {
+      config = await patchRawConfig(patchConfig: pathConfig);
+    } catch (e) {
+      globalState.showNotifier(e.toString());
+      config = {};
+    }
     final res = await Isolate.run<String>(() async {
       try {
         final res = json.encode(config);
@@ -469,10 +475,11 @@ class GlobalState {
     }
     final isEnableDns = rawConfig['dns']['enable'] == true;
     final overrideDns = globalState.config.overrideDns;
+    final systemDns = 'system://';
     if (overrideDns || !isEnableDns) {
       final dns = switch (!isEnableDns) {
         true => realPatchConfig.dns.copyWith(
-          nameserver: [...realPatchConfig.dns.nameserver, 'system://'],
+          nameserver: [...realPatchConfig.dns.nameserver, systemDns],
         ),
         false => realPatchConfig.dns,
       };
@@ -481,6 +488,12 @@ class GlobalState {
       for (final entry in dns.nameserverPolicy.entries) {
         rawConfig['dns']['nameserver-policy'][entry.key] =
             entry.value.splitByMultipleSeparators;
+      }
+    }
+    if (config.networkProps.appendSystemDns) {
+      final List<dynamic> nameserver = rawConfig['dns']['nameserver'] ?? [];
+      if (!nameserver.contains(systemDns)) {
+        rawConfig['dns']['nameserver'] = [...nameserver, systemDns];
       }
     }
     List rules = [];

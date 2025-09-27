@@ -3358,6 +3358,26 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Append System DNS`
+  String get appendSystemDns {
+    return Intl.message(
+      'Append System DNS',
+      name: 'appendSystemDns',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Forcefully append system DNS to the configuration`
+  String get appendSystemDnsTip {
+    return Intl.message(
+      'Forcefully append system DNS to the configuration',
+      name: 'appendSystemDnsTip',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

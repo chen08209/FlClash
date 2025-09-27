@@ -33,16 +33,18 @@ Future<void> _service(List<String> flags) async {
       },
     ),
   );
-  Future(() async {
-    app?.tip(appLocalizations.startVpn);
-    final version = await system.version;
-    await coreController.init(version);
-    final clashConfig = globalState.config.patchClashConfig.copyWith.tun(
-      enable: false,
-    );
-    await globalState.handleStart();
-    await coreController.setupConfig(clashConfig);
-  });
+  app?.tip(appLocalizations.startVpn);
+  final version = await system.version;
+  await coreController.init(version);
+  final clashConfig = globalState.config.patchClashConfig.copyWith.tun(
+    enable: false,
+  );
+  coreController.setupConfig(
+    clashConfig,
+    preloadInvoke: () {
+      globalState.handleStart();
+    },
+  );
 }
 
 @immutable

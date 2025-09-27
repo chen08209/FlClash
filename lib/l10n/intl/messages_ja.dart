@@ -80,6 +80,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "app": MessageLookupByLibrary.simpleMessage("アプリ"),
     "appAccessControl": MessageLookupByLibrary.simpleMessage("アプリアクセス制御"),
     "appDesc": MessageLookupByLibrary.simpleMessage("アプリ関連設定の処理"),
+    "appendSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを追加"),
+    "appendSystemDnsTip": MessageLookupByLibrary.simpleMessage(
+      "設定にシステムDNSを強制的に追加します",
+    ),
     "application": MessageLookupByLibrary.simpleMessage("アプリケーション"),
     "applicationDesc": MessageLookupByLibrary.simpleMessage("アプリ関連設定を変更"),
     "auto": MessageLookupByLibrary.simpleMessage("自動"),

@@ -71,16 +71,16 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     commonPrint.log('$state');
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      globalState.appController.savePreferences();
-    } else {
+    if (state == AppLifecycleState.resumed) {
       render?.resume();
     }
-    if (state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.resumed) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         detectionState.tryStartCheck();
       });
+      if (system.isAndroid) {
+        globalState.appController.tryStartCore();
+      }
     }
   }
 
