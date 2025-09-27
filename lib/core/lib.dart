@@ -62,7 +62,7 @@ class CoreLib extends CoreHandlerInterface {
   }
 
   @override
-  Future get connected => _connectedCompleter.future;
+  Completer get completer => _connectedCompleter;
 }
 
 CoreLib? get coreLib => system.isAndroid ? CoreLib() : null;

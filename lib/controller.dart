@@ -82,8 +82,22 @@ class AppController {
     }
   }
 
+  Future<void> tryStartCore() async {
+    if (coreController.isCompleted) {
+      return;
+    }
+    globalState.isUserDisconnected = true;
+    await _connectCore();
+    await _initCore();
+    _ref.read(initProvider.notifier).value = true;
+    if (_ref.read(isStartProvider)) {
+      await globalState.handleStart();
+    }
+  }
+
   Future<void> updateStatus(bool isStart) async {
     if (isStart) {
+      await globalState.appController.tryStartCore();
       await globalState.handleStart([updateRunTime, updateTraffic]);
       final currentLastModified = await _ref
           .read(currentProfileProvider)
@@ -466,9 +480,6 @@ class AppController {
     Map<String, dynamic>? data,
     bool handleError = false,
   }) async {
-    if (globalState.isPre) {
-      return;
-    }
     if (data != null) {
       final tagName = data['tag_name'];
       final body = data['body'];
@@ -557,7 +568,6 @@ class AppController {
       if (!globalState.isService) Future.delayed(Duration(milliseconds: 300)),
     ]);
     final String message = result[0];
-    await Future.delayed(commonDuration);
     if (message.isNotEmpty) {
       _ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
       if (context.mounted) {
@@ -962,7 +972,7 @@ class AppController {
       final res = await futureFunction();
       return res;
     } catch (e) {
-      commonPrint.log('$futureFunction ===> $e', logLevel: LogLevel.warning);
+      commonPrint.log('$title===> $e', logLevel: LogLevel.warning);
       if (realSilence) {
         globalState.showNotifier(e.toString());
       } else {

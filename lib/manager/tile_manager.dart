@@ -19,7 +19,7 @@ class _TileContainerState extends State<TileManager> with TileListener {
   }
 
   @override
-  void onStart() {
+  Future<void> onStart() async {
     if (globalState.appState.isStart) {
       return;
     }

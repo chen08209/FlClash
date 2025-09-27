@@ -37,6 +37,8 @@ type TunHandler struct {
 }
 
 func (th *TunHandler) start(fd int, stack, address, dns string) {
+	runLock.Lock()
+	defer runLock.Unlock()
 	_ = th.limit.Acquire(context.TODO(), 4)
 	defer th.limit.Release(4)
 	th.initHook()

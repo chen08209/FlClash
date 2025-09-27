@@ -186,9 +186,7 @@ class CoreService extends CoreHandlerInterface {
   }
 
   @override
-  Future get connected {
-    return _socketCompleter.future;
-  }
+  Completer get completer => _socketCompleter;
 }
 
 final coreService = system.isDesktop ? CoreService() : null;
