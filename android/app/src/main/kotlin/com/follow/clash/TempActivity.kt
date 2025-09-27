@@ -30,6 +30,6 @@ class TempActivity : Activity(),
                 }
             }
         }
-        finishAndRemoveTask()
+        finish()
     }
 }

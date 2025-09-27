@@ -304,7 +304,13 @@ class GlobalState {
 
   Future<void> genConfigFile(ClashConfig pathConfig) async {
     final configFilePath = await appPath.configFilePath;
-    final config = await patchRawConfig(patchConfig: pathConfig);
+    var config = {};
+    try {
+      config = await patchRawConfig(patchConfig: pathConfig);
+    } catch (e) {
+      globalState.showNotifier(e.toString());
+      config = {};
+    }
     final res = await Isolate.run<String>(() async {
       try {
         final res = json.encode(config);

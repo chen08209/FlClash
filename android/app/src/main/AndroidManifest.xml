@@ -66,6 +66,7 @@
 
         <activity
             android:name=".TempActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:theme="@style/TransparentTheme">
             <intent-filter>
