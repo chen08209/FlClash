@@ -21,7 +21,9 @@ class TempActivity : Activity(),
             }
 
             QuickAction.STOP.action -> {
-                State.handleStopServiceAction()
+                launch {
+                    State.handleStopServiceAction()
+                }
             }
 
             QuickAction.TOGGLE.action -> {
@@ -30,6 +32,6 @@ class TempActivity : Activity(),
                 }
             }
         }
-        finishAndRemoveTask()
+        finish()
     }
 }

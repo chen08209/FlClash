@@ -34,7 +34,11 @@ class _MemoryInfoState extends State<MemoryInfo> {
   Future<void> _updateMemory() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final rss = ProcessInfo.currentRss;
-      _memoryStateNotifier.value = await coreController.getMemory() + rss;
+      if (coreController.isCompleted) {
+        _memoryStateNotifier.value = await coreController.getMemory() + rss;
+      } else {
+        _memoryStateNotifier.value = rss;
+      }
       timer = Timer(Duration(seconds: 2), () async {
         _updateMemory();
       });

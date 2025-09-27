@@ -77,7 +77,7 @@ mixin CoreInterface {
 }
 
 abstract class CoreHandlerInterface with CoreInterface {
-  Future get connected;
+  Completer get completer;
 
   FutureOr<bool> destroy();
 
@@ -86,7 +86,7 @@ abstract class CoreHandlerInterface with CoreInterface {
     dynamic data,
     Duration? timeout,
   }) async {
-    await connected;
+    await completer.future;
     if (kDebugMode) {
       commonPrint.log('Invoke ${method.name} ${DateTime.now()} $data');
     }
@@ -157,7 +157,7 @@ abstract class CoreHandlerInterface with CoreInterface {
   @override
   Future<Result> getConfig(String path) async {
     return await _invoke<Result>(method: ActionMethod.getConfig, data: path) ??
-        Result<Map<String, dynamic>>.success({});
+        Result.success({});
   }
 
   @override

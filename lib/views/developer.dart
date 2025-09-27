@@ -40,6 +40,7 @@ class DeveloperView extends ConsumerWidget {
           title: Text(appLocalizations.crashTest),
           minVerticalPadding: 14,
           onTap: () {
+            // coreController.crash();
             if (kDebugMode) {
               coreController.crash();
             }

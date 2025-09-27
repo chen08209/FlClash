@@ -12,6 +12,7 @@ import (
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/constant/features"
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
@@ -21,6 +22,7 @@ import (
 	"net"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"time"
@@ -33,6 +35,8 @@ var (
 )
 
 func handleInitClash(paramsString string) bool {
+	runLock.Lock()
+	defer runLock.Unlock()
 	var params = InitParams{}
 	err := json.Unmarshal([]byte(paramsString), &params)
 	if err != nil {
@@ -69,16 +73,17 @@ func handleGetIsInit() bool {
 }
 
 func handleForceGC() {
-	go func() {
-		log.Infoln("[APP] request force GC")
-		runtime.GC()
-	}()
+	log.Infoln("[APP] request force GC")
+	runtime.GC()
+	if features.Android {
+		debug.FreeOSMemory()
+	}
 }
 
 func handleShutdown() bool {
 	stopListeners()
 	executor.Shutdown()
-	runtime.GC()
+	handleForceGC()
 	isInit = false
 	return true
 }

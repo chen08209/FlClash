@@ -140,6 +140,8 @@ class Build {
     bool runInShell = true,
   }) async {
     if (name != null) print('run $name');
+    print('exec: ${executable.join(' ')}');
+    print('env: ${environment.toString()}');
     final process = await Process.start(
       executable[0],
       executable.sublist(1),

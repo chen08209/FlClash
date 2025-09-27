@@ -573,7 +573,7 @@ ColorScheme genColorScheme(
 }
 
 @riverpod
-VM3<String?, String?, Dns?> needSetup(Ref ref) {
+VM4<String?, String?, Dns?, bool> needSetup(Ref ref) {
   final profileId = ref.watch(currentProfileIdProvider);
   final content = ref.watch(
     scriptStateProvider.select((state) => state.currentScript?.content),
@@ -582,7 +582,10 @@ VM3<String?, String?, Dns?> needSetup(Ref ref) {
   final dns = overrideDns == true
       ? ref.watch(patchClashConfigProvider.select((state) => state.dns))
       : null;
-  return VM3(a: profileId, b: content, c: dns);
+  final appendSystemDns = ref.watch(
+    networkSettingProvider.select((state) => state.appendSystemDns),
+  );
+  return VM4(profileId, content, dns, appendSystemDns);
 }
 
 @riverpod

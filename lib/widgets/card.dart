@@ -79,7 +79,7 @@ class CommonCard extends StatelessWidget {
     this.type = CommonCardType.plain,
     this.onPressed,
     this.selectWidget,
-    this.radius = 12,
+    this.radius = 14,
     required this.child,
     this.padding,
     this.enterAnimated = false,

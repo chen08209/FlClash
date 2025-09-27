@@ -257,6 +257,30 @@ class Ipv6Item extends ConsumerWidget {
   }
 }
 
+class AppendSystemDNSItem extends ConsumerWidget {
+  const AppendSystemDNSItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final appendSystemDNS = ref.watch(
+      networkSettingProvider.select((state) => state.appendSystemDns),
+    );
+    return ListItem.switchItem(
+      leading: const Icon(Icons.dns_outlined),
+      title: Text(appLocalizations.appendSystemDns),
+      subtitle: Text(appLocalizations.appendSystemDnsTip),
+      delegate: SwitchDelegate(
+        value: appendSystemDNS,
+        onChanged: (bool value) async {
+          ref
+              .read(networkSettingProvider.notifier)
+              .updateState((state) => state.copyWith(appendSystemDns: value));
+        },
+      ),
+    );
+  }
+}
+
 class AllowLanItem extends ConsumerWidget {
   const AllowLanItem({super.key});
 
@@ -437,6 +461,7 @@ final generalItems = <Widget>[
   Ipv6Item(),
   AllowLanItem(),
   UnifiedDelayItem(),
+  AppendSystemDNSItem(),
   FindProcessItem(),
   TcpConcurrentItem(),
   GeodataLoaderItem(),

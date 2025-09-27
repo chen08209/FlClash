@@ -100,6 +100,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "appDesc": MessageLookupByLibrary.simpleMessage(
       "Processing app related settings",
     ),
+    "appendSystemDns": MessageLookupByLibrary.simpleMessage(
+      "Append System DNS",
+    ),
+    "appendSystemDnsTip": MessageLookupByLibrary.simpleMessage(
+      "Forcefully append system DNS to the configuration",
+    ),
     "application": MessageLookupByLibrary.simpleMessage("Application"),
     "applicationDesc": MessageLookupByLibrary.simpleMessage(
       "Modify application related settings",

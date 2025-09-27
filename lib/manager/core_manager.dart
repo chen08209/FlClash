@@ -93,7 +93,8 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   @override
   Future<void> onCrash(String message) async {
-    if (!globalState.isUserDisconnected) {
+    if (!globalState.isUserDisconnected &&
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
       context.showNotifier(message);
     }
     globalState.isUserDisconnected = false;

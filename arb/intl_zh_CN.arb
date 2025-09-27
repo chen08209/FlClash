@@ -433,5 +433,7 @@
   "dataCollectionTip": "数据收集说明",
   "dataCollectionContent": "本应用使用 Firebase Crashlytics 收集崩溃信息以改进应用稳定性。\n收集的数据包括设备信息和崩溃详情，不包含个人敏感数据。\n您可以在设置中关闭此功能。",
   "crashlytics": "崩溃分析",
-  "crashlyticsTip": "开启后，应用崩溃时自动上传不包含敏感信息的崩溃日志"
+  "crashlyticsTip": "开启后，应用崩溃时自动上传不包含敏感信息的崩溃日志",
+  "appendSystemDns": "追加系统DNS",
+  "appendSystemDnsTip": "强制为配置附加系统DNS"
 }

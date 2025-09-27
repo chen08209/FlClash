@@ -53,7 +53,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     if (res != true) {
       return;
     }
-    await Future.delayed(commonDuration);
     globalState.appController.restartCore();
   }
 

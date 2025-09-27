@@ -20,7 +20,9 @@ class BroadcastReceiver : BroadcastReceiver() {
 
             BroadcastAction.SERVICE_DESTROYED.action -> {
                 GlobalState.log("Receiver service destroyed")
-                State.handleStopServiceAction()
+                GlobalState.launch {
+                    State.handleStopServiceAction()
+                }
             }
         }
     }

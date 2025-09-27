@@ -24,6 +24,7 @@ import (
 	"github.com/metacubex/mihomo/tunnel"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 )
 
@@ -269,6 +270,7 @@ func setupConfig(params *SetupParams) error {
 	hub.ApplyConfig(currentConfig)
 	patchSelectGroup(params.SelectedMap)
 	updateListeners()
+	runtime.GC()
 	return err
 }
 

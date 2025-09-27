@@ -262,11 +262,10 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     final vm4 = ref.watch(
       themeSettingProvider.select(
         (state) => VM4(
-          a: state.primaryColor,
-          b: state.primaryColors,
-          c: state.schemeVariant,
-          d:
-              state.primaryColor == defaultPrimaryColor &&
+          state.primaryColor,
+          state.primaryColors,
+          state.schemeVariant,
+          state.primaryColor == defaultPrimaryColor &&
               intListEquality.equals(state.primaryColors, defaultPrimaryColors),
         ),
       ),

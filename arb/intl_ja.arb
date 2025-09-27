@@ -433,5 +433,7 @@
   "dataCollectionTip": "データ収集説明",
   "dataCollectionContent": "本アプリはFirebase Crashlyticsを使用してクラッシュ情報を収集し、アプリの安定性を向上させます。\n収集されるデータにはデバイス情報とクラッシュ詳細が含まれますが、個人の機密データは含まれません。\n設定でこの機能を無効にすることができます。",
   "crashlytics": "クラッシュ分析",
-  "crashlyticsTip": "有効にすると、アプリがクラッシュした際に機密情報を含まないクラッシュログを自動的にアップロードします"
+  "crashlyticsTip": "有効にすると、アプリがクラッシュした際に機密情報を含まないクラッシュログを自動的にアップロードします",
+  "appendSystemDns": "システムDNSを追加",
+  "appendSystemDnsTip": "設定にシステムDNSを強制的に追加します"
 }

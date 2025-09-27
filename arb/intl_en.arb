@@ -432,5 +432,7 @@
   "dataCollectionTip": "Data Collection Notice",
   "dataCollectionContent": "This app uses Firebase Crashlytics to collect crash information to improve app stability.\nThe collected data includes device information and crash details, but does not contain personal sensitive data.\nYou can disable this feature in settings.",
   "crashlytics": "Crash Analysis",
-  "crashlyticsTip": "When enabled, automatically uploads crash logs without sensitive information when the app crashes"
+  "crashlyticsTip": "When enabled, automatically uploads crash logs without sensitive information when the app crashes",
+  "appendSystemDns": "Append System DNS",
+  "appendSystemDnsTip": "Forcefully append system DNS to the configuration"
 }
