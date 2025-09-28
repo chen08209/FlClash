@@ -237,6 +237,57 @@ class ApiServiceV2 {
     }
   }
 
+  /// 获取关于信息
+  Future<AboutInfoResponse> getAboutInfo() async {
+    try {
+      print('AboutAPI: 开始调用 /api/v2/open/about/about');
+      
+      // 使用HttpClientUtil的端点系统
+      if (!HttpClientUtil.isInitialized) {
+        await HttpClientUtil.initialize();
+      }
+      final baseEndpoint = HttpClientUtil.currentEndpoint;
+      
+      // 创建HTTP客户端
+      final client = HttpClient();
+      client.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+      client.badCertificateCallback = (cert, host, port) => true;
+      client.connectionTimeout = const Duration(seconds: 15);
+      
+      try {
+        final uri = Uri.parse('$baseEndpoint/api/v2/open/about/about');
+        final request = await client.getUrl(uri);
+        
+        // 设置请求头
+        request.headers.set('Accept', 'application/json');
+        request.headers.set('User-Agent', 'PostmanRuntime-ApipostRuntime/1.1.0');
+        
+        print('AboutAPI: 发送关于信息请求到: $uri');
+        
+        final response = await request.close();
+        final responseBody = await response.transform(utf8.decoder).join();
+        
+        print('AboutAPI: 收到响应状态: ${response.statusCode}');
+        print('AboutAPI: 响应内容: $responseBody');
+        
+        if (response.statusCode == 200) {
+          final responseData = json.decode(responseBody) as Map<String, dynamic>;
+          return AboutInfoResponse.fromJson(responseData);
+        } else {
+          throw Exception('获取关于信息请求失败: ${response.statusCode}');
+        }
+      } finally {
+        client.close();
+      }
+    } catch (e) {
+      print('AboutAPI: 获取关于信息失败: $e');
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('获取关于信息失败: $e');
+    }
+  }
+
   /// 获取公告列表
   Future<NoticeListResponse> getNoticeList() async {
     try {

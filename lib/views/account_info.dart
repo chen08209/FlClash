@@ -339,11 +339,8 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              _buildSettingItem('主题设置', Icons.palette, () {
-                                _showThemeDialog();
-                              }),
-                              _buildSettingItem('访问控制', Icons.security, () {
-                                _showAccessDialog();
+                              _buildSettingItem('关于', Icons.info_outline, () {
+                                Navigator.pushNamed(context, '/about');
                               }),
                               _buildSettingItem('退出登录', Icons.logout, () {
                                 _showLogoutDialog();
@@ -645,105 +642,6 @@ class _AccountInfoPageState extends ConsumerState<AccountInfoPage> {
     );
   }
 
-  void _showThemeDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF141A3C),
-          title: const Text(
-            '主题设置',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.brightness_6, color: Color(0xFF3B82F6)),
-                title: const Text('跟随系统', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('已设置为跟随系统主题')),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.light_mode, color: Color(0xFF3B82F6)),
-                title: const Text('浅色模式', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('已设置为浅色模式')),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.dark_mode, color: Color(0xFF3B82F6)),
-                title: const Text('深色模式', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('已设置为深色模式')),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showAccessDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF141A3C),
-          title: const Text(
-            '访问控制',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.vpn_key, color: Color(0xFF3B82F6)),
-                title: const Text('系统代理', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('系统代理设置')),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.network_check, color: Color(0xFF3B82F6)),
-                title: const Text('TUN模式', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('TUN模式设置')),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.security, color: Color(0xFF3B82F6)),
-                title: const Text('DNS设置', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('DNS设置')),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   void _showLogoutDialog() {
     showDialog(

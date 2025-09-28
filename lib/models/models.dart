@@ -1,3 +1,4 @@
+export 'about_info.dart';
 export 'app.dart';
 export 'app_version.dart';
 export 'clash_config.dart';
