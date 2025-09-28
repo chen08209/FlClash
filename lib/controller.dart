@@ -14,6 +14,7 @@ import 'package:fl_clash/services/api_service_v2.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/notice_dialog.dart';
+import 'package:fl_clash/widgets/version_update_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
@@ -566,6 +567,9 @@ class AppController {
     
     // 在启动时获取并显示公告
     await _handleNoticeDisplay();
+    
+    // 检查应用版本更新
+    await _handleVersionCheck();
     
     autoCheckUpdate();
     if (!_ref.read(appSettingProvider).silentLaunch) {
@@ -1269,6 +1273,65 @@ class AppController {
       }
     } catch (e) {
       print('获取公告失败: $e');
+      // 不抛出异常，让应用继续启动
+    }
+  }
+
+  /// 处理版本检查
+  /// 在应用启动时检查版本更新
+  Future<void> _handleVersionCheck() async {
+    print('=== 开始检查应用版本更新 ===');
+    try {
+      // 延迟一下，让其他启动流程完成
+      await Future.delayed(const Duration(milliseconds: 3000));
+      
+      // 检查版本更新
+      print('正在调用版本检查API...');
+      final apiService = ApiServiceV2();
+      final versionResponse = await apiService.checkAppVersion();
+      
+      if (versionResponse.isSuccess && versionResponse.data != null) {
+        final versionInfo = versionResponse.data!;
+        print('版本检查完成: 当前版本需要更新类型: ${versionInfo.updateTypeDescription}');
+        
+        // 获取当前版本
+        final currentVersion = await AppVersion.getCurrentVersion();
+        
+        // 检查是否有新版本需要更新
+        final hasNewVersion = await AppVersion.hasNewVersion(versionInfo.version);
+        
+        if (hasNewVersion && versionInfo.needsUpdate) {
+          print('发现新版本 ${versionInfo.version}，当前版本 $currentVersion，准备显示更新弹窗');
+          
+          // 在主线程显示更新弹窗
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            final currentContext = globalState.navigatorKey.currentContext;
+            if (currentContext != null) {
+              print('显示版本更新弹窗');
+              try {
+                await VersionUpdateManager.showUpdateDialog(
+                  currentContext,
+                  versionInfo,
+                  currentVersion,
+                  onClosed: () {
+                    print('版本更新弹窗已关闭');
+                  },
+                );
+              } catch (e) {
+                print('显示版本更新弹窗失败: $e');
+              }
+            } else {
+              print('无法获取context，无法显示版本更新弹窗');
+            }
+          });
+        } else {
+          print('当前版本已是最新版本，无需更新');
+        }
+      } else {
+        print('版本检查响应失败: ${versionResponse.message}');
+      }
+    } catch (e) {
+      print('版本检查失败: $e');
       // 不抛出异常，让应用继续启动
     }
   }

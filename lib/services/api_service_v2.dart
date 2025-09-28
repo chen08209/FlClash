@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/http_client_util.dart';
 
@@ -164,6 +166,76 @@ class ApiServiceV2 {
     }
   }
 
+
+  /// 检查应用版本更新
+  Future<VersionCheckResponse> checkAppVersion() async {
+    try {
+      print('VersionAPI: 开始检查应用版本更新');
+      
+      // 获取当前操作系统
+      final currentOS = AppVersion.getCurrentOS();
+      print('VersionAPI: 当前操作系统: $currentOS');
+      
+      // 使用HttpClientUtil的端点系统
+      if (!HttpClientUtil.isInitialized) {
+        await HttpClientUtil.initialize();
+      }
+      final baseEndpoint = HttpClientUtil.currentEndpoint;
+      
+      // 创建HTTP客户端用于版本检查
+      final client = HttpClient();
+      client.findProxy = (uri) => 'PROXY 192.168.31.108:8888';
+      client.badCertificateCallback = (cert, host, port) => true;
+      client.connectionTimeout = const Duration(seconds: 15);
+      
+      try {
+        // 使用当前端点构造版本检查URL
+        final uri = Uri.parse('$baseEndpoint/api/v2/open/app/version');
+        final request = await client.postUrl(uri);
+        
+        // 设置请求头
+        request.headers.set('Accept', '*/*');
+        request.headers.set('Accept-Encoding', 'gzip, deflate, br');
+        request.headers.set('Connection', 'keep-alive');
+        request.headers.set('User-Agent', 'PostmanRuntime-ApipostRuntime/1.1.0');
+        
+        // 构造multipart/form-data
+        const boundary = '----WebKitFormBoundary7MA4YWxkTrZu0gW';
+        request.headers.set('content-type', 'multipart/form-data; boundary=$boundary');
+        
+        final formData = '--$boundary\r\n'
+            'Content-Disposition: form-data; name="os"\r\n'
+            '\r\n'
+            '$currentOS\r\n'
+            '--$boundary--\r\n';
+            
+        request.write(formData);
+        
+        print('VersionAPI: 发送版本检查请求到: $uri，OS: $currentOS');
+        
+        final response = await request.close();
+        final responseBody = await response.transform(utf8.decoder).join();
+        
+        print('VersionAPI: 收到响应状态: ${response.statusCode}');
+        print('VersionAPI: 响应内容: $responseBody');
+        
+        if (response.statusCode == 200) {
+          final responseData = json.decode(responseBody) as Map<String, dynamic>;
+          return VersionCheckResponse.fromJson(responseData);
+        } else {
+          throw Exception('版本检查请求失败: ${response.statusCode}');
+        }
+      } finally {
+        client.close();
+      }
+    } catch (e) {
+      print('VersionAPI: 版本检查失败: $e');
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('检查版本更新失败: $e');
+    }
+  }
 
   /// 获取公告列表
   Future<NoticeListResponse> getNoticeList() async {

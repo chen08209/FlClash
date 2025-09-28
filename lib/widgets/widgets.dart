@@ -35,3 +35,4 @@ export 'container.dart';
 export 'notification.dart';
 export 'notice_dialog.dart';
 export 'tech_page_wrapper.dart';
+export 'version_update_dialog.dart';
