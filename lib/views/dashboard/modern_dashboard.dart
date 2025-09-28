@@ -4,6 +4,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/common/tech_theme.dart';
 import 'package:fl_clash/services/api_service_v2.dart';
+import 'package:fl_clash/widgets/notice_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
@@ -29,6 +30,10 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
   
   // 简化版连接状态
   bool _isConnectedSimple = false;
+  
+  // 公告相关状态
+  List<Notice> _notices = [];
+  bool _isLoadingNotices = false;
 
   @override
   void initState() {
@@ -64,6 +69,9 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
     
     // 获取订阅信息
     _fetchSubscriptionInfo();
+    
+    // 获取公告信息
+    _fetchNotices();
     
     // 初始化时也确保获取订阅token
     _initializeSubscriptionToken();
@@ -307,6 +315,11 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // 公告卡片（置顶）
+              _buildNoticeCard(context),
+              
+              const SizedBox(height: 16),
+              
               // 顶部状态卡片
               _buildStatusCard(context, isConnected),
               
@@ -1859,6 +1872,235 @@ class _ModernDashboardState extends ConsumerState<ModernDashboard>
           ],
         ),
       );
+    }
+  }
+
+  /// 获取公告列表
+  Future<void> _fetchNotices() async {
+    setState(() {
+      _isLoadingNotices = true;
+    });
+    
+    try {
+      final apiService = ApiServiceV2();
+      final noticeResponse = await apiService.getNoticeList();
+      
+      if (mounted) {
+        setState(() {
+          _notices = noticeResponse.data.take(1).toList(); // 只显示最新1条
+          _isLoadingNotices = false;
+        });
+      }
+    } catch (e) {
+      print('ModernDashboard: 获取公告失败: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingNotices = false;
+        });
+      }
+    }
+  }
+
+  /// 构建公告卡片
+  Widget _buildNoticeCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    if (_isLoadingNotices) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141A3C) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF00D9FF).withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D9FF)),
+          ),
+        ),
+      );
+    }
+    
+    if (_notices.isEmpty) {
+      return const SizedBox.shrink(); // 没有公告时不显示
+    }
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF141A3C) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF00D9FF).withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题栏
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00D9FF).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.campaign,
+                  color: Color(0xFF00D9FF),
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                '系统公告',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF00D9FF),
+                ),
+              ),
+              const Spacer(),
+              // 总是显示"查看详情"按钮
+              GestureDetector(
+                onTap: () async {
+                  // 重新获取所有公告来显示完整列表
+                  try {
+                    final apiService = ApiServiceV2();
+                    final allNoticesResponse = await apiService.getNoticeList();
+                    await NoticeManager.showNoticeDialog(
+                      context,
+                      allNoticesResponse.data,
+                    );
+                  } catch (e) {
+                    print('获取完整公告列表失败: $e');
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00D9FF).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '查看详情',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: const Color(0xFF00D9FF),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // 公告列表（显示1条）
+          ...(_notices.take(1).map((notice) => _buildNoticeItem(notice, isDark))),
+        ],
+      ),
+    );
+  }
+
+  /// 构建单个公告项
+  Widget _buildNoticeItem(Notice notice, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () async {
+          await NoticeManager.showNoticeDialog(
+            context,
+            [notice], // 显示单个公告
+          );
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0A0E27) : const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: const Color(0xFF00D9FF).withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      notice.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: isDark ? Colors.white54 : Colors.black45,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                notice.content,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _formatNoticeDate(notice.updatedDate),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDark ? Colors.white38 : Colors.black38,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 格式化公告日期
+  String _formatNoticeDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    
+    if (diff.inDays == 0) {
+      return '今天';
+    } else if (diff.inDays == 1) {
+      return '昨天';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays}天前';
+    } else {
+      return '${date.month}-${date.day}';
     }
   }
 

@@ -165,6 +165,44 @@ class ApiServiceV2 {
   }
 
 
+  /// 获取公告列表
+  Future<NoticeListResponse> getNoticeList() async {
+    try {
+      print('NoticeAPI: 开始调用 /user/notice/fetch');
+      final response = await HttpClientUtil.get('/user/notice/fetch');
+      print('NoticeAPI: 收到响应: $response');
+      
+      // 根据您提供的API响应格式：{"data": [...], "total": 8}
+      // 或者可能包装在 {"status": "success", "data": {"data": [...], "total": 8}}
+      Map<String, dynamic> responseData;
+      
+      if (response['status'] == 'success' && response['data'] != null) {
+        // 如果有status和data包装
+        responseData = response['data'];
+      } else if (response['data'] != null && response['total'] != null) {
+        // 如果直接返回data和total
+        responseData = response;
+      } else if (response['data'] != null) {
+        // 如果只有data数组
+        responseData = {
+          'data': response['data'],
+          'total': (response['data'] as List).length,
+        };
+      } else {
+        throw Exception('API响应格式不正确');
+      }
+      
+      print('NoticeAPI: 处理后的数据: $responseData');
+      return NoticeListResponse.fromJson(responseData);
+    } catch (e) {
+      print('NoticeAPI: 调用失败: $e');
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('获取公告列表失败: $e');
+    }
+  }
+
   /// 刷新端点（委托给HttpClientUtil）
   Future<void> refreshEndpoints() async {
     await HttpClientUtil.refreshEndpoints();

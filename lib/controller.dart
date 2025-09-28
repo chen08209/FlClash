@@ -13,6 +13,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/services/api_service_v2.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/dialog.dart';
+import 'package:fl_clash/widgets/notice_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
@@ -562,6 +563,9 @@ class AppController {
     
     // 在启动时自动更新服务器订阅
     await _autoUpdateServerSubscription();
+    
+    // 在启动时获取并显示公告
+    await _handleNoticeDisplay();
     
     autoCheckUpdate();
     if (!_ref.read(appSettingProvider).silentLaunch) {
@@ -1210,6 +1214,62 @@ class AppController {
     final currentProfile = _ref.read(currentProfileProvider);
     if (currentProfile == null) {
       _ref.read(currentProfileIdProvider.notifier).value = profiles.first.id;
+    }
+  }
+
+  /// 处理公告显示
+  /// 在应用启动时获取并显示公告列表
+  Future<void> _handleNoticeDisplay() async {
+    print('=== 开始处理公告显示 ===');
+    try {
+      // 检查是否已登录
+      final prefs = await SharedPreferences.getInstance();
+      final authData = prefs.getString('auth_data');
+      if (authData == null) {
+        print('未登录，跳过公告获取');
+        return;
+      }
+      
+      print('用户已登录，准备获取公告...');
+
+      // 获取公告列表
+      print('正在调用公告API...');
+      final apiService = ApiServiceV2();
+      final noticeResponse = await apiService.getNoticeList();
+      print('公告API调用完成，获取到 ${noticeResponse.data.length} 条公告');
+      
+      if (noticeResponse.hasNotices) {
+        print('获取到 ${noticeResponse.validCount} 条公告，准备显示弹窗');
+        
+        // 延迟更长时间，确保应用完全加载完成后再显示弹窗
+        await Future.delayed(const Duration(milliseconds: 2000));
+        
+        // 确保在主线程的下一帧执行
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          final currentContext = globalState.navigatorKey.currentContext;
+          if (currentContext != null) {
+            print('显示公告弹窗，context: $currentContext');
+            try {
+              await NoticeManager.showNoticeDialog(
+                currentContext,
+                noticeResponse.data,
+                onClosed: () {
+                  print('公告弹窗已关闭');
+                },
+              );
+            } catch (e) {
+              print('显示公告弹窗失败: $e');
+            }
+          } else {
+            print('无法获取context，无法显示公告弹窗');
+          }
+        });
+      } else {
+        print('没有需要显示的公告');
+      }
+    } catch (e) {
+      print('获取公告失败: $e');
+      // 不抛出异常，让应用继续启动
     }
   }
 }
