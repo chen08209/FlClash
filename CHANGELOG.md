@@ -1,3 +1,13 @@
+## v0.8.90
+
+- Fix android tile service
+
+- Support append system DNS
+
+- Fix some issues
+
+- Update changelog
+
 ## v0.8.89
 
 - Fix some issues
