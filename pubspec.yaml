@@ -54,10 +54,7 @@ dependencies:
   riverpod_annotation: ^3.0.0
   riverpod: ^3.0.0
   material_color_utilities: ^0.11.1
-  flutter_js:
-    git:
-      url: https://github.com/chen08209/flutter_js
-      ref: master
+  flutter_js: ^0.8.5
   flutter_svg: ^2.1.0
   flutter_cache_manager: ^3.4.1
   crypto: ^3.0.3
