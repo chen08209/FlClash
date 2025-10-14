@@ -234,9 +234,13 @@ class VpnService : SystemVpnService(), IBaseService,
     }
 
     override fun start() {
-        loader.load()
-        State.options?.let {
-            handleStart(it)
+        try {
+            loader.load()
+            State.options?.let {
+                handleStart(it)
+            }
+        } catch (_: Exception) {
+            stop()
         }
     }
 

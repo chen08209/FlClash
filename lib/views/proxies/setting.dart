@@ -43,13 +43,14 @@ class ProxiesSetting extends StatelessWidget {
   String _getTextWithProxiesIconStyle(ProxiesIconStyle style) {
     return switch (style) {
       ProxiesIconStyle.standard => appLocalizations.standard,
-      ProxiesIconStyle.none => appLocalizations.noIcon,
+      ProxiesIconStyle.none => appLocalizations.none,
       ProxiesIconStyle.icon => appLocalizations.onlyIcon,
     };
   }
 
   List<Widget> _buildStyleSetting() {
     return generateSection(
+      isFirst: true,
       title: appLocalizations.style,
       items: [
         SingleChildScrollView(

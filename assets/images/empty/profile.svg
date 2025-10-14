@@ -1,0 +1,37 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+    <path d="M60 94V84C60 72.9543 68.9543 64 80 64H130C141.046 64 150 72.9543 150 84V94H220C231.046 94 240 102.954 240 114V210C240 221.046 231.046 230 220 230H80C68.9543 230 60 221.046 60 210V94Z"
+          fill="#FDF7FF" stroke="#E8DEF8" stroke-width="2"/>
+
+
+    <rect x="90" y="124" width="60" height="12" rx="6" fill="#E8DEF8"/>
+
+
+    <rect x="90" y="154" width="50" height="12" rx="6" fill="#E8DEF8"/>
+
+    <rect x="90" y="184" width="40" height="12" rx="6" fill="#E8DEF8"/>
+    <rect x="180" y="184" width="30" height="12" rx="6" fill="#E8DEF8" opacity="0.6"/>
+    <circle cx="186" cy="190" r="6" fill="#E8DEF8"/>
+
+    <g transform="translate(210, 210)">
+        <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M0 -32 C-17.67 -32 -32 -17.67 -32 0 C-32 17.67 -17.67 32 0 32 C17.67 32 32 17.67 32 0 C32 -17.67 17.67 -32 0 -32ZM0 -8 C-4.42 -8 -8 -4.42 -8 0 C-8 4.42 -4.42 8 0 8 C4.42 8 8 4.42 8 0 C8 -4.42 4.42 -8 0 -8Z"
+              fill="#6750A4" stroke="#FDF7FF" stroke-width="6"/>
+
+        <rect x="-5" y="-38" width="10" height="12" rx="3" fill="#6750A4" stroke="#FDF7FF" stroke-width="2"/>
+        <rect x="-5" y="26" width="10" height="12" rx="3" fill="#6750A4" stroke="#FDF7FF" stroke-width="2"/>
+        <rect x="-38" y="-5" width="12" height="10" rx="3" fill="#6750A4" stroke="#FDF7FF" stroke-width="2"/>
+        <rect x="26" y="-5" width="12" height="10" rx="3" fill="#6750A4" stroke="#FDF7FF" stroke-width="2"/>
+        <rect x="-5" y="-38" width="10" height="12" rx="3" fill="#6750A4" stroke="#FDF7FF" stroke-width="2"
+              transform="rotate(45)"/>
+        <rect x="-5" y="26" width="10" height="12" rx="3" fill="#6750A4" stroke="#FDF7FF" stroke-width="2"
+              transform="rotate(45)"/>
+        <rect x="-38" y="-5" width="12" height="10" rx="3" fill="#6750A4" stroke="#FDF7FF" stroke-width="2"
+              transform="rotate(45)"/>
+        <rect x="26" y="-5" width="12" height="10" rx="3" fill="#6750A4" stroke="#FDF7FF" stroke-width="2"
+              transform="rotate(45)"/>
+
+        <circle cx="0" cy="0" r="22" fill="#6750A4"/>
+        <circle cx="0" cy="0" r="8" fill="#FDF7FF" opacity="0.8"/>
+    </g>
+</svg>

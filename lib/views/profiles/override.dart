@@ -137,14 +137,14 @@ class _OverrideProfileViewState extends ConsumerState<OverrideProfileView> {
                 SliverToBoxAdapter(
                   child: Consumer(
                     builder: (_, ref, child) {
-                      final scriptMode = ref.watch(
-                        scriptStateProvider.select(
-                          (state) => state.realId != null,
-                        ),
-                      );
-                      if (!scriptMode) {
-                        return SizedBox();
-                      }
+                      // final scriptMode = ref.watch(
+                      //   scriptStateProvider.select(
+                      //     (state) => state.realId != null,
+                      //   ),
+                      // );
+                      // if (!scriptMode) {
+                      //   return SizedBox();
+                      // }
                       return child!;
                     },
                     child: ListItem(
@@ -557,7 +557,7 @@ class RuleContent extends ConsumerWidget {
           ),
         );
       },
-      proxyDecorator: proxyDecorator,
+      proxyDecorator: commonProxyDecorator,
       itemCount: rules.length,
       onReorder: (oldIndex, newIndex) {
         if (oldIndex < newIndex) {

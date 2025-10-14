@@ -2,14 +2,15 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/card.dart';
 import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/null_status.dart';
-import 'package:fl_clash/widgets/popup.dart';
+import 'package:fl_clash/widgets/pop_scope.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:fl_clash/widgets/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,7 +22,9 @@ class ScriptsView extends ConsumerStatefulWidget {
 }
 
 class _ScriptsViewState extends ConsumerState<ScriptsView> {
-  Future<void> _handleDelScript(String label) async {
+  final _key = utils.id;
+
+  Future<void> _handleDelScript(String id) async {
     final res = await globalState.showMessage(
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.script),
@@ -30,85 +33,44 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     if (res != true) {
       return;
     }
-    ref.read(scriptStateProvider.notifier).del(label);
+    ref.read(scriptsProvider.notifier).del(id);
+    ref.read(selectedItemProvider(_key).notifier).value = '';
   }
 
-  Widget _buildContent() {
-    return Consumer(
-      builder: (_, ref, _) {
-        final vm2 = ref.watch(
-          scriptStateProvider.select(
-            (state) => VM2(a: state.currentId, b: state.scripts),
+  void _handleSelected(String id) {
+    ref.read(selectedItemProvider(_key).notifier).update((value) {
+      if (value == id) {
+        return '';
+      }
+      return id;
+    });
+  }
+
+  Widget _buildContent(List<Script> scripts, String selectedScriptId) {
+    if (scripts.isEmpty) {
+      return NullStatus(
+        illustration: ScriptEmptyIllustration(),
+        label: appLocalizations.nullTip(appLocalizations.script),
+      );
+    }
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(vertical: 16),
+      itemCount: scripts.length,
+      itemBuilder: (_, index) {
+        final script = scripts[index];
+        return CommonSelectedListItem(
+          isSelected: selectedScriptId == script.id,
+          title: Text(
+            script.label,
+            style: context.textTheme.bodyLarge,
+            maxLines: 3,
           ),
-        );
-        final currentId = vm2.a;
-        final scripts = vm2.b;
-        if (scripts.isEmpty) {
-          return NullStatus(
-            label: appLocalizations.nullTip(appLocalizations.script),
-          );
-        }
-        return RadioGroup(
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            ref.read(scriptStateProvider.notifier).setId(value);
+          onSelected: () {
+            _handleSelected(script.id);
           },
-          groupValue: currentId,
-          child: ListView.builder(
-            padding: kMaterialListPadding.copyWith(bottom: 16 + 64),
-            itemCount: scripts.length,
-            itemBuilder: (_, index) {
-              final script = scripts[index];
-              return Container(
-                padding: kTabLabelPadding,
-                margin: EdgeInsets.symmetric(vertical: 6),
-                child: CommonCard(
-                  type: CommonCardType.filled,
-                  radius: 16,
-                  child: ListItem.radio(
-                    padding: const EdgeInsets.only(left: 12, right: 12),
-                    title: Text(script.label),
-                    delegate: RadioDelegate(
-                      value: script.id,
-                      onTab: () {
-                        ref.read(scriptStateProvider.notifier).setId(script.id);
-                      },
-                    ),
-                    trailing: CommonPopupBox(
-                      targetBuilder: (open) {
-                        return IconButton(
-                          onPressed: () {
-                            open();
-                          },
-                          icon: Icon(Icons.more_vert),
-                        );
-                      },
-                      popup: CommonPopupMenu(
-                        items: [
-                          PopupMenuItemData(
-                            icon: Icons.edit,
-                            label: appLocalizations.edit,
-                            onPressed: () {
-                              _handleToEditor(script: script);
-                            },
-                          ),
-                          PopupMenuItemData(
-                            icon: Icons.delete,
-                            label: appLocalizations.delete,
-                            onPressed: () {
-                              _handleDelScript(script.label);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          onPressed: () {
+            _handleSelected(script.id);
+          },
         );
       },
     );
@@ -134,9 +96,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
               return appLocalizations.emptyTip(appLocalizations.name);
             }
             if (value != script?.label) {
-              final isExits = ref
-                  .read(scriptStateProvider.notifier)
-                  .isExits(value);
+              final isExits = ref.read(scriptsProvider.notifier).isExits(value);
               if (isExits) {
                 return appLocalizations.existsTip(appLocalizations.name);
               }
@@ -152,7 +112,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     }
     if (newScript.label != script?.label) {
       final isExits = ref
-          .read(scriptStateProvider.notifier)
+          .read(scriptsProvider.notifier)
           .isExits(newScript.label);
       if (isExits) {
         globalState.showMessage(
@@ -163,7 +123,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         return;
       }
     }
-    ref.read(scriptStateProvider.notifier).setScript(newScript);
+    ref.read(scriptsProvider.notifier).setScript(newScript);
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -190,7 +150,8 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     return false;
   }
 
-  void _handleToEditor({Script? script}) {
+  void _handleToEditor([String? id]) {
+    final script = ref.read(scriptsProvider.select((state) => state.get(id)));
     final title = script?.label ?? '';
     final raw = script?.content ?? scriptTemplate;
     BaseNavigator.push(
@@ -213,15 +174,50 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
 
   @override
   Widget build(BuildContext context) {
-    return CommonScaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _handleToEditor();
-        },
-        child: Icon(Icons.add),
+    final scripts = ref.watch(scriptsProvider);
+    final selectedScriptId = ref.watch(selectedItemProvider(_key));
+    return CommonPopScope(
+      onPop: (_) {
+        if (selectedScriptId.isNotEmpty) {
+          ref.read(selectedItemProvider(_key).notifier).value = '';
+          return false;
+        }
+        Navigator.of(context).pop();
+        return false;
+      },
+      child: CommonScaffold(
+        actions: [
+          if (selectedScriptId.isNotEmpty) ...[
+            CommonMinIconButtonTheme(
+              child: IconButton.filledTonal(
+                onPressed: () {
+                  _handleDelScript(selectedScriptId);
+                },
+                icon: Icon(Icons.delete),
+              ),
+            ),
+            SizedBox(width: 2),
+          ],
+          CommonMinFilledButtonTheme(
+            child: selectedScriptId.isNotEmpty
+                ? FilledButton(
+                    onPressed: () {
+                      _handleToEditor(selectedScriptId);
+                    },
+                    child: Text(appLocalizations.edit),
+                  )
+                : FilledButton.tonal(
+                    onPressed: () {
+                      _handleToEditor();
+                    },
+                    child: Text(appLocalizations.add),
+                  ),
+          ),
+          SizedBox(width: 8),
+        ],
+        body: _buildContent(scripts, selectedScriptId),
+        title: appLocalizations.script,
       ),
-      body: _buildContent(),
-      title: appLocalizations.script,
     );
   }
 }

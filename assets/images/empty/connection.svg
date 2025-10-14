@@ -1,0 +1,23 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="75" y="50" width="150" height="180" rx="24" fill="#FDF7FF" stroke="#E8DEF8" stroke-width="2"/>
+
+    <rect x="95" y="90" width="36" height="12" rx="4" fill="#E8DEF8"/>
+    <rect x="140" y="90" width="65" height="12" rx="6" fill="#E8DEF8"/>
+
+    <path d="M95 118H205" stroke="#E8DEF8" stroke-width="2" stroke-dasharray="4 4"/>
+
+    <rect x="95" y="138" width="40" height="12" rx="6" fill="#E8DEF8" opacity="0.7"/>
+    <rect x="145" y="138" width="50" height="12" rx="6" fill="#E8DEF8" opacity="0.5"/>
+
+    <rect x="95" y="162" width="55" height="12" rx="6" fill="#E8DEF8" opacity="0.7"/>
+    <rect x="160" y="162" width="30" height="12" rx="6" fill="#E8DEF8" opacity="0.5"/>
+
+    <g transform="translate(210, 210)">
+        <circle cx="0" cy="0" r="38" fill="#6750A4" stroke="#FDF7FF" stroke-width="6"/>
+
+        <path d="M-10 16V-16M-10 -16L-18 -8M-10 -16L-2 -8" stroke="#FDF7FF" stroke-width="5" stroke-linecap="round"
+              stroke-linejoin="round"/>
+        <path d="M10 -16V16M10 16L2 8M10 16L18 8" stroke="#FDF7FF" stroke-width="5" stroke-linecap="round"
+              stroke-linejoin="round"/>
+    </g>
+</svg>

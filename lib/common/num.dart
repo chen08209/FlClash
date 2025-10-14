@@ -33,11 +33,25 @@ extension NumExt on num {
       unit: units[unitIndex].name,
     );
   }
+
+  TrafficShow get shortTraffic {
+    final units = TrafficUnit.values;
+    var size = toDouble();
+    var unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    return TrafficShow(
+      value: size.toStringAsFixed(0),
+      unit: ' ${units[unitIndex].name}',
+    );
+  }
 }
 
 extension DoubleExt on double {
   bool moreOrEqual(double value) {
-    return this > value || (value - this).abs() < precisionErrorTolerance + 1;
+    return this > value || (value - this).abs() < precisionErrorTolerance + 2;
   }
 }
 

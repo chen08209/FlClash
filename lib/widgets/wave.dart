@@ -71,47 +71,41 @@ class WavePainter extends CustomPainter {
   final double waveFrequency;
   final Color waveColor;
 
-  late Paint _paint;
-  final Path _path = Path();
-  Color _lastColor;
+  late final Paint _paint;
+  late final Path _path;
+
+  static const int _samplePoints = 40;
+  static const double _twoPi = 2 * pi;
 
   WavePainter({
     required this.animationValue,
     required this.waveAmplitude,
     required this.waveFrequency,
     required this.waveColor,
-  }) : _lastColor = waveColor {
+  }) {
     _paint = Paint()
       ..color = waveColor
       ..style = PaintingStyle.fill;
+    _path = Path();
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (waveColor != _lastColor) {
-      _paint = Paint()
-        ..color = waveColor
-        ..style = PaintingStyle.fill;
-      _lastColor = waveColor;
-    }
-
+    _paint.color = waveColor;
     _path.reset();
 
     final baseHeight = size.height / 3;
-    final phase = animationValue * 2 * pi;
-    final widthFactor = 2 * pi * waveFrequency / size.width;
+    final phase = animationValue * _twoPi;
+    final widthFactor = _twoPi * waveFrequency / size.width;
+    final step = size.width / _samplePoints;
 
     _path.moveTo(0, baseHeight);
 
-    for (double x = 0; x <= size.width; x += size.width / 20) {
+    for (var i = 0; i <= _samplePoints; i++) {
+      final x = i * step;
       final y = waveAmplitude * sin(x * widthFactor + phase);
       _path.lineTo(x, baseHeight + y);
     }
-
-    _path.lineTo(
-      size.width,
-      baseHeight + waveAmplitude * sin(size.width * widthFactor + phase),
-    );
 
     _path.lineTo(size.width, size.height);
     _path.lineTo(0, size.height);

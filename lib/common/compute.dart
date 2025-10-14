@@ -7,7 +7,7 @@ List<Group> computeSort({
   required List<Group> groups,
   required ProxiesSortType sortType,
   required DelayMap delayMap,
-  required SelectedMap selectedMap,
+  required Map<String, String> selectedMap,
   required String defaultTestUrl,
 }) {
   return groups.map((group) {
@@ -31,7 +31,7 @@ DelayState computeProxyDelayState({
   required String proxyName,
   required String testUrl,
   required List<Group> groups,
-  required SelectedMap selectedMap,
+  required Map<String, String> selectedMap,
   required DelayMap delayMap,
 }) {
   final state = computeRealSelectedProxyState(
@@ -47,7 +47,7 @@ DelayState computeProxyDelayState({
 SelectedProxyState computeRealSelectedProxyState(
   String proxyName, {
   required List<Group> groups,
-  required SelectedMap selectedMap,
+  required Map<String, String> selectedMap,
 }) {
   return _getRealSelectedProxyState(
     SelectedProxyState(proxyName: proxyName),
@@ -59,7 +59,7 @@ SelectedProxyState computeRealSelectedProxyState(
 SelectedProxyState _getRealSelectedProxyState(
   SelectedProxyState state, {
   required List<Group> groups,
-  required SelectedMap selectedMap,
+  required Map<String, String> selectedMap,
 }) {
   if (state.proxyName.isEmpty) return state;
   final index = groups.indexWhere((element) => element.name == state.proxyName);
@@ -83,7 +83,7 @@ List<Proxy> _sortOfDelay({
   required List<Group> groups,
   required List<Proxy> proxies,
   required DelayMap delayMap,
-  required SelectedMap selectedMap,
+  required Map<String, String> selectedMap,
   required String testUrl,
 }) {
   return List.from(proxies)..sort((a, b) {

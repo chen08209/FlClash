@@ -30,16 +30,15 @@ class Request {
     );
   }
 
-  Future<Response> getFileResponseForUrl(String url) async {
-    final response = await _clashDio.get(
+  Future<Response<Uint8List>> getFileResponseForUrl(String url) async {
+    return await _clashDio.get<Uint8List>(
       url,
       options: Options(responseType: ResponseType.bytes),
     );
-    return response;
   }
 
-  Future<Response> getTextResponseForUrl(String url) async {
-    final response = await _clashDio.get(
+  Future<Response<String>> getTextResponseForUrl(String url) async {
+    final response = await _clashDio.get<String>(
       url,
       options: Options(responseType: ResponseType.plain),
     );

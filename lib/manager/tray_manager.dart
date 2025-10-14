@@ -8,10 +8,7 @@ import 'package:tray_manager/tray_manager.dart';
 class TrayManager extends ConsumerStatefulWidget {
   final Widget child;
 
-  const TrayManager({
-    super.key,
-    required this.child,
-  });
+  const TrayManager({super.key, required this.child});
 
   @override
   ConsumerState<TrayManager> createState() => _TrayContainerState();
@@ -22,14 +19,21 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
   void initState() {
     super.initState();
     trayManager.addListener(this);
-    ref.listenManual(
-      trayStateProvider,
-      (prev, next) {
+    ref.listenManual(trayStateProvider, (prev, next) {
+      if (prev != next) {
+        globalState.appController.updateTray();
+      }
+    });
+    if (system.isMacOS) {
+      ref.listenManual(trayTitleStateProvider, (prev, next) {
         if (prev != next) {
-          globalState.appController.updateTray();
+          tray?.updateTrayTitle(
+            showTrayTitle: next.showTrayTitle,
+            traffic: next.traffic,
+          );
         }
-      },
-    );
+      });
+    }
   }
 
   @override

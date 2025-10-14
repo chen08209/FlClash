@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/javascript.dart';
+import 'package:re_highlight/languages/json.dart';
 import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 
@@ -48,11 +49,16 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   late CodeLineEditingController _controller;
   late CodeFindController _findController;
   late TextEditingController _titleController;
-  final _focusNode = FocusNode();
+  late FocusNode _focusNode;
+  late bool readOnly = false;
+  late final SelectionToolbarController _toolbarController;
 
   @override
   void initState() {
     super.initState();
+    readOnly = widget.onSave == null;
+    _toolbarController = ContextMenuControllerImpl(readOnly);
+    _focusNode = FocusNode(canRequestFocus: !readOnly);
     _controller = CodeLineEditingController.fromText(widget.content);
     _findController = CodeFindController(_controller);
     _titleController = TextEditingController(text: widget.title);
@@ -85,6 +91,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
 
   @override
   void dispose() {
+    _toolbarController.hide(context);
     _findController.dispose();
     _controller.dispose();
     _focusNode.dispose();
@@ -113,25 +120,19 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     _findController.findMode();
   }
 
-  Future<void> _handleImport() async {
-    final option = await globalState.showCommonDialog<ImportOption>(
-      child: _ImportOptionsDialog(),
-    );
-    if (option == null) {
+  Future<void> _handleImportFormFile() async {
+    final file = await picker.pickerFile();
+    if (file == null) {
       return;
     }
-    if (option == ImportOption.file) {
-      final file = await picker.pickerFile();
-      if (file == null) {
-        return;
-      }
-      final res = String.fromCharCodes(file.bytes?.toList() ?? []);
-      _controller.text = res;
-      return;
-    }
+    final res = String.fromCharCodes(file.bytes?.toList() ?? []);
+    _controller.text = res;
+  }
+
+  Future<void> _handleImportFormUrl() async {
     final url = await globalState.showCommonDialog(
       child: InputDialog(
-        title: '导入',
+        title: appLocalizations.import,
         value: '',
         labelText: appLocalizations.url,
         validator: (value) {
@@ -149,7 +150,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       return;
     }
     final res = await request.getTextResponseForUrl(url);
-    _controller.text = res.data;
+    _controller.text = res.data ?? '';
   }
 
   @override
@@ -173,17 +174,19 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       child: CommonScaffold(
         appBar: AppBar(
           title: TextField(
+            maxLength: 20,
             enabled: widget.titleEditable,
             controller: _titleController,
             decoration: InputDecoration(
               border: _NoInputBorder(),
+              counter: SizedBox(),
               hintText: appLocalizations.unnamed,
             ),
             style: context.textTheme.titleLarge,
             autofocus: false,
           ),
           actions: genActions([
-            if (widget.onSave != null)
+            if (!readOnly)
               _wrapController(
                 (value) => _wrapTitleController(
                   (value) => IconButton(
@@ -198,21 +201,17 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                             );
                           }
                         : null,
-                    icon: const Icon(Icons.save_sharp),
+                    icon: const Icon(Icons.save),
                   ),
                 ),
-              ),
-            if (widget.supportRemoteDownload)
-              IconButton(
-                onPressed: _handleImport,
-                icon: Icon(Icons.arrow_downward),
               ),
             _wrapController(
               (value) => CommonPopupBox(
                 targetBuilder: (open) {
                   return IconButton(
                     onPressed: () {
-                      open(offset: Offset(-20, 20));
+                      final isMobile = ref.read(isMobileViewProvider);
+                      open(offset: Offset(0, isMobile ? 0 : 20));
                     },
                     icon: const Icon(Icons.more_vert),
                   );
@@ -234,6 +233,21 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                       label: appLocalizations.redo,
                       onPressed: _controller.canRedo ? _controller.redo : null,
                     ),
+                    if (widget.supportRemoteDownload && !readOnly)
+                      PopupMenuItemData(
+                        icon: Icons.arrow_downward,
+                        label: appLocalizations.externalFetch,
+                        subItems: [
+                          PopupMenuItemData(
+                            label: appLocalizations.importUrl,
+                            onPressed: _handleImportFormUrl,
+                          ),
+                          PopupMenuItemData(
+                            label: appLocalizations.importFile,
+                            onPressed: _handleImportFormFile,
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -241,6 +255,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
           ]),
         ),
         body: CodeEditor(
+          readOnly: readOnly,
+          autofocus: false,
           findController: _findController,
           findBuilder: (context, controller, readOnly) => FindPanel(
             controller: controller,
@@ -256,7 +272,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               child: child,
             );
           },
-          toolbarController: ContextMenuControllerImpl(),
+          toolbarController: _toolbarController,
           indicatorBuilder:
               (context, editingController, chunkController, notifier) {
                 return Row(
@@ -284,6 +300,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   'yaml': CodeHighlightThemeMode(mode: langYaml),
                 if (widget.languages.contains(Language.javaScript))
                   'javascript': CodeHighlightThemeMode(mode: langJavascript),
+                if (widget.languages.contains(Language.json))
+                  'json': CodeHighlightThemeMode(mode: langJson),
               },
               theme: atomOneLightTheme,
             ),
@@ -340,52 +358,53 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     } else {
       result = '${value.result!.index + 1}/${value.result!.matches.length}';
     }
-    final bar = Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (!isMobileView) ...[
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 360),
-            child: _buildFindInput(context, value),
+    final bar = CommonMinIconButtonTheme(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (!isMobileView) ...[
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 360),
+              child: _buildFindInput(context, value),
+            ),
+            SizedBox(width: 12),
+          ],
+          Text(result, style: context.textTheme.bodyMedium),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              spacing: 2,
+              children: [
+                _buildIconButton(
+                  onPressed: value.result == null
+                      ? null
+                      : () {
+                          controller.previousMatch();
+                        },
+                  icon: Icons.arrow_upward,
+                ),
+                _buildIconButton(
+                  onPressed: value.result == null
+                      ? null
+                      : () {
+                          controller.nextMatch();
+                        },
+                  icon: Icons.arrow_downward,
+                ),
+                SizedBox(width: 2),
+                IconButton.filledTonal(
+                  onPressed: controller.close,
+                  icon: Icon(Icons.close, size: 16),
+                ),
+              ],
+            ),
           ),
-          SizedBox(width: 12),
         ],
-        Text(result, style: context.textTheme.bodyMedium),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            spacing: 6,
-            children: [
-              _buildIconButton(
-                onPressed: value.result == null
-                    ? null
-                    : () {
-                        controller.previousMatch();
-                      },
-                icon: Icons.arrow_upward,
-              ),
-              _buildIconButton(
-                onPressed: value.result == null
-                    ? null
-                    : () {
-                        controller.nextMatch();
-                      },
-                icon: Icons.arrow_downward,
-              ),
-              SizedBox(width: 2),
-              IconButton.filledTonal(
-                visualDensity: VisualDensity.compact,
-                onPressed: controller.close,
-                style: IconButton.styleFrom(padding: EdgeInsets.zero),
-                icon: Icon(Icons.close, size: 16),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
     if (isMobileView) {
       return Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [bar, SizedBox(height: 4), _buildFindInput(context, value)],
       );
@@ -393,45 +412,42 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     return bar;
   }
 
-  Stack _buildFindInput(BuildContext context, CodeFindValue value) {
-    return Stack(
-      alignment: Alignment.center,
+  Widget _buildFindInput(BuildContext context, CodeFindValue value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      spacing: 8,
       children: [
-        _buildTextField(
+        Flexible(
+          child: _buildTextField(
+            context: context,
+            onSubmitted: () {
+              if (value.result == null) {
+                return;
+              }
+              controller.nextMatch();
+              controller.findInputFocusNode.requestFocus();
+            },
+            controller: controller.findInputController,
+            focusNode: controller.findInputFocusNode,
+          ),
+        ),
+        _buildCheckText(
           context: context,
-          onSubmitted: () {
-            if (value.result == null) {
-              return;
-            }
-            controller.nextMatch();
-            controller.findInputFocusNode.requestFocus();
+          text: 'Aa',
+          isSelected: value.option.caseSensitive,
+          onPressed: () {
+            controller.toggleCaseSensitive();
           },
-          controller: controller.findInputController,
-          focusNode: controller.findInputFocusNode,
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          spacing: 8,
-          children: [
-            _buildCheckText(
-              context: context,
-              text: 'Aa',
-              isSelected: value.option.caseSensitive,
-              onPressed: () {
-                controller.toggleCaseSensitive();
-              },
-            ),
-            _buildCheckText(
-              context: context,
-              text: '.*',
-              isSelected: value.option.regex,
-              onPressed: () {
-                controller.toggleRegex();
-              },
-            ),
-            SizedBox(width: 4),
-          ],
+        _buildCheckText(
+          context: context,
+          text: '.*',
+          isSelected: value.option.regex,
+          onPressed: () {
+            controller.toggleRegex();
+          },
         ),
+        SizedBox(width: 4),
       ],
     );
   }
@@ -442,18 +458,21 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     required FocusNode focusNode,
     required VoidCallback onSubmitted,
   }) {
-    return TextField(
-      maxLines: 1,
-      focusNode: focusNode,
-      style: context.textTheme.bodyMedium,
-      decoration: InputDecoration(
-        border: OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+    return SizedBox(
+      height: globalState.measure.bodyMediumHeight + 8 * 2,
+      child: TextField(
+        maxLines: 1,
+        focusNode: focusNode,
+        style: context.textTheme.bodyMedium,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12),
+        ),
+        onSubmitted: (_) {
+          onSubmitted();
+        },
+        controller: controller,
       ),
-      onSubmitted: (_) {
-        onSubmitted();
-      },
-      controller: controller,
     );
   }
 
@@ -484,18 +503,16 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildIconButton({required IconData icon, VoidCallback? onPressed}) {
-    return IconButton(
-      visualDensity: VisualDensity.compact,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(padding: EdgeInsets.all(0)),
-      icon: Icon(icon, size: 16),
-    );
+    return IconButton(onPressed: onPressed, icon: Icon(icon, size: 16));
   }
 }
 
 class ContextMenuControllerImpl implements SelectionToolbarController {
   OverlayEntry? _overlayEntry;
   bool _isFirstRender = true;
+  bool readOnly = false;
+
+  ContextMenuControllerImpl(this.readOnly);
 
   void _removeOverLayEntry() {
     _overlayEntry?.remove();
@@ -532,11 +549,12 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
                   label: appLocalizations.copy,
                   onPressed: controller.copy,
                 ),
-              PopupMenuItemData(
-                label: appLocalizations.paste,
-                onPressed: controller.paste,
-              ),
-              if (isNotEmpty)
+              if (!readOnly)
+                PopupMenuItemData(
+                  label: appLocalizations.paste,
+                  onPressed: controller.paste,
+                ),
+              if (isNotEmpty && !readOnly)
                 PopupMenuItemData(
                   label: appLocalizations.cut,
                   onPressed: controller.cut,
@@ -551,6 +569,10 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
               _isFirstRender = false;
             } else if (controller.selectedText.isEmpty) {
               _removeOverLayEntry();
+            }
+            if (menus.isEmpty) {
+              _removeOverLayEntry();
+              return SizedBox();
             }
             return TextSelectionToolbar(
               anchorAbove: anchors.primaryAnchor,

@@ -38,3 +38,4 @@ export 'text.dart';
 export 'tray.dart';
 export 'utils.dart';
 export 'window.dart';
+export 'yaml.dart';

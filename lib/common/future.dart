@@ -10,14 +10,14 @@ extension FutureExt<T> on Future<T> {
     VoidCallback? onLast,
     FutureOr<T> Function()? onTimeout,
   }) {
-    final realTimout = timeout ?? const Duration(minutes: 3);
-    Timer(realTimout + commonDuration, () {
+    final realTimeout = timeout ?? const Duration(minutes: 3);
+    Timer(realTimeout + commonDuration, () {
       if (onLast != null) {
         onLast();
       }
     });
     return this.timeout(
-      realTimout,
+      realTimeout,
       onTimeout: () async {
         if (onTimeout != null) {
           return onTimeout();

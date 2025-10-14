@@ -34,6 +34,7 @@ _AppSettingProps _$AppSettingPropsFromJson(Map<String, dynamic> json) =>
             json['recoveryStrategy'],
           ) ??
           RecoveryStrategy.compatible,
+      showTrayTitle: json['showTrayTitle'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
@@ -59,6 +60,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'hidden': instance.hidden,
       'developerMode': instance.developerMode,
       'recoveryStrategy': _$RecoveryStrategyEnumMap[instance.recoveryStrategy]!,
+      'showTrayTitle': instance.showTrayTitle,
     };
 
 const _$RecoveryStrategyEnumMap = {
@@ -125,8 +127,8 @@ const _$AccessSortTypeEnumMap = {
 };
 
 _WindowProps _$WindowPropsFromJson(Map<String, dynamic> json) => _WindowProps(
-  width: (json['width'] as num?)?.toDouble() ?? 750,
-  height: (json['height'] as num?)?.toDouble() ?? 600,
+  width: (json['width'] as num?)?.toDouble() ?? 0,
+  height: (json['height'] as num?)?.toDouble() ?? 0,
   top: (json['top'] as num?)?.toDouble(),
   left: (json['left'] as num?)?.toDouble(),
 );
@@ -205,11 +207,6 @@ _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>
       cardType:
           $enumDecodeNullable(_$ProxyCardTypeEnumMap, json['cardType']) ??
           ProxyCardType.expand,
-      iconMap:
-          (json['iconMap'] as Map<String, dynamic>?)?.map(
-            (k, e) => MapEntry(k, e as String),
-          ) ??
-          const {},
     );
 
 Map<String, dynamic> _$ProxiesStyleToJson(_ProxiesStyle instance) =>
@@ -219,7 +216,6 @@ Map<String, dynamic> _$ProxiesStyleToJson(_ProxiesStyle instance) =>
       'layout': _$ProxiesLayoutEnumMap[instance.layout]!,
       'iconStyle': _$ProxiesIconStyleEnumMap[instance.iconStyle]!,
       'cardType': _$ProxyCardTypeEnumMap[instance.cardType]!,
-      'iconMap': instance.iconMap,
     };
 
 const _$ProxiesTypeEnumMap = {ProxiesType.tab: 'tab', ProxiesType.list: 'list'};
@@ -237,8 +233,8 @@ const _$ProxiesLayoutEnumMap = {
 };
 
 const _$ProxiesIconStyleEnumMap = {
-  ProxiesIconStyle.standard: 'standard',
   ProxiesIconStyle.none: 'none',
+  ProxiesIconStyle.standard: 'standard',
   ProxiesIconStyle.icon: 'icon',
 };
 
@@ -360,9 +356,16 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
   patchClashConfig: json['patchClashConfig'] == null
       ? defaultClashConfig
       : ClashConfig.fromJson(json['patchClashConfig'] as Map<String, dynamic>),
-  scriptProps: json['scriptProps'] == null
-      ? const ScriptProps()
-      : ScriptProps.fromJson(json['scriptProps'] as Map<String, dynamic>),
+  scripts:
+      (json['scripts'] as List<dynamic>?)
+          ?.map((e) => Script.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  rules:
+      (json['rules'] as List<dynamic>?)
+          ?.map((e) => Rule.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -378,5 +381,6 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'proxiesStyle': instance.proxiesStyle,
   'windowProps': instance.windowProps,
   'patchClashConfig': instance.patchClashConfig,
-  'scriptProps': instance.scriptProps,
+  'scripts': instance.scripts,
+  'rules': instance.rules,
 };

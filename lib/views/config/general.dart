@@ -198,36 +198,31 @@ class PortItem extends ConsumerWidget {
   }
 }
 
-class HostsItem extends StatelessWidget {
+class HostsItem extends ConsumerWidget {
   const HostsItem({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
+    final hosts = ref.watch(
+      patchClashConfigProvider.select((state) => state.hosts),
+    );
     return ListItem.open(
       leading: const Icon(Icons.view_list_outlined),
       title: const Text('Hosts'),
       subtitle: Text(appLocalizations.hostsDesc),
       delegate: OpenDelegate(
         blur: false,
-        title: 'Hosts',
-        widget: Consumer(
-          builder: (_, ref, _) {
-            final hosts = ref.watch(
-              patchClashConfigProvider.select((state) => state.hosts),
-            );
-            return MapInputPage(
-              title: 'Hosts',
-              map: hosts,
-              titleBuilder: (item) => Text(item.key),
-              subtitleBuilder: (item) => Text(item.value),
-              onChange: (value) {
-                ref
-                    .read(patchClashConfigProvider.notifier)
-                    .updateState((state) => state.copyWith(hosts: value));
-              },
-            );
-          },
+        widget: MapInputPage(
+          title: 'Hosts',
+          map: hosts,
+          titleBuilder: (item) => Text(item.key),
+          subtitleBuilder: (item) => Text(item.value),
         ),
+        onChanged: (value) {
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith(hosts: value));
+        },
       ),
     );
   }

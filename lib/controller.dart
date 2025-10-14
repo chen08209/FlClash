@@ -22,8 +22,6 @@ import 'common/common.dart';
 import 'models/models.dart';
 
 class AppController {
-  int? lastProfileModified;
-
   final BuildContext context;
   final WidgetRef _ref;
 
@@ -99,14 +97,9 @@ class AppController {
     if (isStart) {
       await globalState.appController.tryStartCore();
       await globalState.handleStart([updateRunTime, updateTraffic]);
-      final currentLastModified = await _ref
-          .read(currentProfileProvider)
-          ?.profileLastModified;
-      if (currentLastModified == null || lastProfileModified == null) {
-        addCheckIpNumDebounce();
-        return;
-      }
-      if (currentLastModified <= (lastProfileModified ?? 0)) {
+      final profileId = _ref.read(currentProfileIdProvider);
+      final setupState = globalState.getSetupState(profileId);
+      if (!setupState.needSetup(globalState.lastSetupState)) {
         addCheckIpNumDebounce();
         return;
       }
@@ -313,9 +306,15 @@ class AppController {
     }
     final realTunEnable = _ref.read(realTunEnableProvider);
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
-    final message = await coreController.setupConfig(realPatchConfig);
-    lastProfileModified = await _ref.read(
-      currentProfileProvider.select((state) => state?.profileLastModified),
+    final currentProfile = _ref.read(currentProfileProvider);
+    final setupState = _ref.read(setupStateProvider(currentProfile?.id ?? ''));
+    globalState.lastSetupState = setupState;
+    if (system.isAndroid) {
+      globalState.lastVpnState = _ref.read(vpnStateProvider);
+    }
+    final message = await globalState.setupConfig(
+      setupState: setupState,
+      patchConfig: realPatchConfig,
     );
     if (message.isNotEmpty) {
       throw message;
@@ -449,15 +448,15 @@ class AppController {
   }
 
   Future<void> handleExit() async {
-    Future.delayed(commonDuration, () {
+    Future.delayed(Duration(seconds: 3), () {
       system.exit();
     });
     try {
       await savePreferences();
-      await macOS?.updateDns(true);
       await proxy?.stopProxy();
-      await coreController.shutdown();
+      await macOS?.updateDns(true);
       await coreController.destroy();
+      commonPrint.log('exit');
     } finally {
       system.exit();
     }
@@ -477,7 +476,7 @@ class AppController {
 
   Future<void> checkUpdateResultHandle({
     Map<String, dynamic>? data,
-    bool handleError = false,
+    bool isUser = false,
   }) async {
     if (data != null) {
       final tagName = data['tag_name'];
@@ -496,12 +495,16 @@ class AppController {
           ],
         ),
         confirmText: appLocalizations.goDownload,
+        cancelText: isUser ? null : appLocalizations.noLongerRemind,
       );
-      if (res != true) {
-        return;
+      if (res == true) {
+        launchUrl(Uri.parse('https://github.com/$repository/releases/latest'));
+      } else if (!isUser && res == false) {
+        _ref
+            .read(appSettingProvider.notifier)
+            .update((state) => state.copyWith(autoCheckUpdate: false));
       }
-      launchUrl(Uri.parse('https://github.com/$repository/releases/latest'));
-    } else if (handleError) {
+    } else if (isUser) {
       globalState.showMessage(
         title: appLocalizations.checkUpdate,
         message: TextSpan(text: appLocalizations.checkUpdateError),
@@ -793,11 +796,17 @@ class AppController {
     updateStatus(!_ref.read(isStartProvider));
   }
 
+  void updateSpeedStatistics() {
+    _ref
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(showTrayTitle: !state.showTrayTitle));
+  }
+
   void updateCurrentSelectedMap(String groupName, String proxyName) {
     final currentProfile = _ref.read(currentProfileProvider);
     if (currentProfile != null &&
         currentProfile.selectedMap[groupName] != proxyName) {
-      final SelectedMap selectedMap = Map.from(currentProfile.selectedMap)
+      final selectedMap = Map<String, String>.from(currentProfile.selectedMap)
         ..[groupName] = proxyName;
       _ref
           .read(profilesProvider.notifier)
@@ -902,7 +911,7 @@ class AppController {
       json.decode(utf8.decode(configFile.content)),
     );
     for (final profile in profiles) {
-      final filePath = join(homeDirPath, profile.name);
+      final filePath = join(homeDirPath, posix.normalize(profile.name));
       final file = File(filePath);
       await file.create(recursive: true);
       await file.writeAsBytes(profile.content);
@@ -949,12 +958,25 @@ class AppController {
       _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
       _ref.read(networkSettingProvider.notifier).value = config.networkProps;
       _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
-      _ref.read(scriptStateProvider.notifier).value = config.scriptProps;
+      _ref.read(scriptsProvider.notifier).value = config.scripts;
+      _ref.read(rulesProvider.notifier).value = config.rules;
     }
     final currentProfile = _ref.read(currentProfileProvider);
-    if (currentProfile == null) {
+    if (currentProfile == null && profiles.isNotEmpty) {
       _ref.read(currentProfileIdProvider.notifier).value = profiles.first.id;
     }
+  }
+
+  void checkNeedSetup() {
+    if (!globalState.isStart) {
+      return;
+    }
+    final profileId = _ref.read(currentProfileIdProvider);
+    final setupState = globalState.getSetupState(profileId);
+    if (!setupState.needSetup(globalState.lastSetupState)) {
+      return;
+    }
+    setupClashConfigDebounce();
   }
 
   Future<T?> safeRun<T>(
@@ -966,7 +988,7 @@ class AppController {
     final realSilence = needLoading == true ? true : silence;
     try {
       if (needLoading) {
-        _ref.read(loadingProvider.notifier).value = true;
+        _ref.read(loadingProvider.notifier).start();
       }
       final res = await futureFunction();
       return res;
@@ -982,7 +1004,7 @@ class AppController {
       }
       return null;
     } finally {
-      _ref.read(loadingProvider.notifier).value = false;
+      _ref.read(loadingProvider.notifier).stop();
     }
   }
 }

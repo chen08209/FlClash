@@ -23,10 +23,7 @@ extension IterableExt<T> on Iterable<T> {
     }
   }
 
-  Iterable<T> fill(
-    int length, {
-    required T Function(int count) filler,
-  }) sync* {
+  Iterable<T> fill(int length, {required T Function(int count) filler}) sync* {
     int count = 0;
     for (var item in this) {
       yield item;
@@ -85,6 +82,31 @@ extension ListExt<T> on List<T> {
     if (length > index) return this[index];
     return last;
   }
+
+  T safeLast(T value) {
+    if (isNotEmpty) {
+      return last;
+    }
+    return value;
+  }
+
+  void addOrRemove(T value) {
+    if (contains(value)) {
+      remove(value);
+    } else {
+      add(value);
+    }
+  }
+}
+
+extension SetExt<T> on Set<T> {
+  void addOrRemove(T value) {
+    if (contains(value)) {
+      remove(value);
+    } else {
+      add(value);
+    }
+  }
 }
 
 extension DoubleListExt on List<double> {
@@ -119,5 +141,15 @@ extension MapExt<K, V> on Map<K, V> {
       this[key] = callback();
     }
     return this[key]!;
+  }
+
+  Map<K, V> copyWitUpdate(K key, V? value) {
+    final newMap = Map<K, V>.from(this);
+    if (value == null) {
+      newMap.remove(key);
+    } else {
+      newMap[key] = value;
+    }
+    return newMap;
   }
 }
