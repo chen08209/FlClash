@@ -23,15 +23,15 @@ Config configState(Ref ref) {
   final networkProps = ref.watch(networkSettingProvider);
   final vpnProps = ref.watch(vpnSettingProvider);
   final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
-  final scriptProps = ref.watch(scriptStateProvider);
+  final scripts = ref.watch(scriptsProvider);
   final hotKeyActions = ref.watch(hotKeyActionsProvider);
   final dav = ref.watch(appDAVSettingProvider);
   final windowProps = ref.watch(windowSettingProvider);
+  final rules = ref.watch(rulesProvider);
   return Config(
     dav: dav,
     windowProps: windowProps,
     hotKeyActions: hotKeyActions,
-    scriptProps: scriptProps,
     proxiesStyle: proxiesStyle,
     vpnProps: vpnProps,
     networkProps: networkProps,
@@ -41,6 +41,8 @@ Config configState(Ref ref) {
     appSetting: appSetting,
     themeProps: themeProps,
     patchClashConfig: patchClashConfig,
+    scripts: scripts,
+    rules: rules,
   );
 }
 
@@ -49,7 +51,16 @@ GroupsState currentGroupsState(Ref ref) {
   final mode = ref.watch(
     patchClashConfigProvider.select((state) => state.mode),
   );
-  final groups = ref.watch(groupsProvider);
+  final groups = ref.watch(
+    groupsProvider.select(
+      (state) => state.map((item) {
+        return item.copyWith(
+          now: '',
+          all: item.all.map((proxy) => proxy.copyWith(now: '')).toList(),
+        );
+      }),
+    ),
+  );
   return GroupsState(
     value: switch (mode) {
       Mode.direct => [],
@@ -141,26 +152,48 @@ ProxyState proxyState(Ref ref) {
 @riverpod
 TrayState trayState(Ref ref) {
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
-  final networkProps = ref.watch(networkSettingProvider);
-  final clashConfig = ref.watch(patchClashConfigProvider);
-  final appSetting = ref.watch(appSettingProvider);
+  final systemProxy = ref.watch(
+    networkSettingProvider.select((state) => state.systemProxy),
+  );
+  final clashConfigVm3 = ref.watch(
+    patchClashConfigProvider.select(
+      (state) => VM3(a: state.mode, b: state.mixedPort, c: state.tun.enable),
+    ),
+  );
+  final appSettingVm3 = ref.watch(
+    appSettingProvider.select(
+      (state) =>
+          VM3(a: state.autoLaunch, b: state.locale, c: state.showTrayTitle),
+    ),
+  );
   final groups = ref.watch(currentGroupsStateProvider).value;
   final brightness = ref.watch(systemBrightnessProvider);
-
   final selectedMap = ref.watch(selectedMapProvider);
 
   return TrayState(
-    mode: clashConfig.mode,
-    port: clashConfig.mixedPort,
-    autoLaunch: appSetting.autoLaunch,
-    systemProxy: networkProps.systemProxy,
-    tunEnable: clashConfig.tun.enable,
+    mode: clashConfigVm3.a,
+    port: clashConfigVm3.b,
+    autoLaunch: appSettingVm3.a,
+    systemProxy: systemProxy,
+    tunEnable: clashConfigVm3.c,
     isStart: isStart,
-    locale: appSetting.locale,
+    locale: appSettingVm3.b,
     brightness: brightness,
     groups: groups,
     selectedMap: selectedMap,
+    showTrayTitle: appSettingVm3.c,
   );
+}
+
+@riverpod
+TrayTitleState trayTitleState(Ref ref) {
+  final showTrayTitle = ref.watch(
+    appSettingProvider.select((state) => state.showTrayTitle),
+  );
+  final traffic = ref.watch(
+    trafficsProvider.select((state) => state.list.safeLast(Traffic())),
+  );
+  return TrayTitleState(showTrayTitle: showTrayTitle, traffic: traffic);
 }
 
 @riverpod
@@ -169,7 +202,6 @@ VpnState vpnState(Ref ref) {
   final stack = ref.watch(
     patchClashConfigProvider.select((state) => state.tun.stack),
   );
-
   return VpnState(stack: stack, vpnProps: vpnProps);
 }
 
@@ -267,7 +299,7 @@ GroupsState filterGroupsState(Ref ref, String query) {
       })
       .where((group) => group.all.isNotEmpty)
       .toList();
-  return GroupsState(value: groups);
+  return currentGroups.copyWith(value: groups);
 }
 
 @riverpod
@@ -425,7 +457,7 @@ int? getDelay(Ref ref, {required String proxyName, String? testUrl}) {
 }
 
 @riverpod
-SelectedMap selectedMap(Ref ref) {
+Map<String, String> selectedMap(Ref ref) {
   final selectedMap = ref.watch(
     currentProfileProvider.select((state) => state?.selectedMap ?? {}),
   );
@@ -575,9 +607,9 @@ ColorScheme genColorScheme(
 @riverpod
 VM4<String?, String?, Dns?, bool> needSetup(Ref ref) {
   final profileId = ref.watch(currentProfileIdProvider);
-  final content = ref.watch(
-    scriptStateProvider.select((state) => state.currentScript?.content),
-  );
+  // final content = ref.watch(
+  //   scriptsProvider.select((state) => state.currentScript?.content),
+  // );
   final overrideDns = ref.watch(overrideDnsProvider);
   final dns = overrideDns == true
       ? ref.watch(patchClashConfigProvider.select((state) => state.dns))
@@ -585,7 +617,7 @@ VM4<String?, String?, Dns?, bool> needSetup(Ref ref) {
   final appendSystemDns = ref.watch(
     networkSettingProvider.select((state) => state.appendSystemDns),
   );
-  return VM4(profileId, content, dns, appendSystemDns);
+  return VM4(profileId, '', dns, appendSystemDns);
 }
 
 @riverpod
@@ -644,8 +676,49 @@ AndroidState androidState(Ref ref) {
 }
 
 @riverpod
-class Query extends _$Query {
+double overlayTopOffset(Ref ref) {
+  final isMobileView = ref.watch(isMobileViewProvider);
+  final version = ref.watch(versionProvider);
+  ref.watch(viewSizeProvider);
+  double top = kHeaderHeight;
+  if ((version <= 10 || !isMobileView) && system.isMacOS || !system.isDesktop) {
+    top = 0;
+  }
+  return kToolbarHeight + top;
+}
+
+@riverpod
+Profile? profile(Ref ref, String profileId) {
+  return ref.watch(
+    profilesProvider.select((state) => state.getProfile(profileId)),
+  );
+}
+
+@riverpod
+Overwrite? profileOverwrite(Ref ref, String profileId) {
+  return ref.watch(
+    profileProvider(profileId).select((state) => state?.overwrite),
+  );
+}
+
+@riverpod
+class AccessControlState extends _$AccessControlState
+    with AutoDisposeNotifierMixin {
   @override
-  String build(QueryTag id) =>
-      ref.watch(queryMapProvider.select((state) => state[id] ?? ''));
+  AccessControl build() => AccessControl();
+}
+
+@riverpod
+SetupState setupState(Ref ref, String profileId) {
+  ref.watch(
+    profileProvider(profileId).select(
+      (state) =>
+          VM3(a: state?.id, b: state?.lastUpdateDate, c: state?.overwrite),
+    ),
+  );
+  ref.watch(patchClashConfigProvider.select((state) => state.dns));
+  ref.watch(overrideDnsProvider);
+  ref.watch(scriptsProvider);
+  ref.watch(rulesProvider);
+  return globalState.getSetupState(profileId);
 }

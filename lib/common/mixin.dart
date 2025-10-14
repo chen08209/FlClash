@@ -20,6 +20,11 @@ mixin AutoDisposeNotifierMixin<T> on AnyNotifier<T, T> {
   }
 
   void onUpdate(T value) {}
+
+  void update(T Function(T) builder) {
+    final value = builder(state);
+    this.value = value;
+  }
 }
 
 mixin AnyNotifierMixin<T> on AnyNotifier<T, T> {

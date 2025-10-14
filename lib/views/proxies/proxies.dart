@@ -20,6 +20,7 @@ class ProxiesView extends ConsumerStatefulWidget {
 }
 
 class _ProxiesViewState extends ConsumerState<ProxiesView> {
+  final GlobalKey<CommonScaffoldState> _scaffoldKey = GlobalKey();
   final GlobalKey<ProxiesTabViewState> _proxiesTabKey = GlobalKey();
   bool _hasProviders = false;
   bool _isTab = false;
@@ -37,7 +38,8 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
         targetBuilder: (open) {
           return IconButton(
             onPressed: () {
-              open(offset: Offset(0, 20));
+              final isMobile = ref.read(isMobileViewProvider);
+              open(offset: Offset(0, isMobile ? 0 : 20));
             },
             icon: Icon(Icons.more_vert),
           );
@@ -74,23 +76,6 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
                   );
                 },
               ),
-            if (!_isTab)
-              PopupMenuItemData(
-                icon: Icons.style_outlined,
-                label: appLocalizations.iconConfiguration,
-                onPressed: () {
-                  showExtend(
-                    context,
-                    builder: (_, type) {
-                      return AdaptiveSheetScaffold(
-                        type: type,
-                        body: const _IconConfigView(),
-                        title: appLocalizations.iconConfiguration,
-                      );
-                    },
-                  );
-                },
-              ),
           ],
         ),
       ),
@@ -108,7 +93,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
   }
 
   void _onSearch(String value) {
-    ref.read(queryMapProvider.notifier).updateQuery(QueryTag.proxies, value);
+    ref.read(queryProvider(QueryTag.proxies).notifier).value = value;
   }
 
   @override
@@ -137,6 +122,14 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       },
       fireImmediately: true,
     );
+    ref.listenManual(
+      currentPageLabelProvider.select((state) => state == PageLabel.proxies),
+      (prev, next) {
+        if (prev != next && next == false) {
+          _scaffoldKey.currentState?.handleExitSearching();
+        }
+      },
+    );
   }
 
   @override
@@ -145,6 +138,8 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       proxiesStyleSettingProvider.select((state) => state.type),
     );
     return CommonScaffold(
+      key: _scaffoldKey,
+      resizeToAvoidBottomInset: false,
       floatingActionButton: _buildFAB(),
       actions: _buildActions(),
       title: appLocalizations.proxies,
@@ -152,36 +147,6 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       body: switch (proxiesType) {
         ProxiesType.tab => ProxiesTabView(key: _proxiesTabKey),
         ProxiesType.list => const ProxiesListView(),
-      },
-    );
-  }
-}
-
-class _IconConfigView extends ConsumerWidget {
-  const _IconConfigView();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final iconMap = ref.watch(
-      proxiesStyleSettingProvider.select((state) => state.iconMap),
-    );
-    return MapInputPage(
-      title: appLocalizations.iconConfiguration,
-      map: iconMap,
-      keyLabel: appLocalizations.regExp,
-      valueLabel: appLocalizations.icon,
-      titleBuilder: (item) => Text(item.key),
-      leadingBuilder: (item) => Container(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
-        child: CommonTargetIcon(src: item.value, size: 42),
-      ),
-      subtitleBuilder: (item) =>
-          Text(item.value, maxLines: 2, overflow: TextOverflow.ellipsis),
-      onChange: (value) {
-        ref
-            .read(proxiesStyleSettingProvider.notifier)
-            .updateState((state) => state.copyWith(iconMap: value));
       },
     );
   }

@@ -69,11 +69,13 @@ class FadeThroughBox extends StatelessWidget {
 
 class FadeRotationScaleBox extends StatelessWidget {
   final Widget child;
+  final AlignmentGeometry? alignment;
 
-  const FadeRotationScaleBox({super.key, required this.child});
+  const FadeRotationScaleBox({super.key, required this.child, this.alignment});
 
   @override
   Widget build(BuildContext context) {
+    final realAlignment = alignment ?? Alignment.center;
     return AnimatedSwitcher(
       duration: commonDuration,
       switchInCurve: Curves.easeOutBack,
@@ -87,6 +89,13 @@ class FadeRotationScaleBox extends StatelessWidget {
           ),
         );
       },
+      layoutBuilder: (currentChild, previousChildren) => Stack(
+        alignment: realAlignment,
+        children: <Widget>[
+          ...previousChildren,
+          if (currentChild != null) currentChild,
+        ],
+      ),
       child: child,
     );
   }

@@ -5,8 +5,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/clash_config.freezed.dart';
 part 'generated/clash_config.g.dart';
 
-typedef HostsMap = Map<String, String>;
-
 const defaultClashConfig = ClashConfig();
 
 const defaultTun = Tun();
@@ -386,6 +384,19 @@ abstract class Rule with _$Rule {
   factory Rule.fromJson(Map<String, Object?> json) => _$RuleFromJson(json);
 }
 
+extension RulesExt on List<Rule> {
+  List<Rule> updateWith(Rule rule) {
+    var newList = List<Rule>.from(this);
+    final index = newList.indexWhere((item) => item.id == rule.id);
+    if (index != -1) {
+      newList[index] = rule;
+    } else {
+      newList.insert(0, rule);
+    }
+    return newList;
+  }
+}
+
 @freezed
 abstract class SubRule with _$SubRule {
   const factory SubRule({required String name}) = _SubRule;
@@ -463,7 +474,7 @@ abstract class ClashConfig with _$ClashConfig {
     @Default(ExternalControllerStatus.close)
     @JsonKey(name: 'external-controller')
     ExternalControllerStatus externalController,
-    @Default({}) HostsMap hosts,
+    @Default({}) Map<String, String> hosts,
   }) = _ClashConfig;
 
   factory ClashConfig.fromJson(Map<String, Object?> json) =>

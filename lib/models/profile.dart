@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
@@ -10,8 +11,6 @@ import 'clash_config.dart';
 
 part 'generated/profile.freezed.dart';
 part 'generated/profile.g.dart';
-
-typedef SelectedMap = Map<String, String>;
 
 @freezed
 abstract class SubscriptionInfo with _$SubscriptionInfo {
@@ -53,9 +52,10 @@ abstract class Profile with _$Profile {
     required Duration autoUpdateDuration,
     SubscriptionInfo? subscriptionInfo,
     @Default(true) bool autoUpdate,
-    @Default({}) SelectedMap selectedMap,
+    @Default({}) Map<String, String> selectedMap,
     @Default({}) Set<String> unfoldSet,
     @Default(OverrideData()) OverrideData overrideData,
+    @Default(Overwrite()) Overwrite overwrite,
     @JsonKey(includeToJson: false, includeFromJson: false)
     @Default(false)
     bool isUpdating,
@@ -75,6 +75,37 @@ abstract class Profile with _$Profile {
 }
 
 @freezed
+abstract class Overwrite with _$Overwrite {
+  const factory Overwrite({
+    @Default(OverwriteType.standard) OverwriteType type,
+    @Default(StandardOverwrite()) StandardOverwrite standardOverwrite,
+    @Default(ScriptOverwrite()) ScriptOverwrite scriptOverwrite,
+  }) = _Overwrite;
+
+  factory Overwrite.fromJson(Map<String, Object?> json) =>
+      _$OverwriteFromJson(json);
+}
+
+@freezed
+abstract class StandardOverwrite with _$StandardOverwrite {
+  const factory StandardOverwrite({
+    @Default([]) List<Rule> addedRules,
+    @Default([]) List<String> disabledRuleIds,
+  }) = _StandardOverwrite;
+
+  factory StandardOverwrite.fromJson(Map<String, Object?> json) =>
+      _$StandardOverwriteFromJson(json);
+}
+
+@freezed
+abstract class ScriptOverwrite with _$ScriptOverwrite {
+  const factory ScriptOverwrite({String? scriptId}) = _ScriptOverwrite;
+
+  factory ScriptOverwrite.fromJson(Map<String, Object?> json) =>
+      _$ScriptOverwriteFromJson(json);
+}
+
+@freezed
 abstract class OverrideData with _$OverrideData {
   const factory OverrideData({
     @Default(false) bool enable,
@@ -83,15 +114,6 @@ abstract class OverrideData with _$OverrideData {
 
   factory OverrideData.fromJson(Map<String, Object?> json) =>
       _$OverrideDataFromJson(json);
-}
-
-extension OverrideDataExt on OverrideData {
-  List<String> get runningRule {
-    if (!enable) {
-      return [];
-    }
-    return rule.rules.map((item) => item.value).toList();
-  }
 }
 
 @freezed
@@ -104,6 +126,15 @@ abstract class OverrideRule with _$OverrideRule {
 
   factory OverrideRule.fromJson(Map<String, Object?> json) =>
       _$OverrideRuleFromJson(json);
+}
+
+extension OverrideDataExt on OverrideData {
+  List<String> get runningRule {
+    if (!enable) {
+      return [];
+    }
+    return rule.rules.map((item) => item.value).toList();
+  }
 }
 
 extension OverrideRuleExt on OverrideRule {
@@ -169,7 +200,7 @@ extension ProfileExtension on Profile {
     return await copyWith(
       label: label ?? utils.getFileNameForDisposition(disposition) ?? id,
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
-    ).saveFile(response.data);
+    ).saveFile(response.data ?? Uint8List.fromList([]));
   }
 
   Future<Profile> saveFile(Uint8List bytes) async {
@@ -178,7 +209,9 @@ extension ProfileExtension on Profile {
       throw message;
     }
     final file = await getFile();
-    await file.writeAsBytes(bytes);
+    await Isolate.run(() async {
+      return await file.writeAsBytes(bytes);
+    });
     return copyWith(lastUpdateDate: DateTime.now());
   }
 }

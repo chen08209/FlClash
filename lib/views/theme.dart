@@ -37,21 +37,20 @@ class ThemeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      _ThemeModeItem(),
-      _PrimaryColorItem(),
-      _PrueBlackItem(),
-      _TextScaleFactorItem(),
-      const SizedBox(height: 64),
-    ];
-    return ListView.separated(
-      itemCount: items.length,
-      itemBuilder: (_, index) {
-        return items[index];
-      },
-      separatorBuilder: (_, _) {
-        return SizedBox(height: 24);
-      },
+    return BaseScaffold(
+      title: appLocalizations.theme,
+      body: CustomScrollView(
+        slivers: [
+          _ThemeModeItem(),
+          SliverToBoxAdapter(child: SizedBox(height: 16)),
+          _PrimaryColorItem(),
+          SliverToBoxAdapter(child: SizedBox(height: 16)),
+          _PrueBlackItem(),
+          SliverToBoxAdapter(child: SizedBox(height: 16)),
+          _TextScaleFactorItem(),
+          SliverToBoxAdapter(child: SizedBox(height: 32)),
+        ],
+      ),
     );
   }
 }
@@ -105,46 +104,48 @@ class _ThemeModeItem extends ConsumerWidget {
         themeMode: ThemeMode.dark,
       ),
     ];
-    return ItemCard(
-      info: Info(
-        label: appLocalizations.themeMode,
-        iconData: Icons.brightness_high,
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        height: 56,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: themeModeItems.length,
-          itemBuilder: (_, index) {
-            final themeModeItem = themeModeItems[index];
-            return CommonCard(
-              isSelected: themeModeItem.themeMode == themeMode,
-              onPressed: () {
-                ref
-                    .read(themeSettingProvider.notifier)
-                    .updateState(
-                      (state) =>
-                          state.copyWith(themeMode: themeModeItem.themeMode),
-                    );
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Flexible(child: Icon(themeModeItem.iconData)),
-                    const SizedBox(width: 8),
-                    Flexible(child: Text(themeModeItem.label)),
-                  ],
+    return SliverToBoxAdapter(
+      child: ItemCard(
+        info: Info(
+          label: appLocalizations.themeMode,
+          iconData: Icons.brightness_high,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: 56,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: themeModeItems.length,
+            itemBuilder: (_, index) {
+              final themeModeItem = themeModeItems[index];
+              return CommonCard(
+                isSelected: themeModeItem.themeMode == themeMode,
+                onPressed: () {
+                  ref
+                      .read(themeSettingProvider.notifier)
+                      .updateState(
+                        (state) =>
+                            state.copyWith(themeMode: themeModeItem.themeMode),
+                      );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Flexible(child: Icon(themeModeItem.iconData)),
+                      const SizedBox(width: 8),
+                      Flexible(child: Text(themeModeItem.label)),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-          separatorBuilder: (_, _) {
-            return const SizedBox(width: 16);
-          },
+              );
+            },
+            separatorBuilder: (_, _) {
+              return const SizedBox(width: 16);
+            },
+          ),
         ),
       ),
     );
@@ -176,7 +177,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
       return state.copyWith(
         primaryColors: defaultPrimaryColors,
         primaryColor: defaultPrimaryColor,
-        schemeVariant: DynamicSchemeVariant.tonalSpot,
+        schemeVariant: DynamicSchemeVariant.content,
       );
     });
   }
@@ -266,7 +267,11 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
           state.primaryColors,
           state.schemeVariant,
           state.primaryColor == defaultPrimaryColor &&
-              intListEquality.equals(state.primaryColors, defaultPrimaryColors),
+              intListEquality.equals(
+                state.primaryColors,
+                defaultPrimaryColors,
+              ) &&
+              state.schemeVariant == DynamicSchemeVariant.content,
         ),
       ),
     );
@@ -275,125 +280,132 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     final schemeVariant = vm4.c;
     final isEquals = vm4.d;
 
-    return CommonPopScope(
-      onPop: (context) {
-        if (_removablePrimaryColor != null) {
-          setState(() {
-            _removablePrimaryColor = null;
-          });
-          return false;
-        }
-        return true;
-      },
-      child: ItemCard(
-        info: Info(label: appLocalizations.themeColor, iconData: Icons.palette),
-        actions: genActions([
-          if (_removablePrimaryColor == null)
-            FilledButton(
-              style: FilledButton.styleFrom(
-                visualDensity: VisualDensity.compact,
+    return SliverToBoxAdapter(
+      child: CommonPopScope(
+        onPop: (context) {
+          if (_removablePrimaryColor != null) {
+            setState(() {
+              _removablePrimaryColor = null;
+            });
+            return false;
+          }
+          return true;
+        },
+        child: ItemCard(
+          info: Info(
+            label: appLocalizations.themeColor,
+            iconData: Icons.palette,
+          ),
+          actions: genActions([
+            if (_removablePrimaryColor == null)
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: _handleChangeSchemeVariant,
+                child: Text(Intl.message('${schemeVariant.name}Scheme')),
               ),
-              onPressed: _handleChangeSchemeVariant,
-              child: Text(Intl.message('${schemeVariant.name}Scheme')),
-            ),
-          if (_removablePrimaryColor != null)
-            FilledButton(
-              style: FilledButton.styleFrom(
-                visualDensity: VisualDensity.compact,
+            if (_removablePrimaryColor != null)
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _removablePrimaryColor = null;
+                  });
+                },
+                child: Text(appLocalizations.cancel),
               ),
-              onPressed: () {
-                setState(() {
-                  _removablePrimaryColor = null;
-                });
-              },
-              child: Text(appLocalizations.cancel),
-            ),
-          if (_removablePrimaryColor == null && !isEquals)
-            IconButton.filledTonal(
-              iconSize: 20,
-              padding: EdgeInsets.all(4),
-              visualDensity: VisualDensity.compact,
-              onPressed: _handleReset,
-              icon: Icon(Icons.replay),
-            ),
-        ], space: 8),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          child: LayoutBuilder(
-            builder: (_, constraints) {
-              final columns = _calcColumns(constraints.maxWidth);
-              final itemWidth =
-                  (constraints.maxWidth - (columns - 1) * 16) / columns;
-              return Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  for (final color in primaryColors)
-                    Container(
-                      clipBehavior: Clip.none,
-                      width: itemWidth,
-                      height: itemWidth,
-                      child: Stack(
-                        alignment: Alignment.center,
+            if (_removablePrimaryColor == null && !isEquals)
+              IconButton.filledTonal(
+                iconSize: 20,
+                padding: EdgeInsets.all(4),
+                visualDensity: VisualDensity.compact,
+                onPressed: _handleReset,
+                icon: Icon(Icons.replay),
+              ),
+          ], space: 8),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: LayoutBuilder(
+              builder: (_, constraints) {
+                final columns = _calcColumns(constraints.maxWidth);
+                final itemWidth =
+                    (constraints.maxWidth - (columns - 1) * 16) / columns;
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    for (final color in primaryColors)
+                      Container(
                         clipBehavior: Clip.none,
-                        children: [
-                          EffectGestureDetector(
-                            child: ColorSchemeBox(
-                              isSelected: color == primaryColor,
-                              primaryColor: color != null ? Color(color) : null,
-                              onPressed: () {
+                        width: itemWidth,
+                        height: itemWidth,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            EffectGestureDetector(
+                              child: ColorSchemeBox(
+                                isSelected: color == primaryColor,
+                                primaryColor: color != null
+                                    ? Color(color)
+                                    : null,
+                                onPressed: () {
+                                  setState(() {
+                                    _removablePrimaryColor = null;
+                                  });
+                                  ref
+                                      .read(themeSettingProvider.notifier)
+                                      .updateState(
+                                        (state) =>
+                                            state.copyWith(primaryColor: color),
+                                      );
+                                },
+                              ),
+                              onLongPress: () {
                                 setState(() {
-                                  _removablePrimaryColor = null;
+                                  _removablePrimaryColor = color;
                                 });
-                                ref
-                                    .read(themeSettingProvider.notifier)
-                                    .updateState(
-                                      (state) =>
-                                          state.copyWith(primaryColor: color),
-                                    );
                               },
                             ),
-                            onLongPress: () {
-                              setState(() {
-                                _removablePrimaryColor = color;
-                              });
-                            },
-                          ),
-                          if (_removablePrimaryColor != null &&
-                              _removablePrimaryColor == color)
-                            Container(
-                              color: Colors.white.opacity0,
-                              padding: EdgeInsets.all(8),
-                              child: IconButton.filledTonal(
-                                onPressed: _handleDel,
-                                padding: EdgeInsets.all(12),
-                                iconSize: 30,
-                                icon: Icon(
-                                  color: context.colorScheme.primary,
-                                  Icons.delete,
+                            if (_removablePrimaryColor != null &&
+                                _removablePrimaryColor == color)
+                              Container(
+                                color: Colors.white.opacity0,
+                                padding: EdgeInsets.all(8),
+                                child: IconButton.filledTonal(
+                                  onPressed: _handleDel,
+                                  padding: EdgeInsets.all(12),
+                                  iconSize: 30,
+                                  icon: Icon(
+                                    color: context.colorScheme.primary,
+                                    Icons.delete,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  if (_removablePrimaryColor == null)
-                    Container(
-                      width: itemWidth,
-                      height: itemWidth,
-                      padding: EdgeInsets.all(4),
-                      child: IconButton.filledTonal(
-                        onPressed: _handleAdd,
-                        iconSize: 32,
-                        icon: Icon(
-                          color: context.colorScheme.primary,
-                          Icons.add,
+                          ],
                         ),
                       ),
-                    ),
-                ],
-              );
-            },
+                    if (_removablePrimaryColor == null)
+                      Container(
+                        width: itemWidth,
+                        height: itemWidth,
+                        padding: EdgeInsets.all(4),
+                        child: IconButton.filledTonal(
+                          onPressed: _handleAdd,
+                          iconSize: 32,
+                          icon: Icon(
+                            color: context.colorScheme.primary,
+                            Icons.add,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -409,22 +421,24 @@ class _PrueBlackItem extends ConsumerWidget {
     final prueBlack = ref.watch(
       themeSettingProvider.select((state) => state.pureBlack),
     );
-    return ListItem.switchItem(
-      leading: Icon(Icons.contrast),
-      horizontalTitleGap: 12,
-      title: Text(
-        appLocalizations.pureBlackMode,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
+    return SliverToBoxAdapter(
+      child: ListItem.switchItem(
+        leading: Icon(Icons.contrast),
+        horizontalTitleGap: 12,
+        title: Text(
+          appLocalizations.pureBlackMode,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
         ),
-      ),
-      delegate: SwitchDelegate(
-        value: prueBlack,
-        onChanged: (value) {
-          ref
-              .read(themeSettingProvider.notifier)
-              .updateState((state) => state.copyWith(pureBlack: value));
-        },
+        delegate: SwitchDelegate(
+          value: prueBlack,
+          onChanged: (value) {
+            ref
+                .read(themeSettingProvider.notifier)
+                .updateState((state) => state.copyWith(pureBlack: value));
+          },
+        ),
       ),
     );
   }
@@ -439,72 +453,74 @@ class _TextScaleFactorItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.textScale),
     );
     final String process = '${(textScale.scale * 100).round()}%';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(bottom: 8),
-          child: ListItem.switchItem(
-            leading: Icon(Icons.text_fields),
-            horizontalTitleGap: 12,
-            title: Text(
-              appLocalizations.textScale,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: ListItem.switchItem(
+              leading: Icon(Icons.text_fields),
+              horizontalTitleGap: 12,
+              title: Text(
+                appLocalizations.textScale,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              delegate: SwitchDelegate(
+                value: textScale.enable,
+                onChanged: (value) {
+                  ref
+                      .read(themeSettingProvider.notifier)
+                      .updateState(
+                        (state) => state.copyWith.textScale(enable: value),
+                      );
+                },
               ),
             ),
-            delegate: SwitchDelegate(
-              value: textScale.enable,
-              onChanged: (value) {
-                ref
-                    .read(themeSettingProvider.notifier)
-                    .updateState(
-                      (state) => state.copyWith.textScale(enable: value),
-                    );
-              },
-            ),
           ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            mainAxisSize: MainAxisSize.max,
-            spacing: 32,
-            children: [
-              Expanded(
-                child: DisabledMask(
-                  status: !textScale.enable,
-                  child: ActivateBox(
-                    active: textScale.enable,
-                    child: SliderTheme(
-                      data: _SliderDefaultsM3(context),
-                      child: Slider(
-                        padding: EdgeInsets.zero,
-                        min: minTextScale,
-                        max: maxTextScale,
-                        value: textScale.scale,
-                        onChanged: (value) {
-                          ref
-                              .read(themeSettingProvider.notifier)
-                              .updateState(
-                                (state) =>
-                                    state.copyWith.textScale(scale: value),
-                              );
-                        },
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.max,
+              spacing: 32,
+              children: [
+                Expanded(
+                  child: DisabledMask(
+                    status: !textScale.enable,
+                    child: ActivateBox(
+                      active: textScale.enable,
+                      child: SliderTheme(
+                        data: _SliderDefaultsM3(context),
+                        child: Slider(
+                          padding: EdgeInsets.zero,
+                          min: minTextScale,
+                          max: maxTextScale,
+                          value: textScale.scale,
+                          onChanged: (value) {
+                            ref
+                                .read(themeSettingProvider.notifier)
+                                .updateState(
+                                  (state) =>
+                                      state.copyWith.textScale(scale: value),
+                                );
+                          },
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(right: 4),
-                child: Text(process, style: context.textTheme.titleMedium),
-              ),
-            ],
+                Padding(
+                  padding: EdgeInsets.only(right: 4),
+                  child: Text(process, style: context.textTheme.titleMedium),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

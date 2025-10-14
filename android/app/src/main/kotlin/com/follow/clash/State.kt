@@ -54,13 +54,17 @@ object State {
 
     suspend fun handleSyncState() {
         runLock.withLock {
-            Service.bind()
-            runTime = Service.getRunTime()
-            val runState = when (runTime == 0L) {
-                true -> RunState.STOP
-                false -> RunState.START
+            try {
+                Service.bind()
+                runTime = Service.getRunTime()
+                val runState = when (runTime == 0L) {
+                    true -> RunState.STOP
+                    false -> RunState.START
+                }
+                runStateFlow.tryEmit(runState)
+            } catch (_: Exception) {
+                runStateFlow.tryEmit(RunState.STOP)
             }
-            runStateFlow.tryEmit(runState)
         }
     }
 
@@ -92,8 +96,9 @@ object State {
     }
 
     fun handleStartService() {
+        val appPlugin = flutterEngine?.plugin<AppPlugin>()
         if (appPlugin != null) {
-            appPlugin?.requestNotificationsPermission {
+            appPlugin.requestNotificationsPermission {
                 startService()
             }
             return
@@ -159,10 +164,7 @@ object State {
                 if (servicePlugin == null) {
                     return@launch
                 }
-                val options = servicePlugin?.handleGetVpnOptions()
-                if (options == null) {
-                    return@launch
-                }
+                val options = servicePlugin?.handleGetVpnOptions() ?: return@launch
                 appPlugin?.prepare(options.enable) {
                     runTime = Service.startService(options, runTime)
                     runStateFlow.tryEmit(RunState.START)

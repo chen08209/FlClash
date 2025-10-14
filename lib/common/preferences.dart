@@ -42,8 +42,7 @@ class Preferences {
 
   Future<bool> saveConfig(Config config) async {
     final preferences = await sharedPreferencesCompleter.future;
-    return await preferences?.setString(configKey, json.encode(config)) ??
-        false;
+    return preferences?.setString(configKey, json.encode(config)) ?? false;
   }
 
   Future<void> clearClashConfig() async {

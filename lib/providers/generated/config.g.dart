@@ -146,7 +146,7 @@ final class VpnSettingProvider extends $NotifierProvider<VpnSetting, VpnProps> {
   }
 }
 
-String _$vpnSettingHash() => r'1dad4881ae7bcec76678585ac7b84f820b2ca92b';
+String _$vpnSettingHash() => r'e6fab5a735fe518f9d4e5619254b0cea0006f318';
 
 abstract class _$VpnSetting extends $Notifier<VpnProps> {
   VpnProps build();
@@ -591,52 +591,103 @@ abstract class _$ProxiesStyleSetting extends $Notifier<ProxiesStyle> {
   }
 }
 
-@ProviderFor(ScriptState)
-const scriptStateProvider = ScriptStateProvider._();
+@ProviderFor(Scripts)
+const scriptsProvider = ScriptsProvider._();
 
-final class ScriptStateProvider
-    extends $NotifierProvider<ScriptState, ScriptProps> {
-  const ScriptStateProvider._()
+final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
+  const ScriptsProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'scriptStateProvider',
+        name: r'scriptsProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$scriptStateHash();
+  String debugGetCreateSourceHash() => _$scriptsHash();
 
   @$internal
   @override
-  ScriptState create() => ScriptState();
+  Scripts create() => Scripts();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ScriptProps value) {
+  Override overrideWithValue(List<Script> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<ScriptProps>(value),
+      providerOverride: $SyncValueProvider<List<Script>>(value),
     );
   }
 }
 
-String _$scriptStateHash() => r'4770c34c3d24451fef95e372450e4a333b419977';
+String _$scriptsHash() => r'67dfdff76fc16b47c2300011afb5952a8857bad5';
 
-abstract class _$ScriptState extends $Notifier<ScriptProps> {
-  ScriptProps build();
+abstract class _$Scripts extends $Notifier<List<Script>> {
+  List<Script> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<ScriptProps, ScriptProps>;
+    final ref = this.ref as $Ref<List<Script>, List<Script>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<ScriptProps, ScriptProps>,
-              ScriptProps,
+              AnyNotifier<List<Script>, List<Script>>,
+              List<Script>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(Rules)
+const rulesProvider = RulesProvider._();
+
+final class RulesProvider extends $NotifierProvider<Rules, List<Rule>> {
+  const RulesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'rulesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$rulesHash();
+
+  @$internal
+  @override
+  Rules create() => Rules();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Rule> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Rule>>(value),
+    );
+  }
+}
+
+String _$rulesHash() => r'ca7fdb6c8b9c5071002ac950494ec7c20937aa1b';
+
+abstract class _$Rules extends $Notifier<List<Rule>> {
+  List<Rule> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<List<Rule>, List<Rule>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<Rule>, List<Rule>>,
+              List<Rule>,
               Object?,
               Object?
             >;

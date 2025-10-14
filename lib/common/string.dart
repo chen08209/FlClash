@@ -22,6 +22,16 @@ extension StringExtension on String {
     return toLowerCase().compareTo(other.toLowerCase());
   }
 
+  String safeSubstring(int start, [int? end]) {
+    if (isEmpty) return '';
+    final safeStart = start.clamp(0, length);
+    if (end == null) {
+      return substring(safeStart);
+    }
+    final safeEnd = end.clamp(safeStart, length);
+    return substring(safeStart, safeEnd);
+  }
+
   List<int> get encodeUtf16LeWithBom {
     final byteData = ByteData(length * 2);
     final bom = [0xFF, 0xFE];

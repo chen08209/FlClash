@@ -197,7 +197,7 @@ extension KeyboardModifierExt on KeyboardModifier {
 
 enum HotAction { start, view, mode, proxy, tun }
 
-enum ProxiesIconStyle { standard, none, icon }
+enum ProxiesIconStyle { none, standard, icon }
 
 enum FontFamily {
   twEmoji('Twemoji'),
@@ -280,6 +280,7 @@ enum FunctionTag {
   logs,
   requests,
   autoScrollToEnd,
+  loadedProvider,
 }
 
 enum DashboardWidget {
@@ -368,6 +369,18 @@ enum RuleAction {
   final String value;
 
   const RuleAction(this.value);
+
+  static List<RuleAction> get addedRuleActions {
+    return RuleAction.values
+        .where(
+          (item) => ![
+            RuleAction.MATCH,
+            RuleAction.RULE_SET,
+            RuleAction.SUB_RULE,
+          ].contains(item),
+        )
+        .toList();
+  }
 }
 
 extension RuleActionExt on RuleAction {
@@ -384,18 +397,25 @@ extension RuleActionExt on RuleAction {
 
 enum OverrideRuleType { override, added }
 
-enum RuleTarget { DIRECT, REJECT }
+enum OverwriteType {
+  // none,
+  standard,
+  script,
+  // custom,
+}
+
+enum RuleTarget { DIRECT, REJECT, MATCH }
 
 enum RecoveryStrategy { compatible, override }
 
 enum CacheTag { logs, rules, requests, proxiesList }
 
-enum Language { yaml, javaScript }
+enum Language { yaml, javaScript, json }
 
 enum ImportOption { file, url }
 
 enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }
 
-enum QueryTag { proxies }
+enum QueryTag { proxies, access }
 
 enum CoreStatus { connecting, connected, disconnected }
