@@ -40,8 +40,10 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
       }
       if (!stringListEquality.equals(prev?.a, next.a)) {
         _destroyTabController();
-        final index = next.a.indexWhere((item) => item == next.b);
-        _updateTabController(next.a.length, index);
+        final groupNames = next.a;
+        final currentGroupName = next.b;
+        final index = groupNames.indexWhere((item) => item == currentGroupName);
+        _updateTabController(groupNames.length, index);
       }
     }, fireImmediately: true);
   }
@@ -127,22 +129,22 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   }
 
   void _tabControllerListener([int? index]) {
-    int? groupIndex = index;
-    if (groupIndex == -1) {
-      return;
-    }
-    final appController = globalState.appController;
-    if (groupIndex == null) {
-      final currentIndex = _tabController?.index;
-      groupIndex = currentIndex;
-    }
-    final currentGroups = appController.getCurrentGroups();
-    if (groupIndex == null || groupIndex > currentGroups.length) {
-      return;
-    }
-    final currentGroup = currentGroups[groupIndex];
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      globalState.appController.updateCurrentGroupName(currentGroup.name);
+      int? groupIndex = index;
+      if (groupIndex == -1) {
+        return;
+      }
+      final appController = globalState.appController;
+      if (groupIndex == null) {
+        final currentIndex = _tabController?.index;
+        groupIndex = currentIndex;
+      }
+      final currentGroups = appController.getCurrentGroups();
+      if (groupIndex == null || groupIndex > currentGroups.length) {
+        return;
+      }
+      final currentGroup = currentGroups[groupIndex];
+      appController.updateCurrentGroupName(currentGroup.name);
     });
   }
 
@@ -153,8 +155,8 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   }
 
   void _updateTabController(int length, int index) {
+    _destroyTabController();
     if (length == 0) {
-      _destroyTabController();
       return;
     }
     final realIndex = index == -1 ? 0 : index;
@@ -170,25 +172,15 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   @override
   Widget build(BuildContext context) {
     ref.watch(themeSettingProvider.select((state) => state.textScale));
-    final state = ref.watch(proxiesTabStateProvider);
+    final state = ref.watch(proxiesTabStateProvider.select((state) => state));
     final groups = state.groups;
-    if (groups.isEmpty) {
+    if (groups.isEmpty || _tabController == null) {
       return NullStatus(
+        illustration: ProxyEmptyIllustration(),
         label: appLocalizations.nullTip(appLocalizations.proxies),
       );
     }
-    final ProxyGroupViewKeyMap keyMap = {};
-    final children = groups.map((group) {
-      final key = GlobalObjectKey<_ProxyGroupViewState>(group.name);
-      keyMap[group.name] = key;
-      return ProxyGroupView(
-        key: key,
-        group: group,
-        columns: state.columns,
-        cardType: state.proxyCardType,
-      );
-    }).toList();
-    _keyMap = keyMap;
+    _keyMap = {};
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +209,19 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                     overlayColor: const WidgetStatePropertyAll(
                       Colors.transparent,
                     ),
-                    tabs: [for (final group in groups) Tab(text: group.name)],
+                    tabs: [
+                      for (final group in groups)
+                        Tab(
+                          child: Builder(
+                            builder: (context) {
+                              return EmojiText(
+                                group.name,
+                                style: DefaultTextStyle.of(context).style,
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   ),
                   if (value) Positioned(right: 0, child: child!),
                 ],
@@ -232,7 +236,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                     context.colorScheme.surface.opacity10,
                     context.colorScheme.surface,
                   ],
-                  stops: const [0.0, 0.1],
+                  stops: const [0.0, 0.5],
                 ),
               ),
               child: _buildMoreButton(),
@@ -240,7 +244,21 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
           ),
         ),
         Expanded(
-          child: TabBarView(controller: _tabController, children: children),
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              for (final group in groups)
+                ProxyGroupView(
+                  key: _keyMap.updateCacheValue(
+                    group.name,
+                    () => GlobalObjectKey<_ProxyGroupViewState>(group.name),
+                  ),
+                  group: group,
+                  columns: state.columns,
+                  cardType: state.proxyCardType,
+                ),
+            ],
+          ),
         ),
       ],
     );

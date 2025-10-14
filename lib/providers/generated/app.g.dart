@@ -1097,7 +1097,7 @@ final class LoadingProvider extends $NotifierProvider<Loading, bool> {
   }
 }
 
-String _$loadingHash() => r'a0a09132a78495616785461cdc2a8b412c19b51b';
+String _$loadingHash() => r'd3d9e6b203fecbef89d468b6ecf173a98a6a26a9';
 
 abstract class _$Loading extends $Notifier<bool> {
   bool build();
@@ -1437,52 +1437,278 @@ abstract class _$CoreStatus extends $Notifier<CoreStatus> {
   }
 }
 
-@ProviderFor(QueryMap)
-const queryMapProvider = QueryMapProvider._();
+@ProviderFor(Query)
+const queryProvider = QueryFamily._();
 
-final class QueryMapProvider
-    extends $NotifierProvider<QueryMap, Map<QueryTag, String>> {
-  const QueryMapProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'queryMapProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+final class QueryProvider extends $NotifierProvider<Query, String> {
+  const QueryProvider._({
+    required QueryFamily super.from,
+    required QueryTag super.argument,
+  }) : super(
+         retry: null,
+         name: r'queryProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
-  String debugGetCreateSourceHash() => _$queryMapHash();
+  String debugGetCreateSourceHash() => _$queryHash();
+
+  @override
+  String toString() {
+    return r'queryProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
-  QueryMap create() => QueryMap();
+  Query create() => Query();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Map<QueryTag, String> value) {
+  Override overrideWithValue(String value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Map<QueryTag, String>>(value),
+      providerOverride: $SyncValueProvider<String>(value),
     );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is QueryProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
-String _$queryMapHash() => r'f64a1bf5fcd4f85986d8ba3c956e397abc4f2d5d';
+String _$queryHash() => r'da8d34ef86df1366e8607df2ef9155cc9473c959';
 
-abstract class _$QueryMap extends $Notifier<Map<QueryTag, String>> {
-  Map<QueryTag, String> build();
+final class QueryFamily extends $Family
+    with $ClassFamilyOverride<Query, String, String, String, QueryTag> {
+  const QueryFamily._()
+    : super(
+        retry: null,
+        name: r'queryProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  QueryProvider call(QueryTag tag) =>
+      QueryProvider._(argument: tag, from: this);
+
+  @override
+  String toString() => r'queryProvider';
+}
+
+abstract class _$Query extends $Notifier<String> {
+  late final _$args = ref.$arg as QueryTag;
+  QueryTag get tag => _$args;
+
+  String build(QueryTag tag);
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<Map<QueryTag, String>, Map<QueryTag, String>>;
+    final created = build(_$args);
+    final ref = this.ref as $Ref<String, String>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Map<QueryTag, String>, Map<QueryTag, String>>,
-              Map<QueryTag, String>,
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(SelectedItems)
+const selectedItemsProvider = SelectedItemsFamily._();
+
+final class SelectedItemsProvider
+    extends $NotifierProvider<SelectedItems, Set<String>> {
+  const SelectedItemsProvider._({
+    required SelectedItemsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'selectedItemsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$selectedItemsHash();
+
+  @override
+  String toString() {
+    return r'selectedItemsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  SelectedItems create() => SelectedItems();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SelectedItemsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$selectedItemsHash() => r'9a13ee78fdc100c8708af9de46e2861652d68e77';
+
+final class SelectedItemsFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          SelectedItems,
+          Set<String>,
+          Set<String>,
+          Set<String>,
+          String
+        > {
+  const SelectedItemsFamily._()
+    : super(
+        retry: null,
+        name: r'selectedItemsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SelectedItemsProvider call(String key) =>
+      SelectedItemsProvider._(argument: key, from: this);
+
+  @override
+  String toString() => r'selectedItemsProvider';
+}
+
+abstract class _$SelectedItems extends $Notifier<Set<String>> {
+  late final _$args = ref.$arg as String;
+  String get key => _$args;
+
+  Set<String> build(String key);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(SelectedItem)
+const selectedItemProvider = SelectedItemFamily._();
+
+final class SelectedItemProvider
+    extends $NotifierProvider<SelectedItem, String> {
+  const SelectedItemProvider._({
+    required SelectedItemFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'selectedItemProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$selectedItemHash();
+
+  @override
+  String toString() {
+    return r'selectedItemProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  SelectedItem create() => SelectedItem();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SelectedItemProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$selectedItemHash() => r'374202f309d7a786190706fb0a2ac4945de94213';
+
+final class SelectedItemFamily extends $Family
+    with $ClassFamilyOverride<SelectedItem, String, String, String, String> {
+  const SelectedItemFamily._()
+    : super(
+        retry: null,
+        name: r'selectedItemProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SelectedItemProvider call(String key) =>
+      SelectedItemProvider._(argument: key, from: this);
+
+  @override
+  String toString() => r'selectedItemProvider';
+}
+
+abstract class _$SelectedItem extends $Notifier<String> {
+  late final _$args = ref.$arg as String;
+  String get key => _$args;
+
+  String build(String key);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
               Object?,
               Object?
             >;

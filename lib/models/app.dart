@@ -38,6 +38,8 @@ abstract class AppState with _$AppState {
     required SystemUiOverlayStyle systemUiOverlayStyle,
     ProfileOverrideModel? profileOverrideModel,
     @Default({}) Map<QueryTag, String> queryMap,
+    @Default({}) Map<String, String> selectedItemMap,
+    @Default({}) Map<String, Set<String>> selectedItemsMap,
     @Default(CoreStatus.connecting) CoreStatus coreStatus,
   }) = _AppState;
 }

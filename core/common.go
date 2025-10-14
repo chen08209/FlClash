@@ -17,6 +17,7 @@ import (
 	"github.com/metacubex/mihomo/constant/features"
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub"
+	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
@@ -263,7 +264,7 @@ func setupConfig(params *SetupParams) error {
 	defer runLock.Unlock()
 	var err error
 	constant.DefaultTestURL = params.TestURL
-	currentConfig, err = parseWithPath(filepath.Join(constant.Path.HomeDir(), "config.json"))
+	currentConfig, err = executor.ParseWithPath(filepath.Join(constant.Path.HomeDir(), "config.yaml"))
 	if err != nil {
 		currentConfig, _ = config.ParseRawConfig(config.DefaultRawConfig())
 	}

@@ -68,7 +68,7 @@ class AppPath {
 
   Future<String> get configFilePath async {
     final homeDirPath = await appPath.homeDirPath;
-    return join(homeDirPath, 'config.json');
+    return join(homeDirPath, 'config.yaml');
   }
 
   Future<String> get validateFilePath async {

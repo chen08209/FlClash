@@ -214,9 +214,7 @@ class VpnButton extends StatelessWidget {
                     onChanged: (value) {
                       ref
                           .read(vpnSettingProvider.notifier)
-                          .updateState(
-                            (state) => state.copyWith(enable: value),
-                          );
+                          .update((state) => state.copyWith(enable: value));
                     },
                   );
                 },

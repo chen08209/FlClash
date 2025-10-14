@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
 
 class CommonTargetIcon extends StatelessWidget {
@@ -39,6 +40,8 @@ class CommonTargetIcon extends StatelessWidget {
   }
 }
 
+final _cacheMange = DefaultCacheManager();
+
 class ImageCacheWidget extends StatefulWidget {
   final String src;
   final Widget defaultWidget;
@@ -54,22 +57,45 @@ class ImageCacheWidget extends StatefulWidget {
 }
 
 class _ImageCacheWidgetState extends State<ImageCacheWidget> {
-  late Future<File> _imageFuture;
+  final ValueNotifier<File?> _imageNotifier = ValueNotifier(null);
 
   @override
   void initState() {
     super.initState();
-    _imageFuture = LocalImageCacheManager().getSingleFile(widget.src);
+    _getImageFormCache();
+  }
+
+  void _getImageFormCache() async {
+    final src = widget.src;
+    final cacheFile = await _cacheMange.getFileFromCache(src);
+    if (!mounted) {
+      return;
+    }
+    if (cacheFile != null) {
+      _imageNotifier.value = cacheFile.file;
+      if (cacheFile.validTill.isAfter(DateTime.now())) {
+        return;
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    _imageNotifier.value = (await _cacheMange.downloadFile(src, key: src)).file;
+  }
+
+  @override
+  void dispose() {
+    _imageNotifier.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<File>(
-      future: _imageFuture,
-      builder: (context, snapshot) {
-        final data = snapshot.data;
+    return ValueListenableBuilder<File?>(
+      valueListenable: _imageNotifier,
+      builder: (_, data, _) {
         if (data == null) {
-          return SizedBox();
+          return widget.defaultWidget;
         }
         return widget.src.isSvg
             ? SvgPicture.file(

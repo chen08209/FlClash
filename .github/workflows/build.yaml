@@ -22,7 +22,7 @@ jobs:
             os: ubuntu-22.04
             arch: amd64
           - platform: macos
-            os: macos-13
+            os: macos-15-intel
             arch: amd64
           - platform: macos
             os: macos-latest
@@ -64,22 +64,25 @@ jobs:
           cache-dependency-path: |
             core/go.sum
 
-      - name: Setup Flutter Master
-        if: startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm')
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'master'
-          cache: true
       - name: Setup Flutter
         if: ${{ !(startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm')) }}
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
+          flutter-version: 3.35.7
           cache: true
-      #          flutter-version: 3.29.3
+      - name: Setup Flutter With Other
+        if: startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm')
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          flutter-version: 3.35.7
+          cache: true
 
       - name: Get Flutter Dependency
-        run: flutter pub get
+        run: |
+          flutter --version
+          flutter pub get
 
       - name: Setup
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
@@ -104,34 +107,26 @@ jobs:
       - name: Generate
         if: ${{ env.IS_STABLE == 'true' }}
         run: |
-          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
-          preTag=$(grep -oP '^## \K.*' CHANGELOG.md | head -n 1)
-          currentTag=""
-          for ((i = 0; i <= ${#tags[@]}; i++)); do
-            if (( i < ${#tags[@]} )); then
-              tag=${tags[$i]}
-            else
-              tag=""
-            fi
-            if [ -n "$currentTag" ]; then
-              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
-                break
-              fi
-            fi
-            if [ -n "$currentTag" ]; then
-              echo "## $currentTag" >> NEW_CHANGELOG.md
-              echo "" >> NEW_CHANGELOG.md
-              if [ -n "$tag" ]; then
-                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
-              else
-                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> NEW_CHANGELOG.md
-              fi
-              echo "" >> NEW_CHANGELOG.md
-            fi
-            currentTag=$tag
+          last_ver=$(grep -m1 '^## ' CHANGELOG.md 2>/dev/null | sed 's/^## //')
+          
+          tags=($(git tag --merged HEAD --sort=-creatordate))
+          
+          temp="NEW_CHANGELOG.md" > "$temp"
+          
+          for i in "${!tags[@]}"; do
+              curr="${tags[i]}"
+              [[ "$curr" == "$last_ver" ]] && break
+          
+              prev="${tags[i+1]}"
+              range="${prev:+$prev..}$curr"
+          
+              echo -e "## $curr\n" >> "$temp"
+              git log --no-merges --pretty=format:"%B" "$range" | \
+              awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$temp"
           done
-          cat CHANGELOG.md >> NEW_CHANGELOG.md
-          cat NEW_CHANGELOG.md > CHANGELOG.md
+          [ -f CHANGELOG.md ] && cat CHANGELOG.md >> "$temp"
+          
+          mv "$temp" CHANGELOG.md
 
       - name: Commit
         if: ${{ env.IS_STABLE == 'true' }}
@@ -181,31 +176,24 @@ jobs:
 
       - name: Generate release.md
         run: |
-          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
-          preTag=$(curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
-          currentTag=""
-          for ((i = 0; i <= ${#tags[@]}; i++)); do
-            if (( i < ${#tags[@]} )); then
-              tag=${tags[$i]}
-            else
-              tag=""
-            fi
-            if [ -n "$currentTag" ]; then
-              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
-                break
-              fi
-            fi
-            if [ -n "$currentTag" ]; then
-              if [ -n "$tag" ]; then
-                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
-              else
-                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
-              fi
-              echo "" >> release.md
-            fi
-            currentTag=$tag
+          tags=($(git tag --merged HEAD --sort=-creatordate))
+          preTag=$(curl -s "https://api.github.com/repos/chen08209/FlClash/releases/latest" | \
+          sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p')
+          
+          [ -z "$preTag" ] && preTag=""
+          
+          out="release.md" > "$out"
+          
+          for i in "${!tags[@]}"; do
+            curr="${tags[i]}"
+            [[ "$curr" == "$preTag" ]] && break
+          
+            prev="${tags[i+1]}"
+            range="${prev:+$prev..}$curr"
+          
+            git log --no-merges --pretty=format:"%B" "$range" | \
+            awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$out"
           done
-
       - name: Push to telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
