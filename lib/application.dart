@@ -24,15 +24,14 @@ class Application extends ConsumerStatefulWidget {
 }
 
 class ApplicationState extends ConsumerState<Application> {
-  Timer? _autoUpdateGroupTaskTimer;
   Timer? _autoUpdateProfilesTaskTimer;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
-      TargetPlatform.android: CommonPageTransitionsBuilder(),
-      TargetPlatform.windows: CommonPageTransitionsBuilder(),
-      TargetPlatform.linux: CommonPageTransitionsBuilder(),
-      TargetPlatform.macOS: CommonPageTransitionsBuilder(),
+      TargetPlatform.android: commonSharedXPageTransitions,
+      TargetPlatform.windows: commonSharedXPageTransitions,
+      TargetPlatform.linux: commonSharedXPageTransitions,
+      TargetPlatform.macOS: commonSharedXPageTransitions,
     },
   );
 
@@ -102,7 +101,7 @@ class ApplicationState extends ConsumerState<Application> {
   }
 
   Widget _buildApp({required Widget child}) {
-    return MessageManager(child: ThemeManager(child: child));
+    return StatusManager(child: ThemeManager(child: child));
   }
 
   @override
@@ -162,7 +161,6 @@ class ApplicationState extends ConsumerState<Application> {
   @override
   Future<void> dispose() async {
     linkManager.destroy();
-    _autoUpdateGroupTaskTimer?.cancel();
     _autoUpdateProfilesTaskTimer?.cancel();
     await coreController.destroy();
     await globalState.appController.savePreferences();

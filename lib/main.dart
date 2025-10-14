@@ -39,8 +39,12 @@ Future<void> _service(List<String> flags) async {
   final clashConfig = globalState.config.patchClashConfig.copyWith.tun(
     enable: false,
   );
-  coreController.setupConfig(
-    clashConfig,
+  final setupState = globalState.getSetupState(
+    globalState.config.currentProfileId,
+  );
+  globalState.setupConfig(
+    setupState: setupState,
+    patchConfig: clashConfig,
     preloadInvoke: () {
       globalState.handleStart();
     },

@@ -1,8 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +22,7 @@ class VPNItem extends ConsumerWidget {
         onChanged: (value) async {
           ref
               .read(vpnSettingProvider.notifier)
-              .updateState((state) => state.copyWith(enable: value));
+              .update((state) => state.copyWith(enable: value));
         },
       ),
     );
@@ -48,7 +46,7 @@ class TUNItem extends ConsumerWidget {
         onChanged: (value) async {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.tun(enable: value));
+              .update((state) => state.copyWith.tun(enable: value));
         },
       ),
     );
@@ -71,7 +69,7 @@ class AllowBypassItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(vpnSettingProvider.notifier)
-              .updateState((state) => state.copyWith(allowBypass: value));
+              .update((state) => state.copyWith(allowBypass: value));
         },
       ),
     );
@@ -94,7 +92,7 @@ class VpnSystemProxyItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(vpnSettingProvider.notifier)
-              .updateState((state) => state.copyWith(systemProxy: value));
+              .update((state) => state.copyWith(systemProxy: value));
         },
       ),
     );
@@ -139,7 +137,7 @@ class Ipv6Item extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(vpnSettingProvider.notifier)
-              .updateState((state) => state.copyWith(ipv6: value));
+              .update((state) => state.copyWith(ipv6: value));
         },
       ),
     );
@@ -198,61 +196,31 @@ class TunStackItem extends ConsumerWidget {
   }
 }
 
-class BypassDomainItem extends StatelessWidget {
+class BypassDomainItem extends ConsumerWidget {
   const BypassDomainItem({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
+    final bypassDomain = ref.watch(
+      networkSettingProvider.select((state) => state.bypassDomain),
+    );
     return ListItem.open(
       title: Text(appLocalizations.bypassDomain),
       subtitle: Text(appLocalizations.bypassDomainDesc),
       delegate: OpenDelegate(
         blur: false,
-        actions: [
-          Consumer(
-            builder: (_, ref, _) {
-              return IconButton(
-                onPressed: () async {
-                  final res = await globalState.showMessage(
-                    title: appLocalizations.reset,
-                    message: TextSpan(text: appLocalizations.resetTip),
-                  );
-                  if (res != true) {
-                    return;
-                  }
-                  ref
-                      .read(networkSettingProvider.notifier)
-                      .updateState(
-                        (state) =>
-                            state.copyWith(bypassDomain: defaultBypassDomain),
-                      );
-                },
-                tooltip: appLocalizations.reset,
-                icon: const Icon(Icons.replay),
-              );
-            },
-          ),
-        ],
-        title: appLocalizations.bypassDomain,
-        widget: Consumer(
-          builder: (_, ref, _) {
-            final bypassDomain = ref.watch(
-              networkSettingProvider.select((state) => state.bypassDomain),
-            );
-            return ListInputPage(
-              title: appLocalizations.bypassDomain,
-              items: bypassDomain,
-              titleBuilder: (item) => Text(item),
-              onChange: (items) {
-                ref
-                    .read(networkSettingProvider.notifier)
-                    .updateState(
-                      (state) => state.copyWith(bypassDomain: List.from(items)),
-                    );
-              },
-            );
-          },
+        widget: ListInputPage(
+          title: appLocalizations.bypassDomain,
+          items: bypassDomain,
+          titleBuilder: (item) => Text(item),
         ),
+        onChanged: (items) {
+          ref
+              .read(networkSettingProvider.notifier)
+              .updateState(
+                (state) => state.copyWith(bypassDomain: List.from(items)),
+              );
+        },
       ),
     );
   }
@@ -273,7 +241,7 @@ class DNSHijackingItem extends ConsumerWidget {
         onChanged: (value) async {
           ref
               .read(vpnSettingProvider.notifier)
-              .updateState((state) => state.copyWith(dnsHijacking: value));
+              .update((state) => state.copyWith(dnsHijacking: value));
         },
       ),
     );
@@ -322,35 +290,27 @@ class RouteAddressItem extends ConsumerWidget {
     if (bypassPrivate) {
       return Container();
     }
+    final routeAddress = ref.watch(
+      patchClashConfigProvider.select((state) => state.tun.routeAddress),
+    );
     return ListItem.open(
       title: Text(appLocalizations.routeAddress),
       subtitle: Text(appLocalizations.routeAddressDesc),
       delegate: OpenDelegate(
         blur: false,
         maxWidth: 360,
-        title: appLocalizations.routeAddress,
-        widget: Consumer(
-          builder: (_, ref, _) {
-            final routeAddress = ref.watch(
-              patchClashConfigProvider.select(
-                (state) => state.tun.routeAddress,
-              ),
-            );
-            return ListInputPage(
-              title: appLocalizations.routeAddress,
-              items: routeAddress,
-              titleBuilder: (item) => Text(item),
-              onChange: (items) {
-                ref
-                    .read(patchClashConfigProvider.notifier)
-                    .updateState(
-                      (state) =>
-                          state.copyWith.tun(routeAddress: List.from(items)),
-                    );
-              },
-            );
-          },
+        widget: ListInputPage(
+          title: appLocalizations.routeAddress,
+          items: routeAddress,
+          titleBuilder: (item) => Text(item),
         ),
+        onChanged: (items) {
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState(
+                (state) => state.copyWith.tun(routeAddress: List.from(items)),
+              );
+        },
       ),
     );
   }

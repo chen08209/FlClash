@@ -64,10 +64,7 @@ class _EffectGestureDetectorState extends State<EffectGestureDetector>
 class CommonExpandIcon extends StatefulWidget {
   final bool expand;
 
-  const CommonExpandIcon({
-    super.key,
-    this.expand = false,
-  });
+  const CommonExpandIcon({super.key, this.expand = false});
 
   @override
   State<CommonExpandIcon> createState() => _CommonExpandIconState();
@@ -119,19 +116,14 @@ class _CommonExpandIconState extends State<CommonExpandIcon>
     return AnimatedBuilder(
       animation: _animationController.view,
       builder: (_, child) {
-        return RotationTransition(
-          turns: _iconTurns,
-          child: child!,
-        );
+        return RotationTransition(turns: _iconTurns, child: child!);
       },
-      child: const Icon(
-        Icons.expand_more,
-      ),
+      child: const Icon(Icons.expand_more),
     );
   }
 }
 
-Widget proxyDecorator(
+Widget commonProxyDecorator(
   Widget child,
   int index,
   Animation<double> animation,
@@ -141,10 +133,7 @@ Widget proxyDecorator(
     builder: (_, Widget? child) {
       final double animValue = Curves.easeInOut.transform(animation.value);
       final double scale = lerpDouble(1, 1.02, animValue)!;
-      return Transform.scale(
-        scale: scale,
-        child: child,
-      );
+      return Transform.scale(scale: scale, child: child);
     },
     child: child,
   );

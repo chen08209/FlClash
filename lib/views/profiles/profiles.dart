@@ -1,18 +1,19 @@
-import 'dart:ui';
+import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/profiles/edit_profile.dart';
-import 'package:fl_clash/views/profiles/override_profile.dart';
-import 'package:fl_clash/views/profiles/scripts.dart';
+import 'package:fl_clash/views/profiles/overwrite.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'add_profile.dart';
+import 'add.dart';
+import 'edit.dart';
 
 class ProfilesView extends StatefulWidget {
   const ProfilesView({super.key});
@@ -69,49 +70,32 @@ class _ProfilesViewState extends State<ProfilesView> {
     }
   }
 
-  List<Widget> _buildActions() {
-    return [
-      IconButton(
-        onPressed: () {
-          _updateProfiles();
-        },
-        icon: const Icon(Icons.sync),
-      ),
-      IconButton(
-        onPressed: () {
-          showExtend(
-            context,
-            builder: (_, type) {
-              return ScriptsView();
-            },
-          );
-        },
-        icon: Consumer(
-          builder: (context, ref, _) {
-            final isScriptMode = ref.watch(
-              scriptStateProvider.select((state) => state.realId != null),
-            );
-            return Icon(
-              Icons.functions,
-              color: isScriptMode ? context.colorScheme.primary : null,
-            );
-          },
-        ),
-      ),
-      IconButton(
-        onPressed: () {
-          final profiles = globalState.config.profiles;
-          showSheet(
-            context: context,
-            builder: (_, type) {
-              return ReorderableProfilesSheet(type: type, profiles: profiles);
-            },
-          );
-        },
-        icon: const Icon(Icons.sort),
-        iconSize: 26,
-      ),
-    ];
+  List<Widget> _buildActions(List<Profile> profiles) {
+    return profiles.isNotEmpty
+        ? [
+            IconButton(
+              onPressed: () {
+                _updateProfiles();
+              },
+              icon: const Icon(Icons.sync),
+            ),
+            IconButton(
+              onPressed: () {
+                showSheet(
+                  context: context,
+                  builder: (_, type) {
+                    return ReorderableProfilesSheet(
+                      type: type,
+                      profiles: profiles,
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.sort),
+              iconSize: 26,
+            ),
+          ]
+        : [];
   }
 
   Widget _buildFAB() {
@@ -124,55 +108,59 @@ class _ProfilesViewState extends State<ProfilesView> {
 
   @override
   Widget build(BuildContext context) {
-    return CommonScaffold(
-      title: appLocalizations.profiles,
-      floatingActionButton: _buildFAB(),
-      actions: _buildActions(),
-      body: Consumer(
-        builder: (_, ref, _) {
-          final profilesSelectorState = ref.watch(
-            profilesSelectorStateProvider,
-          );
-          if (profilesSelectorState.profiles.isEmpty) {
-            return NullStatus(label: appLocalizations.nullProfileDesc);
-          }
-          return Align(
-            alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              key: profilesStoreKey,
-              padding: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: 88,
-              ),
-              child: Grid(
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                crossAxisCount: profilesSelectorState.columns,
-                children: [
-                  for (
-                    int i = 0;
-                    i < profilesSelectorState.profiles.length;
-                    i++
-                  )
-                    GridItem(
-                      child: ProfileItem(
-                        key: Key(profilesSelectorState.profiles[i].id),
-                        profile: profilesSelectorState.profiles[i],
-                        groupValue: profilesSelectorState.currentProfileId,
-                        onChanged: (profileId) {
-                          ref.read(currentProfileIdProvider.notifier).value =
-                              profileId;
-                        },
-                      ),
+    return Consumer(
+      builder: (_, ref, _) {
+        final profilesSelectorState = ref.watch(profilesSelectorStateProvider);
+        final spacing = 14.ap;
+        return CommonScaffold(
+          title: appLocalizations.profiles,
+          floatingActionButton: _buildFAB(),
+          actions: _buildActions(profilesSelectorState.profiles),
+          body: profilesSelectorState.profiles.isEmpty
+              ? NullStatus(
+                  label: appLocalizations.nullProfileDesc,
+                  illustration: ProfileEmptyIllustration(),
+                )
+              : Align(
+                  alignment: Alignment.topCenter,
+                  child: SingleChildScrollView(
+                    key: profilesStoreKey,
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                      bottom: 88,
                     ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                    child: Grid(
+                      mainAxisSpacing: spacing,
+                      crossAxisSpacing: spacing,
+                      crossAxisCount: profilesSelectorState.columns,
+                      children: [
+                        for (
+                          int i = 0;
+                          i < profilesSelectorState.profiles.length;
+                          i++
+                        )
+                          GridItem(
+                            child: ProfileItem(
+                              key: Key(profilesSelectorState.profiles[i].id),
+                              profile: profilesSelectorState.profiles[i],
+                              groupValue:
+                                  profilesSelectorState.currentProfileId,
+                              onChanged: (profileId) {
+                                ref
+                                        .read(currentProfileIdProvider.notifier)
+                                        .value =
+                                    profileId;
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+        );
+      },
     );
   }
 }
@@ -200,6 +188,22 @@ class ProfileItem extends StatelessWidget {
       return;
     }
     await globalState.appController.deleteProfile(profile.id);
+  }
+
+  Future<void> _handlePreview(BuildContext context) async {
+    final config = await globalState.getConfigMap(profile.id);
+    final content = await Isolate.run(() {
+      return yaml.encode(config);
+    });
+    if (!context.mounted) {
+      return;
+    }
+
+    final previewPage = EditorPage(
+      title: profile.label ?? profile.id,
+      content: content,
+    );
+    BaseNavigator.push<String>(context, previewPage);
   }
 
   Future updateProfile() async {
@@ -252,16 +256,12 @@ class ProfileItem extends StatelessWidget {
     ];
   }
 
-  // _handleCopyLink(BuildContext context) async {
-  //   await Clipboard.setData(
-  //     ClipboardData(
-  //       text: profile.url,
-  //     ),
-  //   );
-  //   if (context.mounted) {
-  //     context.showNotifier(appLocalizations.copySuccess);
-  //   }
-  // }
+  Future<void> _handleCopyLink(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: profile.url));
+    if (context.mounted) {
+      context.showNotifier(appLocalizations.copySuccess);
+    }
+  }
 
   Future<void> _handleExportFile(BuildContext context) async {
     final res = await globalState.appController.safeRun<bool>(
@@ -283,8 +283,7 @@ class ProfileItem extends StatelessWidget {
   }
 
   void _handlePushGenProfilePage(BuildContext context, String id) {
-    final overrideProfileView = OverrideProfileView(profileId: id);
-    BaseNavigator.push(context, overrideProfileView);
+    BaseNavigator.push(context, OverwriteView(profileId: id));
   }
 
   @override
@@ -319,6 +318,13 @@ class ProfileItem extends StatelessWidget {
                             _handleShowEditExtendPage(context);
                           },
                         ),
+                        PopupMenuItemData(
+                          icon: Icons.visibility_outlined,
+                          label: appLocalizations.preview,
+                          onPressed: () {
+                            _handlePreview(context);
+                          },
+                        ),
                         if (profile.type == ProfileType.url) ...[
                           PopupMenuItemData(
                             icon: Icons.sync_alt_sharp,
@@ -329,18 +335,46 @@ class ProfileItem extends StatelessWidget {
                           ),
                         ],
                         PopupMenuItemData(
-                          icon: Icons.extension_outlined,
-                          label: appLocalizations.override,
-                          onPressed: () {
-                            _handlePushGenProfilePage(context, profile.id);
-                          },
-                        ),
-                        PopupMenuItemData(
-                          icon: Icons.file_copy_outlined,
-                          label: appLocalizations.exportFile,
-                          onPressed: () {
-                            _handleExportFile(context);
-                          },
+                          icon: Icons.emergency_outlined,
+                          label: appLocalizations.more,
+                          subItems: [
+                            PopupMenuItemData(
+                              icon: Icons.extension_outlined,
+                              label: appLocalizations.override,
+                              onPressed: () {
+                                _handlePushGenProfilePage(context, profile.id);
+                              },
+                            ),
+                            // PopupMenuItemData(
+                            //   icon: Icons.extension_outlined,
+                            //   label: appLocalizations.override + "1",
+                            //   onPressed: () {
+                            //     final overrideProfileView = OverrideProfileView(
+                            //       profileId: profile.id,
+                            //     );
+                            //     BaseNavigator.push(
+                            //       context,
+                            //       overrideProfileView,
+                            //     );
+                            //   },
+                            // ),
+                            if (profile.type == ProfileType.url) ...[
+                              PopupMenuItemData(
+                                icon: Icons.copy,
+                                label: appLocalizations.copyLink,
+                                onPressed: () {
+                                  _handleCopyLink(context);
+                                },
+                              ),
+                            ],
+                            PopupMenuItemData(
+                              icon: Icons.file_copy_outlined,
+                              label: appLocalizations.exportFile,
+                              onPressed: () {
+                                _handleExportFile(context);
+                              },
+                            ),
+                          ],
                         ),
                         PopupMenuItemData(
                           danger: true,
@@ -419,26 +453,20 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
     profiles = List.from(widget.profiles);
   }
 
-  Widget proxyDecorator(Widget child, int index, Animation<double> animation) {
+  Widget _buildItem(int index, [bool isDecorator = false]) {
+    final isLast = index == profiles.length - 1;
+    final isFirst = index == 0;
     final profile = profiles[index];
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (_, Widget? child) {
-        final double animValue = Curves.easeInOut.transform(animation.value);
-        final double scale = lerpDouble(1, 1.02, animValue)!;
-        return Transform.scale(scale: scale, child: child);
-      },
-      child: Container(
-        key: Key(profile.id),
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: CommonCard(
-          type: CommonCardType.filled,
-          child: ListTile(
-            contentPadding: const EdgeInsets.only(right: 44, left: 16),
-            title: Text(profile.label ?? profile.id),
-          ),
-        ),
+    return CommonInputListItem(
+      key: Key(profile.id),
+      trailing: ReorderableDelayedDragStartListener(
+        index: index,
+        child: const Icon(Icons.drag_handle),
       ),
+      title: Text(profile.label ?? profile.id),
+      isFirst: isFirst,
+      isLast: isLast,
+      isDecorator: isDecorator,
     );
   }
 
@@ -447,20 +475,41 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
     return AdaptiveSheetScaffold(
       type: widget.type,
       actions: [
-        IconButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            globalState.appController.setProfiles(profiles);
-          },
-          icon: Icon(Icons.save),
-        ),
+        if (widget.type == SheetType.bottomSheet)
+          IconButton.filledTonal(
+            onPressed: () {
+              Navigator.of(context).pop();
+              globalState.appController.setProfiles(profiles);
+            },
+            style: IconButton.styleFrom(
+              visualDensity: VisualDensity.comfortable,
+              tapTargetSize: MaterialTapTargetSize.padded,
+              padding: EdgeInsets.all(8),
+              iconSize: 20,
+            ),
+            icon: Icon(Icons.check),
+          )
+        else
+          IconButton.filledTonal(
+            icon: Icon(Icons.check),
+            onPressed: () {
+              Navigator.of(context).pop();
+              globalState.appController.setProfiles(profiles);
+            },
+          ),
       ],
       body: Padding(
-        padding: EdgeInsets.only(bottom: 32, top: 16),
+        padding: EdgeInsets.only(bottom: 32, top: 12),
         child: ReorderableListView.builder(
           buildDefaultDragHandles: false,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          proxyDecorator: proxyDecorator,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          proxyDecorator: (child, index, animation) {
+            return commonProxyDecorator(
+              _buildItem(index, true),
+              index,
+              animation,
+            );
+          },
           onReorder: (oldIndex, newIndex) {
             setState(() {
               if (oldIndex < newIndex) {
@@ -471,22 +520,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
             });
           },
           itemBuilder: (_, index) {
-            final profile = profiles[index];
-            return Container(
-              key: Key(profile.id),
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: CommonCard(
-                type: CommonCardType.filled,
-                child: ListTile(
-                  contentPadding: const EdgeInsets.only(right: 16, left: 16),
-                  title: Text(profile.label ?? profile.id),
-                  trailing: ReorderableDragStartListener(
-                    index: index,
-                    child: const Icon(Icons.drag_handle),
-                  ),
-                ),
-              ),
-            );
+            return _buildItem(index);
           },
           itemCount: profiles.length,
         ),

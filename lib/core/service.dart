@@ -112,6 +112,7 @@ class CoreService extends CoreHandlerInterface {
   @override
   destroy() async {
     final server = await _serverCompleter.future;
+    await shutdown();
     await server.close();
     await _deleteSocketFile();
     return true;

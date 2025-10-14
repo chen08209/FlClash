@@ -407,16 +407,63 @@ class _CoreStatus extends _$CoreStatus with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class QueryMap extends _$QueryMap with AutoDisposeNotifierMixin {
+class Query extends _$Query with AutoDisposeNotifierMixin {
+  late final QueryTag _tag;
+
   @override
-  Map<QueryTag, String> build() => globalState.appState.queryMap;
+  String build(QueryTag tag) {
+    _tag = tag;
+    return globalState.appState.queryMap[tag] ?? '';
+  }
 
   @override
   onUpdate(value) {
-    globalState.appState = globalState.appState.copyWith(queryMap: value);
+    final newMap = Map<QueryTag, String>.from(globalState.appState.queryMap)
+      ..[_tag] = value;
+    globalState.appState = globalState.appState.copyWith(queryMap: newMap);
+  }
+}
+
+@riverpod
+class SelectedItems extends _$SelectedItems with AutoDisposeNotifierMixin {
+  late final String _key;
+
+  @override
+  Set<String> build(String key) {
+    _key = key;
+    return globalState.appState.selectedItemsMap[_key] ?? {};
   }
 
-  void updateQuery(QueryTag tag, String value) {
-    this.value = Map.from(globalState.appState.queryMap)..[tag] = value;
+  @override
+  onUpdate(value) {
+    final newMap = globalState.appState.selectedItemsMap.copyWitUpdate(
+      key,
+      value.isEmpty ? null : value,
+    );
+    globalState.appState = globalState.appState.copyWith(
+      selectedItemsMap: newMap,
+    );
+  }
+}
+
+@riverpod
+class SelectedItem extends _$SelectedItem with AutoDisposeNotifierMixin {
+  late final String _key;
+
+  @override
+  String build(String key) {
+    _key = key;
+    return globalState.appState.selectedItemMap[_key] ?? '';
+  }
+
+  @override
+  onUpdate(value) {
+    final newMap = globalState.appState.selectedItemMap.copyWitUpdate(
+      key,
+      value.isEmpty ? null : value,
+    );
+    globalState.appState = globalState.appState.copyWith(
+      selectedItemMap: newMap,
+    );
   }
 }

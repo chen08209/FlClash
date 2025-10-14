@@ -92,8 +92,9 @@ object State {
     }
 
     fun handleStartService() {
+        val appPlugin = flutterEngine?.plugin<AppPlugin>()
         if (appPlugin != null) {
-            appPlugin?.requestNotificationsPermission {
+            appPlugin.requestNotificationsPermission {
                 startService()
             }
             return

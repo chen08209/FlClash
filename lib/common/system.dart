@@ -260,7 +260,7 @@ class Windows {
     await Future.delayed(Duration(milliseconds: 300));
     final retryStatus = await retry(
       task: checkService,
-      retryIf: (status) => status == WindowsHelperServiceStatus.running,
+      retryIf: (status) => status != WindowsHelperServiceStatus.running,
       delay: commonDuration,
     );
     return res && retryStatus == WindowsHelperServiceStatus.running;

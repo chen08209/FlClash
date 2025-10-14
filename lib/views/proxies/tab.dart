@@ -174,6 +174,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     final groups = state.groups;
     if (groups.isEmpty) {
       return NullStatus(
+        illustration: ProxyEmptyIllustration(),
         label: appLocalizations.nullTip(appLocalizations.proxies),
       );
     }
@@ -217,7 +218,19 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                     overlayColor: const WidgetStatePropertyAll(
                       Colors.transparent,
                     ),
-                    tabs: [for (final group in groups) Tab(text: group.name)],
+                    tabs: [
+                      for (final group in groups)
+                        Tab(
+                          child: Builder(
+                            builder: (context) {
+                              return EmojiText(
+                                group.name,
+                                style: DefaultTextStyle.of(context).style,
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   ),
                   if (value) Positioned(right: 0, child: child!),
                 ],

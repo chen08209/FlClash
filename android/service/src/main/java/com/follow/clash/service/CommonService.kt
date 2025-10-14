@@ -50,7 +50,11 @@ class CommonService : Service(), IBaseService,
     }
 
     override fun start() {
-        loader.load()
+        try {
+            loader.load()
+        } catch (_: Exception) {
+            stop()
+        }
     }
 
     override fun stop() {
