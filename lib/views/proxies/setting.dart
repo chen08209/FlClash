@@ -50,6 +50,7 @@ class ProxiesSetting extends StatelessWidget {
 
   List<Widget> _buildStyleSetting() {
     return generateSection(
+      isFirst: true,
       title: appLocalizations.style,
       items: [
         SingleChildScrollView(

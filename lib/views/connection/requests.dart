@@ -6,6 +6,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:super_sliver_list/super_sliver_list.dart';
 
 import 'item.dart';
 
@@ -39,9 +40,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
   void initState() {
     super.initState();
     _requests = globalState.appState.requests.list;
-    _scrollController = ScrollController(
-      initialScrollOffset: _requests.length * TrackerInfoItem.height,
-    );
+    _scrollController = ScrollController(initialScrollOffset: double.maxFinite);
     _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
       trackerInfos: _requests,
     );
@@ -83,38 +82,33 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
     }, duration: commonDuration);
   }
 
-  List<Widget> _buildActions() {
-    return [
-      ValueListenableBuilder(
-        valueListenable: _requestsStateNotifier,
-        builder: (_, state, _) {
-          return IconButton(
-            style: state.autoScrollToEnd
-                ? IconButton.styleFrom(
-                    backgroundColor: context.colorScheme.secondaryContainer,
-                  )
-                : null,
-            onPressed: () {
-              _requestsStateNotifier.value = _requestsStateNotifier.value
-                  .copyWith(
-                    autoScrollToEnd:
-                        !_requestsStateNotifier.value.autoScrollToEnd,
-                  );
-            },
-            icon: const Icon(Icons.vertical_align_top_outlined),
-          );
-        },
-      ),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
       title: appLocalizations.requests,
-      actions: _buildActions(),
       searchState: AppBarSearchState(onSearch: _onSearch),
       onKeywordsUpdate: _onKeywordsUpdate,
+      floatingActionButton: ValueListenableBuilder(
+        valueListenable: _requestsStateNotifier,
+        builder: (_, state, _) {
+          final autoScrollToEnd = state.autoScrollToEnd;
+          return FadeRotationScaleBox(
+            child: FloatingActionButton(
+              key: ValueKey(autoScrollToEnd),
+              onPressed: () {
+                _requestsStateNotifier.value = _requestsStateNotifier.value
+                    .copyWith(
+                      autoScrollToEnd:
+                          !_requestsStateNotifier.value.autoScrollToEnd,
+                    );
+              },
+              child: autoScrollToEnd
+                  ? const Icon(Icons.block)
+                  : const Icon(Icons.vertical_align_top),
+            ),
+          );
+        },
+      ),
       body: ValueListenableBuilder<TrackerInfosState>(
         valueListenable: _requestsStateNotifier,
         builder: (context, state, _) {
@@ -152,19 +146,13 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                   _requestsStateNotifier.value = _requestsStateNotifier.value
                       .copyWith(autoScrollToEnd: false);
                 },
-                child: ListView.builder(
+                child: SuperListView.builder(
                   reverse: true,
                   shrinkWrap: true,
                   physics: NextClampingScrollPhysics(),
                   controller: _scrollController,
                   itemBuilder: (_, index) {
                     return items[index];
-                  },
-                  itemExtentBuilder: (index, _) {
-                    if (index.isOdd) {
-                      return 0;
-                    }
-                    return TrackerInfoItem.height;
                   },
                   itemCount: items.length,
                 ),

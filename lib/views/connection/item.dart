@@ -26,16 +26,6 @@ class TrackerInfoItem extends ConsumerWidget {
     return globalState.measure.bodySmallHeight + 20;
   }
 
-  static double get height {
-    final measure = globalState.measure;
-    return measure.bodyMediumHeight +
-        8 +
-        8 +
-        measure.bodyLargeHeight +
-        subTitleHeight +
-        16 * 2;
-  }
-
   Future<ImageProvider?> _getPackageIcon(TrackerInfo connection) async {
     return await app?.getPackageIcon(connection.metadata.process);
   }
@@ -45,7 +35,7 @@ class TrackerInfoItem extends ConsumerWidget {
         ? '${trackerInfo.progressText} · '
         : '';
     final traffic = Traffic(up: trackerInfo.upload, down: trackerInfo.download);
-    return '$progress${traffic.desc}';
+    return '${trackerInfo.start.lastUpdateTimeDesc} · $progress${traffic.desc}';
   }
 
   @override
@@ -59,27 +49,23 @@ class TrackerInfoItem extends ConsumerWidget {
     final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          spacing: 8,
-          children: [
-            Flexible(
-              child: Text(
-                trackerInfo.desc,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.textTheme.bodyLarge,
-              ),
-            ),
-            Text(
-              trackerInfo.start.lastUpdateTimeDesc,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: context.colorScheme.onSurface.opacity60,
-              ),
-            ),
-          ],
-        ),
+        Text(trackerInfo.desc, style: context.textTheme.bodyLarge),
+        // Row(
+        //   mainAxisSize: MainAxisSize.max,
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   spacing: 8,
+        //   children: [
+        //     Flexible(
+        //       child: Text(trackerInfo.desc, style: context.textTheme.bodyLarge),
+        //     ),
+        //     Text(
+        //       trackerInfo.start.lastUpdateTimeDesc,
+        //       style: context.textTheme.bodySmall?.copyWith(
+        //         color: context.colorScheme.onSurface.opacity60,
+        //       ),
+        //     ),
+        //   ],
+        // ),
         const SizedBox(height: 6),
         Text(
           _getSourceText(trackerInfo),

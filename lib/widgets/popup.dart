@@ -2,6 +2,8 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:flutter/material.dart';
 
+import 'animated_cross_slide.dart';
+
 class CommonPopupRoute<T> extends PopupRoute<T> {
   final WidgetBuilder builder;
   ValueNotifier<Offset> offsetNotifier;
@@ -206,12 +208,61 @@ class CommonPopupMenu extends StatelessWidget {
     this.fontSize = 15,
   });
 
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 12,
+      color: context.colorScheme.surfaceContainer,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(14)),
+      child: IntrinsicWidth(
+        child: _CommonPopupMenuItems(
+          items: items,
+          minWidth: minWidth,
+          minItemVerticalPadding: minItemVerticalPadding,
+          fontSize: fontSize,
+        ),
+      ),
+    );
+  }
+}
+
+class _CommonPopupMenuItems extends StatefulWidget {
+  final List<PopupMenuItemData> items;
+  final double minWidth;
+  final double minItemVerticalPadding;
+  final double fontSize;
+
+  const _CommonPopupMenuItems({
+    required this.items,
+    required this.minWidth,
+    required this.minItemVerticalPadding,
+    required this.fontSize,
+  });
+
+  @override
+  State<_CommonPopupMenuItems> createState() => _CommonPopupMenuItemsState();
+}
+
+class _CommonPopupMenuItemsState extends State<_CommonPopupMenuItems> {
+  List<PopupMenuItemData> _nextItems = [];
+  String? _subTitle;
+  bool _status = false;
+
   Widget _popupMenuItem(
     BuildContext context, {
     required PopupMenuItemData item,
     required int index,
   }) {
-    final onPressed = item.onPressed;
+    final onPressed = item.subItems.isNotEmpty
+        ? () {
+            _nextItems = item.subItems;
+            _subTitle = item.label;
+            setState(() {
+              _status = true;
+            });
+          }
+        : item.onPressed;
     final disabled = onPressed == null;
     final color = item.danger
         ? context.colorScheme.onError
@@ -229,23 +280,29 @@ class CommonPopupMenu extends StatelessWidget {
       ),
       onPressed: onPressed != null
           ? () {
-              Navigator.of(context).pop();
+              if (item.subItems.isEmpty) {
+                Navigator.of(context).pop();
+              }
               onPressed();
             }
           : null,
       child: Container(
-        constraints: BoxConstraints(minWidth: minWidth),
+        constraints: BoxConstraints(minWidth: widget.minWidth),
         padding: EdgeInsets.only(
           left: 16,
           right: 64,
-          top: minItemVerticalPadding,
-          bottom: minItemVerticalPadding,
+          top: widget.minItemVerticalPadding,
+          bottom: widget.minItemVerticalPadding,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.max,
           children: [
             if (item.icon != null) ...[
-              Icon(item.icon, size: fontSize + 4, color: foregroundColor),
+              Icon(
+                item.icon,
+                size: widget.fontSize + 4,
+                color: foregroundColor,
+              ),
               SizedBox(width: 16),
             ],
             Flexible(
@@ -253,7 +310,7 @@ class CommonPopupMenu extends StatelessWidget {
                 item.label,
                 style: context.textTheme.bodyMedium?.copyWith(
                   color: foregroundColor,
-                  fontSize: fontSize,
+                  fontSize: widget.fontSize,
                 ),
               ),
             ),
@@ -263,29 +320,76 @@ class CommonPopupMenu extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: IntrinsicWidth(
-        child: Card(
-          elevation: 12,
-          color: context.colorScheme.surfaceContainer,
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildItems(List<PopupMenuItemData> items) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final item in items.asMap().entries) ...[
+          _popupMenuItem(context, item: item.value, index: item.key),
+          if (item.value != items.last) Divider(height: 0),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSubMenu() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(left: 8, top: 6, bottom: 2),
+          child: Row(
+            spacing: 4,
             children: [
-              for (final item in items.asMap().entries) ...[
-                _popupMenuItem(context, item: item.value, index: item.key),
-                if (item.value != items.last) Divider(height: 0),
-              ],
+              IconButton(
+                icon: Icon(
+                  Icons.arrow_back_outlined,
+                  color: context.colorScheme.onSurfaceVariant.opacity80,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _status = false;
+                  });
+                },
+                iconSize: 18,
+                style: ButtonStyle(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  minimumSize: WidgetStatePropertyAll(Size.zero),
+                  padding: WidgetStatePropertyAll(EdgeInsets.all(8)),
+                ),
+              ),
+              if (_subTitle != null)
+                Text(
+                  _subTitle!,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant.opacity80,
+                  ),
+                ),
             ],
           ),
         ),
-      ),
+        _CommonPopupMenuItems(
+          items: _nextItems,
+          minWidth: widget.minWidth,
+          minItemVerticalPadding: widget.minItemVerticalPadding,
+          fontSize: widget.fontSize,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedCrossSlide(
+      secondCurve: Curves.easeOut,
+      firstChild: _buildItems(widget.items),
+      secondChild: _nextItems.isEmpty ? Container() : _buildSubMenu(),
+      crossSlideState: _status
+          ? CrossSlideState.showSecond
+          : CrossSlideState.showFirst,
+      duration: Duration(milliseconds: 250),
     );
   }
 }

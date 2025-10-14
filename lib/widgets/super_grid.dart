@@ -122,10 +122,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
 
     _childrenNotifier.value = widget.children;
 
-    _fakeDragWidgetController = AnimationController.unbounded(
-      vsync: this,
-      duration: commonDuration,
-    );
+    _fakeDragWidgetController = AnimationController.unbounded(vsync: this);
 
     _shakeController = AnimationController(
       vsync: this,
@@ -140,7 +137,6 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       vsync: this,
       duration: commonDuration,
     );
-
     _initState();
   }
 
@@ -229,10 +225,14 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       final preAnimationValue = _transformAnimationMap[key]?.value;
       return MapEntry(
         key,
-        Tween(
-          begin: preAnimationValue ?? Offset.zero,
-          end: value.end,
-        ).animate(_transformController),
+        Tween(begin: preAnimationValue ?? Offset.zero, end: value.end).animate(
+          _transformController.drive(
+            Tween<double>(
+              begin: 0.0,
+              end: 1,
+            ).chain(CurveTween(curve: Easing.emphasizedAccelerate)),
+          ),
+        ),
       );
     });
 
@@ -265,8 +265,9 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     if (_targetIndex == -1) {
       return;
     }
+    const tolerance = Tolerance(distance: 0.5, velocity: 0.01);
     const spring = SpringDescription(mass: 1, stiffness: 100, damping: 10);
-    final simulation = SpringSimulation(spring, 0, 1, 0);
+    final simulation = SpringSimulation(spring, 0, 1, 0, tolerance: tolerance);
     _fakeDragWidgetAnimation = Tween(
       begin: details.offset - _parentOffset,
       end: _targetOffset,
@@ -431,7 +432,12 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
         return AbsorbPointer(child: item);
       },
       onWillAcceptWithDetails: (_) {
-        debouncer.call(FunctionTag.handleWill, _handleWill, args: [index]);
+        debouncer.call(
+          FunctionTag.handleWill,
+          _handleWill,
+          args: [index],
+          duration: commonDuration,
+        );
         return false;
       },
     );
@@ -498,7 +504,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
 
   Widget _builderItem(int index) {
     final girdItem = _childrenNotifier.value[index];
-    final child = girdItem.child;
+    final child = RepaintBoundary(child: girdItem.child);
     return GridItem(
       mainAxisCellCount: girdItem.mainAxisCellCount,
       crossAxisCellCount: girdItem.crossAxisCellCount,

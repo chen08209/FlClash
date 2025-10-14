@@ -50,10 +50,6 @@ class VpnSetting extends _$VpnSetting with AutoDisposeNotifierMixin {
   onUpdate(value) {
     globalState.config = globalState.config.copyWith(vpnProps: value);
   }
-
-  void updateState(VpnProps Function(VpnProps state) builder) {
-    value = builder(state);
-  }
 }
 
 @riverpod
@@ -225,44 +221,52 @@ class ProxiesStyleSetting extends _$ProxiesStyleSetting
 }
 
 @riverpod
-class ScriptState extends _$ScriptState with AutoDisposeNotifierMixin {
+class Scripts extends _$Scripts with AutoDisposeNotifierMixin {
   @override
-  ScriptProps build() {
-    return globalState.config.scriptProps;
+  List<Script> build() {
+    return globalState.config.scripts;
   }
 
   @override
   onUpdate(value) {
-    globalState.config = globalState.config.copyWith(scriptProps: value);
+    globalState.config = globalState.config.copyWith(scripts: value);
   }
 
   void setScript(Script script) {
-    final list = List<Script>.from(state.scripts);
+    final list = List<Script>.from(state);
     final index = list.indexWhere((item) => item.id == script.id);
     if (index != -1) {
       list[index] = script;
     } else {
       list.add(script);
     }
-    value = state.copyWith(scripts: list);
-  }
-
-  void setId(String id) {
-    value = state.copyWith(currentId: state.currentId != id ? id : null);
+    value = list;
   }
 
   void del(String id) {
-    final list = List<Script>.from(state.scripts);
-    final index = list.indexWhere((item) => item.label == id);
+    final list = List<Script>.from(state);
+    final index = list.indexWhere((item) => item.id == id);
     if (index != -1) {
       list.removeAt(index);
     }
-    final nextId = id == state.currentId ? null : state.currentId;
-    state = state.copyWith(scripts: list, currentId: nextId);
+    state = list;
   }
 
   bool isExits(String label) {
-    return state.scripts.indexWhere((item) => item.label == label) != -1;
+    return state.indexWhere((item) => item.label == label) != -1;
+  }
+}
+
+@riverpod
+class Rules extends _$Rules with AutoDisposeNotifierMixin {
+  @override
+  List<Rule> build() {
+    return globalState.config.rules;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.config = globalState.config.copyWith(rules: value);
   }
 }
 

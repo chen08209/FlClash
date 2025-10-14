@@ -83,6 +83,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool hidden,
     @Default(false) bool developerMode,
     @Default(RecoveryStrategy.compatible) RecoveryStrategy recoveryStrategy,
+    @Default(true) bool showTrayTitle,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>
@@ -116,19 +117,30 @@ extension AccessControlExt on AccessControl {
     AccessControlMode.acceptSelected => acceptList,
     AccessControlMode.rejectSelected => rejectList,
   };
+
+  AccessControl copyWithNewList(List<String> value) => switch (mode) {
+    AccessControlMode.acceptSelected => copyWith(acceptList: value),
+    AccessControlMode.rejectSelected => copyWith(rejectList: value),
+  };
 }
 
 @freezed
 abstract class WindowProps with _$WindowProps {
   const factory WindowProps({
-    @Default(750) double width,
-    @Default(600) double height,
+    @Default(0) double width,
+    @Default(0) double height,
     double? top,
     double? left,
   }) = _WindowProps;
 
   factory WindowProps.fromJson(Map<String, Object?>? json) =>
       json == null ? const WindowProps() : _$WindowPropsFromJson(json);
+}
+
+extension WindowPropsExt on WindowProps {
+  Size get _size => Size(width, height);
+
+  Size get size => _size.isEmpty ? Size(680, 580) : _size;
 }
 
 @freezed
@@ -168,7 +180,6 @@ abstract class ProxiesStyle with _$ProxiesStyle {
     @Default(ProxiesLayout.standard) ProxiesLayout layout,
     @Default(ProxiesIconStyle.standard) ProxiesIconStyle iconStyle,
     @Default(ProxyCardType.expand) ProxyCardType cardType,
-    @Default({}) Map<String, String> iconMap,
   }) = _ProxiesStyle;
 
   factory ProxiesStyle.fromJson(Map<String, Object?>? json) =>
@@ -223,24 +234,6 @@ abstract class ScriptProps with _$ScriptProps {
       _$ScriptPropsFromJson(json);
 }
 
-extension ScriptPropsExt on ScriptProps {
-  String? get realId {
-    final index = scripts.indexWhere((script) => script.id == currentId);
-    if (index != -1) {
-      return currentId;
-    }
-    return null;
-  }
-
-  Script? get currentScript {
-    final index = scripts.indexWhere((script) => script.id == currentId);
-    if (index != -1) {
-      return scripts[index];
-    }
-    return null;
-  }
-}
-
 @freezed
 abstract class Config with _$Config {
   const factory Config({
@@ -258,7 +251,8 @@ abstract class Config with _$Config {
     @Default(defaultProxiesStyle) ProxiesStyle proxiesStyle,
     @Default(defaultWindowProps) WindowProps windowProps,
     @Default(defaultClashConfig) ClashConfig patchClashConfig,
-    @Default(ScriptProps()) ScriptProps scriptProps,
+    @Default([]) List<Script> scripts,
+    @Default([]) List<Rule> rules,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);
@@ -271,6 +265,12 @@ abstract class Config with _$Config {
         (accessControlMap as Map)['enable'] = isAccessControl;
         if (json['vpnProps'] != null) {
           (json['vpnProps'] as Map)['accessControl'] = accessControlMap;
+        }
+      }
+      if (json['scripts'] == null) {
+        final scriptPropsJson = json['scriptProps'] as Map<String, Object?>?;
+        if (scriptPropsJson != null) {
+          json['scripts'] = scriptPropsJson['scripts'];
         }
       }
     } catch (_) {}

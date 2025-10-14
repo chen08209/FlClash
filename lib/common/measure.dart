@@ -8,26 +8,16 @@ class Measure {
   final Map<String, dynamic> _measureMap;
 
   Measure.of(this.context, double textScaleFactor)
-      : _measureMap = {},
-        _textScaler = TextScaler.linear(
-          textScaleFactor,
-        );
+    : _measureMap = {},
+      _textScaler = TextScaler.linear(textScaleFactor);
 
-  Size computeTextSize(
-    Text text, {
-    double maxWidth = double.infinity,
-  }) {
+  Size computeTextSize(Text text, {double maxWidth = double.infinity}) {
     final textPainter = TextPainter(
-      text: TextSpan(
-        text: text.data,
-        style: text.style,
-      ),
+      text: TextSpan(text: text.data, style: text.style),
       maxLines: text.maxLines,
       textScaler: _textScaler,
       textDirection: text.textDirection ?? TextDirection.ltr,
-    )..layout(
-        maxWidth: maxWidth,
-      );
+    )..layout(maxWidth: maxWidth);
     return textPainter.size;
   }
 
@@ -35,10 +25,7 @@ class Measure {
     return _measureMap.updateCacheValue(
       'bodyMediumHeight',
       () => computeTextSize(
-        Text(
-          'X',
-          style: context.textTheme.bodyMedium,
-        ),
+        Text('X', style: context.textTheme.bodyMedium),
       ).height,
     );
   }
@@ -46,24 +33,16 @@ class Measure {
   double get bodyLargeHeight {
     return _measureMap.updateCacheValue(
       'bodyLargeHeight',
-      () => computeTextSize(
-        Text(
-          'X',
-          style: context.textTheme.bodyLarge,
-        ),
-      ).height,
+      () =>
+          computeTextSize(Text('X', style: context.textTheme.bodyLarge)).height,
     );
   }
 
   double get bodySmallHeight {
     return _measureMap.updateCacheValue(
       'bodySmallHeight',
-      () => computeTextSize(
-        Text(
-          'X',
-          style: context.textTheme.bodySmall,
-        ),
-      ).height,
+      () =>
+          computeTextSize(Text('X', style: context.textTheme.bodySmall)).height,
     );
   }
 
@@ -71,10 +50,16 @@ class Measure {
     return _measureMap.updateCacheValue(
       'labelSmallHeight',
       () => computeTextSize(
-        Text(
-          'X',
-          style: context.textTheme.labelSmall,
-        ),
+        Text('X', style: context.textTheme.labelSmall),
+      ).height,
+    );
+  }
+
+  double get titleSmallHeight {
+    return _measureMap.updateCacheValue(
+      'titleSmallHeight',
+      () => computeTextSize(
+        Text('X', style: context.textTheme.titleSmall),
       ).height,
     );
   }
@@ -83,10 +68,7 @@ class Measure {
     return _measureMap.updateCacheValue(
       'labelMediumHeight',
       () => computeTextSize(
-        Text(
-          'X',
-          style: context.textTheme.labelMedium,
-        ),
+        Text('X', style: context.textTheme.labelMedium),
       ).height,
     );
   }
@@ -95,10 +77,7 @@ class Measure {
     return _measureMap.updateCacheValue(
       'titleLargeHeight',
       () => computeTextSize(
-        Text(
-          'X',
-          style: context.textTheme.titleLarge,
-        ),
+        Text('X', style: context.textTheme.titleLarge),
       ).height,
     );
   }
@@ -107,10 +86,7 @@ class Measure {
     return _measureMap.updateCacheValue(
       'titleMediumHeight',
       () => computeTextSize(
-        Text(
-          'X',
-          style: context.textTheme.titleMedium,
-        ),
+        Text('X', style: context.textTheme.titleMedium),
       ).height,
     );
   }

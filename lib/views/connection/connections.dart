@@ -6,6 +6,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:super_sliver_list/super_sliver_list.dart';
 
 import 'item.dart';
 
@@ -99,6 +100,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
           if (connections.isEmpty) {
             return NullStatus(
               label: appLocalizations.nullTip(appLocalizations.connections),
+              illustration: ConnectionEmptyIllustration(),
             );
           }
           final items = connections
@@ -125,16 +127,10 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
               )
               .separated(const Divider(height: 0))
               .toList();
-          return ListView.builder(
+          return SuperListView.builder(
             controller: _scrollController,
             itemBuilder: (context, index) {
               return items[index];
-            },
-            itemExtentBuilder: (index, _) {
-              if (index.isOdd) {
-                return 0;
-              }
-              return TrackerInfoItem.height;
             },
             itemCount: connections.length,
           );

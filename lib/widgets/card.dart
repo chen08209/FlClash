@@ -1,8 +1,9 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/widgets/fade_box.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 
+import 'fade_box.dart';
 import 'text.dart';
 
 class Info {
@@ -15,7 +16,7 @@ class Info {
 class InfoHeader extends StatelessWidget {
   final Info info;
   final List<Widget> actions;
-  final EdgeInsetsGeometry? padding;
+  final EdgeInsets? padding;
 
   const InfoHeader({
     super.key,
@@ -26,8 +27,12 @@ class InfoHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    EdgeInsetsGeometry nextPadding = (padding ?? baseInfoEdgeInsets);
+    if (actions.isNotEmpty) {
+      nextPadding = nextPadding.subtract(EdgeInsets.symmetric(vertical: 8.ap));
+    }
     return Padding(
-      padding: padding ?? baseInfoEdgeInsets,
+      padding: nextPadding,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -61,11 +66,15 @@ class InfoHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [...actions],
-          ),
+          if (actions.isNotEmpty)
+            SizedBox(
+              height: globalState.measure.titleSmallHeight + 16.ap,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [...actions],
+              ),
+            ),
         ],
       ),
     );
@@ -79,22 +88,24 @@ class CommonCard extends StatelessWidget {
     this.type = CommonCardType.plain,
     this.onPressed,
     this.selectWidget,
-    this.radius = 14,
+    this.radius,
     required this.child,
     this.padding,
     this.enterAnimated = false,
     this.info,
+    this.onLongPress,
   }) : isSelected = isSelected ?? false;
 
   final bool enterAnimated;
   final bool isSelected;
   final void Function()? onPressed;
+  final void Function()? onLongPress;
   final Widget? selectWidget;
   final Widget child;
   final EdgeInsets? padding;
   final Info? info;
   final CommonCardType type;
-  final double radius;
+  final double? radius;
 
   // final WidgetStateProperty<Color?>? backgroundColor;
   // final WidgetStateProperty<BorderSide?>? borderSide;
@@ -172,13 +183,13 @@ class CommonCard extends StatelessWidget {
     }
 
     final card = OutlinedButton(
-      onLongPress: null,
+      onLongPress: onLongPress,
       clipBehavior: Clip.antiAlias,
       style: ButtonStyle(
         padding: const WidgetStatePropertyAll(EdgeInsets.zero),
         shape: WidgetStatePropertyAll(
           RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(radius),
+            borderRadius: BorderRadius.circular(radius ?? 14),
           ),
         ),
         iconColor: WidgetStatePropertyAll(context.colorScheme.primary),

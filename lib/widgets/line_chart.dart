@@ -31,23 +31,27 @@ class LineChart extends StatefulWidget {
 class _LineChartState extends State<LineChart>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  List<Point> prevPoints = [];
-  List<Point> points = [];
+  List<Point> _points = [];
+
+  List<Point> _prevRenderPoints = [];
+  List<Point> _currentRenderPoints = [];
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    points = widget.points;
-    prevPoints = points;
+    _points = widget.points;
+    _currentRenderPoints = _getRenderPoints(_points);
+    _prevRenderPoints = _currentRenderPoints;
   }
 
   @override
   void didUpdateWidget(LineChart oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.points != points) {
-      prevPoints = points;
-      points = widget.points;
+    if (widget.points != _points) {
+      _points = widget.points;
+      _prevRenderPoints = _currentRenderPoints;
+      _currentRenderPoints = _getRenderPoints(_points);
       _controller.forward(from: 0);
     }
   }
@@ -58,49 +62,7 @@ class _LineChartState extends State<LineChart>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (_, container) {
-        return AnimatedBuilder(
-          animation: _controller.view,
-          builder: (_, _) {
-            return CustomPaint(
-              painter: LineChartPainter(
-                prevPoints: prevPoints,
-                points: points,
-                progress: _controller.value,
-                gradient: widget.gradient,
-                color: widget.color,
-              ),
-              child: SizedBox(
-                height: container.maxHeight,
-                width: container.maxWidth,
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class LineChartPainter extends CustomPainter {
-  final List<Point> prevPoints;
-  final List<Point> points;
-  final double progress;
-  final Color color;
-  final bool gradient;
-
-  LineChartPainter({
-    required this.prevPoints,
-    required this.points,
-    required this.progress,
-    required this.color,
-    required this.gradient,
-  });
-
-  List<Point> getRenderPoints(List<Point> points) {
+  List<Point> _getRenderPoints(List<Point> points) {
     if (points.isEmpty) return [];
     double maxX = points[0].x;
     double minX = points[0].x;
@@ -123,25 +85,92 @@ class LineChartPainter extends CustomPainter {
     }).toList();
   }
 
-  List<Point> getInterpolatePoints(
-    List<Point> prevPoints,
-    List<Point> points,
-    double t,
-  ) {
-    final renderPrevPoints = getRenderPoints(prevPoints);
-    final renderPoints = getRenderPoints(points);
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, container) {
+        return AnimatedBuilder(
+          animation: _controller.view,
+          builder: (_, _) {
+            return CustomPaint(
+              painter: LineChartPainter(
+                prevRenderPoints: _prevRenderPoints,
+                currentRenderPoints: _currentRenderPoints,
+                progress: _controller.value,
+                gradient: widget.gradient,
+                color: widget.color,
+              ),
+              child: SizedBox(
+                height: container.maxHeight,
+                width: container.maxWidth,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
-    return List.generate(renderPoints.length, (i) {
-      if (i > renderPrevPoints.length - 1) {
-        return renderPoints[i];
-      }
-      final x = lerpDouble(renderPrevPoints[i].x, renderPoints[i].x, t)!;
-      final y = lerpDouble(renderPrevPoints[i].y, renderPoints[i].y, t)!;
-      return Point(x, y);
-    });
+class LineChartPainter extends CustomPainter {
+  final List<Point> prevRenderPoints;
+  final List<Point> currentRenderPoints;
+  final double progress;
+  final Color color;
+  final bool gradient;
+
+  late final Paint _strokePaint;
+  late final Paint _fillPaint;
+
+  Shader? _cachedShader;
+  Size? _cachedShaderSize;
+  Color? _cachedShaderColor;
+
+  LineChartPainter({
+    required this.prevRenderPoints,
+    required this.currentRenderPoints,
+    required this.progress,
+    required this.color,
+    required this.gradient,
+  }) {
+    _strokePaint = Paint()
+      ..color = color
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    _fillPaint = Paint()..style = PaintingStyle.fill;
   }
 
-  Path getPath(List<Point> points, Size size) {
+  List<Point> _getInterpolatePoints(double t) {
+    if (currentRenderPoints.isEmpty) return [];
+
+    final length = currentRenderPoints.length;
+    final result = <Point>[];
+
+    for (var i = 0; i < length; i++) {
+      if (i > prevRenderPoints.length - 1) {
+        result.add(currentRenderPoints[i]);
+      } else {
+        final x = lerpDouble(
+          prevRenderPoints[i].x,
+          currentRenderPoints[i].x,
+          t,
+        )!;
+        final y = lerpDouble(
+          prevRenderPoints[i].y,
+          currentRenderPoints[i].y,
+          t,
+        )!;
+        result.add(Point(x, y));
+      }
+    }
+
+    return result;
+  }
+
+  Path _getPath(List<Point> points, Size size) {
+    if (points.isEmpty) return Path();
+
     final path = Path()
       ..moveTo(points[0].x * size.width, (1 - points[0].y) * size.height);
 
@@ -163,24 +192,38 @@ class LineChartPainter extends CustomPainter {
     return path;
   }
 
-  Path getAnimatedPath(Size size) {
-    final interpolatedPoints = getInterpolatePoints(
-      prevPoints,
-      points,
-      progress,
-    );
-    final path = getPath(interpolatedPoints, size);
+  Path _getAnimatedPath(Size size) {
+    final interpolatedPoints = _getInterpolatePoints(progress);
+    return _getPath(interpolatedPoints, size);
+  }
 
-    final metric = path.computeMetrics().first;
-    final length = metric.length;
-    return metric.extractPath(0, length);
+  Shader _getShader(Size size) {
+    if (_cachedShader == null ||
+        _cachedShaderSize != size ||
+        _cachedShaderColor != color) {
+      final gradient = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [color.opacity38, color.opacity10],
+      );
+
+      final strokeWidth = 2.0;
+      _cachedShader = gradient.createShader(
+        Rect.fromLTWH(0, 0, size.width, size.height + strokeWidth * 2),
+      );
+      _cachedShaderSize = size;
+      _cachedShaderColor = color;
+    }
+    return _cachedShader!;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (currentRenderPoints.isEmpty) return;
+
     final strokeWidth = 2.0;
     final chartSize = Size(size.width, size.height * 0.7);
-    final path = getAnimatedPath(chartSize);
+    final path = _getAnimatedPath(chartSize);
 
     if (gradient) {
       final fillPath = Path.from(path);
@@ -188,38 +231,18 @@ class LineChartPainter extends CustomPainter {
       fillPath.lineTo(0, size.height + strokeWidth * 2);
       fillPath.close();
 
-      final gradient = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [color.opacity38, color.opacity10],
-      );
-
-      final shader = gradient.createShader(
-        Rect.fromLTWH(0, 0, size.width, size.height + strokeWidth * 2),
-      );
-
-      canvas.drawPath(
-        fillPath,
-        Paint()
-          ..shader = shader
-          ..style = PaintingStyle.fill,
-      );
+      _fillPaint.shader = _getShader(size);
+      canvas.drawPath(fillPath, _fillPaint);
     }
 
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..strokeWidth = strokeWidth
-        ..style = PaintingStyle.stroke,
-    );
+    canvas.drawPath(path, _strokePaint);
   }
 
   @override
   bool shouldRepaint(covariant LineChartPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-        oldDelegate.prevPoints != prevPoints ||
-        oldDelegate.points != points ||
+        oldDelegate.prevRenderPoints != prevRenderPoints ||
+        oldDelegate.currentRenderPoints != currentRenderPoints ||
         oldDelegate.color != color ||
         oldDelegate.gradient != gradient;
   }
