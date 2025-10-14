@@ -23,10 +23,7 @@ extension IterableExt<T> on Iterable<T> {
     }
   }
 
-  Iterable<T> fill(
-    int length, {
-    required T Function(int count) filler,
-  }) sync* {
+  Iterable<T> fill(int length, {required T Function(int count) filler}) sync* {
     int count = 0;
     for (var item in this) {
       yield item;
@@ -84,6 +81,24 @@ extension ListExt<T> on List<T> {
   T safeGet(int index) {
     if (length > index) return this[index];
     return last;
+  }
+
+  void addOrRemove(T value) {
+    if (contains(value)) {
+      remove(value);
+    } else {
+      add(value);
+    }
+  }
+}
+
+extension SetExt<T> on Set<T> {
+  void addOrRemove(T value) {
+    if (contains(value)) {
+      remove(value);
+    } else {
+      add(value);
+    }
   }
 }
 

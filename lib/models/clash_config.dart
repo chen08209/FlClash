@@ -386,6 +386,19 @@ abstract class Rule with _$Rule {
   factory Rule.fromJson(Map<String, Object?> json) => _$RuleFromJson(json);
 }
 
+extension RulesExt on List<Rule> {
+  List<Rule> updateWith(Rule rule) {
+    var newList = List<Rule>.from(this);
+    final index = newList.indexWhere((item) => item.id == rule.id);
+    if (index != -1) {
+      newList[index] = rule;
+    } else {
+      newList.insert(0, rule);
+    }
+    return newList;
+  }
+}
+
 @freezed
 abstract class SubRule with _$SubRule {
   const factory SubRule({required String name}) = _SubRule;

@@ -23,15 +23,15 @@ Config configState(Ref ref) {
   final networkProps = ref.watch(networkSettingProvider);
   final vpnProps = ref.watch(vpnSettingProvider);
   final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
-  final scriptProps = ref.watch(scriptStateProvider);
+  final scripts = ref.watch(scriptsProvider);
   final hotKeyActions = ref.watch(hotKeyActionsProvider);
   final dav = ref.watch(appDAVSettingProvider);
   final windowProps = ref.watch(windowSettingProvider);
+  final rules = ref.watch(rulesProvider);
   return Config(
     dav: dav,
     windowProps: windowProps,
     hotKeyActions: hotKeyActions,
-    scriptProps: scriptProps,
     proxiesStyle: proxiesStyle,
     vpnProps: vpnProps,
     networkProps: networkProps,
@@ -41,6 +41,8 @@ Config configState(Ref ref) {
     appSetting: appSetting,
     themeProps: themeProps,
     patchClashConfig: patchClashConfig,
+    scripts: scripts,
+    rules: rules,
   );
 }
 
@@ -169,7 +171,6 @@ VpnState vpnState(Ref ref) {
   final stack = ref.watch(
     patchClashConfigProvider.select((state) => state.tun.stack),
   );
-
   return VpnState(stack: stack, vpnProps: vpnProps);
 }
 
@@ -272,7 +273,9 @@ GroupsState filterGroupsState(Ref ref, String query) {
 
 @riverpod
 ProxiesListState proxiesListState(Ref ref) {
-  final query = ref.watch(queryProvider(QueryTag.proxies));
+  final query = ref.watch(
+    queryMapProvider.select((state) => state[QueryTag.proxies] ?? ''),
+  );
   final currentGroups = ref.watch(filterGroupsStateProvider(query));
   final currentUnfoldSet = ref.watch(unfoldSetProvider);
   final cardType = ref.watch(
@@ -290,7 +293,9 @@ ProxiesListState proxiesListState(Ref ref) {
 
 @riverpod
 ProxiesTabState proxiesTabState(Ref ref) {
-  final query = ref.watch(queryProvider(QueryTag.proxies));
+  final query = ref.watch(
+    queryMapProvider.select((state) => state[QueryTag.proxies] ?? ''),
+  );
   final currentGroups = ref.watch(filterGroupsStateProvider(query));
   final currentGroupName = ref.watch(
     currentProfileProvider.select((state) => state?.currentGroupName),
@@ -575,9 +580,9 @@ ColorScheme genColorScheme(
 @riverpod
 VM4<String?, String?, Dns?, bool> needSetup(Ref ref) {
   final profileId = ref.watch(currentProfileIdProvider);
-  final content = ref.watch(
-    scriptStateProvider.select((state) => state.currentScript?.content),
-  );
+  // final content = ref.watch(
+  //   scriptsProvider.select((state) => state.currentScript?.content),
+  // );
   final overrideDns = ref.watch(overrideDnsProvider);
   final dns = overrideDns == true
       ? ref.watch(patchClashConfigProvider.select((state) => state.dns))
@@ -585,7 +590,7 @@ VM4<String?, String?, Dns?, bool> needSetup(Ref ref) {
   final appendSystemDns = ref.watch(
     networkSettingProvider.select((state) => state.appendSystemDns),
   );
-  return VM4(profileId, content, dns, appendSystemDns);
+  return VM4(profileId, '', dns, appendSystemDns);
 }
 
 @riverpod
@@ -644,8 +649,61 @@ AndroidState androidState(Ref ref) {
 }
 
 @riverpod
-class Query extends _$Query {
+class Query extends _$Query with AutoDisposeNotifierMixin {
   @override
-  String build(QueryTag id) =>
-      ref.watch(queryMapProvider.select((state) => state[id] ?? ''));
+  String build() => '';
+}
+
+@riverpod
+double overlayTopOffset(Ref ref) {
+  final isMobileView = ref.watch(isMobileViewProvider);
+  final version = ref.watch(versionProvider);
+  ref.watch(viewSizeProvider);
+  double top = kHeaderHeight;
+  if ((version <= 10 || !isMobileView) && system.isMacOS || !system.isDesktop) {
+    top = 0;
+  }
+  return kToolbarHeight + top;
+}
+
+@riverpod
+class SelectedIds extends _$SelectedIds with AutoDisposeNotifierMixin {
+  @override
+  Set<String> build() => {};
+}
+
+@riverpod
+Profile? profile(Ref ref, String profileId) {
+  return ref.watch(
+    profilesProvider.select((state) => state.getProfile(profileId)),
+  );
+}
+
+@riverpod
+Overwrite? profileOverwrite(Ref ref, String profileId) {
+  return ref.watch(
+    profileProvider(profileId).select((state) => state?.overwrite),
+  );
+}
+
+@riverpod
+class AccessControlState extends _$AccessControlState
+    with AutoDisposeNotifierMixin {
+  @override
+  AccessControl build() => AccessControl();
+}
+
+@riverpod
+SetupState setupState(Ref ref, String profileId) {
+  ref.watch(
+    profileProvider(profileId).select(
+      (state) =>
+          VM3(a: state?.id, b: state?.lastUpdateDate, c: state?.overwrite),
+    ),
+  );
+  ref.watch(patchClashConfigProvider.select((state) => state.dns));
+  ref.watch(overrideDnsProvider);
+  ref.watch(scriptsProvider);
+  ref.watch(rulesProvider);
+  return globalState.getSetupState(profileId);
 }

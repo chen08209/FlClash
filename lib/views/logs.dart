@@ -137,6 +137,7 @@ class _LogsViewState extends ConsumerState<LogsView> {
           final logs = state.list;
           if (logs.isEmpty) {
             return NullStatus(
+              illustration: LogEmptyIllustration(),
               label: appLocalizations.nullTip(appLocalizations.logs),
             );
           }

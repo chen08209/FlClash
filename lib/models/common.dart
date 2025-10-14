@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,27 @@ abstract class Package with _$Package {
 
   factory Package.fromJson(Map<String, Object?> json) =>
       _$PackageFromJson(json);
+}
+
+extension PackagesExt on List<Package> {
+  List<Package> getSortList({
+    required List<String> pinedList,
+    required AccessSortType sortType,
+  }) {
+    return sorted((a, b) {
+      final isSelectA = pinedList.contains(a.packageName);
+      final isSelectB = pinedList.contains(b.packageName);
+
+      if (isSelectA != isSelectB) {
+        return isSelectA ? -1 : 1;
+      }
+      return switch (sortType) {
+        AccessSortType.none => 0,
+        AccessSortType.name => a.label.compareTo(b.label),
+        AccessSortType.time => b.lastUpdateTime.compareTo(a.lastUpdateTime),
+      };
+    });
+  }
 }
 
 @freezed
@@ -423,20 +445,20 @@ abstract class Field with _$Field {
   }) = _Field;
 }
 
-enum PopupMenuItemType { primary, danger }
-
 class PopupMenuItemData {
   const PopupMenuItemData({
     this.icon,
     required this.label,
-    required this.onPressed,
+    this.onPressed,
     this.danger = false,
+    this.subItems = const [],
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool danger;
+  final List<PopupMenuItemData> subItems;
 }
 
 @freezed
@@ -490,6 +512,19 @@ abstract class Script with _$Script {
   }
 
   factory Script.fromJson(Map<String, Object?> json) => _$ScriptFromJson(json);
+}
+
+extension ScriptsExt on List<Script> {
+  Script? get(String? id) {
+    if (id == null) {
+      return null;
+    }
+    final index = indexWhere((script) => script.id == id);
+    if (index != -1) {
+      return this[index];
+    }
+    return null;
+  }
 }
 
 @freezed

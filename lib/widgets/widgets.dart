@@ -32,4 +32,5 @@ export 'subscription_info_view.dart';
 export 'super_grid.dart';
 export 'tab.dart';
 export 'text.dart';
+export 'theme.dart';
 export 'wave.dart';

@@ -93,12 +93,11 @@ class CoreController {
     return await _interface.updateConfig(updateParams);
   }
 
-  Future<String> setupConfig(
-    ClashConfig clashConfig, {
+  Future<String> setupConfig({
+    required SetupParams params,
+    required SetupState setupState,
     VoidCallback? preloadInvoke,
   }) async {
-    await globalState.genConfigFile(clashConfig);
-    final params = await globalState.getSetupParams();
     final res = _interface.setupConfig(params);
     if (preloadInvoke != null) {
       preloadInvoke();

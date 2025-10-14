@@ -6,6 +6,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/card.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/list.dart';
+import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,30 +38,35 @@ class HotKeyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: HotAction.values.length,
-      itemBuilder: (_, index) {
-        final hotAction = HotAction.values[index];
-        return Consumer(
-          builder: (_, ref, _) {
-            final hotKeyAction = ref.watch(getHotKeyActionProvider(hotAction));
-            return ListItem(
-              title: Text(IntlExt.actionMessage(hotAction.name)),
-              subtitle: Text(
-                getSubtitle(hotKeyAction),
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.primary,
+    return BaseScaffold(
+      title: appLocalizations.hotkeyManagement,
+      body: ListView.builder(
+        itemCount: HotAction.values.length,
+        itemBuilder: (_, index) {
+          final hotAction = HotAction.values[index];
+          return Consumer(
+            builder: (_, ref, _) {
+              final hotKeyAction = ref.watch(
+                getHotKeyActionProvider(hotAction),
+              );
+              return ListItem(
+                title: Text(IntlExt.actionMessage(hotAction.name)),
+                subtitle: Text(
+                  getSubtitle(hotKeyAction),
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: context.colorScheme.primary,
+                  ),
                 ),
-              ),
-              onTap: () {
-                globalState.showCommonDialog(
-                  child: HotKeyRecorder(hotKeyAction: hotKeyAction),
-                );
-              },
-            );
-          },
-        );
-      },
+                onTap: () {
+                  globalState.showCommonDialog(
+                    child: HotKeyRecorder(hotKeyAction: hotKeyAction),
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
@@ -152,55 +158,58 @@ class _HotKeyRecorderState extends State<HotKeyRecorder> {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      onKeyEvent: (_, _) {
-        return KeyEventResult.handled;
-      },
-      autofocus: true,
-      child: CommonDialog(
-        title: IntlExt.actionMessage(widget.hotKeyAction.action.name),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _handleRemove();
+    return BaseScaffold(
+      title: appLocalizations.hotkeyManagement,
+      body: Focus(
+        onKeyEvent: (_, _) {
+          return KeyEventResult.handled;
+        },
+        autofocus: true,
+        child: CommonDialog(
+          title: IntlExt.actionMessage(widget.hotKeyAction.action.name),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _handleRemove();
+              },
+              child: Text(appLocalizations.remove),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: () {
+                _handleConfirm();
+              },
+              child: Text(appLocalizations.confirm),
+            ),
+          ],
+          child: ValueListenableBuilder(
+            valueListenable: hotKeyActionNotifier,
+            builder: (_, hotKeyAction, _) {
+              final key = hotKeyAction.key;
+              final modifiers = hotKeyAction.modifiers;
+              return SizedBox(
+                width: dialogCommonWidth,
+                child: key != null
+                    ? Wrap(
+                        spacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          for (final modifier in modifiers)
+                            KeyboardKeyBox(
+                              keyboardKey: modifier.physicalKeys.first,
+                            ),
+                          if (modifiers.isNotEmpty)
+                            Text('+', style: context.textTheme.titleMedium),
+                          KeyboardKeyBox(keyboardKey: PhysicalKeyboardKey(key)),
+                        ],
+                      )
+                    : Text(
+                        appLocalizations.pressKeyboard,
+                        style: context.textTheme.titleMedium,
+                      ),
+              );
             },
-            child: Text(appLocalizations.remove),
           ),
-          const SizedBox(width: 8),
-          TextButton(
-            onPressed: () {
-              _handleConfirm();
-            },
-            child: Text(appLocalizations.confirm),
-          ),
-        ],
-        child: ValueListenableBuilder(
-          valueListenable: hotKeyActionNotifier,
-          builder: (_, hotKeyAction, _) {
-            final key = hotKeyAction.key;
-            final modifiers = hotKeyAction.modifiers;
-            return SizedBox(
-              width: dialogCommonWidth,
-              child: key != null
-                  ? Wrap(
-                      spacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        for (final modifier in modifiers)
-                          KeyboardKeyBox(
-                            keyboardKey: modifier.physicalKeys.first,
-                          ),
-                        if (modifiers.isNotEmpty)
-                          Text('+', style: context.textTheme.titleMedium),
-                        KeyboardKeyBox(keyboardKey: PhysicalKeyboardKey(key)),
-                      ],
-                    )
-                  : Text(
-                      appLocalizations.pressKeyboard,
-                      style: context.textTheme.titleMedium,
-                    ),
-            );
-          },
         ),
       ),
     );

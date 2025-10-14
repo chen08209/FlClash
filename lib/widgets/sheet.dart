@@ -54,7 +54,7 @@ Future<T?> showSheet<T>({
       context: context,
       isScrollControlled: props.isScrollControlled,
       builder: (_) {
-        return SafeArea(child: builder(context, SheetType.bottomSheet));
+        return builder(context, SheetType.bottomSheet);
       },
       showDragHandle: false,
       useSafeArea: props.useSafeArea,
@@ -96,6 +96,7 @@ class AdaptiveSheetScaffold extends StatefulWidget {
   final SheetType type;
   final Widget body;
   final String title;
+  final bool? centerTitle;
   final List<Widget> actions;
 
   const AdaptiveSheetScaffold({
@@ -103,6 +104,7 @@ class AdaptiveSheetScaffold extends StatefulWidget {
     required this.type,
     required this.body,
     required this.title,
+    this.centerTitle,
     this.actions = const [],
   });
 
@@ -123,7 +125,8 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
           : widget.actions.isEmpty && sideSheet
           ? false
           : true,
-      centerTitle: bottomSheet,
+      centerTitle:
+          widget.centerTitle ?? (bottomSheet && widget.actions.isEmpty),
       backgroundColor: backgroundColor,
       title: Text(widget.title),
       actions: genActions([
@@ -158,8 +161,12 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
                 ),
               ),
             ),
-            appBar,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: appBar,
+            ),
             Flexible(flex: 1, child: widget.body),
+            SizedBox(height: MediaQuery.of(context).viewPadding.bottom),
           ],
         ),
       );

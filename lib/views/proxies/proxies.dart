@@ -20,6 +20,7 @@ class ProxiesView extends ConsumerStatefulWidget {
 }
 
 class _ProxiesViewState extends ConsumerState<ProxiesView> {
+  final GlobalKey<CommonScaffoldState> _scaffoldKey = GlobalKey();
   final GlobalKey<ProxiesTabViewState> _proxiesTabKey = GlobalKey();
   bool _hasProviders = false;
   bool _isTab = false;
@@ -37,7 +38,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
         targetBuilder: (open) {
           return IconButton(
             onPressed: () {
-              open(offset: Offset(0, 20));
+              open(offset: Offset(0, 0));
             },
             icon: Icon(Icons.more_vert),
           );
@@ -137,6 +138,14 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       },
       fireImmediately: true,
     );
+    ref.listenManual(
+      currentPageLabelProvider.select((state) => state == PageLabel.proxies),
+      (prev, next) {
+        if (prev != next && next == false) {
+          _scaffoldKey.currentState?.handleExitSearching();
+        }
+      },
+    );
   }
 
   @override
@@ -145,6 +154,8 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       proxiesStyleSettingProvider.select((state) => state.type),
     );
     return CommonScaffold(
+      key: _scaffoldKey,
+      resizeToAvoidBottomInset: false,
       floatingActionButton: _buildFAB(),
       actions: _buildActions(),
       title: appLocalizations.proxies,

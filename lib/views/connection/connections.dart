@@ -99,6 +99,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
           if (connections.isEmpty) {
             return NullStatus(
               label: appLocalizations.nullTip(appLocalizations.connections),
+              illustration: ConnectionEmptyIllustration(),
             );
           }
           final items = connections

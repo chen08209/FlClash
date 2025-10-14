@@ -360,9 +360,16 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
   patchClashConfig: json['patchClashConfig'] == null
       ? defaultClashConfig
       : ClashConfig.fromJson(json['patchClashConfig'] as Map<String, dynamic>),
-  scriptProps: json['scriptProps'] == null
-      ? const ScriptProps()
-      : ScriptProps.fromJson(json['scriptProps'] as Map<String, dynamic>),
+  scripts:
+      (json['scripts'] as List<dynamic>?)
+          ?.map((e) => Script.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  rules:
+      (json['rules'] as List<dynamic>?)
+          ?.map((e) => Rule.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -378,5 +385,6 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'proxiesStyle': instance.proxiesStyle,
   'windowProps': instance.windowProps,
   'patchClashConfig': instance.patchClashConfig,
-  'scriptProps': instance.scriptProps,
+  'scripts': instance.scripts,
+  'rules': instance.rules,
 };

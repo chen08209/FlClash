@@ -6572,4 +6572,303 @@ $OverrideDataCopyWith<$Res>? get overrideData {
 }
 }
 
+/// @nodoc
+mixin _$SetupState {
+
+ String? get profileId; int? get profileLastUpdateDate; OverwriteType get overwriteType; List<Rule> get addedRules; String? get scriptContent; bool get overrideDns; Dns get dns;
+/// Create a copy of SetupState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SetupStateCopyWith<SetupState> get copyWith => _$SetupStateCopyWithImpl<SetupState>(this as SetupState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetupState&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.profileLastUpdateDate, profileLastUpdateDate) || other.profileLastUpdateDate == profileLastUpdateDate)&&(identical(other.overwriteType, overwriteType) || other.overwriteType == overwriteType)&&const DeepCollectionEquality().equals(other.addedRules, addedRules)&&(identical(other.scriptContent, scriptContent) || other.scriptContent == scriptContent)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.dns, dns) || other.dns == dns));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,profileId,profileLastUpdateDate,overwriteType,const DeepCollectionEquality().hash(addedRules),scriptContent,overrideDns,dns);
+
+@override
+String toString() {
+  return 'SetupState(profileId: $profileId, profileLastUpdateDate: $profileLastUpdateDate, overwriteType: $overwriteType, addedRules: $addedRules, scriptContent: $scriptContent, overrideDns: $overrideDns, dns: $dns)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SetupStateCopyWith<$Res>  {
+  factory $SetupStateCopyWith(SetupState value, $Res Function(SetupState) _then) = _$SetupStateCopyWithImpl;
+@useResult
+$Res call({
+ String? profileId, int? profileLastUpdateDate, OverwriteType overwriteType, List<Rule> addedRules, String? scriptContent, bool overrideDns, Dns dns
+});
+
+
+$DnsCopyWith<$Res> get dns;
+
+}
+/// @nodoc
+class _$SetupStateCopyWithImpl<$Res>
+    implements $SetupStateCopyWith<$Res> {
+  _$SetupStateCopyWithImpl(this._self, this._then);
+
+  final SetupState _self;
+  final $Res Function(SetupState) _then;
+
+/// Create a copy of SetupState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? profileId = freezed,Object? profileLastUpdateDate = freezed,Object? overwriteType = null,Object? addedRules = null,Object? scriptContent = freezed,Object? overrideDns = null,Object? dns = null,}) {
+  return _then(_self.copyWith(
+profileId: freezed == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
+as String?,profileLastUpdateDate: freezed == profileLastUpdateDate ? _self.profileLastUpdateDate : profileLastUpdateDate // ignore: cast_nullable_to_non_nullable
+as int?,overwriteType: null == overwriteType ? _self.overwriteType : overwriteType // ignore: cast_nullable_to_non_nullable
+as OverwriteType,addedRules: null == addedRules ? _self.addedRules : addedRules // ignore: cast_nullable_to_non_nullable
+as List<Rule>,scriptContent: freezed == scriptContent ? _self.scriptContent : scriptContent // ignore: cast_nullable_to_non_nullable
+as String?,overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
+as bool,dns: null == dns ? _self.dns : dns // ignore: cast_nullable_to_non_nullable
+as Dns,
+  ));
+}
+/// Create a copy of SetupState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$DnsCopyWith<$Res> get dns {
+  
+  return $DnsCopyWith<$Res>(_self.dns, (value) {
+    return _then(_self.copyWith(dns: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [SetupState].
+extension SetupStatePatterns on SetupState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SetupState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SetupState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SetupState value)  $default,){
+final _that = this;
+switch (_that) {
+case _SetupState():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SetupState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SetupState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptContent,  bool overrideDns,  Dns dns)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SetupState() when $default != null:
+return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptContent,_that.overrideDns,_that.dns);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptContent,  bool overrideDns,  Dns dns)  $default,) {final _that = this;
+switch (_that) {
+case _SetupState():
+return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptContent,_that.overrideDns,_that.dns);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptContent,  bool overrideDns,  Dns dns)?  $default,) {final _that = this;
+switch (_that) {
+case _SetupState() when $default != null:
+return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptContent,_that.overrideDns,_that.dns);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _SetupState implements SetupState {
+  const _SetupState({required this.profileId, required this.profileLastUpdateDate, required this.overwriteType, required final  List<Rule> addedRules, required this.scriptContent, required this.overrideDns, required this.dns}): _addedRules = addedRules;
+  
+
+@override final  String? profileId;
+@override final  int? profileLastUpdateDate;
+@override final  OverwriteType overwriteType;
+ final  List<Rule> _addedRules;
+@override List<Rule> get addedRules {
+  if (_addedRules is EqualUnmodifiableListView) return _addedRules;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_addedRules);
+}
+
+@override final  String? scriptContent;
+@override final  bool overrideDns;
+@override final  Dns dns;
+
+/// Create a copy of SetupState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SetupStateCopyWith<_SetupState> get copyWith => __$SetupStateCopyWithImpl<_SetupState>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetupState&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.profileLastUpdateDate, profileLastUpdateDate) || other.profileLastUpdateDate == profileLastUpdateDate)&&(identical(other.overwriteType, overwriteType) || other.overwriteType == overwriteType)&&const DeepCollectionEquality().equals(other._addedRules, _addedRules)&&(identical(other.scriptContent, scriptContent) || other.scriptContent == scriptContent)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.dns, dns) || other.dns == dns));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,profileId,profileLastUpdateDate,overwriteType,const DeepCollectionEquality().hash(_addedRules),scriptContent,overrideDns,dns);
+
+@override
+String toString() {
+  return 'SetupState(profileId: $profileId, profileLastUpdateDate: $profileLastUpdateDate, overwriteType: $overwriteType, addedRules: $addedRules, scriptContent: $scriptContent, overrideDns: $overrideDns, dns: $dns)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SetupStateCopyWith<$Res> implements $SetupStateCopyWith<$Res> {
+  factory _$SetupStateCopyWith(_SetupState value, $Res Function(_SetupState) _then) = __$SetupStateCopyWithImpl;
+@override @useResult
+$Res call({
+ String? profileId, int? profileLastUpdateDate, OverwriteType overwriteType, List<Rule> addedRules, String? scriptContent, bool overrideDns, Dns dns
+});
+
+
+@override $DnsCopyWith<$Res> get dns;
+
+}
+/// @nodoc
+class __$SetupStateCopyWithImpl<$Res>
+    implements _$SetupStateCopyWith<$Res> {
+  __$SetupStateCopyWithImpl(this._self, this._then);
+
+  final _SetupState _self;
+  final $Res Function(_SetupState) _then;
+
+/// Create a copy of SetupState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? profileId = freezed,Object? profileLastUpdateDate = freezed,Object? overwriteType = null,Object? addedRules = null,Object? scriptContent = freezed,Object? overrideDns = null,Object? dns = null,}) {
+  return _then(_SetupState(
+profileId: freezed == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
+as String?,profileLastUpdateDate: freezed == profileLastUpdateDate ? _self.profileLastUpdateDate : profileLastUpdateDate // ignore: cast_nullable_to_non_nullable
+as int?,overwriteType: null == overwriteType ? _self.overwriteType : overwriteType // ignore: cast_nullable_to_non_nullable
+as OverwriteType,addedRules: null == addedRules ? _self._addedRules : addedRules // ignore: cast_nullable_to_non_nullable
+as List<Rule>,scriptContent: freezed == scriptContent ? _self.scriptContent : scriptContent // ignore: cast_nullable_to_non_nullable
+as String?,overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
+as bool,dns: null == dns ? _self.dns : dns // ignore: cast_nullable_to_non_nullable
+as Dns,
+  ));
+}
+
+/// Create a copy of SetupState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$DnsCopyWith<$Res> get dns {
+  
+  return $DnsCopyWith<$Res>(_self.dns, (value) {
+    return _then(_self.copyWith(dns: value));
+  });
+}
+}
+
 // dart format on

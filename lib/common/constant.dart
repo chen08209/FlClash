@@ -23,6 +23,12 @@ final baseInfoEdgeInsets = EdgeInsets.symmetric(
   vertical: 16.ap,
   horizontal: 16.ap,
 );
+final listHeaderPadding = EdgeInsets.only(
+  left: 16.ap,
+  right: 8.ap,
+  top: 24.ap,
+  bottom: 8.ap,
+);
 
 final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
@@ -63,6 +69,7 @@ const stringListEquality = ListEquality<String>();
 const intListEquality = ListEquality<int>();
 const logListEquality = ListEquality<Log>();
 const groupListEquality = ListEquality<Group>();
+const ruleEquality = ListEquality<Rule>();
 const externalProviderListEquality = ListEquality<ExternalProvider>();
 const packageListEquality = ListEquality<Package>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();

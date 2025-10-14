@@ -10,6 +10,7 @@ import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/null_status.dart';
 import 'package:fl_clash/widgets/popup.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:fl_clash/widgets/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,85 +31,65 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     if (res != true) {
       return;
     }
-    ref.read(scriptStateProvider.notifier).del(label);
+    ref.read(scriptsProvider.notifier).del(label);
   }
 
   Widget _buildContent() {
     return Consumer(
       builder: (_, ref, _) {
-        final vm2 = ref.watch(
-          scriptStateProvider.select(
-            (state) => VM2(a: state.currentId, b: state.scripts),
-          ),
-        );
-        final currentId = vm2.a;
-        final scripts = vm2.b;
+        final scripts = ref.watch(scriptsProvider);
         if (scripts.isEmpty) {
           return NullStatus(
+            illustration: ScriptEmptyIllustration(),
             label: appLocalizations.nullTip(appLocalizations.script),
           );
         }
-        return RadioGroup(
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            ref.read(scriptStateProvider.notifier).setId(value);
-          },
-          groupValue: currentId,
-          child: ListView.builder(
-            padding: kMaterialListPadding.copyWith(bottom: 16 + 64),
-            itemCount: scripts.length,
-            itemBuilder: (_, index) {
-              final script = scripts[index];
-              return Container(
-                padding: kTabLabelPadding,
-                margin: EdgeInsets.symmetric(vertical: 6),
-                child: CommonCard(
-                  type: CommonCardType.filled,
-                  radius: 16,
-                  child: ListItem.radio(
-                    padding: const EdgeInsets.only(left: 12, right: 12),
-                    title: Text(script.label),
-                    delegate: RadioDelegate(
-                      value: script.id,
-                      onTab: () {
-                        ref.read(scriptStateProvider.notifier).setId(script.id);
-                      },
-                    ),
-                    trailing: CommonPopupBox(
-                      targetBuilder: (open) {
-                        return IconButton(
+        return ListView.builder(
+          padding: kMaterialListPadding.copyWith(bottom: 16 + 64),
+          itemCount: scripts.length,
+          itemBuilder: (_, index) {
+            final script = scripts[index];
+            return Container(
+              padding: kTabLabelPadding,
+              margin: EdgeInsets.symmetric(vertical: 6),
+              child: CommonCard(
+                type: CommonCardType.filled,
+                radius: 18,
+                child: ListItem(
+                  padding: const EdgeInsets.only(left: 16, right: 12),
+                  title: Text(script.label),
+                  trailing: CommonPopupBox(
+                    targetBuilder: (open) {
+                      return IconButton(
+                        onPressed: () {
+                          open();
+                        },
+                        icon: Icon(Icons.more_vert),
+                      );
+                    },
+                    popup: CommonPopupMenu(
+                      items: [
+                        PopupMenuItemData(
+                          icon: Icons.edit,
+                          label: appLocalizations.edit,
                           onPressed: () {
-                            open();
+                            _handleToEditor(script: script);
                           },
-                          icon: Icon(Icons.more_vert),
-                        );
-                      },
-                      popup: CommonPopupMenu(
-                        items: [
-                          PopupMenuItemData(
-                            icon: Icons.edit,
-                            label: appLocalizations.edit,
-                            onPressed: () {
-                              _handleToEditor(script: script);
-                            },
-                          ),
-                          PopupMenuItemData(
-                            icon: Icons.delete,
-                            label: appLocalizations.delete,
-                            onPressed: () {
-                              _handleDelScript(script.label);
-                            },
-                          ),
-                        ],
-                      ),
+                        ),
+                        PopupMenuItemData(
+                          icon: Icons.delete,
+                          label: appLocalizations.delete,
+                          onPressed: () {
+                            _handleDelScript(script.label);
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -134,9 +115,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
               return appLocalizations.emptyTip(appLocalizations.name);
             }
             if (value != script?.label) {
-              final isExits = ref
-                  .read(scriptStateProvider.notifier)
-                  .isExits(value);
+              final isExits = ref.read(scriptsProvider.notifier).isExits(value);
               if (isExits) {
                 return appLocalizations.existsTip(appLocalizations.name);
               }
@@ -152,7 +131,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     }
     if (newScript.label != script?.label) {
       final isExits = ref
-          .read(scriptStateProvider.notifier)
+          .read(scriptsProvider.notifier)
           .isExits(newScript.label);
       if (isExits) {
         globalState.showMessage(
@@ -163,7 +142,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         return;
       }
     }
-    ref.read(scriptStateProvider.notifier).setScript(newScript);
+    ref.read(scriptsProvider.notifier).setScript(newScript);
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -214,12 +193,17 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _handleToEditor();
-        },
-        child: Icon(Icons.add),
-      ),
+      actions: [
+        CommonMinFilledButtonTheme(
+          child: FilledButton.tonal(
+            onPressed: () {
+              _handleToEditor();
+            },
+            child: Text(appLocalizations.add),
+          ),
+        ),
+        SizedBox(width: 8),
+      ],
       body: _buildContent(),
       title: appLocalizations.script,
     );
