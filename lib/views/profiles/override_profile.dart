@@ -612,9 +612,9 @@ class _AddRuleDialogState extends State<AddRuleDialog> {
   final _subRuleController = TextEditingController();
   bool _noResolve = false;
   bool _src = false;
-  List<DropdownMenuEntry> _targetItems = [];
-  List<DropdownMenuEntry> _ruleProviderItems = [];
-  List<DropdownMenuEntry> _subRuleItems = [];
+  List<DropdownMenuEntry<Object>> _targetItems = [];
+  List<DropdownMenuEntry<Object>> _ruleProviderItems = [];
+  List<DropdownMenuEntry<Object>> _subRuleItems = [];
   final _formKey = GlobalKey<FormState>();
 
   @override
