@@ -22,7 +22,7 @@ jobs:
             os: ubuntu-22.04
             arch: amd64
           - platform: macos
-            os: macos-13
+            os: macos-15-intel
             arch: amd64
           - platform: macos
             os: macos-latest
