@@ -32,7 +32,7 @@
   "ru": "Russian",
   "zh_CN": "Simplified Chinese",
   "theme": "Theme",
-  "themeDesc": "Set dark mode,adjust the color",
+  "themeDesc": "Set dark mode, adjust the color",
   "override": "Override",
   "overrideDesc": "Override Proxy related config",
   "allowLan": "AllowLan",
