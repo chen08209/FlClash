@@ -902,7 +902,9 @@ class AppController {
       json.decode(utf8.decode(configFile.content)),
     );
     for (final profile in profiles) {
-      final filePath = join(homeDirPath, profile.name);
+      
+      final normalName = profile.name.replaceAll('\\', '/');
+      final filePath = join(homeDirPath, normalName);
       final file = File(filePath);
       await file.create(recursive: true);
       await file.writeAsBytes(profile.content);
