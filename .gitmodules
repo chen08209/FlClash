@@ -1,10 +1,10 @@
 [submodule "core/Clash.Meta"]
 	path = core/Clash.Meta
-	url = git@github.com:chen08209/Clash.Meta.git
+	url = https://github.com/chen08209/Clash.Meta.git
 	branch = FlClash
 [submodule "plugins/flutter_distributor"]
 	path = plugins/flutter_distributor
-	url = git@github.com:chen08209/flutter_distributor.git
+	url = https://github.com/chen08209/flutter_distributor.git
 	branch = FlClash
 
 
