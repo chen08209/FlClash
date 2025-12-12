@@ -264,10 +264,10 @@ class AppLocalizations {
     return Intl.message('Theme', name: 'theme', desc: '', args: []);
   }
 
-  /// `Set dark mode,adjust the color`
+  /// `Toggle dark mode and adjust colors`
   String get themeDesc {
     return Intl.message(
-      'Set dark mode,adjust the color',
+      'Toggle dark mode and adjust colors',
       name: 'themeDesc',
       desc: '',
       args: [],
