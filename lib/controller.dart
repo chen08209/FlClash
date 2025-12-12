@@ -430,8 +430,8 @@ class AppController {
     addCheckIpNumDebounce();
   }
 
-  Future<void> handleBackOrExit() async {
-    if (_ref.read(backBlockProvider)) {
+  Future<void> handleBackOrExit({bool isWindowClose = false}) async {
+    if (!isWindowClose && _ref.read(backBlockProvider)) {
       return;
     }
     if (_ref.read(appSettingProvider).minimizeOnExit) {
