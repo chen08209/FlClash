@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:fl_clash/common/sounds.dart';
 
 class HotKeyManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -38,14 +39,18 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
   Future<void> _handleHotKeyAction(HotAction action) async {
     switch (action) {
       case HotAction.mode:
+        await Sounds.playNotify();
         globalState.appController.updateMode();
       case HotAction.start:
+        await Sounds.playNotify();
         globalState.appController.updateStart();
       case HotAction.view:
         globalState.appController.updateVisible();
       case HotAction.proxy:
+        await Sounds.playNotify();
         globalState.appController.updateSystemProxy();
       case HotAction.tun:
+        await Sounds.playNotify();
         globalState.appController.updateTun();
     }
   }

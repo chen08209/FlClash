@@ -65,6 +65,7 @@ dependencies:
       url: https://github.com/chen08209/yaml_writer
       ref: master
   super_sliver_list: ^0.4.1
+  audioplayers: ^6.5.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -80,6 +81,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/
+    - assets/sounds/
     - assets/fonts/
     - assets/images/
     - assets/images/avatar/
