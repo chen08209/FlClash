@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/selector.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -123,7 +123,7 @@ class _ThemeModeItem extends ConsumerWidget {
                 onPressed: () {
                   ref
                       .read(themeSettingProvider.notifier)
-                      .updateState(
+                      .update(
                         (state) =>
                             state.copyWith(themeMode: themeModeItem.themeMode),
                       );
@@ -173,7 +173,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     if (res != true) {
       return;
     }
-    ref.read(themeSettingProvider.notifier).updateState((state) {
+    ref.read(themeSettingProvider.notifier).update((state) {
       return state.copyWith(
         primaryColors: defaultPrimaryColors,
         primaryColor: defaultPrimaryColor,
@@ -194,7 +194,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     if (res != true) {
       return;
     }
-    ref.read(themeSettingProvider.notifier).updateState((state) {
+    ref.read(themeSettingProvider.notifier).update((state) {
       final newPrimaryColors = List<int>.from(state.primaryColors)
         ..remove(_removablePrimaryColor);
       int? newPrimaryColor = state.primaryColor;
@@ -231,7 +231,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
       );
       return;
     }
-    ref.read(themeSettingProvider.notifier).updateState((state) {
+    ref.read(themeSettingProvider.notifier).update((state) {
       return state.copyWith(
         primaryColors: List.from(state.primaryColors)..add(res),
       );
@@ -253,7 +253,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     if (value == null) {
       return;
     }
-    ref.read(themeSettingProvider.notifier).updateState((state) {
+    ref.read(themeSettingProvider.notifier).update((state) {
       return state.copyWith(schemeVariant: value);
     });
   }
@@ -358,7 +358,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
                                   });
                                   ref
                                       .read(themeSettingProvider.notifier)
-                                      .updateState(
+                                      .update(
                                         (state) =>
                                             state.copyWith(primaryColor: color),
                                       );
@@ -436,7 +436,7 @@ class _PrueBlackItem extends ConsumerWidget {
           onChanged: (value) {
             ref
                 .read(themeSettingProvider.notifier)
-                .updateState((state) => state.copyWith(pureBlack: value));
+                .update((state) => state.copyWith(pureBlack: value));
           },
         ),
       ),
@@ -473,7 +473,7 @@ class _TextScaleFactorItem extends ConsumerWidget {
                 onChanged: (value) {
                   ref
                       .read(themeSettingProvider.notifier)
-                      .updateState(
+                      .update(
                         (state) => state.copyWith.textScale(enable: value),
                       );
                 },
@@ -502,7 +502,7 @@ class _TextScaleFactorItem extends ConsumerWidget {
                           onChanged: (value) {
                             ref
                                 .read(themeSettingProvider.notifier)
-                                .updateState(
+                                .update(
                                   (state) =>
                                       state.copyWith.textScale(scale: value),
                                 );

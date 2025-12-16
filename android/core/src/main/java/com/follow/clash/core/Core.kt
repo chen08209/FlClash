@@ -102,6 +102,28 @@ data object Core {
         }
     }
 
+    fun quickSetup(
+        initParamsString: String,
+        setupParamsString: String,
+        cb: (result: String?) -> Unit,
+    ) {
+        quickSetup(
+            initParamsString,
+            setupParamsString,
+            object : InvokeInterface {
+                override fun onResult(result: String?) {
+                    cb(result)
+                }
+            },
+        )
+    }
+
+    private external fun quickSetup(
+        initParamsString: String,
+        setupParamsString: String,
+        cb: InvokeInterface
+    )
+
     external fun stopTun()
 
     external fun getTraffic(onlyStatisticsProxy: Boolean): String

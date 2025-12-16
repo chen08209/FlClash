@@ -41,45 +41,54 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
     final color = context.colorScheme.onSurfaceVariant.opacity80;
     return SizedBox(
       height: getWidgetHeight(2),
-      child: CommonCard(
-        onPressed: () {},
-        info: Info(
-          label: appLocalizations.networkSpeed,
-          iconData: Icons.speed_sharp,
-        ),
-        child: Consumer(
-          builder: (_, ref, _) {
-            final traffics = ref.watch(trafficsProvider).list;
-            return Stack(
-              children: [
-                Positioned.fill(
-                  child: Padding(
-                    padding: EdgeInsets.all(
-                      16,
-                    ).copyWith(bottom: 0, left: 0, right: 0),
-                    child: LineChart(
-                      gradient: true,
-                      color: Theme.of(context).colorScheme.primary,
-                      points: _getPoints(traffics),
+      child: RepaintBoundary(
+        child: CommonCard(
+          onPressed: () {},
+          child: Consumer(
+            builder: (_, ref, _) {
+              final traffics = ref.watch(trafficsProvider).list;
+              return Column(
+                children: [
+                  Padding(
+                    padding: baseInfoEdgeInsets.copyWith(bottom: 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: InfoHeader(
+                            padding: EdgeInsets.zero,
+                            info: Info(
+                              label: appLocalizations.networkSpeed,
+                              iconData: Icons.speed_sharp,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          _getLastTraffic(traffics).speedText,
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: color,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Transform.translate(
-                    offset: Offset(-16, -20),
-                    child: Text(
-                      _getLastTraffic(traffics).speedText,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: color,
+                  Flexible(
+                    child: Padding(
+                      padding: EdgeInsets.all(
+                        16,
+                      ).copyWith(bottom: 0, left: 0, right: 0),
+                      child: LineChart(
+                        gradient: true,
+                        color: Theme.of(context).colorScheme.primary,
+                        points: _getPoints(traffics),
                       ),
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

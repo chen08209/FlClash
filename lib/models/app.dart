@@ -1,6 +1,5 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/selector.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -36,10 +35,6 @@ abstract class AppState with _$AppState {
     @Default(false) bool realTunEnable,
     @Default(false) bool loading,
     required SystemUiOverlayStyle systemUiOverlayStyle,
-    ProfileOverrideModel? profileOverrideModel,
-    @Default({}) Map<QueryTag, String> queryMap,
-    @Default({}) Map<String, String> selectedItemMap,
-    @Default({}) Map<String, Set<String>> selectedItemsMap,
     @Default(CoreStatus.connecting) CoreStatus coreStatus,
   }) = _AppState;
 }

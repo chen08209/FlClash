@@ -285,12 +285,16 @@ Map<String, dynamic> _$GeoXUrlToJson(_GeoXUrl instance) => <String, dynamic>{
   'geosite': instance.geosite,
 };
 
-_Rule _$RuleFromJson(Map<String, dynamic> json) =>
-    _Rule(id: json['id'] as String, value: json['value'] as String);
+_Rule _$RuleFromJson(Map<String, dynamic> json) => _Rule(
+  id: (json['id'] as num).toInt(),
+  value: json['value'] as String,
+  order: json['order'] as String?,
+);
 
 Map<String, dynamic> _$RuleToJson(_Rule instance) => <String, dynamic>{
   'id': instance.id,
   'value': instance.value,
+  'order': instance.order,
 };
 
 _SubRule _$SubRuleFromJson(Map<String, dynamic> json) =>

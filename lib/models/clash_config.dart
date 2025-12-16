@@ -375,17 +375,18 @@ extension ParsedRuleExt on ParsedRule {
 
 @freezed
 abstract class Rule with _$Rule {
-  const factory Rule({required String id, required String value}) = _Rule;
+  const factory Rule({required int id, required String value, String? order}) =
+      _Rule;
 
   factory Rule.value(String value) {
-    return Rule(value: value, id: utils.uuidV4);
+    return Rule(value: value, id: snowflake.id);
   }
 
   factory Rule.fromJson(Map<String, Object?> json) => _$RuleFromJson(json);
 }
 
 extension RulesExt on List<Rule> {
-  List<Rule> updateWith(Rule rule) {
+  List<Rule> copyAndPut(Rule rule) {
     var newList = List<Rule>.from(this);
     final index = newList.indexWhere((item) => item.id == rule.id);
     if (index != -1) {

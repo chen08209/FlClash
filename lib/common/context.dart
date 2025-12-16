@@ -1,6 +1,6 @@
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/manager.dart';
-import 'package:fl_clash/models/widget.dart';
+import 'package:fl_clash/models/state.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 

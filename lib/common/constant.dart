@@ -20,15 +20,17 @@ const helperPort = 47890;
 const maxTextScale = 1.4;
 const minTextScale = 0.8;
 final baseInfoEdgeInsets = EdgeInsets.symmetric(
-  vertical: 16.ap,
-  horizontal: 16.ap,
+  vertical: 16.mAp,
+  horizontal: 16.mAp,
 );
 final listHeaderPadding = EdgeInsets.only(
-  left: 16.ap,
-  right: 8.ap,
-  top: 24.ap,
-  bottom: 8.ap,
+  left: 16.mAp,
+  right: 8.mAp,
+  top: 24.mAp,
+  bottom: 8.mAp,
 );
+
+const watchExecution = true;
 
 final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
@@ -63,6 +65,7 @@ final commonFilter = ImageFilter.blur(
   tileMode: TileMode.mirror,
 );
 
+const listEquality = ListEquality();
 const navigationItemListEquality = ListEquality<NavigationItem>();
 const trackerInfoListEquality = ListEquality<TrackerInfo>();
 const stringListEquality = ListEquality<String>();
@@ -70,15 +73,18 @@ const intListEquality = ListEquality<int>();
 const logListEquality = ListEquality<Log>();
 const groupListEquality = ListEquality<Group>();
 const ruleListEquality = ListEquality<Rule>();
-const scriptEquality = ListEquality<Script>();
+const scriptListEquality = ListEquality<Script>();
 const externalProviderListEquality = ListEquality<ExternalProvider>();
 const packageListEquality = ListEquality<Package>();
+const profileListEquality = ListEquality<Profile>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();
 const stringAndStringMapEquality = MapEquality<String, String>();
 const stringAndStringMapEntryListEquality =
     ListEquality<MapEntry<String, String>>();
 const stringAndStringMapEntryIterableEquality =
     IterableEquality<MapEntry<String, String>>();
+const stringAndObjectMapEntryIterableEquality =
+    IterableEquality<MapEntry<String, Object?>>();
 const delayMapEquality = MapEquality<String, Map<String, int?>>();
 const stringSetEquality = SetEquality<String>();
 const keyboardModifierListEquality = SetEquality<KeyboardModifier>();
@@ -96,7 +102,8 @@ const profilesStoreKey = PageStorageKey<String>('profiles');
 const defaultPrimaryColor = 0XFFD8C0C3;
 
 double getWidgetHeight(num lines) {
-  return max(lines * 80 + (lines - 1) * 16, 0).ap;
+  final space = 14.mAp;
+  return max(lines * (80.ap + space) - space, 0);
 }
 
 const maxLength = 1000;
@@ -119,3 +126,6 @@ const scriptTemplate = '''
 const main = (config) => {
   return config;
 }''';
+
+const backupDatabaseName = 'database.sqlite';
+const configJsonName = 'config.json';
