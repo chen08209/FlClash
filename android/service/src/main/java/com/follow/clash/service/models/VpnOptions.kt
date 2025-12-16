@@ -6,7 +6,7 @@ import kotlinx.parcelize.Parcelize
 import java.net.InetAddress
 
 @Parcelize
-data class AccessControl(
+data class AccessControlProps(
     val enable: Boolean,
     val mode: AccessControlMode,
     val acceptList: List<String>,
@@ -19,7 +19,7 @@ data class VpnOptions(
     val port: Int,
     val ipv6: Boolean,
     val dnsHijacking: Boolean,
-    val accessControl: AccessControl,
+    val accessControlProps: AccessControlProps,
     val allowBypass: Boolean,
     val systemProxy: Boolean,
     val bypassDomain: List<String>,

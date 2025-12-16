@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/list.dart';
@@ -25,12 +26,11 @@ class AboutView extends StatelessWidget {
   const AboutView({super.key});
 
   Future<void> _checkUpdate(BuildContext context) async {
-    final data = await globalState.appController.safeRun<Map<String, dynamic>?>(
+    final data = await appController.safeRun<Map<String, dynamic>?>(
       request.checkForUpdate,
       title: appLocalizations.checkUpdate,
-      needLoading: true,
     );
-    globalState.appController.checkUpdateResultHandle(data: data, isUser: true);
+    appController.checkUpdateResultHandle(data: data, isUser: true);
   }
 
   List<Widget> _buildMoreSection(BuildContext context) {
@@ -144,9 +144,7 @@ class AboutView extends StatelessWidget {
                   onEnterDeveloperMode: () {
                     ref
                         .read(appSettingProvider.notifier)
-                        .updateState(
-                          (state) => state.copyWith(developerMode: true),
-                        );
+                        .update((state) => state.copyWith(developerMode: true));
                     context.showNotifier(
                       appLocalizations.developerModeEnableTip,
                     );

@@ -1,6 +1,7 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/core.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -27,9 +28,14 @@ class _AndroidContainerState extends ConsumerState<AndroidManager>
     ) {
       app?.updateExcludeFromRecents(next);
     }, fireImmediately: true);
-    ref.listenManual(androidStateProvider, (prev, next) {
+    ref.listenManual(sharedStateProvider, (prev, next) {
       if (prev != next) {
-        service?.syncAndroidState(next);
+        debouncer.call(FunctionTag.saveSharedFile, () async {
+          preferences.saveShareState(next);
+        }, duration: Duration(seconds: 1));
+        if (prev?.needSyncSharedState != next.needSyncSharedState) {
+          service?.syncState(next.needSyncSharedState);
+        }
       }
     });
     service?.addListener(this);

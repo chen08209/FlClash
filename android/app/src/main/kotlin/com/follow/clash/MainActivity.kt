@@ -1,7 +1,6 @@
 package com.follow.clash
 
 import android.os.Bundle
-import androidx.lifecycle.lifecycleScope
 import com.follow.clash.common.GlobalState
 import com.follow.clash.plugins.AppPlugin
 import com.follow.clash.plugins.ServicePlugin
@@ -18,9 +17,6 @@ class MainActivity : FlutterActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch {
-            State.destroyServiceEngine()
-        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

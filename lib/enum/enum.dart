@@ -133,7 +133,7 @@ enum InvokeMessageType { protect, process }
 
 enum FindProcessMode { always, off }
 
-enum RecoveryOption { all, onlyProfiles }
+enum RestoreOption { all, onlyProfiles }
 
 enum ChipType { action, delete }
 
@@ -260,8 +260,8 @@ enum AuthorizeCode { none, success, error }
 enum WindowsHelperServiceStatus { none, presence, running }
 
 enum FunctionTag {
-  updateClashConfig,
-  setupClashConfig,
+  updateConfig,
+  setupConfig,
   updateStatus,
   updateGroups,
   addCheckIpNum,
@@ -281,6 +281,7 @@ enum FunctionTag {
   requests,
   autoScrollToEnd,
   loadedProvider,
+  saveSharedFile,
 }
 
 enum DashboardWidget {
@@ -406,7 +407,7 @@ enum OverwriteType {
 
 enum RuleTarget { DIRECT, REJECT, MATCH }
 
-enum RecoveryStrategy { compatible, override }
+enum RestoreStrategy { compatible, override }
 
 enum CacheTag { logs, rules, requests, proxiesList }
 
@@ -418,4 +419,8 @@ enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }
 
 enum QueryTag { proxies, access }
 
+enum LoadingTag { profiles, backup_restore, access, proxies }
+
 enum CoreStatus { connecting, connected, disconnected }
+
+enum RuleScene { added, disabled, custom }
