@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
@@ -18,14 +17,11 @@ extension ArchiveExt on Archive {
         final archiveFile = ArchiveFile(relativePath, data.length, data);
         addFile(archiveFile);
       }
-      // else if (entity is Directory) {
-      //   addDirectoryToArchive(entity.path, parentPath);
-      // }
     }
   }
 
-  void addTextFile<T>(String name, T raw) {
-    final data = json.encode(raw);
-    addFile(ArchiveFile.string(name, data));
-  }
+  // void addTextFile<T>(String name, T raw) {
+  //   final data = json.encode(raw);
+  //   addFile(ArchiveFile.string(name, data));
+  // }
 }

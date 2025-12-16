@@ -187,7 +187,7 @@ class VpnService : SystemVpnService(), IBaseService,
                 addDnsServer(DNS6)
             }
             setMtu(9000)
-            options.accessControl.let { accessControl ->
+            options.accessControlProps.let { accessControl ->
                 if (accessControl.enable) {
                     when (accessControl.mode) {
                         AccessControlMode.ACCEPT_SELECTED -> {

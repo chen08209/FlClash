@@ -64,16 +64,17 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ".dev"
         }
 
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = if (isRelease) {
-                signingConfigs.getByName("release")
+            if (isRelease) {
+                signingConfig = signingConfigs.getByName("release")
             } else {
-                signingConfigs.getByName("debug")
+                signingConfig = signingConfigs.getByName("debug")
+                applicationIdSuffix = ".dev"
             }
 
             proguardFiles(

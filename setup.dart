@@ -369,6 +369,15 @@ class BuildCommand extends Command {
       .map((e) => e.arch!)
       .toList();
 
+  Future<void> _buildEnvFile(String env, {String? coreSha256}) async {
+    final data = {
+      'APP_ENV': env,
+      if (coreSha256 != null) 'CORE_SHA256': coreSha256,
+    };
+    final envFile = File(join(current, 'env.json'))..create();
+    await envFile.writeAsString(json.encode(data));
+  }
+
   Future<void> _getLinuxDependencies(Arch arch) async {
     await Build.exec(Build.getExecutable('sudo apt update -y'));
     await Build.exec(
@@ -412,7 +421,7 @@ class BuildCommand extends Command {
     await Build.exec(
       name: name,
       Build.getExecutable(
-        'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose$args --build-dart-define=APP_ENV=$env',
+        'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose,dart-define-from-file=env.json$args',
       ),
     );
   }
@@ -448,21 +457,23 @@ class BuildCommand extends Command {
       mode: mode,
     );
 
+    String? coreSha256;
+
+    if (Platform.isWindows) {
+      coreSha256 = await Build.calcSha256(corePaths.first);
+      await Build.buildHelper(target, coreSha256);
+    }
+    await _buildEnvFile(env, coreSha256: coreSha256);
     if (out != 'app') {
       return;
     }
 
     switch (target) {
       case Target.windows:
-        final token = target != Target.android
-            ? await Build.calcSha256(corePaths.first)
-            : null;
-        Build.buildHelper(target, token!);
         _buildDistributor(
           target: target,
           targets: 'exe,zip',
-          args:
-              ' --description $archName --build-dart-define=CORE_SHA256=$token',
+          args: ' --description $archName',
           env: env,
         );
         return;

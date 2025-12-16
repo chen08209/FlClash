@@ -30,6 +30,8 @@ final listHeaderPadding = EdgeInsets.only(
   bottom: 8.ap,
 );
 
+const watchExecution = true;
+
 final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
 const httpTimeoutDuration = Duration(milliseconds: 5000);
@@ -63,6 +65,7 @@ final commonFilter = ImageFilter.blur(
   tileMode: TileMode.mirror,
 );
 
+const listEquality = ListEquality();
 const navigationItemListEquality = ListEquality<NavigationItem>();
 const trackerInfoListEquality = ListEquality<TrackerInfo>();
 const stringListEquality = ListEquality<String>();
@@ -70,15 +73,18 @@ const intListEquality = ListEquality<int>();
 const logListEquality = ListEquality<Log>();
 const groupListEquality = ListEquality<Group>();
 const ruleListEquality = ListEquality<Rule>();
-const scriptEquality = ListEquality<Script>();
+const scriptListEquality = ListEquality<Script>();
 const externalProviderListEquality = ListEquality<ExternalProvider>();
 const packageListEquality = ListEquality<Package>();
+const profileListEquality = ListEquality<Profile>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();
 const stringAndStringMapEquality = MapEquality<String, String>();
 const stringAndStringMapEntryListEquality =
     ListEquality<MapEntry<String, String>>();
 const stringAndStringMapEntryIterableEquality =
     IterableEquality<MapEntry<String, String>>();
+const stringAndObjectMapEntryIterableEquality =
+    IterableEquality<MapEntry<String, Object?>>();
 const delayMapEquality = MapEquality<String, Map<String, int?>>();
 const stringSetEquality = SetEquality<String>();
 const keyboardModifierListEquality = SetEquality<KeyboardModifier>();
@@ -119,3 +125,6 @@ const scriptTemplate = '''
 const main = (config) => {
   return config;
 }''';
+
+const backupDatabaseName = 'database.sqlite';
+const configJsonName = 'config.json';

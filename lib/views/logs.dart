@@ -1,13 +1,13 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
-
-import '../models/models.dart';
-import '../widgets/widgets.dart';
 
 class LogsView extends ConsumerStatefulWidget {
   const LogsView({super.key});
@@ -25,7 +25,7 @@ class _LogsViewState extends ConsumerState<LogsView> {
   @override
   void initState() {
     super.initState();
-    _logs = globalState.appState.logs.list;
+    _logs = ref.read(logsProvider).list;
     _scrollController = ScrollController(initialScrollOffset: double.maxFinite);
     _logsStateNotifier.value = _logsStateNotifier.value.copyWith(logs: _logs);
     ref.listenManual(logsProvider.select((state) => state.list), (prev, next) {
@@ -68,13 +68,9 @@ class _LogsViewState extends ConsumerState<LogsView> {
   }
 
   Future<void> _handleExport() async {
-    final res = await globalState.appController.safeRun<bool>(
-      () async {
-        return await globalState.appController.exportLogs();
-      },
-      needLoading: true,
-      title: appLocalizations.exportLogs,
-    );
+    final res = await appController.safeRun<bool>(() async {
+      return await appController.exportLogs();
+    }, title: appLocalizations.exportLogs);
     if (res != true) return;
     globalState.showMessage(
       title: appLocalizations.tip,
@@ -195,7 +191,7 @@ class LogItem extends StatelessWidget {
     return ListItem(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: () {},
-      title: Text(
+      title: SelectableText(
         log.payload,
         style: context.textTheme.bodyLarge?.copyWith(color: log.logLevel.color),
       ),
