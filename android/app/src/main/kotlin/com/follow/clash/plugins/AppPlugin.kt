@@ -9,7 +9,6 @@ import android.content.pm.ComponentInfo
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
@@ -24,6 +23,7 @@ import com.follow.clash.common.QuickAction
 import com.follow.clash.common.quickIntent
 import com.follow.clash.getPackageIconPath
 import com.follow.clash.models.Package
+import com.follow.clash.showToast
 import com.google.gson.Gson
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -193,7 +193,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     private fun tip(message: String?) {
-        Toast.makeText(GlobalState.application, message, Toast.LENGTH_LONG).show()
+        GlobalState.application.showToast(message)
     }
 
     @Suppress("DEPRECATION")

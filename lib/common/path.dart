@@ -61,19 +61,39 @@ class AppPath {
     return directory.path;
   }
 
+  Future<String> get databasePath async {
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'database.sqlite');
+  }
+
+  Future<String> get backupFilePath async {
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'backup.zip');
+  }
+
+  Future<String> get restoreDirPath async {
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'restore');
+  }
+
+  Future<String> get tempFilePath async {
+    final mTempDir = await tempDir.future;
+    return join(mTempDir.path, 'temp${utils.id}');
+  }
+
   Future<String> get lockFilePath async {
     final homeDirPath = await appPath.homeDirPath;
     return join(homeDirPath, 'FlClash.lock');
   }
 
   Future<String> get configFilePath async {
-    final homeDirPath = await appPath.homeDirPath;
-    return join(homeDirPath, 'config.yaml');
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'config.yaml');
   }
 
-  Future<String> get validateFilePath async {
-    final homeDirPath = await appPath.homeDirPath;
-    return join(homeDirPath, 'temp', 'validate${utils.id}.yaml');
+  Future<String> get sharedFilePath async {
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'shared.json');
   }
 
   Future<String> get sharedPreferencesPath async {
@@ -86,9 +106,18 @@ class AppPath {
     return join(directory.path, profilesDirectoryName);
   }
 
-  Future<String> getProfilePath(String id) async {
-    final directory = await profilesPath;
-    return join(directory, '$id.yaml');
+  Future<String> getProfilePath(String fileName) async {
+    return join(await profilesPath, '$fileName.yaml');
+  }
+
+  Future<String> get scriptsDirPath async {
+    final path = await homeDirPath;
+    return join(path, 'scripts');
+  }
+
+  Future<String> getScriptPath(String fileName) async {
+    final path = await scriptsDirPath;
+    return join(path, '$fileName.js');
   }
 
   Future<String> getIconsCacheDir() async {

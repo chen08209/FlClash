@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
@@ -33,42 +36,52 @@ class OutboundMode extends StatelessWidget {
                 iconData: Icons.call_split_sharp,
               ),
               child: Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 16),
+                padding: const EdgeInsets.only(top: 12, bottom: 12),
                 child: RadioGroup<Mode>(
                   groupValue: mode,
                   onChanged: (value) {
                     if (value == null) {
                       return;
                     }
-                    globalState.appController.changeMode(value);
+                    appController.changeMode(value);
                   },
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (final item in Mode.values)
-                        Flexible(
-                          fit: FlexFit.tight,
-                          child: ListItem.radio(
-                            dense: true,
-                            horizontalTitleGap: 4,
-                            padding: EdgeInsets.only(left: 12.ap, right: 16.ap),
-                            delegate: RadioDelegate(
-                              onTab: () {
-                                globalState.appController.changeMode(item);
-                              },
-                              value: item,
+                  child: LayoutBuilder(
+                    builder: (_, constraints) {
+                      final maxHeight = constraints.maxHeight;
+                      return Column(
+                        mainAxisSize: MainAxisSize.max,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          for (final item in Mode.values)
+                            ListItem.radio(
+                              horizontalTitleGap: 8,
+                              tileTitleAlignment: ListTileTitleAlignment.center,
+                              minTileHeight: min(
+                                maxHeight / 3,
+                                globalState.measure.bodyMediumHeight + 16,
+                              ),
+                              minVerticalPadding: 0,
+                              padding: EdgeInsets.only(
+                                left: 12.ap,
+                                right: 16.ap,
+                              ),
+                              delegate: RadioDelegate(
+                                onTab: () {
+                                  appController.changeMode(item);
+                                },
+                                value: item,
+                              ),
+                              title: Text(
+                                Intl.message(item.name),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.toSoftBold,
+                              ),
                             ),
-                            title: Text(
-                              Intl.message(item.name),
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.toSoftBold,
-                            ),
-                          ),
-                        ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -150,7 +163,7 @@ class OutboundModeV2 extends StatelessWidget {
                             if (value == null) {
                               return;
                             }
-                            globalState.appController.changeMode(value);
+                            appController.changeMode(value);
                           },
                           thumbColor: thumbColor,
                         ),

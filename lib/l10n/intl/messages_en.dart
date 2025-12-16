@@ -81,6 +81,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "action_tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "action_view": MessageLookupByLibrary.simpleMessage("Show/Hide"),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
+    "addProfile": MessageLookupByLibrary.simpleMessage("Add Profile"),
     "addRule": MessageLookupByLibrary.simpleMessage("Add rule"),
     "addedOriginRules": MessageLookupByLibrary.simpleMessage(
       "Attach on the original rules",
@@ -164,11 +165,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Auto update interval (minutes)",
     ),
     "backup": MessageLookupByLibrary.simpleMessage("Backup"),
-    "backupAndRecovery": MessageLookupByLibrary.simpleMessage(
-      "Backup and Recovery",
+    "backupAndRestore": MessageLookupByLibrary.simpleMessage(
+      "Backup and Restore",
     ),
-    "backupAndRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "Sync data via WebDAV or file",
+    "backupAndRestoreDesc": MessageLookupByLibrary.simpleMessage(
+      "Sync data via WebDAV or files",
     ),
     "backupSuccess": MessageLookupByLibrary.simpleMessage("Backup success"),
     "basicConfig": MessageLookupByLibrary.simpleMessage("Basic configuration"),
@@ -269,6 +270,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "defaultText": MessageLookupByLibrary.simpleMessage("Default"),
     "delay": MessageLookupByLibrary.simpleMessage("Delay"),
     "delaySort": MessageLookupByLibrary.simpleMessage("Sort by delay"),
+    "delayTest": MessageLookupByLibrary.simpleMessage("Delay Test"),
     "delete": MessageLookupByLibrary.simpleMessage("Delete"),
     "deleteMultipTip": m1,
     "deleteTip": m2,
@@ -425,6 +427,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "internet": MessageLookupByLibrary.simpleMessage("Internet"),
     "interval": MessageLookupByLibrary.simpleMessage("Interval"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("Intranet IP"),
+    "invalidBackupFile": MessageLookupByLibrary.simpleMessage(
+      "Invalid backup file",
+    ),
     "ipcidr": MessageLookupByLibrary.simpleMessage("Ipcidr"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "When turned on it will be able to receive IPv6 traffic",
@@ -449,9 +454,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localBackupDesc": MessageLookupByLibrary.simpleMessage(
       "Backup local data to local",
-    ),
-    "localRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "Recovery data from file",
     ),
     "log": MessageLookupByLibrary.simpleMessage("Log"),
     "logLevel": MessageLookupByLibrary.simpleMessage("LogLevel"),
@@ -503,6 +505,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "networkDetection": MessageLookupByLibrary.simpleMessage(
       "Network detection",
+    ),
+    "networkException": MessageLookupByLibrary.simpleMessage(
+      "Network exception, please check your connection and try again",
+    ),
+    "networkRequestException": MessageLookupByLibrary.simpleMessage(
+      "Network request exception, please try again later.",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Network speed"),
     "networkType": MessageLookupByLibrary.simpleMessage("Network type"),
@@ -564,6 +572,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Override the original rule",
     ),
     "overrideScript": MessageLookupByLibrary.simpleMessage("Override script"),
+    "overwriteTypeCustom": MessageLookupByLibrary.simpleMessage("Custom"),
+    "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
+      "Custom mode, fully customize proxy groups and rules",
+    ),
     "palette": MessageLookupByLibrary.simpleMessage("Palette"),
     "password": MessageLookupByLibrary.simpleMessage("Password"),
     "paste": MessageLookupByLibrary.simpleMessage("Paste"),
@@ -636,27 +648,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Set the Clash listening port",
     ),
     "proxyProviders": MessageLookupByLibrary.simpleMessage("Proxy providers"),
+    "pruneCache": MessageLookupByLibrary.simpleMessage("Prune cache"),
     "pureBlackMode": MessageLookupByLibrary.simpleMessage("Pure black mode"),
     "qrcode": MessageLookupByLibrary.simpleMessage("QR code"),
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
       "Scan QR code to obtain profile",
     ),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Rainbow"),
-    "recovery": MessageLookupByLibrary.simpleMessage("Recovery"),
-    "recoveryAll": MessageLookupByLibrary.simpleMessage("Recovery all data"),
-    "recoveryProfiles": MessageLookupByLibrary.simpleMessage(
-      "Only recovery profiles",
-    ),
-    "recoveryStrategy": MessageLookupByLibrary.simpleMessage(
-      "Recovery strategy",
-    ),
-    "recoveryStrategy_compatible": MessageLookupByLibrary.simpleMessage(
-      "Compatible",
-    ),
-    "recoveryStrategy_override": MessageLookupByLibrary.simpleMessage(
-      "Override",
-    ),
-    "recoverySuccess": MessageLookupByLibrary.simpleMessage("Recovery success"),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir Port"),
     "redo": MessageLookupByLibrary.simpleMessage("redo"),
     "regExp": MessageLookupByLibrary.simpleMessage("RegExp"),
@@ -667,9 +665,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "remoteDestination": MessageLookupByLibrary.simpleMessage(
       "Remote destination",
-    ),
-    "remoteRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "Recovery data from WebDAV",
     ),
     "remove": MessageLookupByLibrary.simpleMessage("Remove"),
     "rename": MessageLookupByLibrary.simpleMessage("Rename"),
@@ -695,6 +690,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "restartCoreTip": MessageLookupByLibrary.simpleMessage(
       "Are you sure you want to restart the core?",
     ),
+    "restore": MessageLookupByLibrary.simpleMessage("Restore"),
+    "restoreAllData": MessageLookupByLibrary.simpleMessage("Restore all data"),
+    "restoreException": MessageLookupByLibrary.simpleMessage(
+      "Recovery exception",
+    ),
+    "restoreFromFileDesc": MessageLookupByLibrary.simpleMessage(
+      "Restore data via file",
+    ),
+    "restoreFromWebDAVDesc": MessageLookupByLibrary.simpleMessage(
+      "Restore data via WebDAV",
+    ),
+    "restoreOnlyConfig": MessageLookupByLibrary.simpleMessage(
+      "Restore configuration files only",
+    ),
+    "restoreStrategy": MessageLookupByLibrary.simpleMessage("Restore strategy"),
+    "restoreStrategy_compatible": MessageLookupByLibrary.simpleMessage(
+      "Compatible",
+    ),
+    "restoreStrategy_override": MessageLookupByLibrary.simpleMessage(
+      "Override",
+    ),
+    "restoreSuccess": MessageLookupByLibrary.simpleMessage("Restore success"),
     "routeAddress": MessageLookupByLibrary.simpleMessage("Route address"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage(
       "Config listen route address",
@@ -806,6 +823,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove extra delays such as handshaking",
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
+    "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
+      "Unknown network error",
+    ),
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),

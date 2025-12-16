@@ -1,11 +1,10 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,12 +54,12 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   }
 
   void scrollToGroupSelected() {
-    final currentGroupName = globalState.appController.getCurrentGroupName();
+    final currentGroupName = appController.getCurrentGroupName();
     _keyMap[currentGroupName]?.currentState?.scrollToSelected();
   }
 
   Future<void> delayTestCurrentGroup() async {
-    final currentGroupName = globalState.appController.getCurrentGroupName();
+    final currentGroupName = appController.getCurrentGroupName();
     final currentState = _keyMap[currentGroupName]?.currentState;
     await delayTest(currentState?.currentProxies ?? [], currentState?.testUrl);
   }
@@ -109,9 +108,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                             );
                             if (index == -1) return;
                             _tabController?.animateTo(index);
-                            globalState.appController.updateCurrentGroupName(
-                              groupName,
-                            );
+                            appController.updateCurrentGroupName(groupName);
                             Navigator.of(context).pop();
                           },
                           isSelected: groupName == currentGroupName,
@@ -134,7 +131,6 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
       if (groupIndex == -1) {
         return;
       }
-      final appController = globalState.appController;
       if (groupIndex == null) {
         final currentIndex = _tabController?.index;
         groupIndex = currentIndex;
@@ -236,7 +232,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                     context.colorScheme.surface.opacity10,
                     context.colorScheme.surface,
                   ],
-                  stops: const [0.0, 0.5],
+                  stops: const [0.0, 0.1],
                 ),
               ),
               child: _buildMoreButton(),
@@ -294,7 +290,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   }
 
   PageStorageKey _getPageStorageKey() {
-    final profile = globalState.config.currentProfile;
+    final profile = appController.currentProfile;
     final key =
         '${profile?.id}_${ScrollPositionCacheKey.proxiesTabList.name}_${widget.group.name}';
     return ProxiesTabView.pageListStoreMap.updateCacheValue(
@@ -414,19 +410,15 @@ class _DelayTestButtonState extends State<DelayTestButton>
     return AnimatedBuilder(
       animation: _controller.view,
       builder: (_, child) {
-        return SizedBox(
-          width: 56,
-          height: 56,
-          child: FadeTransition(
-            opacity: _animation,
-            child: ScaleTransition(scale: _animation, child: child),
-          ),
+        return FadeTransition(
+          opacity: _animation,
+          child: ScaleTransition(scale: _animation, child: child),
         );
       },
-      child: FloatingActionButton(
-        heroTag: null,
+      child: CommonFloatingActionButton(
         onPressed: _healthcheck,
-        child: const Icon(Icons.network_ping),
+        label: appLocalizations.delayTest,
+        icon: const Icon(Icons.network_ping),
       ),
     );
   }
