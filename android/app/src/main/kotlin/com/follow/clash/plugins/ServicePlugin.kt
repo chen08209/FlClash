@@ -3,13 +3,9 @@ package com.follow.clash.plugins
 import com.follow.clash.RunState
 import com.follow.clash.Service
 import com.follow.clash.State
-import com.follow.clash.awaitResult
 import com.follow.clash.common.Components
-import com.follow.clash.common.GlobalState
 import com.follow.clash.invokeMethodOnMainThread
-import com.follow.clash.models.AppState
-import com.follow.clash.service.models.NotificationParams
-import com.follow.clash.service.models.VpnOptions
+import com.follow.clash.models.SharedState
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -38,7 +34,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) = when (call.method) {
         "init" -> {
-            handleInit(call, result)
+            handleInit(result)
         }
 
         "shutdown" -> {
@@ -94,11 +90,6 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
         result.success(true)
     }
 
-    suspend fun handleGetVpnOptions(): VpnOptions? {
-        val res = flutterMethodChannel.awaitResult<String>("getVpnOptions", null)
-        return Gson().fromJson(res, VpnOptions::class.java)
-    }
-
     val semaphore = Semaphore(10)
 
     fun handleSendEvent(value: String?) {
@@ -116,31 +107,19 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
 
     private fun handleSyncState(call: MethodCall, result: MethodChannel.Result) {
         val data = call.arguments<String>()!!
-        val params = Gson().fromJson(data, AppState::class.java)
-        GlobalState.setCrashlytics(params.crashlytics)
+        State.sharedState = Gson().fromJson(data, SharedState::class.java)
         launch {
-            Service.updateNotificationParams(
-                NotificationParams(
-                    title = params.currentProfileName,
-                    stopText = params.stopText,
-                    onlyStatisticsProxy = params.onlyStatisticsProxy
-                )
-            )
-            Service.setCrashlytics(params.crashlytics)
+            State.syncState()
             result.success("")
         }
     }
 
-    fun handleInit(call: MethodCall, result: MethodChannel.Result) {
+
+    fun handleInit(result: MethodChannel.Result) {
         Service.bind()
         launch {
-            val needSetEventListener = call.arguments<Boolean>() ?: false
-            when (needSetEventListener) {
-                true -> Service.setEventListener {
-                    handleSendEvent(it)
-                }
-
-                false -> Service.setEventListener(null)
+            Service.setEventListener {
+                handleSendEvent(it)
             }.onSuccess {
                 result.success("")
             }.onFailure {

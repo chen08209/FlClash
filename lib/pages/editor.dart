@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
@@ -125,7 +127,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     if (file == null) {
       return;
     }
-    final res = String.fromCharCodes(file.bytes?.toList() ?? []);
+    final res = utf8.decode(file.bytes?.toList() ?? []);
     _controller.text = res;
   }
 

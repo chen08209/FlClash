@@ -10,18 +10,15 @@
 // A class abstraction for a high DPI-aware Win32 Window. Intended to be
 // inherited from by classes that wish to specialize with custom
 // rendering and input handling
-class Win32Window
-{
-public:
-  struct Point
-  {
+class Win32Window {
+ public:
+  struct Point {
     unsigned int x;
     unsigned int y;
     Point(unsigned int x, unsigned int y) : x(x), y(y) {}
   };
 
-  struct Size
-  {
+  struct Size {
     unsigned int width;
     unsigned int height;
     Size(unsigned int width, unsigned int height)
@@ -37,7 +34,7 @@ public:
   // consistent size this function will scale the inputted width and height as
   // as appropriate for the default monitor. The window is invisible until
   // |Show| is called. Returns true if the window was created successfully.
-  bool Create(const std::wstring &title, const Point &origin, const Size &size);
+  bool Create(const std::wstring& title, const Point& origin, const Size& size);
 
   // Show the current window. Returns true if the window was successfully shown.
   bool Show();
@@ -58,7 +55,7 @@ public:
   // Return a RECT representing the bounds of the current client area.
   RECT GetClientArea();
 
-protected:
+ protected:
   // Processes and route salient window messages for mouse handling,
   // size change and DPI. Delegates handling of these to member overloads that
   // inheriting classes can handle.
@@ -74,10 +71,8 @@ protected:
   // Called when Destroy is called.
   virtual void OnDestroy();
 
-private:
+ private:
   friend class WindowClassRegistrar;
-
-  bool SendAppLinkToInstance(const std::wstring &title);
 
   // OS callback called by message pump. Handles the WM_NCCREATE message which
   // is passed when the non-client area is being created and enables automatic
@@ -90,7 +85,7 @@ private:
                                   LPARAM const lparam) noexcept;
 
   // Retrieves a class instance pointer for |window|
-  static Win32Window *GetThisFromHandle(HWND const window) noexcept;
+  static Win32Window* GetThisFromHandle(HWND const window) noexcept;
 
   // Update the window frame's theme to match the system theme.
   static void UpdateTheme(HWND const window);
@@ -104,4 +99,4 @@ private:
   HWND child_content_ = nullptr;
 };
 
-#endif // RUNNER_WIN32_WINDOW_H_
+#endif  // RUNNER_WIN32_WINDOW_H_

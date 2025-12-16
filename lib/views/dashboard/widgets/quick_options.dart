@@ -68,9 +68,7 @@ class TUNButton extends StatelessWidget {
                     onChanged: (value) {
                       ref
                           .read(patchClashConfigProvider.notifier)
-                          .updateState(
-                            (state) => state.copyWith.tun(enable: value),
-                          );
+                          .update((state) => state.copyWith.tun(enable: value));
                     },
                   );
                 },
@@ -141,7 +139,7 @@ class SystemProxyButton extends StatelessWidget {
                     onChanged: (value) {
                       ref
                           .read(networkSettingProvider.notifier)
-                          .updateState(
+                          .update(
                             (state) => state.copyWith(systemProxy: value),
                           );
                     },

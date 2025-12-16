@@ -1,5 +1,7 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +23,7 @@ class _StartButtonState extends ConsumerState<StartButton>
   @override
   void initState() {
     super.initState();
-    isStart = globalState.appState.runTime != null;
+    isStart = ref.read(isStartProvider);
     _controller = AnimationController(
       vsync: this,
       value: isStart ? 1 : 0,
@@ -31,10 +33,7 @@ class _StartButtonState extends ConsumerState<StartButton>
       parent: _controller!,
       curve: Curves.easeOutBack,
     );
-    ref.listenManual(runTimeProvider.select((state) => state != null), (
-      prev,
-      next,
-    ) {
+    ref.listenManual(isStartProvider, (prev, next) {
       if (next != isStart) {
         isStart = next;
         updateController();
@@ -53,7 +52,7 @@ class _StartButtonState extends ConsumerState<StartButton>
     isStart = !isStart;
     updateController();
     debouncer.call(FunctionTag.updateStatus, () {
-      globalState.appController.updateStatus(isStart);
+      appController.updateStatus(isStart, isInit: !ref.read(initProvider));
     }, duration: commonDuration);
   }
 
@@ -69,8 +68,10 @@ class _StartButtonState extends ConsumerState<StartButton>
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(startButtonSelectorStateProvider);
-    if (!state.isInit || !state.hasProfile) {
+    final hasProfile = ref.watch(
+      profilesProvider.select((state) => state.isNotEmpty),
+    );
+    if (!hasProfile) {
       return Container();
     }
     return Theme(

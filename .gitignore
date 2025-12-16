@@ -21,7 +21,7 @@ migrate_working_dir/
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
-#.vscode/
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -41,6 +41,11 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
+#AI generated
+CLAUDE.md
+/.claude
+
+
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
@@ -53,7 +58,6 @@ app.*.map.json
 /android/core/**/cmake-build-*/
 /android/core/**/jniLibs/
 
-
 #FlClash
 /libclash/
 /android/app/src/main/jniLibs/
@@ -61,3 +65,6 @@ app.*.map.json
 /macos/**/Package.resolved
 devtools_options.yaml
 
+# FVM Version Cache
+.fvm/
+.fvmrc
