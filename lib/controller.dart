@@ -426,6 +426,8 @@ class AppController {
     );
     if (_ref.read(appSettingProvider).closeConnections) {
       coreController.closeConnections();
+    } else {
+      coreController.resetConnections();
     }
     addCheckIpNumDebounce();
   }
@@ -992,9 +994,9 @@ class AppController {
   }) async {
     final realSilence = needLoading == true ? true : silence;
     try {
-      if (needLoading) {
-        _ref.read(loadingProvider.notifier).start();
-      }
+      // if (needLoading) {
+      //   _ref.read(loadingProvider.notifier).start();
+      // }
       final res = await futureFunction();
       return res;
     } catch (e) {
@@ -1009,7 +1011,7 @@ class AppController {
       }
       return null;
     } finally {
-      _ref.read(loadingProvider.notifier).stop();
+      // _ref.read(loadingProvider.notifier).stop();
     }
   }
 }

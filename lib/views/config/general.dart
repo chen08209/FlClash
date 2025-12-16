@@ -474,11 +474,11 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _isMore = false;
 
-  late TextEditingController _mixedPortController;
-  late TextEditingController _portController;
-  late TextEditingController _socksPortController;
-  late TextEditingController _redirPortController;
-  late TextEditingController _tProxyPortController;
+  late final TextEditingController _mixedPortController;
+  late final TextEditingController _portController;
+  late final TextEditingController _socksPortController;
+  late final TextEditingController _redirPortController;
+  late final TextEditingController _tProxyPortController;
 
   @override
   void initState() {
@@ -544,6 +544,16 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
     setState(() {
       _isMore = !_isMore;
     });
+  }
+
+  @override
+  void dispose() {
+    _mixedPortController.dispose();
+    _portController.dispose();
+    _socksPortController.dispose();
+    _redirPortController.dispose();
+    _tProxyPortController.dispose();
+    super.dispose();
   }
 
   @override

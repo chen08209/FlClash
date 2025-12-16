@@ -7,10 +7,7 @@ import 'package:flutter/material.dart';
 class AddProfileView extends StatelessWidget {
   final BuildContext context;
 
-  const AddProfileView({
-    super.key,
-    required this.context,
-  });
+  const AddProfileView({super.key, required this.context});
 
   Future<void> _handleAddProfileFormFile() async {
     globalState.appController.addProfileFormFile();
@@ -25,10 +22,7 @@ class AddProfileView extends StatelessWidget {
       globalState.appController.addProfileFormQrCode();
       return;
     }
-    final url = await BaseNavigator.push(
-      context,
-      const ScanPage(),
-    );
+    final url = await BaseNavigator.push(context, const ScanPage());
     if (url != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _handleAddProfileFormURL(url);
@@ -80,7 +74,7 @@ class AddProfileView extends StatelessWidget {
           title: Text(appLocalizations.url),
           subtitle: Text(appLocalizations.urlDesc),
           onTap: _toAdd,
-        )
+        ),
       ],
     );
   }
@@ -94,12 +88,18 @@ class URLFormDialog extends StatefulWidget {
 }
 
 class _URLFormDialogState extends State<URLFormDialog> {
-  final urlController = TextEditingController();
+  final _urlController = TextEditingController();
 
   Future<void> _handleAddProfileFormURL() async {
-    final url = urlController.value.text;
+    final url = _urlController.value.text;
     if (url.isEmpty) return;
     Navigator.of(context).pop<String>(url);
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
   }
 
   @override
@@ -110,7 +110,7 @@ class _URLFormDialogState extends State<URLFormDialog> {
         TextButton(
           onPressed: _handleAddProfileFormURL,
           child: Text(appLocalizations.submit),
-        )
+        ),
       ],
       child: SizedBox(
         width: 300,
@@ -125,7 +125,7 @@ class _URLFormDialogState extends State<URLFormDialog> {
                 _handleAddProfileFormURL();
               },
               onEditingComplete: _handleAddProfileFormURL,
-              controller: urlController,
+              controller: _urlController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: appLocalizations.url,

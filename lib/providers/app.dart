@@ -399,32 +399,6 @@ class SystemUiOverlayStyleState extends _$SystemUiOverlayStyleState
   }
 }
 
-@riverpod
-class ProfileOverrideState extends _$ProfileOverrideState
-    with AutoDisposeNotifierMixin {
-  @override
-  ProfileOverrideModel? build() {
-    return globalState.appState.profileOverrideModel;
-  }
-
-  @override
-  onUpdate(value) {
-    globalState.appState = globalState.appState.copyWith(
-      profileOverrideModel: value,
-    );
-  }
-
-  void updateState(
-    ProfileOverrideModel? Function(ProfileOverrideModel? state) builder,
-  ) {
-    final value = builder(state);
-    if (value == null) {
-      return;
-    }
-    this.value = value;
-  }
-}
-
 @Riverpod(name: 'coreStatusProvider')
 class _CoreStatus extends _$CoreStatus with AutoDisposeNotifierMixin {
   @override

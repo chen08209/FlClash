@@ -1330,60 +1330,6 @@ abstract class _$SystemUiOverlayStyleState
   }
 }
 
-@ProviderFor(ProfileOverrideState)
-const profileOverrideStateProvider = ProfileOverrideStateProvider._();
-
-final class ProfileOverrideStateProvider
-    extends $NotifierProvider<ProfileOverrideState, ProfileOverrideModel?> {
-  const ProfileOverrideStateProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'profileOverrideStateProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$profileOverrideStateHash();
-
-  @$internal
-  @override
-  ProfileOverrideState create() => ProfileOverrideState();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ProfileOverrideModel? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ProfileOverrideModel?>(value),
-    );
-  }
-}
-
-String _$profileOverrideStateHash() =>
-    r'6bcf739e034cc39623dc63bf304189d63fc19404';
-
-abstract class _$ProfileOverrideState extends $Notifier<ProfileOverrideModel?> {
-  ProfileOverrideModel? build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<ProfileOverrideModel?, ProfileOverrideModel?>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<ProfileOverrideModel?, ProfileOverrideModel?>,
-              ProfileOverrideModel?,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
-}
-
 @ProviderFor(_CoreStatus)
 const coreStatusProvider = _CoreStatusProvider._();
 

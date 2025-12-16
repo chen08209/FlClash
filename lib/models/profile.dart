@@ -6,6 +6,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:isar_community/isar.dart';
 
 import 'clash_config.dart';
 
@@ -45,7 +46,7 @@ abstract class SubscriptionInfo with _$SubscriptionInfo {
 abstract class Profile with _$Profile {
   const factory Profile({
     required String id,
-    String? label,
+    @Default('') String label,
     String? currentGroupName,
     @Default('') String url,
     DateTime? lastUpdateDate,
@@ -54,7 +55,6 @@ abstract class Profile with _$Profile {
     @Default(true) bool autoUpdate,
     @Default({}) Map<String, String> selectedMap,
     @Default({}) Set<String> unfoldSet,
-    @Default(OverrideData()) OverrideData overrideData,
     @Default(Overwrite()) Overwrite overwrite,
     @JsonKey(includeToJson: false, includeFromJson: false)
     @Default(false)
@@ -65,10 +65,11 @@ abstract class Profile with _$Profile {
       _$ProfileFromJson(json);
 
   factory Profile.normal({String? label, String url = ''}) {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
     return Profile(
-      label: label,
+      label: label ?? id,
       url: url,
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: id,
       autoUpdateDuration: defaultUpdateDuration,
     );
   }
@@ -105,56 +106,40 @@ abstract class ScriptOverwrite with _$ScriptOverwrite {
       _$ScriptOverwriteFromJson(json);
 }
 
-@freezed
-abstract class OverrideData with _$OverrideData {
-  const factory OverrideData({
-    @Default(false) bool enable,
-    @Default(OverrideRule()) OverrideRule rule,
-  }) = _OverrideData;
-
-  factory OverrideData.fromJson(Map<String, Object?> json) =>
-      _$OverrideDataFromJson(json);
-}
-
-@freezed
-abstract class OverrideRule with _$OverrideRule {
-  const factory OverrideRule({
-    @Default(OverrideRuleType.added) OverrideRuleType type,
-    @Default([]) List<Rule> overrideRules,
-    @Default([]) List<Rule> addedRules,
-  }) = _OverrideRule;
-
-  factory OverrideRule.fromJson(Map<String, Object?> json) =>
-      _$OverrideRuleFromJson(json);
-}
-
-extension OverrideDataExt on OverrideData {
-  List<String> get runningRule {
-    if (!enable) {
-      return [];
-    }
-    return rule.rules.map((item) => item.value).toList();
-  }
-}
-
-extension OverrideRuleExt on OverrideRule {
-  List<Rule> get rules => switch (type == OverrideRuleType.override) {
-    true => overrideRules,
-    false => addedRules,
-  };
-
-  OverrideRule updateRules(List<Rule> Function(List<Rule> rules) builder) {
-    if (type == OverrideRuleType.added) {
-      return copyWith(addedRules: builder(addedRules));
-    }
-    return copyWith(overrideRules: builder(overrideRules));
-  }
-}
-
 extension ProfilesExt on List<Profile> {
   Profile? getProfile(String? profileId) {
     final index = indexWhere((profile) => profile.id == profileId);
     return index == -1 ? null : this[index];
+  }
+
+  String _getLabel(String label, String id) {
+    final realLabel = label.getSafeValue(id);
+    final hasDup =
+        indexWhere(
+          (element) => element.label == realLabel && element.id != id,
+        ) !=
+        -1;
+    if (hasDup) {
+      return _getLabel(utils.getOverwriteLabel(realLabel), id);
+    } else {
+      return label;
+    }
+  }
+
+  List<Profile> copyAndAddProfile(Profile profile) {
+    final List<Profile> profilesTemp = List.from(this);
+    final index = profilesTemp.indexWhere(
+      (element) => element.id == profile.id,
+    );
+    final updateProfile = profile.copyWith(
+      label: _getLabel(profile.label, profile.id),
+    );
+    if (index == -1) {
+      profilesTemp.add(updateProfile);
+    } else {
+      profilesTemp[index] = updateProfile;
+    }
+    return profilesTemp;
   }
 }
 
@@ -164,33 +149,42 @@ extension ProfileExtension on Profile {
 
   bool get realAutoUpdate => url.isEmpty == true ? false : autoUpdate;
 
+  String get fileName => label.isNotEmpty ? label : id;
+
   Future<void> checkAndUpdate() async {
-    final isExists = await check();
-    if (!isExists) {
-      if (url.isNotEmpty) {
-        await update();
-      }
+    final mFile = await _getFile(false);
+    final isExists = await mFile.exists();
+    if (isExists || url.isEmpty) {
+      return;
     }
+    update();
   }
 
-  Future<bool> check() async {
-    final profilePath = await appPath.getProfilePath(id);
-    return await File(profilePath).exists();
-  }
-
-  Future<File> getFile() async {
+  Future<File> _getFile([bool autoCreate = false]) async {
     final path = await appPath.getProfilePath(id);
     final file = File(path);
     final isExists = await file.exists();
-    if (!isExists) {
-      await file.create(recursive: true);
+    if (!isExists && autoCreate) {
+      return await file.create(recursive: true);
     }
     return file;
+    // final oldPath = await appPath.getProfilePath(id);
+    // final newPath = await appPath.getProfilePath(fileName);
+    // final oldFile = oldPath == newPath ? null : File(oldPath);
+    // final oldIsExists = await oldFile?.exists() ?? false;
+    // if (oldIsExists) {
+    //   return await oldFile!.rename(newPath);
+    // }
+    // final file = File(newPath);
+    // final isExists = await file.exists();
+    // if (!isExists && autoCreate) {
+    //   return await file.create(recursive: true);
+    // }
+    // return file;
   }
 
-  Future<int> get profileLastModified async {
-    final file = await getFile();
-    return (await file.lastModified()).microsecondsSinceEpoch;
+  Future<File> get file async {
+    return _getFile();
   }
 
   Future<Profile> update() async {
@@ -198,7 +192,9 @@ extension ProfileExtension on Profile {
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
     return await copyWith(
-      label: label ?? utils.getFileNameForDisposition(disposition) ?? id,
+      label: label.getSafeValue(
+        utils.getFileNameForDisposition(disposition).getSafeValue(id),
+      ),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
     ).saveFile(response.data ?? Uint8List.fromList([]));
   }
@@ -208,10 +204,15 @@ extension ProfileExtension on Profile {
     if (message.isNotEmpty) {
       throw message;
     }
-    final file = await getFile();
+    final mFile = await file;
     await Isolate.run(() async {
-      return await file.writeAsBytes(bytes);
+      return await mFile.writeAsBytes(bytes);
     });
     return copyWith(lastUpdateDate: DateTime.now());
   }
+}
+
+@collection
+class ProfileCollection {
+  Id localId = Isar.autoIncrement;
 }

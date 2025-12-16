@@ -200,7 +200,7 @@ class ProfileItem extends StatelessWidget {
     }
 
     final previewPage = EditorPage(
-      title: profile.label ?? profile.id,
+      title: profile.label.getSafeValue(profile.id),
       content: content,
     );
     BaseNavigator.push<String>(context, previewPage);
@@ -266,10 +266,10 @@ class ProfileItem extends StatelessWidget {
   Future<void> _handleExportFile(BuildContext context) async {
     final res = await globalState.appController.safeRun<bool>(
       () async {
-        final file = await profile.getFile();
+        final mFile = await profile.file;
         final value = await picker.saveFile(
-          profile.label ?? profile.id,
-          file.readAsBytesSync(),
+          profile.label.getSafeValue(profile.id),
+          mFile.readAsBytesSync(),
         );
         if (value == null) return false;
         return true;

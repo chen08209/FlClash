@@ -5436,7 +5436,7 @@ as int,
 /// @nodoc
 mixin _$ClashConfigState {
 
- bool get overrideDns; ClashConfig get clashConfig; OverrideData get overrideData; RouteMode get routeMode;
+ bool get overrideDns; ClashConfig get clashConfig; RouteMode get routeMode;
 /// Create a copy of ClashConfigState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -5447,16 +5447,16 @@ $ClashConfigStateCopyWith<ClashConfigState> get copyWith => _$ClashConfigStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClashConfigState&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.clashConfig, clashConfig) || other.clashConfig == clashConfig)&&(identical(other.overrideData, overrideData) || other.overrideData == overrideData)&&(identical(other.routeMode, routeMode) || other.routeMode == routeMode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClashConfigState&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.clashConfig, clashConfig) || other.clashConfig == clashConfig)&&(identical(other.routeMode, routeMode) || other.routeMode == routeMode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,overrideDns,clashConfig,overrideData,routeMode);
+int get hashCode => Object.hash(runtimeType,overrideDns,clashConfig,routeMode);
 
 @override
 String toString() {
-  return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, overrideData: $overrideData, routeMode: $routeMode)';
+  return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, routeMode: $routeMode)';
 }
 
 
@@ -5467,11 +5467,11 @@ abstract mixin class $ClashConfigStateCopyWith<$Res>  {
   factory $ClashConfigStateCopyWith(ClashConfigState value, $Res Function(ClashConfigState) _then) = _$ClashConfigStateCopyWithImpl;
 @useResult
 $Res call({
- bool overrideDns, ClashConfig clashConfig, OverrideData overrideData, RouteMode routeMode
+ bool overrideDns, ClashConfig clashConfig, RouteMode routeMode
 });
 
 
-$ClashConfigCopyWith<$Res> get clashConfig;$OverrideDataCopyWith<$Res> get overrideData;
+$ClashConfigCopyWith<$Res> get clashConfig;
 
 }
 /// @nodoc
@@ -5484,12 +5484,11 @@ class _$ClashConfigStateCopyWithImpl<$Res>
 
 /// Create a copy of ClashConfigState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? overrideDns = null,Object? clashConfig = null,Object? overrideData = null,Object? routeMode = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? overrideDns = null,Object? clashConfig = null,Object? routeMode = null,}) {
   return _then(_self.copyWith(
 overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
 as bool,clashConfig: null == clashConfig ? _self.clashConfig : clashConfig // ignore: cast_nullable_to_non_nullable
-as ClashConfig,overrideData: null == overrideData ? _self.overrideData : overrideData // ignore: cast_nullable_to_non_nullable
-as OverrideData,routeMode: null == routeMode ? _self.routeMode : routeMode // ignore: cast_nullable_to_non_nullable
+as ClashConfig,routeMode: null == routeMode ? _self.routeMode : routeMode // ignore: cast_nullable_to_non_nullable
 as RouteMode,
   ));
 }
@@ -5501,15 +5500,6 @@ $ClashConfigCopyWith<$Res> get clashConfig {
   
   return $ClashConfigCopyWith<$Res>(_self.clashConfig, (value) {
     return _then(_self.copyWith(clashConfig: value));
-  });
-}/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$OverrideDataCopyWith<$Res> get overrideData {
-  
-  return $OverrideDataCopyWith<$Res>(_self.overrideData, (value) {
-    return _then(_self.copyWith(overrideData: value));
   });
 }
 }
@@ -5593,10 +5583,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool overrideDns,  ClashConfig clashConfig,  OverrideData overrideData,  RouteMode routeMode)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool overrideDns,  ClashConfig clashConfig,  RouteMode routeMode)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ClashConfigState() when $default != null:
-return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.routeMode);case _:
+return $default(_that.overrideDns,_that.clashConfig,_that.routeMode);case _:
   return orElse();
 
 }
@@ -5614,10 +5604,10 @@ return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.rou
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool overrideDns,  ClashConfig clashConfig,  OverrideData overrideData,  RouteMode routeMode)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool overrideDns,  ClashConfig clashConfig,  RouteMode routeMode)  $default,) {final _that = this;
 switch (_that) {
 case _ClashConfigState():
-return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.routeMode);case _:
+return $default(_that.overrideDns,_that.clashConfig,_that.routeMode);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -5634,10 +5624,10 @@ return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.rou
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool overrideDns,  ClashConfig clashConfig,  OverrideData overrideData,  RouteMode routeMode)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool overrideDns,  ClashConfig clashConfig,  RouteMode routeMode)?  $default,) {final _that = this;
 switch (_that) {
 case _ClashConfigState() when $default != null:
-return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.routeMode);case _:
+return $default(_that.overrideDns,_that.clashConfig,_that.routeMode);case _:
   return null;
 
 }
@@ -5649,12 +5639,11 @@ return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.rou
 
 
 class _ClashConfigState implements ClashConfigState {
-  const _ClashConfigState({required this.overrideDns, required this.clashConfig, required this.overrideData, required this.routeMode});
+  const _ClashConfigState({required this.overrideDns, required this.clashConfig, required this.routeMode});
   
 
 @override final  bool overrideDns;
 @override final  ClashConfig clashConfig;
-@override final  OverrideData overrideData;
 @override final  RouteMode routeMode;
 
 /// Create a copy of ClashConfigState
@@ -5667,16 +5656,16 @@ _$ClashConfigStateCopyWith<_ClashConfigState> get copyWith => __$ClashConfigStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClashConfigState&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.clashConfig, clashConfig) || other.clashConfig == clashConfig)&&(identical(other.overrideData, overrideData) || other.overrideData == overrideData)&&(identical(other.routeMode, routeMode) || other.routeMode == routeMode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClashConfigState&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.clashConfig, clashConfig) || other.clashConfig == clashConfig)&&(identical(other.routeMode, routeMode) || other.routeMode == routeMode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,overrideDns,clashConfig,overrideData,routeMode);
+int get hashCode => Object.hash(runtimeType,overrideDns,clashConfig,routeMode);
 
 @override
 String toString() {
-  return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, overrideData: $overrideData, routeMode: $routeMode)';
+  return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, routeMode: $routeMode)';
 }
 
 
@@ -5687,11 +5676,11 @@ abstract mixin class _$ClashConfigStateCopyWith<$Res> implements $ClashConfigSta
   factory _$ClashConfigStateCopyWith(_ClashConfigState value, $Res Function(_ClashConfigState) _then) = __$ClashConfigStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool overrideDns, ClashConfig clashConfig, OverrideData overrideData, RouteMode routeMode
+ bool overrideDns, ClashConfig clashConfig, RouteMode routeMode
 });
 
 
-@override $ClashConfigCopyWith<$Res> get clashConfig;@override $OverrideDataCopyWith<$Res> get overrideData;
+@override $ClashConfigCopyWith<$Res> get clashConfig;
 
 }
 /// @nodoc
@@ -5704,12 +5693,11 @@ class __$ClashConfigStateCopyWithImpl<$Res>
 
 /// Create a copy of ClashConfigState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? overrideDns = null,Object? clashConfig = null,Object? overrideData = null,Object? routeMode = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? overrideDns = null,Object? clashConfig = null,Object? routeMode = null,}) {
   return _then(_ClashConfigState(
 overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
 as bool,clashConfig: null == clashConfig ? _self.clashConfig : clashConfig // ignore: cast_nullable_to_non_nullable
-as ClashConfig,overrideData: null == overrideData ? _self.overrideData : overrideData // ignore: cast_nullable_to_non_nullable
-as OverrideData,routeMode: null == routeMode ? _self.routeMode : routeMode // ignore: cast_nullable_to_non_nullable
+as ClashConfig,routeMode: null == routeMode ? _self.routeMode : routeMode // ignore: cast_nullable_to_non_nullable
 as RouteMode,
   ));
 }
@@ -5722,15 +5710,6 @@ $ClashConfigCopyWith<$Res> get clashConfig {
   
   return $ClashConfigCopyWith<$Res>(_self.clashConfig, (value) {
     return _then(_self.copyWith(clashConfig: value));
-  });
-}/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$OverrideDataCopyWith<$Res> get overrideData {
-  
-  return $OverrideDataCopyWith<$Res>(_self.overrideData, (value) {
-    return _then(_self.copyWith(overrideData: value));
   });
 }
 }
@@ -6538,317 +6517,6 @@ $VpnPropsCopyWith<$Res> get vpnProps {
   
   return $VpnPropsCopyWith<$Res>(_self.vpnProps, (value) {
     return _then(_self.copyWith(vpnProps: value));
-  });
-}
-}
-
-/// @nodoc
-mixin _$ProfileOverrideModel {
-
- ClashConfigSnippet get snippet; Set<String> get selectedRules; OverrideData? get overrideData;
-/// Create a copy of ProfileOverrideModel
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ProfileOverrideModelCopyWith<ProfileOverrideModel> get copyWith => _$ProfileOverrideModelCopyWithImpl<ProfileOverrideModel>(this as ProfileOverrideModel, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileOverrideModel&&(identical(other.snippet, snippet) || other.snippet == snippet)&&const DeepCollectionEquality().equals(other.selectedRules, selectedRules)&&(identical(other.overrideData, overrideData) || other.overrideData == overrideData));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,snippet,const DeepCollectionEquality().hash(selectedRules),overrideData);
-
-@override
-String toString() {
-  return 'ProfileOverrideModel(snippet: $snippet, selectedRules: $selectedRules, overrideData: $overrideData)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $ProfileOverrideModelCopyWith<$Res>  {
-  factory $ProfileOverrideModelCopyWith(ProfileOverrideModel value, $Res Function(ProfileOverrideModel) _then) = _$ProfileOverrideModelCopyWithImpl;
-@useResult
-$Res call({
- ClashConfigSnippet snippet, Set<String> selectedRules, OverrideData? overrideData
-});
-
-
-$ClashConfigSnippetCopyWith<$Res> get snippet;$OverrideDataCopyWith<$Res>? get overrideData;
-
-}
-/// @nodoc
-class _$ProfileOverrideModelCopyWithImpl<$Res>
-    implements $ProfileOverrideModelCopyWith<$Res> {
-  _$ProfileOverrideModelCopyWithImpl(this._self, this._then);
-
-  final ProfileOverrideModel _self;
-  final $Res Function(ProfileOverrideModel) _then;
-
-/// Create a copy of ProfileOverrideModel
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? snippet = null,Object? selectedRules = null,Object? overrideData = freezed,}) {
-  return _then(_self.copyWith(
-snippet: null == snippet ? _self.snippet : snippet // ignore: cast_nullable_to_non_nullable
-as ClashConfigSnippet,selectedRules: null == selectedRules ? _self.selectedRules : selectedRules // ignore: cast_nullable_to_non_nullable
-as Set<String>,overrideData: freezed == overrideData ? _self.overrideData : overrideData // ignore: cast_nullable_to_non_nullable
-as OverrideData?,
-  ));
-}
-/// Create a copy of ProfileOverrideModel
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$ClashConfigSnippetCopyWith<$Res> get snippet {
-  
-  return $ClashConfigSnippetCopyWith<$Res>(_self.snippet, (value) {
-    return _then(_self.copyWith(snippet: value));
-  });
-}/// Create a copy of ProfileOverrideModel
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$OverrideDataCopyWith<$Res>? get overrideData {
-    if (_self.overrideData == null) {
-    return null;
-  }
-
-  return $OverrideDataCopyWith<$Res>(_self.overrideData!, (value) {
-    return _then(_self.copyWith(overrideData: value));
-  });
-}
-}
-
-
-/// Adds pattern-matching-related methods to [ProfileOverrideModel].
-extension ProfileOverrideModelPatterns on ProfileOverrideModel {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ProfileOverrideModel value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _ProfileOverrideModel() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ProfileOverrideModel value)  $default,){
-final _that = this;
-switch (_that) {
-case _ProfileOverrideModel():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ProfileOverrideModel value)?  $default,){
-final _that = this;
-switch (_that) {
-case _ProfileOverrideModel() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ClashConfigSnippet snippet,  Set<String> selectedRules,  OverrideData? overrideData)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _ProfileOverrideModel() when $default != null:
-return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ClashConfigSnippet snippet,  Set<String> selectedRules,  OverrideData? overrideData)  $default,) {final _that = this;
-switch (_that) {
-case _ProfileOverrideModel():
-return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ClashConfigSnippet snippet,  Set<String> selectedRules,  OverrideData? overrideData)?  $default,) {final _that = this;
-switch (_that) {
-case _ProfileOverrideModel() when $default != null:
-return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _ProfileOverrideModel implements ProfileOverrideModel {
-  const _ProfileOverrideModel({this.snippet = const ClashConfigSnippet(), final  Set<String> selectedRules = const {}, this.overrideData}): _selectedRules = selectedRules;
-  
-
-@override@JsonKey() final  ClashConfigSnippet snippet;
- final  Set<String> _selectedRules;
-@override@JsonKey() Set<String> get selectedRules {
-  if (_selectedRules is EqualUnmodifiableSetView) return _selectedRules;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableSetView(_selectedRules);
-}
-
-@override final  OverrideData? overrideData;
-
-/// Create a copy of ProfileOverrideModel
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$ProfileOverrideModelCopyWith<_ProfileOverrideModel> get copyWith => __$ProfileOverrideModelCopyWithImpl<_ProfileOverrideModel>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileOverrideModel&&(identical(other.snippet, snippet) || other.snippet == snippet)&&const DeepCollectionEquality().equals(other._selectedRules, _selectedRules)&&(identical(other.overrideData, overrideData) || other.overrideData == overrideData));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,snippet,const DeepCollectionEquality().hash(_selectedRules),overrideData);
-
-@override
-String toString() {
-  return 'ProfileOverrideModel(snippet: $snippet, selectedRules: $selectedRules, overrideData: $overrideData)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$ProfileOverrideModelCopyWith<$Res> implements $ProfileOverrideModelCopyWith<$Res> {
-  factory _$ProfileOverrideModelCopyWith(_ProfileOverrideModel value, $Res Function(_ProfileOverrideModel) _then) = __$ProfileOverrideModelCopyWithImpl;
-@override @useResult
-$Res call({
- ClashConfigSnippet snippet, Set<String> selectedRules, OverrideData? overrideData
-});
-
-
-@override $ClashConfigSnippetCopyWith<$Res> get snippet;@override $OverrideDataCopyWith<$Res>? get overrideData;
-
-}
-/// @nodoc
-class __$ProfileOverrideModelCopyWithImpl<$Res>
-    implements _$ProfileOverrideModelCopyWith<$Res> {
-  __$ProfileOverrideModelCopyWithImpl(this._self, this._then);
-
-  final _ProfileOverrideModel _self;
-  final $Res Function(_ProfileOverrideModel) _then;
-
-/// Create a copy of ProfileOverrideModel
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? snippet = null,Object? selectedRules = null,Object? overrideData = freezed,}) {
-  return _then(_ProfileOverrideModel(
-snippet: null == snippet ? _self.snippet : snippet // ignore: cast_nullable_to_non_nullable
-as ClashConfigSnippet,selectedRules: null == selectedRules ? _self._selectedRules : selectedRules // ignore: cast_nullable_to_non_nullable
-as Set<String>,overrideData: freezed == overrideData ? _self.overrideData : overrideData // ignore: cast_nullable_to_non_nullable
-as OverrideData?,
-  ));
-}
-
-/// Create a copy of ProfileOverrideModel
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$ClashConfigSnippetCopyWith<$Res> get snippet {
-  
-  return $ClashConfigSnippetCopyWith<$Res>(_self.snippet, (value) {
-    return _then(_self.copyWith(snippet: value));
-  });
-}/// Create a copy of ProfileOverrideModel
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$OverrideDataCopyWith<$Res>? get overrideData {
-    if (_self.overrideData == null) {
-    return null;
-  }
-
-  return $OverrideDataCopyWith<$Res>(_self.overrideData!, (value) {
-    return _then(_self.copyWith(overrideData: value));
   });
 }
 }

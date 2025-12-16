@@ -541,14 +541,14 @@ String getProxyDesc(Ref ref, Proxy proxy) {
   }
 }
 
-@riverpod
-OverrideData? getProfileOverrideData(Ref ref, String profileId) {
-  return ref.watch(
-    profilesProvider.select(
-      (state) => state.getProfile(profileId)?.overrideData,
-    ),
-  );
-}
+// @riverpod
+// OverrideData? getProfileOverrideData(Ref ref, String profileId) {
+//   return ref.watch(
+//     profilesProvider.select(
+//       (state) => state.getProfile(profileId)?.overrideData,
+//     ),
+//   );
+// }
 
 @riverpod
 VM2? layoutChange(Ref ref) {

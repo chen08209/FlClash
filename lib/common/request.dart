@@ -31,10 +31,23 @@ class Request {
   }
 
   Future<Response<Uint8List>> getFileResponseForUrl(String url) async {
-    return await _clashDio.get<Uint8List>(
-      url,
-      options: Options(responseType: ResponseType.bytes),
-    );
+    try {
+      return await _clashDio.get<Uint8List>(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+      );
+    } catch (e) {
+      commonPrint.log('getFileResponseForUrl error ${e.toString()}');
+      if (e is DioException) {
+        if (e.type == DioExceptionType.unknown) {
+          throw '未知网络错误';
+        } else if (e.type == DioExceptionType.badResponse) {
+          throw '网络请求异常，请稍后再试。';
+        }
+        rethrow;
+      }
+      throw '未知网络错误';
+    }
   }
 
   Future<Response<String>> getTextResponseForUrl(String url) async {

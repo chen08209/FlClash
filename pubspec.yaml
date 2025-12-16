@@ -65,6 +65,8 @@ dependencies:
       url: https://github.com/chen08209/yaml_writer
       ref: master
   super_sliver_list: ^0.4.1
+  isar_community: 3.3.0
+  isar_community_flutter_libs: 3.3.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -75,6 +77,7 @@ dev_dependencies:
   freezed: ^3.2.0
   riverpod_generator: ^3.0.0
   riverpod_lint: ^3.0.0
+  isar_community_generator: 3.3.0
 
 flutter:
   uses-material-design: true

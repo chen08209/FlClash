@@ -86,9 +86,9 @@ class AppPath {
     return join(directory.path, profilesDirectoryName);
   }
 
-  Future<String> getProfilePath(String id) async {
+  Future<String> getProfilePath(String fileName) async {
     final directory = await profilesPath;
-    return join(directory, '$id.yaml');
+    return join(directory, '$fileName.yaml');
   }
 
   Future<String> getIconsCacheDir() async {

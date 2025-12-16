@@ -347,26 +347,26 @@ class WebDAVFormDialog extends ConsumerStatefulWidget {
 }
 
 class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
-  late TextEditingController uriController;
-  late TextEditingController userController;
-  late TextEditingController passwordController;
+  late TextEditingController _uriController;
+  late TextEditingController _userController;
+  late TextEditingController _passwordController;
   final _obscureController = ValueNotifier<bool>(true);
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    uriController = TextEditingController(text: widget.dav?.uri);
-    userController = TextEditingController(text: widget.dav?.user);
-    passwordController = TextEditingController(text: widget.dav?.password);
+    _uriController = TextEditingController(text: widget.dav?.uri);
+    _userController = TextEditingController(text: widget.dav?.user);
+    _passwordController = TextEditingController(text: widget.dav?.password);
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     ref.read(appDAVSettingProvider.notifier).value = DAV(
-      uri: uriController.text,
-      user: userController.text,
-      password: passwordController.text,
+      uri: _uriController.text,
+      user: _userController.text,
+      password: _passwordController.text,
     );
     Navigator.pop(context);
   }
@@ -379,6 +379,9 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
   @override
   void dispose() {
     _obscureController.dispose();
+    _uriController.dispose();
+    _userController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -397,7 +400,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
           runSpacing: 16,
           children: [
             TextFormField(
-              controller: uriController,
+              controller: _uriController,
               maxLines: 5,
               minLines: 1,
               decoration: InputDecoration(
@@ -414,7 +417,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
               },
             ),
             TextFormField(
-              controller: userController,
+              controller: _userController,
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.account_circle),
                 border: const OutlineInputBorder(),
@@ -431,7 +434,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
               valueListenable: _obscureController,
               builder: (_, obscure, _) {
                 return TextFormField(
-                  controller: passwordController,
+                  controller: _passwordController,
                   obscureText: obscure,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.password),

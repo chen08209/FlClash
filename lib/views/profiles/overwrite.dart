@@ -86,6 +86,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => appLocalizations.standard,
       OverwriteType.script => appLocalizations.script,
+      OverwriteType.custom => '自定义',
     };
   }
 
@@ -93,6 +94,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => Icons.stars,
       OverwriteType.script => Icons.rocket,
+      OverwriteType.custom => Icons.dashboard_customize,
     };
   }
 
@@ -100,6 +102,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => appLocalizations.standardModeDesc,
       OverwriteType.script => appLocalizations.scriptModeDesc,
+      OverwriteType.custom => '自定义模式，支持完全自定义修改代理组以及规则',
     };
   }
 
@@ -180,6 +183,7 @@ class _Content extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => _StandardContent(profileId),
       OverwriteType.script => _ScriptContent(profileId),
+      OverwriteType.custom => SliverToBoxAdapter(),
     };
   }
 }

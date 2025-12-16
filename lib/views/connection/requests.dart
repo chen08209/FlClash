@@ -22,7 +22,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
     const TrackerInfosState(),
   );
   List<TrackerInfo> _requests = [];
-  late ScrollController _scrollController;
+  late final ScrollController _scrollController;
 
   void _onSearch(String value) {
     _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(

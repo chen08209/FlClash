@@ -9,6 +9,7 @@ export 'datetime.dart';
 export 'fixed.dart';
 export 'function.dart';
 export 'future.dart';
+export 'hive.dart';
 export 'http.dart';
 export 'icons.dart';
 export 'iterable.dart';

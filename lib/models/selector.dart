@@ -218,7 +218,6 @@ abstract class ClashConfigState with _$ClashConfigState {
   const factory ClashConfigState({
     required bool overrideDns,
     required ClashConfig clashConfig,
-    required OverrideData overrideData,
     required RouteMode routeMode,
   }) = _ClashConfigState;
 }
@@ -246,15 +245,6 @@ abstract class VpnState with _$VpnState {
     required TunStack stack,
     required VpnProps vpnProps,
   }) = _VpnState;
-}
-
-@freezed
-abstract class ProfileOverrideModel with _$ProfileOverrideModel {
-  const factory ProfileOverrideModel({
-    @Default(ClashConfigSnippet()) ClashConfigSnippet snippet,
-    @Default({}) Set<String> selectedRules,
-    OverrideData? overrideData,
-  }) = _ProfileOverrideModel;
 }
 
 @freezed
