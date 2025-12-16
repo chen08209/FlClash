@@ -467,5 +467,13 @@
   "vpnConfigChangeDetected": "VPN設定の変更が検出されました",
   "restart": "再起動",
   "speedStatistics": "速度統計",
-  "resetPageChangesTip": "現在のページに変更があります。リセットしてもよろしいですか？"
+  "resetPageChangesTip": "現在のページに変更があります。リセットしてもよろしいですか？",
+  "updateMihomoKernel": "Mihomoカーネルを更新",
+  "updateMihomoKernelDesc": "最新のMihomoカーネルをダウンロードして置き換えます。",
+  "updateMihomoKernelSuccess": "Mihomoカーネルの更新に成功しました",
+  "updateMihomoKernelFailed": "Mihomoカーネルの更新に失敗しました",
+  "currentMihomoKernelVersion": "現在のカーネルバージョン",
+  "latestMihomoKernelVersion": "最新のカーネルバージョン",
+  "mihomoKernelUpToDate": "カーネルは最新です",
+  "updateMihomoKernelAssetError": "現在のプラットフォームに適したカーネルが見つかりません"
 }

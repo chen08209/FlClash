@@ -695,6 +695,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "restartCoreTip": MessageLookupByLibrary.simpleMessage(
       "Are you sure you want to restart the core?",
     ),
+    "updateMihomoKernel":
+        MessageLookupByLibrary.simpleMessage("Update Mihomo kernel"),
+    "updateMihomoKernelAssetError": MessageLookupByLibrary.simpleMessage(
+        "No matching kernel asset found for this platform"),
+    "updateMihomoKernelFailed":
+        MessageLookupByLibrary.simpleMessage("Mihomo kernel update failed"),
+    "updateMihomoKernelDesc": MessageLookupByLibrary.simpleMessage(
+        "Download the latest Mihomo kernel and replace the current core."),
+    "currentMihomoKernelVersion":
+        MessageLookupByLibrary.simpleMessage("Current kernel version"),
+    "latestMihomoKernelVersion":
+        MessageLookupByLibrary.simpleMessage("Latest kernel version"),
+    "mihomoKernelUpToDate":
+        MessageLookupByLibrary.simpleMessage("Mihomo kernel is up to date"),
+    "updateMihomoKernelSuccess": MessageLookupByLibrary.simpleMessage(
+        "Mihomo kernel updated successfully"),
     "routeAddress": MessageLookupByLibrary.simpleMessage("Route address"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage(
       "Config listen route address",

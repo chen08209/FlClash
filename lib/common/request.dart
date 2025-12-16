@@ -30,6 +30,15 @@ class Request {
     );
   }
 
+  Future<Map<String, dynamic>?> fetchLatestMihomoRelease() async {
+    final response = await dio.get(
+      'https://api.github.com/repos/MetaCubeX/mihomo/releases/latest',
+      options: Options(responseType: ResponseType.json),
+    );
+    if (response.statusCode != HttpStatus.ok) return null;
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<Response<Uint8List>> getFileResponseForUrl(String url) async {
     try {
       return await _clashDio.get<Uint8List>(

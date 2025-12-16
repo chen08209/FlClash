@@ -466,5 +466,13 @@
   "vpnConfigChangeDetected": "VPN configuration change detected",
   "restart": "Restart",
   "speedStatistics": "Speed statistics",
-  "resetPageChangesTip": "The current page has changes. Are you sure you want to reset?"
+  "resetPageChangesTip": "The current page has changes. Are you sure you want to reset?",
+  "updateMihomoKernel": "Update Mihomo kernel",
+  "updateMihomoKernelDesc": "Download the latest Mihomo kernel and replace the current core.",
+  "updateMihomoKernelSuccess": "Mihomo kernel updated successfully",
+  "updateMihomoKernelFailed": "Mihomo kernel update failed",
+  "currentMihomoKernelVersion": "Current kernel version",
+  "latestMihomoKernelVersion": "Latest kernel version",
+  "mihomoKernelUpToDate": "Mihomo kernel is up to date",
+  "updateMihomoKernelAssetError": "No matching kernel asset found for this platform"
 }

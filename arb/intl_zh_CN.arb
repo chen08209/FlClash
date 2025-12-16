@@ -467,5 +467,13 @@
   "vpnConfigChangeDetected": "检测到VPN相关配置改动",
   "restart": "重启",
   "speedStatistics": "网速统计",
-  "resetPageChangesTip": "当前页面存在更改，确定重置吗？"
+  "resetPageChangesTip": "当前页面存在更改，确定重置吗？",
+  "updateMihomoKernel": "更新Mihomo内核",
+  "updateMihomoKernelDesc": "下载最新的Mihomo内核并替换当前版本。",
+  "updateMihomoKernelSuccess": "Mihomo内核更新成功",
+  "updateMihomoKernelFailed": "Mihomo内核更新失败",
+  "currentMihomoKernelVersion": "当前内核版本",
+  "latestMihomoKernelVersion": "最新内核版本",
+  "mihomoKernelUpToDate": "内核已是最新版本",
+  "updateMihomoKernelAssetError": "未找到适用于当前平台的内核资源"
 }

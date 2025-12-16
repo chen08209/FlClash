@@ -460,6 +460,20 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restart": MessageLookupByLibrary.simpleMessage("重启"),
     "restartCoreTip": MessageLookupByLibrary.simpleMessage("您确定要重启核心吗？"),
+    "updateMihomoKernel": MessageLookupByLibrary.simpleMessage("更新Mihomo内核"),
+    "updateMihomoKernelAssetError": MessageLookupByLibrary.simpleMessage(
+        "未找到适用于当前平台的内核资源"),
+    "updateMihomoKernelFailed":
+        MessageLookupByLibrary.simpleMessage("Mihomo内核更新失败"),
+    "updateMihomoKernelDesc":
+        MessageLookupByLibrary.simpleMessage("下载最新的Mihomo内核并替换当前版本。"),
+    "currentMihomoKernelVersion":
+        MessageLookupByLibrary.simpleMessage("当前内核版本"),
+    "latestMihomoKernelVersion":
+        MessageLookupByLibrary.simpleMessage("最新内核版本"),
+    "mihomoKernelUpToDate":
+        MessageLookupByLibrary.simpleMessage("内核已是最新版本"),
+    "updateMihomoKernelSuccess": MessageLookupByLibrary.simpleMessage("Mihomo内核更新成功"),
     "routeAddress": MessageLookupByLibrary.simpleMessage("路由地址"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage("配置监听路由地址"),
     "routeMode": MessageLookupByLibrary.simpleMessage("路由模式"),

@@ -526,6 +526,21 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restart": MessageLookupByLibrary.simpleMessage("再起動"),
     "restartCoreTip": MessageLookupByLibrary.simpleMessage("コアを再起動してもよろしいですか？"),
+    "updateMihomoKernel": MessageLookupByLibrary.simpleMessage("Mihomoカーネルを更新"),
+    "updateMihomoKernelAssetError": MessageLookupByLibrary.simpleMessage(
+        "現在のプラットフォームに適したカーネルが見つかりません"),
+    "updateMihomoKernelFailed":
+        MessageLookupByLibrary.simpleMessage("Mihomoカーネルの更新に失敗しました"),
+    "updateMihomoKernelDesc":
+        MessageLookupByLibrary.simpleMessage("最新のMihomoカーネルをダウンロードして置き換えます。"),
+    "currentMihomoKernelVersion":
+        MessageLookupByLibrary.simpleMessage("現在のカーネルバージョン"),
+    "latestMihomoKernelVersion":
+        MessageLookupByLibrary.simpleMessage("最新のカーネルバージョン"),
+    "mihomoKernelUpToDate":
+        MessageLookupByLibrary.simpleMessage("カーネルは最新です"),
+    "updateMihomoKernelSuccess":
+        MessageLookupByLibrary.simpleMessage("Mihomoカーネルの更新に成功しました"),
     "routeAddress": MessageLookupByLibrary.simpleMessage("ルートアドレス"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage("ルートアドレスを設定"),
     "routeMode": MessageLookupByLibrary.simpleMessage("ルートモード"),

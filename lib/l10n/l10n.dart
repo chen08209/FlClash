@@ -3663,6 +3663,86 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Update Mihomo kernel`
+  String get updateMihomoKernel {
+    return Intl.message(
+      'Update Mihomo kernel',
+      name: 'updateMihomoKernel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Download the latest Mihomo kernel and replace the current core.`
+  String get updateMihomoKernelDesc {
+    return Intl.message(
+      'Download the latest Mihomo kernel and replace the current core.',
+      name: 'updateMihomoKernelDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mihomo kernel updated successfully`
+  String get updateMihomoKernelSuccess {
+    return Intl.message(
+      'Mihomo kernel updated successfully',
+      name: 'updateMihomoKernelSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mihomo kernel update failed`
+  String get updateMihomoKernelFailed {
+    return Intl.message(
+      'Mihomo kernel update failed',
+      name: 'updateMihomoKernelFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current kernel version`
+  String get currentMihomoKernelVersion {
+    return Intl.message(
+      'Current kernel version',
+      name: 'currentMihomoKernelVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Latest kernel version`
+  String get latestMihomoKernelVersion {
+    return Intl.message(
+      'Latest kernel version',
+      name: 'latestMihomoKernelVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mihomo kernel is up to date`
+  String get mihomoKernelUpToDate {
+    return Intl.message(
+      'Mihomo kernel is up to date',
+      name: 'mihomoKernelUpToDate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No matching kernel asset found for this platform`
+  String get updateMihomoKernelAssetError {
+    return Intl.message(
+      'No matching kernel asset found for this platform',
+      name: 'updateMihomoKernelAssetError',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

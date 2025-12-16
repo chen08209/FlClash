@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -410,6 +411,180 @@ class AppController {
       }
       await updateProfile(profile);
     }
+  }
+
+  String _getMihomoOsTag() {
+    if (system.isWindows) return 'windows';
+    if (system.isMacOS) return 'darwin';
+    if (system.isLinux) return 'linux';
+    return Platform.operatingSystem.toLowerCase();
+  }
+
+  String _getMihomoArchTag() {
+    return switch (Abi.current()) {
+      Abi.macosArm64 || Abi.linuxArm64 || Abi.windowsArm64 || Abi.androidArm64 =>
+        'arm64',
+      Abi.androidArm => 'armv7',
+      _ => 'amd64',
+    };
+  }
+
+  Future<String?> _getCurrentMihomoVersion() async {
+    try {
+      final result = await Process.run(appPath.corePath, ['-v']);
+      if (result.exitCode != 0) return null;
+      final output = '${result.stdout}${result.stderr}';
+      final match =
+          RegExp(r'v?\\d+(?:\\.\\d+)+(?:[-+][\\w\\.]+)?', caseSensitive: false)
+              .firstMatch(output);
+      return match?.group(0)?.replaceFirst(RegExp('^v'), '');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<({
+    String? currentVersion,
+    String? latestVersion,
+    bool hasUpdate,
+  })> getMihomoKernelVersions() async {
+    final release = await request.fetchLatestMihomoRelease();
+    final latestRaw = release == null ? null : release['tag_name'] as String?;
+    final latestVersion = latestRaw?.replaceFirst(RegExp('^v'), '');
+    final currentVersion = await _getCurrentMihomoVersion();
+    final hasUpdate = latestVersion != null &&
+        (currentVersion == null ||
+            utils.compareVersions(latestVersion, currentVersion) > 0);
+    return (
+      currentVersion: currentVersion,
+      latestVersion: latestVersion ?? latestRaw,
+      hasUpdate: hasUpdate,
+    );
+  }
+
+  Future<Map<String, dynamic>> _getTargetMihomoAsset() async {
+    final release = await request.fetchLatestMihomoRelease();
+    if (release == null) {
+      throw appLocalizations.checkUpdateError;
+    }
+    final assets = release['assets'] as List? ?? [];
+    final osTag = _getMihomoOsTag();
+    final archTag = _getMihomoArchTag();
+    for (final asset in assets) {
+      if (asset is! Map<String, dynamic>) continue;
+      final name = (asset['name'] as String?)?.toLowerCase() ?? '';
+      if (!name.contains(osTag) || !name.contains(archTag)) {
+        continue;
+      }
+      if (name.contains('flclashcore') || name.contains('mihomo')) {
+        return asset;
+      }
+    }
+    throw appLocalizations.updateMihomoKernelAssetError;
+  }
+
+  Future<String> _downloadMihomoAsset(Map<String, dynamic> asset) async {
+    final downloadUrl = asset['browser_download_url'] as String?;
+    final name = asset['name'] as String?;
+    if (downloadUrl == null || name == null) {
+      throw appLocalizations.updateMihomoKernelAssetError;
+    }
+    final response = await request.getFileResponseForUrl(downloadUrl);
+    final tempDir = await appPath.tempPath;
+    final tempPath = join(tempDir, name);
+    final file = File(tempPath);
+    await file.writeAsBytes(response.data ?? [], flush: true);
+    return tempPath;
+  }
+
+  ArchiveFile? _findExecutableFile(List<ArchiveFile> files, String fileName) {
+    final target = fileName.toLowerCase();
+    for (final file in files) {
+      if (!file.isFile) continue;
+      if (basename(file.name).toLowerCase() == target) {
+        return file;
+      }
+    }
+    return null;
+  }
+
+  Future<String> _writeArchiveFile(ArchiveFile file) async {
+    final tempDir = await appPath.tempPath;
+    final outputPath = join(tempDir, basename(file.name));
+    final outputFile = File(outputPath);
+    await outputFile.writeAsBytes(file.content as List<int>, flush: true);
+    return outputPath;
+  }
+
+  Future<String> _extractMihomoBinary(String path) async {
+    final lowerPath = path.toLowerCase();
+    final bytes = await File(path).readAsBytes();
+    final executableName = 'flclashcore${system.isWindows ? '.exe' : ''}';
+    List<ArchiveFile> files = [];
+    if (lowerPath.endsWith('.zip')) {
+      files = ZipDecoder().decodeBytes(bytes).files;
+    } else if (lowerPath.endsWith('.tar.gz') || lowerPath.endsWith('.tgz')) {
+      files = TarDecoder()
+          .decodeBytes(GZipDecoder().decodeBytes(bytes))
+          .files;
+    } else if (lowerPath.endsWith('.gz')) {
+      final output = join(
+        await appPath.tempPath,
+        basenameWithoutExtension(path),
+      );
+      await File(output).writeAsBytes(
+        GZipDecoder().decodeBytes(bytes),
+        flush: true,
+      );
+      return output;
+    } else {
+      return path;
+    }
+
+    final targetFile = _findExecutableFile(files, executableName) ??
+        _findExecutableFile(
+          files,
+          'mihomo${system.isWindows ? '.exe' : ''}',
+        ) ??
+        files.firstWhere((file) => file.isFile);
+    return _writeArchiveFile(targetFile);
+  }
+
+  Future<void> _replaceMihomoBinary(String sourcePath) async {
+    final corePath = appPath.corePath;
+    final target = File(corePath);
+    if (await target.exists()) {
+      await target.delete();
+    }
+    await File(sourcePath).copy(corePath);
+    if (!system.isWindows) {
+      await Process.run('chmod', ['+x', corePath]);
+    }
+  }
+
+  Future<bool> updateMihomoKernel() async {
+    final needRestart = _ref.read(isStartProvider);
+    final res = await safeRun<bool>(() async {
+      if (needRestart) {
+        await updateStatus(false);
+      } else {
+        await coreController.shutdown();
+      }
+      final asset = await _getTargetMihomoAsset();
+      final downloadPath = await _downloadMihomoAsset(asset);
+      final binaryPath = await _extractMihomoBinary(downloadPath);
+      await _replaceMihomoBinary(binaryPath);
+      await coreController.destroy();
+      await _connectCore();
+      await _initCore();
+      _ref.read(initProvider.notifier).value = true;
+      if (needRestart) {
+        await updateStatus(true);
+      }
+      globalState.showNotifier(appLocalizations.updateMihomoKernelSuccess);
+      return true;
+    }, needLoading: true, title: appLocalizations.updateMihomoKernel);
+    return res == true;
   }
 
   Future<void> savePreferences() async {

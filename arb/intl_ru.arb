@@ -467,5 +467,13 @@
   "vpnConfigChangeDetected": "Обнаружено изменение конфигурации VPN",
   "restart": "Перезапустить",
   "speedStatistics": "Статистика скорости",
-  "resetPageChangesTip": "На текущей странице есть изменения. Вы уверены, что хотите сбросить?"
+  "resetPageChangesTip": "На текущей странице есть изменения. Вы уверены, что хотите сбросить?",
+  "updateMihomoKernel": "Обновить ядро Mihomo",
+  "updateMihomoKernelDesc": "Загрузить и заменить текущее ядро Mihomo.",
+  "updateMihomoKernelSuccess": "Ядро Mihomo успешно обновлено",
+  "updateMihomoKernelFailed": "Не удалось обновить ядро Mihomo",
+  "currentMihomoKernelVersion": "Текущая версия ядра",
+  "latestMihomoKernelVersion": "Последняя версия ядра",
+  "mihomoKernelUpToDate": "Ядро уже обновлено",
+  "updateMihomoKernelAssetError": "Не удалось найти подходящий файл ядра для текущей платформы"
 }

@@ -37,15 +37,131 @@ class ResourcesView extends StatelessWidget {
 
     return CommonScaffold(
       title: appLocalizations.resources,
-      body: ListView.separated(
-        itemBuilder: (_, index) {
-          final geoItem = geoItems[index];
-          return GeoDataListItem(geoItem: geoItem);
-        },
-        separatorBuilder: (BuildContext context, int index) {
-          return const Divider(height: 0);
-        },
-        itemCount: geoItems.length,
+      body: ListView(
+        children: [
+          if (!system.isAndroid) const UpdateKernelTile(),
+          if (!system.isAndroid) const Divider(height: 0),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (_, index) {
+              final geoItem = geoItems[index];
+              return GeoDataListItem(geoItem: geoItem);
+            },
+            separatorBuilder: (BuildContext context, int index) {
+              return const Divider(height: 0);
+            },
+            itemCount: geoItems.length,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class UpdateKernelTile extends ConsumerStatefulWidget {
+  const UpdateKernelTile({super.key});
+
+  @override
+  ConsumerState<UpdateKernelTile> createState() => _UpdateKernelTileState();
+}
+
+class _UpdateKernelTileState extends ConsumerState<UpdateKernelTile> {
+  bool _updating = false;
+  bool _loadingInfo = true;
+  bool _hasUpdate = false;
+  String? _currentVersion;
+  String? _latestVersion;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshKernelInfo();
+  }
+
+  Future<void> _refreshKernelInfo() async {
+    final info = await globalState.appController.safeRun(
+      globalState.appController.getMihomoKernelVersions,
+      title: appLocalizations.updateMihomoKernel,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingInfo = false;
+      _currentVersion = info?.currentVersion;
+      _latestVersion = info?.latestVersion;
+      _hasUpdate = info?.hasUpdate == true;
+    });
+  }
+
+  Future<void> _handleUpdate() async {
+    if (_updating) return;
+    setState(() => _updating = true);
+    final success = await globalState.appController.updateMihomoKernel();
+    if (!mounted) return;
+    setState(() => _updating = false);
+    if (success) {
+      await _refreshKernelInfo();
+    } else {
+      globalState.showNotifier(appLocalizations.updateMihomoKernelFailed);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final versionStyle = context.textTheme.bodyMedium;
+    return ListItem(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      title: Text(appLocalizations.updateMihomoKernel),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 6),
+          Text(
+            appLocalizations.updateMihomoKernelDesc,
+            style: context.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_currentVersion != null)
+                      Text(
+                        '${appLocalizations.currentMihomoKernelVersion}: ${_currentVersion!}',
+                        style: versionStyle,
+                      ),
+                    if (_latestVersion != null)
+                      Text(
+                        '${appLocalizations.latestMihomoKernelVersion}: ${_latestVersion!}',
+                        style: versionStyle,
+                      ),
+                    if (!_loadingInfo && !_hasUpdate)
+                      Text(
+                        appLocalizations.mihomoKernelUpToDate,
+                        style: versionStyle,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (_hasUpdate)
+                FilledButton.icon(
+                  onPressed: _updating ? null : _handleUpdate,
+                  icon: _updating
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.system_update_alt),
+                  label: Text(appLocalizations.update),
+                ),
+            ],
+          ),
+          const SizedBox(height: 2),
+        ],
       ),
     );
   }

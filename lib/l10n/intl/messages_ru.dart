@@ -734,6 +734,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "restartCoreTip": MessageLookupByLibrary.simpleMessage(
       "Вы уверены, что хотите перезапустить ядро?",
     ),
+    "updateMihomoKernel":
+        MessageLookupByLibrary.simpleMessage("Обновить ядро Mihomo"),
+    "updateMihomoKernelAssetError": MessageLookupByLibrary.simpleMessage(
+        "Не удалось найти подходящий файл ядра для текущей платформы"),
+    "updateMihomoKernelFailed": MessageLookupByLibrary.simpleMessage(
+        "Не удалось обновить ядро Mihomo"),
+    "updateMihomoKernelDesc": MessageLookupByLibrary.simpleMessage(
+        "Загрузить и заменить текущее ядро Mihomo."),
+    "currentMihomoKernelVersion":
+        MessageLookupByLibrary.simpleMessage("Текущая версия ядра"),
+    "latestMihomoKernelVersion":
+        MessageLookupByLibrary.simpleMessage("Последняя версия ядра"),
+    "mihomoKernelUpToDate":
+        MessageLookupByLibrary.simpleMessage("Ядро уже обновлено"),
+    "updateMihomoKernelSuccess": MessageLookupByLibrary.simpleMessage(
+        "Ядро Mihomo успешно обновлено"),
     "routeAddress": MessageLookupByLibrary.simpleMessage("Адрес маршрутизации"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage(
       "Настройка адреса прослушивания маршрутизации",
