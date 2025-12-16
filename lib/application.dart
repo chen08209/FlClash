@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
@@ -25,6 +26,7 @@ class Application extends ConsumerStatefulWidget {
 
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
+  bool _preHasVpn = false;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -45,22 +47,22 @@ class ApplicationState extends ConsumerState<Application> {
   @override
   void initState() {
     super.initState();
-    _autoUpdateProfilesTask();
-    globalState.appController = AppController(context, ref);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final currentContext = globalState.navigatorKey.currentContext;
       if (currentContext != null) {
-        globalState.appController = AppController(currentContext, ref);
+        await appController.attach(currentContext, ref);
+      } else {
+        exit(0);
       }
-      await globalState.appController.init();
-      globalState.appController.initLink();
+      _autoUpdateProfilesTask();
+      appController.initLink();
       app?.initShortcuts();
     });
   }
 
   void _autoUpdateProfilesTask() {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
-      await globalState.appController.autoUpdateProfiles();
+      await appController.autoUpdateProfiles();
       _autoUpdateProfilesTask();
     });
   }
@@ -81,11 +83,13 @@ class ApplicationState extends ConsumerState<Application> {
       child: CoreManager(
         child: ConnectivityManager(
           onConnectivityChanged: (results) async {
-            if (!results.contains(ConnectivityResult.vpn)) {
-              coreController.closeConnections();
+            commonPrint.log('connectivityChanged ${results.toString()}');
+            appController.updateLocalIp();
+            final hasVpn = results.contains(ConnectivityResult.vpn);
+            if (_preHasVpn == hasVpn) {
+              appController.addCheckIp();
             }
-            globalState.appController.updateLocalIp();
-            globalState.appController.addCheckIpNumDebounce();
+            _preHasVpn = hasVpn;
           },
           child: child,
         ),
@@ -163,8 +167,7 @@ class ApplicationState extends ConsumerState<Application> {
     linkManager.destroy();
     _autoUpdateProfilesTaskTimer?.cancel();
     await coreController.destroy();
-    await globalState.appController.savePreferences();
-    await globalState.appController.handleExit();
+    await appController.handleExit();
     super.dispose();
   }
 }

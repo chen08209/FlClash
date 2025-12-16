@@ -1,13 +1,14 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/about.dart';
 import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/application_setting.dart';
+import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/config.dart';
 import 'package:fl_clash/views/hotkey.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -16,7 +17,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' show dirname, join;
 
-import 'backup_and_recovery.dart';
 import 'config/advanced.dart';
 import 'developer.dart';
 import 'theme.dart';
@@ -85,7 +85,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
   Widget build(BuildContext context) {
     final vm2 = ref.watch(
       appSettingProvider.select(
-        (state) => VM2(a: state.locale, b: state.developerMode),
+        (state) => VM2(state.locale, state.developerMode),
       ),
     );
     final items = [
@@ -143,9 +143,7 @@ class _LocaleItem extends ConsumerWidget {
         onChanged: (Locale? locale) {
           ref
               .read(appSettingProvider.notifier)
-              .updateState(
-                (state) => state.copyWith(locale: locale?.toString()),
-              );
+              .update((state) => state.copyWith(locale: locale?.toString()));
         },
         textBuilder: (locale) => _getLocaleString(locale),
         value: currentLocale,
@@ -175,9 +173,9 @@ class _BackupItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListItem.open(
       leading: const Icon(Icons.cloud_sync),
-      title: Text(context.appLocalizations.backupAndRecovery),
-      subtitle: Text(context.appLocalizations.backupAndRecoveryDesc),
-      delegate: OpenDelegate(widget: const BackupAndRecovery()),
+      title: Text(context.appLocalizations.backupAndRestore),
+      subtitle: Text(context.appLocalizations.backupAndRestoreDesc),
+      delegate: OpenDelegate(widget: const BackupAndRestore()),
     );
   }
 }
@@ -280,10 +278,9 @@ class _DisclaimerItem extends StatelessWidget {
       leading: const Icon(Icons.gavel),
       title: Text(context.appLocalizations.disclaimer),
       onTap: () async {
-        final isDisclaimerAccepted = await globalState.appController
-            .showDisclaimer();
+        final isDisclaimerAccepted = await appController.showDisclaimer();
         if (!isDisclaimerAccepted) {
-          globalState.appController.handleExit();
+          appController.handleExit();
         }
       },
     );

@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
-
-import 'print.dart';
+import 'package:fl_clash/common/common.dart';
 
 extension StringExtension on String {
   bool get isUrl {
@@ -78,13 +77,26 @@ extension StringExtension on String {
   // bool containsToLower(String target) {
   //   return toLowerCase().contains(target);
   // }
+
+  Future<T> commonToJSON<T>() async {
+    final thresholdLimit = 51200;
+    if (length < thresholdLimit) {
+      return json.decode(this);
+    } else {
+      return await decodeJSONTask<T>(this);
+    }
+  }
 }
 
-extension StringExtensionSafe on String? {
-  String getSafeValue(String defaultValue) {
-    if (this == null || this!.isEmpty) {
-      return defaultValue;
+extension StringNullExt on String? {
+  String takeFirstValid(List<String?> others, {String defaultValue = ''}) {
+    if (this != null && this!.trim().isNotEmpty) return this!.trim();
+
+    for (final s in others) {
+      if (s != null && s.trim().isNotEmpty) {
+        return s.trim();
+      }
     }
-    return this!;
+    return defaultValue;
   }
 }

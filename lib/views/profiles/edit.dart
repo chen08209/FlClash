@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -26,45 +27,53 @@ class EditProfileView extends StatefulWidget {
 }
 
 class _EditProfileViewState extends State<EditProfileView> {
-  late TextEditingController labelController;
-  late TextEditingController urlController;
-  late TextEditingController autoUpdateDurationController;
-  late bool autoUpdate;
-  String? rawText;
+  late final TextEditingController _labelController;
+  late final TextEditingController _urlController;
+  late final TextEditingController _autoUpdateDurationController;
+  late bool _autoUpdate;
+  String? _rawText;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final fileInfoNotifier = ValueNotifier<FileInfo?>(null);
-  Uint8List? fileData;
-
-  Profile get profile => widget.profile;
+  final _fileInfoNotifier = ValueNotifier<FileInfo?>(null);
+  Uint8List? _fileData;
 
   @override
   void initState() {
     super.initState();
-    labelController = TextEditingController(text: widget.profile.label);
-    urlController = TextEditingController(text: widget.profile.url);
-    autoUpdate = widget.profile.autoUpdate;
-    autoUpdateDurationController = TextEditingController(
+    _labelController = TextEditingController(text: widget.profile.label);
+    _urlController = TextEditingController(text: widget.profile.url);
+    _autoUpdate = widget.profile.autoUpdate;
+    _autoUpdateDurationController = TextEditingController(
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
     );
-    appPath.getProfilePath(widget.profile.id).then((path) async {
-      fileInfoNotifier.value = await _getFileInfo(path);
-    });
+    _updateFileInfo();
+  }
+
+  Future<void> _updateFileInfo() async {
+    final file = await widget.profile.file;
+    if (!await file.exists()) {
+      return;
+    }
+    final lastModified = await file.lastModified();
+    final size = await file.length();
+    if (!mounted) {
+      return;
+    }
+    _fileInfoNotifier.value = FileInfo(size: size, lastModified: lastModified);
   }
 
   Future<void> _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
-    final appController = globalState.appController;
-    Profile profile = this.profile.copyWith(
-      url: urlController.text,
-      label: labelController.text,
-      autoUpdate: autoUpdate,
+    var profile = widget.profile.copyWith(
+      url: _urlController.text,
+      label: _labelController.text,
+      autoUpdate: _autoUpdate,
       autoUpdateDuration: Duration(
-        minutes: int.parse(autoUpdateDurationController.text),
+        minutes: int.parse(_autoUpdateDurationController.text),
       ),
     );
     final hasUpdate = widget.profile.url != profile.url;
-    if (fileData != null) {
-      if (profile.type == ProfileType.url && autoUpdate) {
+    if (_fileData != null) {
+      if (profile.type == ProfileType.url && _autoUpdate) {
         final res = await globalState.showMessage(
           title: appLocalizations.tip,
           message: TextSpan(text: appLocalizations.profileHasUpdate),
@@ -73,11 +82,11 @@ class _EditProfileViewState extends State<EditProfileView> {
           profile = profile.copyWith(autoUpdate: false);
         }
       }
-      appController.setProfileAndAutoApply(await profile.saveFile(fileData!));
+      appController.putProfile(await profile.saveFile(_fileData!));
     } else if (!hasUpdate) {
-      appController.setProfileAndAutoApply(profile);
+      appController.putProfile(profile);
     } else {
-      globalState.appController.safeRun(() async {
+      appController.safeRun(() async {
         await Future.delayed(commonDuration);
         if (hasUpdate) {
           await appController.updateProfile(profile);
@@ -90,25 +99,15 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   void _setAutoUpdate(bool value) {
-    if (autoUpdate == value) return;
+    if (_autoUpdate == value) return;
     setState(() {
-      autoUpdate = value;
+      _autoUpdate = value;
     });
   }
 
-  Future<FileInfo?> _getFileInfo(String path) async {
-    final file = File(path);
-    if (!await file.exists()) {
-      return null;
-    }
-    final lastModified = await file.lastModified();
-    final size = await file.length();
-    return FileInfo(size: size, lastModified: lastModified);
-  }
-
   Future<void> _handleSaveEdit(BuildContext context, String data) async {
-    final message = await globalState.appController.safeRun<String>(() async {
-      final message = await coreController.validateConfig(data);
+    final message = await appController.safeRun<String>(() async {
+      final message = await coreController.validateConfigWithData(data);
       return message;
     }, silence: false);
     if (message?.isNotEmpty == true) {
@@ -124,23 +123,27 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _editProfileFile() async {
-    if (rawText == null) {
-      final profilePath = await appPath.getProfilePath(widget.profile.id);
+    if (_rawText == null) {
+      final profilePath = await appPath.getProfilePath(
+        widget.profile.id.toString(),
+      );
       final file = File(profilePath);
       if (await file.exists()) {
-        rawText = await file.readAsString();
+        _rawText = await file.readAsString();
       }
     }
     if (!mounted) return;
-    final title = widget.profile.label ?? widget.profile.id;
+    final title = widget.profile.label.takeFirstValid([
+      widget.profile.id.toString(),
+    ]);
     final editorPage = EditorPage(
       title: title,
-      content: rawText!,
+      content: _rawText!,
       onSave: (context, _, content) {
         _handleSaveEdit(context, content);
       },
       onPop: (context, _, content) async {
-        if (content == rawText) {
+        if (content == _rawText) {
           return true;
         }
         final res = await globalState.showMessage(
@@ -159,22 +162,23 @@ class _EditProfileViewState extends State<EditProfileView> {
     if (data == null) {
       return;
     }
-    rawText = data;
-    fileData = Uint8List.fromList(utf8.encode(data));
-    fileInfoNotifier.value = fileInfoNotifier.value?.copyWith(
-      size: fileData?.length ?? 0,
+    _rawText = data;
+    _fileData = Uint8List.fromList(utf8.encode(data));
+    _fileInfoNotifier.value = _fileInfoNotifier.value?.copyWith(
+      size: _fileData?.length ?? 0,
       lastModified: DateTime.now(),
     );
   }
 
   Future<void> _uploadProfileFile() async {
-    final platformFile = await globalState.appController.safeRun(
-      picker.pickerFile,
-    );
+    final platformFile = await appController.safeRun(picker.pickerFile);
     if (platformFile?.bytes == null) return;
-    fileData = platformFile?.bytes;
-    fileInfoNotifier.value = fileInfoNotifier.value?.copyWith(
-      size: fileData?.length ?? 0,
+    _fileData = platformFile?.bytes;
+    if (!mounted) {
+      return;
+    }
+    _fileInfoNotifier.value = _fileInfoNotifier.value?.copyWith(
+      size: _fileData?.length ?? 0,
       lastModified: DateTime.now(),
     );
   }
@@ -194,12 +198,22 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   @override
+  void dispose() {
+    _labelController.dispose();
+    _urlController.dispose();
+    _fileInfoNotifier.dispose();
+    _autoUpdateDurationController.dispose();
+    super.dispose();
+    appController.autoApplyProfile();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final items = [
       ListItem(
         title: TextFormField(
           textInputAction: TextInputAction.next,
-          controller: labelController,
+          controller: _labelController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             labelText: appLocalizations.name,
@@ -217,7 +231,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           title: TextFormField(
             textInputAction: TextInputAction.next,
             keyboardType: TextInputType.url,
-            controller: urlController,
+            controller: _urlController,
             maxLines: 5,
             minLines: 1,
             decoration: InputDecoration(
@@ -238,15 +252,15 @@ class _EditProfileViewState extends State<EditProfileView> {
         ListItem.switchItem(
           title: Text(appLocalizations.autoUpdate),
           delegate: SwitchDelegate<bool>(
-            value: autoUpdate,
+            value: _autoUpdate,
             onChanged: _setAutoUpdate,
           ),
         ),
-        if (autoUpdate)
+        if (_autoUpdate)
           ListItem(
             title: TextFormField(
               textInputAction: TextInputAction.next,
-              controller: autoUpdateDurationController,
+              controller: _autoUpdateDurationController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: appLocalizations.autoUpdateInterval,
@@ -268,7 +282,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           ),
       ],
       ValueListenableBuilder<FileInfo?>(
-        valueListenable: fileInfoNotifier,
+        valueListenable: _fileInfoNotifier,
         builder: (_, fileInfo, _) {
           return FadeThroughBox(
             alignment: Alignment.centerLeft,
@@ -307,7 +321,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     ];
     return CommonPopScope(
       onPop: (context) {
-        if (fileData == null) {
+        if (_fileData == null) {
           return true;
         }
         _handleBack();
