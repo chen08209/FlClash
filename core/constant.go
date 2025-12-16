@@ -66,6 +66,11 @@ type ExternalProvider struct {
 	SubscriptionInfo *provider.SubscriptionInfo `json:"subscription-info"`
 }
 
+type ProxiesData struct {
+	Proxies map[string]constant.Proxy `json:"proxies"`
+	All     []string                  `json:"all"`
+}
+
 const (
 	messageMethod                  Method = "message"
 	initClashMethod                Method = "initClash"

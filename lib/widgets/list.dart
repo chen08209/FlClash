@@ -1,7 +1,8 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'card.dart';
@@ -107,6 +108,9 @@ class ListItem<T> extends StatelessWidget {
   final TextStyle? titleTextStyle;
   final TextStyle? subtitleTextStyle;
   final double minVerticalPadding;
+  final Color? color;
+  final double? minTileHeight;
+  final VisualDensity? visualDensity;
   final void Function()? onTap;
 
   const ListItem({
@@ -121,6 +125,9 @@ class ListItem<T> extends StatelessWidget {
     this.onTap,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.color,
+    this.minTileHeight,
+    this.visualDensity,
     this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : delegate = const Delegate();
@@ -137,6 +144,9 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.color,
+    this.minTileHeight,
+    this.visualDensity,
     this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
@@ -153,6 +163,9 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.color,
+    this.minTileHeight,
+    this.visualDensity,
     this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
@@ -169,6 +182,9 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.color,
+    this.minTileHeight,
+    this.visualDensity,
     this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
@@ -185,6 +201,9 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.color,
+    this.minTileHeight,
+    this.visualDensity,
     this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : onTap = null;
@@ -200,6 +219,9 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.color,
+    this.minTileHeight,
+    this.visualDensity,
     this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : trailing = null,
@@ -216,6 +238,9 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.color,
+    this.minTileHeight,
+    this.visualDensity,
     this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : trailing = null,
@@ -232,6 +257,9 @@ class ListItem<T> extends StatelessWidget {
     this.dense,
     this.titleTextStyle,
     this.subtitleTextStyle,
+    this.color,
+    this.minTileHeight,
+    this.visualDensity,
     this.minVerticalPadding = 12,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : leading = null,
@@ -245,11 +273,14 @@ class ListItem<T> extends StatelessWidget {
     return ListTile(
       key: key,
       dense: dense,
+      visualDensity: visualDensity,
+      tileColor: color,
       titleTextStyle: titleTextStyle,
       subtitleTextStyle: subtitleTextStyle,
       leading: leading ?? this.leading,
       horizontalTitleGap: horizontalTitleGap,
       title: title,
+      minTileHeight: minTileHeight,
       minVerticalPadding: minVerticalPadding,
       subtitle: subtitle,
       titleAlignment: tileTitleAlignment,
@@ -272,8 +303,8 @@ class ListItem<T> extends StatelessWidget {
         // openElevation: 0,
         closedBuilder: (_, action) {
           openAction() async {
-            final isMobile = globalState.appState.viewMode == ViewMode.mobile;
-            if (!isMobile) {
+            final isMobile = appController.isMobile;
+            if (!isMobile || kDebugMode) {
               final res = await showExtend(
                 context,
                 props: ExtendProps(
@@ -386,6 +417,7 @@ class ListItem<T> extends StatelessWidget {
       return _buildListTile(
         onTap: radioDelegate.onTab,
         leading: Radio<T>(
+          visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           value: radioDelegate.value,
           toggleable: true,

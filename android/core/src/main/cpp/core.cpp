@@ -70,6 +70,14 @@ Java_com_follow_clash_core_Core_suspended(JNIEnv *env, jobject thiz, jboolean su
     suspend(suspended);
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_quickSetup(JNIEnv *env, jobject thiz, jstring init_params_string,
+                                           jstring setup_params_string, jobject cb) {
+    const auto interface = new_global(cb);
+    quickSetup(interface, get_string(init_params_string), get_string(setup_params_string));
+}
+
 
 static jmethodID m_tun_interface_protect;
 static jmethodID m_tun_interface_resolve_process;
@@ -99,12 +107,12 @@ call_tun_interface_resolve_process_impl(void *tun_interface, const int protocol,
                                         const int uid) {
     ATTACH_JNI();
     const auto packageName = reinterpret_cast<jstring>(env->CallObjectMethod(
-        static_cast<jobject>(tun_interface),
-        m_tun_interface_resolve_process,
-        protocol,
-        new_string(source),
-        new_string(target),
-        uid));
+            static_cast<jobject>(tun_interface),
+            m_tun_interface_resolve_process,
+            protocol,
+            new_string(source),
+            new_string(target),
+            uid));
     return get_string(packageName);
 }
 
@@ -190,5 +198,11 @@ Java_com_follow_clash_core_Core_getTotalTraffic(JNIEnv *env, jobject thiz,
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_follow_clash_core_Core_suspended(JNIEnv *env, jobject thiz, jboolean suspended) {
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_quickSetup(JNIEnv *env, jobject thiz, jstring init_params_string,
+                                           jstring setup_params_string, jobject cb) {
 }
 #endif
