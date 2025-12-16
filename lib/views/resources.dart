@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -79,7 +80,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         if (!newUrl.isUrl) {
           throw 'Invalid url';
         }
-        ref.read(patchClashConfigProvider.notifier).updateState((state) {
+        ref.read(patchClashConfigProvider.notifier).update((state) {
           final map = state.geoXUrl.toJson();
           map[geoItem.key] = newUrl;
           return state.copyWith(geoXUrl: GeoXUrl.fromJson(map));
@@ -184,13 +185,9 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   }
 
   Future<void> _handleUpdateGeoDataItem() async {
-    await globalState.appController.safeRun<void>(
-      () async {
-        await updateGeoDateItem();
-      },
-      silence: false,
-      needLoading: false,
-    );
+    await appController.safeRun<void>(() async {
+      await updateGeoDateItem();
+    }, silence: false);
     if (mounted) {
       setState(() {});
     }
@@ -244,12 +241,12 @@ class UpdateGeoUrlFormDialog extends StatefulWidget {
 }
 
 class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
-  late TextEditingController urlController;
+  late final TextEditingController _urlController;
 
   @override
   void initState() {
     super.initState();
-    urlController = TextEditingController(text: widget.url);
+    _urlController = TextEditingController(text: widget.url);
   }
 
   Future<void> _handleReset() async {
@@ -260,9 +257,15 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
   }
 
   Future<void> _handleUpdate() async {
-    final url = urlController.value.text;
+    final url = _urlController.value.text;
     if (url.isEmpty) return;
     Navigator.of(context).pop<String>(url);
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
   }
 
   @override
@@ -271,7 +274,7 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
       title: widget.title,
       actions: [
         if (widget.defaultValue != null &&
-            urlController.value.text != widget.defaultValue) ...[
+            _urlController.value.text != widget.defaultValue) ...[
           TextButton(
             onPressed: _handleReset,
             child: Text(appLocalizations.reset),
@@ -289,7 +292,7 @@ class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
           TextField(
             maxLines: 5,
             minLines: 1,
-            controller: urlController,
+            controller: _urlController,
             decoration: const InputDecoration(border: OutlineInputBorder()),
           ),
         ],

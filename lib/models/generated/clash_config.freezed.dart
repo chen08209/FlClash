@@ -2698,7 +2698,7 @@ as bool,
 /// @nodoc
 mixin _$Rule {
 
- String get id; String get value;
+ int get id; String get value; String? get order;
 /// Create a copy of Rule
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2711,16 +2711,16 @@ $RuleCopyWith<Rule> get copyWith => _$RuleCopyWithImpl<Rule>(this as Rule, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Rule&&(identical(other.id, id) || other.id == id)&&(identical(other.value, value) || other.value == value));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Rule&&(identical(other.id, id) || other.id == id)&&(identical(other.value, value) || other.value == value)&&(identical(other.order, order) || other.order == order));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,value);
+int get hashCode => Object.hash(runtimeType,id,value,order);
 
 @override
 String toString() {
-  return 'Rule(id: $id, value: $value)';
+  return 'Rule(id: $id, value: $value, order: $order)';
 }
 
 
@@ -2731,7 +2731,7 @@ abstract mixin class $RuleCopyWith<$Res>  {
   factory $RuleCopyWith(Rule value, $Res Function(Rule) _then) = _$RuleCopyWithImpl;
 @useResult
 $Res call({
- String id, String value
+ int id, String value, String? order
 });
 
 
@@ -2748,11 +2748,12 @@ class _$RuleCopyWithImpl<$Res>
 
 /// Create a copy of Rule
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? value = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? value = null,Object? order = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
-as String,
+as int,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
+as String,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -2837,10 +2838,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String value)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String value,  String? order)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Rule() when $default != null:
-return $default(_that.id,_that.value);case _:
+return $default(_that.id,_that.value,_that.order);case _:
   return orElse();
 
 }
@@ -2858,10 +2859,10 @@ return $default(_that.id,_that.value);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String value)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String value,  String? order)  $default,) {final _that = this;
 switch (_that) {
 case _Rule():
-return $default(_that.id,_that.value);case _:
+return $default(_that.id,_that.value,_that.order);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2878,10 +2879,10 @@ return $default(_that.id,_that.value);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String value)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String value,  String? order)?  $default,) {final _that = this;
 switch (_that) {
 case _Rule() when $default != null:
-return $default(_that.id,_that.value);case _:
+return $default(_that.id,_that.value,_that.order);case _:
   return null;
 
 }
@@ -2893,11 +2894,12 @@ return $default(_that.id,_that.value);case _:
 @JsonSerializable()
 
 class _Rule implements Rule {
-  const _Rule({required this.id, required this.value});
+  const _Rule({required this.id, required this.value, this.order});
   factory _Rule.fromJson(Map<String, dynamic> json) => _$RuleFromJson(json);
 
-@override final  String id;
+@override final  int id;
 @override final  String value;
+@override final  String? order;
 
 /// Create a copy of Rule
 /// with the given fields replaced by the non-null parameter values.
@@ -2912,16 +2914,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Rule&&(identical(other.id, id) || other.id == id)&&(identical(other.value, value) || other.value == value));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Rule&&(identical(other.id, id) || other.id == id)&&(identical(other.value, value) || other.value == value)&&(identical(other.order, order) || other.order == order));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,value);
+int get hashCode => Object.hash(runtimeType,id,value,order);
 
 @override
 String toString() {
-  return 'Rule(id: $id, value: $value)';
+  return 'Rule(id: $id, value: $value, order: $order)';
 }
 
 
@@ -2932,7 +2934,7 @@ abstract mixin class _$RuleCopyWith<$Res> implements $RuleCopyWith<$Res> {
   factory _$RuleCopyWith(_Rule value, $Res Function(_Rule) _then) = __$RuleCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String value
+ int id, String value, String? order
 });
 
 
@@ -2949,11 +2951,12 @@ class __$RuleCopyWithImpl<$Res>
 
 /// Create a copy of Rule
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? value = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? value = null,Object? order = freezed,}) {
   return _then(_Rule(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
-as String,
+as int,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
+as String,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

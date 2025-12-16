@@ -1,15 +1,15 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/controller.dart';
 
 class FlClashHttpOverrides extends HttpOverrides {
   static String handleFindProxy(Uri url) {
     if ([localhost].contains(url.host)) {
       return 'DIRECT';
     }
-    final port = globalState.config.patchClashConfig.mixedPort;
-    final isStart = globalState.appState.runTime != null;
+    final port = appController.config.patchClashConfig.mixedPort;
+    final isStart = appController.isStart;
     commonPrint.log('find $url proxy:$isStart');
     if (!isStart) return 'DIRECT';
     return 'PROXY localhost:$port';
