@@ -14,7 +14,7 @@ class RuleItem extends StatelessWidget {
   final bool isSelected;
   final bool isEditing;
   final Rule rule;
-  final void Function(String id) onSelected;
+  final void Function() onSelected;
   final void Function(Rule rule) onEdit;
 
   const RuleItem({
@@ -31,7 +31,7 @@ class RuleItem extends StatelessWidget {
     return CommonSelectedListItem(
       isSelected: isSelected,
       onSelected: () {
-        onSelected(rule.id);
+        onSelected();
       },
       title: Text(
         rule.value,

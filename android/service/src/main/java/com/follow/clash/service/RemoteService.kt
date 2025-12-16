@@ -98,6 +98,35 @@ class RemoteService : Service(),
             }
         }
 
+        override fun quickSetup(
+            initParamsString: String,
+            setupParamsString: String,
+            callback: ICallbackInterface,
+            onStarted: IVoidInterface
+        ) {
+            Core.quickSetup(initParamsString, setupParamsString) {
+                launch {
+                    runCatching {
+                        val chunks = it?.chunkedForAidl() ?: listOf()
+                        for ((index, chunk) in chunks.withIndex()) {
+                            suspendCancellableCoroutine { cont ->
+                                callback.onResult(
+                                    chunk,
+                                    index == chunks.lastIndex,
+                                    object : IAckInterface.Stub() {
+                                        override fun onAck() {
+                                            cont.resume(Unit)
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            onStarted()
+        }
+
         override fun updateNotificationParams(params: NotificationParams?) {
             State.notificationParamsFlow.tryEmit(params)
         }
@@ -108,6 +137,7 @@ class RemoteService : Service(),
             runtime: Long,
             result: IResultInterface,
         ) {
+            GlobalState.log("remote startService")
             State.options = options
             handleStartService(runtime, result)
         }

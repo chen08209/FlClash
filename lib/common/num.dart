@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/state.dart';
@@ -18,6 +20,10 @@ extension NumExt on num {
 
   double get ap {
     return this * (1 + (globalState.theme.textScaleFactor - 1) * 0.5);
+  }
+
+  double get mAp {
+    return this * min((1 + (globalState.theme.textScaleFactor - 1) * 0.5), 1);
   }
 
   TrafficShow get traffic {
@@ -51,7 +57,7 @@ extension NumExt on num {
 
 extension DoubleExt on double {
   bool moreOrEqual(double value) {
-    return this > value || (value - this).abs() < precisionErrorTolerance + 2;
+    return this > value || (value - this).abs() < precisionErrorTolerance + 1;
   }
 }
 
