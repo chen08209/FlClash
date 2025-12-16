@@ -40,7 +40,7 @@ class StatusItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.dns(enable: value));
+              .update((state) => state.copyWith.dns(enable: value));
         },
       ),
     );
@@ -73,7 +73,7 @@ class ListenItem extends ConsumerWidget {
           }
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.dns(listen: value));
+              .update((state) => state.copyWith.dns(listen: value));
         },
       ),
     );
@@ -96,7 +96,7 @@ class PreferH3Item extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.dns(preferH3: value));
+              .update((state) => state.copyWith.dns(preferH3: value));
         },
       ),
     );
@@ -118,7 +118,7 @@ class IPv6Item extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.dns(ipv6: value));
+              .update((state) => state.copyWith.dns(ipv6: value));
         },
       ),
     );
@@ -141,7 +141,7 @@ class RespectRulesItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.dns(respectRules: value));
+              .update((state) => state.copyWith.dns(respectRules: value));
         },
       ),
     );
@@ -168,7 +168,7 @@ class DnsModeItem extends ConsumerWidget {
           }
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.dns(enhancedMode: value));
+              .update((state) => state.copyWith.dns(enhancedMode: value));
         },
         textBuilder: (dnsMode) => dnsMode.name,
         value: enhancedMode,
@@ -203,7 +203,7 @@ class FakeIpRangeItem extends ConsumerWidget {
           }
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.dns(fakeIpRange: value));
+              .update((state) => state.copyWith.dns(fakeIpRange: value));
         },
       ),
     );
@@ -230,7 +230,7 @@ class FakeIpFilterItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) => state.copyWith.dns(fakeIpFilter: List.from(items)),
               );
         },
@@ -260,7 +260,7 @@ class DefaultNameserverItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) =>
                     state.copyWith.dns(defaultNameserver: List.from(items)),
               );
@@ -291,7 +291,7 @@ class NameserverItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) => state.copyWith.dns(nameserver: List.from(items)),
               );
         },
@@ -315,7 +315,7 @@ class UseHostsItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.dns(useHosts: value));
+              .update((state) => state.copyWith.dns(useHosts: value));
         },
       ),
     );
@@ -337,9 +337,7 @@ class UseSystemHostsItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
-                (state) => state.copyWith.dns(useSystemHosts: value),
-              );
+              .update((state) => state.copyWith.dns(useSystemHosts: value));
         },
       ),
     );
@@ -368,9 +366,7 @@ class NameserverPolicyItem extends ConsumerWidget {
         onChanged: (value) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
-                (state) => state.copyWith.dns(nameserverPolicy: value),
-              );
+              .update((state) => state.copyWith.dns(nameserverPolicy: value));
         },
       ),
     );
@@ -400,7 +396,7 @@ class ProxyServerNameserverItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) =>
                     state.copyWith.dns(proxyServerNameserver: List.from(items)),
               );
@@ -431,7 +427,7 @@ class FallbackItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) => state.copyWith.dns(fallback: List.from(items)),
               );
         },
@@ -457,7 +453,7 @@ class GeoipItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) => state.copyWith.dns.fallbackFilter(geoip: value),
               );
         },
@@ -494,7 +490,7 @@ class GeoipCodeItem extends ConsumerWidget {
           }
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) => state.copyWith.dns.fallbackFilter(geoipCode: value),
               );
         },
@@ -525,7 +521,7 @@ class GeositeItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) => state.copyWith.dns.fallbackFilter(
                   geosite: List.from(items),
                 ),
@@ -558,7 +554,7 @@ class IpcidrItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) =>
                     state.copyWith.dns.fallbackFilter(ipcidr: List.from(items)),
               );
@@ -590,7 +586,7 @@ class DomainItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) =>
                     state.copyWith.dns.fallbackFilter(domain: List.from(items)),
               );

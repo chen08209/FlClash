@@ -37,12 +37,6 @@ var (
 	mBatch, _     = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 )
 
-type ExternalProviders []ExternalProvider
-
-func (a ExternalProviders) Len() int           { return len(a) }
-func (a ExternalProviders) Less(i, j int) bool { return a[i].Name < a[j].Name }
-func (a ExternalProviders) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-
 func getExternalProvidersRaw() map[string]cp.Provider {
 	eps := make(map[string]cp.Provider)
 	for n, p := range tunnel.Providers() {
@@ -241,25 +235,8 @@ func updateConfig(params *UpdateParams) {
 	updateListeners()
 }
 
-func parseWithPath(path string) (*config.Config, error) {
-	buf, err := readFile(path)
-	if err != nil {
-		return nil, err
-	}
-	rawConfig := config.DefaultRawConfig()
-	err = UnmarshalJson(buf, rawConfig)
-	if err != nil {
-		return nil, err
-	}
-	parseRawConfig, err := config.ParseRawConfig(rawConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseRawConfig, nil
-}
-
-func setupConfig(params *SetupParams) error {
+func applyConfig(params *SetupParams) error {
+	runtime.GC()
 	runLock.Lock()
 	defer runLock.Unlock()
 	var err error
@@ -271,7 +248,6 @@ func setupConfig(params *SetupParams) error {
 	hub.ApplyConfig(currentConfig)
 	patchSelectGroup(params.SelectedMap)
 	updateListeners()
-	runtime.GC()
 	return err
 }
 

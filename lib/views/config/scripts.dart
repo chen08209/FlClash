@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
@@ -24,7 +27,7 @@ class ScriptsView extends ConsumerStatefulWidget {
 class _ScriptsViewState extends ConsumerState<ScriptsView> {
   final _key = utils.id;
 
-  Future<void> _handleDelScript(String id) async {
+  Future<void> _handleDelScript(int id) async {
     final res = await globalState.showMessage(
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.script),
@@ -34,19 +37,25 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
       return;
     }
     ref.read(scriptsProvider.notifier).del(id);
-    ref.read(selectedItemProvider(_key).notifier).value = '';
+    ref.read(selectedItemProvider(_key).notifier).value = null;
+    _clearEffect(id);
   }
 
-  void _handleSelected(String id) {
+  Future<void> _clearEffect(int id) async {
+    final path = await appPath.getScriptPath(id.toString());
+    await File(path).safeDelete();
+  }
+
+  void _handleSelected(int id) {
     ref.read(selectedItemProvider(_key).notifier).update((value) {
       if (value == id) {
-        return '';
+        return null;
       }
       return id;
     });
   }
 
-  Widget _buildContent(List<Script> scripts, String selectedScriptId) {
+  Widget _buildContent(List<Script> scripts, int? selectedScriptId) {
     if (scripts.isEmpty) {
       return NullStatus(
         illustration: ScriptEmptyIllustration(),
@@ -83,8 +92,8 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     Script? script,
   }) async {
     Script newScript =
-        script?.copyWith(label: title, content: content) ??
-        Script.create(label: title, content: content);
+        (script?.copyWith(label: title) ?? Script.create(label: title));
+    newScript = await newScript.save(content);
     if (newScript.label.isEmpty) {
       final res = await globalState.showCommonDialog<String>(
         child: InputDialog(
@@ -123,7 +132,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         return;
       }
     }
-    ref.read(scriptsProvider.notifier).setScript(newScript);
+    ref.read(scriptsProvider.notifier).put(newScript);
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -150,10 +159,13 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     return false;
   }
 
-  void _handleToEditor([String? id]) {
-    final script = ref.read(scriptsProvider.select((state) => state.get(id)));
+  void _handleToEditor([int? id]) async {
+    final script = await ref.read(scriptProvider(id).future);
     final title = script?.label ?? '';
-    final raw = script?.content ?? scriptTemplate;
+    final raw = (await script?.content) ?? scriptTemplate;
+    if (!mounted) {
+      return;
+    }
     BaseNavigator.push(
       context,
       EditorPage(
@@ -174,12 +186,12 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
 
   @override
   Widget build(BuildContext context) {
-    final scripts = ref.watch(scriptsProvider);
+    final scripts = ref.watch(scriptsProvider).value ?? [];
     final selectedScriptId = ref.watch(selectedItemProvider(_key));
     return CommonPopScope(
       onPop: (_) {
-        if (selectedScriptId.isNotEmpty) {
-          ref.read(selectedItemProvider(_key).notifier).value = '';
+        if (selectedScriptId != null) {
+          ref.read(selectedItemProvider(_key).notifier).value = null;
           return false;
         }
         Navigator.of(context).pop();
@@ -187,7 +199,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
       },
       child: CommonScaffold(
         actions: [
-          if (selectedScriptId.isNotEmpty) ...[
+          if (selectedScriptId != null) ...[
             CommonMinIconButtonTheme(
               child: IconButton.filledTonal(
                 onPressed: () {
@@ -199,7 +211,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
             SizedBox(width: 2),
           ],
           CommonMinFilledButtonTheme(
-            child: selectedScriptId.isNotEmpty
+            child: selectedScriptId != null
                 ? FilledButton(
                     onPressed: () {
                       _handleToEditor(selectedScriptId);

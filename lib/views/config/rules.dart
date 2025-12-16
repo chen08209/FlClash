@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/clash_config.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -16,18 +17,6 @@ class AddedRulesView extends ConsumerStatefulWidget {
 
 class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   final _key = utils.id;
-  late final List<Rule> _originRules;
-
-  @override
-  void initState() {
-    super.initState();
-    _originRules = List<Rule>.from(ref.read(rulesProvider));
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   Future<void> _handleAddOrUpdate([Rule? rule]) async {
     final res = await globalState.showCommonDialog<Rule>(
@@ -36,19 +25,21 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     if (res == null) {
       return;
     }
-    ref.read(rulesProvider.notifier).update((state) => state.updateWith(res));
+    ref.read(globalRulesProvider.notifier).put(res);
   }
 
-  void _handleSelected(String ruleId) {
+  void _handleSelected(int ruleId) {
     ref.read(selectedItemsProvider(_key).notifier).update((selectedRules) {
-      final newSelectedRules = Set<String>.from(selectedRules)
+      final newSelectedRules = Set<int>.from(selectedRules)
         ..addOrRemove(ruleId);
       return newSelectedRules;
     });
   }
 
   void _handleSelectAll() {
-    final ids = ref.read(rulesProvider).map((item) => item.id).toSet();
+    final ids =
+        ref.read(globalRulesProvider).value?.map((item) => item.id).toSet() ??
+        {};
     ref.read(selectedItemsProvider(_key).notifier).update((selected) {
       return selected.containsAll(ids) ? {} : ids;
     });
@@ -65,28 +56,13 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
       return;
     }
     final selectedRules = ref.read(selectedItemsProvider(_key));
-    ref.read(rulesProvider.notifier).update((rules) {
-      final newRules = List<Rule>.from(
-        rules.where((item) => !selectedRules.contains(item.id)),
-      );
-      return newRules;
-    });
+    ref.read(globalRulesProvider.notifier).delAll(selectedRules.cast<int>());
     ref.read(selectedItemsProvider(_key).notifier).value = {};
-  }
-
-  Future<void> _handleReset() async {
-    final res = await globalState.showMessage(
-      message: TextSpan(text: appLocalizations.resetPageChangesTip),
-    );
-    if (res != true) {
-      return;
-    }
-    ref.read(rulesProvider.notifier).value = _originRules;
   }
 
   @override
   Widget build(BuildContext context) {
-    final rules = ref.watch(rulesProvider);
+    final rules = ref.watch(globalRulesProvider).value ?? [];
     final selectedRules = ref.watch(selectedItemsProvider(_key));
     return CommonPopScope(
       onPop: (_) {
@@ -105,14 +81,6 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
               child: IconButton.filledTonal(
                 onPressed: _handleDelete,
                 icon: Icon(Icons.delete),
-              ),
-            ),
-            SizedBox(width: 2),
-          ] else if (!ruleListEquality.equals(rules, _originRules)) ...[
-            CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                onPressed: _handleReset,
-                icon: const Icon(Icons.replay),
               ),
             ),
             SizedBox(width: 2),
@@ -148,7 +116,9 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
                       isEditing: selectedRules.isNotEmpty,
                       rule: rule,
                       isSelected: selectedRules.contains(rule.id),
-                      onSelected: _handleSelected,
+                      onSelected: () {
+                        _handleSelected(rule.id);
+                      },
                       onEdit: (Rule rule) {
                         _handleAddOrUpdate(rule);
                       },
@@ -156,15 +126,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
                   );
                 },
                 itemCount: rules.length,
-                onReorder: (int oldIndex, int newIndex) {
-                  if (oldIndex < newIndex) {
-                    newIndex -= 1;
-                  }
-                  final newRules = List<Rule>.from(rules);
-                  final item = newRules.removeAt(oldIndex);
-                  newRules.insert(newIndex, item);
-                  ref.read(rulesProvider.notifier).value = newRules;
-                },
+                onReorder: ref.read(globalRulesProvider.notifier).order,
               ),
       ),
     );

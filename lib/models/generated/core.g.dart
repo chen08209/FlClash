@@ -81,8 +81,8 @@ _VpnOptions _$VpnOptionsFromJson(Map<String, dynamic> json) => _VpnOptions(
   port: (json['port'] as num).toInt(),
   ipv6: json['ipv6'] as bool,
   dnsHijacking: json['dnsHijacking'] as bool,
-  accessControl: AccessControl.fromJson(
-    json['accessControl'] as Map<String, dynamic>,
+  accessControlProps: AccessControlProps.fromJson(
+    json['accessControlProps'] as Map<String, dynamic>,
   ),
   allowBypass: json['allowBypass'] as bool,
   systemProxy: json['systemProxy'] as bool,
@@ -103,7 +103,7 @@ Map<String, dynamic> _$VpnOptionsToJson(_VpnOptions instance) =>
       'port': instance.port,
       'ipv6': instance.ipv6,
       'dnsHijacking': instance.dnsHijacking,
-      'accessControl': instance.accessControl,
+      'accessControlProps': instance.accessControlProps,
       'allowBypass': instance.allowBypass,
       'systemProxy': instance.systemProxy,
       'bypassDomain': instance.bypassDomain,
@@ -230,7 +230,6 @@ _ExternalProvider _$ExternalProviderFromJson(Map<String, dynamic> json) =>
       subscriptionInfo: subscriptionInfoFormCore(
         json['subscription-info'] as Map<String, Object?>?,
       ),
-      isUpdating: json['isUpdating'] as bool? ?? false,
       vehicleType: json['vehicle-type'] as String,
       updateAt: DateTime.parse(json['update-at'] as String),
     );
@@ -242,7 +241,6 @@ Map<String, dynamic> _$ExternalProviderToJson(_ExternalProvider instance) =>
       'path': instance.path,
       'count': instance.count,
       'subscription-info': instance.subscriptionInfo,
-      'isUpdating': instance.isUpdating,
       'vehicle-type': instance.vehicleType,
       'update-at': instance.updateAt.toIso8601String(),
     };
@@ -300,6 +298,14 @@ const _$ActionMethodEnumMap = {
   ActionMethod.getAndroidVpnOptions: 'getAndroidVpnOptions',
   ActionMethod.getCurrentProfileName: 'getCurrentProfileName',
 };
+
+_ProxiesData _$ProxiesDataFromJson(Map<String, dynamic> json) => _ProxiesData(
+  proxies: json['proxies'] as Map<String, dynamic>,
+  all: (json['all'] as List<dynamic>).map((e) => e as String).toList(),
+);
+
+Map<String, dynamic> _$ProxiesDataToJson(_ProxiesData instance) =>
+    <String, dynamic>{'proxies': instance.proxies, 'all': instance.all};
 
 _ActionResult _$ActionResultFromJson(Map<String, dynamic> json) =>
     _ActionResult(

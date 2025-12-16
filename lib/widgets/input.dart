@@ -118,7 +118,7 @@ class InputDialog extends StatefulWidget {
 class _InputDialogState extends State<InputDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  late TextEditingController textController;
+  late TextEditingController _textController;
 
   String get value => widget.value;
 
@@ -129,12 +129,12 @@ class _InputDialogState extends State<InputDialog> {
   @override
   void initState() {
     super.initState();
-    textController = TextEditingController(text: value);
+    _textController = TextEditingController(text: value);
   }
 
   Future<void> _handleUpdate() async {
     if (_formKey.currentState?.validate() == false) return;
-    final text = textController.value.text;
+    final text = _textController.value.text;
     Navigator.of(context).pop<String>(text);
   }
 
@@ -146,12 +146,18 @@ class _InputDialogState extends State<InputDialog> {
   }
 
   @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return CommonDialog(
       title: title,
       actions: [
         if (widget.resetValue != null &&
-            textController.value.text != widget.resetValue) ...[
+            _textController.value.text != widget.resetValue) ...[
           TextButton(
             onPressed: _handleReset,
             child: Text(appLocalizations.reset),
@@ -174,7 +180,7 @@ class _InputDialogState extends State<InputDialog> {
               keyboardType: TextInputType.url,
               maxLines: widget.obscureText == true ? 1 : 5,
               minLines: 1,
-              controller: textController,
+              controller: _textController,
               onFieldSubmitted: (_) {
                 _handleUpdate();
               },
@@ -709,8 +715,8 @@ class AddDialog extends StatefulWidget {
 }
 
 class _AddDialogState extends State<AddDialog> {
-  TextEditingController? keyController;
-  late TextEditingController valueController;
+  TextEditingController? _keyController;
+  late TextEditingController _valueController;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   Field? get keyField => widget.keyField;
@@ -721,20 +727,27 @@ class _AddDialogState extends State<AddDialog> {
   void initState() {
     super.initState();
     if (keyField != null) {
-      keyController = TextEditingController(text: keyField!.value);
+      _keyController = TextEditingController(text: keyField!.value);
     }
-    valueController = TextEditingController(text: valueField.value);
+    _valueController = TextEditingController(text: valueField.value);
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (keyField != null) {
       Navigator.of(context).pop<MapEntry<String, String>>(
-        MapEntry(keyController!.text, valueController.text),
+        MapEntry(_keyController!.text, _valueController.text),
       );
     } else {
-      Navigator.of(context).pop<String>(valueController.text);
+      Navigator.of(context).pop<String>(_valueController.text);
     }
+  }
+
+  @override
+  void dispose() {
+    _keyController?.dispose();
+    _valueController.dispose();
+    super.dispose();
   }
 
   @override
@@ -754,7 +767,7 @@ class _AddDialogState extends State<AddDialog> {
               TextFormField(
                 maxLines: 3,
                 minLines: 1,
-                controller: keyController,
+                controller: _keyController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   labelText: keyField!.label,
@@ -777,7 +790,7 @@ class _AddDialogState extends State<AddDialog> {
               maxLines: 3,
               minLines: 1,
               keyboardType: TextInputType.text,
-              controller: valueController,
+              controller: _valueController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: valueField.label,
