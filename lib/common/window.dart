@@ -2,14 +2,21 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
 class Window {
-  Future<void> init(int version) async {
-    final props = globalState.config.windowProps;
+  static Window? _instance;
+
+  Window._internal();
+
+  factory Window() {
+    _instance ??= Window._internal();
+    return _instance!;
+  }
+
+  Future<void> init(int version, WindowProps props) async {
     final acquire = await singleInstanceLock.acquire();
     if (!acquire) {
       exit(0);
@@ -76,6 +83,7 @@ class Window {
   }
 
   Future<void> close() async {
+    await windowManager.close();
     exit(0);
   }
 
