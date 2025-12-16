@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -28,7 +27,7 @@ mixin CoreInterface {
 
   Future<String> setupConfig(SetupParams setupParams);
 
-  Future<Map> getProxies();
+  Future<ProxiesData> getProxies();
 
   Future<String> changeProxy(ChangeProxyParams changeProxyParams);
 
@@ -95,7 +94,7 @@ abstract class CoreHandlerInterface with CoreInterface {
       );
       return null;
     }
-    if (kDebugMode) {
+    if (kDebugMode && watchExecution) {
       commonPrint.log('Invoke ${method.name} ${DateTime.now()} $data');
     }
 
@@ -170,10 +169,9 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> setupConfig(SetupParams setupParams) async {
-    final data = await Isolate.run(() => json.encode(setupParams));
     return await _invoke<String>(
           method: ActionMethod.setupConfig,
-          data: data,
+          data: json.encode(setupParams),
         ) ??
         '';
   }
@@ -184,9 +182,13 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<Map> getProxies() async {
-    final map = await _invoke<Map>(method: ActionMethod.getProxies);
-    return map ?? {};
+  Future<ProxiesData> getProxies() async {
+    final data = await _invoke<Map<String, dynamic>>(
+      method: ActionMethod.getProxies,
+    );
+    return data != null
+        ? ProxiesData.fromJson(data)
+        : ProxiesData(proxies: {}, all: []);
   }
 
   @override

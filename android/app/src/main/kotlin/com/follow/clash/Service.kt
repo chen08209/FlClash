@@ -1,5 +1,6 @@
 package com.follow.clash
 
+import com.follow.clash.common.GlobalState
 import com.follow.clash.common.ServiceDelegate
 import com.follow.clash.common.formatString
 import com.follow.clash.common.intent
@@ -8,6 +9,7 @@ import com.follow.clash.service.ICallbackInterface
 import com.follow.clash.service.IEventInterface
 import com.follow.clash.service.IRemoteInterface
 import com.follow.clash.service.IResultInterface
+import com.follow.clash.service.IVoidInterface
 import com.follow.clash.service.RemoteService
 import com.follow.clash.service.models.NotificationParams
 import com.follow.clash.service.models.VpnOptions
@@ -40,7 +42,7 @@ object Service {
         delegate.unbind()
     }
 
-    suspend fun invokeAction(data: String, cb: (result: String) -> Unit): Result<Unit> {
+    suspend fun invokeAction(data: String, cb: ((result: String) -> Unit)?): Result<Unit> {
         val res = mutableListOf<ByteArray>()
         return delegate.useService {
             it.invokeAction(
@@ -51,10 +53,47 @@ object Service {
                         res.add(result ?: byteArrayOf())
                         ack?.onAck()
                         if (isSuccess) {
-                            cb(res.formatString())
+                            cb?.let { cb ->
+                                cb(res.formatString())
+                            }
                         }
                     }
                 })
+        }
+    }
+
+    suspend fun quickSetup(
+        initParamsString: String,
+        setupParamsString: String,
+        onStarted: (() -> Unit)?,
+        onResult: ((result: String) -> Unit)?,
+    ): Result<Unit> {
+        val res = mutableListOf<ByteArray>()
+        return delegate.useService {
+            it.quickSetup(
+                initParamsString,
+                setupParamsString,
+                object : ICallbackInterface.Stub() {
+                    override fun onResult(
+                        result: ByteArray?, isSuccess: Boolean, ack: IAckInterface?
+                    ) {
+                        res.add(result ?: byteArrayOf())
+                        ack?.onAck()
+                        if (isSuccess) {
+                            onResult?.let { cb ->
+                                cb(res.formatString())
+                            }
+                        }
+                    }
+                },
+                object : IVoidInterface.Stub() {
+                    override fun invoke() {
+                        onStarted?.let { onStarted ->
+                            onStarted()
+                        }
+                    }
+                }
+            )
         }
     }
 
@@ -65,24 +104,24 @@ object Service {
         return delegate.useService {
             it.setEventListener(
                 when (cb != null) {
-                true -> object : IEventInterface.Stub() {
-                    override fun onEvent(
-                        id: String, data: ByteArray?, isSuccess: Boolean, ack: IAckInterface?
-                    ) {
-                        if (results[id] == null) {
-                            results[id] = mutableListOf()
-                        }
-                        results[id]?.add(data ?: byteArrayOf())
-                        ack?.onAck()
-                        if (isSuccess) {
-                            cb(results[id]?.formatString())
-                            results.remove(id)
+                    true -> object : IEventInterface.Stub() {
+                        override fun onEvent(
+                            id: String, data: ByteArray?, isSuccess: Boolean, ack: IAckInterface?
+                        ) {
+                            if (results[id] == null) {
+                                results[id] = mutableListOf()
+                            }
+                            results[id]?.add(data ?: byteArrayOf())
+                            ack?.onAck()
+                            if (isSuccess) {
+                                cb(results[id]?.formatString())
+                                results.remove(id)
+                            }
                         }
                     }
-                }
 
-                false -> null
-            })
+                    false -> null
+                })
         }
     }
 
@@ -116,6 +155,7 @@ object Service {
         try {
             block(callback)
         } catch (e: Exception) {
+            GlobalState.log("awaitIResultInterface $e")
             if (continuation.isActive) {
                 continuation.resumeWithException(e)
             }

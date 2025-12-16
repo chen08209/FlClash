@@ -1,12 +1,11 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,7 +28,7 @@ class DeveloperView extends ConsumerWidget {
           minVerticalPadding: 12,
           onTap: () {
             for (int i = 0; i < 1000; i++) {
-              globalState.appController.addLog(
+              appController.addLog(
                 Log.app(
                   '[$i]${utils.generateRandomString(maxLength: 200, minLength: 20)}',
                 ),
@@ -37,7 +36,7 @@ class DeveloperView extends ConsumerWidget {
             }
           },
         ),
-        if (kDebugMode)
+        if (globalState.isPre)
           ListItem(
             title: Text(appLocalizations.crashTest),
             minVerticalPadding: 12,
@@ -61,16 +60,23 @@ class DeveloperView extends ConsumerWidget {
             if (res != true) {
               return;
             }
-            await globalState.appController.handleClear();
+            await appController.handleClear();
           },
         ),
+        // ListItem(
+        //   title: Text(appLocalizations.loadTest),
+        //   minVerticalPadding: 12,
+        //   onTap: () {
+        //     ref.read(loadingProvider.notifier).value = !ref.read(
+        //       loadingProvider,
+        //     );
+        //   },
+        // ),
         ListItem(
-          title: Text(appLocalizations.loadTest),
+          title: Text(appLocalizations.pruneCache),
           minVerticalPadding: 12,
           onTap: () {
-            ref.read(loadingProvider.notifier).value = !ref.read(
-              loadingProvider,
-            );
+            appController.shakingStore();
           },
         ),
       ],
@@ -99,7 +105,7 @@ class DeveloperView extends ConsumerWidget {
                   onChanged: (value) {
                     ref
                         .read(appSettingProvider.notifier)
-                        .updateState(
+                        .update(
                           (state) => state.copyWith(developerMode: value),
                         );
                   },

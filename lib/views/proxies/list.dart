@@ -1,11 +1,11 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -88,7 +88,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     } else {
       tempUnfoldSet.add(groupName);
     }
-    globalState.appController.updateCurrentUnfoldSet(tempUnfoldSet);
+    appController.updateCurrentUnfoldSet(tempUnfoldSet);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _adjustHeader();
     });
@@ -197,7 +197,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     if (_controller.position.maxScrollExtent == 0) {
       return 0;
     }
-    final currentGroups = globalState.appController.getCurrentGroups();
+    final currentGroups = appController.getCurrentGroups();
     final findIndex = currentGroups.indexWhere(
       (item) => item.name == groupName,
     );
@@ -257,7 +257,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
 
   void _scrollToGroupSelected(String groupName) {
     final currentInitOffset = _getGroupOffset(groupName);
-    final currentGroups = globalState.appController.getCurrentGroups();
+    final currentGroups = appController.getCurrentGroups();
     final proxies = currentGroups.getGroup(groupName)?.all;
     _jumpTo(
       currentInitOffset +
@@ -515,7 +515,7 @@ class _ListHeaderState extends State<ListHeader> {
                                             groupName,
                                           ),
                                         )
-                                        .getSafeValue('');
+                                        .takeFirstValid([]);
                                     return Row(
                                       mainAxisSize: MainAxisSize.min,
                                       mainAxisAlignment:

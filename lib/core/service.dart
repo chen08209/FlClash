@@ -70,8 +70,9 @@ class CoreService extends CoreHandlerInterface {
         .transform(uint8ListToListIntConverter)
         .transform(utf8.decoder)
         .transform(LineSplitter())
-        .listen((data) {
-          handleResult(ActionResult.fromJson(json.decode(data.trim())));
+        .listen((data) async {
+          final dataJson = await data.trim().commonToJSON<dynamic>();
+          handleResult(ActionResult.fromJson(dataJson));
         })
         .onDone(() {
           _handleInvokeCrashEvent();
@@ -126,9 +127,7 @@ class CoreService extends CoreHandlerInterface {
   Future<void> _deleteSocketFile() async {
     if (!system.isWindows) {
       final file = File(unixSocketPath);
-      if (await file.exists()) {
-        await file.delete();
-      }
+      await file.safeDelete();
     }
   }
 

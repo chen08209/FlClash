@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"github.com/metacubex/mihomo/adapter"
@@ -19,11 +20,11 @@ import (
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
+	"golang.org/x/exp/slices"
 	"net"
 	"os"
 	"runtime"
 	"runtime/debug"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -43,10 +44,8 @@ func handleInitClash(paramsString string) bool {
 		return false
 	}
 	version = params.Version
-	if !isInit {
-		constant.SetHomeDir(params.HomeDir)
-		isInit = true
-	}
+	constant.SetHomeDir(params.HomeDir)
+	isInit = true
 	return isInit
 }
 
@@ -97,10 +96,32 @@ func handleValidateConfig(path string) string {
 	return ""
 }
 
-func handleGetProxies() map[string]constant.Proxy {
+func handleGetProxies() ProxiesData {
 	runLock.Lock()
 	defer runLock.Unlock()
-	return tunnel.ProxiesWithProviders()
+	var all = []string{"GLOBAL"}
+	all = append(all, config.ProxyList...)
+	proxies := make(map[string]constant.Proxy)
+	for name, proxy := range tunnel.Proxies() {
+		proxies[name] = proxy
+	}
+	for _, p := range tunnel.Providers() {
+		for _, proxy := range p.Proxies() {
+			name := proxy.Name()
+			proxies[name] = proxy
+		}
+	}
+
+	types := []constant.AdapterType{
+		constant.Selector, constant.URLTest, constant.Fallback, constant.Relay, constant.LoadBalance,
+	}
+	nextAll := slices.DeleteFunc(all, func(name string) bool {
+		return !slices.Contains(types, proxies[name].Type())
+	})
+	return ProxiesData{
+		All:     nextAll,
+		Proxies: proxies,
+	}
 }
 
 func handleChangeProxy(data string, fn func(string string)) {
@@ -143,7 +164,7 @@ func handleChangeProxy(data string, fn func(string string)) {
 }
 
 func handleGetTraffic(onlyStatisticsProxy bool) string {
-	up, down := statistic.DefaultManager.Current(onlyStatisticsProxy)
+	up, down := statistic.DefaultManager.NowTraffic(onlyStatisticsProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -157,7 +178,7 @@ func handleGetTraffic(onlyStatisticsProxy bool) string {
 }
 
 func handleGetTotalTraffic(onlyStatisticsProxy bool) string {
-	up, down := statistic.DefaultManager.Total(onlyStatisticsProxy)
+	up, down := statistic.DefaultManager.TotalTraffic(onlyStatisticsProxy)
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -287,7 +308,9 @@ func handleGetExternalProviders() string {
 		}
 		eps = append(eps, *externalProvider)
 	}
-	sort.Sort(ExternalProviders(eps))
+	slices.SortFunc(eps, func(a, b ExternalProvider) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
 	data, err := json.Marshal(eps)
 	if err != nil {
 		return ""
@@ -493,10 +516,10 @@ func handleSetupConfig(bytes []byte) string {
 	err := UnmarshalJson(bytes, params)
 	if err != nil {
 		log.Errorln("unmarshalRawConfig error %v", err)
-		_ = setupConfig(defaultSetupParams())
+		_ = applyConfig(defaultSetupParams())
 		return err.Error()
 	}
-	err = setupConfig(params)
+	err = applyConfig(params)
 	if err != nil {
 		return err.Error()
 	}

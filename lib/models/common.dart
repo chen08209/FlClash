@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -215,15 +217,16 @@ extension TrackerInfosStateExt on TrackerInfosState {
 const defaultDavFileName = 'backup.zip';
 
 @freezed
-abstract class DAV with _$DAV {
-  const factory DAV({
+abstract class DAVProps with _$DAVProps {
+  const factory DAVProps({
     required String uri,
     required String user,
     required String password,
     @Default(defaultDavFileName) String fileName,
-  }) = _DAV;
+  }) = _DAVProps;
 
-  factory DAV.fromJson(Map<String, Object?> json) => _$DAVFromJson(json);
+  factory DAVProps.fromJson(Map<String, Object?> json) =>
+      _$DAVPropsFromJson(json);
 }
 
 @freezed
@@ -471,19 +474,6 @@ class PopupMenuItemData {
   final List<PopupMenuItemData> subItems;
 }
 
-@freezed
-abstract class AndroidState with _$AndroidState {
-  const factory AndroidState({
-    required String currentProfileName,
-    required String stopText,
-    required bool onlyStatisticsProxy,
-    required bool crashlytics,
-  }) = _AndroidState;
-
-  factory AndroidState.fromJson(Map<String, Object?> json) =>
-      _$AndroidStateFromJson(json);
-}
-
 class CloseWindowIntent extends Intent {
   const CloseWindowIntent();
 }
@@ -512,20 +502,24 @@ extension ResultExt on Result {
 @freezed
 abstract class Script with _$Script {
   const factory Script({
-    required String id,
+    required int id,
     required String label,
-    required String content,
+    required DateTime lastUpdateTime,
   }) = _Script;
 
-  factory Script.create({required String label, required String content}) {
-    return Script(id: utils.uuidV4, label: label, content: content);
-  }
-
   factory Script.fromJson(Map<String, Object?> json) => _$ScriptFromJson(json);
+
+  factory Script.create({required String label}) {
+    return Script(
+      id: snowflake.id,
+      label: label,
+      lastUpdateTime: DateTime.now(),
+    );
+  }
 }
 
 extension ScriptsExt on List<Script> {
-  Script? get(String? id) {
+  Script? get(int? id) {
     if (id == null) {
       return null;
     }
@@ -534,6 +528,38 @@ extension ScriptsExt on List<Script> {
       return this[index];
     }
     return null;
+  }
+}
+
+extension ScriptExt on Script {
+  String get fileName => '$id.js';
+
+  Future<String> get path async => await appPath.getScriptPath(id.toString());
+
+  Future<String?> get content async {
+    final file = File(await path);
+    if (await file.exists()) {
+      return file.readAsString();
+    }
+    return null;
+  }
+
+  Future<Script> save(String content) async {
+    final file = File(await path);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    }
+    await file.writeAsString(content);
+    return copyWith(lastUpdateTime: DateTime.now());
+  }
+
+  Future<Script> saveWithPath(String copyPath) async {
+    final file = File(await path);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    }
+    await File(copyPath).copy(copyPath);
+    return copyWith(lastUpdateTime: DateTime.now());
   }
 }
 
@@ -561,4 +587,12 @@ extension DelayStateExt on DelayState {
     if (!group && group) return 1;
     return 0;
   }
+}
+
+@freezed
+abstract class UpdatingMessage with _$UpdatingMessage {
+  const factory UpdatingMessage({
+    required String label,
+    required String message,
+  }) = _UpdatingMessage;
 }

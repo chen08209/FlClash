@@ -44,7 +44,7 @@ abstract class VpnOptions with _$VpnOptions {
     required int port,
     required bool ipv6,
     required bool dnsHijacking,
-    required AccessControl accessControl,
+    required AccessControlProps accessControlProps,
     required bool allowBypass,
     required bool systemProxy,
     required List<String> bypassDomain,
@@ -154,13 +154,16 @@ abstract class ExternalProvider with _$ExternalProvider {
     required int count,
     @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
     SubscriptionInfo? subscriptionInfo,
-    @Default(false) bool isUpdating,
     @JsonKey(name: 'vehicle-type') required String vehicleType,
     @JsonKey(name: 'update-at') required DateTime updateAt,
   }) = _ExternalProvider;
 
   factory ExternalProvider.fromJson(Map<String, Object?> json) =>
       _$ExternalProviderFromJson(json);
+}
+
+extension ExternalProviderExt on ExternalProvider {
+  String get updatingKey => 'provider_$name';
 }
 
 @freezed
@@ -172,6 +175,17 @@ abstract class Action with _$Action {
   }) = _Action;
 
   factory Action.fromJson(Map<String, Object?> json) => _$ActionFromJson(json);
+}
+
+@freezed
+abstract class ProxiesData with _$ProxiesData {
+  const factory ProxiesData({
+    required Map<String, dynamic> proxies,
+    required List<String> all,
+  }) = _ProxiesData;
+
+  factory ProxiesData.fromJson(Map<String, Object?> json) =>
+      _$ProxiesDataFromJson(json);
 }
 
 @freezed
