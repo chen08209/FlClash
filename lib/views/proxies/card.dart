@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -104,7 +105,6 @@ class ProxyCard extends StatelessWidget {
         true => currentProxyName == proxy.name ? '' : proxy.name,
         false => proxy.name,
       };
-      final appController = globalState.appController;
       appController.updateCurrentSelectedMap(groupName, nextProxyName);
       appController.changeProxyDebounce(groupName, nextProxyName);
       return;

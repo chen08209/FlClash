@@ -1,38 +1,46 @@
-import 'package:fl_clash/models/app.dart';
+import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/controller.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/tile.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class TileManager extends StatefulWidget {
+class TileManager extends ConsumerStatefulWidget {
   final Widget child;
 
   const TileManager({super.key, required this.child});
 
   @override
-  State<TileManager> createState() => _TileContainerState();
+  ConsumerState<TileManager> createState() => _TileContainerState();
 }
 
-class _TileContainerState extends State<TileManager> with TileListener {
+class _TileContainerState extends ConsumerState<TileManager> with TileListener {
   @override
   Widget build(BuildContext context) {
     return widget.child;
   }
 
+  bool get isStart => ref.read(isStartProvider);
+
   @override
   Future<void> onStart() async {
-    if (globalState.appState.isStart) {
+    if (isStart && coreController.isCompleted) {
       return;
     }
-    globalState.appController.updateStatus(true);
+    appController.updateStatus(true);
+    app?.tip(appLocalizations.startVpn);
     super.onStart();
   }
 
   @override
   Future<void> onStop() async {
-    if (!globalState.appState.isStart) {
+    if (!isStart) {
       return;
     }
-    globalState.appController.updateStatus(false);
+    appController.updateStatus(false);
+    app?.tip(appLocalizations.stopVpn);
     super.onStop();
   }
 

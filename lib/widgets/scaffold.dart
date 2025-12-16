@@ -16,6 +16,7 @@ class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Color? backgroundColor;
   final String? title;
+  final bool isLoading;
   final List<Widget>? actions;
   final bool? centerTitle;
   final Widget? floatingActionButton;
@@ -33,6 +34,7 @@ class CommonScaffold extends StatefulWidget {
     this.actions,
     this.centerTitle,
     this.editState,
+    this.isLoading = false,
     this.searchState,
     this.floatingActionButton,
     this.onKeywordsUpdate,
@@ -46,7 +48,7 @@ class CommonScaffold extends StatefulWidget {
 class CommonScaffoldState extends State<CommonScaffold> {
   late final ValueNotifier<AppBarState> _appBarState;
   final ValueNotifier<Widget?> _floatingActionButton = ValueNotifier(null);
-  final ValueNotifier<bool> _loadingVisible = ValueNotifier(false);
+  final ValueNotifier<bool> _loadingNotifier = ValueNotifier(false);
   final ValueNotifier<List<String>> _keywordsNotifier = ValueNotifier([]);
   final _textController = TextEditingController();
 
@@ -68,6 +70,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _appBarState = ValueNotifier(
       AppBarState(editState: widget.editState, searchState: widget.searchState),
     );
+    _loadingNotifier.value = widget.isLoading;
   }
 
   Future<void> _updateSearchState(AppBarSearchStateBuilder builder) async {
@@ -121,6 +124,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
         searchState: widget.searchState,
       );
     }
+    if (oldWidget.isLoading != widget.isLoading) {
+      _loadingNotifier.value = widget.isLoading;
+    }
   }
 
   void _handleClearInput() {
@@ -151,7 +157,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _appBarState.dispose();
     _textController.dispose();
     _floatingActionButton.dispose();
-    _loadingVisible.dispose();
+    _loadingNotifier.dispose();
     super.dispose();
   }
 
@@ -284,6 +290,14 @@ class CommonScaffoldState extends State<CommonScaffold> {
                   );
                 },
               ),
+          ValueListenableBuilder(
+            valueListenable: _loadingNotifier,
+            builder: (_, value, _) {
+              return value == true
+                  ? const LinearProgressIndicator()
+                  : Container();
+            },
+          ),
         ],
       ),
     );

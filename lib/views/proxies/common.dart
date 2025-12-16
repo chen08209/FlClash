@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -21,17 +22,16 @@ double getItemHeight(ProxyCardType proxyCardType) {
 }
 
 Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
-  final appController = globalState.appController;
-  final groups = globalState.appState.groups;
-  final selectedMap = globalState.config.currentProfile?.selectedMap ?? {};
+  final groups = appController.groups;
+  final selectedMap = appController.currentProfile?.selectedMap ?? {};
   final state = computeRealSelectedProxyState(
     proxy.name,
     groups: groups,
     selectedMap: selectedMap,
   );
-  final currentTestUrl = state.testUrl.getSafeValue(
+  final currentTestUrl = state.testUrl.takeFirstValid([
     appController.getRealTestUrl(testUrl),
-  );
+  ]);
   if (state.proxyName.isEmpty) {
     return;
   }
@@ -44,20 +44,19 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
 }
 
 Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final appController = globalState.appController;
   final proxyNames = proxies.map((proxy) => proxy.name).toSet().toList();
 
   final delayProxies = proxyNames.map<Future>((proxyName) async {
-    final groups = globalState.appState.groups;
-    final selectedMap = globalState.config.currentProfile?.selectedMap ?? {};
+    final groups = appController.groups;
+    final selectedMap = appController.currentProfile?.selectedMap ?? {};
     final state = computeRealSelectedProxyState(
       proxyName,
       groups: groups,
       selectedMap: selectedMap,
     );
-    final url = state.testUrl.getSafeValue(
+    final url = state.testUrl.takeFirstValid([
       appController.getRealTestUrl(testUrl),
-    );
+    ]);
     final name = state.proxyName;
     if (name.isEmpty) {
       return;
@@ -77,9 +76,8 @@ double getScrollToSelectedOffset({
   required String groupName,
   required List<Proxy> proxies,
 }) {
-  final appController = globalState.appController;
   final columns = appController.getProxiesColumns();
-  final proxyCardType = globalState.config.proxiesStyle.cardType;
+  final proxyCardType = appController.config.proxiesStyleProps.cardType;
   final selectedProxyName = appController.getSelectedProxyName(groupName);
   final findSelectedIndex = proxies.indexWhere(
     (proxy) => proxy.name == selectedProxyName,

@@ -1,13 +1,11 @@
 import 'package:animations/animations.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:flutter/material.dart';
 
 class BaseNavigator {
   static Future<T?> push<T>(BuildContext context, Widget child) async {
-    if (globalState.appState.viewMode != ViewMode.mobile) {
+    if (!appController.isMobile) {
       return await Navigator.of(
         context,
       ).push<T>(CommonDesktopRoute(builder: (context) => child));
