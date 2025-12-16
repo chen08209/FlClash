@@ -116,7 +116,7 @@ class SystemProxyItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(networkSettingProvider.notifier)
-              .updateState((state) => state.copyWith(systemProxy: value));
+              .update((state) => state.copyWith(systemProxy: value));
         },
       ),
     );
@@ -159,7 +159,7 @@ class AutoSetSystemDnsItem extends ConsumerWidget {
         onChanged: (bool value) async {
           ref
               .read(networkSettingProvider.notifier)
-              .updateState((state) => state.copyWith(autoSetSystemDns: value));
+              .update((state) => state.copyWith(autoSetSystemDns: value));
         },
       ),
     );
@@ -188,7 +188,7 @@ class TunStackItem extends ConsumerWidget {
           }
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState((state) => state.copyWith.tun(stack: value));
+              .update((state) => state.copyWith.tun(stack: value));
         },
         title: appLocalizations.stackMode,
       ),
@@ -217,7 +217,7 @@ class BypassDomainItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(networkSettingProvider.notifier)
-              .updateState(
+              .update(
                 (state) => state.copyWith(bypassDomain: List.from(items)),
               );
         },
@@ -268,7 +268,7 @@ class RouteModeItem extends ConsumerWidget {
           }
           ref
               .read(networkSettingProvider.notifier)
-              .updateState((state) => state.copyWith(routeMode: value));
+              .update((state) => state.copyWith(routeMode: value));
         },
         textBuilder: (routeMode) => Intl.message('routeMode_${routeMode.name}'),
         value: routeMode,
@@ -307,7 +307,7 @@ class RouteAddressItem extends ConsumerWidget {
         onChanged: (items) {
           ref
               .read(patchClashConfigProvider.notifier)
-              .updateState(
+              .update(
                 (state) => state.copyWith.tun(routeAddress: List.from(items)),
               );
         },

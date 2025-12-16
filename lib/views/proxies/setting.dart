@@ -72,11 +72,11 @@ class ProxiesSetting extends StatelessWidget {
                       ),
                       isSelected: proxiesType == item,
                       onPressed: () {
-                        ref
-                            .read(proxiesStyleSettingProvider.notifier)
-                            .updateState((state) {
-                              return state.copyWith(type: item);
-                            });
+                        ref.read(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(type: item);
+                        });
                       },
                     ),
                 ],
@@ -111,11 +111,11 @@ class ProxiesSetting extends StatelessWidget {
                       ),
                       isSelected: sortType == item,
                       onPressed: () {
-                        ref
-                            .read(proxiesStyleSettingProvider.notifier)
-                            .updateState((state) {
-                              return state.copyWith(sortType: item);
-                            });
+                        ref.read(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(sortType: item);
+                        });
                       },
                     ),
                 ],
@@ -147,11 +147,11 @@ class ProxiesSetting extends StatelessWidget {
                       Intl.message(item.name),
                       isSelected: item == cardType,
                       onPressed: () {
-                        ref
-                            .read(proxiesStyleSettingProvider.notifier)
-                            .updateState((state) {
-                              return state.copyWith(cardType: item);
-                            });
+                        ref.read(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(cardType: item);
+                        });
                       },
                     ),
                 ],
@@ -183,11 +183,11 @@ class ProxiesSetting extends StatelessWidget {
                       getTextForProxiesLayout(item),
                       isSelected: item == layout,
                       onPressed: () {
-                        ref
-                            .watch(proxiesStyleSettingProvider.notifier)
-                            .updateState((state) {
-                              return state.copyWith(layout: item);
-                            });
+                        ref.watch(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(layout: item);
+                        });
                       },
                     ),
                 ],
@@ -219,11 +219,11 @@ class ProxiesSetting extends StatelessWidget {
                       _getTextWithProxiesIconStyle(item),
                       isSelected: iconStyle == item,
                       onPressed: () {
-                        ref
-                            .read(proxiesStyleSettingProvider.notifier)
-                            .updateState((state) {
-                              return state.copyWith(iconStyle: item);
-                            });
+                        ref.read(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(iconStyle: item);
+                        });
                       },
                     ),
                 ],

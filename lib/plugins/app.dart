@@ -1,11 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
-import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/system.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,24 +38,18 @@ class App {
     final packagesString = await methodChannel.invokeMethod<String>(
       'getPackages',
     );
-    return Isolate.run<List<Package>>(() {
-      final List<dynamic> packagesRaw = packagesString != null
-          ? json.decode(packagesString)
-          : [];
-      return packagesRaw.map((e) => Package.fromJson(e)).toSet().toList();
-    });
+    List<dynamic> packagesRaw =
+        (await packagesString?.commonToJSON<List<dynamic>>()) ?? [];
+    return packagesRaw.map((e) => Package.fromJson(e)).toSet().toList();
   }
 
   Future<List<String>> getChinaPackageNames() async {
     final packageNamesString = await methodChannel.invokeMethod<String>(
       'getChinaPackageNames',
     );
-    return Isolate.run<List<String>>(() {
-      final List<dynamic> packageNamesRaw = packageNamesString != null
-          ? json.decode(packageNamesString)
-          : [];
-      return packageNamesRaw.map((e) => e.toString()).toList();
-    });
+    List<dynamic> packageNamesRaw =
+        await packageNamesString?.commonToJSON<List<dynamic>>() ?? [];
+    return packageNamesRaw.map((e) => e.toString()).toList();
   }
 
   Future<bool?> requestNotificationsPermission() async {
