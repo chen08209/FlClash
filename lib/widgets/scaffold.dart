@@ -238,19 +238,22 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget _buildAppBarWrap(Widget child) {
     final appBar = _isSearch ? _buildSearchingAppBarTheme(child) : child;
     if (_isEdit || _isSearch) {
-      return SystemBackBlock(
-        child: CommonPopScope(
-          onPop: (context) {
-            if (_isEdit || _isSearch) {
-              handleExitSearching();
-              _appBarState.value.editState?.onExit();
-              return false;
-            }
-            return true;
-          },
-          child: appBar,
-        ),
+      final wrappedAppBar = CommonPopScope(
+        onPop: (context) {
+          if (_isEdit || _isSearch) {
+            handleExitSearching();
+            _appBarState.value.editState?.onExit();
+            return false;
+          }
+          return true;
+        },
+        child: appBar,
       );
+      // Only block system back for edit mode, not search mode
+      if (_isEdit) {
+        return SystemBackBlock(child: wrappedAppBar);
+      }
+      return wrappedAppBar;
     }
     return appBar;
   }
