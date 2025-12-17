@@ -138,6 +138,7 @@
   "recoveryAll": "Recovery all data",
   "recoverySuccess": "Recovery success",
   "backupSuccess": "Backup success",
+  "copied": "Copied",
   "noInfo": "No info",
   "pleaseBindWebDAV": "Please bind WebDAV",
   "bind": "Bind",

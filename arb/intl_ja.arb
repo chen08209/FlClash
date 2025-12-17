@@ -138,6 +138,7 @@
   "recoveryAll": "全データ復元",
   "recoverySuccess": "復元成功",
   "backupSuccess": "バックアップ成功",
+  "copied": "コピーしました",
   "noInfo": "情報なし",
   "pleaseBindWebDAV": "WebDAVをバインドしてください",
   "bind": "バインド",

@@ -171,6 +171,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Sync data via WebDAV or file",
     ),
     "backupSuccess": MessageLookupByLibrary.simpleMessage("Backup success"),
+    "copied": MessageLookupByLibrary.simpleMessage("Copied"),
     "basicConfig": MessageLookupByLibrary.simpleMessage("Basic configuration"),
     "basicConfigDesc": MessageLookupByLibrary.simpleMessage(
       "Modify the basic configuration globally",
