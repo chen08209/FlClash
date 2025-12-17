@@ -148,8 +148,8 @@ class WindowHeader extends StatefulWidget {
 class _WindowHeaderState extends State<WindowHeader> {
   final isMaximizedNotifier = ValueNotifier<bool>(false);
   final isPinNotifier = ValueNotifier<bool>(false);
-  bool _windowsBoundsMaximized =
-      false; // Track Windows-specific bounds-based maximize state
+  bool _manuallyMaximized =
+      false; // Track bounds-based manual maximize state
   Rect? _savedBounds; // Save window bounds before maximizing
   bool _isUpdatingMaximized =
       false; // Prevent concurrent maximize/unmaximize operations
