@@ -122,6 +122,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAVまたはファイルでデータを同期",
     ),
     "backupSuccess": MessageLookupByLibrary.simpleMessage("バックアップ成功"),
+    "copied": MessageLookupByLibrary.simpleMessage("コピーしました"),
     "basicConfig": MessageLookupByLibrary.simpleMessage("基本設定"),
     "basicConfigDesc": MessageLookupByLibrary.simpleMessage("基本設定をグローバルに変更"),
     "bind": MessageLookupByLibrary.simpleMessage("バインド"),

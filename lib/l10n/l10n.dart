@@ -1074,6 +1074,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Copied`
+  String get copied {
+    return Intl.message(
+      'Copied',
+      name: 'copied',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `No info`
   String get noInfo {
     return Intl.message('No info', name: 'noInfo', desc: '', args: []);

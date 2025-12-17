@@ -113,8 +113,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "backupAndRecoveryDesc": MessageLookupByLibrary.simpleMessage(
       "通过WebDAV或者文件同步数据",
     ),
-    "backupSuccess": MessageLookupByLibrary.simpleMessage("备份成功"),
-    "basicConfig": MessageLookupByLibrary.simpleMessage("基本配置"),
+    "backupSuccess": MessageLookupByLibrary.simpleMessage("备份成功"),    "copied": MessageLookupByLibrary.simpleMessage("已复制"),    "basicConfig": MessageLookupByLibrary.simpleMessage("基本配置"),
     "basicConfigDesc": MessageLookupByLibrary.simpleMessage("全局修改基本配置"),
     "bind": MessageLookupByLibrary.simpleMessage("绑定"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage("黑名单模式"),
