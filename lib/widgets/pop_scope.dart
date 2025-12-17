@@ -62,10 +62,8 @@ class _SystemBackBlockState extends State<SystemBackBlock> {
 
   @override
   void dispose() {
+    globalState.appController.unBackBlock();
     super.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      globalState.appController.unBackBlock();
-    });
   }
 
   @override
