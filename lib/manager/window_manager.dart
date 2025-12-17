@@ -6,6 +6,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_ext/window_ext.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -147,6 +148,8 @@ class WindowHeader extends StatefulWidget {
 class _WindowHeaderState extends State<WindowHeader> {
   final isMaximizedNotifier = ValueNotifier<bool>(false);
   final isPinNotifier = ValueNotifier<bool>(false);
+  bool _manualMaximized = false; // Track manual maximized state on Windows
+  Rect? _savedBounds; // Save window bounds before maximizing
 
   @override
   void initState() {
@@ -167,16 +170,54 @@ class _WindowHeaderState extends State<WindowHeader> {
   }
 
   Future<void> _updateMaximized() async {
-    final isMaximized = await windowManager.isMaximized();
-    switch (isMaximized) {
-      case true:
+    final isMaximized = system.isWindows
+        ? _manualMaximized
+        : await windowManager.isMaximized();
+
+    if (isMaximized) {
+      // Unmaximize and restore previous size
+      if (system.isWindows && _savedBounds != null) {
+        // Restore saved window bounds on Windows
+        await windowManager.setBounds(_savedBounds!);
+        _savedBounds = null;
+      } else {
         await windowManager.unmaximize();
-        break;
-      case false:
+      }
+      _manualMaximized = false;
+      isMaximizedNotifier.value = false;
+    } else {
+      // Maximize window
+      if (system.isWindows) {
+        // Save current window bounds
+        final currentPosition = await windowManager.getPosition();
+        final currentSize = await windowManager.getSize();
+        _savedBounds = Rect.fromLTWH(
+          currentPosition.dx,
+          currentPosition.dy,
+          currentSize.width,
+          currentSize.height,
+        );
+
+        // On Windows, manually set to work area size (excluding taskbar)
+        final display = await screenRetriever.getPrimaryDisplay();
+        final visiblePosition = display.visiblePosition ?? Offset.zero;
+        final visibleSize = display.visibleSize ?? display.size;
+
+        await windowManager.setBounds(
+          Rect.fromLTWH(
+            visiblePosition.dx,
+            visiblePosition.dy,
+            visibleSize.width,
+            visibleSize.height,
+          ),
+        );
+        _manualMaximized = true;
+        isMaximizedNotifier.value = true;
+      } else {
         await windowManager.maximize();
-        break;
+        isMaximizedNotifier.value = await windowManager.isMaximized();
+      }
     }
-    isMaximizedNotifier.value = await windowManager.isMaximized();
   }
 
   Future<void> _updatePin() async {
