@@ -16,6 +16,7 @@ import 'package:fl_clash/widgets/dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_js/flutter_js.dart';
+import 'package:isar_community/isar.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
@@ -32,10 +33,11 @@ class GlobalState {
   Map<CacheTag, FixedMap<String, double>> computeHeightMapCache = {};
   Timer? timer;
   Timer? groupsUpdateTimer;
-  late Config config;
-  late AppState appState;
+  late final Isar isar;
+  late final Config config;
+  late final AppState appState;
   bool isPre = true;
-  String? coreSHA256;
+  late final String coreSHA256;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;
@@ -83,40 +85,8 @@ class GlobalState {
     );
     await _initDynamicColor();
     await init();
-    await window?.init(version);
+    await window?.init(version, config.windowProps);
     _shakingStore();
-  }
-
-  Future<void> _shakingStore() async {
-    final profileIds = config.profiles.map((item) => item.id);
-    final providersRootPath = await appPath.getProvidersRootPath();
-    final profilesRootPath = await appPath.profilesPath;
-    final entities = await Isolate.run<List<FileSystemEntity>>(() async {
-      final profilesDir = Directory(profilesRootPath);
-      final providersDir = Directory(providersRootPath);
-      final List<FileSystemEntity> entities = [];
-      if (await profilesDir.exists()) {
-        entities.addAll(
-          profilesDir.listSync().where(
-            (item) => !item.path.contains('providers'),
-          ),
-        );
-      }
-      if (await providersDir.exists()) {
-        entities.addAll(providersDir.listSync());
-      }
-      return entities;
-    });
-    final deleteFutures = entities.map((entity) async {
-      if (!profileIds.contains(basenameWithoutExtension(entity.path))) {
-        final res = await coreController.deleteFile(entity.path);
-        if (res.isNotEmpty) {
-          throw res;
-        }
-      }
-      return true;
-    });
-    await Future.wait(deleteFutures);
   }
 
   Future<void> _initDynamicColor() async {
@@ -128,15 +98,73 @@ class GlobalState {
     } catch (_) {}
   }
 
+  Future<void> _shakingStore() async {
+    final profileIds = config.profiles.map((item) => item.id).toSet();
+
+    final providersRootPath = await appPath.getProvidersRootPath();
+    final profilesRootPath = await appPath.profilesPath;
+
+    final pathsToDelete = await Isolate.run<List<String>>(() {
+      final profilesDir = Directory(profilesRootPath);
+      final providersDir = Directory(providersRootPath);
+      final List<String> targets = [];
+      void scanDirectory(Directory dir, {bool skipProvidersFolder = false}) {
+        if (!dir.existsSync()) return;
+        final entities = dir.listSync(recursive: false, followLinks: false);
+
+        for (final entity in entities) {
+          if (entity is File) {
+            final id = basenameWithoutExtension(entity.path);
+            if (!profileIds.contains(id)) {
+              targets.add(entity.path);
+            }
+          } else if (skipProvidersFolder && entity is Directory) {
+            if (basename(entity.path) == 'providers') {
+              continue;
+            }
+          }
+        }
+      }
+
+      scanDirectory(profilesDir, skipProvidersFolder: true);
+      scanDirectory(providersDir);
+
+      return targets;
+    });
+    if (pathsToDelete.isNotEmpty) {
+      final deleteFutures = pathsToDelete.map((path) async {
+        try {
+          final res = await coreController.deleteFile(path);
+          if (res.isNotEmpty) {
+            throw res;
+          }
+        } catch (e) {
+          rethrow;
+        }
+      });
+
+      await Future.wait(deleteFutures);
+    }
+  }
+
   Future<void> init() async {
     packageInfo = await PackageInfo.fromPlatform();
-    config =
-        await preferences.getConfig() ?? Config(themeProps: defaultThemeProps);
-    await globalState.migrateOldData(config);
+    config = Config(themeProps: defaultThemeProps);
+    await _initIsar();
+    await version.migration(config);
     await AppLocalizations.load(
       utils.getLocaleForString(config.appSetting.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );
+  }
+
+  Future<void> _initIsar() async {
+    final homeDirPath = await appPath.homeDirPath;
+    isar = await Isar.open([
+      ProfileCollectionSchema,
+      ScriptCollectionSchema,
+      RuleCollectionSchema,
+    ], directory: homeDirPath);
   }
 
   String get ua => config.patchClashConfig.globalUa ?? packageInfo.ua;
@@ -307,11 +335,11 @@ class GlobalState {
     return params;
   }
 
-  Future<Map> getConfigMap(String profileId) async {
+  Future<Map> getProfileMap(String profileId) async {
     var res = {};
     try {
       final setupState = globalState.getSetupState(profileId);
-      res = await makeRealConfig(
+      res = await makeRealProfile(
         setupState: setupState,
         patchConfig: config.patchClashConfig,
       );
@@ -373,12 +401,12 @@ class GlobalState {
     return group?.getCurrentSelectedName(proxyName ?? '') ?? '';
   }
 
-  Future<String> setupConfig({
+  Future<String> setupProfile({
     required SetupState setupState,
     required ClashConfig patchConfig,
     VoidCallback? preloadInvoke,
   }) async {
-    final config = await makeRealConfig(
+    final config = await makeRealProfile(
       setupState: setupState,
       patchConfig: patchConfig,
     );
@@ -407,7 +435,7 @@ class GlobalState {
     );
   }
 
-  Future<Map<String, dynamic>> makeRealConfig({
+  Future<Map<String, dynamic>> makeRealProfile({
     required SetupState setupState,
     required ClashConfig patchConfig,
   }) async {

@@ -49,7 +49,7 @@ class _ProfilesViewState extends State<ProfilesView> {
       try {
         await globalState.appController.updateProfile(profile);
       } catch (e) {
-        messages.add('${profile.label ?? profile.id}: $e \n');
+        messages.add('${profile.label.getSafeValue(profile.id)}: $e \n');
         globalState.appController.setProfile(
           profile.copyWith(isUpdating: false),
         );
@@ -191,7 +191,7 @@ class ProfileItem extends StatelessWidget {
   }
 
   Future<void> _handlePreview(BuildContext context) async {
-    final config = await globalState.getConfigMap(profile.id);
+    final config = await globalState.getProfileConfig(profile.id);
     final content = await Isolate.run(() {
       return yaml.encode(config);
     });
@@ -404,7 +404,7 @@ class ProfileItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                profile.label ?? profile.id,
+                profile.label.getSafeValue(profile.id),
                 style: context.textTheme.titleMedium,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -463,7 +463,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
         index: index,
         child: const Icon(Icons.drag_handle),
       ),
-      title: Text(profile.label ?? profile.id),
+      title: Text(profile.label.getSafeValue(profile.id)),
       isFirst: isFirst,
       isLast: isLast,
       isDecorator: isDecorator,

@@ -6,7 +6,6 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:isar_community/isar.dart';
 
 import 'clash_config.dart';
 
@@ -210,9 +209,4 @@ extension ProfileExtension on Profile {
     });
     return copyWith(lastUpdateDate: DateTime.now());
   }
-}
-
-@collection
-class ProfileCollection {
-  Id localId = Isar.autoIncrement;
 }

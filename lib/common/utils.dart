@@ -10,6 +10,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class Utils {
+  static Utils? _instance;
+
+  Utils._internal();
+
+  factory Utils() {
+    _instance ??= Utils._internal();
+    return _instance!;
+  }
+
   Color? getDelayColor(int? delay) {
     if (delay == null) return null;
     if (delay < 0) return Colors.red;
@@ -327,6 +336,21 @@ class Utils {
       return res;
     }
     return await function();
+  }
+
+  int fastHash(String string) {
+    var hash = 0xcbf29ce484222325;
+
+    var i = 0;
+    while (i < string.length) {
+      final codeUnit = string.codeUnitAt(i++);
+      hash ^= codeUnit >> 8;
+      hash *= 0x100000001b3;
+      hash ^= codeUnit & 0xFF;
+      hash *= 0x100000001b3;
+    }
+
+    return hash;
   }
 }
 

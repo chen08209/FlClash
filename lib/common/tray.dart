@@ -14,6 +14,15 @@ import 'system.dart';
 import 'window.dart';
 
 class Tray {
+  static Tray? _instance;
+
+  Tray._internal();
+
+  factory Tray() {
+    _instance ??= Tray._internal();
+    return _instance!;
+  }
+
   String get trayIconSuffix {
     return system.isWindows ? 'ico' : 'png';
   }

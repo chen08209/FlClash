@@ -91,6 +91,11 @@ class AppPath {
     return join(directory, '$fileName.yaml');
   }
 
+  Future<String> getScriptPath(String fileName) async {
+    final directory = await profilesPath;
+    return join(directory, 'scripts', '$fileName.js');
+  }
+
   Future<String> getIconsCacheDir() async {
     final directory = await cacheDir.future;
     return join(directory.path, 'icons');

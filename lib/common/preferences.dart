@@ -24,6 +24,16 @@ class Preferences {
     return _instance!;
   }
 
+  Future<int> getVersion() async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.getInt('version') ?? 0;
+  }
+
+  Future<void> setVersion(int version) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    await preferences?.setInt('version', version);
+  }
+
   Future<ClashConfig?> getClashConfig() async {
     final preferences = await sharedPreferencesCompleter.future;
     final clashConfigString = preferences?.getString(clashConfigKey);
@@ -32,11 +42,19 @@ class Preferences {
     return ClashConfig.fromJson(clashConfigMap);
   }
 
-  Future<Config?> getConfig() async {
+  Future<Map<String, Object?>?> getConfigMap() async {
     final preferences = await sharedPreferencesCompleter.future;
     final configString = preferences?.getString(configKey);
     if (configString == null) return null;
-    final configMap = json.decode(configString);
+    final Map<String, Object?>? configMap = json.decode(configString);
+    return configMap;
+  }
+
+  Future<Config?> getConfig() async {
+    final configMap = await getConfigMap();
+    if (configMap == null) {
+      return null;
+    }
     return Config.compatibleFromJson(configMap);
   }
 

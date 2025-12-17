@@ -44,7 +44,7 @@ Future<void> _service(List<String> flags) async {
   final setupState = globalState.getSetupState(
     globalState.config.currentProfileId,
   );
-  globalState.setupConfig(
+  globalState.setupProfile(
     setupState: setupState,
     patchConfig: clashConfig,
     preloadInvoke: () {

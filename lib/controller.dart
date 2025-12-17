@@ -316,7 +316,7 @@ class AppController {
     if (system.isAndroid) {
       globalState.lastVpnState = _ref.read(vpnStateProvider);
     }
-    final message = await globalState.setupConfig(
+    final message = await globalState.setupProfile(
       setupState: setupState,
       patchConfig: realPatchConfig,
     );
