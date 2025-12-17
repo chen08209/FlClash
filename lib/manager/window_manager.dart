@@ -148,8 +148,11 @@ class WindowHeader extends StatefulWidget {
 class _WindowHeaderState extends State<WindowHeader> {
   final isMaximizedNotifier = ValueNotifier<bool>(false);
   final isPinNotifier = ValueNotifier<bool>(false);
-  bool _manualMaximized = false; // Track manual maximized state on Windows
+  bool _windowsBoundsMaximized =
+      false; // Track Windows-specific bounds-based maximize state
   Rect? _savedBounds; // Save window bounds before maximizing
+  bool _isUpdatingMaximized =
+      false; // Prevent concurrent maximize/unmaximize operations
 
   @override
   void initState() {
@@ -170,53 +173,142 @@ class _WindowHeaderState extends State<WindowHeader> {
   }
 
   Future<void> _updateMaximized() async {
-    final isMaximized = system.isWindows
-        ? _manualMaximized
-        : await windowManager.isMaximized();
+    // Prevent concurrent execution to avoid race conditions
+    if (_isUpdatingMaximized) return;
+    _isUpdatingMaximized = true;
 
-    if (isMaximized) {
-      // Unmaximize and restore previous size
-      if (system.isWindows && _savedBounds != null) {
-        // Restore saved window bounds on Windows
-        await windowManager.setBounds(_savedBounds!);
-        _savedBounds = null;
+    try {
+      final isMaximized = system.isWindows
+          ? _windowsBoundsMaximized
+          : await windowManager.isMaximized();
+
+      if (isMaximized) {
+        // Unmaximize and restore previous size
+        if (system.isWindows) {
+          if (_savedBounds != null) {
+            // Restore saved window bounds if we have them
+            try {
+              await windowManager.setBounds(_savedBounds!);
+              // Only clear saved bounds after successful restoration
+              _savedBounds = null;
+            } catch (e) {
+              // If restoration fails, keep saved bounds and try unmaximize
+              commonPrint.log('Failed to restore saved bounds: $e');
+              await windowManager.unmaximize();
+            }
+          } else {
+            // Window was maximized externally (e.g., Win+Up, drag to edge)
+            // Use system unmaximize, then verify the actual state
+            await windowManager.unmaximize();
+            final actuallyMaximized = await windowManager.isMaximized();
+            if (actuallyMaximized) {
+              // If still maximized, window might be in snap state
+              // Restore to a default reasonable size
+              try {
+                final display = await screenRetriever.getPrimaryDisplay();
+                final visibleSize = display.visibleSize ?? display.size;
+
+                // Validate display size before using it
+                if (visibleSize.width > 0 && visibleSize.height > 0) {
+                  await windowManager.setSize(
+                    Size(visibleSize.width * 0.8, visibleSize.height * 0.8),
+                  );
+                  await windowManager.center();
+                } else {
+                  // Invalid display size, use hardcoded fallback
+                  commonPrint.log(
+                    'Invalid display size, using fallback dimensions',
+                  );
+                  await windowManager.setSize(const Size(1280, 720));
+                  await windowManager.center();
+                }
+              } catch (e) {
+                // Failed to get display info, use fallback size
+                commonPrint.log('Failed to get display info: $e');
+                await windowManager.setSize(const Size(1280, 720));
+                await windowManager.center();
+              }
+            }
+          }
+          _windowsBoundsMaximized = false;
+          isMaximizedNotifier.value = false;
+        } else {
+          // Non-Windows platforms: use standard unmaximize
+          await windowManager.unmaximize();
+          _windowsBoundsMaximized = false;
+          isMaximizedNotifier.value = false;
+        }
       } else {
-        await windowManager.unmaximize();
-      }
-      _manualMaximized = false;
-      isMaximizedNotifier.value = false;
-    } else {
-      // Maximize window
-      if (system.isWindows) {
-        // Save current window bounds
-        final currentPosition = await windowManager.getPosition();
-        final currentSize = await windowManager.getSize();
-        _savedBounds = Rect.fromLTWH(
-          currentPosition.dx,
-          currentPosition.dy,
-          currentSize.width,
-          currentSize.height,
-        );
+        // Maximize window
+        if (system.isWindows) {
+          // Save current window bounds
+          final currentPosition = await windowManager.getPosition();
+          final currentSize = await windowManager.getSize();
+          _savedBounds = Rect.fromLTWH(
+            currentPosition.dx,
+            currentPosition.dy,
+            currentSize.width,
+            currentSize.height,
+          );
 
-        // On Windows, manually set to work area size (excluding taskbar)
-        final display = await screenRetriever.getPrimaryDisplay();
-        final visiblePosition = display.visiblePosition ?? Offset.zero;
-        final visibleSize = display.visibleSize ?? display.size;
+          // Determine which display the window is currently on by finding
+          // the display that contains the window's center point
+          final windowCenter = Offset(
+            currentPosition.dx + currentSize.width / 2,
+            currentPosition.dy + currentSize.height / 2,
+          );
 
-        await windowManager.setBounds(
-          Rect.fromLTWH(
-            visiblePosition.dx,
-            visiblePosition.dy,
-            visibleSize.width,
-            visibleSize.height,
-          ),
-        );
-        _manualMaximized = true;
-        isMaximizedNotifier.value = true;
-      } else {
-        await windowManager.maximize();
-        isMaximizedNotifier.value = await windowManager.isMaximized();
+          final displays = await screenRetriever.getAllDisplays();
+          Display? targetDisplay;
+
+          for (final display in displays) {
+            final displayBounds = Rect.fromLTWH(
+              display.visiblePosition?.dx ?? 0,
+              display.visiblePosition?.dy ?? 0,
+              display.visibleSize?.width ?? display.size.width,
+              display.visibleSize?.height ?? display.size.height,
+            );
+            if (displayBounds.contains(windowCenter)) {
+              targetDisplay = display;
+              break;
+            }
+          }
+
+          // Fallback to primary display if window is not on any display
+          targetDisplay ??= await screenRetriever.getPrimaryDisplay();
+
+          // Validate display information before using it
+          final visiblePosition = targetDisplay.visiblePosition ?? Offset.zero;
+          final visibleSize = targetDisplay.visibleSize ?? targetDisplay.size;
+
+          // Ensure we have valid dimensions
+          if (visibleSize.width <= 0 || visibleSize.height <= 0) {
+            // Display information is invalid, fallback to native maximize
+            commonPrint.log(
+              'Invalid display dimensions, using native maximize',
+            );
+            await windowManager.maximize();
+            _windowsBoundsMaximized = false;
+            isMaximizedNotifier.value = await windowManager.isMaximized();
+          } else {
+            await windowManager.setBounds(
+              Rect.fromLTWH(
+                visiblePosition.dx,
+                visiblePosition.dy,
+                visibleSize.width,
+                visibleSize.height,
+              ),
+            );
+            _windowsBoundsMaximized = true;
+            isMaximizedNotifier.value = true;
+          }
+        } else {
+          await windowManager.maximize();
+          isMaximizedNotifier.value = await windowManager.isMaximized();
+        }
       }
+    } finally {
+      _isUpdatingMaximized = false;
     }
   }
 
