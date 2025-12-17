@@ -67,7 +67,7 @@ class IntranetIP extends ConsumerWidget {
                           ],
                         )
                       : Container(
-                          padding: EdgeInsets.all(2),
+                          padding: const EdgeInsets.all(2),
                           child: AspectRatio(
                             aspectRatio: 1,
                             child: CircularProgressIndicator(strokeWidth: 2),
