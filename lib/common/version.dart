@@ -41,9 +41,18 @@ class Version {
         if (accessControlMap != null) {
           (accessControlMap as Map)['enable'] = isAccessControl;
           if (configMap['vpnProps'] != null) {
-            (configMap['vpnProps'] as Map)['accessControl'] = accessControlMap;
+            final vpnPropsRaw = configMap['vpnProps'] as Map;
+            vpnPropsRaw['accessControl'] = accessControlMap;
           }
         }
+        if (configMap['vpnProps'] != null) {
+          final vpnPropsRaw = configMap['vpnProps'] as Map;
+          vpnPropsRaw['accessControlProps'] = vpnPropsRaw['accessControl'];
+        }
+        configMap['davProps'] = configMap['dav'];
+        configMap['appSettingProps'] = configMap['appSetting'];
+        configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
+        configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
         List<Map<String, Object?>> rawScripts =
             configMap['scripts'] as List<Map<String, Object?>>? ?? [];
         if (rawScripts.isEmpty) {
