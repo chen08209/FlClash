@@ -84,7 +84,9 @@ class _EditProfileViewState extends State<EditProfileView> {
           profile = profile.copyWith(autoUpdate: false);
         }
       }
-      appController.setProfileAndAutoApply(await profile.saveFile(_fileData!));
+      appController.setProfileAndAutoApply(
+        await profile.saveFileAndCopy(_fileData!),
+      );
     } else if (!hasUpdate) {
       appController.setProfileAndAutoApply(profile);
     } else {

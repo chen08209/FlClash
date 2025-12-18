@@ -52,9 +52,7 @@ class AdvancedConfigView extends StatelessWidget {
                       }
                       ref
                           .read(patchClashConfigProvider.notifier)
-                          .updateState(
-                            (state) => state.copyWith(dns: defaultDns),
-                          );
+                          .update((state) => state.copyWith(dns: defaultDns));
                     },
                     tooltip: appLocalizations.reset,
                     icon: const Icon(Icons.replay),

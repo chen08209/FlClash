@@ -148,14 +148,14 @@ class AppController {
   Future<void> deleteProfile(String id) async {
     _ref.read(profilesProvider.notifier).deleteProfileById(id);
     clearEffect(id);
-    if (globalState.config.currentProfileId == id) {
-      final profiles = globalState.config.profiles;
-      final currentProfileId = _ref.read(currentProfileIdProvider.notifier);
+    final currentProfileId = _ref.read(currentProfileIdProvider);
+    if (currentProfileId == id) {
+      final profiles = _ref.read(profilesProvider);
       if (profiles.isNotEmpty) {
         final updateId = profiles.first.id;
-        currentProfileId.value = updateId;
+        _ref.read(currentProfileIdProvider.notifier).value = updateId;
       } else {
-        currentProfileId.value = null;
+        _ref.read(currentProfileIdProvider.notifier).value = null;
         updateStatus(false);
       }
     }
@@ -173,7 +173,7 @@ class AppController {
   }
 
   Future<void> updateProfile(Profile profile) async {
-    final newProfile = await profile.update();
+    final newProfile = await profile.updateAndCopy();
     _ref
         .read(profilesProvider.notifier)
         .setProfile(newProfile.copyWith(isUpdating: false));
@@ -302,7 +302,12 @@ class AppController {
   }
 
   Future<void> _setupClashConfig() async {
-    await _ref.read(currentProfileProvider)?.checkAndUpdate();
+    final profile = await _ref
+        .read(currentProfileProvider)
+        ?.checkAndUpdateAndCopy();
+    if (profile != null) {
+      _ref.read(profilesProvider.notifier).setProfile(profile);
+    }
     final patchConfig = _ref.read(patchClashConfigProvider);
     final res = await _requestAdmin(patchConfig.tun.enable);
     if (res.isError) {
@@ -347,7 +352,6 @@ class AppController {
     applyProfile();
     _ref.read(logsProvider.notifier).value = FixedList(500);
     _ref.read(requestsProvider.notifier).value = FixedList(500);
-    globalState.computeHeightMapCache = {};
   }
 
   void updateBrightness() {
@@ -681,7 +685,7 @@ class AppController {
     );
     _ref
         .read(appSettingProvider.notifier)
-        .updateState((state) => state.copyWith(crashlyticsTip: true));
+        .update((state) => state.copyWith(crashlyticsTip: true));
   }
 
   Future<void> _handlerDisclaimer() async {
@@ -696,7 +700,7 @@ class AppController {
     }
     _ref
         .read(appSettingProvider.notifier)
-        .updateState((state) => state.copyWith(disclaimerAccepted: true));
+        .update((state) => state.copyWith(disclaimerAccepted: true));
     return;
   }
 
@@ -708,7 +712,7 @@ class AppController {
 
     final profile = await safeRun(
       () async {
-        return await Profile.normal(url: url).update();
+        return await Profile.normal(url: url).updateAndCopy();
       },
       needLoading: true,
       title: '${appLocalizations.add}${appLocalizations.profile}',
@@ -731,7 +735,9 @@ class AppController {
     final profile = await safeRun(
       () async {
         await Future.delayed(const Duration(milliseconds: 300));
-        return await Profile.normal(label: platformFile?.name).saveFile(bytes);
+        return await Profile.normal(
+          label: platformFile?.name,
+        ).saveFileAndCopy(bytes);
       },
       needLoading: true,
       title: '${appLocalizations.add}${appLocalizations.profile}',
@@ -773,15 +779,13 @@ class AppController {
   void updateTun() {
     _ref
         .read(patchClashConfigProvider.notifier)
-        .updateState((state) => state.copyWith.tun(enable: !state.tun.enable));
+        .update((state) => state.copyWith.tun(enable: !state.tun.enable));
   }
 
   void updateSystemProxy() {
     _ref
         .read(networkSettingProvider.notifier)
-        .updateState(
-          (state) => state.copyWith(systemProxy: !state.systemProxy),
-        );
+        .update((state) => state.copyWith(systemProxy: !state.systemProxy));
   }
 
   void handleCoreDisconnected() {
@@ -834,7 +838,7 @@ class AppController {
   void changeMode(Mode mode) {
     _ref
         .read(patchClashConfigProvider.notifier)
-        .updateState((state) => state.copyWith(mode: mode));
+        .update((state) => state.copyWith(mode: mode));
     if (mode == Mode.global) {
       updateCurrentGroupName(GroupName.GLOBAL.name);
     }
@@ -844,7 +848,7 @@ class AppController {
   void updateAutoLaunch() {
     _ref
         .read(appSettingProvider.notifier)
-        .updateState((state) => state.copyWith(autoLaunch: !state.autoLaunch));
+        .update((state) => state.copyWith(autoLaunch: !state.autoLaunch));
   }
 
   Future<void> updateVisible() async {
@@ -857,7 +861,7 @@ class AppController {
   }
 
   void updateMode() {
-    _ref.read(patchClashConfigProvider.notifier).updateState((state) {
+    _ref.read(patchClashConfigProvider.notifier).update((state) {
       final index = Mode.values.indexWhere((item) => item == state.mode);
       if (index == -1) {
         return null;
@@ -938,40 +942,40 @@ class AppController {
   }
 
   void _recovery(Config config, RecoveryOption recoveryOption) {
-    final recoveryStrategy = _ref.read(
-      appSettingProvider.select((state) => state.recoveryStrategy),
-    );
-    final profiles = config.profiles;
-    if (recoveryStrategy == RecoveryStrategy.override) {
-      _ref.read(profilesProvider.notifier).value = profiles;
-    } else {
-      for (final profile in profiles) {
-        _ref.read(profilesProvider.notifier).setProfile(profile);
-      }
-    }
-    final onlyProfiles = recoveryOption == RecoveryOption.onlyProfiles;
-    if (!onlyProfiles) {
-      _ref.read(patchClashConfigProvider.notifier).value =
-          config.patchClashConfig;
-      _ref.read(appSettingProvider.notifier).value = config.appSetting;
-      _ref.read(currentProfileIdProvider.notifier).value =
-          config.currentProfileId;
-      _ref.read(appDAVSettingProvider.notifier).value = config.dav;
-      _ref.read(themeSettingProvider.notifier).value = config.themeProps;
-      _ref.read(windowSettingProvider.notifier).value = config.windowProps;
-      _ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
-      _ref.read(proxiesStyleSettingProvider.notifier).value =
-          config.proxiesStyle;
-      _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
-      _ref.read(networkSettingProvider.notifier).value = config.networkProps;
-      _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
-      _ref.read(scriptsProvider.notifier).value = config.scripts;
-      _ref.read(rulesProvider.notifier).value = config.rules;
-    }
-    final currentProfile = _ref.read(currentProfileProvider);
-    if (currentProfile == null && profiles.isNotEmpty) {
-      _ref.read(currentProfileIdProvider.notifier).value = profiles.first.id;
-    }
+    // final recoveryStrategy = _ref.read(
+    //   appSettingProvider.select((state) => state.recoveryStrategy),
+    // );
+    // final profiles = config.profiles;
+    // if (recoveryStrategy == RecoveryStrategy.override) {
+    //   _ref.read(profilesProvider.notifier).value = profiles;
+    // } else {
+    //   for (final profile in profiles) {
+    //     _ref.read(profilesProvider.notifier).setProfile(profile);
+    //   }
+    // }
+    // final onlyProfiles = recoveryOption == RecoveryOption.onlyProfiles;
+    // if (!onlyProfiles) {
+    //   _ref.read(patchClashConfigProvider.notifier).value =
+    //       config.patchClashConfig;
+    //   _ref.read(appSettingProvider.notifier).value = config.appSetting;
+    //   _ref.read(currentProfileIdProvider.notifier).value =
+    //       config.currentProfileId;
+    //   _ref.read(appDAVSettingProvider.notifier).value = config.dav;
+    //   _ref.read(themeSettingProvider.notifier).value = config.themeProps;
+    //   _ref.read(windowSettingProvider.notifier).value = config.windowProps;
+    //   _ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
+    //   _ref.read(proxiesStyleSettingProvider.notifier).value =
+    //       config.proxiesStyle;
+    //   _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
+    //   _ref.read(networkSettingProvider.notifier).value = config.networkProps;
+    //   _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
+    //   _ref.read(scriptsProvider.notifier).value = config.scripts;
+    //   _ref.read(rulesProvider.notifier).value = config.rules;
+    // }
+    // final currentProfile = _ref.read(currentProfileProvider);
+    // if (currentProfile == null && profiles.isNotEmpty) {
+    //   _ref.read(currentProfileIdProvider.notifier).value = profiles.first.id;
+    // }
   }
 
   void checkNeedSetup() {

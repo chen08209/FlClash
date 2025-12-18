@@ -150,13 +150,13 @@ extension ProfileExtension on Profile {
 
   String get fileName => label.isNotEmpty ? label : id;
 
-  Future<void> checkAndUpdate() async {
+  Future<Profile?> checkAndUpdateAndCopy() async {
     final mFile = await _getFile(false);
     final isExists = await mFile.exists();
     if (isExists || url.isEmpty) {
-      return;
+      return null;
     }
-    update();
+    return updateAndCopy();
   }
 
   Future<File> _getFile([bool autoCreate = false]) async {
@@ -186,7 +186,7 @@ extension ProfileExtension on Profile {
     return _getFile();
   }
 
-  Future<Profile> update() async {
+  Future<Profile> updateAndCopy() async {
     final response = await request.getFileResponseForUrl(url);
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
@@ -195,10 +195,10 @@ extension ProfileExtension on Profile {
         utils.getFileNameForDisposition(disposition).getSafeValue(id),
       ),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
-    ).saveFile(response.data ?? Uint8List.fromList([]));
+    ).saveFileAndCopy(response.data ?? Uint8List.fromList([]));
   }
 
-  Future<Profile> saveFile(Uint8List bytes) async {
+  Future<Profile> saveFileAndCopy(Uint8List bytes) async {
     final message = await coreController.validateConfigFormBytes(bytes);
     if (message.isNotEmpty) {
       throw message;

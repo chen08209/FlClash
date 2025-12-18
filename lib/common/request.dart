@@ -40,13 +40,13 @@ class Request {
       commonPrint.log('getFileResponseForUrl error ${e.toString()}');
       if (e is DioException) {
         if (e.type == DioExceptionType.unknown) {
-          throw '未知网络错误';
+          throw appLocalizations.unknownNetworkError;
         } else if (e.type == DioExceptionType.badResponse) {
-          throw '网络请求异常，请稍后再试。';
+          throw '网络异常，请检查连接后重试';
         }
         rethrow;
       }
-      throw '未知网络错误';
+      throw appLocalizations.unknownNetworkError;
     }
   }
 

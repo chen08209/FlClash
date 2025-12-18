@@ -1,6 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -3663,6 +3664,46 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Custom`
+  String get overwriteTypeCustom {
+    return Intl.message(
+      'Custom',
+      name: 'overwriteTypeCustom',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Custom mode, fully customize proxy groups and rules`
+  String get overwriteTypeCustomDesc {
+    return Intl.message(
+      'Custom mode, fully customize proxy groups and rules',
+      name: 'overwriteTypeCustomDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unknown network error`
+  String get unknownNetworkError {
+    return Intl.message(
+      'Unknown network error',
+      name: 'unknownNetworkError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Network request exception, please try again later.`
+  String get networkRequestException {
+    return Intl.message(
+      'Network request exception, please try again later.',
+      name: 'networkRequestException',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -3679,8 +3720,10 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
 
   @override
   bool isSupported(Locale locale) => _isSupported(locale);
+
   @override
   Future<AppLocalizations> load(Locale locale) => AppLocalizations.load(locale);
+
   @override
   bool shouldReload(AppLocalizationDelegate old) => false;
 

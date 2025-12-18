@@ -14,35 +14,29 @@ part 'generated/state.g.dart';
 
 @riverpod
 Config configState(Ref ref) {
-  final themeProps = ref.watch(themeSettingProvider);
-  final patchClashConfig = ref.watch(patchClashConfigProvider);
-  final appSetting = ref.watch(appSettingProvider);
-  final profiles = ref.watch(profilesProvider);
-  final currentProfileId = ref.watch(currentProfileIdProvider);
   final overrideDns = ref.watch(overrideDnsProvider);
+  final currentProfileId = ref.watch(currentProfileIdProvider);
+  final themeProps = ref.watch(themeSettingProvider);
+  final appSettingProps = ref.watch(appSettingProvider);
   final networkProps = ref.watch(networkSettingProvider);
   final vpnProps = ref.watch(vpnSettingProvider);
-  final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
-  final scripts = ref.watch(scriptsProvider);
+  final proxiesStyleProps = ref.watch(proxiesStyleSettingProvider);
   final hotKeyActions = ref.watch(hotKeyActionsProvider);
-  final dav = ref.watch(appDAVSettingProvider);
+  final davProps = ref.watch(davSettingProvider);
   final windowProps = ref.watch(windowSettingProvider);
-  final rules = ref.watch(rulesProvider);
+  final patchClashConfig = ref.watch(patchClashConfigProvider);
   return Config(
-    dav: dav,
+    currentProfileId: currentProfileId,
+    davProps: davProps,
     windowProps: windowProps,
     hotKeyActions: hotKeyActions,
-    proxiesStyle: proxiesStyle,
+    proxiesStyleProps: proxiesStyleProps,
     vpnProps: vpnProps,
     networkProps: networkProps,
     overrideDns: overrideDns,
-    currentProfileId: currentProfileId,
-    profiles: profiles,
-    appSetting: appSetting,
+    appSettingProps: appSettingProps,
     themeProps: themeProps,
     patchClashConfig: patchClashConfig,
-    scripts: scripts,
-    rules: rules,
   );
 }
 
@@ -390,12 +384,12 @@ ProxyGroupSelectorState proxyGroupSelectorState(
 @riverpod
 PackageListSelectorState packageListSelectorState(Ref ref) {
   final packages = ref.watch(packagesProvider);
-  final accessControl = ref.watch(
-    vpnSettingProvider.select((state) => state.accessControl),
+  final accessControlProps = ref.watch(
+    vpnSettingProvider.select((state) => state.accessControlProps),
   );
   return PackageListSelectorState(
     packages: packages,
-    accessControl: accessControl,
+    accessControlProps: accessControlProps,
   );
 }
 
@@ -705,7 +699,7 @@ Overwrite? profileOverwrite(Ref ref, String profileId) {
 class AccessControlState extends _$AccessControlState
     with AutoDisposeNotifierMixin {
   @override
-  AccessControl build() => AccessControl();
+  AccessControlProps build() => AccessControlProps();
 }
 
 @riverpod

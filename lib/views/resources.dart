@@ -79,7 +79,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
         if (!newUrl.isUrl) {
           throw 'Invalid url';
         }
-        ref.read(patchClashConfigProvider.notifier).updateState((state) {
+        ref.read(patchClashConfigProvider.notifier).update((state) {
           final map = state.geoXUrl.toJson();
           map[geoItem.key] = newUrl;
           return state.copyWith(geoXUrl: GeoXUrl.fromJson(map));

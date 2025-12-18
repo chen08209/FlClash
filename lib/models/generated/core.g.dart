@@ -81,8 +81,8 @@ _VpnOptions _$VpnOptionsFromJson(Map<String, dynamic> json) => _VpnOptions(
   port: (json['port'] as num).toInt(),
   ipv6: json['ipv6'] as bool,
   dnsHijacking: json['dnsHijacking'] as bool,
-  accessControl: AccessControl.fromJson(
-    json['accessControl'] as Map<String, dynamic>,
+  accessControlProps: AccessControlProps.fromJson(
+    json['accessControlProps'] as Map<String, dynamic>,
   ),
   allowBypass: json['allowBypass'] as bool,
   systemProxy: json['systemProxy'] as bool,
@@ -103,7 +103,7 @@ Map<String, dynamic> _$VpnOptionsToJson(_VpnOptions instance) =>
       'port': instance.port,
       'ipv6': instance.ipv6,
       'dnsHijacking': instance.dnsHijacking,
-      'accessControl': instance.accessControl,
+      'accessControlProps': instance.accessControlProps,
       'allowBypass': instance.allowBypass,
       'systemProxy': instance.systemProxy,
       'bypassDomain': instance.bypassDomain,

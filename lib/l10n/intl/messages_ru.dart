@@ -527,6 +527,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkDetection": MessageLookupByLibrary.simpleMessage(
       "Обнаружение сети",
     ),
+    "networkRequestException": MessageLookupByLibrary.simpleMessage(
+      "Исключение сетевого запроса, пожалуйста, попробуйте позже.",
+    ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Скорость сети"),
     "networkType": MessageLookupByLibrary.simpleMessage("Тип сети"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("Нейтральные"),
@@ -594,6 +597,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "overrideScript": MessageLookupByLibrary.simpleMessage(
       "Скрипт переопределения",
+    ),
+    "overwriteTypeCustom": MessageLookupByLibrary.simpleMessage(
+      "Пользовательский",
+    ),
+    "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
+      "Пользовательский режим, полная настройка групп прокси и правил",
     ),
     "palette": MessageLookupByLibrary.simpleMessage("Палитра"),
     "password": MessageLookupByLibrary.simpleMessage("Пароль"),
@@ -851,6 +860,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Убрать дополнительные задержки, такие как рукопожатие",
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("Неизвестно"),
+    "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
+      "Неизвестная сетевая ошибка",
+    ),
     "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),
     "upload": MessageLookupByLibrary.simpleMessage("Загрузка"),

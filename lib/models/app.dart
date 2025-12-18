@@ -3,8 +3,10 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'clash_config.dart';
 import 'common.dart';
 import 'core.dart';
+import 'profile.dart';
 
 part 'generated/app.freezed.dart';
 
@@ -40,6 +42,15 @@ abstract class AppState with _$AppState {
     @Default({}) Map<String, Set<String>> selectedItemsMap,
     @Default(CoreStatus.connecting) CoreStatus coreStatus,
   }) = _AppState;
+}
+
+@freezed
+abstract class RunningState with _$RunningState {
+  const factory RunningState({
+    @Default([]) List<Profile> profiles,
+    @Default([]) List<Script> scripts,
+    @Default([]) List<Rule> rules,
+  }) = _RunningState;
 }
 
 extension AppStateExt on AppState {

@@ -10,19 +10,10 @@ class DAVClient {
   Completer<bool> pingCompleter = Completer();
   late String fileName;
 
-  DAVClient(DAV dav) {
-    client = newClient(
-      dav.uri,
-      user: dav.user,
-      password: dav.password,
-    );
+  DAVClient(DAVProps dav) {
+    client = newClient(dav.uri, user: dav.user, password: dav.password);
     fileName = dav.fileName;
-    client.setHeaders(
-      {
-        'accept-charset': 'utf-8',
-        'Content-Type': 'text/xml',
-      },
-    );
+    client.setHeaders({'accept-charset': 'utf-8', 'Content-Type': 'text/xml'});
     client.setConnectTimeout(8000);
     client.setSendTimeout(60000);
     client.setReceiveTimeout(60000);

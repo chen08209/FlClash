@@ -1,9 +1,11 @@
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/utils.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/profile.dart';
 import 'package:isar_community/isar.dart';
 
 import 'clash_config.dart';
+import 'common.dart';
 
 part 'generated/isar.g.dart';
 
@@ -110,13 +112,39 @@ class OverwriteEmbedded {
   }
 }
 
+@embedded
+class SubscriptionInfoEmbedded {
+  int upload = 0;
+  int download = 0;
+  int total = 0;
+  int expire = 0;
+
+  static SubscriptionInfoEmbedded fromSubscriptionInfo(
+    SubscriptionInfo subscriptionInfo,
+  ) {
+    return SubscriptionInfoEmbedded()
+      ..upload = subscriptionInfo.upload
+      ..download = subscriptionInfo.download
+      ..total = subscriptionInfo.total
+      ..expire = subscriptionInfo.expire;
+  }
+
+  SubscriptionInfo toSubscriptionInfo() {
+    return SubscriptionInfo(
+      upload: upload,
+      download: download,
+      total: total,
+      expire: expire,
+    );
+  }
+}
+
 @collection
 @Name('Profile')
 class ProfileCollection {
-  Id get localId => utils.fastHash(id);
-
-  @Index(unique: true)
   late String id;
+
+  Id get isarId => utils.fastHash(id);
 
   late String label;
 
@@ -130,18 +158,11 @@ class ProfileCollection {
   Duration get autoUpdateDuration =>
       Duration(milliseconds: autoUpdateDurationMillis);
 
-  set autoUpdateDuration(Duration value) {
-    autoUpdateDurationMillis = value.inMilliseconds;
-  }
+  int autoUpdateDurationMillis = defaultUpdateDuration.inMilliseconds;
 
-  late int autoUpdateDurationMillis;
+  SubscriptionInfoEmbedded? subscriptionInfo;
 
-  int subscriptionUpload = 0;
-  int subscriptionDownload = 0;
-  int subscriptionTotal = 0;
-  int subscriptionExpire = 0;
-
-  late bool autoUpdate;
+  bool autoUpdate = true;
 
   List<StringMapEntryEmbedded> selectedMapEntries = [];
 
@@ -158,11 +179,12 @@ class ProfileCollection {
       ..currentGroupName = profile.currentGroupName
       ..url = profile.url
       ..lastUpdateDate = profile.lastUpdateDate
-      ..autoUpdateDuration = profile.autoUpdateDuration
-      ..subscriptionUpload = profile.subscriptionInfo?.upload ?? 0
-      ..subscriptionDownload = profile.subscriptionInfo?.download ?? 0
-      ..subscriptionTotal = profile.subscriptionInfo?.total ?? 0
-      ..subscriptionExpire = profile.subscriptionInfo?.expire ?? 0
+      ..autoUpdateDurationMillis = profile.autoUpdateDuration.inMilliseconds
+      ..subscriptionInfo = profile.subscriptionInfo != null
+          ? SubscriptionInfoEmbedded.fromSubscriptionInfo(
+              profile.subscriptionInfo!,
+            )
+          : null
       ..autoUpdate = profile.autoUpdate
       ..selectedMapEntries = profile.selectedMap.entries
           .map((e) => StringMapEntryEmbedded.fromEntry(e))
@@ -183,12 +205,7 @@ class ProfileCollection {
       url: url,
       lastUpdateDate: lastUpdateDate,
       autoUpdateDuration: autoUpdateDuration,
-      subscriptionInfo: SubscriptionInfo(
-        upload: subscriptionUpload,
-        download: subscriptionDownload,
-        total: subscriptionTotal,
-        expire: subscriptionExpire,
-      ),
+      subscriptionInfo: subscriptionInfo?.toSubscriptionInfo(),
       autoUpdate: autoUpdate,
       selectedMap: selectedMap,
       unfoldSet: unfoldList.toSet(),
@@ -200,20 +217,43 @@ class ProfileCollection {
 @collection
 @Name('Rule')
 class RuleCollection {
-  Id id = Isar.autoIncrement;
+  late String id;
+
+  Id get isarId => utils.fastHash(id);
 
   late String value;
 
+  static RuleCollection formRule(Rule rule) {
+    return RuleCollection()
+      ..id = rule.id
+      ..value = rule.value;
+  }
+
   Rule toRule() {
-    return Rule(id: '', value: value);
+    return Rule(id: id, value: value);
   }
 }
 
 @collection
 @Name('Script')
 class ScriptCollection {
-  Id id = Isar.autoIncrement;
+  late String id;
+
+  Id get isarId => utils.fastHash(id);
 
   @Index(unique: true)
   late String label;
+
+  late DateTime lastUpdateTime;
+
+  static ScriptCollection formScript(Script script) {
+    return ScriptCollection()
+      ..id = script.id
+      ..label = script.label
+      ..lastUpdateTime = script.lastUpdateTime;
+  }
+
+  Script toScript() {
+    return Script(id: id, label: label, lastUpdateTime: lastUpdateTime);
+  }
 }

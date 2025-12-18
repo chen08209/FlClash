@@ -4357,7 +4357,7 @@ as List<NavigationItem>,
 /// @nodoc
 mixin _$PackageListSelectorState {
 
- List<Package> get packages; AccessControl get accessControl;
+ List<Package> get packages; AccessControlProps get accessControlProps;
 /// Create a copy of PackageListSelectorState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4368,16 +4368,16 @@ $PackageListSelectorStateCopyWith<PackageListSelectorState> get copyWith => _$Pa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PackageListSelectorState&&const DeepCollectionEquality().equals(other.packages, packages)&&(identical(other.accessControl, accessControl) || other.accessControl == accessControl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PackageListSelectorState&&const DeepCollectionEquality().equals(other.packages, packages)&&(identical(other.accessControlProps, accessControlProps) || other.accessControlProps == accessControlProps));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(packages),accessControl);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(packages),accessControlProps);
 
 @override
 String toString() {
-  return 'PackageListSelectorState(packages: $packages, accessControl: $accessControl)';
+  return 'PackageListSelectorState(packages: $packages, accessControlProps: $accessControlProps)';
 }
 
 
@@ -4388,11 +4388,11 @@ abstract mixin class $PackageListSelectorStateCopyWith<$Res>  {
   factory $PackageListSelectorStateCopyWith(PackageListSelectorState value, $Res Function(PackageListSelectorState) _then) = _$PackageListSelectorStateCopyWithImpl;
 @useResult
 $Res call({
- List<Package> packages, AccessControl accessControl
+ List<Package> packages, AccessControlProps accessControlProps
 });
 
 
-$AccessControlCopyWith<$Res> get accessControl;
+$AccessControlPropsCopyWith<$Res> get accessControlProps;
 
 }
 /// @nodoc
@@ -4405,21 +4405,21 @@ class _$PackageListSelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of PackageListSelectorState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? packages = null,Object? accessControl = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? packages = null,Object? accessControlProps = null,}) {
   return _then(_self.copyWith(
 packages: null == packages ? _self.packages : packages // ignore: cast_nullable_to_non_nullable
-as List<Package>,accessControl: null == accessControl ? _self.accessControl : accessControl // ignore: cast_nullable_to_non_nullable
-as AccessControl,
+as List<Package>,accessControlProps: null == accessControlProps ? _self.accessControlProps : accessControlProps // ignore: cast_nullable_to_non_nullable
+as AccessControlProps,
   ));
 }
 /// Create a copy of PackageListSelectorState
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
-$AccessControlCopyWith<$Res> get accessControl {
+$AccessControlPropsCopyWith<$Res> get accessControlProps {
   
-  return $AccessControlCopyWith<$Res>(_self.accessControl, (value) {
-    return _then(_self.copyWith(accessControl: value));
+  return $AccessControlPropsCopyWith<$Res>(_self.accessControlProps, (value) {
+    return _then(_self.copyWith(accessControlProps: value));
   });
 }
 }
@@ -4503,10 +4503,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Package> packages,  AccessControl accessControl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Package> packages,  AccessControlProps accessControlProps)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PackageListSelectorState() when $default != null:
-return $default(_that.packages,_that.accessControl);case _:
+return $default(_that.packages,_that.accessControlProps);case _:
   return orElse();
 
 }
@@ -4524,10 +4524,10 @@ return $default(_that.packages,_that.accessControl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Package> packages,  AccessControl accessControl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Package> packages,  AccessControlProps accessControlProps)  $default,) {final _that = this;
 switch (_that) {
 case _PackageListSelectorState():
-return $default(_that.packages,_that.accessControl);case _:
+return $default(_that.packages,_that.accessControlProps);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -4544,10 +4544,10 @@ return $default(_that.packages,_that.accessControl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Package> packages,  AccessControl accessControl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Package> packages,  AccessControlProps accessControlProps)?  $default,) {final _that = this;
 switch (_that) {
 case _PackageListSelectorState() when $default != null:
-return $default(_that.packages,_that.accessControl);case _:
+return $default(_that.packages,_that.accessControlProps);case _:
   return null;
 
 }
@@ -4559,7 +4559,7 @@ return $default(_that.packages,_that.accessControl);case _:
 
 
 class _PackageListSelectorState implements PackageListSelectorState {
-  const _PackageListSelectorState({required final  List<Package> packages, required this.accessControl}): _packages = packages;
+  const _PackageListSelectorState({required final  List<Package> packages, required this.accessControlProps}): _packages = packages;
   
 
  final  List<Package> _packages;
@@ -4569,7 +4569,7 @@ class _PackageListSelectorState implements PackageListSelectorState {
   return EqualUnmodifiableListView(_packages);
 }
 
-@override final  AccessControl accessControl;
+@override final  AccessControlProps accessControlProps;
 
 /// Create a copy of PackageListSelectorState
 /// with the given fields replaced by the non-null parameter values.
@@ -4581,16 +4581,16 @@ _$PackageListSelectorStateCopyWith<_PackageListSelectorState> get copyWith => __
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PackageListSelectorState&&const DeepCollectionEquality().equals(other._packages, _packages)&&(identical(other.accessControl, accessControl) || other.accessControl == accessControl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PackageListSelectorState&&const DeepCollectionEquality().equals(other._packages, _packages)&&(identical(other.accessControlProps, accessControlProps) || other.accessControlProps == accessControlProps));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_packages),accessControl);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_packages),accessControlProps);
 
 @override
 String toString() {
-  return 'PackageListSelectorState(packages: $packages, accessControl: $accessControl)';
+  return 'PackageListSelectorState(packages: $packages, accessControlProps: $accessControlProps)';
 }
 
 
@@ -4601,11 +4601,11 @@ abstract mixin class _$PackageListSelectorStateCopyWith<$Res> implements $Packag
   factory _$PackageListSelectorStateCopyWith(_PackageListSelectorState value, $Res Function(_PackageListSelectorState) _then) = __$PackageListSelectorStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Package> packages, AccessControl accessControl
+ List<Package> packages, AccessControlProps accessControlProps
 });
 
 
-@override $AccessControlCopyWith<$Res> get accessControl;
+@override $AccessControlPropsCopyWith<$Res> get accessControlProps;
 
 }
 /// @nodoc
@@ -4618,11 +4618,11 @@ class __$PackageListSelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of PackageListSelectorState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? packages = null,Object? accessControl = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? packages = null,Object? accessControlProps = null,}) {
   return _then(_PackageListSelectorState(
 packages: null == packages ? _self._packages : packages // ignore: cast_nullable_to_non_nullable
-as List<Package>,accessControl: null == accessControl ? _self.accessControl : accessControl // ignore: cast_nullable_to_non_nullable
-as AccessControl,
+as List<Package>,accessControlProps: null == accessControlProps ? _self.accessControlProps : accessControlProps // ignore: cast_nullable_to_non_nullable
+as AccessControlProps,
   ));
 }
 
@@ -4630,10 +4630,10 @@ as AccessControl,
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
-$AccessControlCopyWith<$Res> get accessControl {
+$AccessControlPropsCopyWith<$Res> get accessControlProps {
   
-  return $AccessControlCopyWith<$Res>(_self.accessControl, (value) {
-    return _then(_self.copyWith(accessControl: value));
+  return $AccessControlPropsCopyWith<$Res>(_self.accessControlProps, (value) {
+    return _then(_self.copyWith(accessControlProps: value));
   });
 }
 }
@@ -6524,7 +6524,7 @@ $VpnPropsCopyWith<$Res> get vpnProps {
 /// @nodoc
 mixin _$SetupState {
 
- String? get profileId; int? get profileLastUpdateDate; OverwriteType get overwriteType; List<Rule> get addedRules; String? get scriptContent; bool get overrideDns; Dns get dns;
+ String? get profileId; int? get profileLastUpdateDate; OverwriteType get overwriteType; List<Rule> get addedRules; String? get scriptId; DateTime? get scriptLastUpdateTime; bool get overrideDns; Dns get dns;
 /// Create a copy of SetupState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -6535,16 +6535,16 @@ $SetupStateCopyWith<SetupState> get copyWith => _$SetupStateCopyWithImpl<SetupSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetupState&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.profileLastUpdateDate, profileLastUpdateDate) || other.profileLastUpdateDate == profileLastUpdateDate)&&(identical(other.overwriteType, overwriteType) || other.overwriteType == overwriteType)&&const DeepCollectionEquality().equals(other.addedRules, addedRules)&&(identical(other.scriptContent, scriptContent) || other.scriptContent == scriptContent)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.dns, dns) || other.dns == dns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetupState&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.profileLastUpdateDate, profileLastUpdateDate) || other.profileLastUpdateDate == profileLastUpdateDate)&&(identical(other.overwriteType, overwriteType) || other.overwriteType == overwriteType)&&const DeepCollectionEquality().equals(other.addedRules, addedRules)&&(identical(other.scriptId, scriptId) || other.scriptId == scriptId)&&(identical(other.scriptLastUpdateTime, scriptLastUpdateTime) || other.scriptLastUpdateTime == scriptLastUpdateTime)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.dns, dns) || other.dns == dns));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,profileId,profileLastUpdateDate,overwriteType,const DeepCollectionEquality().hash(addedRules),scriptContent,overrideDns,dns);
+int get hashCode => Object.hash(runtimeType,profileId,profileLastUpdateDate,overwriteType,const DeepCollectionEquality().hash(addedRules),scriptId,scriptLastUpdateTime,overrideDns,dns);
 
 @override
 String toString() {
-  return 'SetupState(profileId: $profileId, profileLastUpdateDate: $profileLastUpdateDate, overwriteType: $overwriteType, addedRules: $addedRules, scriptContent: $scriptContent, overrideDns: $overrideDns, dns: $dns)';
+  return 'SetupState(profileId: $profileId, profileLastUpdateDate: $profileLastUpdateDate, overwriteType: $overwriteType, addedRules: $addedRules, scriptId: $scriptId, scriptLastUpdateTime: $scriptLastUpdateTime, overrideDns: $overrideDns, dns: $dns)';
 }
 
 
@@ -6555,7 +6555,7 @@ abstract mixin class $SetupStateCopyWith<$Res>  {
   factory $SetupStateCopyWith(SetupState value, $Res Function(SetupState) _then) = _$SetupStateCopyWithImpl;
 @useResult
 $Res call({
- String? profileId, int? profileLastUpdateDate, OverwriteType overwriteType, List<Rule> addedRules, String? scriptContent, bool overrideDns, Dns dns
+ String? profileId, int? profileLastUpdateDate, OverwriteType overwriteType, List<Rule> addedRules, String? scriptId, DateTime? scriptLastUpdateTime, bool overrideDns, Dns dns
 });
 
 
@@ -6572,14 +6572,15 @@ class _$SetupStateCopyWithImpl<$Res>
 
 /// Create a copy of SetupState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? profileId = freezed,Object? profileLastUpdateDate = freezed,Object? overwriteType = null,Object? addedRules = null,Object? scriptContent = freezed,Object? overrideDns = null,Object? dns = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? profileId = freezed,Object? profileLastUpdateDate = freezed,Object? overwriteType = null,Object? addedRules = null,Object? scriptId = freezed,Object? scriptLastUpdateTime = freezed,Object? overrideDns = null,Object? dns = null,}) {
   return _then(_self.copyWith(
 profileId: freezed == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
 as String?,profileLastUpdateDate: freezed == profileLastUpdateDate ? _self.profileLastUpdateDate : profileLastUpdateDate // ignore: cast_nullable_to_non_nullable
 as int?,overwriteType: null == overwriteType ? _self.overwriteType : overwriteType // ignore: cast_nullable_to_non_nullable
 as OverwriteType,addedRules: null == addedRules ? _self.addedRules : addedRules // ignore: cast_nullable_to_non_nullable
-as List<Rule>,scriptContent: freezed == scriptContent ? _self.scriptContent : scriptContent // ignore: cast_nullable_to_non_nullable
-as String?,overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
+as List<Rule>,scriptId: freezed == scriptId ? _self.scriptId : scriptId // ignore: cast_nullable_to_non_nullable
+as String?,scriptLastUpdateTime: freezed == scriptLastUpdateTime ? _self.scriptLastUpdateTime : scriptLastUpdateTime // ignore: cast_nullable_to_non_nullable
+as DateTime?,overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
 as bool,dns: null == dns ? _self.dns : dns // ignore: cast_nullable_to_non_nullable
 as Dns,
   ));
@@ -6675,10 +6676,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptContent,  bool overrideDns,  Dns dns)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptId,  DateTime? scriptLastUpdateTime,  bool overrideDns,  Dns dns)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SetupState() when $default != null:
-return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptContent,_that.overrideDns,_that.dns);case _:
+return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptId,_that.scriptLastUpdateTime,_that.overrideDns,_that.dns);case _:
   return orElse();
 
 }
@@ -6696,10 +6697,10 @@ return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptContent,  bool overrideDns,  Dns dns)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptId,  DateTime? scriptLastUpdateTime,  bool overrideDns,  Dns dns)  $default,) {final _that = this;
 switch (_that) {
 case _SetupState():
-return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptContent,_that.overrideDns,_that.dns);case _:
+return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptId,_that.scriptLastUpdateTime,_that.overrideDns,_that.dns);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -6716,10 +6717,10 @@ return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptContent,  bool overrideDns,  Dns dns)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? profileId,  int? profileLastUpdateDate,  OverwriteType overwriteType,  List<Rule> addedRules,  String? scriptId,  DateTime? scriptLastUpdateTime,  bool overrideDns,  Dns dns)?  $default,) {final _that = this;
 switch (_that) {
 case _SetupState() when $default != null:
-return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptContent,_that.overrideDns,_that.dns);case _:
+return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,_that.addedRules,_that.scriptId,_that.scriptLastUpdateTime,_that.overrideDns,_that.dns);case _:
   return null;
 
 }
@@ -6731,7 +6732,7 @@ return $default(_that.profileId,_that.profileLastUpdateDate,_that.overwriteType,
 
 
 class _SetupState implements SetupState {
-  const _SetupState({required this.profileId, required this.profileLastUpdateDate, required this.overwriteType, required final  List<Rule> addedRules, required this.scriptContent, required this.overrideDns, required this.dns}): _addedRules = addedRules;
+  const _SetupState({required this.profileId, required this.profileLastUpdateDate, required this.overwriteType, required final  List<Rule> addedRules, required this.scriptId, required this.scriptLastUpdateTime, required this.overrideDns, required this.dns}): _addedRules = addedRules;
   
 
 @override final  String? profileId;
@@ -6744,7 +6745,8 @@ class _SetupState implements SetupState {
   return EqualUnmodifiableListView(_addedRules);
 }
 
-@override final  String? scriptContent;
+@override final  String? scriptId;
+@override final  DateTime? scriptLastUpdateTime;
 @override final  bool overrideDns;
 @override final  Dns dns;
 
@@ -6758,16 +6760,16 @@ _$SetupStateCopyWith<_SetupState> get copyWith => __$SetupStateCopyWithImpl<_Set
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetupState&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.profileLastUpdateDate, profileLastUpdateDate) || other.profileLastUpdateDate == profileLastUpdateDate)&&(identical(other.overwriteType, overwriteType) || other.overwriteType == overwriteType)&&const DeepCollectionEquality().equals(other._addedRules, _addedRules)&&(identical(other.scriptContent, scriptContent) || other.scriptContent == scriptContent)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.dns, dns) || other.dns == dns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetupState&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.profileLastUpdateDate, profileLastUpdateDate) || other.profileLastUpdateDate == profileLastUpdateDate)&&(identical(other.overwriteType, overwriteType) || other.overwriteType == overwriteType)&&const DeepCollectionEquality().equals(other._addedRules, _addedRules)&&(identical(other.scriptId, scriptId) || other.scriptId == scriptId)&&(identical(other.scriptLastUpdateTime, scriptLastUpdateTime) || other.scriptLastUpdateTime == scriptLastUpdateTime)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.dns, dns) || other.dns == dns));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,profileId,profileLastUpdateDate,overwriteType,const DeepCollectionEquality().hash(_addedRules),scriptContent,overrideDns,dns);
+int get hashCode => Object.hash(runtimeType,profileId,profileLastUpdateDate,overwriteType,const DeepCollectionEquality().hash(_addedRules),scriptId,scriptLastUpdateTime,overrideDns,dns);
 
 @override
 String toString() {
-  return 'SetupState(profileId: $profileId, profileLastUpdateDate: $profileLastUpdateDate, overwriteType: $overwriteType, addedRules: $addedRules, scriptContent: $scriptContent, overrideDns: $overrideDns, dns: $dns)';
+  return 'SetupState(profileId: $profileId, profileLastUpdateDate: $profileLastUpdateDate, overwriteType: $overwriteType, addedRules: $addedRules, scriptId: $scriptId, scriptLastUpdateTime: $scriptLastUpdateTime, overrideDns: $overrideDns, dns: $dns)';
 }
 
 
@@ -6778,7 +6780,7 @@ abstract mixin class _$SetupStateCopyWith<$Res> implements $SetupStateCopyWith<$
   factory _$SetupStateCopyWith(_SetupState value, $Res Function(_SetupState) _then) = __$SetupStateCopyWithImpl;
 @override @useResult
 $Res call({
- String? profileId, int? profileLastUpdateDate, OverwriteType overwriteType, List<Rule> addedRules, String? scriptContent, bool overrideDns, Dns dns
+ String? profileId, int? profileLastUpdateDate, OverwriteType overwriteType, List<Rule> addedRules, String? scriptId, DateTime? scriptLastUpdateTime, bool overrideDns, Dns dns
 });
 
 
@@ -6795,14 +6797,15 @@ class __$SetupStateCopyWithImpl<$Res>
 
 /// Create a copy of SetupState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? profileId = freezed,Object? profileLastUpdateDate = freezed,Object? overwriteType = null,Object? addedRules = null,Object? scriptContent = freezed,Object? overrideDns = null,Object? dns = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? profileId = freezed,Object? profileLastUpdateDate = freezed,Object? overwriteType = null,Object? addedRules = null,Object? scriptId = freezed,Object? scriptLastUpdateTime = freezed,Object? overrideDns = null,Object? dns = null,}) {
   return _then(_SetupState(
 profileId: freezed == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
 as String?,profileLastUpdateDate: freezed == profileLastUpdateDate ? _self.profileLastUpdateDate : profileLastUpdateDate // ignore: cast_nullable_to_non_nullable
 as int?,overwriteType: null == overwriteType ? _self.overwriteType : overwriteType // ignore: cast_nullable_to_non_nullable
 as OverwriteType,addedRules: null == addedRules ? _self._addedRules : addedRules // ignore: cast_nullable_to_non_nullable
-as List<Rule>,scriptContent: freezed == scriptContent ? _self.scriptContent : scriptContent // ignore: cast_nullable_to_non_nullable
-as String?,overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
+as List<Rule>,scriptId: freezed == scriptId ? _self.scriptId : scriptId // ignore: cast_nullable_to_non_nullable
+as String?,scriptLastUpdateTime: freezed == scriptLastUpdateTime ? _self.scriptLastUpdateTime : scriptLastUpdateTime // ignore: cast_nullable_to_non_nullable
+as DateTime?,overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
 as bool,dns: null == dns ? _self.dns : dns // ignore: cast_nullable_to_non_nullable
 as Dns,
   ));

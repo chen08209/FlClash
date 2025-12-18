@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -215,15 +217,16 @@ extension TrackerInfosStateExt on TrackerInfosState {
 const defaultDavFileName = 'backup.zip';
 
 @freezed
-abstract class DAV with _$DAV {
-  const factory DAV({
+abstract class DAVProps with _$DAVProps {
+  const factory DAVProps({
     required String uri,
     required String user,
     required String password,
     @Default(defaultDavFileName) String fileName,
-  }) = _DAV;
+  }) = _DAVProps;
 
-  factory DAV.fromJson(Map<String, Object?> json) => _$DAVFromJson(json);
+  factory DAVProps.fromJson(Map<String, Object?> json) =>
+      _$DAVPropsFromJson(json);
 }
 
 @freezed
@@ -514,14 +517,18 @@ abstract class Script with _$Script {
   const factory Script({
     required String id,
     required String label,
-    required String content,
+    required DateTime lastUpdateTime,
   }) = _Script;
 
-  factory Script.create({required String label, required String content}) {
-    return Script(id: utils.uuidV4, label: label, content: content);
-  }
-
   factory Script.fromJson(Map<String, Object?> json) => _$ScriptFromJson(json);
+
+  factory Script.create({required String label}) {
+    return Script(
+      id: utils.uuidV4,
+      label: label,
+      lastUpdateTime: DateTime.now(),
+    );
+  }
 }
 
 extension ScriptsExt on List<Script> {
@@ -534,6 +541,24 @@ extension ScriptsExt on List<Script> {
       return this[index];
     }
     return null;
+  }
+}
+
+extension ScriptExt on Script {
+  Future<String> get path async => await appPath.getScriptPath(id);
+
+  Future<String?> get content async {
+    final file = File(await path);
+    if (await file.exists()) {
+      return file.readAsString();
+    }
+    return null;
+  }
+
+  Future<Script> saveAndCopy(String context) async {
+    final file = File(await path);
+    await file.writeAsString(context);
+    return copyWith(lastUpdateTime: DateTime.now());
   }
 }
 

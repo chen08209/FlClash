@@ -33,7 +33,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
     _controller = ScrollController();
     _completer.complete(globalState.appController.getPackages());
     final accessControl = ref
-        .read(vpnSettingProvider.select((state) => state.accessControl))
+        .read(vpnSettingProvider.select((state) => state.accessControlProps))
         .copyWith();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(accessControlStateProvider.notifier).value = accessControl;
@@ -157,7 +157,9 @@ class _AccessViewState extends ConsumerState<AccessView> {
     }
   }
 
-  AccessControl _getRealAccessControl(AccessControl accessControl) {
+  AccessControlProps _getRealAccessControlProps(
+    AccessControlProps accessControl,
+  ) {
     final packages = ref.read(packagesProvider);
     if (packages.isEmpty) {
       return accessControl;
@@ -183,7 +185,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
         .read(vpnSettingProvider.notifier)
         .update(
           (state) => state.copyWith(
-            accessControl: _getRealAccessControl(accessControl),
+            accessControlProps: _getRealAccessControlProps(accessControl),
           ),
         );
   }
@@ -195,7 +197,8 @@ class _AccessViewState extends ConsumerState<AccessView> {
         final noSave = ref.watch(
           vpnSettingProvider.select(
             (state) =>
-                state.accessControl == _getRealAccessControl(accessControl),
+                state.accessControlProps ==
+                _getRealAccessControlProps(accessControl),
           ),
         );
         if (noSave) {

@@ -504,6 +504,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkDetection": MessageLookupByLibrary.simpleMessage(
       "Network detection",
     ),
+    "networkRequestException": MessageLookupByLibrary.simpleMessage(
+      "Network request exception, please try again later.",
+    ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Network speed"),
     "networkType": MessageLookupByLibrary.simpleMessage("Network type"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("Neutral"),
@@ -564,6 +567,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Override the original rule",
     ),
     "overrideScript": MessageLookupByLibrary.simpleMessage("Override script"),
+    "overwriteTypeCustom": MessageLookupByLibrary.simpleMessage("Custom"),
+    "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
+      "Custom mode, fully customize proxy groups and rules",
+    ),
     "palette": MessageLookupByLibrary.simpleMessage("Palette"),
     "password": MessageLookupByLibrary.simpleMessage("Password"),
     "paste": MessageLookupByLibrary.simpleMessage("Paste"),
@@ -806,6 +813,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove extra delays such as handshaking",
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
+    "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
+      "Unknown network error",
+    ),
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),

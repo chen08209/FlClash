@@ -86,7 +86,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => appLocalizations.standard,
       OverwriteType.script => appLocalizations.script,
-      OverwriteType.custom => '自定义',
+      OverwriteType.custom => appLocalizations.overwriteTypeCustom,
     };
   }
 
@@ -102,7 +102,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => appLocalizations.standardModeDesc,
       OverwriteType.script => appLocalizations.scriptModeDesc,
-      OverwriteType.custom => '自定义模式，支持完全自定义修改代理组以及规则',
+      OverwriteType.custom => appLocalizations.overwriteTypeCustomDesc,
     };
   }
 

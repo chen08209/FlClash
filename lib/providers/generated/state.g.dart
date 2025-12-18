@@ -48,7 +48,7 @@ final class ConfigStateProvider
   }
 }
 
-String _$configStateHash() => r'0eb72e2cf30d1d0de694d28a3ec3c7658e825e92';
+String _$configStateHash() => r'7287598858d91e6902902c33d80440526a257221';
 
 @ProviderFor(currentGroupsState)
 const currentGroupsStateProvider = CurrentGroupsStateProvider._();
@@ -1049,7 +1049,7 @@ final class PackageListSelectorStateProvider
 }
 
 String _$packageListSelectorStateHash() =>
-    r'26ad58fec2cb0136ece373c7f3ec89b5aafd9324';
+    r'1fa2bebbd8ee07910aa8d6e9c5d5d6128df5c13b';
 
 @ProviderFor(moreToolsSelectorState)
 const moreToolsSelectorStateProvider = MoreToolsSelectorStateProvider._();
@@ -2523,7 +2523,7 @@ final class ProfileOverwriteFamily extends $Family
 const accessControlStateProvider = AccessControlStateProvider._();
 
 final class AccessControlStateProvider
-    extends $NotifierProvider<AccessControlState, AccessControl> {
+    extends $NotifierProvider<AccessControlState, AccessControlProps> {
   const AccessControlStateProvider._()
     : super(
         from: null,
@@ -2543,29 +2543,29 @@ final class AccessControlStateProvider
   AccessControlState create() => AccessControlState();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AccessControl value) {
+  Override overrideWithValue(AccessControlProps value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AccessControl>(value),
+      providerOverride: $SyncValueProvider<AccessControlProps>(value),
     );
   }
 }
 
 String _$accessControlStateHash() =>
-    r'f7e23637439b8b6c80744d8fa83498edf15acc11';
+    r'08fda2e342d027c1bdd49c1ef9a13f2e775db204';
 
-abstract class _$AccessControlState extends $Notifier<AccessControl> {
-  AccessControl build();
+abstract class _$AccessControlState extends $Notifier<AccessControlProps> {
+  AccessControlProps build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<AccessControl, AccessControl>;
+    final ref = this.ref as $Ref<AccessControlProps, AccessControlProps>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AccessControl, AccessControl>,
-              AccessControl,
+              AnyNotifier<AccessControlProps, AccessControlProps>,
+              AccessControlProps,
               Object?,
               Object?
             >;

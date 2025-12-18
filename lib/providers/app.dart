@@ -473,3 +473,90 @@ class SelectedItem extends _$SelectedItem with AutoDisposeNotifierMixin {
     );
   }
 }
+
+@riverpod
+class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
+  @override
+  List<Profile> build() {
+    return globalState.runningState.profiles;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.runningState = globalState.runningState.copyWith(
+      profiles: value,
+    );
+  }
+
+  void setProfile(Profile profile) {
+    value = state.copyAndAddProfile(profile);
+  }
+
+  void updateProfile(
+    String profileId,
+    Profile Function(Profile profile) builder,
+  ) {
+    final List<Profile> profilesTemp = List.from(state);
+    final index = profilesTemp.indexWhere((element) => element.id == profileId);
+    if (index != -1) {
+      profilesTemp[index] = builder(profilesTemp[index]);
+    }
+    value = profilesTemp;
+  }
+
+  void deleteProfileById(String id) {
+    value = state.where((element) => element.id != id).toList();
+  }
+}
+
+@riverpod
+class Scripts extends _$Scripts with AutoDisposeNotifierMixin {
+  @override
+  List<Script> build() {
+    return globalState.runningState.scripts;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.runningState = globalState.runningState.copyWith(
+      scripts: value,
+    );
+  }
+
+  void setScript(Script script) {
+    final list = List<Script>.from(state);
+    final index = list.indexWhere((item) => item.id == script.id);
+    if (index != -1) {
+      list[index] = script;
+    } else {
+      list.add(script);
+    }
+    value = list;
+  }
+
+  void del(String id) {
+    final list = List<Script>.from(state);
+    final index = list.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      list.removeAt(index);
+    }
+    state = list;
+  }
+
+  bool isExits(String label) {
+    return state.indexWhere((item) => item.label == label) != -1;
+  }
+}
+
+@riverpod
+class Rules extends _$Rules with AutoDisposeNotifierMixin {
+  @override
+  List<Rule> build() {
+    return globalState.runningState.rules;
+  }
+
+  @override
+  onUpdate(value) {
+    globalState.runningState = globalState.runningState.copyWith(rules: value);
+  }
+}

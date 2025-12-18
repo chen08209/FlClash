@@ -467,5 +467,9 @@
   "vpnConfigChangeDetected": "VPN設定の変更が検出されました",
   "restart": "再起動",
   "speedStatistics": "速度統計",
-  "resetPageChangesTip": "現在のページに変更があります。リセットしてもよろしいですか？"
+  "resetPageChangesTip": "現在のページに変更があります。リセットしてもよろしいですか？",
+  "overwriteTypeCustom": "カスタム",
+  "overwriteTypeCustomDesc": "カスタムモード、プロキシグループとルールを完全にカスタマイズ可能",
+  "unknownNetworkError": "不明なネットワークエラー",
+  "networkRequestException": "ネットワーク要求例外、後でもう一度試してください。"
 }

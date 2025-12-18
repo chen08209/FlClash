@@ -19,7 +19,7 @@ import 'package:intl/intl.dart';
 class BackupAndRecovery extends ConsumerWidget {
   const BackupAndRecovery({super.key});
 
-  Future<void> _showAddWebDAV(DAV? dav) async {
+  Future<void> _showAddWebDAV(DAVProps? dav) async {
     await globalState.showCommonDialog<String>(
       child: WebDAVFormDialog(dav: dav?.copyWith()),
     );
@@ -129,8 +129,8 @@ class BackupAndRecovery extends ConsumerWidget {
       return;
     }
     ref
-        .read(appDAVSettingProvider.notifier)
-        .updateState((state) => state?.copyWith(fileName: value));
+        .read(davSettingProvider.notifier)
+        .update((state) => state?.copyWith(fileName: value));
   }
 
   Future<void> _handleUpdateRecoveryStrategy(WidgetRef ref) async {
@@ -155,7 +155,7 @@ class BackupAndRecovery extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final dav = ref.watch(appDAVSettingProvider);
+    final dav = ref.watch(davSettingProvider);
     final client = dav != null ? DAVClient(dav) : null;
     return BaseScaffold(
       title: appLocalizations.backupAndRecovery,
@@ -338,7 +338,7 @@ class _RecoveryOptionsDialogState extends State<RecoveryOptionsDialog> {
 }
 
 class WebDAVFormDialog extends ConsumerStatefulWidget {
-  final DAV? dav;
+  final DAVProps? dav;
 
   const WebDAVFormDialog({super.key, this.dav});
 
@@ -363,7 +363,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    ref.read(appDAVSettingProvider.notifier).value = DAV(
+    ref.read(davSettingProvider.notifier).value = DAVProps(
       uri: _uriController.text,
       user: _userController.text,
       password: _passwordController.text,
@@ -372,7 +372,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
   }
 
   void _delete() {
-    ref.read(appDAVSettingProvider.notifier).value = null;
+    ref.read(davSettingProvider.notifier).value = null;
     Navigator.pop(context);
   }
 

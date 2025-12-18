@@ -3,7 +3,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
@@ -83,8 +82,8 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     Script? script,
   }) async {
     Script newScript =
-        script?.copyWith(label: title, content: content) ??
-        Script.create(label: title, content: content);
+        (script?.copyWith(label: title) ?? Script.create(label: title));
+    newScript = await newScript.saveAndCopy(content);
     if (newScript.label.isEmpty) {
       final res = await globalState.showCommonDialog<String>(
         child: InputDialog(
@@ -150,10 +149,13 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     return false;
   }
 
-  void _handleToEditor([String? id]) {
+  void _handleToEditor([String? id]) async {
     final script = ref.read(scriptsProvider.select((state) => state.get(id)));
     final title = script?.label ?? '';
-    final raw = script?.content ?? scriptTemplate;
+    final raw = (await script?.content) ?? scriptTemplate;
+    if (!mounted) {
+      return;
+    }
     BaseNavigator.push(
       context,
       EditorPage(

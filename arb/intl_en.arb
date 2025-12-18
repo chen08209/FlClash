@@ -466,5 +466,9 @@
   "vpnConfigChangeDetected": "VPN configuration change detected",
   "restart": "Restart",
   "speedStatistics": "Speed statistics",
-  "resetPageChangesTip": "The current page has changes. Are you sure you want to reset?"
+  "resetPageChangesTip": "The current page has changes. Are you sure you want to reset?",
+  "overwriteTypeCustom": "Custom",
+  "overwriteTypeCustomDesc": "Custom mode, fully customize proxy groups and rules",
+  "unknownNetworkError": "Unknown network error",
+  "networkRequestException": "Network request exception, please try again later."
 }

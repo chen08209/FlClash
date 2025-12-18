@@ -41,7 +41,7 @@ class _ProfilesViewState extends State<ProfilesView> {
   }
 
   Future<void> _updateProfiles() async {
-    final profiles = globalState.config.profiles;
+    final profiles = globalState.profiles;
     final messages = [];
     final updateProfiles = profiles.map<Future>((profile) async {
       if (profile.type == ProfileType.file) return;

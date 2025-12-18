@@ -403,4 +403,285 @@ $TrafficCopyWith<$Res> get totalTraffic {
 }
 }
 
+/// @nodoc
+mixin _$RunningState {
+
+ List<Profile> get profiles; List<Script> get scripts; List<Rule> get rules;
+/// Create a copy of RunningState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RunningStateCopyWith<RunningState> get copyWith => _$RunningStateCopyWithImpl<RunningState>(this as RunningState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RunningState&&const DeepCollectionEquality().equals(other.profiles, profiles)&&const DeepCollectionEquality().equals(other.scripts, scripts)&&const DeepCollectionEquality().equals(other.rules, rules));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(profiles),const DeepCollectionEquality().hash(scripts),const DeepCollectionEquality().hash(rules));
+
+@override
+String toString() {
+  return 'RunningState(profiles: $profiles, scripts: $scripts, rules: $rules)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RunningStateCopyWith<$Res>  {
+  factory $RunningStateCopyWith(RunningState value, $Res Function(RunningState) _then) = _$RunningStateCopyWithImpl;
+@useResult
+$Res call({
+ List<Profile> profiles, List<Script> scripts, List<Rule> rules
+});
+
+
+
+
+}
+/// @nodoc
+class _$RunningStateCopyWithImpl<$Res>
+    implements $RunningStateCopyWith<$Res> {
+  _$RunningStateCopyWithImpl(this._self, this._then);
+
+  final RunningState _self;
+  final $Res Function(RunningState) _then;
+
+/// Create a copy of RunningState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? profiles = null,Object? scripts = null,Object? rules = null,}) {
+  return _then(_self.copyWith(
+profiles: null == profiles ? _self.profiles : profiles // ignore: cast_nullable_to_non_nullable
+as List<Profile>,scripts: null == scripts ? _self.scripts : scripts // ignore: cast_nullable_to_non_nullable
+as List<Script>,rules: null == rules ? _self.rules : rules // ignore: cast_nullable_to_non_nullable
+as List<Rule>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [RunningState].
+extension RunningStatePatterns on RunningState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _RunningState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _RunningState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _RunningState value)  $default,){
+final _that = this;
+switch (_that) {
+case _RunningState():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _RunningState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _RunningState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Profile> profiles,  List<Script> scripts,  List<Rule> rules)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _RunningState() when $default != null:
+return $default(_that.profiles,_that.scripts,_that.rules);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Profile> profiles,  List<Script> scripts,  List<Rule> rules)  $default,) {final _that = this;
+switch (_that) {
+case _RunningState():
+return $default(_that.profiles,_that.scripts,_that.rules);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Profile> profiles,  List<Script> scripts,  List<Rule> rules)?  $default,) {final _that = this;
+switch (_that) {
+case _RunningState() when $default != null:
+return $default(_that.profiles,_that.scripts,_that.rules);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _RunningState implements RunningState {
+  const _RunningState({final  List<Profile> profiles = const [], final  List<Script> scripts = const [], final  List<Rule> rules = const []}): _profiles = profiles,_scripts = scripts,_rules = rules;
+  
+
+ final  List<Profile> _profiles;
+@override@JsonKey() List<Profile> get profiles {
+  if (_profiles is EqualUnmodifiableListView) return _profiles;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_profiles);
+}
+
+ final  List<Script> _scripts;
+@override@JsonKey() List<Script> get scripts {
+  if (_scripts is EqualUnmodifiableListView) return _scripts;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_scripts);
+}
+
+ final  List<Rule> _rules;
+@override@JsonKey() List<Rule> get rules {
+  if (_rules is EqualUnmodifiableListView) return _rules;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_rules);
+}
+
+
+/// Create a copy of RunningState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$RunningStateCopyWith<_RunningState> get copyWith => __$RunningStateCopyWithImpl<_RunningState>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RunningState&&const DeepCollectionEquality().equals(other._profiles, _profiles)&&const DeepCollectionEquality().equals(other._scripts, _scripts)&&const DeepCollectionEquality().equals(other._rules, _rules));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_profiles),const DeepCollectionEquality().hash(_scripts),const DeepCollectionEquality().hash(_rules));
+
+@override
+String toString() {
+  return 'RunningState(profiles: $profiles, scripts: $scripts, rules: $rules)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$RunningStateCopyWith<$Res> implements $RunningStateCopyWith<$Res> {
+  factory _$RunningStateCopyWith(_RunningState value, $Res Function(_RunningState) _then) = __$RunningStateCopyWithImpl;
+@override @useResult
+$Res call({
+ List<Profile> profiles, List<Script> scripts, List<Rule> rules
+});
+
+
+
+
+}
+/// @nodoc
+class __$RunningStateCopyWithImpl<$Res>
+    implements _$RunningStateCopyWith<$Res> {
+  __$RunningStateCopyWithImpl(this._self, this._then);
+
+  final _RunningState _self;
+  final $Res Function(_RunningState) _then;
+
+/// Create a copy of RunningState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? profiles = null,Object? scripts = null,Object? rules = null,}) {
+  return _then(_RunningState(
+profiles: null == profiles ? _self._profiles : profiles // ignore: cast_nullable_to_non_nullable
+as List<Profile>,scripts: null == scripts ? _self._scripts : scripts // ignore: cast_nullable_to_non_nullable
+as List<Script>,rules: null == rules ? _self._rules : rules // ignore: cast_nullable_to_non_nullable
+as List<Rule>,
+  ));
+}
+
+
+}
+
 // dart format on

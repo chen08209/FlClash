@@ -9,12 +9,12 @@ part 'generated/config.g.dart';
 class AppSetting extends _$AppSetting with AutoDisposeNotifierMixin {
   @override
   AppSettingProps build() {
-    return globalState.config.appSetting;
+    return globalState.config.appSettingProps;
   }
 
   @override
   onUpdate(value) {
-    globalState.config = globalState.config.copyWith(appSetting: value);
+    globalState.config = globalState.config.copyWith(appSettingProps: value);
   }
 
   void updateState(AppSettingProps Function(AppSettingProps state) builder) {
@@ -87,39 +87,6 @@ class ThemeSetting extends _$ThemeSetting with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
-  @override
-  List<Profile> build() {
-    return globalState.config.profiles;
-  }
-
-  @override
-  onUpdate(value) {
-    globalState.config = globalState.config.copyWith(profiles: value);
-  }
-
-  void setProfile(Profile profile) {
-    value = state.copyAndAddProfile(profile);
-  }
-
-  void updateProfile(
-    String profileId,
-    Profile Function(Profile profile) builder,
-  ) {
-    final List<Profile> profilesTemp = List.from(state);
-    final index = profilesTemp.indexWhere((element) => element.id == profileId);
-    if (index != -1) {
-      profilesTemp[index] = builder(profilesTemp[index]);
-    }
-    value = profilesTemp;
-  }
-
-  void deleteProfileById(String id) {
-    value = state.where((element) => element.id != id).toList();
-  }
-}
-
-@riverpod
 class CurrentProfileId extends _$CurrentProfileId
     with AutoDisposeNotifierMixin {
   @override
@@ -134,19 +101,15 @@ class CurrentProfileId extends _$CurrentProfileId
 }
 
 @riverpod
-class AppDAVSetting extends _$AppDAVSetting with AutoDisposeNotifierMixin {
+class DavSetting extends _$DavSetting with AutoDisposeNotifierMixin {
   @override
-  DAV? build() {
-    return globalState.config.dav;
+  DAVProps? build() {
+    return globalState.config.davProps;
   }
 
   @override
   onUpdate(value) {
-    globalState.config = globalState.config.copyWith(dav: value);
-  }
-
-  void updateState(DAV? Function(DAV? state) builder) {
-    value = builder(state);
+    globalState.config = globalState.config.copyWith(davProps: value);
   }
 }
 
@@ -180,67 +143,13 @@ class HotKeyActions extends _$HotKeyActions with AutoDisposeNotifierMixin {
 class ProxiesStyleSetting extends _$ProxiesStyleSetting
     with AutoDisposeNotifierMixin {
   @override
-  ProxiesStyle build() {
-    return globalState.config.proxiesStyle;
+  ProxiesStyleProps build() {
+    return globalState.config.proxiesStyleProps;
   }
 
   @override
   onUpdate(value) {
-    globalState.config = globalState.config.copyWith(proxiesStyle: value);
-  }
-
-  void updateState(ProxiesStyle Function(ProxiesStyle state) builder) {
-    value = builder(state);
-  }
-}
-
-@riverpod
-class Scripts extends _$Scripts with AutoDisposeNotifierMixin {
-  @override
-  List<Script> build() {
-    return globalState.config.scripts;
-  }
-
-  @override
-  onUpdate(value) {
-    globalState.config = globalState.config.copyWith(scripts: value);
-  }
-
-  void setScript(Script script) {
-    final list = List<Script>.from(state);
-    final index = list.indexWhere((item) => item.id == script.id);
-    if (index != -1) {
-      list[index] = script;
-    } else {
-      list.add(script);
-    }
-    value = list;
-  }
-
-  void del(String id) {
-    final list = List<Script>.from(state);
-    final index = list.indexWhere((item) => item.id == id);
-    if (index != -1) {
-      list.removeAt(index);
-    }
-    state = list;
-  }
-
-  bool isExits(String label) {
-    return state.indexWhere((item) => item.label == label) != -1;
-  }
-}
-
-@riverpod
-class Rules extends _$Rules with AutoDisposeNotifierMixin {
-  @override
-  List<Rule> build() {
-    return globalState.config.rules;
-  }
-
-  @override
-  onUpdate(value) {
-    globalState.config = globalState.config.copyWith(rules: value);
+    globalState.config = globalState.config.copyWith(proxiesStyleProps: value);
   }
 }
 
@@ -250,14 +159,6 @@ class PatchClashConfig extends _$PatchClashConfig
   @override
   ClashConfig build() {
     return globalState.config.patchClashConfig;
-  }
-
-  void updateState(ClashConfig? Function(ClashConfig state) builder) {
-    final newState = builder(state);
-    if (newState == null) {
-      return;
-    }
-    value = newState;
   }
 
   @override

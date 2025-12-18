@@ -149,14 +149,14 @@ abstract class MoreToolsSelectorState with _$MoreToolsSelectorState {
 abstract class PackageListSelectorState with _$PackageListSelectorState {
   const factory PackageListSelectorState({
     required List<Package> packages,
-    required AccessControl accessControl,
+    required AccessControlProps accessControlProps,
   }) = _PackageListSelectorState;
 }
 
 extension PackageListSelectorStateExt on PackageListSelectorState {
   List<Package> get list {
-    final isFilterSystemApp = accessControl.isFilterSystemApp;
-    final isFilterNonInternetApp = accessControl.isFilterNonInternetApp;
+    final isFilterSystemApp = accessControlProps.isFilterSystemApp;
+    final isFilterNonInternetApp = accessControlProps.isFilterNonInternetApp;
     return packages
         .where(
           (item) =>
@@ -167,7 +167,7 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
   }
 
   List<Package> getSortList(List<String> selectedList) {
-    final sort = accessControl.sort;
+    final sort = accessControlProps.sort;
 
     return list.sorted((a, b) {
       final isSelectA = selectedList.contains(a.packageName);
@@ -254,7 +254,8 @@ abstract class SetupState with _$SetupState {
     required int? profileLastUpdateDate,
     required OverwriteType overwriteType,
     required List<Rule> addedRules,
-    required String? scriptContent,
+    required String? scriptId,
+    required DateTime? scriptLastUpdateTime,
     required bool overrideDns,
     required Dns dns,
   }) = _SetupState;
@@ -271,14 +272,17 @@ extension SetupStateExt on SetupState {
     if (profileLastUpdateDate != lastSetupState.profileLastUpdateDate) {
       return true;
     }
+    final scriptIsChange =
+        scriptId != lastSetupState.scriptId ||
+        scriptLastUpdateTime != lastSetupState.scriptLastUpdateTime;
     if (overwriteType != lastSetupState.overwriteType) {
       if (!ruleListEquality.equals(addedRules, lastSetupState.addedRules) ||
-          scriptContent != lastSetupState.scriptContent) {
+          scriptIsChange) {
         return true;
       }
     } else {
       if (overwriteType == OverwriteType.script) {
-        if (scriptContent != lastSetupState.scriptContent) {
+        if (scriptIsChange) {
           return true;
         }
       }

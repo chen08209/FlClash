@@ -1661,3 +1661,160 @@ abstract class _$SelectedItem extends $Notifier<String> {
     element.handleValue(ref, created);
   }
 }
+
+@ProviderFor(Profiles)
+const profilesProvider = ProfilesProvider._();
+
+final class ProfilesProvider
+    extends $NotifierProvider<Profiles, List<Profile>> {
+  const ProfilesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'profilesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$profilesHash();
+
+  @$internal
+  @override
+  Profiles create() => Profiles();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Profile> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Profile>>(value),
+    );
+  }
+}
+
+String _$profilesHash() => r'847a7134871a2540162f9cceb33d06b11f554b8c';
+
+abstract class _$Profiles extends $Notifier<List<Profile>> {
+  List<Profile> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<List<Profile>, List<Profile>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<Profile>, List<Profile>>,
+              List<Profile>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(Scripts)
+const scriptsProvider = ScriptsProvider._();
+
+final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
+  const ScriptsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'scriptsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$scriptsHash();
+
+  @$internal
+  @override
+  Scripts create() => Scripts();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Script> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Script>>(value),
+    );
+  }
+}
+
+String _$scriptsHash() => r'a42a6e1ae6ddde1cf2d3fffdc3334f9122fbccc9';
+
+abstract class _$Scripts extends $Notifier<List<Script>> {
+  List<Script> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<List<Script>, List<Script>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<Script>, List<Script>>,
+              List<Script>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(Rules)
+const rulesProvider = RulesProvider._();
+
+final class RulesProvider extends $NotifierProvider<Rules, List<Rule>> {
+  const RulesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'rulesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$rulesHash();
+
+  @$internal
+  @override
+  Rules create() => Rules();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Rule> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Rule>>(value),
+    );
+  }
+}
+
+String _$rulesHash() => r'493005852c50694dff70d26f552b37b558c80f6d';
+
+abstract class _$Rules extends $Notifier<List<Rule>> {
+  List<Rule> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<List<Rule>, List<Rule>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<Rule>, List<Rule>>,
+              List<Rule>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

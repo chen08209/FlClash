@@ -125,14 +125,14 @@ const _$LogLevelEnumMap = {
   LogLevel.silent: 'silent',
 };
 
-_DAV _$DAVFromJson(Map<String, dynamic> json) => _DAV(
+_DAVProps _$DAVPropsFromJson(Map<String, dynamic> json) => _DAVProps(
   uri: json['uri'] as String,
   user: json['user'] as String,
   password: json['password'] as String,
   fileName: json['fileName'] as String? ?? defaultDavFileName,
 );
 
-Map<String, dynamic> _$DAVToJson(_DAV instance) => <String, dynamic>{
+Map<String, dynamic> _$DAVPropsToJson(_DAVProps instance) => <String, dynamic>{
   'uri': instance.uri,
   'user': instance.user,
   'password': instance.password,
@@ -258,11 +258,11 @@ Map<String, dynamic> _$AndroidStateToJson(_AndroidState instance) =>
 _Script _$ScriptFromJson(Map<String, dynamic> json) => _Script(
   id: json['id'] as String,
   label: json['label'] as String,
-  content: json['content'] as String,
+  lastUpdateTime: DateTime.parse(json['lastUpdateTime'] as String),
 );
 
 Map<String, dynamic> _$ScriptToJson(_Script instance) => <String, dynamic>{
   'id': instance.id,
   'label': instance.label,
-  'content': instance.content,
+  'lastUpdateTime': instance.lastUpdateTime.toIso8601String(),
 };

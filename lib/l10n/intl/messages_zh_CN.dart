@@ -335,6 +335,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "network": MessageLookupByLibrary.simpleMessage("网络"),
     "networkDesc": MessageLookupByLibrary.simpleMessage("修改网络相关设置"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("网络检测"),
+    "networkRequestException": MessageLookupByLibrary.simpleMessage(
+      "网络请求异常，请稍后再试。",
+    ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("网络速度"),
     "networkType": MessageLookupByLibrary.simpleMessage("网络类型"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("中性"),
@@ -373,6 +376,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideMode": MessageLookupByLibrary.simpleMessage("覆写模式"),
     "overrideOriginRules": MessageLookupByLibrary.simpleMessage("覆盖原始规则"),
     "overrideScript": MessageLookupByLibrary.simpleMessage("覆写脚本"),
+    "overwriteTypeCustom": MessageLookupByLibrary.simpleMessage("自定义"),
+    "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
+      "自定义模式，支持完全自定义修改代理组以及规则",
+    ),
     "palette": MessageLookupByLibrary.simpleMessage("调色板"),
     "password": MessageLookupByLibrary.simpleMessage("密码"),
     "paste": MessageLookupByLibrary.simpleMessage("粘贴"),
@@ -547,6 +554,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("统一延迟"),
     "unifiedDelayDesc": MessageLookupByLibrary.simpleMessage("去除握手等额外延迟"),
     "unknown": MessageLookupByLibrary.simpleMessage("未知"),
+    "unknownNetworkError": MessageLookupByLibrary.simpleMessage("未知网络错误"),
     "unnamed": MessageLookupByLibrary.simpleMessage("未命名"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
     "upload": MessageLookupByLibrary.simpleMessage("上传"),

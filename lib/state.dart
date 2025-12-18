@@ -30,12 +30,12 @@ typedef UpdateTasks = List<FutureOr Function()>;
 
 class GlobalState {
   static GlobalState? _instance;
-  Map<CacheTag, FixedMap<String, double>> computeHeightMapCache = {};
+  final navigatorKey = GlobalKey<NavigatorState>();
   Timer? timer;
-  Timer? groupsUpdateTimer;
   late final Isar isar;
   late final Config config;
   late final AppState appState;
+  late final RunningState runningState;
   bool isPre = true;
   late final String coreSHA256;
   late PackageInfo packageInfo;
@@ -46,7 +46,6 @@ class GlobalState {
   CorePalette? corePalette;
   DateTime? startTime;
   UpdateTasks tasks = [];
-  final navigatorKey = GlobalKey<NavigatorState>();
   AppController? _appController;
   bool isInit = false;
   bool isUserDisconnected = false;
@@ -98,8 +97,25 @@ class GlobalState {
     } catch (_) {}
   }
 
+  List<Profile> get profiles {
+    return runningState.profiles;
+  }
+
+  Profile? get currentProfile {
+    final profileId = config.currentProfileId;
+    return runningState.profiles.getProfile(profileId);
+  }
+
+  List<Script> get scripts {
+    return runningState.scripts;
+  }
+
+  List<Rule> get rules {
+    return runningState.rules;
+  }
+
   Future<void> _shakingStore() async {
-    final profileIds = config.profiles.map((item) => item.id).toSet();
+    final profileIds = runningState.profiles.map((item) => item.id).toSet();
 
     final providersRootPath = await appPath.getProvidersRootPath();
     final profilesRootPath = await appPath.profilesPath;
@@ -150,17 +166,33 @@ class GlobalState {
   Future<void> init() async {
     packageInfo = await PackageInfo.fromPlatform();
     config = Config(themeProps: defaultThemeProps);
-    await _initIsar();
+    isar = await _openIsar();
     await version.migration(config);
+    final results = await Future.wait([
+      isar.profileCollections.where().findAll(),
+      isar.scriptCollections.where().findAll(),
+      isar.ruleCollections.where().findAll(),
+    ]);
+    final profileCollection = results[0] as List<ProfileCollection>;
+    final scriptCollection = results[1] as List<ScriptCollection>;
+    final ruleCollections = results[2] as List<RuleCollection>;
+    final profiles = profileCollection.map((item) => item.toProfile());
+    final scripts = scriptCollection.map((item) => item.toScript());
+    final rules = ruleCollections.map((item) => item.toRule());
+    runningState = RunningState(
+      profiles: profiles.toList(),
+      rules: rules.toList(),
+      scripts: scripts.toList(),
+    );
     await AppLocalizations.load(
-      utils.getLocaleForString(config.appSetting.locale) ??
+      utils.getLocaleForString(config.appSettingProps.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );
   }
 
-  Future<void> _initIsar() async {
+  Future<Isar> _openIsar() async {
     final homeDirPath = await appPath.homeDirPath;
-    isar = await Isar.open([
+    return await Isar.open([
       ProfileCollectionSchema,
       ScriptCollectionSchema,
       RuleCollectionSchema,
@@ -275,7 +307,7 @@ class GlobalState {
       port: port,
       ipv6: vpnProps.ipv6,
       dnsHijacking: vpnProps.dnsHijacking,
-      accessControl: vpnProps.accessControl,
+      accessControlProps: vpnProps.accessControlProps,
       allowBypass: vpnProps.allowBypass,
       bypassDomain: networkProps.bypassDomain,
     );
@@ -329,8 +361,8 @@ class GlobalState {
 
   Future<SetupParams> getSetupParams() async {
     final params = SetupParams(
-      selectedMap: config.currentProfile?.selectedMap ?? {},
-      testUrl: config.appSetting.testUrl,
+      selectedMap: currentProfile?.selectedMap ?? {},
+      testUrl: config.appSettingProps.testUrl,
     );
     return params;
   }
@@ -388,16 +420,16 @@ class GlobalState {
 
   AndroidState getAndroidState() {
     return AndroidState(
-      currentProfileName: config.currentProfile?.label ?? '',
-      onlyStatisticsProxy: config.appSetting.onlyStatisticsProxy,
+      currentProfileName: currentProfile?.label ?? '',
+      onlyStatisticsProxy: config.appSettingProps.onlyStatisticsProxy,
       stopText: appLocalizations.stop,
-      crashlytics: config.appSetting.crashlytics,
+      crashlytics: config.appSettingProps.crashlytics,
     );
   }
 
   String getSelectedProxyName(String groupName) {
     final group = appState.groups.getGroup(groupName);
-    final proxyName = config.currentProfile?.selectedMap[groupName];
+    final proxyName = currentProfile?.selectedMap[groupName];
     return group?.getCurrentSelectedName(proxyName ?? '') ?? '';
   }
 
@@ -447,7 +479,8 @@ class GlobalState {
     String? scriptContent;
     final List<Rule> addedRules = [];
     if (setupState.overwriteType == OverwriteType.script) {
-      scriptContent = setupState.scriptContent;
+      final scriptId = setupState.scriptId;
+      scriptContent = await scripts.get(scriptId)?.content;
     } else {
       addedRules.addAll(setupState.addedRules);
     }
@@ -649,20 +682,18 @@ class GlobalState {
   }
 
   SetupState getSetupState(String? profileId) {
-    final profile = config.profiles.getProfile(profileId);
+    final profile = profiles.getProfile(profileId);
     final profileState = VM3(
       a: profile?.id,
       b: profile?.lastUpdateDate,
       c: profile?.overwrite,
     );
     final overwrite = profileState.c;
-    final scriptContent = config.scripts
-        .get(overwrite?.scriptOverwrite.scriptId)
-        ?.content;
+    final scriptId = overwrite?.scriptOverwrite.scriptId;
     final standardOverwrite =
         overwrite?.standardOverwrite ?? StandardOverwrite();
-    final rules = config.rules;
-    final globalAddedRules = rules.where(
+    final mRules = rules;
+    final globalAddedRules = mRules.where(
       (item) => !standardOverwrite.disabledRuleIds.contains(item.id),
     );
     final addedRules = [...standardOverwrite.addedRules, ...globalAddedRules];
@@ -671,7 +702,8 @@ class GlobalState {
       profileLastUpdateDate: profile?.lastUpdateDate?.millisecondsSinceEpoch,
       overwriteType: profile?.overwrite.type ?? OverwriteType.standard,
       addedRules: addedRules,
-      scriptContent: scriptContent,
+      scriptId: scriptId,
+      scriptLastUpdateTime: scripts.get(scriptId)?.lastUpdateTime,
       overrideDns: config.overrideDns,
       dns: config.patchClashConfig.dns,
     );

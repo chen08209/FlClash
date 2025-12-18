@@ -375,6 +375,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "network": MessageLookupByLibrary.simpleMessage("ネットワーク"),
     "networkDesc": MessageLookupByLibrary.simpleMessage("ネットワーク関連設定の変更"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("ネットワーク検出"),
+    "networkRequestException": MessageLookupByLibrary.simpleMessage(
+      "ネットワーク要求例外、後でもう一度試してください。",
+    ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("ネットワーク速度"),
     "networkType": MessageLookupByLibrary.simpleMessage("ネットワーク種別"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("ニュートラル"),
@@ -423,6 +426,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideMode": MessageLookupByLibrary.simpleMessage("上書きモード"),
     "overrideOriginRules": MessageLookupByLibrary.simpleMessage("元のルールを上書き"),
     "overrideScript": MessageLookupByLibrary.simpleMessage("上書きスクリプト"),
+    "overwriteTypeCustom": MessageLookupByLibrary.simpleMessage("カスタム"),
+    "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
+      "カスタムモード、プロキシグループとルールを完全にカスタマイズ可能",
+    ),
     "palette": MessageLookupByLibrary.simpleMessage("パレット"),
     "password": MessageLookupByLibrary.simpleMessage("パスワード"),
     "paste": MessageLookupByLibrary.simpleMessage("貼り付け"),
@@ -619,6 +626,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "ハンドシェイクなどの余分な遅延を削除",
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("不明"),
+    "unknownNetworkError": MessageLookupByLibrary.simpleMessage("不明なネットワークエラー"),
     "unnamed": MessageLookupByLibrary.simpleMessage("無題"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
     "upload": MessageLookupByLibrary.simpleMessage("アップロード"),
