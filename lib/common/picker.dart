@@ -20,12 +20,27 @@ class Picker {
     final path = await FilePicker.platform.saveFile(
       fileName: fileName,
       initialDirectory: await appPath.downloadDirPath,
-      bytes: system.isAndroid ? bytes : null,
     );
     if (!system.isAndroid && path != null) {
       final file = await File(path).create(recursive: true);
       await file.writeAsBytes(bytes);
     }
+    return path;
+  }
+
+  Future<String?> saveFileWithLocalPath(
+    String fileName,
+    String localPath,
+  ) async {
+    final path = await FilePicker.platform.saveFile(
+      fileName: fileName,
+      initialDirectory: await appPath.downloadDirPath,
+    );
+    final localFile = await File(localPath).create(recursive: true);
+    if (path != null) {
+      await localFile.copy(path);
+    }
+    await localFile.delete();
     return path;
   }
 

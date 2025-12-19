@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -170,10 +169,9 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> setupConfig(SetupParams setupParams) async {
-    final data = await Isolate.run(() => json.encode(setupParams));
     return await _invoke<String>(
           method: ActionMethod.setupConfig,
-          data: data,
+          data: json.encode(setupParams),
         ) ??
         '';
   }
@@ -184,8 +182,10 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<Map> getProxies() async {
-    final map = await _invoke<Map>(method: ActionMethod.getProxies);
+  Future<Map<String, dynamic>> getProxies() async {
+    final map = await _invoke<Map<String, dynamic>>(
+      method: ActionMethod.getProxies,
+    );
     return map ?? {};
   }
 

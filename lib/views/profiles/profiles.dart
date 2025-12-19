@@ -1,5 +1,3 @@
-import 'dart:isolate';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -192,9 +190,7 @@ class ProfileItem extends StatelessWidget {
 
   Future<void> _handlePreview(BuildContext context) async {
     final config = await globalState.getProfileConfig(profile.id);
-    final content = await Isolate.run(() {
-      return yaml.encode(config);
-    });
+    final content = await encodeYamlTask(config);
     if (!context.mounted) {
       return;
     }

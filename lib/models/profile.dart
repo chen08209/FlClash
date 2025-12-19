@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
@@ -204,9 +203,7 @@ extension ProfileExtension on Profile {
       throw message;
     }
     final mFile = await file;
-    await Isolate.run(() async {
-      return await mFile.writeAsBytes(bytes);
-    });
+    await mFile.writeAsBytes(bytes);
     return copyWith(lastUpdateDate: DateTime.now());
   }
 }

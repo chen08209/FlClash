@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/system.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/core.dart';
 import 'package:fl_clash/state.dart';
@@ -62,7 +61,8 @@ class Service {
     if (data == null) {
       return null;
     }
-    return ActionResult.fromJson(json.decode(data));
+    final dataJson = await data.commonToJSON();
+    return ActionResult.fromJson(dataJson);
   }
 
   String handleGetVpnOptions() {

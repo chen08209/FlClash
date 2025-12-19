@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:archive/archive.dart';
-import 'package:fl_clash/common/archive.dart';
+import 'package:archive/archive_io.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -13,7 +12,6 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -766,14 +764,12 @@ class AppController {
   Future<void> clearEffect(String profileId) async {
     final profilePath = await appPath.getProfilePath(profileId);
     final providersDirPath = await appPath.getProvidersDirPath(profileId);
-    return await Isolate.run(() async {
-      final profileFile = File(profilePath);
-      final isExists = await profileFile.exists();
-      if (isExists) {
-        profileFile.delete(recursive: true);
-      }
-      await coreController.deleteFile(providersDirPath);
-    });
+    final profileFile = File(profilePath);
+    final isExists = await profileFile.exists();
+    if (isExists) {
+      profileFile.delete(recursive: true);
+    }
+    await coreController.deleteFile(providersDirPath);
   }
 
   void updateTun() {
@@ -872,26 +868,14 @@ class AppController {
   }
 
   Future<bool> exportLogs() async {
-    final logsRaw = _ref.read(logsProvider).list.map((item) => item.toString());
-    final data = await Isolate.run<List<int>>(() async {
-      final logsRawString = logsRaw.join('\n');
-      return utf8.encode(logsRawString);
-    });
-    return await picker.saveFile(utils.logFile, Uint8List.fromList(data)) !=
-        null;
-  }
-
-  Future<List<int>> backupData() async {
-    final homeDirPath = await appPath.homeDirPath;
-    final profilesPath = await appPath.profilesPath;
-    final configJson = globalState.config.toJson();
-    return Isolate.run<List<int>>(() async {
-      final archive = Archive();
-      archive.addTextFile('config.json', configJson);
-      archive.addDirectoryToArchive(profilesPath, homeDirPath);
-      final zipEncoder = ZipEncoder();
-      return zipEncoder.encode(archive);
-    });
+    final logString = await encodeLogsTask(_ref.read(logsProvider).list);
+    final tempFilePath = await appPath.tempFilePath;
+    final file = await File(tempFilePath).create(recursive: true);
+    await file.writeAsString(logString);
+    bool res = false;
+    res =
+        await picker.saveFileWithLocalPath(utils.logFile, tempFilePath) != null;
+    return res;
   }
 
   Future<void> updateTray([bool focus = false]) async {

@@ -61,19 +61,29 @@ class AppPath {
     return directory.path;
   }
 
+  Future<String> get isarPath async {
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'db.isar');
+  }
+
+  Future<String> get backupFilePath async {
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'backup.zip');
+  }
+
+  Future<String> get tempFilePath async {
+    final mTempDir = await tempDir.future;
+    return join(mTempDir.path, 'temp${utils.id}');
+  }
+
   Future<String> get lockFilePath async {
     final homeDirPath = await appPath.homeDirPath;
     return join(homeDirPath, 'FlClash.lock');
   }
 
   Future<String> get configFilePath async {
-    final homeDirPath = await appPath.homeDirPath;
-    return join(homeDirPath, 'config.yaml');
-  }
-
-  Future<String> get validateFilePath async {
-    final homeDirPath = await appPath.homeDirPath;
-    return join(homeDirPath, 'temp', 'validate${utils.id}.yaml');
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'config.yaml');
   }
 
   Future<String> get sharedPreferencesPath async {

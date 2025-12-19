@@ -1,14 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
@@ -74,16 +72,24 @@ class CoreController {
   FutureOr<bool> get isInit => _interface.isInit;
 
   Future<String> validateConfig(String data) async {
-    final path = await appPath.validateFilePath;
-    await globalState.genValidateFile(path, data);
+    final path = await appPath.tempFilePath;
+    final file = File(path);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    }
+    await file.writeAsString(data);
     final res = await _interface.validateConfig(path);
     await File(path).delete();
     return res;
   }
 
   Future<String> validateConfigFormBytes(Uint8List bytes) async {
-    final path = await appPath.validateFilePath;
-    await globalState.genValidateFileFormBytes(path, bytes);
+    final path = await appPath.tempFilePath;
+    final file = File(path);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    }
+    await file.writeAsBytes(bytes);
     final res = await _interface.validateConfig(path);
     await File(path).delete();
     return res;
@@ -112,32 +118,15 @@ class CoreController {
     required String defaultTestUrl,
   }) async {
     final proxies = await _interface.getProxies();
-    return Isolate.run<List<Group>>(() {
-      if (proxies.isEmpty) return [];
-      final groupNames = [
-        UsedProxy.GLOBAL.name,
-        ...(proxies[UsedProxy.GLOBAL.name]['all'] as List).where((e) {
-          final proxy = proxies[e] ?? {};
-          return GroupTypeExtension.valueList.contains(proxy['type']);
-        }),
-      ];
-      final groupsRaw = groupNames.map((groupName) {
-        final group = proxies[groupName];
-        group['all'] = ((group['all'] ?? []) as List)
-            .map((name) => proxies[name])
-            .where((proxy) => proxy != null)
-            .toList();
-        return group;
-      }).toList();
-      final groups = groupsRaw.map((e) => Group.fromJson(e)).toList();
-      return computeSort(
-        groups: groups,
+    return toGroupsTask(
+      ComputeGroupsState(
+        proxies: proxies,
         sortType: sortType,
         delayMap: delayMap,
         selectedMap: selectedMap,
         defaultTestUrl: defaultTestUrl,
-      );
-    });
+      ),
+    );
   }
 
   FutureOr<String> changeProxy(ChangeProxyParams changeProxyParams) async {
@@ -168,13 +157,10 @@ class CoreController {
     if (externalProvidersRawString.isEmpty) {
       return [];
     }
-    return Isolate.run<List<ExternalProvider>>(() {
-      final externalProviders =
-          (json.decode(externalProvidersRawString) as List<dynamic>)
-              .map((item) => ExternalProvider.fromJson(item))
-              .toList();
-      return externalProviders;
-    });
+    final externalProviders = (await externalProvidersRawString.commonToJSON())
+        .map((item) => ExternalProvider.fromJson(item))
+        .toList();
+    return externalProviders;
   }
 
   Future<ExternalProvider?> getExternalProvider(

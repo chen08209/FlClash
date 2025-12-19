@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
@@ -33,9 +32,9 @@ class DAVClient {
 
   String get backupFile => '$root/$fileName';
 
-  Future<bool> backup(Uint8List data) async {
+  Future<bool> backup(String localFilePath) async {
     await client.mkdir(root);
-    await client.write(backupFile, data);
+    client.writeFromFile(localFilePath, backupFile);
     return true;
   }
 

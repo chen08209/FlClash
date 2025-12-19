@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/dav_client.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -28,8 +26,8 @@ class BackupAndRecovery extends ConsumerWidget {
   Future<void> _backupOnWebDAV(DAVClient client) async {
     final res = await globalState.appController.safeRun<bool>(
       () async {
-        final backupData = await globalState.appController.backupData();
-        return await client.backup(Uint8List.fromList(backupData));
+        final path = await globalState.backup();
+        return await client.backup(path);
       },
       needLoading: true,
       title: appLocalizations.backup,
@@ -76,10 +74,10 @@ class BackupAndRecovery extends ConsumerWidget {
   Future<void> _backupOnLocal(BuildContext context) async {
     final res = await globalState.appController.safeRun<bool>(
       () async {
-        final backupData = await globalState.appController.backupData();
-        final value = await picker.saveFile(
+        final path = await globalState.backup();
+        final value = await picker.saveFileWithLocalPath(
           utils.getBackupFileName(),
-          Uint8List.fromList(backupData),
+          path,
         );
         if (value == null) return false;
         return true;

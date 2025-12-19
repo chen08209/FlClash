@@ -248,6 +248,31 @@ abstract class VpnState with _$VpnState {
 }
 
 @freezed
+abstract class ComputeGroupsState with _$ComputeGroupsState {
+  const factory ComputeGroupsState({
+    required Map<String, dynamic> proxies,
+    required ProxiesSortType sortType,
+    required DelayMap delayMap,
+    required Map<String, String> selectedMap,
+    required String defaultTestUrl,
+  }) = _ComputeGroupsState;
+}
+
+@freezed
+abstract class MakeRealProfileState with _$MakeRealProfileState {
+  const factory MakeRealProfileState({
+    required String profilesPath,
+    required String profileId,
+    required Map<String, dynamic> rawConfig,
+    required ClashConfig realPatchConfig,
+    required bool overrideDns,
+    required bool appendSystemDns,
+    required List<Rule> addedRules,
+    required String defaultUA,
+  }) = _MakeRealProfileState;
+}
+
+@freezed
 abstract class SetupState with _$SetupState {
   const factory SetupState({
     required String? profileId,

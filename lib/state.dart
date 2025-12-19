@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:animations/animations.dart';
 import 'package:dio/dio.dart';
@@ -19,7 +18,6 @@ import 'package:flutter_js/flutter_js.dart';
 import 'package:isar_community/isar.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
@@ -115,38 +113,14 @@ class GlobalState {
   }
 
   Future<void> _shakingStore() async {
-    final profileIds = runningState.profiles.map((item) => item.id).toSet();
+    final profileIds = runningState.profiles.map((item) => item.id).toList();
 
     final providersRootPath = await appPath.getProvidersRootPath();
     final profilesRootPath = await appPath.profilesPath;
 
-    final pathsToDelete = await Isolate.run<List<String>>(() {
-      final profilesDir = Directory(profilesRootPath);
-      final providersDir = Directory(providersRootPath);
-      final List<String> targets = [];
-      void scanDirectory(Directory dir, {bool skipProvidersFolder = false}) {
-        if (!dir.existsSync()) return;
-        final entities = dir.listSync(recursive: false, followLinks: false);
-
-        for (final entity in entities) {
-          if (entity is File) {
-            final id = basenameWithoutExtension(entity.path);
-            if (!profileIds.contains(id)) {
-              targets.add(entity.path);
-            }
-          } else if (skipProvidersFolder && entity is Directory) {
-            if (basename(entity.path) == 'providers') {
-              continue;
-            }
-          }
-        }
-      }
-
-      scanDirectory(profilesDir, skipProvidersFolder: true);
-      scanDirectory(providersDir);
-
-      return targets;
-    });
+    final pathsToDelete = await shakingProfileTask(
+      VM3(a: profileIds, b: profilesRootPath, c: providersRootPath),
+    );
     if (pathsToDelete.isNotEmpty) {
       final deleteFutures = pathsToDelete.map((path) async {
         try {
@@ -167,7 +141,7 @@ class GlobalState {
     packageInfo = await PackageInfo.fromPlatform();
     config = Config(themeProps: defaultThemeProps);
     isar = await _openIsar();
-    await version.migration(config);
+    await version.migration(config, isar);
     final results = await Future.wait([
       isar.profileCollections.where().findAll(),
       isar.scriptCollections.where().findAll(),
@@ -192,11 +166,11 @@ class GlobalState {
 
   Future<Isar> _openIsar() async {
     final homeDirPath = await appPath.homeDirPath;
-    return await Isar.open([
-      ProfileCollectionSchema,
-      ScriptCollectionSchema,
-      RuleCollectionSchema,
-    ], directory: homeDirPath);
+    return await Isar.open(
+      [ProfileCollectionSchema, ScriptCollectionSchema, RuleCollectionSchema],
+      directory: homeDirPath,
+      name: 'db',
+    );
   }
 
   String get ua => config.patchClashConfig.globalUa ?? packageInfo.ua;
@@ -382,42 +356,6 @@ class GlobalState {
     return res;
   }
 
-  Future<void> genValidateFile(String path, String data) async {
-    final res = await Isolate.run<String>(() async {
-      try {
-        final file = File(path);
-        if (!await file.exists()) {
-          await file.create(recursive: true);
-        }
-        await file.writeAsString(data);
-        return '';
-      } catch (e) {
-        return e.toString();
-      }
-    });
-    if (res.isNotEmpty) {
-      throw res;
-    }
-  }
-
-  Future<void> genValidateFileFormBytes(String path, Uint8List bytes) async {
-    final res = await Isolate.run<String>(() async {
-      try {
-        final file = File(path);
-        if (!await file.exists()) {
-          await file.create(recursive: true);
-        }
-        await file.writeAsBytes(bytes);
-        return '';
-      } catch (e) {
-        return e.toString();
-      }
-    });
-    if (res.isNotEmpty) {
-      throw res;
-    }
-  }
-
   AndroidState getAndroidState() {
     return AndroidState(
       currentProfileName: currentProfile?.label ?? '',
@@ -443,28 +381,22 @@ class GlobalState {
       patchConfig: patchConfig,
     );
     final configFilePath = await appPath.configFilePath;
-    final res = await Isolate.run<String>(() async {
-      try {
-        final res = yaml.encode(config);
-        final file = File(configFilePath);
-        if (!await file.exists()) {
-          await file.create(recursive: true);
-        }
-        await file.writeAsString(res);
-        return '';
-      } catch (e) {
-        return e.toString();
-      }
-    });
-    if (res.isNotEmpty) {
-      throw res;
+    final res = await encodeYamlTask(config);
+    final file = File(configFilePath);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
     }
+    await file.writeAsString(res);
     final params = await globalState.getSetupParams();
     return await coreController.setupConfig(
       params: params,
       setupState: setupState,
       preloadInvoke: preloadInvoke,
     );
+  }
+
+  Future<String> backup() async {
+    return await backupTask(VM2(a: config, b: isar));
   }
 
   Future<Map<String, dynamic>> makeRealProfile({
@@ -495,166 +427,18 @@ class GlobalState {
       rawConfig = await handleEvaluate(scriptContent!, rawConfig);
     }
     final directory = await appPath.profilesPath;
-    String getProvidersFilePathInner(String type, String url) {
-      return join(directory, 'providers', profileId, type, url.toMd5());
-    }
-
-    final res = await Isolate.run<Map<String, dynamic>>(() async {
-      rawConfig['external-controller'] =
-          realPatchConfig.externalController.value;
-      rawConfig['external-ui'] = '';
-      rawConfig['interface-name'] = '';
-      rawConfig['external-ui-url'] = '';
-      rawConfig['tcp-concurrent'] = realPatchConfig.tcpConcurrent;
-      rawConfig['unified-delay'] = realPatchConfig.unifiedDelay;
-      rawConfig['ipv6'] = realPatchConfig.ipv6;
-      rawConfig['log-level'] = realPatchConfig.logLevel.name;
-      rawConfig['port'] = 0;
-      rawConfig['socks-port'] = 0;
-      rawConfig['keep-alive-interval'] = realPatchConfig.keepAliveInterval;
-      rawConfig['mixed-port'] = realPatchConfig.mixedPort;
-      rawConfig['port'] = realPatchConfig.port;
-      rawConfig['socks-port'] = realPatchConfig.socksPort;
-      rawConfig['redir-port'] = realPatchConfig.redirPort;
-      rawConfig['tproxy-port'] = realPatchConfig.tproxyPort;
-      rawConfig['find-process-mode'] = realPatchConfig.findProcessMode.name;
-      rawConfig['allow-lan'] = realPatchConfig.allowLan;
-      rawConfig['mode'] = realPatchConfig.mode.name;
-      if (rawConfig['tun'] == null) {
-        rawConfig['tun'] = {};
-      }
-      rawConfig['tun']['enable'] = realPatchConfig.tun.enable;
-      rawConfig['tun']['device'] = realPatchConfig.tun.device;
-      rawConfig['tun']['dns-hijack'] = realPatchConfig.tun.dnsHijack;
-      rawConfig['tun']['stack'] = realPatchConfig.tun.stack.name;
-      rawConfig['tun']['route-address'] = realPatchConfig.tun.routeAddress;
-      rawConfig['tun']['auto-route'] = realPatchConfig.tun.autoRoute;
-      rawConfig['geodata-loader'] = realPatchConfig.geodataLoader.name;
-      if (rawConfig['sniffer']?['sniff'] != null) {
-        for (final value in (rawConfig['sniffer']?['sniff'] as Map).values) {
-          if (value['ports'] != null && value['ports'] is List) {
-            value['ports'] =
-                value['ports']?.map((item) => item.toString()).toList() ?? [];
-          }
-        }
-      }
-      if (rawConfig['profile'] == null) {
-        rawConfig['profile'] = {};
-      }
-      if (rawConfig['proxy-providers'] != null) {
-        final proxyProviders = rawConfig['proxy-providers'] as Map;
-        for (final key in proxyProviders.keys) {
-          final proxyProvider = proxyProviders[key];
-          if (proxyProvider['type'] != 'http') {
-            continue;
-          }
-          if (proxyProvider['url'] != null) {
-            proxyProvider['path'] = getProvidersFilePathInner(
-              'proxies',
-              proxyProvider['url'],
-            );
-          }
-        }
-      }
-      if (rawConfig['rule-providers'] != null) {
-        final ruleProviders = rawConfig['rule-providers'] as Map;
-        for (final key in ruleProviders.keys) {
-          final ruleProvider = ruleProviders[key];
-          if (ruleProvider['type'] != 'http') {
-            continue;
-          }
-          if (ruleProvider['url'] != null) {
-            ruleProvider['path'] = getProvidersFilePathInner(
-              'rules',
-              ruleProvider['url'],
-            );
-          }
-        }
-      }
-      rawConfig['profile']['store-selected'] = false;
-      rawConfig['geox-url'] = realPatchConfig.geoXUrl.toJson();
-      rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
-      if (rawConfig['hosts'] == null) {
-        rawConfig['hosts'] = {};
-      }
-      for (final host in realPatchConfig.hosts.entries) {
-        rawConfig['hosts'][host.key] = host.value.splitByMultipleSeparators;
-      }
-      if (rawConfig['dns'] == null) {
-        rawConfig['dns'] = {};
-      }
-      final isEnableDns = rawConfig['dns']['enable'] == true;
-      final systemDns = 'system://';
-      if (overrideDns || !isEnableDns) {
-        final dns = switch (!isEnableDns) {
-          true => realPatchConfig.dns.copyWith(
-            nameserver: [...realPatchConfig.dns.nameserver, systemDns],
-          ),
-          false => realPatchConfig.dns,
-        };
-        rawConfig['dns'] = dns.toJson();
-        rawConfig['dns']['nameserver-policy'] = {};
-        for (final entry in dns.nameserverPolicy.entries) {
-          rawConfig['dns']['nameserver-policy'][entry.key] =
-              entry.value.splitByMultipleSeparators;
-        }
-      }
-      if (appendSystemDns) {
-        final List<String> nameserver = List<String>.from(
-          rawConfig['dns']['nameserver'] ?? [],
-        );
-        if (!nameserver.contains(systemDns)) {
-          rawConfig['dns']['nameserver'] = [...nameserver, systemDns];
-        }
-      }
-      List<String> rules = [];
-      if (rawConfig['rules'] != null) {
-        rules = List<String>.from(rawConfig['rules']);
-      }
-      rawConfig.remove('rules');
-      if (addedRules.isNotEmpty) {
-        final parsedNewRules = addedRules
-            .map((item) => ParsedRule.parseString(item.value))
-            .toList();
-        final hasMatchPlaceholder = parsedNewRules.any(
-          (item) => item.ruleTarget?.toUpperCase() == 'MATCH',
-        );
-        String? replacementTarget;
-
-        if (hasMatchPlaceholder) {
-          for (int i = rules.length - 1; i >= 0; i--) {
-            final parsed = ParsedRule.parseString(rules[i]);
-            if (parsed.ruleAction == RuleAction.MATCH) {
-              final target = parsed.ruleTarget;
-              if (target != null && target.isNotEmpty) {
-                replacementTarget = target;
-                break;
-              }
-            }
-          }
-        }
-        final List<String> finalAddedRules;
-
-        if (replacementTarget?.isNotEmpty == true) {
-          finalAddedRules = [];
-          for (int i = 0; i < parsedNewRules.length; i++) {
-            final parsed = parsedNewRules[i];
-            if (parsed.ruleTarget?.toUpperCase() == 'MATCH') {
-              finalAddedRules.add(
-                parsed.copyWith(ruleTarget: replacementTarget).value,
-              );
-            } else {
-              finalAddedRules.add(addedRules[i].value);
-            }
-          }
-        } else {
-          finalAddedRules = addedRules.map((e) => e.value).toList();
-        }
-        rules = [...finalAddedRules, ...rules];
-      }
-      rawConfig['rules'] = rules;
-      return rawConfig;
-    });
+    final res = makeRealProfileTask(
+      MakeRealProfileState(
+        profilesPath: directory,
+        profileId: profileId,
+        rawConfig: rawConfig,
+        realPatchConfig: realPatchConfig,
+        overrideDns: overrideDns,
+        appendSystemDns: appendSystemDns,
+        addedRules: addedRules,
+        defaultUA: defaultUA,
+      ),
+    );
     return res;
   }
 
