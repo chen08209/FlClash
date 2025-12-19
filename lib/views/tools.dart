@@ -143,9 +143,7 @@ class _LocaleItem extends ConsumerWidget {
         onChanged: (Locale? locale) {
           ref
               .read(appSettingProvider.notifier)
-              .updateState(
-                (state) => state.copyWith(locale: locale?.toString()),
-              );
+              .update((state) => state.copyWith(locale: locale?.toString()));
         },
         textBuilder: (locale) => _getLocaleString(locale),
         value: currentLocale,

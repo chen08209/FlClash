@@ -163,7 +163,7 @@ class ApplicationState extends ConsumerState<Application> {
     linkManager.destroy();
     _autoUpdateProfilesTaskTimer?.cancel();
     await coreController.destroy();
-    await globalState.appController.savePreferences();
+    await globalState.savePreferences();
     await globalState.appController.handleExit();
     super.dispose();
   }

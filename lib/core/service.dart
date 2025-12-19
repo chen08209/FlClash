@@ -71,7 +71,7 @@ class CoreService extends CoreHandlerInterface {
         .transform(utf8.decoder)
         .transform(LineSplitter())
         .listen((data) async {
-          final dataJson = await data.trim().commonToJSON();
+          final dataJson = await data.trim().commonToJSON<dynamic>();
           handleResult(ActionResult.fromJson(dataJson));
         })
         .onDone(() {

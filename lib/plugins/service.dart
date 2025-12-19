@@ -61,7 +61,7 @@ class Service {
     if (data == null) {
       return null;
     }
-    final dataJson = await data.commonToJSON();
+    final dataJson = await data.commonToJSON<dynamic>();
     return ActionResult.fromJson(dataJson);
   }
 

@@ -47,7 +47,7 @@ class BackupAndRecovery extends ConsumerWidget {
     final res = await globalState.appController.safeRun<bool>(
       () async {
         final data = await client.recovery();
-        await globalState.appController.recoveryData(data, recoveryOption);
+        // await globalState.appController.recoveryData(data, recoveryOption);
         return true;
       },
       needLoading: true,
@@ -98,10 +98,10 @@ class BackupAndRecovery extends ConsumerWidget {
     if (data == null) return;
     final res = await globalState.appController.safeRun<bool>(
       () async {
-        await globalState.appController.recoveryData(
-          List<int>.from(data),
-          recoveryOption,
-        );
+        // await globalState.appController.recoveryData(
+        //   List<int>.from(data),
+        //   recoveryOption,
+        // );
         return true;
       },
       needLoading: true,
@@ -148,7 +148,7 @@ class BackupAndRecovery extends ConsumerWidget {
     }
     ref
         .read(appSettingProvider.notifier)
-        .updateState((state) => state.copyWith(recoveryStrategy: res));
+        .update((state) => state.copyWith(recoveryStrategy: res));
   }
 
   @override

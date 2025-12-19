@@ -31,12 +31,12 @@ class GlobalState {
   final navigatorKey = GlobalKey<NavigatorState>();
   Timer? timer;
   late final Isar isar;
-  late final Config config;
-  late final AppState appState;
-  late final RunningState runningState;
+  late Config config;
+  late AppState appState;
+  late RunningState runningState;
   bool isPre = true;
   late final String coreSHA256;
-  late PackageInfo packageInfo;
+  late final PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;
   late CommonTheme theme;
@@ -139,9 +139,8 @@ class GlobalState {
 
   Future<void> init() async {
     packageInfo = await PackageInfo.fromPlatform();
-    config = Config(themeProps: defaultThemeProps);
-    isar = await _openIsar();
-    await version.migration(config, isar);
+    isar = await openIsar();
+    config = await version.migration() ?? Config(themeProps: defaultThemeProps);
     final results = await Future.wait([
       isar.profileCollections.where().findAll(),
       isar.scriptCollections.where().findAll(),
@@ -164,7 +163,7 @@ class GlobalState {
     );
   }
 
-  Future<Isar> _openIsar() async {
+  Future<Isar> openIsar() async {
     final homeDirPath = await appPath.homeDirPath;
     return await Isar.open(
       [ProfileCollectionSchema, ScriptCollectionSchema, RuleCollectionSchema],
@@ -211,6 +210,11 @@ class GlobalState {
 
   Future updateStartTime() async {
     startTime = await service?.getRunTime();
+  }
+
+  Future<void> savePreferences() async {
+    commonPrint.log('save preferences');
+    await preferences.saveConfig(config);
   }
 
   Future handleStop() async {
@@ -324,15 +328,6 @@ class GlobalState {
     launchUrl(Uri.parse(url));
   }
 
-  Future<void> migrateOldData(Config config) async {
-    final clashConfig = await preferences.getClashConfig();
-    if (clashConfig != null) {
-      config = config.copyWith(patchClashConfig: clashConfig);
-      preferences.clearClashConfig();
-      preferences.saveConfig(config);
-    }
-  }
-
   Future<SetupParams> getSetupParams() async {
     final params = SetupParams(
       selectedMap: currentProfile?.selectedMap ?? {},
@@ -396,7 +391,7 @@ class GlobalState {
   }
 
   Future<String> backup() async {
-    return await backupTask(VM2(a: config, b: isar));
+    return await backupTask(config);
   }
 
   Future<Map<String, dynamic>> makeRealProfile({

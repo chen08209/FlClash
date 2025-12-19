@@ -55,7 +55,7 @@ class Preferences {
     if (configMap == null) {
       return null;
     }
-    return Config.compatibleFromJson(configMap);
+    return Config.fromJson(configMap);
   }
 
   Future<bool> saveConfig(Config config) async {

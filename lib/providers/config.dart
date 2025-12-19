@@ -16,10 +16,6 @@ class AppSetting extends _$AppSetting with AutoDisposeNotifierMixin {
   onUpdate(value) {
     globalState.config = globalState.config.copyWith(appSettingProps: value);
   }
-
-  void updateState(AppSettingProps Function(AppSettingProps state) builder) {
-    value = builder(state);
-  }
 }
 
 @riverpod
@@ -62,10 +58,6 @@ class NetworkSetting extends _$NetworkSetting with AutoDisposeNotifierMixin {
   @override
   onUpdate(value) {
     globalState.config = globalState.config.copyWith(networkProps: value);
-  }
-
-  void updateState(NetworkProps Function(NetworkProps state) builder) {
-    value = builder(state);
   }
 }
 

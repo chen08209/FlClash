@@ -243,24 +243,4 @@ abstract class Config with _$Config {
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);
-
-  factory Config.compatibleFromJson(Map<String, Object?> json) {
-    try {
-      final accessControlMap = json['accessControl'];
-      final isAccessControl = json['isAccessControl'];
-      if (accessControlMap != null) {
-        (accessControlMap as Map)['enable'] = isAccessControl;
-        if (json['vpnProps'] != null) {
-          (json['vpnProps'] as Map)['accessControl'] = accessControlMap;
-        }
-      }
-      if (json['scripts'] == null) {
-        final scriptPropsJson = json['scriptProps'] as Map<String, Object?>?;
-        if (scriptPropsJson != null) {
-          json['scripts'] = scriptPropsJson['scripts'];
-        }
-      }
-    } catch (_) {}
-    return Config.fromJson(json);
-  }
 }

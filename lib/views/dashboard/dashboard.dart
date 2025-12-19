@@ -217,7 +217,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           .toList();
       ref
           .read(appSettingProvider.notifier)
-          .updateState(
+          .update(
             (state) => state.copyWith(dashboardWidgets: dashboardWidgets),
           );
     }

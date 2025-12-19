@@ -139,7 +139,7 @@ class SystemProxyButton extends StatelessWidget {
                     onChanged: (value) {
                       ref
                           .read(networkSettingProvider.notifier)
-                          .updateState(
+                          .update(
                             (state) => state.copyWith(systemProxy: value),
                           );
                     },

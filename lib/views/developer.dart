@@ -99,7 +99,7 @@ class DeveloperView extends ConsumerWidget {
                   onChanged: (value) {
                     ref
                         .read(appSettingProvider.notifier)
-                        .updateState(
+                        .update(
                           (state) => state.copyWith(developerMode: value),
                         );
                   },

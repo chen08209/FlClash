@@ -41,7 +41,7 @@ final class AppSettingProvider
   }
 }
 
-String _$appSettingHash() => r'348f6d2c56269215e9a06dc24153ff0c49b531ff';
+String _$appSettingHash() => r'dede19a9d4e5d631406f56efb4271ea2c59a5ec4';
 
 abstract class _$AppSetting extends $Notifier<AppSettingProps> {
   AppSettingProps build();
@@ -199,7 +199,7 @@ final class NetworkSettingProvider
   }
 }
 
-String _$networkSettingHash() => r'6ac5959ad478247fd60329221743cccc7a7d010b';
+String _$networkSettingHash() => r'281ff425db7c9a08f95aaadb4fd585abf90636f8';
 
 abstract class _$NetworkSetting extends $Notifier<NetworkProps> {
   NetworkProps build();

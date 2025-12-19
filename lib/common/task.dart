@@ -6,8 +6,9 @@ import 'package:fl_clash/common/path.dart';
 import 'package:fl_clash/common/yaml.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
 import 'compute.dart';
@@ -85,7 +86,7 @@ Future<Map<String, dynamic>> makeRealProfileTask(
 Future<Map<String, dynamic>> _makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
-  final rawConfig = data.rawConfig;
+  final rawConfig = Map.from(data.rawConfig);
   final realPatchConfig = data.realPatchConfig;
   final profilesPath = data.profilesPath;
   final profileId = data.profileId;
@@ -301,20 +302,24 @@ Future<String> _encodeLogsTask(List<Log> data) async {
   return logsRawString;
 }
 
-Future<Map<String, Object?>> oldToV1Task(
-  VM2<Map<String, Object?>, Isar> data,
-) async {
-  return await compute<VM2<Map<String, Object?>, Isar>, Map<String, Object?>>(
-    _oldToV1Task,
-    data,
-  );
+Future<Map<String, Object?>> oldToNowTask(Map<String, Object?> data) async {
+  final token = RootIsolateToken.instance;
+  if (token == null) {
+    throw 'oldToNow error';
+  }
+  return await compute<
+    VM2<Map<String, Object?>, RootIsolateToken>,
+    Map<String, Object?>
+  >(_oldToNowTask, VM2(a: data, b: token));
 }
 
-Future<Map<String, Object?>> _oldToV1Task(
-  VM2<Map<String, Object?>, Isar> data,
+Future<Map<String, Object?>> _oldToNowTask(
+  VM2<Map<String, Object?>, RootIsolateToken> data,
 ) async {
   final configMap = data.a;
-  final isar = data.b;
+  final token = data.b;
+  final isar = await globalState.openIsar();
+  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   final accessControlMap = configMap['accessControl'];
   final isAccessControl = configMap['isAccessControl'];
   if (accessControlMap != null) {
@@ -385,13 +390,22 @@ Future<Map<String, Object?>> _oldToV1Task(
   return configMap;
 }
 
-Future<String> backupTask(VM2<Config, Isar> data) async {
-  return await compute<VM2<Config, Isar>, String>(_backupTask, data);
+Future<String> backupTask(Config config) async {
+  final token = RootIsolateToken.instance;
+  if (token == null) {
+    throw 'backup error';
+  }
+  return await compute<VM2<Config, RootIsolateToken>, String>(
+    _backupTask,
+    VM2(a: config, b: token),
+  );
 }
 
-Future<String> _backupTask<T>(VM2<Config, Isar> data) async {
-  final config = data.a;
-  final isar = data.b;
+Future<String> _backupTask<T>(VM2<Config, RootIsolateToken> args) async {
+  final config = args.a;
+  final token = args.b;
+  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
+  final isar = await globalState.openIsar();
   final configStr = json.encode(config);
   final profilesPath = await appPath.profilesPath;
   final tempZipFilePath = await appPath.tempFilePath;

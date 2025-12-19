@@ -34,13 +34,14 @@ class DAVClient {
 
   Future<bool> backup(String localFilePath) async {
     await client.mkdir(root);
-    client.writeFromFile(localFilePath, backupFile);
+    await client.writeFromFile(localFilePath, backupFile);
     return true;
   }
 
-  Future<List<int>> recovery() async {
+  Future<bool> recovery() async {
     await client.mkdir(root);
-    final data = await client.read(backupFile);
-    return data;
+    final backupFilePath = await appPath.backupFilePath;
+    await client.read2File(backupFile, backupFilePath);
+    return true;
   }
 }

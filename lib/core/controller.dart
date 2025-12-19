@@ -157,9 +157,10 @@ class CoreController {
     if (externalProvidersRawString.isEmpty) {
       return [];
     }
-    final externalProviders = (await externalProvidersRawString.commonToJSON())
-        .map((item) => ExternalProvider.fromJson(item))
-        .toList();
+    final externalProviders =
+        (await externalProvidersRawString.commonToJSON<List<dynamic>>())
+            .map((item) => ExternalProvider.fromJson(item))
+            .toList();
     return externalProviders;
   }
 

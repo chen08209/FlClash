@@ -38,7 +38,8 @@ class App {
     final packagesString = await methodChannel.invokeMethod<String>(
       'getPackages',
     );
-    List<dynamic> packagesRaw = (await packagesString?.commonToJSON()) ?? [];
+    List<dynamic> packagesRaw =
+        (await packagesString?.commonToJSON<List<dynamic>>()) ?? [];
     return packagesRaw.map((e) => Package.fromJson(e)).toSet().toList();
   }
 
@@ -47,7 +48,7 @@ class App {
       'getChinaPackageNames',
     );
     List<dynamic> packageNamesRaw =
-        await packageNamesString?.commonToJSON() ?? [];
+        await packageNamesString?.commonToJSON<List<dynamic>>() ?? [];
     return packageNamesRaw.map((e) => e.toString()).toList();
   }
 

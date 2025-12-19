@@ -557,6 +557,9 @@ extension ScriptExt on Script {
 
   Future<Script> saveAndCopy(String context) async {
     final file = File(await path);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    }
     await file.writeAsString(context);
     return copyWith(lastUpdateTime: DateTime.now());
   }

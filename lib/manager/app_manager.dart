@@ -244,7 +244,7 @@ class AppSidebarContainer extends ConsumerWidget {
                       onPressed: () {
                         ref
                             .read(appSettingProvider.notifier)
-                            .updateState(
+                            .update(
                               (state) =>
                                   state.copyWith(showLabel: !state.showLabel),
                             );

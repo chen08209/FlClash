@@ -486,6 +486,11 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
     globalState.runningState = globalState.runningState.copyWith(
       profiles: value,
     );
+    globalState.isar.writeTxn(() async {
+      globalState.isar.profileCollections.putAll(
+        value.map(ProfileCollection.fromProfile).toList(),
+      );
+    });
   }
 
   void setProfile(Profile profile) {
@@ -521,6 +526,11 @@ class Scripts extends _$Scripts with AutoDisposeNotifierMixin {
     globalState.runningState = globalState.runningState.copyWith(
       scripts: value,
     );
+    globalState.isar.writeTxn(() async {
+      globalState.isar.scriptCollections.putAll(
+        value.map(ScriptCollection.formScript).toList(),
+      );
+    });
   }
 
   void setScript(Script script) {
@@ -558,5 +568,10 @@ class Rules extends _$Rules with AutoDisposeNotifierMixin {
   @override
   onUpdate(value) {
     globalState.runningState = globalState.runningState.copyWith(rules: value);
+    globalState.isar.writeTxn(() async {
+      globalState.isar.ruleCollections.putAll(
+        value.map(RuleCollection.formRule).toList(),
+      );
+    });
   }
 }

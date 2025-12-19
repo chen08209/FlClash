@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
-import 'package:archive/archive_io.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -13,7 +10,6 @@ import 'package:fl_clash/widgets/dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
@@ -54,11 +50,9 @@ class AppController {
   }
 
   void savePreferencesDebounce() {
-    debouncer.call(
-      FunctionTag.savePreferences,
-      savePreferences,
-      duration: Duration(seconds: 3),
-    );
+    debouncer.call(FunctionTag.savePreferences, () {
+      globalState.savePreferences();
+    }, duration: Duration(seconds: 3));
   }
 
   void changeProxyDebounce(String groupName, String proxyName) {
@@ -414,11 +408,6 @@ class AppController {
     }
   }
 
-  Future<void> savePreferences() async {
-    commonPrint.log('save preferences');
-    await preferences.saveConfig(globalState.config);
-  }
-
   Future<void> changeProxy({
     required String groupName,
     required String proxyName,
@@ -440,7 +429,7 @@ class AppController {
     }
     if (_ref.read(appSettingProvider).minimizeOnExit) {
       if (system.isDesktop) {
-        await savePreferences();
+        await globalState.savePreferences();
       }
       await system.back();
     } else {
@@ -461,7 +450,7 @@ class AppController {
       system.exit();
     });
     try {
-      await savePreferences();
+      await globalState.savePreferences();
       await proxy?.stopProxy();
       await macOS?.updateDns(true);
       await coreController.destroy();
@@ -882,47 +871,56 @@ class AppController {
     tray?.update(trayState: _ref.read(trayStateProvider));
   }
 
-  Future<void> recoveryData(
-    List<int> data,
-    RecoveryOption recoveryOption,
-  ) async {
-    final archive = await Isolate.run<Archive>(() {
-      final zipDecoder = ZipDecoder();
-      return zipDecoder.decodeBytes(data);
-    });
-    final homeDirPath = await appPath.homeDirPath;
-    final configs = archive.files
-        .where((item) => item.name.endsWith('.json'))
-        .toList();
-    final profiles = archive.files.where(
-      (item) => !item.name.endsWith('.json'),
-    );
-    final configIndex = configs.indexWhere(
-      (config) => config.name == 'config.json',
-    );
-    if (configIndex == -1) throw 'invalid backup file';
-    final configFile = configs[configIndex];
-    var tempConfig = Config.compatibleFromJson(
-      json.decode(utf8.decode(configFile.content)),
-    );
-    for (final profile in profiles) {
-      final filePath = join(homeDirPath, posix.normalize(profile.name));
-      final file = File(filePath);
-      await file.create(recursive: true);
-      await file.writeAsBytes(profile.content);
-    }
-    final clashConfigIndex = configs.indexWhere(
-      (config) => config.name == 'clashConfig.json',
-    );
-    if (clashConfigIndex != -1) {
-      final clashConfigFile = configs[clashConfigIndex];
-      tempConfig = tempConfig.copyWith(
-        patchClashConfig: ClashConfig.fromJson(
-          json.decode(utf8.decode(clashConfigFile.content)),
-        ),
-      );
-    }
-    _recovery(tempConfig, recoveryOption);
+  Future<void> recoveryData(RecoveryOption recoveryOption) async {
+    // final backupFilePath = await appPath.backupFilePath;
+    // final zipDecoder = ZipDecoder();
+    // final input = InputFileStream(backupFilePath);
+    // final archive = zipDecoder.decodeStream(input);
+    // ArchiveFile? configArchiveFile;
+    // ArchiveFile? clashConfigArchiveFile;
+    // ArchiveFile? profileArchiveFile;
+    // for (final file in archive.files) {
+    //   if (file.name == 'config.json') {
+    //     configArchiveFile = file;
+    //   } else if (file.name == 'clashConfig.json') {
+    //     clashConfigArchiveFile = file;
+    //   } else if (file.name == 'profile') {
+    //     clashConfigArchiveFile = file;
+    //   }
+    // }
+    // final homeDirPath = await appPath.homeDirPath;
+    // final configs = archive.files
+    //     .where((item) => item.name.endsWith('.json'))
+    //     .toList();
+    // final profiles = archive.files.where(
+    //   (item) => !item.name.endsWith('.json'),
+    // );
+    // final configIndex = configs.indexWhere(
+    //   (config) => config.name == 'config.json',
+    // );
+    // if (configIndex == -1) throw 'invalid backup file';
+    // final configFile = configs[configIndex];
+    // var tempConfig = Config.compatibleFromJson(
+    //   json.decode(utf8.decode(configFile.content)),
+    // );
+    // for (final profile in profiles) {
+    //   final filePath = join(homeDirPath, posix.normalize(profile.name));
+    //   final file = File(filePath);
+    //   await file.create(recursive: true);
+    //   await file.writeAsBytes(profile.content);
+    // }
+    // final clashConfigIndex = configs.indexWhere(
+    //   (config) => config.name == 'clashConfig.json',
+    // );
+    // if (clashConfigIndex != -1) {
+    //   final clashConfigFile = configs[clashConfigIndex];
+    //   tempConfig = tempConfig.copyWith(
+    //     patchClashConfig: ClashConfig.fromJson(
+    //       json.decode(utf8.decode(clashConfigFile.content)),
+    //     ),
+    //   );
+    // }
+    // _recovery(tempConfig, recoveryOption);
   }
 
   void _recovery(Config config, RecoveryOption recoveryOption) {
