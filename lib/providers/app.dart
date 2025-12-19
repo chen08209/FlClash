@@ -5,6 +5,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/app.g.dart';
@@ -487,8 +488,13 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
       profiles: value,
     );
     globalState.isar.writeTxn(() async {
-      globalState.isar.profileCollections.putAll(
-        value.map(ProfileCollection.fromProfile).toList(),
+      final newProfileCollections = value
+          .map(ProfileCollection.fromProfile)
+          .toList();
+      await globalState.isar.profileCollections.setAll(
+        newProfileCollections,
+        getId: (item) => item.isarId,
+        getIdsInDb: (col) => col.where().isarIdProperty().findAll(),
       );
     });
   }
@@ -527,8 +533,13 @@ class Scripts extends _$Scripts with AutoDisposeNotifierMixin {
       scripts: value,
     );
     globalState.isar.writeTxn(() async {
-      globalState.isar.scriptCollections.putAll(
-        value.map(ScriptCollection.formScript).toList(),
+      final newScriptCollections = value
+          .map(ScriptCollection.formScript)
+          .toList();
+      await globalState.isar.scriptCollections.setAll(
+        newScriptCollections,
+        getId: (item) => item.isarId,
+        getIdsInDb: (col) => col.where().isarIdProperty().findAll(),
       );
     });
   }
@@ -569,8 +580,11 @@ class Rules extends _$Rules with AutoDisposeNotifierMixin {
   onUpdate(value) {
     globalState.runningState = globalState.runningState.copyWith(rules: value);
     globalState.isar.writeTxn(() async {
-      globalState.isar.ruleCollections.putAll(
-        value.map(RuleCollection.formRule).toList(),
+      final newRuleCollections = value.map(RuleCollection.formRule).toList();
+      await globalState.isar.ruleCollections.setAll(
+        newRuleCollections,
+        getId: (item) => item.isarId,
+        getIdsInDb: (col) => col.where().isarIdProperty().findAll(),
       );
     });
   }

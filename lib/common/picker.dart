@@ -40,7 +40,7 @@ class Picker {
     if (path != null) {
       await localFile.copy(path);
     }
-    await localFile.delete();
+    await localFile.safeDelete();
     return path;
   }
 

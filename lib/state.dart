@@ -114,12 +114,10 @@ class GlobalState {
 
   Future<void> _shakingStore() async {
     final profileIds = runningState.profiles.map((item) => item.id).toList();
-
-    final providersRootPath = await appPath.getProvidersRootPath();
-    final profilesRootPath = await appPath.profilesPath;
+    final scriptIds = runningState.scripts.map((item) => item.id).toList();
 
     final pathsToDelete = await shakingProfileTask(
-      VM3(a: profileIds, b: profilesRootPath, c: providersRootPath),
+      VM2(a: profileIds, b: scriptIds),
     );
     if (pathsToDelete.isNotEmpty) {
       final deleteFutures = pathsToDelete.map((path) async {

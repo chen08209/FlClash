@@ -127,9 +127,7 @@ class CoreService extends CoreHandlerInterface {
   Future<void> _deleteSocketFile() async {
     if (!system.isWindows) {
       final file = File(unixSocketPath);
-      if (await file.exists()) {
-        await file.delete();
-      }
+      await file.safeDelete();
     }
   }
 

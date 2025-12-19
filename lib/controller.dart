@@ -520,10 +520,7 @@ class AppController {
     );
     if (res == true) {
       final file = File(await appPath.sharedPreferencesPath);
-      final isExists = await file.exists();
-      if (isExists) {
-        await file.delete();
-      }
+      await file.safeDelete();
     }
     await handleExit();
   }
@@ -756,7 +753,7 @@ class AppController {
     final profileFile = File(profilePath);
     final isExists = await profileFile.exists();
     if (isExists) {
-      profileFile.delete(recursive: true);
+      await profileFile.safeDelete(recursive: true);
     }
     await coreController.deleteFile(providersDirPath);
   }

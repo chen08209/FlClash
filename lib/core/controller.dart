@@ -79,7 +79,7 @@ class CoreController {
     }
     await file.writeAsString(data);
     final res = await _interface.validateConfig(path);
-    await File(path).delete();
+    await File(path).safeDelete();
     return res;
   }
 
@@ -91,7 +91,7 @@ class CoreController {
     }
     await file.writeAsBytes(bytes);
     final res = await _interface.validateConfig(path);
-    await File(path).delete();
+    await File(path).safeDelete();
     return res;
   }
 

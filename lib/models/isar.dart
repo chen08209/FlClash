@@ -241,7 +241,6 @@ class ScriptCollection {
 
   Id get isarId => utils.fastHash(id);
 
-  @Index(unique: true)
   late String label;
 
   late DateTime lastUpdateTime;

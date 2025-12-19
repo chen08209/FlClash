@@ -97,13 +97,18 @@ class AppPath {
   }
 
   Future<String> getProfilePath(String fileName) async {
-    final directory = await profilesPath;
-    return join(directory, '$fileName.yaml');
+    final path = await profilesPath;
+    return join(path, '$fileName.yaml');
+  }
+
+  Future<String> get scriptsPath async {
+    final path = await homeDirPath;
+    return join(path, 'scripts');
   }
 
   Future<String> getScriptPath(String fileName) async {
-    final directory = await profilesPath;
-    return join(directory, 'scripts', '$fileName.js');
+    final path = await scriptsPath;
+    return join(path, '$fileName.js');
   }
 
   Future<String> getIconsCacheDir() async {

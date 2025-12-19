@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -34,6 +36,12 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     }
     ref.read(scriptsProvider.notifier).del(id);
     ref.read(selectedItemProvider(_key).notifier).value = '';
+    _clearEffect(id);
+  }
+
+  Future<void> _clearEffect(String id) async {
+    final path = await appPath.getScriptPath(id);
+    await File(path).safeDelete();
   }
 
   void _handleSelected(String id) {

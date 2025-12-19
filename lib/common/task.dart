@@ -2,17 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:fl_clash/common/path.dart';
-import 'package:fl_clash/common/yaml.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
-
-import 'compute.dart';
-import 'string.dart';
 
 Future<T> decodeJSONTask<T>(String data) async {
   return await compute<String, T>(_decodeJSON, data);
@@ -254,29 +250,40 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
 }
 
 Future<List<String>> shakingProfileTask(
-  VM3<List<String>, String, String> data,
+  VM2<List<String>, List<String>> data,
 ) async {
-  return await compute<VM3<List<String>, String, String>, List<String>>(
+  return await compute<
+    VM3<List<String>, List<String>, RootIsolateToken>,
+    List<String>
+  >(
     _shakingProfileTask,
-    data,
+    VM3(a: data.a, b: data.b, c: RootIsolateToken.instance!),
   );
 }
 
-List<String> _shakingProfileTask(VM3<List<String>, String, String> data) {
+Future<List<String>> _shakingProfileTask(
+  VM3<List<String>, List<String>, RootIsolateToken> data,
+) async {
   final profileIds = data.a;
-  final profilesRootPath = data.b;
-  final providersRootPath = data.c;
-  final profilesDir = Directory(profilesRootPath);
-  final providersDir = Directory(providersRootPath);
+  final scriptIds = data.b;
+  final token = data.c;
+  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
+  final profilesDir = Directory(await appPath.profilesPath);
+  final scriptsDir = Directory(await appPath.scriptsPath);
+  final providersDir = Directory(await appPath.getProvidersRootPath());
   final List<String> targets = [];
-  void scanDirectory(Directory dir, {bool skipProvidersFolder = false}) {
+  void scanDirectory(
+    Directory dir,
+    List<String> baseNames, {
+    bool skipProvidersFolder = false,
+  }) {
     if (!dir.existsSync()) return;
     final entities = dir.listSync(recursive: false, followLinks: false);
 
     for (final entity in entities) {
       if (entity is File) {
         final id = basenameWithoutExtension(entity.path);
-        if (!profileIds.contains(id)) {
+        if (!baseNames.contains(id)) {
           targets.add(entity.path);
         }
       } else if (skipProvidersFolder && entity is Directory) {
@@ -287,8 +294,9 @@ List<String> _shakingProfileTask(VM3<List<String>, String, String> data) {
     }
   }
 
-  scanDirectory(profilesDir, skipProvidersFolder: true);
-  scanDirectory(providersDir);
+  scanDirectory(profilesDir, profileIds, skipProvidersFolder: true);
+  scanDirectory(providersDir, profileIds);
+  scanDirectory(scriptsDir, scriptIds);
   return targets;
 }
 
@@ -303,14 +311,10 @@ Future<String> _encodeLogsTask(List<Log> data) async {
 }
 
 Future<Map<String, Object?>> oldToNowTask(Map<String, Object?> data) async {
-  final token = RootIsolateToken.instance;
-  if (token == null) {
-    throw 'oldToNow error';
-  }
   return await compute<
     VM2<Map<String, Object?>, RootIsolateToken>,
     Map<String, Object?>
-  >(_oldToNowTask, VM2(a: data, b: token));
+  >(_oldToNowTask, VM2(a: data, b: RootIsolateToken.instance!));
 }
 
 Future<Map<String, Object?>> _oldToNowTask(
@@ -391,13 +395,9 @@ Future<Map<String, Object?>> _oldToNowTask(
 }
 
 Future<String> backupTask(Config config) async {
-  final token = RootIsolateToken.instance;
-  if (token == null) {
-    throw 'backup error';
-  }
   return await compute<VM2<Config, RootIsolateToken>, String>(
     _backupTask,
-    VM2(a: config, b: token),
+    VM2(a: config, b: RootIsolateToken.instance!),
   );
 }
 
@@ -407,7 +407,8 @@ Future<String> _backupTask<T>(VM2<Config, RootIsolateToken> args) async {
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   final isar = await globalState.openIsar();
   final configStr = json.encode(config);
-  final profilesPath = await appPath.profilesPath;
+  final profilesDir = Directory(await appPath.profilesPath);
+  final scriptsDir = Directory(await appPath.scriptsPath);
   final tempZipFilePath = await appPath.tempFilePath;
   final tempDBFile = File(await appPath.tempFilePath);
   final tempConfigFile = File(await appPath.tempFilePath);
@@ -417,17 +418,30 @@ Future<String> _backupTask<T>(VM2<Config, RootIsolateToken> args) async {
   await tempConfigFile.writeAsString(configStr);
   await encoder.addFile(tempDBFile, 'isar.db');
   await encoder.addFile(tempConfigFile, 'config.json');
-  await encoder.addDirectory(
-    Directory(profilesPath),
-    filter: (file, _) {
-      if (file is Directory) {
-        return ZipFileOperation.skip;
-      }
-      return ZipFileOperation.include;
-    },
-  );
+  if (await profilesDir.exists()) {
+    await encoder.addDirectory(
+      profilesDir,
+      filter: (file, _) {
+        if (file.parent.path != profilesDir.path || file is Directory) {
+          return ZipFileOperation.skip;
+        }
+        return ZipFileOperation.include;
+      },
+    );
+  }
+  if (await scriptsDir.exists()) {
+    await encoder.addDirectory(
+      scriptsDir,
+      filter: (file, _) {
+        if (file.parent.path != scriptsDir.path || file is Directory) {
+          return ZipFileOperation.skip;
+        }
+        return ZipFileOperation.include;
+      },
+    );
+  }
   encoder.close();
-  await tempConfigFile.delete();
-  await tempDBFile.delete();
+  await tempConfigFile.safeDelete();
+  await tempDBFile.safeDelete();
   return tempZipFilePath;
 }
