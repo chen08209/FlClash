@@ -84,9 +84,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           profile = profile.copyWith(autoUpdate: false);
         }
       }
-      appController.setProfileAndAutoApply(
-        await profile.saveFileAndCopy(_fileData!),
-      );
+      appController.setProfileAndAutoApply(await profile.saveFile(_fileData!));
     } else if (!hasUpdate) {
       appController.setProfileAndAutoApply(profile);
     } else {
@@ -111,7 +109,7 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _handleSaveEdit(BuildContext context, String data) async {
     final message = await globalState.appController.safeRun<String>(() async {
-      final message = await coreController.validateConfig(data);
+      final message = await coreController.validateConfigWithData(data);
       return message;
     }, silence: false);
     if (message?.isNotEmpty == true) {

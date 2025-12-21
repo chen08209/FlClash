@@ -10,6 +10,7 @@ import 'package:fl_clash/widgets/dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
@@ -165,7 +166,7 @@ class AppController {
   }
 
   Future<void> updateProfile(Profile profile) async {
-    final newProfile = await profile.updateAndCopy();
+    final newProfile = await profile.update();
     _ref
         .read(profilesProvider.notifier)
         .setProfile(newProfile.copyWith(isUpdating: false));
@@ -696,7 +697,7 @@ class AppController {
 
     final profile = await safeRun(
       () async {
-        return await Profile.normal(url: url).updateAndCopy();
+        return await Profile.normal(url: url).update();
       },
       needLoading: true,
       title: '${appLocalizations.add}${appLocalizations.profile}',
@@ -715,13 +716,10 @@ class AppController {
     if (!context.mounted) return;
     globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     toProfiles();
-
     final profile = await safeRun(
       () async {
         await Future.delayed(const Duration(milliseconds: 300));
-        return await Profile.normal(
-          label: platformFile?.name,
-        ).saveFileAndCopy(bytes);
+        return await Profile.normal(label: platformFile?.name).saveFile(bytes);
       },
       needLoading: true,
       title: '${appLocalizations.add}${appLocalizations.profile}',
@@ -868,93 +866,62 @@ class AppController {
     tray?.update(trayState: _ref.read(trayStateProvider));
   }
 
-  Future<void> recoveryData(RecoveryOption recoveryOption) async {
-    // final backupFilePath = await appPath.backupFilePath;
-    // final zipDecoder = ZipDecoder();
-    // final input = InputFileStream(backupFilePath);
-    // final archive = zipDecoder.decodeStream(input);
-    // ArchiveFile? configArchiveFile;
-    // ArchiveFile? clashConfigArchiveFile;
-    // ArchiveFile? profileArchiveFile;
-    // for (final file in archive.files) {
-    //   if (file.name == 'config.json') {
-    //     configArchiveFile = file;
-    //   } else if (file.name == 'clashConfig.json') {
-    //     clashConfigArchiveFile = file;
-    //   } else if (file.name == 'profile') {
-    //     clashConfigArchiveFile = file;
-    //   }
-    // }
-    // final homeDirPath = await appPath.homeDirPath;
-    // final configs = archive.files
-    //     .where((item) => item.name.endsWith('.json'))
-    //     .toList();
-    // final profiles = archive.files.where(
-    //   (item) => !item.name.endsWith('.json'),
-    // );
-    // final configIndex = configs.indexWhere(
-    //   (config) => config.name == 'config.json',
-    // );
-    // if (configIndex == -1) throw 'invalid backup file';
-    // final configFile = configs[configIndex];
-    // var tempConfig = Config.compatibleFromJson(
-    //   json.decode(utf8.decode(configFile.content)),
-    // );
-    // for (final profile in profiles) {
-    //   final filePath = join(homeDirPath, posix.normalize(profile.name));
-    //   final file = File(filePath);
-    //   await file.create(recursive: true);
-    //   await file.writeAsBytes(profile.content);
-    // }
-    // final clashConfigIndex = configs.indexWhere(
-    //   (config) => config.name == 'clashConfig.json',
-    // );
-    // if (clashConfigIndex != -1) {
-    //   final clashConfigFile = configs[clashConfigIndex];
-    //   tempConfig = tempConfig.copyWith(
-    //     patchClashConfig: ClashConfig.fromJson(
-    //       json.decode(utf8.decode(clashConfigFile.content)),
-    //     ),
-    //   );
-    // }
-    // _recovery(tempConfig, recoveryOption);
-  }
+  Future<void> restore(RestoreOption option) async {
+    final migrationData = await restoreTask();
+    final restoreDirPath = await appPath.restoreDirPath;
+    final restoreDir = Directory(restoreDirPath);
+    if (!await restoreDir.exists()) {
+      throw '恢复异常';
+    }
+    final recoveryStrategy = _ref.read(
+      appSettingProvider.select((state) => state.recoveryStrategy),
+    );
+    String getRestoreProfilePath(String id) {
+      return join(restoreDirPath, 'profiles', '$id.yaml');
+    }
 
-  void _recovery(Config config, RecoveryOption recoveryOption) {
-    // final recoveryStrategy = _ref.read(
-    //   appSettingProvider.select((state) => state.recoveryStrategy),
-    // );
-    // final profiles = config.profiles;
-    // if (recoveryStrategy == RecoveryStrategy.override) {
-    //   _ref.read(profilesProvider.notifier).value = profiles;
-    // } else {
-    //   for (final profile in profiles) {
-    //     _ref.read(profilesProvider.notifier).setProfile(profile);
-    //   }
-    // }
-    // final onlyProfiles = recoveryOption == RecoveryOption.onlyProfiles;
-    // if (!onlyProfiles) {
-    //   _ref.read(patchClashConfigProvider.notifier).value =
-    //       config.patchClashConfig;
-    //   _ref.read(appSettingProvider.notifier).value = config.appSetting;
-    //   _ref.read(currentProfileIdProvider.notifier).value =
-    //       config.currentProfileId;
-    //   _ref.read(appDAVSettingProvider.notifier).value = config.dav;
-    //   _ref.read(themeSettingProvider.notifier).value = config.themeProps;
-    //   _ref.read(windowSettingProvider.notifier).value = config.windowProps;
-    //   _ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
-    //   _ref.read(proxiesStyleSettingProvider.notifier).value =
-    //       config.proxiesStyle;
-    //   _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
-    //   _ref.read(networkSettingProvider.notifier).value = config.networkProps;
-    //   _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
-    //   _ref.read(scriptsProvider.notifier).value = config.scripts;
-    //   _ref.read(rulesProvider.notifier).value = config.rules;
-    // }
-    // final currentProfile = _ref.read(currentProfileProvider);
-    // if (currentProfile == null && profiles.isNotEmpty) {
-    //   _ref.read(currentProfileIdProvider.notifier).value = profiles.first.id;
-    // }
+    final profiles = migrationData.profiles;
+    if (recoveryStrategy == RecoveryStrategy.override) {
+      final List<Profile> newProfiles = [];
+      for (final profile in profiles) {
+        final newProfile = await profile.saveFileWithPath(
+          getRestoreProfilePath(profile.id),
+        );
+        newProfiles.add(newProfile);
+      }
+      _ref.read(profilesProvider.notifier).value = newProfiles;
+    } else {
+      for (final profile in profiles) {
+        final newProfile = await profile.saveFileWithPath(
+          getRestoreProfilePath(profile.id),
+        );
+        _ref.read(profilesProvider.notifier).setProfile(newProfile);
+      }
+    }
+    if (option != RestoreOption.onlyProfiles) {
+      final configMap = migrationData.configMap;
+      if (configMap != null) {
+        final config = Config.fromJson(configMap);
+        _ref.read(patchClashConfigProvider.notifier).value =
+            config.patchClashConfig;
+        _ref.read(appSettingProvider.notifier).value = config.appSettingProps;
+        _ref.read(currentProfileIdProvider.notifier).value =
+            config.currentProfileId;
+        _ref.read(davSettingProvider.notifier).value = config.davProps;
+        _ref.read(themeSettingProvider.notifier).value = config.themeProps;
+        _ref.read(windowSettingProvider.notifier).value = config.windowProps;
+        _ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
+        _ref.read(proxiesStyleSettingProvider.notifier).value =
+            config.proxiesStyleProps;
+        _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
+        _ref.read(networkSettingProvider.notifier).value = config.networkProps;
+        _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
+        // _ref.read(scriptsProvider.notifier).value = config.scripts;
+        // _ref.read(rulesProvider.notifier).value = config.rules;
+      }
+    }
+    await restoreDir.safeDelete();
+    return;
   }
 
   void checkNeedSetup() {

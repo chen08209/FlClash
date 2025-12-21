@@ -273,6 +273,17 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
 }
 
 @freezed
+abstract class MigrationData with _$MigrationData {
+  const factory MigrationData({
+    Map<String, Object?>? configMap,
+    @Default([]) List<Rule> rules,
+    @Default([]) List<OldScript> oldScripts,
+    @Default([]) List<Script> scripts,
+    @Default([]) List<Profile> profiles,
+  }) = _MigrationData;
+}
+
+@freezed
 abstract class SetupState with _$SetupState {
   const factory SetupState({
     required String? profileId,

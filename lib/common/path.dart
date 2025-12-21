@@ -71,6 +71,11 @@ class AppPath {
     return join(mHomeDirPath, 'backup.zip');
   }
 
+  Future<String> get restoreDirPath async {
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'restore');
+  }
+
   Future<String> get tempFilePath async {
     final mTempDir = await tempDir.future;
     return join(mTempDir.path, 'temp${utils.id}');

@@ -2550,21 +2550,7 @@ const ScriptCollectionSchema = CollectionSchema(
   deserialize: _scriptCollectionDeserialize,
   deserializeProp: _scriptCollectionDeserializeProp,
   idName: r'isarId',
-  indexes: {
-    r'label': IndexSchema(
-      id: 6902807635198700142,
-      name: r'label',
-      unique: true,
-      replace: false,
-      properties: [
-        IndexPropertySchema(
-          name: r'label',
-          type: IndexType.hash,
-          caseSensitive: true,
-        ),
-      ],
-    ),
-  },
+  indexes: {},
   links: {},
   embeddedSchemas: {},
 
@@ -2640,63 +2626,6 @@ void _scriptCollectionAttach(
   Id id,
   ScriptCollection object,
 ) {}
-
-extension ScriptCollectionByIndex on IsarCollection<ScriptCollection> {
-  Future<ScriptCollection?> getByLabel(String label) {
-    return getByIndex(r'label', [label]);
-  }
-
-  ScriptCollection? getByLabelSync(String label) {
-    return getByIndexSync(r'label', [label]);
-  }
-
-  Future<bool> deleteByLabel(String label) {
-    return deleteByIndex(r'label', [label]);
-  }
-
-  bool deleteByLabelSync(String label) {
-    return deleteByIndexSync(r'label', [label]);
-  }
-
-  Future<List<ScriptCollection?>> getAllByLabel(List<String> labelValues) {
-    final values = labelValues.map((e) => [e]).toList();
-    return getAllByIndex(r'label', values);
-  }
-
-  List<ScriptCollection?> getAllByLabelSync(List<String> labelValues) {
-    final values = labelValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'label', values);
-  }
-
-  Future<int> deleteAllByLabel(List<String> labelValues) {
-    final values = labelValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'label', values);
-  }
-
-  int deleteAllByLabelSync(List<String> labelValues) {
-    final values = labelValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'label', values);
-  }
-
-  Future<Id> putByLabel(ScriptCollection object) {
-    return putByIndex(r'label', object);
-  }
-
-  Id putByLabelSync(ScriptCollection object, {bool saveLinks = true}) {
-    return putByIndexSync(r'label', object, saveLinks: saveLinks);
-  }
-
-  Future<List<Id>> putAllByLabel(List<ScriptCollection> objects) {
-    return putAllByIndex(r'label', objects);
-  }
-
-  List<Id> putAllByLabelSync(
-    List<ScriptCollection> objects, {
-    bool saveLinks = true,
-  }) {
-    return putAllByIndexSync(r'label', objects, saveLinks: saveLinks);
-  }
-}
 
 extension ScriptCollectionQueryWhereSort
     on QueryBuilder<ScriptCollection, ScriptCollection, QWhere> {
@@ -2775,58 +2704,6 @@ extension ScriptCollectionQueryWhere
           includeUpper: includeUpper,
         ),
       );
-    });
-  }
-
-  QueryBuilder<ScriptCollection, ScriptCollection, QAfterWhereClause>
-  labelEqualTo(String label) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        IndexWhereClause.equalTo(indexName: r'label', value: [label]),
-      );
-    });
-  }
-
-  QueryBuilder<ScriptCollection, ScriptCollection, QAfterWhereClause>
-  labelNotEqualTo(String label) {
-    return QueryBuilder.apply(this, (query) {
-      if (query.whereSort == Sort.asc) {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'label',
-                lower: [],
-                upper: [label],
-                includeUpper: false,
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'label',
-                lower: [label],
-                includeLower: false,
-                upper: [],
-              ),
-            );
-      } else {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'label',
-                lower: [label],
-                includeLower: false,
-                upper: [],
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'label',
-                lower: [],
-                upper: [label],
-                includeUpper: false,
-              ),
-            );
-      }
     });
   }
 }

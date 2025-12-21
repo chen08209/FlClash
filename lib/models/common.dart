@@ -513,6 +513,18 @@ extension ResultExt on Result {
 }
 
 @freezed
+abstract class OldScript with _$OldScript {
+  const factory OldScript({
+    required String id,
+    required String label,
+    required String content,
+  }) = _OldScript;
+
+  factory OldScript.fromJson(Map<String, Object?> json) =>
+      _$OldScriptFromJson(json);
+}
+
+@freezed
 abstract class Script with _$Script {
   const factory Script({
     required String id,

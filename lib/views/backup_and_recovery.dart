@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/dav_client.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -42,12 +44,12 @@ class BackupAndRecovery extends ConsumerWidget {
   Future<void> _recoveryOnWebDAV(
     BuildContext context,
     DAVClient client,
-    RecoveryOption recoveryOption,
+    RestoreOption option,
   ) async {
     final res = await globalState.appController.safeRun<bool>(
       () async {
-        final data = await client.recovery();
-        // await globalState.appController.recoveryData(data, recoveryOption);
+        await client.recovery();
+        await globalState.appController.restore(option);
         return true;
       },
       needLoading: true,
@@ -64,7 +66,7 @@ class BackupAndRecovery extends ConsumerWidget {
     BuildContext context,
     DAVClient client,
   ) async {
-    final recoveryOption = await globalState.showCommonDialog<RecoveryOption>(
+    final recoveryOption = await globalState.showCommonDialog<RestoreOption>(
       child: const RecoveryOptionsDialog(),
     );
     if (recoveryOption == null || !context.mounted) return;
@@ -92,16 +94,14 @@ class BackupAndRecovery extends ConsumerWidget {
     );
   }
 
-  Future<void> _recoveryOnLocal(RecoveryOption recoveryOption) async {
-    final file = await picker.pickerFile();
-    final data = file?.bytes;
-    if (data == null) return;
+  Future<void> _recoveryOnLocal(RestoreOption option) async {
+    final file = await picker.pickerFile(withData: false);
+    final path = file?.path;
+    if (path == null) return;
+    await File(path).safeCopy(await appPath.backupFilePath);
     final res = await globalState.appController.safeRun<bool>(
       () async {
-        // await globalState.appController.recoveryData(
-        //   List<int>.from(data),
-        //   recoveryOption,
-        // );
+        await globalState.appController.restore(option);
         return true;
       },
       needLoading: true,
@@ -115,11 +115,11 @@ class BackupAndRecovery extends ConsumerWidget {
   }
 
   Future<void> _handleRecoveryOnLocal(BuildContext context) async {
-    final recoveryOption = await globalState.showCommonDialog<RecoveryOption>(
+    final option = await globalState.showCommonDialog<RestoreOption>(
       child: const RecoveryOptionsDialog(),
     );
-    if (recoveryOption == null || !context.mounted) return;
-    _recoveryOnLocal(recoveryOption);
+    if (option == null || !context.mounted) return;
+    _recoveryOnLocal(option);
   }
 
   void _handleChange(String? value, WidgetRef ref) {
@@ -305,9 +305,9 @@ class RecoveryOptionsDialog extends StatefulWidget {
 }
 
 class _RecoveryOptionsDialogState extends State<RecoveryOptionsDialog> {
-  void _handleOnTab(RecoveryOption? value) {
-    if (value == null) return;
-    Navigator.of(context).pop(value);
+  void _handleOnTab(RestoreOption? option) {
+    if (option == null) return;
+    Navigator.of(context).pop(option);
   }
 
   @override
@@ -319,13 +319,13 @@ class _RecoveryOptionsDialogState extends State<RecoveryOptionsDialog> {
         children: [
           ListItem(
             onTap: () {
-              _handleOnTab(RecoveryOption.onlyProfiles);
+              _handleOnTab(RestoreOption.onlyProfiles);
             },
             title: Text(appLocalizations.recoveryProfiles),
           ),
           ListItem(
             onTap: () {
-              _handleOnTab(RecoveryOption.all);
+              _handleOnTab(RestoreOption.all);
             },
             title: Text(appLocalizations.recoveryAll),
           ),

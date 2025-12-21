@@ -5506,6 +5506,275 @@ as String,
 
 
 /// @nodoc
+mixin _$OldScript {
+
+ String get id; String get label; String get content;
+/// Create a copy of OldScript
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$OldScriptCopyWith<OldScript> get copyWith => _$OldScriptCopyWithImpl<OldScript>(this as OldScript, _$identity);
+
+  /// Serializes this OldScript to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OldScript&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.content, content) || other.content == content));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,label,content);
+
+@override
+String toString() {
+  return 'OldScript(id: $id, label: $label, content: $content)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $OldScriptCopyWith<$Res>  {
+  factory $OldScriptCopyWith(OldScript value, $Res Function(OldScript) _then) = _$OldScriptCopyWithImpl;
+@useResult
+$Res call({
+ String id, String label, String content
+});
+
+
+
+
+}
+/// @nodoc
+class _$OldScriptCopyWithImpl<$Res>
+    implements $OldScriptCopyWith<$Res> {
+  _$OldScriptCopyWithImpl(this._self, this._then);
+
+  final OldScript _self;
+  final $Res Function(OldScript) _then;
+
+/// Create a copy of OldScript
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? label = null,Object? content = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [OldScript].
+extension OldScriptPatterns on OldScript {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _OldScript value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _OldScript() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _OldScript value)  $default,){
+final _that = this;
+switch (_that) {
+case _OldScript():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _OldScript value)?  $default,){
+final _that = this;
+switch (_that) {
+case _OldScript() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String label,  String content)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _OldScript() when $default != null:
+return $default(_that.id,_that.label,_that.content);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String label,  String content)  $default,) {final _that = this;
+switch (_that) {
+case _OldScript():
+return $default(_that.id,_that.label,_that.content);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String label,  String content)?  $default,) {final _that = this;
+switch (_that) {
+case _OldScript() when $default != null:
+return $default(_that.id,_that.label,_that.content);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _OldScript implements OldScript {
+  const _OldScript({required this.id, required this.label, required this.content});
+  factory _OldScript.fromJson(Map<String, dynamic> json) => _$OldScriptFromJson(json);
+
+@override final  String id;
+@override final  String label;
+@override final  String content;
+
+/// Create a copy of OldScript
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$OldScriptCopyWith<_OldScript> get copyWith => __$OldScriptCopyWithImpl<_OldScript>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$OldScriptToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OldScript&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.content, content) || other.content == content));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,label,content);
+
+@override
+String toString() {
+  return 'OldScript(id: $id, label: $label, content: $content)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$OldScriptCopyWith<$Res> implements $OldScriptCopyWith<$Res> {
+  factory _$OldScriptCopyWith(_OldScript value, $Res Function(_OldScript) _then) = __$OldScriptCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String label, String content
+});
+
+
+
+
+}
+/// @nodoc
+class __$OldScriptCopyWithImpl<$Res>
+    implements _$OldScriptCopyWith<$Res> {
+  __$OldScriptCopyWithImpl(this._self, this._then);
+
+  final _OldScript _self;
+  final $Res Function(_OldScript) _then;
+
+/// Create a copy of OldScript
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? label = null,Object? content = null,}) {
+  return _then(_OldScript(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$Script {
 
  String get id; String get label; DateTime get lastUpdateTime;

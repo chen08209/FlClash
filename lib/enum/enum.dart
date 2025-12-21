@@ -133,7 +133,7 @@ enum InvokeMessageType { protect, process }
 
 enum FindProcessMode { always, off }
 
-enum RecoveryOption { all, onlyProfiles }
+enum RestoreOption { all, onlyProfiles }
 
 enum ChipType { action, delete }
 

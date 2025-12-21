@@ -255,6 +255,19 @@ Map<String, dynamic> _$AndroidStateToJson(_AndroidState instance) =>
       'crashlytics': instance.crashlytics,
     };
 
+_OldScript _$OldScriptFromJson(Map<String, dynamic> json) => _OldScript(
+  id: json['id'] as String,
+  label: json['label'] as String,
+  content: json['content'] as String,
+);
+
+Map<String, dynamic> _$OldScriptToJson(_OldScript instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'label': instance.label,
+      'content': instance.content,
+    };
+
 _Script _$ScriptFromJson(Map<String, dynamic> json) => _Script(
   id: json['id'] as String,
   label: json['label'] as String,

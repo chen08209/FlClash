@@ -155,7 +155,7 @@ extension ProfileExtension on Profile {
     if (isExists || url.isEmpty) {
       return null;
     }
-    return updateAndCopy();
+    return update();
   }
 
   Future<File> _getFile([bool autoCreate = false]) async {
@@ -185,7 +185,7 @@ extension ProfileExtension on Profile {
     return _getFile();
   }
 
-  Future<Profile> updateAndCopy() async {
+  Future<Profile> update() async {
     final response = await request.getFileResponseForUrl(url);
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
@@ -194,16 +194,32 @@ extension ProfileExtension on Profile {
         utils.getFileNameForDisposition(disposition).getSafeValue(id),
       ),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
-    ).saveFileAndCopy(response.data ?? Uint8List.fromList([]));
+    ).saveFile(response.data ?? Uint8List.fromList([]));
   }
 
-  Future<Profile> saveFileAndCopy(Uint8List bytes) async {
-    final message = await coreController.validateConfigFormBytes(bytes);
+  Future<Profile> saveFile(Uint8List bytes) async {
+    final path = await appPath.tempFilePath;
+    final tempFile = File(path);
+    if (!await tempFile.exists()) {
+      await tempFile.create(recursive: true);
+    }
+    final message = await coreController.validateConfig(path);
     if (message.isNotEmpty) {
       throw message;
     }
     final mFile = await file;
-    await mFile.writeAsBytes(bytes);
+    await File(path).copy(mFile.path);
+    await File(path).safeDelete();
+    return copyWith(lastUpdateDate: DateTime.now());
+  }
+
+  Future<Profile> saveFileWithPath(String path) async {
+    final message = await coreController.validateConfig(path);
+    if (message.isNotEmpty) {
+      throw message;
+    }
+    final mFile = await file;
+    await File(path).copy(mFile.path);
     return copyWith(lastUpdateDate: DateTime.now());
   }
 }

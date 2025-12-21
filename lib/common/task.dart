@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:isar_community/isar.dart';
 import 'package:path/path.dart';
 
 Future<T> decodeJSONTask<T>(String data) async {
@@ -24,6 +25,35 @@ Future<String> encodeJSONTask<T>(T data) async {
 
 Future<String> _encodeJSON<T>(T content) async {
   return json.encode(content);
+}
+
+Future<List<Script>> oldScriptsToScriptsTask(List<OldScript> oldScripts) async {
+  return await compute<List<OldScript>, List<Script>>(
+    _oldScriptsToScriptsTask,
+    oldScripts,
+  );
+}
+
+Future<List<Script>> _oldScriptsToScriptsTask(
+  List<OldScript> oldScripts,
+) async {
+  final List<Script> scripts = [];
+  for (final oldScript in oldScripts) {
+    final path = await appPath.getScriptPath(oldScript.id);
+    final file = File(path);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+      await file.writeAsString(oldScript.content);
+      scripts.add(
+        Script(
+          id: oldScript.id,
+          label: oldScript.label,
+          lastUpdateTime: DateTime.now(),
+        ),
+      );
+    }
+  }
+  return scripts;
 }
 
 Future<String> encodeYamlTask<T>(T data) async {
@@ -310,20 +340,14 @@ Future<String> _encodeLogsTask(List<Log> data) async {
   return logsRawString;
 }
 
-Future<Map<String, Object?>> oldToNowTask(Map<String, Object?> data) async {
-  return await compute<
-    VM2<Map<String, Object?>, RootIsolateToken>,
-    Map<String, Object?>
-  >(_oldToNowTask, VM2(a: data, b: RootIsolateToken.instance!));
+Future<MigrationData> oldToNowTask(Map<String, Object?> data) async {
+  return await compute<Map<String, Object?>, MigrationData>(
+    _oldToNowTask,
+    data,
+  );
 }
 
-Future<Map<String, Object?>> _oldToNowTask(
-  VM2<Map<String, Object?>, RootIsolateToken> data,
-) async {
-  final configMap = data.a;
-  final token = data.b;
-  final isar = await globalState.openIsar();
-  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
+Future<MigrationData> _oldToNowTask(Map<String, Object?> configMap) async {
   final accessControlMap = configMap['accessControl'];
   final isAccessControl = configMap['isAccessControl'];
   if (accessControlMap != null) {
@@ -352,61 +376,34 @@ Future<Map<String, Object?>> _oldToNowTask(
   }
   List<Map<String, Object?>> rawProfiles =
       configMap['profiles'] as List<Map<String, Object?>>? ?? [];
-  final profileCollections = rawProfiles
-      .map((item) => ProfileCollection.fromProfile(Profile.fromJson(item)))
-      .toList();
+  final profiles = rawProfiles.map((item) => Profile.fromJson(item)).toList();
   List<Map<String, Object?>> rawRules =
       configMap['rules'] as List<Map<String, Object?>>? ?? [];
-  final List<RuleCollection> ruleCollections = [];
-  for (final rule in rawRules) {
-    final id = rule['id'] as String?;
-    final value = rule['value'] as String?;
-    if (id == null || value == null) {
-      continue;
-    }
-    ruleCollections.add(RuleCollection.formRule(Rule(id: id, value: value)));
-  }
-  final List<ScriptCollection> scriptCollections = [];
-  for (final script in rawScripts) {
-    final id = script['id'] as String?;
-    final label = script['label'] as String?;
-    final content = script['content'] as String?;
-    if (id == null || content == null) {
-      continue;
-    }
-    final path = await appPath.getScriptPath(id);
-    final file = await File(path).create(recursive: true);
-    await file.writeAsString(content);
-    scriptCollections.add(
-      ScriptCollection.formScript(
-        Script(id: id, label: label ?? id, lastUpdateTime: DateTime.now()),
-      ),
-    );
-  }
-  await isar.writeTxn(() async {
-    await isar.profileCollections.clear();
-    await isar.ruleCollections.clear();
-    await isar.scriptCollections.clear();
-    await isar.scriptCollections.putAll(scriptCollections);
-    await isar.ruleCollections.putAll(ruleCollections);
-    await isar.profileCollections.putAll(profileCollections);
-  });
-  return configMap;
-}
-
-Future<String> backupTask(Config config) async {
-  return await compute<VM2<Config, RootIsolateToken>, String>(
-    _backupTask,
-    VM2(a: config, b: RootIsolateToken.instance!),
+  final rules = rawRules.map((item) => Rule.fromJson(item)).toList();
+  final scripts = rawScripts.map((item) => OldScript.fromJson(item)).toList();
+  return MigrationData(
+    configMap: configMap,
+    profiles: profiles,
+    rules: rules,
+    oldScripts: scripts,
   );
 }
 
-Future<String> _backupTask<T>(VM2<Config, RootIsolateToken> args) async {
-  final config = args.a;
+Future<String> backupTask(Map<String, dynamic> configMap) async {
+  return await compute<VM2<Map<String, dynamic>, RootIsolateToken>, String>(
+    _backupTask,
+    VM2(a: configMap, b: RootIsolateToken.instance!),
+  );
+}
+
+Future<String> _backupTask<T>(
+  VM2<Map<String, dynamic>, RootIsolateToken> args,
+) async {
+  final configMap = args.a;
   final token = args.b;
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   final isar = await globalState.openIsar();
-  final configStr = json.encode(config);
+  final configStr = json.encode(configMap);
   final profilesDir = Directory(await appPath.profilesPath);
   final scriptsDir = Directory(await appPath.scriptsPath);
   final tempZipFilePath = await appPath.tempFilePath;
@@ -416,8 +413,8 @@ Future<String> _backupTask<T>(VM2<Config, RootIsolateToken> args) async {
   final encoder = ZipFileEncoder();
   encoder.create(tempZipFilePath);
   await tempConfigFile.writeAsString(configStr);
-  await encoder.addFile(tempDBFile, 'isar.db');
-  await encoder.addFile(tempConfigFile, 'config.json');
+  await encoder.addFile(tempDBFile, backupIsarName);
+  await encoder.addFile(tempConfigFile, configJsonName);
   if (await profilesDir.exists()) {
     await encoder.addDirectory(
       profilesDir,
@@ -444,4 +441,75 @@ Future<String> _backupTask<T>(VM2<Config, RootIsolateToken> args) async {
   await tempConfigFile.safeDelete();
   await tempDBFile.safeDelete();
   return tempZipFilePath;
+}
+
+Future<MigrationData> restoreTask() async {
+  return await compute<RootIsolateToken, MigrationData>(
+    _restoreTask,
+    RootIsolateToken.instance!,
+  );
+}
+
+Future<MigrationData> _restoreTask(RootIsolateToken token) async {
+  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
+  final backupFilePath = await appPath.backupFilePath;
+  final restoreDirPath = await appPath.restoreDirPath;
+  final zipDecoder = ZipDecoder();
+  final input = InputFileStream(backupFilePath);
+  final archive = zipDecoder.decodeStream(input);
+  final dir = Directory(restoreDirPath);
+  await dir.create(recursive: true);
+  for (final file in archive.files) {
+    final outPath = join(restoreDirPath, posix.normalize(file.name));
+    final outputStream = OutputFileStream(outPath);
+    file.writeContent(outputStream);
+    await outputStream.close();
+  }
+  await input.close();
+  final restoreConfigFile = File(join(restoreDirPath, configJsonName));
+  if (!await restoreConfigFile.exists()) {
+    throw '无效备份文件';
+  }
+  final restoreConfigMap = json.decode(await restoreConfigFile.readAsString());
+  final version = restoreConfigMap['version'] ?? 0;
+  MigrationData migrationData = MigrationData(configMap: restoreConfigMap);
+  if (version == 0 && restoreConfigMap != null) {
+    migrationData = await _oldToNowTask(restoreConfigMap);
+    return migrationData;
+  }
+  final backupIsarFile = File(join(restoreDirPath, backupIsarName));
+  if (!await backupIsarFile.exists()) {
+    return migrationData;
+  }
+  final isar = await globalState.openIsar(
+    directory: restoreDirPath,
+    name: 'backup',
+  );
+  final profileCollections = await isar.profileCollections.where().findAll();
+  final ruleCollections = await isar.ruleCollections.where().findAll();
+  final scriptCollections = await isar.scriptCollections.where().findAll();
+  migrationData = migrationData.copyWith(
+    profiles: profileCollections.map((item) => item.toProfile()).toList(),
+    rules: ruleCollections.map((item) => item.toRule()).toList(),
+    scripts: scriptCollections.map((item) => item.toScript()).toList(),
+  );
+  await isar.close();
+  return migrationData;
+
+  // if (file.name == 'config.json') {
+  //   configArchiveFile = file;
+  // } else if (file.name == 'backup.db') {
+  //   isarArchiveFile = file;
+  // } else {
+  //   others.add(file);
+  // }
+  // if (configArchiveFile == null) {
+  //   return;
+  // }
+  // final configMap = json.decode(utf8.decode(configArchiveFile.content));
+  // final version = configMap['version'] ?? 0;
+  // if (version == 0 && version != migration.currentVersion) {
+  //   final data = await _oldToNowTask(configMap);
+  // }
+  // await input.close();
 }

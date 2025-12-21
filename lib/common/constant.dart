@@ -119,3 +119,6 @@ const scriptTemplate = '''
 const main = (config) => {
   return config;
 }''';
+
+const backupIsarName = 'backup.isar';
+const configJsonName = 'config.json';

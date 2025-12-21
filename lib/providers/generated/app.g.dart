@@ -1694,7 +1694,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'847a7134871a2540162f9cceb33d06b11f554b8c';
+String _$profilesHash() => r'eb21ce29c9f835e4faf218ebef10b1b70cbcc6c0';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -1746,7 +1746,7 @@ final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
   }
 }
 
-String _$scriptsHash() => r'a42a6e1ae6ddde1cf2d3fffdc3334f9122fbccc9';
+String _$scriptsHash() => r'42786cbea1169879a696edeb75bd01e7a83f1fc3';
 
 abstract class _$Scripts extends $Notifier<List<Script>> {
   List<Script> build();
@@ -1798,7 +1798,7 @@ final class RulesProvider extends $NotifierProvider<Rules, List<Rule>> {
   }
 }
 
-String _$rulesHash() => r'493005852c50694dff70d26f552b37b558c80f6d';
+String _$rulesHash() => r'01ed56824e8c3a5124de541ea0498ce709cd0447';
 
 abstract class _$Rules extends $Notifier<List<Rule>> {
   List<Rule> build();

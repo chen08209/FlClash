@@ -7117,6 +7117,307 @@ $ClashConfigCopyWith<$Res> get realPatchConfig {
 }
 
 /// @nodoc
+mixin _$MigrationData {
+
+ Map<String, Object?>? get configMap; List<Rule> get rules; List<OldScript> get oldScripts; List<Script> get scripts; List<Profile> get profiles;
+/// Create a copy of MigrationData
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MigrationDataCopyWith<MigrationData> get copyWith => _$MigrationDataCopyWithImpl<MigrationData>(this as MigrationData, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MigrationData&&const DeepCollectionEquality().equals(other.configMap, configMap)&&const DeepCollectionEquality().equals(other.rules, rules)&&const DeepCollectionEquality().equals(other.oldScripts, oldScripts)&&const DeepCollectionEquality().equals(other.scripts, scripts)&&const DeepCollectionEquality().equals(other.profiles, profiles));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(configMap),const DeepCollectionEquality().hash(rules),const DeepCollectionEquality().hash(oldScripts),const DeepCollectionEquality().hash(scripts),const DeepCollectionEquality().hash(profiles));
+
+@override
+String toString() {
+  return 'MigrationData(configMap: $configMap, rules: $rules, oldScripts: $oldScripts, scripts: $scripts, profiles: $profiles)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MigrationDataCopyWith<$Res>  {
+  factory $MigrationDataCopyWith(MigrationData value, $Res Function(MigrationData) _then) = _$MigrationDataCopyWithImpl;
+@useResult
+$Res call({
+ Map<String, Object?>? configMap, List<Rule> rules, List<OldScript> oldScripts, List<Script> scripts, List<Profile> profiles
+});
+
+
+
+
+}
+/// @nodoc
+class _$MigrationDataCopyWithImpl<$Res>
+    implements $MigrationDataCopyWith<$Res> {
+  _$MigrationDataCopyWithImpl(this._self, this._then);
+
+  final MigrationData _self;
+  final $Res Function(MigrationData) _then;
+
+/// Create a copy of MigrationData
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? configMap = freezed,Object? rules = null,Object? oldScripts = null,Object? scripts = null,Object? profiles = null,}) {
+  return _then(_self.copyWith(
+configMap: freezed == configMap ? _self.configMap : configMap // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>?,rules: null == rules ? _self.rules : rules // ignore: cast_nullable_to_non_nullable
+as List<Rule>,oldScripts: null == oldScripts ? _self.oldScripts : oldScripts // ignore: cast_nullable_to_non_nullable
+as List<OldScript>,scripts: null == scripts ? _self.scripts : scripts // ignore: cast_nullable_to_non_nullable
+as List<Script>,profiles: null == profiles ? _self.profiles : profiles // ignore: cast_nullable_to_non_nullable
+as List<Profile>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MigrationData].
+extension MigrationDataPatterns on MigrationData {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MigrationData value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MigrationData() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MigrationData value)  $default,){
+final _that = this;
+switch (_that) {
+case _MigrationData():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MigrationData value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MigrationData() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<OldScript> oldScripts,  List<Script> scripts,  List<Profile> profiles)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MigrationData() when $default != null:
+return $default(_that.configMap,_that.rules,_that.oldScripts,_that.scripts,_that.profiles);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<OldScript> oldScripts,  List<Script> scripts,  List<Profile> profiles)  $default,) {final _that = this;
+switch (_that) {
+case _MigrationData():
+return $default(_that.configMap,_that.rules,_that.oldScripts,_that.scripts,_that.profiles);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<OldScript> oldScripts,  List<Script> scripts,  List<Profile> profiles)?  $default,) {final _that = this;
+switch (_that) {
+case _MigrationData() when $default != null:
+return $default(_that.configMap,_that.rules,_that.oldScripts,_that.scripts,_that.profiles);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _MigrationData implements MigrationData {
+  const _MigrationData({final  Map<String, Object?>? configMap, final  List<Rule> rules = const [], final  List<OldScript> oldScripts = const [], final  List<Script> scripts = const [], final  List<Profile> profiles = const []}): _configMap = configMap,_rules = rules,_oldScripts = oldScripts,_scripts = scripts,_profiles = profiles;
+  
+
+ final  Map<String, Object?>? _configMap;
+@override Map<String, Object?>? get configMap {
+  final value = _configMap;
+  if (value == null) return null;
+  if (_configMap is EqualUnmodifiableMapView) return _configMap;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
+ final  List<Rule> _rules;
+@override@JsonKey() List<Rule> get rules {
+  if (_rules is EqualUnmodifiableListView) return _rules;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_rules);
+}
+
+ final  List<OldScript> _oldScripts;
+@override@JsonKey() List<OldScript> get oldScripts {
+  if (_oldScripts is EqualUnmodifiableListView) return _oldScripts;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_oldScripts);
+}
+
+ final  List<Script> _scripts;
+@override@JsonKey() List<Script> get scripts {
+  if (_scripts is EqualUnmodifiableListView) return _scripts;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_scripts);
+}
+
+ final  List<Profile> _profiles;
+@override@JsonKey() List<Profile> get profiles {
+  if (_profiles is EqualUnmodifiableListView) return _profiles;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_profiles);
+}
+
+
+/// Create a copy of MigrationData
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MigrationDataCopyWith<_MigrationData> get copyWith => __$MigrationDataCopyWithImpl<_MigrationData>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MigrationData&&const DeepCollectionEquality().equals(other._configMap, _configMap)&&const DeepCollectionEquality().equals(other._rules, _rules)&&const DeepCollectionEquality().equals(other._oldScripts, _oldScripts)&&const DeepCollectionEquality().equals(other._scripts, _scripts)&&const DeepCollectionEquality().equals(other._profiles, _profiles));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_configMap),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_oldScripts),const DeepCollectionEquality().hash(_scripts),const DeepCollectionEquality().hash(_profiles));
+
+@override
+String toString() {
+  return 'MigrationData(configMap: $configMap, rules: $rules, oldScripts: $oldScripts, scripts: $scripts, profiles: $profiles)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MigrationDataCopyWith<$Res> implements $MigrationDataCopyWith<$Res> {
+  factory _$MigrationDataCopyWith(_MigrationData value, $Res Function(_MigrationData) _then) = __$MigrationDataCopyWithImpl;
+@override @useResult
+$Res call({
+ Map<String, Object?>? configMap, List<Rule> rules, List<OldScript> oldScripts, List<Script> scripts, List<Profile> profiles
+});
+
+
+
+
+}
+/// @nodoc
+class __$MigrationDataCopyWithImpl<$Res>
+    implements _$MigrationDataCopyWith<$Res> {
+  __$MigrationDataCopyWithImpl(this._self, this._then);
+
+  final _MigrationData _self;
+  final $Res Function(_MigrationData) _then;
+
+/// Create a copy of MigrationData
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? configMap = freezed,Object? rules = null,Object? oldScripts = null,Object? scripts = null,Object? profiles = null,}) {
+  return _then(_MigrationData(
+configMap: freezed == configMap ? _self._configMap : configMap // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>?,rules: null == rules ? _self._rules : rules // ignore: cast_nullable_to_non_nullable
+as List<Rule>,oldScripts: null == oldScripts ? _self._oldScripts : oldScripts // ignore: cast_nullable_to_non_nullable
+as List<OldScript>,scripts: null == scripts ? _self._scripts : scripts // ignore: cast_nullable_to_non_nullable
+as List<Script>,profiles: null == profiles ? _self._profiles : profiles // ignore: cast_nullable_to_non_nullable
+as List<Profile>,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$SetupState {
 
  String? get profileId; int? get profileLastUpdateDate; OverwriteType get overwriteType; List<Rule> get addedRules; String? get scriptId; DateTime? get scriptLastUpdateTime; bool get overrideDns; Dns get dns;

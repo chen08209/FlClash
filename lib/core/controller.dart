@@ -71,25 +71,18 @@ class CoreController {
 
   FutureOr<bool> get isInit => _interface.isInit;
 
-  Future<String> validateConfig(String data) async {
+  Future<String> validateConfig(String path) async {
+    final res = await _interface.validateConfig(path);
+    return res;
+  }
+
+  Future<String> validateConfigWithData(String data) async {
     final path = await appPath.tempFilePath;
     final file = File(path);
     if (!await file.exists()) {
       await file.create(recursive: true);
     }
     await file.writeAsString(data);
-    final res = await _interface.validateConfig(path);
-    await File(path).safeDelete();
-    return res;
-  }
-
-  Future<String> validateConfigFormBytes(Uint8List bytes) async {
-    final path = await appPath.tempFilePath;
-    final file = File(path);
-    if (!await file.exists()) {
-      await file.create(recursive: true);
-    }
-    await file.writeAsBytes(bytes);
     final res = await _interface.validateConfig(path);
     await File(path).safeDelete();
     return res;

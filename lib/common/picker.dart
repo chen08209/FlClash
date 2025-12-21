@@ -7,9 +7,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class Picker {
-  Future<PlatformFile?> pickerFile() async {
+  Future<PlatformFile?> pickerFile({bool withData = true}) async {
     final filePickerResult = await FilePicker.platform.pickFiles(
-      withData: true,
+      withData: withData,
       allowMultiple: false,
       initialDirectory: await appPath.downloadDirPath,
     );

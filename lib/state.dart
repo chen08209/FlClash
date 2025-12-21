@@ -138,7 +138,25 @@ class GlobalState {
   Future<void> init() async {
     packageInfo = await PackageInfo.fromPlatform();
     isar = await openIsar();
-    config = await version.migration() ?? Config(themeProps: defaultThemeProps);
+    final configMap = await preferences.getConfigMap();
+    final migrationData = await migration.migrationIfNeeded(configMap);
+    config = migrationData.configMap != null
+        ? Config.fromJson(migrationData.configMap!)
+        : Config(themeProps: defaultThemeProps);
+    await isar.writeTxn(() async {
+      await isar.profileCollections.putAll(
+        migrationData.profiles.map(ProfileCollection.fromProfile).toList(),
+      );
+      final oldScripts = await oldScriptsToScriptsTask(
+        migrationData.oldScripts,
+      );
+      await isar.scriptCollections.putAll(
+        oldScripts.map(ScriptCollection.formScript).toList(),
+      );
+      await isar.ruleCollections.putAll(
+        migrationData.rules.map(RuleCollection.formRule).toList(),
+      );
+    });
     final results = await Future.wait([
       isar.profileCollections.where().findAll(),
       isar.scriptCollections.where().findAll(),
@@ -161,12 +179,31 @@ class GlobalState {
     );
   }
 
-  Future<Isar> openIsar() async {
-    final homeDirPath = await appPath.homeDirPath;
+  Future<List<Script>> oldScriptsToScripts(List<OldScript> oldScripts) async {
+    final List<Script> scripts = [];
+    for (final oldScript in oldScripts) {
+      final path = await appPath.getScriptPath(oldScript.id);
+      final file = File(path);
+      if (!await file.exists()) {
+        await file.create(recursive: true);
+        await file.writeAsString(oldScript.content);
+        scripts.add(
+          Script(
+            id: oldScript.id,
+            label: oldScript.label,
+            lastUpdateTime: DateTime.now(),
+          ),
+        );
+      }
+    }
+    return scripts;
+  }
+
+  Future<Isar> openIsar({String? directory, String? name}) async {
     return await Isar.open(
       [ProfileCollectionSchema, ScriptCollectionSchema, RuleCollectionSchema],
-      directory: homeDirPath,
-      name: 'db',
+      directory: directory ?? await appPath.homeDirPath,
+      name: name ?? 'db',
     );
   }
 
@@ -389,7 +426,9 @@ class GlobalState {
   }
 
   Future<String> backup() async {
-    return await backupTask(config);
+    final configMap = config.toJson();
+    configMap['version'] = await preferences.getVersion();
+    return await backupTask(config.toJson());
   }
 
   Future<Map<String, dynamic>> makeRealProfile({
