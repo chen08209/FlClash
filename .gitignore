@@ -43,6 +43,7 @@ app.*.map.json
 
 #AI generated
 CLAUDE.md
+/.claude
 
 # Android Studio will place build artifacts here
 /android/app/debug
