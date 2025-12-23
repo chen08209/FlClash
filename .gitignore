@@ -57,7 +57,6 @@ CLAUDE.md
 /android/core/**/cmake-build-*/
 /android/core/**/jniLibs/
 
-
 #FlClash
 /libclash/
 /android/app/src/main/jniLibs/
@@ -65,3 +64,5 @@ CLAUDE.md
 /macos/**/Package.resolved
 devtools_options.yaml
 
+# FVM Version Cache
+.fvm/
