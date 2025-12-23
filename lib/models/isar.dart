@@ -1,5 +1,4 @@
 import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/utils.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/profile.dart';
 import 'package:isar_community/isar.dart';
@@ -27,7 +26,7 @@ class StringMapEntryEmbedded {
 
 @embedded
 class RuleEmbedded {
-  late String id;
+  late int id;
   late String value;
 
   static RuleEmbedded fromRule(Rule rule) {
@@ -44,7 +43,7 @@ class RuleEmbedded {
 @embedded
 class StandardOverwriteEmbedded {
   List<RuleEmbedded> addedRules = [];
-  List<String> disabledRuleIds = [];
+  List<int> disabledRuleIds = [];
 
   static StandardOverwriteEmbedded fromStandardOverwrite(
     StandardOverwrite overwrite,
@@ -66,7 +65,7 @@ class StandardOverwriteEmbedded {
 
 @embedded
 class ScriptOverwriteEmbedded {
-  String? scriptId;
+  int? scriptId;
 
   static ScriptOverwriteEmbedded fromScriptOverwrite(
     ScriptOverwrite overwrite,
@@ -142,9 +141,7 @@ class SubscriptionInfoEmbedded {
 @collection
 @Name('Profile')
 class ProfileCollection {
-  late String id;
-
-  Id get isarId => utils.fastHash(id);
+  late Id id;
 
   late String label;
 
@@ -172,7 +169,10 @@ class ProfileCollection {
 
   final customRules = IsarLinks<RuleCollection>();
 
-  static ProfileCollection fromProfile(Profile profile) {
+  @Index()
+  int order = -1;
+
+  static ProfileCollection fromProfile(Profile profile, [order = -1]) {
     return ProfileCollection()
       ..id = profile.id
       ..label = profile.label
@@ -190,7 +190,8 @@ class ProfileCollection {
           .map((e) => StringMapEntryEmbedded.fromEntry(e))
           .toList()
       ..unfoldList = profile.unfoldSet.toList()
-      ..overwrite = OverwriteEmbedded.fromOverwrite(profile.overwrite);
+      ..overwrite = OverwriteEmbedded.fromOverwrite(profile.overwrite)
+      ..order = order;
   }
 
   Profile toProfile() {
@@ -217,13 +218,11 @@ class ProfileCollection {
 @collection
 @Name('Rule')
 class RuleCollection {
-  late String id;
-
-  Id get isarId => utils.fastHash(id);
+  late Id id;
 
   late String value;
 
-  static RuleCollection formRule(Rule rule) {
+  static RuleCollection formRule(Rule rule, [int order = -1]) {
     return RuleCollection()
       ..id = rule.id
       ..value = rule.value;
@@ -237,9 +236,7 @@ class RuleCollection {
 @collection
 @Name('Script')
 class ScriptCollection {
-  late String id;
-
-  Id get isarId => utils.fastHash(id);
+  late Id id;
 
   late String label;
 

@@ -27,35 +27,6 @@ Future<String> _encodeJSON<T>(T content) async {
   return json.encode(content);
 }
 
-Future<List<Script>> oldScriptsToScriptsTask(List<OldScript> oldScripts) async {
-  return await compute<List<OldScript>, List<Script>>(
-    _oldScriptsToScriptsTask,
-    oldScripts,
-  );
-}
-
-Future<List<Script>> _oldScriptsToScriptsTask(
-  List<OldScript> oldScripts,
-) async {
-  final List<Script> scripts = [];
-  for (final oldScript in oldScripts) {
-    final path = await appPath.getScriptPath(oldScript.id);
-    final file = File(path);
-    if (!await file.exists()) {
-      await file.create(recursive: true);
-      await file.writeAsString(oldScript.content);
-      scripts.add(
-        Script(
-          id: oldScript.id,
-          label: oldScript.label,
-          lastUpdateTime: DateTime.now(),
-        ),
-      );
-    }
-  }
-  return scripts;
-}
-
 Future<String> encodeYamlTask<T>(T data) async {
   return await compute<T, String>(_encodeYaml, data);
 }
@@ -121,7 +92,13 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   final appendSystemDns = data.appendSystemDns;
   final defaultUA = data.defaultUA;
   String getProvidersFilePathInner(String type, String url) {
-    return join(profilesPath, 'providers', profileId, type, url.toMd5());
+    return join(
+      profilesPath,
+      'providers',
+      profileId.toString(),
+      type,
+      url.toMd5(),
+    );
   }
 
   rawConfig['external-controller'] = realPatchConfig.externalController.value;
@@ -279,11 +256,9 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   return Map<String, dynamic>.from(rawConfig);
 }
 
-Future<List<String>> shakingProfileTask(
-  VM2<List<String>, List<String>> data,
-) async {
+Future<List<String>> shakingProfileTask(VM2<List<int>, List<int>> data) async {
   return await compute<
-    VM3<List<String>, List<String>, RootIsolateToken>,
+    VM3<List<int>, List<int>, RootIsolateToken>,
     List<String>
   >(
     _shakingProfileTask,
@@ -292,19 +267,19 @@ Future<List<String>> shakingProfileTask(
 }
 
 Future<List<String>> _shakingProfileTask(
-  VM3<List<String>, List<String>, RootIsolateToken> data,
+  VM3<List<int>, List<int>, RootIsolateToken> data,
 ) async {
   final profileIds = data.a;
   final scriptIds = data.b;
   final token = data.c;
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   final profilesDir = Directory(await appPath.profilesPath);
-  final scriptsDir = Directory(await appPath.scriptsPath);
+  final scriptsDir = Directory(await appPath.scriptsDirPath);
   final providersDir = Directory(await appPath.getProvidersRootPath());
   final List<String> targets = [];
   void scanDirectory(
     Directory dir,
-    List<String> baseNames, {
+    List<int> baseNames, {
     bool skipProvidersFolder = false,
   }) {
     if (!dir.existsSync()) return;
@@ -313,7 +288,7 @@ Future<List<String>> _shakingProfileTask(
     for (final entity in entities) {
       if (entity is File) {
         final id = basenameWithoutExtension(entity.path);
-        if (!baseNames.contains(id)) {
+        if (!baseNames.contains(int.tryParse(id))) {
           targets.add(entity.path);
         }
       } else if (skipProvidersFolder && entity is Directory) {
@@ -341,13 +316,27 @@ Future<String> _encodeLogsTask(List<Log> data) async {
 }
 
 Future<MigrationData> oldToNowTask(Map<String, Object?> data) async {
-  return await compute<Map<String, Object?>, MigrationData>(
-    _oldToNowTask,
-    data,
-  );
+  final homeDir = await appPath.homeDirPath;
+  return await compute<
+    VM3<Map<String, Object?>, String, String>,
+    MigrationData
+  >(_oldToNowTask, VM3(a: data, b: homeDir, c: homeDir));
 }
 
-Future<MigrationData> _oldToNowTask(Map<String, Object?> configMap) async {
+Future<MigrationData> _oldToNowTask(
+  VM3<Map<String, Object?>, String, String> data,
+) async {
+  final configMap = data.a;
+  final sourcePath = data.b;
+  final targetPath = data.c;
+  String getScriptPath(String root, String fileName) {
+    return join(root, 'scripts', '$fileName.js');
+  }
+
+  String getProfilePath(String root, String fileName) {
+    return join(root, 'profiles', '$fileName.yaml');
+  }
+
   final accessControlMap = configMap['accessControl'];
   final isAccessControl = configMap['isAccessControl'];
   if (accessControlMap != null) {
@@ -365,27 +354,93 @@ Future<MigrationData> _oldToNowTask(Map<String, Object?> configMap) async {
   configMap['appSettingProps'] = configMap['appSetting'];
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
-  List<Map<String, Object?>> rawScripts =
-      configMap['scripts'] as List<Map<String, Object?>>? ?? [];
+  List rawScripts = configMap['scripts'] as List<dynamic>? ?? [];
   if (rawScripts.isEmpty) {
-    final scriptPropsJson = configMap['scriptProps'] as Map<String, Object?>?;
+    final scriptPropsJson = configMap['scriptProps'] as Map<String, dynamic>?;
     if (scriptPropsJson != null) {
-      rawScripts =
-          scriptPropsJson['scripts'] as List<Map<String, Object?>>? ?? [];
+      rawScripts = scriptPropsJson['scripts'] as List<dynamic>? ?? [];
     }
   }
-  List<Map<String, Object?>> rawProfiles =
-      configMap['profiles'] as List<Map<String, Object?>>? ?? [];
-  final profiles = rawProfiles.map((item) => Profile.fromJson(item)).toList();
-  List<Map<String, Object?>> rawRules =
-      configMap['rules'] as List<Map<String, Object?>>? ?? [];
-  final rules = rawRules.map((item) => Rule.fromJson(item)).toList();
-  final scripts = rawScripts.map((item) => OldScript.fromJson(item)).toList();
+  final Map<String, int> idMap = {};
+  final List<Script> scripts = [];
+  for (final rawScript in rawScripts) {
+    final id = rawScript['id'] as String?;
+    final content = rawScript['content'] as String?;
+    final label = rawScript['label'] as String?;
+    if (id == null || content == null || label == null) {
+      continue;
+    }
+    final newId = idMap.updateCacheValue(rawScript['id'], () => snowflake.id);
+    final path = getScriptPath(targetPath, newId.toString());
+    final file = File(path);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+      await file.writeAsString(content);
+      scripts.add(
+        Script(id: newId, label: label, lastUpdateTime: DateTime.now()),
+      );
+    }
+  }
+  List rawRules = configMap['rules'] as List<dynamic>? ?? [];
+  final List<Rule> rules = [];
+  for (final rawRule in rawRules) {
+    rawRule['id'] = idMap.updateCacheValue(rawRule['id'], () => snowflake.id);
+    rules.add(Rule.fromJson(rawRule));
+  }
+  List rawProfiles = configMap['profiles'] as List<dynamic>? ?? [];
+  final List<Profile> profiles = [];
+  for (final rawProfile in rawProfiles) {
+    final rawId = rawProfile['id'] as String?;
+    if (rawId == null) {
+      continue;
+    }
+    final id = idMap.updateCacheValue(rawId, () => snowflake.id);
+    rawProfile['id'] = id;
+    final overwrite = rawProfile['overwrite'] as Map?;
+    if (overwrite != null) {
+      final standardOverwrite = overwrite['standardOverwrite'] as Map?;
+      if (standardOverwrite != null) {
+        final addedRules = standardOverwrite['addedRules'] as List? ?? [];
+        for (final addRule in addedRules) {
+          addRule['id'] = idMap.updateCacheValue(
+            addRule['id'],
+            () => snowflake.id,
+          );
+        }
+        final disabledRuleIds = standardOverwrite['disabledRuleIds'] as List?;
+        if (disabledRuleIds != null) {
+          final List newDisabledRuleIds = [];
+          for (final disabledRuleId in disabledRuleIds) {
+            final newDisabledRuleId = idMap[disabledRuleId];
+            if (newDisabledRuleId != null) {
+              newDisabledRuleIds.add(newDisabledRuleId);
+            }
+          }
+          standardOverwrite['disabledRuleIds'] = newDisabledRuleIds;
+        }
+      }
+      final scriptOverwrite = overwrite['scriptOverwrite'] as Map?;
+      if (scriptOverwrite != null) {
+        final scriptId = scriptOverwrite['scriptId'] as String?;
+        scriptOverwrite['scriptId'] = scriptId != null ? idMap[scriptId] : null;
+      }
+    }
+
+    final sourceFile = File(getProfilePath(sourcePath, rawId));
+    final targetFilePath = getProfilePath(targetPath, id.toString());
+    await sourceFile.safeCopy(targetFilePath);
+    profiles.add(Profile.fromJson(rawProfile));
+  }
+  final currentProfileId = configMap['currentProfileId'] as String?;
+  configMap['currentProfileId'] = currentProfileId != null
+      ? idMap[currentProfileId]
+      : null;
+
   return MigrationData(
     configMap: configMap,
     profiles: profiles,
     rules: rules,
-    oldScripts: scripts,
+    scripts: scripts,
   );
 }
 
@@ -405,7 +460,7 @@ Future<String> _backupTask<T>(
   final isar = await globalState.openIsar();
   final configStr = json.encode(configMap);
   final profilesDir = Directory(await appPath.profilesPath);
-  final scriptsDir = Directory(await appPath.scriptsPath);
+  final scriptsDir = Directory(await appPath.scriptsDirPath);
   final tempZipFilePath = await appPath.tempFilePath;
   final tempDBFile = File(await appPath.tempFilePath);
   final tempConfigFile = File(await appPath.tempFilePath);
@@ -454,6 +509,7 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   final backupFilePath = await appPath.backupFilePath;
   final restoreDirPath = await appPath.restoreDirPath;
+  final homeDirPath = await appPath.homeDirPath;
   final zipDecoder = ZipDecoder();
   final input = InputFileStream(backupFilePath);
   final archive = zipDecoder.decodeStream(input);
@@ -470,11 +526,15 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   if (!await restoreConfigFile.exists()) {
     throw '无效备份文件';
   }
-  final restoreConfigMap = json.decode(await restoreConfigFile.readAsString());
-  final version = restoreConfigMap['version'] ?? 0;
+  final restoreConfigMap =
+      json.decode(await restoreConfigFile.readAsString())
+          as Map<String, Object?>?;
+  final version = restoreConfigMap?['version'] ?? 0;
   MigrationData migrationData = MigrationData(configMap: restoreConfigMap);
   if (version == 0 && restoreConfigMap != null) {
-    migrationData = await _oldToNowTask(restoreConfigMap);
+    migrationData = await _oldToNowTask(
+      VM3(a: restoreConfigMap, b: restoreDirPath, c: homeDirPath),
+    );
     return migrationData;
   }
   final backupIsarFile = File(join(restoreDirPath, backupIsarName));

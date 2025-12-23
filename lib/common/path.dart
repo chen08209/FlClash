@@ -106,13 +106,13 @@ class AppPath {
     return join(path, '$fileName.yaml');
   }
 
-  Future<String> get scriptsPath async {
+  Future<String> get scriptsDirPath async {
     final path = await homeDirPath;
     return join(path, 'scripts');
   }
 
   Future<String> getScriptPath(String fileName) async {
-    final path = await scriptsPath;
+    final path = await scriptsDirPath;
     return join(path, '$fileName.js');
   }
 

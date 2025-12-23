@@ -126,14 +126,18 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _editProfileFile() async {
     if (_rawText == null) {
-      final profilePath = await appPath.getProfilePath(widget.profile.id);
+      final profilePath = await appPath.getProfilePath(
+        widget.profile.id.toString(),
+      );
       final file = File(profilePath);
       if (await file.exists()) {
         _rawText = await file.readAsString();
       }
     }
     if (!mounted) return;
-    final title = widget.profile.label.getSafeValue(widget.profile.id);
+    final title = widget.profile.label.getSafeValue(
+      widget.profile.id.toString(),
+    );
     final editorPage = EditorPage(
       title: title,
       content: _rawText!,

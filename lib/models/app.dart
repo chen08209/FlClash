@@ -38,8 +38,8 @@ abstract class AppState with _$AppState {
     @Default(false) bool loading,
     required SystemUiOverlayStyle systemUiOverlayStyle,
     @Default({}) Map<QueryTag, String> queryMap,
-    @Default({}) Map<String, String> selectedItemMap,
-    @Default({}) Map<String, Set<String>> selectedItemsMap,
+    @Default({}) Map<String, dynamic> selectedItemMap,
+    @Default({}) Map<String, Set<dynamic>> selectedItemsMap,
     @Default(CoreStatus.connecting) CoreStatus coreStatus,
   }) = _AppState;
 }

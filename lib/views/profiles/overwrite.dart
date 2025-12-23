@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class OverwriteView extends ConsumerStatefulWidget {
-  final String profileId;
+  final int profileId;
 
   const OverwriteView({super.key, required this.profileId});
 
@@ -78,7 +78,7 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
 }
 
 class _Title extends ConsumerWidget {
-  final String profileId;
+  final int profileId;
 
   const _Title(this.profileId);
 
@@ -169,7 +169,7 @@ class _Title extends ConsumerWidget {
 }
 
 class _Content extends ConsumerWidget {
-  final String profileId;
+  final int profileId;
 
   const _Content(this.profileId);
 
@@ -189,7 +189,7 @@ class _Content extends ConsumerWidget {
 }
 
 class _StandardContent extends ConsumerStatefulWidget {
-  final String profileId;
+  final int profileId;
 
   const _StandardContent(this.profileId);
 
@@ -218,9 +218,9 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
     });
   }
 
-  void _handleSelected(String ruleId) {
+  void _handleSelected(int ruleId) {
     ref.read(selectedItemsProvider(_key).notifier).update((selectedRules) {
-      final newSelectedRules = Set<String>.from(selectedRules)
+      final newSelectedRules = Set<int>.from(selectedRules)
         ..addOrRemove(ruleId);
       return newSelectedRules;
     });
@@ -336,8 +336,8 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
                       isEditing: selectedRules.isNotEmpty,
                       isSelected: selectedRules.contains(rule.id),
                       rule: rule,
-                      onSelected: (id) {
-                        _handleSelected(id);
+                      onSelected: () {
+                        _handleSelected(rule.id);
                       },
                       onEdit: (rule) {
                         _handleAddOrUpdate(rule);
@@ -410,13 +410,13 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
 }
 
 class _ScriptContent extends ConsumerWidget {
-  final String profileId;
+  final int profileId;
 
   const _ScriptContent(this.profileId);
 
-  void _handleChange(WidgetRef ref, String scriptId) {
+  void _handleChange(WidgetRef ref, int scriptId) {
     ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-      String? newScriptId = scriptId;
+      int? newScriptId = scriptId;
       if (newScriptId == state.overwrite.scriptOverwrite.scriptId) {
         newScriptId = null;
       }
@@ -536,13 +536,13 @@ class _ScriptContent extends ConsumerWidget {
 }
 
 class _EditGlobalAddedRules extends ConsumerWidget {
-  final String profileId;
+  final int profileId;
 
   const _EditGlobalAddedRules({required this.profileId});
 
-  void _handleChange(WidgetRef ref, String ruleId) {
+  void _handleChange(WidgetRef ref, int ruleId) {
     ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-      final newDisabledRuleIds = Set<String>.from(
+      final newDisabledRuleIds = Set<int>.from(
         state.overwrite.standardOverwrite.disabledRuleIds,
       )..addOrRemove(ruleId);
       return state.copyWith.overwrite.standardOverwrite(

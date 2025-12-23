@@ -43,7 +43,7 @@ abstract class SubscriptionInfo with _$SubscriptionInfo {
 @freezed
 abstract class Profile with _$Profile {
   const factory Profile({
-    required String id,
+    required int id,
     @Default('') String label,
     String? currentGroupName,
     @Default('') String url,
@@ -63,9 +63,9 @@ abstract class Profile with _$Profile {
       _$ProfileFromJson(json);
 
   factory Profile.normal({String? label, String url = ''}) {
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final id = snowflake.id;
     return Profile(
-      label: label ?? id,
+      label: label ?? id.toString(),
       url: url,
       id: id,
       autoUpdateDuration: defaultUpdateDuration,
@@ -89,7 +89,7 @@ abstract class Overwrite with _$Overwrite {
 abstract class StandardOverwrite with _$StandardOverwrite {
   const factory StandardOverwrite({
     @Default([]) List<Rule> addedRules,
-    @Default([]) List<String> disabledRuleIds,
+    @Default([]) List<int> disabledRuleIds,
   }) = _StandardOverwrite;
 
   factory StandardOverwrite.fromJson(Map<String, Object?> json) =>
@@ -98,20 +98,20 @@ abstract class StandardOverwrite with _$StandardOverwrite {
 
 @freezed
 abstract class ScriptOverwrite with _$ScriptOverwrite {
-  const factory ScriptOverwrite({String? scriptId}) = _ScriptOverwrite;
+  const factory ScriptOverwrite({int? scriptId}) = _ScriptOverwrite;
 
   factory ScriptOverwrite.fromJson(Map<String, Object?> json) =>
       _$ScriptOverwriteFromJson(json);
 }
 
 extension ProfilesExt on List<Profile> {
-  Profile? getProfile(String? profileId) {
+  Profile? getProfile(int? profileId) {
     final index = indexWhere((profile) => profile.id == profileId);
     return index == -1 ? null : this[index];
   }
 
-  String _getLabel(String label, String id) {
-    final realLabel = label.getSafeValue(id);
+  String _getLabel(String label, int id) {
+    final realLabel = label.getSafeValue(id.toString());
     final hasDup =
         indexWhere(
           (element) => element.label == realLabel && element.id != id,
@@ -147,7 +147,7 @@ extension ProfileExtension on Profile {
 
   bool get realAutoUpdate => url.isEmpty == true ? false : autoUpdate;
 
-  String get fileName => label.isNotEmpty ? label : id;
+  String get fileName => label.isNotEmpty ? label : id.toString();
 
   Future<Profile?> checkAndUpdateAndCopy() async {
     final mFile = await _getFile(false);
@@ -159,7 +159,7 @@ extension ProfileExtension on Profile {
   }
 
   Future<File> _getFile([bool autoCreate = false]) async {
-    final path = await appPath.getProfilePath(id);
+    final path = await appPath.getProfilePath(id.toString());
     final file = File(path);
     final isExists = await file.exists();
     if (!isExists && autoCreate) {
@@ -191,7 +191,9 @@ extension ProfileExtension on Profile {
     final userinfo = response.headers.value('subscription-userinfo');
     return await copyWith(
       label: label.getSafeValue(
-        utils.getFileNameForDisposition(disposition).getSafeValue(id),
+        utils
+            .getFileNameForDisposition(disposition)
+            .getSafeValue(id.toString()),
       ),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
     ).saveFile(response.data ?? Uint8List.fromList([]));

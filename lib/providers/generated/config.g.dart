@@ -277,7 +277,7 @@ abstract class _$ThemeSetting extends $Notifier<ThemeProps> {
 const currentProfileIdProvider = CurrentProfileIdProvider._();
 
 final class CurrentProfileIdProvider
-    extends $NotifierProvider<CurrentProfileId, String?> {
+    extends $NotifierProvider<CurrentProfileId, int?> {
   const CurrentProfileIdProvider._()
     : super(
         from: null,
@@ -297,28 +297,28 @@ final class CurrentProfileIdProvider
   CurrentProfileId create() => CurrentProfileId();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(String? value) {
+  Override overrideWithValue(int? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<String?>(value),
+      providerOverride: $SyncValueProvider<int?>(value),
     );
   }
 }
 
-String _$currentProfileIdHash() => r'0c3e324e751aac1164da479e1796e826615bdcbe';
+String _$currentProfileIdHash() => r'6f5cba8def834ee51a379f5ba070424dd19c6720';
 
-abstract class _$CurrentProfileId extends $Notifier<String?> {
-  String? build();
+abstract class _$CurrentProfileId extends $Notifier<int?> {
+  int? build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<String?, String?>;
+    final ref = this.ref as $Ref<int?, int?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<String?, String?>,
-              String?,
+              AnyNotifier<int?, int?>,
+              int?,
               Object?,
               Object?
             >;

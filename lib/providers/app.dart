@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -436,7 +437,7 @@ class SelectedItems extends _$SelectedItems with AutoDisposeNotifierMixin {
   late final String _key;
 
   @override
-  Set<String> build(String key) {
+  Set<dynamic> build(String key) {
     _key = key;
     return globalState.appState.selectedItemsMap[_key] ?? {};
   }
@@ -445,7 +446,7 @@ class SelectedItems extends _$SelectedItems with AutoDisposeNotifierMixin {
   onUpdate(value) {
     final newMap = globalState.appState.selectedItemsMap.copyWitUpdate(
       key,
-      value.isEmpty ? null : value,
+      value,
     );
     globalState.appState = globalState.appState.copyWith(
       selectedItemsMap: newMap,
@@ -458,16 +459,16 @@ class SelectedItem extends _$SelectedItem with AutoDisposeNotifierMixin {
   late final String _key;
 
   @override
-  String build(String key) {
+  dynamic build(String key) {
     _key = key;
-    return globalState.appState.selectedItemMap[_key] ?? '';
+    return globalState.appState.selectedItemMap[_key];
   }
 
   @override
   onUpdate(value) {
     final newMap = globalState.appState.selectedItemMap.copyWitUpdate(
       key,
-      value.isEmpty ? null : value,
+      value,
     );
     globalState.appState = globalState.appState.copyWith(
       selectedItemMap: newMap,
@@ -488,13 +489,13 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
       profiles: value,
     );
     globalState.isar.writeTxn(() async {
-      final newProfileCollections = value
-          .map(ProfileCollection.fromProfile)
-          .toList();
+      final newProfileCollections = value.mapIndexed((index, profile) {
+        return ProfileCollection.fromProfile(profile, index);
+      }).toList();
       await globalState.isar.profileCollections.setAll(
         newProfileCollections,
-        getId: (item) => item.isarId,
-        getIdsInDb: (col) => col.where().isarIdProperty().findAll(),
+        getId: (item) => item.id,
+        getIdsInDb: (col) => col.where().idProperty().findAll(),
       );
     });
   }
@@ -503,10 +504,7 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
     value = state.copyAndAddProfile(profile);
   }
 
-  void updateProfile(
-    String profileId,
-    Profile Function(Profile profile) builder,
-  ) {
+  void updateProfile(int profileId, Profile Function(Profile profile) builder) {
     final List<Profile> profilesTemp = List.from(state);
     final index = profilesTemp.indexWhere((element) => element.id == profileId);
     if (index != -1) {
@@ -515,7 +513,7 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
     value = profilesTemp;
   }
 
-  void deleteProfileById(String id) {
+  void deleteProfileById(int id) {
     value = state.where((element) => element.id != id).toList();
   }
 }
@@ -538,8 +536,8 @@ class Scripts extends _$Scripts with AutoDisposeNotifierMixin {
           .toList();
       await globalState.isar.scriptCollections.setAll(
         newScriptCollections,
-        getId: (item) => item.isarId,
-        getIdsInDb: (col) => col.where().isarIdProperty().findAll(),
+        getId: (item) => item.id,
+        getIdsInDb: (col) => col.where().idProperty().findAll(),
       );
     });
   }
@@ -555,7 +553,7 @@ class Scripts extends _$Scripts with AutoDisposeNotifierMixin {
     value = list;
   }
 
-  void del(String id) {
+  void del(int id) {
     final list = List<Script>.from(state);
     final index = list.indexWhere((item) => item.id == id);
     if (index != -1) {
@@ -583,8 +581,8 @@ class Rules extends _$Rules with AutoDisposeNotifierMixin {
       final newRuleCollections = value.map(RuleCollection.formRule).toList();
       await globalState.isar.ruleCollections.setAll(
         newRuleCollections,
-        getId: (item) => item.isarId,
-        getIdsInDb: (col) => col.where().isarIdProperty().findAll(),
+        getId: (item) => item.id,
+        getIdsInDb: (col) => col.where().idProperty().findAll(),
       );
     });
   }

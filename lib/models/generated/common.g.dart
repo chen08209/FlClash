@@ -269,7 +269,7 @@ Map<String, dynamic> _$OldScriptToJson(_OldScript instance) =>
     };
 
 _Script _$ScriptFromJson(Map<String, dynamic> json) => _Script(
-  id: json['id'] as String,
+  id: (json['id'] as num).toInt(),
   label: json['label'] as String,
   lastUpdateTime: DateTime.parse(json['lastUpdateTime'] as String),
 );

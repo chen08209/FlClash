@@ -599,7 +599,7 @@ ColorScheme genColorScheme(
 }
 
 @riverpod
-VM4<String?, String?, Dns?, bool> needSetup(Ref ref) {
+VM4<int?, String?, Dns?, bool> needSetup(Ref ref) {
   final profileId = ref.watch(currentProfileIdProvider);
   // final content = ref.watch(
   //   scriptsProvider.select((state) => state.currentScript?.content),
@@ -682,14 +682,14 @@ double overlayTopOffset(Ref ref) {
 }
 
 @riverpod
-Profile? profile(Ref ref, String profileId) {
+Profile? profile(Ref ref, int? profileId) {
   return ref.watch(
     profilesProvider.select((state) => state.getProfile(profileId)),
   );
 }
 
 @riverpod
-Overwrite? profileOverwrite(Ref ref, String profileId) {
+Overwrite? profileOverwrite(Ref ref, int profileId) {
   return ref.watch(
     profileProvider(profileId).select((state) => state?.overwrite),
   );
@@ -703,7 +703,7 @@ class AccessControlState extends _$AccessControlState
 }
 
 @riverpod
-SetupState setupState(Ref ref, String profileId) {
+SetupState setupState(Ref ref, int? profileId) {
   ref.watch(
     profileProvider(profileId).select(
       (state) =>

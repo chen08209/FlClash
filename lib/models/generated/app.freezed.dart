@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppState {
 
- bool get isInit; bool get backBlock; PageLabel get pageLabel; List<Package> get packages; int get sortNum; Size get viewSize; double get sideWidth; DelayMap get delayMap; List<Group> get groups; int get checkIpNum; Brightness get brightness; int? get runTime; List<ExternalProvider> get providers; String? get localIp; FixedList<TrackerInfo> get requests; int get version; FixedList<Log> get logs; FixedList<Traffic> get traffics; Traffic get totalTraffic; bool get realTunEnable; bool get loading; SystemUiOverlayStyle get systemUiOverlayStyle; Map<QueryTag, String> get queryMap; Map<String, String> get selectedItemMap; Map<String, Set<String>> get selectedItemsMap; CoreStatus get coreStatus;
+ bool get isInit; bool get backBlock; PageLabel get pageLabel; List<Package> get packages; int get sortNum; Size get viewSize; double get sideWidth; DelayMap get delayMap; List<Group> get groups; int get checkIpNum; Brightness get brightness; int? get runTime; List<ExternalProvider> get providers; String? get localIp; FixedList<TrackerInfo> get requests; int get version; FixedList<Log> get logs; FixedList<Traffic> get traffics; Traffic get totalTraffic; bool get realTunEnable; bool get loading; SystemUiOverlayStyle get systemUiOverlayStyle; Map<QueryTag, String> get queryMap; Map<String, dynamic> get selectedItemMap; Map<String, Set<dynamic>> get selectedItemsMap; CoreStatus get coreStatus;
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $AppStateCopyWith<$Res>  {
   factory $AppStateCopyWith(AppState value, $Res Function(AppState) _then) = _$AppStateCopyWithImpl;
 @useResult
 $Res call({
- bool isInit, bool backBlock, PageLabel pageLabel, List<Package> packages, int sortNum, Size viewSize, double sideWidth, DelayMap delayMap, List<Group> groups, int checkIpNum, Brightness brightness, int? runTime, List<ExternalProvider> providers, String? localIp, FixedList<TrackerInfo> requests, int version, FixedList<Log> logs, FixedList<Traffic> traffics, Traffic totalTraffic, bool realTunEnable, bool loading, SystemUiOverlayStyle systemUiOverlayStyle, Map<QueryTag, String> queryMap, Map<String, String> selectedItemMap, Map<String, Set<String>> selectedItemsMap, CoreStatus coreStatus
+ bool isInit, bool backBlock, PageLabel pageLabel, List<Package> packages, int sortNum, Size viewSize, double sideWidth, DelayMap delayMap, List<Group> groups, int checkIpNum, Brightness brightness, int? runTime, List<ExternalProvider> providers, String? localIp, FixedList<TrackerInfo> requests, int version, FixedList<Log> logs, FixedList<Traffic> traffics, Traffic totalTraffic, bool realTunEnable, bool loading, SystemUiOverlayStyle systemUiOverlayStyle, Map<QueryTag, String> queryMap, Map<String, dynamic> selectedItemMap, Map<String, Set<dynamic>> selectedItemsMap, CoreStatus coreStatus
 });
 
 
@@ -88,8 +88,8 @@ as bool,loading: null == loading ? _self.loading : loading // ignore: cast_nulla
 as bool,systemUiOverlayStyle: null == systemUiOverlayStyle ? _self.systemUiOverlayStyle : systemUiOverlayStyle // ignore: cast_nullable_to_non_nullable
 as SystemUiOverlayStyle,queryMap: null == queryMap ? _self.queryMap : queryMap // ignore: cast_nullable_to_non_nullable
 as Map<QueryTag, String>,selectedItemMap: null == selectedItemMap ? _self.selectedItemMap : selectedItemMap // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,selectedItemsMap: null == selectedItemsMap ? _self.selectedItemsMap : selectedItemsMap // ignore: cast_nullable_to_non_nullable
-as Map<String, Set<String>>,coreStatus: null == coreStatus ? _self.coreStatus : coreStatus // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,selectedItemsMap: null == selectedItemsMap ? _self.selectedItemsMap : selectedItemsMap // ignore: cast_nullable_to_non_nullable
+as Map<String, Set<dynamic>>,coreStatus: null == coreStatus ? _self.coreStatus : coreStatus // ignore: cast_nullable_to_non_nullable
 as CoreStatus,
   ));
 }
@@ -184,7 +184,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isInit,  bool backBlock,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  int checkIpNum,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  bool realTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  Map<QueryTag, String> queryMap,  Map<String, String> selectedItemMap,  Map<String, Set<String>> selectedItemsMap,  CoreStatus coreStatus)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isInit,  bool backBlock,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  int checkIpNum,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  bool realTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  Map<QueryTag, String> queryMap,  Map<String, dynamic> selectedItemMap,  Map<String, Set<dynamic>> selectedItemsMap,  CoreStatus coreStatus)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppState() when $default != null:
 return $default(_that.isInit,_that.backBlock,_that.pageLabel,_that.packages,_that.sortNum,_that.viewSize,_that.sideWidth,_that.delayMap,_that.groups,_that.checkIpNum,_that.brightness,_that.runTime,_that.providers,_that.localIp,_that.requests,_that.version,_that.logs,_that.traffics,_that.totalTraffic,_that.realTunEnable,_that.loading,_that.systemUiOverlayStyle,_that.queryMap,_that.selectedItemMap,_that.selectedItemsMap,_that.coreStatus);case _:
@@ -205,7 +205,7 @@ return $default(_that.isInit,_that.backBlock,_that.pageLabel,_that.packages,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isInit,  bool backBlock,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  int checkIpNum,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  bool realTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  Map<QueryTag, String> queryMap,  Map<String, String> selectedItemMap,  Map<String, Set<String>> selectedItemsMap,  CoreStatus coreStatus)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isInit,  bool backBlock,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  int checkIpNum,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  bool realTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  Map<QueryTag, String> queryMap,  Map<String, dynamic> selectedItemMap,  Map<String, Set<dynamic>> selectedItemsMap,  CoreStatus coreStatus)  $default,) {final _that = this;
 switch (_that) {
 case _AppState():
 return $default(_that.isInit,_that.backBlock,_that.pageLabel,_that.packages,_that.sortNum,_that.viewSize,_that.sideWidth,_that.delayMap,_that.groups,_that.checkIpNum,_that.brightness,_that.runTime,_that.providers,_that.localIp,_that.requests,_that.version,_that.logs,_that.traffics,_that.totalTraffic,_that.realTunEnable,_that.loading,_that.systemUiOverlayStyle,_that.queryMap,_that.selectedItemMap,_that.selectedItemsMap,_that.coreStatus);case _:
@@ -225,7 +225,7 @@ return $default(_that.isInit,_that.backBlock,_that.pageLabel,_that.packages,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isInit,  bool backBlock,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  int checkIpNum,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  bool realTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  Map<QueryTag, String> queryMap,  Map<String, String> selectedItemMap,  Map<String, Set<String>> selectedItemsMap,  CoreStatus coreStatus)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isInit,  bool backBlock,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  int checkIpNum,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  bool realTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  Map<QueryTag, String> queryMap,  Map<String, dynamic> selectedItemMap,  Map<String, Set<dynamic>> selectedItemsMap,  CoreStatus coreStatus)?  $default,) {final _that = this;
 switch (_that) {
 case _AppState() when $default != null:
 return $default(_that.isInit,_that.backBlock,_that.pageLabel,_that.packages,_that.sortNum,_that.viewSize,_that.sideWidth,_that.delayMap,_that.groups,_that.checkIpNum,_that.brightness,_that.runTime,_that.providers,_that.localIp,_that.requests,_that.version,_that.logs,_that.traffics,_that.totalTraffic,_that.realTunEnable,_that.loading,_that.systemUiOverlayStyle,_that.queryMap,_that.selectedItemMap,_that.selectedItemsMap,_that.coreStatus);case _:
@@ -240,7 +240,7 @@ return $default(_that.isInit,_that.backBlock,_that.pageLabel,_that.packages,_tha
 
 
 class _AppState implements AppState {
-  const _AppState({this.isInit = false, this.backBlock = false, this.pageLabel = PageLabel.dashboard, final  List<Package> packages = const [], this.sortNum = 0, required this.viewSize, this.sideWidth = 0, final  DelayMap delayMap = const {}, final  List<Group> groups = const [], this.checkIpNum = 0, required this.brightness, this.runTime, final  List<ExternalProvider> providers = const [], this.localIp, required this.requests, required this.version, required this.logs, required this.traffics, required this.totalTraffic, this.realTunEnable = false, this.loading = false, required this.systemUiOverlayStyle, final  Map<QueryTag, String> queryMap = const {}, final  Map<String, String> selectedItemMap = const {}, final  Map<String, Set<String>> selectedItemsMap = const {}, this.coreStatus = CoreStatus.connecting}): _packages = packages,_delayMap = delayMap,_groups = groups,_providers = providers,_queryMap = queryMap,_selectedItemMap = selectedItemMap,_selectedItemsMap = selectedItemsMap;
+  const _AppState({this.isInit = false, this.backBlock = false, this.pageLabel = PageLabel.dashboard, final  List<Package> packages = const [], this.sortNum = 0, required this.viewSize, this.sideWidth = 0, final  DelayMap delayMap = const {}, final  List<Group> groups = const [], this.checkIpNum = 0, required this.brightness, this.runTime, final  List<ExternalProvider> providers = const [], this.localIp, required this.requests, required this.version, required this.logs, required this.traffics, required this.totalTraffic, this.realTunEnable = false, this.loading = false, required this.systemUiOverlayStyle, final  Map<QueryTag, String> queryMap = const {}, final  Map<String, dynamic> selectedItemMap = const {}, final  Map<String, Set<dynamic>> selectedItemsMap = const {}, this.coreStatus = CoreStatus.connecting}): _packages = packages,_delayMap = delayMap,_groups = groups,_providers = providers,_queryMap = queryMap,_selectedItemMap = selectedItemMap,_selectedItemsMap = selectedItemsMap;
   
 
 @override@JsonKey() final  bool isInit;
@@ -296,15 +296,15 @@ class _AppState implements AppState {
   return EqualUnmodifiableMapView(_queryMap);
 }
 
- final  Map<String, String> _selectedItemMap;
-@override@JsonKey() Map<String, String> get selectedItemMap {
+ final  Map<String, dynamic> _selectedItemMap;
+@override@JsonKey() Map<String, dynamic> get selectedItemMap {
   if (_selectedItemMap is EqualUnmodifiableMapView) return _selectedItemMap;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_selectedItemMap);
 }
 
- final  Map<String, Set<String>> _selectedItemsMap;
-@override@JsonKey() Map<String, Set<String>> get selectedItemsMap {
+ final  Map<String, Set<dynamic>> _selectedItemsMap;
+@override@JsonKey() Map<String, Set<dynamic>> get selectedItemsMap {
   if (_selectedItemsMap is EqualUnmodifiableMapView) return _selectedItemsMap;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_selectedItemsMap);
@@ -342,7 +342,7 @@ abstract mixin class _$AppStateCopyWith<$Res> implements $AppStateCopyWith<$Res>
   factory _$AppStateCopyWith(_AppState value, $Res Function(_AppState) _then) = __$AppStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool isInit, bool backBlock, PageLabel pageLabel, List<Package> packages, int sortNum, Size viewSize, double sideWidth, DelayMap delayMap, List<Group> groups, int checkIpNum, Brightness brightness, int? runTime, List<ExternalProvider> providers, String? localIp, FixedList<TrackerInfo> requests, int version, FixedList<Log> logs, FixedList<Traffic> traffics, Traffic totalTraffic, bool realTunEnable, bool loading, SystemUiOverlayStyle systemUiOverlayStyle, Map<QueryTag, String> queryMap, Map<String, String> selectedItemMap, Map<String, Set<String>> selectedItemsMap, CoreStatus coreStatus
+ bool isInit, bool backBlock, PageLabel pageLabel, List<Package> packages, int sortNum, Size viewSize, double sideWidth, DelayMap delayMap, List<Group> groups, int checkIpNum, Brightness brightness, int? runTime, List<ExternalProvider> providers, String? localIp, FixedList<TrackerInfo> requests, int version, FixedList<Log> logs, FixedList<Traffic> traffics, Traffic totalTraffic, bool realTunEnable, bool loading, SystemUiOverlayStyle systemUiOverlayStyle, Map<QueryTag, String> queryMap, Map<String, dynamic> selectedItemMap, Map<String, Set<dynamic>> selectedItemsMap, CoreStatus coreStatus
 });
 
 
@@ -385,8 +385,8 @@ as bool,loading: null == loading ? _self.loading : loading // ignore: cast_nulla
 as bool,systemUiOverlayStyle: null == systemUiOverlayStyle ? _self.systemUiOverlayStyle : systemUiOverlayStyle // ignore: cast_nullable_to_non_nullable
 as SystemUiOverlayStyle,queryMap: null == queryMap ? _self._queryMap : queryMap // ignore: cast_nullable_to_non_nullable
 as Map<QueryTag, String>,selectedItemMap: null == selectedItemMap ? _self._selectedItemMap : selectedItemMap // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,selectedItemsMap: null == selectedItemsMap ? _self._selectedItemsMap : selectedItemsMap // ignore: cast_nullable_to_non_nullable
-as Map<String, Set<String>>,coreStatus: null == coreStatus ? _self.coreStatus : coreStatus // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,selectedItemsMap: null == selectedItemsMap ? _self._selectedItemsMap : selectedItemsMap // ignore: cast_nullable_to_non_nullable
+as Map<String, Set<dynamic>>,coreStatus: null == coreStatus ? _self.coreStatus : coreStatus // ignore: cast_nullable_to_non_nullable
 as CoreStatus,
   ));
 }

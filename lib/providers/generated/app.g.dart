@@ -1477,7 +1477,7 @@ abstract class _$Query extends $Notifier<String> {
 const selectedItemsProvider = SelectedItemsFamily._();
 
 final class SelectedItemsProvider
-    extends $NotifierProvider<SelectedItems, Set<String>> {
+    extends $NotifierProvider<SelectedItems, Set<dynamic>> {
   const SelectedItemsProvider._({
     required SelectedItemsFamily super.from,
     required String super.argument,
@@ -1504,10 +1504,10 @@ final class SelectedItemsProvider
   SelectedItems create() => SelectedItems();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Set<String> value) {
+  Override overrideWithValue(Set<dynamic> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Set<String>>(value),
+      providerOverride: $SyncValueProvider<Set<dynamic>>(value),
     );
   }
 
@@ -1522,15 +1522,15 @@ final class SelectedItemsProvider
   }
 }
 
-String _$selectedItemsHash() => r'9a13ee78fdc100c8708af9de46e2861652d68e77';
+String _$selectedItemsHash() => r'483536e8c20146a2708323eb449f2680c8147c6a';
 
 final class SelectedItemsFamily extends $Family
     with
         $ClassFamilyOverride<
           SelectedItems,
-          Set<String>,
-          Set<String>,
-          Set<String>,
+          Set<dynamic>,
+          Set<dynamic>,
+          Set<dynamic>,
           String
         > {
   const SelectedItemsFamily._()
@@ -1549,21 +1549,21 @@ final class SelectedItemsFamily extends $Family
   String toString() => r'selectedItemsProvider';
 }
 
-abstract class _$SelectedItems extends $Notifier<Set<String>> {
+abstract class _$SelectedItems extends $Notifier<Set<dynamic>> {
   late final _$args = ref.$arg as String;
   String get key => _$args;
 
-  Set<String> build(String key);
+  Set<dynamic> build(String key);
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build(_$args);
-    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final ref = this.ref as $Ref<Set<dynamic>, Set<dynamic>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Set<String>, Set<String>>,
-              Set<String>,
+              AnyNotifier<Set<dynamic>, Set<dynamic>>,
+              Set<dynamic>,
               Object?,
               Object?
             >;
@@ -1575,7 +1575,7 @@ abstract class _$SelectedItems extends $Notifier<Set<String>> {
 const selectedItemProvider = SelectedItemFamily._();
 
 final class SelectedItemProvider
-    extends $NotifierProvider<SelectedItem, String> {
+    extends $NotifierProvider<SelectedItem, dynamic> {
   const SelectedItemProvider._({
     required SelectedItemFamily super.from,
     required String super.argument,
@@ -1602,10 +1602,10 @@ final class SelectedItemProvider
   SelectedItem create() => SelectedItem();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(String value) {
+  Override overrideWithValue(dynamic value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<String>(value),
+      providerOverride: $SyncValueProvider<dynamic>(value),
     );
   }
 
@@ -1620,10 +1620,10 @@ final class SelectedItemProvider
   }
 }
 
-String _$selectedItemHash() => r'374202f309d7a786190706fb0a2ac4945de94213';
+String _$selectedItemHash() => r'b2ddb8182c2022f4d9d3df91497c6d487ad43fbe';
 
 final class SelectedItemFamily extends $Family
-    with $ClassFamilyOverride<SelectedItem, String, String, String, String> {
+    with $ClassFamilyOverride<SelectedItem, dynamic, dynamic, dynamic, String> {
   const SelectedItemFamily._()
     : super(
         retry: null,
@@ -1640,21 +1640,21 @@ final class SelectedItemFamily extends $Family
   String toString() => r'selectedItemProvider';
 }
 
-abstract class _$SelectedItem extends $Notifier<String> {
+abstract class _$SelectedItem extends $Notifier<dynamic> {
   late final _$args = ref.$arg as String;
   String get key => _$args;
 
-  String build(String key);
+  dynamic build(String key);
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build(_$args);
-    final ref = this.ref as $Ref<String, String>;
+    final ref = this.ref as $Ref<dynamic, dynamic>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<String, String>,
-              String,
+              AnyNotifier<dynamic, dynamic>,
+              dynamic,
               Object?,
               Object?
             >;
@@ -1694,7 +1694,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'eb21ce29c9f835e4faf218ebef10b1b70cbcc6c0';
+String _$profilesHash() => r'79b15251ea014fb39eaa2582daf084cf8f4e7a06';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -1746,7 +1746,7 @@ final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
   }
 }
 
-String _$scriptsHash() => r'42786cbea1169879a696edeb75bd01e7a83f1fc3';
+String _$scriptsHash() => r'7eae69ce902f7d319cc61d6926f221f25c24c86d';
 
 abstract class _$Scripts extends $Notifier<List<Script>> {
   List<Script> build();
@@ -1798,7 +1798,7 @@ final class RulesProvider extends $NotifierProvider<Rules, List<Rule>> {
   }
 }
 
-String _$rulesHash() => r'01ed56824e8c3a5124de541ea0498ce709cd0447';
+String _$rulesHash() => r'84eb777b6265da1c0507144bea88167354b29d6f';
 
 abstract class _$Rules extends $Notifier<List<Rule>> {
   List<Rule> build();

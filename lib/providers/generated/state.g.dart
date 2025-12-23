@@ -2107,11 +2107,11 @@ const needSetupProvider = NeedSetupProvider._();
 final class NeedSetupProvider
     extends
         $FunctionalProvider<
-          VM4<String?, String?, Dns?, bool>,
-          VM4<String?, String?, Dns?, bool>,
-          VM4<String?, String?, Dns?, bool>
+          VM4<int?, String?, Dns?, bool>,
+          VM4<int?, String?, Dns?, bool>,
+          VM4<int?, String?, Dns?, bool>
         >
-    with $Provider<VM4<String?, String?, Dns?, bool>> {
+    with $Provider<VM4<int?, String?, Dns?, bool>> {
   const NeedSetupProvider._()
     : super(
         from: null,
@@ -2128,27 +2128,27 @@ final class NeedSetupProvider
 
   @$internal
   @override
-  $ProviderElement<VM4<String?, String?, Dns?, bool>> $createElement(
+  $ProviderElement<VM4<int?, String?, Dns?, bool>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  VM4<String?, String?, Dns?, bool> create(Ref ref) {
+  VM4<int?, String?, Dns?, bool> create(Ref ref) {
     return needSetup(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(VM4<String?, String?, Dns?, bool> value) {
+  Override overrideWithValue(VM4<int?, String?, Dns?, bool> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<VM4<String?, String?, Dns?, bool>>(
+      providerOverride: $SyncValueProvider<VM4<int?, String?, Dns?, bool>>(
         value,
       ),
     );
   }
 }
 
-String _$needSetupHash() => r'6ea0d2be3df2046bbfa4e6c5d751727f06e7a4b3';
+String _$needSetupHash() => r'41f9cd5db4cc15197b82cfc2b12bb5ca60511510';
 
 @ProviderFor(currentBrightness)
 const currentBrightnessProvider = CurrentBrightnessProvider._();
@@ -2373,7 +2373,7 @@ final class ProfileProvider
     with $Provider<Profile?> {
   const ProfileProvider._({
     required ProfileFamily super.from,
-    required String super.argument,
+    required int? super.argument,
   }) : super(
          retry: null,
          name: r'profileProvider',
@@ -2399,7 +2399,7 @@ final class ProfileProvider
 
   @override
   Profile? create(Ref ref) {
-    final argument = this.argument as String;
+    final argument = this.argument as int?;
     return profile(ref, argument);
   }
 
@@ -2422,10 +2422,10 @@ final class ProfileProvider
   }
 }
 
-String _$profileHash() => r'6992b7e6f32b24f2a876e2a2cab24fcd8e39d30d';
+String _$profileHash() => r'8de429dc0844c6b6155032ad3c9546231e08cead';
 
 final class ProfileFamily extends $Family
-    with $FunctionalFamilyOverride<Profile?, String> {
+    with $FunctionalFamilyOverride<Profile?, int?> {
   const ProfileFamily._()
     : super(
         retry: null,
@@ -2435,7 +2435,7 @@ final class ProfileFamily extends $Family
         isAutoDispose: true,
       );
 
-  ProfileProvider call(String profileId) =>
+  ProfileProvider call(int? profileId) =>
       ProfileProvider._(argument: profileId, from: this);
 
   @override
@@ -2450,7 +2450,7 @@ final class ProfileOverwriteProvider
     with $Provider<Overwrite?> {
   const ProfileOverwriteProvider._({
     required ProfileOverwriteFamily super.from,
-    required String super.argument,
+    required int super.argument,
   }) : super(
          retry: null,
          name: r'profileOverwriteProvider',
@@ -2476,7 +2476,7 @@ final class ProfileOverwriteProvider
 
   @override
   Overwrite? create(Ref ref) {
-    final argument = this.argument as String;
+    final argument = this.argument as int;
     return profileOverwrite(ref, argument);
   }
 
@@ -2499,10 +2499,10 @@ final class ProfileOverwriteProvider
   }
 }
 
-String _$profileOverwriteHash() => r'9d64c5546ff9236c7c9b0d6536bafdb57ffe40a5';
+String _$profileOverwriteHash() => r'c193a36219a6cb96a5ed68794cf8cd4c60a35849';
 
 final class ProfileOverwriteFamily extends $Family
-    with $FunctionalFamilyOverride<Overwrite?, String> {
+    with $FunctionalFamilyOverride<Overwrite?, int> {
   const ProfileOverwriteFamily._()
     : super(
         retry: null,
@@ -2512,7 +2512,7 @@ final class ProfileOverwriteFamily extends $Family
         isAutoDispose: true,
       );
 
-  ProfileOverwriteProvider call(String profileId) =>
+  ProfileOverwriteProvider call(int profileId) =>
       ProfileOverwriteProvider._(argument: profileId, from: this);
 
   @override
@@ -2581,7 +2581,7 @@ final class SetupStateProvider
     with $Provider<SetupState> {
   const SetupStateProvider._({
     required SetupStateFamily super.from,
-    required String super.argument,
+    required int? super.argument,
   }) : super(
          retry: null,
          name: r'setupStateProvider',
@@ -2607,7 +2607,7 @@ final class SetupStateProvider
 
   @override
   SetupState create(Ref ref) {
-    final argument = this.argument as String;
+    final argument = this.argument as int?;
     return setupState(ref, argument);
   }
 
@@ -2630,10 +2630,10 @@ final class SetupStateProvider
   }
 }
 
-String _$setupStateHash() => r'f4a7cd47c996bb6de04ee84716d59feca6bb7bc9';
+String _$setupStateHash() => r'd8c17e6ac80033e8e45652ffa3100c2a2228b485';
 
 final class SetupStateFamily extends $Family
-    with $FunctionalFamilyOverride<SetupState, String> {
+    with $FunctionalFamilyOverride<SetupState, int?> {
   const SetupStateFamily._()
     : super(
         retry: null,
@@ -2643,7 +2643,7 @@ final class SetupStateFamily extends $Family
         isAutoDispose: true,
       );
 
-  SetupStateProvider call(String profileId) =>
+  SetupStateProvider call(int? profileId) =>
       SetupStateProvider._(argument: profileId, from: this);
 
   @override

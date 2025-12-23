@@ -527,7 +527,7 @@ abstract class OldScript with _$OldScript {
 @freezed
 abstract class Script with _$Script {
   const factory Script({
-    required String id,
+    required int id,
     required String label,
     required DateTime lastUpdateTime,
   }) = _Script;
@@ -536,7 +536,7 @@ abstract class Script with _$Script {
 
   factory Script.create({required String label}) {
     return Script(
-      id: utils.uuidV4,
+      id: snowflake.id,
       label: label,
       lastUpdateTime: DateTime.now(),
     );
@@ -544,7 +544,7 @@ abstract class Script with _$Script {
 }
 
 extension ScriptsExt on List<Script> {
-  Script? get(String? id) {
+  Script? get(int? id) {
     if (id == null) {
       return null;
     }
@@ -557,7 +557,7 @@ extension ScriptsExt on List<Script> {
 }
 
 extension ScriptExt on Script {
-  Future<String> get path async => await appPath.getScriptPath(id);
+  Future<String> get path async => await appPath.getScriptPath(id.toString());
 
   Future<String?> get content async {
     final file = File(await path);
@@ -567,12 +567,21 @@ extension ScriptExt on Script {
     return null;
   }
 
-  Future<Script> saveAndCopy(String context) async {
+  Future<Script> save(String content) async {
     final file = File(await path);
     if (!await file.exists()) {
       await file.create(recursive: true);
     }
-    await file.writeAsString(context);
+    await file.writeAsString(content);
+    return copyWith(lastUpdateTime: DateTime.now());
+  }
+
+  Future<Script> saveWithPath(String copyPath) async {
+    final file = File(await path);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    }
+    await File(copyPath).copy(copyPath);
     return copyWith(lastUpdateTime: DateTime.now());
   }
 }

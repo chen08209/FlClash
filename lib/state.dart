@@ -4,6 +4,7 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 
 import 'package:animations/animations.dart';
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/theme.dart';
@@ -145,20 +146,19 @@ class GlobalState {
         : Config(themeProps: defaultThemeProps);
     await isar.writeTxn(() async {
       await isar.profileCollections.putAll(
-        migrationData.profiles.map(ProfileCollection.fromProfile).toList(),
-      );
-      final oldScripts = await oldScriptsToScriptsTask(
-        migrationData.oldScripts,
+        migrationData.profiles.mapIndexed((index, profile) {
+          return ProfileCollection.fromProfile(profile, index);
+        }).toList(),
       );
       await isar.scriptCollections.putAll(
-        oldScripts.map(ScriptCollection.formScript).toList(),
+        migrationData.scripts.map(ScriptCollection.formScript).toList(),
       );
       await isar.ruleCollections.putAll(
         migrationData.rules.map(RuleCollection.formRule).toList(),
       );
     });
     final results = await Future.wait([
-      isar.profileCollections.where().findAll(),
+      isar.profileCollections.where().sortByOrder().findAll(),
       isar.scriptCollections.where().findAll(),
       isar.ruleCollections.where().findAll(),
     ]);
@@ -189,7 +189,7 @@ class GlobalState {
         await file.writeAsString(oldScript.content);
         scripts.add(
           Script(
-            id: oldScript.id,
+            id: snowflake.id,
             label: oldScript.label,
             lastUpdateTime: DateTime.now(),
           ),
@@ -371,7 +371,7 @@ class GlobalState {
     return params;
   }
 
-  Future<Map> getProfileMap(String profileId) async {
+  Future<Map> getProfileMap(int profileId) async {
     var res = {};
     try {
       final setupState = globalState.getSetupState(profileId);
@@ -436,10 +436,10 @@ class GlobalState {
     required ClashConfig patchConfig,
   }) async {
     final profileId = setupState.profileId;
-    if (profileId?.isNotEmpty != true) {
+    if (profileId == null) {
       return {};
     }
-    final configMap = await getProfileConfig(profileId!);
+    final configMap = await getProfileConfig(profileId);
     String? scriptContent;
     final List<Rule> addedRules = [];
     if (setupState.overwriteType == OverwriteType.script) {
@@ -497,7 +497,7 @@ class GlobalState {
     return value ?? config;
   }
 
-  SetupState getSetupState(String? profileId) {
+  SetupState getSetupState(int? profileId) {
     final profile = profiles.getProfile(profileId);
     final profileState = VM3(
       a: profile?.id,
@@ -525,7 +525,7 @@ class GlobalState {
     );
   }
 
-  Future<Map<String, dynamic>> getProfileConfig(String profileId) async {
+  Future<Map<String, dynamic>> getProfileConfig(int profileId) async {
     final configMap = await coreController.getConfig(profileId);
     configMap['rules'] = configMap['rule'];
     configMap.remove('rule');

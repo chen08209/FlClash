@@ -45,7 +45,7 @@ abstract class StartButtonSelectorState with _$StartButtonSelectorState {
 abstract class ProfilesSelectorState with _$ProfilesSelectorState {
   const factory ProfilesSelectorState({
     required List<Profile> profiles,
-    required String? currentProfileId,
+    required int? currentProfileId,
     required int columns,
   }) = _ProfilesSelectorState;
 }
@@ -262,7 +262,7 @@ abstract class ComputeGroupsState with _$ComputeGroupsState {
 abstract class MakeRealProfileState with _$MakeRealProfileState {
   const factory MakeRealProfileState({
     required String profilesPath,
-    required String profileId,
+    required int profileId,
     required Map<String, dynamic> rawConfig,
     required ClashConfig realPatchConfig,
     required bool overrideDns,
@@ -277,7 +277,6 @@ abstract class MigrationData with _$MigrationData {
   const factory MigrationData({
     Map<String, Object?>? configMap,
     @Default([]) List<Rule> rules,
-    @Default([]) List<OldScript> oldScripts,
     @Default([]) List<Script> scripts,
     @Default([]) List<Profile> profiles,
   }) = _MigrationData;
@@ -286,11 +285,11 @@ abstract class MigrationData with _$MigrationData {
 @freezed
 abstract class SetupState with _$SetupState {
   const factory SetupState({
-    required String? profileId,
+    required int? profileId,
     required int? profileLastUpdateDate,
     required OverwriteType overwriteType,
     required List<Rule> addedRules,
-    required String? scriptId,
+    required int? scriptId,
     required DateTime? scriptLastUpdateTime,
     required bool overrideDns,
     required Dns dns,

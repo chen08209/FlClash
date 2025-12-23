@@ -23,7 +23,7 @@ Map<String, dynamic> _$SubscriptionInfoToJson(_SubscriptionInfo instance) =>
     };
 
 _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
-  id: json['id'] as String,
+  id: (json['id'] as num).toInt(),
   label: json['label'] as String? ?? '',
   currentGroupName: json['currentGroupName'] as String?,
   url: json['url'] as String? ?? '',
@@ -104,7 +104,7 @@ _StandardOverwrite _$StandardOverwriteFromJson(Map<String, dynamic> json) =>
           const [],
       disabledRuleIds:
           (json['disabledRuleIds'] as List<dynamic>?)
-              ?.map((e) => e as String)
+              ?.map((e) => (e as num).toInt())
               .toList() ??
           const [],
     );
@@ -116,7 +116,7 @@ Map<String, dynamic> _$StandardOverwriteToJson(_StandardOverwrite instance) =>
     };
 
 _ScriptOverwrite _$ScriptOverwriteFromJson(Map<String, dynamic> json) =>
-    _ScriptOverwrite(scriptId: json['scriptId'] as String?);
+    _ScriptOverwrite(scriptId: (json['scriptId'] as num?)?.toInt());
 
 Map<String, dynamic> _$ScriptOverwriteToJson(_ScriptOverwrite instance) =>
     <String, dynamic>{'scriptId': instance.scriptId};

@@ -39,9 +39,9 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     ref.read(rulesProvider.notifier).update((state) => state.updateWith(res));
   }
 
-  void _handleSelected(String ruleId) {
+  void _handleSelected(int ruleId) {
     ref.read(selectedItemsProvider(_key).notifier).update((selectedRules) {
-      final newSelectedRules = Set<String>.from(selectedRules)
+      final newSelectedRules = Set<int>.from(selectedRules)
         ..addOrRemove(ruleId);
       return newSelectedRules;
     });
@@ -148,7 +148,9 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
                       isEditing: selectedRules.isNotEmpty,
                       rule: rule,
                       isSelected: selectedRules.contains(rule.id),
-                      onSelected: _handleSelected,
+                      onSelected: () {
+                        _handleSelected(rule.id);
+                      },
                       onEdit: (Rule rule) {
                         _handleAddOrUpdate(rule);
                       },

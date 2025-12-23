@@ -10,7 +10,6 @@ import 'package:fl_clash/widgets/dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
@@ -138,7 +137,7 @@ class AppController {
     _ref.read(currentProfileIdProvider.notifier).value = profile.id;
   }
 
-  Future<void> deleteProfile(String id) async {
+  Future<void> deleteProfile(int id) async {
     _ref.read(profilesProvider.notifier).deleteProfileById(id);
     clearEffect(id);
     final currentProfileId = _ref.read(currentProfileIdProvider);
@@ -309,7 +308,7 @@ class AppController {
     final realTunEnable = _ref.read(realTunEnableProvider);
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
     final currentProfile = _ref.read(currentProfileProvider);
-    final setupState = _ref.read(setupStateProvider(currentProfile?.id ?? ''));
+    final setupState = _ref.read(setupStateProvider(currentProfile?.id));
     globalState.lastSetupState = setupState;
     if (system.isAndroid) {
       globalState.lastVpnState = _ref.read(vpnStateProvider);
@@ -465,6 +464,12 @@ class AppController {
     await preferences.clearPreferences();
     commonPrint.log('clear preferences');
     globalState.config = Config(themeProps: defaultThemeProps);
+    globalState.isar.close(deleteFromDisk: true);
+    final homeDir = Directory(await appPath.profilesPath);
+    homeDir.list(recursive: true).forEach((e) async {
+      await e.safeDelete(recursive: true);
+    });
+    handleExit();
   }
 
   Future<void> autoCheckUpdate() async {
@@ -745,9 +750,11 @@ class AppController {
     _ref.read(providersProvider.notifier).setProvider(provider);
   }
 
-  Future<void> clearEffect(String profileId) async {
-    final profilePath = await appPath.getProfilePath(profileId);
-    final providersDirPath = await appPath.getProvidersDirPath(profileId);
+  Future<void> clearEffect(int profileId) async {
+    final profilePath = await appPath.getProfilePath(profileId.toString());
+    final providersDirPath = await appPath.getProvidersDirPath(
+      profileId.toString(),
+    );
     final profileFile = File(profilePath);
     final isExists = await profileFile.exists();
     if (isExists) {
@@ -867,61 +874,51 @@ class AppController {
   }
 
   Future<void> restore(RestoreOption option) async {
-    final migrationData = await restoreTask();
     final restoreDirPath = await appPath.restoreDirPath;
     final restoreDir = Directory(restoreDirPath);
-    if (!await restoreDir.exists()) {
-      throw '恢复异常';
-    }
     final recoveryStrategy = _ref.read(
       appSettingProvider.select((state) => state.recoveryStrategy),
     );
-    String getRestoreProfilePath(String id) {
-      return join(restoreDirPath, 'profiles', '$id.yaml');
-    }
+    final isOverride = recoveryStrategy == RecoveryStrategy.override;
+    try {
+      final migrationData = await restoreTask();
+      if (!await restoreDir.exists()) {
+        throw '恢复异常';
+      }
 
-    final profiles = migrationData.profiles;
-    if (recoveryStrategy == RecoveryStrategy.override) {
-      final List<Profile> newProfiles = [];
-      for (final profile in profiles) {
-        final newProfile = await profile.saveFileWithPath(
-          getRestoreProfilePath(profile.id),
-        );
-        newProfiles.add(newProfile);
+      final profiles = migrationData.profiles;
+      if (isOverride) {
+        _ref.read(profilesProvider.notifier).value = profiles;
+      } else {
+        for (final profile in profiles) {
+          _ref.read(profilesProvider.notifier).setProfile(profile);
+        }
       }
-      _ref.read(profilesProvider.notifier).value = newProfiles;
-    } else {
-      for (final profile in profiles) {
-        final newProfile = await profile.saveFileWithPath(
-          getRestoreProfilePath(profile.id),
-        );
-        _ref.read(profilesProvider.notifier).setProfile(newProfile);
-      }
-    }
-    if (option != RestoreOption.onlyProfiles) {
       final configMap = migrationData.configMap;
-      if (configMap != null) {
-        final config = Config.fromJson(configMap);
-        _ref.read(patchClashConfigProvider.notifier).value =
-            config.patchClashConfig;
-        _ref.read(appSettingProvider.notifier).value = config.appSettingProps;
-        _ref.read(currentProfileIdProvider.notifier).value =
-            config.currentProfileId;
-        _ref.read(davSettingProvider.notifier).value = config.davProps;
-        _ref.read(themeSettingProvider.notifier).value = config.themeProps;
-        _ref.read(windowSettingProvider.notifier).value = config.windowProps;
-        _ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
-        _ref.read(proxiesStyleSettingProvider.notifier).value =
-            config.proxiesStyleProps;
-        _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
-        _ref.read(networkSettingProvider.notifier).value = config.networkProps;
-        _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
-        // _ref.read(scriptsProvider.notifier).value = config.scripts;
-        // _ref.read(rulesProvider.notifier).value = config.rules;
+      if (option == RestoreOption.onlyProfiles || configMap == null) {
+        return;
       }
+      final config = Config.fromJson(configMap);
+      _ref.read(patchClashConfigProvider.notifier).value =
+          config.patchClashConfig;
+      _ref.read(appSettingProvider.notifier).value = config.appSettingProps;
+      _ref.read(currentProfileIdProvider.notifier).value =
+          config.currentProfileId;
+      _ref.read(davSettingProvider.notifier).value = config.davProps;
+      _ref.read(themeSettingProvider.notifier).value = config.themeProps;
+      _ref.read(windowSettingProvider.notifier).value = config.windowProps;
+      _ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
+      _ref.read(proxiesStyleSettingProvider.notifier).value =
+          config.proxiesStyleProps;
+      _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
+      _ref.read(networkSettingProvider.notifier).value = config.networkProps;
+      _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
+      _ref.read(scriptsProvider.notifier).value = migrationData.scripts;
+      _ref.read(rulesProvider.notifier).value = migrationData.rules;
+      return;
+    } finally {
+      await restoreDir.safeDelete(recursive: true);
     }
-    await restoreDir.safeDelete();
-    return;
   }
 
   void checkNeedSetup() {

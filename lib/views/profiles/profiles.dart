@@ -47,7 +47,9 @@ class _ProfilesViewState extends State<ProfilesView> {
       try {
         await globalState.appController.updateProfile(profile);
       } catch (e) {
-        messages.add('${profile.label.getSafeValue(profile.id)}: $e \n');
+        messages.add(
+          '${profile.label.getSafeValue(profile.id.toString())}: $e \n',
+        );
         globalState.appController.setProfile(
           profile.copyWith(isUpdating: false),
         );
@@ -141,7 +143,9 @@ class _ProfilesViewState extends State<ProfilesView> {
                         )
                           GridItem(
                             child: ProfileItem(
-                              key: Key(profilesSelectorState.profiles[i].id),
+                              key: Key(
+                                profilesSelectorState.profiles[i].id.toString(),
+                              ),
                               profile: profilesSelectorState.profiles[i],
                               groupValue:
                                   profilesSelectorState.currentProfileId,
@@ -165,8 +169,8 @@ class _ProfilesViewState extends State<ProfilesView> {
 
 class ProfileItem extends StatelessWidget {
   final Profile profile;
-  final String? groupValue;
-  final void Function(String? value) onChanged;
+  final int? groupValue;
+  final void Function(int? value) onChanged;
 
   const ProfileItem({
     super.key,
@@ -196,7 +200,7 @@ class ProfileItem extends StatelessWidget {
     }
 
     final previewPage = EditorPage(
-      title: profile.label.getSafeValue(profile.id),
+      title: profile.label.getSafeValue(profile.id.toString()),
       content: content,
     );
     BaseNavigator.push<String>(context, previewPage);
@@ -264,7 +268,7 @@ class ProfileItem extends StatelessWidget {
       () async {
         final mFile = await profile.file;
         final value = await picker.saveFile(
-          profile.label.getSafeValue(profile.id),
+          profile.label.getSafeValue(profile.id.toString()),
           mFile.readAsBytesSync(),
         );
         if (value == null) return false;
@@ -278,7 +282,7 @@ class ProfileItem extends StatelessWidget {
     }
   }
 
-  void _handlePushGenProfilePage(BuildContext context, String id) {
+  void _handlePushGenProfilePage(BuildContext context, int id) {
     BaseNavigator.push(context, OverwriteView(profileId: id));
   }
 
@@ -290,7 +294,7 @@ class ProfileItem extends StatelessWidget {
         onChanged(profile.id);
       },
       child: ListItem(
-        key: Key(profile.id),
+        key: Key(profile.id.toString()),
         horizontalTitleGap: 16,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         trailing: SizedBox(
@@ -400,7 +404,7 @@ class ProfileItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                profile.label.getSafeValue(profile.id),
+                profile.label.getSafeValue(profile.id.toString()),
                 style: context.textTheme.titleMedium,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -454,12 +458,12 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
     final isFirst = index == 0;
     final profile = profiles[index];
     return CommonInputListItem(
-      key: Key(profile.id),
+      key: Key(profile.id.toString()),
       trailing: ReorderableDelayedDragStartListener(
         index: index,
         child: const Icon(Icons.drag_handle),
       ),
-      title: Text(profile.label.getSafeValue(profile.id)),
+      title: Text(profile.label.getSafeValue(profile.id.toString())),
       isFirst: isFirst,
       isLast: isLast,
       isDecorator: isDecorator,

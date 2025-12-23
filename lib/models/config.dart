@@ -227,7 +227,7 @@ abstract class ThemeProps with _$ThemeProps {
 @freezed
 abstract class Config with _$Config {
   const factory Config({
-    String? currentProfileId,
+    int? currentProfileId,
     @Default(false) bool overrideDns,
     @Default([]) List<HotKeyAction> hotKeyActions,
     @JsonKey(fromJson: AppSettingProps.safeFromJson)

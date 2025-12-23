@@ -82,7 +82,7 @@ class ThemeSetting extends _$ThemeSetting with AutoDisposeNotifierMixin {
 class CurrentProfileId extends _$CurrentProfileId
     with AutoDisposeNotifierMixin {
   @override
-  String? build() {
+  int? build() {
     return globalState.config.currentProfileId;
   }
 

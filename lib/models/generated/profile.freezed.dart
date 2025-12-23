@@ -287,7 +287,7 @@ as int,
 /// @nodoc
 mixin _$Profile {
 
- String get id; String get label; String? get currentGroupName; String get url; DateTime? get lastUpdateDate; Duration get autoUpdateDuration; SubscriptionInfo? get subscriptionInfo; bool get autoUpdate; Map<String, String> get selectedMap; Set<String> get unfoldSet; Overwrite get overwrite;@JsonKey(includeToJson: false, includeFromJson: false) bool get isUpdating;
+ int get id; String get label; String? get currentGroupName; String get url; DateTime? get lastUpdateDate; Duration get autoUpdateDuration; SubscriptionInfo? get subscriptionInfo; bool get autoUpdate; Map<String, String> get selectedMap; Set<String> get unfoldSet; Overwrite get overwrite;@JsonKey(includeToJson: false, includeFromJson: false) bool get isUpdating;
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -320,7 +320,7 @@ abstract mixin class $ProfileCopyWith<$Res>  {
   factory $ProfileCopyWith(Profile value, $Res Function(Profile) _then) = _$ProfileCopyWithImpl;
 @useResult
 $Res call({
- String id, String label, String? currentGroupName, String url, DateTime? lastUpdateDate, Duration autoUpdateDuration, SubscriptionInfo? subscriptionInfo, bool autoUpdate, Map<String, String> selectedMap, Set<String> unfoldSet, Overwrite overwrite,@JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating
+ int id, String label, String? currentGroupName, String url, DateTime? lastUpdateDate, Duration autoUpdateDuration, SubscriptionInfo? subscriptionInfo, bool autoUpdate, Map<String, String> selectedMap, Set<String> unfoldSet, Overwrite overwrite,@JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating
 });
 
 
@@ -340,7 +340,7 @@ class _$ProfileCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? label = null,Object? currentGroupName = freezed,Object? url = null,Object? lastUpdateDate = freezed,Object? autoUpdateDuration = null,Object? subscriptionInfo = freezed,Object? autoUpdate = null,Object? selectedMap = null,Object? unfoldSet = null,Object? overwrite = null,Object? isUpdating = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as int,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,currentGroupName: freezed == currentGroupName ? _self.currentGroupName : currentGroupName // ignore: cast_nullable_to_non_nullable
 as String?,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,lastUpdateDate: freezed == lastUpdateDate ? _self.lastUpdateDate : lastUpdateDate // ignore: cast_nullable_to_non_nullable
@@ -457,7 +457,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String label,  String? currentGroupName,  String url,  DateTime? lastUpdateDate,  Duration autoUpdateDuration,  SubscriptionInfo? subscriptionInfo,  bool autoUpdate,  Map<String, String> selectedMap,  Set<String> unfoldSet,  Overwrite overwrite, @JsonKey(includeToJson: false, includeFromJson: false)  bool isUpdating)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String label,  String? currentGroupName,  String url,  DateTime? lastUpdateDate,  Duration autoUpdateDuration,  SubscriptionInfo? subscriptionInfo,  bool autoUpdate,  Map<String, String> selectedMap,  Set<String> unfoldSet,  Overwrite overwrite, @JsonKey(includeToJson: false, includeFromJson: false)  bool isUpdating)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Profile() when $default != null:
 return $default(_that.id,_that.label,_that.currentGroupName,_that.url,_that.lastUpdateDate,_that.autoUpdateDuration,_that.subscriptionInfo,_that.autoUpdate,_that.selectedMap,_that.unfoldSet,_that.overwrite,_that.isUpdating);case _:
@@ -478,7 +478,7 @@ return $default(_that.id,_that.label,_that.currentGroupName,_that.url,_that.last
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String label,  String? currentGroupName,  String url,  DateTime? lastUpdateDate,  Duration autoUpdateDuration,  SubscriptionInfo? subscriptionInfo,  bool autoUpdate,  Map<String, String> selectedMap,  Set<String> unfoldSet,  Overwrite overwrite, @JsonKey(includeToJson: false, includeFromJson: false)  bool isUpdating)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String label,  String? currentGroupName,  String url,  DateTime? lastUpdateDate,  Duration autoUpdateDuration,  SubscriptionInfo? subscriptionInfo,  bool autoUpdate,  Map<String, String> selectedMap,  Set<String> unfoldSet,  Overwrite overwrite, @JsonKey(includeToJson: false, includeFromJson: false)  bool isUpdating)  $default,) {final _that = this;
 switch (_that) {
 case _Profile():
 return $default(_that.id,_that.label,_that.currentGroupName,_that.url,_that.lastUpdateDate,_that.autoUpdateDuration,_that.subscriptionInfo,_that.autoUpdate,_that.selectedMap,_that.unfoldSet,_that.overwrite,_that.isUpdating);case _:
@@ -498,7 +498,7 @@ return $default(_that.id,_that.label,_that.currentGroupName,_that.url,_that.last
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String label,  String? currentGroupName,  String url,  DateTime? lastUpdateDate,  Duration autoUpdateDuration,  SubscriptionInfo? subscriptionInfo,  bool autoUpdate,  Map<String, String> selectedMap,  Set<String> unfoldSet,  Overwrite overwrite, @JsonKey(includeToJson: false, includeFromJson: false)  bool isUpdating)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String label,  String? currentGroupName,  String url,  DateTime? lastUpdateDate,  Duration autoUpdateDuration,  SubscriptionInfo? subscriptionInfo,  bool autoUpdate,  Map<String, String> selectedMap,  Set<String> unfoldSet,  Overwrite overwrite, @JsonKey(includeToJson: false, includeFromJson: false)  bool isUpdating)?  $default,) {final _that = this;
 switch (_that) {
 case _Profile() when $default != null:
 return $default(_that.id,_that.label,_that.currentGroupName,_that.url,_that.lastUpdateDate,_that.autoUpdateDuration,_that.subscriptionInfo,_that.autoUpdate,_that.selectedMap,_that.unfoldSet,_that.overwrite,_that.isUpdating);case _:
@@ -516,7 +516,7 @@ class _Profile implements Profile {
   const _Profile({required this.id, this.label = '', this.currentGroupName, this.url = '', this.lastUpdateDate, required this.autoUpdateDuration, this.subscriptionInfo, this.autoUpdate = true, final  Map<String, String> selectedMap = const {}, final  Set<String> unfoldSet = const {}, this.overwrite = const Overwrite(), @JsonKey(includeToJson: false, includeFromJson: false) this.isUpdating = false}): _selectedMap = selectedMap,_unfoldSet = unfoldSet;
   factory _Profile.fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);
 
-@override final  String id;
+@override final  int id;
 @override@JsonKey() final  String label;
 @override final  String? currentGroupName;
 @override@JsonKey() final  String url;
@@ -574,7 +574,7 @@ abstract mixin class _$ProfileCopyWith<$Res> implements $ProfileCopyWith<$Res> {
   factory _$ProfileCopyWith(_Profile value, $Res Function(_Profile) _then) = __$ProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String label, String? currentGroupName, String url, DateTime? lastUpdateDate, Duration autoUpdateDuration, SubscriptionInfo? subscriptionInfo, bool autoUpdate, Map<String, String> selectedMap, Set<String> unfoldSet, Overwrite overwrite,@JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating
+ int id, String label, String? currentGroupName, String url, DateTime? lastUpdateDate, Duration autoUpdateDuration, SubscriptionInfo? subscriptionInfo, bool autoUpdate, Map<String, String> selectedMap, Set<String> unfoldSet, Overwrite overwrite,@JsonKey(includeToJson: false, includeFromJson: false) bool isUpdating
 });
 
 
@@ -594,7 +594,7 @@ class __$ProfileCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? label = null,Object? currentGroupName = freezed,Object? url = null,Object? lastUpdateDate = freezed,Object? autoUpdateDuration = null,Object? subscriptionInfo = freezed,Object? autoUpdate = null,Object? selectedMap = null,Object? unfoldSet = null,Object? overwrite = null,Object? isUpdating = null,}) {
   return _then(_Profile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as int,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,currentGroupName: freezed == currentGroupName ? _self.currentGroupName : currentGroupName // ignore: cast_nullable_to_non_nullable
 as String?,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,lastUpdateDate: freezed == lastUpdateDate ? _self.lastUpdateDate : lastUpdateDate // ignore: cast_nullable_to_non_nullable
@@ -942,7 +942,7 @@ $ScriptOverwriteCopyWith<$Res> get scriptOverwrite {
 /// @nodoc
 mixin _$StandardOverwrite {
 
- List<Rule> get addedRules; List<String> get disabledRuleIds;
+ List<Rule> get addedRules; List<int> get disabledRuleIds;
 /// Create a copy of StandardOverwrite
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -975,7 +975,7 @@ abstract mixin class $StandardOverwriteCopyWith<$Res>  {
   factory $StandardOverwriteCopyWith(StandardOverwrite value, $Res Function(StandardOverwrite) _then) = _$StandardOverwriteCopyWithImpl;
 @useResult
 $Res call({
- List<Rule> addedRules, List<String> disabledRuleIds
+ List<Rule> addedRules, List<int> disabledRuleIds
 });
 
 
@@ -996,7 +996,7 @@ class _$StandardOverwriteCopyWithImpl<$Res>
   return _then(_self.copyWith(
 addedRules: null == addedRules ? _self.addedRules : addedRules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,disabledRuleIds: null == disabledRuleIds ? _self.disabledRuleIds : disabledRuleIds // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<int>,
   ));
 }
 
@@ -1081,7 +1081,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Rule> addedRules,  List<String> disabledRuleIds)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Rule> addedRules,  List<int> disabledRuleIds)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _StandardOverwrite() when $default != null:
 return $default(_that.addedRules,_that.disabledRuleIds);case _:
@@ -1102,7 +1102,7 @@ return $default(_that.addedRules,_that.disabledRuleIds);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Rule> addedRules,  List<String> disabledRuleIds)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Rule> addedRules,  List<int> disabledRuleIds)  $default,) {final _that = this;
 switch (_that) {
 case _StandardOverwrite():
 return $default(_that.addedRules,_that.disabledRuleIds);case _:
@@ -1122,7 +1122,7 @@ return $default(_that.addedRules,_that.disabledRuleIds);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Rule> addedRules,  List<String> disabledRuleIds)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Rule> addedRules,  List<int> disabledRuleIds)?  $default,) {final _that = this;
 switch (_that) {
 case _StandardOverwrite() when $default != null:
 return $default(_that.addedRules,_that.disabledRuleIds);case _:
@@ -1137,7 +1137,7 @@ return $default(_that.addedRules,_that.disabledRuleIds);case _:
 @JsonSerializable()
 
 class _StandardOverwrite implements StandardOverwrite {
-  const _StandardOverwrite({final  List<Rule> addedRules = const [], final  List<String> disabledRuleIds = const []}): _addedRules = addedRules,_disabledRuleIds = disabledRuleIds;
+  const _StandardOverwrite({final  List<Rule> addedRules = const [], final  List<int> disabledRuleIds = const []}): _addedRules = addedRules,_disabledRuleIds = disabledRuleIds;
   factory _StandardOverwrite.fromJson(Map<String, dynamic> json) => _$StandardOverwriteFromJson(json);
 
  final  List<Rule> _addedRules;
@@ -1147,8 +1147,8 @@ class _StandardOverwrite implements StandardOverwrite {
   return EqualUnmodifiableListView(_addedRules);
 }
 
- final  List<String> _disabledRuleIds;
-@override@JsonKey() List<String> get disabledRuleIds {
+ final  List<int> _disabledRuleIds;
+@override@JsonKey() List<int> get disabledRuleIds {
   if (_disabledRuleIds is EqualUnmodifiableListView) return _disabledRuleIds;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_disabledRuleIds);
@@ -1188,7 +1188,7 @@ abstract mixin class _$StandardOverwriteCopyWith<$Res> implements $StandardOverw
   factory _$StandardOverwriteCopyWith(_StandardOverwrite value, $Res Function(_StandardOverwrite) _then) = __$StandardOverwriteCopyWithImpl;
 @override @useResult
 $Res call({
- List<Rule> addedRules, List<String> disabledRuleIds
+ List<Rule> addedRules, List<int> disabledRuleIds
 });
 
 
@@ -1209,7 +1209,7 @@ class __$StandardOverwriteCopyWithImpl<$Res>
   return _then(_StandardOverwrite(
 addedRules: null == addedRules ? _self._addedRules : addedRules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,disabledRuleIds: null == disabledRuleIds ? _self._disabledRuleIds : disabledRuleIds // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<int>,
   ));
 }
 
@@ -1220,7 +1220,7 @@ as List<String>,
 /// @nodoc
 mixin _$ScriptOverwrite {
 
- String? get scriptId;
+ int? get scriptId;
 /// Create a copy of ScriptOverwrite
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1253,7 +1253,7 @@ abstract mixin class $ScriptOverwriteCopyWith<$Res>  {
   factory $ScriptOverwriteCopyWith(ScriptOverwrite value, $Res Function(ScriptOverwrite) _then) = _$ScriptOverwriteCopyWithImpl;
 @useResult
 $Res call({
- String? scriptId
+ int? scriptId
 });
 
 
@@ -1273,7 +1273,7 @@ class _$ScriptOverwriteCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? scriptId = freezed,}) {
   return _then(_self.copyWith(
 scriptId: freezed == scriptId ? _self.scriptId : scriptId // ignore: cast_nullable_to_non_nullable
-as String?,
+as int?,
   ));
 }
 
@@ -1358,7 +1358,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? scriptId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? scriptId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ScriptOverwrite() when $default != null:
 return $default(_that.scriptId);case _:
@@ -1379,7 +1379,7 @@ return $default(_that.scriptId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? scriptId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? scriptId)  $default,) {final _that = this;
 switch (_that) {
 case _ScriptOverwrite():
 return $default(_that.scriptId);case _:
@@ -1399,7 +1399,7 @@ return $default(_that.scriptId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? scriptId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? scriptId)?  $default,) {final _that = this;
 switch (_that) {
 case _ScriptOverwrite() when $default != null:
 return $default(_that.scriptId);case _:
@@ -1417,7 +1417,7 @@ class _ScriptOverwrite implements ScriptOverwrite {
   const _ScriptOverwrite({this.scriptId});
   factory _ScriptOverwrite.fromJson(Map<String, dynamic> json) => _$ScriptOverwriteFromJson(json);
 
-@override final  String? scriptId;
+@override final  int? scriptId;
 
 /// Create a copy of ScriptOverwrite
 /// with the given fields replaced by the non-null parameter values.
@@ -1452,7 +1452,7 @@ abstract mixin class _$ScriptOverwriteCopyWith<$Res> implements $ScriptOverwrite
   factory _$ScriptOverwriteCopyWith(_ScriptOverwrite value, $Res Function(_ScriptOverwrite) _then) = __$ScriptOverwriteCopyWithImpl;
 @override @useResult
 $Res call({
- String? scriptId
+ int? scriptId
 });
 
 
@@ -1472,7 +1472,7 @@ class __$ScriptOverwriteCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? scriptId = freezed,}) {
   return _then(_ScriptOverwrite(
 scriptId: freezed == scriptId ? _self.scriptId : scriptId // ignore: cast_nullable_to_non_nullable
-as String?,
+as int?,
   ));
 }
 

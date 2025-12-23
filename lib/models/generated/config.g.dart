@@ -305,7 +305,7 @@ const _$DynamicSchemeVariantEnumMap = {
 };
 
 _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
-  currentProfileId: json['currentProfileId'] as String?,
+  currentProfileId: (json['currentProfileId'] as num?)?.toInt(),
   overrideDns: json['overrideDns'] as bool? ?? false,
   hotKeyActions:
       (json['hotKeyActions'] as List<dynamic>?)

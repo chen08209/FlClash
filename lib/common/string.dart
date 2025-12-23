@@ -88,7 +88,7 @@ extension StringExtension on String {
   }
 }
 
-extension StringExtensionSafe on String? {
+extension StringNullExt on String? {
   String getSafeValue(String defaultValue) {
     if (this == null || this!.isEmpty) {
       return defaultValue;
