@@ -5,7 +5,6 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:crypto/crypto.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:path/path.dart';
 
 enum Target { windows, linux, android, macos }
@@ -186,7 +185,7 @@ class Build {
     final targetOutFilePath = join(outDir, target.name);
     final targetOutFile = File(targetOutFilePath);
     if (await targetOutFile.exists()) {
-      await targetOutFile.safeDelete(recursive: true);
+      await targetOutFile.delete(recursive: true);
       await Directory(targetOutFilePath).create(recursive: true);
     }
     for (final item in items) {
@@ -261,7 +260,7 @@ class Build {
       if (coreFiles.contains(file)) {
         continue;
       }
-      await realFile.safeDelete();
+      await realFile.delete();
     }
   }
 
