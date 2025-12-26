@@ -83,7 +83,7 @@ class BackupAndRecovery extends ConsumerWidget {
         if (path.isEmpty) {
           return false;
         }
-        final value = await picker.saveFileWithLocalPath(
+        final value = await picker.saveFileWithPath(
           utils.getBackupFileName(),
           path,
         );

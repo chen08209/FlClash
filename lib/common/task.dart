@@ -465,9 +465,6 @@ Future<String> _backupTask<T>(
   final configStr = json.encode(configMap);
   final profilesDir = Directory(await appPath.profilesPath);
   final scriptsDir = Directory(await appPath.scriptsDirPath);
-  if (!await profilesDir.exists()) {
-    return '';
-  }
   final tempZipFilePath = await appPath.tempFilePath;
   final tempDBFile = File(await appPath.tempFilePath);
   final tempConfigFile = File(await appPath.tempFilePath);

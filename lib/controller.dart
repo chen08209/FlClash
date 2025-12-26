@@ -882,8 +882,7 @@ class AppController {
     final file = await File(tempFilePath).create(recursive: true);
     await file.writeAsString(logString);
     bool res = false;
-    res =
-        await picker.saveFileWithLocalPath(utils.logFile, tempFilePath) != null;
+    res = await picker.saveFileWithPath(utils.logFile, tempFilePath) != null;
     return res;
   }
 
