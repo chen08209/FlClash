@@ -124,18 +124,13 @@ int _profileCollectionEstimateSize(
     }
   }
   bytesCount += 3 + object.label.length * 3;
-  {
-    final value = object.overwrite;
-    if (value != null) {
-      bytesCount +=
-          3 +
-          OverwriteEmbeddedSchema.estimateSize(
-            value,
-            allOffsets[OverwriteEmbedded]!,
-            allOffsets,
-          );
-    }
-  }
+  bytesCount +=
+      3 +
+      OverwriteEmbeddedSchema.estimateSize(
+        object.overwrite,
+        allOffsets[OverwriteEmbedded]!,
+        allOffsets,
+      );
   bytesCount += 3 + object.selectedMapEntries.length * 3;
   {
     final offsets = allOffsets[StringMapEntryEmbedded]!;
@@ -219,11 +214,13 @@ ProfileCollection _profileCollectionDeserialize(
   object.label = reader.readString(offsets[3]);
   object.lastUpdateDate = reader.readDateTimeOrNull(offsets[4]);
   object.order = reader.readLong(offsets[5]);
-  object.overwrite = reader.readObjectOrNull<OverwriteEmbedded>(
-    offsets[6],
-    OverwriteEmbeddedSchema.deserialize,
-    allOffsets,
-  );
+  object.overwrite =
+      reader.readObjectOrNull<OverwriteEmbedded>(
+        offsets[6],
+        OverwriteEmbeddedSchema.deserialize,
+        allOffsets,
+      ) ??
+      OverwriteEmbedded();
   object.selectedMapEntries =
       reader.readObjectList<StringMapEntryEmbedded>(
         offsets[7],
@@ -263,10 +260,11 @@ P _profileCollectionDeserializeProp<P>(
       return (reader.readLong(offset)) as P;
     case 6:
       return (reader.readObjectOrNull<OverwriteEmbedded>(
-            offset,
-            OverwriteEmbeddedSchema.deserialize,
-            allOffsets,
-          ))
+                offset,
+                OverwriteEmbeddedSchema.deserialize,
+                allOffsets,
+              ) ??
+              OverwriteEmbedded())
           as P;
     case 7:
       return (reader.readObjectList<StringMapEntryEmbedded>(
@@ -1052,24 +1050,6 @@ extension ProfileCollectionQueryFilter
           upper: upper,
           includeUpper: includeUpper,
         ),
-      );
-    });
-  }
-
-  QueryBuilder<ProfileCollection, ProfileCollection, QAfterFilterCondition>
-  overwriteIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        const FilterCondition.isNull(property: r'overwrite'),
-      );
-    });
-  }
-
-  QueryBuilder<ProfileCollection, ProfileCollection, QAfterFilterCondition>
-  overwriteIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        const FilterCondition.isNotNull(property: r'overwrite'),
       );
     });
   }
@@ -1899,7 +1879,7 @@ extension ProfileCollectionQueryProperty
     });
   }
 
-  QueryBuilder<ProfileCollection, OverwriteEmbedded?, QQueryOperations>
+  QueryBuilder<ProfileCollection, OverwriteEmbedded, QQueryOperations>
   overwriteProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'overwrite');
@@ -1949,7 +1929,8 @@ const RuleCollectionSchema = CollectionSchema(
   name: r'Rule',
   id: -2659006343538057288,
   properties: {
-    r'value': PropertySchema(id: 0, name: r'value', type: IsarType.string),
+    r'order': PropertySchema(id: 0, name: r'order', type: IsarType.long),
+    r'value': PropertySchema(id: 1, name: r'value', type: IsarType.string),
   },
 
   estimateSize: _ruleCollectionEstimateSize,
@@ -1957,7 +1938,21 @@ const RuleCollectionSchema = CollectionSchema(
   deserialize: _ruleCollectionDeserialize,
   deserializeProp: _ruleCollectionDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'order': IndexSchema(
+      id: 5897270977454184057,
+      name: r'order',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'order',
+          type: IndexType.value,
+          caseSensitive: false,
+        ),
+      ],
+    ),
+  },
   links: {},
   embeddedSchemas: {},
 
@@ -1983,7 +1978,8 @@ void _ruleCollectionSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.value);
+  writer.writeLong(offsets[0], object.order);
+  writer.writeString(offsets[1], object.value);
 }
 
 RuleCollection _ruleCollectionDeserialize(
@@ -1994,7 +1990,8 @@ RuleCollection _ruleCollectionDeserialize(
 ) {
   final object = RuleCollection();
   object.id = id;
-  object.value = reader.readString(offsets[0]);
+  object.order = reader.readLong(offsets[0]);
+  object.value = reader.readString(offsets[1]);
   return object;
 }
 
@@ -2006,6 +2003,8 @@ P _ruleCollectionDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readLong(offset)) as P;
+    case 1:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -2033,6 +2032,14 @@ extension RuleCollectionQueryWhereSort
   QueryBuilder<RuleCollection, RuleCollection, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterWhere> anyOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'order'),
+      );
     });
   }
 }
@@ -2110,6 +2117,108 @@ extension RuleCollectionQueryWhere
       );
     });
   }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterWhereClause> orderEqualTo(
+    int order,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'order', value: [order]),
+      );
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterWhereClause>
+  orderNotEqualTo(int order) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'order',
+                lower: [],
+                upper: [order],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'order',
+                lower: [order],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'order',
+                lower: [order],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'order',
+                lower: [],
+                upper: [order],
+                includeUpper: false,
+              ),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterWhereClause>
+  orderGreaterThan(int order, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'order',
+          lower: [order],
+          includeLower: include,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterWhereClause> orderLessThan(
+    int order, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'order',
+          lower: [],
+          upper: [order],
+          includeUpper: include,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterWhereClause> orderBetween(
+    int lowerOrder,
+    int upperOrder, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'order',
+          lower: [lowerOrder],
+          includeLower: includeLower,
+          upper: [upperOrder],
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
 }
 
 extension RuleCollectionQueryFilter
@@ -2160,6 +2269,61 @@ extension RuleCollectionQueryFilter
       return query.addFilterCondition(
         FilterCondition.between(
           property: r'id',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterFilterCondition>
+  orderEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'order', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterFilterCondition>
+  orderGreaterThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'order',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterFilterCondition>
+  orderLessThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'order',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterFilterCondition>
+  orderBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'order',
           lower: lower,
           includeLower: includeLower,
           upper: upper,
@@ -2319,6 +2483,18 @@ extension RuleCollectionQueryLinks
 
 extension RuleCollectionQuerySortBy
     on QueryBuilder<RuleCollection, RuleCollection, QSortBy> {
+  QueryBuilder<RuleCollection, RuleCollection, QAfterSortBy> sortByOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'order', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterSortBy> sortByOrderDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'order', Sort.desc);
+    });
+  }
+
   QueryBuilder<RuleCollection, RuleCollection, QAfterSortBy> sortByValue() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'value', Sort.asc);
@@ -2346,6 +2522,18 @@ extension RuleCollectionQuerySortThenBy
     });
   }
 
+  QueryBuilder<RuleCollection, RuleCollection, QAfterSortBy> thenByOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'order', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RuleCollection, RuleCollection, QAfterSortBy> thenByOrderDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'order', Sort.desc);
+    });
+  }
+
   QueryBuilder<RuleCollection, RuleCollection, QAfterSortBy> thenByValue() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'value', Sort.asc);
@@ -2361,6 +2549,12 @@ extension RuleCollectionQuerySortThenBy
 
 extension RuleCollectionQueryWhereDistinct
     on QueryBuilder<RuleCollection, RuleCollection, QDistinct> {
+  QueryBuilder<RuleCollection, RuleCollection, QDistinct> distinctByOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'order');
+    });
+  }
+
   QueryBuilder<RuleCollection, RuleCollection, QDistinct> distinctByValue({
     bool caseSensitive = true,
   }) {
@@ -2375,6 +2569,12 @@ extension RuleCollectionQueryProperty
   QueryBuilder<RuleCollection, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<RuleCollection, int, QQueryOperations> orderProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'order');
     });
   }
 
@@ -3388,7 +3588,8 @@ const RuleEmbeddedSchema = Schema(
   id: -590334916944944295,
   properties: {
     r'id': PropertySchema(id: 0, name: r'id', type: IsarType.long),
-    r'value': PropertySchema(id: 1, name: r'value', type: IsarType.string),
+    r'order': PropertySchema(id: 1, name: r'order', type: IsarType.long),
+    r'value': PropertySchema(id: 2, name: r'value', type: IsarType.string),
   },
 
   estimateSize: _ruleEmbeddedEstimateSize,
@@ -3414,7 +3615,8 @@ void _ruleEmbeddedSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.id);
-  writer.writeString(offsets[1], object.value);
+  writer.writeLong(offsets[1], object.order);
+  writer.writeString(offsets[2], object.value);
 }
 
 RuleEmbedded _ruleEmbeddedDeserialize(
@@ -3425,7 +3627,8 @@ RuleEmbedded _ruleEmbeddedDeserialize(
 ) {
   final object = RuleEmbedded();
   object.id = reader.readLong(offsets[0]);
-  object.value = reader.readString(offsets[1]);
+  object.order = reader.readLong(offsets[1]);
+  object.value = reader.readString(offsets[2]);
   return object;
 }
 
@@ -3439,6 +3642,8 @@ P _ruleEmbeddedDeserializeProp<P>(
     case 0:
       return (reader.readLong(offset)) as P;
     case 1:
+      return (reader.readLong(offset)) as P;
+    case 2:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -3497,6 +3702,63 @@ extension RuleEmbeddedQueryFilter
       return query.addFilterCondition(
         FilterCondition.between(
           property: r'id',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<RuleEmbedded, RuleEmbedded, QAfterFilterCondition> orderEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'order', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<RuleEmbedded, RuleEmbedded, QAfterFilterCondition>
+  orderGreaterThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'order',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<RuleEmbedded, RuleEmbedded, QAfterFilterCondition> orderLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'order',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<RuleEmbedded, RuleEmbedded, QAfterFilterCondition> orderBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'order',
           lower: lower,
           includeLower: includeLower,
           upper: upper,

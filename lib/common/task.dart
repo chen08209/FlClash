@@ -428,6 +428,10 @@ Future<MigrationData> _oldToNowTask(
 
     final sourceFile = File(getProfilePath(sourcePath, rawId));
     final targetFilePath = getProfilePath(targetPath, id.toString());
+    final targetFile = File(targetFilePath);
+    if (!await targetFile.exists()) {
+      await targetFile.create(recursive: true);
+    }
     await sourceFile.safeCopy(targetFilePath);
     profiles.add(Profile.fromJson(rawProfile));
   }
@@ -461,6 +465,9 @@ Future<String> _backupTask<T>(
   final configStr = json.encode(configMap);
   final profilesDir = Directory(await appPath.profilesPath);
   final scriptsDir = Directory(await appPath.scriptsDirPath);
+  if (!await profilesDir.exists()) {
+    return '';
+  }
   final tempZipFilePath = await appPath.tempFilePath;
   final tempDBFile = File(await appPath.tempFilePath);
   final tempConfigFile = File(await appPath.tempFilePath);
@@ -555,21 +562,4 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   );
   await isar.close();
   return migrationData;
-
-  // if (file.name == 'config.json') {
-  //   configArchiveFile = file;
-  // } else if (file.name == 'backup.db') {
-  //   isarArchiveFile = file;
-  // } else {
-  //   others.add(file);
-  // }
-  // if (configArchiveFile == null) {
-  //   return;
-  // }
-  // final configMap = json.decode(utf8.decode(configArchiveFile.content));
-  // final version = configMap['version'] ?? 0;
-  // if (version == 0 && version != migration.currentVersion) {
-  //   final data = await _oldToNowTask(configMap);
-  // }
-  // await input.close();
 }

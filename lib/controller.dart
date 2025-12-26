@@ -466,9 +466,9 @@ class AppController {
     globalState.config = Config(themeProps: defaultThemeProps);
     globalState.isar.close(deleteFromDisk: true);
     final homeDir = Directory(await appPath.profilesPath);
-    homeDir.list(recursive: true).forEach((e) async {
-      await e.safeDelete(recursive: true);
-    });
+    await for (final file in homeDir.list(recursive: true)) {
+      await file.safeDelete();
+    }
     handleExit();
   }
 

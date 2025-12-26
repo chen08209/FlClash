@@ -489,8 +489,8 @@ class Profiles extends _$Profiles with AutoDisposeNotifierMixin {
       profiles: value,
     );
     globalState.isar.writeTxn(() async {
-      final newProfileCollections = value.mapIndexed((index, profile) {
-        return ProfileCollection.fromProfile(profile, index);
+      final newProfileCollections = value.mapIndexed((index, item) {
+        return ProfileCollection.fromProfile(item, index);
       }).toList();
       await globalState.isar.profileCollections.setAll(
         newProfileCollections,
@@ -532,7 +532,7 @@ class Scripts extends _$Scripts with AutoDisposeNotifierMixin {
     );
     globalState.isar.writeTxn(() async {
       final newScriptCollections = value
-          .map(ScriptCollection.formScript)
+          .map(ScriptCollection.fromScript)
           .toList();
       await globalState.isar.scriptCollections.setAll(
         newScriptCollections,
@@ -578,7 +578,9 @@ class Rules extends _$Rules with AutoDisposeNotifierMixin {
   onUpdate(value) {
     globalState.runningState = globalState.runningState.copyWith(rules: value);
     globalState.isar.writeTxn(() async {
-      final newRuleCollections = value.map(RuleCollection.formRule).toList();
+      final newRuleCollections = value.mapIndexed((index, item) {
+        return RuleCollection.fromRule(item, index);
+      }).toList();
       await globalState.isar.ruleCollections.setAll(
         newRuleCollections,
         getId: (item) => item.id,

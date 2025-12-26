@@ -29,10 +29,13 @@ class RuleEmbedded {
   late int id;
   late String value;
 
-  static RuleEmbedded fromRule(Rule rule) {
+  int order = -1;
+
+  static RuleEmbedded fromRule(Rule rule, {int? order}) {
     return RuleEmbedded()
       ..id = rule.id
-      ..value = rule.value;
+      ..value = rule.value
+      ..order = order ?? rule.order;
   }
 
   Rule toRule() {
@@ -165,14 +168,14 @@ class ProfileCollection {
 
   List<String> unfoldList = [];
 
-  OverwriteEmbedded? overwrite;
+  late OverwriteEmbedded overwrite;
 
   final customRules = IsarLinks<RuleCollection>();
 
   @Index()
   int order = -1;
 
-  static ProfileCollection fromProfile(Profile profile, [order = -1]) {
+  static ProfileCollection fromProfile(Profile profile, [int? order]) {
     return ProfileCollection()
       ..id = profile.id
       ..label = profile.label
@@ -191,7 +194,7 @@ class ProfileCollection {
           .toList()
       ..unfoldList = profile.unfoldSet.toList()
       ..overwrite = OverwriteEmbedded.fromOverwrite(profile.overwrite)
-      ..order = order;
+      ..order = order ?? profile.order;
   }
 
   Profile toProfile() {
@@ -210,7 +213,7 @@ class ProfileCollection {
       autoUpdate: autoUpdate,
       selectedMap: selectedMap,
       unfoldSet: unfoldList.toSet(),
-      overwrite: overwrite?.toOverwrite() ?? const Overwrite(),
+      overwrite: overwrite.toOverwrite(),
     );
   }
 }
@@ -222,10 +225,14 @@ class RuleCollection {
 
   late String value;
 
-  static RuleCollection formRule(Rule rule, [int order = -1]) {
+  @Index()
+  int order = -1;
+
+  static RuleCollection fromRule(Rule rule, [int? order]) {
     return RuleCollection()
       ..id = rule.id
-      ..value = rule.value;
+      ..value = rule.value
+      ..order = order ?? rule.order;
   }
 
   Rule toRule() {
@@ -242,7 +249,7 @@ class ScriptCollection {
 
   late DateTime lastUpdateTime;
 
-  static ScriptCollection formScript(Script script) {
+  static ScriptCollection fromScript(Script script) {
     return ScriptCollection()
       ..id = script.id
       ..label = script.label

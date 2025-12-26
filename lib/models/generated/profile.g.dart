@@ -50,6 +50,7 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   overwrite: json['overwrite'] == null
       ? const Overwrite()
       : Overwrite.fromJson(json['overwrite'] as Map<String, dynamic>),
+  order: (json['order'] as num?)?.toInt() ?? -1,
 );
 
 Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
@@ -64,6 +65,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'selectedMap': instance.selectedMap,
   'unfoldSet': instance.unfoldSet.toList(),
   'overwrite': instance.overwrite,
+  'order': instance.order,
 };
 
 _Overwrite _$OverwriteFromJson(Map<String, dynamic> json) => _Overwrite(

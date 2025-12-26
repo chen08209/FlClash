@@ -29,6 +29,9 @@ class BackupAndRecovery extends ConsumerWidget {
     final res = await globalState.appController.safeRun<bool>(
       () async {
         final path = await globalState.backup();
+        if (path.isEmpty) {
+          return false;
+        }
         return await client.backup(path);
       },
       needLoading: true,
@@ -77,6 +80,9 @@ class BackupAndRecovery extends ConsumerWidget {
     final res = await globalState.appController.safeRun<bool>(
       () async {
         final path = await globalState.backup();
+        if (path.isEmpty) {
+          return false;
+        }
         final value = await picker.saveFileWithLocalPath(
           utils.getBackupFileName(),
           path,

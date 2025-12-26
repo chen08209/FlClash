@@ -102,8 +102,7 @@ class AppPath {
   }
 
   Future<String> getProfilePath(String fileName) async {
-    final path = await profilesPath;
-    return join(path, '$fileName.yaml');
+    return join(await profilesPath, '$fileName.yaml');
   }
 
   Future<String> get scriptsDirPath async {

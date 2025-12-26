@@ -70,7 +70,7 @@ class Preferences {
 
   Future<void> clearPreferences() async {
     final sharedPreferencesIns = await sharedPreferencesCompleter.future;
-    sharedPreferencesIns?.clear();
+    await sharedPreferencesIns?.clear();
   }
 }
 

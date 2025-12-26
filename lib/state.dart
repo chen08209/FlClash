@@ -151,16 +151,18 @@ class GlobalState {
         }).toList(),
       );
       await isar.scriptCollections.putAll(
-        migrationData.scripts.map(ScriptCollection.formScript).toList(),
+        migrationData.scripts.map(ScriptCollection.fromScript).toList(),
       );
       await isar.ruleCollections.putAll(
-        migrationData.rules.map(RuleCollection.formRule).toList(),
+        migrationData.rules.mapIndexed((index, rule) {
+          return RuleCollection.fromRule(rule, index);
+        }).toList(),
       );
     });
     final results = await Future.wait([
       isar.profileCollections.where().sortByOrder().findAll(),
       isar.scriptCollections.where().findAll(),
-      isar.ruleCollections.where().findAll(),
+      isar.ruleCollections.where().sortByOrder().findAll(),
     ]);
     final profileCollection = results[0] as List<ProfileCollection>;
     final scriptCollection = results[1] as List<ScriptCollection>;

@@ -57,6 +57,7 @@ abstract class Profile with _$Profile {
     @JsonKey(includeToJson: false, includeFromJson: false)
     @Default(false)
     bool isUpdating,
+    @Default(-1) int order,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, Object?> json) =>
@@ -158,7 +159,7 @@ extension ProfileExtension on Profile {
     return update();
   }
 
-  Future<File> _getFile([bool autoCreate = false]) async {
+  Future<File> _getFile([bool autoCreate = true]) async {
     final path = await appPath.getProfilePath(id.toString());
     final file = File(path);
     final isExists = await file.exists();
@@ -205,13 +206,14 @@ extension ProfileExtension on Profile {
     if (!await tempFile.exists()) {
       await tempFile.create(recursive: true);
     }
+    await tempFile.writeAsBytes(bytes);
     final message = await coreController.validateConfig(path);
     if (message.isNotEmpty) {
       throw message;
     }
     final mFile = await file;
-    await File(path).copy(mFile.path);
-    await File(path).safeDelete();
+    await tempFile.copy(mFile.path);
+    await tempFile.safeDelete();
     return copyWith(lastUpdateDate: DateTime.now());
   }
 
