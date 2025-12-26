@@ -241,6 +241,8 @@ const _$KeyboardModifierEnumMap = {
 
 _AndroidState _$AndroidStateFromJson(Map<String, dynamic> json) =>
     _AndroidState(
+      stopTip: json['stopTip'] as String,
+      startTip: json['startTip'] as String,
       currentProfileName: json['currentProfileName'] as String,
       stopText: json['stopText'] as String,
       onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool,
@@ -249,23 +251,12 @@ _AndroidState _$AndroidStateFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$AndroidStateToJson(_AndroidState instance) =>
     <String, dynamic>{
+      'stopTip': instance.stopTip,
+      'startTip': instance.startTip,
       'currentProfileName': instance.currentProfileName,
       'stopText': instance.stopText,
       'onlyStatisticsProxy': instance.onlyStatisticsProxy,
       'crashlytics': instance.crashlytics,
-    };
-
-_OldScript _$OldScriptFromJson(Map<String, dynamic> json) => _OldScript(
-  id: json['id'] as String,
-  label: json['label'] as String,
-  content: json['content'] as String,
-);
-
-Map<String, dynamic> _$OldScriptToJson(_OldScript instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'label': instance.label,
-      'content': instance.content,
     };
 
 _Script _$ScriptFromJson(Map<String, dynamic> json) => _Script(

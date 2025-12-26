@@ -1,6 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/handler.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -651,21 +652,23 @@ VM3<bool, int, ProxiesSortType> needUpdateGroups(Ref ref) {
 
 @riverpod
 AndroidState androidState(Ref ref) {
+  ref.watch((appSettingProvider).select((state) => state.locale));
   final currentProfileName = ref.watch(
     currentProfileProvider.select((state) => state?.label ?? ''),
   );
   final onlyStatisticsProxy = ref.watch(
     appSettingProvider.select((state) => state.onlyStatisticsProxy),
   );
-  ref.watch((appSettingProvider).select((state) => state.locale));
   final crashlytics = ref.watch(
     (appSettingProvider).select((state) => state.crashlytics),
   );
-  return AndroidState(
+  return appHandler.getAndroidState(
     currentProfileName: currentProfileName,
     onlyStatisticsProxy: onlyStatisticsProxy,
     stopText: appLocalizations.stop,
     crashlytics: crashlytics,
+    startTip: appLocalizations.startVpn,
+    stopTip: appLocalizations.stopVpn,
   );
 }
 
@@ -704,15 +707,24 @@ class AccessControlState extends _$AccessControlState
 
 @riverpod
 SetupState setupState(Ref ref, int? profileId) {
-  ref.watch(
-    profileProvider(profileId).select(
-      (state) =>
-          VM3(a: state?.id, b: state?.lastUpdateDate, c: state?.overwrite),
-    ),
+  final vm2 = ref.watch(
+    profileProvider(
+      profileId,
+    ).select((state) => VM2(a: state?.lastUpdateDate, b: state?.overwrite)),
   );
-  ref.watch(patchClashConfigProvider.select((state) => state.dns));
-  ref.watch(overrideDnsProvider);
-  ref.watch(scriptsProvider);
-  ref.watch(rulesProvider);
-  return globalState.getSetupState(profileId);
+  final lastUpdateDate = vm2.a;
+  final overwrite = vm2.b;
+  final dns = ref.watch(patchClashConfigProvider.select((state) => state.dns));
+  final overrideDns = ref.watch(overrideDnsProvider);
+  final scripts = ref.watch(scriptsProvider);
+  final rules = ref.watch(rulesProvider);
+  return appHandler.getSetupState(
+    profileId: profileId,
+    rules: rules,
+    scripts: scripts,
+    overrideDns: overrideDns,
+    dns: dns,
+    overwrite: overwrite,
+    profileLastUpdateDate: lastUpdateDate,
+  );
 }

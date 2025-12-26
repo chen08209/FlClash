@@ -27,11 +27,11 @@ class _AndroidContainerState extends ConsumerState<AndroidManager>
     ) {
       app?.updateExcludeFromRecents(next);
     }, fireImmediately: true);
-    ref.listenManual(androidStateProvider, (prev, next) {
-      if (prev != next) {
-        service?.syncAndroidState(next);
-      }
-    });
+    // ref.listenManual(androidStateProvider, (prev, next) {
+    //   if (prev != next) {
+    //     service?.syncAndroidState(next);
+    //   }
+    // });
     service?.addListener(this);
   }
 

@@ -5,5 +5,5 @@ export 'config.dart';
 export 'core.dart';
 export 'isar.dart';
 export 'profile.dart';
-export 'selector.dart';
+export 'state.dart';
 export 'widget.dart';

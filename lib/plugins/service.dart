@@ -3,9 +3,7 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/core.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -32,8 +30,6 @@ class Service {
     methodChannel = const MethodChannel('$packageName/service');
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
-        case 'getVpnOptions':
-          return handleGetVpnOptions();
         case 'event':
           final data = call.arguments as String? ?? '';
           final result = ActionResult.fromJson(json.decode(data));
@@ -65,10 +61,6 @@ class Service {
     return ActionResult.fromJson(dataJson);
   }
 
-  String handleGetVpnOptions() {
-    return json.encode(globalState.getVpnOptions());
-  }
-
   Future<bool> start() async {
     return await methodChannel.invokeMethod<bool>('start') ?? false;
   }
@@ -77,20 +69,8 @@ class Service {
     return await methodChannel.invokeMethod<bool>('stop') ?? false;
   }
 
-  Future<String> syncAndroidState(AndroidState state) async {
-    return await methodChannel.invokeMethod<String>(
-          'syncState',
-          json.encode(state),
-        ) ??
-        '';
-  }
-
   Future<String> init() async {
-    return await methodChannel.invokeMethod<String>(
-          'init',
-          !globalState.isService,
-        ) ??
-        '';
+    return await methodChannel.invokeMethod<String>('init') ?? '';
   }
 
   Future<bool> shutdown() async {

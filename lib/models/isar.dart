@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/profile.dart';
@@ -31,7 +32,7 @@ class RuleEmbedded {
 
   int order = -1;
 
-  static RuleEmbedded fromRule(Rule rule, {int? order}) {
+  static RuleEmbedded fromRule(Rule rule, [int? order]) {
     return RuleEmbedded()
       ..id = rule.id
       ..value = rule.value
@@ -53,7 +54,7 @@ class StandardOverwriteEmbedded {
   ) {
     return StandardOverwriteEmbedded()
       ..addedRules = overwrite.addedRules
-          .map((rule) => RuleEmbedded.fromRule(rule))
+          .mapIndexed((index, rule) => RuleEmbedded.fromRule(rule, index))
           .toList()
       ..disabledRuleIds = overwrite.disabledRuleIds;
   }

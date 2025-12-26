@@ -1,11 +1,17 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'generated/selector.freezed.dart';
+import 'app.dart';
+import 'clash_config.dart';
+import 'common.dart';
+import 'config.dart';
+import 'core.dart';
+import 'profile.dart';
+
+part 'generated/state.freezed.dart';
 
 @freezed
 abstract class VM2<A, B> with _$VM2<A, B> {
@@ -245,6 +251,15 @@ abstract class VpnState with _$VpnState {
     required TunStack stack,
     required VpnProps vpnProps,
   }) = _VpnState;
+}
+
+@freezed
+abstract class SharedState with _$SharedState {
+  const factory SharedState({
+    required SetupParams setupParams,
+    VpnOptions? vpnOptions,
+    AndroidState? androidState,
+  }) = _SharedState;
 }
 
 @freezed

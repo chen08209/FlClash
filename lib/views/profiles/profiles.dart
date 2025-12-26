@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/handler.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -183,7 +184,7 @@ class ProfileItem extends StatelessWidget {
   }
 
   Future<void> _handlePreview(BuildContext context) async {
-    final config = await globalState.getProfileConfig(profile.id);
+    final config = await appHandler.getProfileConfig(profile.id);
     final content = await encodeYamlTask(config);
     if (!context.mounted) {
       return;

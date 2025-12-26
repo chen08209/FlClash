@@ -74,7 +74,7 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             } else {
                 signingConfig = signingConfigs.getByName("debug")
-                applicationIdSuffix = ".debug"
+                applicationIdSuffix = ".dev"
             }
 
             proguardFiles(

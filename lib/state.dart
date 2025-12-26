@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi' as ffi;
 import 'dart:io';
 
 import 'package:animations/animations.dart';
@@ -16,7 +15,6 @@ import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_js/flutter_js.dart';
 import 'package:isar_community/isar.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -24,6 +22,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
 import 'controller.dart';
+import 'handler.dart';
 import 'models/models.dart';
 
 typedef UpdateTasks = List<FutureOr Function()>;
@@ -49,9 +48,9 @@ class GlobalState {
   AppController? _appController;
   bool isInit = false;
   bool isUserDisconnected = false;
-  bool isService = false;
   SetupState? lastSetupState;
   VpnState? lastVpnState;
+  SharedState? lastSharedState;
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
@@ -67,6 +66,57 @@ class GlobalState {
   factory GlobalState() {
     _instance ??= GlobalState._internal();
     return _instance!;
+  }
+
+  String get ua => config.patchClashConfig.globalUa ?? packageInfo.ua;
+
+  List<Profile> get profiles {
+    return runningState.profiles;
+  }
+
+  Profile? get currentProfile {
+    final profileId = config.currentProfileId;
+    return runningState.profiles.getProfile(profileId);
+  }
+
+  List<Script> get scripts {
+    return runningState.scripts;
+  }
+
+  List<Rule> get rules {
+    return runningState.rules;
+  }
+
+  SetupParams get setupParams {
+    return appHandler.getSetupParams(
+      selectedMap: currentProfile?.selectedMap ?? {},
+      testUrl: config.appSettingProps.testUrl,
+    );
+  }
+
+  VpnOptions get vpnOptions {
+    return appHandler.getVpnOptions(
+      stack: config.patchClashConfig.tun.stack.name,
+      enable: config.vpnProps.enable,
+      systemProxy: config.vpnProps.systemProxy,
+      port: config.patchClashConfig.mixedPort,
+      ipv6: config.vpnProps.ipv6,
+      dnsHijacking: config.vpnProps.dnsHijacking,
+      accessControlProps: config.vpnProps.accessControlProps,
+      allowBypass: config.vpnProps.allowBypass,
+      bypassDomain: config.networkProps.bypassDomain,
+    );
+  }
+
+  AndroidState get androidState {
+    return appHandler.getAndroidState(
+      currentProfileName: currentProfile?.label ?? '',
+      onlyStatisticsProxy: config.appSettingProps.onlyStatisticsProxy,
+      stopText: appLocalizations.stop,
+      crashlytics: config.appSettingProps.crashlytics,
+      stopTip: appLocalizations.stopVpn,
+      startTip: appLocalizations.startVpn,
+    );
   }
 
   Future<void> initApp(int version) async {
@@ -95,23 +145,6 @@ class GlobalState {
           await DynamicColorPlugin.getAccentColor() ??
           Color(defaultPrimaryColor);
     } catch (_) {}
-  }
-
-  List<Profile> get profiles {
-    return runningState.profiles;
-  }
-
-  Profile? get currentProfile {
-    final profileId = config.currentProfileId;
-    return runningState.profiles.getProfile(profileId);
-  }
-
-  List<Script> get scripts {
-    return runningState.scripts;
-  }
-
-  List<Rule> get rules {
-    return runningState.rules;
   }
 
   Future<void> _shakingStore() async {
@@ -180,26 +213,7 @@ class GlobalState {
       utils.getLocaleForString(config.appSettingProps.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );
-  }
-
-  Future<List<Script>> oldScriptsToScripts(List<OldScript> oldScripts) async {
-    final List<Script> scripts = [];
-    for (final oldScript in oldScripts) {
-      final path = await appPath.getScriptPath(oldScript.id);
-      final file = File(path);
-      if (!await file.exists()) {
-        await file.create(recursive: true);
-        await file.writeAsString(oldScript.content);
-        scripts.add(
-          Script(
-            id: snowflake.id,
-            label: oldScript.label,
-            lastUpdateTime: DateTime.now(),
-          ),
-        );
-      }
-    }
-    return scripts;
+    await createSharedFile();
   }
 
   Future<Isar> openIsar({String? directory, String? name}) async {
@@ -209,8 +223,6 @@ class GlobalState {
       name: name ?? 'db',
     );
   }
-
-  String get ua => config.patchClashConfig.globalUa ?? packageInfo.ua;
 
   Future<void> startUpdateTasks([UpdateTasks? tasks]) async {
     if (timer != null && timer!.isActive == true) return;
@@ -260,6 +272,19 @@ class GlobalState {
     await coreController.stopListener();
     await service?.stop();
     stopUpdateTasks();
+  }
+
+  SetupState getSetupState(int? profileId) {
+    final profile = profiles.getProfile(profileId);
+    return appHandler.getSetupState(
+      profileId: profileId,
+      rules: rules,
+      scripts: scripts,
+      overrideDns: config.overrideDns,
+      dns: config.patchClashConfig.dns,
+      overwrite: profile?.overwrite,
+      profileLastUpdateDate: profile?.lastUpdateDate,
+    );
   }
 
   Future<bool?> showMessage({
@@ -351,23 +376,6 @@ class GlobalState {
     );
   }
 
-  VpnOptions getVpnOptions() {
-    final vpnProps = config.vpnProps;
-    final networkProps = config.networkProps;
-    final port = config.patchClashConfig.mixedPort;
-    return VpnOptions(
-      stack: config.patchClashConfig.tun.stack.name,
-      enable: vpnProps.enable,
-      systemProxy: vpnProps.systemProxy,
-      port: port,
-      ipv6: vpnProps.ipv6,
-      dnsHijacking: vpnProps.dnsHijacking,
-      accessControlProps: vpnProps.accessControlProps,
-      allowBypass: vpnProps.allowBypass,
-      bypassDomain: networkProps.bypassDomain,
-    );
-  }
-
   Future<T?> showCommonDialog<T>({
     required Widget child,
     BuildContext? context,
@@ -405,36 +413,18 @@ class GlobalState {
     launchUrl(Uri.parse(url));
   }
 
-  Future<SetupParams> getSetupParams() async {
-    final params = SetupParams(
-      selectedMap: currentProfile?.selectedMap ?? {},
-      testUrl: config.appSettingProps.testUrl,
-    );
-    return params;
-  }
-
   Future<Map> getProfileMap(int profileId) async {
     var res = {};
     try {
-      final setupState = globalState.getSetupState(profileId);
+      final setupState = getSetupState(profileId);
       res = await makeRealProfile(
         setupState: setupState,
         patchConfig: config.patchClashConfig,
       );
     } catch (e) {
       globalState.showNotifier(e.toString());
-      res = {};
     }
     return res;
-  }
-
-  AndroidState getAndroidState() {
-    return AndroidState(
-      currentProfileName: currentProfile?.label ?? '',
-      onlyStatisticsProxy: config.appSettingProps.onlyStatisticsProxy,
-      stopText: appLocalizations.stop,
-      crashlytics: config.appSettingProps.crashlytics,
-    );
   }
 
   String getSelectedProxyName(String groupName) {
@@ -443,11 +433,10 @@ class GlobalState {
     return group?.getCurrentSelectedName(proxyName ?? '') ?? '';
   }
 
-  Future<String> setupProfile({
-    required SetupState setupState,
-    required ClashConfig patchConfig,
-    VoidCallback? preloadInvoke,
-  }) async {
+  Future<void> createProfile(
+    SetupState setupState,
+    ClashConfig patchConfig,
+  ) async {
     final config = await makeRealProfile(
       setupState: setupState,
       patchConfig: patchConfig,
@@ -459,9 +448,31 @@ class GlobalState {
       await file.create(recursive: true);
     }
     await file.writeAsString(res);
-    final params = await globalState.getSetupParams();
+  }
+
+  Future<void> createSharedFile() async {
+    final sharedFilePath = await appPath.sharedFilePath;
+    final sharedState = SharedState(
+      setupParams: setupParams,
+      vpnOptions: system.isAndroid ? vpnOptions : null,
+      androidState: system.isAndroid ? androidState : null,
+    );
+    final file = File(sharedFilePath);
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    }
+    await file.writeAsString(json.encode(sharedState));
+    lastSharedState = sharedState;
+  }
+
+  Future<String> setupProfile({
+    required SetupState setupState,
+    required ClashConfig patchConfig,
+    VoidCallback? preloadInvoke,
+  }) async {
+    await createProfile(setupState, patchConfig);
+    await createSharedFile();
     return await coreController.setupConfig(
-      params: params,
       setupState: setupState,
       preloadInvoke: preloadInvoke,
     );
@@ -477,101 +488,19 @@ class GlobalState {
     required SetupState setupState,
     required ClashConfig patchConfig,
   }) async {
-    final profileId = setupState.profileId;
-    if (profileId == null) {
-      return {};
-    }
-    final configMap = await getProfileConfig(profileId);
-    String? scriptContent;
-    final List<Rule> addedRules = [];
-    if (setupState.overwriteType == OverwriteType.script) {
-      final scriptId = setupState.scriptId;
-      scriptContent = await scripts.get(scriptId)?.content;
-    } else {
-      addedRules.addAll(setupState.addedRules);
-    }
     final defaultUA = packageInfo.ua;
     final appendSystemDns = config.networkProps.appendSystemDns;
-    final realPatchConfig = patchConfig.copyWith(
-      tun: patchConfig.tun.getRealTun(config.networkProps.routeMode),
-    );
+    final routeMode = config.networkProps.routeMode;
     final overrideDns = globalState.config.overrideDns;
-    Map<String, dynamic> rawConfig = configMap;
-    if (scriptContent?.isNotEmpty == true) {
-      rawConfig = await handleEvaluate(scriptContent!, rawConfig);
-    }
-    final directory = await appPath.profilesPath;
-    final res = makeRealProfileTask(
-      MakeRealProfileState(
-        profilesPath: directory,
-        profileId: profileId,
-        rawConfig: rawConfig,
-        realPatchConfig: realPatchConfig,
-        overrideDns: overrideDns,
-        appendSystemDns: appendSystemDns,
-        addedRules: addedRules,
-        defaultUA: defaultUA,
-      ),
+    return appHandler.makeRealProfile(
+      scripts: scripts,
+      setupState: setupState,
+      patchConfig: patchConfig,
+      defaultUA: defaultUA,
+      appendSystemDns: appendSystemDns,
+      routeMode: routeMode,
+      overrideDns: overrideDns,
     );
-    return res;
-  }
-
-  Future<Map<String, dynamic>> handleEvaluate(
-    String scriptContent,
-    Map<String, dynamic> config,
-  ) async {
-    if (config['proxy-providers'] == null) {
-      config['proxy-providers'] = {};
-    }
-    final configJs = json.encode(config);
-    final runtime = getJavascriptRuntime();
-    final res = await runtime.evaluateAsync('''
-      $scriptContent
-      main($configJs)
-    ''');
-    if (res.isError) {
-      throw res.stringResult;
-    }
-    final value = switch (res.rawResult is ffi.Pointer) {
-      true => runtime.convertValue<Map<String, dynamic>>(res),
-      false => Map<String, dynamic>.from(res.rawResult),
-    };
-    return value ?? config;
-  }
-
-  SetupState getSetupState(int? profileId) {
-    final profile = profiles.getProfile(profileId);
-    final profileState = VM3(
-      a: profile?.id,
-      b: profile?.lastUpdateDate,
-      c: profile?.overwrite,
-    );
-    final overwrite = profileState.c;
-    final scriptId = overwrite?.scriptOverwrite.scriptId;
-    final standardOverwrite =
-        overwrite?.standardOverwrite ?? StandardOverwrite();
-    final mRules = rules;
-    final globalAddedRules = mRules.where(
-      (item) => !standardOverwrite.disabledRuleIds.contains(item.id),
-    );
-    final addedRules = [...standardOverwrite.addedRules, ...globalAddedRules];
-    return SetupState(
-      profileId: profileId,
-      profileLastUpdateDate: profile?.lastUpdateDate?.millisecondsSinceEpoch,
-      overwriteType: profile?.overwrite.type ?? OverwriteType.standard,
-      addedRules: addedRules,
-      scriptId: scriptId,
-      scriptLastUpdateTime: scripts.get(scriptId)?.lastUpdateTime,
-      overrideDns: config.overrideDns,
-      dns: config.patchClashConfig.dns,
-    );
-  }
-
-  Future<Map<String, dynamic>> getProfileConfig(int profileId) async {
-    final configMap = await coreController.getConfig(profileId);
-    configMap['rules'] = configMap['rule'];
-    configMap.remove('rule');
-    return configMap;
   }
 }
 

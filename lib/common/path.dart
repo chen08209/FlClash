@@ -91,6 +91,11 @@ class AppPath {
     return join(mHomeDirPath, 'config.yaml');
   }
 
+  Future<String> get sharedFilePath async {
+    final mHomeDirPath = await homeDirPath;
+    return join(mHomeDirPath, 'shared.json');
+  }
+
   Future<String> get sharedPreferencesPath async {
     final directory = await dataDir.future;
     return join(directory.path, 'shared_preferences.json');

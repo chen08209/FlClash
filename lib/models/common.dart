@@ -477,6 +477,8 @@ class PopupMenuItemData {
 @freezed
 abstract class AndroidState with _$AndroidState {
   const factory AndroidState({
+    required String stopTip,
+    required String startTip,
     required String currentProfileName,
     required String stopText,
     required bool onlyStatisticsProxy,
@@ -510,18 +512,6 @@ extension ResultExt on Result {
   bool get isError => type == ResultType.error;
 
   bool get isSuccess => type == ResultType.success;
-}
-
-@freezed
-abstract class OldScript with _$OldScript {
-  const factory OldScript({
-    required String id,
-    required String label,
-    required String content,
-  }) = _OldScript;
-
-  factory OldScript.fromJson(Map<String, Object?> json) =>
-      _$OldScriptFromJson(json);
 }
 
 @freezed
