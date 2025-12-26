@@ -164,13 +164,31 @@ class AppController {
     _ref.read(localIpProvider.notifier).value = await utils.getLocalIpAddress();
   }
 
+  Future<String> updateProvider(ExternalProvider provider) async {
+    try {
+      _ref.read(isUpdatingProvider(provider.updatingKey).notifier).value = true;
+      final message = await coreController.updateExternalProvider(
+        providerName: provider.name,
+      );
+      if (message.isNotEmpty) return message;
+      setProvider(await coreController.getExternalProvider(provider.name));
+      return '';
+    } finally {
+      _ref.read(isUpdatingProvider(provider.updatingKey).notifier).value =
+          false;
+    }
+  }
+
   Future<void> updateProfile(Profile profile) async {
-    final newProfile = await profile.update();
-    _ref
-        .read(profilesProvider.notifier)
-        .setProfile(newProfile.copyWith(isUpdating: false));
-    if (profile.id == _ref.read(currentProfileIdProvider)) {
-      applyProfileDebounce(silence: true);
+    try {
+      _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = true;
+      final newProfile = await profile.update();
+      _ref.read(profilesProvider.notifier).setProfile(newProfile);
+      if (profile.id == _ref.read(currentProfileIdProvider)) {
+        applyProfileDebounce(silence: true);
+      }
+    } finally {
+      _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = false;
     }
   }
 

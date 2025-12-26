@@ -230,7 +230,6 @@ _ExternalProvider _$ExternalProviderFromJson(Map<String, dynamic> json) =>
       subscriptionInfo: subscriptionInfoFormCore(
         json['subscription-info'] as Map<String, Object?>?,
       ),
-      isUpdating: json['isUpdating'] as bool? ?? false,
       vehicleType: json['vehicle-type'] as String,
       updateAt: DateTime.parse(json['update-at'] as String),
     );
@@ -242,7 +241,6 @@ Map<String, dynamic> _$ExternalProviderToJson(_ExternalProvider instance) =>
       'path': instance.path,
       'count': instance.count,
       'subscription-info': instance.subscriptionInfo,
-      'isUpdating': instance.isUpdating,
       'vehicle-type': instance.vehicleType,
       'update-at': instance.updateAt.toIso8601String(),
     };

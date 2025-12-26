@@ -13,6 +13,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/widgets/dialog.dart';
+import 'package:fl_clash/widgets/list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_js/flutter_js.dart';
@@ -303,6 +304,45 @@ class GlobalState {
                   ),
                   style: const TextStyle(overflow: TextOverflow.visible),
                 ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool?> showAllUpdatingMessagesDialog(
+    List<UpdatingMessage> messages,
+  ) async {
+    return await showCommonDialog<bool>(
+      child: Builder(
+        builder: (context) {
+          return CommonDialog(
+            padding: EdgeInsets.zero,
+            title: appLocalizations.tip,
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+                child: Text(appLocalizations.confirm),
+              ),
+            ],
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 4),
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.separated(
+                itemBuilder: (_, index) {
+                  final message = messages[index];
+                  return ListItem(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    title: Text(message.label),
+                    subtitle: Text(message.message),
+                  );
+                },
+                itemCount: messages.length,
+                separatorBuilder: (_, _) => Divider(height: 0),
               ),
             ),
           );

@@ -40,33 +40,23 @@ class _ProfilesViewState extends State<ProfilesView> {
 
   Future<void> _updateProfiles() async {
     final profiles = globalState.profiles;
-    final messages = [];
+    final List<UpdatingMessage> messages = [];
     final updateProfiles = profiles.map<Future>((profile) async {
       if (profile.type == ProfileType.file) return;
-      globalState.appController.setProfile(profile.copyWith(isUpdating: true));
       try {
         await globalState.appController.updateProfile(profile);
       } catch (e) {
         messages.add(
-          '${profile.label.getSafeValue(profile.id.toString())}: $e \n',
-        );
-        globalState.appController.setProfile(
-          profile.copyWith(isUpdating: false),
+          UpdatingMessage(
+            label: profile.label.getSafeValue(profile.id.toString()),
+            message: e.toString(),
+          ),
         );
       }
     });
-    final titleMedium = context.textTheme.titleMedium;
     await Future.wait(updateProfiles);
     if (messages.isNotEmpty) {
-      globalState.showMessage(
-        title: appLocalizations.tip,
-        message: TextSpan(
-          children: [
-            for (final message in messages)
-              TextSpan(text: message, style: titleMedium),
-          ],
-        ),
-      );
+      globalState.showAllUpdatingMessagesDialog(messages);
     }
   }
 
@@ -210,13 +200,7 @@ class ProfileItem extends StatelessWidget {
     final appController = globalState.appController;
     if (profile.type == ProfileType.file) return;
     await globalState.appController.safeRun(silence: false, () async {
-      try {
-        appController.setProfile(profile.copyWith(isUpdating: true));
-        await appController.updateProfile(profile);
-      } catch (e) {
-        appController.setProfile(profile.copyWith(isUpdating: false));
-        rethrow;
-      }
+      await appController.updateProfile(profile);
     });
   }
 
@@ -300,101 +284,111 @@ class ProfileItem extends StatelessWidget {
         trailing: SizedBox(
           height: 40,
           width: 40,
-          child: FadeThroughBox(
-            child: profile.isUpdating
-                ? const Padding(
-                    key: ValueKey('loading'),
-                    padding: EdgeInsets.all(8),
-                    child: CircularProgressIndicator(),
-                  )
-                : CommonPopupBox(
-                    key: ValueKey('menu'),
-                    popup: CommonPopupMenu(
-                      items: [
-                        PopupMenuItemData(
-                          icon: Icons.edit_outlined,
-                          label: appLocalizations.edit,
-                          onPressed: () {
-                            _handleShowEditExtendPage(context);
-                          },
-                        ),
-                        PopupMenuItemData(
-                          icon: Icons.visibility_outlined,
-                          label: appLocalizations.preview,
-                          onPressed: () {
-                            _handlePreview(context);
-                          },
-                        ),
-                        if (profile.type == ProfileType.url) ...[
-                          PopupMenuItemData(
-                            icon: Icons.sync_alt_sharp,
-                            label: appLocalizations.sync,
-                            onPressed: () {
-                              updateProfile();
-                            },
-                          ),
-                        ],
-                        PopupMenuItemData(
-                          icon: Icons.emergency_outlined,
-                          label: appLocalizations.more,
-                          subItems: [
+          child: Consumer(
+            builder: (_, ref, _) {
+              final isUpdating = ref.watch(
+                isUpdatingProvider(profile.updatingKey),
+              );
+              return FadeThroughBox(
+                child: isUpdating
+                    ? const Padding(
+                        key: ValueKey('loading'),
+                        padding: EdgeInsets.all(8),
+                        child: CircularProgressIndicator(),
+                      )
+                    : CommonPopupBox(
+                        key: ValueKey('menu'),
+                        popup: CommonPopupMenu(
+                          items: [
                             PopupMenuItemData(
-                              icon: Icons.extension_outlined,
-                              label: appLocalizations.override,
+                              icon: Icons.edit_outlined,
+                              label: appLocalizations.edit,
                               onPressed: () {
-                                _handlePushGenProfilePage(context, profile.id);
+                                _handleShowEditExtendPage(context);
                               },
                             ),
-                            // PopupMenuItemData(
-                            //   icon: Icons.extension_outlined,
-                            //   label: appLocalizations.override + "1",
-                            //   onPressed: () {
-                            //     final overrideProfileView = OverrideProfileView(
-                            //       profileId: profile.id,
-                            //     );
-                            //     BaseNavigator.push(
-                            //       context,
-                            //       overrideProfileView,
-                            //     );
-                            //   },
-                            // ),
+                            PopupMenuItemData(
+                              icon: Icons.visibility_outlined,
+                              label: appLocalizations.preview,
+                              onPressed: () {
+                                _handlePreview(context);
+                              },
+                            ),
                             if (profile.type == ProfileType.url) ...[
                               PopupMenuItemData(
-                                icon: Icons.copy,
-                                label: appLocalizations.copyLink,
+                                icon: Icons.sync_alt_sharp,
+                                label: appLocalizations.sync,
                                 onPressed: () {
-                                  _handleCopyLink(context);
+                                  updateProfile();
                                 },
                               ),
                             ],
                             PopupMenuItemData(
-                              icon: Icons.file_copy_outlined,
-                              label: appLocalizations.exportFile,
+                              icon: Icons.emergency_outlined,
+                              label: appLocalizations.more,
+                              subItems: [
+                                PopupMenuItemData(
+                                  icon: Icons.extension_outlined,
+                                  label: appLocalizations.override,
+                                  onPressed: () {
+                                    _handlePushGenProfilePage(
+                                      context,
+                                      profile.id,
+                                    );
+                                  },
+                                ),
+                                // PopupMenuItemData(
+                                //   icon: Icons.extension_outlined,
+                                //   label: appLocalizations.override + "1",
+                                //   onPressed: () {
+                                //     final overrideProfileView = OverrideProfileView(
+                                //       profileId: profile.id,
+                                //     );
+                                //     BaseNavigator.push(
+                                //       context,
+                                //       overrideProfileView,
+                                //     );
+                                //   },
+                                // ),
+                                if (profile.type == ProfileType.url) ...[
+                                  PopupMenuItemData(
+                                    icon: Icons.copy,
+                                    label: appLocalizations.copyLink,
+                                    onPressed: () {
+                                      _handleCopyLink(context);
+                                    },
+                                  ),
+                                ],
+                                PopupMenuItemData(
+                                  icon: Icons.file_copy_outlined,
+                                  label: appLocalizations.exportFile,
+                                  onPressed: () {
+                                    _handleExportFile(context);
+                                  },
+                                ),
+                              ],
+                            ),
+                            PopupMenuItemData(
+                              danger: true,
+                              icon: Icons.delete_outlined,
+                              label: appLocalizations.delete,
                               onPressed: () {
-                                _handleExportFile(context);
+                                _handleDeleteProfile(context);
                               },
                             ),
                           ],
                         ),
-                        PopupMenuItemData(
-                          danger: true,
-                          icon: Icons.delete_outlined,
-                          label: appLocalizations.delete,
-                          onPressed: () {
-                            _handleDeleteProfile(context);
-                          },
-                        ),
-                      ],
-                    ),
-                    targetBuilder: (open) {
-                      return IconButton(
-                        onPressed: () {
-                          open();
+                        targetBuilder: (open) {
+                          return IconButton(
+                            onPressed: () {
+                              open();
+                            },
+                            icon: Icon(Icons.more_vert),
+                          );
                         },
-                        icon: Icon(Icons.more_vert),
-                      );
-                    },
-                  ),
+                      ),
+              );
+            },
           ),
         ),
         title: Container(

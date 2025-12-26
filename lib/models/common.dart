@@ -611,3 +611,11 @@ extension DelayStateExt on DelayState {
     return 0;
   }
 }
+
+@freezed
+abstract class UpdatingMessage with _$UpdatingMessage {
+  const factory UpdatingMessage({
+    required String label,
+    required String message,
+  }) = _UpdatingMessage;
+}

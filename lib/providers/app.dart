@@ -589,3 +589,20 @@ class Rules extends _$Rules with AutoDisposeNotifierMixin {
     });
   }
 }
+
+@riverpod
+class IsUpdating extends _$IsUpdating with AutoDisposeNotifierMixin {
+  late final String _name;
+
+  @override
+  bool build(String name) {
+    _name = name;
+    return globalState.appState.updatingMap[_name] ?? false;
+  }
+
+  @override
+  onUpdate(value) {
+    final newMap = globalState.appState.updatingMap.copyWitUpdate(_name, value);
+    globalState.appState = globalState.appState.copyWith(updatingMap: newMap);
+  }
+}

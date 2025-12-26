@@ -41,6 +41,7 @@ abstract class AppState with _$AppState {
     @Default({}) Map<String, dynamic> selectedItemMap,
     @Default({}) Map<String, Set<dynamic>> selectedItemsMap,
     @Default(CoreStatus.connecting) CoreStatus coreStatus,
+    @Default({}) Map<String, bool> updatingMap,
   }) = _AppState;
 }
 

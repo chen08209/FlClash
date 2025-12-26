@@ -154,13 +154,16 @@ abstract class ExternalProvider with _$ExternalProvider {
     required int count,
     @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)
     SubscriptionInfo? subscriptionInfo,
-    @Default(false) bool isUpdating,
     @JsonKey(name: 'vehicle-type') required String vehicleType,
     @JsonKey(name: 'update-at') required DateTime updateAt,
   }) = _ExternalProvider;
 
   factory ExternalProvider.fromJson(Map<String, Object?> json) =>
       _$ExternalProviderFromJson(json);
+}
+
+extension ExternalProviderExt on ExternalProvider {
+  String get updatingKey => 'provider_$name';
 }
 
 @freezed

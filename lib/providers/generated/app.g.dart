@@ -1818,3 +1818,93 @@ abstract class _$Rules extends $Notifier<List<Rule>> {
     element.handleValue(ref, created);
   }
 }
+
+@ProviderFor(IsUpdating)
+const isUpdatingProvider = IsUpdatingFamily._();
+
+final class IsUpdatingProvider extends $NotifierProvider<IsUpdating, bool> {
+  const IsUpdatingProvider._({
+    required IsUpdatingFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'isUpdatingProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$isUpdatingHash();
+
+  @override
+  String toString() {
+    return r'isUpdatingProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  IsUpdating create() => IsUpdating();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IsUpdatingProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$isUpdatingHash() => r'e5cb47af4ce8e5a891e67062f0c39ebccfca587c';
+
+final class IsUpdatingFamily extends $Family
+    with $ClassFamilyOverride<IsUpdating, bool, bool, bool, String> {
+  const IsUpdatingFamily._()
+    : super(
+        retry: null,
+        name: r'isUpdatingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  IsUpdatingProvider call(String name) =>
+      IsUpdatingProvider._(argument: name, from: this);
+
+  @override
+  String toString() => r'isUpdatingProvider';
+}
+
+abstract class _$IsUpdating extends $Notifier<bool> {
+  late final _$args = ref.$arg as String;
+  String get name => _$args;
+
+  bool build(String name);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

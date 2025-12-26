@@ -54,9 +54,6 @@ abstract class Profile with _$Profile {
     @Default({}) Map<String, String> selectedMap,
     @Default({}) Set<String> unfoldSet,
     @Default(Overwrite()) Overwrite overwrite,
-    @JsonKey(includeToJson: false, includeFromJson: false)
-    @Default(false)
-    bool isUpdating,
     @Default(-1) int order,
   }) = _Profile;
 
@@ -149,6 +146,8 @@ extension ProfileExtension on Profile {
   bool get realAutoUpdate => url.isEmpty == true ? false : autoUpdate;
 
   String get fileName => label.isNotEmpty ? label : id.toString();
+
+  String get updatingKey => 'profile_$id';
 
   Future<Profile?> checkAndUpdateAndCopy() async {
     final mFile = await _getFile(false);
