@@ -1,18 +1,16 @@
 package com.follow.clash
 
 import com.follow.clash.common.GlobalState
+import com.follow.clash.models.SharedState
 import com.follow.clash.plugins.AppPlugin
-import com.follow.clash.plugins.ServicePlugin
 import com.follow.clash.plugins.TilePlugin
-import io.flutter.FlutterInjector
+import com.google.gson.Gson
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.engine.dart.DartExecutor
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
+import java.util.UUID
 
 enum class RunState {
     START, PENDING, STOP
@@ -25,20 +23,17 @@ object State {
 
     var runTime: Long = 0
 
+    var sharedState: SharedState = SharedState()
+
     val runStateFlow: MutableStateFlow<RunState> = MutableStateFlow(RunState.STOP)
 
     var flutterEngine: FlutterEngine? = null
-    var serviceFlutterEngine: FlutterEngine? = null
 
     val appPlugin: AppPlugin?
-        get() = flutterEngine?.plugin<AppPlugin>() ?: serviceFlutterEngine?.plugin<AppPlugin>()
-
-    val servicePlugin: ServicePlugin?
-        get() = flutterEngine?.plugin<ServicePlugin>()
-            ?: serviceFlutterEngine?.plugin<ServicePlugin>()
+        get() = flutterEngine?.plugin<AppPlugin>()
 
     val tilePlugin: TilePlugin?
-        get() = flutterEngine?.plugin<TilePlugin>() ?: serviceFlutterEngine?.plugin<TilePlugin>()
+        get() = flutterEngine?.plugin<TilePlugin>()
 
     suspend fun handleToggleAction() {
         var action: (suspend () -> Unit)?
@@ -77,7 +72,7 @@ object State {
             if (flutterEngine != null) {
                 return
             }
-            startServiceWithEngine()
+            startServiceWithFile()
         }
 
     }
@@ -88,9 +83,10 @@ object State {
                 return
             }
             tilePlugin?.handleStop()
-            if (flutterEngine != null || serviceFlutterEngine != null) {
+            if (flutterEngine != null) {
                 return
             }
+            GlobalState.application.showToast(sharedState.stopTip)
             handleStopService()
         }
     }
@@ -106,50 +102,36 @@ object State {
         startService()
     }
 
-    fun handleStopService() {
-        GlobalState.launch {
-            runLock.withLock {
-                if (runStateFlow.value != RunState.START) {
-                    return@launch
-                }
-                runStateFlow.tryEmit(RunState.PENDING)
-                runTime = Service.stopService()
-                runStateFlow.tryEmit(RunState.STOP)
-            }
-            destroyServiceEngine()
-        }
-    }
-
-    suspend fun destroyServiceEngine() {
-        runLock.withLock {
-            GlobalState.log("Destroy service engine")
-            withContext(Dispatchers.Main) {
-                runCatching {
-                    serviceFlutterEngine?.destroy()
-                    serviceFlutterEngine = null
-                }
-            }
-        }
-    }
-
-    private fun startServiceWithEngine() {
+    private fun startServiceWithFile() {
         GlobalState.launch {
             runLock.withLock {
                 if (runStateFlow.value != RunState.STOP) {
                     return@launch
                 }
-                GlobalState.log("Create service engine")
-                withContext(Dispatchers.Main) {
-                    serviceFlutterEngine?.destroy()
-                    serviceFlutterEngine = FlutterEngine(GlobalState.application)
-                    serviceFlutterEngine?.plugins?.add(ServicePlugin())
-                    serviceFlutterEngine?.plugins?.add(AppPlugin())
-                    serviceFlutterEngine?.plugins?.add(TilePlugin())
-                    val dartEntrypoint = DartExecutor.DartEntrypoint(
-                        FlutterInjector.instance().flutterLoader().findAppBundlePath(), "_service"
-                    )
-                    serviceFlutterEngine?.dartExecutor?.executeDartEntrypoint(dartEntrypoint)
+                val sharedFile = GlobalState.application.sharedFile
+                try {
+                    val data = sharedFile.readText()
+                    sharedState = Gson().fromJson(data, SharedState::class.java)
+                    GlobalState.application.showToast(sharedState.startTip)
+                    setupConfig()
+                    startService()
+                } catch (_: Exception) {
+                    GlobalState.application.showToast("Initialization failed")
                 }
+            }
+        }
+    }
+
+    private fun setupConfig() {
+        Service.bind()
+        GlobalState.launch {
+            val action = mutableMapOf<String, String>()
+            action["method"] = "setupConfig"
+            action["id"] = UUID.randomUUID().toString()
+            action["data"] = Gson().toJson(sharedState.setupParams)
+            val data = Gson().toJson(action)
+            Service.invokeAction(data) {
+
             }
         }
     }
@@ -160,18 +142,39 @@ object State {
                 if (runStateFlow.value != RunState.STOP) {
                     return@launch
                 }
-                runStateFlow.tryEmit(RunState.PENDING)
-                if (servicePlugin == null) {
-                    return@launch
-                }
-                val options = servicePlugin?.handleGetVpnOptions() ?: return@launch
-                appPlugin?.prepare(options.enable) {
-                    runTime = Service.startService(options, runTime)
-                    runStateFlow.tryEmit(RunState.START)
+                try {
+                    runStateFlow.tryEmit(RunState.PENDING)
+                    sharedState.vpnOptions?.let { options ->
+                        appPlugin?.prepare(options.enable) {
+                            runTime = Service.startService(options, runTime)
+                            runStateFlow.tryEmit(RunState.START)
+                        }
+                        return@launch
+                    }
+                    runStateFlow.tryEmit(RunState.STOP)
+                } catch (_: Exception) {
+                    runStateFlow.tryEmit(RunState.STOP)
                 }
             }
         }
 
+    }
+
+    fun handleStopService() {
+        GlobalState.launch {
+            runLock.withLock {
+                if (runStateFlow.value != RunState.START) {
+                    return@launch
+                }
+                try {
+                    runStateFlow.tryEmit(RunState.PENDING)
+                    runTime = Service.stopService()
+                    runStateFlow.tryEmit(RunState.STOP)
+                } catch (_: Exception) {
+                    runStateFlow.tryEmit(RunState.START)
+                }
+            }
+        }
     }
 }
 

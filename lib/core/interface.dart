@@ -25,7 +25,7 @@ mixin CoreInterface {
 
   Future<String> updateConfig(UpdateParams updateParams);
 
-  Future<String> setupConfig();
+  Future<String> setupConfig(SetupParams setupParams);
 
   Future<Map> getProxies();
 
@@ -168,8 +168,12 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<String> setupConfig() async {
-    return await _invoke<String>(method: ActionMethod.setupConfig) ?? '';
+  Future<String> setupConfig(SetupParams setupParams) async {
+    return await _invoke<String>(
+          method: ActionMethod.setupConfig,
+          data: json.encode(setupParams),
+        ) ??
+        '';
   }
 
   @override

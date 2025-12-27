@@ -493,10 +493,10 @@ func handleSetupConfig(bytes []byte) string {
 	err := UnmarshalJson(bytes, params)
 	if err != nil {
 		log.Errorln("unmarshalRawConfig error %v", err)
-		_ = setupConfig(defaultSetupParams())
+		_ = applyConfig(defaultSetupParams())
 		return err.Error()
 	}
-	err = setupConfig(params)
+	err = applyConfig(params)
 	if err != nil {
 		return err.Error()
 	}

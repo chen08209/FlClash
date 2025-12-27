@@ -651,24 +651,60 @@ VM3<bool, int, ProxiesSortType> needUpdateGroups(Ref ref) {
 }
 
 @riverpod
-AndroidState androidState(Ref ref) {
+SharedState sharedState(Ref ref) {
   ref.watch((appSettingProvider).select((state) => state.locale));
-  final currentProfileName = ref.watch(
-    currentProfileProvider.select((state) => state?.label ?? ''),
+  final currentProfileVM2 = ref.watch(
+    currentProfileProvider.select(
+      (state) => VM2(a: state?.label ?? '', b: state?.selectedMap ?? {}),
+    ),
   );
-  final onlyStatisticsProxy = ref.watch(
-    appSettingProvider.select((state) => state.onlyStatisticsProxy),
+  final appSettingVM3 = ref.watch(
+    appSettingProvider.select(
+      (state) => VM3(
+        a: state.onlyStatisticsProxy,
+        b: state.crashlytics,
+        c: state.testUrl,
+      ),
+    ),
   );
-  final crashlytics = ref.watch(
-    (appSettingProvider).select((state) => state.crashlytics),
+  final bypassDomain = ref.watch(
+    networkSettingProvider.select((state) => state.bypassDomain),
   );
-  return appHandler.getAndroidState(
+  final clashConfigVM2 = ref.watch(
+    patchClashConfigProvider.select(
+      (state) => VM2(a: state.tun.stack.name, b: state.mixedPort),
+    ),
+  );
+  final vpnSetting = ref.watch(vpnSettingProvider);
+  final currentProfileName = currentProfileVM2.a;
+  final selectedMap = currentProfileVM2.b;
+  final onlyStatisticsProxy = appSettingVM3.a;
+  final crashlytics = appSettingVM3.b;
+  final testUrl = appSettingVM3.c;
+  final stack = clashConfigVM2.a;
+  final port = clashConfigVM2.b;
+  return appHandler.getSharedState(
     currentProfileName: currentProfileName,
     onlyStatisticsProxy: onlyStatisticsProxy,
     stopText: appLocalizations.stop,
     crashlytics: crashlytics,
     startTip: appLocalizations.startVpn,
     stopTip: appLocalizations.stopVpn,
+    setupParams: appHandler.getSetupParams(
+      selectedMap: selectedMap,
+      testUrl: testUrl,
+    ),
+    vpnOptions: appHandler.getVpnOptions(
+      enable: vpnSetting.enable,
+      stack: stack,
+      systemProxy: vpnSetting.systemProxy,
+      port: port,
+      ipv6: vpnSetting.ipv6,
+      dnsHijacking: vpnSetting.dnsHijacking,
+      accessControlProps: vpnSetting.accessControlProps,
+      allowBypass: vpnSetting.allowBypass,
+      bypassDomain: bypassDomain,
+    ),
   );
 }
 

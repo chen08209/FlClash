@@ -30,13 +30,10 @@ class RuleEmbedded {
   late int id;
   late String value;
 
-  int order = -1;
-
-  static RuleEmbedded fromRule(Rule rule, [int? order]) {
+  static RuleEmbedded fromRule(Rule rule) {
     return RuleEmbedded()
       ..id = rule.id
-      ..value = rule.value
-      ..order = order ?? rule.order;
+      ..value = rule.value;
   }
 
   Rule toRule() {
@@ -54,7 +51,7 @@ class StandardOverwriteEmbedded {
   ) {
     return StandardOverwriteEmbedded()
       ..addedRules = overwrite.addedRules
-          .mapIndexed((index, rule) => RuleEmbedded.fromRule(rule, index))
+          .mapIndexed((index, rule) => RuleEmbedded.fromRule(rule))
           .toList()
       ..disabledRuleIds = overwrite.disabledRuleIds;
   }

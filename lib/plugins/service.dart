@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/core.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -71,6 +71,14 @@ class Service {
 
   Future<String> init() async {
     return await methodChannel.invokeMethod<String>('init') ?? '';
+  }
+
+  Future<String> syncState(SharedState state) async {
+    return await methodChannel.invokeMethod<String>(
+          'syncState',
+          json.encode(state),
+        ) ??
+        '';
   }
 
   Future<bool> shutdown() async {

@@ -12,6 +12,7 @@ import 'core.dart';
 import 'profile.dart';
 
 part 'generated/state.freezed.dart';
+part 'generated/state.g.dart';
 
 @freezed
 abstract class VM2<A, B> with _$VM2<A, B> {
@@ -256,10 +257,22 @@ abstract class VpnState with _$VpnState {
 @freezed
 abstract class SharedState with _$SharedState {
   const factory SharedState({
-    required SetupParams setupParams,
+    SetupParams? setupParams,
     VpnOptions? vpnOptions,
-    AndroidState? androidState,
+    required String stopTip,
+    required String startTip,
+    required String currentProfileName,
+    required String stopText,
+    required bool onlyStatisticsProxy,
+    required bool crashlytics,
   }) = _SharedState;
+
+  factory SharedState.fromJson(Map<String, Object?> json) =>
+      _$SharedStateFromJson(json);
+}
+
+extension SharedStateExt on SharedState {
+  SharedState get needSyncSharedState => copyWith(setupParams: null);
 }
 
 @freezed

@@ -1,11 +1,13 @@
 package com.follow.clash
 
+import android.app.Application
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.widget.Toast
 import androidx.core.graphics.drawable.toBitmap
 import com.follow.clash.common.GlobalState
 import io.flutter.embedding.engine.FlutterEngine
@@ -20,6 +22,21 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
 private const val ICON_TTL_DAYS = 1L
+
+val Application.sharedFile
+    get() = File(dataDir, "shared.json")
+
+
+private var lastToast: Toast? = null
+
+fun Application.showToast(text: String?) {
+    Handler(Looper.getMainLooper()).post {
+        lastToast?.cancel()
+        lastToast = Toast.makeText(this, text, Toast.LENGTH_LONG).apply {
+            show()
+        }
+    }
+}
 
 suspend fun PackageManager.getPackageIconPath(packageName: String): String =
     withContext(Dispatchers.IO) {

@@ -239,26 +239,6 @@ const _$KeyboardModifierEnumMap = {
   KeyboardModifier.shift: 'shift',
 };
 
-_AndroidState _$AndroidStateFromJson(Map<String, dynamic> json) =>
-    _AndroidState(
-      stopTip: json['stopTip'] as String,
-      startTip: json['startTip'] as String,
-      currentProfileName: json['currentProfileName'] as String,
-      stopText: json['stopText'] as String,
-      onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool,
-      crashlytics: json['crashlytics'] as bool,
-    );
-
-Map<String, dynamic> _$AndroidStateToJson(_AndroidState instance) =>
-    <String, dynamic>{
-      'stopTip': instance.stopTip,
-      'startTip': instance.startTip,
-      'currentProfileName': instance.currentProfileName,
-      'stopText': instance.stopText,
-      'onlyStatisticsProxy': instance.onlyStatisticsProxy,
-      'crashlytics': instance.crashlytics,
-    };
-
 _Script _$ScriptFromJson(Map<String, dynamic> json) => _Script(
   id: (json['id'] as num).toInt(),
   label: json['label'] as String,

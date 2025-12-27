@@ -3588,8 +3588,7 @@ const RuleEmbeddedSchema = Schema(
   id: -590334916944944295,
   properties: {
     r'id': PropertySchema(id: 0, name: r'id', type: IsarType.long),
-    r'order': PropertySchema(id: 1, name: r'order', type: IsarType.long),
-    r'value': PropertySchema(id: 2, name: r'value', type: IsarType.string),
+    r'value': PropertySchema(id: 1, name: r'value', type: IsarType.string),
   },
 
   estimateSize: _ruleEmbeddedEstimateSize,
@@ -3615,8 +3614,7 @@ void _ruleEmbeddedSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.id);
-  writer.writeLong(offsets[1], object.order);
-  writer.writeString(offsets[2], object.value);
+  writer.writeString(offsets[1], object.value);
 }
 
 RuleEmbedded _ruleEmbeddedDeserialize(
@@ -3627,8 +3625,7 @@ RuleEmbedded _ruleEmbeddedDeserialize(
 ) {
   final object = RuleEmbedded();
   object.id = reader.readLong(offsets[0]);
-  object.order = reader.readLong(offsets[1]);
-  object.value = reader.readString(offsets[2]);
+  object.value = reader.readString(offsets[1]);
   return object;
 }
 
@@ -3642,8 +3639,6 @@ P _ruleEmbeddedDeserializeProp<P>(
     case 0:
       return (reader.readLong(offset)) as P;
     case 1:
-      return (reader.readLong(offset)) as P;
-    case 2:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -3702,63 +3697,6 @@ extension RuleEmbeddedQueryFilter
       return query.addFilterCondition(
         FilterCondition.between(
           property: r'id',
-          lower: lower,
-          includeLower: includeLower,
-          upper: upper,
-          includeUpper: includeUpper,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<RuleEmbedded, RuleEmbedded, QAfterFilterCondition> orderEqualTo(
-    int value,
-  ) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'order', value: value),
-      );
-    });
-  }
-
-  QueryBuilder<RuleEmbedded, RuleEmbedded, QAfterFilterCondition>
-  orderGreaterThan(int value, {bool include = false}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.greaterThan(
-          include: include,
-          property: r'order',
-          value: value,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<RuleEmbedded, RuleEmbedded, QAfterFilterCondition> orderLessThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.lessThan(
-          include: include,
-          property: r'order',
-          value: value,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<RuleEmbedded, RuleEmbedded, QAfterFilterCondition> orderBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.between(
-          property: r'order',
           lower: lower,
           includeLower: includeLower,
           upper: upper,

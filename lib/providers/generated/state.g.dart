@@ -2283,46 +2283,46 @@ final class NeedUpdateGroupsProvider
 
 String _$needUpdateGroupsHash() => r'1d1fbf135b4b5d2a2ee984e421ccffe7c4bb0a47';
 
-@ProviderFor(androidState)
-const androidStateProvider = AndroidStateProvider._();
+@ProviderFor(sharedState)
+const sharedStateProvider = SharedStateProvider._();
 
-final class AndroidStateProvider
-    extends $FunctionalProvider<AndroidState, AndroidState, AndroidState>
-    with $Provider<AndroidState> {
-  const AndroidStateProvider._()
+final class SharedStateProvider
+    extends $FunctionalProvider<SharedState, SharedState, SharedState>
+    with $Provider<SharedState> {
+  const SharedStateProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'androidStateProvider',
+        name: r'sharedStateProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$androidStateHash();
+  String debugGetCreateSourceHash() => _$sharedStateHash();
 
   @$internal
   @override
-  $ProviderElement<AndroidState> $createElement($ProviderPointer pointer) =>
+  $ProviderElement<SharedState> $createElement($ProviderPointer pointer) =>
       $ProviderElement(pointer);
 
   @override
-  AndroidState create(Ref ref) {
-    return androidState(ref);
+  SharedState create(Ref ref) {
+    return sharedState(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AndroidState value) {
+  Override overrideWithValue(SharedState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AndroidState>(value),
+      providerOverride: $SyncValueProvider<SharedState>(value),
     );
   }
 }
 
-String _$androidStateHash() => r'dcf6ade5ff86714e42d7c86bb1cce8e1cfc700b1';
+String _$sharedStateHash() => r'a3829304fa29dfbcc87ae5ab1d092420b9f63585';
 
 @ProviderFor(overlayTopOffset)
 const overlayTopOffsetProvider = OverlayTopOffsetProvider._();

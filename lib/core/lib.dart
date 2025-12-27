@@ -4,6 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/core.dart';
 import 'package:fl_clash/plugins/service.dart';
+import 'package:fl_clash/state.dart';
 
 import 'interface.dart';
 
@@ -21,7 +22,8 @@ class CoreLib extends CoreHandlerInterface {
       return res ?? '';
     }
     _connectedCompleter.complete(true);
-    return '';
+    final syncRes = await service?.syncState(globalState.sharedState);
+    return syncRes ?? '';
   }
 
   factory CoreLib() {

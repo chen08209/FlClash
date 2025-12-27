@@ -241,25 +241,7 @@ func updateConfig(params *UpdateParams) {
 	updateListeners()
 }
 
-func parseWithPath(path string) (*config.Config, error) {
-	buf, err := readFile(path)
-	if err != nil {
-		return nil, err
-	}
-	rawConfig := config.DefaultRawConfig()
-	err = UnmarshalJson(buf, rawConfig)
-	if err != nil {
-		return nil, err
-	}
-	parseRawConfig, err := config.ParseRawConfig(rawConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseRawConfig, nil
-}
-
-func setupConfig(params *SetupParams) error {
+func applyConfig(params *SetupParams) error {
 	runLock.Lock()
 	defer runLock.Unlock()
 	var err error

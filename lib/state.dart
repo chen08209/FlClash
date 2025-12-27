@@ -50,7 +50,6 @@ class GlobalState {
   bool isUserDisconnected = false;
   SetupState? lastSetupState;
   VpnState? lastVpnState;
-  SharedState? lastSharedState;
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
@@ -108,14 +107,16 @@ class GlobalState {
     );
   }
 
-  AndroidState get androidState {
-    return appHandler.getAndroidState(
+  SharedState get sharedState {
+    return appHandler.getSharedState(
       currentProfileName: currentProfile?.label ?? '',
       onlyStatisticsProxy: config.appSettingProps.onlyStatisticsProxy,
       stopText: appLocalizations.stop,
       crashlytics: config.appSettingProps.crashlytics,
       stopTip: appLocalizations.stopVpn,
       startTip: appLocalizations.startVpn,
+      setupParams: setupParams,
+      vpnOptions: vpnOptions,
     );
   }
 
@@ -213,7 +214,6 @@ class GlobalState {
       utils.getLocaleForString(config.appSettingProps.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );
-    await createSharedFile();
   }
 
   Future<Isar> openIsar({String? directory, String? name}) async {
@@ -450,19 +450,16 @@ class GlobalState {
     await file.writeAsString(res);
   }
 
-  Future<void> createSharedFile() async {
+  Future<void> saveSharedFile() async {
+    if (!system.isAndroid) {
+      return;
+    }
     final sharedFilePath = await appPath.sharedFilePath;
-    final sharedState = SharedState(
-      setupParams: setupParams,
-      vpnOptions: system.isAndroid ? vpnOptions : null,
-      androidState: system.isAndroid ? androidState : null,
-    );
     final file = File(sharedFilePath);
     if (!await file.exists()) {
       await file.create(recursive: true);
     }
     await file.writeAsString(json.encode(sharedState));
-    lastSharedState = sharedState;
   }
 
   Future<String> setupProfile({
@@ -470,11 +467,12 @@ class GlobalState {
     required ClashConfig patchConfig,
     VoidCallback? preloadInvoke,
   }) async {
+    saveSharedFile();
     await createProfile(setupState, patchConfig);
-    await createSharedFile();
     return await coreController.setupConfig(
       setupState: setupState,
       preloadInvoke: preloadInvoke,
+      params: setupParams,
     );
   }
 

@@ -474,21 +474,6 @@ class PopupMenuItemData {
   final List<PopupMenuItemData> subItems;
 }
 
-@freezed
-abstract class AndroidState with _$AndroidState {
-  const factory AndroidState({
-    required String stopTip,
-    required String startTip,
-    required String currentProfileName,
-    required String stopText,
-    required bool onlyStatisticsProxy,
-    required bool crashlytics,
-  }) = _AndroidState;
-
-  factory AndroidState.fromJson(Map<String, Object?> json) =>
-      _$AndroidStateFromJson(json);
-}
-
 class CloseWindowIntent extends Intent {
   const CloseWindowIntent();
 }

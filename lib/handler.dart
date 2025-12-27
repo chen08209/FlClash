@@ -19,21 +19,25 @@ class AppHandler {
     return _instance!;
   }
 
-  AndroidState getAndroidState({
+  SharedState getSharedState({
     required String currentProfileName,
     required bool onlyStatisticsProxy,
     required String stopText,
     required bool crashlytics,
     required String startTip,
     required String stopTip,
+    required SetupParams setupParams,
+    required VpnOptions vpnOptions,
   }) {
-    return AndroidState(
+    return SharedState(
       currentProfileName: currentProfileName,
       onlyStatisticsProxy: onlyStatisticsProxy,
       stopText: stopText,
       crashlytics: crashlytics,
       stopTip: stopTip,
       startTip: startTip,
+      setupParams: setupParams,
+      vpnOptions: vpnOptions,
     );
   }
 
