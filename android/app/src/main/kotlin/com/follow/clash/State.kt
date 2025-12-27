@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.UUID
 
 enum class RunState {
     START, PENDING, STOP
@@ -112,28 +111,29 @@ object State {
                 try {
                     val data = sharedFile.readText()
                     sharedState = Gson().fromJson(data, SharedState::class.java)
-                    GlobalState.application.showToast(sharedState.startTip)
-                    setupConfig()
-                    startService()
-                } catch (_: Exception) {
+                    setupAndStart()
+                } catch (e: Exception) {
+                    GlobalState.log(e.toString())
                     GlobalState.application.showToast("Initialization failed")
                 }
             }
         }
     }
 
-    private fun setupConfig() {
+    private suspend fun setupAndStart() {
         Service.bind()
-        GlobalState.launch {
-            val action = mutableMapOf<String, String>()
-            action["method"] = "setupConfig"
-            action["id"] = UUID.randomUUID().toString()
-            action["data"] = Gson().toJson(sharedState.setupParams)
-            val data = Gson().toJson(action)
-            Service.invokeAction(data) {
-
+        GlobalState.application.showToast(sharedState.startTip)
+        val initParams = mutableMapOf<String, Any>()
+        initParams["home-dir"] = GlobalState.application.filesDir.path
+        initParams["version"] = android.os.Build.VERSION.SDK_INT
+        val initParamsString = Gson().toJson(initParams)
+        val setupParamsString = Gson().toJson(sharedState.setupParams)
+        Service.quickSetup(initParamsString, setupParamsString) {
+            if (it.isNotEmpty()) {
+                GlobalState.application.showToast(it)
             }
         }
+        startService()
     }
 
     private fun startService() {
@@ -146,6 +146,7 @@ object State {
                     runStateFlow.tryEmit(RunState.PENDING)
                     sharedState.vpnOptions?.let { options ->
                         appPlugin?.prepare(options.enable) {
+                            GlobalState.log("prepare end")
                             runTime = Service.startService(options, runTime)
                             runStateFlow.tryEmit(RunState.START)
                         }

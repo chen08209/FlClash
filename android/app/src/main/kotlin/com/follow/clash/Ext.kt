@@ -24,7 +24,7 @@ import kotlin.coroutines.resume
 private const val ICON_TTL_DAYS = 1L
 
 val Application.sharedFile
-    get() = File(dataDir, "shared.json")
+    get() = File(filesDir, "shared.json")
 
 
 private var lastToast: Toast? = null

@@ -36,7 +36,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) = when (call.method) {
         "init" -> {
-            handleInit(call, result)
+            handleInit(result)
         }
 
         "shutdown" -> {
@@ -124,16 +124,11 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
         }
     }
 
-    fun handleInit(call: MethodCall, result: MethodChannel.Result) {
+    fun handleInit(result: MethodChannel.Result) {
         Service.bind()
         launch {
-            val needSetEventListener = call.arguments<Boolean>() ?: false
-            when (needSetEventListener) {
-                true -> Service.setEventListener {
-                    handleSendEvent(it)
-                }
-
-                false -> Service.setEventListener(null)
+            Service.setEventListener {
+                handleSendEvent(it)
             }.onSuccess {
                 result.success("")
             }.onFailure {
