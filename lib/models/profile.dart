@@ -145,7 +145,7 @@ extension ProfileExtension on Profile {
 
   bool get realAutoUpdate => url.isEmpty == true ? false : autoUpdate;
 
-  String get fileName => label.isNotEmpty ? label : id.toString();
+  String get fileName => '$id.yaml';
 
   String get updatingKey => 'profile_$id';
 
