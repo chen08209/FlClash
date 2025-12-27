@@ -448,18 +448,25 @@ Future<MigrationData> _oldToNowTask(
   );
 }
 
-Future<String> backupTask(Map<String, dynamic> configMap) async {
-  return await compute<VM2<Map<String, dynamic>, RootIsolateToken>, String>(
+Future<String> backupTask(
+  Map<String, dynamic> configMap,
+  List<String> fileNames,
+) async {
+  return await compute<
+    VM3<Map<String, dynamic>, List<String>, RootIsolateToken>,
+    String
+  >(
     _backupTask,
-    VM2(a: configMap, b: RootIsolateToken.instance!),
+    VM3(a: configMap, b: fileNames, c: RootIsolateToken.instance!),
   );
 }
 
 Future<String> _backupTask<T>(
-  VM2<Map<String, dynamic>, RootIsolateToken> args,
+  VM3<Map<String, dynamic>, List<String>, RootIsolateToken> args,
 ) async {
   final configMap = args.a;
-  final token = args.b;
+  final fileNames = args.b;
+  final token = args.c;
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   final isar = await globalState.openIsar();
   final configStr = json.encode(configMap);
@@ -478,7 +485,7 @@ Future<String> _backupTask<T>(
     await encoder.addDirectory(
       profilesDir,
       filter: (file, _) {
-        if (file.parent.path != profilesDir.path || file is Directory) {
+        if (!fileNames.contains(basename(file.path))) {
           return ZipFileOperation.skip;
         }
         return ZipFileOperation.include;
@@ -489,7 +496,7 @@ Future<String> _backupTask<T>(
     await encoder.addDirectory(
       scriptsDir,
       filter: (file, _) {
-        if (file.parent.path != scriptsDir.path || file is Directory) {
+        if (!fileNames.contains(basename(file.path))) {
           return ZipFileOperation.skip;
         }
         return ZipFileOperation.include;

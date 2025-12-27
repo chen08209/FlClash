@@ -73,6 +73,13 @@ class DeveloperView extends ConsumerWidget {
             );
           },
         ),
+        ListItem(
+          title: Text('修剪缓存'),
+          minVerticalPadding: 12,
+          onTap: () {
+            globalState.shakingStore();
+          },
+        ),
       ],
     );
   }

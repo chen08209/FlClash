@@ -45,7 +45,10 @@ class _ProfilesViewState extends State<ProfilesView> {
     final updateProfiles = profiles.map<Future>((profile) async {
       if (profile.type == ProfileType.file) return;
       try {
-        await globalState.appController.updateProfile(profile);
+        await globalState.appController.updateProfile(
+          profile,
+          showLoading: true,
+        );
       } catch (e) {
         messages.add(
           UpdatingMessage(
@@ -201,7 +204,7 @@ class ProfileItem extends StatelessWidget {
     final appController = globalState.appController;
     if (profile.type == ProfileType.file) return;
     await globalState.appController.safeRun(silence: false, () async {
-      await appController.updateProfile(profile);
+      await appController.updateProfile(profile, showLoading: true);
     });
   }
 

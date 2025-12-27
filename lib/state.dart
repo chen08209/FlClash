@@ -136,7 +136,6 @@ class GlobalState {
     await _initDynamicColor();
     await init();
     await window?.init(version, config.windowProps);
-    _shakingStore();
   }
 
   Future<void> _initDynamicColor() async {
@@ -148,7 +147,7 @@ class GlobalState {
     } catch (_) {}
   }
 
-  Future<void> _shakingStore() async {
+  Future<void> shakingStore() async {
     final profileIds = runningState.profiles.map((item) => item.id).toList();
     final scriptIds = runningState.scripts.map((item) => item.id).toList();
 
@@ -479,7 +478,16 @@ class GlobalState {
   Future<String> backup() async {
     final configMap = config.toJson();
     configMap['version'] = await preferences.getVersion();
-    return await backupTask(config.toJson());
+    final List<String> backupFileNames = [];
+    final scriptIds = globalState.runningState.scripts.map(
+      (item) => item.fileName,
+    );
+    final profileIds = globalState.runningState.profiles.map(
+      (item) => item.fileName,
+    );
+    backupFileNames.addAll(scriptIds);
+    backupFileNames.addAll(profileIds);
+    return await backupTask(config.toJson(), backupFileNames);
   }
 
   Future<Map<String, dynamic>> makeRealProfile({

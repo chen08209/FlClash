@@ -1,4 +1,7 @@
+import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/models/app.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/tile.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -20,10 +23,11 @@ class _TileContainerState extends State<TileManager> with TileListener {
 
   @override
   Future<void> onStart() async {
-    if (globalState.appState.isStart) {
+    if (globalState.appState.isStart && coreController.isCompleted) {
       return;
     }
     globalState.appController.updateStatus(true);
+    app?.tip(appLocalizations.startVpn);
     super.onStart();
   }
 
@@ -33,6 +37,7 @@ class _TileContainerState extends State<TileManager> with TileListener {
       return;
     }
     globalState.appController.updateStatus(false);
+    app?.tip(appLocalizations.stopVpn);
     super.onStop();
   }
 

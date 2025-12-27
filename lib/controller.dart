@@ -164,9 +164,15 @@ class AppController {
     _ref.read(localIpProvider.notifier).value = await utils.getLocalIpAddress();
   }
 
-  Future<String> updateProvider(ExternalProvider provider) async {
+  Future<String> updateProvider(
+    ExternalProvider provider, {
+    bool showLoading = false,
+  }) async {
     try {
-      _ref.read(isUpdatingProvider(provider.updatingKey).notifier).value = true;
+      if (showLoading) {
+        _ref.read(isUpdatingProvider(provider.updatingKey).notifier).value =
+            true;
+      }
       final message = await coreController.updateExternalProvider(
         providerName: provider.name,
       );
@@ -179,9 +185,15 @@ class AppController {
     }
   }
 
-  Future<void> updateProfile(Profile profile) async {
+  Future<void> updateProfile(
+    Profile profile, {
+    bool showLoading = false,
+  }) async {
     try {
-      _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = true;
+      if (showLoading) {
+        _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value =
+            true;
+      }
       final newProfile = await profile.update();
       _ref.read(profilesProvider.notifier).setProfile(newProfile);
       if (profile.id == _ref.read(currentProfileIdProvider)) {
@@ -553,8 +565,10 @@ class AppController {
     final isInit = await coreController.isInit;
     if (!isInit) {
       await coreController.init(globalState.appState.version);
+      await applyProfile();
+    } else {
+      await updateGroups();
     }
-    await applyProfile();
   }
 
   Future<void> init() async {
