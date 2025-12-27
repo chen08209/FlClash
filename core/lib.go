@@ -208,13 +208,12 @@ func startTUN(callback unsafe.Pointer, fd C.int, stackChar, addressChar, dnsChar
 func quickSetup(callback unsafe.Pointer, initParamsChar *C.char, setupParamsChar *C.char) {
 	go func() {
 		initParamsString := takeCString(initParamsChar)
-		isInit := handleInitClash(initParamsString)
-		if !isInit {
+		setupParams := takeCString(setupParamsChar)
+		if !handleInitClash(initParamsString) {
 			invokeResult(callback, "init failed")
 			return
 		}
-		params := takeCString(setupParamsChar)
-		invokeResult(callback, handleSetupConfig([]byte(params)))
+		invokeResult(callback, handleSetupConfig([]byte(setupParams)))
 	}()
 }
 

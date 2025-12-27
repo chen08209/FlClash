@@ -1,5 +1,6 @@
 package com.follow.clash
 
+import android.net.VpnService
 import com.follow.clash.common.GlobalState
 import com.follow.clash.models.SharedState
 import com.follow.clash.plugins.AppPlugin
@@ -113,7 +114,7 @@ object State {
                     sharedState = Gson().fromJson(data, SharedState::class.java)
                     setupAndStart()
                 } catch (e: Exception) {
-                    GlobalState.log(e.toString())
+                    GlobalState.log("startServiceWithFile error: $e")
                     GlobalState.application.showToast("Initialization failed")
                 }
             }
@@ -128,12 +129,18 @@ object State {
         initParams["version"] = android.os.Build.VERSION.SDK_INT
         val initParamsString = Gson().toJson(initParams)
         val setupParamsString = Gson().toJson(sharedState.setupParams)
-        Service.quickSetup(initParamsString, setupParamsString) {
-            if (it.isNotEmpty()) {
-                GlobalState.application.showToast(it)
-            }
-        }
-        startService()
+        Service.quickSetup(
+            initParamsString,
+            setupParamsString,
+            onStarted = {
+                startService()
+            },
+            onResult = {
+                if (it.isNotEmpty()) {
+                    GlobalState.application.showToast(it)
+                }
+            },
+        )
     }
 
     private fun startService() {
@@ -144,21 +151,27 @@ object State {
                 }
                 try {
                     runStateFlow.tryEmit(RunState.PENDING)
-                    sharedState.vpnOptions?.let { options ->
-                        appPlugin?.prepare(options.enable) {
-                            GlobalState.log("prepare end")
+                    val options = sharedState.vpnOptions ?: return@launch
+                    appPlugin?.let {
+                        it.prepare(options.enable) {
                             runTime = Service.startService(options, runTime)
                             runStateFlow.tryEmit(RunState.START)
                         }
-                        return@launch
+                    } ?: run {
+                        val intent = VpnService.prepare(GlobalState.application)
+                        if (intent != null) {
+                            return@launch
+                        }
+                        runTime = Service.startService(options, runTime)
+                        runStateFlow.tryEmit(RunState.START)
                     }
-                    runStateFlow.tryEmit(RunState.STOP)
-                } catch (_: Exception) {
-                    runStateFlow.tryEmit(RunState.STOP)
+                } finally {
+                    if (runStateFlow.value == RunState.PENDING) {
+                        runStateFlow.tryEmit(RunState.STOP)
+                    }
                 }
             }
         }
-
     }
 
     fun handleStopService() {
@@ -171,8 +184,10 @@ object State {
                     runStateFlow.tryEmit(RunState.PENDING)
                     runTime = Service.stopService()
                     runStateFlow.tryEmit(RunState.STOP)
-                } catch (_: Exception) {
-                    runStateFlow.tryEmit(RunState.START)
+                } finally {
+                    if (runStateFlow.value == RunState.PENDING) {
+                        runStateFlow.tryEmit(RunState.START)
+                    }
                 }
             }
         }

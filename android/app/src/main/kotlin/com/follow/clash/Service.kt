@@ -9,6 +9,7 @@ import com.follow.clash.service.ICallbackInterface
 import com.follow.clash.service.IEventInterface
 import com.follow.clash.service.IRemoteInterface
 import com.follow.clash.service.IResultInterface
+import com.follow.clash.service.IVoidInterface
 import com.follow.clash.service.RemoteService
 import com.follow.clash.service.models.NotificationParams
 import com.follow.clash.service.models.VpnOptions
@@ -64,24 +65,35 @@ object Service {
     suspend fun quickSetup(
         initParamsString: String,
         setupParamsString: String,
-        cb: ((result: String) -> Unit)?
+        onStarted: (() -> Unit)?,
+        onResult: ((result: String) -> Unit)?,
     ): Result<Unit> {
         val res = mutableListOf<ByteArray>()
         return delegate.useService {
             it.quickSetup(
-                initParamsString, setupParamsString, object : ICallbackInterface.Stub() {
+                initParamsString,
+                setupParamsString,
+                object : ICallbackInterface.Stub() {
                     override fun onResult(
                         result: ByteArray?, isSuccess: Boolean, ack: IAckInterface?
                     ) {
                         res.add(result ?: byteArrayOf())
                         ack?.onAck()
                         if (isSuccess) {
-                            cb?.let { cb ->
+                            onResult?.let { cb ->
                                 cb(res.formatString())
                             }
                         }
                     }
-                })
+                },
+                object : IVoidInterface.Stub() {
+                    override fun invoke() {
+                        onStarted?.let { onStarted ->
+                            onStarted()
+                        }
+                    }
+                }
+            )
         }
     }
 

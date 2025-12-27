@@ -101,7 +101,8 @@ class RemoteService : Service(),
         override fun quickSetup(
             initParamsString: String,
             setupParamsString: String,
-            callback: ICallbackInterface
+            callback: ICallbackInterface,
+            onStarted: IVoidInterface
         ) {
             Core.quickSetup(initParamsString, setupParamsString) {
                 launch {
@@ -123,6 +124,7 @@ class RemoteService : Service(),
                     }
                 }
             }
+            onStarted()
         }
 
         override fun updateNotificationParams(params: NotificationParams?) {
