@@ -207,7 +207,7 @@ return $default(_that.a,_that.b);case _:
 
 
 class _VM2<A,B> implements VM2<A, B> {
-  const _VM2({required this.a, required this.b});
+  const _VM2(this.a, this.b);
   
 
 @override final  A a;
@@ -262,8 +262,8 @@ class __$VM2CopyWithImpl<A,B,$Res>
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? a = freezed,Object? b = freezed,}) {
   return _then(_VM2<A, B>(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
+freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
+as A,freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
 as B,
   ));
 }
@@ -468,7 +468,7 @@ return $default(_that.a,_that.b,_that.c);case _:
 
 
 class _VM3<A,B,C> implements VM3<A, B, C> {
-  const _VM3({required this.a, required this.b, required this.c});
+  const _VM3(this.a, this.b, this.c);
   
 
 @override final  A a;
@@ -524,9 +524,9 @@ class __$VM3CopyWithImpl<A,B,C,$Res>
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,}) {
   return _then(_VM3<A, B, C>(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
+freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
+as A,freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
+as B,freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
 as C,
   ));
 }
@@ -999,7 +999,7 @@ return $default(_that.a,_that.b,_that.c,_that.d,_that.e);case _:
 
 
 class _VM5<A,B,C,D,E> implements VM5<A, B, C, D, E> {
-  const _VM5({required this.a, required this.b, required this.c, required this.d, required this.e});
+  const _VM5(this.a, this.b, this.c, this.d, this.e);
   
 
 @override final  A a;
@@ -1057,11 +1057,11 @@ class __$VM5CopyWithImpl<A,B,C,D,E,$Res>
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,Object? d = freezed,Object? e = freezed,}) {
   return _then(_VM5<A, B, C, D, E>(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
-as C,d: freezed == d ? _self.d : d // ignore: cast_nullable_to_non_nullable
-as D,e: freezed == e ? _self.e : e // ignore: cast_nullable_to_non_nullable
+freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
+as A,freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
+as B,freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
+as C,freezed == d ? _self.d : d // ignore: cast_nullable_to_non_nullable
+as D,freezed == e ? _self.e : e // ignore: cast_nullable_to_non_nullable
 as E,
   ));
 }

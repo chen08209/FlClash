@@ -130,7 +130,7 @@ ProxyState proxyState(Ref ref) {
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
   final vm2 = ref.watch(
     networkSettingProvider.select(
-      (state) => VM2(a: state.systemProxy, b: state.bypassDomain),
+      (state) => VM2(state.systemProxy, state.bypassDomain),
     ),
   );
   final mixedPort = ref.watch(
@@ -152,13 +152,12 @@ TrayState trayState(Ref ref) {
   );
   final clashConfigVm3 = ref.watch(
     patchClashConfigProvider.select(
-      (state) => VM3(a: state.mode, b: state.mixedPort, c: state.tun.enable),
+      (state) => VM3(state.mode, state.mixedPort, state.tun.enable),
     ),
   );
   final appSettingVm3 = ref.watch(
     appSettingProvider.select(
-      (state) =>
-          VM3(a: state.autoLaunch, b: state.locale, c: state.showTrayTitle),
+      (state) => VM3(state.autoLaunch, state.locale, state.showTrayTitle),
     ),
   );
   final groups = ref.watch(currentGroupsStateProvider).value;
@@ -344,8 +343,8 @@ VM2<List<String>, String?> proxiesTabControllerState(Ref ref) {
   return ref.watch(
     proxiesTabStateProvider.select(
       (state) => VM2(
-        a: state.groups.map((group) => group.name).toList(),
-        b: state.currentGroupName,
+        state.groups.map((group) => group.name).toList(),
+        state.currentGroupName,
       ),
     ),
   );
@@ -551,11 +550,12 @@ VM2? layoutChange(Ref ref) {
   final textScale = ref.watch(
     themeSettingProvider.select((state) => state.textScale),
   );
-  return VM2(a: viewWidth, b: textScale);
+  return VM2(viewWidth, textScale);
 }
 
 @riverpod
-VM2<int, bool> checkIp(Ref ref) {
+VM3<bool, int, bool> checkIp(Ref ref) {
+  final isInit = ref.watch(initProvider);
   final checkIpNum = ref.watch(checkIpNumProvider);
   final containsDetection = ref.watch(
     dashboardStateProvider.select(
@@ -563,7 +563,7 @@ VM2<int, bool> checkIp(Ref ref) {
           state.dashboardWidgets.contains(DashboardWidget.networkDetection),
     ),
   );
-  return VM2(a: checkIpNum, b: containsDetection);
+  return VM3(isInit, checkIpNum, containsDetection);
 }
 
 @riverpod
@@ -575,7 +575,7 @@ ColorScheme genColorScheme(
 }) {
   final vm2 = ref.watch(
     themeSettingProvider.select(
-      (state) => VM2(a: state.primaryColor, b: state.schemeVariant),
+      (state) => VM2(state.primaryColor, state.schemeVariant),
     ),
   );
   if (color == null && (ignoreConfig == true || vm2.a == null)) {
@@ -635,7 +635,7 @@ VM2<bool, bool> autoSetSystemDnsState(Ref ref) {
   final autoSetSystemDns = ref.watch(
     networkSettingProvider.select((state) => state.autoSetSystemDns),
   );
-  return VM2(a: isStart ? realTunEnable : false, b: autoSetSystemDns);
+  return VM2(isStart ? realTunEnable : false, autoSetSystemDns);
 }
 
 @riverpod
@@ -647,7 +647,7 @@ VM3<bool, int, ProxiesSortType> needUpdateGroups(Ref ref) {
   final sortType = ref.watch(
     proxiesStyleSettingProvider.select((state) => state.sortType),
   );
-  return VM3(a: isProxies, b: sortNum, c: sortType);
+  return VM3(isProxies, sortNum, sortType);
 }
 
 @riverpod
@@ -655,16 +655,13 @@ SharedState sharedState(Ref ref) {
   ref.watch((appSettingProvider).select((state) => state.locale));
   final currentProfileVM2 = ref.watch(
     currentProfileProvider.select(
-      (state) => VM2(a: state?.label ?? '', b: state?.selectedMap ?? {}),
+      (state) => VM2(state?.label ?? '', state?.selectedMap ?? {}),
     ),
   );
   final appSettingVM3 = ref.watch(
     appSettingProvider.select(
-      (state) => VM3(
-        a: state.onlyStatisticsProxy,
-        b: state.crashlytics,
-        c: state.testUrl,
-      ),
+      (state) =>
+          VM3(state.onlyStatisticsProxy, state.crashlytics, state.testUrl),
     ),
   );
   final bypassDomain = ref.watch(
@@ -672,7 +669,7 @@ SharedState sharedState(Ref ref) {
   );
   final clashConfigVM2 = ref.watch(
     patchClashConfigProvider.select(
-      (state) => VM2(a: state.tun.stack.name, b: state.mixedPort),
+      (state) => VM2(state.tun.stack.name, state.mixedPort),
     ),
   );
   final vpnSetting = ref.watch(vpnSettingProvider);
@@ -746,7 +743,7 @@ SetupState setupState(Ref ref, int? profileId) {
   final vm2 = ref.watch(
     profileProvider(
       profileId,
-    ).select((state) => VM2(a: state?.lastUpdateDate, b: state?.overwrite)),
+    ).select((state) => VM2(state?.lastUpdateDate, state?.overwrite)),
   );
   final lastUpdateDate = vm2.a;
   final overwrite = vm2.b;

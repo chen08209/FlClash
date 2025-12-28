@@ -81,6 +81,7 @@ class ApplicationState extends ConsumerState<Application> {
       child: CoreManager(
         child: ConnectivityManager(
           onConnectivityChanged: (results) async {
+            commonPrint.log('connectivityChanged ${results.toString()}');
             if (!results.contains(ConnectivityResult.vpn)) {
               coreController.closeConnections();
             }

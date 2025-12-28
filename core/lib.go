@@ -201,7 +201,11 @@ func invokeAction(callback unsafe.Pointer, paramsChar *C.char) {
 //export startTUN
 func startTUN(callback unsafe.Pointer, fd C.int, stackChar, addressChar, dnsChar *C.char) bool {
 	handleStartTun(callback, int(fd), takeCString(stackChar), takeCString(addressChar), takeCString(dnsChar))
-	handleStartListener()
+	if !isRunning {
+		handleStartListener()
+	} else {
+		handleResetConnections()
+	}
 	return true
 }
 
@@ -214,6 +218,7 @@ func quickSetup(callback unsafe.Pointer, initParamsChar *C.char, setupParamsChar
 			invokeResult(callback, "init failed")
 			return
 		}
+		isRunning = true
 		message := handleSetupConfig([]byte(setupParamsString))
 		invokeResult(callback, message)
 	}()
@@ -256,7 +261,9 @@ func sendMessage(message Message) {
 //export stopTun
 func stopTun() {
 	handleStopTun()
-	handleStopListener()
+	if isRunning {
+		handleStopListener()
+	}
 }
 
 //export suspend

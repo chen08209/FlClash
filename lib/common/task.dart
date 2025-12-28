@@ -260,10 +260,7 @@ Future<List<String>> shakingProfileTask(VM2<List<int>, List<int>> data) async {
   return await compute<
     VM3<List<int>, List<int>, RootIsolateToken>,
     List<String>
-  >(
-    _shakingProfileTask,
-    VM3(a: data.a, b: data.b, c: RootIsolateToken.instance!),
-  );
+  >(_shakingProfileTask, VM3(data.a, data.b, RootIsolateToken.instance!));
 }
 
 Future<List<String>> _shakingProfileTask(
@@ -320,7 +317,7 @@ Future<MigrationData> oldToNowTask(Map<String, Object?> data) async {
   return await compute<
     VM3<Map<String, Object?>, String, String>,
     MigrationData
-  >(_oldToNowTask, VM3(a: data, b: homeDir, c: homeDir));
+  >(_oldToNowTask, VM3(data, homeDir, homeDir));
 }
 
 Future<MigrationData> _oldToNowTask(
@@ -455,10 +452,7 @@ Future<String> backupTask(
   return await compute<
     VM3<Map<String, dynamic>, List<String>, RootIsolateToken>,
     String
-  >(
-    _backupTask,
-    VM3(a: configMap, b: fileNames, c: RootIsolateToken.instance!),
-  );
+  >(_backupTask, VM3(configMap, fileNames, RootIsolateToken.instance!));
 }
 
 Future<String> _backupTask<T>(
@@ -544,7 +538,7 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   MigrationData migrationData = MigrationData(configMap: restoreConfigMap);
   if (version == 0 && restoreConfigMap != null) {
     migrationData = await _oldToNowTask(
-      VM3(a: restoreConfigMap, b: restoreDirPath, c: homeDirPath),
+      VM3(restoreConfigMap, restoreDirPath, homeDirPath),
     );
     return migrationData;
   }

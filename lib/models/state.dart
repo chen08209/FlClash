@@ -16,12 +16,12 @@ part 'generated/state.g.dart';
 
 @freezed
 abstract class VM2<A, B> with _$VM2<A, B> {
-  const factory VM2({required A a, required B b}) = _VM2;
+  const factory VM2(A a, B b) = _VM2;
 }
 
 @freezed
 abstract class VM3<A, B, C> with _$VM3<A, B, C> {
-  const factory VM3({required A a, required B b, required C c}) = _VM3;
+  const factory VM3(A a, B b, C c) = _VM3;
 }
 
 @freezed
@@ -31,13 +31,7 @@ abstract class VM4<A, B, C, D> with _$VM4<A, B, C, D> {
 
 @freezed
 abstract class VM5<A, B, C, D, E> with _$VM5<A, B, C, D, E> {
-  const factory VM5({
-    required A a,
-    required B b,
-    required C c,
-    required D d,
-    required E e,
-  }) = _VM5;
+  const factory VM5(A a, B b, C c, D d, E e) = _VM5;
 }
 
 @freezed

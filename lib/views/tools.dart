@@ -85,7 +85,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
   Widget build(BuildContext context) {
     final vm2 = ref.watch(
       appSettingProvider.select(
-        (state) => VM2(a: state.locale, b: state.developerMode),
+        (state) => VM2(state.locale, state.developerMode),
       ),
     );
     final items = [

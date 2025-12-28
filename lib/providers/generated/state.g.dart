@@ -269,7 +269,7 @@ final class ProxyStateProvider
   }
 }
 
-String _$proxyStateHash() => r'22478fb593aaca11dfe2cf64472013190475a5bc';
+String _$proxyStateHash() => r'3df11daa70bd06de32da43e9b3e09a74389264b2';
 
 @ProviderFor(trayState)
 const trayStateProvider = TrayStateProvider._();
@@ -310,7 +310,7 @@ final class TrayStateProvider
   }
 }
 
-String _$trayStateHash() => r'f5057cc600a13dfc3bc7a45de7452febd18b2293';
+String _$trayStateHash() => r'b03770ae2eb7fe1a73372f1128af3b38fdebb818';
 
 @ProviderFor(trayTitleState)
 const trayTitleStateProvider = TrayTitleStateProvider._();
@@ -913,7 +913,7 @@ final class ProxiesTabControllerStateProvider
 }
 
 String _$proxiesTabControllerStateHash() =>
-    r'05dba6f9b7fe99b84234540f56ba1bf53a2a5228';
+    r'd9c4eb6771262b2a989b053ce6ad94c307cf43fb';
 
 @ProviderFor(proxyGroupSelectorState)
 const proxyGroupSelectorStateProvider = ProxyGroupSelectorStateFamily._();
@@ -1965,14 +1965,19 @@ final class LayoutChangeProvider
   }
 }
 
-String _$layoutChangeHash() => r'f25182e1dfaf3c70000404d7635bb1e1db09efbb';
+String _$layoutChangeHash() => r'd83d879f9ae182082c59c3541c0b5bf7693f5bab';
 
 @ProviderFor(checkIp)
 const checkIpProvider = CheckIpProvider._();
 
 final class CheckIpProvider
-    extends $FunctionalProvider<VM2<int, bool>, VM2<int, bool>, VM2<int, bool>>
-    with $Provider<VM2<int, bool>> {
+    extends
+        $FunctionalProvider<
+          VM3<bool, int, bool>,
+          VM3<bool, int, bool>,
+          VM3<bool, int, bool>
+        >
+    with $Provider<VM3<bool, int, bool>> {
   const CheckIpProvider._()
     : super(
         from: null,
@@ -1989,24 +1994,25 @@ final class CheckIpProvider
 
   @$internal
   @override
-  $ProviderElement<VM2<int, bool>> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<VM3<bool, int, bool>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
-  VM2<int, bool> create(Ref ref) {
+  VM3<bool, int, bool> create(Ref ref) {
     return checkIp(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(VM2<int, bool> value) {
+  Override overrideWithValue(VM3<bool, int, bool> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<VM2<int, bool>>(value),
+      providerOverride: $SyncValueProvider<VM3<bool, int, bool>>(value),
     );
   }
 }
 
-String _$checkIpHash() => r'07ebf8d032349e2b3adda483e68b1936ffbed68d';
+String _$checkIpHash() => r'7d8be66f0e8164bcf20c32659da2a4bea9893596';
 
 @ProviderFor(genColorScheme)
 const genColorSchemeProvider = GenColorSchemeFamily._();
@@ -2071,7 +2077,7 @@ final class GenColorSchemeProvider
   }
 }
 
-String _$genColorSchemeHash() => r'b18f15c938a8132ee4ed02cdfc02f3b9f01724e2';
+String _$genColorSchemeHash() => r'25f648db7c33ac00e7152f3d304da372a4de9fdd';
 
 final class GenColorSchemeFamily extends $Family
     with
@@ -2232,7 +2238,7 @@ final class AutoSetSystemDnsStateProvider
 }
 
 String _$autoSetSystemDnsStateHash() =>
-    r'2e0976e079100325b1ca797285df48a94c2c066c';
+    r'a8805965efe78241613bfde55f4ea8fa12a6ea32';
 
 @ProviderFor(needUpdateGroups)
 const needUpdateGroupsProvider = NeedUpdateGroupsProvider._();
@@ -2281,7 +2287,7 @@ final class NeedUpdateGroupsProvider
   }
 }
 
-String _$needUpdateGroupsHash() => r'1d1fbf135b4b5d2a2ee984e421ccffe7c4bb0a47';
+String _$needUpdateGroupsHash() => r'7913b7b74caf9f2c72fd32729d52b7c6ac9258e8';
 
 @ProviderFor(sharedState)
 const sharedStateProvider = SharedStateProvider._();
@@ -2322,7 +2328,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'a3829304fa29dfbcc87ae5ab1d092420b9f63585';
+String _$sharedStateHash() => r'5af2de336f20f526d2292ebc6d900ffaaffa0369';
 
 @ProviderFor(overlayTopOffset)
 const overlayTopOffsetProvider = OverlayTopOffsetProvider._();
@@ -2630,7 +2636,7 @@ final class SetupStateProvider
   }
 }
 
-String _$setupStateHash() => r'c9ec58ffbaef868972d8bf769b1b94a2beb9fd94';
+String _$setupStateHash() => r'f5becd09bca08d4c04c7718625bd3f85d11e65e6';
 
 final class SetupStateFamily extends $Family
     with $FunctionalFamilyOverride<SetupState, int?> {

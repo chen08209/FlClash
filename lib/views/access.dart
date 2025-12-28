@@ -605,8 +605,8 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
               final vm2 = ref.watch(
                 accessControlStateProvider.select(
                   (state) => VM2(
-                    a: state.isFilterSystemApp,
-                    b: state.isFilterNonInternetApp,
+                    state.isFilterSystemApp,
+                    state.isFilterNonInternetApp,
                   ),
                 ),
               );

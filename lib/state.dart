@@ -151,9 +151,7 @@ class GlobalState {
     final profileIds = runningState.profiles.map((item) => item.id).toList();
     final scriptIds = runningState.scripts.map((item) => item.id).toList();
 
-    final pathsToDelete = await shakingProfileTask(
-      VM2(a: profileIds, b: scriptIds),
-    );
+    final pathsToDelete = await shakingProfileTask(VM2(profileIds, scriptIds));
     if (pathsToDelete.isNotEmpty) {
       final deleteFutures = pathsToDelete.map((path) async {
         try {
