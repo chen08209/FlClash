@@ -53,18 +53,24 @@ func handleInitClash(paramsString string) bool {
 func handleStartListener() bool {
 	runLock.Lock()
 	defer runLock.Unlock()
-	isRunning = true
-	updateListeners()
-	resolver.ResetConnection()
+	if !isRunning {
+		isRunning = true
+		updateListeners()
+		resolver.ResetConnection()
+		return false
+	}
 	return true
 }
 
 func handleStopListener() bool {
 	runLock.Lock()
 	defer runLock.Unlock()
-	isRunning = false
-	listener.StopListener()
-	resolver.ResetConnection()
+	if isRunning {
+		isRunning = false
+		listener.StopListener()
+		resolver.ResetConnection()
+		return false
+	}
 	return true
 }
 

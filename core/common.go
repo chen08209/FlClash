@@ -242,6 +242,7 @@ func updateConfig(params *UpdateParams) {
 }
 
 func applyConfig(params *SetupParams) error {
+	runtime.GC()
 	runLock.Lock()
 	defer runLock.Unlock()
 	var err error
@@ -253,7 +254,6 @@ func applyConfig(params *SetupParams) error {
 	hub.ApplyConfig(currentConfig)
 	patchSelectGroup(params.SelectedMap)
 	updateListeners()
-	runtime.GC()
 	return err
 }
 

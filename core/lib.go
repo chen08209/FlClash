@@ -201,6 +201,7 @@ func invokeAction(callback unsafe.Pointer, paramsChar *C.char) {
 //export startTUN
 func startTUN(callback unsafe.Pointer, fd C.int, stackChar, addressChar, dnsChar *C.char) bool {
 	handleStartTun(callback, int(fd), takeCString(stackChar), takeCString(addressChar), takeCString(dnsChar))
+	handleStartListener()
 	return true
 }
 
@@ -208,12 +209,13 @@ func startTUN(callback unsafe.Pointer, fd C.int, stackChar, addressChar, dnsChar
 func quickSetup(callback unsafe.Pointer, initParamsChar *C.char, setupParamsChar *C.char) {
 	go func() {
 		initParamsString := takeCString(initParamsChar)
-		setupParams := takeCString(setupParamsChar)
+		setupParamsString := takeCString(setupParamsChar)
 		if !handleInitClash(initParamsString) {
 			invokeResult(callback, "init failed")
 			return
 		}
-		invokeResult(callback, handleSetupConfig([]byte(setupParams)))
+		message := handleSetupConfig([]byte(setupParamsString))
+		invokeResult(callback, message)
 	}()
 }
 
@@ -254,6 +256,7 @@ func sendMessage(message Message) {
 //export stopTun
 func stopTun() {
 	handleStopTun()
+	handleStopListener()
 }
 
 //export suspend
