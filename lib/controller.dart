@@ -565,10 +565,10 @@ class AppController {
     final isInit = await coreController.isInit;
     if (!isInit) {
       await coreController.init(globalState.appState.version);
+      await applyProfile();
     } else {
       await updateGroups();
     }
-    await applyProfile();
   }
 
   Future<void> init() async {
@@ -620,11 +620,7 @@ class AppController {
     final status = globalState.isStart == true
         ? true
         : _ref.read(appSettingProvider).autoRun;
-
     await updateStatus(status);
-    if (!status) {
-      addCheckIpNumDebounce();
-    }
   }
 
   void setDelay(Delay delay) {

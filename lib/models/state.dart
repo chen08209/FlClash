@@ -321,7 +321,7 @@ abstract class SetupState with _$SetupState {
 extension SetupStateExt on SetupState {
   bool needSetup(SetupState? lastSetupState) {
     if (lastSetupState == null) {
-      return true;
+      return false;
     }
     if (profileId != lastSetupState.profileId) {
       return true;
