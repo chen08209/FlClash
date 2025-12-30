@@ -18,6 +18,9 @@ jobs:
           - platform: windows
             os: Windows-2022
             arch: amd64
+          - platform: windows
+            os: Windows-2022
+            arch: arm64
           - platform: linux
             os: ubuntu-22.04
             arch: amd64
@@ -35,13 +38,17 @@ jobs:
             arch: arm64
 
     steps:
-      - name: Setup rust
-        if: startsWith(matrix.os, 'windows-11-arm')
-        run: |
-          Invoke-WebRequest -Uri "https://win.rustup.rs/aarch64" -OutFile rustup-init.exe
-          .\rustup-init.exe -y --default-toolchain stable
-          $cargoPath = "$env:USERPROFILE\.cargo\bin"
-          Add-Content $env:GITHUB_PATH $cargoPath
+#      - name: Setup rust
+#        if: startsWith(matrix.os, 'windows-11-arm')
+#        run: |
+#          Invoke-WebRequest -Uri "https://win.rustup.rs/aarch64" -OutFile rustup-init.exe
+#          .\rustup-init.exe -y --default-toolchain stable
+#          $cargoPath = "$env:USERPROFILE\.cargo\bin"
+#          Add-Content $env:GITHUB_PATH $cargoPath
+
+      - name: Setup Rust Target
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
+        run: rustup target add aarch64-pc-windows-msvc
 
       - name: Checkout
         uses: actions/checkout@v4
