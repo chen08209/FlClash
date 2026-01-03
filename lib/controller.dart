@@ -829,6 +829,30 @@ class AppController {
         .setProfile(currentProfile.copyWith(unfoldSet: value));
   }
 
+  void archiveProxy(String proxyName) {
+    final currentProfile = _ref.read(currentProfileProvider);
+    if (currentProfile == null) {
+      return;
+    }
+    final archivedProxies = Set<String>.from(currentProfile.archivedProxies)
+      ..add(proxyName);
+    _ref
+        .read(profilesProvider.notifier)
+        .setProfile(currentProfile.copyWith(archivedProxies: archivedProxies));
+  }
+
+  void unarchiveProxy(String proxyName) {
+    final currentProfile = _ref.read(currentProfileProvider);
+    if (currentProfile == null) {
+      return;
+    }
+    final archivedProxies = Set<String>.from(currentProfile.archivedProxies)
+      ..remove(proxyName);
+    _ref
+        .read(profilesProvider.notifier)
+        .setProfile(currentProfile.copyWith(archivedProxies: archivedProxies));
+  }
+
   void changeMode(Mode mode) {
     _ref
         .read(patchClashConfigProvider.notifier)

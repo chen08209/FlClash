@@ -112,6 +112,38 @@ class ProxyCard extends StatelessWidget {
     globalState.showNotifier(appLocalizations.notSelectedTip);
   }
 
+  void _showProxyMenu(BuildContext context, WidgetRef ref) {
+    if (GroupTypeExtension.getGroupType(proxy.type) != null ||
+        proxy.type == 'Relay') {
+      return;
+    }
+    final isArchived = ref.read(isProxyArchivedProvider(proxy.name));
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(isArchived ? Icons.unarchive : Icons.archive),
+              title: Text(isArchived
+                  ? appLocalizations.unarchive
+                  : appLocalizations.archive),
+              onTap: () {
+                Navigator.pop(context);
+                if (isArchived) {
+                  globalState.appController.unarchiveProxy(proxy.name);
+                } else {
+                  globalState.appController.archiveProxy(proxy.name);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final measure = globalState.measure;
@@ -124,13 +156,20 @@ class ProxyCard extends StatelessWidget {
             final selectedProxyName = ref.watch(
               getSelectedProxyNameProvider(groupName),
             );
-            return CommonCard(
-              key: key,
-              onPressed: () {
-                _changeProxy(ref);
-              },
-              isSelected: selectedProxyName == proxy.name,
-              child: child!,
+            final isArchived = ref.watch(isProxyArchivedProvider(proxy.name));
+            return GestureDetector(
+              onLongPress: () => _showProxyMenu(context, ref),
+              child: CommonCard(
+                key: key,
+                onPressed: () {
+                  _changeProxy(ref);
+                },
+                isSelected: selectedProxyName == proxy.name,
+                child: Opacity(
+                  opacity: isArchived ? 0.5 : 1.0,
+                  child: child!,
+                ),
+              ),
             );
           },
           child: Container(

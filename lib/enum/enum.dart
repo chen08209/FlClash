@@ -149,6 +149,8 @@ enum ProxiesLayout { loose, standard, tight }
 
 enum ProxyCardType { expand, shrink, min }
 
+enum ProxyViewMode { active, archived, all }
+
 enum DnsMode {
   normal,
   @JsonValue('fake-ip')

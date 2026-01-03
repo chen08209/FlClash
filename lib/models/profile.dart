@@ -54,6 +54,7 @@ abstract class Profile with _$Profile {
     @Default(true) bool autoUpdate,
     @Default({}) Map<String, String> selectedMap,
     @Default({}) Set<String> unfoldSet,
+    @Default({}) Set<String> archivedProxies,
     @Default(OverrideData()) OverrideData overrideData,
     @Default(Overwrite()) Overwrite overwrite,
     @JsonKey(includeToJson: false, includeFromJson: false)

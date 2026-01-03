@@ -467,5 +467,10 @@
   "vpnConfigChangeDetected": "检测到VPN相关配置改动",
   "restart": "重启",
   "speedStatistics": "网速统计",
-  "resetPageChangesTip": "当前页面存在更改，确定重置吗？"
+  "resetPageChangesTip": "当前页面存在更改，确定重置吗？",
+  "archive": "归档",
+  "unarchive": "取消归档",
+  "archivedProxies": "归档节点",
+  "activeProxies": "活跃节点",
+  "allProxies": "全部节点"
 }

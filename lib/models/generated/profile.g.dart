@@ -47,6 +47,11 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   unfoldSet:
       (json['unfoldSet'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
       const {},
+  archivedProxies:
+      (json['archivedProxies'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toSet() ??
+      const {},
   overrideData: json['overrideData'] == null
       ? const OverrideData()
       : OverrideData.fromJson(json['overrideData'] as Map<String, dynamic>),
@@ -66,6 +71,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'autoUpdate': instance.autoUpdate,
   'selectedMap': instance.selectedMap,
   'unfoldSet': instance.unfoldSet.toList(),
+  'archivedProxies': instance.archivedProxies.toList(),
   'overrideData': instance.overrideData,
   'overwrite': instance.overwrite,
 };

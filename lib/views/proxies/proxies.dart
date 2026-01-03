@@ -41,6 +41,56 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
               final isMobile = ref.read(isMobileViewProvider);
               open(offset: Offset(0, isMobile ? 0 : 20));
             },
+            icon: Icon(Icons.filter_list),
+          );
+        },
+        popup: Consumer(
+          builder: (_, ref, _) {
+            final viewMode = ref.watch(proxyViewModeStateProvider);
+            return CommonPopupMenu(
+              items: [
+                PopupMenuItemData(
+                  icon: viewMode == ProxyViewMode.active
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
+                  label: appLocalizations.activeProxies,
+                  onPressed: () {
+                    ref.read(proxyViewModeStateProvider.notifier).value =
+                        ProxyViewMode.active;
+                  },
+                ),
+                PopupMenuItemData(
+                  icon: viewMode == ProxyViewMode.archived
+                      ? Icons.archive
+                      : Icons.archive_outlined,
+                  label: appLocalizations.archivedProxies,
+                  onPressed: () {
+                    ref.read(proxyViewModeStateProvider.notifier).value =
+                        ProxyViewMode.archived;
+                  },
+                ),
+                PopupMenuItemData(
+                  icon: viewMode == ProxyViewMode.all
+                      ? Icons.list_alt
+                      : Icons.list_alt_outlined,
+                  label: appLocalizations.allProxies,
+                  onPressed: () {
+                    ref.read(proxyViewModeStateProvider.notifier).value =
+                        ProxyViewMode.all;
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+      CommonPopupBox(
+        targetBuilder: (open) {
+          return IconButton(
+            onPressed: () {
+              final isMobile = ref.read(isMobileViewProvider);
+              open(offset: Offset(0, isMobile ? 0 : 20));
+            },
             icon: Icon(Icons.more_vert),
           );
         },
