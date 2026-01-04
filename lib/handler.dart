@@ -149,6 +149,7 @@ class AppHandler {
         appendSystemDns: appendSystemDns,
         addedRules: addedRules,
         defaultUA: defaultUA,
+        archivedProxies: setupState.archivedProxies,
       ),
     );
     return res;

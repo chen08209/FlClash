@@ -400,10 +400,34 @@ class AppController {
     }
   }
 
+  void archiveProxy(String proxyName) {
+    final currentProfile = _ref.read(currentProfileProvider);
+    if (currentProfile == null) {
+      return;
+    }
+    final archivedProxies = Set<String>.from(currentProfile.archivedProxies)
+      ..add(proxyName);
+    _ref
+        .read(profilesProvider.notifier)
+        .setProfile(currentProfile.copyWith(archivedProxies: archivedProxies));
+  }
+
+  void unarchiveProxy(String proxyName) {
+    final currentProfile = _ref.read(currentProfileProvider);
+    if (currentProfile == null) {
+      return;
+    }
+    final archivedProxies = Set<String>.from(currentProfile.archivedProxies)
+      ..remove(proxyName);
+    _ref
+        .read(profilesProvider.notifier)
+        .setProfile(currentProfile.copyWith(archivedProxies: archivedProxies));
+  }
+
   Future<void> updateGroups() async {
     try {
       commonPrint.log('updateGroups');
-      _ref.read(groupsProvider.notifier).value = await retry(
+      final groups = await retry(
         task: () async {
           final sortType = _ref.read(
             proxiesStyleSettingProvider.select((state) => state.sortType),
@@ -424,6 +448,23 @@ class AppController {
         },
         retryIf: (res) => res.isEmpty,
       );
+      final currentProfile = _ref.read(currentProfileProvider);
+      if (currentProfile != null) {
+        final archivedProxies = currentProfile.archivedProxies;
+        if (archivedProxies.isNotEmpty) {
+          for (final group in groups) {
+            group.all.addAll(
+              archivedProxies.map(
+                (name) => Proxy(
+                  name: name,
+                  type: 'Shadowsocks',
+                ),
+              ),
+            );
+          }
+        }
+      }
+      _ref.read(groupsProvider.notifier).value = groups;
     } catch (_) {
       _ref.read(groupsProvider.notifier).value = [];
     }

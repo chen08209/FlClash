@@ -470,5 +470,10 @@
   "overwriteTypeCustom": "Custom",
   "overwriteTypeCustomDesc": "Custom mode, fully customize proxy groups and rules",
   "unknownNetworkError": "Unknown network error",
-  "networkRequestException": "Network request exception, please try again later."
+  "networkRequestException": "Network request exception, please try again later.",
+  "activeProxies": "Active proxies",
+  "allProxies": "All proxies",
+  "archivedProxies": "Archived proxies",
+  "archive": "Archive",
+  "unarchive": "Unarchive"
 }

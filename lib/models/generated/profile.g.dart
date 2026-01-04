@@ -44,6 +44,11 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
         (k, e) => MapEntry(k, e as String),
       ) ??
       const {},
+  archivedProxies:
+      (json['archivedProxies'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toSet() ??
+      const {},
   unfoldSet:
       (json['unfoldSet'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
       const {},
@@ -63,6 +68,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'subscriptionInfo': instance.subscriptionInfo,
   'autoUpdate': instance.autoUpdate,
   'selectedMap': instance.selectedMap,
+  'archivedProxies': instance.archivedProxies.toList(),
   'unfoldSet': instance.unfoldSet.toList(),
   'overwrite': instance.overwrite,
   'order': instance.order,

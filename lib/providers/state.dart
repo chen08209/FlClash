@@ -277,13 +277,59 @@ ProfilesSelectorState profilesSelectorState(Ref ref) {
 }
 
 @riverpod
+@riverpod
+Set<String> archivedProxies(Ref ref) {
+  final archivedProxies = ref.watch(
+    currentProfileProvider.select((state) => state?.archivedProxies ?? {}),
+  );
+  return archivedProxies;
+}
+
+@riverpod
+bool isProxyArchived(Ref ref, String proxyName) {
+  return ref.watch(archivedProxiesProvider).contains(proxyName);
+}
+
+@riverpod
+class ProxyViewModeState extends _$ProxyViewModeState
+    with AutoDisposeNotifierMixin<ProxyViewMode> {
+  @override
+  ProxyViewMode build() => ProxyViewMode.active;
+}
+
+@riverpod
 GroupsState filterGroupsState(Ref ref, String query) {
   final currentGroups = ref.watch(currentGroupsStateProvider);
+  final archived = ref.watch(archivedProxiesProvider);
+  final viewMode = ref.watch(proxyViewModeStateProvider);
+
+  final filteredByArchiveGroups = currentGroups.value
+      .map((group) {
+        final proxies = group.all.where((proxy) {
+          final isArchived = archived.contains(proxy.name);
+          return switch (viewMode) {
+            ProxyViewMode.active => !isArchived,
+            ProxyViewMode.archived => isArchived,
+            ProxyViewMode.all => true,
+          };
+        }).toList();
+        return group.copyWith(all: proxies);
+      })
+      .where((group) {
+        final isGroupArchived = archived.contains(group.name);
+        return switch (viewMode) {
+          ProxyViewMode.active => !isGroupArchived && group.all.isNotEmpty,
+          ProxyViewMode.archived => group.all.isNotEmpty,
+          ProxyViewMode.all => true,
+        };
+      })
+      .toList();
+
   if (query.isEmpty) {
-    return currentGroups;
+    return currentGroups.copyWith(value: filteredByArchiveGroups);
   }
   final lowQuery = query.toLowerCase();
-  final groups = currentGroups.value
+  final groups = filteredByArchiveGroups
       .map((group) {
         return group.copyWith(
           all: group.all
