@@ -59,6 +59,41 @@ class AppLocalizations {
     return Intl.message('Rule', name: 'rule', desc: '', args: []);
   }
 
+  /// `Archive`
+  String get archive {
+    return Intl.message('Archive', name: 'archive', desc: '', args: []);
+  }
+
+  /// `Unarchive`
+  String get unarchive {
+    return Intl.message('Unarchive', name: 'unarchive', desc: '', args: []);
+  }
+
+  /// `Archived Proxies`
+  String get archivedProxies {
+    return Intl.message(
+      'Archived Proxies',
+      name: 'archivedProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Active Proxies`
+  String get activeProxies {
+    return Intl.message(
+      'Active Proxies',
+      name: 'activeProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All Proxies`
+  String get allProxies {
+    return Intl.message('All Proxies', name: 'allProxies', desc: '', args: []);
+  }
+
   /// `Global`
   String get global {
     return Intl.message('Global', name: 'global', desc: '', args: []);

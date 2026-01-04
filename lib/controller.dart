@@ -389,12 +389,81 @@ class AppController {
           final selectedMap = _ref.read(
             currentProfileProvider.select((state) => state?.selectedMap ?? {}),
           );
-          return await coreController.getProxiesGroups(
+          final currentProfile = _ref.read(currentProfileProvider);
+          final archivedProxies = currentProfile?.archivedProxies ?? {};
+          
+          // Get groups from Core (without archived proxies)
+          final groups = await coreController.getProxiesGroups(
             selectedMap: selectedMap,
             sortType: sortType,
             delayMap: delayMap,
             defaultTestUrl: testUrl,
           );
+          
+          // If there are archived proxies, restore them from original config
+          if (archivedProxies.isNotEmpty && currentProfile != null) {
+            try {
+              final rawConfig = await globalState.getProfileConfig(currentProfile.id);
+              final proxyGroups = rawConfig['proxy-groups'] as List?;
+              final proxies = rawConfig['proxies'] as List?;
+              
+              if (proxyGroups != null && proxies != null) {
+                // Create a map of proxy name -> proxy data
+                final proxyMap = <String, Map<String, dynamic>>{};
+                for (final proxy in proxies) {
+                  if (proxy is Map<String, dynamic> && proxy['name'] != null) {
+                    proxyMap[proxy['name']] = proxy;
+                  }
+                }
+                
+                // Restore archived proxies to each group
+                for (final group in groups) {
+                  final rawGroup = proxyGroups.firstWhere(
+                    (g) => g is Map && g['name'] == group.name,
+                    orElse: () => null,
+                  );
+                  
+                  if (rawGroup != null && rawGroup is Map<String, dynamic>) {
+                    final rawProxies = rawGroup['proxies'] as List?;
+                    if (rawProxies != null) {
+                      // Find archived proxies that belong to this group
+                      final archivedInGroup = rawProxies
+                          .where((name) => archivedProxies.contains(name))
+                          .toList();
+                      
+                      if (archivedInGroup.isNotEmpty) {
+                        // Create Proxy objects for archived proxies
+                        final archivedProxyObjects = archivedInGroup
+                            .map((name) {
+                              final proxyData = proxyMap[name];
+                              if (proxyData != null) {
+                                return Proxy(
+                                  name: name as String,
+                                  type: proxyData['type'] ?? 'Unknown',
+                                  now: '',
+                                );
+                              }
+                              return null;
+                            })
+                            .whereType<Proxy>()
+                            .toList();
+                        
+                        // Add archived proxies to the group's all list
+                        final updatedAll = [...group.all, ...archivedProxyObjects];
+                        final updatedGroup = group.copyWith(all: updatedAll);
+                        final groupIndex = groups.indexOf(group);
+                        groups[groupIndex] = updatedGroup;
+                      }
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              commonPrint.log('Failed to restore archived proxies: $e', logLevel: LogLevel.warning);
+            }
+          }
+          
+          return groups;
         },
         retryIf: (res) => res.isEmpty,
       );
@@ -827,6 +896,30 @@ class AppController {
     _ref
         .read(profilesProvider.notifier)
         .setProfile(currentProfile.copyWith(unfoldSet: value));
+  }
+
+  void archiveProxy(String proxyName) {
+    final currentProfile = _ref.read(currentProfileProvider);
+    if (currentProfile == null) {
+      return;
+    }
+    final archivedProxies = Set<String>.from(currentProfile.archivedProxies)
+      ..add(proxyName);
+    _ref
+        .read(profilesProvider.notifier)
+        .setProfile(currentProfile.copyWith(archivedProxies: archivedProxies));
+  }
+
+  void unarchiveProxy(String proxyName) {
+    final currentProfile = _ref.read(currentProfileProvider);
+    if (currentProfile == null) {
+      return;
+    }
+    final archivedProxies = Set<String>.from(currentProfile.archivedProxies)
+      ..remove(proxyName);
+    _ref
+        .read(profilesProvider.notifier)
+        .setProfile(currentProfile.copyWith(archivedProxies: archivedProxies));
   }
 
   void changeMode(Mode mode) {

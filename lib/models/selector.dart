@@ -267,6 +267,7 @@ abstract class SetupState with _$SetupState {
     required String? scriptContent,
     required bool overrideDns,
     required Dns dns,
+    @Default({}) Set<String> archivedProxies,
   }) = _SetupState;
 }
 
@@ -302,6 +303,9 @@ extension SetupStateExt on SetupState {
       return true;
     }
     if (overrideDns == true && dns != lastSetupState.dns) {
+      return true;
+    }
+    if (!const SetEquality().equals(archivedProxies, lastSetupState.archivedProxies)) {
       return true;
     }
     return false;

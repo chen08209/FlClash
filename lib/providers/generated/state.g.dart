@@ -662,6 +662,60 @@ final class ProfilesSelectorStateProvider
 String _$profilesSelectorStateHash() =>
     r'da4a4382d7054dfe4010e44e55368d31ec805536';
 
+@ProviderFor(ProxyViewModeState)
+const proxyViewModeStateProvider = ProxyViewModeStateProvider._();
+
+final class ProxyViewModeStateProvider
+    extends $NotifierProvider<ProxyViewModeState, ProxyViewMode> {
+  const ProxyViewModeStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'proxyViewModeStateProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$proxyViewModeStateHash();
+
+  @$internal
+  @override
+  ProxyViewModeState create() => ProxyViewModeState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProxyViewMode value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProxyViewMode>(value),
+    );
+  }
+}
+
+String _$proxyViewModeStateHash() =>
+    r'dfebad86008e34ace60170c8050a2544a0383c11';
+
+abstract class _$ProxyViewModeState extends $Notifier<ProxyViewMode> {
+  ProxyViewMode build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<ProxyViewMode, ProxyViewMode>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ProxyViewMode, ProxyViewMode>,
+              ProxyViewMode,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(filterGroupsState)
 const filterGroupsStateProvider = FilterGroupsStateFamily._();
 
@@ -719,7 +773,7 @@ final class FilterGroupsStateProvider
   }
 }
 
-String _$filterGroupsStateHash() => r'7de7a4603ca5ed7c39a00351af43144eb6c21404';
+String _$filterGroupsStateHash() => r'0cc3babc339cbc8053b8c867cf9200517be19f7a';
 
 final class FilterGroupsStateFamily extends $Family
     with $FunctionalFamilyOverride<GroupsState, String> {
@@ -1444,6 +1498,124 @@ final class UnfoldSetProvider
 }
 
 String _$unfoldSetHash() => r'59a5b417611533069462ddf31eca080ab2f74ac9';
+
+@ProviderFor(archivedProxies)
+const archivedProxiesProvider = ArchivedProxiesProvider._();
+
+final class ArchivedProxiesProvider
+    extends $FunctionalProvider<Set<String>, Set<String>, Set<String>>
+    with $Provider<Set<String>> {
+  const ArchivedProxiesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'archivedProxiesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$archivedProxiesHash();
+
+  @$internal
+  @override
+  $ProviderElement<Set<String>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Set<String> create(Ref ref) {
+    return archivedProxies(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$archivedProxiesHash() => r'd29149b11861e1cb37a517db5cdcc6e083a88112';
+
+@ProviderFor(isProxyArchived)
+const isProxyArchivedProvider = IsProxyArchivedFamily._();
+
+final class IsProxyArchivedProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  const IsProxyArchivedProvider._({
+    required IsProxyArchivedFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'isProxyArchivedProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$isProxyArchivedHash();
+
+  @override
+  String toString() {
+    return r'isProxyArchivedProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as String;
+    return isProxyArchived(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IsProxyArchivedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$isProxyArchivedHash() => r'6bf2a1f27464ec92fc4e3bad30d38609fefe6dc6';
+
+final class IsProxyArchivedFamily extends $Family
+    with $FunctionalFamilyOverride<bool, String> {
+  const IsProxyArchivedFamily._()
+    : super(
+        retry: null,
+        name: r'isProxyArchivedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  IsProxyArchivedProvider call(String proxyName) =>
+      IsProxyArchivedProvider._(argument: proxyName, from: this);
+
+  @override
+  String toString() => r'isProxyArchivedProvider';
+}
 
 @ProviderFor(getHotKeyAction)
 const getHotKeyActionProvider = GetHotKeyActionFamily._();
