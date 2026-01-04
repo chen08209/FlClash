@@ -61,3 +61,4 @@ app.*.map.json
 /macos/**/Package.resolved
 devtools_options.yaml
 
+/dist-win/
