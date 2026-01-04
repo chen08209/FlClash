@@ -393,3 +393,20 @@ class _CommonPopupMenuItemsState extends State<_CommonPopupMenuItems> {
     );
   }
 }
+
+Future<T?> showContextMenu<T>({
+  required BuildContext context,
+  required List<PopupMenuItemData> items,
+  Offset offset = Offset.zero,
+}) async {
+  final targetOffsetValueNotifier = ValueNotifier<Offset>(offset);
+  return await Navigator.of(context).push(
+    CommonPopupRoute(
+      barrierLabel: utils.id,
+      builder: (BuildContext context) {
+        return CommonPopupMenu(items: items);
+      },
+      offsetNotifier: targetOffsetValueNotifier,
+    ),
+  );
+}

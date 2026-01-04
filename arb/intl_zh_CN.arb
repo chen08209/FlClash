@@ -471,5 +471,10 @@
   "overwriteTypeCustom": "自定义",
   "overwriteTypeCustomDesc": "自定义模式，支持完全自定义修改代理组以及规则",
   "unknownNetworkError": "未知网络错误",
-  "networkRequestException": "网络请求异常，请稍后再试。"
+  "networkRequestException": "网络请求异常，请稍后再试。",
+  "activeProxies": "活跃代理",
+  "allProxies": "全部代理",
+  "archivedProxies": "归档代理",
+  "archive": "归档",
+  "unarchive": "取消归档"
 }

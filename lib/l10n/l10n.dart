@@ -1,7 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -3704,6 +3703,41 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Active proxies`
+  String get activeProxies {
+    return Intl.message(
+      'Active proxies',
+      name: 'activeProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All proxies`
+  String get allProxies {
+    return Intl.message('All proxies', name: 'allProxies', desc: '', args: []);
+  }
+
+  /// `Archived proxies`
+  String get archivedProxies {
+    return Intl.message(
+      'Archived proxies',
+      name: 'archivedProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Archive`
+  String get archive {
+    return Intl.message('Archive', name: 'archive', desc: '', args: []);
+  }
+
+  /// `Unarchive`
+  String get unarchive {
+    return Intl.message('Unarchive', name: 'unarchive', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -3720,10 +3754,8 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
 
   @override
   bool isSupported(Locale locale) => _isSupported(locale);
-
   @override
   Future<AppLocalizations> load(Locale locale) => AppLocalizations.load(locale);
-
   @override
   bool shouldReload(AppLocalizationDelegate old) => false;
 

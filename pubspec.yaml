@@ -68,6 +68,7 @@ dependencies:
   isar_community: 3.3.0
   isar_community_flutter_libs: 3.3.0
 dev_dependencies:
+  intl_utils: ^2.8.7
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0

@@ -253,6 +253,22 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
     rules = [...finalAddedRules, ...rules];
   }
   rawConfig['rules'] = rules;
+
+  if (rawConfig['proxy-groups'] != null && rawConfig['proxy-groups'] is List) {
+    final archivedProxies = data.archivedProxies;
+    if (archivedProxies.isNotEmpty) {
+      for (final group in rawConfig['proxy-groups']) {
+        if (group is Map &&
+            group['proxies'] != null &&
+            group['proxies'] is List) {
+          group['proxies'] = (group['proxies'] as List)
+              .where((proxyName) => !archivedProxies.contains(proxyName))
+              .toList();
+        }
+      }
+    }
+  }
+
   return Map<String, dynamic>.from(rawConfig);
 }
 

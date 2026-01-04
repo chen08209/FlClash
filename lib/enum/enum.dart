@@ -86,6 +86,8 @@ extension UsedProxyExtension on UsedProxy {
 
 enum Mode { rule, global, direct }
 
+enum ProxyViewMode { active, archived, all }
+
 enum ViewMode { mobile, laptop, desktop }
 
 enum LogLevel { debug, info, warning, error, silent }

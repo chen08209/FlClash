@@ -52,6 +52,7 @@ abstract class Profile with _$Profile {
     SubscriptionInfo? subscriptionInfo,
     @Default(true) bool autoUpdate,
     @Default({}) Map<String, String> selectedMap,
+    @Default({}) Set<String> archivedProxies,
     @Default({}) Set<String> unfoldSet,
     @Default(Overwrite()) Overwrite overwrite,
     @Default(-1) int order,

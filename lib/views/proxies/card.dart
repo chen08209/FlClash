@@ -112,6 +112,29 @@ class ProxyCard extends StatelessWidget {
     globalState.showNotifier(appLocalizations.notSelectedTip);
   }
 
+  void _showArchives(BuildContext context, WidgetRef ref) {
+    final isArchived = ref.read(isProxyArchivedProvider(proxy.name));
+    final appController = globalState.appController;
+    showContextMenu(
+      context: context,
+      items: [
+        PopupMenuItemData(
+          label: isArchived
+              ? appLocalizations.unarchive
+              : appLocalizations.archive,
+          icon: isArchived ? Icons.unarchive : Icons.archive,
+          onPressed: () {
+            if (isArchived) {
+              appController.unarchiveProxy(proxy.name);
+            } else {
+              appController.archiveProxy(proxy.name);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final measure = globalState.measure;
@@ -124,13 +147,20 @@ class ProxyCard extends StatelessWidget {
             final selectedProxyName = ref.watch(
               getSelectedProxyNameProvider(groupName),
             );
-            return CommonCard(
-              key: key,
-              onPressed: () {
-                _changeProxy(ref);
-              },
-              isSelected: selectedProxyName == proxy.name,
-              child: child!,
+            final isArchived = ref.watch(isProxyArchivedProvider(proxy.name));
+            return Opacity(
+              opacity: isArchived ? 0.5 : 1.0,
+              child: CommonCard(
+                key: key,
+                onPressed: () {
+                  _changeProxy(ref);
+                },
+                onLongPress: () {
+                  _showArchives(context, ref);
+                },
+                isSelected: selectedProxyName == proxy.name,
+                child: child!,
+              ),
             );
           },
           child: Container(

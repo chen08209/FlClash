@@ -291,6 +291,7 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required bool appendSystemDns,
     required List<Rule> addedRules,
     required String defaultUA,
+    required Set<String> archivedProxies,
   }) = _MakeRealProfileState;
 }
 
@@ -315,6 +316,7 @@ abstract class SetupState with _$SetupState {
     required DateTime? scriptLastUpdateTime,
     required bool overrideDns,
     required Dns dns,
+    @Default({}) Set<String> archivedProxies,
   }) = _SetupState;
 }
 

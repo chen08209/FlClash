@@ -80,6 +80,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "action_start": MessageLookupByLibrary.simpleMessage("Start/Stop"),
     "action_tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "action_view": MessageLookupByLibrary.simpleMessage("Show/Hide"),
+    "activeProxies": MessageLookupByLibrary.simpleMessage("Active proxies"),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
     "addRule": MessageLookupByLibrary.simpleMessage("Add rule"),
     "addedOriginRules": MessageLookupByLibrary.simpleMessage(
@@ -108,6 +109,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ago": MessageLookupByLibrary.simpleMessage(" Ago"),
     "agree": MessageLookupByLibrary.simpleMessage("Agree"),
     "allApps": MessageLookupByLibrary.simpleMessage("All apps"),
+    "allProxies": MessageLookupByLibrary.simpleMessage("All proxies"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Allow applications to bypass VPN",
     ),
@@ -135,6 +137,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationDesc": MessageLookupByLibrary.simpleMessage(
       "Modify application related settings",
     ),
+    "archive": MessageLookupByLibrary.simpleMessage("Archive"),
+    "archivedProxies": MessageLookupByLibrary.simpleMessage("Archived proxies"),
     "auto": MessageLookupByLibrary.simpleMessage("Auto"),
     "autoCheckUpdate": MessageLookupByLibrary.simpleMessage(
       "Auto check updates",
@@ -807,6 +811,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "unableToUpdateCurrentProfileDesc": MessageLookupByLibrary.simpleMessage(
       "unable to update current profile",
     ),
+    "unarchive": MessageLookupByLibrary.simpleMessage("Unarchive"),
     "undo": MessageLookupByLibrary.simpleMessage("undo"),
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("Unified delay"),
     "unifiedDelayDesc": MessageLookupByLibrary.simpleMessage(

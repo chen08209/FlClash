@@ -9,6 +9,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'filter.dart';
 import 'setting.dart';
 import 'tab.dart';
 
@@ -34,6 +35,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           },
           icon: Icon(Icons.adjust, weight: 1),
         ),
+      const ProxiesFilterButton(),
       CommonPopupBox(
         targetBuilder: (open) {
           return IconButton(
