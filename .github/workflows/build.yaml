@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: '是否发布到 Release'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
 
@@ -97,6 +107,7 @@ jobs:
   changelog:
     runs-on: ubuntu-latest
     needs: [ build ]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -152,6 +163,7 @@ jobs:
   upload:
     permissions: write-all
     needs: [ build ]
+    if: always() && (needs.build.result == 'success')
     runs-on: ubuntu-latest
     services:
       telegram-bot-api:
@@ -195,6 +207,7 @@ jobs:
             awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$out"
           done
       - name: Push to telegram
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TAG: ${{ github.ref_name }}
@@ -210,7 +223,7 @@ jobs:
           sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
 
       - name: Generate sha256
-        if: env.IS_STABLE == 'true'
+        if: (startsWith(github.ref, 'refs/tags/v') && env.IS_STABLE == 'true') || github.event.inputs.publish == 'true'
         run: |
           cd ./dist
           for file in $(find . -type f -not -name "*.sha256"); do
@@ -218,21 +231,21 @@ jobs:
           done  
 
       - name: Release
-        if: ${{ env.IS_STABLE == 'true' }}
+        if: (startsWith(github.ref, 'refs/tags/v') && env.IS_STABLE == 'true') || github.event.inputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/*
           body_path: './release.md'
 
       - name: Create Fdroid Source Dir
-        if: ${{ env.IS_STABLE == 'true' }}
+        if: (startsWith(github.ref, 'refs/tags/v') && env.IS_STABLE == 'true') || github.event.inputs.publish == 'true'
         run: |
           mkdir -p ./tmp
           cp ./dist/*android-arm64-v8a* ./tmp/ || true
           echo "Files copied successfully"
 
       - name: Push to fdroid repo
-        if: ${{ env.IS_STABLE == 'true' }}
+        if: (startsWith(github.ref, 'refs/tags/v') && env.IS_STABLE == 'true') || github.event.inputs.publish == 'true'
         uses: cpina/github-action-push-to-another-repository@v1.7.2
         env:
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
