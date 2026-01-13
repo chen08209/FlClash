@@ -35,20 +35,77 @@ abstract class VM5<A, B, C, D, E> with _$VM5<A, B, C, D, E> {
 }
 
 @freezed
-abstract class StartButtonSelectorState with _$StartButtonSelectorState {
-  const factory StartButtonSelectorState({
-    required bool isInit,
-    required bool hasProfile,
-  }) = _StartButtonSelectorState;
+abstract class ActivateState with _$ActivateState {
+  const factory ActivateState({required bool active}) = _ActivateState;
 }
 
 @freezed
-abstract class ProfilesSelectorState with _$ProfilesSelectorState {
-  const factory ProfilesSelectorState({
+abstract class InitState with _$InitState {
+  const factory InitState({
+    required Config config,
+    required List<Profile> profiles,
+  }) = _InitState;
+}
+
+@freezed
+abstract class CommonMessage with _$CommonMessage {
+  const factory CommonMessage({
+    required String id,
+    required String text,
+    @Default(Duration(seconds: 3)) Duration duration,
+    MessageActionState? actionState,
+  }) = _CommonMessage;
+}
+
+@freezed
+abstract class MessageActionState with _$MessageActionState {
+  const factory MessageActionState({
+    required String actionText,
+    required VoidCallback action,
+  }) = _MessageActionState;
+}
+
+@freezed
+abstract class AppBarState with _$AppBarState {
+  const factory AppBarState({
+    @Default([]) List<Widget> actions,
+    AppBarSearchState? searchState,
+    AppBarEditState? editState,
+  }) = _AppBarState;
+}
+
+@freezed
+abstract class AppBarSearchState with _$AppBarSearchState {
+  const factory AppBarSearchState({
+    required Function(String) onSearch,
+    @Default(true) bool autoAddSearch,
+    @Default(null) String? query,
+  }) = _AppBarSearchState;
+}
+
+@freezed
+abstract class AppBarEditState with _$AppBarEditState {
+  const factory AppBarEditState({
+    @Default(0) int editCount,
+    required Function() onExit,
+  }) = _AppBarEditState;
+}
+
+@freezed
+abstract class StartButtonState with _$StartButtonState {
+  const factory StartButtonState({
+    required bool isInit,
+    required bool hasProfile,
+  }) = _StartButtonState;
+}
+
+@freezed
+abstract class ProfilesState with _$ProfilesState {
+  const factory ProfilesState({
     required List<Profile> profiles,
     required int? currentProfileId,
     required int columns,
-  }) = _ProfilesSelectorState;
+  }) = _ProfilesState;
 }
 
 @freezed
@@ -301,6 +358,7 @@ abstract class MigrationData with _$MigrationData {
     @Default([]) List<Rule> rules,
     @Default([]) List<Script> scripts,
     @Default([]) List<Profile> profiles,
+    @Default([]) List<ProfileRuleLink> links,
   }) = _MigrationData;
 }
 
@@ -311,8 +369,7 @@ abstract class SetupState with _$SetupState {
     required int? profileLastUpdateDate,
     required OverwriteType overwriteType,
     required List<Rule> addedRules,
-    required int? scriptId,
-    required DateTime? scriptLastUpdateTime,
+    required Script? script,
     required bool overrideDns,
     required Dns dns,
   }) = _SetupState;
@@ -329,9 +386,7 @@ extension SetupStateExt on SetupState {
     if (profileLastUpdateDate != lastSetupState.profileLastUpdateDate) {
       return true;
     }
-    final scriptIsChange =
-        scriptId != lastSetupState.scriptId ||
-        scriptLastUpdateTime != lastSetupState.scriptLastUpdateTime;
+    final scriptIsChange = script != lastSetupState.script;
     if (overwriteType != lastSetupState.overwriteType) {
       if (!ruleListEquality.equals(addedRules, lastSetupState.addedRules) ||
           scriptIsChange) {

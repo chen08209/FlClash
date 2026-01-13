@@ -41,7 +41,7 @@ final class AppSettingProvider
   }
 }
 
-String _$appSettingHash() => r'dede19a9d4e5d631406f56efb4271ea2c59a5ec4';
+String _$appSettingHash() => r'0efd340a05a5be1b1190b3f2e9465bdfc6182046';
 
 abstract class _$AppSetting extends $Notifier<AppSettingProps> {
   AppSettingProps build();
@@ -73,7 +73,7 @@ final class WindowSettingProvider
         argument: null,
         retry: null,
         name: r'windowSettingProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -94,7 +94,7 @@ final class WindowSettingProvider
   }
 }
 
-String _$windowSettingHash() => r'fc0e5c4ec95a57a24e0e656fc2fab6f31add31e7';
+String _$windowSettingHash() => r'd245796233fec671722ebed58e39c967d9a12142';
 
 abstract class _$WindowSetting extends $Notifier<WindowProps> {
   WindowProps build();
@@ -146,7 +146,7 @@ final class VpnSettingProvider extends $NotifierProvider<VpnSetting, VpnProps> {
   }
 }
 
-String _$vpnSettingHash() => r'e6fab5a735fe518f9d4e5619254b0cea0006f318';
+String _$vpnSettingHash() => r'051f90f388a52678052b655827c48947150b7ca1';
 
 abstract class _$VpnSetting extends $Notifier<VpnProps> {
   VpnProps build();
@@ -199,7 +199,7 @@ final class NetworkSettingProvider
   }
 }
 
-String _$networkSettingHash() => r'281ff425db7c9a08f95aaadb4fd585abf90636f8';
+String _$networkSettingHash() => r'54bd68084a1eb1b68650e353089c240d4a07f3a5';
 
 abstract class _$NetworkSetting extends $Notifier<NetworkProps> {
   NetworkProps build();
@@ -252,7 +252,7 @@ final class ThemeSettingProvider
   }
 }
 
-String _$themeSettingHash() => r'0ddad89cb63fc2b2094dd82262c76d972c2def5c';
+String _$themeSettingHash() => r'5b64a2e3968a60967534805b4bef3adf3712e77a';
 
 abstract class _$ThemeSetting extends $Notifier<ThemeProps> {
   ThemeProps build();
@@ -305,7 +305,7 @@ final class CurrentProfileIdProvider
   }
 }
 
-String _$currentProfileIdHash() => r'6f5cba8def834ee51a379f5ba070424dd19c6720';
+String _$currentProfileIdHash() => r'98ff7a3a0b8ed420d086993839f4d629df7590a6';
 
 abstract class _$CurrentProfileId extends $Notifier<int?> {
   int? build();
@@ -358,7 +358,7 @@ final class DavSettingProvider
   }
 }
 
-String _$davSettingHash() => r'49b7624acc75952b99949b8bdbc9366f0d15aedb';
+String _$davSettingHash() => r'5c85725b0d988c8f44ef6ba373953e551e09e857';
 
 abstract class _$DavSetting extends $Notifier<DAVProps?> {
   DAVProps? build();
@@ -410,7 +410,7 @@ final class OverrideDnsProvider extends $NotifierProvider<OverrideDns, bool> {
   }
 }
 
-String _$overrideDnsHash() => r'1fc914de471319bf1e003edf9627b8c646b641bf';
+String _$overrideDnsHash() => r'3d49994fa23389530643e8c80e588a58f14eec92';
 
 abstract class _$OverrideDns extends $Notifier<bool> {
   bool build();
@@ -463,7 +463,7 @@ final class HotKeyActionsProvider
   }
 }
 
-String _$hotKeyActionsHash() => r'1d308d61b74accebbb11b1771a55975760503691';
+String _$hotKeyActionsHash() => r'5512b83196646a49fa7307282315d9dccc658dc8';
 
 abstract class _$HotKeyActions extends $Notifier<List<HotKeyAction>> {
   List<HotKeyAction> build();
@@ -517,7 +517,7 @@ final class ProxiesStyleSettingProvider
 }
 
 String _$proxiesStyleSettingHash() =>
-    r'bfdb7119de53c380645533300c01593588acfd6c';
+    r'b785ed2e71d74384150d80456d2b852e80629b8e';
 
 abstract class _$ProxiesStyleSetting extends $Notifier<ProxiesStyleProps> {
   ProxiesStyleProps build();
@@ -570,7 +570,7 @@ final class PatchClashConfigProvider
   }
 }
 
-String _$patchClashConfigHash() => r'de173d8fdec59b6b6fdbf5bce2c7f911c5a35f15';
+String _$patchClashConfigHash() => r'ff92f991ccb3a3d13a938affc006d7e2cb85fecd';
 
 abstract class _$PatchClashConfig extends $Notifier<ClashConfig> {
   ClashConfig build();
@@ -590,3 +590,43 @@ abstract class _$PatchClashConfig extends $Notifier<ClashConfig> {
     element.handleValue(ref, created);
   }
 }
+
+@ProviderFor(_config)
+const configProvider = _ConfigProvider._();
+
+final class _ConfigProvider extends $FunctionalProvider<Config, Config, Config>
+    with $Provider<Config> {
+  const _ConfigProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'configProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$_configHash();
+
+  @$internal
+  @override
+  $ProviderElement<Config> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Config create(Ref ref) {
+    return _config(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Config value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Config>(value),
+    );
+  }
+}
+
+String _$_configHash() => r'17dad8563f5727690a7fd484815e7344e6a46ffa';

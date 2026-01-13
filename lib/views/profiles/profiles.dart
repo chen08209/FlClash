@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/handler.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -39,16 +40,12 @@ class _ProfilesViewState extends State<ProfilesView> {
     );
   }
 
-  Future<void> _updateProfiles() async {
-    final profiles = globalState.profiles;
+  Future<void> _updateProfiles(List<Profile> profiles) async {
     final List<UpdatingMessage> messages = [];
     final updateProfiles = profiles.map<Future>((profile) async {
       if (profile.type == ProfileType.file) return;
       try {
-        await globalState.appController.updateProfile(
-          profile,
-          showLoading: true,
-        );
+        await appController.updateProfile(profile, showLoading: true);
       } catch (e) {
         messages.add(
           UpdatingMessage(
@@ -69,7 +66,7 @@ class _ProfilesViewState extends State<ProfilesView> {
         ? [
             IconButton(
               onPressed: () {
-                _updateProfiles();
+                _updateProfiles(profiles);
               },
               icon: const Icon(Icons.sync),
             ),
@@ -104,13 +101,13 @@ class _ProfilesViewState extends State<ProfilesView> {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (_, ref, _) {
-        final profilesSelectorState = ref.watch(profilesSelectorStateProvider);
+        final state = ref.watch(profilesStateProvider);
         final spacing = 14.ap;
         return CommonScaffold(
           title: appLocalizations.profiles,
           floatingActionButton: _buildFAB(),
-          actions: _buildActions(profilesSelectorState.profiles),
-          body: profilesSelectorState.profiles.isEmpty
+          actions: _buildActions(state.profiles),
+          body: state.profiles.isEmpty
               ? NullStatus(
                   label: appLocalizations.nullProfileDesc,
                   illustration: ProfileEmptyIllustration(),
@@ -128,21 +125,14 @@ class _ProfilesViewState extends State<ProfilesView> {
                     child: Grid(
                       mainAxisSpacing: spacing,
                       crossAxisSpacing: spacing,
-                      crossAxisCount: profilesSelectorState.columns,
+                      crossAxisCount: state.columns,
                       children: [
-                        for (
-                          int i = 0;
-                          i < profilesSelectorState.profiles.length;
-                          i++
-                        )
+                        for (int i = 0; i < state.profiles.length; i++)
                           GridItem(
                             child: ProfileItem(
-                              key: Key(
-                                profilesSelectorState.profiles[i].id.toString(),
-                              ),
-                              profile: profilesSelectorState.profiles[i],
-                              groupValue:
-                                  profilesSelectorState.currentProfileId,
+                              key: Key(state.profiles[i].id.toString()),
+                              profile: state.profiles[i],
+                              groupValue: state.currentProfileId,
                               onChanged: (profileId) {
                                 ref
                                         .read(currentProfileIdProvider.notifier)
@@ -183,12 +173,12 @@ class ProfileItem extends StatelessWidget {
     if (res != true) {
       return;
     }
-    await globalState.appController.deleteProfile(profile.id);
+    await appController.deleteProfile(profile.id);
   }
 
   Future<void> _handlePreview(BuildContext context) async {
-    final config = await appHandler.getProfileConfig(profile.id);
-    final content = await encodeYamlTask(config);
+    final configMap = await coreController.getConfig(profile.id);
+    final content = await encodeYamlTask(configMap);
     if (!context.mounted) {
       return;
     }
@@ -201,9 +191,8 @@ class ProfileItem extends StatelessWidget {
   }
 
   Future updateProfile() async {
-    final appController = globalState.appController;
     if (profile.type == ProfileType.file) return;
-    await globalState.appController.safeRun(silence: false, () async {
+    await appController.safeRun(silence: false, () async {
       await appController.updateProfile(profile, showLoading: true);
     });
   }
@@ -252,7 +241,7 @@ class ProfileItem extends StatelessWidget {
   }
 
   Future<void> _handleExportFile(BuildContext context) async {
-    final res = await globalState.appController.safeRun<bool>(
+    final res = await appController.safeRun<bool>(
       () async {
         final mFile = await profile.file;
         final value = await picker.saveFile(
@@ -468,6 +457,11 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
     );
   }
 
+  void _handleSave() {
+    Navigator.of(context).pop();
+    appController.reorder(profiles);
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdaptiveSheetScaffold(
@@ -475,10 +469,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
       actions: [
         if (widget.type == SheetType.bottomSheet)
           IconButton.filledTonal(
-            onPressed: () {
-              Navigator.of(context).pop();
-              globalState.appController.setProfiles(profiles);
-            },
+            onPressed: _handleSave,
             style: IconButton.styleFrom(
               visualDensity: VisualDensity.comfortable,
               tapTargetSize: MaterialTapTargetSize.padded,
@@ -490,10 +481,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
         else
           IconButton.filledTonal(
             icon: Icon(Icons.check),
-            onPressed: () {
-              Navigator.of(context).pop();
-              globalState.appController.setProfiles(profiles);
-            },
+            onPressed: _handleSave,
           ),
       ],
       body: Padding(

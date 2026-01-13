@@ -1,9 +1,11 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/scripts.dart';
@@ -40,7 +42,8 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
     ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
       state,
     ) {
-      return state.copyWith(overwrite: _originOverwriteData);
+      return state;
+      // return state.copyWith(overwrite: _originOverwriteData);
     });
   }
 
@@ -72,7 +75,7 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      globalState.appController.checkNeedSetup();
+      appController.checkNeedSetup();
     });
   }
 }
@@ -108,7 +111,8 @@ class _Title extends ConsumerWidget {
 
   void _handleChange(WidgetRef ref, OverwriteType type) {
     ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-      return state.copyWith.overwrite(type: type);
+      return state;
+      // return state.copyWith.overwrite(type: type);
     });
   }
 
@@ -207,15 +211,15 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
     if (res == null) {
       return;
     }
-    ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
-      state,
-    ) {
-      final newAddedRules = state.overwrite.standardOverwrite.addedRules
-          .updateWith(res);
-      return state.copyWith.overwrite.standardOverwrite(
-        addedRules: newAddedRules,
-      );
-    });
+    // ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
+    //   state,
+    // ) {
+    //   final newAddedRules = state.overwrite.standardOverwrite.addedRules
+    //       .updateWith(res);
+    //   return state.copyWith.overwrite.standardOverwrite(
+    //     addedRules: newAddedRules,
+    //   );
+    // });
   }
 
   void _handleSelected(int ruleId) {
@@ -251,16 +255,16 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
       return;
     }
     final selectedRules = ref.read(selectedItemsProvider(_key));
-    ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
-      state,
-    ) {
-      final newAddedRules = state.overwrite.standardOverwrite.addedRules
-          .where((item) => !selectedRules.contains(item.id))
-          .toList();
-      return state.copyWith.overwrite.standardOverwrite(
-        addedRules: newAddedRules,
-      );
-    });
+    // ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
+    //   state,
+    // ) {
+    //   final newAddedRules = state.overwrite.standardOverwrite.addedRules
+    //       .where((item) => !selectedRules.contains(item.id))
+    //       .toList();
+    //   return state.copyWith.overwrite.standardOverwrite(
+    //     addedRules: newAddedRules,
+    //   );
+    // });
     ref.read(selectedItemsProvider(_key).notifier).value = {};
   }
 
@@ -349,19 +353,19 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
                   if (oldIndex < newIndex) {
                     newIndex -= 1;
                   }
-                  ref.read(profilesProvider.notifier).updateProfile(
-                    widget.profileId,
-                    (state) {
-                      final newAddRules = List<Rule>.from(
-                        state.overwrite.standardOverwrite.addedRules,
-                      );
-                      final item = newAddRules.removeAt(oldIndex);
-                      newAddRules.insert(newIndex, item);
-                      return state.copyWith.overwrite.standardOverwrite(
-                        addedRules: newAddRules,
-                      );
-                    },
-                  );
+                  // ref.read(profilesProvider.notifier).updateProfile(
+                  //   widget.profileId,
+                  //   (state) {
+                  //     final newAddRules = List<Rule>.from(
+                  //       state.overwrite.standardOverwrite.addedRules,
+                  //     );
+                  //     final item = newAddRules.removeAt(oldIndex);
+                  //     newAddRules.insert(newIndex, item);
+                  //     return state.copyWith.overwrite.standardOverwrite(
+                  //       addedRules: newAddRules,
+                  //     );
+                  //   },
+                  // );
                 },
               );
             },
@@ -415,13 +419,13 @@ class _ScriptContent extends ConsumerWidget {
   const _ScriptContent(this.profileId);
 
   void _handleChange(WidgetRef ref, int scriptId) {
-    ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-      int? newScriptId = scriptId;
-      if (newScriptId == state.overwrite.scriptOverwrite.scriptId) {
-        newScriptId = null;
-      }
-      return state.copyWith.overwrite.scriptOverwrite(scriptId: newScriptId);
-    });
+    // ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
+    //   int? newScriptId = scriptId;
+    //   if (newScriptId == state.overwrite.scriptOverwrite.scriptId) {
+    //     newScriptId = null;
+    //   }
+    //   return state.copyWith.overwrite.scriptOverwrite(scriptId: newScriptId);
+    // });
   }
 
   @override
@@ -541,14 +545,14 @@ class _EditGlobalAddedRules extends ConsumerWidget {
   const _EditGlobalAddedRules({required this.profileId});
 
   void _handleChange(WidgetRef ref, int ruleId) {
-    ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-      final newDisabledRuleIds = Set<int>.from(
-        state.overwrite.standardOverwrite.disabledRuleIds,
-      )..addOrRemove(ruleId);
-      return state.copyWith.overwrite.standardOverwrite(
-        disabledRuleIds: newDisabledRuleIds.toList(),
-      );
-    });
+    // ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
+    //   final newDisabledRuleIds = Set<int>.from(
+    //     state.overwrite.standardOverwrite.disabledRuleIds,
+    //   )..addOrRemove(ruleId);
+    //   return state.copyWith.overwrite.standardOverwrite(
+    //     disabledRuleIds: newDisabledRuleIds.toList(),
+    //   );
+    // });
   }
 
   @override

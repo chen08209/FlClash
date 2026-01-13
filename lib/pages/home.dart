@@ -1,8 +1,9 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/app_manager.dart';
+import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,11 +24,15 @@ class HomePage extends StatelessWidget {
           child: Consumer(
             builder: (context, ref, _) {
               final state = ref.watch(navigationStateProvider);
+              final systemUiOverlayStyle = ref.read(
+                systemUiOverlayStyleStateProvider,
+              );
               final isMobile = state.viewMode == ViewMode.mobile;
               final navigationItems = state.navigationItems;
               final pageView = _HomePageView(
+                navigationItems: navigationItems,
                 pageBuilder: (_, index) {
-                  final navigationItem = state.navigationItems[index];
+                  final navigationItem = navigationItems[index];
                   final navigationView = navigationItem.builder(context);
                   final view = KeepScope(
                     keep: navigationItem.keep,
@@ -42,6 +47,7 @@ class HomePage extends StatelessWidget {
                 },
               );
               final currentIndex = state.currentIndex;
+              print(currentIndex);
               final bottomNavigationBar = NavigationBarTheme(
                 data: _NavigationBarDefaultsM3(context),
                 child: NavigationBar(
@@ -54,16 +60,14 @@ class HomePage extends StatelessWidget {
                       )
                       .toList(),
                   onDestinationSelected: (index) {
-                    globalState.appController.toPage(
-                      navigationItems[index].label,
-                    );
+                    appController.toPage(navigationItems[index].label);
                   },
                   selectedIndex: currentIndex,
                 ),
               );
               if (isMobile) {
                 return AnnotatedRegion<SystemUiOverlayStyle>(
-                  value: globalState.appState.systemUiOverlayStyle.copyWith(
+                  value: systemUiOverlayStyle.copyWith(
                     systemNavigationBarColor:
                         context.colorScheme.surfaceContainer,
                   ),
@@ -104,8 +108,12 @@ class HomePage extends StatelessWidget {
 
 class _HomePageView extends ConsumerStatefulWidget {
   final IndexedWidgetBuilder pageBuilder;
+  final List<NavigationItem> navigationItems;
 
-  const _HomePageView({required this.pageBuilder});
+  const _HomePageView({
+    required this.pageBuilder,
+    required this.navigationItems,
+  });
 
   @override
   ConsumerState createState() => _HomePageViewState();
@@ -123,18 +131,19 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
         _toPage(next);
       }
     });
-    ref.listenManual(currentNavigationItemsStateProvider, (prev, next) {
-      if (prev?.value.length != next.value.length) {
-        _updatePageController();
-      }
-    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _HomePageView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.navigationItems.length != widget.navigationItems.length) {
+      _updatePageController();
+    }
   }
 
   int get _pageIndex {
-    final navigationItems = ref.read(currentNavigationItemsStateProvider).value;
-    return navigationItems.indexWhere(
-      (item) => item.label == globalState.appState.pageLabel,
-    );
+    final pageLabel = ref.read(currentPageLabelProvider);
+    return widget.navigationItems.indexWhere((item) => item.label == pageLabel);
   }
 
   Future<void> _toPage(
@@ -144,8 +153,9 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     if (!mounted) {
       return;
     }
-    final navigationItems = ref.read(currentNavigationItemsStateProvider).value;
-    final index = navigationItems.indexWhere((item) => item.label == pageLabel);
+    final index = widget.navigationItems.indexWhere(
+      (item) => item.label == pageLabel,
+    );
     if (index == -1) {
       return;
     }
@@ -163,7 +173,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   }
 
   void _updatePageController() {
-    final pageLabel = globalState.appState.pageLabel;
+    final pageLabel = ref.read(currentPageLabelProvider);
     _toPage(pageLabel, true);
   }
 
@@ -262,7 +272,7 @@ class HomeBackScopeContainer extends ConsumerWidget {
         if (canPop) {
           Navigator.of(realContext).pop();
         } else {
-          await globalState.appController.handleBackOrExit();
+          await appController.handleBackOrExit();
         }
         return false;
       },

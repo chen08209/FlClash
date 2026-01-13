@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_ext/window_ext.dart';
@@ -44,7 +44,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 
   @override
   void onWindowClose() async {
-    await globalState.appController.handleBackOrExit();
+    await appController.handleBackOrExit();
     super.onWindowClose();
   }
 
@@ -57,19 +57,17 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 
   @override
   Future<void> onShouldTerminate() async {
-    await globalState.appController.handleExit();
+    await appController.handleExit();
     super.onShouldTerminate();
   }
 
   @override
-  Future<void> onWindowMoved() async {
+  void onWindowMoved() {
     super.onWindowMoved();
-    final offset = await windowManager.getPosition();
-    ref
-        .read(windowSettingProvider.notifier)
-        .updateState(
-          (state) => state.copyWith(top: offset.dy, left: offset.dx),
-        );
+    windowManager.getPosition().then((offset) {
+      ref.read(windowSettingProvider.notifier);
+      // .update((state) => state.copyWith(top: offset.dy, left: offset.dx));
+    });
   }
 
   @override
@@ -78,14 +76,14 @@ class _WindowContainerState extends ConsumerState<WindowManager>
     final size = await windowManager.getSize();
     ref
         .read(windowSettingProvider.notifier)
-        .updateState(
+        .update(
           (state) => state.copyWith(width: size.width, height: size.height),
         );
   }
 
   @override
   void onWindowMinimize() async {
-    globalState.appController.savePreferencesDebounce();
+    appController.savePreferencesDebounce();
     commonPrint.log('minimize');
     render?.pause();
     super.onWindowMinimize();
@@ -222,7 +220,7 @@ class _WindowHeaderState extends State<WindowHeader> {
         ),
         IconButton(
           onPressed: () {
-            globalState.appController.handleBackOrExit();
+            appController.handleBackOrExit();
           },
           icon: const Icon(Icons.close),
         ),

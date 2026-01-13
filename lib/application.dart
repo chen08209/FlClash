@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
@@ -45,22 +46,22 @@ class ApplicationState extends ConsumerState<Application> {
   @override
   void initState() {
     super.initState();
-    _autoUpdateProfilesTask();
-    globalState.appController = AppController(context, ref);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final currentContext = globalState.navigatorKey.currentContext;
       if (currentContext != null) {
-        globalState.appController = AppController(currentContext, ref);
+        await appController.attach(context, ref);
+      } else {
+        exit(0);
       }
-      await globalState.appController.init();
-      globalState.appController.initLink();
+      _autoUpdateProfilesTask();
+      appController.initLink();
       app?.initShortcuts();
     });
   }
 
   void _autoUpdateProfilesTask() {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
-      await globalState.appController.autoUpdateProfiles();
+      await appController.autoUpdateProfiles();
       _autoUpdateProfilesTask();
     });
   }
@@ -85,8 +86,8 @@ class ApplicationState extends ConsumerState<Application> {
             if (!results.contains(ConnectivityResult.vpn)) {
               coreController.closeConnections();
             }
-            globalState.appController.updateLocalIp();
-            globalState.appController.addCheckIpNumDebounce();
+            appController.updateLocalIp();
+            appController.addCheckIpNumDebounce();
           },
           child: child,
         ),
@@ -164,8 +165,7 @@ class ApplicationState extends ConsumerState<Application> {
     linkManager.destroy();
     _autoUpdateProfilesTaskTimer?.cancel();
     await coreController.destroy();
-    await globalState.savePreferences();
-    await globalState.appController.handleExit();
+    await appController.handleExit();
     super.dispose();
   }
 }

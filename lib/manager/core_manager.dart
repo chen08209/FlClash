@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -31,12 +32,12 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     coreEventManager.addListener(this);
     ref.listenManual(needSetupProvider, (prev, next) {
       if (prev != next) {
-        globalState.appController.handleChangeProfile();
+        appController.handleChangeProfile();
       }
     });
     ref.listenManual(updateParamsProvider, (prev, next) {
       if (prev != next) {
-        globalState.appController.updateClashConfigDebounce();
+        appController.updateConfigDebounce();
       }
     });
     ref.listenManual(appSettingProvider.select((state) => state.openLogs), (
@@ -60,7 +61,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   @override
   Future<void> onDelay(Delay delay) async {
     super.onDelay(delay);
-    final appController = globalState.appController;
     appController.setDelay(delay);
     debouncer.call(FunctionTag.updateDelay, () async {
       appController.updateGroupsDebounce();
@@ -88,7 +88,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         .read(providersProvider.notifier)
         .setProvider(await coreController.getExternalProvider(providerName));
     debouncer.call(FunctionTag.loadedProvider, () async {
-      globalState.appController.updateGroupsDebounce();
+      appController.updateGroupsDebounce();
     }, duration: const Duration(milliseconds: 5000));
     super.onLoaded(providerName);
   }

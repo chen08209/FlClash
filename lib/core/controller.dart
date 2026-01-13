@@ -204,6 +204,8 @@ class CoreController {
     final profilePath = await appPath.getProfilePath(id.toString());
     final res = await _interface.getConfig(profilePath);
     if (res.isSuccess) {
+      res.data['rules'] = res.data['rule'];
+      res.data.remove('rule');
       return res.data;
     } else {
       throw res.message;

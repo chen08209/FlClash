@@ -41,7 +41,7 @@ final class RealTunEnableProvider
   }
 }
 
-String _$realTunEnableHash() => r'a4e995c86deca4c8307966470e69d93d64a40df6';
+String _$realTunEnableHash() => r'f2c88f5031d1f97665c10f70121082c4f6d6c99d';
 
 abstract class _$RealTunEnable extends $Notifier<bool> {
   bool build();
@@ -72,7 +72,7 @@ final class LogsProvider extends $NotifierProvider<Logs, FixedList<Log>> {
         argument: null,
         retry: null,
         name: r'logsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -93,7 +93,7 @@ final class LogsProvider extends $NotifierProvider<Logs, FixedList<Log>> {
   }
 }
 
-String _$logsHash() => r'a671cf70f13d38cae75dc51841b651fe2d2dad9a';
+String _$logsHash() => r'f327fa8d05527172a647adf07771c797fb436bfd';
 
 abstract class _$Logs extends $Notifier<FixedList<Log>> {
   FixedList<Log> build();
@@ -125,7 +125,7 @@ final class RequestsProvider
         argument: null,
         retry: null,
         name: r'requestsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -146,7 +146,7 @@ final class RequestsProvider
   }
 }
 
-String _$requestsHash() => r'8642621b8b5f2e56f3abb04554c058fb30389795';
+String _$requestsHash() => r'32e4f0141a66b27732f8156a55a6fb23d74cfc07';
 
 abstract class _$Requests extends $Notifier<FixedList<TrackerInfo>> {
   FixedList<TrackerInfo> build();
@@ -179,7 +179,7 @@ final class ProvidersProvider
         argument: null,
         retry: null,
         name: r'providersProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -200,7 +200,7 @@ final class ProvidersProvider
   }
 }
 
-String _$providersHash() => r'9cb491314be6dca0d9ff2d09aa276d19a92895af';
+String _$providersHash() => r'8752fd5059f1ff767a7dabd0a4ab92effe2f2651';
 
 abstract class _$Providers extends $Notifier<List<ExternalProvider>> {
   List<ExternalProvider> build();
@@ -233,7 +233,7 @@ final class PackagesProvider
         argument: null,
         retry: null,
         name: r'packagesProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -254,7 +254,7 @@ final class PackagesProvider
   }
 }
 
-String _$packagesHash() => r'84bff9f5271622ed4199ecafacda8e74fa444fe2';
+String _$packagesHash() => r'93c92438ed777ec4c3017b90c22f4ddd1c02e931';
 
 abstract class _$Packages extends $Notifier<List<Package>> {
   List<Package> build();
@@ -286,7 +286,7 @@ final class SystemBrightnessProvider
         argument: null,
         retry: null,
         name: r'systemBrightnessProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -307,7 +307,7 @@ final class SystemBrightnessProvider
   }
 }
 
-String _$systemBrightnessHash() => r'2fb112459d5f505768f8c33b314aa62cf1fb0a0a';
+String _$systemBrightnessHash() => r'5b8c93dc20f048b12cdad42b301afe8b9aa864cf';
 
 abstract class _$SystemBrightness extends $Notifier<Brightness> {
   Brightness build();
@@ -339,7 +339,7 @@ final class TrafficsProvider
         argument: null,
         retry: null,
         name: r'trafficsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -360,7 +360,7 @@ final class TrafficsProvider
   }
 }
 
-String _$trafficsHash() => r'7df7d01f39e9fa1bf629221c9f73273757fa535a';
+String _$trafficsHash() => r'00b83d393175b51abcef277417fb3d9b70cc247f';
 
 abstract class _$Traffics extends $Notifier<FixedList<Traffic>> {
   FixedList<Traffic> build();
@@ -392,7 +392,7 @@ final class TotalTrafficProvider
         argument: null,
         retry: null,
         name: r'totalTrafficProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -413,7 +413,7 @@ final class TotalTrafficProvider
   }
 }
 
-String _$totalTrafficHash() => r'cc993ec58fa4c8ee0dbbf2e8a146f7039e818d7e';
+String _$totalTrafficHash() => r'00c5b34834882c4db0eacf948121ddbe9921728a';
 
 abstract class _$TotalTraffic extends $Notifier<Traffic> {
   Traffic build();
@@ -444,7 +444,7 @@ final class LocalIpProvider extends $NotifierProvider<LocalIp, String?> {
         argument: null,
         retry: null,
         name: r'localIpProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -465,7 +465,7 @@ final class LocalIpProvider extends $NotifierProvider<LocalIp, String?> {
   }
 }
 
-String _$localIpHash() => r'25ff07ff9ae316eac7ef39c29d9ae2714b7ba323';
+String _$localIpHash() => r'7daf4c498425db64db4e33b10c870d8fa10695d8';
 
 abstract class _$LocalIp extends $Notifier<String?> {
   String? build();
@@ -496,7 +496,7 @@ final class RunTimeProvider extends $NotifierProvider<RunTime, int?> {
         argument: null,
         retry: null,
         name: r'runTimeProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -517,7 +517,7 @@ final class RunTimeProvider extends $NotifierProvider<RunTime, int?> {
   }
 }
 
-String _$runTimeHash() => r'8d792a969f68de037ee46f271e7f04a25924e6a6';
+String _$runTimeHash() => r'665a3a58487bb59aa54c3f797db0627986aa878f';
 
 abstract class _$RunTime extends $Notifier<int?> {
   int? build();
@@ -548,7 +548,7 @@ final class ViewSizeProvider extends $NotifierProvider<ViewSize, Size> {
         argument: null,
         retry: null,
         name: r'viewSizeProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -569,7 +569,7 @@ final class ViewSizeProvider extends $NotifierProvider<ViewSize, Size> {
   }
 }
 
-String _$viewSizeHash() => r'8f7e485a3a2ec7cade8577c737cf7ead14868081';
+String _$viewSizeHash() => r'3f355412237dc1234cca0d97972ac2eef1eb4792';
 
 abstract class _$ViewSize extends $Notifier<Size> {
   Size build();
@@ -600,7 +600,7 @@ final class SideWidthProvider extends $NotifierProvider<SideWidth, double> {
         argument: null,
         retry: null,
         name: r'sideWidthProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -621,7 +621,7 @@ final class SideWidthProvider extends $NotifierProvider<SideWidth, double> {
   }
 }
 
-String _$sideWidthHash() => r'380c2ae2136dc75346259d3c1d0dd3325e41fe49';
+String _$sideWidthHash() => r'2f849d52dab271831bad68b07c1f90b5c18c0cc4';
 
 abstract class _$SideWidth extends $Notifier<double> {
   double build();
@@ -654,7 +654,7 @@ final class ViewWidthProvider
         argument: null,
         retry: null,
         name: r'viewWidthProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -681,7 +681,7 @@ final class ViewWidthProvider
   }
 }
 
-String _$viewWidthHash() => r'a469c3414170a6616ff3264962e7f160b2edceca';
+String _$viewWidthHash() => r'5ee8f1bdebe44760f7333f88127108f5ffd70214';
 
 @ProviderFor(viewMode)
 const viewModeProvider = ViewModeProvider._();
@@ -695,7 +695,7 @@ final class ViewModeProvider
         argument: null,
         retry: null,
         name: r'viewModeProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -722,7 +722,7 @@ final class ViewModeProvider
   }
 }
 
-String _$viewModeHash() => r'736e2acc7e7d98ee30132de1990bf85f9506b47a';
+String _$viewModeHash() => r'6822e9dc28c813afe1ed743feea464f0d33c805c';
 
 @ProviderFor(isMobileView)
 const isMobileViewProvider = IsMobileViewProvider._();
@@ -735,7 +735,7 @@ final class IsMobileViewProvider extends $FunctionalProvider<bool, bool, bool>
         argument: null,
         retry: null,
         name: r'isMobileViewProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -762,7 +762,7 @@ final class IsMobileViewProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$isMobileViewHash() => r'554c9ed269a02af001e623e596622e2bb2d658e7';
+String _$isMobileViewHash() => r'1d75bccb4f50ae206bf43b68df869a5d95e5ea5f';
 
 @ProviderFor(viewHeight)
 const viewHeightProvider = ViewHeightProvider._();
@@ -776,7 +776,7 @@ final class ViewHeightProvider
         argument: null,
         retry: null,
         name: r'viewHeightProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -803,7 +803,7 @@ final class ViewHeightProvider
   }
 }
 
-String _$viewHeightHash() => r'410aee5b41388226ab16737f0e85a56f7e9fe801';
+String _$viewHeightHash() => r'dc3fc18337b5ce9fc953d994c380e8f1fa49f352';
 
 @ProviderFor(Init)
 const initProvider = InitProvider._();
@@ -815,7 +815,7 @@ final class InitProvider extends $NotifierProvider<Init, bool> {
         argument: null,
         retry: null,
         name: r'initProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -836,7 +836,7 @@ final class InitProvider extends $NotifierProvider<Init, bool> {
   }
 }
 
-String _$initHash() => r'7d3f11c8aff7a1924c5ec8886b2cd2cbdda57c3f';
+String _$initHash() => r'0fcded1ed3c62f2658898dee845455e412b171b1';
 
 abstract class _$Init extends $Notifier<bool> {
   bool build();
@@ -868,7 +868,7 @@ final class CurrentPageLabelProvider
         argument: null,
         retry: null,
         name: r'currentPageLabelProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -889,7 +889,7 @@ final class CurrentPageLabelProvider
   }
 }
 
-String _$currentPageLabelHash() => r'a4ed13348bcd406ec3be52138cf1083106d31215';
+String _$currentPageLabelHash() => r'3a5fcd2d50e018ae379cdcd835cfa72ccf8720b8';
 
 abstract class _$CurrentPageLabel extends $Notifier<PageLabel> {
   PageLabel build();
@@ -920,7 +920,7 @@ final class SortNumProvider extends $NotifierProvider<SortNum, int> {
         argument: null,
         retry: null,
         name: r'sortNumProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -941,7 +941,7 @@ final class SortNumProvider extends $NotifierProvider<SortNum, int> {
   }
 }
 
-String _$sortNumHash() => r'b67bee9fdfbb74b484190fbc6e5c3da7d773bed0';
+String _$sortNumHash() => r'6682f00d1f87cb17f294ad181ac96bf4dc6edb52';
 
 abstract class _$SortNum extends $Notifier<int> {
   int build();
@@ -972,7 +972,7 @@ final class CheckIpNumProvider extends $NotifierProvider<CheckIpNum, int> {
         argument: null,
         retry: null,
         name: r'checkIpNumProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -993,7 +993,7 @@ final class CheckIpNumProvider extends $NotifierProvider<CheckIpNum, int> {
   }
 }
 
-String _$checkIpNumHash() => r'4d8b32ed9c0013c056f90c9d5483f11fa5fddec5';
+String _$checkIpNumHash() => r'e66b46fae31f3683698dc55533fbdd240aff44fe';
 
 abstract class _$CheckIpNum extends $Notifier<int> {
   int build();
@@ -1024,7 +1024,7 @@ final class BackBlockProvider extends $NotifierProvider<BackBlock, bool> {
         argument: null,
         retry: null,
         name: r'backBlockProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1045,7 +1045,7 @@ final class BackBlockProvider extends $NotifierProvider<BackBlock, bool> {
   }
 }
 
-String _$backBlockHash() => r'c0223e0776b72d3a8c8842fc32fdb5287353999f';
+String _$backBlockHash() => r'76e821bab72717698f0a5f10e9d2a8909918ae0d';
 
 abstract class _$BackBlock extends $Notifier<bool> {
   bool build();
@@ -1076,7 +1076,7 @@ final class LoadingProvider extends $NotifierProvider<Loading, bool> {
         argument: null,
         retry: null,
         name: r'loadingProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1097,7 +1097,7 @@ final class LoadingProvider extends $NotifierProvider<Loading, bool> {
   }
 }
 
-String _$loadingHash() => r'd3d9e6b203fecbef89d468b6ecf173a98a6a26a9';
+String _$loadingHash() => r'35f0535635bb10289b1ea388efb24b951f0e5199';
 
 abstract class _$Loading extends $Notifier<bool> {
   bool build();
@@ -1128,7 +1128,7 @@ final class VersionProvider extends $NotifierProvider<Version, int> {
         argument: null,
         retry: null,
         name: r'versionProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1149,7 +1149,7 @@ final class VersionProvider extends $NotifierProvider<Version, int> {
   }
 }
 
-String _$versionHash() => r'8c0ee019d20df3f112c38ae4dc4abd61148d3809';
+String _$versionHash() => r'00b43faa4061121d30a0612ed275644a402ce3fa';
 
 abstract class _$Version extends $Notifier<int> {
   int build();
@@ -1180,7 +1180,7 @@ final class GroupsProvider extends $NotifierProvider<Groups, List<Group>> {
         argument: null,
         retry: null,
         name: r'groupsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1201,7 +1201,7 @@ final class GroupsProvider extends $NotifierProvider<Groups, List<Group>> {
   }
 }
 
-String _$groupsHash() => r'fbff504e0bcdb5a2770a902f2867aabd921fbadc';
+String _$groupsHash() => r'180ede48880a239add201c111ae45b2a6d98f3a5';
 
 abstract class _$Groups extends $Notifier<List<Group>> {
   List<Group> build();
@@ -1233,7 +1233,7 @@ final class DelayDataSourceProvider
         argument: null,
         retry: null,
         name: r'delayDataSourceProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1254,7 +1254,7 @@ final class DelayDataSourceProvider
   }
 }
 
-String _$delayDataSourceHash() => r'0cc7064c6e7e7a1823df1c5b339001ae49ee54f1';
+String _$delayDataSourceHash() => r'9737cf2d943cb9b5504a5ec8ace20b0a9380b197';
 
 abstract class _$DelayDataSource extends $Notifier<DelayMap> {
   DelayMap build();
@@ -1286,7 +1286,7 @@ final class SystemUiOverlayStyleStateProvider
         argument: null,
         retry: null,
         name: r'systemUiOverlayStyleStateProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1308,7 +1308,7 @@ final class SystemUiOverlayStyleStateProvider
 }
 
 String _$systemUiOverlayStyleStateHash() =>
-    r'4420d92227ae617ce685c8943dda64f29f57d5d1';
+    r'c5ba11d1c6eceef95f80b129e4d2a8ab7ecb7916';
 
 abstract class _$SystemUiOverlayStyleState
     extends $Notifier<SystemUiOverlayStyle> {
@@ -1341,7 +1341,7 @@ final class _CoreStatusProvider
         argument: null,
         retry: null,
         name: r'coreStatusProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1362,7 +1362,7 @@ final class _CoreStatusProvider
   }
 }
 
-String _$_coreStatusHash() => r'795bee66f41f4fbafe14249263356ade03950aa5';
+String _$_coreStatusHash() => r'e2e7fe37f66b906877e678149d09c656993e1405';
 
 abstract class _$CoreStatus extends $Notifier<CoreStatus> {
   CoreStatus build();
@@ -1431,7 +1431,7 @@ final class QueryProvider extends $NotifierProvider<Query, String> {
   }
 }
 
-String _$queryHash() => r'da8d34ef86df1366e8607df2ef9155cc9473c959';
+String _$queryHash() => r'b6be53823f3351ee2bf1c0d147c0ccf5f31bb8b5';
 
 final class QueryFamily extends $Family
     with $ClassFamilyOverride<Query, String, String, String, QueryTag> {
@@ -1522,7 +1522,7 @@ final class SelectedItemsProvider
   }
 }
 
-String _$selectedItemsHash() => r'483536e8c20146a2708323eb449f2680c8147c6a';
+String _$selectedItemsHash() => r'05ef5c5584cbac90d416e5c4fe53ec9e29604020';
 
 final class SelectedItemsFamily extends $Family
     with
@@ -1620,7 +1620,7 @@ final class SelectedItemProvider
   }
 }
 
-String _$selectedItemHash() => r'b2ddb8182c2022f4d9d3df91497c6d487ad43fbe';
+String _$selectedItemHash() => r'b50be0386d53ee8441c37d1a2a4c25640ce10766';
 
 final class SelectedItemFamily extends $Family
     with $ClassFamilyOverride<SelectedItem, dynamic, dynamic, dynamic, String> {
@@ -1655,163 +1655,6 @@ abstract class _$SelectedItem extends $Notifier<dynamic> {
             as $ClassProviderElement<
               AnyNotifier<dynamic, dynamic>,
               dynamic,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
-}
-
-@ProviderFor(Profiles)
-const profilesProvider = ProfilesProvider._();
-
-final class ProfilesProvider
-    extends $NotifierProvider<Profiles, List<Profile>> {
-  const ProfilesProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'profilesProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$profilesHash();
-
-  @$internal
-  @override
-  Profiles create() => Profiles();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Profile> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<Profile>>(value),
-    );
-  }
-}
-
-String _$profilesHash() => r'3f5c0d5c95c88bce07f762902a2689e01e6b07f8';
-
-abstract class _$Profiles extends $Notifier<List<Profile>> {
-  List<Profile> build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<List<Profile>, List<Profile>>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<List<Profile>, List<Profile>>,
-              List<Profile>,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
-}
-
-@ProviderFor(Scripts)
-const scriptsProvider = ScriptsProvider._();
-
-final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
-  const ScriptsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'scriptsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$scriptsHash();
-
-  @$internal
-  @override
-  Scripts create() => Scripts();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Script> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<Script>>(value),
-    );
-  }
-}
-
-String _$scriptsHash() => r'79ba80926f7e131c9931838b44a3b02ade3ddcee';
-
-abstract class _$Scripts extends $Notifier<List<Script>> {
-  List<Script> build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<List<Script>, List<Script>>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<List<Script>, List<Script>>,
-              List<Script>,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
-}
-
-@ProviderFor(Rules)
-const rulesProvider = RulesProvider._();
-
-final class RulesProvider extends $NotifierProvider<Rules, List<Rule>> {
-  const RulesProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'rulesProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$rulesHash();
-
-  @$internal
-  @override
-  Rules create() => Rules();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Rule> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<Rule>>(value),
-    );
-  }
-}
-
-String _$rulesHash() => r'569a87273580a826bdf474182dd90e02cb32857e';
-
-abstract class _$Rules extends $Notifier<List<Rule>> {
-  List<Rule> build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<List<Rule>, List<Rule>>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<List<Rule>, List<Rule>>,
-              List<Rule>,
               Object?,
               Object?
             >;
@@ -1867,7 +1710,7 @@ final class IsUpdatingProvider extends $NotifierProvider<IsUpdating, bool> {
   }
 }
 
-String _$isUpdatingHash() => r'e5cb47af4ce8e5a891e67062f0c39ebccfca587c';
+String _$isUpdatingHash() => r'934cc96cbf8cf6909d27867455a31bf3008470e6';
 
 final class IsUpdatingFamily extends $Family
     with $ClassFamilyOverride<IsUpdating, bool, bool, bool, String> {

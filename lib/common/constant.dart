@@ -63,6 +63,7 @@ final commonFilter = ImageFilter.blur(
   tileMode: TileMode.mirror,
 );
 
+const listEquality = ListEquality();
 const navigationItemListEquality = ListEquality<NavigationItem>();
 const trackerInfoListEquality = ListEquality<TrackerInfo>();
 const stringListEquality = ListEquality<String>();
@@ -70,9 +71,10 @@ const intListEquality = ListEquality<int>();
 const logListEquality = ListEquality<Log>();
 const groupListEquality = ListEquality<Group>();
 const ruleListEquality = ListEquality<Rule>();
-const scriptEquality = ListEquality<Script>();
+const scriptListEquality = ListEquality<Script>();
 const externalProviderListEquality = ListEquality<ExternalProvider>();
 const packageListEquality = ListEquality<Package>();
+const profileListEquality = ListEquality<Profile>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();
 const stringAndStringMapEquality = MapEquality<String, String>();
 const stringAndStringMapEntryListEquality =
@@ -120,5 +122,5 @@ const main = (config) => {
   return config;
 }''';
 
-const backupIsarName = 'backup.isar';
+const backupDatabaseName = 'database.sqlite';
 const configJsonName = 'config.json';

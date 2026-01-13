@@ -12,9 +12,9 @@
 #include <file_selector_windows/file_selector_windows.h>
 #include <flutter_js/flutter_js_plugin.h>
 #include <hotkey_manager_windows/hotkey_manager_windows_plugin_c_api.h>
-#include <isar_community_flutter_libs/isar_flutter_libs_plugin.h>
 #include <proxy/proxy_plugin_c_api.h>
 #include <screen_retriever_windows/screen_retriever_windows_plugin_c_api.h>
+#include <sqlite3_flutter_libs/sqlite3_flutter_libs_plugin.h>
 #include <tray_manager/tray_manager_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
 #include <window_ext/window_ext_plugin_c_api.h>
@@ -33,12 +33,12 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("FlutterJsPlugin"));
   HotkeyManagerWindowsPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("HotkeyManagerWindowsPluginCApi"));
-  IsarFlutterLibsPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("IsarFlutterLibsPlugin"));
   ProxyPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ProxyPluginCApi"));
   ScreenRetrieverWindowsPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ScreenRetrieverWindowsPluginCApi"));
+  Sqlite3FlutterLibsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("Sqlite3FlutterLibsPlugin"));
   TrayManagerPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("TrayManagerPlugin"));
   UrlLauncherWindowsRegisterWithRegistrar(

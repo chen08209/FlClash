@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -64,7 +65,6 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
-    final appController = globalState.appController;
     Profile profile = this.profile.copyWith(
       url: _urlController.text,
       label: _labelController.text,
@@ -88,7 +88,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     } else if (!hasUpdate) {
       appController.setProfileAndAutoApply(profile);
     } else {
-      globalState.appController.safeRun(() async {
+      appController.safeRun(() async {
         await Future.delayed(commonDuration);
         if (hasUpdate) {
           await appController.updateProfile(profile);
@@ -108,7 +108,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _handleSaveEdit(BuildContext context, String data) async {
-    final message = await globalState.appController.safeRun<String>(() async {
+    final message = await appController.safeRun<String>(() async {
       final message = await coreController.validateConfigWithData(data);
       return message;
     }, silence: false);
@@ -173,9 +173,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _uploadProfileFile() async {
-    final platformFile = await globalState.appController.safeRun(
-      picker.pickerFile,
-    );
+    final platformFile = await appController.safeRun(picker.pickerFile);
     if (platformFile?.bytes == null) return;
     _fileData = platformFile?.bytes;
     if (!mounted) {

@@ -6,6 +6,7 @@ targets:
           build_extensions:
             '^lib/models/{{}}.dart': 'lib/models/generated/{{}}.g.dart'
             '^lib/providers/{{}}.dart': 'lib/providers/generated/{{}}.g.dart'
+            '^lib/database/{{}}.dart': 'lib/database/generated/{{}}.g.dart'
       freezed:
         options:
           build_extensions:

@@ -260,8 +260,8 @@ enum AuthorizeCode { none, success, error }
 enum WindowsHelperServiceStatus { none, presence, running }
 
 enum FunctionTag {
-  updateClashConfig,
-  setupClashConfig,
+  updateConfig,
+  setupConfig,
   updateStatus,
   updateGroups,
   addCheckIpNum,
@@ -420,3 +420,5 @@ enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }
 enum QueryTag { proxies, access }
 
 enum CoreStatus { connecting, connected, disconnected }
+
+enum RuleScene { added, disabled, custom }

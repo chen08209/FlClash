@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/dav_client.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -26,9 +27,9 @@ class BackupAndRecovery extends ConsumerWidget {
   }
 
   Future<void> _backupOnWebDAV(DAVClient client) async {
-    final res = await globalState.appController.safeRun<bool>(
+    final res = await appController.safeRun<bool>(
       () async {
-        final path = await globalState.backup();
+        final path = await appController.backup();
         if (path.isEmpty) {
           return false;
         }
@@ -49,10 +50,10 @@ class BackupAndRecovery extends ConsumerWidget {
     DAVClient client,
     RestoreOption option,
   ) async {
-    final res = await globalState.appController.safeRun<bool>(
+    final res = await appController.safeRun<bool>(
       () async {
         await client.recovery();
-        await globalState.appController.restore(option);
+        await appController.restore(option);
         return true;
       },
       needLoading: true,
@@ -77,9 +78,9 @@ class BackupAndRecovery extends ConsumerWidget {
   }
 
   Future<void> _backupOnLocal(BuildContext context) async {
-    final res = await globalState.appController.safeRun<bool>(
+    final res = await appController.safeRun<bool>(
       () async {
-        final path = await globalState.backup();
+        final path = await appController.backup();
         if (path.isEmpty) {
           return false;
         }
@@ -105,9 +106,9 @@ class BackupAndRecovery extends ConsumerWidget {
     final path = file?.path;
     if (path == null) return;
     await File(path).safeCopy(await appPath.backupFilePath);
-    final res = await globalState.appController.safeRun<bool>(
+    final res = await appController.safeRun<bool>(
       () async {
-        await globalState.appController.restore(option);
+        await appController.restore(option);
         return true;
       },
       needLoading: true,

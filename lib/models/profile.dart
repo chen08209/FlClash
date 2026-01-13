@@ -7,6 +7,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'clash_config.dart';
+import 'state.dart';
 
 part 'generated/profile.freezed.dart';
 part 'generated/profile.g.dart';
@@ -53,8 +54,9 @@ abstract class Profile with _$Profile {
     @Default(true) bool autoUpdate,
     @Default({}) Map<String, String> selectedMap,
     @Default({}) Set<String> unfoldSet,
-    @Default(Overwrite()) Overwrite overwrite,
-    @Default(-1) int order,
+    @Default(OverwriteType.standard) OverwriteType overwriteType,
+    int? scriptId,
+    int? order,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, Object?> json) =>
@@ -68,6 +70,27 @@ abstract class Profile with _$Profile {
       id: id,
       autoUpdateDuration: defaultUpdateDuration,
     );
+  }
+}
+
+@freezed
+abstract class ProfileRuleLink with _$ProfileRuleLink {
+  const factory ProfileRuleLink({
+    int? profileId,
+    required int ruleId,
+    RuleScene? scene,
+    String? order,
+  }) = _ProfileRuleLink;
+}
+
+extension ProfileRuleLinkExt on ProfileRuleLink {
+  String get key {
+    final splits = <String?>[
+      profileId?.toString(),
+      ruleId.toString(),
+      scene?.name,
+    ];
+    return splits.where((item) => item != null).join('_');
   }
 }
 
@@ -122,7 +145,7 @@ extension ProfilesExt on List<Profile> {
     }
   }
 
-  List<Profile> copyAndAddProfile(Profile profile) {
+  VM2<List<Profile>, Profile> copyAndAddProfile(Profile profile) {
     final List<Profile> profilesTemp = List.from(this);
     final index = profilesTemp.indexWhere(
       (element) => element.id == profile.id,
@@ -135,13 +158,17 @@ extension ProfilesExt on List<Profile> {
     } else {
       profilesTemp[index] = updateProfile;
     }
-    return profilesTemp;
+    return VM2(profilesTemp, updateProfile);
   }
 }
 
 extension ProfileExtension on Profile {
   ProfileType get type =>
       url.isEmpty == true ? ProfileType.file : ProfileType.url;
+
+  Overwrite? get overwrite {
+    return null;
+  }
 
   bool get realAutoUpdate => url.isEmpty == true ? false : autoUpdate;
 

@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
@@ -29,7 +30,7 @@ class DeveloperView extends ConsumerWidget {
           minVerticalPadding: 12,
           onTap: () {
             for (int i = 0; i < 1000; i++) {
-              globalState.appController.addLog(
+              appController.addLog(
                 Log.app(
                   '[$i]${utils.generateRandomString(maxLength: 200, minLength: 20)}',
                 ),
@@ -61,7 +62,7 @@ class DeveloperView extends ConsumerWidget {
             if (res != true) {
               return;
             }
-            await globalState.appController.handleClear();
+            await appController.handleClear();
           },
         ),
         ListItem(
@@ -77,7 +78,7 @@ class DeveloperView extends ConsumerWidget {
           title: Text('修剪缓存'),
           minVerticalPadding: 12,
           onTap: () {
-            globalState.shakingStore();
+            appController.shakingStore();
           },
         ),
       ],

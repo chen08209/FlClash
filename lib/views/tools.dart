@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/about.dart';
 import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/application_setting.dart';
@@ -278,10 +278,9 @@ class _DisclaimerItem extends StatelessWidget {
       leading: const Icon(Icons.gavel),
       title: Text(context.appLocalizations.disclaimer),
       onTap: () async {
-        final isDisclaimerAccepted = await globalState.appController
-            .showDisclaimer();
+        final isDisclaimerAccepted = await appController.showDisclaimer();
         if (!isDisclaimerAccepted) {
-          globalState.appController.handleExit();
+          appController.handleExit();
         }
       },
     );

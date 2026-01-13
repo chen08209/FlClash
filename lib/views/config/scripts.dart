@@ -5,6 +5,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
@@ -130,7 +131,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         return;
       }
     }
-    ref.read(scriptsProvider.notifier).setScript(newScript);
+    ref.read(scriptsProvider.notifier).put(newScript);
     if (mounted) {
       Navigator.of(context).pop();
     }

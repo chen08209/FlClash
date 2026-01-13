@@ -61,9 +61,9 @@ class AppPath {
     return directory.path;
   }
 
-  Future<String> get isarPath async {
+  Future<String> get databasePath async {
     final mHomeDirPath = await homeDirPath;
-    return join(mHomeDirPath, 'db.isar');
+    return join(mHomeDirPath, 'database.sqlite');
   }
 
   Future<String> get backupFilePath async {

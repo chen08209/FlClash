@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
+import 'package:fl_clash/controller.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -28,17 +30,27 @@ class ThemeManager extends ConsumerWidget {
           final iconBrightness = brightness == Brightness.light
               ? Brightness.dark
               : Brightness.light;
-          globalState.appState = globalState.appState.copyWith(
-            systemUiOverlayStyle: SystemUiOverlayStyle(
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref
+                .read(systemUiOverlayStyleStateProvider.notifier)
+                .update(
+                  (state) => state.copyWith(
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness: iconBrightness,
+                    systemNavigationBarIconBrightness: iconBrightness,
+                    systemNavigationBarColor: context.colorScheme.surface,
+                    systemNavigationBarDividerColor: Colors.transparent,
+                  ),
+                );
+          });
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle(
               statusBarColor: Colors.transparent,
               statusBarIconBrightness: iconBrightness,
               systemNavigationBarIconBrightness: iconBrightness,
               systemNavigationBarColor: context.colorScheme.surface,
               systemNavigationBarDividerColor: Colors.transparent,
             ),
-          );
-          return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: globalState.appState.systemUiOverlayStyle,
             sized: false,
             child: child,
           );
@@ -98,7 +110,7 @@ class ThemeManager extends ConsumerWidget {
         ),
         child: LayoutBuilder(
           builder: (_, container) {
-            globalState.appController.updateViewSize(
+            appController.updateViewSize(
               Size(container.maxWidth, container.maxHeight),
             );
             return _buildSystemUi(child);

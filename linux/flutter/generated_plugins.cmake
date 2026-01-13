@@ -8,8 +8,8 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_js
   gtk
   hotkey_manager_linux
-  isar_community_flutter_libs
   screen_retriever_linux
+  sqlite3_flutter_libs
   tray_manager
   url_launcher_linux
   window_manager

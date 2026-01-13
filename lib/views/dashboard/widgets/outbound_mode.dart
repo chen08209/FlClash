@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
@@ -40,7 +41,7 @@ class OutboundMode extends StatelessWidget {
                     if (value == null) {
                       return;
                     }
-                    globalState.appController.changeMode(value);
+                    appController.changeMode(value);
                   },
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
@@ -56,7 +57,7 @@ class OutboundMode extends StatelessWidget {
                             padding: EdgeInsets.only(left: 12.ap, right: 16.ap),
                             delegate: RadioDelegate(
                               onTab: () {
-                                globalState.appController.changeMode(item);
+                                appController.changeMode(item);
                               },
                               value: item,
                             ),
@@ -150,7 +151,7 @@ class OutboundModeV2 extends StatelessWidget {
                             if (value == null) {
                               return;
                             }
-                            globalState.appController.changeMode(value);
+                            appController.changeMode(value);
                           },
                           thumbColor: thumbColor,
                         ),

@@ -1,0 +1,136 @@
+part of 'database.dart';
+
+@DataClassName('RawProfile')
+class Profiles extends Table {
+  @override
+  String get tableName => 'profiles';
+
+  IntColumn get id => integer()();
+
+  TextColumn get label => text()();
+
+  TextColumn get currentGroupName => text().nullable()();
+
+  TextColumn get url => text()();
+
+  DateTimeColumn get lastUpdateDate => dateTime().nullable()();
+
+  TextColumn get overwriteType => textEnum<OverwriteType>()();
+
+  IntColumn get scriptId => integer().nullable()();
+
+  IntColumn get autoUpdateDurationMillis => integer()();
+
+  TextColumn get subscriptionInfo =>
+      text().map(const SubscriptionInfoConverter()).nullable()();
+
+  BoolColumn get autoUpdate => boolean()();
+
+  TextColumn get selectedMap => text().map(const StringMapConverter())();
+
+  TextColumn get unfoldSet => text().map(const StringSetConverter())();
+
+  IntColumn get order => integer().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+class SubscriptionInfoConverter
+    extends TypeConverter<SubscriptionInfo?, String?> {
+  const SubscriptionInfoConverter();
+
+  @override
+  SubscriptionInfo? fromSql(String? fromDb) {
+    if (fromDb == null) return null;
+    return SubscriptionInfo.fromJson(json.decode(fromDb));
+  }
+
+  @override
+  String? toSql(SubscriptionInfo? value) {
+    if (value == null) return null;
+    return json.encode(value.toJson());
+  }
+}
+
+@DriftAccessor(tables: [Profiles])
+class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
+  ProfilesDao(super.attachedDatabase);
+
+  Selectable<Profile> all() {
+    final stmt = profiles.select();
+    stmt.orderBy([
+      (t) => OrderingTerm(expression: t.order),
+      (t) => OrderingTerm(expression: t.id),
+    ]);
+    return stmt.map((item) => item.toProfile());
+  }
+}
+
+class StringMapConverter extends TypeConverter<Map<String, String>, String> {
+  const StringMapConverter();
+
+  @override
+  Map<String, String> fromSql(String fromDb) {
+    return Map<String, String>.from(json.decode(fromDb));
+  }
+
+  @override
+  String toSql(Map<String, String> value) {
+    return json.encode(value);
+  }
+}
+
+class StringSetConverter extends TypeConverter<Set<String>, String> {
+  const StringSetConverter();
+
+  @override
+  Set<String> fromSql(String fromDb) {
+    return Set<String>.from(json.decode(fromDb));
+  }
+
+  @override
+  String toSql(Set<String> value) {
+    return json.encode(value.toList());
+  }
+}
+
+extension RawProfilExt on RawProfile {
+  Profile toProfile() {
+    return Profile(
+      id: id,
+      label: label,
+      currentGroupName: currentGroupName,
+      url: url,
+      lastUpdateDate: lastUpdateDate,
+      autoUpdateDuration: Duration(milliseconds: autoUpdateDurationMillis),
+      subscriptionInfo: subscriptionInfo,
+      autoUpdate: autoUpdate,
+      selectedMap: selectedMap,
+      unfoldSet: unfoldSet,
+      overwriteType: overwriteType,
+      scriptId: scriptId,
+      order: order ?? -1,
+    );
+  }
+}
+
+extension ProfilesCompanionExt on Profile {
+  ProfilesCompanion toCompanion([int? order]) {
+    return ProfilesCompanion.insert(
+      id: Value(id),
+      label: label,
+      currentGroupName: Value(currentGroupName),
+      url: url,
+      lastUpdateDate: Value(lastUpdateDate),
+      autoUpdateDurationMillis: autoUpdateDuration.inMilliseconds,
+      subscriptionInfo: Value(subscriptionInfo),
+      autoUpdate: autoUpdate,
+      selectedMap: selectedMap,
+      unfoldSet: unfoldSet,
+      overwriteType: overwriteType,
+      scriptId: Value(scriptId),
+      order: Value(order ?? this.order),
+    );
+  }
+}

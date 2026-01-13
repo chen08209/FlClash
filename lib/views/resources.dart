@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -184,7 +185,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   }
 
   Future<void> _handleUpdateGeoDataItem() async {
-    await globalState.appController.safeRun<void>(
+    await appController.safeRun<void>(
       () async {
         await updateGeoDateItem();
       },

@@ -47,10 +47,11 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   unfoldSet:
       (json['unfoldSet'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
       const {},
-  overwrite: json['overwrite'] == null
-      ? const Overwrite()
-      : Overwrite.fromJson(json['overwrite'] as Map<String, dynamic>),
-  order: (json['order'] as num?)?.toInt() ?? -1,
+  overwriteType:
+      $enumDecodeNullable(_$OverwriteTypeEnumMap, json['overwriteType']) ??
+      OverwriteType.standard,
+  scriptId: (json['scriptId'] as num?)?.toInt(),
+  order: (json['order'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
@@ -64,8 +65,15 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'autoUpdate': instance.autoUpdate,
   'selectedMap': instance.selectedMap,
   'unfoldSet': instance.unfoldSet.toList(),
-  'overwrite': instance.overwrite,
+  'overwriteType': _$OverwriteTypeEnumMap[instance.overwriteType]!,
+  'scriptId': instance.scriptId,
   'order': instance.order,
+};
+
+const _$OverwriteTypeEnumMap = {
+  OverwriteType.standard: 'standard',
+  OverwriteType.script: 'script',
+  OverwriteType.custom: 'custom',
 };
 
 _Overwrite _$OverwriteFromJson(Map<String, dynamic> json) => _Overwrite(
@@ -90,12 +98,6 @@ Map<String, dynamic> _$OverwriteToJson(_Overwrite instance) =>
       'standardOverwrite': instance.standardOverwrite,
       'scriptOverwrite': instance.scriptOverwrite,
     };
-
-const _$OverwriteTypeEnumMap = {
-  OverwriteType.standard: 'standard',
-  OverwriteType.script: 'script',
-  OverwriteType.custom: 'custom',
-};
 
 _StandardOverwrite _$StandardOverwriteFromJson(Map<String, dynamic> json) =>
     _StandardOverwrite(

@@ -1,7 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:flutter/material.dart';
 
 import 'scaffold.dart';
@@ -48,7 +46,7 @@ Future<T?> showSheet<T>({
   required SheetBuilder builder,
   SheetProps props = const SheetProps(),
 }) {
-  final isMobile = globalState.appState.viewMode == ViewMode.mobile;
+  final isMobile = appController.isMobile;
   return switch (isMobile) {
     true => showModalBottomSheet<T>(
       context: context,
@@ -77,7 +75,7 @@ Future<T?> showExtend<T>(
   required SheetBuilder builder,
   ExtendProps props = const ExtendProps(),
 }) {
-  final isMobile = globalState.appState.viewMode == ViewMode.mobile;
+  final isMobile = appController.isMobile;
   return switch (isMobile || props.forceFull) {
     true => BaseNavigator.push(context, builder(context, SheetType.page)),
     false => showModalSideSheet<T>(

@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/clash_config.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -36,7 +37,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     if (res == null) {
       return;
     }
-    ref.read(rulesProvider.notifier).update((state) => state.updateWith(res));
+    ref.read(rulesProvider.notifier).put(res);
   }
 
   void _handleSelected(int ruleId) {
@@ -65,12 +66,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
       return;
     }
     final selectedRules = ref.read(selectedItemsProvider(_key));
-    ref.read(rulesProvider.notifier).update((rules) {
-      final newRules = List<Rule>.from(
-        rules.where((item) => !selectedRules.contains(item.id)),
-      );
-      return newRules;
-    });
+    ref.read(rulesProvider.notifier).delAll(selectedRules.cast<int>());
     ref.read(selectedItemsProvider(_key).notifier).value = {};
   }
 
@@ -81,7 +77,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     if (res != true) {
       return;
     }
-    ref.read(rulesProvider.notifier).value = _originRules;
+    ref.read(rulesProvider.notifier).setAll(_originRules);
   }
 
   @override
@@ -158,15 +154,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
                   );
                 },
                 itemCount: rules.length,
-                onReorder: (int oldIndex, int newIndex) {
-                  if (oldIndex < newIndex) {
-                    newIndex -= 1;
-                  }
-                  final newRules = List<Rule>.from(rules);
-                  final item = newRules.removeAt(oldIndex);
-                  newRules.insert(newIndex, item);
-                  ref.read(rulesProvider.notifier).value = newRules;
-                },
+                onReorder: ref.read(rulesProvider.notifier).order,
               ),
       ),
     );

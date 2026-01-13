@@ -13,7 +13,7 @@ export 'future.dart';
 export 'hive.dart';
 export 'http.dart';
 export 'icons.dart';
-export 'isar.dart';
+export 'indexing.dart';
 export 'iterable.dart';
 export 'keyboard.dart';
 export 'launch.dart';

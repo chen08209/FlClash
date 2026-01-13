@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/window_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -25,19 +26,22 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // ref.listenManual(appStateProvider, (_, _) {});
+    ref.listenManual(needSetupProvider, (prev, next) {});
     ref.listenManual(checkIpProvider, (prev, next) {
       if (prev != next && next.a && next.c) {
-        detectionState.startCheck();
+        final isStart = ref.read(isStartProvider);
+        detectionState.startCheck(next.a, isStart);
       }
     }, fireImmediately: true);
-    ref.listenManual(configStateProvider, (prev, next) {
+    ref.listenManual(configProvider, (prev, next) {
       if (prev != next) {
-        globalState.appController.savePreferencesDebounce();
+        appController.savePreferencesDebounce();
       }
     });
     ref.listenManual(needUpdateGroupsProvider, (prev, next) {
       if (prev != next) {
-        globalState.appController.updateGroupsDebounce();
+        appController.updateGroupsDebounce();
       }
     });
     if (window == null) {
@@ -69,17 +73,19 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     }
     if (state == AppLifecycleState.resumed) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        detectionState.tryStartCheck();
+        final isInit = ref.read(initProvider);
+        final isStart = ref.read(isStartProvider);
+        detectionState.tryStartCheck(isInit, isStart);
       });
       if (system.isAndroid) {
-        globalState.appController.tryStartCore();
+        appController.tryStartCore();
       }
     }
   }
 
   @override
   void didChangePlatformBrightness() {
-    globalState.appController.updateBrightness();
+    appController.updateBrightness();
   }
 
   @override
@@ -224,7 +230,7 @@ class AppSidebarContainer extends ConsumerWidget {
                                     )
                                     .toList(),
                                 onDestinationSelected: (index) {
-                                  globalState.appController.toPage(
+                                  appController.toPage(
                                     navigationItems[index].label,
                                   );
                                 },

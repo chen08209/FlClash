@@ -78,16 +78,18 @@ extension ListExt<T> on List<T> {
     return sublist(start);
   }
 
-  T safeGet(int index) {
-    if (length > index) return this[index];
-    return last;
+  T? safeGet(int index, {T? defaultValue}) {
+    if (index < 0 || index >= length) {
+      return defaultValue;
+    }
+    return this[index];
   }
 
-  T safeLast(T value) {
+  T safeLast(T defaultValue) {
     if (isNotEmpty) {
       return last;
     }
-    return value;
+    return defaultValue;
   }
 
   void addOrRemove(T value) {

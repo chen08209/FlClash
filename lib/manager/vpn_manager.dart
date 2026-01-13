@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/state.dart';
@@ -39,7 +40,7 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
             actionText: appLocalizations.restart,
             action: () async {
               await globalState.handleStop();
-              await globalState.appController.updateStatus(true);
+              await appController.updateStatus(true);
             },
           ),
         );

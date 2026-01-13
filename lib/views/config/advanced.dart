@@ -10,7 +10,7 @@ import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'added_rules.dart';
+import 'rules.dart';
 
 class AdvancedConfigView extends StatelessWidget {
   const AdvancedConfigView({super.key});

@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -21,7 +22,7 @@ class _StartButtonState extends ConsumerState<StartButton>
   @override
   void initState() {
     super.initState();
-    isStart = globalState.appState.runTime != null;
+    isStart = ref.read(isStartProvider);
     _controller = AnimationController(
       vsync: this,
       value: isStart ? 1 : 0,
@@ -53,7 +54,7 @@ class _StartButtonState extends ConsumerState<StartButton>
     isStart = !isStart;
     updateController();
     debouncer.call(FunctionTag.updateStatus, () {
-      globalState.appController.updateStatus(isStart);
+      appController.updateStatus(isStart);
     }, duration: commonDuration);
   }
 
@@ -69,7 +70,7 @@ class _StartButtonState extends ConsumerState<StartButton>
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(startButtonSelectorStateProvider);
+    final state = ref.watch(startButtonStateProvider);
     if (!state.isInit || !state.hasProfile) {
       return Container();
     }

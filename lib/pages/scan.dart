@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_clash/common/color.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -139,7 +139,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               ),
               padding: const EdgeInsets.all(16),
               iconSize: 32.0,
-              onPressed: globalState.appController.addProfileFormQrCode,
+              onPressed: appController.addProfileFormQrCode,
               icon: const Icon(Icons.photo_camera_back),
             ),
           ),

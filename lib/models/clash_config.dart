@@ -375,11 +375,8 @@ extension ParsedRuleExt on ParsedRule {
 
 @freezed
 abstract class Rule with _$Rule {
-  const factory Rule({
-    required int id,
-    required String value,
-    @Default(-1) int order,
-  }) = _Rule;
+  const factory Rule({required int id, required String value, String? order}) =
+      _Rule;
 
   factory Rule.value(String value) {
     return Rule(value: value, id: snowflake.id);
@@ -389,7 +386,7 @@ abstract class Rule with _$Rule {
 }
 
 extension RulesExt on List<Rule> {
-  List<Rule> updateWith(Rule rule) {
+  List<Rule> copyAndUpdate(Rule rule) {
     var newList = List<Rule>.from(this);
     final index = newList.indexWhere((item) => item.id == rule.id);
     if (index != -1) {
