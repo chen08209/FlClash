@@ -175,58 +175,55 @@ class _HotKeyRecorderState extends ConsumerState<HotKeyRecorder> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScaffold(
-      title: appLocalizations.hotkeyManagement,
-      body: Focus(
-        onKeyEvent: (_, _) {
-          return KeyEventResult.handled;
-        },
-        autofocus: true,
-        child: CommonDialog(
-          title: IntlExt.actionMessage(widget.hotKeyAction.action.name),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _handleRemove();
-              },
-              child: Text(appLocalizations.remove),
-            ),
-            const SizedBox(width: 8),
-            TextButton(
-              onPressed: () {
-                _handleConfirm();
-              },
-              child: Text(appLocalizations.confirm),
-            ),
-          ],
-          child: ValueListenableBuilder(
-            valueListenable: hotKeyActionNotifier,
-            builder: (_, hotKeyAction, _) {
-              final key = hotKeyAction.key;
-              final modifiers = hotKeyAction.modifiers;
-              return SizedBox(
-                width: dialogCommonWidth,
-                child: key != null
-                    ? Wrap(
-                        spacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          for (final modifier in modifiers)
-                            KeyboardKeyBox(
-                              keyboardKey: modifier.physicalKeys.first,
-                            ),
-                          if (modifiers.isNotEmpty)
-                            Text('+', style: context.textTheme.titleMedium),
-                          KeyboardKeyBox(keyboardKey: PhysicalKeyboardKey(key)),
-                        ],
-                      )
-                    : Text(
-                        appLocalizations.pressKeyboard,
-                        style: context.textTheme.titleMedium,
-                      ),
-              );
+    return Focus(
+      onKeyEvent: (_, _) {
+        return KeyEventResult.handled;
+      },
+      autofocus: true,
+      child: CommonDialog(
+        title: IntlExt.actionMessage(widget.hotKeyAction.action.name),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _handleRemove();
             },
+            child: Text(appLocalizations.remove),
           ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: () {
+              _handleConfirm();
+            },
+            child: Text(appLocalizations.confirm),
+          ),
+        ],
+        child: ValueListenableBuilder(
+          valueListenable: hotKeyActionNotifier,
+          builder: (_, hotKeyAction, _) {
+            final key = hotKeyAction.key;
+            final modifiers = hotKeyAction.modifiers;
+            return SizedBox(
+              width: dialogCommonWidth,
+              child: key != null
+                  ? Wrap(
+                      spacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        for (final modifier in modifiers)
+                          KeyboardKeyBox(
+                            keyboardKey: modifier.physicalKeys.first,
+                          ),
+                        if (modifiers.isNotEmpty)
+                          Text('+', style: context.textTheme.titleMedium),
+                        KeyboardKeyBox(keyboardKey: PhysicalKeyboardKey(key)),
+                      ],
+                    )
+                  : Text(
+                      appLocalizations.pressKeyboard,
+                      style: context.textTheme.titleMedium,
+                    ),
+            );
+          },
         ),
       ),
     );

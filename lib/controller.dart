@@ -514,11 +514,13 @@ extension ActionControllerExt on AppController {
   Future handleClear() async {
     await preferences.clearPreferences();
     commonPrint.log('clear preferences');
-    database.close();
+    await database.close();
+    await File(await appPath.databasePath).safeDelete(recursive: true);
     final homeDir = Directory(await appPath.profilesPath);
     await for (final file in homeDir.list(recursive: true)) {
       await coreController.deleteFile(file.path);
     }
+    await preferences.clearPreferences();
     handleExit();
   }
 

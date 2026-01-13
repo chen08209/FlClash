@@ -22,32 +22,14 @@ class HomePage extends StatelessWidget {
         child: Material(
           color: context.colorScheme.surface,
           child: Consumer(
-            builder: (context, ref, _) {
+            builder: (context, ref, child) {
               final state = ref.watch(navigationStateProvider);
               final systemUiOverlayStyle = ref.read(
                 systemUiOverlayStyleStateProvider,
               );
               final isMobile = state.viewMode == ViewMode.mobile;
               final navigationItems = state.navigationItems;
-              final pageView = _HomePageView(
-                navigationItems: navigationItems,
-                pageBuilder: (_, index) {
-                  final navigationItem = navigationItems[index];
-                  final navigationView = navigationItem.builder(context);
-                  final view = KeepScope(
-                    keep: navigationItem.keep,
-                    child: isMobile
-                        ? navigationView
-                        : Navigator(
-                            pages: [MaterialPage(child: navigationView)],
-                            onDidRemovePage: (_) {},
-                          ),
-                  );
-                  return view;
-                },
-              );
               final currentIndex = state.currentIndex;
-              print(currentIndex);
               final bottomNavigationBar = NavigationBarTheme(
                 data: _NavigationBarDefaultsM3(context),
                 child: NavigationBar(
@@ -81,7 +63,7 @@ class HomePage extends StatelessWidget {
                           removeLeft: true,
                           removeRight: true,
                           context: context,
-                          child: pageView,
+                          child: child!,
                         ),
                       ),
                       MediaQuery.removePadding(
@@ -96,9 +78,35 @@ class HomePage extends StatelessWidget {
                   ),
                 );
               } else {
-                return pageView;
+                return child!;
               }
             },
+            child: Consumer(
+              builder: (_, ref, _) {
+                final navigationItems = ref
+                    .watch(currentNavigationItemsStateProvider)
+                    .value;
+                final isMobile = ref.watch(isMobileViewProvider);
+                return _HomePageView(
+                  navigationItems: navigationItems,
+                  pageBuilder: (_, index) {
+                    final navigationItem = navigationItems[index];
+                    final navigationView = navigationItem.builder(context);
+                    final view = KeepScope(
+                      keep: navigationItem.keep,
+                      child: isMobile
+                          ? navigationView
+                          : Navigator(
+                              pages: [MaterialPage(child: navigationView)],
+                              onDidRemovePage: (_) {},
+                            ),
+                    );
+                    return view;
+                  },
+                );
+                ;
+              },
+            ),
           ),
         ),
       ),
