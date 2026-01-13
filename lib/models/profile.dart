@@ -94,17 +94,17 @@ extension ProfileRuleLinkExt on ProfileRuleLink {
   }
 }
 
-@freezed
-abstract class Overwrite with _$Overwrite {
-  const factory Overwrite({
-    @Default(OverwriteType.standard) OverwriteType type,
-    @Default(StandardOverwrite()) StandardOverwrite standardOverwrite,
-    @Default(ScriptOverwrite()) ScriptOverwrite scriptOverwrite,
-  }) = _Overwrite;
-
-  factory Overwrite.fromJson(Map<String, Object?> json) =>
-      _$OverwriteFromJson(json);
-}
+// @freezed
+// abstract class Overwrite with _$Overwrite {
+//   const factory Overwrite({
+//     @Default(OverwriteType.standard) OverwriteType type,
+//     @Default(StandardOverwrite()) StandardOverwrite standardOverwrite,
+//     @Default(ScriptOverwrite()) ScriptOverwrite scriptOverwrite,
+//   }) = _Overwrite;
+//
+//   factory Overwrite.fromJson(Map<String, Object?> json) =>
+//       _$OverwriteFromJson(json);
+// }
 
 @freezed
 abstract class StandardOverwrite with _$StandardOverwrite {
@@ -165,10 +165,6 @@ extension ProfilesExt on List<Profile> {
 extension ProfileExtension on Profile {
   ProfileType get type =>
       url.isEmpty == true ? ProfileType.file : ProfileType.url;
-
-  Overwrite? get overwrite {
-    return null;
-  }
 
   bool get realAutoUpdate => url.isEmpty == true ? false : autoUpdate;
 

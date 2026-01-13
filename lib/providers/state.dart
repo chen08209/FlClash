@@ -667,11 +667,6 @@ Profile? profile(Ref ref, int? profileId) {
 }
 
 @riverpod
-Overwrite? profileOverwrite(Ref ref, int profileId) {
-  return ref.watch(profileProvider(profileId).select((state) => null));
-}
-
-@riverpod
 Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profile = ref.watch(
     profilesProvider.select((state) => state.getProfile(profileId)),

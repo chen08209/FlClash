@@ -76,29 +76,6 @@ const _$OverwriteTypeEnumMap = {
   OverwriteType.custom: 'custom',
 };
 
-_Overwrite _$OverwriteFromJson(Map<String, dynamic> json) => _Overwrite(
-  type:
-      $enumDecodeNullable(_$OverwriteTypeEnumMap, json['type']) ??
-      OverwriteType.standard,
-  standardOverwrite: json['standardOverwrite'] == null
-      ? const StandardOverwrite()
-      : StandardOverwrite.fromJson(
-          json['standardOverwrite'] as Map<String, dynamic>,
-        ),
-  scriptOverwrite: json['scriptOverwrite'] == null
-      ? const ScriptOverwrite()
-      : ScriptOverwrite.fromJson(
-          json['scriptOverwrite'] as Map<String, dynamic>,
-        ),
-);
-
-Map<String, dynamic> _$OverwriteToJson(_Overwrite instance) =>
-    <String, dynamic>{
-      'type': _$OverwriteTypeEnumMap[instance.type]!,
-      'standardOverwrite': instance.standardOverwrite,
-      'scriptOverwrite': instance.scriptOverwrite,
-    };
-
 _StandardOverwrite _$StandardOverwriteFromJson(Map<String, dynamic> json) =>
     _StandardOverwrite(
       addedRules:

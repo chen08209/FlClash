@@ -88,7 +88,7 @@ class Profiles extends _$Profiles {
 
   @override
   bool updateShouldNotify(List<Profile> previous, List<Profile> next) {
-    return profileListEquality.equals(previous, next);
+    return !profileListEquality.equals(previous, next);
   }
 }
 
@@ -138,7 +138,7 @@ class Scripts extends _$Scripts {
 
   @override
   bool updateShouldNotify(List<Script> previous, List<Script> next) {
-    return scriptListEquality.equals(previous, next);
+    return !scriptListEquality.equals(previous, next);
   }
 }
 
@@ -151,7 +151,7 @@ class Rules extends _$Rules {
 
   @override
   bool updateShouldNotify(List<Rule> previous, List<Rule> next) {
-    return ruleListEquality.equals(previous, next);
+    return !ruleListEquality.equals(previous, next);
   }
 
   void delAll(Iterable<int> ruleIds) {
