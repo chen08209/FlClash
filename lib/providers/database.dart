@@ -21,6 +21,24 @@ Stream<List<Rule>> rulesStream(Ref ref) {
   return database.rulesDao.allGlobalAddedRules().watch();
 }
 
+@Riverpod(keepAlive: true)
+Stream<List<Rule>> globalRulesStream(Ref ref) {
+  return database.rulesDao.allGlobalAddedRules().watch();
+}
+
+@riverpod
+Stream<List<int>> profileDisabledRuleIdsStream(Ref ref, int profileId) {
+  return database.rulesDao
+      .allProfileDisabledRules(profileId)
+      .map((item) => item.id)
+      .watch();
+}
+
+@riverpod
+Stream<List<Rule>> profileAddedRulesStream(Ref ref, int profileId) {
+  return database.rulesDao.allProfileAddedRules(profileId).watch();
+}
+
 @riverpod
 Stream<List<Rule>> addedRuleStream(Ref ref, int profileId) {
   return database.rulesDao.allAddedRules(profileId).watch();
@@ -62,12 +80,7 @@ class Profiles extends _$Profiles {
   void setAndReorder(List<Profile> profiles) {
     final newProfiles = List<Profile>.from(profiles);
     state = newProfiles;
-    final ids = newProfiles.map((item) => item.id);
-    database.setAll(
-      database.profiles,
-      newProfiles.mapIndexed((index, profile) => profile.toCompanion(index)),
-      deleteFilter: (t) => t.id.isNotIn(ids),
-    );
+    database.profilesDao.setAll(profiles);
   }
 
   void reorder(List<Profile> profiles) {
@@ -97,16 +110,6 @@ class Scripts extends _$Scripts {
   @override
   List<Script> build() {
     return ref.watch(scriptsStreamProvider).value ?? [];
-  }
-
-  void setAll(List<Script> scripts) {
-    state = scripts;
-    final ids = scripts.map((item) => item.id);
-    database.setAll(
-      database.scripts,
-      scripts.map((item) => item.toCompanion()),
-      deleteFilter: (t) => t.id.isNotIn(ids),
-    );
   }
 
   void put(Script script) {
@@ -143,10 +146,10 @@ class Scripts extends _$Scripts {
 }
 
 @riverpod
-class Rules extends _$Rules {
+class GlobalRules extends _$GlobalRules {
   @override
   List<Rule> build() {
-    return ref.watch(rulesStreamProvider).value ?? [];
+    return ref.watch(globalRulesStreamProvider).value ?? [];
   }
 
   @override
@@ -156,17 +159,17 @@ class Rules extends _$Rules {
 
   void delAll(Iterable<int> ruleIds) {
     state = List<Rule>.from(state.where((item) => !ruleIds.contains(item.id)));
-    database.rulesDao.delRules(ruleIds);
+    database.rulesDao.delGlobalRules(ruleIds);
   }
 
   void put(Rule rule) {
     state = state.copyAndUpdate(rule);
-    database.rulesDao.putRule(rule);
+    database.rulesDao.putGlobalRule(rule);
   }
 
   void setAll(Iterable<Rule> rules) {
     state = rules.toList();
-    database.rulesDao.setRules(rules);
+    database.rulesDao.setGlobalRules(rules);
   }
 
   void order(int oldIndex, int newIndex) {
@@ -181,6 +184,6 @@ class Rules extends _$Rules {
     final preOrder = nextItems.safeGet(insertIndex - 1)?.order;
     final nextOrder = nextItems.safeGet(insertIndex + 1)?.order;
     final newOrder = indexing.generateKeyBetween(nextOrder, preOrder)!;
-    database.rulesDao.orderRule(ruleId: item.id, order: newOrder);
+    database.rulesDao.orderGlobalRule(ruleId: item.id, order: newOrder);
   }
 }

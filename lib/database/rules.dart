@@ -65,47 +65,49 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     });
   }
 
-  Future<void> restore(
+  void restoreWithBatch(
+    Batch batch,
     Iterable<Rule> rules,
     Iterable<ProfileRuleLink> links,
-  ) async {
-    await batch((b) {
-      b.insertAllOnConflictUpdate(
-        this.rules,
-        rules.map((item) => item.toCompanion()),
-      );
-      final ruleIds = rules.map((item) => item.id);
-      b.deleteWhere(this.rules, (t) => t.id.isNotIn(ruleIds));
-      b.insertAllOnConflictUpdate(
-        profileRuleLinks,
-        links.map((item) => item.toCompanion()),
-      );
-      final linkKeys = links.map((item) => item.key);
-      b.deleteWhere(profileRuleLinks, (t) => t.id.isNotIn(linkKeys));
-    });
+  ) {
+    batch.insertAllOnConflictUpdate(
+      this.rules,
+      rules.map((item) => item.toCompanion()),
+    );
+    final ruleIds = rules.map((item) => item.id);
+    batch.deleteWhere(this.rules, (t) => t.id.isNotIn(ruleIds));
+    batch.insertAllOnConflictUpdate(
+      profileRuleLinks,
+      links.map((item) => item.toCompanion()),
+    );
+    final linkKeys = links.map((item) => item.key);
+    batch.deleteWhere(profileRuleLinks, (t) => t.id.isNotIn(linkKeys));
   }
 
-  Future<int> delRule(int ruleId) {
+  Future<int> delGlobalRule(int ruleId) {
     return _del(ruleId);
   }
 
-  Future<void> delRules(Iterable<int> ruleIds) {
+  Future<void> delGlobalRules(Iterable<int> ruleIds) {
     return _delAll(ruleIds);
   }
 
-  Future<void> putRule(Rule rule) {
+  Future<void> putGlobalRule(Rule rule) {
     return _put(rule);
   }
 
-  Future<void> putRules(Iterable<Rule> rules) {
+  Future<void> putGlobalRules(Iterable<Rule> rules) {
     return _putAll(rules);
   }
 
-  Future<void> setRules(Iterable<Rule> rules) {
+  Future<void> setGlobalRules(Iterable<Rule> rules) {
     return _set(rules);
   }
 
-  Future<int> orderRule({required int ruleId, required String order}) async {
+  Future<int> orderGlobalRule({
+    required int ruleId,
+    required String order,
+  }) async {
     return await _order(ruleId: ruleId, order: order);
   }
 

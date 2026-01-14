@@ -92,16 +92,12 @@ class GlobalState {
     final config = migrationData.configMap != null
         ? Config.fromJson(migrationData.configMap!)
         : Config(themeProps: defaultThemeProps);
-
-    await database.putAll(
-      database.profiles,
-      migrationData.profiles.map((e) => e.toCompanion()).toList(),
+    await database.restore(
+      migrationData.profiles,
+      migrationData.scripts,
+      migrationData.rules,
+      migrationData.links,
     );
-    await database.putAll(
-      database.scripts,
-      migrationData.scripts.map((e) => e.toCompanion()).toList(),
-    );
-    await database.rulesDao.restore(migrationData.rules, migrationData.links);
     final profiles = await database.profilesDao.all().get();
     await AppLocalizations.load(
       utils.getLocaleForString(config.appSettingProps.locale) ??

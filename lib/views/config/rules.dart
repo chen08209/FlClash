@@ -22,7 +22,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   @override
   void initState() {
     super.initState();
-    _originRules = List<Rule>.from(ref.read(rulesProvider));
+    _originRules = List<Rule>.from(ref.read(globalRulesProvider));
   }
 
   @override
@@ -37,7 +37,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     if (res == null) {
       return;
     }
-    ref.read(rulesProvider.notifier).put(res);
+    ref.read(globalRulesProvider.notifier).put(res);
   }
 
   void _handleSelected(int ruleId) {
@@ -49,7 +49,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   }
 
   void _handleSelectAll() {
-    final ids = ref.read(rulesProvider).map((item) => item.id).toSet();
+    final ids = ref.read(globalRulesProvider).map((item) => item.id).toSet();
     ref.read(selectedItemsProvider(_key).notifier).update((selected) {
       return selected.containsAll(ids) ? {} : ids;
     });
@@ -66,7 +66,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
       return;
     }
     final selectedRules = ref.read(selectedItemsProvider(_key));
-    ref.read(rulesProvider.notifier).delAll(selectedRules.cast<int>());
+    ref.read(globalRulesProvider.notifier).delAll(selectedRules.cast<int>());
     ref.read(selectedItemsProvider(_key).notifier).value = {};
   }
 
@@ -77,12 +77,14 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     if (res != true) {
       return;
     }
-    ref.read(rulesProvider.notifier).setAll(_originRules);
+    ref.read(globalRulesProvider.notifier).setAll(_originRules);
   }
 
   @override
   Widget build(BuildContext context) {
-    final rules = ref.watch(rulesProvider);
+    final rules = ref.watch(globalRulesProvider);
+    print("rules ===> ${rules.length}");
+    print("orign ===> ${_originRules.length}");
     final selectedRules = ref.watch(selectedItemsProvider(_key));
     return CommonPopScope(
       onPop: (_) {
@@ -154,7 +156,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
                   );
                 },
                 itemCount: rules.length,
-                onReorder: ref.read(rulesProvider.notifier).order,
+                onReorder: ref.read(globalRulesProvider.notifier).order,
               ),
       ),
     );

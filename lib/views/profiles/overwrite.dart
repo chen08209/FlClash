@@ -3,6 +3,8 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/overwrite/rule.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -114,11 +116,7 @@ class _Title extends ConsumerWidget {
 
   @override
   Widget build(context, ref) {
-    final overwriteType = ref.watch(
-      profileProvider(
-        profileId,
-      ).select((state) => state?.overwriteType ?? OverwriteType.standard),
-    );
+    final overwriteType = ref.watch(overwriteTypeProvider(profileId));
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,241 +173,234 @@ class _Content extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return SliverToBoxAdapter();
-    // final type = ref.watch(
-    //   profileOverwriteProvider(
-    //     profileId,
-    //   ).select((state) => state?.type ?? OverwriteType.standard),
-    // );
-    // return switch (type) {
-    //   OverwriteType.standard => _StandardContent(profileId),
-    //   OverwriteType.script => _ScriptContent(profileId),
-    //   OverwriteType.custom => SliverToBoxAdapter(),
-    // };
+    final overwriteType = ref.watch(overwriteTypeProvider(profileId));
+    return switch (overwriteType) {
+      OverwriteType.standard => _StandardContent(profileId),
+      // OverwriteType.script => _ScriptContent(profileId),
+      OverwriteType.script => SliverToBoxAdapter(),
+      OverwriteType.custom => SliverToBoxAdapter(),
+    };
   }
 }
 
-// class _StandardContent extends ConsumerStatefulWidget {
-//   final int profileId;
-//
-//   const _StandardContent(this.profileId);
-//
-//   @override
-//   ConsumerState createState() => __StandardContentState();
-// }
+class _StandardContent extends ConsumerStatefulWidget {
+  final int profileId;
 
-// class __StandardContentState extends ConsumerState<_StandardContent> {
-//   final _key = utils.id;
-//
-//   Future<void> _handleAddOrUpdate([Rule? rule]) async {
-//     final res = await globalState.showCommonDialog<Rule>(
-//       child: AddOrEditRuleDialog(rule: rule),
-//     );
-//     if (res == null) {
-//       return;
-//     }
-//     // ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
-//     //   state,
-//     // ) {
-//     //   final newAddedRules = state.overwrite.standardOverwrite.addedRules
-//     //       .updateWith(res);
-//     //   return state.copyWith.overwrite.standardOverwrite(
-//     //     addedRules: newAddedRules,
-//     //   );
-//     // });
-//   }
-//
-//   void _handleSelected(int ruleId) {
-//     ref.read(selectedItemsProvider(_key).notifier).update((selectedRules) {
-//       final newSelectedRules = Set<int>.from(selectedRules)
-//         ..addOrRemove(ruleId);
-//       return newSelectedRules;
-//     });
-//   }
-//
-//   void _handleSelectAll() {
-//     final ids = ref
-//         .read(
-//           profileOverwriteProvider(
-//             widget.profileId,
-//           ).select((state) => state?.standardOverwrite.addedRules ?? []),
-//         )
-//         .map((item) => item.id)
-//         .toSet();
-//     ref.read(selectedItemsProvider(_key).notifier).update((selected) {
-//       return selected.containsAll(ids) ? {} : ids;
-//     });
-//   }
-//
-//   Future<void> _handleDelete() async {
-//     final res = await globalState.showMessage(
-//       title: appLocalizations.tip,
-//       message: TextSpan(
-//         text: appLocalizations.deleteMultipTip(appLocalizations.rule),
-//       ),
-//     );
-//     if (res != true) {
-//       return;
-//     }
-//     final selectedRules = ref.read(selectedItemsProvider(_key));
-//     // ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
-//     //   state,
-//     // ) {
-//     //   final newAddedRules = state.overwrite.standardOverwrite.addedRules
-//     //       .where((item) => !selectedRules.contains(item.id))
-//     //       .toList();
-//     //   return state.copyWith.overwrite.standardOverwrite(
-//     //     addedRules: newAddedRules,
-//     //   );
-//     // });
-//     ref.read(selectedItemsProvider(_key).notifier).value = {};
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final standardOverwrite = ref.watch(
-//       profileOverwriteProvider(
-//         widget.profileId,
-//       ).select((state) => state?.standardOverwrite),
-//     );
-//     final selectedRules = ref.watch(selectedItemsProvider(_key));
-//     final addedRules = standardOverwrite?.addedRules ?? [];
-//     return CommonPopScope(
-//       onPop: (_) {
-//         if (selectedRules.isNotEmpty) {
-//           ref.read(selectedItemsProvider(_key).notifier).value = {};
-//           return false;
-//         }
-//         Navigator.of(context).pop();
-//         return false;
-//       },
-//       child: SliverMainAxisGroup(
-//         slivers: [
-//           SliverToBoxAdapter(child: SizedBox(height: 24)),
-//           SliverToBoxAdapter(
-//             child: Column(
-//               children: [
-//                 InfoHeader(
-//                   info: Info(label: appLocalizations.addedRules),
-//                   actions: [
-//                     if (selectedRules.isNotEmpty) ...[
-//                       CommonMinIconButtonTheme(
-//                         child: IconButton.filledTonal(
-//                           onPressed: () {
-//                             _handleDelete();
-//                           },
-//                           icon: Icon(Icons.delete),
-//                         ),
-//                       ),
-//                       SizedBox(width: 8),
-//                     ],
-//                     CommonMinFilledButtonTheme(
-//                       child: selectedRules.isNotEmpty
-//                           ? FilledButton(
-//                               onPressed: () {
-//                                 _handleSelectAll();
-//                               },
-//                               child: Text(appLocalizations.selectAll),
-//                             )
-//                           : FilledButton.tonal(
-//                               onPressed: () {
-//                                 _handleAddOrUpdate();
-//                               },
-//                               child: Text(appLocalizations.add),
-//                             ),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-//           SliverToBoxAdapter(child: SizedBox(height: 8)),
-//           Consumer(
-//             builder: (_, ref, _) {
-//               return SliverReorderableList(
-//                 itemCount: addedRules.length,
-//                 itemBuilder: (_, index) {
-//                   final rule = addedRules[index];
-//                   return ReorderableDelayedDragStartListener(
-//                     key: ObjectKey(rule),
-//                     index: index,
-//                     child: RuleItem(
-//                       isEditing: selectedRules.isNotEmpty,
-//                       isSelected: selectedRules.contains(rule.id),
-//                       rule: rule,
-//                       onSelected: () {
-//                         _handleSelected(rule.id);
-//                       },
-//                       onEdit: (rule) {
-//                         _handleAddOrUpdate(rule);
-//                       },
-//                     ),
-//                   );
-//                 },
-//                 onReorder: (int oldIndex, int newIndex) {
-//                   if (oldIndex < newIndex) {
-//                     newIndex -= 1;
-//                   }
-//                   // ref.read(profilesProvider.notifier).updateProfile(
-//                   //   widget.profileId,
-//                   //   (state) {
-//                   //     final newAddRules = List<Rule>.from(
-//                   //       state.overwrite.standardOverwrite.addedRules,
-//                   //     );
-//                   //     final item = newAddRules.removeAt(oldIndex);
-//                   //     newAddRules.insert(newIndex, item);
-//                   //     return state.copyWith.overwrite.standardOverwrite(
-//                   //       addedRules: newAddRules,
-//                   //     );
-//                   //   },
-//                   // );
-//                 },
-//               );
-//             },
-//           ),
-//           SliverToBoxAdapter(
-//             child: Padding(
-//               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-//               child: CommonCard(
-//                 padding: EdgeInsets.zero,
-//                 radius: 18,
-//                 child: ListTile(
-//                   minTileHeight: 0,
-//                   minVerticalPadding: 0,
-//                   titleTextStyle: context.textTheme.bodyMedium?.toJetBrainsMono,
-//                   contentPadding: const EdgeInsets.symmetric(
-//                     horizontal: 16,
-//                     vertical: 16,
-//                   ),
-//                   title: Row(
-//                     crossAxisAlignment: CrossAxisAlignment.center,
-//                     children: [
-//                       Flexible(
-//                         child: Text(
-//                           appLocalizations.controlGlobalAddedRules,
-//                           style: context.textTheme.bodyLarge,
-//                         ),
-//                       ),
-//                       SizedBox(width: 4),
-//                       Icon(Icons.arrow_forward, size: 18),
-//                     ],
-//                   ),
-//                 ),
-//                 onPressed: () {
-//                   BaseNavigator.push(
-//                     context,
-//                     _EditGlobalAddedRules(profileId: widget.profileId),
-//                   );
-//                 },
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-//
+  const _StandardContent(this.profileId);
+
+  @override
+  ConsumerState createState() => __StandardContentState();
+}
+
+class __StandardContentState extends ConsumerState<_StandardContent> {
+  final _key = utils.id;
+
+  Future<void> _handleAddOrUpdate([Rule? rule]) async {
+    final res = await globalState.showCommonDialog<Rule>(
+      child: AddOrEditRuleDialog(rule: rule),
+    );
+    if (res == null) {
+      return;
+    }
+    // ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
+    //   state,
+    // ) {
+    //   final newAddedRules = state.overwrite.standardOverwrite.addedRules
+    //       .updateWith(res);
+    //   return state.copyWith.overwrite.standardOverwrite(
+    //     addedRules: newAddedRules,
+    //   );
+    // });
+  }
+
+  void _handleSelected(int ruleId) {
+    ref.read(selectedItemsProvider(_key).notifier).update((selectedRules) {
+      final newSelectedRules = Set<int>.from(selectedRules)
+        ..addOrRemove(ruleId);
+      return newSelectedRules;
+    });
+  }
+
+  void _handleSelectAll() {
+    // final ids = ref
+    //     .read(
+    //       profileOverwriteProvider(
+    //         widget.profileId,
+    //       ).select((state) => state?.standardOverwrite.addedRules ?? []),
+    //     )
+    //     .map((item) => item.id)
+    //     .toSet();
+    // ref.read(selectedItemsProvider(_key).notifier).update((selected) {
+    //   return selected.containsAll(ids) ? {} : ids;
+    // });
+  }
+
+  Future<void> _handleDelete() async {
+    final res = await globalState.showMessage(
+      title: appLocalizations.tip,
+      message: TextSpan(
+        text: appLocalizations.deleteMultipTip(appLocalizations.rule),
+      ),
+    );
+    if (res != true) {
+      return;
+    }
+    final selectedRules = ref.read(selectedItemsProvider(_key));
+    // ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
+    //   state,
+    // ) {
+    //   final newAddedRules = state.overwrite.standardOverwrite.addedRules
+    //       .where((item) => !selectedRules.contains(item.id))
+    //       .toList();
+    //   return state.copyWith.overwrite.standardOverwrite(
+    //     addedRules: newAddedRules,
+    //   );
+    // });
+    ref.read(selectedItemsProvider(_key).notifier).value = {};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final addedRules =
+        ref.watch(profileAddedRulesStreamProvider(widget.profileId)).value ??
+        [];
+    final selectedRules = ref.watch(selectedItemsProvider(_key));
+    return CommonPopScope(
+      onPop: (_) {
+        if (selectedRules.isNotEmpty) {
+          ref.read(selectedItemsProvider(_key).notifier).value = {};
+          return false;
+        }
+        Navigator.of(context).pop();
+        return false;
+      },
+      child: SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(child: SizedBox(height: 24)),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                InfoHeader(
+                  info: Info(label: appLocalizations.addedRules),
+                  actions: [
+                    if (selectedRules.isNotEmpty) ...[
+                      CommonMinIconButtonTheme(
+                        child: IconButton.filledTonal(
+                          onPressed: () {
+                            _handleDelete();
+                          },
+                          icon: Icon(Icons.delete),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                    ],
+                    CommonMinFilledButtonTheme(
+                      child: selectedRules.isNotEmpty
+                          ? FilledButton(
+                              onPressed: () {
+                                _handleSelectAll();
+                              },
+                              child: Text(appLocalizations.selectAll),
+                            )
+                          : FilledButton.tonal(
+                              onPressed: () {
+                                _handleAddOrUpdate();
+                              },
+                              child: Text(appLocalizations.add),
+                            ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SliverToBoxAdapter(child: SizedBox(height: 8)),
+          Consumer(
+            builder: (_, ref, _) {
+              return SliverReorderableList(
+                itemCount: addedRules.length,
+                itemBuilder: (_, index) {
+                  final rule = addedRules[index];
+                  return ReorderableDelayedDragStartListener(
+                    key: ObjectKey(rule),
+                    index: index,
+                    child: RuleItem(
+                      isEditing: selectedRules.isNotEmpty,
+                      isSelected: selectedRules.contains(rule.id),
+                      rule: rule,
+                      onSelected: () {
+                        _handleSelected(rule.id);
+                      },
+                      onEdit: (rule) {
+                        _handleAddOrUpdate(rule);
+                      },
+                    ),
+                  );
+                },
+                onReorder: (int oldIndex, int newIndex) {
+                  if (oldIndex < newIndex) {
+                    newIndex -= 1;
+                  }
+                  // ref.read(profilesProvider.notifier).updateProfile(
+                  //   widget.profileId,
+                  //   (state) {
+                  //     final newAddRules = List<Rule>.from(
+                  //       state.overwrite.standardOverwrite.addedRules,
+                  //     );
+                  //     final item = newAddRules.removeAt(oldIndex);
+                  //     newAddRules.insert(newIndex, item);
+                  //     return state.copyWith.overwrite.standardOverwrite(
+                  //       addedRules: newAddRules,
+                  //     );
+                  //   },
+                  // );
+                },
+              );
+            },
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: CommonCard(
+                padding: EdgeInsets.zero,
+                radius: 18,
+                child: ListTile(
+                  minTileHeight: 0,
+                  minVerticalPadding: 0,
+                  titleTextStyle: context.textTheme.bodyMedium?.toJetBrainsMono,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  title: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          appLocalizations.controlGlobalAddedRules,
+                          style: context.textTheme.bodyLarge,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(Icons.arrow_forward, size: 18),
+                    ],
+                  ),
+                ),
+                onPressed: () {
+                  BaseNavigator.push(
+                    context,
+                    _EditGlobalAddedRules(profileId: widget.profileId),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // class _ScriptContent extends ConsumerWidget {
 //   final int profileId;
 //
@@ -535,52 +526,49 @@ class _Content extends ConsumerWidget {
 //     );
 //   }
 // }
-//
-// class _EditGlobalAddedRules extends ConsumerWidget {
-//   final int profileId;
-//
-//   const _EditGlobalAddedRules({required this.profileId});
-//
-//   void _handleChange(WidgetRef ref, int ruleId) {
-//     // ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-//     //   final newDisabledRuleIds = Set<int>.from(
-//     //     state.overwrite.standardOverwrite.disabledRuleIds,
-//     //   )..addOrRemove(ruleId);
-//     //   return state.copyWith.overwrite.standardOverwrite(
-//     //     disabledRuleIds: newDisabledRuleIds.toList(),
-//     //   );
-//     // });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     final disabledRuleIds = ref.watch(
-//       profileOverwriteProvider(
-//         profileId,
-//       ).select((state) => state?.standardOverwrite.disabledRuleIds ?? []),
-//     );
-//     final rules = ref.watch(rulesProvider);
-//     return BaseScaffold(
-//       title: appLocalizations.editGlobalRules,
-//       body: rules.isEmpty
-//           ? NullStatus(
-//               label: appLocalizations.nullTip(appLocalizations.rule),
-//               illustration: RuleEmptyIllustration(),
-//             )
-//           : ListView.builder(
-//               padding: EdgeInsets.all(16),
-//               itemBuilder: (context, index) {
-//                 final rule = rules[index];
-//                 return RuleStatusItem(
-//                   status: !disabledRuleIds.contains(rule.id),
-//                   rule: rule,
-//                   onChange: (_) {
-//                     _handleChange(ref, rule.id);
-//                   },
-//                 );
-//               },
-//               itemCount: rules.length,
-//             ),
-//     );
-//   }
-// }
+
+class _EditGlobalAddedRules extends ConsumerWidget {
+  final int profileId;
+
+  const _EditGlobalAddedRules({required this.profileId});
+
+  void _handleChange(WidgetRef ref, int ruleId) {
+    // ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
+    //   final newDisabledRuleIds = Set<int>.from(
+    //     state.overwrite.standardOverwrite.disabledRuleIds,
+    //   )..addOrRemove(ruleId);
+    //   return state.copyWith.overwrite.standardOverwrite(
+    //     disabledRuleIds: newDisabledRuleIds.toList(),
+    //   );
+    // });
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final disabledRuleIds =
+        ref.watch(profileDisabledRuleIdsStreamProvider(profileId)).value ?? [];
+    final rules = ref.watch(globalRulesProvider);
+    return BaseScaffold(
+      title: appLocalizations.editGlobalRules,
+      body: rules.isEmpty
+          ? NullStatus(
+              label: appLocalizations.nullTip(appLocalizations.rule),
+              illustration: RuleEmptyIllustration(),
+            )
+          : ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemBuilder: (context, index) {
+                final rule = rules[index];
+                return RuleStatusItem(
+                  status: !disabledRuleIds.contains(rule.id),
+                  rule: rule,
+                  onChange: (_) {
+                    _handleChange(ref, rule.id);
+                  },
+                );
+              },
+              itemCount: rules.length,
+            ),
+    );
+  }
+}

@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
+import 'package:drift/native.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:path_provider/path_provider.dart';
 
 part 'generated/database.g.dart';
 part 'links.dart';
@@ -22,14 +24,11 @@ class Database extends _$Database {
   @override
   int get schemaVersion => 1;
 
-  static QueryExecutor _openConnection() {
-    return driftDatabase(
-      name: 'database',
-      native: const DriftNativeOptions(
-        shareAcrossIsolates: true,
-        databaseDirectory: getApplicationSupportDirectory,
-      ),
-    );
+  static LazyDatabase _openConnection() {
+    return LazyDatabase(() async {
+      final databaseFile = File(await appPath.databasePath);
+      return NativeDatabase.createInBackground(databaseFile);
+    });
   }
 
   Future<int> put<T extends Table, D extends DataClass>(
@@ -46,24 +45,39 @@ class Database extends _$Database {
     return await (table.delete()..where(filter)).go();
   }
 
-  Future<void> setAll<T extends Table, D extends DataClass>(
-    TableInfo<T, D> table,
-    Iterable<Insertable<D>> items, {
-    required Expression<bool> Function(T tbl) deleteFilter,
+  Future<void> restore(
+    List<Profile> profiles,
+    List<Script> scripts,
+    List<Rule> rules,
+    List<ProfileRuleLink> links, {
+    bool isOverride = false,
   }) async {
-    await batch((b) {
-      b.insertAllOnConflictUpdate(table, items);
-      b.deleteWhere(table, deleteFilter);
-    });
+    if (profiles.isNotEmpty ||
+        scripts.isNotEmpty ||
+        rules.isNotEmpty ||
+        links.isNotEmpty) {
+      await batch((b) {
+        isOverride
+            ? profilesDao.setAllWithBatch(b, profiles)
+            : profilesDao.putAllWithBatch(
+                b,
+                profiles.map((item) => item.toCompanion()),
+              );
+        scriptsDao.setAllWithBatch(b, scripts);
+        rulesDao.restoreWithBatch(b, rules, links);
+      });
+    }
   }
+}
 
-  Future<void> putAll<T extends Table, D extends DataClass>(
-    TableInfo<T, D> table,
-    Iterable<Insertable<D>> items,
-  ) async {
-    await batch((b) {
-      b.insertAllOnConflictUpdate(table, items);
-    });
+extension TableInfoExt<Tbl extends Table, Row> on TableInfo<Tbl, Row> {
+  void setAll(
+    Batch batch,
+    Iterable<Insertable<Row>> items, {
+    required Expression<bool> Function(Tbl tbl) deleteFilter,
+  }) async {
+    batch.insertAllOnConflictUpdate(this, items);
+    batch.deleteWhere(this, deleteFilter);
   }
 }
 

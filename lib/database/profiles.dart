@@ -65,6 +65,32 @@ class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
     ]);
     return stmt.map((item) => item.toProfile());
   }
+
+  Future<void> setAll(Iterable<Profile> profiles) async {
+    await batch((b) async {
+      setAllWithBatch(b, profiles);
+    });
+  }
+
+  void putAllWithBatch<T extends Table, D extends DataClass>(
+    Batch batch,
+    Iterable<Insertable<D>> items,
+  ) {
+    batch.insertAllOnConflictUpdate(profiles, items);
+  }
+
+  void setAllWithBatch(Batch batch, Iterable<Profile> profiles) {
+    final List<ProfilesCompanion> items = [];
+    final List<int> ids = [];
+    profiles.forEachIndexed((index, profile) {
+      for (final profile in profiles) {
+        ids.add(profile.id);
+        items.add(profile.toCompanion(index));
+      }
+    });
+
+    this.profiles.setAll(batch, items, deleteFilter: (t) => t.id.isNotIn(ids));
+  }
 }
 
 class StringMapConverter extends TypeConverter<Map<String, String>, String> {

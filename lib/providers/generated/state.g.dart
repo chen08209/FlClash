@@ -2349,6 +2349,83 @@ final class ProfileFamily extends $Family
   String toString() => r'profileProvider';
 }
 
+@ProviderFor(overwriteType)
+const overwriteTypeProvider = OverwriteTypeFamily._();
+
+final class OverwriteTypeProvider
+    extends $FunctionalProvider<OverwriteType, OverwriteType, OverwriteType>
+    with $Provider<OverwriteType> {
+  const OverwriteTypeProvider._({
+    required OverwriteTypeFamily super.from,
+    required int? super.argument,
+  }) : super(
+         retry: null,
+         name: r'overwriteTypeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$overwriteTypeHash();
+
+  @override
+  String toString() {
+    return r'overwriteTypeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<OverwriteType> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  OverwriteType create(Ref ref) {
+    final argument = this.argument as int?;
+    return overwriteType(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(OverwriteType value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<OverwriteType>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OverwriteTypeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$overwriteTypeHash() => r'03a8ab8ddec76935da5fa231270b65baa70fd727';
+
+final class OverwriteTypeFamily extends $Family
+    with $FunctionalFamilyOverride<OverwriteType, int?> {
+  const OverwriteTypeFamily._()
+    : super(
+        retry: null,
+        name: r'overwriteTypeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  OverwriteTypeProvider call(int? profileId) =>
+      OverwriteTypeProvider._(argument: profileId, from: this);
+
+  @override
+  String toString() => r'overwriteTypeProvider';
+}
+
 @ProviderFor(setupState)
 const setupStateProvider = SetupStateFamily._();
 

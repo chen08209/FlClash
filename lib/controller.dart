@@ -769,15 +769,13 @@ extension ActionControllerExt on AppController {
       if (!await restoreDir.exists()) {
         throw '恢复异常';
       }
-
-      final profiles = migrationData.profiles;
-      if (isOverride) {
-        _ref.read(profilesProvider.notifier).setAndReorder(profiles);
-      } else {
-        for (final profile in profiles) {
-          _ref.read(profilesProvider.notifier).put(profile);
-        }
-      }
+      await database.restore(
+        migrationData.profiles,
+        migrationData.scripts,
+        migrationData.rules,
+        migrationData.links,
+        isOverride: isOverride,
+      );
       final configMap = migrationData.configMap;
       if (option == RestoreOption.onlyProfiles || configMap == null) {
         return;
@@ -797,8 +795,6 @@ extension ActionControllerExt on AppController {
       _ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
       _ref.read(networkSettingProvider.notifier).value = config.networkProps;
       _ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
-      _ref.read(scriptsProvider.notifier).setAll(migrationData.scripts);
-      database.rulesDao.restore(migrationData.rules, migrationData.links);
       return;
     } finally {
       await restoreDir.safeDelete(recursive: true);
