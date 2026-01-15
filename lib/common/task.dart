@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
+import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
@@ -576,13 +577,18 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
       ),
     ),
   );
-  final profileCollections = await database.select(database.profiles).get();
-  final ruleCollections = await database.select(database.rules).get();
-  final scriptCollections = await database.select(database.scripts).get();
+  final results = await Future.wait([
+    database.profiles.all().get(),
+    database.scripts.all().get(),
+    database.rules.all().get(),
+    database.profileRuleLinks.all().get(),
+  ]);
+  results[0] as List<Profile>;
   migrationData = migrationData.copyWith(
-    profiles: profileCollections.map((item) => item.toProfile()).toList(),
-    rules: ruleCollections.map((item) => item.toRule()).toList(),
-    scripts: scriptCollections.map((item) => item.toScript()).toList(),
+    profiles: results[0].cast<Profile>(),
+    scripts: results[1].cast<Script>(),
+    rules: results[2].cast<Rule>(),
+    links: results[3].cast<ProfileRuleLink>(),
   );
   await database.close();
   return migrationData;
