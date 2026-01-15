@@ -5,6 +5,7 @@ import com.follow.clash.common.GlobalState
 import com.follow.clash.models.SharedState
 import com.follow.clash.plugins.AppPlugin
 import com.follow.clash.plugins.TilePlugin
+import com.follow.clash.service.models.NotificationParams
 import com.google.gson.Gson
 import io.flutter.embedding.engine.FlutterEngine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,7 +73,7 @@ object State {
             if (flutterEngine != null) {
                 return
             }
-            startServiceWithFile()
+            startServiceWithPref()
         }
 
     }
@@ -102,27 +103,33 @@ object State {
         startService()
     }
 
-    private fun startServiceWithFile() {
+    private fun startServiceWithPref() {
         GlobalState.launch {
             runLock.withLock {
                 if (runStateFlow.value != RunState.STOP) {
                     return@launch
                 }
-                val sharedFile = GlobalState.application.sharedFile
-                try {
-                    val data = sharedFile.readText()
-                    sharedState = Gson().fromJson(data, SharedState::class.java)
-                    setupAndStart()
-                } catch (e: Exception) {
-                    GlobalState.log("startServiceWithFile error: $e")
-                    GlobalState.application.showToast("Initialization failed")
-                }
+                sharedState = GlobalState.application.sharedState
+                setupAndStart()
             }
         }
     }
 
+    suspend fun syncState() {
+        GlobalState.setCrashlytics(sharedState.crashlytics)
+        Service.updateNotificationParams(
+            NotificationParams(
+                title = sharedState.currentProfileName,
+                stopText = sharedState.stopText,
+                onlyStatisticsProxy = sharedState.onlyStatisticsProxy
+            )
+        )
+        Service.setCrashlytics(sharedState.crashlytics)
+    }
+
     private suspend fun setupAndStart() {
         Service.bind()
+        syncState()
         GlobalState.application.showToast(sharedState.startTip)
         val initParams = mutableMapOf<String, Any>()
         initParams["home-dir"] = GlobalState.application.filesDir.path
