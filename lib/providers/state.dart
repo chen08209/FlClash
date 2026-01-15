@@ -554,11 +554,9 @@ ColorScheme genColorScheme(
 }
 
 @riverpod
-VM2<SetupState?, bool> needSetupState(Ref ref) {
+SetupState? currentSetupState(Ref ref) {
   final profileId = ref.watch(currentProfileIdProvider);
-  final state = ref.watch(setupStateProvider(profileId)).value;
-  final block = ref.watch(setupBlockProvider);
-  return VM2(state, block);
+  return ref.watch(setupStateProvider(profileId)).value;
 }
 
 @riverpod

@@ -316,14 +316,6 @@ class IsUpdating extends _$IsUpdating with AutoDisposeNotifierMixin {
   }
 }
 
-@riverpod
-class SetupBlock extends _$SetupBlock with AutoDisposeNotifierMixin {
-  @override
-  bool build() {
-    return false;
-  }
-}
-
 List<Override> buildAppStateOverrides(AppState appState) {
   return [
     initProvider.overrideWithBuild((_, _) => appState.isInit),

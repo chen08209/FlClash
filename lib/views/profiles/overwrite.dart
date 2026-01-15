@@ -26,9 +26,6 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      appController.setBlockAutoSetup(true);
-    });
   }
 
   @override
@@ -44,9 +41,7 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
   @override
   void dispose() {
     super.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      appController.setBlockAutoSetup(false);
-    });
+    appController.checkNeedSetup();
   }
 }
 
