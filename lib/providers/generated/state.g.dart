@@ -2010,52 +2010,52 @@ final class GenColorSchemeFamily extends $Family
   String toString() => r'genColorSchemeProvider';
 }
 
-@ProviderFor(_needSetup)
-const needSetupProvider = _NeedSetupProvider._();
+@ProviderFor(needSetupState)
+const needSetupStateProvider = NeedSetupStateProvider._();
 
-final class _NeedSetupProvider
+final class NeedSetupStateProvider
     extends
         $FunctionalProvider<
-          VM2<int?, SetupState?>,
-          VM2<int?, SetupState?>,
-          VM2<int?, SetupState?>
+          VM2<SetupState?, bool>,
+          VM2<SetupState?, bool>,
+          VM2<SetupState?, bool>
         >
-    with $Provider<VM2<int?, SetupState?>> {
-  const _NeedSetupProvider._()
+    with $Provider<VM2<SetupState?, bool>> {
+  const NeedSetupStateProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'needSetupProvider',
+        name: r'needSetupStateProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$_needSetupHash();
+  String debugGetCreateSourceHash() => _$needSetupStateHash();
 
   @$internal
   @override
-  $ProviderElement<VM2<int?, SetupState?>> $createElement(
+  $ProviderElement<VM2<SetupState?, bool>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  VM2<int?, SetupState?> create(Ref ref) {
-    return _needSetup(ref);
+  VM2<SetupState?, bool> create(Ref ref) {
+    return needSetupState(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(VM2<int?, SetupState?> value) {
+  Override overrideWithValue(VM2<SetupState?, bool> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<VM2<int?, SetupState?>>(value),
+      providerOverride: $SyncValueProvider<VM2<SetupState?, bool>>(value),
     );
   }
 }
 
-String _$_needSetupHash() => r'e4c71ed6c3dfbe014b228dde96e386548608c783';
+String _$needSetupStateHash() => r'314ceeba43316b4eddff4c1f018f4e5d16696adc';
 
 @ProviderFor(currentBrightness)
 const currentBrightnessProvider = CurrentBrightnessProvider._();

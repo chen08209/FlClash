@@ -553,11 +553,12 @@ ColorScheme genColorScheme(
   );
 }
 
-@Riverpod(name: 'needSetupProvider')
-VM2<int?, SetupState?> _needSetup(Ref ref) {
+@riverpod
+VM2<SetupState?, bool> needSetupState(Ref ref) {
   final profileId = ref.watch(currentProfileIdProvider);
   final state = ref.watch(setupStateProvider(profileId)).value;
-  return VM2(profileId, state);
+  final block = ref.watch(setupBlockProvider);
+  return VM2(state, block);
 }
 
 @riverpod

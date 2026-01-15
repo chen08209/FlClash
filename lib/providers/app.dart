@@ -316,57 +316,13 @@ class IsUpdating extends _$IsUpdating with AutoDisposeNotifierMixin {
   }
 }
 
-// @riverpod
-// AppState appState(Ref ref) {
-//   final isInit = ref.watch(initProvider);
-//   final backBlock = ref.watch(backBlockProvider);
-//   final pageLabel = ref.watch(currentPageLabelProvider);
-//   final packages = ref.watch(packagesProvider);
-//   final sortNum = ref.watch(sortNumProvider);
-//   final viewSize = ref.watch(viewSizeProvider);
-//   final sideWidth = ref.watch(sideWidthProvider);
-//   final delayMap = ref.watch(delayDataSourceProvider);
-//   final groups = ref.watch(groupsProvider);
-//   final checkIpNum = ref.watch(checkIpNumProvider);
-//   final brightness = ref.watch(systemBrightnessProvider);
-//   final runTime = ref.watch(runTimeProvider);
-//   final providers = ref.watch(providersProvider);
-//   final localIp = ref.watch(localIpProvider);
-//   final requests = ref.watch(requestsProvider);
-//   final version = ref.watch(versionProvider);
-//   final logs = ref.watch(logsProvider);
-//   final traffics = ref.watch(trafficsProvider);
-//   final totalTraffic = ref.watch(totalTrafficProvider);
-//   final realTunEnable = ref.watch(realTunEnableProvider);
-//   final loading = ref.watch(loadingProvider);
-//   final systemUiOverlayStyle = ref.watch(systemUiOverlayStyleStateProvider);
-//   final coreStatus = ref.watch(coreStatusProvider);
-//   return AppState(
-//     isInit: isInit,
-//     backBlock: backBlock,
-//     pageLabel: pageLabel,
-//     packages: packages,
-//     sortNum: sortNum,
-//     viewSize: viewSize,
-//     sideWidth: sideWidth,
-//     delayMap: delayMap,
-//     groups: groups,
-//     checkIpNum: checkIpNum,
-//     brightness: brightness,
-//     runTime: runTime,
-//     providers: providers,
-//     localIp: localIp,
-//     requests: requests,
-//     version: version,
-//     logs: logs,
-//     traffics: traffics,
-//     totalTraffic: totalTraffic,
-//     realTunEnable: realTunEnable,
-//     loading: loading,
-//     systemUiOverlayStyle: systemUiOverlayStyle,
-//     coreStatus: coreStatus,
-//   );
-// }
+@riverpod
+class SetupBlock extends _$SetupBlock with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return false;
+  }
+}
 
 List<Override> buildAppStateOverrides(AppState appState) {
   return [

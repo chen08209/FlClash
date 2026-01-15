@@ -30,8 +30,11 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void initState() {
     super.initState();
     coreEventManager.addListener(this);
-    ref.listenManual(needSetupProvider, (prev, next) {
-      if (prev != next) {
+    ref.listenManual(needSetupStateProvider, (prev, next) {
+      if (next.b == true) {
+        return;
+      }
+      if (prev?.a != next.a) {
         appController.handleChangeProfile();
       }
     });

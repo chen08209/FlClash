@@ -860,15 +860,8 @@ extension SetupControllerExt on AppController {
     return setupState.needSetup(globalState.lastSetupState) != true;
   }
 
-  Future<void> checkNeedSetup() async {
-    if (!globalState.isStart) {
-      return;
-    }
-    final profileId = _ref.read(currentProfileIdProvider);
-    if (!await needSetup(profileId)) {
-      return;
-    }
-    applyProfileDebounce();
+  void setBlockAutoSetup(bool block) {
+    _ref.read(setupBlockProvider.notifier).value = block;
   }
 
   Future<void> updateConfigDebounce() async {

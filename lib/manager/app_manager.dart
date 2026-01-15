@@ -27,7 +27,6 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // ref.listenManual(appStateProvider, (_, _) {});
-    ref.listenManual(needSetupProvider, (prev, next) {});
     ref.listenManual(checkIpProvider, (prev, next) {
       if (prev != next && next.a && next.c) {
         final isStart = ref.read(isStartProvider);

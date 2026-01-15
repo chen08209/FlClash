@@ -1751,3 +1751,55 @@ abstract class _$IsUpdating extends $Notifier<bool> {
     element.handleValue(ref, created);
   }
 }
+
+@ProviderFor(SetupBlock)
+const setupBlockProvider = SetupBlockProvider._();
+
+final class SetupBlockProvider extends $NotifierProvider<SetupBlock, bool> {
+  const SetupBlockProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'setupBlockProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$setupBlockHash();
+
+  @$internal
+  @override
+  SetupBlock create() => SetupBlock();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$setupBlockHash() => r'582b63c05e95a09a621e946e671e0d0580cbc0c7';
+
+abstract class _$SetupBlock extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

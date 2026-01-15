@@ -24,6 +24,14 @@ class OverwriteView extends ConsumerStatefulWidget {
 
 class _OverwriteViewState extends ConsumerState<OverwriteView> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      appController.setBlockAutoSetup(true);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return CommonScaffold(
       title: appLocalizations.override,
@@ -37,7 +45,7 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      appController.checkNeedSetup();
+      appController.setBlockAutoSetup(false);
     });
   }
 }
