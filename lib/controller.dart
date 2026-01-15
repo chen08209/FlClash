@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/core/core.dart';
@@ -932,24 +931,12 @@ extension SetupControllerExt on AppController {
     addCheckIpNumDebounce();
   }
 
-  Future<void> saveSharedFile() async {
-    if (!system.isAndroid) {
-      return;
-    }
-    final sharedFilePath = await appPath.sharedFilePath;
-    final file = File(sharedFilePath);
-    if (!await file.exists()) {
-      await file.create(recursive: true);
-    }
-    await file.writeAsString(json.encode(sharedState));
-  }
-
   Future<String> setupProfile({
     required SetupState setupState,
     required ClashConfig patchConfig,
     VoidCallback? preloadInvoke,
   }) async {
-    saveSharedFile();
+    preferences.saveShareState(this.sharedState);
     await saveProfile(setupState, patchConfig);
     return await coreController.setupConfig(
       setupState: setupState,

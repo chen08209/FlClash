@@ -34,12 +34,9 @@ class Preferences {
     await preferences?.setInt('version', version);
   }
 
-  Future<ClashConfig?> getClashConfig() async {
+  Future<void> saveShareState(SharedState shareState) async {
     final preferences = await sharedPreferencesCompleter.future;
-    final clashConfigString = preferences?.getString(clashConfigKey);
-    if (clashConfigString == null) return null;
-    final clashConfigMap = json.decode(clashConfigString);
-    return ClashConfig.fromJson(clashConfigMap);
+    await preferences?.setString('shareState', json.encode(shareState));
   }
 
   Future<Map<String, Object?>?> getConfigMap() async {
@@ -61,11 +58,6 @@ class Preferences {
   Future<bool> saveConfig(Config config) async {
     final preferences = await sharedPreferencesCompleter.future;
     return preferences?.setString(configKey, json.encode(config)) ?? false;
-  }
-
-  Future<void> clearClashConfig() async {
-    final preferences = await sharedPreferencesCompleter.future;
-    preferences?.remove(clashConfigKey);
   }
 
   Future<void> clearPreferences() async {
