@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/config/scripts.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +51,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => appLocalizations.standard,
       OverwriteType.script => appLocalizations.script,
-      OverwriteType.custom => appLocalizations.overwriteTypeCustom,
+      // OverwriteType.custom => appLocalizations.overwriteTypeCustom,
     };
   }
 
@@ -58,7 +59,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => Icons.stars,
       OverwriteType.script => Icons.rocket,
-      OverwriteType.custom => Icons.dashboard_customize,
+      // OverwriteType.custom => Icons.dashboard_customize,
     };
   }
 
@@ -66,7 +67,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => appLocalizations.standardModeDesc,
       OverwriteType.script => appLocalizations.scriptModeDesc,
-      OverwriteType.custom => appLocalizations.overwriteTypeCustomDesc,
+      // OverwriteType.custom => appLocalizations.overwriteTypeCustomDesc,
     };
   }
 
@@ -138,9 +139,8 @@ class _Content extends ConsumerWidget {
     final overwriteType = ref.watch(overwriteTypeProvider(profileId));
     return switch (overwriteType) {
       OverwriteType.standard => _StandardContent(profileId),
-      // OverwriteType.script => _ScriptContent(profileId),
-      OverwriteType.script => SliverToBoxAdapter(),
-      OverwriteType.custom => SliverToBoxAdapter(),
+      OverwriteType.script => _ScriptContent(profileId),
+      // OverwriteType.custom => SliverToBoxAdapter(),
     };
   }
 }
@@ -331,131 +331,125 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
   }
 }
 
-// class _ScriptContent extends ConsumerWidget {
-//   final int profileId;
-//
-//   const _ScriptContent(this.profileId);
-//
-//   void _handleChange(WidgetRef ref, int scriptId) {
-//     // ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-//     //   int? newScriptId = scriptId;
-//     //   if (newScriptId == state.overwrite.scriptOverwrite.scriptId) {
-//     //     newScriptId = null;
-//     //   }
-//     //   return state.copyWith.overwrite.scriptOverwrite(scriptId: newScriptId);
-//     // });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context, ref) {
-//     final scriptId = ref.watch(
-//       profileOverwriteProvider(
-//         profileId,
-//       ).select((state) => state?.scriptOverwrite.scriptId),
-//     );
-//     final scripts = ref.watch(scriptsProvider);
-//     return SliverMainAxisGroup(
-//       slivers: [
-//         SliverToBoxAdapter(child: SizedBox(height: 24)),
-//         SliverToBoxAdapter(
-//           child: Column(
-//             children: [
-//               InfoHeader(info: Info(label: appLocalizations.overrideScript)),
-//             ],
-//           ),
-//         ),
-//         SliverToBoxAdapter(child: SizedBox(height: 8)),
-//         Consumer(
-//           builder: (_, ref, _) {
-//             return SliverPadding(
-//               padding: EdgeInsets.symmetric(horizontal: 16),
-//               sliver: SliverList.builder(
-//                 itemCount: scripts.length,
-//                 itemBuilder: (_, index) {
-//                   final script = scripts[index];
-//                   return Container(
-//                     margin: EdgeInsets.symmetric(vertical: 4),
-//                     child: CommonCard(
-//                       padding: EdgeInsets.zero,
-//                       type: CommonCardType.filled,
-//                       radius: 18,
-//                       child: ListTile(
-//                         minLeadingWidth: 0,
-//                         minTileHeight: 0,
-//                         minVerticalPadding: 16,
-//                         contentPadding: const EdgeInsets.symmetric(
-//                           horizontal: 14,
-//                         ),
-//                         title: Row(
-//                           children: [
-//                             SizedBox(
-//                               width: 24,
-//                               height: 24,
-//                               child: Radio(
-//                                 materialTapTargetSize:
-//                                     MaterialTapTargetSize.shrinkWrap,
-//                                 visualDensity: VisualDensity.compact,
-//                                 toggleable: true,
-//                                 value: script.id,
-//                                 groupValue: scriptId,
-//                                 onChanged: (_) {
-//                                   _handleChange(ref, script.id);
-//                                 },
-//                               ),
-//                             ),
-//                             SizedBox(width: 8),
-//                             Flexible(child: Text(script.label)),
-//                           ],
-//                         ),
-//                         onTap: () {
-//                           _handleChange(ref, script.id);
-//                         },
-//                       ),
-//                     ),
-//                   );
-//                 },
-//               ),
-//             );
-//           },
-//         ),
-//         SliverToBoxAdapter(
-//           child: Padding(
-//             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-//             child: CommonCard(
-//               padding: EdgeInsets.zero,
-//               radius: 18,
-//               child: ListTile(
-//                 minTileHeight: 0,
-//                 minVerticalPadding: 0,
-//                 titleTextStyle: context.textTheme.bodyMedium?.toJetBrainsMono,
-//                 contentPadding: const EdgeInsets.symmetric(
-//                   horizontal: 16,
-//                   vertical: 16,
-//                 ),
-//                 title: Row(
-//                   crossAxisAlignment: CrossAxisAlignment.center,
-//                   children: [
-//                     Flexible(
-//                       child: Text(
-//                         appLocalizations.goToConfigureScript,
-//                         style: context.textTheme.bodyLarge,
-//                       ),
-//                     ),
-//                     SizedBox(width: 4),
-//                     Icon(Icons.arrow_forward, size: 18),
-//                   ],
-//                 ),
-//               ),
-//               onPressed: () {
-//                 BaseNavigator.push(context, const ScriptsView());
-//               },
-//             ),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
+class _ScriptContent extends ConsumerWidget {
+  final int profileId;
+
+  const _ScriptContent(this.profileId);
+
+  void _handleChange(WidgetRef ref, int scriptId) {
+    ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
+      return state.copyWith(scriptId: scriptId);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final scriptId = ref.watch(
+      profileProvider(profileId).select((state) => state?.scriptId),
+    );
+    final scripts = ref.watch(scriptsProvider);
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverToBoxAdapter(child: SizedBox(height: 24)),
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              InfoHeader(info: Info(label: appLocalizations.overrideScript)),
+            ],
+          ),
+        ),
+        SliverToBoxAdapter(child: SizedBox(height: 8)),
+        Consumer(
+          builder: (_, ref, _) {
+            return SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverList.builder(
+                itemCount: scripts.length,
+                itemBuilder: (_, index) {
+                  final script = scripts[index];
+                  return Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    child: CommonCard(
+                      padding: EdgeInsets.zero,
+                      type: CommonCardType.filled,
+                      radius: 18,
+                      child: ListTile(
+                        minLeadingWidth: 0,
+                        minTileHeight: 0,
+                        minVerticalPadding: 16,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                        ),
+                        title: Row(
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: Radio(
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                                toggleable: true,
+                                value: script.id,
+                                groupValue: scriptId,
+                                onChanged: (_) {
+                                  _handleChange(ref, script.id);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Flexible(child: Text(script.label)),
+                          ],
+                        ),
+                        onTap: () {
+                          _handleChange(ref, script.id);
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: CommonCard(
+              padding: EdgeInsets.zero,
+              radius: 18,
+              child: ListTile(
+                minTileHeight: 0,
+                minVerticalPadding: 0,
+                titleTextStyle: context.textTheme.bodyMedium?.toJetBrainsMono,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                title: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        appLocalizations.goToConfigureScript,
+                        style: context.textTheme.bodyLarge,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward, size: 18),
+                  ],
+                ),
+              ),
+              onPressed: () {
+                BaseNavigator.push(context, const ScriptsView());
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class _EditGlobalAddedRules extends ConsumerWidget {
   final int profileId;
