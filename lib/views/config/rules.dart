@@ -17,18 +17,6 @@ class AddedRulesView extends ConsumerStatefulWidget {
 
 class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   final _key = utils.id;
-  late final List<Rule> _originRules;
-
-  @override
-  void initState() {
-    super.initState();
-    _originRules = List<Rule>.from(ref.read(globalRulesProvider));
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   Future<void> _handleAddOrUpdate([Rule? rule]) async {
     final res = await globalState.showCommonDialog<Rule>(
@@ -70,21 +58,9 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     ref.read(selectedItemsProvider(_key).notifier).value = {};
   }
 
-  Future<void> _handleReset() async {
-    final res = await globalState.showMessage(
-      message: TextSpan(text: appLocalizations.resetPageChangesTip),
-    );
-    if (res != true) {
-      return;
-    }
-    ref.read(globalRulesProvider.notifier).setAll(_originRules);
-  }
-
   @override
   Widget build(BuildContext context) {
     final rules = ref.watch(globalRulesProvider);
-    print("rules ===> ${rules.length}");
-    print("orign ===> ${_originRules.length}");
     final selectedRules = ref.watch(selectedItemsProvider(_key));
     return CommonPopScope(
       onPop: (_) {
@@ -103,14 +79,6 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
               child: IconButton.filledTonal(
                 onPressed: _handleDelete,
                 icon: Icon(Icons.delete),
-              ),
-            ),
-            SizedBox(width: 2),
-          ] else if (!ruleListEquality.equals(rules, _originRules)) ...[
-            CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                onPressed: _handleReset,
-                icon: const Icon(Icons.replay),
               ),
             ),
             SizedBox(width: 2),

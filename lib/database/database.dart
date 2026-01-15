@@ -31,20 +31,6 @@ class Database extends _$Database {
     });
   }
 
-  Future<int> put<T extends Table, D extends DataClass>(
-    TableInfo<T, D> table,
-    Insertable<D> item,
-  ) async {
-    return await table.insertOnConflictUpdate(item);
-  }
-
-  Future<int> remove<T extends Table, D extends DataClass>(
-    TableInfo<T, D> table,
-    Expression<bool> Function(T tbl) filter,
-  ) async {
-    return await (table.delete()..where(filter)).go();
-  }
-
   Future<void> restore(
     List<Profile> profiles,
     List<Script> scripts,
@@ -78,6 +64,14 @@ extension TableInfoExt<Tbl extends Table, Row> on TableInfo<Tbl, Row> {
   }) async {
     batch.insertAllOnConflictUpdate(this, items);
     batch.deleteWhere(this, deleteFilter);
+  }
+
+  Future<int> remove(Expression<bool> Function(Tbl tbl) filter) async {
+    return await (delete()..where(filter)).go();
+  }
+
+  Future<int> put(Insertable<Row> item) async {
+    return await insertOnConflictUpdate(item);
   }
 }
 

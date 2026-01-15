@@ -22,48 +22,10 @@ class OverwriteView extends ConsumerStatefulWidget {
 }
 
 class _OverwriteViewState extends ConsumerState<OverwriteView> {
-  // late final Overwrite overwrite;
-
-  @override
-  void initState() {
-    super.initState();
-    // _originOverwriteData =
-    //     ref.read(profileOverwriteProvider(widget.profileId)) ?? Overwrite();
-  }
-
-  Future<void> _handleReset() async {
-    final res = await globalState.showMessage(
-      message: TextSpan(text: appLocalizations.resetPageChangesTip),
-    );
-    if (res != true) {
-      return;
-    }
-    ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
-      state,
-    ) {
-      return state;
-      // return state.copyWith(overwrite: _originOverwriteData);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    // final needReset = ref.watch(
-    //   profileOverwriteProvider(
-    //     widget.profileId,
-    //   ).select((state) => state != _originOverwriteData),
-    // );
     return CommonScaffold(
       title: appLocalizations.override,
-      // actions: [
-      //   if (needReset)
-      //     CommonMinFilledButtonTheme(
-      //       child: FilledButton(
-      //         onPressed: _handleReset,
-      //         child: Text(appLocalizations.reset),
-      //       ),
-      //     ),
-      // ],
       body: CustomScrollView(
         slivers: [_Title(widget.profileId), _Content(widget.profileId)],
       ),
@@ -202,15 +164,7 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
     if (res == null) {
       return;
     }
-    // ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
-    //   state,
-    // ) {
-    //   final newAddedRules = state.overwrite.standardOverwrite.addedRules
-    //       .updateWith(res);
-    //   return state.copyWith.overwrite.standardOverwrite(
-    //     addedRules: newAddedRules,
-    //   );
-    // });
+    ref.read(profileAddedRulesProvider(widget.profileId).notifier).put(res);
   }
 
   void _handleSelected(int ruleId) {
@@ -222,17 +176,16 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
   }
 
   void _handleSelectAll() {
-    // final ids = ref
-    //     .read(
-    //       profileOverwriteProvider(
-    //         widget.profileId,
-    //       ).select((state) => state?.standardOverwrite.addedRules ?? []),
-    //     )
-    //     .map((item) => item.id)
-    //     .toSet();
-    // ref.read(selectedItemsProvider(_key).notifier).update((selected) {
-    //   return selected.containsAll(ids) ? {} : ids;
-    // });
+    final ids =
+        ref
+            .read(profileAddedRulesProvider(widget.profileId))
+            .value
+            ?.map((item) => item.id)
+            .toSet() ??
+        {};
+    ref.read(selectedItemsProvider(_key).notifier).update((selected) {
+      return selected.containsAll(ids) ? {} : ids;
+    });
   }
 
   Future<void> _handleDelete() async {
@@ -246,24 +199,16 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
       return;
     }
     final selectedRules = ref.read(selectedItemsProvider(_key));
-    // ref.read(profilesProvider.notifier).updateProfile(widget.profileId, (
-    //   state,
-    // ) {
-    //   final newAddedRules = state.overwrite.standardOverwrite.addedRules
-    //       .where((item) => !selectedRules.contains(item.id))
-    //       .toList();
-    //   return state.copyWith.overwrite.standardOverwrite(
-    //     addedRules: newAddedRules,
-    //   );
-    // });
+    ref
+        .read(profileAddedRulesProvider(widget.profileId).notifier)
+        .delAll(selectedRules.cast<int>());
     ref.read(selectedItemsProvider(_key).notifier).value = {};
   }
 
   @override
   Widget build(BuildContext context) {
     final addedRules =
-        ref.watch(profileAddedRulesStreamProvider(widget.profileId)).value ??
-        [];
+        ref.watch(profileAddedRulesProvider(widget.profileId)).value ?? [];
     final selectedRules = ref.watch(selectedItemsProvider(_key));
     return CommonPopScope(
       onPop: (_) {
@@ -337,24 +282,9 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
                     ),
                   );
                 },
-                onReorder: (int oldIndex, int newIndex) {
-                  if (oldIndex < newIndex) {
-                    newIndex -= 1;
-                  }
-                  // ref.read(profilesProvider.notifier).updateProfile(
-                  //   widget.profileId,
-                  //   (state) {
-                  //     final newAddRules = List<Rule>.from(
-                  //       state.overwrite.standardOverwrite.addedRules,
-                  //     );
-                  //     final item = newAddRules.removeAt(oldIndex);
-                  //     newAddRules.insert(newIndex, item);
-                  //     return state.copyWith.overwrite.standardOverwrite(
-                  //       addedRules: newAddRules,
-                  //     );
-                  //   },
-                  // );
-                },
+                onReorder: ref
+                    .read(profileAddedRulesProvider(widget.profileId).notifier)
+                    .order,
               );
             },
           ),
@@ -532,22 +462,19 @@ class _EditGlobalAddedRules extends ConsumerWidget {
 
   const _EditGlobalAddedRules({required this.profileId});
 
-  void _handleChange(WidgetRef ref, int ruleId) {
-    // ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-    //   final newDisabledRuleIds = Set<int>.from(
-    //     state.overwrite.standardOverwrite.disabledRuleIds,
-    //   )..addOrRemove(ruleId);
-    //   return state.copyWith.overwrite.standardOverwrite(
-    //     disabledRuleIds: newDisabledRuleIds.toList(),
-    //   );
-    // });
+  void _handleChange(WidgetRef ref, bool status, int ruleId) {
+    if (status) {
+      ref.read(profileDisabledRuleIdsProvider(profileId).notifier).put(ruleId);
+    } else {
+      ref.read(profileDisabledRuleIdsProvider(profileId).notifier).del(ruleId);
+    }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final disabledRuleIds =
-        ref.watch(profileDisabledRuleIdsStreamProvider(profileId)).value ?? [];
-    final rules = ref.watch(globalRulesProvider);
+        ref.watch(profileDisabledRuleIdsProvider(profileId)).value ?? [];
+    final rules = ref.watch(globalRulesProvider) ?? [];
     return BaseScaffold(
       title: appLocalizations.editGlobalRules,
       body: rules.isEmpty
@@ -562,8 +489,8 @@ class _EditGlobalAddedRules extends ConsumerWidget {
                 return RuleStatusItem(
                   status: !disabledRuleIds.contains(rule.id),
                   rule: rule,
-                  onChange: (_) {
-                    _handleChange(ref, rule.id);
+                  onChange: (status) {
+                    _handleChange(ref, !status, rule.id);
                   },
                 );
               },

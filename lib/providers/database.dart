@@ -27,19 +27,6 @@ Stream<List<Rule>> globalRulesStream(Ref ref) {
 }
 
 @riverpod
-Stream<List<int>> profileDisabledRuleIdsStream(Ref ref, int profileId) {
-  return database.rulesDao
-      .allProfileDisabledRules(profileId)
-      .map((item) => item.id)
-      .watch();
-}
-
-@riverpod
-Stream<List<Rule>> profileAddedRulesStream(Ref ref, int profileId) {
-  return database.rulesDao.allProfileAddedRules(profileId).watch();
-}
-
-@riverpod
 Stream<List<Rule>> addedRuleStream(Ref ref, int profileId) {
   return database.rulesDao.allAddedRules(profileId).watch();
 }
@@ -56,13 +43,13 @@ class Profiles extends _$Profiles {
     final nextProfiles = vm2.a;
     final newProfile = vm2.b;
     state = nextProfiles;
-    database.put(database.profiles, newProfile.toCompanion());
+    database.profiles.put(newProfile.toCompanion());
   }
 
   void del(int id) {
     final newProfiles = state.where((element) => element.id != id).toList();
     state = newProfiles;
-    database.remove(database.profiles, (t) => t.id.equals(id));
+    database.profiles.remove((t) => t.id.equals(id));
   }
 
   void updateProfile(int profileId, Profile Function(Profile profile) builder) {
@@ -74,7 +61,7 @@ class Profiles extends _$Profiles {
     final newProfile = builder(profilesTemp[index]);
     profilesTemp[index] = newProfile;
     state = profilesTemp;
-    database.put(database.profiles, newProfile.toCompanion());
+    database.profiles.put(newProfile.toCompanion());
   }
 
   void setAndReorder(List<Profile> profiles) {
@@ -121,7 +108,7 @@ class Scripts extends _$Scripts {
       list.add(script);
     }
     state = list;
-    database.put(database.scripts, script.toCompanion());
+    database.scripts.put(script.toCompanion());
   }
 
   void del(int id) {
@@ -132,7 +119,7 @@ class Scripts extends _$Scripts {
     final list = List<Script>.from(state);
     list.removeAt(index);
     state = list;
-    database.remove(database.scripts, (t) => t.id.equals(id));
+    database.scripts.remove((t) => t.id.equals(id));
   }
 
   bool isExits(String label) {
@@ -159,17 +146,12 @@ class GlobalRules extends _$GlobalRules {
 
   void delAll(Iterable<int> ruleIds) {
     state = List<Rule>.from(state.where((item) => !ruleIds.contains(item.id)));
-    database.rulesDao.delGlobalRules(ruleIds);
+    database.rulesDao.delRules(ruleIds);
   }
 
   void put(Rule rule) {
-    state = state.copyAndUpdate(rule);
+    state = state.copyAndPut(rule);
     database.rulesDao.putGlobalRule(rule);
-  }
-
-  void setAll(Iterable<Rule> rules) {
-    state = rules.toList();
-    database.rulesDao.setGlobalRules(rules);
   }
 
   void order(int oldIndex, int newIndex) {
@@ -185,5 +167,96 @@ class GlobalRules extends _$GlobalRules {
     final nextOrder = nextItems.safeGet(insertIndex + 1)?.order;
     final newOrder = indexing.generateKeyBetween(nextOrder, preOrder)!;
     database.rulesDao.orderGlobalRule(ruleId: item.id, order: newOrder);
+  }
+}
+
+@riverpod
+class ProfileAddedRules extends _$ProfileAddedRules {
+  @override
+  Stream<List<Rule>> build(int profileId) {
+    return database.rulesDao.allProfileAddedRules(profileId).watch();
+  }
+
+  @override
+  bool updateShouldNotify(
+    AsyncValue<List<Rule>> previous,
+    AsyncValue<List<Rule>> next,
+  ) {
+    return !ruleListEquality.equals(previous.value, next.value);
+  }
+
+  void _set(List<Rule> rules) {
+    state = AsyncData(rules);
+  }
+
+  void put(Rule rule) {
+    _set(state.value?.copyAndPut(rule) ?? []);
+    database.rulesDao.putProfileAddedRule(profileId, rule);
+  }
+
+  void delAll(Iterable<int> ruleIds) {
+    _set(
+      List<Rule>.from(
+        state.value?.where((item) => !ruleIds.contains(item.id)) ?? [],
+      ),
+    );
+    database.rulesDao.delRules(ruleIds);
+  }
+
+  void order(int oldIndex, int newIndex) {
+    int insertIndex = newIndex;
+    if (oldIndex < newIndex) {
+      insertIndex -= 1;
+    }
+    final nextItems = List<Rule>.from(state.value ?? []);
+    final item = nextItems.removeAt(oldIndex);
+    nextItems.insert(insertIndex, item);
+    _set(nextItems);
+    final preOrder = nextItems.safeGet(insertIndex - 1)?.order;
+    final nextOrder = nextItems.safeGet(insertIndex + 1)?.order;
+    final newOrder = indexing.generateKeyBetween(nextOrder, preOrder)!;
+    database.rulesDao.orderProfileAddedRule(
+      profileId,
+      ruleId: item.id,
+      order: newOrder,
+    );
+  }
+}
+
+@riverpod
+class ProfileDisabledRuleIds extends _$ProfileDisabledRuleIds {
+  @override
+  Stream<List<int>> build(int profileId) {
+    return database.rulesDao
+        .allProfileDisabledRules(profileId)
+        .map((item) => item.id)
+        .watch();
+  }
+
+  void _set(List<int> ids) {
+    state = AsyncData(ids);
+  }
+
+  void _put(int ruleId) {
+    var newList = List<int>.from(state.value ?? []);
+    final index = newList.indexWhere((item) => item == ruleId);
+    if (index != -1) {
+      newList[index] = ruleId;
+    } else {
+      newList.insert(0, ruleId);
+    }
+    _set(newList);
+  }
+
+  void del(int ruleId) {
+    List<int> newList = List.from((state.value ?? []));
+    newList = newList.where((item) => item != ruleId).toList();
+    _set(newList);
+    database.rulesDao.delDisabledLink(profileId, ruleId);
+  }
+
+  void put(int ruleId) {
+    _put(ruleId);
+    database.rulesDao.putDisabledLink(profileId, ruleId);
   }
 }

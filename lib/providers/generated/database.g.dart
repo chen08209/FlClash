@@ -163,155 +163,6 @@ final class GlobalRulesStreamProvider
 
 String _$globalRulesStreamHash() => r'5f8cf7d59390358a8b4725e6a6120e9129cb9393';
 
-@ProviderFor(profileDisabledRuleIdsStream)
-const profileDisabledRuleIdsStreamProvider =
-    ProfileDisabledRuleIdsStreamFamily._();
-
-final class ProfileDisabledRuleIdsStreamProvider
-    extends
-        $FunctionalProvider<AsyncValue<List<int>>, List<int>, Stream<List<int>>>
-    with $FutureModifier<List<int>>, $StreamProvider<List<int>> {
-  const ProfileDisabledRuleIdsStreamProvider._({
-    required ProfileDisabledRuleIdsStreamFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'profileDisabledRuleIdsStreamProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$profileDisabledRuleIdsStreamHash();
-
-  @override
-  String toString() {
-    return r'profileDisabledRuleIdsStreamProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $StreamProviderElement<List<int>> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<int>> create(Ref ref) {
-    final argument = this.argument as int;
-    return profileDisabledRuleIdsStream(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ProfileDisabledRuleIdsStreamProvider &&
-        other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$profileDisabledRuleIdsStreamHash() =>
-    r'6369c5b911976f13e41ef5e4990aeb18e30a0109';
-
-final class ProfileDisabledRuleIdsStreamFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<List<int>>, int> {
-  const ProfileDisabledRuleIdsStreamFamily._()
-    : super(
-        retry: null,
-        name: r'profileDisabledRuleIdsStreamProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  ProfileDisabledRuleIdsStreamProvider call(int profileId) =>
-      ProfileDisabledRuleIdsStreamProvider._(argument: profileId, from: this);
-
-  @override
-  String toString() => r'profileDisabledRuleIdsStreamProvider';
-}
-
-@ProviderFor(profileAddedRulesStream)
-const profileAddedRulesStreamProvider = ProfileAddedRulesStreamFamily._();
-
-final class ProfileAddedRulesStreamProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Rule>>,
-          List<Rule>,
-          Stream<List<Rule>>
-        >
-    with $FutureModifier<List<Rule>>, $StreamProvider<List<Rule>> {
-  const ProfileAddedRulesStreamProvider._({
-    required ProfileAddedRulesStreamFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'profileAddedRulesStreamProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$profileAddedRulesStreamHash();
-
-  @override
-  String toString() {
-    return r'profileAddedRulesStreamProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $StreamProviderElement<List<Rule>> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<Rule>> create(Ref ref) {
-    final argument = this.argument as int;
-    return profileAddedRulesStream(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ProfileAddedRulesStreamProvider &&
-        other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$profileAddedRulesStreamHash() =>
-    r'ca86a4761c0927d288f78da68c2e3d969b70e36d';
-
-final class ProfileAddedRulesStreamFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<List<Rule>>, int> {
-  const ProfileAddedRulesStreamFamily._()
-    : super(
-        retry: null,
-        name: r'profileAddedRulesStreamProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  ProfileAddedRulesStreamProvider call(int profileId) =>
-      ProfileAddedRulesStreamProvider._(argument: profileId, from: this);
-
-  @override
-  String toString() => r'profileAddedRulesStreamProvider';
-}
-
 @ProviderFor(addedRuleStream)
 const addedRuleStreamProvider = AddedRuleStreamFamily._();
 
@@ -418,7 +269,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'30d4d86bc2cdee4d9235e0b501179646a230bc3f';
+String _$profilesHash() => r'9c213e9ef58883c8d9d88ace7d42f5c85eec3bd6';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -470,7 +321,7 @@ final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
   }
 }
 
-String _$scriptsHash() => r'9b930cb778f2752f02a7e10b1b2ed724e6ab12d1';
+String _$scriptsHash() => r'22ddfa49b1ff3cbb71792b74e42faaed91bdd7bc';
 
 abstract class _$Scripts extends $Notifier<List<Script>> {
   List<Script> build();
@@ -523,7 +374,7 @@ final class GlobalRulesProvider
   }
 }
 
-String _$globalRulesHash() => r'dea3bc322b76519eeda5dd6a9da955b6de5315b6';
+String _$globalRulesHash() => r'36c277ca7cfceafd5e308b96d413d682a131c978';
 
 abstract class _$GlobalRules extends $Notifier<List<Rule>> {
   List<Rule> build();
@@ -537,6 +388,188 @@ abstract class _$GlobalRules extends $Notifier<List<Rule>> {
             as $ClassProviderElement<
               AnyNotifier<List<Rule>, List<Rule>>,
               List<Rule>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(ProfileAddedRules)
+const profileAddedRulesProvider = ProfileAddedRulesFamily._();
+
+final class ProfileAddedRulesProvider
+    extends $StreamNotifierProvider<ProfileAddedRules, List<Rule>> {
+  const ProfileAddedRulesProvider._({
+    required ProfileAddedRulesFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'profileAddedRulesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileAddedRulesHash();
+
+  @override
+  String toString() {
+    return r'profileAddedRulesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  ProfileAddedRules create() => ProfileAddedRules();
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProfileAddedRulesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$profileAddedRulesHash() => r'12b37659e19b0faa0f6800a1b35a731098fa53d0';
+
+final class ProfileAddedRulesFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          ProfileAddedRules,
+          AsyncValue<List<Rule>>,
+          List<Rule>,
+          Stream<List<Rule>>,
+          int
+        > {
+  const ProfileAddedRulesFamily._()
+    : super(
+        retry: null,
+        name: r'profileAddedRulesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ProfileAddedRulesProvider call(int profileId) =>
+      ProfileAddedRulesProvider._(argument: profileId, from: this);
+
+  @override
+  String toString() => r'profileAddedRulesProvider';
+}
+
+abstract class _$ProfileAddedRules extends $StreamNotifier<List<Rule>> {
+  late final _$args = ref.$arg as int;
+  int get profileId => _$args;
+
+  Stream<List<Rule>> build(int profileId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<AsyncValue<List<Rule>>, List<Rule>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Rule>>, List<Rule>>,
+              AsyncValue<List<Rule>>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(ProfileDisabledRuleIds)
+const profileDisabledRuleIdsProvider = ProfileDisabledRuleIdsFamily._();
+
+final class ProfileDisabledRuleIdsProvider
+    extends $StreamNotifierProvider<ProfileDisabledRuleIds, List<int>> {
+  const ProfileDisabledRuleIdsProvider._({
+    required ProfileDisabledRuleIdsFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'profileDisabledRuleIdsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileDisabledRuleIdsHash();
+
+  @override
+  String toString() {
+    return r'profileDisabledRuleIdsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  ProfileDisabledRuleIds create() => ProfileDisabledRuleIds();
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProfileDisabledRuleIdsProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$profileDisabledRuleIdsHash() =>
+    r'3a11dc5f24884fb7cf96c234e1028d156b68100f';
+
+final class ProfileDisabledRuleIdsFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          ProfileDisabledRuleIds,
+          AsyncValue<List<int>>,
+          List<int>,
+          Stream<List<int>>,
+          int
+        > {
+  const ProfileDisabledRuleIdsFamily._()
+    : super(
+        retry: null,
+        name: r'profileDisabledRuleIdsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ProfileDisabledRuleIdsProvider call(int profileId) =>
+      ProfileDisabledRuleIdsProvider._(argument: profileId, from: this);
+
+  @override
+  String toString() => r'profileDisabledRuleIdsProvider';
+}
+
+abstract class _$ProfileDisabledRuleIds extends $StreamNotifier<List<int>> {
+  late final _$args = ref.$arg as int;
+  int get profileId => _$args;
+
+  Stream<List<int>> build(int profileId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<AsyncValue<List<int>>, List<int>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<int>>, List<int>>,
+              AsyncValue<List<int>>,
               Object?,
               Object?
             >;

@@ -386,7 +386,7 @@ abstract class Rule with _$Rule {
 }
 
 extension RulesExt on List<Rule> {
-  List<Rule> copyAndUpdate(Rule rule) {
+  List<Rule> copyAndPut(Rule rule) {
     var newList = List<Rule>.from(this);
     final index = newList.indexWhere((item) => item.id == rule.id);
     if (index != -1) {

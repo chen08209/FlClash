@@ -84,16 +84,20 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     batch.deleteWhere(profileRuleLinks, (t) => t.id.isNotIn(linkKeys));
   }
 
-  Future<int> delGlobalRule(int ruleId) {
-    return _del(ruleId);
-  }
-
-  Future<void> delGlobalRules(Iterable<int> ruleIds) {
+  Future<void> delRules(Iterable<int> ruleIds) {
     return _delAll(ruleIds);
   }
 
   Future<void> putGlobalRule(Rule rule) {
     return _put(rule);
+  }
+
+  Future<void> putProfileAddedRule(int profileId, Rule rule) {
+    return _put(rule, profileId: profileId, scene: RuleScene.added);
+  }
+
+  Future<void> putProfileDisabledRule(int profileId, Rule rule) {
+    return _put(rule, profileId: profileId, scene: RuleScene.added);
   }
 
   Future<void> putGlobalRules(Iterable<Rule> rules) {
@@ -104,11 +108,44 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     return _set(rules);
   }
 
+  Future<int> putDisabledLink(int profileId, int ruleId) async {
+    return await profileRuleLinks.insertOnConflictUpdate(
+      ProfileRuleLink(
+        ruleId: ruleId,
+        profileId: profileId,
+        scene: RuleScene.disabled,
+      ).toCompanion(),
+    );
+  }
+
+  Future<bool> delDisabledLink(int profileId, int ruleId) async {
+    return await profileRuleLinks.deleteOne(
+      ProfileRuleLink(
+        profileId: profileId,
+        ruleId: ruleId,
+        scene: RuleScene.disabled,
+      ).toCompanion(),
+    );
+  }
+
   Future<int> orderGlobalRule({
     required int ruleId,
     required String order,
   }) async {
     return await _order(ruleId: ruleId, order: order);
+  }
+
+  Future<int> orderProfileAddedRule(
+    int profileId, {
+    required int ruleId,
+    required String order,
+  }) async {
+    return await _order(
+      ruleId: ruleId,
+      order: order,
+      profileId: profileId,
+      scene: RuleScene.added,
+    );
   }
 
   Selectable<Rule> _get({int? profileId, RuleScene? scene}) {
@@ -150,28 +187,11 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     return await stmt.write(ProfileRuleLinksCompanion(order: Value(order)));
   }
 
-  Future<int> _del(int ruleId, {int? profileId, RuleScene? scene}) {
-    if (scene != RuleScene.disabled) {
-      return rules.deleteWhere((t) => t.id.equals(ruleId));
-    } else {
-      return profileRuleLinks.deleteWhere(
-        (t) =>
-            (profileId == null
-                ? t.profileId.isNull()
-                : t.profileId.equals(profileId)) &
-            t.ruleId.equals(ruleId) &
-            t.scene.equalsValue(scene),
-      );
-    }
-  }
-
   Future<int> _put(Rule rule, {int? profileId, RuleScene? scene}) async {
     return transaction(() async {
-      if (scene != RuleScene.disabled) {
-        final row = await rules.insertOnConflictUpdate(rule.toCompanion());
-        if (row == 0) {
-          return 0;
-        }
+      final row = await rules.insertOnConflictUpdate(rule.toCompanion());
+      if (row == 0) {
+        return 0;
       }
       return await profileRuleLinks.insertOnConflictUpdate(
         ProfileRuleLink(
@@ -183,26 +203,8 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     });
   }
 
-  Future<void> _delAll(
-    Iterable<int> ruleIds, {
-    int? profileId,
-    RuleScene? scene,
-  }) async {
-    await batch((b) {
-      if (scene != RuleScene.disabled) {
-        b.deleteWhere(rules, (t) => t.id.isIn(ruleIds));
-      } else {
-        b.deleteWhere(
-          profileRuleLinks,
-          (t) =>
-              (profileId == null
-                  ? t.profileId.isNull()
-                  : t.profileId.equals(profileId)) &
-              t.ruleId.isIn(ruleIds) &
-              t.scene.equalsValue(scene),
-        );
-      }
-    });
+  Future<void> _delAll(Iterable<int> ruleIds) async {
+    await rules.deleteWhere((t) => t.id.isIn(ruleIds));
   }
 
   Future<void> _putAll(
@@ -211,12 +213,10 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     RuleScene? scene,
   }) async {
     await batch((b) {
-      if (scene != RuleScene.disabled) {
-        b.insertAllOnConflictUpdate(
-          this.rules,
-          rules.map((item) => item.toCompanion()),
-        );
-      }
+      b.insertAllOnConflictUpdate(
+        this.rules,
+        rules.map((item) => item.toCompanion()),
+      );
       b.insertAllOnConflictUpdate(
         profileRuleLinks,
         rules.map(
@@ -236,12 +236,10 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     RuleScene? scene,
   }) async {
     await batch((b) {
-      if (scene != RuleScene.disabled) {
-        b.insertAllOnConflictUpdate(
-          this.rules,
-          rules.map((item) => item.toCompanion()),
-        );
-      }
+      b.insertAllOnConflictUpdate(
+        this.rules,
+        rules.map((item) => item.toCompanion()),
+      );
 
       b.deleteWhere(
         profileRuleLinks,
@@ -263,13 +261,11 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
         ),
       );
 
-      if (scene != RuleScene.disabled) {
-        b.deleteWhere(this.rules, (r) {
-          final linkedIds = selectOnly(profileRuleLinks);
-          linkedIds.addColumns([profileRuleLinks.ruleId]);
-          return r.id.isNotInQuery(linkedIds);
-        });
-      }
+      b.deleteWhere(this.rules, (r) {
+        final linkedIds = selectOnly(profileRuleLinks);
+        linkedIds.addColumns([profileRuleLinks.ruleId]);
+        return r.id.isNotInQuery(linkedIds);
+      });
     });
   }
 }
