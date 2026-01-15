@@ -676,9 +676,7 @@ OverwriteType overwriteType(Ref ref, int? profileId) {
 
 @riverpod
 Future<SetupState> setupState(Ref ref, int? profileId) async {
-  final profile = ref.watch(
-    profilesProvider.select((state) => state.getProfile(profileId)),
-  );
+  final profile = ref.watch(profileProvider(profileId));
   final scriptId = profile?.scriptId;
   final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
   final overwriteType = profile?.overwriteType ?? OverwriteType.standard;

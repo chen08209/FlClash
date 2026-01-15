@@ -30,9 +30,14 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void initState() {
     super.initState();
     coreEventManager.addListener(this);
-    ref.listenManual(currentProfileIdProvider, (prev, next) {
-      appController.reSetup();
-    });
+    ref.listenManual(
+      currentSetupStateProvider.select((state) => state?.profileId),
+      (prev, next) {
+        if (prev != next) {
+          appController.reSetup();
+        }
+      },
+    );
     ref.listenManual(updateParamsProvider, (prev, next) {
       if (prev != next) {
         appController.updateConfigDebounce();

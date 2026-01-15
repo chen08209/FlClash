@@ -45,22 +45,26 @@ extension InitControllerExt on AppController {
         logLevel: LogLevel.warning,
       );
     };
-    updateTray();
-    autoUpdateProfiles();
-    autoCheckUpdate();
-    autoLaunch?.updateStatus(_ref.read(appSettingProvider).autoLaunch);
-    if (!_ref.read(appSettingProvider).silentLaunch) {
-      window?.show();
-    } else {
-      window?.hide();
+    try {
+      updateTray();
+      autoUpdateProfiles();
+      autoCheckUpdate();
+      autoLaunch?.updateStatus(_ref.read(appSettingProvider).autoLaunch);
+      if (!_ref.read(appSettingProvider).silentLaunch) {
+        window?.show();
+      } else {
+        window?.hide();
+      }
+      await _handleFailedPreference();
+      await _handlerDisclaimer();
+      await _showCrashlyticsTip();
+      await _connectCore();
+      await _initCore();
+      await _initStatus();
+      _ref.read(initProvider.notifier).value = true;
+    } catch (e) {
+      commonPrint.log('init error: $e');
     }
-    await _handleFailedPreference();
-    await _handlerDisclaimer();
-    await _showCrashlyticsTip();
-    await _connectCore();
-    await _initCore();
-    await _initStatus();
-    _ref.read(initProvider.notifier).value = true;
   }
 
   Future<void> _handleFailedPreference() async {
@@ -640,34 +644,14 @@ extension SetupControllerExt on AppController {
     addCheckIpNumDebounce();
   }
 
-  Future<String> setupProfile({
-    required SetupState setupState,
-    required ClashConfig patchConfig,
-    VoidCallback? preloadInvoke,
-  }) async {
-    preferences.saveShareState(this.sharedState);
-    final config = await getProfile(
-      setupState: setupState,
-      patchConfig: patchConfig,
-    );
-    final configFilePath = await appPath.configFilePath;
-    final res = await encodeYamlTask(config);
-    final file = File(configFilePath);
-    if (!await file.exists()) {
-      await file.create(recursive: true);
-    }
-    await file.writeAsString(res);
-    return await coreController.setupConfig(
-      setupState: setupState,
-      preloadInvoke: preloadInvoke,
-      params: setupParams,
-    );
-  }
-
   Future<Map<String, dynamic>> getProfile({
     required SetupState setupState,
     required ClashConfig patchConfig,
   }) async {
+    final profileId = setupState.profileId;
+    if (profileId == null) {
+      return {};
+    }
     final defaultUA = globalState.packageInfo.ua;
     final networkVM2 = _ref.read(
       networkSettingProvider.select(
@@ -677,10 +661,6 @@ extension SetupControllerExt on AppController {
     final overrideDns = _ref.read(overrideDnsProvider);
     final appendSystemDns = networkVM2.a;
     final routeMode = networkVM2.b;
-    final profileId = setupState.profileId;
-    if (profileId == null) {
-      return {};
-    }
     final configMap = await coreController.getConfig(profileId);
     String? scriptContent;
     final List<Rule> addedRules = [];
@@ -728,11 +708,35 @@ extension SetupControllerExt on AppController {
   }
 
   Future<void> _setupClashConfig() async {
-    final profile = await _ref
-        .read(currentProfileProvider)
-        ?.checkAndUpdateAndCopy();
-    if (profile != null) {
-      _ref.read(profilesProvider.notifier).put(profile);
+    Future<String> setupProfile({
+      required SetupState setupState,
+      required ClashConfig patchConfig,
+    }) async {
+      if (system.isAndroid) {
+        preferences.saveShareState(this.sharedState);
+      }
+      final config = await getProfile(
+        setupState: setupState,
+        patchConfig: patchConfig,
+      );
+      final configFilePath = await appPath.configFilePath;
+      final res = await encodeYamlTask(config);
+      final file = File(configFilePath);
+      if (!await file.exists()) {
+        await file.create(recursive: true);
+      }
+      await file.writeAsString(res);
+      return await coreController.setupConfig(
+        setupState: setupState,
+        params: setupParams,
+      );
+    }
+
+    var profile = _ref.read(currentProfileProvider);
+    final nextProfile = await profile?.checkAndUpdateAndCopy();
+    if (nextProfile != null) {
+      profile = nextProfile;
+      _ref.read(profilesProvider.notifier).put(nextProfile);
     }
     final patchConfig = _ref.read(patchClashConfigProvider);
     final res = await _requestAdmin(patchConfig.tun.enable);
@@ -741,10 +745,7 @@ extension SetupControllerExt on AppController {
     }
     final realTunEnable = _ref.read(realTunEnableProvider);
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
-    final currentProfile = _ref.read(currentProfileProvider);
-    final setupState = await _ref.read(
-      setupStateProvider(currentProfile?.id).future,
-    );
+    final setupState = await _ref.read(setupStateProvider(profile?.id).future);
     globalState.lastSetupState = setupState;
     if (system.isAndroid) {
       globalState.lastVpnState = _ref.read(vpnStateProvider);

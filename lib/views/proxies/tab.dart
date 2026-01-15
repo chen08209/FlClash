@@ -232,7 +232,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                     context.colorScheme.surface.opacity10,
                     context.colorScheme.surface,
                   ],
-                  stops: const [0.0, 0.5],
+                  stops: const [0.0, 0.1],
                 ),
               ),
               child: _buildMoreButton(),
