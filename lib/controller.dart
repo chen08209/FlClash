@@ -507,7 +507,7 @@ extension ProxiesControllerExt on AppController {
     } else {
       coreController.resetConnections();
     }
-    addCheckIpNumDebounce();
+    addCheckIp();
   }
 
   void setProvider(ExternalProvider? provider) {
@@ -567,7 +567,7 @@ extension SetupControllerExt on AppController {
       _ref.read(trafficsProvider.notifier).clear();
       _ref.read(totalTrafficProvider.notifier).value = Traffic();
       _ref.read(runTimeProvider.notifier).value = null;
-      addCheckIpNumDebounce();
+      addCheckIp();
     }
   }
 
@@ -597,10 +597,8 @@ extension SetupControllerExt on AppController {
     });
   }
 
-  void addCheckIpNumDebounce() {
-    debouncer.call(FunctionTag.addCheckIpNum, () {
-      _ref.read(checkIpNumProvider.notifier).add();
-    }, duration: commonDuration);
+  void addCheckIp() {
+    _ref.read(checkIpNumProvider.notifier).add();
   }
 
   void applyProfileDebounce({bool silence = false, bool force = false}) {
@@ -616,7 +614,7 @@ extension SetupControllerExt on AppController {
     if (mode == Mode.global) {
       updateCurrentGroupName(GroupName.GLOBAL.name);
     }
-    addCheckIpNumDebounce();
+    addCheckIp();
   }
 
   void autoApplyProfile() {
@@ -633,7 +631,7 @@ extension SetupControllerExt on AppController {
       needLoading: !silence,
       silence: true,
     );
-    addCheckIpNumDebounce();
+    addCheckIp();
   }
 
   Future<Map<String, dynamic>> getProfile({

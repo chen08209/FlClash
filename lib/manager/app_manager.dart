@@ -28,7 +28,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     WidgetsBinding.instance.addObserver(this);
     ref.listenManual(checkIpProvider, (prev, next) {
       if (prev != next && next.a && next.c) {
-        ref.read(networkDetectionProvider.notifier).checkIp();
+        ref.read(networkDetectionProvider.notifier).startCheck();
       }
     });
     ref.listenManual(configProvider, (prev, next) {
@@ -69,9 +69,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       render?.resume();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (system.isAndroid) {
-          appController.addCheckIpNumDebounce();
-        }
-        if (system.isAndroid) {
+          appController.addCheckIp();
           appController.tryStartCore();
         }
       });

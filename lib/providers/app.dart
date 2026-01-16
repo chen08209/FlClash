@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -321,13 +322,20 @@ class IsUpdating extends _$IsUpdating with AutoDisposeNotifierMixin {
 class NetworkDetection extends _$NetworkDetection
     with AutoDisposeNotifierMixin {
   bool? _preIsStart;
+  CancelToken? _cancelToken;
 
   @override
   NetworkDetectionState build() {
     return NetworkDetectionState(isLoading: true, ipInfo: null);
   }
 
-  Future<void> checkIp() async {
+  void startCheck() {
+    debouncer.call(FunctionTag.checkIp, () {
+      _checkIp();
+    }, duration: commonDuration);
+  }
+
+  Future<void> _checkIp() async {
     final isInit = ref.read(initProvider);
     if (!isInit) {
       return;
@@ -336,10 +344,12 @@ class NetworkDetection extends _$NetworkDetection
     if (!isStart && _preIsStart == false && state.ipInfo != null) {
       return;
     }
+    // _cancelToken?.cancel();
+    // _cancelToken = CancelToken();
     commonPrint.log('checkIp start');
     state = state.copyWith(isLoading: true, ipInfo: null);
     _preIsStart = isStart;
-    final res = await request.checkIp();
+    final res = await request.checkIp(cancelToken: _cancelToken);
     commonPrint.log('checkIp res: $res');
     if (res.isError) {
       state = state.copyWith(isLoading: true, ipInfo: null);

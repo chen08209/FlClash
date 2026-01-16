@@ -21,11 +21,12 @@ class Profiles extends _$Profiles {
 
   void _initListen() {
     final subscription = database.profilesDao.all().watch().listen((value) {
-      print('saddada===>');
+      print('set profiles ===>');
       state = value;
     });
 
     ref.onDispose(() {
+      print('dasadda===>');
       subscription.cancel();
     });
   }
