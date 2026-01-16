@@ -675,15 +675,24 @@ OverwriteType overwriteType(Ref ref, int? profileId) {
 }
 
 @riverpod
+Future<Script?> script(Ref ref, int? scriptId) async {
+  final script = await ref.watch(
+    (scriptsProvider.future.select((state) async {
+      final scripts = await state;
+      return scripts.get(scriptId);
+    })),
+  );
+  return script;
+}
+
+@riverpod
 Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profile = ref.watch(profileProvider(profileId));
   final scriptId = profile?.scriptId;
   final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
   final overwriteType = profile?.overwriteType ?? OverwriteType.standard;
   final dns = ref.watch(patchClashConfigProvider.select((state) => state.dns));
-  final script = ref.watch(
-    (scriptsProvider.select((state) => state.get(scriptId))),
-  );
+  final script = await ref.watch(scriptProvider(scriptId).future);
   final overrideDns = ref.watch(overrideDnsProvider);
   final List<Rule> addedRules = profileId != null
       ? await ref.watch(addedRuleStreamProvider(profileId).future)

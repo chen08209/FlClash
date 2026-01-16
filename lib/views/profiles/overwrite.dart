@@ -350,7 +350,7 @@ class _ScriptContent extends ConsumerWidget {
     final scriptId = ref.watch(
       profileProvider(profileId).select((state) => state?.scriptId),
     );
-    final scripts = ref.watch(scriptsProvider);
+    final scripts = ref.watch(scriptsProvider).value ?? [];
     return SliverMainAxisGroup(
       slivers: [
         SliverToBoxAdapter(child: SizedBox(height: 24)),

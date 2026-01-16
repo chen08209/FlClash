@@ -9,6 +9,45 @@ part of '../database.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(profilesStream)
+const profilesStreamProvider = ProfilesStreamProvider._();
+
+final class ProfilesStreamProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Profile>>,
+          List<Profile>,
+          Stream<List<Profile>>
+        >
+    with $FutureModifier<List<Profile>>, $StreamProvider<List<Profile>> {
+  const ProfilesStreamProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'profilesStreamProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$profilesStreamHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Profile>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Profile>> create(Ref ref) {
+    return profilesStream(ref);
+  }
+}
+
+String _$profilesStreamHash() => r'483907aa6c324209b5202369300a4a53230f83db';
+
 @ProviderFor(addedRuleStream)
 const addedRuleStreamProvider = AddedRuleStreamFamily._();
 
@@ -94,7 +133,7 @@ final class ProfilesProvider
         argument: null,
         retry: null,
         name: r'profilesProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -115,7 +154,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'a63823a4bf34d18c1e6b7802c4c601e5ec8c9761';
+String _$profilesHash() => r'dd9f4353f5928b0b6986e8a90466f5fc9765c06e';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -139,7 +178,8 @@ abstract class _$Profiles extends $Notifier<List<Profile>> {
 @ProviderFor(Scripts)
 const scriptsProvider = ScriptsProvider._();
 
-final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
+final class ScriptsProvider
+    extends $StreamNotifierProvider<Scripts, List<Script>> {
   const ScriptsProvider._()
     : super(
         from: null,
@@ -157,30 +197,22 @@ final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
   @$internal
   @override
   Scripts create() => Scripts();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Script> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<Script>>(value),
-    );
-  }
 }
 
-String _$scriptsHash() => r'ccfb7a2f5d12993393266d2d9c6c83c21e3e006b';
+String _$scriptsHash() => r'a784e9986eae864229a1035cc28ce4f3ec4644a0';
 
-abstract class _$Scripts extends $Notifier<List<Script>> {
-  List<Script> build();
+abstract class _$Scripts extends $StreamNotifier<List<Script>> {
+  Stream<List<Script>> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<List<Script>, List<Script>>;
+    final ref = this.ref as $Ref<AsyncValue<List<Script>>, List<Script>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<List<Script>, List<Script>>,
-              List<Script>,
+              AnyNotifier<AsyncValue<List<Script>>, List<Script>>,
+              AsyncValue<List<Script>>,
               Object?,
               Object?
             >;

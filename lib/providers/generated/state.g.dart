@@ -2420,6 +2420,75 @@ final class OverwriteTypeFamily extends $Family
   String toString() => r'overwriteTypeProvider';
 }
 
+@ProviderFor(script)
+const scriptProvider = ScriptFamily._();
+
+final class ScriptProvider
+    extends $FunctionalProvider<AsyncValue<Script?>, Script?, FutureOr<Script?>>
+    with $FutureModifier<Script?>, $FutureProvider<Script?> {
+  const ScriptProvider._({
+    required ScriptFamily super.from,
+    required int? super.argument,
+  }) : super(
+         retry: null,
+         name: r'scriptProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$scriptHash();
+
+  @override
+  String toString() {
+    return r'scriptProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Script?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Script?> create(Ref ref) {
+    final argument = this.argument as int?;
+    return script(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ScriptProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$scriptHash() => r'b12a6dbe34e08cb1232afafa8b0b0f5363d28bc0';
+
+final class ScriptFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Script?>, int?> {
+  const ScriptFamily._()
+    : super(
+        retry: null,
+        name: r'scriptProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ScriptProvider call(int? scriptId) =>
+      ScriptProvider._(argument: scriptId, from: this);
+
+  @override
+  String toString() => r'scriptProvider';
+}
+
 @ProviderFor(setupState)
 const setupStateProvider = SetupStateFamily._();
 
@@ -2474,7 +2543,7 @@ final class SetupStateProvider
   }
 }
 
-String _$setupStateHash() => r'b2bc71877699b6d213a161801d6c88aa69217fff';
+String _$setupStateHash() => r'8e0c849fa1a51ee15f8b40be94e3094182325b58';
 
 final class SetupStateFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<SetupState>, int?> {

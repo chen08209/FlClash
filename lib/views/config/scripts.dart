@@ -6,6 +6,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
@@ -159,7 +160,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
   }
 
   void _handleToEditor([int? id]) async {
-    final script = ref.read(scriptsProvider.select((state) => state.get(id)));
+    final script = await ref.read(scriptProvider(id).future);
     final title = script?.label ?? '';
     final raw = (await script?.content) ?? scriptTemplate;
     if (!mounted) {
@@ -185,7 +186,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
 
   @override
   Widget build(BuildContext context) {
-    final scripts = ref.watch(scriptsProvider);
+    final scripts = ref.watch(scriptsProvider).value ?? [];
     final selectedScriptId = ref.watch(selectedItemProvider(_key));
     return CommonPopScope(
       onPop: (_) {

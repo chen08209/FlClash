@@ -147,7 +147,11 @@ extension InitControllerExt on AppController {
     final status = globalState.isStart == true
         ? true
         : _ref.read(appSettingProvider).autoRun;
-    await updateStatus(status);
+    if (status == true) {
+      await updateStatus(true, isInit: true);
+    } else {
+      applyProfile(force: true);
+    }
   }
 
   Future<void> autoCheckUpdate() async {
@@ -556,11 +560,15 @@ extension SetupControllerExt on AppController {
     _ref.read(requestsProvider.notifier).value = FixedList(500);
   }
 
-  Future<void> updateStatus(bool isStart) async {
+  Future<void> updateStatus(bool isStart, {bool isInit = false}) async {
     if (isStart) {
       await tryStartCore();
       await globalState.handleStart([updateRunTime, updateTraffic]);
-      applyProfileDebounce(force: true);
+      if (!isInit) {
+        applyProfileDebounce(force: true);
+      } else {
+        await applyProfile(force: true);
+      }
     } else {
       await globalState.handleStop();
       coreController.resetTraffic();
@@ -751,11 +759,7 @@ extension CoreControllerExt on AppController {
     final isInit = await coreController.isInit;
     final version = _ref.read(versionProvider);
     if (!isInit) {
-      final res = await coreController.init(version);
-      commonPrint.log('init core status: $res');
-      await applyProfile(force: true);
-    } else {
-      await updateGroups();
+      await coreController.init(version);
     }
   }
 
@@ -799,13 +803,17 @@ extension CoreControllerExt on AppController {
   }
 
   Future<void> restartCore() async {
+    if (globalState.isUserDisconnected) {
+      await coreController.shutdown();
+    }
     globalState.isUserDisconnected = true;
-    await coreController.shutdown();
     await _connectCore();
     await _initCore();
     _ref.read(initProvider.notifier).value = true;
     if (_ref.read(isStartProvider)) {
       await globalState.handleStart();
+    } else {
+      applyProfile(force: true);
     }
   }
 
@@ -813,13 +821,7 @@ extension CoreControllerExt on AppController {
     if (coreController.isCompleted) {
       return;
     }
-    globalState.isUserDisconnected = true;
-    await _connectCore();
-    await _initCore();
-    _ref.read(initProvider.notifier).value = true;
-    if (_ref.read(isStartProvider)) {
-      await globalState.handleStart();
-    }
+    restartCore();
   }
 
   void handleCoreDisconnected() {
@@ -960,8 +962,10 @@ extension BackupControllerExt on AppController {
     final profileIds = _ref.read(
       profilesProvider.select((state) => state.map((item) => item.id)),
     );
-    final scriptIds = _ref.read(
-      scriptsProvider.select((state) => state.map((item) => item.id)),
+    final scriptIds = await _ref.read(
+      scriptsProvider.future.select(
+        (state) async => (await state).map((item) => item.id),
+      ),
     );
     final pathsToDelete = await shakingProfileTask(VM2(profileIds, scriptIds));
     if (pathsToDelete.isNotEmpty) {
@@ -984,8 +988,10 @@ extension BackupControllerExt on AppController {
     final profileFileNames = _ref.read(
       profilesProvider.select((state) => state.map((item) => item.fileName)),
     );
-    final scriptFileNames = _ref.read(
-      scriptsProvider.select((state) => state.map((item) => item.fileName)),
+    final scriptFileNames = await _ref.read(
+      scriptsProvider.future.select(
+        (state) async => (await state).map((item) => item.fileName),
+      ),
     );
     final configMap = _ref.read(configProvider).toJson();
     configMap['version'] = await preferences.getVersion();

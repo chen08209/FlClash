@@ -7,28 +7,20 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'generated/database.g.dart';
 
 @riverpod
+Stream<List<Profile>> profilesStream(Ref ref) {
+  return database.profilesDao.all().watch();
+}
+
+@riverpod
 Stream<List<Rule>> addedRuleStream(Ref ref, int profileId) {
   return database.rulesDao.allAddedRules(profileId).watch();
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class Profiles extends _$Profiles {
   @override
   List<Profile> build() {
-    _initListen();
-    return [];
-  }
-
-  void _initListen() {
-    final subscription = database.profilesDao.all().watch().listen((value) {
-      print('set profiles ===>');
-      state = value;
-    });
-
-    ref.onDispose(() {
-      print('dasadda===>');
-      subscription.cancel();
-    });
+    return ref.watch(profilesStreamProvider).value ?? [];
   }
 
   void put(Profile profile) {
@@ -86,53 +78,48 @@ class Profiles extends _$Profiles {
 }
 
 @riverpod
-class Scripts extends _$Scripts {
+class Scripts extends _$Scripts with AsyncNotifierMixin {
   @override
-  List<Script> build() {
-    _initListen();
-    return [];
+  Stream<List<Script>> build() {
+    return database.scriptsDao.all().watch();
   }
 
-  void _initListen() {
-    final subscription = database.scriptsDao.all().watch().listen((value) {
-      state = value;
-    });
-
-    ref.onDispose(() {
-      subscription.cancel();
-    });
-  }
+  @override
+  List<Script> get value => state.value ?? [];
 
   void put(Script script) {
-    final list = List<Script>.from(state);
-    final index = state.indexWhere((item) => item.id == script.id);
+    final list = List<Script>.from(value);
+    final index = value.indexWhere((item) => item.id == script.id);
     if (index != -1) {
       list[index] = script;
     } else {
       list.add(script);
     }
-    state = list;
+    value = list;
     database.scripts.put(script.toCompanion());
   }
 
   void del(int id) {
-    final index = state.indexWhere((item) => item.id == id);
+    final index = value.indexWhere((item) => item.id == id);
     if (index == -1) {
       return;
     }
-    final list = List<Script>.from(state);
+    final list = List<Script>.from(value);
     list.removeAt(index);
-    state = list;
+    value = list;
     database.scripts.remove((t) => t.id.equals(id));
   }
 
   bool isExits(String label) {
-    return state.indexWhere((item) => item.label == label) != -1;
+    return value.indexWhere((item) => item.label == label) != -1;
   }
 
   @override
-  bool updateShouldNotify(List<Script> previous, List<Script> next) {
-    return !scriptListEquality.equals(previous, next);
+  bool updateShouldNotify(
+    AsyncValue<List<Script>> previous,
+    AsyncValue<List<Script>> next,
+  ) {
+    return !scriptListEquality.equals(previous.value, next.value);
   }
 }
 

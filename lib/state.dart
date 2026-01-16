@@ -6,7 +6,6 @@ import 'package:animations/animations.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/core/core.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -55,23 +54,11 @@ class GlobalState {
     return _instance!;
   }
 
-  Future<List<Override>> init(int version) async {
+  Future<ProviderContainer> init(int version) async {
     coreSHA256 = const String.fromEnvironment('CORE_SHA256');
     isPre = const String.fromEnvironment('APP_ENV') != 'stable';
-    final overrides = <Override>[];
-    final appState = AppState(
-      brightness: WidgetsBinding.instance.platformDispatcher.platformBrightness,
-      version: version,
-      viewSize: Size.zero,
-      requests: FixedList(maxLength),
-      logs: FixedList(maxLength),
-      traffics: FixedList(30),
-      totalTraffic: Traffic(),
-      systemUiOverlayStyle: const SystemUiOverlayStyle(),
-    );
-    overrides.addAll(buildAppStateOverrides(appState));
     await _initDynamicColor();
-    return [...overrides, ...await _initData(version)];
+    return await _initData(version);
   }
 
   Future<void> _initDynamicColor() async {
@@ -83,38 +70,49 @@ class GlobalState {
     } catch (_) {}
   }
 
-  Future<List<Override>> _initData(int version) async {
-    packageInfo = await PackageInfo.fromPlatform();
-    final configMap = await preferences.getConfigMap();
-    final migrationData = await migration.migrationIfNeeded(configMap);
-    final config = migrationData.configMap != null
-        ? Config.fromJson(migrationData.configMap!)
-        : Config(themeProps: defaultThemeProps);
-    await database.restore(
-      migrationData.profiles,
-      migrationData.scripts,
-      migrationData.rules,
-      migrationData.links,
-    );
-    final results = await Future.wait([
-      database.profilesDao.all().get(),
-      database.scriptsDao.all().get(),
-    ]);
-    final profiles = results[0].cast<Profile>();
-    final scripts = results[0].cast<Script>();
-    final profilesOverride = profilesProvider.overrideWithBuild(
-      (_, _) => profiles,
-    );
-    final scriptsOverride = scriptsProvider.overrideWithBuild(
-      (_, _) => scripts,
-    );
-    await AppLocalizations.load(
-      utils.getLocaleForString(config.appSettingProps.locale) ??
-          WidgetsBinding.instance.platformDispatcher.locale,
-    );
-    await window?.init(version, config.windowProps);
-    final configOverrides = buildConfigOverrides(config);
-    return [profilesOverride, scriptsOverride, ...configOverrides];
+  Future<ProviderContainer> _initData(int version) async {
+    try {
+      final appState = AppState(
+        brightness:
+            WidgetsBinding.instance.platformDispatcher.platformBrightness,
+        version: version,
+        viewSize: Size.zero,
+        requests: FixedList(maxLength),
+        logs: FixedList(maxLength),
+        traffics: FixedList(30),
+        totalTraffic: Traffic(),
+        systemUiOverlayStyle: const SystemUiOverlayStyle(),
+      );
+      final appStateOverrides = buildAppStateOverrides(appState);
+      packageInfo = await PackageInfo.fromPlatform();
+      final configMap = await preferences.getConfigMap();
+      final migrationData = await migration.migrationIfNeeded(configMap);
+      final config = migrationData.configMap != null
+          ? Config.fromJson(migrationData.configMap!)
+          : Config(themeProps: defaultThemeProps);
+      final configOverrides = buildConfigOverrides(config);
+      await database.restore(
+        migrationData.profiles,
+        migrationData.scripts,
+        migrationData.rules,
+        migrationData.links,
+      );
+      final container = ProviderContainer(
+        overrides: [...appStateOverrides, ...configOverrides],
+      );
+      final profiles = await database.profilesDao.all().get();
+      container.read(profilesProvider.notifier).setAndReorder(profiles);
+      await AppLocalizations.load(
+        utils.getLocaleForString(config.appSettingProps.locale) ??
+            WidgetsBinding.instance.platformDispatcher.locale,
+      );
+
+      await window?.init(version, config.windowProps);
+      return container;
+    } catch (e) {
+      commonPrint.log('init failed $e');
+      rethrow;
+    }
   }
 
   Future<void> startUpdateTasks([UpdateTasks? tasks]) async {

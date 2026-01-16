@@ -11,7 +11,9 @@ import 'common/common.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final version = await system.version;
-  final overrides = await globalState.init(version);
+  final container = await globalState.init(version);
   HttpOverrides.global = FlClashHttpOverrides();
-  runApp(ProviderScope(overrides: overrides, child: const Application()));
+  runApp(
+    UncontrolledProviderScope(container: container, child: const Application()),
+  );
 }
