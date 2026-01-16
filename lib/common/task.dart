@@ -376,13 +376,10 @@ Future<MigrationData> _oldToNowTask(
     final newId = idMap.updateCacheValue(rawScript['id'], () => snowflake.id);
     final path = getScriptPath(targetPath, newId.toString());
     final file = File(path);
-    if (!await file.exists()) {
-      await file.create(recursive: true);
-      await file.writeAsString(content);
-      scripts.add(
-        Script(id: newId, label: label, lastUpdateTime: DateTime.now()),
-      );
-    }
+    await file.safeWriteAsString(content);
+    scripts.add(
+      Script(id: newId, label: label, lastUpdateTime: DateTime.now()),
+    );
   }
   List rawRules = configMap['rules'] as List<dynamic>? ?? [];
   final List<Rule> rules = [];

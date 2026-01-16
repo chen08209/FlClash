@@ -41,7 +41,7 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
   @override
   void dispose() {
     super.dispose();
-    appController.checkNeedSetup();
+    appController.autoApplyProfile();
   }
 }
 

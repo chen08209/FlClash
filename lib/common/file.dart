@@ -8,6 +8,20 @@ extension FileExt on File {
     }
     await copy(newPath);
   }
+
+  Future<File> safeWriteAsString(String str) async {
+    if (!await exists()) {
+      await create(recursive: true);
+    }
+    return await writeAsString(str);
+  }
+
+  Future<File> safeWriteAsBytes(List<int> bytes) async {
+    if (!await exists()) {
+      await create(recursive: true);
+    }
+    return await writeAsBytes(bytes);
+  }
 }
 
 extension FileSystemEntityExt on FileSystemEntity {

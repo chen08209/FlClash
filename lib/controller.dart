@@ -295,7 +295,7 @@ extension ProfilesControllerExt on AppController {
     }
   }
 
-  Future<void> addProfile(Profile profile) async {
+  void putProfile(Profile profile) {
     _ref.read(profilesProvider.notifier).put(profile);
     if (_ref.read(currentProfileIdProvider) != null) return;
     _ref.read(currentProfileIdProvider.notifier).value = profile.id;
@@ -342,7 +342,7 @@ extension ProfilesControllerExt on AppController {
       title: '${appLocalizations.add}${appLocalizations.profile}',
     );
     if (profile != null) {
-      await addProfile(profile);
+      putProfile(profile);
     }
   }
 
@@ -371,7 +371,7 @@ extension ProfilesControllerExt on AppController {
       title: '${appLocalizations.add}${appLocalizations.profile}',
     );
     if (profile != null) {
-      await addProfile(profile);
+      putProfile(profile);
     }
   }
 
@@ -407,8 +407,8 @@ extension LogsControllerExt on AppController {
   Future<bool> exportLogs() async {
     final logString = await encodeLogsTask(_ref.read(logsProvider).list);
     final tempFilePath = await appPath.tempFilePath;
-    final file = await File(tempFilePath).create(recursive: true);
-    await file.writeAsString(logString);
+    final file = File(tempFilePath);
+    await file.safeWriteAsString(logString);
     bool res = false;
     res = await picker.saveFileWithPath(utils.logFile, tempFilePath) != null;
     return res;
@@ -546,9 +546,9 @@ extension ProxiesControllerExt on AppController {
 }
 
 extension SetupControllerExt on AppController {
-  void reSetup() {
+  void fullSetup() {
     _ref.read(delayDataSourceProvider.notifier).value = {};
-    applyProfile();
+    applyProfile(force: true);
     _ref.read(logsProvider.notifier).value = FixedList(500);
     _ref.read(requestsProvider.notifier).value = FixedList(500);
   }
@@ -557,12 +557,7 @@ extension SetupControllerExt on AppController {
     if (isStart) {
       await tryStartCore();
       await globalState.handleStart([updateRunTime, updateTraffic]);
-      final profileId = _ref.read(currentProfileIdProvider);
-      if (!await needSetup(profileId)) {
-        addCheckIpNumDebounce();
-        return;
-      }
-      applyProfileDebounce();
+      applyProfileDebounce(force: true);
     } else {
       await globalState.handleStop();
       coreController.resetTraffic();
@@ -573,25 +568,13 @@ extension SetupControllerExt on AppController {
     }
   }
 
-  Future<bool> needSetup(int? profileId) async {
+  Future<bool> needSetup() async {
+    final profileId = _ref.read(currentProfileIdProvider);
     if (profileId == null) {
       return false;
     }
     final setupState = await _ref.read(setupStateProvider(profileId).future);
     return setupState.needSetup(globalState.lastSetupState) != true;
-  }
-
-  Future<void> checkNeedSetup() async {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!globalState.isStart) {
-        return;
-      }
-      final profileId = _ref.read(currentProfileIdProvider);
-      if (!await needSetup(profileId)) {
-        return;
-      }
-      applyProfileDebounce();
-    });
   }
 
   Future<void> updateConfigDebounce() async {
@@ -617,10 +600,10 @@ extension SetupControllerExt on AppController {
     });
   }
 
-  void applyProfileDebounce({bool silence = false}) {
-    debouncer.call(FunctionTag.applyProfile, (silence) {
-      applyProfile(silence: silence);
-    }, args: [silence]);
+  void applyProfileDebounce({bool silence = false, bool force = false}) {
+    debouncer.call(FunctionTag.applyProfile, (silence, force) {
+      applyProfile(silence: silence, force: force);
+    }, args: [silence, force]);
   }
 
   void changeMode(Mode mode) {
@@ -633,14 +616,20 @@ extension SetupControllerExt on AppController {
     addCheckIpNumDebounce();
   }
 
-  Future applyProfile({bool silence = false}) async {
-    if (silence) {
-      await _applyProfile();
-    } else {
-      await safeRun(() async {
-        await _applyProfile();
-      }, needLoading: true);
-    }
+  void autoApplyProfile() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      applyProfile();
+    });
+  }
+
+  Future<void> applyProfile({bool silence = false, bool force = false}) async {
+    await safeRun(
+      () async {
+        await _applyProfile(force);
+      },
+      needLoading: !silence,
+      silence: true,
+    );
     addCheckIpNumDebounce();
   }
 
@@ -707,31 +696,10 @@ extension SetupControllerExt on AppController {
     return res;
   }
 
-  Future<void> _setupClashConfig() async {
-    Future<String> setupProfile({
-      required SetupState setupState,
-      required ClashConfig patchConfig,
-    }) async {
-      if (system.isAndroid) {
-        preferences.saveShareState(this.sharedState);
-      }
-      final config = await getProfile(
-        setupState: setupState,
-        patchConfig: patchConfig,
-      );
-      final configFilePath = await appPath.configFilePath;
-      final res = await encodeYamlTask(config);
-      final file = File(configFilePath);
-      if (!await file.exists()) {
-        await file.create(recursive: true);
-      }
-      await file.writeAsString(res);
-      return await coreController.setupConfig(
-        setupState: setupState,
-        params: setupParams,
-      );
+  Future<void> _setupConfig([bool force = false]) async {
+    if (!force && !await needSetup()) {
+      return;
     }
-
     var profile = _ref.read(currentProfileProvider);
     final nextProfile = await profile?.checkAndUpdateAndCopy();
     if (nextProfile != null) {
@@ -750,17 +718,28 @@ extension SetupControllerExt on AppController {
     if (system.isAndroid) {
       globalState.lastVpnState = _ref.read(vpnStateProvider);
     }
-    final message = await setupProfile(
+
+    if (system.isAndroid) {
+      preferences.saveShareState(this.sharedState);
+    }
+    final config = await getProfile(
       setupState: setupState,
       patchConfig: realPatchConfig,
+    );
+    final configFilePath = await appPath.configFilePath;
+    final yamlString = await encodeYamlTask(config);
+    await File(configFilePath).safeWriteAsString(yamlString);
+    final message = await coreController.setupConfig(
+      setupState: setupState,
+      params: setupParams,
     );
     if (message.isNotEmpty) {
       throw message;
     }
   }
 
-  Future _applyProfile() async {
-    await _setupClashConfig();
+  Future _applyProfile([bool force = false]) async {
+    await _setupConfig(force);
     await updateGroups();
     await updateProviders();
   }
@@ -772,7 +751,7 @@ extension CoreControllerExt on AppController {
     final version = _ref.read(versionProvider);
     if (!isInit) {
       await coreController.init(version);
-      await applyProfile();
+      await applyProfile(force: true);
     } else {
       await updateGroups();
     }

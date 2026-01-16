@@ -79,10 +79,7 @@ class CoreController {
   Future<String> validateConfigWithData(String data) async {
     final path = await appPath.tempFilePath;
     final file = File(path);
-    if (!await file.exists()) {
-      await file.create(recursive: true);
-    }
-    await file.writeAsString(data);
+    await file.safeWriteAsString(data);
     final res = await _interface.validateConfig(path);
     await File(path).safeDelete();
     return res;

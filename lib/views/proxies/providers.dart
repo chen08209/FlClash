@@ -92,8 +92,7 @@ class ProviderItem extends StatelessWidget {
       final platformFile = await picker.pickerFile();
       final bytes = platformFile?.bytes;
       if (bytes == null || provider.path == null) return;
-      final file = await File(provider.path!).create(recursive: true);
-      await file.writeAsBytes(bytes);
+      await File(provider.path!).safeWriteAsBytes(bytes);
       final providerName = provider.name;
       var message = await coreController.sideLoadExternalProvider(
         providerName: providerName,

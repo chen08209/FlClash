@@ -23,8 +23,8 @@ class Picker {
       bytes: bytes,
     );
     if (!system.isAndroid && path != null) {
-      final file = await File(path).create(recursive: true);
-      await file.writeAsBytes(bytes);
+      final file = File(path);
+      await file.safeWriteAsBytes(bytes);
     }
     return path;
   }

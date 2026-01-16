@@ -34,7 +34,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       currentSetupStateProvider.select((state) => state?.profileId),
       (prev, next) {
         if (prev != next) {
-          appController.reSetup();
+          appController.fullSetup();
         }
       },
     );

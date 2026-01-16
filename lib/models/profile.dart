@@ -225,10 +225,7 @@ extension ProfileExtension on Profile {
   Future<Profile> saveFile(Uint8List bytes) async {
     final path = await appPath.tempFilePath;
     final tempFile = File(path);
-    if (!await tempFile.exists()) {
-      await tempFile.create(recursive: true);
-    }
-    await tempFile.writeAsBytes(bytes);
+    await tempFile.safeWriteAsBytes(bytes);
     final message = await coreController.validateConfig(path);
     if (message.isNotEmpty) {
       throw message;

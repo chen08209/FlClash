@@ -36,8 +36,6 @@ class _EditProfileViewState extends State<EditProfileView> {
   final _fileInfoNotifier = ValueNotifier<FileInfo?>(null);
   Uint8List? _fileData;
 
-  Profile get profile => widget.profile;
-
   @override
   void initState() {
     super.initState();
@@ -65,7 +63,7 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
-    Profile profile = this.profile.copyWith(
+    var profile = widget.profile.copyWith(
       url: _urlController.text,
       label: _labelController.text,
       autoUpdate: _autoUpdate,
@@ -84,9 +82,9 @@ class _EditProfileViewState extends State<EditProfileView> {
           profile = profile.copyWith(autoUpdate: false);
         }
       }
-      appController.setProfileAndAutoApply(await profile.saveFile(_fileData!));
+      appController.putProfile(await profile.saveFile(_fileData!));
     } else if (!hasUpdate) {
-      appController.setProfileAndAutoApply(profile);
+      appController.putProfile(profile);
     } else {
       appController.safeRun(() async {
         await Future.delayed(commonDuration);
@@ -206,6 +204,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     _fileInfoNotifier.dispose();
     _autoUpdateDurationController.dispose();
     super.dispose();
+    appController.autoApplyProfile();
   }
 
   @override
