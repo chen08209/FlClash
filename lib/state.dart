@@ -22,6 +22,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
 import 'database/database.dart';
+import 'l10n/l10n.dart';
 import 'models/models.dart';
 
 typedef UpdateTasks = List<FutureOr Function()>;
