@@ -195,7 +195,7 @@ class LogItem extends StatelessWidget {
     return ListItem(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: () {},
-      title: Text(
+      title: SelectableText(
         log.payload,
         style: context.textTheme.bodyLarge?.copyWith(color: log.logLevel.color),
       ),

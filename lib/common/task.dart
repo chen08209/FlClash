@@ -448,7 +448,7 @@ Future<MigrationData> _oldToNowTask(
     await sourceFile.safeCopy(targetFilePath);
     profiles.add(Profile.fromJson(rawProfile));
   }
-  final currentProfileId = configMap['currentProfileId'] as String?;
+  final currentProfileId = configMap['currentProfileId'];
   configMap['currentProfileId'] = currentProfileId != null
       ? idMap[currentProfileId]
       : null;

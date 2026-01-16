@@ -547,6 +547,9 @@ extension ProxiesControllerExt on AppController {
 
 extension SetupControllerExt on AppController {
   void fullSetup() {
+    if (!_ref.read(initProvider)) {
+      return;
+    }
     _ref.read(delayDataSourceProvider.notifier).value = {};
     applyProfile(force: true);
     _ref.read(logsProvider.notifier).value = FixedList(500);
@@ -750,7 +753,8 @@ extension CoreControllerExt on AppController {
     final isInit = await coreController.isInit;
     final version = _ref.read(versionProvider);
     if (!isInit) {
-      await coreController.init(version);
+      final res = await coreController.init(version);
+      commonPrint.log('init core status: $res');
       await applyProfile(force: true);
     } else {
       await updateGroups();
@@ -837,12 +841,14 @@ extension SystemControllerExt on AppController {
     return _ref.read(packagesProvider);
   }
 
-  Future<void> handleExit() async {
+  Future<void> handleExit([bool needSave = false]) async {
     Future.delayed(Duration(seconds: 3), () {
       system.exit();
     });
     try {
-      await preferences.saveConfig(config);
+      if (needSave) {
+        await preferences.saveConfig(config);
+      }
       await proxy?.stopProxy();
       await macOS?.updateDns(true);
       await coreController.destroy();
@@ -1063,7 +1069,7 @@ extension StoreControllerExt on AppController {
       await coreController.deleteFile(file.path);
     }
     await preferences.clearPreferences();
-    handleExit();
+    handleExit(false);
   }
 }
 

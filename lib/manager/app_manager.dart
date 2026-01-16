@@ -26,11 +26,9 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // ref.listenManual(appStateProvider, (_, _) {});
     ref.listenManual(checkIpProvider, (prev, next) {
       if (prev != next && next.a && next.c) {
-        final isStart = ref.read(isStartProvider);
-        detectionState.startCheck(next.a, isStart);
+        ref.read(networkDetectionProvider.notifier).startCheck();
       }
     }, fireImmediately: true);
     ref.listenManual(configProvider, (prev, next) {
@@ -72,9 +70,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     }
     if (state == AppLifecycleState.resumed) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final isInit = ref.read(initProvider);
-        final isStart = ref.read(isStartProvider);
-        detectionState.tryStartCheck(isInit, isStart);
+        ref.read(networkDetectionProvider.notifier).startCheck();
       });
       if (system.isAndroid) {
         appController.tryStartCore();
