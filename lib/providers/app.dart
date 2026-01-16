@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -322,21 +321,13 @@ class IsUpdating extends _$IsUpdating with AutoDisposeNotifierMixin {
 class NetworkDetection extends _$NetworkDetection
     with AutoDisposeNotifierMixin {
   bool? _preIsStart;
-  Timer? _setTimeoutTimer;
-  CancelToken? cancelToken;
 
   @override
   NetworkDetectionState build() {
     return NetworkDetectionState(isLoading: true, ipInfo: null);
   }
 
-  void startCheck() {
-    debouncer.call(FunctionTag.checkIp, () {
-      _checkIp();
-    }, duration: Duration(milliseconds: 1200));
-  }
-
-  Future<void> _checkIp() async {
+  Future<void> checkIp() async {
     final isInit = ref.read(initProvider);
     if (!isInit) {
       return;
@@ -345,36 +336,20 @@ class NetworkDetection extends _$NetworkDetection
     if (!isStart && _preIsStart == false && state.ipInfo != null) {
       return;
     }
-    _clearSetTimeoutTimer();
+    commonPrint.log('checkIp start');
     state = state.copyWith(isLoading: true, ipInfo: null);
     _preIsStart = isStart;
-    if (cancelToken != null) {
-      cancelToken!.cancel();
-      cancelToken = null;
-    }
-    cancelToken = CancelToken();
-    final res = await request.checkIp(cancelToken: cancelToken);
+    final res = await request.checkIp();
     commonPrint.log('checkIp res: $res');
     if (res.isError) {
       state = state.copyWith(isLoading: true, ipInfo: null);
       return;
     }
     final ipInfo = res.data;
-    if (ipInfo != null) {
-      state = state.copyWith(isLoading: false, ipInfo: ipInfo);
+    if (ipInfo == null) {
       return;
     }
-    _clearSetTimeoutTimer();
-    _setTimeoutTimer = Timer(const Duration(milliseconds: 300), () {
-      state = state.copyWith(isLoading: false, ipInfo: null);
-    });
-  }
-
-  void _clearSetTimeoutTimer() {
-    if (_setTimeoutTimer != null) {
-      _setTimeoutTimer?.cancel();
-      _setTimeoutTimer = null;
-    }
+    state = state.copyWith(isLoading: false, ipInfo: ipInfo);
   }
 }
 

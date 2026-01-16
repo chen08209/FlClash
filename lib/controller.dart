@@ -600,7 +600,7 @@ extension SetupControllerExt on AppController {
   void addCheckIpNumDebounce() {
     debouncer.call(FunctionTag.addCheckIpNum, () {
       _ref.read(checkIpNumProvider.notifier).add();
-    });
+    }, duration: commonDuration);
   }
 
   void applyProfileDebounce({bool silence = false, bool force = false}) {

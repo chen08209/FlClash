@@ -101,8 +101,9 @@ class Request {
     'https://ipinfo.io/json': IpInfo.fromIpInfoIoJson,
   };
 
-  Future<Result<IpInfo?>> checkIp({CancelToken? cancelToken}) async {
+  Future<Result<IpInfo?>> checkIp() async {
     var failureCount = 0;
+    final cancelToken = CancelToken();
     final futures = _ipInfoSources.entries.map((source) async {
       final Completer<Result<IpInfo?>> completer = Completer();
       handleFailRes() {
@@ -137,7 +138,7 @@ class Request {
       return completer.future;
     });
     final res = await Future.any(futures);
-    cancelToken?.cancel();
+    cancelToken.cancel();
     return res;
   }
 

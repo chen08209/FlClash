@@ -94,7 +94,7 @@ abstract class CoreHandlerInterface with CoreInterface {
       );
       return null;
     }
-    if (kDebugMode) {
+    if (kDebugMode && watchExecution) {
       commonPrint.log('Invoke ${method.name} ${DateTime.now()} $data');
     }
 

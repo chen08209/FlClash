@@ -328,7 +328,7 @@ class Utils {
     required Function function,
     required void Function(T data, int elapsedMilliseconds) onWatch,
   }) async {
-    if (kDebugMode) {
+    if (kDebugMode && watchExecution) {
       final stopwatch = Stopwatch()..start();
       final res = await function();
       stopwatch.stop();

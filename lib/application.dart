@@ -26,6 +26,7 @@ class Application extends ConsumerStatefulWidget {
 
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
+  bool _preHasVpn = false;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -83,11 +84,12 @@ class ApplicationState extends ConsumerState<Application> {
         child: ConnectivityManager(
           onConnectivityChanged: (results) async {
             commonPrint.log('connectivityChanged ${results.toString()}');
-            if (!results.contains(ConnectivityResult.vpn)) {
-              coreController.closeConnections();
-            }
             appController.updateLocalIp();
-            appController.addCheckIpNumDebounce();
+            final hasVpn = results.contains(ConnectivityResult.vpn);
+            if (_preHasVpn == hasVpn) {
+              appController.addCheckIpNumDebounce();
+            }
+            _preHasVpn = hasVpn;
           },
           child: child,
         ),
