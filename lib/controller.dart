@@ -776,6 +776,8 @@ extension CoreControllerExt on AppController {
     final version = _ref.read(versionProvider);
     if (!isInit) {
       await coreController.init(version);
+    } else {
+      await updateGroups();
     }
   }
 
