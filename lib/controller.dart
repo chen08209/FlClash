@@ -150,7 +150,7 @@ extension InitControllerExt on AppController {
     if (status == true) {
       await updateStatus(true, isInit: true);
     } else {
-      applyProfile(force: true);
+      await applyProfile(force: true);
     }
   }
 
@@ -563,11 +563,16 @@ extension SetupControllerExt on AppController {
   Future<void> updateStatus(bool isStart, {bool isInit = false}) async {
     if (isStart) {
       await tryStartCore();
-      await globalState.handleStart([updateRunTime, updateTraffic]);
       if (!isInit) {
+        await globalState.handleStart([updateRunTime, updateTraffic]);
         applyProfileDebounce(force: true);
       } else {
-        await applyProfile(force: true);
+        await applyProfile(
+          force: true,
+          preloadInvoke: () async {
+            await globalState.handleStart([updateRunTime, updateTraffic]);
+          },
+        );
       }
     } else {
       await globalState.handleStop();
@@ -631,10 +636,14 @@ extension SetupControllerExt on AppController {
     });
   }
 
-  Future<void> applyProfile({bool silence = false, bool force = false}) async {
+  Future<void> applyProfile({
+    bool silence = false,
+    bool force = false,
+    VoidCallback? preloadInvoke,
+  }) async {
     await safeRun(
       () async {
-        await _applyProfile(force);
+        await _applyProfile(force, preloadInvoke);
       },
       needLoading: !silence,
       silence: true,
@@ -705,7 +714,10 @@ extension SetupControllerExt on AppController {
     return res;
   }
 
-  Future<void> _setupConfig([bool force = false]) async {
+  Future<void> _setupConfig([
+    bool force = false,
+    VoidCallback? preloadInvoke,
+  ]) async {
     if (!force && !await needSetup()) {
       return;
     }
@@ -741,14 +753,18 @@ extension SetupControllerExt on AppController {
     final message = await coreController.setupConfig(
       setupState: setupState,
       params: setupParams,
+      preloadInvoke: preloadInvoke,
     );
     if (message.isNotEmpty) {
       throw message;
     }
   }
 
-  Future _applyProfile([bool force = false]) async {
-    await _setupConfig(force);
+  Future _applyProfile([
+    bool force = false,
+    VoidCallback? preloadInvoke,
+  ]) async {
+    await _setupConfig(force, preloadInvoke);
     await updateGroups();
     await updateProviders();
   }
@@ -811,17 +827,18 @@ extension CoreControllerExt on AppController {
     await _initCore();
     _ref.read(initProvider.notifier).value = true;
     if (_ref.read(isStartProvider)) {
-      await globalState.handleStart();
+      await updateStatus(true, isInit: true);
     } else {
-      applyProfile(force: true);
+      await applyProfile(force: true);
     }
   }
 
-  Future<void> tryStartCore() async {
+  Future<bool> tryStartCore() async {
     if (coreController.isCompleted) {
-      return;
+      return false;
     }
     restartCore();
+    return true;
   }
 
   void handleCoreDisconnected() {
