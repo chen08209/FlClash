@@ -61,7 +61,7 @@ class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
     final stmt = profiles.select();
     stmt.orderBy([
       (t) => OrderingTerm(expression: t.order),
-      (t) => OrderingTerm(expression: t.id),
+      (t) => OrderingTerm.asc(t.id),
     ]);
     return stmt.map((item) => item.toProfile());
   }

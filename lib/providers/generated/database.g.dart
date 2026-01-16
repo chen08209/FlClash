@@ -9,160 +9,6 @@ part of '../database.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(profilesStream)
-const profilesStreamProvider = ProfilesStreamProvider._();
-
-final class ProfilesStreamProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Profile>>,
-          List<Profile>,
-          Stream<List<Profile>>
-        >
-    with $FutureModifier<List<Profile>>, $StreamProvider<List<Profile>> {
-  const ProfilesStreamProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'profilesStreamProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$profilesStreamHash();
-
-  @$internal
-  @override
-  $StreamProviderElement<List<Profile>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<Profile>> create(Ref ref) {
-    return profilesStream(ref);
-  }
-}
-
-String _$profilesStreamHash() => r'483907aa6c324209b5202369300a4a53230f83db';
-
-@ProviderFor(scriptsStream)
-const scriptsStreamProvider = ScriptsStreamProvider._();
-
-final class ScriptsStreamProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Script>>,
-          List<Script>,
-          Stream<List<Script>>
-        >
-    with $FutureModifier<List<Script>>, $StreamProvider<List<Script>> {
-  const ScriptsStreamProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'scriptsStreamProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$scriptsStreamHash();
-
-  @$internal
-  @override
-  $StreamProviderElement<List<Script>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<Script>> create(Ref ref) {
-    return scriptsStream(ref);
-  }
-}
-
-String _$scriptsStreamHash() => r'51ce8ca517b26ceba3539ff32ddbf75fc6ac276e';
-
-@ProviderFor(rulesStream)
-const rulesStreamProvider = RulesStreamProvider._();
-
-final class RulesStreamProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Rule>>,
-          List<Rule>,
-          Stream<List<Rule>>
-        >
-    with $FutureModifier<List<Rule>>, $StreamProvider<List<Rule>> {
-  const RulesStreamProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'rulesStreamProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$rulesStreamHash();
-
-  @$internal
-  @override
-  $StreamProviderElement<List<Rule>> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<Rule>> create(Ref ref) {
-    return rulesStream(ref);
-  }
-}
-
-String _$rulesStreamHash() => r'2a8ad5a820460de584ad78e6cd72dc5d7c22fac8';
-
-@ProviderFor(globalRulesStream)
-const globalRulesStreamProvider = GlobalRulesStreamProvider._();
-
-final class GlobalRulesStreamProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Rule>>,
-          List<Rule>,
-          Stream<List<Rule>>
-        >
-    with $FutureModifier<List<Rule>>, $StreamProvider<List<Rule>> {
-  const GlobalRulesStreamProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'globalRulesStreamProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$globalRulesStreamHash();
-
-  @$internal
-  @override
-  $StreamProviderElement<List<Rule>> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<Rule>> create(Ref ref) {
-    return globalRulesStream(ref);
-  }
-}
-
-String _$globalRulesStreamHash() => r'5f8cf7d59390358a8b4725e6a6120e9129cb9393';
-
 @ProviderFor(addedRuleStream)
 const addedRuleStreamProvider = AddedRuleStreamFamily._();
 
@@ -269,7 +115,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'9c213e9ef58883c8d9d88ace7d42f5c85eec3bd6';
+String _$profilesHash() => r'd1e74133bb85266e85c211b398542fa052edb7aa';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -321,7 +167,7 @@ final class ScriptsProvider extends $NotifierProvider<Scripts, List<Script>> {
   }
 }
 
-String _$scriptsHash() => r'22ddfa49b1ff3cbb71792b74e42faaed91bdd7bc';
+String _$scriptsHash() => r'ccfb7a2f5d12993393266d2d9c6c83c21e3e006b';
 
 abstract class _$Scripts extends $Notifier<List<Script>> {
   List<Script> build();
@@ -346,7 +192,7 @@ abstract class _$Scripts extends $Notifier<List<Script>> {
 const globalRulesProvider = GlobalRulesProvider._();
 
 final class GlobalRulesProvider
-    extends $NotifierProvider<GlobalRules, List<Rule>> {
+    extends $StreamNotifierProvider<GlobalRules, List<Rule>> {
   const GlobalRulesProvider._()
     : super(
         from: null,
@@ -364,30 +210,22 @@ final class GlobalRulesProvider
   @$internal
   @override
   GlobalRules create() => GlobalRules();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Rule> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<Rule>>(value),
-    );
-  }
 }
 
-String _$globalRulesHash() => r'36c277ca7cfceafd5e308b96d413d682a131c978';
+String _$globalRulesHash() => r'3ed947f389649a86d5c6d78d8c02ba5b8d0f7119';
 
-abstract class _$GlobalRules extends $Notifier<List<Rule>> {
-  List<Rule> build();
+abstract class _$GlobalRules extends $StreamNotifier<List<Rule>> {
+  Stream<List<Rule>> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<List<Rule>, List<Rule>>;
+    final ref = this.ref as $Ref<AsyncValue<List<Rule>>, List<Rule>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<List<Rule>, List<Rule>>,
-              List<Rule>,
+              AnyNotifier<AsyncValue<List<Rule>>, List<Rule>>,
+              AsyncValue<List<Rule>>,
               Object?,
               Object?
             >;
@@ -436,7 +274,7 @@ final class ProfileAddedRulesProvider
   }
 }
 
-String _$profileAddedRulesHash() => r'12b37659e19b0faa0f6800a1b35a731098fa53d0';
+String _$profileAddedRulesHash() => r'4155448335cf14a8928db6adf68e59572aa4ce47';
 
 final class ProfileAddedRulesFamily extends $Family
     with
@@ -528,7 +366,7 @@ final class ProfileDisabledRuleIdsProvider
 }
 
 String _$profileDisabledRuleIdsHash() =>
-    r'3a11dc5f24884fb7cf96c234e1028d156b68100f';
+    r'22d6e68bcee55b42fbb909e7f66e5c7095935224';
 
 final class ProfileDisabledRuleIdsFamily extends $Family
     with

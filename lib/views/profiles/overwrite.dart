@@ -471,7 +471,7 @@ class _EditGlobalAddedRules extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final disabledRuleIds =
         ref.watch(profileDisabledRuleIdsProvider(profileId)).value ?? [];
-    final rules = ref.watch(globalRulesProvider);
+    final rules = ref.watch(globalRulesProvider).value ?? [];
     return BaseScaffold(
       title: appLocalizations.editGlobalRules,
       body: rules.isEmpty

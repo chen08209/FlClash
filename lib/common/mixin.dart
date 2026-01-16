@@ -33,3 +33,11 @@ mixin AutoDisposeNotifierMixin<T> on AnyNotifier<T, T> {
     value = res;
   }
 }
+
+mixin AsyncNotifierMixin<T> on AnyNotifier<AsyncValue<T>, T> {
+  T get value;
+
+  set value(T value) {
+    state = AsyncData(value);
+  }
+}

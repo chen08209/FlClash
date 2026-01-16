@@ -96,17 +96,25 @@ class GlobalState {
       migrationData.rules,
       migrationData.links,
     );
-    final profiles = await database.profilesDao.all().get();
+    final results = await Future.wait([
+      database.profilesDao.all().get(),
+      database.scriptsDao.all().get(),
+    ]);
+    final profiles = results[0].cast<Profile>();
+    final scripts = results[0].cast<Script>();
+    final profilesOverride = profilesProvider.overrideWithBuild(
+      (_, _) => profiles,
+    );
+    final scriptsOverride = scriptsProvider.overrideWithBuild(
+      (_, _) => scripts,
+    );
     await AppLocalizations.load(
       utils.getLocaleForString(config.appSettingProps.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );
     await window?.init(version, config.windowProps);
-    final profilesOverride = profilesProvider.overrideWithBuild(
-      (_, _) => profiles,
-    );
     final configOverrides = buildConfigOverrides(config);
-    return [profilesOverride, ...configOverrides];
+    return [profilesOverride, scriptsOverride, ...configOverrides];
   }
 
   Future<void> startUpdateTasks([UpdateTasks? tasks]) async {

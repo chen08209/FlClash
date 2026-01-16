@@ -67,10 +67,10 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     commonPrint.log('$state');
     if (state == AppLifecycleState.resumed) {
       render?.resume();
-    }
-    if (state == AppLifecycleState.resumed) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        appController.addCheckIpNumDebounce();
+        if (system.isAndroid) {
+          appController.addCheckIpNumDebounce();
+        }
         if (system.isAndroid) {
           appController.tryStartCore();
         }
