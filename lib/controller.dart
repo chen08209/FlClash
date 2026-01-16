@@ -1077,7 +1077,7 @@ extension StoreControllerExt on AppController {
   void savePreferencesDebounce() {
     debouncer.call(FunctionTag.savePreferences, () async {
       await preferences.saveConfig(config);
-    }, duration: Duration(seconds: 3));
+    });
   }
 
   Future handleClear() async {
