@@ -256,7 +256,7 @@ class Query extends _$Query with AutoDisposeNotifierMixin {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class Loading extends _$Loading with AutoDisposeNotifierMixin {
   DateTime? _start;
   Timer? _timer;

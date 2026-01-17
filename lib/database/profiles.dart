@@ -60,7 +60,7 @@ class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
   Selectable<Profile> all() {
     final stmt = profiles.select();
     stmt.orderBy([
-      (t) => OrderingTerm(expression: t.order),
+      (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
       (t) => OrderingTerm.asc(t.id),
     ]);
     return stmt.map((item) => item.toProfile());
@@ -69,6 +69,14 @@ class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
   Future<void> setAll(Iterable<Profile> profiles) async {
     await batch((b) async {
       setAllWithBatch(b, profiles);
+    });
+  }
+
+  Future<void> putAll<T extends Table, D extends DataClass>(
+    Iterable<Insertable<D>> items,
+  ) async {
+    await batch((b) async {
+      putAllWithBatch(b, items);
     });
   }
 
@@ -83,10 +91,8 @@ class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
     final List<ProfilesCompanion> items = [];
     final List<int> ids = [];
     profiles.forEachIndexed((index, profile) {
-      for (final profile in profiles) {
-        ids.add(profile.id);
-        items.add(profile.toCompanion(index));
-      }
+      ids.add(profile.id);
+      items.add(profile.toCompanion(index));
     });
 
     this.profiles.setAll(batch, items, deleteFilter: (t) => t.id.isNotIn(ids));
@@ -136,7 +142,7 @@ extension RawProfilExt on RawProfile {
       unfoldSet: unfoldSet,
       overwriteType: overwriteType,
       scriptId: scriptId,
-      order: order ?? -1,
+      order: order,
     );
   }
 }

@@ -365,7 +365,6 @@ extension ProfilesControllerExt on AppController {
     final profile = await loadingRun(
       tag: LoadingTag.profiles,
       () async {
-        await Future.delayed(const Duration(milliseconds: 300));
         return await Profile.normal(label: platformFile?.name).saveFile(bytes);
       },
       title: '${appLocalizations.add}${appLocalizations.profile}',

@@ -1431,7 +1431,7 @@ final class LoadingProvider extends $NotifierProvider<Loading, bool> {
   }) : super(
          retry: null,
          name: r'loadingProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -1469,7 +1469,7 @@ final class LoadingProvider extends $NotifierProvider<Loading, bool> {
   }
 }
 
-String _$loadingHash() => r'9506a84c71653bd3b18a4ece9b7095bf7bde7164';
+String _$loadingHash() => r'f4c58da7e5869c3e114b76439f3169b31d2e5b71';
 
 final class LoadingFamily extends $Family
     with $ClassFamilyOverride<Loading, bool, bool, bool, LoadingTag> {
@@ -1479,7 +1479,7 @@ final class LoadingFamily extends $Family
         name: r'loadingProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   LoadingProvider call(LoadingTag tag) =>

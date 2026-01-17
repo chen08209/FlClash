@@ -58,17 +58,13 @@ class Profiles extends _$Profiles {
   void reorder(List<Profile> profiles) {
     final newProfiles = List<Profile>.from(profiles);
     state = newProfiles;
-    database.batch((batch) {
-      newProfiles.forEachIndexed((index, item) {
-        if (item.order != index) {
-          batch.update(
-            database.profiles,
-            item.toCompanion(index),
-            where: (tbl) => tbl.id.equals(item.id),
-          );
-        }
-      });
+    final List<ProfilesCompanion> needUpdateProfiles = [];
+    newProfiles.forEachIndexed((index, item) {
+      if (item.order != index) {
+        needUpdateProfiles.add(item.toCompanion(index));
+      }
     });
+    database.profilesDao.putAll(needUpdateProfiles);
   }
 
   @override
