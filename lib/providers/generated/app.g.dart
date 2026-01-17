@@ -1066,58 +1066,6 @@ abstract class _$BackBlock extends $Notifier<bool> {
   }
 }
 
-@ProviderFor(Loading)
-const loadingProvider = LoadingProvider._();
-
-final class LoadingProvider extends $NotifierProvider<Loading, bool> {
-  const LoadingProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'loadingProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$loadingHash();
-
-  @$internal
-  @override
-  Loading create() => Loading();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(bool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<bool>(value),
-    );
-  }
-}
-
-String _$loadingHash() => r'35f0535635bb10289b1ea388efb24b951f0e5199';
-
-abstract class _$Loading extends $Notifier<bool> {
-  bool build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<bool, bool>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<bool, bool>,
-              bool,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
-}
-
 @ProviderFor(Version)
 const versionProvider = VersionProvider._();
 
@@ -1466,6 +1414,96 @@ abstract class _$Query extends $Notifier<String> {
             as $ClassProviderElement<
               AnyNotifier<String, String>,
               String,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(Loading)
+const loadingProvider = LoadingFamily._();
+
+final class LoadingProvider extends $NotifierProvider<Loading, bool> {
+  const LoadingProvider._({
+    required LoadingFamily super.from,
+    required LoadingTag super.argument,
+  }) : super(
+         retry: null,
+         name: r'loadingProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$loadingHash();
+
+  @override
+  String toString() {
+    return r'loadingProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  Loading create() => Loading();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LoadingProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$loadingHash() => r'9506a84c71653bd3b18a4ece9b7095bf7bde7164';
+
+final class LoadingFamily extends $Family
+    with $ClassFamilyOverride<Loading, bool, bool, bool, LoadingTag> {
+  const LoadingFamily._()
+    : super(
+        retry: null,
+        name: r'loadingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  LoadingProvider call(LoadingTag tag) =>
+      LoadingProvider._(argument: tag, from: this);
+
+  @override
+  String toString() => r'loadingProvider';
+}
+
+abstract class _$Loading extends $Notifier<bool> {
+  late final _$args = ref.$arg as LoadingTag;
+  LoadingTag get tag => _$args;
+
+  bool build(LoadingTag tag);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
               Object?,
               Object?
             >;

@@ -185,13 +185,9 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   }
 
   Future<void> _handleUpdateGeoDataItem() async {
-    await appController.safeRun<void>(
-      () async {
-        await updateGeoDateItem();
-      },
-      silence: false,
-      needLoading: false,
-    );
+    await appController.safeRun<void>(() async {
+      await updateGeoDateItem();
+    }, silence: false);
     if (mounted) {
       setState(() {});
     }

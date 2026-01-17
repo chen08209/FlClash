@@ -38,7 +38,7 @@ class DAVClient {
     return true;
   }
 
-  Future<bool> recovery() async {
+  Future<bool> restore() async {
     await client.mkdir(root);
     final backupFilePath = await appPath.backupFilePath;
     await client.read2File(backupFile, backupFilePath);

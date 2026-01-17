@@ -326,7 +326,7 @@ extension ProfilesControllerExt on AppController {
       final newProfile = await profile.update();
       _ref.read(profilesProvider.notifier).put(newProfile);
       if (profile.id == _ref.read(currentProfileIdProvider)) {
-        applyProfileDebounce(silence: true);
+        applyProfileDebounce();
       }
     } finally {
       _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = false;
@@ -338,13 +338,9 @@ extension ProfilesControllerExt on AppController {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     }
     toProfiles();
-    final profile = await safeRun(
-      () async {
-        return await Profile.normal(url: url).update();
-      },
-      needLoading: true,
-      title: '${appLocalizations.add}${appLocalizations.profile}',
-    );
+    final profile = await loadingRun(tag: LoadingTag.profiles, () async {
+      return await Profile.normal(url: url).update();
+    }, title: appLocalizations.add);
     if (profile != null) {
       putProfile(profile);
     }
@@ -353,7 +349,7 @@ extension ProfilesControllerExt on AppController {
   void setProfileAndAutoApply(Profile profile) {
     _ref.read(profilesProvider.notifier).put(profile);
     if (profile.id == _ref.read(currentProfileIdProvider)) {
-      applyProfileDebounce(silence: true);
+      applyProfileDebounce();
     }
   }
 
@@ -366,12 +362,12 @@ extension ProfilesControllerExt on AppController {
     if (!_context.mounted) return;
     globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     toProfiles();
-    final profile = await safeRun(
+    final profile = await loadingRun(
+      tag: LoadingTag.profiles,
       () async {
         await Future.delayed(const Duration(milliseconds: 300));
         return await Profile.normal(label: platformFile?.name).saveFile(bytes);
       },
-      needLoading: true,
       title: '${appLocalizations.add}${appLocalizations.profile}',
     );
     if (profile != null) {
@@ -606,7 +602,7 @@ extension SetupControllerExt on AppController {
           updateParams.copyWith.tun(enable: realTunEnable),
         );
         if (message.isNotEmpty) throw message;
-      }, needLoading: true);
+      });
     });
   }
 
@@ -614,10 +610,10 @@ extension SetupControllerExt on AppController {
     _ref.read(checkIpNumProvider.notifier).add();
   }
 
-  void applyProfileDebounce({bool silence = false, bool force = false}) {
+  void applyProfileDebounce({bool force = false}) {
     debouncer.call(FunctionTag.applyProfile, (silence, force) {
-      applyProfile(silence: silence, force: force);
-    }, args: [silence, force]);
+      applyProfile(force: force);
+    }, args: [force]);
   }
 
   void changeMode(Mode mode) {
@@ -637,17 +633,12 @@ extension SetupControllerExt on AppController {
   }
 
   Future<void> applyProfile({
-    bool silence = false,
     bool force = false,
     VoidCallback? preloadInvoke,
   }) async {
-    await safeRun(
-      () async {
-        await _applyProfile(force, preloadInvoke);
-      },
-      needLoading: !silence,
-      silence: true,
-    );
+    await safeRun(() async {
+      await _applyProfile(force, preloadInvoke);
+    }, silence: true);
     addCheckIp();
   }
 
@@ -1023,14 +1014,14 @@ extension BackupControllerExt on AppController {
   Future<void> restore(RestoreOption option) async {
     final restoreDirPath = await appPath.restoreDirPath;
     final restoreDir = Directory(restoreDirPath);
-    final recoveryStrategy = _ref.read(
-      appSettingProvider.select((state) => state.recoveryStrategy),
+    final restoreStrategy = _ref.read(
+      appSettingProvider.select((state) => state.restoreStrategy),
     );
-    final isOverride = recoveryStrategy == RecoveryStrategy.override;
+    final isOverride = restoreStrategy == RestoreStrategy.override;
     try {
       final migrationData = await restoreTask();
       if (!await restoreDir.exists()) {
-        throw '恢复异常';
+        throw appLocalizations.restoreException;
       }
       await database.restore(
         migrationData.profiles,
@@ -1147,22 +1138,40 @@ extension CommonControllerExt on AppController {
         .getTotalTraffic(onlyStatisticsProxy);
   }
 
+  Future<T?> loadingRun<T>(
+    FutureOr<T> Function() futureFunction, {
+    String? title,
+    required LoadingTag tag,
+  }) async {
+    return safeRun(
+      futureFunction,
+      silence: false,
+      title: title,
+      onStart: () {
+        _ref.read(loadingProvider(tag).notifier).start();
+      },
+      onEnd: () {
+        _ref.read(loadingProvider(tag).notifier).stop();
+      },
+    );
+  }
+
   Future<T?> safeRun<T>(
     FutureOr<T> Function() futureFunction, {
     String? title,
-    bool needLoading = false,
+    VoidCallback? onStart,
+    VoidCallback? onEnd,
     bool silence = true,
   }) async {
-    final realSilence = needLoading == true ? true : silence;
     try {
-      // if (needLoading) {
-      //   _ref.read(loadingProvider.notifier).start();
-      // }
+      if (onStart != null) {
+        onStart();
+      }
       final res = await futureFunction();
       return res;
     } catch (e) {
       commonPrint.log('$title===> $e', logLevel: LogLevel.warning);
-      if (realSilence) {
+      if (silence) {
         globalState.showNotifier(e.toString());
       } else {
         globalState.showMessage(
@@ -1172,7 +1181,9 @@ extension CommonControllerExt on AppController {
       }
       return null;
     } finally {
-      // _ref.read(loadingProvider.notifier).stop();
+      if (onEnd != null) {
+        onEnd();
+      }
     }
   }
 }

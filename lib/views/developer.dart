@@ -3,7 +3,6 @@ import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -65,17 +64,17 @@ class DeveloperView extends ConsumerWidget {
             await appController.handleClear();
           },
         ),
+        // ListItem(
+        //   title: Text(appLocalizations.loadTest),
+        //   minVerticalPadding: 12,
+        //   onTap: () {
+        //     ref.read(loadingProvider.notifier).value = !ref.read(
+        //       loadingProvider,
+        //     );
+        //   },
+        // ),
         ListItem(
-          title: Text(appLocalizations.loadTest),
-          minVerticalPadding: 12,
-          onTap: () {
-            ref.read(loadingProvider.notifier).value = !ref.read(
-              loadingProvider,
-            );
-          },
-        ),
-        ListItem(
-          title: Text('修剪缓存'),
+          title: Text(appLocalizations.pruneCache),
           minVerticalPadding: 12,
           onTap: () {
             appController.shakingStore();

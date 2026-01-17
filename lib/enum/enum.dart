@@ -407,7 +407,7 @@ enum OverwriteType {
 
 enum RuleTarget { DIRECT, REJECT, MATCH }
 
-enum RecoveryStrategy { compatible, override }
+enum RestoreStrategy { compatible, override }
 
 enum CacheTag { logs, rules, requests, proxiesList }
 
@@ -418,6 +418,8 @@ enum ImportOption { file, url }
 enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }
 
 enum QueryTag { proxies, access }
+
+enum LoadingTag { profiles, backup_restore, access }
 
 enum CoreStatus { connecting, connected, disconnected }
 

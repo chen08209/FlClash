@@ -351,7 +351,9 @@ Future<MigrationData> _oldToNowTask(
     vpnPropsRaw['accessControlProps'] = vpnPropsRaw['accessControl'];
   }
   configMap['davProps'] = configMap['dav'];
-  configMap['appSettingProps'] = configMap['appSetting'];
+  final appSettingProps = configMap['appSetting'] as Map? ?? {};
+  appSettingProps['restoreStrategy'] = appSettingProps['recoveryStrategy'];
+  configMap['appSettingProps'] = appSettingProps;
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
   // final overwriteMap = configMap['overwrite'] as Map? ?? {};
@@ -549,7 +551,7 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   await input.close();
   final restoreConfigFile = File(join(restoreDirPath, configJsonName));
   if (!await restoreConfigFile.exists()) {
-    throw '无效备份文件';
+    throw appLocalizations.invalidBackupFile;
   }
   final restoreConfigMap =
       json.decode(await restoreConfigFile.readAsString())

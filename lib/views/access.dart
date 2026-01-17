@@ -92,9 +92,9 @@ class _AccessViewState extends ConsumerState<AccessView> {
       return;
     }
     final selectedPackageNames =
-        (await appController.safeRun<List<String>>(needLoading: true, () async {
+        (await appController.loadingRun<List<String>>(() async {
           return await app?.getChinaPackageNames() ?? [];
-        }))?.toSet() ??
+        }, tag: LoadingTag.access))?.toSet() ??
         {};
     final acceptList = packageNames
         .where((item) => !selectedPackageNames.contains(item))
@@ -372,6 +372,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(loadingProvider(LoadingTag.access));
     final query = ref.watch(queryProvider(QueryTag.access));
     final packages = ref.watch(packagesProvider);
     final accessControl = ref.watch(accessControlStateProvider);
@@ -402,6 +403,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
     final valueList = currentList.intersection(viewPackageNameList);
     return CommonScaffold(
       key: _scaffoldKey,
+      isLoading: isLoading,
       searchState: AppBarSearchState(onSearch: _onSearch, autoAddSearch: false),
       title: appLocalizations.appAccessControl,
       actions: _buildActions(enable: accessControl.enable),

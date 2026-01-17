@@ -28,12 +28,12 @@ _AppSettingProps _$AppSettingPropsFromJson(Map<String, dynamic> json) =>
       minimizeOnExit: json['minimizeOnExit'] as bool? ?? true,
       hidden: json['hidden'] as bool? ?? false,
       developerMode: json['developerMode'] as bool? ?? false,
-      recoveryStrategy:
+      restoreStrategy:
           $enumDecodeNullable(
-            _$RecoveryStrategyEnumMap,
-            json['recoveryStrategy'],
+            _$RestoreStrategyEnumMap,
+            json['restoreStrategy'],
           ) ??
-          RecoveryStrategy.compatible,
+          RestoreStrategy.compatible,
       showTrayTitle: json['showTrayTitle'] as bool? ?? true,
     );
 
@@ -59,13 +59,13 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'minimizeOnExit': instance.minimizeOnExit,
       'hidden': instance.hidden,
       'developerMode': instance.developerMode,
-      'recoveryStrategy': _$RecoveryStrategyEnumMap[instance.recoveryStrategy]!,
+      'restoreStrategy': _$RestoreStrategyEnumMap[instance.restoreStrategy]!,
       'showTrayTitle': instance.showTrayTitle,
     };
 
-const _$RecoveryStrategyEnumMap = {
-  RecoveryStrategy.compatible: 'compatible',
-  RecoveryStrategy.override: 'override',
+const _$RestoreStrategyEnumMap = {
+  RestoreStrategy.compatible: 'compatible',
+  RestoreStrategy.override: 'override',
 };
 
 const _$DashboardWidgetEnumMap = {

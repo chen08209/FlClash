@@ -29,7 +29,6 @@ class AboutView extends StatelessWidget {
     final data = await appController.safeRun<Map<String, dynamic>?>(
       request.checkForUpdate,
       title: appLocalizations.checkUpdate,
-      needLoading: true,
     );
     appController.checkUpdateResultHandle(data: data, isUser: true);
   }

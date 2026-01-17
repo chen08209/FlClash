@@ -8,6 +8,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/about.dart';
 import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/application_setting.dart';
+import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/config.dart';
 import 'package:fl_clash/views/hotkey.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -16,7 +17,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' show dirname, join;
 
-import 'backup_and_recovery.dart';
 import 'config/advanced.dart';
 import 'developer.dart';
 import 'theme.dart';
@@ -173,9 +173,9 @@ class _BackupItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListItem.open(
       leading: const Icon(Icons.cloud_sync),
-      title: Text(context.appLocalizations.backupAndRecovery),
-      subtitle: Text(context.appLocalizations.backupAndRecoveryDesc),
-      delegate: OpenDelegate(widget: const BackupAndRecovery()),
+      title: Text(context.appLocalizations.backupAndRestore),
+      subtitle: Text(context.appLocalizations.backupAndRestoreDesc),
+      delegate: OpenDelegate(widget: const BackupAndRestore()),
     );
   }
 }

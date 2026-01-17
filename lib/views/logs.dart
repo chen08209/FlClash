@@ -68,13 +68,9 @@ class _LogsViewState extends ConsumerState<LogsView> {
   }
 
   Future<void> _handleExport() async {
-    final res = await appController.safeRun<bool>(
-      () async {
-        return await appController.exportLogs();
-      },
-      needLoading: true,
-      title: appLocalizations.exportLogs,
-    );
+    final res = await appController.safeRun<bool>(() async {
+      return await appController.exportLogs();
+    }, title: appLocalizations.exportLogs);
     if (res != true) return;
     globalState.showMessage(
       title: appLocalizations.tip,

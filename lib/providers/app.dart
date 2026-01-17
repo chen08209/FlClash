@@ -197,44 +197,6 @@ class BackBlock extends _$BackBlock with AutoDisposeNotifierMixin {
 }
 
 @Riverpod(keepAlive: true)
-class Loading extends _$Loading with AutoDisposeNotifierMixin {
-  DateTime? _start;
-  Timer? _timer;
-
-  @override
-  bool build() {
-    return false;
-  }
-
-  void start() {
-    _timer?.cancel();
-    _timer = null;
-    _start = DateTime.now();
-    value = true;
-  }
-
-  Future<void> stop() async {
-    if (_start == null) {
-      value = false;
-      return;
-    }
-    final startedAt = _start!;
-    final elapsed = DateTime.now().difference(_start!).inMilliseconds;
-    const minDuration = 1000;
-    if (elapsed >= minDuration) {
-      value = false;
-      return;
-    }
-    _timer = Timer(Duration(milliseconds: minDuration - elapsed), () {
-      if (_start != startedAt) {
-        return;
-      }
-      value = false;
-    });
-  }
-}
-
-@Riverpod(keepAlive: true)
 class Version extends _$Version with AutoDisposeNotifierMixin {
   @override
   int build() {
@@ -291,6 +253,44 @@ class Query extends _$Query with AutoDisposeNotifierMixin {
   @override
   String build(QueryTag tag) {
     return '';
+  }
+}
+
+@riverpod
+class Loading extends _$Loading with AutoDisposeNotifierMixin {
+  DateTime? _start;
+  Timer? _timer;
+
+  @override
+  bool build(LoadingTag tag) {
+    return false;
+  }
+
+  void start() {
+    _timer?.cancel();
+    _timer = null;
+    _start = DateTime.now();
+    value = true;
+  }
+
+  Future<void> stop() async {
+    if (_start == null) {
+      value = false;
+      return;
+    }
+    final startedAt = _start!;
+    final elapsed = DateTime.now().difference(_start!).inMilliseconds;
+    const minDuration = 1000;
+    if (elapsed >= minDuration) {
+      value = false;
+      return;
+    }
+    _timer = Timer(Duration(milliseconds: minDuration - elapsed), () {
+      if (_start != startedAt) {
+        return;
+      }
+      value = false;
+    });
   }
 }
 
@@ -385,7 +385,6 @@ List<Override> buildAppStateOverrides(AppState appState) {
     trafficsProvider.overrideWithBuild((_, _) => appState.traffics),
     totalTrafficProvider.overrideWithBuild((_, _) => appState.totalTraffic),
     realTunEnableProvider.overrideWithBuild((_, _) => appState.realTunEnable),
-    loadingProvider.overrideWithBuild((_, _) => appState.loading),
     systemUiOverlayStyleStateProvider.overrideWithBuild(
       (_, _) => appState.systemUiOverlayStyle,
     ),

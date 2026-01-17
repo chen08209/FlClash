@@ -82,7 +82,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(true) bool minimizeOnExit,
     @Default(false) bool hidden,
     @Default(false) bool developerMode,
-    @Default(RecoveryStrategy.compatible) RecoveryStrategy recoveryStrategy,
+    @Default(RestoreStrategy.compatible) RestoreStrategy restoreStrategy,
     @Default(true) bool showTrayTitle,
   }) = _AppSettingProps;
 

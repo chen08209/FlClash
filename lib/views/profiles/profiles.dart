@@ -191,9 +191,10 @@ class ProfileItem extends StatelessWidget {
 
   Future updateProfile() async {
     if (profile.type == ProfileType.file) return;
-    await appController.safeRun(silence: false, () async {
+    try {} finally {}
+    await appController.loadingRun(() async {
       await appController.updateProfile(profile, showLoading: true);
-    });
+    }, tag: LoadingTag.profiles);
   }
 
   void _handleShowEditExtendPage(BuildContext context) {
@@ -240,19 +241,15 @@ class ProfileItem extends StatelessWidget {
   }
 
   Future<void> _handleExportFile(BuildContext context) async {
-    final res = await appController.safeRun<bool>(
-      () async {
-        final mFile = await profile.file;
-        final value = await picker.saveFile(
-          profile.label.getSafeValue(profile.id.toString()),
-          mFile.readAsBytesSync(),
-        );
-        if (value == null) return false;
-        return true;
-      },
-      needLoading: true,
-      title: appLocalizations.tip,
-    );
+    final res = await appController.safeRun<bool>(() async {
+      final mFile = await profile.file;
+      final value = await picker.saveFile(
+        profile.label.getSafeValue(profile.id.toString()),
+        mFile.readAsBytesSync(),
+      );
+      if (value == null) return false;
+      return true;
+    }, title: appLocalizations.tip);
     if (res == true && context.mounted) {
       context.showNotifier(appLocalizations.exportSuccess);
     }
