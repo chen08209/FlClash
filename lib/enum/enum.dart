@@ -419,7 +419,7 @@ enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }
 
 enum QueryTag { proxies, access }
 
-enum LoadingTag { profiles, backup_restore, access }
+enum LoadingTag { profiles, backup_restore, access, proxies }
 
 enum CoreStatus { connecting, connected, disconnected }
 

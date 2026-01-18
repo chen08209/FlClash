@@ -150,7 +150,12 @@ extension InitControllerExt on AppController {
     if (status == true) {
       await updateStatus(true, isInit: true);
     } else {
-      await applyProfile(force: true);
+      await applyProfile(
+        force: true,
+        preloadInvoke: () {
+          _ref.read(initProvider.notifier).value = true;
+        },
+      );
     }
   }
 
@@ -326,7 +331,7 @@ extension ProfilesControllerExt on AppController {
       final newProfile = await profile.update();
       _ref.read(profilesProvider.notifier).put(newProfile);
       if (profile.id == _ref.read(currentProfileIdProvider)) {
-        applyProfileDebounce();
+        applyProfileDebounce(silence: true);
       }
     } finally {
       _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = false;
@@ -555,12 +560,16 @@ extension SetupControllerExt on AppController {
     if (isStart) {
       await tryStartCore();
       if (!isInit) {
+        if (!_ref.read(initProvider)) {
+          return;
+        }
         await globalState.handleStart([updateRunTime, updateTraffic]);
-        applyProfileDebounce(force: true);
+        applyProfileDebounce(force: true, silence: true);
       } else {
         await applyProfile(
           force: true,
           preloadInvoke: () async {
+            _ref.read(initProvider.notifier).value = true;
             await globalState.handleStart([updateRunTime, updateTraffic]);
           },
         );
@@ -605,10 +614,10 @@ extension SetupControllerExt on AppController {
     _ref.read(checkIpNumProvider.notifier).add();
   }
 
-  void applyProfileDebounce({bool force = false}) {
+  void applyProfileDebounce({bool silence = false, bool force = false}) {
     debouncer.call(FunctionTag.applyProfile, (silence, force) {
-      applyProfile(force: force);
-    }, args: [force]);
+      applyProfile(silence: silence, force: force);
+    }, args: [silence, force]);
   }
 
   void changeMode(Mode mode) {
@@ -628,12 +637,17 @@ extension SetupControllerExt on AppController {
   }
 
   Future<void> applyProfile({
+    bool silence = false,
     bool force = false,
     VoidCallback? preloadInvoke,
   }) async {
-    await safeRun(() async {
-      await _applyProfile(force, preloadInvoke);
-    }, silence: true);
+    await loadingRun(
+      () async {
+        await _applyProfile(force, preloadInvoke);
+      },
+      silence: true,
+      tag: !silence ? LoadingTag.proxies : null,
+    );
     addCheckIp();
   }
 
@@ -813,7 +827,6 @@ extension CoreControllerExt on AppController {
     globalState.isUserDisconnected = true;
     await _connectCore();
     await _initCore();
-    _ref.read(initProvider.notifier).value = true;
     if (_ref.read(isStartProvider)) {
       await updateStatus(true, isInit: true);
     } else {
@@ -825,7 +838,7 @@ extension CoreControllerExt on AppController {
     if (coreController.isCompleted) {
       return false;
     }
-    restartCore();
+    await restartCore();
     return true;
   }
 
@@ -1136,16 +1149,23 @@ extension CommonControllerExt on AppController {
   Future<T?> loadingRun<T>(
     FutureOr<T> Function() futureFunction, {
     String? title,
-    required LoadingTag tag,
+    required LoadingTag? tag,
+    bool silence = false,
   }) async {
     return safeRun(
       futureFunction,
-      silence: false,
+      silence: silence,
       title: title,
       onStart: () {
+        if (tag == null) {
+          return;
+        }
         _ref.read(loadingProvider(tag).notifier).start();
       },
       onEnd: () {
+        if (tag == null) {
+          return;
+        }
         _ref.read(loadingProvider(tag).notifier).stop();
       },
     );

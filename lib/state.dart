@@ -41,7 +41,6 @@ class GlobalState {
   CorePalette? corePalette;
   DateTime? startTime;
   UpdateTasks tasks = [];
-  bool isInit = false;
   bool isUserDisconnected = false;
   SetupState? lastSetupState;
   VpnState? lastVpnState;

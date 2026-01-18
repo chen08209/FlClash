@@ -137,8 +137,10 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     final proxiesType = ref.watch(
       proxiesStyleSettingProvider.select((state) => state.type),
     );
+    final isLoading = ref.watch(loadingProvider(LoadingTag.proxies));
     return CommonScaffold(
       key: _scaffoldKey,
+      isLoading: isLoading,
       resizeToAvoidBottomInset: false,
       floatingActionButton: _buildFAB(),
       actions: _buildActions(),
