@@ -563,6 +563,7 @@ extension SetupControllerExt on AppController {
         await globalState.handleStart([updateRunTime, updateTraffic]);
         applyProfileDebounce(force: true, silence: true);
       } else {
+        _ref.read(runTimeProvider.notifier).value = 0;
         await applyProfile(
           force: true,
           preloadInvoke: () async {
@@ -753,7 +754,6 @@ extension SetupControllerExt on AppController {
     if (message.isNotEmpty) {
       throw message;
     }
-    print('sdada===>');
     addCheckIp();
   }
 

@@ -292,7 +292,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
               ),
           ValueListenableBuilder(
             valueListenable: _loadingNotifier,
-            builder: (_, value, __) {
+            builder: (_, value, _) {
               return value == true
                   ? const LinearProgressIndicator()
                   : Container();
