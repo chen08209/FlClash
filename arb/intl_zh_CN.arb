@@ -475,5 +475,6 @@
   "restoreFromWebDAVDesc": "通过WebDAV恢复数据",
   "restoreFromFileDesc": "通过文件恢复数据",
   "restoreOnlyConfig": "仅恢复配置文件",
-  "restoreAllData": "恢复所有数据"
+  "restoreAllData": "恢复所有数据",
+  "addProfile": "添加配置"
 }

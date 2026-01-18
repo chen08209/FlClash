@@ -475,5 +475,6 @@
   "restoreFromWebDAVDesc": "WebDAVを介してデータを復元する",
   "restoreFromFileDesc": "ファイルを介してデータを復元する",
   "restoreOnlyConfig": "設定ファイルのみを復元する",
-  "restoreAllData": "すべてのデータを復元する"
+  "restoreAllData": "すべてのデータを復元する",
+  "addProfile": "プロファイルを追加"
 }

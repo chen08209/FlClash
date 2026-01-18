@@ -340,7 +340,7 @@ extension ProfilesControllerExt on AppController {
     toProfiles();
     final profile = await loadingRun(tag: LoadingTag.profiles, () async {
       return await Profile.normal(url: url).update();
-    }, title: appLocalizations.add);
+    }, title: appLocalizations.addProfile);
     if (profile != null) {
       putProfile(profile);
     }
@@ -362,13 +362,9 @@ extension ProfilesControllerExt on AppController {
     if (!_context.mounted) return;
     globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     toProfiles();
-    final profile = await loadingRun(
-      tag: LoadingTag.profiles,
-      () async {
-        return await Profile.normal(label: platformFile?.name).saveFile(bytes);
-      },
-      title: '${appLocalizations.add}${appLocalizations.profile}',
-    );
+    final profile = await loadingRun(tag: LoadingTag.profiles, () async {
+      return await Profile.normal(label: platformFile?.name).saveFile(bytes);
+    }, title: appLocalizations.addProfile);
     if (profile != null) {
       putProfile(profile);
     }

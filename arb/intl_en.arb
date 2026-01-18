@@ -474,5 +474,6 @@
   "restoreFromWebDAVDesc": "Restore data via WebDAV",
   "restoreFromFileDesc": "Restore data via file",
   "restoreOnlyConfig": "Restore configuration files only",
-  "restoreAllData": "Restore all data"
+  "restoreAllData": "Restore all data",
+  "addProfile": "Add Profile"
 }

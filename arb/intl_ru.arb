@@ -483,5 +483,6 @@
   "restoreFromWebDAVDesc": "Восстановить данные через WebDAV",
   "restoreFromFileDesc": "Восстановить данные из файла",
   "restoreOnlyConfig": "Восстановить только файлы конфигурации",
-  "restoreAllData": "Восстановить все данные"
+  "restoreAllData": "Восстановить все данные",
+  "addProfile": "Добавить профиль"
 }
