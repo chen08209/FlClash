@@ -47,10 +47,7 @@ class _ProfilesViewState extends State<ProfilesView> {
         await appController.updateProfile(profile, showLoading: true);
       } catch (e) {
         messages.add(
-          UpdatingMessage(
-            label: profile.label.getSafeValue(profile.id.toString()),
-            message: e.toString(),
-          ),
+          UpdatingMessage(label: profile.realLabel, message: e.toString()),
         );
       }
     });
@@ -184,10 +181,7 @@ class ProfileItem extends StatelessWidget {
       return;
     }
 
-    final previewPage = EditorPage(
-      title: profile.label.getSafeValue(profile.id.toString()),
-      content: content,
-    );
+    final previewPage = EditorPage(title: profile.realLabel, content: content);
     BaseNavigator.push<String>(context, previewPage);
   }
 
@@ -246,7 +240,7 @@ class ProfileItem extends StatelessWidget {
     final res = await appController.safeRun<bool>(() async {
       final mFile = await profile.file;
       final value = await picker.saveFile(
-        profile.label.getSafeValue(profile.id.toString()),
+        profile.realLabel,
         mFile.readAsBytesSync(),
       );
       if (value == null) return false;
@@ -389,7 +383,7 @@ class ProfileItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                profile.label.getSafeValue(profile.id.toString()),
+                profile.realLabel,
                 style: context.textTheme.titleMedium,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -448,7 +442,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
         index: index,
         child: const Icon(Icons.drag_handle),
       ),
-      title: Text(profile.label.getSafeValue(profile.id.toString())),
+      title: Text(profile.realLabel),
       isFirst: isFirst,
       isLast: isLast,
       isDecorator: isDecorator,

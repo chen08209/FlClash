@@ -65,7 +65,7 @@ abstract class Profile with _$Profile {
   factory Profile.normal({String? label, String url = ''}) {
     final id = snowflake.id;
     return Profile(
-      label: label ?? id.toString(),
+      label: label ?? '',
       url: url,
       id: id,
       autoUpdateDuration: defaultUpdateDuration,
@@ -132,7 +132,7 @@ extension ProfilesExt on List<Profile> {
   }
 
   String _getLabel(String label, int id) {
-    final realLabel = label.getSafeValue(id.toString());
+    final realLabel = label.takeFirstValid([id.toString()]);
     final hasDup =
         indexWhere(
           (element) => element.label == realLabel && element.id != id,
@@ -167,6 +167,8 @@ extension ProfileExtension on Profile {
       url.isEmpty == true ? ProfileType.file : ProfileType.url;
 
   bool get realAutoUpdate => url.isEmpty == true ? false : autoUpdate;
+
+  String get realLabel => label.takeFirstValid([id.toString()]);
 
   String get fileName => '$id.yaml';
 
@@ -213,11 +215,10 @@ extension ProfileExtension on Profile {
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
     return await copyWith(
-      label: label.getSafeValue(
-        utils
-            .getFileNameForDisposition(disposition)
-            .getSafeValue(id.toString()),
-      ),
+      label: label.takeFirstValid([
+        utils.getFileNameForDisposition(disposition),
+        id.toString(),
+      ]),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
     ).saveFile(response.data ?? Uint8List.fromList([]));
   }

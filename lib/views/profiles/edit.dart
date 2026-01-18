@@ -133,9 +133,9 @@ class _EditProfileViewState extends State<EditProfileView> {
       }
     }
     if (!mounted) return;
-    final title = widget.profile.label.getSafeValue(
+    final title = widget.profile.label.takeFirstValid([
       widget.profile.id.toString(),
-    );
+    ]);
     final editorPage = EditorPage(
       title: title,
       content: _rawText!,

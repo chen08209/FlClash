@@ -29,9 +29,9 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
     groups: groups,
     selectedMap: selectedMap,
   );
-  final currentTestUrl = state.testUrl.getSafeValue(
+  final currentTestUrl = state.testUrl.takeFirstValid([
     appController.getRealTestUrl(testUrl),
-  );
+  ]);
   if (state.proxyName.isEmpty) {
     return;
   }
@@ -54,9 +54,9 @@ Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
       groups: groups,
       selectedMap: selectedMap,
     );
-    final url = state.testUrl.getSafeValue(
+    final url = state.testUrl.takeFirstValid([
       appController.getRealTestUrl(testUrl),
-    );
+    ]);
     final name = state.proxyName;
     if (name.isEmpty) {
       return;

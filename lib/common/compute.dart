@@ -48,7 +48,7 @@ List<Group> computeSort({
         proxies: proxies,
         delayMap: delayMap,
         selectedMap: selectedMap,
-        testUrl: group.testUrl.getSafeValue(defaultTestUrl),
+        testUrl: group.testUrl.takeFirstValid([defaultTestUrl]),
       ),
       ProxiesSortType.name => sortOfName(proxies),
     };
@@ -103,7 +103,8 @@ DelayState computeProxyDelayState({
     groups: groups,
     selectedMap: selectedMap,
   );
-  final currentDelayMap = delayMap[state.testUrl.getSafeValue(testUrl)] ?? {};
+  final currentDelayMap =
+      delayMap[state.testUrl.takeFirstValid([testUrl])] ?? {};
   final delay = currentDelayMap[state.proxyName];
   return DelayState(delay: delay ?? 0, group: state.group);
 }

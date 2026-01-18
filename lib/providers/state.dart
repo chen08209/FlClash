@@ -396,7 +396,7 @@ bool isCurrentPage(
 @riverpod
 String realTestUrl(Ref ref, [String? testUrl]) {
   final currentTestUrl = ref.watch(appSettingProvider).testUrl;
-  return testUrl.getSafeValue(currentTestUrl);
+  return testUrl.takeFirstValid([currentTestUrl]);
 }
 
 @riverpod
@@ -405,7 +405,8 @@ int? getDelay(Ref ref, {required String proxyName, String? testUrl}) {
   final proxyState = ref.watch(realSelectedProxyStateProvider(proxyName));
   final delay = ref.watch(
     delayDataSourceProvider.select((state) {
-      final delayMap = state[proxyState.testUrl.getSafeValue(currentTestUrl)];
+      final delayMap =
+          state[proxyState.testUrl.takeFirstValid([currentTestUrl])];
       return delayMap?[proxyState.proxyName];
     }),
   );

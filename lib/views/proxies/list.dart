@@ -515,7 +515,7 @@ class _ListHeaderState extends State<ListHeader> {
                                             groupName,
                                           ),
                                         )
-                                        .getSafeValue('');
+                                        .takeFirstValid([]);
                                     return Row(
                                       mainAxisSize: MainAxisSize.min,
                                       mainAxisAlignment:
