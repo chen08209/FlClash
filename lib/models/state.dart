@@ -94,7 +94,7 @@ abstract class AppBarEditState with _$AppBarEditState {
 @freezed
 abstract class StartButtonState with _$StartButtonState {
   const factory StartButtonState({
-    required bool isInit,
+    required bool isPreload,
     required bool hasProfile,
   }) = _StartButtonState;
 }

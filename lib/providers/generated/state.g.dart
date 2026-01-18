@@ -525,52 +525,6 @@ final class ProxiesActionsStateProvider
 String _$proxiesActionsStateHash() =>
     r'84f8a94706233ff5d4b8a456291a4e66c1381c62';
 
-@ProviderFor(startButtonState)
-const startButtonStateProvider = StartButtonStateProvider._();
-
-final class StartButtonStateProvider
-    extends
-        $FunctionalProvider<
-          StartButtonState,
-          StartButtonState,
-          StartButtonState
-        >
-    with $Provider<StartButtonState> {
-  const StartButtonStateProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'startButtonStateProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$startButtonStateHash();
-
-  @$internal
-  @override
-  $ProviderElement<StartButtonState> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  StartButtonState create(Ref ref) {
-    return startButtonState(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(StartButtonState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<StartButtonState>(value),
-    );
-  }
-}
-
-String _$startButtonStateHash() => r'7ad94aa053729317ff3aa1f3f8fd34cac3470abb';
-
 @ProviderFor(profilesState)
 const profilesStateProvider = ProfilesStateProvider._();
 

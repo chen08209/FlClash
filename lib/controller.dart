@@ -150,12 +150,7 @@ extension InitControllerExt on AppController {
     if (status == true) {
       await updateStatus(true, isInit: true);
     } else {
-      await applyProfile(
-        force: true,
-        preloadInvoke: () {
-          _ref.read(initProvider.notifier).value = true;
-        },
-      );
+      await applyProfile(force: true);
     }
   }
 
@@ -558,7 +553,10 @@ extension SetupControllerExt on AppController {
 
   Future<void> updateStatus(bool isStart, {bool isInit = false}) async {
     if (isStart) {
-      await tryStartCore();
+      final res = await tryStartCore(true);
+      if (res) {
+        return;
+      }
       if (!isInit) {
         if (!_ref.read(initProvider)) {
           return;
@@ -569,7 +567,6 @@ extension SetupControllerExt on AppController {
         await applyProfile(
           force: true,
           preloadInvoke: () async {
-            _ref.read(initProvider.notifier).value = true;
             await globalState.handleStart([updateRunTime, updateTraffic]);
           },
         );
@@ -820,21 +817,21 @@ extension CoreControllerExt on AppController {
     return Result.success(enableTun);
   }
 
-  Future<void> restartCore() async {
+  Future<void> restartCore([bool start = false]) async {
     if (globalState.isUserDisconnected) {
       await coreController.shutdown();
     }
     globalState.isUserDisconnected = true;
     await _connectCore();
     await _initCore();
-    if (_ref.read(isStartProvider)) {
+    if (start || _ref.read(isStartProvider)) {
       await updateStatus(true, isInit: true);
     } else {
       await applyProfile(force: true);
     }
   }
 
-  Future<bool> tryStartCore() async {
+  Future<bool> tryStartCore([bool start = false]) async {
     if (coreController.isCompleted) {
       return false;
     }

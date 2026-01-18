@@ -3003,7 +3003,7 @@ as  Function(),
 /// @nodoc
 mixin _$StartButtonState {
 
- bool get isInit; bool get hasProfile;
+ bool get isPreload; bool get hasProfile;
 /// Create a copy of StartButtonState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3014,16 +3014,16 @@ $StartButtonStateCopyWith<StartButtonState> get copyWith => _$StartButtonStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StartButtonState&&(identical(other.isInit, isInit) || other.isInit == isInit)&&(identical(other.hasProfile, hasProfile) || other.hasProfile == hasProfile));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StartButtonState&&(identical(other.isPreload, isPreload) || other.isPreload == isPreload)&&(identical(other.hasProfile, hasProfile) || other.hasProfile == hasProfile));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isInit,hasProfile);
+int get hashCode => Object.hash(runtimeType,isPreload,hasProfile);
 
 @override
 String toString() {
-  return 'StartButtonState(isInit: $isInit, hasProfile: $hasProfile)';
+  return 'StartButtonState(isPreload: $isPreload, hasProfile: $hasProfile)';
 }
 
 
@@ -3034,7 +3034,7 @@ abstract mixin class $StartButtonStateCopyWith<$Res>  {
   factory $StartButtonStateCopyWith(StartButtonState value, $Res Function(StartButtonState) _then) = _$StartButtonStateCopyWithImpl;
 @useResult
 $Res call({
- bool isInit, bool hasProfile
+ bool isPreload, bool hasProfile
 });
 
 
@@ -3051,9 +3051,9 @@ class _$StartButtonStateCopyWithImpl<$Res>
 
 /// Create a copy of StartButtonState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isInit = null,Object? hasProfile = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isPreload = null,Object? hasProfile = null,}) {
   return _then(_self.copyWith(
-isInit: null == isInit ? _self.isInit : isInit // ignore: cast_nullable_to_non_nullable
+isPreload: null == isPreload ? _self.isPreload : isPreload // ignore: cast_nullable_to_non_nullable
 as bool,hasProfile: null == hasProfile ? _self.hasProfile : hasProfile // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -3140,10 +3140,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isInit,  bool hasProfile)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isPreload,  bool hasProfile)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _StartButtonState() when $default != null:
-return $default(_that.isInit,_that.hasProfile);case _:
+return $default(_that.isPreload,_that.hasProfile);case _:
   return orElse();
 
 }
@@ -3161,10 +3161,10 @@ return $default(_that.isInit,_that.hasProfile);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isInit,  bool hasProfile)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isPreload,  bool hasProfile)  $default,) {final _that = this;
 switch (_that) {
 case _StartButtonState():
-return $default(_that.isInit,_that.hasProfile);case _:
+return $default(_that.isPreload,_that.hasProfile);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3181,10 +3181,10 @@ return $default(_that.isInit,_that.hasProfile);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isInit,  bool hasProfile)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isPreload,  bool hasProfile)?  $default,) {final _that = this;
 switch (_that) {
 case _StartButtonState() when $default != null:
-return $default(_that.isInit,_that.hasProfile);case _:
+return $default(_that.isPreload,_that.hasProfile);case _:
   return null;
 
 }
@@ -3196,10 +3196,10 @@ return $default(_that.isInit,_that.hasProfile);case _:
 
 
 class _StartButtonState implements StartButtonState {
-  const _StartButtonState({required this.isInit, required this.hasProfile});
+  const _StartButtonState({required this.isPreload, required this.hasProfile});
   
 
-@override final  bool isInit;
+@override final  bool isPreload;
 @override final  bool hasProfile;
 
 /// Create a copy of StartButtonState
@@ -3212,16 +3212,16 @@ _$StartButtonStateCopyWith<_StartButtonState> get copyWith => __$StartButtonStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StartButtonState&&(identical(other.isInit, isInit) || other.isInit == isInit)&&(identical(other.hasProfile, hasProfile) || other.hasProfile == hasProfile));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StartButtonState&&(identical(other.isPreload, isPreload) || other.isPreload == isPreload)&&(identical(other.hasProfile, hasProfile) || other.hasProfile == hasProfile));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isInit,hasProfile);
+int get hashCode => Object.hash(runtimeType,isPreload,hasProfile);
 
 @override
 String toString() {
-  return 'StartButtonState(isInit: $isInit, hasProfile: $hasProfile)';
+  return 'StartButtonState(isPreload: $isPreload, hasProfile: $hasProfile)';
 }
 
 
@@ -3232,7 +3232,7 @@ abstract mixin class _$StartButtonStateCopyWith<$Res> implements $StartButtonSta
   factory _$StartButtonStateCopyWith(_StartButtonState value, $Res Function(_StartButtonState) _then) = __$StartButtonStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool isInit, bool hasProfile
+ bool isPreload, bool hasProfile
 });
 
 
@@ -3249,9 +3249,9 @@ class __$StartButtonStateCopyWithImpl<$Res>
 
 /// Create a copy of StartButtonState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isInit = null,Object? hasProfile = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? isPreload = null,Object? hasProfile = null,}) {
   return _then(_StartButtonState(
-isInit: null == isInit ? _self.isInit : isInit // ignore: cast_nullable_to_non_nullable
+isPreload: null == isPreload ? _self.isPreload : isPreload // ignore: cast_nullable_to_non_nullable
 as bool,hasProfile: null == hasProfile ? _self.hasProfile : hasProfile // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

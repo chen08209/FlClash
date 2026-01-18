@@ -226,15 +226,6 @@ ProxiesActionsState proxiesActionsState(Ref ref) {
 }
 
 @riverpod
-StartButtonState startButtonState(Ref ref) {
-  final isInit = ref.watch(initProvider);
-  final hasProfile = ref.watch(
-    profilesProvider.select((state) => state.isNotEmpty),
-  );
-  return StartButtonState(isInit: isInit, hasProfile: hasProfile);
-}
-
-@riverpod
 ProfilesState profilesState(Ref ref) {
   final currentProfileId = ref.watch(currentProfileIdProvider);
   final profiles = ref.watch(profilesProvider);
