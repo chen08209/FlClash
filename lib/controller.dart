@@ -586,7 +586,7 @@ extension SetupControllerExt on AppController {
       return false;
     }
     final setupState = await _ref.read(setupStateProvider(profileId).future);
-    return setupState.needSetup(globalState.lastSetupState) != true;
+    return setupState.needSetup(globalState.lastSetupState) == true;
   }
 
   Future<void> updateConfigDebounce() async {
@@ -644,7 +644,6 @@ extension SetupControllerExt on AppController {
       silence: true,
       tag: !silence ? LoadingTag.proxies : null,
     );
-    addCheckIp();
   }
 
   Future<Map<String, dynamic>> getProfile({
@@ -754,6 +753,8 @@ extension SetupControllerExt on AppController {
     if (message.isNotEmpty) {
       throw message;
     }
+    print('sdada===>');
+    addCheckIp();
   }
 
   Future _applyProfile([

@@ -1,19 +1,10 @@
-buildscript {
-    dependencies {
-        classpath(libs.build.kotlin)
-    }
-}
-
-plugins {
-    id("com.android.library") apply false
-}
-
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
 }
+
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
@@ -31,4 +22,3 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
-

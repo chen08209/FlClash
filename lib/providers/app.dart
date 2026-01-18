@@ -344,8 +344,8 @@ class NetworkDetection extends _$NetworkDetection
     if (!isStart && _preIsStart == false && state.ipInfo != null) {
       return;
     }
-    // _cancelToken?.cancel();
-    // _cancelToken = CancelToken();
+    _cancelToken?.cancel();
+    _cancelToken = CancelToken();
     commonPrint.log('checkIp start');
     state = state.copyWith(isLoading: true, ipInfo: null);
     _preIsStart = isStart;
