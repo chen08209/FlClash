@@ -1,3 +1,13 @@
+## v0.8.92
+
+- Add sqlite store
+
+- Optimize android quick action
+
+- Optimize backup and restore
+
+- Optimize more details
+
 ## v0.8.91
 
 - Fix windows some issues
