@@ -402,7 +402,7 @@ enum OverwriteType {
   // none,
   standard,
   script,
-  // custom,
+  custom,
 }
 
 enum RuleTarget { DIRECT, REJECT, MATCH }

@@ -24,6 +24,19 @@ class ProfilesView extends StatefulWidget {
 class _ProfilesViewState extends State<ProfilesView> {
   Function? applyConfigDebounce;
   bool _isUpdating = false;
+  final GlobalKey _targetKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _targetKey.currentContext;
+      if (context == null) {
+        return;
+      }
+      Scrollable.ensureVisible(context, duration: commonDuration);
+    });
+  }
 
   void _handleShowAddExtendPage() {
     showExtend(
@@ -134,7 +147,10 @@ class _ProfilesViewState extends State<ProfilesView> {
                         for (int i = 0; i < state.profiles.length; i++)
                           GridItem(
                             child: ProfileItem(
-                              key: Key(state.profiles[i].id.toString()),
+                              key:
+                                  state.currentProfileId == state.profiles[i].id
+                                  ? _targetKey
+                                  : null,
                               profile: state.profiles[i],
                               groupValue: state.currentProfileId,
                               onChanged: (profileId) {

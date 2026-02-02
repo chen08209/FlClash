@@ -78,7 +78,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => appLocalizations.standard,
       OverwriteType.script => appLocalizations.script,
-      // OverwriteType.custom => appLocalizations.overwriteTypeCustom,
+      OverwriteType.custom => appLocalizations.overwriteTypeCustom,
     };
   }
 
@@ -86,7 +86,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => Icons.stars,
       OverwriteType.script => Icons.rocket,
-      // OverwriteType.custom => Icons.dashboard_customize,
+      OverwriteType.custom => Icons.dashboard_customize,
     };
   }
 
@@ -94,7 +94,7 @@ class _Title extends ConsumerWidget {
     return switch (type) {
       OverwriteType.standard => appLocalizations.standardModeDesc,
       OverwriteType.script => appLocalizations.scriptModeDesc,
-      // OverwriteType.custom => appLocalizations.overwriteTypeCustomDesc,
+      OverwriteType.custom => appLocalizations.overwriteTypeCustomDesc,
     };
   }
 
@@ -167,7 +167,7 @@ class _Content extends ConsumerWidget {
     return switch (overwriteType) {
       OverwriteType.standard => _StandardContent(profileId),
       OverwriteType.script => _ScriptContent(profileId),
-      // OverwriteType.custom => SliverToBoxAdapter(),
+      OverwriteType.custom => _CustomContent(profileId),
     };
   }
 }
@@ -331,6 +331,7 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
                   ),
                   title: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Flexible(
                         child: Text(
@@ -338,8 +339,7 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
                           style: context.textTheme.bodyLarge,
                         ),
                       ),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, size: 18),
+                      Icon(Icons.arrow_forward_ios, size: 18),
                     ],
                   ),
                 ),
@@ -457,6 +457,7 @@ class _ScriptContent extends ConsumerWidget {
                 ),
                 title: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
                       child: Text(
@@ -464,14 +465,57 @@ class _ScriptContent extends ConsumerWidget {
                         style: context.textTheme.bodyLarge,
                       ),
                     ),
-                    SizedBox(width: 4),
-                    Icon(Icons.arrow_forward, size: 18),
+                    Icon(Icons.arrow_forward_ios, size: 18),
                   ],
                 ),
               ),
               onPressed: () {
                 BaseNavigator.push(context, const ScriptsView());
               },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CustomContent extends ConsumerWidget {
+  final int profileId;
+
+  const _CustomContent(this.profileId);
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverToBoxAdapter(child: SizedBox(height: 24)),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: CommonCard(
+              padding: EdgeInsets.zero,
+              radius: 18,
+              child: ListTile(
+                minTileHeight: 0,
+                minVerticalPadding: 0,
+                titleTextStyle: context.textTheme.bodyMedium?.toJetBrainsMono,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                title: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text('代理组', style: context.textTheme.bodyLarge),
+                    ),
+                    Icon(Icons.arrow_forward_ios, size: 18),
+                  ],
+                ),
+              ),
+              onPressed: () {},
             ),
           ),
         ),
