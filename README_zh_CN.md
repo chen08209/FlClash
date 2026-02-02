@@ -41,8 +41,8 @@ on Mobile:
 ⚠️ 使用前请确保安装以下依赖
 
    ```bash
-    sudo apt-get install libayatana-appindicator3-dev
-    sudo apt-get install libkeybinder-3.0-dev
+    sudo apt-get install libayatana-appindicator3-1
+    sudo apt-get install libkeybinder-3.0-0
    ```
 
 <details>
