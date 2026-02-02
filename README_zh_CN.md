@@ -41,9 +41,22 @@ on Mobile:
 ⚠️ 使用前请确保安装以下依赖
 
    ```bash
-    sudo apt-get install libayatana-appindicator3-dev
-    sudo apt-get install libkeybinder-3.0-dev
+    sudo apt-get install libayatana-appindicator3-1
+    sudo apt-get install libkeybinder-3.0-0
    ```
+
+<details>
+
+<summary>有关deb包依赖问题</summary>
+
+这个项目以前使用的是devel依赖，可以试着一起装上
+
+```bash
+sudo apt-get install libayatana-appindicator3-dev
+sudo apt-get install libkeybinder-3.0-dev
+```
+
+</details>
 
 ### Android
 

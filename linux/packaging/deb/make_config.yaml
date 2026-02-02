@@ -11,8 +11,8 @@ essential: false
 icon: ./assets/images/icon.png
 
 dependencies:
-  - libayatana-appindicator3-dev
-  - libkeybinder-3.0-dev
+  - libayatana-appindicator3-1
+  - libkeybinder-3.0-0
 
 keywords:
   - FlClash
