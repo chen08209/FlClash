@@ -402,7 +402,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "getOriginRules": MessageLookupByLibrary.simpleMessage(
       "Получить оригинальные правила",
     ),
-    "global": MessageLookupByLibrary.simpleMessage("Глобальный"),
+    "global": MessageLookupByLibrary.simpleMessage("Глобально"),
     "go": MessageLookupByLibrary.simpleMessage("Перейти"),
     "goDownload": MessageLookupByLibrary.simpleMessage("Перейти к загрузке"),
     "goToConfigureScript": MessageLookupByLibrary.simpleMessage(
