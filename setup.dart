@@ -390,7 +390,7 @@ class BuildCommand extends Command {
       Build.getExecutable('sudo apt-get install -y libkeybinder-3.0-dev'),
     );
     await Build.exec(Build.getExecutable('sudo apt install -y locate'));
-    if (arch == Arch.amd64) {
+    if (arch == Arch.amd64 || arch == Arch.arm64) {
       await Build.exec(Build.getExecutable('sudo apt install -y rpm patchelf'));
       await Build.exec(Build.getExecutable('sudo apt install -y libfuse2'));
 
@@ -481,7 +481,7 @@ class BuildCommand extends Command {
         final targetMap = {Arch.arm64: 'linux-arm64', Arch.amd64: 'linux-x64'};
         final targets = [
           'deb',
-          if (arch == Arch.amd64) 'appimage',
+          'appimage',
           if (arch == Arch.amd64) 'rpm',
         ].join(',');
         final defaultTarget = targetMap[arch];
