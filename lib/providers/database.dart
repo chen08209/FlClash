@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
@@ -14,6 +16,11 @@ Stream<List<Profile>> profilesStream(Ref ref) {
 @riverpod
 Stream<List<Rule>> addedRuleStream(Ref ref, int profileId) {
   return database.rulesDao.allAddedRules(profileId).watch();
+}
+
+@riverpod
+Future<List<Rule>> addedRules(Ref ref, int profileId) {
+  return database.rulesDao.allAddedRules(profileId).get();
 }
 
 @Riverpod(keepAlive: true)

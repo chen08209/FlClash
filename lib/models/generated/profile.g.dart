@@ -73,6 +73,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
 const _$OverwriteTypeEnumMap = {
   OverwriteType.standard: 'standard',
   OverwriteType.script: 'script',
+  OverwriteType.custom: 'custom',
 };
 
 _StandardOverwrite _$StandardOverwriteFromJson(Map<String, dynamic> json) =>

@@ -60,7 +60,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     super.initState();
     readOnly = widget.onSave == null;
     _toolbarController = ContextMenuControllerImpl(readOnly);
-    _focusNode = FocusNode(canRequestFocus: !readOnly);
+    _focusNode = FocusNode();
     _controller = CodeLineEditingController.fromText(widget.content);
     _findController = CodeFindController(_controller);
     _titleController = TextEditingController(text: widget.title);
@@ -259,6 +259,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         body: CodeEditor(
           readOnly: readOnly,
           autofocus: false,
+          showCursorWhenReadOnly: false,
           findController: _findController,
           findBuilder: (context, controller, readOnly) => FindPanel(
             controller: controller,
@@ -408,7 +409,7 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
       return Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [bar, SizedBox(height: 4), _buildFindInput(context, value)],
+        children: [bar, SizedBox(height: 12), _buildFindInput(context, value)],
       );
     }
     return bar;

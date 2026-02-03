@@ -686,9 +686,15 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
   final dns = ref.watch(patchClashConfigProvider.select((state) => state.dns));
   final script = await ref.watch(scriptProvider(scriptId).future);
   final overrideDns = ref.watch(overrideDnsProvider);
-  final List<Rule> addedRules = profileId != null
-      ? await ref.watch(addedRuleStreamProvider(profileId).future)
-      : [];
+  List<Rule> addedRules = [];
+  if (profileId != null) {
+    final currentProfileId = ref.read(currentProfileIdProvider);
+    if (currentProfileId == profileId) {
+      addedRules = await ref.watch(addedRuleStreamProvider(profileId).future);
+    } else {
+      addedRules = await ref.read(addedRulesProvider(profileId).future);
+    }
+  }
   return SetupState(
     profileId: profileId,
     profileLastUpdateDate: profileLastUpdateDate,

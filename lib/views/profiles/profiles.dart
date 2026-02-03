@@ -34,7 +34,11 @@ class _ProfilesViewState extends State<ProfilesView> {
       if (context == null) {
         return;
       }
-      Scrollable.ensureVisible(context, duration: commonDuration);
+      Scrollable.ensureVisible(
+        context,
+        duration: commonDuration,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
     });
   }
 
