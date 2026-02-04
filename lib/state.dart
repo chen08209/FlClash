@@ -119,9 +119,22 @@ class GlobalState {
       return;
     }
     await executorUpdateTask();
-    timer = Timer(const Duration(seconds: 1), () async {
+    final interval = await _resolveUpdateInterval();
+    timer = Timer(interval, () {
       startUpdateTasks();
     });
+  }
+
+  Future<Duration> _resolveUpdateInterval() async {
+    const defaultInterval = Duration(seconds: 1);
+    if (!system.isMacOS) {
+      return defaultInterval;
+    }
+    final visible = await window?.isVisible;
+    if (visible == false) {
+      return const Duration(seconds: 10);
+    }
+    return const Duration(seconds: 3);
   }
 
   Future<void> executorUpdateTask() async {
