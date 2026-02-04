@@ -8,7 +8,9 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 
+part 'converter.dart';
 part 'generated/database.g.dart';
+part 'groups.dart';
 part 'links.dart';
 part 'profiles.dart';
 part 'rules.dart';

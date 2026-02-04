@@ -99,34 +99,6 @@ class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
   }
 }
 
-class StringMapConverter extends TypeConverter<Map<String, String>, String> {
-  const StringMapConverter();
-
-  @override
-  Map<String, String> fromSql(String fromDb) {
-    return Map<String, String>.from(json.decode(fromDb));
-  }
-
-  @override
-  String toSql(Map<String, String> value) {
-    return json.encode(value);
-  }
-}
-
-class StringSetConverter extends TypeConverter<Set<String>, String> {
-  const StringSetConverter();
-
-  @override
-  Set<String> fromSql(String fromDb) {
-    return Set<String>.from(json.decode(fromDb));
-  }
-
-  @override
-  String toSql(Set<String> value) {
-    return json.encode(value.toList());
-  }
-}
-
 extension RawProfilExt on RawProfile {
   Profile toProfile() {
     return Profile(
