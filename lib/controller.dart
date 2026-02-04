@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -638,6 +639,16 @@ extension SetupControllerExt on AppController {
         .update((state) => state.copyWith(mode: mode));
     if (mode == Mode.global) {
       updateCurrentGroupName(GroupName.GLOBAL.name);
+      // Auto select first non-DIRECT/REJECT proxy
+      final globalGroup = groups.getGroup(GroupName.GLOBAL.name);
+      if (globalGroup != null) {
+        final firstNonDirectProxy = globalGroup.all.firstWhereOrNull(
+          (proxy) => proxy.name != 'DIRECT' && proxy.name != 'REJECT',
+        );
+        if (firstNonDirectProxy != null) {
+          changeProxyDebounce(GroupName.GLOBAL.name, firstNonDirectProxy.name);
+        }
+      }
     }
     addCheckIp();
   }
