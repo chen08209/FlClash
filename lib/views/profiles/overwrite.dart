@@ -491,34 +491,11 @@ class _CustomContent extends ConsumerWidget {
       slivers: [
         SliverToBoxAdapter(child: SizedBox(height: 24)),
         SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: CommonCard(
-              padding: EdgeInsets.zero,
-              radius: 18,
-              child: ListTile(
-                minTileHeight: 0,
-                minVerticalPadding: 0,
-                titleTextStyle: context.textTheme.bodyMedium?.toJetBrainsMono,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                title: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text('代理组', style: context.textTheme.bodyLarge),
-                    ),
-                    Icon(Icons.arrow_forward_ios, size: 18),
-                  ],
-                ),
-              ),
-              onPressed: () {},
-            ),
+          child: Column(
+            children: [InfoHeader(info: Info(label: '自定义'))],
           ),
         ),
+        SliverToBoxAdapter(child: SizedBox(height: 8)),
       ],
     );
   }

@@ -11,48 +11,44 @@ class Groups extends Table {
     onDelete: KeyAction.cascade,
   )();
 
-  TextColumn get name => text().named('name')();
+  TextColumn get name => text()();
 
-  TextColumn get type => text().named('type')();
+  TextColumn get type => text()();
 
   TextColumn get proxies =>
-      text().map(const StringListConverter()).nullable().named('proxies')();
+      text().map(const StringListConverter()).nullable()();
 
-  TextColumn get use =>
-      text().map(const StringListConverter()).nullable().named('use')();
+  TextColumn get use => text().map(const StringListConverter()).nullable()();
 
-  TextColumn get url => text().nullable().named('url')();
+  TextColumn get url => text().nullable()();
 
-  IntColumn get interval => integer().nullable().named('interval')();
+  IntColumn get interval => integer().nullable()();
 
-  IntColumn get testTimeout => integer().nullable().named('timeout')();
+  IntColumn get testTimeout => integer().nullable()();
 
-  IntColumn get maxFailedTimes =>
-      integer().nullable().named('max_failed_times')();
+  IntColumn get maxFailedTimes => integer().nullable()();
 
-  BoolColumn get lazy => boolean().nullable().named('lazy')();
+  BoolColumn get lazy => boolean().nullable()();
 
-  BoolColumn get disableUdp => boolean().nullable().named('disable_udp')();
+  BoolColumn get disableUdp => boolean().nullable()();
 
-  TextColumn get filter => text().nullable().named('filter')();
+  TextColumn get filter => text().nullable()();
 
-  TextColumn get excludeFilter => text().nullable().named('exclude_filter')();
+  TextColumn get excludeFilter => text().nullable()();
 
-  TextColumn get excludeType => text().nullable().named('exclude_type')();
+  TextColumn get excludeType => text().nullable()();
 
-  TextColumn get expectedStatus => text().nullable().named('expected_status')();
+  TextColumn get expectedStatus => text().nullable()();
 
-  BoolColumn get includeAll => boolean().nullable().named('include_all')();
+  BoolColumn get includeAll => boolean().nullable()();
 
-  BoolColumn get includeAllProxies =>
-      boolean().nullable().named('include_all_proxies')();
+  BoolColumn get includeAllProxies => boolean().nullable()();
 
-  BoolColumn get includeAllProviders =>
-      boolean().nullable().named('include_all_providers')();
+  BoolColumn get includeAllProviders => boolean().nullable()();
 
-  BoolColumn get hidden => boolean().nullable().named('hidden')();
+  BoolColumn get hidden => boolean().nullable()();
 
-  TextColumn get icon => text().nullable().named('icon')();
+  TextColumn get icon => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {profileId, name};
