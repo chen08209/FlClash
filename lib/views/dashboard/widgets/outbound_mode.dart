@@ -110,7 +110,6 @@ class OutboundModeV2 extends StatelessWidget {
     return SizedBox(
       height: height,
       child: CommonCard(
-        padding: EdgeInsets.zero,
         child: Consumer(
           builder: (_, ref, _) {
             final mode = ref.watch(

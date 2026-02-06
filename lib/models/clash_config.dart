@@ -114,7 +114,7 @@ abstract class ProxyGroup with _$ProxyGroup {
     String? filter,
     @JsonKey(name: 'expected-filter') String? excludeFilter,
     @JsonKey(name: 'exclude-type') String? excludeType,
-    @JsonKey(name: 'expected-status') dynamic expectedStatus,
+    @JsonKey(name: 'expected-status') String? expectedStatus,
     bool? hidden,
     String? icon,
   }) = _ProxyGroup;
@@ -211,7 +211,7 @@ abstract class FallbackFilter with _$FallbackFilter {
   const factory FallbackFilter({
     @Default(true) bool geoip,
     @Default('CN') @JsonKey(name: 'geoip-code') String geoipCode,
-    @Default(['gfw']) List<String> geosite,
+    @Default(['']) List<String> geosite,
     @Default(['240.0.0.0/4']) List<String> ipcidr,
     @Default(['+.google.com', '+.facebook.com', '+.youtube.com'])
     List<String> domain,
@@ -413,29 +413,29 @@ List<Rule> _genRule(List<dynamic>? rules) {
   return rules.map((item) => Rule.value(item)).toList();
 }
 
-List<RuleProvider> _genRuleProviders(Map<String, dynamic> json) {
-  return json.entries.map((entry) => RuleProvider(name: entry.key)).toList();
-}
-
-List<SubRule> _genSubRules(Map<String, dynamic> json) {
-  return json.entries.map((entry) => SubRule(name: entry.key)).toList();
-}
+// List<RuleProvider> _genRuleProviders(Map<String, dynamic> json) {
+//   return json.entries.map((entry) => RuleProvider(name: entry.key)).toList();
+// }
+//
+// List<SubRule> _genSubRules(Map<String, dynamic> json) {
+//   return json.entries.map((entry) => SubRule(name: entry.key)).toList();
+// }
 
 @freezed
-abstract class ClashConfigSnippet with _$ClashConfigSnippet {
-  const factory ClashConfigSnippet({
+abstract class CustomClashConfig with _$CustomClashConfig {
+  const factory CustomClashConfig({
     @Default([]) @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
     @JsonKey(fromJson: _genRule, name: 'rules') @Default([]) List<Rule> rule,
-    @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
-    @Default([])
-    List<RuleProvider> ruleProvider,
-    @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
-    @Default([])
-    List<SubRule> subRules,
-  }) = _ClashConfigSnippet;
+    // @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
+    // @Default([])
+    // List<RuleProvider> ruleProvider,
+    // @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
+    // @Default([])
+    // List<SubRule> subRules,
+  }) = _CustomClashConfig;
 
-  factory ClashConfigSnippet.fromJson(Map<String, Object?> json) =>
-      _$ClashConfigSnippetFromJson(json);
+  factory CustomClashConfig.fromJson(Map<String, Object?> json) =>
+      _$CustomClashConfigFromJson(json);
 }
 
 @freezed

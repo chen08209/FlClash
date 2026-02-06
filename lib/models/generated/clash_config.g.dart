@@ -21,7 +21,7 @@ _ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) => _ProxyGroup(
   filter: json['filter'] as String?,
   excludeFilter: json['expected-filter'] as String?,
   excludeType: json['exclude-type'] as String?,
-  expectedStatus: json['expected-status'],
+  expectedStatus: json['expected-status'] as String?,
   hidden: json['hidden'] as bool?,
   icon: json['icon'] as String?,
 );
@@ -168,7 +168,7 @@ _FallbackFilter _$FallbackFilterFromJson(
   geoipCode: json['geoip-code'] as String? ?? 'CN',
   geosite:
       (json['geosite'] as List<dynamic>?)?.map((e) => e as String).toList() ??
-      const ['gfw'],
+      const [''],
   ipcidr:
       (json['ipcidr'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const ['240.0.0.0/4'],
@@ -304,28 +304,20 @@ Map<String, dynamic> _$SubRuleToJson(_SubRule instance) => <String, dynamic>{
   'name': instance.name,
 };
 
-_ClashConfigSnippet _$ClashConfigSnippetFromJson(Map<String, dynamic> json) =>
-    _ClashConfigSnippet(
+_CustomClashConfig _$CustomClashConfigFromJson(Map<String, dynamic> json) =>
+    _CustomClashConfig(
       proxyGroups:
           (json['proxy-groups'] as List<dynamic>?)
               ?.map((e) => ProxyGroup.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
       rule: json['rules'] == null ? const [] : _genRule(json['rules'] as List?),
-      ruleProvider: json['rule-providers'] == null
-          ? const []
-          : _genRuleProviders(json['rule-providers'] as Map<String, dynamic>),
-      subRules: json['sub-rules'] == null
-          ? const []
-          : _genSubRules(json['sub-rules'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$ClashConfigSnippetToJson(_ClashConfigSnippet instance) =>
+Map<String, dynamic> _$CustomClashConfigToJson(_CustomClashConfig instance) =>
     <String, dynamic>{
       'proxy-groups': instance.proxyGroups,
       'rules': instance.rule,
-      'rule-providers': instance.ruleProvider,
-      'sub-rules': instance.subRules,
     };
 
 _ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => _ClashConfig(

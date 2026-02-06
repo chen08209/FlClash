@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ProxyGroup {
 
- String get name;@JsonKey(fromJson: GroupType.parseProfileType) GroupType get type; List<String>? get proxies; List<String>? get use; int? get interval; bool? get lazy; String? get url; int? get timeout;@JsonKey(name: 'max-failed-times') int? get maxFailedTimes; String? get filter;@JsonKey(name: 'expected-filter') String? get excludeFilter;@JsonKey(name: 'exclude-type') String? get excludeType;@JsonKey(name: 'expected-status') dynamic get expectedStatus; bool? get hidden; String? get icon;
+ String get name;@JsonKey(fromJson: GroupType.parseProfileType) GroupType get type; List<String>? get proxies; List<String>? get use; int? get interval; bool? get lazy; String? get url; int? get timeout;@JsonKey(name: 'max-failed-times') int? get maxFailedTimes; String? get filter;@JsonKey(name: 'expected-filter') String? get excludeFilter;@JsonKey(name: 'exclude-type') String? get excludeType;@JsonKey(name: 'expected-status') String? get expectedStatus; bool? get hidden; String? get icon;
 /// Create a copy of ProxyGroup
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,12 +28,12 @@ $ProxyGroupCopyWith<ProxyGroup> get copyWith => _$ProxyGroupCopyWithImpl<ProxyGr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyGroup&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.proxies, proxies)&&const DeepCollectionEquality().equals(other.use, use)&&(identical(other.interval, interval) || other.interval == interval)&&(identical(other.lazy, lazy) || other.lazy == lazy)&&(identical(other.url, url) || other.url == url)&&(identical(other.timeout, timeout) || other.timeout == timeout)&&(identical(other.maxFailedTimes, maxFailedTimes) || other.maxFailedTimes == maxFailedTimes)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.excludeFilter, excludeFilter) || other.excludeFilter == excludeFilter)&&(identical(other.excludeType, excludeType) || other.excludeType == excludeType)&&const DeepCollectionEquality().equals(other.expectedStatus, expectedStatus)&&(identical(other.hidden, hidden) || other.hidden == hidden)&&(identical(other.icon, icon) || other.icon == icon));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyGroup&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.proxies, proxies)&&const DeepCollectionEquality().equals(other.use, use)&&(identical(other.interval, interval) || other.interval == interval)&&(identical(other.lazy, lazy) || other.lazy == lazy)&&(identical(other.url, url) || other.url == url)&&(identical(other.timeout, timeout) || other.timeout == timeout)&&(identical(other.maxFailedTimes, maxFailedTimes) || other.maxFailedTimes == maxFailedTimes)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.excludeFilter, excludeFilter) || other.excludeFilter == excludeFilter)&&(identical(other.excludeType, excludeType) || other.excludeType == excludeType)&&(identical(other.expectedStatus, expectedStatus) || other.expectedStatus == expectedStatus)&&(identical(other.hidden, hidden) || other.hidden == hidden)&&(identical(other.icon, icon) || other.icon == icon));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,type,const DeepCollectionEquality().hash(proxies),const DeepCollectionEquality().hash(use),interval,lazy,url,timeout,maxFailedTimes,filter,excludeFilter,excludeType,const DeepCollectionEquality().hash(expectedStatus),hidden,icon);
+int get hashCode => Object.hash(runtimeType,name,type,const DeepCollectionEquality().hash(proxies),const DeepCollectionEquality().hash(use),interval,lazy,url,timeout,maxFailedTimes,filter,excludeFilter,excludeType,expectedStatus,hidden,icon);
 
 @override
 String toString() {
@@ -48,7 +48,7 @@ abstract mixin class $ProxyGroupCopyWith<$Res>  {
   factory $ProxyGroupCopyWith(ProxyGroup value, $Res Function(ProxyGroup) _then) = _$ProxyGroupCopyWithImpl;
 @useResult
 $Res call({
- String name,@JsonKey(fromJson: GroupType.parseProfileType) GroupType type, List<String>? proxies, List<String>? use, int? interval, bool? lazy, String? url, int? timeout,@JsonKey(name: 'max-failed-times') int? maxFailedTimes, String? filter,@JsonKey(name: 'expected-filter') String? excludeFilter,@JsonKey(name: 'exclude-type') String? excludeType,@JsonKey(name: 'expected-status') dynamic expectedStatus, bool? hidden, String? icon
+ String name,@JsonKey(fromJson: GroupType.parseProfileType) GroupType type, List<String>? proxies, List<String>? use, int? interval, bool? lazy, String? url, int? timeout,@JsonKey(name: 'max-failed-times') int? maxFailedTimes, String? filter,@JsonKey(name: 'expected-filter') String? excludeFilter,@JsonKey(name: 'exclude-type') String? excludeType,@JsonKey(name: 'expected-status') String? expectedStatus, bool? hidden, String? icon
 });
 
 
@@ -80,7 +80,7 @@ as int?,filter: freezed == filter ? _self.filter : filter // ignore: cast_nullab
 as String?,excludeFilter: freezed == excludeFilter ? _self.excludeFilter : excludeFilter // ignore: cast_nullable_to_non_nullable
 as String?,excludeType: freezed == excludeType ? _self.excludeType : excludeType // ignore: cast_nullable_to_non_nullable
 as String?,expectedStatus: freezed == expectedStatus ? _self.expectedStatus : expectedStatus // ignore: cast_nullable_to_non_nullable
-as dynamic,hidden: freezed == hidden ? _self.hidden : hidden // ignore: cast_nullable_to_non_nullable
+as String?,hidden: freezed == hidden ? _self.hidden : hidden // ignore: cast_nullable_to_non_nullable
 as bool?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -167,7 +167,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name, @JsonKey(fromJson: GroupType.parseProfileType)  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'expected-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  dynamic expectedStatus,  bool? hidden,  String? icon)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name, @JsonKey(fromJson: GroupType.parseProfileType)  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'expected-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  bool? hidden,  String? icon)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProxyGroup() when $default != null:
 return $default(_that.name,_that.type,_that.proxies,_that.use,_that.interval,_that.lazy,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.hidden,_that.icon);case _:
@@ -188,7 +188,7 @@ return $default(_that.name,_that.type,_that.proxies,_that.use,_that.interval,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name, @JsonKey(fromJson: GroupType.parseProfileType)  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'expected-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  dynamic expectedStatus,  bool? hidden,  String? icon)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name, @JsonKey(fromJson: GroupType.parseProfileType)  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'expected-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  bool? hidden,  String? icon)  $default,) {final _that = this;
 switch (_that) {
 case _ProxyGroup():
 return $default(_that.name,_that.type,_that.proxies,_that.use,_that.interval,_that.lazy,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.hidden,_that.icon);case _:
@@ -208,7 +208,7 @@ return $default(_that.name,_that.type,_that.proxies,_that.use,_that.interval,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name, @JsonKey(fromJson: GroupType.parseProfileType)  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'expected-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  dynamic expectedStatus,  bool? hidden,  String? icon)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name, @JsonKey(fromJson: GroupType.parseProfileType)  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'expected-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  bool? hidden,  String? icon)?  $default,) {final _that = this;
 switch (_that) {
 case _ProxyGroup() when $default != null:
 return $default(_that.name,_that.type,_that.proxies,_that.use,_that.interval,_that.lazy,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.hidden,_that.icon);case _:
@@ -254,7 +254,7 @@ class _ProxyGroup implements ProxyGroup {
 @override final  String? filter;
 @override@JsonKey(name: 'expected-filter') final  String? excludeFilter;
 @override@JsonKey(name: 'exclude-type') final  String? excludeType;
-@override@JsonKey(name: 'expected-status') final  dynamic expectedStatus;
+@override@JsonKey(name: 'expected-status') final  String? expectedStatus;
 @override final  bool? hidden;
 @override final  String? icon;
 
@@ -271,12 +271,12 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyGroup&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other._proxies, _proxies)&&const DeepCollectionEquality().equals(other._use, _use)&&(identical(other.interval, interval) || other.interval == interval)&&(identical(other.lazy, lazy) || other.lazy == lazy)&&(identical(other.url, url) || other.url == url)&&(identical(other.timeout, timeout) || other.timeout == timeout)&&(identical(other.maxFailedTimes, maxFailedTimes) || other.maxFailedTimes == maxFailedTimes)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.excludeFilter, excludeFilter) || other.excludeFilter == excludeFilter)&&(identical(other.excludeType, excludeType) || other.excludeType == excludeType)&&const DeepCollectionEquality().equals(other.expectedStatus, expectedStatus)&&(identical(other.hidden, hidden) || other.hidden == hidden)&&(identical(other.icon, icon) || other.icon == icon));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyGroup&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other._proxies, _proxies)&&const DeepCollectionEquality().equals(other._use, _use)&&(identical(other.interval, interval) || other.interval == interval)&&(identical(other.lazy, lazy) || other.lazy == lazy)&&(identical(other.url, url) || other.url == url)&&(identical(other.timeout, timeout) || other.timeout == timeout)&&(identical(other.maxFailedTimes, maxFailedTimes) || other.maxFailedTimes == maxFailedTimes)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.excludeFilter, excludeFilter) || other.excludeFilter == excludeFilter)&&(identical(other.excludeType, excludeType) || other.excludeType == excludeType)&&(identical(other.expectedStatus, expectedStatus) || other.expectedStatus == expectedStatus)&&(identical(other.hidden, hidden) || other.hidden == hidden)&&(identical(other.icon, icon) || other.icon == icon));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,type,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_use),interval,lazy,url,timeout,maxFailedTimes,filter,excludeFilter,excludeType,const DeepCollectionEquality().hash(expectedStatus),hidden,icon);
+int get hashCode => Object.hash(runtimeType,name,type,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_use),interval,lazy,url,timeout,maxFailedTimes,filter,excludeFilter,excludeType,expectedStatus,hidden,icon);
 
 @override
 String toString() {
@@ -291,7 +291,7 @@ abstract mixin class _$ProxyGroupCopyWith<$Res> implements $ProxyGroupCopyWith<$
   factory _$ProxyGroupCopyWith(_ProxyGroup value, $Res Function(_ProxyGroup) _then) = __$ProxyGroupCopyWithImpl;
 @override @useResult
 $Res call({
- String name,@JsonKey(fromJson: GroupType.parseProfileType) GroupType type, List<String>? proxies, List<String>? use, int? interval, bool? lazy, String? url, int? timeout,@JsonKey(name: 'max-failed-times') int? maxFailedTimes, String? filter,@JsonKey(name: 'expected-filter') String? excludeFilter,@JsonKey(name: 'exclude-type') String? excludeType,@JsonKey(name: 'expected-status') dynamic expectedStatus, bool? hidden, String? icon
+ String name,@JsonKey(fromJson: GroupType.parseProfileType) GroupType type, List<String>? proxies, List<String>? use, int? interval, bool? lazy, String? url, int? timeout,@JsonKey(name: 'max-failed-times') int? maxFailedTimes, String? filter,@JsonKey(name: 'expected-filter') String? excludeFilter,@JsonKey(name: 'exclude-type') String? excludeType,@JsonKey(name: 'expected-status') String? expectedStatus, bool? hidden, String? icon
 });
 
 
@@ -323,7 +323,7 @@ as int?,filter: freezed == filter ? _self.filter : filter // ignore: cast_nullab
 as String?,excludeFilter: freezed == excludeFilter ? _self.excludeFilter : excludeFilter // ignore: cast_nullable_to_non_nullable
 as String?,excludeType: freezed == excludeType ? _self.excludeType : excludeType // ignore: cast_nullable_to_non_nullable
 as String?,expectedStatus: freezed == expectedStatus ? _self.expectedStatus : expectedStatus // ignore: cast_nullable_to_non_nullable
-as dynamic,hidden: freezed == hidden ? _self.hidden : hidden // ignore: cast_nullable_to_non_nullable
+as String?,hidden: freezed == hidden ? _self.hidden : hidden // ignore: cast_nullable_to_non_nullable
 as bool?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -1694,7 +1694,7 @@ return $default(_that.geoip,_that.geoipCode,_that.geosite,_that.ipcidr,_that.dom
 @JsonSerializable()
 
 class _FallbackFilter implements FallbackFilter {
-  const _FallbackFilter({this.geoip = true, @JsonKey(name: 'geoip-code') this.geoipCode = 'CN', final  List<String> geosite = const ['gfw'], final  List<String> ipcidr = const ['240.0.0.0/4'], final  List<String> domain = const ['+.google.com', '+.facebook.com', '+.youtube.com']}): _geosite = geosite,_ipcidr = ipcidr,_domain = domain;
+  const _FallbackFilter({this.geoip = true, @JsonKey(name: 'geoip-code') this.geoipCode = 'CN', final  List<String> geosite = const [''], final  List<String> ipcidr = const ['240.0.0.0/4'], final  List<String> domain = const ['+.google.com', '+.facebook.com', '+.youtube.com']}): _geosite = geosite,_ipcidr = ipcidr,_domain = domain;
   factory _FallbackFilter.fromJson(Map<String, dynamic> json) => _$FallbackFilterFromJson(json);
 
 @override@JsonKey() final  bool geoip;
@@ -3228,42 +3228,42 @@ as String,
 
 
 /// @nodoc
-mixin _$ClashConfigSnippet {
+mixin _$CustomClashConfig {
 
-@JsonKey(name: 'proxy-groups') List<ProxyGroup> get proxyGroups;@JsonKey(fromJson: _genRule, name: 'rules') List<Rule> get rule;@JsonKey(name: 'rule-providers', fromJson: _genRuleProviders) List<RuleProvider> get ruleProvider;@JsonKey(name: 'sub-rules', fromJson: _genSubRules) List<SubRule> get subRules;
-/// Create a copy of ClashConfigSnippet
+@JsonKey(name: 'proxy-groups') List<ProxyGroup> get proxyGroups;@JsonKey(fromJson: _genRule, name: 'rules') List<Rule> get rule;
+/// Create a copy of CustomClashConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$ClashConfigSnippetCopyWith<ClashConfigSnippet> get copyWith => _$ClashConfigSnippetCopyWithImpl<ClashConfigSnippet>(this as ClashConfigSnippet, _$identity);
+$CustomClashConfigCopyWith<CustomClashConfig> get copyWith => _$CustomClashConfigCopyWithImpl<CustomClashConfig>(this as CustomClashConfig, _$identity);
 
-  /// Serializes this ClashConfigSnippet to a JSON map.
+  /// Serializes this CustomClashConfig to a JSON map.
   Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClashConfigSnippet&&const DeepCollectionEquality().equals(other.proxyGroups, proxyGroups)&&const DeepCollectionEquality().equals(other.rule, rule)&&const DeepCollectionEquality().equals(other.ruleProvider, ruleProvider)&&const DeepCollectionEquality().equals(other.subRules, subRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomClashConfig&&const DeepCollectionEquality().equals(other.proxyGroups, proxyGroups)&&const DeepCollectionEquality().equals(other.rule, rule));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(proxyGroups),const DeepCollectionEquality().hash(rule),const DeepCollectionEquality().hash(ruleProvider),const DeepCollectionEquality().hash(subRules));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(proxyGroups),const DeepCollectionEquality().hash(rule));
 
 @override
 String toString() {
-  return 'ClashConfigSnippet(proxyGroups: $proxyGroups, rule: $rule, ruleProvider: $ruleProvider, subRules: $subRules)';
+  return 'CustomClashConfig(proxyGroups: $proxyGroups, rule: $rule)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $ClashConfigSnippetCopyWith<$Res>  {
-  factory $ClashConfigSnippetCopyWith(ClashConfigSnippet value, $Res Function(ClashConfigSnippet) _then) = _$ClashConfigSnippetCopyWithImpl;
+abstract mixin class $CustomClashConfigCopyWith<$Res>  {
+  factory $CustomClashConfigCopyWith(CustomClashConfig value, $Res Function(CustomClashConfig) _then) = _$CustomClashConfigCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,@JsonKey(fromJson: _genRule, name: 'rules') List<Rule> rule,@JsonKey(name: 'rule-providers', fromJson: _genRuleProviders) List<RuleProvider> ruleProvider,@JsonKey(name: 'sub-rules', fromJson: _genSubRules) List<SubRule> subRules
+@JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,@JsonKey(fromJson: _genRule, name: 'rules') List<Rule> rule
 });
 
 
@@ -3271,30 +3271,28 @@ $Res call({
 
 }
 /// @nodoc
-class _$ClashConfigSnippetCopyWithImpl<$Res>
-    implements $ClashConfigSnippetCopyWith<$Res> {
-  _$ClashConfigSnippetCopyWithImpl(this._self, this._then);
+class _$CustomClashConfigCopyWithImpl<$Res>
+    implements $CustomClashConfigCopyWith<$Res> {
+  _$CustomClashConfigCopyWithImpl(this._self, this._then);
 
-  final ClashConfigSnippet _self;
-  final $Res Function(ClashConfigSnippet) _then;
+  final CustomClashConfig _self;
+  final $Res Function(CustomClashConfig) _then;
 
-/// Create a copy of ClashConfigSnippet
+/// Create a copy of CustomClashConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? proxyGroups = null,Object? rule = null,Object? ruleProvider = null,Object? subRules = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? proxyGroups = null,Object? rule = null,}) {
   return _then(_self.copyWith(
 proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
 as List<ProxyGroup>,rule: null == rule ? _self.rule : rule // ignore: cast_nullable_to_non_nullable
-as List<Rule>,ruleProvider: null == ruleProvider ? _self.ruleProvider : ruleProvider // ignore: cast_nullable_to_non_nullable
-as List<RuleProvider>,subRules: null == subRules ? _self.subRules : subRules // ignore: cast_nullable_to_non_nullable
-as List<SubRule>,
+as List<Rule>,
   ));
 }
 
 }
 
 
-/// Adds pattern-matching-related methods to [ClashConfigSnippet].
-extension ClashConfigSnippetPatterns on ClashConfigSnippet {
+/// Adds pattern-matching-related methods to [CustomClashConfig].
+extension CustomClashConfigPatterns on CustomClashConfig {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -3307,10 +3305,10 @@ extension ClashConfigSnippetPatterns on ClashConfigSnippet {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ClashConfigSnippet value)?  $default,{required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CustomClashConfig value)?  $default,{required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _ClashConfigSnippet() when $default != null:
+case _CustomClashConfig() when $default != null:
 return $default(_that);case _:
   return orElse();
 
@@ -3329,10 +3327,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ClashConfigSnippet value)  $default,){
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CustomClashConfig value)  $default,){
 final _that = this;
 switch (_that) {
-case _ClashConfigSnippet():
+case _CustomClashConfig():
 return $default(_that);case _:
   throw StateError('Unexpected subclass');
 
@@ -3350,10 +3348,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ClashConfigSnippet value)?  $default,){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CustomClashConfig value)?  $default,){
 final _that = this;
 switch (_that) {
-case _ClashConfigSnippet() when $default != null:
+case _CustomClashConfig() when $default != null:
 return $default(_that);case _:
   return null;
 
@@ -3371,10 +3369,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-groups')  List<ProxyGroup> proxyGroups, @JsonKey(fromJson: _genRule, name: 'rules')  List<Rule> rule, @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)  List<RuleProvider> ruleProvider, @JsonKey(name: 'sub-rules', fromJson: _genSubRules)  List<SubRule> subRules)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-groups')  List<ProxyGroup> proxyGroups, @JsonKey(fromJson: _genRule, name: 'rules')  List<Rule> rule)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _ClashConfigSnippet() when $default != null:
-return $default(_that.proxyGroups,_that.rule,_that.ruleProvider,_that.subRules);case _:
+case _CustomClashConfig() when $default != null:
+return $default(_that.proxyGroups,_that.rule);case _:
   return orElse();
 
 }
@@ -3392,10 +3390,10 @@ return $default(_that.proxyGroups,_that.rule,_that.ruleProvider,_that.subRules);
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-groups')  List<ProxyGroup> proxyGroups, @JsonKey(fromJson: _genRule, name: 'rules')  List<Rule> rule, @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)  List<RuleProvider> ruleProvider, @JsonKey(name: 'sub-rules', fromJson: _genSubRules)  List<SubRule> subRules)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-groups')  List<ProxyGroup> proxyGroups, @JsonKey(fromJson: _genRule, name: 'rules')  List<Rule> rule)  $default,) {final _that = this;
 switch (_that) {
-case _ClashConfigSnippet():
-return $default(_that.proxyGroups,_that.rule,_that.ruleProvider,_that.subRules);case _:
+case _CustomClashConfig():
+return $default(_that.proxyGroups,_that.rule);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3412,10 +3410,10 @@ return $default(_that.proxyGroups,_that.rule,_that.ruleProvider,_that.subRules);
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'proxy-groups')  List<ProxyGroup> proxyGroups, @JsonKey(fromJson: _genRule, name: 'rules')  List<Rule> rule, @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)  List<RuleProvider> ruleProvider, @JsonKey(name: 'sub-rules', fromJson: _genSubRules)  List<SubRule> subRules)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'proxy-groups')  List<ProxyGroup> proxyGroups, @JsonKey(fromJson: _genRule, name: 'rules')  List<Rule> rule)?  $default,) {final _that = this;
 switch (_that) {
-case _ClashConfigSnippet() when $default != null:
-return $default(_that.proxyGroups,_that.rule,_that.ruleProvider,_that.subRules);case _:
+case _CustomClashConfig() when $default != null:
+return $default(_that.proxyGroups,_that.rule);case _:
   return null;
 
 }
@@ -3426,9 +3424,9 @@ return $default(_that.proxyGroups,_that.rule,_that.ruleProvider,_that.subRules);
 /// @nodoc
 @JsonSerializable()
 
-class _ClashConfigSnippet implements ClashConfigSnippet {
-  const _ClashConfigSnippet({@JsonKey(name: 'proxy-groups') final  List<ProxyGroup> proxyGroups = const [], @JsonKey(fromJson: _genRule, name: 'rules') final  List<Rule> rule = const [], @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders) final  List<RuleProvider> ruleProvider = const [], @JsonKey(name: 'sub-rules', fromJson: _genSubRules) final  List<SubRule> subRules = const []}): _proxyGroups = proxyGroups,_rule = rule,_ruleProvider = ruleProvider,_subRules = subRules;
-  factory _ClashConfigSnippet.fromJson(Map<String, dynamic> json) => _$ClashConfigSnippetFromJson(json);
+class _CustomClashConfig implements CustomClashConfig {
+  const _CustomClashConfig({@JsonKey(name: 'proxy-groups') final  List<ProxyGroup> proxyGroups = const [], @JsonKey(fromJson: _genRule, name: 'rules') final  List<Rule> rule = const []}): _proxyGroups = proxyGroups,_rule = rule;
+  factory _CustomClashConfig.fromJson(Map<String, dynamic> json) => _$CustomClashConfigFromJson(json);
 
  final  List<ProxyGroup> _proxyGroups;
 @override@JsonKey(name: 'proxy-groups') List<ProxyGroup> get proxyGroups {
@@ -3444,55 +3442,41 @@ class _ClashConfigSnippet implements ClashConfigSnippet {
   return EqualUnmodifiableListView(_rule);
 }
 
- final  List<RuleProvider> _ruleProvider;
-@override@JsonKey(name: 'rule-providers', fromJson: _genRuleProviders) List<RuleProvider> get ruleProvider {
-  if (_ruleProvider is EqualUnmodifiableListView) return _ruleProvider;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_ruleProvider);
-}
 
- final  List<SubRule> _subRules;
-@override@JsonKey(name: 'sub-rules', fromJson: _genSubRules) List<SubRule> get subRules {
-  if (_subRules is EqualUnmodifiableListView) return _subRules;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_subRules);
-}
-
-
-/// Create a copy of ClashConfigSnippet
+/// Create a copy of CustomClashConfig
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$ClashConfigSnippetCopyWith<_ClashConfigSnippet> get copyWith => __$ClashConfigSnippetCopyWithImpl<_ClashConfigSnippet>(this, _$identity);
+_$CustomClashConfigCopyWith<_CustomClashConfig> get copyWith => __$CustomClashConfigCopyWithImpl<_CustomClashConfig>(this, _$identity);
 
 @override
 Map<String, dynamic> toJson() {
-  return _$ClashConfigSnippetToJson(this, );
+  return _$CustomClashConfigToJson(this, );
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClashConfigSnippet&&const DeepCollectionEquality().equals(other._proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other._rule, _rule)&&const DeepCollectionEquality().equals(other._ruleProvider, _ruleProvider)&&const DeepCollectionEquality().equals(other._subRules, _subRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomClashConfig&&const DeepCollectionEquality().equals(other._proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other._rule, _rule));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rule),const DeepCollectionEquality().hash(_ruleProvider),const DeepCollectionEquality().hash(_subRules));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rule));
 
 @override
 String toString() {
-  return 'ClashConfigSnippet(proxyGroups: $proxyGroups, rule: $rule, ruleProvider: $ruleProvider, subRules: $subRules)';
+  return 'CustomClashConfig(proxyGroups: $proxyGroups, rule: $rule)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$ClashConfigSnippetCopyWith<$Res> implements $ClashConfigSnippetCopyWith<$Res> {
-  factory _$ClashConfigSnippetCopyWith(_ClashConfigSnippet value, $Res Function(_ClashConfigSnippet) _then) = __$ClashConfigSnippetCopyWithImpl;
+abstract mixin class _$CustomClashConfigCopyWith<$Res> implements $CustomClashConfigCopyWith<$Res> {
+  factory _$CustomClashConfigCopyWith(_CustomClashConfig value, $Res Function(_CustomClashConfig) _then) = __$CustomClashConfigCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,@JsonKey(fromJson: _genRule, name: 'rules') List<Rule> rule,@JsonKey(name: 'rule-providers', fromJson: _genRuleProviders) List<RuleProvider> ruleProvider,@JsonKey(name: 'sub-rules', fromJson: _genSubRules) List<SubRule> subRules
+@JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,@JsonKey(fromJson: _genRule, name: 'rules') List<Rule> rule
 });
 
 
@@ -3500,22 +3484,20 @@ $Res call({
 
 }
 /// @nodoc
-class __$ClashConfigSnippetCopyWithImpl<$Res>
-    implements _$ClashConfigSnippetCopyWith<$Res> {
-  __$ClashConfigSnippetCopyWithImpl(this._self, this._then);
+class __$CustomClashConfigCopyWithImpl<$Res>
+    implements _$CustomClashConfigCopyWith<$Res> {
+  __$CustomClashConfigCopyWithImpl(this._self, this._then);
 
-  final _ClashConfigSnippet _self;
-  final $Res Function(_ClashConfigSnippet) _then;
+  final _CustomClashConfig _self;
+  final $Res Function(_CustomClashConfig) _then;
 
-/// Create a copy of ClashConfigSnippet
+/// Create a copy of CustomClashConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? proxyGroups = null,Object? rule = null,Object? ruleProvider = null,Object? subRules = null,}) {
-  return _then(_ClashConfigSnippet(
+@override @pragma('vm:prefer-inline') $Res call({Object? proxyGroups = null,Object? rule = null,}) {
+  return _then(_CustomClashConfig(
 proxyGroups: null == proxyGroups ? _self._proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
 as List<ProxyGroup>,rule: null == rule ? _self._rule : rule // ignore: cast_nullable_to_non_nullable
-as List<Rule>,ruleProvider: null == ruleProvider ? _self._ruleProvider : ruleProvider // ignore: cast_nullable_to_non_nullable
-as List<RuleProvider>,subRules: null == subRules ? _self._subRules : subRules // ignore: cast_nullable_to_non_nullable
-as List<SubRule>,
+as List<Rule>,
   ));
 }
 

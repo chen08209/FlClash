@@ -45,7 +45,7 @@ enum GroupType {
   Relay;
 
   static GroupType parseProfileType(String type) {
-    return switch (type) {
+    return switch (type.toLowerCase()) {
       'url-test' => URLTest,
       'select' => Selector,
       'fallback' => Fallback,

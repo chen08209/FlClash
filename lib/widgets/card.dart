@@ -186,7 +186,7 @@ class CommonCard extends StatelessWidget {
       onLongPress: onLongPress,
       clipBehavior: Clip.antiAlias,
       style: ButtonStyle(
-        padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+        padding: WidgetStatePropertyAll(padding ?? EdgeInsets.zero),
         shape: WidgetStatePropertyAll(
           RoundedSuperellipseBorder(
             borderRadius: BorderRadius.circular(radius ?? 14),

@@ -63,7 +63,6 @@ class RuleStatusItem extends StatelessWidget {
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 4),
         child: CommonCard(
-          padding: EdgeInsets.zero,
           radius: 18,
           type: CommonCardType.filled,
           onPressed: () {

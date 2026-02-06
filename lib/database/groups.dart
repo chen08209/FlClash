@@ -1,9 +1,9 @@
 part of 'database.dart';
 
-@DataClassName('RawGroup')
-class Groups extends Table {
+@DataClassName('RawProxyGroup')
+class ProxyGroups extends Table {
   @override
-  String get tableName => 'groups';
+  String get tableName => 'proxy_groups';
 
   IntColumn get profileId => integer().nullable().references(
     Profiles,

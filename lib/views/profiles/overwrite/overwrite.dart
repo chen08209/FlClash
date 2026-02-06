@@ -14,6 +14,8 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+part 'custom.dart';
+
 class OverwriteView extends ConsumerStatefulWidget {
   final int profileId;
 
@@ -319,7 +321,6 @@ class __StandardContentState extends ConsumerState<_StandardContent> {
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: CommonCard(
-                padding: EdgeInsets.zero,
                 radius: 18,
                 child: ListTile(
                   minTileHeight: 0,
@@ -399,7 +400,6 @@ class _ScriptContent extends ConsumerWidget {
                   return Container(
                     margin: EdgeInsets.symmetric(vertical: 4),
                     child: CommonCard(
-                      padding: EdgeInsets.zero,
                       type: CommonCardType.filled,
                       radius: 18,
                       child: ListTile(
@@ -445,7 +445,6 @@ class _ScriptContent extends ConsumerWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: CommonCard(
-              padding: EdgeInsets.zero,
               radius: 18,
               child: ListTile(
                 minTileHeight: 0,
@@ -475,27 +474,6 @@ class _ScriptContent extends ConsumerWidget {
             ),
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _CustomContent extends ConsumerWidget {
-  final int profileId;
-
-  const _CustomContent(this.profileId);
-
-  @override
-  Widget build(BuildContext context, ref) {
-    return SliverMainAxisGroup(
-      slivers: [
-        SliverToBoxAdapter(child: SizedBox(height: 24)),
-        SliverToBoxAdapter(
-          child: Column(
-            children: [InfoHeader(info: Info(label: '自定义'))],
-          ),
-        ),
-        SliverToBoxAdapter(child: SizedBox(height: 8)),
       ],
     );
   }

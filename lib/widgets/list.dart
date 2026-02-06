@@ -587,7 +587,6 @@ class CommonSelectedListItem extends StatelessWidget {
         margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
         color: Colors.transparent,
         child: CommonCard(
-          padding: EdgeInsets.zero,
           radius: 18,
           type: CommonCardType.filled,
           isSelected: isSelected,
