@@ -12,6 +12,7 @@
 #include <file_selector_windows/file_selector_windows.h>
 #include <flutter_js/flutter_js_plugin.h>
 #include <hotkey_manager_windows/hotkey_manager_windows_plugin_c_api.h>
+#include <permission_handler_windows/permission_handler_windows_plugin.h>
 #include <proxy/proxy_plugin_c_api.h>
 #include <screen_retriever_windows/screen_retriever_windows_plugin_c_api.h>
 #include <sqlite3_flutter_libs/sqlite3_flutter_libs_plugin.h>
@@ -33,6 +34,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("FlutterJsPlugin"));
   HotkeyManagerWindowsPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("HotkeyManagerWindowsPluginCApi"));
+  PermissionHandlerWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
   ProxyPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ProxyPluginCApi"));
   ScreenRetrieverWindowsPluginCApiRegisterWithRegistrar(

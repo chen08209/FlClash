@@ -1,7 +1,7 @@
 [versions]
 #agp = "8.10.1"
 firebaseBom = "34.2.0"
-minSdk = "23"
+minSdk = "31"
 targetSdk = "36"
 compileSdk = "36"
 ndkVersion = "28.0.13004108"
