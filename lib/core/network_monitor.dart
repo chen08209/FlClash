@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -14,6 +15,9 @@ class NetworkStateMonitor {
   final _connectivity = Connectivity();
   final _networkInfo = NetworkInfo();
   StreamSubscription<List<ConnectivityResult>>? _subscription;
+  static const _macLocationChannel = MethodChannel(
+    'com.flclash/location_permission',
+  );
 
   String _currentNetworkType = '';
   String _currentSsid = '';
@@ -26,43 +30,10 @@ class NetworkStateMonitor {
   /// Check and request location permission (required for getting WiFi SSID)
   Future<bool> _checkAndRequestPermission() async {
     try {
-      // On macOS, location permission works differently
+      // On macOS Sonoma+, CWWiFiClient.ssid() requires CLLocationManager
+      // authorization. We use a native MethodChannel to request it.
       if (Platform.isMacOS) {
-        // Try to check permission status
-        var status = await Permission.location.status;
-
-        if (status.isGranted) {
-          _hasLocationPermission = true;
-          commonPrint.log(
-            'NetworkStateMonitor: Location permission granted on macOS',
-          );
-          return true;
-        }
-
-        // Request permission if not granted
-        if (status.isDenied) {
-          commonPrint.log(
-            'NetworkStateMonitor: Requesting location permission on macOS',
-          );
-          status = await Permission.location.request();
-
-          if (status.isGranted) {
-            _hasLocationPermission = true;
-            commonPrint.log(
-              'NetworkStateMonitor: Location permission granted on macOS',
-            );
-            return true;
-          } else {
-            commonPrint.log(
-              'NetworkStateMonitor: Location permission denied on macOS',
-            );
-            return false;
-          }
-        }
-
-        // For other statuses, try to proceed anyway
-        _hasLocationPermission = status.isGranted || status.isLimited;
-        return _hasLocationPermission;
+        return await _requestMacOSLocationPermission();
       }
 
       // Android permission flow
@@ -162,6 +133,33 @@ class NetworkStateMonitor {
     }
   }
 
+  /// Request location permission on macOS via native CLLocationManager
+  Future<bool> _requestMacOSLocationPermission() async {
+    try {
+      final status = await _macLocationChannel.invokeMethod<String>(
+        'requestLocationPermission',
+      );
+      commonPrint.log(
+        'NetworkStateMonitor: macOS location permission status: $status',
+      );
+      _hasLocationPermission = status == 'granted';
+      if (!_hasLocationPermission) {
+        commonPrint.log(
+          'NetworkStateMonitor: macOS location permission not granted ($status). '
+          'WiFi SSID will not be available. '
+          'Please grant location permission in System Settings > '
+          'Privacy & Security > Location Services.',
+        );
+      }
+      return _hasLocationPermission;
+    } catch (e) {
+      commonPrint.log(
+        'NetworkStateMonitor: Error requesting macOS location permission: $e',
+      );
+      return false;
+    }
+  }
+
   /// Start monitoring network state changes
   Future<void> startMonitoring() async {
     commonPrint.log('NetworkStateMonitor: Starting network monitoring');
@@ -230,8 +228,9 @@ class NetworkStateMonitor {
       return '';
     }
 
-    // Check if we have location permission
-    if (!_hasLocationPermission) {
+    // On macOS, system handles permission automatically
+    // On Android/iOS, check if we have location permission
+    if (!Platform.isMacOS && !_hasLocationPermission) {
       commonPrint.log(
         'NetworkStateMonitor: Cannot get SSID without location permission',
       );
