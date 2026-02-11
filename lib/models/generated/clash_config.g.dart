@@ -320,65 +320,58 @@ Map<String, dynamic> _$CustomClashConfigToJson(_CustomClashConfig instance) =>
       'rules': instance.rule,
     };
 
-_ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => _ClashConfig(
-  mixedPort: (json['mixed-port'] as num?)?.toInt() ?? defaultMixedPort,
-  socksPort: (json['socks-port'] as num?)?.toInt() ?? 0,
-  port: (json['port'] as num?)?.toInt() ?? 0,
-  redirPort: (json['redir-port'] as num?)?.toInt() ?? 0,
-  tproxyPort: (json['tproxy-port'] as num?)?.toInt() ?? 0,
-  mode: $enumDecodeNullable(_$ModeEnumMap, json['mode']) ?? Mode.rule,
-  allowLan: json['allow-lan'] as bool? ?? false,
-  logLevel:
-      $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']) ??
-      LogLevel.error,
-  ipv6: json['ipv6'] as bool? ?? false,
-  findProcessMode:
-      $enumDecodeNullable(
-        _$FindProcessModeEnumMap,
-        json['find-process-mode'],
-        unknownValue: FindProcessMode.always,
-      ) ??
-      FindProcessMode.always,
-  keepAliveInterval:
-      (json['keep-alive-interval'] as num?)?.toInt() ??
-      defaultKeepAliveInterval,
-  unifiedDelay: json['unified-delay'] as bool? ?? true,
-  tcpConcurrent: json['tcp-concurrent'] as bool? ?? true,
-  tun: json['tun'] == null
-      ? defaultTun
-      : Tun.safeFormJson(json['tun'] as Map<String, Object?>?),
-  dns: json['dns'] == null
-      ? defaultDns
-      : Dns.safeDnsFromJson(json['dns'] as Map<String, Object?>),
-  geoXUrl: json['geox-url'] == null
-      ? defaultGeoXUrl
-      : GeoXUrl.safeFormJson(json['geox-url'] as Map<String, Object?>?),
-  geodataLoader:
-      $enumDecodeNullable(_$GeodataLoaderEnumMap, json['geodata-loader']) ??
-      GeodataLoader.memconservative,
-  proxyGroups:
-      (json['proxy-groups'] as List<dynamic>?)
-          ?.map((e) => ProxyGroup.fromJson(e as Map<String, dynamic>))
-          .toList() ??
-      const [],
-  rule:
-      (json['rule'] as List<dynamic>?)?.map((e) => e as String).toList() ??
-      const [],
-  globalUa: json['global-ua'] as String?,
-  externalController:
-      $enumDecodeNullable(
-        _$ExternalControllerStatusEnumMap,
-        json['external-controller'],
-      ) ??
-      ExternalControllerStatus.close,
-  hosts:
-      (json['hosts'] as Map<String, dynamic>?)?.map(
-        (k, e) => MapEntry(k, e as String),
-      ) ??
-      const {},
-);
+_PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
+    _PatchClashConfig(
+      mixedPort: (json['mixed-port'] as num?)?.toInt() ?? defaultMixedPort,
+      socksPort: (json['socks-port'] as num?)?.toInt() ?? 0,
+      port: (json['port'] as num?)?.toInt() ?? 0,
+      redirPort: (json['redir-port'] as num?)?.toInt() ?? 0,
+      tproxyPort: (json['tproxy-port'] as num?)?.toInt() ?? 0,
+      mode: $enumDecodeNullable(_$ModeEnumMap, json['mode']) ?? Mode.rule,
+      allowLan: json['allow-lan'] as bool? ?? false,
+      logLevel:
+          $enumDecodeNullable(_$LogLevelEnumMap, json['log-level']) ??
+          LogLevel.error,
+      ipv6: json['ipv6'] as bool? ?? false,
+      findProcessMode:
+          $enumDecodeNullable(
+            _$FindProcessModeEnumMap,
+            json['find-process-mode'],
+            unknownValue: FindProcessMode.always,
+          ) ??
+          FindProcessMode.always,
+      keepAliveInterval:
+          (json['keep-alive-interval'] as num?)?.toInt() ??
+          defaultKeepAliveInterval,
+      unifiedDelay: json['unified-delay'] as bool? ?? true,
+      tcpConcurrent: json['tcp-concurrent'] as bool? ?? true,
+      tun: json['tun'] == null
+          ? defaultTun
+          : Tun.safeFormJson(json['tun'] as Map<String, Object?>?),
+      dns: json['dns'] == null
+          ? defaultDns
+          : Dns.safeDnsFromJson(json['dns'] as Map<String, Object?>),
+      geoXUrl: json['geox-url'] == null
+          ? defaultGeoXUrl
+          : GeoXUrl.safeFormJson(json['geox-url'] as Map<String, Object?>?),
+      geodataLoader:
+          $enumDecodeNullable(_$GeodataLoaderEnumMap, json['geodata-loader']) ??
+          GeodataLoader.memconservative,
+      globalUa: json['global-ua'] as String?,
+      externalController:
+          $enumDecodeNullable(
+            _$ExternalControllerStatusEnumMap,
+            json['external-controller'],
+          ) ??
+          ExternalControllerStatus.close,
+      hosts:
+          (json['hosts'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+    );
 
-Map<String, dynamic> _$ClashConfigToJson(_ClashConfig instance) =>
+Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
     <String, dynamic>{
       'mixed-port': instance.mixedPort,
       'socks-port': instance.socksPort,
@@ -397,8 +390,6 @@ Map<String, dynamic> _$ClashConfigToJson(_ClashConfig instance) =>
       'dns': instance.dns,
       'geox-url': instance.geoXUrl,
       'geodata-loader': _$GeodataLoaderEnumMap[instance.geodataLoader]!,
-      'proxy-groups': instance.proxyGroups,
-      'rule': instance.rule,
       'global-ua': instance.globalUa,
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,

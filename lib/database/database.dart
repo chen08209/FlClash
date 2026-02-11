@@ -17,8 +17,8 @@ part 'rules.dart';
 part 'scripts.dart';
 
 @DriftDatabase(
-  tables: [Profiles, Scripts, Rules, ProfileRuleLinks],
-  daos: [ProfilesDao, ScriptsDao, RulesDao],
+  tables: [Profiles, Scripts, Rules, ProfileRuleLinks, ProxyGroups],
+  daos: [ProfilesDao, ScriptsDao, RulesDao, ProxyGroupsDao],
 )
 class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());

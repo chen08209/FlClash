@@ -272,15 +272,6 @@ abstract class ProxyState with _$ProxyState {
 }
 
 @freezed
-abstract class ClashConfigState with _$ClashConfigState {
-  const factory ClashConfigState({
-    required bool overrideDns,
-    required ClashConfig clashConfig,
-    required RouteMode routeMode,
-  }) = _ClashConfigState;
-}
-
-@freezed
 abstract class DashboardState with _$DashboardState {
   const factory DashboardState({
     required List<DashboardWidget> dashboardWidgets,
@@ -343,7 +334,7 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required String profilesPath,
     required int profileId,
     required Map<String, dynamic> rawConfig,
-    required ClashConfig realPatchConfig,
+    required PatchClashConfig realPatchConfig,
     required bool overrideDns,
     required bool appendSystemDns,
     required List<Rule> addedRules,

@@ -88,12 +88,12 @@ class ProxiesStyleSetting extends _$ProxiesStyleSetting
   }
 }
 
-@riverpod
-class PatchClashConfig extends _$PatchClashConfig
+@Riverpod(name: 'patchClashConfigProvider')
+class _PatchClashConfig extends _$PatchClashConfig
     with AutoDisposeNotifierMixin {
   @override
-  ClashConfig build() {
-    return ClashConfig();
+  PatchClashConfig build() {
+    return PatchClashConfig();
   }
 }
 

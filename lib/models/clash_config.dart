@@ -5,7 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/clash_config.freezed.dart';
 part 'generated/clash_config.g.dart';
 
-const defaultClashConfig = ClashConfig();
+const defaultClashConfig = PatchClashConfig();
 
 const defaultTun = Tun();
 const defaultDns = Dns();
@@ -439,8 +439,8 @@ abstract class CustomClashConfig with _$CustomClashConfig {
 }
 
 @freezed
-abstract class ClashConfig with _$ClashConfig {
-  const factory ClashConfig({
+abstract class PatchClashConfig with _$PatchClashConfig {
+  const factory PatchClashConfig({
     @Default(defaultMixedPort) @JsonKey(name: 'mixed-port') int mixedPort,
     @Default(0) @JsonKey(name: 'socks-port') int socksPort,
     @Default(0) @JsonKey(name: 'port') int port,
@@ -469,24 +469,22 @@ abstract class ClashConfig with _$ClashConfig {
     @Default(GeodataLoader.memconservative)
     @JsonKey(name: 'geodata-loader')
     GeodataLoader geodataLoader,
-    @Default([]) @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
-    @Default([]) List<String> rule,
     @JsonKey(name: 'global-ua') String? globalUa,
     @Default(ExternalControllerStatus.close)
     @JsonKey(name: 'external-controller')
     ExternalControllerStatus externalController,
     @Default({}) Map<String, String> hosts,
-  }) = _ClashConfig;
+  }) = _PatchClashConfig;
 
-  factory ClashConfig.fromJson(Map<String, Object?> json) =>
-      _$ClashConfigFromJson(json);
+  factory PatchClashConfig.fromJson(Map<String, Object?> json) =>
+      _$PatchClashConfigFromJson(json);
 
-  factory ClashConfig.safeFormJson(Map<String, Object?>? json) {
+  factory PatchClashConfig.safeFormJson(Map<String, Object?>? json) {
     if (json == null) {
       return defaultClashConfig;
     }
     try {
-      return ClashConfig.fromJson(json);
+      return PatchClashConfig.fromJson(json);
     } catch (_) {
       return defaultClashConfig;
     }

@@ -538,12 +538,12 @@ abstract class _$ProxiesStyleSetting extends $Notifier<ProxiesStyleProps> {
   }
 }
 
-@ProviderFor(PatchClashConfig)
-const patchClashConfigProvider = PatchClashConfigProvider._();
+@ProviderFor(_PatchClashConfig)
+const patchClashConfigProvider = _PatchClashConfigProvider._();
 
-final class PatchClashConfigProvider
-    extends $NotifierProvider<PatchClashConfig, ClashConfig> {
-  const PatchClashConfigProvider._()
+final class _PatchClashConfigProvider
+    extends $NotifierProvider<_PatchClashConfig, PatchClashConfig> {
+  const _PatchClashConfigProvider._()
     : super(
         from: null,
         argument: null,
@@ -555,35 +555,35 @@ final class PatchClashConfigProvider
       );
 
   @override
-  String debugGetCreateSourceHash() => _$patchClashConfigHash();
+  String debugGetCreateSourceHash() => _$_patchClashConfigHash();
 
   @$internal
   @override
-  PatchClashConfig create() => PatchClashConfig();
+  _PatchClashConfig create() => _PatchClashConfig();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ClashConfig value) {
+  Override overrideWithValue(PatchClashConfig value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<ClashConfig>(value),
+      providerOverride: $SyncValueProvider<PatchClashConfig>(value),
     );
   }
 }
 
-String _$patchClashConfigHash() => r'ff92f991ccb3a3d13a938affc006d7e2cb85fecd';
+String _$_patchClashConfigHash() => r'9548891fadecd07245851b4cbd4c677abc40d95e';
 
-abstract class _$PatchClashConfig extends $Notifier<ClashConfig> {
-  ClashConfig build();
+abstract class _$PatchClashConfig extends $Notifier<PatchClashConfig> {
+  PatchClashConfig build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<ClashConfig, ClashConfig>;
+    final ref = this.ref as $Ref<PatchClashConfig, PatchClashConfig>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<ClashConfig, ClashConfig>,
-              ClashConfig,
+              AnyNotifier<PatchClashConfig, PatchClashConfig>,
+              PatchClashConfig,
               Object?,
               Object?
             >;

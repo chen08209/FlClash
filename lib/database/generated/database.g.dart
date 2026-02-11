@@ -1596,6 +1596,1219 @@ class ProfileRuleLinksCompanion extends UpdateCompanion<RawProfileRuleLink> {
   }
 }
 
+class $ProxyGroupsTable extends ProxyGroups
+    with TableInfo<$ProxyGroupsTable, RawProxyGroup> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProxyGroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<int> profileId = GeneratedColumn<int>(
+    'profile_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES profiles (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<List<String>?, String> proxies =
+      GeneratedColumn<String>(
+        'proxies',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<List<String>?>($ProxyGroupsTable.$converterproxiesn);
+  @override
+  late final GeneratedColumnWithTypeConverter<List<String>?, String> use =
+      GeneratedColumn<String>(
+        'use',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<List<String>?>($ProxyGroupsTable.$converterusen);
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _intervalMeta = const VerificationMeta(
+    'interval',
+  );
+  @override
+  late final GeneratedColumn<int> interval = GeneratedColumn<int>(
+    'interval',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _testTimeoutMeta = const VerificationMeta(
+    'testTimeout',
+  );
+  @override
+  late final GeneratedColumn<int> testTimeout = GeneratedColumn<int>(
+    'test_timeout',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _maxFailedTimesMeta = const VerificationMeta(
+    'maxFailedTimes',
+  );
+  @override
+  late final GeneratedColumn<int> maxFailedTimes = GeneratedColumn<int>(
+    'max_failed_times',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lazyMeta = const VerificationMeta('lazy');
+  @override
+  late final GeneratedColumn<bool> lazy = GeneratedColumn<bool>(
+    'lazy',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("lazy" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _disableUdpMeta = const VerificationMeta(
+    'disableUdp',
+  );
+  @override
+  late final GeneratedColumn<bool> disableUdp = GeneratedColumn<bool>(
+    'disable_udp',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("disable_udp" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _filterMeta = const VerificationMeta('filter');
+  @override
+  late final GeneratedColumn<String> filter = GeneratedColumn<String>(
+    'filter',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _excludeFilterMeta = const VerificationMeta(
+    'excludeFilter',
+  );
+  @override
+  late final GeneratedColumn<String> excludeFilter = GeneratedColumn<String>(
+    'exclude_filter',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _excludeTypeMeta = const VerificationMeta(
+    'excludeType',
+  );
+  @override
+  late final GeneratedColumn<String> excludeType = GeneratedColumn<String>(
+    'exclude_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _expectedStatusMeta = const VerificationMeta(
+    'expectedStatus',
+  );
+  @override
+  late final GeneratedColumn<String> expectedStatus = GeneratedColumn<String>(
+    'expected_status',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _includeAllMeta = const VerificationMeta(
+    'includeAll',
+  );
+  @override
+  late final GeneratedColumn<bool> includeAll = GeneratedColumn<bool>(
+    'include_all',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("include_all" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _includeAllProxiesMeta = const VerificationMeta(
+    'includeAllProxies',
+  );
+  @override
+  late final GeneratedColumn<bool> includeAllProxies = GeneratedColumn<bool>(
+    'include_all_proxies',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("include_all_proxies" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _includeAllProvidersMeta =
+      const VerificationMeta('includeAllProviders');
+  @override
+  late final GeneratedColumn<bool> includeAllProviders = GeneratedColumn<bool>(
+    'include_all_providers',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("include_all_providers" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _hiddenMeta = const VerificationMeta('hidden');
+  @override
+  late final GeneratedColumn<bool> hidden = GeneratedColumn<bool>(
+    'hidden',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("hidden" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _iconMeta = const VerificationMeta('icon');
+  @override
+  late final GeneratedColumn<String> icon = GeneratedColumn<String>(
+    'icon',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<String> order = GeneratedColumn<String>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    profileId,
+    name,
+    type,
+    proxies,
+    use,
+    url,
+    interval,
+    testTimeout,
+    maxFailedTimes,
+    lazy,
+    disableUdp,
+    filter,
+    excludeFilter,
+    excludeType,
+    expectedStatus,
+    includeAll,
+    includeAllProxies,
+    includeAllProviders,
+    hidden,
+    icon,
+    order,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'proxy_groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawProxyGroup> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    }
+    if (data.containsKey('interval')) {
+      context.handle(
+        _intervalMeta,
+        interval.isAcceptableOrUnknown(data['interval']!, _intervalMeta),
+      );
+    }
+    if (data.containsKey('test_timeout')) {
+      context.handle(
+        _testTimeoutMeta,
+        testTimeout.isAcceptableOrUnknown(
+          data['test_timeout']!,
+          _testTimeoutMeta,
+        ),
+      );
+    }
+    if (data.containsKey('max_failed_times')) {
+      context.handle(
+        _maxFailedTimesMeta,
+        maxFailedTimes.isAcceptableOrUnknown(
+          data['max_failed_times']!,
+          _maxFailedTimesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('lazy')) {
+      context.handle(
+        _lazyMeta,
+        lazy.isAcceptableOrUnknown(data['lazy']!, _lazyMeta),
+      );
+    }
+    if (data.containsKey('disable_udp')) {
+      context.handle(
+        _disableUdpMeta,
+        disableUdp.isAcceptableOrUnknown(data['disable_udp']!, _disableUdpMeta),
+      );
+    }
+    if (data.containsKey('filter')) {
+      context.handle(
+        _filterMeta,
+        filter.isAcceptableOrUnknown(data['filter']!, _filterMeta),
+      );
+    }
+    if (data.containsKey('exclude_filter')) {
+      context.handle(
+        _excludeFilterMeta,
+        excludeFilter.isAcceptableOrUnknown(
+          data['exclude_filter']!,
+          _excludeFilterMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exclude_type')) {
+      context.handle(
+        _excludeTypeMeta,
+        excludeType.isAcceptableOrUnknown(
+          data['exclude_type']!,
+          _excludeTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('expected_status')) {
+      context.handle(
+        _expectedStatusMeta,
+        expectedStatus.isAcceptableOrUnknown(
+          data['expected_status']!,
+          _expectedStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('include_all')) {
+      context.handle(
+        _includeAllMeta,
+        includeAll.isAcceptableOrUnknown(data['include_all']!, _includeAllMeta),
+      );
+    }
+    if (data.containsKey('include_all_proxies')) {
+      context.handle(
+        _includeAllProxiesMeta,
+        includeAllProxies.isAcceptableOrUnknown(
+          data['include_all_proxies']!,
+          _includeAllProxiesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('include_all_providers')) {
+      context.handle(
+        _includeAllProvidersMeta,
+        includeAllProviders.isAcceptableOrUnknown(
+          data['include_all_providers']!,
+          _includeAllProvidersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hidden')) {
+      context.handle(
+        _hiddenMeta,
+        hidden.isAcceptableOrUnknown(data['hidden']!, _hiddenMeta),
+      );
+    }
+    if (data.containsKey('icon')) {
+      context.handle(
+        _iconMeta,
+        icon.isAcceptableOrUnknown(data['icon']!, _iconMeta),
+      );
+    }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {profileId, name};
+  @override
+  RawProxyGroup map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawProxyGroup(
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}profile_id'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      proxies: $ProxyGroupsTable.$converterproxiesn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}proxies'],
+        ),
+      ),
+      use: $ProxyGroupsTable.$converterusen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}use'],
+        ),
+      ),
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      ),
+      interval: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}interval'],
+      ),
+      testTimeout: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}test_timeout'],
+      ),
+      maxFailedTimes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_failed_times'],
+      ),
+      lazy: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}lazy'],
+      ),
+      disableUdp: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}disable_udp'],
+      ),
+      filter: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}filter'],
+      ),
+      excludeFilter: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exclude_filter'],
+      ),
+      excludeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exclude_type'],
+      ),
+      expectedStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}expected_status'],
+      ),
+      includeAll: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}include_all'],
+      ),
+      includeAllProxies: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}include_all_proxies'],
+      ),
+      includeAllProviders: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}include_all_providers'],
+      ),
+      hidden: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}hidden'],
+      ),
+      icon: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}icon'],
+      ),
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}order'],
+      ),
+    );
+  }
+
+  @override
+  $ProxyGroupsTable createAlias(String alias) {
+    return $ProxyGroupsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<List<String>, String> $converterproxies =
+      const StringListConverter();
+  static TypeConverter<List<String>?, String?> $converterproxiesn =
+      NullAwareTypeConverter.wrap($converterproxies);
+  static TypeConverter<List<String>, String> $converteruse =
+      const StringListConverter();
+  static TypeConverter<List<String>?, String?> $converterusen =
+      NullAwareTypeConverter.wrap($converteruse);
+}
+
+class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
+  final int? profileId;
+  final String name;
+  final String type;
+  final List<String>? proxies;
+  final List<String>? use;
+  final String? url;
+  final int? interval;
+  final int? testTimeout;
+  final int? maxFailedTimes;
+  final bool? lazy;
+  final bool? disableUdp;
+  final String? filter;
+  final String? excludeFilter;
+  final String? excludeType;
+  final String? expectedStatus;
+  final bool? includeAll;
+  final bool? includeAllProxies;
+  final bool? includeAllProviders;
+  final bool? hidden;
+  final String? icon;
+  final String? order;
+  const RawProxyGroup({
+    this.profileId,
+    required this.name,
+    required this.type,
+    this.proxies,
+    this.use,
+    this.url,
+    this.interval,
+    this.testTimeout,
+    this.maxFailedTimes,
+    this.lazy,
+    this.disableUdp,
+    this.filter,
+    this.excludeFilter,
+    this.excludeType,
+    this.expectedStatus,
+    this.includeAll,
+    this.includeAllProxies,
+    this.includeAllProviders,
+    this.hidden,
+    this.icon,
+    this.order,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (!nullToAbsent || profileId != null) {
+      map['profile_id'] = Variable<int>(profileId);
+    }
+    map['name'] = Variable<String>(name);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || proxies != null) {
+      map['proxies'] = Variable<String>(
+        $ProxyGroupsTable.$converterproxiesn.toSql(proxies),
+      );
+    }
+    if (!nullToAbsent || use != null) {
+      map['use'] = Variable<String>(
+        $ProxyGroupsTable.$converterusen.toSql(use),
+      );
+    }
+    if (!nullToAbsent || url != null) {
+      map['url'] = Variable<String>(url);
+    }
+    if (!nullToAbsent || interval != null) {
+      map['interval'] = Variable<int>(interval);
+    }
+    if (!nullToAbsent || testTimeout != null) {
+      map['test_timeout'] = Variable<int>(testTimeout);
+    }
+    if (!nullToAbsent || maxFailedTimes != null) {
+      map['max_failed_times'] = Variable<int>(maxFailedTimes);
+    }
+    if (!nullToAbsent || lazy != null) {
+      map['lazy'] = Variable<bool>(lazy);
+    }
+    if (!nullToAbsent || disableUdp != null) {
+      map['disable_udp'] = Variable<bool>(disableUdp);
+    }
+    if (!nullToAbsent || filter != null) {
+      map['filter'] = Variable<String>(filter);
+    }
+    if (!nullToAbsent || excludeFilter != null) {
+      map['exclude_filter'] = Variable<String>(excludeFilter);
+    }
+    if (!nullToAbsent || excludeType != null) {
+      map['exclude_type'] = Variable<String>(excludeType);
+    }
+    if (!nullToAbsent || expectedStatus != null) {
+      map['expected_status'] = Variable<String>(expectedStatus);
+    }
+    if (!nullToAbsent || includeAll != null) {
+      map['include_all'] = Variable<bool>(includeAll);
+    }
+    if (!nullToAbsent || includeAllProxies != null) {
+      map['include_all_proxies'] = Variable<bool>(includeAllProxies);
+    }
+    if (!nullToAbsent || includeAllProviders != null) {
+      map['include_all_providers'] = Variable<bool>(includeAllProviders);
+    }
+    if (!nullToAbsent || hidden != null) {
+      map['hidden'] = Variable<bool>(hidden);
+    }
+    if (!nullToAbsent || icon != null) {
+      map['icon'] = Variable<String>(icon);
+    }
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<String>(order);
+    }
+    return map;
+  }
+
+  ProxyGroupsCompanion toCompanion(bool nullToAbsent) {
+    return ProxyGroupsCompanion(
+      profileId: profileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profileId),
+      name: Value(name),
+      type: Value(type),
+      proxies: proxies == null && nullToAbsent
+          ? const Value.absent()
+          : Value(proxies),
+      use: use == null && nullToAbsent ? const Value.absent() : Value(use),
+      url: url == null && nullToAbsent ? const Value.absent() : Value(url),
+      interval: interval == null && nullToAbsent
+          ? const Value.absent()
+          : Value(interval),
+      testTimeout: testTimeout == null && nullToAbsent
+          ? const Value.absent()
+          : Value(testTimeout),
+      maxFailedTimes: maxFailedTimes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maxFailedTimes),
+      lazy: lazy == null && nullToAbsent ? const Value.absent() : Value(lazy),
+      disableUdp: disableUdp == null && nullToAbsent
+          ? const Value.absent()
+          : Value(disableUdp),
+      filter: filter == null && nullToAbsent
+          ? const Value.absent()
+          : Value(filter),
+      excludeFilter: excludeFilter == null && nullToAbsent
+          ? const Value.absent()
+          : Value(excludeFilter),
+      excludeType: excludeType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(excludeType),
+      expectedStatus: expectedStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expectedStatus),
+      includeAll: includeAll == null && nullToAbsent
+          ? const Value.absent()
+          : Value(includeAll),
+      includeAllProxies: includeAllProxies == null && nullToAbsent
+          ? const Value.absent()
+          : Value(includeAllProxies),
+      includeAllProviders: includeAllProviders == null && nullToAbsent
+          ? const Value.absent()
+          : Value(includeAllProviders),
+      hidden: hidden == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hidden),
+      icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
+    );
+  }
+
+  factory RawProxyGroup.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawProxyGroup(
+      profileId: serializer.fromJson<int?>(json['profileId']),
+      name: serializer.fromJson<String>(json['name']),
+      type: serializer.fromJson<String>(json['type']),
+      proxies: serializer.fromJson<List<String>?>(json['proxies']),
+      use: serializer.fromJson<List<String>?>(json['use']),
+      url: serializer.fromJson<String?>(json['url']),
+      interval: serializer.fromJson<int?>(json['interval']),
+      testTimeout: serializer.fromJson<int?>(json['testTimeout']),
+      maxFailedTimes: serializer.fromJson<int?>(json['maxFailedTimes']),
+      lazy: serializer.fromJson<bool?>(json['lazy']),
+      disableUdp: serializer.fromJson<bool?>(json['disableUdp']),
+      filter: serializer.fromJson<String?>(json['filter']),
+      excludeFilter: serializer.fromJson<String?>(json['excludeFilter']),
+      excludeType: serializer.fromJson<String?>(json['excludeType']),
+      expectedStatus: serializer.fromJson<String?>(json['expectedStatus']),
+      includeAll: serializer.fromJson<bool?>(json['includeAll']),
+      includeAllProxies: serializer.fromJson<bool?>(json['includeAllProxies']),
+      includeAllProviders: serializer.fromJson<bool?>(
+        json['includeAllProviders'],
+      ),
+      hidden: serializer.fromJson<bool?>(json['hidden']),
+      icon: serializer.fromJson<String?>(json['icon']),
+      order: serializer.fromJson<String?>(json['order']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'profileId': serializer.toJson<int?>(profileId),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(type),
+      'proxies': serializer.toJson<List<String>?>(proxies),
+      'use': serializer.toJson<List<String>?>(use),
+      'url': serializer.toJson<String?>(url),
+      'interval': serializer.toJson<int?>(interval),
+      'testTimeout': serializer.toJson<int?>(testTimeout),
+      'maxFailedTimes': serializer.toJson<int?>(maxFailedTimes),
+      'lazy': serializer.toJson<bool?>(lazy),
+      'disableUdp': serializer.toJson<bool?>(disableUdp),
+      'filter': serializer.toJson<String?>(filter),
+      'excludeFilter': serializer.toJson<String?>(excludeFilter),
+      'excludeType': serializer.toJson<String?>(excludeType),
+      'expectedStatus': serializer.toJson<String?>(expectedStatus),
+      'includeAll': serializer.toJson<bool?>(includeAll),
+      'includeAllProxies': serializer.toJson<bool?>(includeAllProxies),
+      'includeAllProviders': serializer.toJson<bool?>(includeAllProviders),
+      'hidden': serializer.toJson<bool?>(hidden),
+      'icon': serializer.toJson<String?>(icon),
+      'order': serializer.toJson<String?>(order),
+    };
+  }
+
+  RawProxyGroup copyWith({
+    Value<int?> profileId = const Value.absent(),
+    String? name,
+    String? type,
+    Value<List<String>?> proxies = const Value.absent(),
+    Value<List<String>?> use = const Value.absent(),
+    Value<String?> url = const Value.absent(),
+    Value<int?> interval = const Value.absent(),
+    Value<int?> testTimeout = const Value.absent(),
+    Value<int?> maxFailedTimes = const Value.absent(),
+    Value<bool?> lazy = const Value.absent(),
+    Value<bool?> disableUdp = const Value.absent(),
+    Value<String?> filter = const Value.absent(),
+    Value<String?> excludeFilter = const Value.absent(),
+    Value<String?> excludeType = const Value.absent(),
+    Value<String?> expectedStatus = const Value.absent(),
+    Value<bool?> includeAll = const Value.absent(),
+    Value<bool?> includeAllProxies = const Value.absent(),
+    Value<bool?> includeAllProviders = const Value.absent(),
+    Value<bool?> hidden = const Value.absent(),
+    Value<String?> icon = const Value.absent(),
+    Value<String?> order = const Value.absent(),
+  }) => RawProxyGroup(
+    profileId: profileId.present ? profileId.value : this.profileId,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    proxies: proxies.present ? proxies.value : this.proxies,
+    use: use.present ? use.value : this.use,
+    url: url.present ? url.value : this.url,
+    interval: interval.present ? interval.value : this.interval,
+    testTimeout: testTimeout.present ? testTimeout.value : this.testTimeout,
+    maxFailedTimes: maxFailedTimes.present
+        ? maxFailedTimes.value
+        : this.maxFailedTimes,
+    lazy: lazy.present ? lazy.value : this.lazy,
+    disableUdp: disableUdp.present ? disableUdp.value : this.disableUdp,
+    filter: filter.present ? filter.value : this.filter,
+    excludeFilter: excludeFilter.present
+        ? excludeFilter.value
+        : this.excludeFilter,
+    excludeType: excludeType.present ? excludeType.value : this.excludeType,
+    expectedStatus: expectedStatus.present
+        ? expectedStatus.value
+        : this.expectedStatus,
+    includeAll: includeAll.present ? includeAll.value : this.includeAll,
+    includeAllProxies: includeAllProxies.present
+        ? includeAllProxies.value
+        : this.includeAllProxies,
+    includeAllProviders: includeAllProviders.present
+        ? includeAllProviders.value
+        : this.includeAllProviders,
+    hidden: hidden.present ? hidden.value : this.hidden,
+    icon: icon.present ? icon.value : this.icon,
+    order: order.present ? order.value : this.order,
+  );
+  RawProxyGroup copyWithCompanion(ProxyGroupsCompanion data) {
+    return RawProxyGroup(
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      proxies: data.proxies.present ? data.proxies.value : this.proxies,
+      use: data.use.present ? data.use.value : this.use,
+      url: data.url.present ? data.url.value : this.url,
+      interval: data.interval.present ? data.interval.value : this.interval,
+      testTimeout: data.testTimeout.present
+          ? data.testTimeout.value
+          : this.testTimeout,
+      maxFailedTimes: data.maxFailedTimes.present
+          ? data.maxFailedTimes.value
+          : this.maxFailedTimes,
+      lazy: data.lazy.present ? data.lazy.value : this.lazy,
+      disableUdp: data.disableUdp.present
+          ? data.disableUdp.value
+          : this.disableUdp,
+      filter: data.filter.present ? data.filter.value : this.filter,
+      excludeFilter: data.excludeFilter.present
+          ? data.excludeFilter.value
+          : this.excludeFilter,
+      excludeType: data.excludeType.present
+          ? data.excludeType.value
+          : this.excludeType,
+      expectedStatus: data.expectedStatus.present
+          ? data.expectedStatus.value
+          : this.expectedStatus,
+      includeAll: data.includeAll.present
+          ? data.includeAll.value
+          : this.includeAll,
+      includeAllProxies: data.includeAllProxies.present
+          ? data.includeAllProxies.value
+          : this.includeAllProxies,
+      includeAllProviders: data.includeAllProviders.present
+          ? data.includeAllProviders.value
+          : this.includeAllProviders,
+      hidden: data.hidden.present ? data.hidden.value : this.hidden,
+      icon: data.icon.present ? data.icon.value : this.icon,
+      order: data.order.present ? data.order.value : this.order,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawProxyGroup(')
+          ..write('profileId: $profileId, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('proxies: $proxies, ')
+          ..write('use: $use, ')
+          ..write('url: $url, ')
+          ..write('interval: $interval, ')
+          ..write('testTimeout: $testTimeout, ')
+          ..write('maxFailedTimes: $maxFailedTimes, ')
+          ..write('lazy: $lazy, ')
+          ..write('disableUdp: $disableUdp, ')
+          ..write('filter: $filter, ')
+          ..write('excludeFilter: $excludeFilter, ')
+          ..write('excludeType: $excludeType, ')
+          ..write('expectedStatus: $expectedStatus, ')
+          ..write('includeAll: $includeAll, ')
+          ..write('includeAllProxies: $includeAllProxies, ')
+          ..write('includeAllProviders: $includeAllProviders, ')
+          ..write('hidden: $hidden, ')
+          ..write('icon: $icon, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    profileId,
+    name,
+    type,
+    proxies,
+    use,
+    url,
+    interval,
+    testTimeout,
+    maxFailedTimes,
+    lazy,
+    disableUdp,
+    filter,
+    excludeFilter,
+    excludeType,
+    expectedStatus,
+    includeAll,
+    includeAllProxies,
+    includeAllProviders,
+    hidden,
+    icon,
+    order,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawProxyGroup &&
+          other.profileId == this.profileId &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.proxies == this.proxies &&
+          other.use == this.use &&
+          other.url == this.url &&
+          other.interval == this.interval &&
+          other.testTimeout == this.testTimeout &&
+          other.maxFailedTimes == this.maxFailedTimes &&
+          other.lazy == this.lazy &&
+          other.disableUdp == this.disableUdp &&
+          other.filter == this.filter &&
+          other.excludeFilter == this.excludeFilter &&
+          other.excludeType == this.excludeType &&
+          other.expectedStatus == this.expectedStatus &&
+          other.includeAll == this.includeAll &&
+          other.includeAllProxies == this.includeAllProxies &&
+          other.includeAllProviders == this.includeAllProviders &&
+          other.hidden == this.hidden &&
+          other.icon == this.icon &&
+          other.order == this.order);
+}
+
+class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
+  final Value<int?> profileId;
+  final Value<String> name;
+  final Value<String> type;
+  final Value<List<String>?> proxies;
+  final Value<List<String>?> use;
+  final Value<String?> url;
+  final Value<int?> interval;
+  final Value<int?> testTimeout;
+  final Value<int?> maxFailedTimes;
+  final Value<bool?> lazy;
+  final Value<bool?> disableUdp;
+  final Value<String?> filter;
+  final Value<String?> excludeFilter;
+  final Value<String?> excludeType;
+  final Value<String?> expectedStatus;
+  final Value<bool?> includeAll;
+  final Value<bool?> includeAllProxies;
+  final Value<bool?> includeAllProviders;
+  final Value<bool?> hidden;
+  final Value<String?> icon;
+  final Value<String?> order;
+  final Value<int> rowid;
+  const ProxyGroupsCompanion({
+    this.profileId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.proxies = const Value.absent(),
+    this.use = const Value.absent(),
+    this.url = const Value.absent(),
+    this.interval = const Value.absent(),
+    this.testTimeout = const Value.absent(),
+    this.maxFailedTimes = const Value.absent(),
+    this.lazy = const Value.absent(),
+    this.disableUdp = const Value.absent(),
+    this.filter = const Value.absent(),
+    this.excludeFilter = const Value.absent(),
+    this.excludeType = const Value.absent(),
+    this.expectedStatus = const Value.absent(),
+    this.includeAll = const Value.absent(),
+    this.includeAllProxies = const Value.absent(),
+    this.includeAllProviders = const Value.absent(),
+    this.hidden = const Value.absent(),
+    this.icon = const Value.absent(),
+    this.order = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProxyGroupsCompanion.insert({
+    this.profileId = const Value.absent(),
+    required String name,
+    required String type,
+    this.proxies = const Value.absent(),
+    this.use = const Value.absent(),
+    this.url = const Value.absent(),
+    this.interval = const Value.absent(),
+    this.testTimeout = const Value.absent(),
+    this.maxFailedTimes = const Value.absent(),
+    this.lazy = const Value.absent(),
+    this.disableUdp = const Value.absent(),
+    this.filter = const Value.absent(),
+    this.excludeFilter = const Value.absent(),
+    this.excludeType = const Value.absent(),
+    this.expectedStatus = const Value.absent(),
+    this.includeAll = const Value.absent(),
+    this.includeAllProxies = const Value.absent(),
+    this.includeAllProviders = const Value.absent(),
+    this.hidden = const Value.absent(),
+    this.icon = const Value.absent(),
+    this.order = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : name = Value(name),
+       type = Value(type);
+  static Insertable<RawProxyGroup> custom({
+    Expression<int>? profileId,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<String>? proxies,
+    Expression<String>? use,
+    Expression<String>? url,
+    Expression<int>? interval,
+    Expression<int>? testTimeout,
+    Expression<int>? maxFailedTimes,
+    Expression<bool>? lazy,
+    Expression<bool>? disableUdp,
+    Expression<String>? filter,
+    Expression<String>? excludeFilter,
+    Expression<String>? excludeType,
+    Expression<String>? expectedStatus,
+    Expression<bool>? includeAll,
+    Expression<bool>? includeAllProxies,
+    Expression<bool>? includeAllProviders,
+    Expression<bool>? hidden,
+    Expression<String>? icon,
+    Expression<String>? order,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (profileId != null) 'profile_id': profileId,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (proxies != null) 'proxies': proxies,
+      if (use != null) 'use': use,
+      if (url != null) 'url': url,
+      if (interval != null) 'interval': interval,
+      if (testTimeout != null) 'test_timeout': testTimeout,
+      if (maxFailedTimes != null) 'max_failed_times': maxFailedTimes,
+      if (lazy != null) 'lazy': lazy,
+      if (disableUdp != null) 'disable_udp': disableUdp,
+      if (filter != null) 'filter': filter,
+      if (excludeFilter != null) 'exclude_filter': excludeFilter,
+      if (excludeType != null) 'exclude_type': excludeType,
+      if (expectedStatus != null) 'expected_status': expectedStatus,
+      if (includeAll != null) 'include_all': includeAll,
+      if (includeAllProxies != null) 'include_all_proxies': includeAllProxies,
+      if (includeAllProviders != null)
+        'include_all_providers': includeAllProviders,
+      if (hidden != null) 'hidden': hidden,
+      if (icon != null) 'icon': icon,
+      if (order != null) 'order': order,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProxyGroupsCompanion copyWith({
+    Value<int?>? profileId,
+    Value<String>? name,
+    Value<String>? type,
+    Value<List<String>?>? proxies,
+    Value<List<String>?>? use,
+    Value<String?>? url,
+    Value<int?>? interval,
+    Value<int?>? testTimeout,
+    Value<int?>? maxFailedTimes,
+    Value<bool?>? lazy,
+    Value<bool?>? disableUdp,
+    Value<String?>? filter,
+    Value<String?>? excludeFilter,
+    Value<String?>? excludeType,
+    Value<String?>? expectedStatus,
+    Value<bool?>? includeAll,
+    Value<bool?>? includeAllProxies,
+    Value<bool?>? includeAllProviders,
+    Value<bool?>? hidden,
+    Value<String?>? icon,
+    Value<String?>? order,
+    Value<int>? rowid,
+  }) {
+    return ProxyGroupsCompanion(
+      profileId: profileId ?? this.profileId,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      proxies: proxies ?? this.proxies,
+      use: use ?? this.use,
+      url: url ?? this.url,
+      interval: interval ?? this.interval,
+      testTimeout: testTimeout ?? this.testTimeout,
+      maxFailedTimes: maxFailedTimes ?? this.maxFailedTimes,
+      lazy: lazy ?? this.lazy,
+      disableUdp: disableUdp ?? this.disableUdp,
+      filter: filter ?? this.filter,
+      excludeFilter: excludeFilter ?? this.excludeFilter,
+      excludeType: excludeType ?? this.excludeType,
+      expectedStatus: expectedStatus ?? this.expectedStatus,
+      includeAll: includeAll ?? this.includeAll,
+      includeAllProxies: includeAllProxies ?? this.includeAllProxies,
+      includeAllProviders: includeAllProviders ?? this.includeAllProviders,
+      hidden: hidden ?? this.hidden,
+      icon: icon ?? this.icon,
+      order: order ?? this.order,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (profileId.present) {
+      map['profile_id'] = Variable<int>(profileId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (proxies.present) {
+      map['proxies'] = Variable<String>(
+        $ProxyGroupsTable.$converterproxiesn.toSql(proxies.value),
+      );
+    }
+    if (use.present) {
+      map['use'] = Variable<String>(
+        $ProxyGroupsTable.$converterusen.toSql(use.value),
+      );
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (interval.present) {
+      map['interval'] = Variable<int>(interval.value);
+    }
+    if (testTimeout.present) {
+      map['test_timeout'] = Variable<int>(testTimeout.value);
+    }
+    if (maxFailedTimes.present) {
+      map['max_failed_times'] = Variable<int>(maxFailedTimes.value);
+    }
+    if (lazy.present) {
+      map['lazy'] = Variable<bool>(lazy.value);
+    }
+    if (disableUdp.present) {
+      map['disable_udp'] = Variable<bool>(disableUdp.value);
+    }
+    if (filter.present) {
+      map['filter'] = Variable<String>(filter.value);
+    }
+    if (excludeFilter.present) {
+      map['exclude_filter'] = Variable<String>(excludeFilter.value);
+    }
+    if (excludeType.present) {
+      map['exclude_type'] = Variable<String>(excludeType.value);
+    }
+    if (expectedStatus.present) {
+      map['expected_status'] = Variable<String>(expectedStatus.value);
+    }
+    if (includeAll.present) {
+      map['include_all'] = Variable<bool>(includeAll.value);
+    }
+    if (includeAllProxies.present) {
+      map['include_all_proxies'] = Variable<bool>(includeAllProxies.value);
+    }
+    if (includeAllProviders.present) {
+      map['include_all_providers'] = Variable<bool>(includeAllProviders.value);
+    }
+    if (hidden.present) {
+      map['hidden'] = Variable<bool>(hidden.value);
+    }
+    if (icon.present) {
+      map['icon'] = Variable<String>(icon.value);
+    }
+    if (order.present) {
+      map['order'] = Variable<String>(order.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProxyGroupsCompanion(')
+          ..write('profileId: $profileId, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('proxies: $proxies, ')
+          ..write('use: $use, ')
+          ..write('url: $url, ')
+          ..write('interval: $interval, ')
+          ..write('testTimeout: $testTimeout, ')
+          ..write('maxFailedTimes: $maxFailedTimes, ')
+          ..write('lazy: $lazy, ')
+          ..write('disableUdp: $disableUdp, ')
+          ..write('filter: $filter, ')
+          ..write('excludeFilter: $excludeFilter, ')
+          ..write('excludeType: $excludeType, ')
+          ..write('expectedStatus: $expectedStatus, ')
+          ..write('includeAll: $includeAll, ')
+          ..write('includeAllProxies: $includeAllProxies, ')
+          ..write('includeAllProviders: $includeAllProviders, ')
+          ..write('hidden: $hidden, ')
+          ..write('icon: $icon, ')
+          ..write('order: $order, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -1605,13 +2818,19 @@ abstract class _$Database extends GeneratedDatabase {
   late final $ProfileRuleLinksTable profileRuleLinks = $ProfileRuleLinksTable(
     this,
   );
+  late final $ProxyGroupsTable proxyGroups = $ProxyGroupsTable(this);
   late final Index idxProfileSceneOrder = Index(
     'idx_profile_scene_order',
     'CREATE INDEX idx_profile_scene_order ON profile_rule_mapping (profile_id, scene, "order")',
   );
+  late final Index idxProfileNameOrder = Index(
+    'idx_profile_name_order',
+    'CREATE INDEX idx_profile_name_order ON proxy_groups (profile_id, name, "order")',
+  );
   late final ProfilesDao profilesDao = ProfilesDao(this as Database);
   late final ScriptsDao scriptsDao = ScriptsDao(this as Database);
   late final RulesDao rulesDao = RulesDao(this as Database);
+  late final ProxyGroupsDao proxyGroupsDao = ProxyGroupsDao(this as Database);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1621,7 +2840,9 @@ abstract class _$Database extends GeneratedDatabase {
     scripts,
     rules,
     profileRuleLinks,
+    proxyGroups,
     idxProfileSceneOrder,
+    idxProfileNameOrder,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1638,6 +2859,13 @@ abstract class _$Database extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('profile_rule_mapping', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'profiles',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('proxy_groups', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -1697,6 +2925,24 @@ final class $$ProfilesTableReferences
     final cache = $_typedResult.readTableOrNull(
       _profileRuleLinksRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ProxyGroupsTable, List<RawProxyGroup>>
+  _proxyGroupsRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
+    db.proxyGroups,
+    aliasName: $_aliasNameGenerator(db.profiles.id, db.proxyGroups.profileId),
+  );
+
+  $$ProxyGroupsTableProcessedTableManager get proxyGroupsRefs {
+    final manager = $$ProxyGroupsTableTableManager(
+      $_db,
+      $_db.proxyGroups,
+    ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_proxyGroupsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -1801,6 +3047,31 @@ class $$ProfilesTableFilterComposer
           }) => $$ProfileRuleLinksTableFilterComposer(
             $db: $db,
             $table: $db.profileRuleLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> proxyGroupsRefs(
+    Expression<bool> Function($$ProxyGroupsTableFilterComposer f) f,
+  ) {
+    final $$ProxyGroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.proxyGroups,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProxyGroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.proxyGroups,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1975,6 +3246,31 @@ class $$ProfilesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> proxyGroupsRefs<T extends Object>(
+    Expression<T> Function($$ProxyGroupsTableAnnotationComposer a) f,
+  ) {
+    final $$ProxyGroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.proxyGroups,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProxyGroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.proxyGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ProfilesTableTableManager
@@ -1990,7 +3286,10 @@ class $$ProfilesTableTableManager
           $$ProfilesTableUpdateCompanionBuilder,
           (RawProfile, $$ProfilesTableReferences),
           RawProfile,
-          PrefetchHooks Function({bool profileRuleLinksRefs})
+          PrefetchHooks Function({
+            bool profileRuleLinksRefs,
+            bool proxyGroupsRefs,
+          })
         > {
   $$ProfilesTableTableManager(_$Database db, $ProfilesTable table)
     : super(
@@ -2073,37 +3372,63 @@ class $$ProfilesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({profileRuleLinksRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (profileRuleLinksRefs) db.profileRuleLinks,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (profileRuleLinksRefs)
-                    await $_getPrefetchedData<
-                      RawProfile,
-                      $ProfilesTable,
-                      RawProfileRuleLink
-                    >(
-                      currentTable: table,
-                      referencedTable: $$ProfilesTableReferences
-                          ._profileRuleLinksRefsTable(db),
-                      managerFromTypedResult: (p0) => $$ProfilesTableReferences(
-                        db,
-                        table,
-                        p0,
-                      ).profileRuleLinksRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.profileId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({profileRuleLinksRefs = false, proxyGroupsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (profileRuleLinksRefs) db.profileRuleLinks,
+                    if (proxyGroupsRefs) db.proxyGroups,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (profileRuleLinksRefs)
+                        await $_getPrefetchedData<
+                          RawProfile,
+                          $ProfilesTable,
+                          RawProfileRuleLink
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProfilesTableReferences
+                              ._profileRuleLinksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProfilesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).profileRuleLinksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.profileId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (proxyGroupsRefs)
+                        await $_getPrefetchedData<
+                          RawProfile,
+                          $ProfilesTable,
+                          RawProxyGroup
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProfilesTableReferences
+                              ._proxyGroupsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProfilesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).proxyGroupsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.profileId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -2120,7 +3445,7 @@ typedef $$ProfilesTableProcessedTableManager =
       $$ProfilesTableUpdateCompanionBuilder,
       (RawProfile, $$ProfilesTableReferences),
       RawProfile,
-      PrefetchHooks Function({bool profileRuleLinksRefs})
+      PrefetchHooks Function({bool profileRuleLinksRefs, bool proxyGroupsRefs})
     >;
 typedef $$ScriptsTableCreateCompanionBuilder =
     ScriptsCompanion Function({
@@ -2913,6 +4238,649 @@ typedef $$ProfileRuleLinksTableProcessedTableManager =
       RawProfileRuleLink,
       PrefetchHooks Function({bool profileId, bool ruleId})
     >;
+typedef $$ProxyGroupsTableCreateCompanionBuilder =
+    ProxyGroupsCompanion Function({
+      Value<int?> profileId,
+      required String name,
+      required String type,
+      Value<List<String>?> proxies,
+      Value<List<String>?> use,
+      Value<String?> url,
+      Value<int?> interval,
+      Value<int?> testTimeout,
+      Value<int?> maxFailedTimes,
+      Value<bool?> lazy,
+      Value<bool?> disableUdp,
+      Value<String?> filter,
+      Value<String?> excludeFilter,
+      Value<String?> excludeType,
+      Value<String?> expectedStatus,
+      Value<bool?> includeAll,
+      Value<bool?> includeAllProxies,
+      Value<bool?> includeAllProviders,
+      Value<bool?> hidden,
+      Value<String?> icon,
+      Value<String?> order,
+      Value<int> rowid,
+    });
+typedef $$ProxyGroupsTableUpdateCompanionBuilder =
+    ProxyGroupsCompanion Function({
+      Value<int?> profileId,
+      Value<String> name,
+      Value<String> type,
+      Value<List<String>?> proxies,
+      Value<List<String>?> use,
+      Value<String?> url,
+      Value<int?> interval,
+      Value<int?> testTimeout,
+      Value<int?> maxFailedTimes,
+      Value<bool?> lazy,
+      Value<bool?> disableUdp,
+      Value<String?> filter,
+      Value<String?> excludeFilter,
+      Value<String?> excludeType,
+      Value<String?> expectedStatus,
+      Value<bool?> includeAll,
+      Value<bool?> includeAllProxies,
+      Value<bool?> includeAllProviders,
+      Value<bool?> hidden,
+      Value<String?> icon,
+      Value<String?> order,
+      Value<int> rowid,
+    });
+
+final class $$ProxyGroupsTableReferences
+    extends BaseReferences<_$Database, $ProxyGroupsTable, RawProxyGroup> {
+  $$ProxyGroupsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ProfilesTable _profileIdTable(_$Database db) =>
+      db.profiles.createAlias(
+        $_aliasNameGenerator(db.proxyGroups.profileId, db.profiles.id),
+      );
+
+  $$ProfilesTableProcessedTableManager? get profileId {
+    final $_column = $_itemColumn<int>('profile_id');
+    if ($_column == null) return null;
+    final manager = $$ProfilesTableTableManager(
+      $_db,
+      $_db.profiles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_profileIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ProxyGroupsTableFilterComposer
+    extends Composer<_$Database, $ProxyGroupsTable> {
+  $$ProxyGroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<List<String>?, List<String>, String>
+  get proxies => $composableBuilder(
+    column: $table.proxies,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<List<String>?, List<String>, String> get use =>
+      $composableBuilder(
+        column: $table.use,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get interval => $composableBuilder(
+    column: $table.interval,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get testTimeout => $composableBuilder(
+    column: $table.testTimeout,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxFailedTimes => $composableBuilder(
+    column: $table.maxFailedTimes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get lazy => $composableBuilder(
+    column: $table.lazy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get disableUdp => $composableBuilder(
+    column: $table.disableUdp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filter => $composableBuilder(
+    column: $table.filter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get excludeFilter => $composableBuilder(
+    column: $table.excludeFilter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get excludeType => $composableBuilder(
+    column: $table.excludeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get expectedStatus => $composableBuilder(
+    column: $table.expectedStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includeAll => $composableBuilder(
+    column: $table.includeAll,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includeAllProxies => $composableBuilder(
+    column: $table.includeAllProxies,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includeAllProviders => $composableBuilder(
+    column: $table.includeAllProviders,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hidden => $composableBuilder(
+    column: $table.hidden,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ProfilesTableFilterComposer get profileId {
+    final $$ProfilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableFilterComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProxyGroupsTableOrderingComposer
+    extends Composer<_$Database, $ProxyGroupsTable> {
+  $$ProxyGroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get proxies => $composableBuilder(
+    column: $table.proxies,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get use => $composableBuilder(
+    column: $table.use,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get interval => $composableBuilder(
+    column: $table.interval,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get testTimeout => $composableBuilder(
+    column: $table.testTimeout,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maxFailedTimes => $composableBuilder(
+    column: $table.maxFailedTimes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get lazy => $composableBuilder(
+    column: $table.lazy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get disableUdp => $composableBuilder(
+    column: $table.disableUdp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filter => $composableBuilder(
+    column: $table.filter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get excludeFilter => $composableBuilder(
+    column: $table.excludeFilter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get excludeType => $composableBuilder(
+    column: $table.excludeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get expectedStatus => $composableBuilder(
+    column: $table.expectedStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get includeAll => $composableBuilder(
+    column: $table.includeAll,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get includeAllProxies => $composableBuilder(
+    column: $table.includeAllProxies,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get includeAllProviders => $composableBuilder(
+    column: $table.includeAllProviders,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get hidden => $composableBuilder(
+    column: $table.hidden,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProfilesTableOrderingComposer get profileId {
+    final $$ProfilesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableOrderingComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProxyGroupsTableAnnotationComposer
+    extends Composer<_$Database, $ProxyGroupsTable> {
+  $$ProxyGroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<List<String>?, String> get proxies =>
+      $composableBuilder(column: $table.proxies, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<List<String>?, String> get use =>
+      $composableBuilder(column: $table.use, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<int> get interval =>
+      $composableBuilder(column: $table.interval, builder: (column) => column);
+
+  GeneratedColumn<int> get testTimeout => $composableBuilder(
+    column: $table.testTimeout,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get maxFailedTimes => $composableBuilder(
+    column: $table.maxFailedTimes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get lazy =>
+      $composableBuilder(column: $table.lazy, builder: (column) => column);
+
+  GeneratedColumn<bool> get disableUdp => $composableBuilder(
+    column: $table.disableUdp,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get filter =>
+      $composableBuilder(column: $table.filter, builder: (column) => column);
+
+  GeneratedColumn<String> get excludeFilter => $composableBuilder(
+    column: $table.excludeFilter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get excludeType => $composableBuilder(
+    column: $table.excludeType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get expectedStatus => $composableBuilder(
+    column: $table.expectedStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includeAll => $composableBuilder(
+    column: $table.includeAll,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includeAllProxies => $composableBuilder(
+    column: $table.includeAllProxies,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includeAllProviders => $composableBuilder(
+    column: $table.includeAllProviders,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get hidden =>
+      $composableBuilder(column: $table.hidden, builder: (column) => column);
+
+  GeneratedColumn<String> get icon =>
+      $composableBuilder(column: $table.icon, builder: (column) => column);
+
+  GeneratedColumn<String> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
+
+  $$ProfilesTableAnnotationComposer get profileId {
+    final $$ProfilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProxyGroupsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $ProxyGroupsTable,
+          RawProxyGroup,
+          $$ProxyGroupsTableFilterComposer,
+          $$ProxyGroupsTableOrderingComposer,
+          $$ProxyGroupsTableAnnotationComposer,
+          $$ProxyGroupsTableCreateCompanionBuilder,
+          $$ProxyGroupsTableUpdateCompanionBuilder,
+          (RawProxyGroup, $$ProxyGroupsTableReferences),
+          RawProxyGroup,
+          PrefetchHooks Function({bool profileId})
+        > {
+  $$ProxyGroupsTableTableManager(_$Database db, $ProxyGroupsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProxyGroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProxyGroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProxyGroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int?> profileId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<List<String>?> proxies = const Value.absent(),
+                Value<List<String>?> use = const Value.absent(),
+                Value<String?> url = const Value.absent(),
+                Value<int?> interval = const Value.absent(),
+                Value<int?> testTimeout = const Value.absent(),
+                Value<int?> maxFailedTimes = const Value.absent(),
+                Value<bool?> lazy = const Value.absent(),
+                Value<bool?> disableUdp = const Value.absent(),
+                Value<String?> filter = const Value.absent(),
+                Value<String?> excludeFilter = const Value.absent(),
+                Value<String?> excludeType = const Value.absent(),
+                Value<String?> expectedStatus = const Value.absent(),
+                Value<bool?> includeAll = const Value.absent(),
+                Value<bool?> includeAllProxies = const Value.absent(),
+                Value<bool?> includeAllProviders = const Value.absent(),
+                Value<bool?> hidden = const Value.absent(),
+                Value<String?> icon = const Value.absent(),
+                Value<String?> order = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProxyGroupsCompanion(
+                profileId: profileId,
+                name: name,
+                type: type,
+                proxies: proxies,
+                use: use,
+                url: url,
+                interval: interval,
+                testTimeout: testTimeout,
+                maxFailedTimes: maxFailedTimes,
+                lazy: lazy,
+                disableUdp: disableUdp,
+                filter: filter,
+                excludeFilter: excludeFilter,
+                excludeType: excludeType,
+                expectedStatus: expectedStatus,
+                includeAll: includeAll,
+                includeAllProxies: includeAllProxies,
+                includeAllProviders: includeAllProviders,
+                hidden: hidden,
+                icon: icon,
+                order: order,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int?> profileId = const Value.absent(),
+                required String name,
+                required String type,
+                Value<List<String>?> proxies = const Value.absent(),
+                Value<List<String>?> use = const Value.absent(),
+                Value<String?> url = const Value.absent(),
+                Value<int?> interval = const Value.absent(),
+                Value<int?> testTimeout = const Value.absent(),
+                Value<int?> maxFailedTimes = const Value.absent(),
+                Value<bool?> lazy = const Value.absent(),
+                Value<bool?> disableUdp = const Value.absent(),
+                Value<String?> filter = const Value.absent(),
+                Value<String?> excludeFilter = const Value.absent(),
+                Value<String?> excludeType = const Value.absent(),
+                Value<String?> expectedStatus = const Value.absent(),
+                Value<bool?> includeAll = const Value.absent(),
+                Value<bool?> includeAllProxies = const Value.absent(),
+                Value<bool?> includeAllProviders = const Value.absent(),
+                Value<bool?> hidden = const Value.absent(),
+                Value<String?> icon = const Value.absent(),
+                Value<String?> order = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProxyGroupsCompanion.insert(
+                profileId: profileId,
+                name: name,
+                type: type,
+                proxies: proxies,
+                use: use,
+                url: url,
+                interval: interval,
+                testTimeout: testTimeout,
+                maxFailedTimes: maxFailedTimes,
+                lazy: lazy,
+                disableUdp: disableUdp,
+                filter: filter,
+                excludeFilter: excludeFilter,
+                excludeType: excludeType,
+                expectedStatus: expectedStatus,
+                includeAll: includeAll,
+                includeAllProxies: includeAllProxies,
+                includeAllProviders: includeAllProviders,
+                hidden: hidden,
+                icon: icon,
+                order: order,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ProxyGroupsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({profileId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (profileId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.profileId,
+                                referencedTable: $$ProxyGroupsTableReferences
+                                    ._profileIdTable(db),
+                                referencedColumn: $$ProxyGroupsTableReferences
+                                    ._profileIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ProxyGroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $ProxyGroupsTable,
+      RawProxyGroup,
+      $$ProxyGroupsTableFilterComposer,
+      $$ProxyGroupsTableOrderingComposer,
+      $$ProxyGroupsTableAnnotationComposer,
+      $$ProxyGroupsTableCreateCompanionBuilder,
+      $$ProxyGroupsTableUpdateCompanionBuilder,
+      (RawProxyGroup, $$ProxyGroupsTableReferences),
+      RawProxyGroup,
+      PrefetchHooks Function({bool profileId})
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -2925,6 +4893,8 @@ class $DatabaseManager {
       $$RulesTableTableManager(_db, _db.rules);
   $$ProfileRuleLinksTableTableManager get profileRuleLinks =>
       $$ProfileRuleLinksTableTableManager(_db, _db.profileRuleLinks);
+  $$ProxyGroupsTableTableManager get proxyGroups =>
+      $$ProxyGroupsTableTableManager(_db, _db.proxyGroups);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {
@@ -2938,4 +4908,8 @@ mixin _$RulesDaoMixin on DatabaseAccessor<Database> {
   $ProfilesTable get profiles => attachedDatabase.profiles;
   $ProfileRuleLinksTable get profileRuleLinks =>
       attachedDatabase.profileRuleLinks;
+}
+mixin _$ProxyGroupsDaoMixin on DatabaseAccessor<Database> {
+  $ProfilesTable get profiles => attachedDatabase.profiles;
+  $ProxyGroupsTable get proxyGroups => attachedDatabase.proxyGroups;
 }

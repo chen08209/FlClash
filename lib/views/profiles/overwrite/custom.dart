@@ -6,7 +6,7 @@ class _CustomContent extends ConsumerWidget {
   const _CustomContent(this.profileId);
 
   void _handleUseDefault() async {
-    final res = await appController.getProfileWithId(profileId);
+    // final configMap = await coreController.getConfig(profileId);
   }
 
   @override
@@ -16,23 +16,35 @@ class _CustomContent extends ConsumerWidget {
         SliverToBoxAdapter(child: SizedBox(height: 24)),
         SliverToBoxAdapter(
           child: Column(
-            children: [
-              InfoHeader(
-                info: Info(label: '自定义'),
-                actions: [
-                  CommonMinFilledButtonTheme(
-                    child: FilledButton.tonal(
-                      onPressed: _handleUseDefault,
-                      child: Text('使用默认配置'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            children: [InfoHeader(info: Info(label: '代理组'))],
           ),
         ),
         SliverToBoxAdapter(child: SizedBox(height: 8)),
         _CustomProxyGroups(profileId),
+        SliverToBoxAdapter(child: SizedBox(height: 8)),
+        SliverToBoxAdapter(
+          child: Column(
+            children: [InfoHeader(info: Info(label: '规则'))],
+          ),
+        ),
+        SliverFillRemaining(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: MaterialBanner(
+              elevation: 0,
+              dividerColor: Colors.transparent,
+              content: Text('检测到没有数据'),
+              actions: [
+                CommonMinFilledButtonTheme(
+                  child: FilledButton.tonal(
+                    onPressed: _handleUseDefault,
+                    child: Text('一键填入'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         // SliverToBoxAdapter(child: SizedBox(height: 8)),
         // SliverToBoxAdapter(
         //   child: Padding(
@@ -81,7 +93,7 @@ class _CustomProxyGroupsState extends ConsumerState<_CustomProxyGroups> {
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Wrap(
           children: [
             CommonCard(

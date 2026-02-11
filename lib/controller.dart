@@ -665,7 +665,7 @@ extension SetupControllerExt on AppController {
 
   Future<Map<String, dynamic>> getProfile({
     required SetupState setupState,
-    required ClashConfig patchConfig,
+    required PatchClashConfig patchConfig,
   }) async {
     final profileId = setupState.profileId;
     if (profileId == null) {
