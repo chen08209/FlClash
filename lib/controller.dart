@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
+import 'core/network_monitor.dart';
 import 'database/database.dart';
 import 'models/models.dart';
 import 'providers/database.dart';
@@ -540,6 +541,130 @@ extension ProxiesControllerExt on AppController {
   int addSortNum() {
     return _ref.read(sortNumProvider.notifier).add();
   }
+
+  Future<void> applySsidPolicy(
+    String networkType,
+    String ssid,
+    String wifiIp,
+  ) async {
+    try {
+      // Check if proxy is running
+      if (globalState.isStart != true) {
+        return;
+      }
+
+      // Get the current running config from the core
+      final currentProfileId = _ref.read(currentProfileIdProvider);
+      if (currentProfileId == null) {
+        return;
+      }
+
+      // Get the config that's currently loaded (after scripts have processed it)
+      final configMap = await coreController.getConfig(currentProfileId);
+
+      // Extract proxy-groups from config
+      final proxyGroups = configMap['proxy-groups'] as List?;
+      if (proxyGroups == null || proxyGroups.isEmpty) {
+        return;
+      }
+
+      // Determine network key for policy lookup
+      final networkKey = networkType == 'wifi' ? ssid : networkType;
+
+      commonPrint.log(
+        'Applying SSID policy for network: $networkKey${networkType == 'wifi' && wifiIp.isNotEmpty ? " (IP: $wifiIp)" : ""}',
+      );
+
+      // Get current proxy groups to validate target proxies exist
+      final currentGroups = groups;
+
+      // Apply policy for each proxy group that has ssid-policy defined
+      for (final groupData in proxyGroups) {
+        if (groupData is! Map) continue;
+
+        final groupName = groupData['name'] as String?;
+        final ssidPolicyData = groupData['ssid-policy'] as Map?;
+
+        if (groupName == null ||
+            ssidPolicyData == null ||
+            ssidPolicyData.isEmpty) {
+          continue;
+        }
+
+        // Convert ssidPolicyData to Map<String, String>
+        final policy = ssidPolicyData.map(
+          (key, value) => MapEntry(key.toString(), value.toString()),
+        );
+
+        // Look up target proxy with priority: IP segment match > SSID/network > default
+        String? targetProxy;
+        String? matchedKey;
+
+        // For WiFi, try IP segment match first (e.g., 'ip:192.168.2' matches '192.168.2.100')
+        if (networkType == 'wifi' && wifiIp.isNotEmpty) {
+          for (final key in policy.keys) {
+            if (key.startsWith('ip:')) {
+              final ipSegment = key.substring(3); // Remove 'ip:' prefix
+              if (wifiIp.startsWith(ipSegment)) {
+                targetProxy = policy[key];
+                matchedKey = key;
+                break;
+              }
+            }
+          }
+        }
+
+        // If no IP match, try SSID/network match
+        if (targetProxy == null && policy.containsKey(networkKey)) {
+          targetProxy = policy[networkKey];
+          matchedKey = networkKey;
+        }
+
+        // Finally try default
+        if (targetProxy == null) {
+          targetProxy = policy['default'];
+          matchedKey = 'default';
+        }
+
+        if (targetProxy != null && targetProxy.isNotEmpty) {
+          // Find the group to validate the proxy exists
+          final group = currentGroups
+              .where((g) => g.name == groupName)
+              .firstOrNull;
+
+          if (group == null || group.type != GroupType.Selector) {
+            commonPrint.log(
+              'SSID Policy: Group "$groupName" not found or not a Selector type, skipping',
+            );
+            continue;
+          }
+
+          // Check if target proxy exists in the group's proxy list
+          final proxyExists = group.all.any(
+            (proxy) => proxy.name == targetProxy,
+          );
+
+          if (!proxyExists) {
+            commonPrint.log(
+              'SSID Policy: Proxy "$targetProxy" not found in group "$groupName", skipping',
+            );
+            continue;
+          }
+
+          commonPrint.log(
+            'SSID Policy: Switching $groupName to $targetProxy (matched: $matchedKey)',
+          );
+          updateCurrentSelectedMap(groupName, targetProxy);
+          changeProxyDebounce(groupName, targetProxy);
+        }
+      }
+    } catch (e) {
+      commonPrint.log(
+        'Error applying SSID policy: $e',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
 }
 
 extension SetupControllerExt on AppController {
@@ -565,6 +690,9 @@ extension SetupControllerExt on AppController {
         }
         await globalState.handleStart([updateRunTime, updateTraffic]);
         applyProfileDebounce(force: true, silence: true);
+
+        // Start network monitoring and apply initial SSID policy
+        _startNetworkMonitoring();
       } else {
         globalState.needInitStatus = false;
         await applyProfile(
@@ -573,6 +701,9 @@ extension SetupControllerExt on AppController {
             await globalState.handleStart([updateRunTime, updateTraffic]);
           },
         );
+
+        // Start network monitoring and apply initial SSID policy
+        _startNetworkMonitoring();
       }
     } else {
       await globalState.handleStop();
@@ -581,7 +712,32 @@ extension SetupControllerExt on AppController {
       _ref.read(totalTrafficProvider.notifier).value = Traffic();
       _ref.read(runTimeProvider.notifier).value = null;
       addCheckIp();
+
+      // Stop network monitoring when proxy stops
+      _stopNetworkMonitoring();
     }
+  }
+
+  void _startNetworkMonitoring() {
+    // Only support SSID policy on Android and macOS
+    if (!Platform.isAndroid && !Platform.isMacOS) {
+      return;
+    }
+
+    final monitor = NetworkStateMonitor();
+    monitor.onNetworkStateChanged = (networkType, ssid, wifiIp) {
+      applySsidPolicy(networkType, ssid, wifiIp);
+    };
+    monitor.startMonitoring();
+  }
+
+  void _stopNetworkMonitoring() {
+    // Only support SSID policy on Android and macOS
+    if (!Platform.isAndroid && !Platform.isMacOS) {
+      return;
+    }
+
+    NetworkStateMonitor().stopMonitoring();
   }
 
   Future<bool> needSetup() async {

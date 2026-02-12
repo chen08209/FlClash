@@ -47,13 +47,28 @@ on Mobile:
 
 ### Android
 
+WiFi ssid policy
+
+```yaml
+proxy-groups:
+  - name: "🚀 节点选择"
+    type: select
+    proxies: [...]
+    ssid-policy:
+      "ip:192.168.10.": "home"       # 匹配 192.168.10.x（家里）
+      "ip:10.10.": "office"        # 匹配 10.10.x.x（公司）
+      "HomeWiFi": "DIRECT"         # SSID
+      "cellular": "hk"          # 移动网络
+      "default": "auto"            # 默认规则
+```
+
 Support the following actions
 
    ```bash
     com.follow.clash.action.START
-    
+
     com.follow.clash.action.STOP
-    
+
     com.follow.clash.action.TOGGLE
    ```
 

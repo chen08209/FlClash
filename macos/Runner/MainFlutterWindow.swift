@@ -9,7 +9,7 @@ class MainFlutterWindow: NSWindow {
         let windowFrame = self.frame
         self.contentViewController = flutterViewController
         self.setFrame(windowFrame, display: true)
-        
+
         FlutterMethodChannel(
             name: "launch_at_startup", binaryMessenger: flutterViewController.engine.binaryMessenger
         )
@@ -26,8 +26,11 @@ class MainFlutterWindow: NSWindow {
                 result(FlutterMethodNotImplemented)
             }
         }
-        
+
         RegisterGeneratedPlugins(registry: flutterViewController)
+        LocationPermissionPlugin.register(
+            with: flutterViewController.registrar(forPlugin: "LocationPermissionPlugin")
+        )
         super.awakeFromNib()
     }
     override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {

@@ -38,7 +38,7 @@ android {
 
     defaultConfig {
         applicationId = "com.follow.clash"
-        minSdk = flutter.minSdkVersion
+        minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = flutter.versionCode
         versionName = flutter.versionName
