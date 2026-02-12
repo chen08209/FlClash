@@ -15,6 +15,7 @@ _ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) => _ProxyGroup(
   use: (json['use'] as List<dynamic>?)?.map((e) => e as String).toList(),
   interval: (json['interval'] as num?)?.toInt(),
   lazy: json['lazy'] as bool?,
+  disableUDP: json['disable-udp'] as bool?,
   url: json['url'] as String?,
   timeout: (json['timeout'] as num?)?.toInt(),
   maxFailedTimes: (json['max-failed-times'] as num?)?.toInt(),
@@ -22,8 +23,12 @@ _ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) => _ProxyGroup(
   excludeFilter: json['expected-filter'] as String?,
   excludeType: json['exclude-type'] as String?,
   expectedStatus: json['expected-status'] as String?,
+  includeAll: json['include-all'] as bool?,
+  includeAllProxies: json['include-all-proxies'] as bool?,
+  includeAllProviders: json['include-all-providers'] as bool?,
   hidden: json['hidden'] as bool?,
   icon: json['icon'] as String?,
+  order: json['order'] as String?,
 );
 
 Map<String, dynamic> _$ProxyGroupToJson(_ProxyGroup instance) =>
@@ -34,6 +39,7 @@ Map<String, dynamic> _$ProxyGroupToJson(_ProxyGroup instance) =>
       'use': instance.use,
       'interval': instance.interval,
       'lazy': instance.lazy,
+      'disable-udp': instance.disableUDP,
       'url': instance.url,
       'timeout': instance.timeout,
       'max-failed-times': instance.maxFailedTimes,
@@ -41,8 +47,12 @@ Map<String, dynamic> _$ProxyGroupToJson(_ProxyGroup instance) =>
       'expected-filter': instance.excludeFilter,
       'exclude-type': instance.excludeType,
       'expected-status': instance.expectedStatus,
+      'include-all': instance.includeAll,
+      'include-all-proxies': instance.includeAllProxies,
+      'include-all-providers': instance.includeAllProviders,
       'hidden': instance.hidden,
       'icon': instance.icon,
+      'order': instance.order,
     };
 
 const _$GroupTypeEnumMap = {

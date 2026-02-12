@@ -108,6 +108,7 @@ abstract class ProxyGroup with _$ProxyGroup {
     List<String>? use,
     int? interval,
     bool? lazy,
+    @JsonKey(name: 'disable-udp') bool? disableUDP,
     String? url,
     int? timeout,
     @JsonKey(name: 'max-failed-times') int? maxFailedTimes,
@@ -115,8 +116,12 @@ abstract class ProxyGroup with _$ProxyGroup {
     @JsonKey(name: 'expected-filter') String? excludeFilter,
     @JsonKey(name: 'exclude-type') String? excludeType,
     @JsonKey(name: 'expected-status') String? expectedStatus,
+    @JsonKey(name: 'include-all') bool? includeAll,
+    @JsonKey(name: 'include-all-proxies') bool? includeAllProxies,
+    @JsonKey(name: 'include-all-providers') bool? includeAllProviders,
     bool? hidden,
     String? icon,
+    String? order,
   }) = _ProxyGroup;
 
   factory ProxyGroup.fromJson(Map<String, Object?> json) =>

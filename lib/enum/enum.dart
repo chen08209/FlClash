@@ -72,7 +72,7 @@ extension GroupTypeExtension on GroupType {
     return GroupType.values[index];
   }
 
-  String get value => GroupTypeExtension.valueList[index];
+  // String get value => GroupTypeExtension.valueList[index];
 }
 
 enum UsedProxy { GLOBAL, DIRECT, REJECT }

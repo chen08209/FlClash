@@ -1672,12 +1672,12 @@ class $ProxyGroupsTable extends ProxyGroups
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _testTimeoutMeta = const VerificationMeta(
-    'testTimeout',
+  static const VerificationMeta _timeoutMeta = const VerificationMeta(
+    'timeout',
   );
   @override
-  late final GeneratedColumn<int> testTimeout = GeneratedColumn<int>(
-    'test_timeout',
+  late final GeneratedColumn<int> timeout = GeneratedColumn<int>(
+    'timeout',
     aliasedName,
     true,
     type: DriftSqlType.int,
@@ -1706,18 +1706,18 @@ class $ProxyGroupsTable extends ProxyGroups
       'CHECK ("lazy" IN (0, 1))',
     ),
   );
-  static const VerificationMeta _disableUdpMeta = const VerificationMeta(
-    'disableUdp',
+  static const VerificationMeta _disableUDPMeta = const VerificationMeta(
+    'disableUDP',
   );
   @override
-  late final GeneratedColumn<bool> disableUdp = GeneratedColumn<bool>(
-    'disable_udp',
+  late final GeneratedColumn<bool> disableUDP = GeneratedColumn<bool>(
+    'disable_u_d_p',
     aliasedName,
     true,
     type: DriftSqlType.bool,
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("disable_udp" IN (0, 1))',
+      'CHECK ("disable_u_d_p" IN (0, 1))',
     ),
   );
   static const VerificationMeta _filterMeta = const VerificationMeta('filter');
@@ -1842,10 +1842,10 @@ class $ProxyGroupsTable extends ProxyGroups
     use,
     url,
     interval,
-    testTimeout,
+    timeout,
     maxFailedTimes,
     lazy,
-    disableUdp,
+    disableUDP,
     filter,
     excludeFilter,
     excludeType,
@@ -1903,13 +1903,10 @@ class $ProxyGroupsTable extends ProxyGroups
         interval.isAcceptableOrUnknown(data['interval']!, _intervalMeta),
       );
     }
-    if (data.containsKey('test_timeout')) {
+    if (data.containsKey('timeout')) {
       context.handle(
-        _testTimeoutMeta,
-        testTimeout.isAcceptableOrUnknown(
-          data['test_timeout']!,
-          _testTimeoutMeta,
-        ),
+        _timeoutMeta,
+        timeout.isAcceptableOrUnknown(data['timeout']!, _timeoutMeta),
       );
     }
     if (data.containsKey('max_failed_times')) {
@@ -1927,10 +1924,13 @@ class $ProxyGroupsTable extends ProxyGroups
         lazy.isAcceptableOrUnknown(data['lazy']!, _lazyMeta),
       );
     }
-    if (data.containsKey('disable_udp')) {
+    if (data.containsKey('disable_u_d_p')) {
       context.handle(
-        _disableUdpMeta,
-        disableUdp.isAcceptableOrUnknown(data['disable_udp']!, _disableUdpMeta),
+        _disableUDPMeta,
+        disableUDP.isAcceptableOrUnknown(
+          data['disable_u_d_p']!,
+          _disableUDPMeta,
+        ),
       );
     }
     if (data.containsKey('filter')) {
@@ -2049,9 +2049,9 @@ class $ProxyGroupsTable extends ProxyGroups
         DriftSqlType.int,
         data['${effectivePrefix}interval'],
       ),
-      testTimeout: attachedDatabase.typeMapping.read(
+      timeout: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
-        data['${effectivePrefix}test_timeout'],
+        data['${effectivePrefix}timeout'],
       ),
       maxFailedTimes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -2061,9 +2061,9 @@ class $ProxyGroupsTable extends ProxyGroups
         DriftSqlType.bool,
         data['${effectivePrefix}lazy'],
       ),
-      disableUdp: attachedDatabase.typeMapping.read(
+      disableUDP: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
-        data['${effectivePrefix}disable_udp'],
+        data['${effectivePrefix}disable_u_d_p'],
       ),
       filter: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -2131,10 +2131,10 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
   final List<String>? use;
   final String? url;
   final int? interval;
-  final int? testTimeout;
+  final int? timeout;
   final int? maxFailedTimes;
   final bool? lazy;
-  final bool? disableUdp;
+  final bool? disableUDP;
   final String? filter;
   final String? excludeFilter;
   final String? excludeType;
@@ -2153,10 +2153,10 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     this.use,
     this.url,
     this.interval,
-    this.testTimeout,
+    this.timeout,
     this.maxFailedTimes,
     this.lazy,
-    this.disableUdp,
+    this.disableUDP,
     this.filter,
     this.excludeFilter,
     this.excludeType,
@@ -2192,8 +2192,8 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     if (!nullToAbsent || interval != null) {
       map['interval'] = Variable<int>(interval);
     }
-    if (!nullToAbsent || testTimeout != null) {
-      map['test_timeout'] = Variable<int>(testTimeout);
+    if (!nullToAbsent || timeout != null) {
+      map['timeout'] = Variable<int>(timeout);
     }
     if (!nullToAbsent || maxFailedTimes != null) {
       map['max_failed_times'] = Variable<int>(maxFailedTimes);
@@ -2201,8 +2201,8 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     if (!nullToAbsent || lazy != null) {
       map['lazy'] = Variable<bool>(lazy);
     }
-    if (!nullToAbsent || disableUdp != null) {
-      map['disable_udp'] = Variable<bool>(disableUdp);
+    if (!nullToAbsent || disableUDP != null) {
+      map['disable_u_d_p'] = Variable<bool>(disableUDP);
     }
     if (!nullToAbsent || filter != null) {
       map['filter'] = Variable<String>(filter);
@@ -2252,16 +2252,16 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       interval: interval == null && nullToAbsent
           ? const Value.absent()
           : Value(interval),
-      testTimeout: testTimeout == null && nullToAbsent
+      timeout: timeout == null && nullToAbsent
           ? const Value.absent()
-          : Value(testTimeout),
+          : Value(timeout),
       maxFailedTimes: maxFailedTimes == null && nullToAbsent
           ? const Value.absent()
           : Value(maxFailedTimes),
       lazy: lazy == null && nullToAbsent ? const Value.absent() : Value(lazy),
-      disableUdp: disableUdp == null && nullToAbsent
+      disableUDP: disableUDP == null && nullToAbsent
           ? const Value.absent()
-          : Value(disableUdp),
+          : Value(disableUDP),
       filter: filter == null && nullToAbsent
           ? const Value.absent()
           : Value(filter),
@@ -2306,10 +2306,10 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       use: serializer.fromJson<List<String>?>(json['use']),
       url: serializer.fromJson<String?>(json['url']),
       interval: serializer.fromJson<int?>(json['interval']),
-      testTimeout: serializer.fromJson<int?>(json['testTimeout']),
+      timeout: serializer.fromJson<int?>(json['timeout']),
       maxFailedTimes: serializer.fromJson<int?>(json['maxFailedTimes']),
       lazy: serializer.fromJson<bool?>(json['lazy']),
-      disableUdp: serializer.fromJson<bool?>(json['disableUdp']),
+      disableUDP: serializer.fromJson<bool?>(json['disableUDP']),
       filter: serializer.fromJson<String?>(json['filter']),
       excludeFilter: serializer.fromJson<String?>(json['excludeFilter']),
       excludeType: serializer.fromJson<String?>(json['excludeType']),
@@ -2335,10 +2335,10 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       'use': serializer.toJson<List<String>?>(use),
       'url': serializer.toJson<String?>(url),
       'interval': serializer.toJson<int?>(interval),
-      'testTimeout': serializer.toJson<int?>(testTimeout),
+      'timeout': serializer.toJson<int?>(timeout),
       'maxFailedTimes': serializer.toJson<int?>(maxFailedTimes),
       'lazy': serializer.toJson<bool?>(lazy),
-      'disableUdp': serializer.toJson<bool?>(disableUdp),
+      'disableUDP': serializer.toJson<bool?>(disableUDP),
       'filter': serializer.toJson<String?>(filter),
       'excludeFilter': serializer.toJson<String?>(excludeFilter),
       'excludeType': serializer.toJson<String?>(excludeType),
@@ -2360,10 +2360,10 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     Value<List<String>?> use = const Value.absent(),
     Value<String?> url = const Value.absent(),
     Value<int?> interval = const Value.absent(),
-    Value<int?> testTimeout = const Value.absent(),
+    Value<int?> timeout = const Value.absent(),
     Value<int?> maxFailedTimes = const Value.absent(),
     Value<bool?> lazy = const Value.absent(),
-    Value<bool?> disableUdp = const Value.absent(),
+    Value<bool?> disableUDP = const Value.absent(),
     Value<String?> filter = const Value.absent(),
     Value<String?> excludeFilter = const Value.absent(),
     Value<String?> excludeType = const Value.absent(),
@@ -2382,12 +2382,12 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     use: use.present ? use.value : this.use,
     url: url.present ? url.value : this.url,
     interval: interval.present ? interval.value : this.interval,
-    testTimeout: testTimeout.present ? testTimeout.value : this.testTimeout,
+    timeout: timeout.present ? timeout.value : this.timeout,
     maxFailedTimes: maxFailedTimes.present
         ? maxFailedTimes.value
         : this.maxFailedTimes,
     lazy: lazy.present ? lazy.value : this.lazy,
-    disableUdp: disableUdp.present ? disableUdp.value : this.disableUdp,
+    disableUDP: disableUDP.present ? disableUDP.value : this.disableUDP,
     filter: filter.present ? filter.value : this.filter,
     excludeFilter: excludeFilter.present
         ? excludeFilter.value
@@ -2416,16 +2416,14 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       use: data.use.present ? data.use.value : this.use,
       url: data.url.present ? data.url.value : this.url,
       interval: data.interval.present ? data.interval.value : this.interval,
-      testTimeout: data.testTimeout.present
-          ? data.testTimeout.value
-          : this.testTimeout,
+      timeout: data.timeout.present ? data.timeout.value : this.timeout,
       maxFailedTimes: data.maxFailedTimes.present
           ? data.maxFailedTimes.value
           : this.maxFailedTimes,
       lazy: data.lazy.present ? data.lazy.value : this.lazy,
-      disableUdp: data.disableUdp.present
-          ? data.disableUdp.value
-          : this.disableUdp,
+      disableUDP: data.disableUDP.present
+          ? data.disableUDP.value
+          : this.disableUDP,
       filter: data.filter.present ? data.filter.value : this.filter,
       excludeFilter: data.excludeFilter.present
           ? data.excludeFilter.value
@@ -2461,10 +2459,10 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
           ..write('use: $use, ')
           ..write('url: $url, ')
           ..write('interval: $interval, ')
-          ..write('testTimeout: $testTimeout, ')
+          ..write('timeout: $timeout, ')
           ..write('maxFailedTimes: $maxFailedTimes, ')
           ..write('lazy: $lazy, ')
-          ..write('disableUdp: $disableUdp, ')
+          ..write('disableUDP: $disableUDP, ')
           ..write('filter: $filter, ')
           ..write('excludeFilter: $excludeFilter, ')
           ..write('excludeType: $excludeType, ')
@@ -2488,10 +2486,10 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     use,
     url,
     interval,
-    testTimeout,
+    timeout,
     maxFailedTimes,
     lazy,
-    disableUdp,
+    disableUDP,
     filter,
     excludeFilter,
     excludeType,
@@ -2514,10 +2512,10 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
           other.use == this.use &&
           other.url == this.url &&
           other.interval == this.interval &&
-          other.testTimeout == this.testTimeout &&
+          other.timeout == this.timeout &&
           other.maxFailedTimes == this.maxFailedTimes &&
           other.lazy == this.lazy &&
-          other.disableUdp == this.disableUdp &&
+          other.disableUDP == this.disableUDP &&
           other.filter == this.filter &&
           other.excludeFilter == this.excludeFilter &&
           other.excludeType == this.excludeType &&
@@ -2538,10 +2536,10 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
   final Value<List<String>?> use;
   final Value<String?> url;
   final Value<int?> interval;
-  final Value<int?> testTimeout;
+  final Value<int?> timeout;
   final Value<int?> maxFailedTimes;
   final Value<bool?> lazy;
-  final Value<bool?> disableUdp;
+  final Value<bool?> disableUDP;
   final Value<String?> filter;
   final Value<String?> excludeFilter;
   final Value<String?> excludeType;
@@ -2561,10 +2559,10 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     this.use = const Value.absent(),
     this.url = const Value.absent(),
     this.interval = const Value.absent(),
-    this.testTimeout = const Value.absent(),
+    this.timeout = const Value.absent(),
     this.maxFailedTimes = const Value.absent(),
     this.lazy = const Value.absent(),
-    this.disableUdp = const Value.absent(),
+    this.disableUDP = const Value.absent(),
     this.filter = const Value.absent(),
     this.excludeFilter = const Value.absent(),
     this.excludeType = const Value.absent(),
@@ -2585,10 +2583,10 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     this.use = const Value.absent(),
     this.url = const Value.absent(),
     this.interval = const Value.absent(),
-    this.testTimeout = const Value.absent(),
+    this.timeout = const Value.absent(),
     this.maxFailedTimes = const Value.absent(),
     this.lazy = const Value.absent(),
-    this.disableUdp = const Value.absent(),
+    this.disableUDP = const Value.absent(),
     this.filter = const Value.absent(),
     this.excludeFilter = const Value.absent(),
     this.excludeType = const Value.absent(),
@@ -2610,10 +2608,10 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     Expression<String>? use,
     Expression<String>? url,
     Expression<int>? interval,
-    Expression<int>? testTimeout,
+    Expression<int>? timeout,
     Expression<int>? maxFailedTimes,
     Expression<bool>? lazy,
-    Expression<bool>? disableUdp,
+    Expression<bool>? disableUDP,
     Expression<String>? filter,
     Expression<String>? excludeFilter,
     Expression<String>? excludeType,
@@ -2634,10 +2632,10 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
       if (use != null) 'use': use,
       if (url != null) 'url': url,
       if (interval != null) 'interval': interval,
-      if (testTimeout != null) 'test_timeout': testTimeout,
+      if (timeout != null) 'timeout': timeout,
       if (maxFailedTimes != null) 'max_failed_times': maxFailedTimes,
       if (lazy != null) 'lazy': lazy,
-      if (disableUdp != null) 'disable_udp': disableUdp,
+      if (disableUDP != null) 'disable_u_d_p': disableUDP,
       if (filter != null) 'filter': filter,
       if (excludeFilter != null) 'exclude_filter': excludeFilter,
       if (excludeType != null) 'exclude_type': excludeType,
@@ -2661,10 +2659,10 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     Value<List<String>?>? use,
     Value<String?>? url,
     Value<int?>? interval,
-    Value<int?>? testTimeout,
+    Value<int?>? timeout,
     Value<int?>? maxFailedTimes,
     Value<bool?>? lazy,
-    Value<bool?>? disableUdp,
+    Value<bool?>? disableUDP,
     Value<String?>? filter,
     Value<String?>? excludeFilter,
     Value<String?>? excludeType,
@@ -2685,10 +2683,10 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
       use: use ?? this.use,
       url: url ?? this.url,
       interval: interval ?? this.interval,
-      testTimeout: testTimeout ?? this.testTimeout,
+      timeout: timeout ?? this.timeout,
       maxFailedTimes: maxFailedTimes ?? this.maxFailedTimes,
       lazy: lazy ?? this.lazy,
-      disableUdp: disableUdp ?? this.disableUdp,
+      disableUDP: disableUDP ?? this.disableUDP,
       filter: filter ?? this.filter,
       excludeFilter: excludeFilter ?? this.excludeFilter,
       excludeType: excludeType ?? this.excludeType,
@@ -2731,8 +2729,8 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     if (interval.present) {
       map['interval'] = Variable<int>(interval.value);
     }
-    if (testTimeout.present) {
-      map['test_timeout'] = Variable<int>(testTimeout.value);
+    if (timeout.present) {
+      map['timeout'] = Variable<int>(timeout.value);
     }
     if (maxFailedTimes.present) {
       map['max_failed_times'] = Variable<int>(maxFailedTimes.value);
@@ -2740,8 +2738,8 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     if (lazy.present) {
       map['lazy'] = Variable<bool>(lazy.value);
     }
-    if (disableUdp.present) {
-      map['disable_udp'] = Variable<bool>(disableUdp.value);
+    if (disableUDP.present) {
+      map['disable_u_d_p'] = Variable<bool>(disableUDP.value);
     }
     if (filter.present) {
       map['filter'] = Variable<String>(filter.value);
@@ -2789,10 +2787,10 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
           ..write('use: $use, ')
           ..write('url: $url, ')
           ..write('interval: $interval, ')
-          ..write('testTimeout: $testTimeout, ')
+          ..write('timeout: $timeout, ')
           ..write('maxFailedTimes: $maxFailedTimes, ')
           ..write('lazy: $lazy, ')
-          ..write('disableUdp: $disableUdp, ')
+          ..write('disableUDP: $disableUDP, ')
           ..write('filter: $filter, ')
           ..write('excludeFilter: $excludeFilter, ')
           ..write('excludeType: $excludeType, ')
@@ -4247,10 +4245,10 @@ typedef $$ProxyGroupsTableCreateCompanionBuilder =
       Value<List<String>?> use,
       Value<String?> url,
       Value<int?> interval,
-      Value<int?> testTimeout,
+      Value<int?> timeout,
       Value<int?> maxFailedTimes,
       Value<bool?> lazy,
-      Value<bool?> disableUdp,
+      Value<bool?> disableUDP,
       Value<String?> filter,
       Value<String?> excludeFilter,
       Value<String?> excludeType,
@@ -4272,10 +4270,10 @@ typedef $$ProxyGroupsTableUpdateCompanionBuilder =
       Value<List<String>?> use,
       Value<String?> url,
       Value<int?> interval,
-      Value<int?> testTimeout,
+      Value<int?> timeout,
       Value<int?> maxFailedTimes,
       Value<bool?> lazy,
-      Value<bool?> disableUdp,
+      Value<bool?> disableUDP,
       Value<String?> filter,
       Value<String?> excludeFilter,
       Value<String?> excludeType,
@@ -4354,8 +4352,8 @@ class $$ProxyGroupsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get testTimeout => $composableBuilder(
-    column: $table.testTimeout,
+  ColumnFilters<int> get timeout => $composableBuilder(
+    column: $table.timeout,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4369,8 +4367,8 @@ class $$ProxyGroupsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get disableUdp => $composableBuilder(
-    column: $table.disableUdp,
+  ColumnFilters<bool> get disableUDP => $composableBuilder(
+    column: $table.disableUDP,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4487,8 +4485,8 @@ class $$ProxyGroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get testTimeout => $composableBuilder(
-    column: $table.testTimeout,
+  ColumnOrderings<int> get timeout => $composableBuilder(
+    column: $table.timeout,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4502,8 +4500,8 @@ class $$ProxyGroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get disableUdp => $composableBuilder(
-    column: $table.disableUdp,
+  ColumnOrderings<bool> get disableUDP => $composableBuilder(
+    column: $table.disableUDP,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4608,10 +4606,8 @@ class $$ProxyGroupsTableAnnotationComposer
   GeneratedColumn<int> get interval =>
       $composableBuilder(column: $table.interval, builder: (column) => column);
 
-  GeneratedColumn<int> get testTimeout => $composableBuilder(
-    column: $table.testTimeout,
-    builder: (column) => column,
-  );
+  GeneratedColumn<int> get timeout =>
+      $composableBuilder(column: $table.timeout, builder: (column) => column);
 
   GeneratedColumn<int> get maxFailedTimes => $composableBuilder(
     column: $table.maxFailedTimes,
@@ -4621,8 +4617,8 @@ class $$ProxyGroupsTableAnnotationComposer
   GeneratedColumn<bool> get lazy =>
       $composableBuilder(column: $table.lazy, builder: (column) => column);
 
-  GeneratedColumn<bool> get disableUdp => $composableBuilder(
-    column: $table.disableUdp,
+  GeneratedColumn<bool> get disableUDP => $composableBuilder(
+    column: $table.disableUDP,
     builder: (column) => column,
   );
 
@@ -4727,10 +4723,10 @@ class $$ProxyGroupsTableTableManager
                 Value<List<String>?> use = const Value.absent(),
                 Value<String?> url = const Value.absent(),
                 Value<int?> interval = const Value.absent(),
-                Value<int?> testTimeout = const Value.absent(),
+                Value<int?> timeout = const Value.absent(),
                 Value<int?> maxFailedTimes = const Value.absent(),
                 Value<bool?> lazy = const Value.absent(),
-                Value<bool?> disableUdp = const Value.absent(),
+                Value<bool?> disableUDP = const Value.absent(),
                 Value<String?> filter = const Value.absent(),
                 Value<String?> excludeFilter = const Value.absent(),
                 Value<String?> excludeType = const Value.absent(),
@@ -4750,10 +4746,10 @@ class $$ProxyGroupsTableTableManager
                 use: use,
                 url: url,
                 interval: interval,
-                testTimeout: testTimeout,
+                timeout: timeout,
                 maxFailedTimes: maxFailedTimes,
                 lazy: lazy,
-                disableUdp: disableUdp,
+                disableUDP: disableUDP,
                 filter: filter,
                 excludeFilter: excludeFilter,
                 excludeType: excludeType,
@@ -4775,10 +4771,10 @@ class $$ProxyGroupsTableTableManager
                 Value<List<String>?> use = const Value.absent(),
                 Value<String?> url = const Value.absent(),
                 Value<int?> interval = const Value.absent(),
-                Value<int?> testTimeout = const Value.absent(),
+                Value<int?> timeout = const Value.absent(),
                 Value<int?> maxFailedTimes = const Value.absent(),
                 Value<bool?> lazy = const Value.absent(),
-                Value<bool?> disableUdp = const Value.absent(),
+                Value<bool?> disableUDP = const Value.absent(),
                 Value<String?> filter = const Value.absent(),
                 Value<String?> excludeFilter = const Value.absent(),
                 Value<String?> excludeType = const Value.absent(),
@@ -4798,10 +4794,10 @@ class $$ProxyGroupsTableTableManager
                 use: use,
                 url: url,
                 interval: interval,
-                testTimeout: testTimeout,
+                timeout: timeout,
                 maxFailedTimes: maxFailedTimes,
                 lazy: lazy,
-                disableUdp: disableUdp,
+                disableUDP: disableUDP,
                 filter: filter,
                 excludeFilter: excludeFilter,
                 excludeType: excludeType,
