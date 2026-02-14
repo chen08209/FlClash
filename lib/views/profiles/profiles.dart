@@ -2,7 +2,6 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/overwrite.dart';
@@ -13,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'add.dart';
 import 'edit.dart';
+import 'preview.dart';
 
 class ProfilesView extends StatefulWidget {
   const ProfilesView({super.key});
@@ -198,14 +198,7 @@ class ProfileItem extends StatelessWidget {
   }
 
   Future<void> _handlePreview(BuildContext context) async {
-    final configMap = await appController.getProfileWithId(profile.id);
-    final content = await encodeYamlTask(configMap);
-    if (!context.mounted) {
-      return;
-    }
-
-    final previewPage = EditorPage(title: profile.realLabel, content: content);
-    BaseNavigator.push<String>(context, previewPage);
+    BaseNavigator.push<String>(context, PreviewProfileView(profile: profile));
   }
 
   Future updateProfile() async {

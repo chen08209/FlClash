@@ -2,15 +2,14 @@
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/controller.dart';
-import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/rule.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/scripts.dart';
+import 'package:fl_clash/views/profiles/preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,13 +36,7 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
     if (profile == null) {
       return;
     }
-    final configMap = await appController.getProfileWithId(profile.id);
-    final content = await encodeYamlTask(configMap);
-    if (!mounted) {
-      return;
-    }
-    final previewPage = EditorPage(title: profile.realLabel, content: content);
-    BaseNavigator.push<String>(context, previewPage);
+    BaseNavigator.push<String>(context, PreviewProfileView(profile: profile));
   }
 
   @override
@@ -181,10 +174,10 @@ class _StandardContent extends ConsumerStatefulWidget {
   const _StandardContent(this.profileId);
 
   @override
-  ConsumerState createState() => __StandardContentState();
+  ConsumerState createState() => _StandardContentState();
 }
 
-class __StandardContentState extends ConsumerState<_StandardContent> {
+class _StandardContentState extends ConsumerState<_StandardContent> {
   final _key = utils.id;
 
   Future<void> _handleAddOrUpdate([Rule? rule]) async {
