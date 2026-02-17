@@ -140,6 +140,16 @@ class $ProfilesTable extends Profiles
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _loginPasswordMeta =
+      const VerificationMeta('loginPassword');
+  @override
+  late final GeneratedColumn<String> loginPassword = GeneratedColumn<String>(
+    'login_password',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -155,6 +165,7 @@ class $ProfilesTable extends Profiles
     selectedMap,
     unfoldSet,
     order,
+    loginPassword,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -305,6 +316,10 @@ class $ProfilesTable extends Profiles
         DriftSqlType.int,
         data['${effectivePrefix}order'],
       ),
+      loginPassword: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}login_password'],
+      ),
     );
   }
 
@@ -339,6 +354,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
   final Map<String, String> selectedMap;
   final Set<String> unfoldSet;
   final int? order;
+  final String? loginPassword;
   const RawProfile({
     required this.id,
     required this.label,
@@ -353,6 +369,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     required this.selectedMap,
     required this.unfoldSet,
     this.order,
+    this.loginPassword,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -396,6 +413,9 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     if (!nullToAbsent || order != null) {
       map['order'] = Variable<int>(order);
     }
+    if (!nullToAbsent || loginPassword != null) {
+      map['login_password'] = Variable<String>(loginPassword);
+    }
     return map;
   }
 
@@ -424,6 +444,9 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
       order: order == null && nullToAbsent
           ? const Value.absent()
           : Value(order),
+      loginPassword: loginPassword == null && nullToAbsent
+          ? const Value.absent()
+          : Value(loginPassword),
     );
   }
 
@@ -454,6 +477,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
       ),
       unfoldSet: serializer.fromJson<Set<String>>(json['unfoldSet']),
       order: serializer.fromJson<int?>(json['order']),
+      loginPassword: serializer.fromJson<String?>(json['loginPassword']),
     );
   }
   @override
@@ -479,6 +503,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
       'selectedMap': serializer.toJson<Map<String, String>>(selectedMap),
       'unfoldSet': serializer.toJson<Set<String>>(unfoldSet),
       'order': serializer.toJson<int?>(order),
+      'loginPassword': serializer.toJson<String?>(loginPassword),
     };
   }
 
@@ -496,6 +521,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     Map<String, String>? selectedMap,
     Set<String>? unfoldSet,
     Value<int?> order = const Value.absent(),
+    Value<String?> loginPassword = const Value.absent(),
   }) => RawProfile(
     id: id ?? this.id,
     label: label ?? this.label,
@@ -517,6 +543,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     selectedMap: selectedMap ?? this.selectedMap,
     unfoldSet: unfoldSet ?? this.unfoldSet,
     order: order.present ? order.value : this.order,
+    loginPassword: loginPassword.present ? loginPassword.value : this.loginPassword,
   );
   RawProfile copyWithCompanion(ProfilesCompanion data) {
     return RawProfile(
@@ -547,6 +574,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
           : this.selectedMap,
       unfoldSet: data.unfoldSet.present ? data.unfoldSet.value : this.unfoldSet,
       order: data.order.present ? data.order.value : this.order,
+      loginPassword: data.loginPassword.present ? data.loginPassword.value : this.loginPassword,
     );
   }
 
@@ -585,6 +613,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     selectedMap,
     unfoldSet,
     order,
+    loginPassword,
   );
   @override
   bool operator ==(Object other) =>
@@ -602,7 +631,8 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
           other.autoUpdate == this.autoUpdate &&
           other.selectedMap == this.selectedMap &&
           other.unfoldSet == this.unfoldSet &&
-          other.order == this.order);
+          other.order == this.order &&
+          other.loginPassword == this.loginPassword);
 }
 
 class ProfilesCompanion extends UpdateCompanion<RawProfile> {
@@ -619,6 +649,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
   final Value<Map<String, String>> selectedMap;
   final Value<Set<String>> unfoldSet;
   final Value<int?> order;
+  final Value<String?> loginPassword;
   const ProfilesCompanion({
     this.id = const Value.absent(),
     this.label = const Value.absent(),
@@ -633,6 +664,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     this.selectedMap = const Value.absent(),
     this.unfoldSet = const Value.absent(),
     this.order = const Value.absent(),
+    this.loginPassword = const Value.absent(),
   });
   ProfilesCompanion.insert({
     this.id = const Value.absent(),
@@ -648,6 +680,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     required Map<String, String> selectedMap,
     required Set<String> unfoldSet,
     this.order = const Value.absent(),
+    this.loginPassword = const Value.absent(),
   }) : label = Value(label),
        url = Value(url),
        overwriteType = Value(overwriteType),
@@ -669,6 +702,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     Expression<String>? selectedMap,
     Expression<String>? unfoldSet,
     Expression<int>? order,
+    Expression<String>? loginPassword,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -685,6 +719,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
       if (selectedMap != null) 'selected_map': selectedMap,
       if (unfoldSet != null) 'unfold_set': unfoldSet,
       if (order != null) 'order': order,
+      if (loginPassword != null) 'login_password': loginPassword,
     });
   }
 
@@ -702,6 +737,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     Value<Map<String, String>>? selectedMap,
     Value<Set<String>>? unfoldSet,
     Value<int?>? order,
+    Value<String?>? loginPassword,
   }) {
     return ProfilesCompanion(
       id: id ?? this.id,
@@ -718,6 +754,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
       selectedMap: selectedMap ?? this.selectedMap,
       unfoldSet: unfoldSet ?? this.unfoldSet,
       order: order ?? this.order,
+      loginPassword: loginPassword ?? this.loginPassword,
     );
   }
 
@@ -772,6 +809,9 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     }
     if (order.present) {
       map['order'] = Variable<int>(order.value);
+    }
+    if (loginPassword.present) {
+      map['login_password'] = Variable<String>(loginPassword.value);
     }
     return map;
   }

@@ -38,6 +38,8 @@ export 'request.dart';
 export 'scroll.dart';
 export 'snowflake.dart';
 export 'string.dart';
+export 'subscription_decrypt.dart';
+export 'subscription_exception.dart';
 export 'system.dart';
 export 'task.dart';
 export 'text.dart';

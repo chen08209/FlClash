@@ -29,6 +29,7 @@ class EditProfileView extends StatefulWidget {
 class _EditProfileViewState extends State<EditProfileView> {
   late final TextEditingController _labelController;
   late final TextEditingController _urlController;
+  late final TextEditingController _loginPasswordController;
   late final TextEditingController _autoUpdateDurationController;
   late bool _autoUpdate;
   String? _rawText;
@@ -41,6 +42,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     super.initState();
     _labelController = TextEditingController(text: widget.profile.label);
     _urlController = TextEditingController(text: widget.profile.url);
+    _loginPasswordController = TextEditingController(text: widget.profile.loginPassword ?? '');
     _autoUpdate = widget.profile.autoUpdate;
     _autoUpdateDurationController = TextEditingController(
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
@@ -70,6 +72,7 @@ class _EditProfileViewState extends State<EditProfileView> {
       autoUpdateDuration: Duration(
         minutes: int.parse(_autoUpdateDurationController.text),
       ),
+      loginPassword: _loginPasswordController.text.isEmpty ? null : _loginPasswordController.text,
     );
     final hasUpdate = widget.profile.url != profile.url;
     if (_fileData != null) {
@@ -201,6 +204,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   void dispose() {
     _labelController.dispose();
     _urlController.dispose();
+    _loginPasswordController.dispose();
     _fileInfoNotifier.dispose();
     _autoUpdateDurationController.dispose();
     super.dispose();
@@ -247,6 +251,18 @@ class _EditProfileViewState extends State<EditProfileView> {
               }
               return null;
             },
+          ),
+        ),
+        ListItem(
+          title: TextFormField(
+            textInputAction: TextInputAction.next,
+            obscureText: true,
+            controller: _loginPasswordController,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              labelText: appLocalizations.subscriptionLoginPassword,
+              hintText: appLocalizations.subscriptionLoginPasswordHint,
+            ),
           ),
         ),
         ListItem.switchItem(

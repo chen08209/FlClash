@@ -2,10 +2,12 @@ name: build
 
 on:
   push:
+    branches: [main]
     tags:
       - 'v*'
+  workflow_dispatch:
 env:
-  IS_STABLE: ${{ !contains(github.ref, '-') }}
+  IS_STABLE: ${{ startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-') }}
 
 jobs:
   build:
@@ -49,7 +51,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Android Signing
-        if: startsWith(matrix.platform,'android')
+        if: startsWith(matrix.platform,'android') && secrets.KEYSTORE != ''
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
           echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json

@@ -609,6 +609,36 @@ class AppLocalizations {
     );
   }
 
+  /// `Website login password`
+  String get subscriptionLoginPassword {
+    return Intl.message(
+      'Website login password',
+      name: 'subscriptionLoginPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `For encrypted subscriptions only`
+  String get subscriptionLoginPasswordHint {
+    return Intl.message(
+      'For encrypted subscriptions only',
+      name: 'subscriptionLoginPasswordHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Incorrect password, please try again`
+  String get subscriptionPasswordWrongTip {
+    return Intl.message(
+      'Incorrect password, please try again',
+      name: 'subscriptionPasswordWrongTip',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Auto update`
   String get autoUpdate {
     return Intl.message('Auto update', name: 'autoUpdate', desc: '', args: []);
