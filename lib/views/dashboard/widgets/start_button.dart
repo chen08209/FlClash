@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -132,6 +134,75 @@ class _StartButtonState extends ConsumerState<StartButton>
           },
         ),
       ),
+    );
+  }
+}
+
+class LaunchBrowserButton extends ConsumerWidget {
+  const LaunchBrowserButton({super.key});
+
+  Future<void> _launchWithProxy(int port) async {
+    final proxyArg = '--proxy-server=http://127.0.0.1:$port';
+    if (system.isWindows) {
+      // Follow v2rayN style: start browser with proxy args.
+      await Process.start('cmd', ['/c', 'start', '', 'msedge', proxyArg]);
+      return;
+    }
+    if (system.isMacOS) {
+      await Process.start('open', [
+        '-a',
+        'Google Chrome',
+        '--args',
+        proxyArg,
+      ]);
+      return;
+    }
+    if (system.isLinux) {
+      final commands = [
+        'google-chrome',
+        'google-chrome-stable',
+        'chromium-browser',
+        'chromium',
+      ];
+      for (final command in commands) {
+        try {
+          await Process.start(command, [proxyArg]);
+          return;
+        } catch (_) {
+          // try next command
+        }
+      }
+      throw 'Chrome is not found on this Linux system.';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (system.isAndroid) {
+      return const SizedBox.shrink();
+    }
+    final hasProfile = ref.watch(
+      profilesProvider.select((state) => state.isNotEmpty),
+    );
+    if (!hasProfile) {
+      return const SizedBox.shrink();
+    }
+    final isStart = ref.watch(isStartProvider);
+    final port = ref.watch(proxyStateProvider.select((state) => state.port));
+    return FloatingActionButton(
+      heroTag: null,
+      mini: true,
+      tooltip: 'Launch browser with proxy',
+      onPressed: !isStart
+          ? null
+          : () async {
+              try {
+                await _launchWithProxy(port);
+              } catch (e) {
+                globalState.showNotifier('Launch browser failed: $e');
+              }
+            },
+      child: const Icon(Icons.language),
     );
   }
 }
