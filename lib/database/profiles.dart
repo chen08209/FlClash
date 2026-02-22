@@ -32,6 +32,8 @@ class Profiles extends Table {
 
   IntColumn get order => integer().nullable()();
 
+  TextColumn get loginPassword => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -143,6 +145,7 @@ extension RawProfilExt on RawProfile {
       overwriteType: overwriteType,
       scriptId: scriptId,
       order: order,
+      loginPassword: loginPassword,
     );
   }
 }
@@ -163,6 +166,7 @@ extension ProfilesCompanionExt on Profile {
       overwriteType: overwriteType,
       scriptId: Value(scriptId),
       order: Value(order ?? this.order),
+      loginPassword: Value(loginPassword),
     );
   }
 }

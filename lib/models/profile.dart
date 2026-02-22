@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -57,18 +58,20 @@ abstract class Profile with _$Profile {
     @Default(OverwriteType.standard) OverwriteType overwriteType,
     int? scriptId,
     int? order,
+    String? loginPassword,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, Object?> json) =>
       _$ProfileFromJson(json);
 
-  factory Profile.normal({String? label, String url = ''}) {
+  factory Profile.normal({String? label, String url = '', String? loginPassword}) {
     final id = snowflake.id;
     return Profile(
       label: label ?? '',
       url: url,
       id: id,
       autoUpdateDuration: defaultUpdateDuration,
+      loginPassword: loginPassword,
     );
   }
 }
@@ -214,13 +217,29 @@ extension ProfileExtension on Profile {
     final response = await request.getFileResponseForUrl(url);
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
+    final encHeader = response.headers.value('subscription-encryption');
+    var data = response.data ?? Uint8List.fromList([]);
+
+    if (isSubscriptionEncrypted(encHeader)) {
+      final password = loginPassword;
+      if (password == null || password.isEmpty) {
+        throw const SubscriptionEncryptedException(passwordWrong: false);
+      }
+      final base64Str = utf8.decode(data);
+      final decrypted = tryDecryptSubscription(password, base64Str);
+      if (decrypted == null) {
+        throw const SubscriptionEncryptedException(passwordWrong: true);
+      }
+      data = decrypted;
+    }
+
     return await copyWith(
       label: label.takeFirstValid([
         utils.getFileNameForDisposition(disposition),
         id.toString(),
       ]),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
-    ).saveFile(response.data ?? Uint8List.fromList([]));
+    ).saveFile(data);
   }
 
   Future<Profile> saveFile(Uint8List bytes) async {

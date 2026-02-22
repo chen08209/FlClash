@@ -319,18 +319,44 @@ extension ProfilesControllerExt on AppController {
     Profile profile, {
     bool showLoading = false,
   }) async {
-    try {
-      if (showLoading) {
-        _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value =
-            true;
+    var currentProfile = profile;
+    while (true) {
+      try {
+        if (showLoading) {
+          _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value =
+              true;
+        }
+        final newProfile = await currentProfile.update();
+        _ref.read(profilesProvider.notifier).put(newProfile);
+        if (profile.id == _ref.read(currentProfileIdProvider)) {
+          applyProfileDebounce(silence: true);
+        }
+        return;
+      } on SubscriptionEncryptedException catch (e) {
+        final password = await globalState.showCommonDialog<String>(
+          child: InputDialog(
+            autovalidateMode: AutovalidateMode.onUnfocus,
+            title: appLocalizations.subscriptionLoginPassword,
+            labelText: appLocalizations.subscriptionLoginPassword,
+            value: currentProfile.loginPassword ?? '',
+            obscureText: true,
+            validator: (value) {
+              if (e.passwordWrong && (value == null || value.isEmpty)) {
+                return appLocalizations.subscriptionPasswordWrongTip;
+              }
+              return null;
+            },
+          ),
+        );
+        if (password == null) return;
+        currentProfile = currentProfile.copyWith(loginPassword: password);
+        _ref.read(profilesProvider.notifier).put(currentProfile);
+      } finally {
+        if (showLoading) {
+          _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value =
+              false;
+        }
       }
-      final newProfile = await profile.update();
-      _ref.read(profilesProvider.notifier).put(newProfile);
-      if (profile.id == _ref.read(currentProfileIdProvider)) {
-        applyProfileDebounce(silence: true);
-      }
-    } finally {
-      _ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = false;
     }
   }
 
@@ -339,11 +365,35 @@ extension ProfilesControllerExt on AppController {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     }
     toProfiles();
-    final profile = await loadingRun(tag: LoadingTag.profiles, () async {
-      return await Profile.normal(url: url).update();
-    }, title: appLocalizations.addProfile);
-    if (profile != null) {
-      putProfile(profile);
+    var loginPassword = '';
+    while (true) {
+      try {
+        final profile = await loadingRun(tag: LoadingTag.profiles, () async {
+          return await Profile.normal(url: url, loginPassword: loginPassword.isEmpty ? null : loginPassword).update();
+        }, title: appLocalizations.addProfile);
+        if (profile != null) {
+          putProfile(profile);
+        }
+        return;
+      } on SubscriptionEncryptedException catch (e) {
+        final password = await globalState.showCommonDialog<String>(
+          child: InputDialog(
+            autovalidateMode: AutovalidateMode.onUnfocus,
+            title: appLocalizations.subscriptionLoginPassword,
+            labelText: appLocalizations.subscriptionLoginPassword,
+            value: loginPassword,
+            obscureText: true,
+            validator: (value) {
+              if (e.passwordWrong && (value == null || value.isEmpty)) {
+                return appLocalizations.subscriptionPasswordWrongTip;
+              }
+              return null;
+            },
+          ),
+        );
+        if (password == null) return;
+        loginPassword = password;
+      }
     }
   }
 
@@ -1181,6 +1231,7 @@ extension CommonControllerExt on AppController {
       final res = await futureFunction();
       return res;
     } catch (e, s) {
+      if (e is SubscriptionEncryptedException) rethrow;
       commonPrint.log('$title ===> $e, $s', logLevel: LogLevel.warning);
       if (silence) {
         globalState.showNotifier(e.toString());

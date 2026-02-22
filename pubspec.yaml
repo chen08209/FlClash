@@ -59,6 +59,7 @@ dependencies:
   flutter_svg: ^2.1.0
   flutter_cache_manager: ^3.4.1
   crypto: ^3.0.3
+  encrypt: ^5.0.3
   yaml: ^3.1.3
   yaml_writer:
     git:
