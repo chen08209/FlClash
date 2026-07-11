@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -55,14 +54,31 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   }
 
   void scrollToGroupSelected() {
-    final currentGroupName = getCurrentGroupName();
-    _keyMap[currentGroupName]?.currentState?.scrollToSelected();
+    final group = currentGroup;
+    if (group == null) {
+      return;
+    }
+    _keyMap[group.name]?.currentState?.scrollToSelected();
   }
 
   Future<void> delayTestCurrentGroup() async {
-    final currentGroupName = getCurrentGroupName();
-    final currentState = _keyMap[currentGroupName]?.currentState;
-    await delayTest(currentState?.currentProxies ?? [], currentState?.testUrl);
+    final group = currentGroup;
+    if (group == null) {
+      return;
+    }
+    await delayTest(group.all, group.testUrl);
+  }
+
+  Group? get currentGroup {
+    return _getGroup(_tabController?.index);
+  }
+
+  Group? _getGroup(int? index) {
+    final groups = ref.read(proxiesTabStateProvider).groups;
+    if (index == null || index < 0 || index >= groups.length) {
+      return null;
+    }
+    return groups[index];
   }
 
   Widget _buildMoreButton() {
@@ -126,21 +142,15 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   }
 
   void _tabControllerListener([int? index]) {
+    final group = _getGroup(index ?? _tabController?.index);
+    if (group == null) {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      int? groupIndex = index;
-      if (groupIndex == -1) {
+      if (!mounted) {
         return;
       }
-      if (groupIndex == null) {
-        final currentIndex = _tabController?.index;
-        groupIndex = currentIndex;
-      }
-      final currentGroups = getCurrentGroups();
-      if (groupIndex == null || groupIndex > currentGroups.length) {
-        return;
-      }
-      final currentGroup = currentGroups[groupIndex];
-      updateCurrentGroupName(currentGroup.name);
+      updateCurrentGroupName(group.name);
     });
   }
 
@@ -281,9 +291,6 @@ class ProxyGroupView extends ConsumerStatefulWidget {
 class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   late final ScrollController _controller;
 
-  List<Proxy> currentProxies = [];
-  String? testUrl;
-
   @override
   void initState() {
     super.initState();
@@ -315,7 +322,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
         16 +
             getScrollToSelectedOffset(
               groupName: widget.group.name,
-              proxies: currentProxies,
+              proxies: widget.group.all,
             ),
         _controller.position.maxScrollExtent,
       ),
@@ -328,8 +335,6 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   Widget build(BuildContext context) {
     final group = widget.group;
     final proxies = group.all;
-    testUrl = group.testUrl;
-    currentProxies = proxies;
     return CommonScrollBar(
       controller: _controller,
       child: GridView.builder(
@@ -347,9 +352,9 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
           crossAxisSpacing: 8,
           mainAxisExtent: getItemHeight(widget.cardType),
         ),
-        itemCount: currentProxies.length,
+        itemCount: proxies.length,
         itemBuilder: (_, index) {
-          final proxy = currentProxies[index];
+          final proxy = proxies[index];
           return ProxyCard(
             testUrl: group.testUrl,
             groupType: group.type,

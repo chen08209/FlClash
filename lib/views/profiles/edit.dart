@@ -257,12 +257,10 @@ class _EditProfileViewState extends State<EditProfileView> {
             },
           ),
         ),
-        ListItem.switchItem(
+        ListItem.toggle(
           title: Text(appLocalizations.autoUpdate),
-          delegate: SwitchDelegate<bool>(
-            value: _autoUpdate,
-            onChanged: _setAutoUpdate,
-          ),
+          value: _autoUpdate,
+          onChanged: _setAutoUpdate,
         ),
         if (_autoUpdate)
           ListItem(

@@ -3,7 +3,6 @@
 #include <flutter_linux/flutter_linux.h>
 #include <gio/gio.h>
 
-#include <cstdio>
 #include <cstring>
 
 #define WIFI_SSID_PLUGIN(obj)                                     \
@@ -12,11 +11,9 @@
 
 struct _WifiSsidPlugin {
   GObject parent_instance;
-  FlPluginRegistrar* registrar;
-  FlMethodChannel* channel;
 };
 
-G_DEFINE_TYPE(WifiSsidPlugin, wifi_ssid_plugin, g_object_get_type())
+G_DEFINE_TYPE(WifiSsidPlugin, wifi_ssid_plugin, G_TYPE_OBJECT)
 
 static constexpr guint32 kNmDeviceTypeWifi = 2;
 static constexpr guint32 kNmDeviceStateActivated = 100;
@@ -300,31 +297,38 @@ static gchar* get_ssid_from_connman() {
 }
 
 static gchar* get_ssid_from_nmcli() {
-  FILE* fp = popen("nmcli -t -f active,ssid dev wifi 2>/dev/null", "r");
-  if (fp == nullptr) {
+  g_auto(GStrv) arguments = nullptr;
+  gint argument_count = 0;
+  g_autoptr(GError) error = nullptr;
+  if (!g_shell_parse_argv(
+          "nmcli --terse --fields active,ssid device wifi", &argument_count,
+          &arguments, &error)) {
     return nullptr;
   }
 
-  char line[256];
-  gchar* ssid = nullptr;
-
-  while (fgets(line, sizeof(line), fp) != nullptr) {
-    // Remove trailing newline
-    size_t len = strlen(line);
-    if (len > 0 && line[len - 1] == '\n') {
-      line[len - 1] = '\0';
-    }
-
-    // Parse "yes:SSID" or "no:SSID"
-    char* colon = strchr(line, ':');
-    if (colon != nullptr && strncmp(line, "yes", colon - line) == 0) {
-      ssid = unescape_nmcli_value(colon + 1);
-      break;
-    }
+  g_auto(GStrv) environment = g_get_environ();
+  environment = g_environ_setenv(environment, "LC_ALL", "C", TRUE);
+  g_autofree gchar* standard_output = nullptr;
+  gint wait_status = 0;
+  const gboolean spawned = g_spawn_sync(
+      nullptr, arguments, environment,
+      static_cast<GSpawnFlags>(G_SPAWN_SEARCH_PATH |
+                               G_SPAWN_STDERR_TO_DEV_NULL),
+      nullptr, nullptr, &standard_output, nullptr, &wait_status, &error);
+  if (!spawned || standard_output == nullptr) {
+    return nullptr;
+  }
+  if (!g_spawn_check_wait_status(wait_status, &error)) {
+    return nullptr;
   }
 
-  pclose(fp);
-  return ssid;
+  g_auto(GStrv) lines = g_strsplit(standard_output, "\n", -1);
+  for (gchar** line = lines; *line != nullptr; ++line) {
+    if (g_str_has_prefix(*line, "yes:")) {
+      return unescape_nmcli_value(*line + strlen("yes:"));
+    }
+  }
+  return nullptr;
 }
 
 static gchar* get_ssid_value() {
@@ -374,8 +378,7 @@ static void get_ssid_done(GObject* source_object, GAsyncResult* result,
   g_object_unref(method_call);
 }
 
-static void wifi_ssid_plugin_handle_method_call(WifiSsidPlugin* self,
-                                                 FlMethodCall* method_call) {
+static void wifi_ssid_plugin_handle_method_call(FlMethodCall* method_call) {
   g_autoptr(FlMethodResponse) response = nullptr;
   const gchar* method = fl_method_call_get_name(method_call);
 
@@ -384,8 +387,9 @@ static void wifi_ssid_plugin_handle_method_call(WifiSsidPlugin* self,
         g_task_new(nullptr, nullptr, get_ssid_done, g_object_ref(method_call));
     g_task_run_in_thread(task, get_ssid_task);
     return;
-  } else if (strcmp(method, "checkPermission") == 0 || strcmp(method, "requestPermission") == 0) {
-    // Linux does not require location permission for WiFi SSID
+  } else if (strcmp(method, "checkPermission") == 0 ||
+             strcmp(method, "requestPermission") == 0) {
+    // Linux does not require location permission for the Wi-Fi SSID.
     response = FL_METHOD_RESPONSE(
         fl_method_success_response_new(fl_value_new_int(0)));
   } else {
@@ -405,24 +409,21 @@ static void wifi_ssid_plugin_class_init(WifiSsidPluginClass* klass) {
 
 static void wifi_ssid_plugin_init(WifiSsidPlugin* self) {}
 
-static void method_call_cb(FlMethodChannel* channel,
-                            FlMethodCall* method_call, gpointer user_data) {
-  WifiSsidPlugin* plugin = WIFI_SSID_PLUGIN(user_data);
-  wifi_ssid_plugin_handle_method_call(plugin, method_call);
+static void method_call_cb(FlMethodChannel*, FlMethodCall* method_call,
+                           gpointer) {
+  wifi_ssid_plugin_handle_method_call(method_call);
 }
 
 void wifi_ssid_plugin_register_with_registrar(FlPluginRegistrar* registrar) {
   WifiSsidPlugin* plugin = WIFI_SSID_PLUGIN(
       g_object_new(wifi_ssid_plugin_get_type(), nullptr));
 
-  plugin->registrar = FL_PLUGIN_REGISTRAR(g_object_ref(registrar));
-
   g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
-  plugin->channel =
+  g_autoptr(FlMethodChannel) channel =
       fl_method_channel_new(fl_plugin_registrar_get_messenger(registrar),
                             "wifi_ssid", FL_METHOD_CODEC(codec));
   fl_method_channel_set_method_call_handler(
-      plugin->channel, method_call_cb, g_object_ref(plugin), g_object_unref);
+      channel, method_call_cb, g_object_ref(plugin), g_object_unref);
 
   g_object_unref(plugin);
 }

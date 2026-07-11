@@ -178,28 +178,4 @@ void main() {
       expect(msg.type, InvokeMessageType.protect);
     });
   });
-
-  group('ActionResult', () {
-    test('toResult returns success Result for success code', () {
-      const ar = ActionResult(
-        method: ActionMethod.getConfig,
-        data: {'key': 'value'},
-        code: ResultType.success,
-      );
-      final result = ar.toResult;
-      expect(result.isSuccess, true);
-      expect(result.data, {'key': 'value'});
-    });
-
-    test('toResult returns error Result for error code', () {
-      const ar = ActionResult(
-        method: ActionMethod.getConfig,
-        data: 'something went wrong',
-        code: ResultType.error,
-      );
-      final result = ar.toResult;
-      expect(result.isSuccess, false);
-      expect(result.message, 'something went wrong');
-    });
-  });
 }

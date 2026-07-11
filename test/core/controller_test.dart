@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -87,6 +86,14 @@ void main() {
       final result = await controller.isInit;
       expect(result, true);
     });
+
+    test('crash delegates to interface', () async {
+      when(() => mock.crash()).thenAnswer((_) async => true);
+
+      await controller.crash();
+
+      verify(() => mock.crash()).called(1);
+    });
   });
 
   group('config methods', () {
@@ -114,6 +121,33 @@ void main() {
       final result = await controller.updateConfig(params);
       expect(result, 'ok');
     });
+
+    test('setupConfig waits for asynchronous preload', () async {
+      const params = SetupParams(selectedMap: {}, testUrl: 'http://x.com');
+      final preloadCompleter = Completer<void>();
+      final events = <String>[];
+      when(() => mock.setupConfig(params)).thenAnswer((_) {
+        events.add('setup');
+        return Future.value('ok');
+      });
+
+      final setupFuture = controller.setupConfig(
+        params: params,
+        preloadInvoke: () async {
+          events.add('preload');
+          await preloadCompleter.future;
+        },
+      );
+      var completed = false;
+      setupFuture.then((_) => completed = true);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(events, ['setup', 'preload']);
+      expect(completed, isFalse);
+
+      preloadCompleter.complete();
+      expect(await setupFuture, 'ok');
+    });
   });
 
   group('proxy methods', () {
@@ -126,32 +160,25 @@ void main() {
   });
 
   group('connection methods', () {
-    test('getConnections parses JSON response', () async {
-      when(() => mock.getConnections()).thenAnswer(
-        (_) async => json.encode({
-          'connections': [
-            {
-              'id': '1',
-              'metadata': {'network': 'tcp'},
-              'upload': 0,
-              'download': 0,
-              'start': '2024-01-01',
-              'chains': ['Proxy'],
-              'rule': 'DIRECT',
-              'rulePayload': '',
-            },
-          ],
-        }),
-      );
+    test('getConnections delegates structured connections', () async {
+      final connection = TrackerInfo.fromJson({
+        'id': '1',
+        'metadata': {'network': 'tcp'},
+        'upload': 0,
+        'download': 0,
+        'start': '2024-01-01',
+        'chains': ['Proxy'],
+        'rule': 'DIRECT',
+        'rulePayload': '',
+      });
+      when(() => mock.getConnections()).thenAnswer((_) async => [connection]);
       final result = await controller.getConnections();
       expect(result.length, 1);
       expect(result.first.id, '1');
     });
 
     test('getConnections handles empty connections', () async {
-      when(
-        () => mock.getConnections(),
-      ).thenAnswer((_) async => json.encode({'connections': []}));
+      when(() => mock.getConnections()).thenAnswer((_) async => []);
       final result = await controller.getConnections();
       expect(result, isEmpty);
     });
@@ -164,55 +191,58 @@ void main() {
   });
 
   group('external providers', () {
-    test('getExternalProviders parses JSON', () async {
-      when(() => mock.getExternalProviders()).thenAnswer(
-        (_) async => json.encode([
-          {
-            'name': 'provider1',
-            'type': 'Proxy',
-            'count': 5,
-            'vehicle-type': 'HTTP',
-            'update-at': DateTime.now().toIso8601String(),
-          },
-        ]),
+    test('getExternalProviders delegates structured providers', () async {
+      final provider = ExternalProvider(
+        name: 'provider1',
+        type: 'Proxy',
+        count: 5,
+        vehicleType: 'HTTP',
+        updateAt: DateTime.now(),
       );
+      when(
+        () => mock.getExternalProviders(),
+      ).thenAnswer((_) async => [provider]);
       final result = await controller.getExternalProviders();
       expect(result.length, 1);
       expect(result.first.name, 'provider1');
     });
 
-    test('getExternalProviders handles empty string', () async {
-      when(() => mock.getExternalProviders()).thenAnswer((_) async => '');
+    test('getExternalProviders handles empty list', () async {
+      when(() => mock.getExternalProviders()).thenAnswer((_) async => []);
       final result = await controller.getExternalProviders();
       expect(result, isEmpty);
     });
 
-    test('getExternalProvider returns null on empty', () async {
-      when(() => mock.getExternalProvider(any())).thenAnswer((_) async => '');
+    test('getExternalProvider returns null when missing', () async {
+      when(() => mock.getExternalProvider(any())).thenAnswer((_) async => null);
       final result = await controller.getExternalProvider('test');
       expect(result, isNull);
     });
   });
 
   group('traffic methods', () {
-    test('getTraffic handles empty string', () async {
-      when(() => mock.getTraffic(false)).thenAnswer((_) async => '');
+    test('getTraffic delegates structured traffic', () async {
+      when(
+        () => mock.getTraffic(false),
+      ).thenAnswer((_) async => const Traffic(up: 1, down: 2));
       final result = await controller.getTraffic(false);
-      expect(result.up, 0);
-      expect(result.down, 0);
+      expect(result.up, 1);
+      expect(result.down, 2);
     });
 
-    test('getTotalTraffic handles empty string', () async {
-      when(() => mock.getTotalTraffic(false)).thenAnswer((_) async => '');
+    test('getTotalTraffic delegates structured traffic', () async {
+      when(
+        () => mock.getTotalTraffic(false),
+      ).thenAnswer((_) async => const Traffic(up: 3, down: 4));
       final result = await controller.getTotalTraffic(false);
-      expect(result.up, 0);
-      expect(result.down, 0);
+      expect(result.up, 3);
+      expect(result.down, 4);
     });
 
-    test('getMemory handles empty string', () async {
-      when(() => mock.getMemory()).thenAnswer((_) async => '');
+    test('getMemory delegates numeric memory', () async {
+      when(() => mock.getMemory()).thenAnswer((_) async => 2048);
       final result = await controller.getMemory();
-      expect(result, 0);
+      expect(result, 2048);
     });
   });
 
@@ -223,10 +253,9 @@ void main() {
       expect(result, isNull);
     });
 
-    test('getDelay parses JSON response', () async {
+    test('getDelay delegates structured delay', () async {
       when(() => mock.asyncTestDelay(any(), any())).thenAnswer(
-        (_) async =>
-            json.encode({'name': 'P1', 'value': 100, 'url': 'test.com'}),
+        (_) async => const Delay(name: 'P1', value: 100, url: 'test.com'),
       );
       final result = await controller.getDelay('test.com', 'P1');
       expect(result.name, 'P1');
@@ -257,9 +286,9 @@ void main() {
       verify(() => mock.forceGc()).called(1);
     });
 
-    test('deleteFile delegates', () async {
-      when(() => mock.deleteFile('/tmp/x')).thenAnswer((_) async => 'ok');
-      final result = await controller.deleteFile('/tmp/x');
+    test('clearEffect delegates', () async {
+      when(() => mock.clearEffect(42)).thenAnswer((_) async => 'ok');
+      final result = await controller.clearEffect(42);
       expect(result, 'ok');
     });
   });

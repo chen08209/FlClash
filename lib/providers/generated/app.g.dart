@@ -9,51 +9,52 @@ part of '../app.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(RealTunEnable)
-final realTunEnableProvider = RealTunEnableProvider._();
+@ProviderFor(AuthorizedTunEnable)
+final authorizedTunEnableProvider = AuthorizedTunEnableProvider._();
 
-final class RealTunEnableProvider
-    extends $NotifierProvider<RealTunEnable, bool> {
-  RealTunEnableProvider._()
+final class AuthorizedTunEnableProvider
+    extends $NotifierProvider<AuthorizedTunEnable, TunAuthorizationState> {
+  AuthorizedTunEnableProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'realTunEnableProvider',
-        isAutoDispose: true,
+        name: r'authorizedTunEnableProvider',
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$realTunEnableHash();
+  String debugGetCreateSourceHash() => _$authorizedTunEnableHash();
 
   @$internal
   @override
-  RealTunEnable create() => RealTunEnable();
+  AuthorizedTunEnable create() => AuthorizedTunEnable();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(bool value) {
+  Override overrideWithValue(TunAuthorizationState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<bool>(value),
+      providerOverride: $SyncValueProvider<TunAuthorizationState>(value),
     );
   }
 }
 
-String _$realTunEnableHash() => r'f2c88f5031d1f97665c10f70121082c4f6d6c99d';
+String _$authorizedTunEnableHash() =>
+    r'75958aeb341f93a4573209f7bae5057936d9700a';
 
-abstract class _$RealTunEnable extends $Notifier<bool> {
-  bool build();
+abstract class _$AuthorizedTunEnable extends $Notifier<TunAuthorizationState> {
+  TunAuthorizationState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<bool, bool>;
+    final ref = this.ref as $Ref<TunAuthorizationState, TunAuthorizationState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<bool, bool>,
-              bool,
+              AnyNotifier<TunAuthorizationState, TunAuthorizationState>,
+              TunAuthorizationState,
               Object?,
               Object?
             >;

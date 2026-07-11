@@ -1,7 +1,60 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:fl_clash/common/function.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('SerialTaskScheduler', () {
+    test('serializes tasks in submission order', () async {
+      final scheduler = SerialTaskScheduler();
+      final firstStarted = Completer<void>();
+      final releaseFirst = Completer<void>();
+      final events = <String>[];
+      var runningTasks = 0;
+      var maxRunningTasks = 0;
+
+      final first = scheduler.run(() async {
+        runningTasks++;
+        maxRunningTasks = max(maxRunningTasks, runningTasks);
+        firstStarted.complete();
+        await releaseFirst.future;
+        events.add('first');
+        runningTasks--;
+      });
+      await firstStarted.future;
+
+      final second = scheduler.run(() async {
+        runningTasks++;
+        maxRunningTasks = max(maxRunningTasks, runningTasks);
+        events.add('second');
+        runningTasks--;
+      });
+      await Future<void>.delayed(Duration.zero);
+
+      expect(events, isEmpty);
+      releaseFirst.complete();
+      await Future.wait([first, second]);
+
+      expect(events, ['first', 'second']);
+      expect(maxRunningTasks, 1);
+    });
+
+    test('continues after a failed serialized task', () async {
+      final scheduler = SerialTaskScheduler();
+
+      await expectLater(
+        scheduler.run<void>(() async {
+          throw StateError('failed');
+        }),
+        throwsStateError,
+      );
+
+      final result = await scheduler.run(() async => 'next');
+      expect(result, 'next');
+    });
+  });
+
   group('retry', () {
     test('returns immediately when first result does not need retry', () async {
       var attempts = 0;

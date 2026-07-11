@@ -483,7 +483,8 @@ class PackageListItem extends StatelessWidget {
         style: const TextStyle(overflow: TextOverflow.ellipsis),
         maxLines: 1,
       ),
-      delegate: CheckboxDelegate(value: value, onChanged: onChanged),
+      value: value,
+      onChanged: onChanged,
     );
   }
 }

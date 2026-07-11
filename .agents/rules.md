@@ -21,7 +21,16 @@ Generated directories are excluded from analysis:
 - `lib/**/generated/**`
 - `plugins/**`
 
+## Core API Safety
+
+- Do not expose direct filesystem deletion APIs through Core or helper IPC; use
+  a scope-specific cleanup API instead.
+
 ## Testing Rules
+
+The `core/` directory is excluded from automated test coverage. Do not add `*_test.go` files, coverage instrumentation,
+or coverage collection for code under `core/`. Verify core protocol behavior through shared Dart contract tests under
+`test/core/` and native platform build checks instead.
 
 Use `CoreController.test(mock)` to inject a mocked `CoreHandlerInterface`. Call `CoreController.resetInstance()` in `tearDown` to clean up the singleton between tests.
 
@@ -39,6 +48,7 @@ When testing freezed models with nested objects, always round-trip through `json
 
 Do not manually edit generated files under:
 
+- `lib/l10n/l10n.dart`
 - `lib/models/generated/`
 - `lib/providers/generated/`
 - `lib/database/generated/`

@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"sync"
 )
@@ -14,29 +15,54 @@ var (
 	connMu sync.Mutex
 )
 
-func (result ActionResult) send() {
-	data, err := result.Json()
+const maxIPCFrameSize = 64 * 1024 * 1024
+
+func (response MethodResponse) send() {
+	data, err := response.JSON()
 	if err != nil {
-		logError("ActionResult marshal error: method=%s id=%s err=%v", result.Method, result.Id, err)
+		logError("MethodResponse marshal error: id=%s err=%v", response.ID, err)
 		return
 	}
 	send(data)
 }
 
-func sendMessage(message Message) {
-	result := ActionResult{
-		Method: messageMethod,
-		Data:   message,
+func sendMessageBatch(messages []Message) {
+	call := MethodCall{
+		Method:    messageMethod,
+		Arguments: mustMarshalJSON(messages),
 	}
-	result.send()
+	data, err := json.Marshal(call)
+	if err != nil {
+		logError("MethodCall marshal error: method=%s err=%v", call.Method, err)
+		return
+	}
+	send(data)
 }
 
 func writeFrame(w io.Writer, data []byte) error {
-	frame := make([]byte, 4+len(data))
-	binary.LittleEndian.PutUint32(frame, uint32(len(data)))
-	copy(frame[4:], data)
-	_, err := w.Write(frame)
-	return err
+	if len(data) > maxIPCFrameSize {
+		return fmt.Errorf("IPC frame exceeds %d bytes", maxIPCFrameSize)
+	}
+	lenBuf := [4]byte{}
+	binary.LittleEndian.PutUint32(lenBuf[:], uint32(len(data)))
+	if err := writeAll(w, lenBuf[:]); err != nil {
+		return err
+	}
+	return writeAll(w, data)
+}
+
+func writeAll(w io.Writer, data []byte) error {
+	for len(data) > 0 {
+		n, err := w.Write(data)
+		if err != nil {
+			return err
+		}
+		if n == 0 {
+			return io.ErrShortWrite
+		}
+		data = data[n:]
+	}
+	return nil
 }
 
 func readFrame(r io.Reader) ([]byte, error) {
@@ -45,7 +71,10 @@ func readFrame(r io.Reader) ([]byte, error) {
 		return nil, err
 	}
 	length := binary.LittleEndian.Uint32(lenBuf)
-	data := make([]byte, length)
+	if length > maxIPCFrameSize {
+		return nil, fmt.Errorf("IPC frame exceeds %d bytes", maxIPCFrameSize)
+	}
+	data := make([]byte, int(length))
 	if _, err := io.ReadFull(r, data); err != nil {
 		return nil, err
 	}
@@ -83,24 +112,23 @@ func startServer(arg string) {
 			}
 			return
 		}
-		var action = &Action{}
+		call := &MethodCall{}
 
-		err = json.Unmarshal(data, action)
+		err = json.Unmarshal(data, call)
 
 		if err != nil {
 			logError("server unmarshal error: %v (data: %q)", err, data)
 			continue
 		}
 
-		result := ActionResult{
-			Id:     action.Id,
-			Method: action.Method,
+		response := MethodResponse{
+			ID: call.ID,
 		}
 
-		go handleAction(action, result)
+		go handleMethodCall(call, response)
 	}
 }
 
-func nextHandle(action *Action, result ActionResult) bool {
+func handlePlatformMethodCall(call *MethodCall, response MethodResponse) bool {
 	return false
 }
