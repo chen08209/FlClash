@@ -87,9 +87,6 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ref = globalState.container;
         ref.read(setupActionProvider.notifier).tryCheckIp();
-        if (system.isAndroid) {
-          ref.read(coreActionProvider.notifier).tryStartCore();
-        }
       });
     }
   }
@@ -128,7 +125,7 @@ class AppEnvManager extends StatelessWidget {
     }
     if (globalState.isPre) {
       return Banner(
-        message: 'PRE',
+        message: globalState.appEnv.toUpperCase(),
         location: BannerLocation.topEnd,
         child: child,
       );

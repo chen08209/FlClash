@@ -54,14 +54,6 @@ class _AndroidContainerState extends ConsumerState<AndroidManager>
   }
 
   @override
-  void onServiceCrash(String message) {
-    coreEventManager.sendEvent(
-      CoreEvent(type: CoreEventType.crash, data: message),
-    );
-    super.onServiceCrash(message);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return widget.child;
   }

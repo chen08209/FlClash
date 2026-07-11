@@ -2041,7 +2041,7 @@ final class AutoSetSystemDnsStateProvider
 }
 
 String _$autoSetSystemDnsStateHash() =>
-    r'a8805965efe78241613bfde55f4ea8fa12a6ea32';
+    r'60135ce263c5c31200006f4a9f342f8241a872cc';
 
 @ProviderFor(needUpdateGroups)
 final needUpdateGroupsProvider = NeedUpdateGroupsProvider._();
@@ -3021,7 +3021,7 @@ abstract class _$AccessControlState extends $Notifier<AccessControlProps> {
   AccessControlProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AccessControlProps, AccessControlProps>;
     final element =
         ref.element
@@ -3031,7 +3031,7 @@ abstract class _$AccessControlState extends $Notifier<AccessControlProps> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -3074,7 +3074,7 @@ abstract class _$ProxyGroupProvider extends $Notifier<ProxyGroup> {
   ProxyGroup build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ProxyGroup, ProxyGroup>;
     final element =
         ref.element
@@ -3084,7 +3084,7 @@ abstract class _$ProxyGroupProvider extends $Notifier<ProxyGroup> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -3125,7 +3125,7 @@ abstract class _$RuleProvider extends $Notifier<Rule> {
   Rule build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<Rule, Rule>;
     final element =
         ref.element
@@ -3135,7 +3135,7 @@ abstract class _$RuleProvider extends $Notifier<Rule> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 

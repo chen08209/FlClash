@@ -32,18 +32,16 @@ class ResourcesView extends StatelessWidget {
             ...generateSection(
               title: appLocalizations.geoOptions,
               items: [
-                ListItem.switchItem(
+                ListItem.toggle(
                   title: Text(appLocalizations.geoAutoUpdate),
-                  delegate: SwitchDelegate(
-                    value: vm2.a,
-                    onChanged: (value) {
-                      ref
-                          .read(patchClashConfigProvider.notifier)
-                          .update(
-                            (state) => state.copyWith(geoAutoUpdate: value),
-                          );
-                    },
-                  ),
+                  value: vm2.a,
+                  onChanged: (value) {
+                    ref
+                        .read(patchClashConfigProvider.notifier)
+                        .update(
+                          (state) => state.copyWith(geoAutoUpdate: value),
+                        );
+                  },
                 ),
                 ListItem.input(
                   title: Text(appLocalizations.geoAutoUpdateInterval),
@@ -51,41 +49,39 @@ class ResourcesView extends StatelessWidget {
                     appLocalizations.hoursCount(vm2.b),
                     style: context.textTheme.bodyMedium?.toSoftBold,
                   ),
-                  delegate: InputDelegate(
-                    suffixText: appLocalizations.hours,
-                    title: appLocalizations.geoAutoUpdateInterval,
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return appLocalizations.emptyTip(
-                          appLocalizations.geoAutoUpdateInterval,
+                  suffixText: appLocalizations.hours,
+                  dialogTitle: appLocalizations.geoAutoUpdateInterval,
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return appLocalizations.emptyTip(
+                        appLocalizations.geoAutoUpdateInterval,
+                      );
+                    }
+                    final interval = int.tryParse(value);
+                    if (interval == null) {
+                      return appLocalizations.numberTip(
+                        appLocalizations.geoAutoUpdateInterval,
+                      );
+                    }
+                    if (interval <= 0) {
+                      return appLocalizations.geoAutoUpdateIntervalTip;
+                    }
+                    return null;
+                  },
+                  value: vm2.b.toString(),
+                  onChanged: (value) {
+                    final intValue = int.tryParse(value ?? '') ?? 0;
+                    if (intValue <= 0) {
+                      return;
+                    }
+                    ref
+                        .read(patchClashConfigProvider.notifier)
+                        .update(
+                          (state) =>
+                              state.copyWith(geoUpdateInterval: intValue),
                         );
-                      }
-                      final interval = int.tryParse(value);
-                      if (interval == null) {
-                        return appLocalizations.numberTip(
-                          appLocalizations.geoAutoUpdateInterval,
-                        );
-                      }
-                      if (interval <= 0) {
-                        return appLocalizations.geoAutoUpdateIntervalTip;
-                      }
-                      return null;
-                    },
-                    value: vm2.b.toString(),
-                    onChanged: (value) {
-                      final intValue = int.tryParse(value ?? '') ?? 0;
-                      if (intValue <= 0) {
-                        return;
-                      }
-                      ref
-                          .read(patchClashConfigProvider.notifier)
-                          .update(
-                            (state) =>
-                                state.copyWith(geoUpdateInterval: intValue),
-                          );
-                    },
-                  ),
+                  },
                 ),
               ],
             ),
@@ -145,12 +141,10 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
     }
   }
 
-  Future<FileInfo> _getGeoFileLastModified(String fileName) async {
+  Future<FileInfo?> _getGeoFileInfo(String fileName) async {
     final homePath = await appPath.homeDirPath;
     final file = File(join(homePath, fileName));
-    final lastModified = await file.lastModified();
-    final size = await file.length();
-    return FileInfo(size: size, lastModified: lastModified);
+    return file.getFileInfo();
   }
 
   Future<void> _handleUpdateGeoDataItem() async {
@@ -177,8 +171,8 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 6),
-                FutureBuilder<FileInfo>(
-                  future: _getGeoFileLastModified(fileName),
+                FutureBuilder<FileInfo?>(
+                  future: _getGeoFileInfo(fileName),
                   builder: (_, snapshot) {
                     final height = globalState.measure.bodyMediumHeight;
                     return SizedBox(
@@ -199,6 +193,7 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
                   runSpacing: 6,
                   spacing: 12,
                   runAlignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     CommonChip(
                       avatar: const Icon(Icons.edit),
@@ -209,6 +204,7 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(
                           child: isUpdating
@@ -217,7 +213,7 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
                                   width: 30,
                                   child: Padding(
                                     padding: EdgeInsets.all(2),
-                                    child: CircularProgressIndicator(),
+                                    child: CommonCircleLoading(),
                                   ),
                                 )
                               : CommonChip(

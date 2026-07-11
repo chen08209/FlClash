@@ -570,11 +570,16 @@ Brightness currentBrightness(Ref ref) {
 @riverpod
 VM2<bool, bool> autoSetSystemDnsState(Ref ref) {
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
-  final realTunEnable = ref.watch(realTunEnableProvider);
+  final tunEnable = ref.watch(
+    patchClashConfigProvider.select((state) => state.tun.enable),
+  );
+  final authorizationState = ref.watch(authorizedTunEnableProvider);
   final autoSetSystemDns = ref.watch(
     networkSettingProvider.select((state) => state.autoSetSystemDns),
   );
-  return VM2(isStart ? realTunEnable : false, autoSetSystemDns);
+  final effectiveTunEnable =
+      tunEnable && authorizationState == TunAuthorizationState.authorized;
+  return VM2(isStart ? effectiveTunEnable : false, autoSetSystemDns);
 }
 
 @riverpod

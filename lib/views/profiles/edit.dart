@@ -50,15 +50,11 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _updateFileInfo() async {
     final file = await widget.profile.file;
-    if (!await file.exists()) {
-      return;
-    }
-    final lastModified = await file.lastModified();
-    final size = await file.length();
+    final fileInfo = await file.getFileInfo();
     if (!mounted) {
       return;
     }
-    _fileInfoNotifier.value = FileInfo(size: size, lastModified: lastModified);
+    _fileInfoNotifier.value = fileInfo;
   }
 
   Future<void> _handleConfirm() async {
@@ -257,12 +253,10 @@ class _EditProfileViewState extends State<EditProfileView> {
             },
           ),
         ),
-        ListItem.switchItem(
+        ListItem.toggle(
           title: Text(appLocalizations.autoUpdate),
-          delegate: SwitchDelegate<bool>(
-            value: _autoUpdate,
-            onChanged: _setAutoUpdate,
-          ),
+          value: _autoUpdate,
+          onChanged: _setAutoUpdate,
         ),
         if (_autoUpdate)
           ListItem(

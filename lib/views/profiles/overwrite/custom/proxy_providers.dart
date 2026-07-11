@@ -186,7 +186,7 @@ class _EditProxyProvidersViewState extends ConsumerState<EditProxyProvidersView>
                 child: CommonCard(
                   radius: 20,
                   type: CommonCardType.filled,
-                  child: ListItem.switchItem(
+                  child: ListItem.toggle(
                     minTileHeight: 54,
                     title: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -214,12 +214,10 @@ class _EditProxyProvidersViewState extends ConsumerState<EditProxyProvidersView>
                         ),
                       ],
                     ),
-                    delegate: SwitchDelegate(
-                      value: includeAllProxyProviders,
-                      onChanged: (_) {
-                        _handleChangeIncludeAllProxyProviders();
-                      },
-                    ),
+                    value: includeAllProxyProviders,
+                    onChanged: (_) {
+                      _handleChangeIncludeAllProxyProviders();
+                    },
                   ),
                 ),
               ),

@@ -2,9 +2,9 @@ package com.follow.clash.core
 
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.URL
+import java.net.URI
 
-data object Core {
+object Core {
     private external fun startTun(
         fd: Int,
         cb: TunInterface,
@@ -13,17 +13,17 @@ data object Core {
         dns: String,
     )
 
-    external fun forceGC(
-    )
+    external fun forceGC()
 
     external fun updateDNS(
         dns: String,
     )
 
     private fun parseInetSocketAddress(address: String): InetSocketAddress {
-        val url = URL("https://$address")
-
-        return InetSocketAddress(InetAddress.getByName(url.host), url.port)
+        val uri = URI("tcp://$address")
+        val host = requireNotNull(uri.host) { "Missing host in address: $address" }
+        require(uri.port >= 0) { "Missing port in address: $address" }
+        return InetSocketAddress(InetAddress.getByName(host), uri.port)
     }
 
     fun startTun(
@@ -45,7 +45,7 @@ data object Core {
                     protocol: Int,
                     source: String,
                     target: String,
-                    uid: Int
+                    uid: Int,
                 ): String {
                     return resolverProcess(
                         protocol,
@@ -57,7 +57,7 @@ data object Core {
             },
             stack,
             address,
-            dns
+            dns,
         )
     }
 
@@ -65,16 +65,16 @@ data object Core {
         suspended: Boolean,
     )
 
-    private external fun invokeAction(
+    private external fun invokeMethod(
         data: String,
-        cb: InvokeInterface
+        cb: InvokeInterface,
     )
 
-    fun invokeAction(
+    fun invokeMethod(
         data: String,
-        cb: (result: String?) -> Unit
+        cb: (result: String?) -> Unit,
     ) {
-        invokeAction(
+        invokeMethod(
             data,
             object : InvokeInterface {
                 override fun onResult(result: String?) {
@@ -86,33 +86,33 @@ data object Core {
 
     private external fun setEventListener(cb: InvokeInterface?)
 
-    fun callSetEventListener(
-        cb: ((result: String?) -> Unit)?
+    fun updateEventListener(
+        callback: ((result: String?) -> Unit)?,
     ) {
-        when (cb != null) {
-            true -> setEventListener(
+        if (callback == null) {
+            setEventListener(null)
+        } else {
+            setEventListener(
                 object : InvokeInterface {
                     override fun onResult(result: String?) {
-                        cb(result)
+                        callback(result)
                     }
                 },
             )
-
-            false -> setEventListener(null)
         }
     }
 
     fun quickSetup(
         initParamsString: String,
         setupParamsString: String,
-        cb: (result: String?) -> Unit,
+        callback: (result: String?) -> Unit,
     ) {
         quickSetup(
             initParamsString,
             setupParamsString,
             object : InvokeInterface {
                 override fun onResult(result: String?) {
-                    cb(result)
+                    callback(result)
                 }
             },
         )
@@ -121,7 +121,7 @@ data object Core {
     private external fun quickSetup(
         initParamsString: String,
         setupParamsString: String,
-        cb: InvokeInterface
+        cb: InvokeInterface,
     )
 
     external fun stopTun()
