@@ -34,9 +34,9 @@ Java_com_follow_clash_core_Core_updateDNS(JNIEnv *env, jobject thiz, jstring dns
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
+Java_com_follow_clash_core_Core_invokeMethod(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
     const auto interface = new_global(cb);
-    invokeAction(interface, get_string(data));
+    invokeMethod(interface, get_string(data));
 }
 
 extern "C"
@@ -54,14 +54,16 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_follow_clash_core_Core_getTraffic(JNIEnv *env, jobject thiz,
                                            const jboolean only_statistics_proxy) {
-    return new_string(getTraffic(only_statistics_proxy));
+    scoped_string traffic = getTraffic(only_statistics_proxy);
+    return new_string(traffic);
 }
 
 extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_follow_clash_core_Core_getTotalTraffic(JNIEnv *env, jobject thiz,
                                                 const jboolean only_statistics_proxy) {
-    return new_string(getTotalTraffic(only_statistics_proxy));
+    scoped_string traffic = getTotalTraffic(only_statistics_proxy);
+    return new_string(traffic);
 }
 
 extern "C"
@@ -106,21 +108,31 @@ call_tun_interface_resolve_process_impl(void *tun_interface, const int protocol,
                                         const char *target,
                                         const int uid) {
     ATTACH_JNI();
-    const auto packageName = reinterpret_cast<jstring>(env->CallObjectMethod(
+    const auto source_string = new_string(source);
+    const auto target_string = new_string(target);
+    const auto package_name = reinterpret_cast<jstring>(env->CallObjectMethod(
             static_cast<jobject>(tun_interface),
             m_tun_interface_resolve_process,
             protocol,
-            new_string(source),
-            new_string(target),
+            source_string,
+            target_string,
             uid));
-    return get_string(packageName);
+    env->DeleteLocalRef(source_string);
+    env->DeleteLocalRef(target_string);
+    const auto result = get_string(package_name);
+    if (package_name != nullptr) {
+        env->DeleteLocalRef(package_name);
+    }
+    return result;
 }
 
 static void call_invoke_interface_result_impl(void *invoke_interface, const char *data) {
     ATTACH_JNI();
+    const auto value = new_string(data);
     env->CallVoidMethod(static_cast<jobject>(invoke_interface),
                         m_invoke_interface_result,
-                        new_string(data));
+                        value);
+    env->DeleteLocalRef(value);
 }
 
 extern "C"
@@ -166,7 +178,7 @@ Java_com_follow_clash_core_Core_stopTun(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
+Java_com_follow_clash_core_Core_invokeMethod(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
 }
 
 extern "C"
@@ -188,11 +200,13 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_follow_clash_core_Core_getTraffic(JNIEnv *env, jobject thiz,
                                            const jboolean only_statistics_proxy) {
+    return env->NewStringUTF("{}");
 }
 extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_follow_clash_core_Core_getTotalTraffic(JNIEnv *env, jobject thiz,
                                                 const jboolean only_statistics_proxy) {
+    return env->NewStringUTF("{}");
 }
 
 extern "C"

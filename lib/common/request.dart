@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
@@ -9,7 +10,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 
 class Request {
   late final Dio dio;
@@ -144,59 +145,114 @@ class Request {
     return res;
   }
 
-  Future<bool> pingHelper() async {
-    if (kDebugMode) return true;
+  Future<bool> pingHelper({Duration? timeout, bool logFailure = true}) async {
+    if (timeout != null && timeout <= Duration.zero) {
+      return false;
+    }
+    final cancelToken = CancelToken();
+    final timeoutTimer = timeout == null
+        ? null
+        : Timer(timeout, () {
+            cancelToken.cancel('helper ping deadline exceeded');
+          });
     try {
-      final response = await dio
-          .get(
-            'http://$localhost:$helperPort/ping',
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
-      if (response.statusCode != HttpStatus.ok) {
+      final response = await dio.get(
+        'http://$localhost:$helperPort/ping',
+        cancelToken: cancelToken,
+        options: _helperRequestOptions(),
+      );
+      final helperPath = response.data;
+      if (response.statusCode != HttpStatus.ok || helperPath is! String) {
+        if (logFailure) {
+          commonPrint.log(
+            'helper ping returned invalid response',
+            logLevel: LogLevel.warning,
+          );
+        }
         return false;
       }
-      return (response.data as String) == globalState.coreSHA256;
-    } catch (_) {
+      final protocolVersion = response.headers.value(
+        helperProtocolVersionHeader,
+      );
+      if (protocolVersion != helperProtocolVersion) {
+        if (logFailure) {
+          commonPrint.log(
+            'helper protocol mismatch: $protocolVersion',
+            logLevel: LogLevel.warning,
+          );
+        }
+        return false;
+      }
+      final matches = p.Context(
+        style: p.Style.windows,
+      ).equals(helperPath.trim(), appPath.helperPath);
+      if (!matches && logFailure) {
+        commonPrint.log(
+          'helper executable path mismatch',
+          logLevel: LogLevel.warning,
+        );
+      }
+      return matches;
+    } catch (error) {
+      if (logFailure) {
+        commonPrint.log(
+          'helper ping failed: $error',
+          logLevel: LogLevel.warning,
+        );
+      }
       return false;
+    } finally {
+      timeoutTimer?.cancel();
     }
   }
 
-  Future<bool> startCoreByHelper(String arg) async {
+  Future<int?> startCoreByHelper(String address) async {
     try {
-      final response = await dio
-          .post(
-            'http://$localhost:$helperPort/start',
-            data: json.encode({'path': appPath.corePath, 'arg': arg}),
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
+      final response = await dio.post(
+        'http://$localhost:$helperPort/start',
+        data: json.encode({'address': address}),
+        options: _helperRequestOptions(),
+      );
       if (response.statusCode != HttpStatus.ok) {
-        return false;
+        return null;
       }
-      final data = response.data as String;
-      return data.isEmpty;
-    } catch (_) {
-      return false;
+      final data = response.data;
+      return data is String ? int.tryParse(data.trim()) : null;
+    } catch (error) {
+      commonPrint.log(
+        'helper Core start failed: $error',
+        logLevel: LogLevel.warning,
+      );
+      return null;
     }
   }
 
   Future<bool> stopCoreByHelper() async {
     try {
-      final response = await dio
-          .post(
-            'http://$localhost:$helperPort/stop',
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
+      final response = await dio.post(
+        'http://$localhost:$helperPort/stop',
+        options: _helperRequestOptions(),
+      );
       if (response.statusCode != HttpStatus.ok) {
         return false;
       }
       final data = response.data as String;
       return data.isEmpty;
-    } catch (_) {
+    } catch (error) {
+      commonPrint.log(
+        'helper Core stop failed: $error',
+        logLevel: LogLevel.warning,
+      );
       return false;
     }
+  }
+
+  Options _helperRequestOptions() {
+    return Options(
+      responseType: ResponseType.plain,
+      connectTimeout: const Duration(milliseconds: 300),
+      receiveTimeout: const Duration(seconds: 2),
+    );
   }
 }
 

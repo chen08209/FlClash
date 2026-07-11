@@ -13,13 +13,11 @@ extern jstring jni_new_string(JNIEnv *env, const char *str);
 
 extern char *jni_get_string(JNIEnv *env, jstring str);
 
-extern int jni_catch_exception(JNIEnv *env);
-
 extern void jni_attach_thread(scoped_jni *jni);
 
 extern void jni_detach_thread(const scoped_jni *env);
 
-extern void release_string( char **str);
+extern void release_string(char **value);
 
 #define ATTACH_JNI() __attribute__((unused, cleanup(jni_detach_thread))) \
                     scoped_jni _jni{}; \

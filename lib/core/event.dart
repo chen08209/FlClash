@@ -4,6 +4,14 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 
+List<CoreEvent> coreEventsFromData(Object? data) {
+  final items = data is List ? data : [data];
+  return items
+      .whereType<Map>()
+      .map((item) => CoreEvent.fromJson(Map<String, Object?>.from(item)))
+      .toList();
+}
+
 abstract mixin class CoreEventListener {
   void onLog(Log log) {}
 

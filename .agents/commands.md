@@ -33,11 +33,15 @@ make core-macos ARCH=arm64
 make core-android TARGET_PLATFORM=android-arm64
 ```
 
+Core builds use setup's input fingerprint cache. Pass `FORCE=1` to bypass it,
+for example `make core-macos ARCH=arm64 FORCE=1`.
+
 The Makefile wraps `plugins/setup/buildkit/run_build_tool.sh`; prefer the `make` entry points unless debugging the build tool itself.
 
 ## Flutter Development
 
-The project is pinned with FVM.
+The project follows FVM's `stable` channel locally. Release CI pins an exact
+Flutter version separately; see `.agents/project.md`.
 
 ```bash
 fvm flutter pub get
@@ -95,7 +99,7 @@ Root `flutter test` only discovers the root package's `test/` directory by defau
 
 ## Verify
 
-CI runs these in order:
+The pull-request and release workflows run these root-package checks in order:
 
 ```bash
 flutter pub get
@@ -104,3 +108,10 @@ flutter test --reporter expanded
 ```
 
 Run `flutter analyze` locally before committing when practical.
+
+The test job runs for pull requests and `v*` tag pushes. Release builds remain
+tag-only. Root analysis excludes `plugins/**`, and root tests do not discover
+nested plugin packages, so CI also validates local Flutter packages, the setup
+build tool, the Go wrapper, and Rust components from their own package
+directories. A separate Windows runner compiles and tests the helper's
+`windows-service` feature before release builds can start.

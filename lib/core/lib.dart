@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/core.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 
 import 'interface.dart';
+import 'method.dart';
 
 class CoreLib extends CoreHandlerInterface {
   static CoreLib? _instance;
@@ -53,32 +52,34 @@ class CoreLib extends CoreHandlerInterface {
 
   @override
   Future<bool> startListener() async {
-    await super.startListener();
-    await service?.start();
-    return true;
+    final listenerStarted = await super.startListener();
+    final serviceStarted = await service?.start() ?? false;
+    return listenerStarted && serviceStarted;
   }
 
   @override
   Future<bool> stopListener() async {
-    await super.stopListener();
-    await service?.stop();
-    return true;
+    final serviceStopped = await service?.stop() ?? false;
+    final listenerStopped = await super.stopListener();
+    return serviceStopped && listenerStopped;
   }
 
   @override
-  Future<T?> invoke<T>({
-    required ActionMethod method,
-    dynamic data,
+  Future<T?> invokeMethod<T>({
+    required CoreMethod method,
+    Object? arguments,
     Duration? timeout,
   }) async {
-    final id = '${method.name}#${utils.id}';
-    final result = await service
-        ?.invokeAction(Action(id: id, method: method, data: data))
-        .withTimeout(onTimeout: () => null);
-    if (result == null) {
+    final id = nextMethodCallId;
+    final response = await service
+        ?.invokeMethod(
+          CoreMethodCall(id: id, method: method, arguments: arguments),
+        )
+        .withTimeout(timeout: timeout, onTimeout: () => null);
+    if (response == null) {
       return null;
     }
-    return parasResult<T>(result);
+    return response.unwrap<T>();
   }
 
   @override

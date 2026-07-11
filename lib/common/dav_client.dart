@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:webdav_client/webdav_client.dart';
+
+typedef DAVClientFactory = DAVClient Function(DAVProps props);
 
 class DAVClient {
   late Client client;
@@ -41,5 +44,48 @@ class DAVClient {
     final backupFilePath = await appPath.backupFilePath;
     await client.read2File(backupFile, backupFilePath);
     return true;
+  }
+}
+
+class DAVConnectionController extends ValueNotifier<bool?> {
+  DAVConnectionController({DAVClientFactory? createClient})
+    : _createClient = createClient ?? DAVClient.new,
+      super(null);
+
+  final DAVClientFactory _createClient;
+
+  DAVProps? _lastProps;
+  bool _hasUpdated = false;
+  int _requestId = 0;
+  bool _disposed = false;
+
+  DAVClient? client;
+
+  Future<void> update(DAVProps? props) async {
+    final nextClient = props == null ? null : _createClient(props);
+    client = nextClient;
+
+    final rawProps = props?.copyWith(fileName: '');
+    final rawLastProps = _lastProps?.copyWith(fileName: '');
+    final isSameCredentials = _hasUpdated && rawProps == rawLastProps;
+    _lastProps = props;
+    _hasUpdated = true;
+    if (isSameCredentials) {
+      return;
+    }
+
+    final requestId = ++_requestId;
+    value = null;
+    final result = await nextClient?.ping() ?? false;
+    if (!_disposed && requestId == _requestId) {
+      value = result;
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _requestId++;
+    super.dispose();
   }
 }

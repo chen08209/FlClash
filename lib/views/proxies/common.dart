@@ -30,12 +30,6 @@ List<Group> getGroups() {
   return globalState.container.read(groupsProvider);
 }
 
-String? getCurrentGroupName() {
-  return globalState.container.read(
-    currentProfileProvider.select((state) => state?.currentGroupName),
-  );
-}
-
 void updateCurrentGroupName(String groupName) {
   globalState.container
       .read(proxiesActionProvider.notifier)
@@ -74,13 +68,13 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
 }
 
 Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final delayProxies = proxies.map<Future>((proxy) async {
-    await proxyDelayTest(proxy, testUrl);
-  }).toList();
-
-  final batchesDelayProxies = delayProxies.batch(100);
-  for (final batchDelayProxies in batchesDelayProxies) {
-    await Future.wait(batchDelayProxies);
+  final batches = proxies.batch(100);
+  for (final batch in batches) {
+    await Future.wait(
+      batch.map((proxy) async {
+        await proxyDelayTest(proxy, testUrl);
+      }),
+    );
   }
   globalState.container.read(sortNumProvider.notifier).add();
 }

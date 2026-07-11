@@ -4,43 +4,43 @@ import 'package:flutter/material.dart';
 
 extension ColorExtension on Color {
   Color get opacity80 {
-    return withAlpha(204);
+    return withValues(alpha: 0.8);
   }
 
   Color get opacity60 {
-    return withAlpha(153);
+    return withValues(alpha: 0.6);
   }
 
   Color get opacity50 {
-    return withAlpha(128);
+    return withValues(alpha: 0.5);
   }
 
   Color get opacity38 {
-    return withAlpha(97);
+    return withValues(alpha: 0.38);
   }
 
   Color get opacity30 {
-    return withAlpha(77);
+    return withValues(alpha: 0.3);
   }
 
   Color get opacity12 {
-    return withAlpha(31);
+    return withValues(alpha: 0.12);
   }
 
   Color get opacity15 {
-    return withAlpha(38);
+    return withValues(alpha: 0.15);
   }
 
   Color get opacity10 {
-    return withAlpha(15);
+    return withValues(alpha: 0.1);
   }
 
   Color get opacity3 {
-    return withAlpha(76);
+    return withValues(alpha: 0.03);
   }
 
   Color get opacity0 {
-    return withAlpha(0);
+    return withValues(alpha: 0);
   }
 
   int get value32bit {
