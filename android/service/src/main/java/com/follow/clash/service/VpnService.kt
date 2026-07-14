@@ -70,7 +70,8 @@ class VpnService : SystemVpnService(), IBaseService,
         if (!uidPageNameMap.containsKey(nextUid)) {
             uidPageNameMap[nextUid] = this.packageManager?.getPackagesForUid(nextUid)?.first() ?: ""
         }
-        return uidPageNameMap[nextUid] ?: ""
+        val packageName = uidPageNameMap[nextUid] ?: ""
+        return "$nextUid\n$packageName"
     }
 
     val VpnOptions.address

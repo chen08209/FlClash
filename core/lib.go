@@ -21,6 +21,7 @@ import (
 	"github.com/metacubex/mihomo/log"
 	"golang.org/x/sync/semaphore"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -115,7 +116,14 @@ func (th *TunHandler) initHook() {
 		if src == nil || dst == nil {
 			return "", process.ErrInvalidNetwork
 		}
-		return tunHandler.handleResolveProcess(src, dst), nil
+		result := tunHandler.handleResolveProcess(src, dst)
+		if parts := strings.SplitN(result, "\n", 2); len(parts) == 2 {
+			if uid, err := strconv.ParseUint(parts[0], 10, 32); err == nil {
+				metadata.Uid = uint32(uid)
+			}
+			return parts[1], nil
+		}
+		return result, nil
 	}
 }
 
