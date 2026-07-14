@@ -41,9 +41,23 @@ on Mobile:
 ⚠️ Make sure to install the following dependencies before using them
 
    ```bash
-    sudo apt-get install libayatana-appindicator3-dev
-    sudo apt-get install libkeybinder-3.0-dev
+    sudo apt-get install libayatana-appindicator3-1
+    sudo apt-get install libkeybinder-3.0-0
    ```
+
+<details>
+
+<summary>about debian package</summary>
+
+this project used to be using devel libraries as dependencies, which is an overkill
+
+```bash
+sudo apt-get install libayatana-appindicator3-dev
+sudo apt-get install libkeybinder-3.0-dev
+```
+
+</details>
+
 
 ### Android
 
