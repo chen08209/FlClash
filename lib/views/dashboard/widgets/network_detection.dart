@@ -93,7 +93,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
               ),
             ),
             Container(
-              padding: baseInfoEdgeInsets.copyWith(top: 0),
+              padding: baseInfoEdgeInsets.copyWith(top: 0, bottom: 8),
               child: SizedBox(
                 height: globalState.measure.bodyMediumHeight + 2,
                 child: FadeThroughBox(

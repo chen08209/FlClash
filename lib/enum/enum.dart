@@ -312,6 +312,7 @@ enum DashboardWidget {
     GridItem(crossAxisCellCount: 4, child: SystemProxyButton()),
     platforms: desktopPlatforms,
   ),
+  proxyBypass(GridItem(crossAxisCellCount: 8, child: ProxyBypass())),
   intranetIp(GridItem(crossAxisCellCount: 4, child: IntranetIP())),
   memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo()));
 

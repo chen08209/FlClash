@@ -17,7 +17,7 @@ class IntranetIP extends StatelessWidget {
         info: Info(label: appLocalizations.intranetIP, iconData: Icons.devices),
         onPressed: () {},
         child: Container(
-          padding: baseInfoEdgeInsets.copyWith(top: 0),
+          padding: baseInfoEdgeInsets.copyWith(top: 0, bottom: 8),
           child: Column(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.end,
