@@ -40,7 +40,7 @@ class OutboundMode extends StatelessWidget {
                 iconData: Icons.call_split_sharp,
               ),
               child: Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 12),
+                padding: const EdgeInsets.only(top: 8, bottom: 8),
                 child: RadioGroup<Mode>(
                   groupValue: mode,
                   onChanged: (value) {
@@ -52,6 +52,13 @@ class OutboundMode extends StatelessWidget {
                   child: LayoutBuilder(
                     builder: (_, constraints) {
                       final maxHeight = constraints.maxHeight;
+                      final itemHeight = max(
+                        0.0,
+                        min(
+                          (maxHeight / Mode.values.length).floorToDouble() - 2,
+                          globalState.measure.bodyMediumHeight + 16,
+                        ),
+                      );
                       return Column(
                         mainAxisSize: MainAxisSize.max,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,10 +68,7 @@ class OutboundMode extends StatelessWidget {
                             ListItem.radio(
                               horizontalTitleGap: 8,
                               tileTitleAlignment: ListTileTitleAlignment.center,
-                              minTileHeight: min(
-                                maxHeight / 3,
-                                globalState.measure.bodyMediumHeight + 16,
-                              ),
+                              minTileHeight: itemHeight,
                               minVerticalPadding: 0,
                               padding: EdgeInsets.only(
                                 left: 12.ap,

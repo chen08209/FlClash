@@ -32,6 +32,7 @@ migrate_working_dir/
 .packages
 .pub-cache/
 .pub/
+.tools/
 /build/
 /dist/
 
