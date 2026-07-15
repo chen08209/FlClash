@@ -464,6 +464,9 @@ func handleGetConfig(path string) (*config.RawConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	if !prof.IPv6 {
+		prof.Tun.Inet6Address = nil
+	}
 	return prof, nil
 }
 
