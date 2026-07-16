@@ -29,7 +29,7 @@
   "ru": "Russian",
   "zh_CN": "Simplified Chinese",
   "theme": "Theme",
-  "themeDesc": "Set dark mode,adjust the color",
+  "themeDesc": "Toggle dark mode and adjust colors",
   "override": "Override",
   "allowLan": "AllowLan",
   "allowLanDesc": "Allow access proxy through the LAN",
