@@ -124,10 +124,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                           child: switch (coreStatus) {
                             CoreStatus.connecting => Padding(
                               padding: const EdgeInsets.all(2),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
+                              child: CommonCircleLoading(
                                 color: context.colorScheme.onPrimary,
-                                backgroundColor: Colors.transparent,
                               ),
                             ),
                             CoreStatus.connected => const Icon(

@@ -313,7 +313,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
       builder: (context, snapshot) {
         final appLocalizations = context.appLocalizations;
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CommonCircleLoading());
         }
         return packages.isEmpty
             ? NullStatus(label: appLocalizations.noData)

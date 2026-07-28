@@ -14,6 +14,7 @@ import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
+import 'package:fl_clash/widgets/loading.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:fl_clash/widgets/text.dart';
 import 'package:flutter/material.dart';
@@ -248,9 +249,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                                 ? const SizedBox(
                                     width: 12,
                                     height: 12,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1,
-                                    ),
+                                    child: CommonCircleLoading(),
                                   )
                                 : Container(
                                     decoration: BoxDecoration(
