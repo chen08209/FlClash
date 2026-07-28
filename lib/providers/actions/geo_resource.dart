@@ -6,6 +6,8 @@ class GeoResourceAction extends _$GeoResourceAction {
   void build() {}
 
   Future<void> updateGeoResource(GeoResource geoResource) async {
+    debouncer.cancel(FunctionTag.applyProfile);
+    await ref.read(setupActionProvider.notifier).applyProfile(silence: true);
     await coreController.updateGeoData(geoResource.name);
   }
 

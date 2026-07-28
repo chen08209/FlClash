@@ -44,6 +44,20 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         ref.read(setupActionProvider.notifier).updateConfigDebounce();
       }
     });
+    ref.listenManual(patchClashConfigProvider, (prev, next) {
+      if (prev == null) {
+        return;
+      }
+      final isEquality = stringAndStringMapEquality.equals(
+        prev.geoXUrl.raw,
+        next.geoXUrl.raw,
+      );
+      if (!isEquality) {
+        ref
+            .read(setupActionProvider.notifier)
+            .applyProfileDebounce(silence: true);
+      }
+    });
     ref.listenManual(appSettingProvider.select((state) => state.openLogs), (
       prev,
       next,
