@@ -1059,14 +1059,31 @@ function Initialize-PublicRepository {
 
 function Initialize-SourceMirror {
     if (Test-Path -LiteralPath $RepositoryStage) {
-        throw 'Repository staging directory already exists; refusing to replace it.'
+        if (-not (Test-Path -LiteralPath (Join-Path $RepositoryStage '.git'))) {
+            throw 'Repository staging directory exists but is not a Git repository.'
+        }
+        $origin = Invoke-Captured -FilePath (Get-GitExecutable) `
+            -WorkingDirectory $RepositoryStage `
+            -Arguments @('remote', 'get-url', 'origin')
+        $repositoryPattern = [regex]::Escape($Repository) + '(?:\.git)?$'
+        if ($origin.Stdout.Trim() -notmatch $repositoryPattern) {
+            throw 'Repository staging origin does not match the release repository.'
+        }
+        $status = Invoke-Captured -FilePath (Get-GitExecutable) `
+            -WorkingDirectory $RepositoryStage `
+            -Arguments @('status', '--porcelain=v1')
+        if (-not [string]::IsNullOrWhiteSpace($status.Stdout)) {
+            throw 'Repository staging directory contains uncommitted changes.'
+        }
     }
-    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $RepositoryStage) |
-        Out-Null
-    Invoke-Captured -FilePath (Get-GitHubCliExecutable) -Arguments @(
-        'repo', 'clone', $Repository, $RepositoryStage
-    ) -WorkingDirectory $ReleaseRoot `
-        -LogPath (Join-Path $LogsRoot 'github-clone.log') | Out-Null
+    else {
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $RepositoryStage) |
+            Out-Null
+        Invoke-Captured -FilePath (Get-GitHubCliExecutable) -Arguments @(
+            'repo', 'clone', $Repository, $RepositoryStage
+        ) -WorkingDirectory $ReleaseRoot `
+            -LogPath (Join-Path $LogsRoot 'github-clone.log') | Out-Null
+    }
 
     $sourceDirectories = @(
         'android', 'arb', 'assets', 'core', 'lib', 'linux', 'macos', 'plugins',
