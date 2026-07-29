@@ -2,6 +2,8 @@
 
 set -e
 
+echo "warning: [setup] Plugin triggered"
+
 BASEDIR=$(cd "$(dirname "$0")" && pwd)
 PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"
 

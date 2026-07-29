@@ -97,6 +97,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
           title: appLocalizations.save,
           value: '',
           hintText: appLocalizations.pleaseEnterScriptName,
+          inputFormatters: TextInputLimits.limit(TextInputLimits.name),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return appLocalizations.emptyTip(appLocalizations.name);

@@ -61,6 +61,13 @@ Support the following actions
 
 Project downloads: [flclashplus.nkbr.cc](https://flclashplus.nkbr.cc/) · [GitHub Releases](https://github.com/nekobyran/flclashplus/releases)
 
+### Homebrew
+
+```bash
+brew tap chen08209/tap
+brew install --cask flclash
+```
+
 ## Build
 
 1. Update submodules

@@ -943,8 +943,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
           },
           onReorderItem: (oldIndex, newIndex) {
             setState(() {
-              final profile = profiles.removeAt(oldIndex);
-              profiles.insert(newIndex, profile);
+              profiles = profiles.copyAndReorder(oldIndex, newIndex);
             });
           },
           itemBuilder: (_, index) {

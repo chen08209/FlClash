@@ -104,6 +104,7 @@ class System {
           obscureText: true,
           title: currentAppLocalizations.pleaseInputAdminPassword,
           value: '',
+          inputFormatters: TextInputLimits.limit(TextInputLimits.password),
         ),
       );
       if (password == null || password.isEmpty) {

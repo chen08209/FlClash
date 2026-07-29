@@ -44,7 +44,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 
   @override
   void onWindowClose() async {
-    await ref.read(systemActionProvider.notifier).handleBackOrExit();
+    await ref.read(systemActionProvider.notifier).handleClose();
     super.onWindowClose();
   }
 
@@ -178,7 +178,10 @@ class _WindowHeaderState extends State<WindowHeader> {
         windowExtManager.setWindowCornerPreference(round: false);
       }
     }
-    isMaximizedNotifier.value = await windowManager.isMaximized();
+    final res = await windowManager.isMaximized();
+    if (mounted) {
+      isMaximizedNotifier.value = res;
+    }
   }
 
   Future<void> _updatePin() async {
@@ -226,7 +229,7 @@ class _WindowHeaderState extends State<WindowHeader> {
           onPressed: () {
             globalState.container
                 .read(systemActionProvider.notifier)
-                .handleBackOrExit();
+                .handleClose();
           },
           icon: const Icon(Icons.close),
         ),

@@ -203,6 +203,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         ? TextField(
             autofocus: true,
             controller: _textController,
+            inputFormatters: TextInputLimits.limit(TextInputLimits.search),
             style: context.textTheme.titleLarge,
             onChanged: (value) {
               if (startState != null) {

@@ -245,7 +245,7 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView>
                     animation,
                   );
                 },
-                onReorder: _handleReorder,
+                onReorderItem: _handleReorder,
               ),
             ),
     );
@@ -360,7 +360,7 @@ class _AddOrEditRuleNestedSheetState
                 child: PagedSheetRouteTheme(
                   data: const PagedSheetRouteThemeData(
                     transitionsBuilder: fadeAndSlideTransition,
-                    transitionDuration: Duration(milliseconds: 400),
+                    transitionDuration: Duration(milliseconds: 300),
                   ),
                   child: PagedSheet(
                     decoration: MaterialSheetDecoration(
@@ -468,6 +468,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
       trailing: TextFormField(
         initialValue: content,
         keyboardType: TextInputType.name,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.rule),
         onChanged: (value) {
           ref
               .read(ruleProvider.notifier)

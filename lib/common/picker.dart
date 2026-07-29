@@ -7,13 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class Picker {
-  Future<PlatformFile?> pickerFile({bool withData = true}) async {
-    final filePickerResult = await FilePicker.pickFiles(
-      withData: withData,
-      allowMultiple: false,
-      initialDirectory: await appPath.downloadDirPath,
-    );
-    return filePickerResult?.files.first;
+  Future<PlatformFile?> pickerFile() async {
+    return FilePicker.pickFile(initialDirectory: await appPath.downloadDirPath);
   }
 
   Future<String?> saveFile(String fileName, Uint8List bytes) async {
@@ -34,15 +29,12 @@ class Picker {
     if (!await localFile.exists()) {
       await localFile.create(recursive: true);
     }
-    final bytes = Platform.isAndroid ? await localFile.readAsBytes() : null;
+    final bytes = await localFile.readAsBytes();
     final path = await FilePicker.saveFile(
       fileName: fileName,
       initialDirectory: await appPath.downloadDirPath,
       bytes: bytes,
     );
-    if (path != null && bytes == null) {
-      await localFile.copy(path);
-    }
     await localFile.safeDelete();
     return path;
   }
@@ -62,6 +54,12 @@ class Picker {
       throw currentAppLocalizations.pleaseUploadValidQrcode;
     }
     return result;
+  }
+}
+
+extension PlatformFileExt on PlatformFile {
+  Future<Uint8List> readBytes() {
+    return readAsBytes();
   }
 }
 

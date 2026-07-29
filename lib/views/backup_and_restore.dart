@@ -138,7 +138,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
 
   Future<void> _restoreOnLocal(RestoreOption option) async {
     final appLocalizations = context.appLocalizations;
-    final file = await picker.pickerFile(withData: false);
+    final file = await picker.pickerFile();
     final path = file?.path;
     if (path == null) return;
     await File(path).safeCopy(await appPath.backupFilePath);
@@ -283,6 +283,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                 title: appLocalizations.file,
                 value: dav.fileName,
                 resetValue: defaultDavFileName,
+                maxLength: TextInputLimits.fileName,
                 onChanged: (value) {
                   _handleChange(value, ref);
                 },
@@ -450,6 +451,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
           children: [
             TextFormField(
               controller: _uriController,
+              inputFormatters: TextInputLimits.limit(TextInputLimits.uri),
               maxLines: 5,
               minLines: 1,
               decoration: InputDecoration(
@@ -467,6 +469,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
             ),
             TextFormField(
               controller: _userController,
+              inputFormatters: TextInputLimits.limit(TextInputLimits.userName),
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.account_circle),
                 border: const OutlineInputBorder(),
@@ -484,6 +487,9 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
               builder: (_, obscure, _) {
                 return TextFormField(
                   controller: _passwordController,
+                  inputFormatters: TextInputLimits.limit(
+                    TextInputLimits.password,
+                  ),
                   obscureText: obscure,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.password),

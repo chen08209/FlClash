@@ -1,5 +1,4 @@
-# CLAUDE.md - Claude Code instructions
+# CLAUDE.md
 
-Please read AGENTS.md for all project guidelines and conventions.
-
-@AGENTS.md
+This repository uses [AGENTS.md](AGENTS.md) as the canonical agent entry point.
+Read that file first, then follow the `.agents/` references it routes to.

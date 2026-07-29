@@ -194,7 +194,7 @@ Future<VM2<String, String>> _makeRealProfileTask(
     }
   }
   rawConfig['profile']['store-selected'] = false;
-  rawConfig['geox-url'] = realPatchConfig.geoXUrl.toJson();
+  rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
   if (rawConfig['hosts'] == null) {
     rawConfig['hosts'] = {};

@@ -1,0 +1,13 @@
+{
+  "lsp": {
+    "gopls": {
+      "binary": {
+        "env": {
+          "CGO_ENABLED": "0",
+          // "GOOS": "android",
+          // "GOARCH": "arm64",
+        },
+      },
+    },
+  },
+}

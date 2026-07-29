@@ -1,7 +1,7 @@
 import Cocoa
-import FlutterMacOS
-import CoreWLAN
 import CoreLocation
+import CoreWLAN
+import FlutterMacOS
 
 // Permission values must match WifiSsidPermission enum index in Dart:
 //   0 = granted, 1 = denied, 2 = permanentlyDenied

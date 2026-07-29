@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -72,7 +74,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   @override
   void onLog(Log log) {
-    // ref.read(logsProvider.notifier).add(log);
+    ref.read(logsProvider.notifier).add(log);
     if (log.logLevel == LogLevel.error) {
       globalState.showNotifier(log.payload);
     }
@@ -108,5 +110,24 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     }
     await coreController.shutdown(false);
     super.onCrash(message);
+  }
+
+  @override
+  void onGeoUpdate(String geoType, bool updating, bool skipped, String? error) {
+    final geoResource = GeoResource.fromJson(geoType.toLowerCase());
+    final key = geoResource.updatingKey;
+    final l10n = currentAppLocalizations;
+    if (updating) {
+      globalState.showNotifier(l10n.geoUpdating(geoResource.name));
+    } else if (skipped) {
+      globalState.showNotifier(l10n.geoSkipped(geoResource.name));
+    } else {
+      globalState.showNotifier(l10n.geoUpdated(geoResource.name));
+    }
+    ref.read(isUpdatingProvider(key).notifier).value = updating;
+    if (!updating && error != null && error.isNotEmpty) {
+      globalState.showNotifier(error);
+    }
+    super.onGeoUpdate(geoType, updating, skipped, error);
   }
 }

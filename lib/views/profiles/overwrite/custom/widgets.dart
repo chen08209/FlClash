@@ -30,10 +30,10 @@ Widget fadeAndSlideTransition(
   return FadeTransition(
     opacity: CurveTween(curve: Curves.easeInExpo).animate(animation),
     child: FadeTransition(
-      opacity: Tween(begin: 1.0, end: 0.0)
+      opacity: Tween(begin: 1.0, end: 0.1)
           .chain(CurveTween(curve: Curves.easeOutExpo))
           .animate(secondaryAnimation),
-      child: const CommonPageTransitionsBuilder().buildTransitions(
+      child: const FadeForwardsPageTransitionsBuilder().buildTransitions(
         ModalRoute.of(context) as PageRoute,
         context,
         animation,

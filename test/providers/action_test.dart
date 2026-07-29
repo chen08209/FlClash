@@ -987,6 +987,29 @@ proxy-groups:
       expect(proxies[0].containsKey('reality-opts'), false);
     });
   });
+
+  group('GeoResourceAction', () {
+    test('GeoResource has correct updatingKey', () {
+      expect(GeoResource.MMDB.updatingKey, 'geo_resource_MMDB');
+      expect(GeoResource.ASN.updatingKey, 'geo_resource_ASN');
+      expect(GeoResource.GEOIP.updatingKey, 'geo_resource_GEOIP');
+      expect(GeoResource.GEOSITE.updatingKey, 'geo_resource_GEOSITE');
+    });
+
+    test('IsUpdating provider works with geo resource key', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final key = GeoResource.MMDB.updatingKey;
+      expect(container.read(isUpdatingProvider(key)), false);
+
+      container.read(isUpdatingProvider(key).notifier).value = true;
+      expect(container.read(isUpdatingProvider(key)), true);
+
+      container.read(isUpdatingProvider(key).notifier).value = false;
+      expect(container.read(isUpdatingProvider(key)), false);
+    });
+  });
 }
 
 class _TestProfiles extends Profiles {

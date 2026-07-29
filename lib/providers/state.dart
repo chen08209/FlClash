@@ -107,6 +107,8 @@ UpdateParams updateParams(Ref ref) {
         externalController: state.externalController,
         unifiedDelay: state.unifiedDelay,
         mixedPort: state.mixedPort,
+        geoAutoUpdate: state.geoAutoUpdate,
+        geoUpdateInterval: state.geoUpdateInterval,
       ),
     ),
   );

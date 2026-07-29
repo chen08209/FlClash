@@ -88,8 +88,8 @@ class ProviderItem extends StatelessWidget {
     final ref = globalState.container;
     await globalState.safeRun<void>(() async {
       final platformFile = await picker.pickerFile();
-      final bytes = platformFile?.bytes;
-      if (bytes == null || provider.path == null) return;
+      if (platformFile == null || provider.path == null) return;
+      final bytes = await platformFile.readBytes();
       await File(provider.path!).safeWriteAsBytes(bytes);
       final providerName = provider.name;
       final message = await coreController.sideLoadExternalProvider(
@@ -110,7 +110,7 @@ class ProviderItem extends StatelessWidget {
     final count = provider.count;
     return switch (count == 0) {
       true => baseInfo,
-      false => '$baseInfo  ·  $count${context.appLocalizations.entries}',
+      false => '$baseInfo  ·  ${context.appLocalizations.entriesCount(count)}',
     };
   }
 

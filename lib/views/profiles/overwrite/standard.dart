@@ -166,7 +166,7 @@ class _StandardContentState extends ConsumerState<StandardContent> {
                   );
                 },
                 itemExtent: ruleItemHeight,
-                onReorder: ref
+                onReorderItem: ref
                     .read(profileAddedRulesProvider(_profileId).notifier)
                     .order,
               );

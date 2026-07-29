@@ -106,13 +106,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
 
   void _handleReorder(int oldIndex, newIndex) {
     globalState.container.read(excludeSSIDsProvider.notifier).update((value) {
-      final nextItems = List<String>.from(value);
-      if (oldIndex < newIndex) {
-        newIndex -= 1;
-      }
-      final item = nextItems.removeAt(oldIndex);
-      nextItems.insert(newIndex, item);
-      return nextItems;
+      return value.copyAndReorder(oldIndex, newIndex);
     });
   }
 
@@ -350,7 +344,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                   );
                 },
                 itemCount: excludeSSIDs.length,
-                onReorder: _handleReorder,
+                onReorderItem: _handleReorder,
               ),
             ),
         ],

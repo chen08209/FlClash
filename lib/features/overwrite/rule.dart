@@ -251,7 +251,7 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
       return;
     }
     final rule = Rule(
-      id: widget.rule?.id ?? -1,
+      id: widget.rule?.id ?? snowflake.id,
       ruleAction: _ruleAction,
       content: _contentController.text,
       ruleTarget: _ruleTargetController.text,
@@ -310,6 +310,9 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
                   const SizedBox(height: 24),
                   TextFormField(
                     keyboardType: TextInputType.text,
+                    inputFormatters: TextInputLimits.limit(
+                      TextInputLimits.rule,
+                    ),
                     onFieldSubmitted: (_) {
                       _handleSubmit();
                     },

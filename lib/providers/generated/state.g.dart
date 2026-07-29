@@ -49,7 +49,7 @@ final class CurrentGroupsStateProvider
 }
 
 String _$currentGroupsStateHash() =>
-    r'961dd6764417e29b47e213c85317ca47bf9e8d23';
+    r'c62b8d4ff82f718757f00c010ae0553f90f72d35';
 
 @ProviderFor(navigationItemsState)
 final navigationItemsStateProvider = NavigationItemsStateProvider._();
@@ -97,7 +97,7 @@ final class NavigationItemsStateProvider
 }
 
 String _$navigationItemsStateHash() =>
-    r'1fc37c14d129f9725b0e62fd53f6b25382f51102';
+    r'29fca83c50212813804420a7a07e4ec75e6fe252';
 
 @ProviderFor(currentNavigationItemsState)
 final currentNavigationItemsStateProvider =
@@ -187,7 +187,7 @@ final class UpdateParamsProvider
   }
 }
 
-String _$updateParamsHash() => r'012df72ab0e769a51c573f4692031506d7b1f1b4';
+String _$updateParamsHash() => r'6f471ce2a4114291cc7dc725723911764c8c3cd9';
 
 @ProviderFor(proxyState)
 final proxyStateProvider = ProxyStateProvider._();
@@ -729,7 +729,7 @@ final class ProxiesTabStateProvider
   }
 }
 
-String _$proxiesTabStateHash() => r'b16734b2578c4e9a91880af8af41faa2e293b257';
+String _$proxiesTabStateHash() => r'4bd9c5ab46a2cf96078741f4d50c301007f9b32b';
 
 @ProviderFor(isStart)
 final isStartProvider = IsStartProvider._();
@@ -817,7 +817,7 @@ final class ProxiesTabControllerStateProvider
 }
 
 String _$proxiesTabControllerStateHash() =>
-    r'd9c4eb6771262b2a989b053ce6ad94c307cf43fb';
+    r'562e975c537a01d33601c45a843e25f747f70b57';
 
 @ProviderFor(proxyGroupSelectorState)
 final proxyGroupSelectorStateProvider = ProxyGroupSelectorStateFamily._();
@@ -1233,7 +1233,7 @@ final class DelayProvider extends $FunctionalProvider<int?, int?, int?>
   }
 }
 
-String _$delayHash() => r'3cbaa758ea602519d2958a4e413c705b062bce32';
+String _$delayHash() => r'dccf332a84a894233f748313e7a512498241b7b9';
 
 final class DelayFamily extends $Family
     with

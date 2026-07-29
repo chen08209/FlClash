@@ -348,9 +348,8 @@ void main() {
     });
 
     test('updateGeoData delegates', () async {
-      const params = UpdateGeoDataParams(geoType: 'mmdb', geoName: 'Country');
-      when(() => mock.updateGeoData(params)).thenAnswer((_) async => 'ok');
-      final result = await controller.updateGeoData(params);
+      when(() => mock.updateGeoData('MMDB')).thenAnswer((_) async => 'ok');
+      final result = await controller.updateGeoData('MMDB');
       expect(result, 'ok');
     });
 

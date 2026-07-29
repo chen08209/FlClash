@@ -162,6 +162,28 @@ void main() {
     });
   });
 
+  group('ListExt.copyAndReorder', () {
+    test('uses final insertion index when moving an item forward', () {
+      final result = ['a', 'b', 'c', 'd'].copyAndReorder(1, 3);
+
+      expect(result, ['a', 'c', 'd', 'b']);
+    });
+
+    test('uses final insertion index when moving an item backward', () {
+      final result = ['a', 'b', 'c', 'd'].copyAndReorder(3, 1);
+
+      expect(result, ['a', 'd', 'b', 'c']);
+    });
+
+    test('does not mutate original list', () {
+      final list = ['a', 'b', 'c'];
+      final result = list.copyAndReorder(0, 2);
+
+      expect(list, ['a', 'b', 'c']);
+      expect(result, ['b', 'c', 'a']);
+    });
+  });
+
   group('ListExt.safeSublist', () {
     test('returns full list when start <= 0', () {
       final result = [1, 2, 3].safeSublist(0);

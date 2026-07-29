@@ -295,28 +295,6 @@ const _$DnsModeEnumMap = {
   DnsMode.hosts: 'hosts',
 };
 
-_GeoXUrl _$GeoXUrlFromJson(Map<String, dynamic> json) => _GeoXUrl(
-  mmdb:
-      json['mmdb'] as String? ??
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
-  asn:
-      json['asn'] as String? ??
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb',
-  geoip:
-      json['geoip'] as String? ??
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat',
-  geosite:
-      json['geosite'] as String? ??
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
-);
-
-Map<String, dynamic> _$GeoXUrlToJson(_GeoXUrl instance) => <String, dynamic>{
-  'mmdb': instance.mmdb,
-  'asn': instance.asn,
-  'geoip': instance.geoip,
-  'geosite': instance.geosite,
-};
-
 _Rule _$RuleFromJson(Map<String, dynamic> json) => _Rule(
   id: (json['id'] as num?)?.toInt() ?? -1,
   ruleAction:
@@ -451,7 +429,7 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
           : Dns.safeDnsFromJson(json['dns'] as Map<String, Object?>),
       geoXUrl: json['geox-url'] == null
           ? defaultGeoXUrl
-          : GeoXUrl.safeFormJson(json['geox-url'] as Map<String, Object?>?),
+          : _geoXUrlFromJson(json['geox-url'] as Map<String, Object?>?),
       geodataLoader:
           $enumDecodeNullable(_$GeodataLoaderEnumMap, json['geodata-loader']) ??
           GeodataLoader.memconservative,
@@ -467,6 +445,8 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
             (k, e) => MapEntry(k, e as String),
           ) ??
           const {},
+      geoAutoUpdate: json['geo-auto-update'] as bool? ?? false,
+      geoUpdateInterval: (json['geo-update-interval'] as num?)?.toInt() ?? 24,
     );
 
 Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
@@ -486,12 +466,14 @@ Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
       'tcp-concurrent': instance.tcpConcurrent,
       'tun': instance.tun,
       'dns': instance.dns,
-      'geox-url': instance.geoXUrl,
+      'geox-url': _geoXUrlToJson(instance.geoXUrl),
       'geodata-loader': _$GeodataLoaderEnumMap[instance.geodataLoader]!,
       'global-ua': instance.globalUa,
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,
       'hosts': instance.hosts,
+      'geo-auto-update': instance.geoAutoUpdate,
+      'geo-update-interval': instance.geoUpdateInterval,
     };
 
 const _$ModeEnumMap = {

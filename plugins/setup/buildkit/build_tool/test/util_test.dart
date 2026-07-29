@@ -44,8 +44,7 @@ void main() {
 
   group('copyFile', () {
     test('copies file to destination', () {
-      final src =
-          File('${Directory.systemTemp.path}/build_tool_test_src.txt');
+      final src = File('${Directory.systemTemp.path}/build_tool_test_src.txt');
       final dest =
           '${Directory.systemTemp.path}/build_tool_test_dest/sub/file.txt';
       src.writeAsStringSync('content');

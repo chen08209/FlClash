@@ -24,16 +24,16 @@ android {
     if (project.android.hasProperty("namespace")) {
         namespace 'com.follow.clash.setup'
     }
-    compileSdkVersion 33
+    compileSdkVersion 36
     ndkVersion android.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     defaultConfig {
-        minSdkVersion 19
+        minSdkVersion 23
     }
 }
 

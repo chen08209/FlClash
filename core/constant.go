@@ -34,6 +34,8 @@ type UpdateParams struct {
 	ExternalController *string            `json:"external-controller"`
 	Interface          *string            `json:"interface-name"`
 	UnifiedDelay       *bool              `json:"unified-delay"`
+	GeoAutoUpdate      *bool              `json:"geo-auto-update"`
+	GeoUpdateInterval  *int               `json:"geo-update-interval"`
 }
 
 type tunSchema struct {
@@ -123,11 +125,19 @@ type Message struct {
 }
 
 const (
-	LogMessage     MessageType = "log"
-	DelayMessage   MessageType = "delay"
-	RequestMessage MessageType = "request"
-	LoadedMessage  MessageType = "loaded"
+	LogMessage       MessageType = "log"
+	DelayMessage     MessageType = "delay"
+	RequestMessage   MessageType = "request"
+	LoadedMessage    MessageType = "loaded"
+	GeoUpdateMessage MessageType = "geoUpdate"
 )
+
+type GeoUpdateStatus struct {
+	Type     string `json:"type"`
+	Updating bool   `json:"updating"`
+	Skipped  bool   `json:"skipped,omitempty"`
+	Error    string `json:"error,omitempty"`
+}
 
 func (message *Message) Json() (string, error) {
 	data, err := json.Marshal(message)

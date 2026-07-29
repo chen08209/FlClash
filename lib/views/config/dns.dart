@@ -64,6 +64,7 @@ class ListenItem extends ConsumerWidget {
       delegate: InputDelegate(
         title: appLocalizations.listen,
         value: listen,
+        maxLength: TextInputLimits.dnsListen,
         validator: (value) {
           if (value == null || value.isEmpty) {
             return appLocalizations.emptyTip(appLocalizations.listen);
@@ -198,6 +199,7 @@ class FakeIpRangeItem extends ConsumerWidget {
       delegate: InputDelegate(
         title: appLocalizations.fakeipRange,
         value: fakeIpRange,
+        maxLength: TextInputLimits.cidr,
         validator: (value) {
           if (value == null || value.isEmpty) {
             return appLocalizations.emptyTip(appLocalizations.fakeipRange);
@@ -233,6 +235,7 @@ class FakeIpFilterItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.fakeipFilter,
           items: fakeIpFilter,
+          itemMaxLength: TextInputLimits.domain,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
@@ -264,6 +267,7 @@ class DefaultNameserverItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.defaultNameserver,
           items: defaultNameserver,
+          itemMaxLength: TextInputLimits.dnsServer,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
@@ -296,6 +300,7 @@ class NameserverItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.nameserver,
           items: nameserver,
+          itemMaxLength: TextInputLimits.dnsServer,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
@@ -373,6 +378,8 @@ class NameserverPolicyItem extends ConsumerWidget {
         widget: MapInputPage(
           title: appLocalizations.nameserverPolicy,
           map: nameserverPolicy,
+          keyMaxLength: TextInputLimits.domain,
+          valueMaxLength: TextInputLimits.dnsServer,
           titleBuilder: (item) => Text(item.key),
           subtitleBuilder: (item) => Text(item.value),
         ),
@@ -405,6 +412,7 @@ class ProxyServerNameserverItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.proxyNameserver,
           items: proxyServerNameserver,
+          itemMaxLength: TextInputLimits.dnsServer,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
@@ -437,6 +445,7 @@ class FallbackItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.fallback,
           items: fallback,
+          itemMaxLength: TextInputLimits.dnsServer,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
@@ -494,6 +503,7 @@ class GeoipCodeItem extends ConsumerWidget {
       delegate: InputDelegate(
         title: appLocalizations.geoipCode,
         value: geoipCode,
+        maxLength: TextInputLimits.geoIpCode,
         validator: (value) {
           if (value == null || value.isEmpty) {
             return appLocalizations.emptyTip(appLocalizations.geoipCode);
@@ -532,6 +542,7 @@ class GeositeItem extends ConsumerWidget {
         widget: ListInputPage(
           title: 'Geosite',
           items: geosite,
+          itemMaxLength: TextInputLimits.geoSite,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
@@ -566,6 +577,7 @@ class IpcidrItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.ipcidr,
           items: ipcidr,
+          itemMaxLength: TextInputLimits.cidr,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
@@ -599,6 +611,7 @@ class DomainItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.domain,
           items: domain,
+          itemMaxLength: TextInputLimits.domain,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {

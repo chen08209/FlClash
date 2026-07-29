@@ -9,6 +9,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'clash_config.dart';
 
 part 'generated/common.freezed.dart';
+
 part 'generated/common.g.dart';
 
 @freezed
@@ -271,7 +272,7 @@ extension TrafficExt on Traffic {
   }
 
   String get trayTitle {
-    return '${up.shortTraffic.show}/s \n ${down.shortTraffic.show}/s';
+    return '${up.shortTraffic.show}/s\n${down.shortTraffic.show}/s';
   }
 
   num get speed => up + down;

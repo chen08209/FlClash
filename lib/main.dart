@@ -11,8 +11,8 @@ import 'application.dart';
 import 'common/common.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   try {
-    WidgetsFlutterBinding.ensureInitialized();
     await ensureRustApiInitialized();
     final version = await system.version;
     final container = await globalState.init(version);
@@ -24,7 +24,7 @@ Future<void> main() async {
       ),
     );
   } catch (e, s) {
-    return runApp(
+    runApp(
       MaterialApp(
         home: InitErrorScreen(error: e, stack: s),
       ),

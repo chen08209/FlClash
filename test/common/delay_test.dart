@@ -45,19 +45,23 @@ void main() {
       expect(b.compareTo(a), greaterThan(0));
     });
 
-    test('group=true sorts before group=false within same priority and delay',
-        () {
-      const a = DelayState(delay: 100, group: true);
-      const b = DelayState(delay: 100, group: false);
-      expect(a.compareTo(b), lessThan(0));
-    });
+    test(
+      'group=true sorts before group=false within same priority and delay',
+      () {
+        const a = DelayState(delay: 100, group: true);
+        const b = DelayState(delay: 100, group: false);
+        expect(a.compareTo(b), lessThan(0));
+      },
+    );
 
-    test('group=false sorts after group=true within same priority and delay',
-        () {
-      const a = DelayState(delay: 100, group: false);
-      const b = DelayState(delay: 100, group: true);
-      expect(a.compareTo(b), greaterThan(0));
-    });
+    test(
+      'group=false sorts after group=true within same priority and delay',
+      () {
+        const a = DelayState(delay: 100, group: false);
+        const b = DelayState(delay: 100, group: true);
+        expect(a.compareTo(b), greaterThan(0));
+      },
+    );
 
     test('returns 0 for equal states', () {
       const a = DelayState(delay: 100, group: true);

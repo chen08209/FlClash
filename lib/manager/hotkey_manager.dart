@@ -73,7 +73,7 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
     await Future.wait(hotkeyActionHandles);
   }
 
-  Shortcuts _buildShortcuts(Widget child) {
+  Shortcuts _buildCloseShortcuts(Widget child) {
     return Shortcuts(
       shortcuts: {
         utils.controlSingleActivator(LogicalKeyboardKey.keyW):
@@ -84,7 +84,7 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
           CloseWindowIntent: CallbackAction<CloseWindowIntent>(
             onInvoke: (_) => globalState.container
                 .read(systemActionProvider.notifier)
-                .handleBackOrExit(),
+                .handleClose(false),
           ),
           DoNothingIntent: CallbackAction<DoNothingIntent>(
             onInvoke: (_) => null,
@@ -97,6 +97,6 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildShortcuts(widget.child);
+    return _buildCloseShortcuts(widget.child);
   }
 }

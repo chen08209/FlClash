@@ -103,6 +103,13 @@ extension ListExt<T> on List<T> {
     return newList;
   }
 
+  List<T> copyAndReorder(int oldIndex, int newIndex) {
+    final newList = List<T>.from(this);
+    final item = newList.removeAt(oldIndex);
+    newList.insert(newIndex, item);
+    return newList;
+  }
+
   List<T> safeSublist(int start, [int? end]) {
     if (start <= 0) return this;
     if (start > length) return [];

@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -9,7 +10,6 @@ import 'package:flutter/material.dart';
 
 import 'card.dart';
 import 'input.dart';
-import 'open_container.dart';
 import 'scaffold.dart';
 import 'sheet.dart';
 
@@ -84,6 +84,8 @@ class InputDelegate extends Delegate {
   final String? suffixText;
   final Function(String? value) onChanged;
   final FormFieldValidator<String>? validator;
+  final int? maxLength;
+  final TextInputType? keyboardType;
 
   final String? resetValue;
 
@@ -94,6 +96,8 @@ class InputDelegate extends Delegate {
     required this.onChanged,
     this.resetValue,
     this.validator,
+    this.maxLength,
+    this.keyboardType,
   });
 }
 
@@ -299,10 +303,16 @@ class ListItem<T> extends StatelessWidget {
       final child = openDelegate.widget;
       final onChanged = openDelegate.onChanged;
       return OpenContainer<T>(
-        // closedColor: context.colorScheme.surface,
-        // openColor: context.colorScheme.surface,
-        // closedElevation: 0,
-        // openElevation: 0,
+        closedColor: context.colorScheme.surface,
+        openColor: context.colorScheme.surface,
+        closedElevation: 0,
+        openElevation: 0,
+        openShape: const RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.zero,
+        ),
+        closedShape: const RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.zero,
+        ),
         closedBuilder: (context, action) {
           Future<void> openAction() async {
             final isMobile = globalState.container.read(isMobileViewProvider);
@@ -379,6 +389,10 @@ class ListItem<T> extends StatelessWidget {
               value: inputDelegate.value,
               suffixText: inputDelegate.suffixText,
               resetValue: inputDelegate.resetValue,
+              inputFormatters: inputDelegate.maxLength == null
+                  ? null
+                  : TextInputLimits.limit(inputDelegate.maxLength!),
+              keyboardType: inputDelegate.keyboardType,
               validator: inputDelegate.validator,
             ),
           );

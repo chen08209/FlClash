@@ -133,6 +133,7 @@
   "app": "アプリ",
   "general": "一般",
   "systemProxyDesc": "HTTPプロキシをVpnServiceに接続",
+  "userAgent": "ユーザーエージェント",
   "unifiedDelay": "統一遅延",
   "unifiedDelayDesc": "ハンドシェイクなどの余分な遅延を削除",
   "tcpConcurrent": "TCP並列処理",
@@ -537,5 +538,17 @@
   "editSsid": "SSIDを編集",
   "authorized": "許可済み",
   "tapToAuthorize": "タップして許可",
-  "suspended": "一時停止中..."
+  "suspended": "一時停止中...",
+  "geoOptions": "Geoオプション",
+  "geoAutoUpdate": "自動更新",
+  "geoAutoUpdateInterval": "自動更新間隔",
+  "geoAutoUpdateIntervalTip": "自動更新間隔は0より大きくなければなりません",
+  "hours": "時間",
+  "hoursCount": "{count} 時間",
+  "geoResources": "Geoリソース",
+  "geoUpdating": "{name}を更新中...",
+  "geoSkipped": "{name} スキップ済み",
+  "geoUpdated": "{name} 更新済み",
+  "secondsCount": "{count} 秒",
+  "entriesCount": "{count} エントリ"
 }

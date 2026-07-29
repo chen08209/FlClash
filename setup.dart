@@ -152,26 +152,6 @@ Future<int> _package(
   String? androidArch,
   required bool verbose,
 }) async {
-  final distributorDir = p.join(
-    rootDir,
-    'plugins',
-    'flutter_distributor',
-    'packages',
-    'flutter_distributor',
-  );
-  final activateResult = await Process.run('dart', [
-    'pub',
-    'global',
-    'activate',
-    '-s',
-    'path',
-    distributorDir,
-  ]);
-  if (activateResult.exitCode != 0) {
-    stderr.write(activateResult.stderr);
-    return activateResult.exitCode;
-  }
-
   final coreSha256 = platform == 'windows' ? await _buildGoCore(rootDir) : null;
 
   final file = File(p.join(rootDir, 'env.json'));
@@ -192,6 +172,26 @@ Future<int> _package(
 
   final depExit = await _ensureDependencies(platform, arch);
   if (depExit != 0) return depExit;
+
+  final distributorDir = p.join(
+    rootDir,
+    'plugins',
+    'flutter_distributor',
+    'packages',
+    'flutter_distributor',
+  );
+  final activateResult = await Process.run('dart', [
+    'pub',
+    'global',
+    'activate',
+    '-s',
+    'path',
+    distributorDir,
+  ]);
+  if (activateResult.exitCode != 0) {
+    stderr.write(activateResult.stderr);
+    return activateResult.exitCode;
+  }
 
   final process = await Process.start(
     'dart',

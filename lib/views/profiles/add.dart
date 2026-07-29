@@ -150,6 +150,7 @@ class _ProfileUrlDialogState extends State<_ProfileUrlDialog> {
           children: [
             TextFormField(
               controller: _urlController,
+              inputFormatters: TextInputLimits.limit(TextInputLimits.url),
               keyboardType: TextInputType.url,
               minLines: 1,
               maxLines: 4,
@@ -166,6 +167,7 @@ class _ProfileUrlDialogState extends State<_ProfileUrlDialog> {
             ),
             TextFormField(
               controller: _sourceUrlController,
+              inputFormatters: TextInputLimits.limit(TextInputLimits.url),
               keyboardType: TextInputType.url,
               minLines: 1,
               maxLines: 4,
@@ -229,6 +231,7 @@ class _URLFormDialogState extends State<URLFormDialog> {
               keyboardType: TextInputType.url,
               minLines: 1,
               maxLines: 5,
+              inputFormatters: TextInputLimits.limit(TextInputLimits.url),
               onSubmitted: (_) {
                 _handleAddProfileFormURL();
               },

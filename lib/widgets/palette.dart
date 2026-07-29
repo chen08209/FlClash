@@ -1,7 +1,12 @@
-import 'dart:math' as math;
+import 'dart:math';
 
-import 'package:flutter/gestures.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/widgets/card.dart';
 import 'package:flutter/material.dart';
+import 'package:material_color_utilities/hct/hct.dart';
+
+import 'color_scheme_box.dart';
+import 'theme.dart';
 
 @immutable
 class Palette extends StatefulWidget {
@@ -14,120 +19,38 @@ class Palette extends StatefulWidget {
 }
 
 class _PaletteState extends State<Palette> {
-  final double _thickness = 20;
-  final double _radius = 4;
-  final double _padding = 8;
-  final GlobalKey renderBoxKey = GlobalKey();
-  bool isSquare = false;
-  bool isTrack = false;
-  late double colorHue;
-  late double colorSaturation;
-  late double colorValue;
-
-  late FocusNode _focusNode;
-
-  Color get value => widget.controller.value;
-
-  HSVColor get color => HSVColor.fromColor(value);
+  double _hue = 0;
+  double _chroma = 0;
+  double _tone = 0;
 
   @override
   void initState() {
     super.initState();
-    colorHue = color.hue;
-    colorSaturation = color.saturation;
-    colorValue = color.value;
-    _focusNode = FocusNode();
+    _initFromColor(widget.controller.value);
   }
 
-  void _handleChange() {
-    widget.controller.value = HSVColor.fromAHSV(
-      color.alpha,
-      colorHue,
-      colorSaturation,
-      colorValue,
-    ).toColor();
+  void _initFromColor(Color color) {
+    final hct = Hct.fromInt(color.toARGB32());
+    _hue = hct.hue;
+    _chroma = hct.chroma;
+    _tone = hct.tone;
   }
 
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
+  Color _toColor() => Color(Hct.from(_hue, _chroma, _tone).toInt());
+
+  void _onHueChanged(double value) {
+    setState(() => _hue = value);
+    widget.controller.value = _toColor();
   }
 
-  double trackRadius(Size size) =>
-      math.min(size.width, size.height) / 2 - _thickness;
-
-  static double squareRadius(double radius, double trackSquarePadding) =>
-      (radius - trackSquarePadding) / math.sqrt(2);
-
-  void onStart(Offset offset) {
-    final RenderBox renderBox =
-        renderBoxKey.currentContext!.findRenderObject()! as RenderBox;
-    final size = renderBox.size;
-    final radius = trackRadius(size);
-    final radiusOuter = radius + _thickness;
-    final effectiveSquareRadius = squareRadius(radius, _padding);
-    final startPosition = renderBox.localToGlobal(Offset.zero);
-    final center = Offset(size.width / 2, size.height / 2);
-    final vector = offset - startPosition - center;
-    final vectorLength = _Computer.vectorLength(vector);
-    isSquare =
-        vector.dx.abs() < effectiveSquareRadius &&
-        vector.dy.abs() < effectiveSquareRadius;
-    isTrack = vectorLength >= radius && vectorLength <= radiusOuter;
-    if (isSquare) {
-      colorSaturation = _Computer.vectorToSaturation(
-        vector.dx,
-        effectiveSquareRadius,
-      ).clamp(0.0, 1.0);
-      colorValue = _Computer.vectorToValue(
-        vector.dy,
-        effectiveSquareRadius,
-      ).clamp(0.0, 1.0);
-      _handleChange();
-    } else if (isTrack) {
-      colorHue = _Computer.vectorToHue(vector);
-      _handleChange();
-    } else {
-      isTrack = false;
-      isSquare = false;
-    }
+  void _onChromaChanged(double value) {
+    setState(() => _chroma = value);
+    widget.controller.value = _toColor();
   }
 
-  void onUpdate(Offset offset) {
-    final RenderBox renderBox =
-        renderBoxKey.currentContext!.findRenderObject()! as RenderBox;
-    final size = renderBox.size;
-    final radius = trackRadius(size);
-    final effectiveSquareRadius = squareRadius(radius, _padding);
-    final startPosition = renderBox.localToGlobal(Offset.zero);
-    final center = Offset(size.width / 2, size.height / 2);
-    final vector = offset - startPosition - center;
-    if (isSquare) {
-      isTrack = false;
-      colorSaturation = _Computer.vectorToSaturation(
-        vector.dx,
-        effectiveSquareRadius,
-      ).clamp(0.0, 1.0);
-      colorValue = _Computer.vectorToValue(
-        vector.dy,
-        effectiveSquareRadius,
-      ).clamp(0.0, 1.0);
-
-      _handleChange();
-    } else if (isTrack) {
-      isSquare = false;
-      colorHue = _Computer.vectorToHue(vector);
-      _handleChange();
-    } else {
-      isTrack = false;
-      isSquare = false;
-    }
-  }
-
-  void onEnd() {
-    isTrack = false;
-    isSquare = false;
+  void _onToneSelected(double tone) {
+    setState(() => _tone = tone);
+    widget.controller.value = _toColor();
   }
 
   @override
@@ -135,321 +58,368 @@ class _PaletteState extends State<Palette> {
     return ValueListenableBuilder(
       valueListenable: widget.controller,
       builder: (_, _, _) {
-        return GestureDetector(
-          dragStartBehavior: DragStartBehavior.down,
-          onVerticalDragDown: (DragDownDetails details) =>
-              onStart(details.globalPosition),
-          onVerticalDragUpdate: (DragUpdateDetails details) =>
-              onUpdate(details.globalPosition),
-          onHorizontalDragUpdate: (DragUpdateDetails details) =>
-              onUpdate(details.globalPosition),
-          onVerticalDragEnd: (DragEndDetails details) => onEnd(),
-          onHorizontalDragEnd: (DragEndDetails details) => onEnd(),
-          onTapUp: (TapUpDetails details) => onEnd(),
-          child: SizedBox(
-            key: renderBoxKey,
-            child: Focus(
-              focusNode: _focusNode,
-              child: MouseRegion(
-                cursor: WidgetStateMouseCursor.clickable,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: <Widget>[
-                    RepaintBoundary(
-                      child: CustomPaint(
-                        painter: _ShadePainter(
-                          colorHue: colorHue,
-                          colorSaturation: colorSaturation,
-                          colorValue: colorValue,
-                          thickness: _thickness,
-                          padding: _padding,
-                          trackBorderRadius: _radius,
-                        ),
-                      ),
-                    ),
-                    CustomPaint(
-                      painter: _ShadeThumbPainter(
-                        colorSaturation: colorSaturation,
-                        colorValue: colorValue,
-                        thickness: _thickness,
-                        padding: _padding,
-                      ),
-                    ),
-                    RepaintBoundary(
-                      child: CustomPaint(
-                        painter: _TrackPainter(
-                          thickness: _thickness,
-                          ticks: 360,
-                        ),
-                      ),
-                    ),
-                    CustomPaint(
-                      painter: _TrackThumbPainter(
-                        colorHue: colorHue,
-                        thickness: _thickness,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _HueSlider(hue: _hue, onChanged: _onHueChanged),
+            const SizedBox(height: 16),
+            _ChromaSlider(
+              hue: _hue,
+              chroma: _chroma,
+              onChanged: _onChromaChanged,
             ),
-          ),
+            const SizedBox(height: 28),
+            _ToneGrid(
+              hue: _hue,
+              chroma: _chroma,
+              selectedTone: _tone,
+              onToneSelected: _onToneSelected,
+            ),
+            const SizedBox(height: 16),
+            InfoHeader(info: Info(label: context.appLocalizations.preview)),
+            PrimaryColorBox(
+              primaryColor: widget.controller.value,
+              child: const _ColorSchemePreview(),
+            ),
+          ],
         );
       },
     );
   }
 }
 
-class _ShadePainter extends CustomPainter {
-  const _ShadePainter({
-    required this.colorHue,
-    required this.colorSaturation,
-    required this.colorValue,
-    required this.thickness,
-    required this.padding,
-    required this.trackBorderRadius,
-  }) : super();
+class _HueSlider extends StatelessWidget {
+  const _HueSlider({required this.hue, required this.onChanged});
 
-  final double colorHue;
-  final double colorSaturation;
-  final double colorValue;
-
-  final double thickness;
-  final double padding;
-  final double trackBorderRadius;
-
-  static double trackRadius(Size size, double trackWidth) =>
-      math.min(size.width, size.height) / 2 - trackWidth / 2;
-
-  static double squareRadius(
-    double radius,
-    double trackWidth,
-    double padding,
-  ) => (radius - trackWidth / 2 - padding) / math.sqrt(2);
+  final double hue;
+  final ValueChanged<double> onChanged;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = trackRadius(size, thickness);
-    final double effectiveSquareRadius = squareRadius(
-      radius,
-      thickness,
-      padding,
+  Widget build(BuildContext context) {
+    return SliderTheme(
+      data: SliderDefaultsM3(context).copyWith(
+        trackShape: _HueTrackShape(),
+        trackHeight: 24,
+        thumbSize: const WidgetStatePropertyAll(Size(6.0, 48.0)),
+        thumbColor: Color(Hct.from(hue, 100, 80).toInt()),
+      ),
+      child: Slider(
+        padding: EdgeInsets.zero,
+        value: hue,
+        min: 0,
+        max: 360,
+        onChanged: onChanged,
+      ),
     );
-
-    final Rect rectBox = Rect.fromLTWH(
-      center.dx - effectiveSquareRadius,
-      center.dy - effectiveSquareRadius,
-      effectiveSquareRadius * 2,
-      effectiveSquareRadius * 2,
-    );
-    final RSuperellipse rSuperellipse = RSuperellipse.fromRectAndRadius(
-      rectBox,
-      Radius.circular(trackBorderRadius),
-    );
-
-    final Shader horizontal = LinearGradient(
-      colors: <Color>[
-        Colors.white,
-        HSVColor.fromAHSV(1, colorHue, 1, 1).toColor(),
-      ],
-    ).createShader(rectBox);
-    canvas.drawRSuperellipse(
-      rSuperellipse,
-      Paint()
-        ..style = PaintingStyle.fill
-        ..shader = horizontal,
-    );
-
-    final Shader vertical = const LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: <Color>[Colors.transparent, Colors.black],
-    ).createShader(rectBox);
-    canvas.drawRSuperellipse(
-      rSuperellipse,
-      Paint()
-        ..style = PaintingStyle.fill
-        ..shader = vertical,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ShadePainter oldDelegate) {
-    return oldDelegate.thickness != thickness ||
-        oldDelegate.padding != padding ||
-        oldDelegate.trackBorderRadius != trackBorderRadius ||
-        oldDelegate.colorHue != colorHue ||
-        oldDelegate.colorSaturation != colorSaturation ||
-        oldDelegate.colorValue != colorValue;
   }
 }
 
-class _TrackPainter extends CustomPainter {
-  const _TrackPainter({this.ticks = 360, required this.thickness}) : super();
-  final int ticks;
-  final double thickness;
+class _ChromaSlider extends StatelessWidget {
+  const _ChromaSlider({
+    required this.hue,
+    required this.chroma,
+    required this.onChanged,
+  });
+
+  final double hue;
+  final double chroma;
+  final ValueChanged<double> onChanged;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final Offset center = Offset(size.width / 2, size.height / 2);
-
-    const double rads = (2 * math.pi) / 360;
-    const double step = 1;
-    const double aliasing = 0.5;
-
-    final double shortestRectSide = math.min(size.width, size.height);
-
-    final Rect rectCircle = Rect.fromCenter(
-      center: center,
-      width: shortestRectSide - thickness,
-      height: shortestRectSide - thickness,
+  Widget build(BuildContext context) {
+    return SliderTheme(
+      data: SliderDefaultsM3(context).copyWith(
+        trackShape: _ChromaTrackShape(hue: hue),
+        trackHeight: 24,
+        thumbSize: const WidgetStatePropertyAll(Size(6.0, 48.0)),
+        thumbColor: Color(Hct.from(hue, chroma, 80).toInt()),
+      ),
+      child: Slider(
+        padding: EdgeInsets.zero,
+        value: chroma.clamp(0, 10),
+        min: 0,
+        max: 10,
+        onChanged: onChanged,
+      ),
     );
+  }
+}
 
-    for (int i = 0; i < ticks; i++) {
-      final double sRad = (i - aliasing) * rads;
-      final double eRad = (i + step) * rads;
-      final Paint segmentPaint = Paint()
-        ..color = HSVColor.fromAHSV(1, i.toDouble(), 1, 1).toColor()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = thickness;
-      canvas.drawArc(rectCircle, sRad, sRad - eRad, false, segmentPaint);
+class _HueTrackShape extends SliderTrackShape {
+  @override
+  Rect getPreferredRect({
+    required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    final trackHeight = sliderTheme.trackHeight ?? 24;
+    final trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
+    return Rect.fromLTWH(
+      offset.dx,
+      trackTop,
+      parentBox.size.width,
+      trackHeight,
+    );
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+  }) {
+    final rect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+    final colors = <Color>[];
+    for (int i = 0; i <= 360; i += 10) {
+      colors.add(Color(Hct.from(i.toDouble(), 100, 60).toInt()));
     }
-  }
-
-  @override
-  bool shouldRepaint(_TrackPainter oldDelegate) {
-    return oldDelegate.thickness != thickness || oldDelegate.ticks != ticks;
-  }
-}
-
-class _ShadeThumbPainter extends CustomPainter {
-  const _ShadeThumbPainter({
-    required this.colorSaturation,
-    required this.colorValue,
-    required this.thickness,
-    required this.padding,
-  }) : super();
-
-  final double colorSaturation;
-  final double colorValue;
-  final double thickness;
-  final double padding;
-
-  static double trackRadius(Size size, double thickness) =>
-      math.min(size.width, size.height) / 2 - thickness / 2;
-
-  static double squareRadius(
-    double radius,
-    double thickness,
-    double trackSquarePadding,
-  ) => (radius - thickness / 2 - trackSquarePadding) / math.sqrt(2);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = trackRadius(size, thickness);
-    final double effectiveSquareRadius = squareRadius(
-      radius,
-      thickness,
-      padding,
-    );
-
-    final Paint paintBlack = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 5
-      ..style = PaintingStyle.stroke;
-    final Paint paintWhite = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final double paletteX = _Computer.saturationToVector(
-      colorSaturation,
-      effectiveSquareRadius,
-      center.dx,
-    );
-    final double paletteY = _Computer.valueToVector(
-      colorValue,
-      effectiveSquareRadius,
-      center.dy,
-    );
-    final Offset paletteVector = Offset(paletteX, paletteY);
-    canvas.drawCircle(paletteVector, 12, paintBlack);
-    canvas.drawCircle(paletteVector, 12, paintWhite);
-  }
-
-  @override
-  bool shouldRepaint(_ShadeThumbPainter oldDelegate) {
-    return oldDelegate.thickness != thickness ||
-        oldDelegate.colorSaturation != colorSaturation ||
-        oldDelegate.colorValue != colorValue ||
-        oldDelegate.padding != padding;
+    final shader = LinearGradient(colors: colors).createShader(rect);
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(12));
+    context.canvas.drawRRect(rrect, Paint()..shader = shader);
+    _paintTrackHighlight(context.canvas, rect);
   }
 }
 
-class _TrackThumbPainter extends CustomPainter {
-  const _TrackThumbPainter({required this.colorHue, required this.thickness})
-    : super();
+class _ChromaTrackShape extends SliderTrackShape {
+  const _ChromaTrackShape({required this.hue});
 
-  final double colorHue;
-  final double thickness;
-
-  static double trackRadius(Size size, double thickness) =>
-      math.min(size.width, size.height) / 2 - thickness / 2;
+  final double hue;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = trackRadius(size, thickness);
-    final Paint paintBlack = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 5
-      ..style = PaintingStyle.stroke;
-    final Paint paintWhite = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-    final Offset track = _Computer.hueToVector(
-      (colorHue + 360.0) * math.pi / 180.0,
-      radius,
-      center,
+  Rect getPreferredRect({
+    required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    final trackHeight = sliderTheme.trackHeight ?? 24;
+    final trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
+    return Rect.fromLTWH(
+      offset.dx,
+      trackTop,
+      parentBox.size.width,
+      trackHeight,
     );
-    canvas.drawCircle(track, thickness / 2 + 4, paintBlack);
-    canvas.drawCircle(track, thickness / 2 + 4, paintWhite);
   }
 
   @override
-  bool shouldRepaint(_TrackThumbPainter oldDelegate) {
-    return oldDelegate.thickness != thickness ||
-        oldDelegate.colorHue != colorHue;
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+  }) {
+    final rect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+    final colors = <Color>[];
+    for (int i = 0; i <= 49; i++) {
+      colors.add(Color(Hct.from(hue, (i / 49) * 150, 60).toInt()));
+    }
+    final shader = LinearGradient(colors: colors).createShader(rect);
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(12));
+    context.canvas.drawRRect(rrect, Paint()..shader = shader);
+    _paintTrackHighlight(context.canvas, rect);
   }
 }
 
-class _Computer {
-  static double vectorLength(Offset vector) =>
-      math.sqrt(vector.dx * vector.dx + vector.dy * vector.dy);
-
-  static double vectorToHue(Offset vector) =>
-      (((math.atan2(vector.dy, vector.dx)) * 180.0 / math.pi) + 360.0) % 360.0;
-
-  static double vectorToSaturation(double vectorX, double squareRadius) =>
-      vectorX * 0.5 / squareRadius + 0.5;
-
-  static double vectorToValue(double vectorY, double squareRadius) =>
-      0.5 - vectorY * 0.5 / squareRadius;
-
-  static Offset hueToVector(double h, double radius, Offset center) => Offset(
-    math.cos(h) * radius + center.dx,
-    math.sin(h) * radius + center.dy,
+void _paintTrackHighlight(Canvas canvas, Rect rect) {
+  final rrect = RRect.fromRectAndRadius(
+    rect.deflate(1),
+    const Radius.circular(12),
   );
+  canvas.drawRRect(
+    rrect,
+    Paint()
+      ..color = Colors.white.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1,
+  );
+  canvas.drawLine(
+    Offset(rect.left + 12, rect.bottom - 2),
+    Offset(rect.right - 12, rect.bottom - 2),
+    Paint()
+      ..color = Colors.black.withValues(alpha: 0.12)
+      ..strokeWidth = 1,
+  );
+}
 
-  static double saturationToVector(
-    double s,
-    double squareRadius,
-    double centerX,
-  ) => (s - 0.5) * squareRadius / 0.5 + centerX;
+class _ToneGrid extends StatelessWidget {
+  const _ToneGrid({
+    required this.hue,
+    required this.chroma,
+    required this.selectedTone,
+    required this.onToneSelected,
+  });
 
-  static double valueToVector(double l, double squareRadius, double centerY) =>
-      (0.5 - l) * squareRadius / 0.5 + centerY;
+  final double hue;
+  final double chroma;
+  final double selectedTone;
+  final ValueChanged<double> onToneSelected;
+
+  static const _tones = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+  static const _spacing = 8.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedBorderColor = Theme.of(context).colorScheme.primary;
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final columns = min(
+          max((constraints.maxWidth / 40).floor(), 1),
+          _tones.length,
+        );
+        final itemWidth =
+            (constraints.maxWidth - (columns - 1) * _spacing) / columns;
+        return Wrap(
+          spacing: _spacing,
+          runSpacing: _spacing,
+          children: _tones.map((tone) {
+            final color = Color(Hct.from(hue, chroma, tone.toDouble()).toInt());
+            final isSelected = tone == selectedTone.round();
+            final textColor = tone <= 50 ? Colors.white : Colors.black;
+            return GestureDetector(
+              onTap: () => onToneSelected(tone.toDouble()),
+              child: SizedBox(
+                width: itemWidth,
+                height: itemWidth,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$tone',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (isSelected)
+                      Positioned.fill(
+                        top: -4,
+                        right: -4,
+                        bottom: -4,
+                        left: -4,
+                        child: IgnorePointer(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: selectedBorderColor,
+                                width: 4,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _ColorSchemePreview extends StatelessWidget {
+  const _ColorSchemePreview();
+
+  static const _spacing = 8.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final roles = [
+      (colorScheme.primary, colorScheme.onPrimary, 'Primary'),
+      (colorScheme.secondary, colorScheme.onSecondary, 'Secondary'),
+      (colorScheme.tertiary, colorScheme.onTertiary, 'Tertiary'),
+      (colorScheme.error, colorScheme.onError, 'Error'),
+      (colorScheme.surface, colorScheme.onSurface, 'Surface'),
+      (
+        colorScheme.primaryContainer,
+        colorScheme.onPrimaryContainer,
+        'Primary\nCont.',
+      ),
+      (
+        colorScheme.secondaryContainer,
+        colorScheme.onSecondaryContainer,
+        'Secondary\nCont.',
+      ),
+      (
+        colorScheme.tertiaryContainer,
+        colorScheme.onTertiaryContainer,
+        'Tertiary\nCont.',
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final columns = min(
+          max((constraints.maxWidth / 68).floor(), 1),
+          roles.length,
+        );
+        final itemWidth =
+            (constraints.maxWidth - (columns - 1) * _spacing) / columns;
+        return Wrap(
+          spacing: _spacing,
+          runSpacing: _spacing,
+          children: [
+            for (final (bg, fg, label) in roles)
+              Container(
+                width: itemWidth,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  label,
+                  style: TextStyle(color: fg, fontSize: 9),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
 }

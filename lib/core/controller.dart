@@ -177,8 +177,8 @@ class CoreController {
     return ExternalProvider.fromJson(json.decode(externalProvidersRawString));
   }
 
-  Future<String> updateGeoData(UpdateGeoDataParams params) {
-    return _interface.updateGeoData(params);
+  Future<String> updateGeoData(String type) {
+    return _interface.updateGeoData(type);
   }
 
   Future<String> sideLoadExternalProvider({

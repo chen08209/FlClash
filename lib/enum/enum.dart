@@ -135,7 +135,7 @@ enum ResultType {
   error,
 }
 
-enum CoreEventType { log, delay, request, loaded, crash }
+enum CoreEventType { log, delay, request, loaded, crash, geoUpdate }
 
 enum InvokeMessageType { protect, process }
 
@@ -331,6 +331,40 @@ enum DashboardWidget {
 }
 
 enum GeodataLoader { standard, memconservative }
+
+enum GeoResource {
+  @JsonValue('mmdb')
+  MMDB,
+  @JsonValue('asn')
+  ASN,
+  @JsonValue('geo-ip')
+  GEOIP,
+  @JsonValue('geo-site')
+  GEOSITE;
+
+  static GeoResource fromJson(String value) {
+    return switch (value) {
+      'mmdb' => GeoResource.MMDB,
+      'asn' => GeoResource.ASN,
+      'geo-ip' || 'geoip' => GeoResource.GEOIP,
+      'geo-site' || 'geosite' => GeoResource.GEOSITE,
+      _ => throw ArgumentError.value(value, 'value', 'Invalid geo resource'),
+    };
+  }
+}
+
+extension GeoResourceExt on GeoResource {
+  String get value {
+    return switch (this) {
+      GeoResource.MMDB => 'mmdb',
+      GeoResource.ASN => 'asn',
+      GeoResource.GEOIP => 'geo-ip',
+      GeoResource.GEOSITE => 'geo-site',
+    };
+  }
+
+  String get updatingKey => 'geo_resource_$name';
+}
 
 enum PageLabel {
   dashboard,

@@ -347,36 +347,22 @@ func handleGetExternalProvider(externalProviderName string) string {
 	return string(data)
 }
 
-func handleUpdateGeoData(geoType string, geoName string, fn func(value string)) {
+func handleUpdateGeoData(geoType string) {
 	go func() {
-		path := constant.Path.Resolve(geoName)
 		switch geoType {
 		case "MMDB":
-			err := updater.UpdateMMDBWithPath(path)
-			if err != nil {
-				fn(err.Error())
-				return
-			}
+			updater.UpdateMMDB()
+			return
 		case "ASN":
-			err := updater.UpdateASNWithPath(path)
-			if err != nil {
-				fn(err.Error())
-				return
-			}
+			updater.UpdateASN()
+			return
 		case "GEOIP":
-			err := updater.UpdateGeoIpWithPath(path)
-			if err != nil {
-				fn(err.Error())
-				return
-			}
+			updater.UpdateGeoIp()
+			return
 		case "GEOSITE":
-			err := updater.UpdateGeoSiteWithPath(path)
-			if err != nil {
-				fn(err.Error())
-				return
-			}
+			updater.UpdateGeoSite()
+			return
 		}
-		fn("")
 	}()
 }
 
@@ -566,6 +552,20 @@ func init() {
 		sendMessage(Message{
 			Type: LoadedMessage,
 			Data: providerName,
+		})
+	}
+	updater.GeoUpdateHook = func(geoType string, updating bool, skipped bool, updateErr error) {
+		status := GeoUpdateStatus{
+			Type:     geoType,
+			Updating: updating,
+			Skipped:  skipped,
+		}
+		if updateErr != nil {
+			status.Error = updateErr.Error()
+		}
+		sendMessage(Message{
+			Type: GeoUpdateMessage,
+			Data: status,
 		})
 	}
 }

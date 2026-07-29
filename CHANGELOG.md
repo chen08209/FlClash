@@ -1,3 +1,15 @@
+## v0.8.94
+
+- Fix macos performance issue
+
+- Support custom global-ua
+
+- Update core
+
+- Optimize some details
+
+- Fix linux silent launching not working
+
 ## v0.8.93
 
 - Support custom overwrite

@@ -38,7 +38,7 @@ mixin CoreInterface {
 
   Future<String>? getExternalProvider(String externalProviderName);
 
-  Future<String> updateGeoData(UpdateGeoDataParams params);
+  Future<String> updateGeoData(String type);
 
   Future<String> sideLoadExternalProvider({
     required String providerName,
@@ -214,10 +214,10 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<String> updateGeoData(UpdateGeoDataParams params) async {
+  Future<String> updateGeoData(String type) async {
     return await _invoke<String>(
           method: ActionMethod.updateGeoData,
-          data: json.encode(params),
+          data: type,
         ) ??
         '';
   }

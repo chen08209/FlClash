@@ -17,7 +17,8 @@ class RustBuilder {
   String get _helperPath => p.join(rootDir, config.helperDir);
   String get _outputPath => p.join(rootDir, config.outputDir);
 
-  Future<String> build(Target target, String token, {bool release = true}) async {
+  Future<String> build(Target target, String token,
+      {bool release = true}) async {
     final args = ['build'];
     if (release) {
       args.addAll(['--release', '--features', 'windows-service']);
@@ -32,7 +33,9 @@ class RustBuilder {
         workingDirectory: _helperPath, environment: env);
 
     final srcPath = p.join(
-      _helperPath, 'target', release ? 'release' : 'debug',
+      _helperPath,
+      'target',
+      release ? 'release' : 'debug',
       'helper${target.executableExtension}',
     );
     final destDir = p.join(_outputPath, target.goos);

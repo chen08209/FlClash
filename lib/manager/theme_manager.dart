@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/providers/action.dart';
-import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -21,41 +20,25 @@ class ThemeManager extends ConsumerWidget {
     if (!system.isAndroid) {
       return child;
     }
-    return AnnotatedRegion<SystemUiMode>(
-      sized: false,
-      value: SystemUiMode.edgeToEdge,
-      child: Consumer(
-        builder: (context, ref, _) {
-          final brightness = ref.watch(currentBrightnessProvider);
-          final iconBrightness = brightness == Brightness.light
-              ? Brightness.dark
-              : Brightness.light;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref
-                .read(systemUiOverlayStyleStateProvider.notifier)
-                .update(
-                  (state) => state.copyWith(
-                    statusBarColor: Colors.transparent,
-                    statusBarIconBrightness: iconBrightness,
-                    systemNavigationBarIconBrightness: iconBrightness,
-                    systemNavigationBarColor: context.colorScheme.surface,
-                    systemNavigationBarDividerColor: Colors.transparent,
-                  ),
-                );
-          });
-          return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: iconBrightness,
-              systemNavigationBarIconBrightness: iconBrightness,
-              systemNavigationBarColor: context.colorScheme.surface,
-              systemNavigationBarDividerColor: Colors.transparent,
-            ),
-            sized: false,
-            child: child,
-          );
-        },
-      ),
+    return Consumer(
+      builder: (context, ref, _) {
+        final brightness = ref.watch(currentBrightnessProvider);
+        final iconBrightness = brightness == Brightness.light
+            ? Brightness.dark
+            : Brightness.light;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: iconBrightness,
+            systemNavigationBarIconBrightness: iconBrightness,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarDividerColor: Colors.transparent,
+            systemNavigationBarContrastEnforced: false,
+          ),
+          sized: false,
+          child: child,
+        );
+      },
     );
   }
 

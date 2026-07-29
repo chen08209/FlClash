@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: dart-format
+        name: dart format
+        entry: dart format
+        language: system
+        files: \.dart$
+      - id: flutter-analyze
+        name: flutter analyze
+        entry: flutter analyze --no-fatal-infos
+        language: system
+        pass_filenames: false
+        files: \.dart$
+      - id: flutter-test
+        name: flutter test
+        entry: flutter test --reporter expanded
+        language: system
+        pass_filenames: false
+        files: \.dart$

@@ -1039,6 +1039,11 @@ class AppLocalizations {
     );
   }
 
+  /// `User-Agent`
+  String get userAgent {
+    return Intl.message('User-Agent', name: 'userAgent', desc: '', args: []);
+  }
+
   /// `Unified delay`
   String get unifiedDelay {
     return Intl.message(
@@ -4377,6 +4382,116 @@ class AppLocalizations {
   /// `Suspended...`
   String get suspended {
     return Intl.message('Suspended...', name: 'suspended', desc: '', args: []);
+  }
+
+  /// `Geo Options`
+  String get geoOptions {
+    return Intl.message('Geo Options', name: 'geoOptions', desc: '', args: []);
+  }
+
+  /// `Auto Update`
+  String get geoAutoUpdate {
+    return Intl.message(
+      'Auto Update',
+      name: 'geoAutoUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auto Update Interval`
+  String get geoAutoUpdateInterval {
+    return Intl.message(
+      'Auto Update Interval',
+      name: 'geoAutoUpdateInterval',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auto update interval must be greater than 0`
+  String get geoAutoUpdateIntervalTip {
+    return Intl.message(
+      'Auto update interval must be greater than 0',
+      name: 'geoAutoUpdateIntervalTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `hours`
+  String get hours {
+    return Intl.message('hours', name: 'hours', desc: '', args: []);
+  }
+
+  /// `{count} hours`
+  String hoursCount(Object count) {
+    return Intl.message(
+      '$count hours',
+      name: 'hoursCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Geo Resources`
+  String get geoResources {
+    return Intl.message(
+      'Geo Resources',
+      name: 'geoResources',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating {name}...`
+  String geoUpdating(Object name) {
+    return Intl.message(
+      'Updating $name...',
+      name: 'geoUpdating',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `{name} skipped`
+  String geoSkipped(Object name) {
+    return Intl.message(
+      '$name skipped',
+      name: 'geoSkipped',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `{name} updated`
+  String geoUpdated(Object name) {
+    return Intl.message(
+      '$name updated',
+      name: 'geoUpdated',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `{count} seconds`
+  String secondsCount(Object count) {
+    return Intl.message(
+      '$count seconds',
+      name: 'secondsCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} entries`
+  String entriesCount(Object count) {
+    return Intl.message(
+      '$count entries',
+      name: 'entriesCount',
+      desc: '',
+      args: [count],
+    );
   }
 }
 

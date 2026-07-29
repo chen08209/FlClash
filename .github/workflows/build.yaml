@@ -6,6 +6,7 @@ on:
       - 'v*'
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
+  FLUTTER_VERSION: '3.44.4'
 
 jobs:
   test:
@@ -21,7 +22,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.41.9
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Install dependencies
@@ -63,6 +64,7 @@ jobs:
     steps:
       - name: Setup rust
         if: startsWith(matrix.os, 'windows-11-arm')
+        shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://win.rustup.rs/aarch64" -OutFile rustup-init.exe
           .\rustup-init.exe -y --default-toolchain stable
@@ -79,14 +81,16 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
           echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
-          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
+          {
+            echo "keyAlias=${{ secrets.KEY_ALIAS }}"
+            echo "storePassword=${{ secrets.STORE_PASSWORD }}"
+            echo "keyPassword=${{ secrets.KEY_PASSWORD }}"
+          } >> android/local.properties
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.0'
+          go-version: '1.26.4'
           cache-dependency-path: |
             core/go.sum
 
@@ -95,19 +99,17 @@ jobs:
         run: git config --global core.longpaths true
 
       - name: Setup Flutter
-        if: ${{ !(startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm')) }}
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: 3.41.9
-          cache: true
-      - name: Setup Flutter With Other
-        if: startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm')
         uses: subosito/flutter-action@v2
         with:
           channel: master
-          flutter-version: 3.44.0-0.1.pre
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+
+      - name: Setup Xcode
+        if: startsWith(matrix.platform,'macos')
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app || sudo xcode-select -s /Applications/Xcode_26.2.app
+          xcodebuild -version
 
       - name: Setup NDK
         if: startsWith(matrix.platform,'android')
@@ -133,17 +135,18 @@ jobs:
           overwrite: true
 
   changelog:
+    if: ${{ !contains(github.ref, '-') }}
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     needs: [ build ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        if: ${{ env.IS_STABLE == 'true' }}
         with:
           fetch-depth: 0
           ref: refs/heads/main
       - name: Generate
-        if: ${{ env.IS_STABLE == 'true' }}
         run: |
           last_ver=$(grep -m1 '^## ' CHANGELOG.md 2>/dev/null | sed 's/^## //')
           
@@ -167,7 +170,6 @@ jobs:
           mv "$temp" CHANGELOG.md
 
       - name: Commit
-        if: ${{ env.IS_STABLE == 'true' }}
         run: |
           git add CHANGELOG.md
           if ! git diff --cached --quiet; then
@@ -175,8 +177,7 @@ jobs:
             git config --local user.email "chen08209@gmail.com"
             git config --local user.name "chen08209"
             git commit -m "Update changelog"
-            git push
-            if [ $? -eq 0 ]; then
+            if git push; then
               echo "Push succeeded"
             else
               echo "Push failed"
@@ -188,7 +189,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   upload:
-    permissions: write-all
+    permissions:
+      contents: write
     needs: [ build ]
     runs-on: ubuntu-latest
     services:
@@ -251,7 +253,7 @@ jobs:
         if: ${{ env.IS_STABLE == 'true' }}
         run: |
           cd ./dist
-          sha256sum * > SHA256SUMS
+          sha256sum ./* > SHA256SUMS
 
       - name: Release
         if: ${{ env.IS_STABLE == 'true' }}
@@ -259,6 +261,35 @@ jobs:
         with:
           files: ./dist/*
           body_path: './release.md'
+
+      - name: Create Homebrew Cask Source Dir
+        if: ${{ env.IS_STABLE == 'true' }}
+        run: |
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          arm_sha=$(sha256sum "./dist/FlClash-${version}-macos-arm64.dmg" | awk '{print $1}')
+          amd_sha=$(sha256sum "./dist/FlClash-${version}-macos-amd64.dmg" | awk '{print $1}')
+
+          mkdir -p ./brew/Casks
+          sed \
+            -e "s|VERSION|$version|g" \
+            -e "s|ARM_SHA256|$arm_sha|g" \
+            -e "s|AMD_SHA256|$amd_sha|g" \
+            ./.github/homebrew_cask_template.rb > ./brew/Casks/flclash.rb
+
+      - name: Push to Homebrew tap
+        if: ${{ env.IS_STABLE == 'true' }}
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.HOMEBREW_SSH_DEPLOY_KEY }}
+        with:
+          source-directory: ./brew/
+          destination-github-username: chen08209
+          destination-repository-name: homebrew-tap
+          user-name: 'chen08029'
+          user-email: 'chen08209@gmail.com'
+          target-branch: main
+          commit-message: Update Homebrew cask from ${{ github.ref_name }}
+          target-directory: /
 
       - name: Create Fdroid Source Dir
         if: ${{ env.IS_STABLE == 'true' }}
@@ -276,8 +307,8 @@ jobs:
           source-directory: ./tmp/
           destination-github-username: chen08209
           destination-repository-name: FlClash-fdroid-repo
-          user-name: 'github-actions[bot]'
-          user-email: 'github-actions[bot]@users.noreply.github.com'
+          user-name: 'chen08029'
+          user-email: 'chen08209@gmail.com'
           target-branch: main
           commit-message: Update from ${{ github.ref_name }}
           target-directory: /tmp/

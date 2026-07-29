@@ -9,7 +9,6 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/proxy_providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 
@@ -167,7 +166,7 @@ class _CustomProxyGroupsViewState extends ConsumerState<CustomProxyGroupsView> {
                     globalState.measure.bodyLargeHeight +
                     globalState.measure.bodyMediumHeight +
                     16,
-                onReorder: (oldIndex, newIndex) {
+                onReorderItem: (oldIndex, newIndex) {
                   _handleReorder(oldIndex, newIndex);
                 },
               ),
@@ -390,7 +389,7 @@ class _AddOrEditProxyGroupNestedSheetState
                 child: PagedSheetRouteTheme(
                   data: const PagedSheetRouteThemeData(
                     transitionsBuilder: fadeAndSlideTransition,
-                    transitionDuration: Duration(milliseconds: 400),
+                    transitionDuration: Duration(milliseconds: 300),
                   ),
                   child: PagedSheet(
                     decoration: MaterialSheetDecoration(
@@ -535,6 +534,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       trailing: TextFormField(
         textAlign: TextAlign.end,
         initialValue: filter,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.filter),
         onChanged: (value) {
           ref
               .read(proxyGroupProvider.notifier)
@@ -554,7 +554,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       title: Text(appLocalizations.maxFailedTimes),
       trailing: TextFormField(
         keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.number),
         textAlign: TextAlign.end,
         initialValue: maxFailedTimes?.toString(),
         onChanged: (value) {
@@ -578,6 +578,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       title: Text(appLocalizations.testUrl),
       trailing: TextFormField(
         keyboardType: TextInputType.url,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.url),
         textAlign: TextAlign.end,
         initialValue: url,
         onChanged: (value) {
@@ -599,7 +600,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       title: Text(appLocalizations.testInterval),
       trailing: TextFormField(
         keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.interval),
         textAlign: TextAlign.end,
         initialValue: interval?.toString(),
         onChanged: (value) {
@@ -622,6 +623,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       trailing: TextFormField(
         textAlign: TextAlign.end,
         initialValue: excludeFilter,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.filter),
         onChanged: (value) {
           ref
               .read(proxyGroupProvider.notifier)
@@ -642,6 +644,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       trailing: TextFormField(
         textAlign: TextAlign.end,
         initialValue: type,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.name),
         onChanged: (value) {
           ref
               .read(proxyGroupProvider.notifier)
@@ -662,6 +665,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       trailing: TextFormField(
         textAlign: TextAlign.end,
         initialValue: expectedStatus,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.status),
         onChanged: (value) {
           ref
               .read(proxyGroupProvider.notifier)
@@ -744,6 +748,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       trailing: TextFormField(
         initialValue: name,
         keyboardType: TextInputType.name,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.groupName),
         onChanged: (value) {
           ref
               .read(proxyGroupProvider.notifier)

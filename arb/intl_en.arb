@@ -133,6 +133,7 @@
   "app": "App",
   "general": "General",
   "systemProxyDesc": "Attach HTTP proxy to VpnService",
+  "userAgent": "User-Agent",
   "unifiedDelay": "Unified delay",
   "unifiedDelayDesc": "Remove extra delays such as handshaking",
   "tcpConcurrent": "TCP concurrent",
@@ -537,5 +538,17 @@
   "editSsid": "Edit SSID",
   "authorized": "Authorized",
   "tapToAuthorize": "Tap to authorize",
-  "suspended": "Suspended..."
+  "suspended": "Suspended...",
+  "geoOptions": "Geo Options",
+  "geoAutoUpdate": "Auto Update",
+  "geoAutoUpdateInterval": "Auto Update Interval",
+  "geoAutoUpdateIntervalTip": "Auto update interval must be greater than 0",
+  "hours": "hours",
+  "hoursCount": "{count} hours",
+  "geoResources": "Geo Resources",
+  "geoUpdating": "Updating {name}...",
+  "geoSkipped": "{name} skipped",
+  "geoUpdated": "{name} updated",
+  "secondsCount": "{count} seconds",
+  "entriesCount": "{count} entries"
 }

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -293,10 +291,7 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
                               top: Radius.circular(28),
                             ),
                             child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                sigmaX: 12.0,
-                                sigmaY: 12.0,
-                              ),
+                              filter: commonFilter,
                               child: ColoredBox(
                                 color: isScrolled
                                     ? backgroundColor.opacity60

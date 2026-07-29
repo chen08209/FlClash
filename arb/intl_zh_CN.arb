@@ -133,6 +133,7 @@
   "app": "应用",
   "general": "常规",
   "systemProxyDesc": "设置系统代理",
+  "userAgent": "用户代理",
   "unifiedDelay": "统一延迟",
   "unifiedDelayDesc": "去除握手等额外延迟",
   "tcpConcurrent": "TCP并发",
@@ -537,5 +538,17 @@
   "editSsid": "编辑SSID",
   "authorized": "已授权",
   "tapToAuthorize": "点击授权",
-  "suspended": "挂起中..."
+  "suspended": "挂起中...",
+  "geoOptions": "Geo 选项",
+  "geoAutoUpdate": "自动更新",
+  "geoAutoUpdateInterval": "自动更新间隔",
+  "geoAutoUpdateIntervalTip": "自动更新间隔必须大于0",
+  "hours": "小时",
+  "hoursCount": "{count} 小时",
+  "geoResources": "Geo 资源",
+  "geoUpdating": "正在更新 {name}...",
+  "geoSkipped": "{name} 已跳过",
+  "geoUpdated": "{name} 已更新",
+  "secondsCount": "{count} 秒",
+  "entriesCount": "{count} 个条目"
 }

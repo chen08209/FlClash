@@ -246,6 +246,9 @@ class _IconEditViewState extends ConsumerState<IconEditView>
                               title: TextField(
                                 controller: _srcController,
                                 keyboardType: TextInputType.url,
+                                inputFormatters: TextInputLimits.limit(
+                                  TextInputLimits.iconUrl,
+                                ),
                                 onChanged: (_) {
                                   _handleInputChange();
                                 },

@@ -3,6 +3,8 @@ setlocal
 
 setlocal ENABLEDELAYEDEXPANSION
 
+echo warning: [setup] Plugin triggered
+
 SET BASEDIR=%~dp0
 SET PROJECT_DIR=%CD%
 

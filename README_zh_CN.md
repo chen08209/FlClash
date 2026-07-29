@@ -61,6 +61,13 @@ on Mobile:
 
 项目下载：[flclashplus.nkbr.cc](https://flclashplus.nkbr.cc/) · [GitHub Releases](https://github.com/nekobyran/flclashplus/releases)
 
+### Homebrew
+
+```bash
+brew tap chen08209/tap
+brew install --cask flclash
+```
+
 ## Build
 
 1. 更新 submodules

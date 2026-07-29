@@ -221,6 +221,7 @@ class BypassDomainItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.bypassDomain,
           items: bypassDomain,
+          itemMaxLength: TextInputLimits.domain,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
@@ -314,6 +315,7 @@ class RouteAddressItem extends ConsumerWidget {
         widget: ListInputPage(
           title: appLocalizations.routeAddress,
           items: routeAddress,
+          itemMaxLength: TextInputLimits.cidr,
           titleBuilder: (item) => Text(item),
         ),
         onChanged: (items) {
