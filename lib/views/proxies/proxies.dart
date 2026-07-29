@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/free_nodes.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/state.dart';
@@ -11,6 +14,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'setting.dart';
 import 'tab.dart';
+
+@visibleForTesting
+bool shouldRefreshGroupsOnProxiesEnter({
+  required bool isProxiesPage,
+  required bool hasGroups,
+}) {
+  return isProxiesPage && !hasGroups;
+}
+
+@visibleForTesting
+bool shouldApplyProfileOnProxiesEnter({
+  required bool isProxiesPage,
+  required bool hasGroups,
+  required bool isFreeNodesProfile,
+}) {
+  return isProxiesPage && !hasGroups && isFreeNodesProfile;
+}
 
 class ProxiesView extends ConsumerStatefulWidget {
   const ProxiesView({super.key});
@@ -96,6 +116,35 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     ref.read(queryProvider(QueryTag.proxies).notifier).value = value;
   }
 
+  void _refreshGroupsIfNeededOnEnter(bool isProxiesPage) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final hasGroups = ref.read(currentGroupsStateProvider).value.isNotEmpty;
+      if (!shouldRefreshGroupsOnProxiesEnter(
+        isProxiesPage: isProxiesPage,
+        hasGroups: hasGroups,
+      )) {
+        return;
+      }
+      final currentProfile = ref.read(currentProfileProvider);
+      if (shouldApplyProfileOnProxiesEnter(
+        isProxiesPage: isProxiesPage,
+        hasGroups: hasGroups,
+        isFreeNodesProfile: currentProfile?.isFreeNodesProfile == true,
+      )) {
+        unawaited(
+          ref
+              .read(setupActionProvider.notifier)
+              .applyProfile(silence: true, force: true),
+        );
+        return;
+      }
+      ref
+          .read(proxiesActionProvider.notifier)
+          .updateGroupsDebounce(Duration.zero);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -128,7 +177,11 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
         if (prev != next && next == false) {
           _scaffoldKey.currentState?.handleExitSearching();
         }
+        if (prev != next && next == true) {
+          _refreshGroupsIfNeededOnEnter(next);
+        }
       },
+      fireImmediately: true,
     );
   }
 

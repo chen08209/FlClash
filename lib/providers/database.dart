@@ -51,15 +51,17 @@ class Profiles extends _$Profiles {
   }
 
   void put(Profile profile) {
+    unawaited(putAndWait(profile));
+  }
+
+  Future<void> putAndWait(Profile profile) async {
     final previous = List<Profile>.from(state);
     final newProfile = previous.optimizeLabel(profile);
     state = previous.copyAndPut(newProfile, (item) => item.id == newProfile.id);
-    unawaited(
-      withRollback(
-        snapshot: previous,
-        action: () => database.profiles.put(newProfile.toCompanion()),
-        rollback: (v) => state = v,
-      ),
+    await withRollback(
+      snapshot: previous,
+      action: () => database.profiles.put(newProfile.toCompanion()),
+      rollback: (v) => state = v,
     );
   }
 

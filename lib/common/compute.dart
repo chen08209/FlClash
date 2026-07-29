@@ -2,6 +2,23 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 
+bool isDelaySortedGroupName(String groupName) {
+  return groupName == 'FREE-NODES' ||
+      _dateTokenFromGroupName(groupName) > 0 ||
+      groupName == '优选节点' ||
+      groupName == '宝藏积累' ||
+      groupName == '历史';
+}
+
+int _dateTokenFromGroupName(String groupName) {
+  final match = RegExp(
+    r'(20\d{2})[-_/\.]?(\d{2})[-_/\.]?(\d{2})',
+  ).firstMatch(groupName);
+  if (match == null) return 0;
+  return int.tryParse('${match.group(1)}${match.group(2)}${match.group(3)}') ??
+      0;
+}
+
 List<Group> computeSort({
   required List<Group> groups,
   required ProxiesSortType sortType,
@@ -9,28 +26,26 @@ List<Group> computeSort({
   required Map<String, String> selectedMap,
   required String defaultTestUrl,
 }) {
+  final groupByName = {for (final group in groups) group.name: group};
+  final selectedStateCache = <String, SelectedProxyState>{};
+
   List<Proxy> sortOfDelay({
-    required List<Group> groups,
     required List<Proxy> proxies,
     required DelayMap delayMap,
     required Map<String, String> selectedMap,
     required String testUrl,
   }) {
+    final delayStates = computeProxyDelayStateMap(
+      proxies: proxies,
+      testUrl: testUrl,
+      groupByName: groupByName,
+      selectedMap: selectedMap,
+      delayMap: delayMap,
+      selectedStateCache: selectedStateCache,
+    );
     return List.from(proxies)..sort((a, b) {
-      final aDelayState = computeProxyDelayState(
-        proxyName: a.name,
-        testUrl: testUrl,
-        groups: groups,
-        selectedMap: selectedMap,
-        delayMap: delayMap,
-      );
-      final bDelayState = computeProxyDelayState(
-        proxyName: b.name,
-        testUrl: testUrl,
-        groups: groups,
-        selectedMap: selectedMap,
-        delayMap: delayMap,
-      );
+      final aDelayState = delayStates[a.name]!;
+      final bDelayState = delayStates[b.name]!;
       return aDelayState.compareTo(bDelayState);
     });
   }
@@ -41,10 +56,12 @@ List<Group> computeSort({
 
   return groups.map((group) {
     final proxies = group.all;
-    final newProxies = switch (sortType) {
+    final effectiveSortType = isDelaySortedGroupName(group.name)
+        ? ProxiesSortType.delay
+        : sortType;
+    final newProxies = switch (effectiveSortType) {
       ProxiesSortType.none => proxies,
       ProxiesSortType.delay => sortOfDelay(
-        groups: groups,
         proxies: proxies,
         delayMap: delayMap,
         selectedMap: selectedMap,
@@ -61,20 +78,32 @@ SelectedProxyState getRealSelectedProxyState(
   required List<Group> groups,
   required Map<String, String> selectedMap,
 }) {
+  final groupByName = {for (final group in groups) group.name: group};
+  return getRealSelectedProxyStateByName(
+    state,
+    groupByName: groupByName,
+    selectedMap: selectedMap,
+  );
+}
+
+SelectedProxyState getRealSelectedProxyStateByName(
+  SelectedProxyState state, {
+  required Map<String, Group> groupByName,
+  required Map<String, String> selectedMap,
+}) {
   if (state.proxyName.isEmpty) return state;
-  final index = groups.indexWhere((element) => element.name == state.proxyName);
   final newState = state.copyWith(group: true);
-  if (index == -1) return newState;
-  final group = groups[index];
+  final group = groupByName[state.proxyName];
+  if (group == null) return newState;
   final currentSelectedName = group.getCurrentSelectedName(
     selectedMap[newState.proxyName] ?? '',
   );
   if (currentSelectedName.isEmpty) {
     return newState;
   }
-  return getRealSelectedProxyState(
+  return getRealSelectedProxyStateByName(
     newState.copyWith(proxyName: currentSelectedName, testUrl: group.testUrl),
-    groups: groups,
+    groupByName: groupByName,
     selectedMap: selectedMap,
   );
 }
@@ -98,13 +127,101 @@ DelayState computeProxyDelayState({
   required Map<String, String> selectedMap,
   required DelayMap delayMap,
 }) {
-  final state = computeRealSelectedProxyState(
-    proxyName,
-    groups: groups,
+  final groupByName = {for (final group in groups) group.name: group};
+  return computeProxyDelayStateWithGroupMap(
+    proxyName: proxyName,
+    testUrl: testUrl,
+    groupByName: groupByName,
     selectedMap: selectedMap,
+    delayMap: delayMap,
   );
-  final currentDelayMap =
-      delayMap[state.testUrl.takeFirstValid([testUrl])] ?? {};
-  final delay = currentDelayMap[state.proxyName];
+}
+
+DelayState computeProxyDelayStateWithGroupMap({
+  required String proxyName,
+  required String testUrl,
+  required Map<String, Group> groupByName,
+  required Map<String, String> selectedMap,
+  required DelayMap delayMap,
+  Map<String, SelectedProxyState>? selectedStateCache,
+}) {
+  final state = (selectedStateCache ?? <String, SelectedProxyState>{})
+      .putIfAbsent(
+        proxyName,
+        () => getRealSelectedProxyStateByName(
+          SelectedProxyState(proxyName: proxyName),
+          groupByName: groupByName,
+          selectedMap: selectedMap,
+        ),
+      );
+  final effectiveTestUrl = state.testUrl.takeFirstValid([testUrl]);
+  final delay = visibleDelayValueForProxy(
+    delayMap: delayMap,
+    testUrl: effectiveTestUrl,
+    proxyName: state.proxyName,
+  );
   return DelayState(delay: delay ?? 0, group: state.group);
+}
+
+int? visibleDelayValueForProxy({
+  required DelayMap delayMap,
+  required String testUrl,
+  required String proxyName,
+}) {
+  final currentDelay = delayMap[testUrl]?[proxyName];
+  if (currentDelay != null && currentDelay >= 0) {
+    return currentDelay;
+  }
+  final alternateDelay = positiveDelayValueForProxy(
+    delayMap: delayMap,
+    excludedTestUrl: testUrl,
+    proxyName: proxyName,
+  );
+  return alternateDelay ?? currentDelay;
+}
+
+int? positiveDelayValueForProxy({
+  required DelayMap delayMap,
+  required String excludedTestUrl,
+  required String proxyName,
+}) {
+  int? bestDelay;
+  for (final entry in delayMap.entries) {
+    if (entry.key == excludedTestUrl) {
+      continue;
+    }
+    final delay = entry.value[proxyName];
+    if (delay == null || delay <= 0) {
+      continue;
+    }
+    if (bestDelay == null || delay < bestDelay) {
+      bestDelay = delay;
+    }
+  }
+  return bestDelay;
+}
+
+Map<String, DelayState> computeProxyDelayStateMap({
+  required Iterable<Proxy> proxies,
+  required String testUrl,
+  required Map<String, Group> groupByName,
+  required Map<String, String> selectedMap,
+  required DelayMap delayMap,
+  Map<String, SelectedProxyState>? selectedStateCache,
+}) {
+  final delayStateMap = <String, DelayState>{};
+  for (final proxy in proxies) {
+    delayStateMap.putIfAbsent(
+      proxy.name,
+      () => computeProxyDelayStateWithGroupMap(
+        proxyName: proxy.name,
+        testUrl: testUrl,
+        groupByName: groupByName,
+        selectedMap: selectedMap,
+        delayMap: delayMap,
+        selectedStateCache: selectedStateCache,
+      ),
+    );
+  }
+  return delayStateMap;
 }

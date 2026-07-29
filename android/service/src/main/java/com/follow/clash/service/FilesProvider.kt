@@ -41,7 +41,7 @@ class FilesProvider : DocumentsProvider() {
                 add(DocumentsContract.Root.COLUMN_ROOT_ID, DEFAULT_ROOT_ID)
                 add(DocumentsContract.Root.COLUMN_FLAGS, DocumentsContract.Root.FLAG_LOCAL_ONLY)
                 add(DocumentsContract.Root.COLUMN_ICON, R.drawable.ic_service)
-                add(DocumentsContract.Root.COLUMN_TITLE, "FlClash")
+                add(DocumentsContract.Root.COLUMN_TITLE, "flclash++")
                 add(DocumentsContract.Root.COLUMN_SUMMARY, "Data")
                 add(DocumentsContract.Root.COLUMN_DOCUMENT_ID, "/")
             }

@@ -1,4 +1,4 @@
-display_name: FlClash
+display_name: flclash++
 
 packager: chen08209
 packagerEmail: chen08209@gmail.com
@@ -11,12 +11,12 @@ essential: false
 icon: ./assets/images/icon.png
 
 keywords:
-  - FlClash
+  - flclash++
   - Clash
   - ClashMeta
   - Proxy
 
-generic_name: FlClash
+generic_name: flclash++
 
 group: Applications/Internet
 

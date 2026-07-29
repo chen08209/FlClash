@@ -3,10 +3,14 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/free_nodes.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
@@ -160,6 +164,31 @@ void main() {
     });
   });
 
+  group('NavigationItemsState provider', () {
+    test(
+      'keeps proxies page visible when profile exists but groups are empty',
+      () {
+        final profile = Profile.normal(label: 'free nodes', url: 'free.yaml');
+        final scopedContainer = ProviderContainer(
+          overrides: [
+            initProvider.overrideWithBuild((_, _) => true),
+            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+            profilesProvider.overrideWith(() => _TestProfiles([profile])),
+            groupsProvider.overrideWithBuild((_, _) => []),
+          ],
+        );
+        addTearDown(scopedContainer.dispose);
+
+        final labels = scopedContainer
+            .read(navigationItemsStateProvider)
+            .value
+            .map((item) => item.label);
+
+        expect(labels, contains(PageLabel.proxies));
+      },
+    );
+  });
+
   group('SortNum provider', () {
     test('default is 0', () {
       expect(container.read(sortNumProvider), 0);
@@ -193,6 +222,22 @@ void main() {
     });
   });
 
+  group('DelayDataSource provider', () {
+    test('writes the latest core delay result directly', () {
+      final notifier = container.read(delayDataSourceProvider.notifier);
+
+      notifier.setDelay(
+        const Delay(url: 'https://test.example', name: 'proxy-a', value: 88),
+      );
+      notifier.setDelay(
+        const Delay(url: 'https://test.example', name: 'proxy-a', value: -1),
+      );
+
+      expect(container.read(delayDataSourceProvider), {
+        'https://test.example': {'proxy-a': -1},
+      });
+    });
+  });
   group('Groups provider', () {
     test('default is empty', () {
       expect(container.read(groupsProvider), isEmpty);
@@ -205,6 +250,53 @@ void main() {
       container.read(groupsProvider.notifier).update((_) => groups);
       expect(container.read(groupsProvider).length, 1);
       expect(container.read(groupsProvider).first.name, 'G1');
+    });
+
+    test('hides stale free node date groups from visible proxy groups', () {
+      final today =
+          '${DateTime.now().year.toString().padLeft(4, '0')}-'
+          '${DateTime.now().month.toString().padLeft(2, '0')}-'
+          '${DateTime.now().day.toString().padLeft(2, '0')}';
+      final todayIsoGroupName = '${today}T00:00:00Z';
+      final freeNodesProfile = freeNodesService.createProfile().copyWith(
+        currentGroupName: todayIsoGroupName,
+      );
+      final scopedContainer = ProviderContainer(
+        overrides: [
+          currentProfileProvider.overrideWithValue(freeNodesProfile),
+          groupsProvider.overrideWithValue([
+            const Group(name: freeNodesGroupName, type: GroupType.Selector),
+            const Group(
+              name: freeNodesTreasureGroupName,
+              type: GroupType.Selector,
+              hidden: true,
+            ),
+            const Group(name: '日期 2026-05-30', type: GroupType.Selector),
+            Group(name: '日期 $today', type: GroupType.Selector),
+            Group(name: todayIsoGroupName, type: GroupType.Selector),
+            const Group(name: '香港', type: GroupType.Selector),
+            const Group(name: 'GLOBAL', type: GroupType.Selector),
+          ]),
+        ],
+      );
+      addTearDown(scopedContainer.dispose);
+
+      final names = scopedContainer
+          .read(currentGroupsStateProvider)
+          .value
+          .map((group) => group.name)
+          .toList();
+
+      expect(names, [freeNodesTreasureGroupName, '日期 $today']);
+      expect(names.where((name) => name == '日期 $today'), hasLength(1));
+      expect(names, isNot(contains(todayIsoGroupName)));
+      expect(names, isNot(contains('日期 2026-05-30')));
+      expect(names, isNot(contains('香港')));
+      expect(names, isNot(contains('GLOBAL')));
+      expect(
+        scopedContainer.read(proxiesTabStateProvider).currentGroupName,
+        '日期 $today',
+      );
     });
   });
 
@@ -275,6 +367,37 @@ void main() {
       },
     );
   });
+}
+
+class _TestProfiles extends Profiles {
+  final List<Profile> initial;
+
+  _TestProfiles(this.initial);
+
+  @override
+  List<Profile> build() => initial;
+
+  @override
+  void put(Profile profile) {
+    unawaited(putAndWait(profile));
+  }
+
+  @override
+  Future<void> putAndWait(Profile profile) async {
+    final next = List<Profile>.from(state);
+    final index = next.indexWhere((item) => item.id == profile.id);
+    if (index == -1) {
+      next.add(profile);
+    } else {
+      next[index] = profile;
+    }
+    state = next;
+  }
+
+  @override
+  void del(int id) {
+    state = state.where((profile) => profile.id != id).toList();
+  }
 }
 
 class _DelayedCancelIpAdapter implements HttpClientAdapter {

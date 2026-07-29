@@ -34,50 +34,50 @@ class IPCCoreTransport {
     try {
       final stream = restartIpcServer(name: address);
       _subscription = stream.listen(
-      (data) {
-        if (data.isEmpty) return;
-        final type = data[0];
-        final payload = data.length > 1 ? data.sublist(1) : Uint8List(0);
-        switch (type) {
-          case _typeReady:
-            commonPrint.log('IPC Ready');
-            if (_readyCompleter.isCompleted) {
+        (data) {
+          if (data.isEmpty) return;
+          final type = data[0];
+          final payload = data.length > 1 ? data.sublist(1) : Uint8List(0);
+          switch (type) {
+            case _typeReady:
+              commonPrint.log('IPC Ready');
+              if (_readyCompleter.isCompleted) {
+                break;
+              }
+              _readyCompleter.complete();
               break;
-            }
-            _readyCompleter.complete();
-            break;
-          case _typeConnected:
-            commonPrint.log('IPC Connected');
-            if (_completer.isCompleted) {
+            case _typeConnected:
+              commonPrint.log('IPC Connected');
+              if (_completer.isCompleted) {
+                break;
+              }
+              _completer.complete();
               break;
-            }
-            _completer.complete();
-            break;
-          case _typeDisconnected:
-            commonPrint.log('IPC Disconnected');
-            _completer = Completer<void>();
-            onDisconnect?.call();
-            break;
-          case _typeData:
-            _dataController.add(payload);
-            break;
-          case _typeError:
-            final msg = utf8.decode(payload);
-            commonPrint.log('IPC error: $msg', logLevel: LogLevel.error);
-            break;
-          default:
-            commonPrint.log(
-              'IPC unknown frame type: $type',
-              logLevel: LogLevel.warning,
-            );
-        }
-      },
-      onError: (error) {
-        commonPrint.log('IPC error: $error', logLevel: LogLevel.error);
-      },
-      cancelOnError: false,
-    );
-    await _readyCompleter.future;
+            case _typeDisconnected:
+              commonPrint.log('IPC Disconnected');
+              _completer = Completer<void>();
+              onDisconnect?.call();
+              break;
+            case _typeData:
+              _dataController.add(payload);
+              break;
+            case _typeError:
+              final msg = utf8.decode(payload);
+              commonPrint.log('IPC error: $msg', logLevel: LogLevel.error);
+              break;
+            default:
+              commonPrint.log(
+                'IPC unknown frame type: $type',
+                logLevel: LogLevel.warning,
+              );
+          }
+        },
+        onError: (error) {
+          commonPrint.log('IPC error: $error', logLevel: LogLevel.error);
+        },
+        cancelOnError: false,
+      );
+      await _readyCompleter.future;
     } catch (e) {
       commonPrint.log(
         'Failed to start IPC server: $e',

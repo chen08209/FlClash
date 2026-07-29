@@ -61,7 +61,10 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final double sideLength = min(400, MediaQuery.of(context).size.width * 0.67);
+    final double sideLength = min(
+      400,
+      MediaQuery.of(context).size.width * 0.67,
+    );
     final scanWindow = Rect.fromCenter(
       center: MediaQuery.sizeOf(context).center(Offset.zero),
       width: sideLength,

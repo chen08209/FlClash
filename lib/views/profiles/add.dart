@@ -16,10 +16,19 @@ class AddProfileView extends StatelessWidget {
         .addProfileFormFile();
   }
 
-  Future<void> _handleAddProfileFormURL(String url) async {
+  Future<void> _handleAddProfileFormURL(
+    String url, {
+    String sourceUrl = '',
+  }) async {
     globalState.container
         .read(profilesActionProvider.notifier)
-        .addProfileFormURL(url);
+        .addProfileFormURL(url, sourceUrl: sourceUrl);
+  }
+
+  Future<void> _handleAddFreeNodesProfile() async {
+    globalState.container
+        .read(profilesActionProvider.notifier)
+        .addFreeNodesProfile();
   }
 
   Future<void> _toScan() async {
@@ -39,25 +48,11 @@ class AddProfileView extends StatelessWidget {
 
   Future<void> _toAdd() async {
     final appLocalizations = context.appLocalizations;
-    final url = await globalState.showCommonDialog<String>(
-      child: InputDialog(
-        autovalidateMode: AutovalidateMode.onUnfocus,
-        title: appLocalizations.importFromURL,
-        labelText: appLocalizations.url,
-        value: '',
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return appLocalizations.emptyTip('').trim();
-          }
-          if (!value.isUrl) {
-            return appLocalizations.urlTip('').trim();
-          }
-          return null;
-        },
-      ),
+    final input = await globalState.showCommonDialog<_ProfileUrlInput>(
+      child: _ProfileUrlDialog(title: appLocalizations.importFromURL),
     );
-    if (url != null) {
-      _handleAddProfileFormURL(url);
+    if (input != null) {
+      _handleAddProfileFormURL(input.url, sourceUrl: input.sourceUrl);
     }
   }
 
@@ -84,7 +79,110 @@ class AddProfileView extends StatelessWidget {
           subtitle: Text(appLocalizations.urlDesc),
           onTap: _toAdd,
         ),
+        ListItem(
+          leading: const Icon(Icons.travel_explore_outlined),
+          title: const Text('免费节点'),
+          subtitle: const Text('聚合多个免费节点来源，自动检查且每日最多更新一次'),
+          onTap: _handleAddFreeNodesProfile,
+        ),
       ],
+    );
+  }
+}
+
+class _ProfileUrlInput {
+  final String url;
+  final String sourceUrl;
+
+  const _ProfileUrlInput({required this.url, required this.sourceUrl});
+}
+
+class _ProfileUrlDialog extends StatefulWidget {
+  final String title;
+
+  const _ProfileUrlDialog({required this.title});
+
+  @override
+  State<_ProfileUrlDialog> createState() => _ProfileUrlDialogState();
+}
+
+class _ProfileUrlDialogState extends State<_ProfileUrlDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _urlController = TextEditingController();
+  final _sourceUrlController = TextEditingController();
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.of(context).pop(
+      _ProfileUrlInput(
+        url: _urlController.text.trim(),
+        sourceUrl: _sourceUrlController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _sourceUrlController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return CommonDialog(
+      title: widget.title,
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text(appLocalizations.cancel),
+        ),
+        TextButton(onPressed: _submit, child: Text(appLocalizations.submit)),
+      ],
+      child: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUnfocus,
+        child: Wrap(
+          runSpacing: 16,
+          children: [
+            TextFormField(
+              controller: _urlController,
+              keyboardType: TextInputType.url,
+              minLines: 1,
+              maxLines: 4,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: appLocalizations.url,
+              ),
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) return appLocalizations.emptyTip('').trim();
+                if (!text.isUrl) return appLocalizations.urlTip('').trim();
+                return null;
+              },
+            ),
+            TextFormField(
+              controller: _sourceUrlController,
+              keyboardType: TextInputType.url,
+              minLines: 1,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: '原订阅网站（可选）',
+              ),
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) return null;
+                if (!text.isUrl) return appLocalizations.urlTip('').trim();
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

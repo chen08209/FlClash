@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:animations/animations.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/theme.dart';
+import 'package:fl_clash/pages/inner_browser.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
 import 'database/database.dart';
@@ -20,6 +20,12 @@ import 'enum/enum.dart';
 import 'l10n/l10n.dart';
 import 'models/models.dart';
 import 'providers/providers.dart';
+
+bool shouldIncludeFreeNodesInStartupProfileAutoUpdate({
+  required bool freeNodesEnsureAlreadyStarted,
+}) {
+  return !freeNodesEnsureAlreadyStarted;
+}
 
 class GlobalState {
   static GlobalState? _instance;
@@ -280,24 +286,30 @@ class GlobalState {
     navigatorKey.currentContext?.showNotifier(text, actionState: actionState);
   }
 
-  Future<void> openUrl(String url) async {
-    final res = await showMessage(
-      message: TextSpan(text: url),
-      title: currentAppLocalizations.externalLink,
-      confirmText: currentAppLocalizations.go,
-    );
-    if (res != true) {
-      return;
+  Future<void> openUrl(String url, {bool confirm = true}) async {
+    if (confirm) {
+      final res = await showMessage(
+        message: TextSpan(text: url),
+        title: currentAppLocalizations.externalLink,
+        confirmText: currentAppLocalizations.go,
+      );
+      if (res != true) {
+        return;
+      }
     }
-    launchUrl(Uri.parse(url));
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+    if (!context.mounted) return;
+    await BaseNavigator.push(context, InnerBrowserPage(url: url));
   }
 
-  Future<void> attach() async {
+  Future<bool> attach() async {
     if (isAttach == true) {
-      return;
+      return false;
     }
     await _initApp();
     isAttach = true;
+    return true;
   }
 
   Future<void> _initApp() async {
@@ -308,8 +320,6 @@ class GlobalState {
       );
     };
     container.read(systemActionProvider.notifier).updateTray();
-    container.read(profilesActionProvider.notifier).autoUpdateProfiles();
-    container.read(commonActionProvider.notifier).autoCheckUpdate();
     autoLaunch?.updateStatus(container.read(appSettingProvider).autoLaunch);
     if (!container.read(appSettingProvider).silentLaunch) {
       window?.show();
@@ -318,11 +328,24 @@ class GlobalState {
     }
     await _handleFailedPreference();
     await _handlerDisclaimer();
+    await _showFreeNodesForkTip();
     await _showCrashlyticsTip();
     await container.read(coreActionProvider.notifier).connectCore();
     await container.read(coreActionProvider.notifier).initCore();
+    final freeNodesEnsureAlreadyStarted = await container
+        .read(profilesActionProvider.notifier)
+        .ensureFreeNodesProfile();
     await container.read(setupActionProvider.notifier).initStatus();
     container.read(initProvider.notifier).value = true;
+    unawaited(
+      container
+          .read(profilesActionProvider.notifier)
+          .autoUpdateProfiles(
+            includeFreeNodes: shouldIncludeFreeNodesInStartupProfileAutoUpdate(
+              freeNodesEnsureAlreadyStarted: freeNodesEnsureAlreadyStarted,
+            ),
+          ),
+    );
     permissions.check();
   }
 
@@ -379,6 +402,20 @@ class GlobalState {
     container
         .read(appSettingProvider.notifier)
         .update((state) => state.copyWith(crashlyticsTip: true));
+  }
+
+  Future<void> _showFreeNodesForkTip() async {
+    const key = 'free_nodes_fork_tip_shown';
+    if (await preferences.getBool(key)) return;
+    await showMessage(
+      title: currentAppLocalizations.tip,
+      cancelable: false,
+      message: const TextSpan(
+        text:
+            '\u8be5\u7248\u672c\u4e3a\u52a0\u5165\u4e86\u514d\u8d39\u8282\u70b9\u7684\u6539\u7248\uff0c\u975e\u539f\u7248',
+      ),
+    );
+    await preferences.setBool(key, true);
   }
 
   Future<void> _handlerDisclaimer() async {

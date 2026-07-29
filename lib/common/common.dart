@@ -1,4 +1,5 @@
 export 'app_localizations.dart';
+export 'browser_downloads.dart';
 export 'color.dart';
 export 'compute.dart';
 export 'constant.dart';

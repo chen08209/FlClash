@@ -252,7 +252,10 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
               ),
             ),
           ),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: appBar),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: appBar,
+          ),
           const SizedBox(height: 6),
         ],
       );

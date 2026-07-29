@@ -244,30 +244,6 @@ class CrashlyticsItem extends ConsumerWidget {
   }
 }
 
-class AutoCheckUpdateItem extends ConsumerWidget {
-  const AutoCheckUpdateItem({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final autoCheckUpdate = ref.watch(
-      appSettingProvider.select((state) => state.autoCheckUpdate),
-    );
-    return ListItem.switchItem(
-      title: Text(appLocalizations.autoCheckUpdate),
-      subtitle: Text(appLocalizations.autoCheckUpdateDesc),
-      delegate: SwitchDelegate(
-        value: autoCheckUpdate,
-        onChanged: (bool value) {
-          ref
-              .read(appSettingProvider.notifier)
-              .update((state) => state.copyWith(autoCheckUpdate: value));
-        },
-      ),
-    );
-  }
-}
-
 class ApplicationSettingView extends StatelessWidget {
   const ApplicationSettingView({super.key});
 
@@ -275,7 +251,10 @@ class ApplicationSettingView extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Widget> items = [
       const MinimizeItem(),
-      if (system.isDesktop) ...[const AutoLaunchItem(), const SilentLaunchItem()],
+      if (system.isDesktop) ...[
+        const AutoLaunchItem(),
+        const SilentLaunchItem(),
+      ],
       const AutoRunItem(),
       if (system.isAndroid) ...[const HiddenItem()],
       const AnimateTabItem(),
@@ -283,7 +262,6 @@ class ApplicationSettingView extends StatelessWidget {
       const CloseConnectionsItem(),
       const UsageItem(),
       if (system.isAndroid) const CrashlyticsItem(),
-      const AutoCheckUpdateItem(),
     ];
     return BaseScaffold(
       title: context.appLocalizations.application,

@@ -25,6 +25,12 @@ class Snowflake {
     return snowflake.id;
   }
 
+  static DateTime? dateTimeFromId(int id) {
+    final timestampPart = id >> _timestampLeftShift;
+    if (timestampPart <= 0) return null;
+    return DateTime.fromMillisecondsSinceEpoch(timestampPart + _twepoch);
+  }
+
   final int _workerId = 1;
   int _lastTimestamp = -1;
   int _sequence = 0;

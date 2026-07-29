@@ -58,16 +58,27 @@ Future<List<Group>> _toGroupsTask(ComputeGroupsState state) async {
   final defaultTestUrl = state.defaultTestUrl;
   final proxies = proxiesData.proxies;
   if (proxies.isEmpty) return [];
-  final groupsRaw = all
+  final proxyNames = {...all, ...proxies.keys};
+  final groupsRaw = proxyNames
       .where((name) {
         final proxy = proxies[name] ?? {};
-        return GroupTypeExtension.valueList.contains(proxy['type']);
+        try {
+          GroupType.parse(proxy['type']?.toString() ?? '');
+          return true;
+        } catch (_) {
+          return false;
+        }
       })
       .map((groupName) {
-        final group = proxies[groupName];
-        group['all'] = ((group['all'] ?? []) as List)
-            .map((name) => proxies[name])
-            .where((proxy) => proxy != null)
+        final rawGroup = proxies[groupName];
+        final group = Map<String, dynamic>.from(rawGroup as Map);
+        group['type'] = GroupType.parse(group['type']?.toString() ?? '').value;
+        final rawAll = group['all'];
+        final List allItems = rawAll is List ? rawAll : const [];
+        group['all'] = allItems
+            .map((item) => item is String ? proxies[item] : item)
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
             .toList();
         return group;
       })
@@ -331,10 +342,10 @@ Future<String> _encodeLogsTask(List<Log> data) async {
 
 Future<MigrationData> oldToNowTask(Map<String, Object?> data) async {
   final homeDir = await appPath.homeDirPath;
-  return compute<
-    VM3<Map<String, Object?>, String, String>,
-    MigrationData
-  >(_oldToNowTask, VM3(data, homeDir, homeDir));
+  return compute<VM3<Map<String, Object?>, String, String>, MigrationData>(
+    _oldToNowTask,
+    VM3(data, homeDir, homeDir),
+  );
 }
 
 Future<MigrationData> _oldToNowTask(

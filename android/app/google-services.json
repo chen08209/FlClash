@@ -8,7 +8,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
-          "package_name": "com.follow.clash"
+          "package_name": "cc.nkbr.flclashplusplus"
         }
       },
       "oauth_client": [],
@@ -27,7 +27,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
-          "package_name": "com.follow.clash.debug"
+          "package_name": "cc.nkbr.flclashplusplus.debug"
         }
       },
       "oauth_client": [],
@@ -46,7 +46,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
-          "package_name": "com.follow.clash.dev"
+          "package_name": "cc.nkbr.flclashplusplus.dev"
         }
       },
       "oauth_client": [],

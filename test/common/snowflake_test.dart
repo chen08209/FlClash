@@ -32,5 +32,22 @@ void main() {
       final id = Snowflake.buildId(null);
       expect(id, greaterThan(0));
     });
+
+    test('dateTimeFromId restores creation time for generated IDs', () {
+      final before = DateTime.now().subtract(const Duration(milliseconds: 1));
+      final id = snowflake.id;
+      final after = DateTime.now().add(const Duration(milliseconds: 1));
+
+      final dateTime = Snowflake.dateTimeFromId(id);
+
+      expect(dateTime, isNotNull);
+      expect(dateTime!.isBefore(before), false);
+      expect(dateTime.isAfter(after), false);
+    });
+
+    test('dateTimeFromId returns null for non-snowflake legacy IDs', () {
+      expect(Snowflake.dateTimeFromId(42), isNull);
+      expect(Snowflake.dateTimeFromId(0), isNull);
+    });
   });
 }

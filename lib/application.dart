@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
@@ -15,6 +15,19 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'pages/pages.dart';
+
+@visibleForTesting
+bool shouldRunStartupFreeNodesEnsure({required bool didAttachInitializeApp}) {
+  return !didAttachInitializeApp;
+}
+
+@visibleForTesting
+bool shouldRunNavigatorFallbackFreeNodesEnsure({
+  required bool mounted,
+  required bool hasNavigatorContext,
+}) {
+  return mounted && !hasNavigatorContext;
+}
 
 class Application extends ConsumerStatefulWidget {
   const Application({super.key});
@@ -47,15 +60,49 @@ class ApplicationState extends ConsumerState<Application> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      if (globalState.navigatorKey.currentContext != null) {
-        await globalState.attach();
-      } else {
-        exit(0);
+      final hasNavigatorContext = await _waitForNavigatorContext();
+      if (shouldRunNavigatorFallbackFreeNodesEnsure(
+        mounted: mounted,
+        hasNavigatorContext: hasNavigatorContext,
+      )) {
+        _startFallbackFreeNodesEnsure();
       }
-      _autoUpdateProfilesTask();
+      if (!mounted || !hasNavigatorContext) {
+        commonPrint.log(
+          'skip startup attach: navigator context is not ready',
+          logLevel: LogLevel.warning,
+        );
+        return;
+      }
+      var didAttachInitializeApp = false;
+      didAttachInitializeApp = await globalState.attach();
+      _startAutoUpdateProfilesTask(
+        didAttachInitializeApp: didAttachInitializeApp,
+      );
       _initLink();
       app?.initShortcuts();
     });
+  }
+
+  void _startFallbackFreeNodesEnsure() {
+    unawaited(
+      ref
+          .read(profilesActionProvider.notifier)
+          .ensureFreeNodesProfile()
+          .catchError((e) {
+            commonPrint.log(e.toString(), logLevel: LogLevel.warning);
+            return false;
+          }),
+    );
+  }
+
+  Future<bool> _waitForNavigatorContext() async {
+    for (var attempt = 0; attempt < 30; attempt++) {
+      if (!mounted) return false;
+      if (globalState.navigatorKey.currentContext != null) return true;
+      await WidgetsBinding.instance.endOfFrame;
+    }
+    return globalState.navigatorKey.currentContext != null;
   }
 
   void _initLink() {
@@ -82,10 +129,41 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  void _autoUpdateProfilesTask() {
+  void _startAutoUpdateProfilesTask({required bool didAttachInitializeApp}) {
+    unawaited(
+      _runStartupProfileAutoUpdate(
+        didAttachInitializeApp: didAttachInitializeApp,
+      ),
+    );
+    _scheduleAutoUpdateProfilesTask();
+  }
+
+  Future<void> _runStartupProfileAutoUpdate({
+    required bool didAttachInitializeApp,
+  }) async {
+    try {
+      final profilesAction = ref.read(profilesActionProvider.notifier);
+      var freeNodesEnsureAlreadyStarted = didAttachInitializeApp;
+      if (shouldRunStartupFreeNodesEnsure(
+        didAttachInitializeApp: didAttachInitializeApp,
+      )) {
+        freeNodesEnsureAlreadyStarted = await profilesAction
+            .ensureFreeNodesProfile();
+      }
+      await profilesAction.autoUpdateProfiles(
+        includeFreeNodes: shouldIncludeFreeNodesInStartupProfileAutoUpdate(
+          freeNodesEnsureAlreadyStarted: freeNodesEnsureAlreadyStarted,
+        ),
+      );
+    } catch (e) {
+      commonPrint.log(e.toString(), logLevel: LogLevel.warning);
+    }
+  }
+
+  void _scheduleAutoUpdateProfilesTask() {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
       await ref.read(profilesActionProvider.notifier).autoUpdateProfiles();
-      _autoUpdateProfilesTask();
+      _scheduleAutoUpdateProfilesTask();
     });
   }
 

@@ -11,6 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+@visibleForTesting
+bool shouldCheckFreeNodesOnResume({required bool initialized}) => initialized;
+
 class AppStateManager extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -87,6 +90,17 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ref = globalState.container;
         ref.read(setupActionProvider.notifier).tryCheckIp();
+        if (shouldCheckFreeNodesOnResume(initialized: ref.read(initProvider))) {
+          unawaited(
+            ref
+                .read(profilesActionProvider.notifier)
+                .ensureFreeNodesProfile()
+                .catchError((e) {
+                  commonPrint.log(e.toString(), logLevel: LogLevel.warning);
+                  return false;
+                }),
+          );
+        }
         if (system.isAndroid) {
           ref.read(coreActionProvider.notifier).tryStartCore();
         }

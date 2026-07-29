@@ -23,6 +23,15 @@ const _hostPlatform = {
   'windows': 'windows',
 };
 
+const _splitDebugInfoDir = 'build/symbols';
+
+String _decodeProcessOutput(List<int> data) {
+  return const Utf8Decoder(allowMalformed: true).convert(data);
+}
+
+String _asFlutterArgPath(String path) =>
+    p.normalize(path).replaceAll('\\', '/');
+
 Future<void> main(List<String> args) async {
   final parser = createSetupArgParser();
 
@@ -74,7 +83,7 @@ ArgParser createSetupArgParser() {
   return ArgParser()
     ..addOption(
       'env',
-      defaultsTo: 'pre',
+      defaultsTo: 'stable',
       allowed: ['pre', 'stable'],
       help: 'Application environment',
     )
@@ -99,11 +108,18 @@ ArgParser createSetupArgParser() {
 
 List<String> createFlutterBuildArgs({
   required String platform,
+  required String rootDir,
   required bool verbose,
 }) {
+  final splitDebugInfoPath = _asFlutterArgPath(
+    p.join(rootDir, _splitDebugInfoDir, platform),
+  );
   final flutterBuildArgs = <String>[
     if (verbose) 'verbose',
     'dart-define-from-file=env.json',
+    'obfuscate',
+    'split-debug-info=$splitDebugInfoPath',
+    'tree-shake-icons',
   ];
   if (platform == 'android') {
     flutterBuildArgs.add('split-per-abi');
@@ -166,6 +182,7 @@ Future<int> _package(
 
   final flutterBuildArgs = createFlutterBuildArgs(
     platform: platform,
+    rootDir: rootDir,
     verbose: verbose,
   );
   final descriptionArgs = <String>[];
@@ -177,8 +194,12 @@ Future<int> _package(
   if (depExit != 0) return depExit;
 
   final process = await Process.start(
-    'flutter_distributor',
+    'dart',
     [
+      'pub',
+      'global',
+      'run',
+      'flutter_distributor:main',
       'package',
       '--skip-clean',
       '--platform',
@@ -197,10 +218,10 @@ Future<int> _package(
   );
 
   process.stdout.listen((data) {
-    stdout.write(utf8.decode(data));
+    stdout.write(_decodeProcessOutput(data));
   });
   process.stderr.listen((data) {
-    stderr.write(utf8.decode(data));
+    stderr.write(_decodeProcessOutput(data));
   });
   final exitCode = await process.exitCode;
   return exitCode;
@@ -395,10 +416,10 @@ Future<int> _runLinuxDependencyCommand(List<String> command) async {
   stdout.writeln('exec: sudo ${sudoCommand.join(' ')}');
   final result = await Process.start('sudo', sudoCommand);
   result.stdout.listen((data) {
-    stdout.write(utf8.decode(data));
+    stdout.write(_decodeProcessOutput(data));
   });
   result.stderr.listen((data) {
-    stderr.write(utf8.decode(data));
+    stderr.write(_decodeProcessOutput(data));
   });
   final exitCode = await result.exitCode;
   if (exitCode != 0) {

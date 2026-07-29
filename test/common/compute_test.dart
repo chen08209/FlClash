@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/compute.dart';
+import 'package:fl_clash/common/task.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
@@ -210,6 +211,37 @@ void main() {
       );
       expect(state.delay, 80);
     });
+
+    test('precomputes unique DelayState values before delay sorting', () {
+      final groups = [
+        const Group(
+          name: 'auto',
+          type: GroupType.URLTest,
+          testUrl: 'http://group-test.com',
+          all: [Proxy(name: 'proxy-a', type: 'ss')],
+        ),
+      ];
+      final groupByName = {for (final group in groups) group.name: group};
+      final states = computeProxyDelayStateMap(
+        proxies: const [
+          Proxy(name: 'auto', type: 'Selector'),
+          Proxy(name: 'auto', type: 'Selector'),
+          Proxy(name: 'proxy-b', type: 'ss'),
+        ],
+        testUrl: 'http://default.com',
+        groupByName: groupByName,
+        selectedMap: {'auto': 'proxy-a'},
+        delayMap: {
+          'http://group-test.com': {'proxy-a': 45},
+          'http://default.com': {'proxy-b': 90},
+        },
+      );
+
+      expect(states.keys, ['auto', 'proxy-b']);
+      expect(states['auto']?.delay, 45);
+      expect(states['auto']?.group, true);
+      expect(states['proxy-b']?.delay, 90);
+    });
   });
 
   group('computeSort', () {
@@ -231,6 +263,19 @@ void main() {
       delayMap = <String, Map<String, int?>>{
         'http://test.com': {'proxy-a': 100, 'proxy-b': 50, 'proxy-c': 0},
       };
+    });
+
+    test('identifies groups that must refresh after delay tests', () {
+      expect(isDelaySortedGroupName('FREE-NODES'), true);
+      expect(isDelaySortedGroupName('2026-06-19'), true);
+      expect(isDelaySortedGroupName('日期 2026-06-19'), true);
+      expect(isDelaySortedGroupName('2026-06-19T00:00:00Z'), true);
+      expect(isDelaySortedGroupName('20260619'), true);
+      expect(isDelaySortedGroupName('优选节点'), true);
+      expect(isDelaySortedGroupName('宝藏积累'), true);
+      expect(isDelaySortedGroupName('历史'), true);
+      expect(isDelaySortedGroupName('Proxy'), false);
+      expect(isDelaySortedGroupName('2026-6-19'), false);
     });
 
     test('ProxiesSortType.none preserves original order', () {
@@ -275,6 +320,21 @@ void main() {
       expect(names.indexOf('proxy-b'), lessThan(names.indexOf('proxy-a')));
     });
 
+    test('FREE-NODES group always sorts by delay value', () {
+      final result = computeSort(
+        groups: [groups.first.copyWith(name: 'FREE-NODES')],
+        sortType: ProxiesSortType.none,
+        delayMap: delayMap,
+        selectedMap: {},
+        defaultTestUrl: 'http://test.com',
+      );
+      expect(result[0].all.map((p) => p.name).toList(), [
+        'proxy-b',
+        'proxy-a',
+        'proxy-c',
+      ]);
+    });
+
     test('preserves group count in result', () {
       final multiGroups = [
         ...groups,
@@ -292,6 +352,42 @@ void main() {
         defaultTestUrl: '',
       );
       expect(result.length, 2);
+    });
+  });
+
+  group('toGroupsTask', () {
+    test('parses core group data with enum type names', () async {
+      final result = await toGroupsTask(
+        const ComputeGroupsState(
+          proxiesData: ProxiesData(
+            all: ['FREE-NODES'],
+            proxies: {
+              'FREE-NODES': {
+                'name': 'FREE-NODES',
+                'type': 'URLTest',
+                'hidden': false,
+                'all': ['proxy-fast', 'proxy-slow'],
+              },
+              'proxy-fast': {'name': 'proxy-fast', 'type': 'ss'},
+              'proxy-slow': {'name': 'proxy-slow', 'type': 'ss'},
+            },
+          ),
+          sortType: ProxiesSortType.none,
+          delayMap: {
+            'http://test.com': {'proxy-fast': 20, 'proxy-slow': 200},
+          },
+          selectedMap: {},
+          defaultTestUrl: 'http://test.com',
+        ),
+      );
+
+      expect(result, hasLength(1));
+      expect(result.single.name, 'FREE-NODES');
+      expect(result.single.type, GroupType.URLTest);
+      expect(result.single.all.map((item) => item.name), [
+        'proxy-fast',
+        'proxy-slow',
+      ]);
     });
   });
 

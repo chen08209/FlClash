@@ -4,7 +4,6 @@ use flutter_rust_bridge::frb;
 use interprocess::local_socket::prelude::*;
 use interprocess::local_socket::{GenericFilePath, ListenerNonblockingMode, ListenerOptions};
 use std::io::{self, Read, Write};
-use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{self, Sender};
 use std::sync::{Arc, Mutex};
@@ -13,6 +12,8 @@ use std::time::Duration;
 
 #[cfg(unix)]
 use std::os::unix::io::RawFd;
+#[cfg(unix)]
+use std::path::Path;
 
 macro_rules! ipc_debug {
     ($($arg:tt)*) => {
@@ -65,10 +66,7 @@ fn cleanup_socket(path: &str) {
 }
 
 #[frb]
-pub fn restart_ipc_server(
-    name: String,
-    sink: StreamSink<Vec<u8>, SseCodec>,
-) -> Result<(), String> {
+pub fn restart_ipc_server(name: String, sink: StreamSink<Vec<u8>, SseCodec>) -> Result<(), String> {
     let new_gen = GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
     ipc_debug!("[IPC] restart_ipc_server: gen={new_gen}, name={name}");
 
@@ -178,8 +176,7 @@ pub fn send_ipc_message(data: Vec<u8>) -> Result<(), String> {
     }
     let guard = STATE.lock().map_err(|e| format!("Lock poisoned: {e}"))?;
     let tx = guard.tx.as_ref().ok_or("IPC server is not running")?;
-    tx.send(data)
-        .map_err(|e| format!("Failed to send: {e}"))
+    tx.send(data).map_err(|e| format!("Failed to send: {e}"))
 }
 
 fn write_frame(mut writer: impl Write, data: &[u8]) -> io::Result<()> {
@@ -234,7 +231,10 @@ fn io_loop(name: String, sink: StreamSink<Vec<u8>, SseCodec>, gen: u64) {
         Ok(n) => n,
         Err(e) => {
             ipc_debug!("[IPC] io_loop[{gen}]: name error: {e}");
-            let _ = sink.add(make_frame(TYPE_ERROR, format!("name error: {e}").as_bytes()));
+            let _ = sink.add(make_frame(
+                TYPE_ERROR,
+                format!("name error: {e}").as_bytes(),
+            ));
             if is_current_gen(gen) {
                 RUNNING.store(false, Ordering::SeqCst);
             }
@@ -246,7 +246,10 @@ fn io_loop(name: String, sink: StreamSink<Vec<u8>, SseCodec>, gen: u64) {
         Ok(l) => l,
         Err(e) => {
             ipc_debug!("[IPC] io_loop[{gen}]: bind error: {e}");
-            let _ = sink.add(make_frame(TYPE_ERROR, format!("bind error: {e}").as_bytes()));
+            let _ = sink.add(make_frame(
+                TYPE_ERROR,
+                format!("bind error: {e}").as_bytes(),
+            ));
             if is_current_gen(gen) {
                 RUNNING.store(false, Ordering::SeqCst);
             }
@@ -282,9 +285,10 @@ fn io_loop(name: String, sink: StreamSink<Vec<u8>, SseCodec>, gen: u64) {
             Err(e) => {
                 ipc_debug!("[IPC] io_loop[{gen}]: accept error: {e}");
                 if RUNNING.load(Ordering::SeqCst) {
-                    let _ = sink.add(
-                        make_frame(TYPE_ERROR, format!("accept error: {e}").as_bytes()),
-                    );
+                    let _ = sink.add(make_frame(
+                        TYPE_ERROR,
+                        format!("accept error: {e}").as_bytes(),
+                    ));
                 }
                 break;
             }
@@ -292,9 +296,10 @@ fn io_loop(name: String, sink: StreamSink<Vec<u8>, SseCodec>, gen: u64) {
 
         if let Err(e) = stream.set_nonblocking(false) {
             ipc_debug!("[IPC] io_loop[{gen}]: set_nonblocking(false) error: {e}");
-            let _ = sink.add(
-                make_frame(TYPE_ERROR, format!("stream nonblocking error: {e}").as_bytes()),
-            );
+            let _ = sink.add(make_frame(
+                TYPE_ERROR,
+                format!("stream nonblocking error: {e}").as_bytes(),
+            ));
             continue;
         }
 
@@ -346,9 +351,10 @@ fn io_loop(name: String, sink: StreamSink<Vec<u8>, SseCodec>, gen: u64) {
                 }
                 Err(e) => {
                     ipc_debug!("[IPC] io_loop[{gen}]: read error: {e}");
-                    let _ = sink.add(
-                        make_frame(TYPE_ERROR, format!("read error: {e}").as_bytes()),
-                    );
+                    let _ = sink.add(make_frame(
+                        TYPE_ERROR,
+                        format!("read error: {e}").as_bytes(),
+                    ));
                     break;
                 }
             }

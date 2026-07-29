@@ -47,6 +47,7 @@ abstract class Profile with _$Profile {
     @Default('') String label,
     String? currentGroupName,
     @Default('') String url,
+    @Default('') String sourceUrl,
     DateTime? lastUpdateDate,
     required Duration autoUpdateDuration,
     SubscriptionInfo? subscriptionInfo,
@@ -66,6 +67,7 @@ abstract class Profile with _$Profile {
     return Profile(
       label: label ?? '',
       url: url,
+      sourceUrl: '',
       id: id,
       autoUpdateDuration: defaultUpdateDuration,
     );
@@ -195,6 +197,10 @@ extension ProfileExtension on Profile {
 
   Future<File> get file async {
     return _getFile();
+  }
+
+  Future<File> get existingFile async {
+    return _getFile(false);
   }
 
   Future<Profile> update() async {

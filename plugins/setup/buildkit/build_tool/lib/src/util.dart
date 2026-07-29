@@ -60,12 +60,16 @@ Future<void> runCommandStream(
     includeParentEnvironment: true,
     runInShell: Platform.isWindows,
   );
-  process.stdout.transform(utf8.decoder).listen((data) {
+  process.stdout.transform(const Utf8Decoder(allowMalformed: true)).listen((
+    data,
+  ) {
     for (final line in data.split('\n')) {
       if (line.isNotEmpty) _log.info(line);
     }
   });
-  process.stderr.transform(utf8.decoder).listen((data) {
+  process.stderr.transform(const Utf8Decoder(allowMalformed: true)).listen((
+    data,
+  ) {
     for (final line in data.split('\n')) {
       if (line.isNotEmpty) _log.warning(line);
     }
@@ -109,7 +113,6 @@ void copyFile(String source, String destination) {
   _log.fine('Copied $source -> $destination');
 }
 
-String joinPath(String part1,
-    [String? part2, String? part3, String? part4]) {
+String joinPath(String part1, [String? part2, String? part3, String? part4]) {
   return p.join(part1, part2, part3, part4);
 }

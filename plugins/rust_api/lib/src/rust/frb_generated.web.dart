@@ -6,6 +6,7 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'api/free_nodes.dart';
 import 'api/ipc.dart';
 import 'dart:async';
 import 'dart:convert';

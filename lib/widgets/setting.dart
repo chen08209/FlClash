@@ -42,18 +42,21 @@ class SettingTextCard extends StatelessWidget {
   final String text;
   final bool? isSelected;
   final VoidCallback onPressed;
+  final VoidCallback? onLongPress;
 
   const SettingTextCard(
     this.text, {
     super.key,
     this.isSelected,
     required this.onPressed,
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     return CommonCard(
       onPressed: onPressed,
+      onLongPress: onLongPress,
       isSelected: isSelected,
       child: Padding(
         padding: const EdgeInsets.all(12),

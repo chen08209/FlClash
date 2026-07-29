@@ -122,6 +122,34 @@ void main() {
     });
   });
 
+  group('IterableExt.forEachConcurrent', () {
+    test('limits active async tasks', () async {
+      var active = 0;
+      var maxActive = 0;
+      final completed = <int>[];
+
+      await [1, 2, 3, 4, 5].forEachConcurrent((item) async {
+        active++;
+        if (active > maxActive) maxActive = active;
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+        completed.add(item);
+        active--;
+      }, concurrency: 2);
+
+      expect(maxActive, lessThanOrEqualTo(2));
+      expect(completed, hasLength(5));
+      expect(completed.toSet(), {1, 2, 3, 4, 5});
+    });
+
+    test('runs synchronously completed actions for every item', () async {
+      final completed = <int>[];
+
+      await [1, 2, 3].forEachConcurrent(completed.add, concurrency: 8);
+
+      expect(completed, [1, 2, 3]);
+    });
+  });
+
   group('ListExt.copyAndPut', () {
     test('replaces matching element', () {
       final result = [1, 2, 3].copyAndPut(99, (e) => e == 2);

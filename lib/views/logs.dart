@@ -72,9 +72,7 @@ class _LogsViewState extends ConsumerState<LogsView> {
   Future<void> _handleExport() async {
     final appLocalizations = context.appLocalizations;
     final res = await globalState.safeRun<bool>(() async {
-      return globalState.container
-          .read(logsProvider.notifier)
-          .exportLogs();
+      return globalState.container.read(logsProvider.notifier).exportLogs();
     }, title: appLocalizations.exportLogs);
     if (res != true) return;
     globalState.showMessage(

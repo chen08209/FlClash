@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -13,6 +14,42 @@ class MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 class FakeCompleter extends Fake implements Completer<dynamic> {
   @override
   bool get isCompleted => true;
+}
+
+class CaptureCoreHandlerInterface extends CoreHandlerInterface {
+  final _completer = Completer<void>()..complete();
+  ActionMethod? capturedMethod;
+  dynamic capturedData;
+  Duration? capturedTimeout;
+
+  @override
+  Completer get completer => _completer;
+
+  @override
+  FutureOr<bool> destroy() => true;
+
+  @override
+  Future<String> preload() async => '';
+
+  @override
+  Future<bool> shutdown(bool isUser) async => true;
+
+  @override
+  Future<T?> invoke<T>({
+    required ActionMethod method,
+    dynamic data,
+    Duration? timeout,
+  }) async {
+    capturedMethod = method;
+    capturedData = data;
+    capturedTimeout = timeout;
+    return json.encode({
+          'name': 'P1',
+          'url': 'https://probe.example.com',
+          'value': 123,
+        })
+        as T;
+  }
 }
 
 void main() {
@@ -40,6 +77,19 @@ void main() {
     );
     registerFallbackValue(
       const ChangeProxyParams(groupName: 'G', proxyName: 'P'),
+    );
+    registerFallbackValue(
+      const SetupState(
+        profileId: null,
+        profileLastUpdateDate: null,
+        overwriteType: OverwriteType.standard,
+        rules: [],
+        proxyGroups: [],
+        addedRules: [],
+        script: null,
+        overrideDns: false,
+        dns: Dns(),
+      ),
     );
     registerFallbackValue(
       const UpdateGeoDataParams(geoType: 't', geoName: 'n'),
@@ -113,6 +163,43 @@ void main() {
       when(() => mock.updateConfig(params)).thenAnswer((_) async => 'ok');
       final result = await controller.updateConfig(params);
       expect(result, 'ok');
+    });
+
+    test('setupConfig waits for core before preload callback', () async {
+      const params = SetupParams(selectedMap: {}, testUrl: 'http://x.com');
+      const setupState = SetupState(
+        profileId: null,
+        profileLastUpdateDate: null,
+        overwriteType: OverwriteType.standard,
+        rules: [],
+        proxyGroups: [],
+        addedRules: [],
+        script: null,
+        overrideDns: false,
+        dns: Dns(),
+      );
+      final setupCompleter = Completer<String>();
+      var preloadCalled = false;
+      when(
+        () => mock.setupConfig(params),
+      ).thenAnswer((_) => setupCompleter.future);
+
+      final resultFuture = controller.setupConfig(
+        params: params,
+        setupState: setupState,
+        preloadInvoke: () {
+          preloadCalled = true;
+        },
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(preloadCalled, false);
+
+      setupCompleter.complete('ok');
+      final result = await resultFuture;
+
+      expect(result, 'ok');
+      expect(preloadCalled, true);
     });
   });
 
@@ -231,6 +318,21 @@ void main() {
       final result = await controller.getDelay('test.com', 'P1');
       expect(result.name, 'P1');
       expect(result.value, 100);
+    });
+
+    test('asyncTestDelay keeps the original core timeout contract', () async {
+      final handler = CaptureCoreHandlerInterface();
+
+      final result = await handler.asyncTestDelay(
+        'https://probe.example.com',
+        'P1',
+      );
+      final payload = json.decode(handler.capturedData as String) as Map;
+
+      expect(handler.capturedMethod, ActionMethod.asyncTestDelay);
+      expect(payload['timeout'], httpTimeoutDuration.inMilliseconds);
+      expect(handler.capturedTimeout, const Duration(seconds: 6));
+      expect(result, contains('"value":123'));
     });
 
     test('startListener delegates', () async {

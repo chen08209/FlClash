@@ -4,6 +4,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 double get listHeaderHeight {
@@ -48,6 +49,26 @@ void updateCurrentUnfoldSet(Set<String> value) {
       .updateCurrentUnfoldSet(value);
 }
 
+typedef ProxyDelayRequester =
+    Future<Delay> Function(String testUrl, String proxyName);
+
+@visibleForTesting
+Future<Delay> requestProxyDelayWithFallback({
+  required String testUrl,
+  required String proxyName,
+  ProxyDelayRequester? requestDelay,
+}) async {
+  try {
+    return await (requestDelay ?? coreController.getDelay)(testUrl, proxyName);
+  } catch (error) {
+    commonPrint.log(
+      'Delay test failed for $proxyName: $error',
+      logLevel: LogLevel.error,
+    );
+    return Delay(url: testUrl, name: proxyName, value: -1);
+  }
+}
+
 Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   final ref = globalState.container;
   final groups = getGroups();
@@ -70,19 +91,56 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
       .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: 0));
   ref
       .read(proxiesActionProvider.notifier)
-      .setDelay(await coreController.getDelay(currentTestUrl, state.proxyName));
+      .setDelay(
+        await requestProxyDelayWithFallback(
+          testUrl: currentTestUrl,
+          proxyName: state.proxyName,
+        ),
+      );
+}
+
+typedef ProxyDelayTestRunner =
+    Future<void> Function(Proxy proxy, String? testUrl);
+
+@visibleForTesting
+Future<void> runProxyDelayTestBatches({
+  required List<Proxy> proxies,
+  String? testUrl,
+  int batchSize = 100,
+  ProxyDelayTestRunner? testProxy,
+}) async {
+  if (batchSize <= 0) {
+    throw ArgumentError.value(batchSize, 'batchSize', 'must be positive');
+  }
+  final runner = testProxy ?? proxyDelayTest;
+  Object? firstError;
+  StackTrace? firstStackTrace;
+
+  for (final batch in proxies.batch(batchSize)) {
+    await Future.wait(
+      batch.map((proxy) async {
+        try {
+          await runner(proxy, testUrl);
+        } catch (error, stackTrace) {
+          firstError ??= error;
+          firstStackTrace ??= stackTrace;
+        }
+      }),
+    );
+  }
+
+  if (firstError != null) {
+    Error.throwWithStackTrace(firstError!, firstStackTrace!);
+  }
 }
 
 Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final delayProxies = proxies.map<Future>((proxy) async {
-    await proxyDelayTest(proxy, testUrl);
-  }).toList();
-
-  final batchesDelayProxies = delayProxies.batch(100);
-  for (final batchDelayProxies in batchesDelayProxies) {
-    await Future.wait(batchDelayProxies);
+  if (proxies.isEmpty) return;
+  try {
+    await runProxyDelayTestBatches(proxies: proxies, testUrl: testUrl);
+  } finally {
+    globalState.container.read(sortNumProvider.notifier).add();
   }
-  globalState.container.read(sortNumProvider.notifier).add();
 }
 
 double getScrollToSelectedOffset({

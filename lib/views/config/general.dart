@@ -1,4 +1,6 @@
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/free_nodes.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -458,9 +460,63 @@ class ExternalControllerItem extends ConsumerWidget {
   }
 }
 
+class FreeNodesProfileItem extends ConsumerWidget {
+  const FreeNodesProfileItem({super.key});
+
+  Future<void> _handleTap(
+    BuildContext context,
+    WidgetRef ref,
+    bool exists,
+  ) async {
+    if (exists) {
+      final res = await globalState.showMessage(
+        title: freeNodesProfileLabel,
+        message: const TextSpan(text: '重置免费节点并立即重新获取？入口不会被永久删除。'),
+        confirmText: '重置',
+      );
+      if (res != true) return;
+      await ref.read(profilesActionProvider.notifier).removeFreeNodesProfile();
+      globalState.showNotifier('已重置免费节点');
+      return;
+    }
+    final res = await globalState.showMessage(
+      title: freeNodesProfileLabel,
+      message: const TextSpan(text: '恢复免费节点并立即更新？'),
+      confirmText: '恢复',
+    );
+    if (res != true) return;
+    await globalState.safeRun(
+      () => ref
+          .read(profilesActionProvider.notifier)
+          .updateFreeNodesProfile(showLoading: true),
+      title: freeNodesProfileLabel,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final exists = ref.watch(
+      profilesProvider.select(
+        (profiles) =>
+            profiles.firstWhereOrNull(
+              (profile) => profile.isFreeNodesProfile,
+            ) !=
+            null,
+      ),
+    );
+    return ListItem(
+      leading: const Icon(Icons.restore_outlined),
+      title: const Text('免费节点'),
+      subtitle: Text(exists ? '重置并重新获取，防止节点列表消失' : '点击恢复并更新'),
+      onTap: () => _handleTap(context, ref, exists),
+    );
+  }
+}
+
 final generalItems = <Widget>[
   const LogLevelItem(),
   const UaItem(),
+  const FreeNodesProfileItem(),
   if (system.isDesktop) const KeepAliveIntervalItem(),
   const TestUrlItem(),
   const PortItem(),

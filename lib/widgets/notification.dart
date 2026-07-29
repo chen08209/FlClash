@@ -17,14 +17,14 @@ class TextScaleNotification extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (_, ref, child) {
-        ref.listen(
-          themeSettingProvider.select((state) => state.textScale),
-          (prev, next) {
-            if (prev != next) {
-              onNotification(next);
-            }
-          },
-        );
+        ref.listen(themeSettingProvider.select((state) => state.textScale), (
+          prev,
+          next,
+        ) {
+          if (prev != next) {
+            onNotification(next);
+          }
+        });
         return child!;
       },
       child: child,

@@ -15,18 +15,34 @@ class AppPath {
 
   AppPath._internal() {
     appDirPath = join(dirname(Platform.resolvedExecutable));
-    getApplicationSupportDirectory().then((value) {
-      dataDir.complete(value);
-    });
-    getTemporaryDirectory().then((value) {
-      tempDir.complete(value);
-    });
-    getDownloadsDirectory().then((value) {
-      downloadDir.complete(value);
-    });
-    getApplicationCacheDirectory().then((value) {
-      cacheDir.complete(value);
-    });
+    final appDir = Directory(appDirPath);
+    final tempFallbackDir = Directory.systemTemp;
+    _completeDirectory(dataDir, getApplicationSupportDirectory(), appDir);
+    _completeDirectory(tempDir, getTemporaryDirectory(), tempFallbackDir);
+    _completeDirectory(downloadDir, getDownloadsDirectory(), appDir);
+    _completeDirectory(
+      cacheDir,
+      getApplicationCacheDirectory(),
+      tempFallbackDir,
+    );
+  }
+
+  void _completeDirectory(
+    Completer<Directory> completer,
+    Future<Directory?> future,
+    Directory fallback,
+  ) {
+    future
+        .then((value) {
+          if (!completer.isCompleted) {
+            completer.complete(value ?? fallback);
+          }
+        })
+        .catchError((_) {
+          if (!completer.isCompleted) {
+            completer.complete(fallback);
+          }
+        });
   }
 
   factory AppPath() {

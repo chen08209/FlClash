@@ -442,7 +442,11 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
       return Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [bar, const SizedBox(height: 12), _buildFindInput(context, value)],
+        children: [
+          bar,
+          const SizedBox(height: 12),
+          _buildFindInput(context, value),
+        ],
       );
     }
     return bar;

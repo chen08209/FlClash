@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `cleanup_socket`, `io_loop`, `is_current_gen`, `make_frame`, `read_frame`, `write_frame`
+// These functions are ignored because they are not marked as `pub`: `cleanup_socket`, `clear_shutdown_fd`, `io_loop`, `is_current_gen`, `make_frame`, `read_frame`, `save_shutdown_fd`, `shutdown_old_fd`, `write_frame`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `ServerState`
 
 Stream<Uint8List> restartIpcServer({required String name}) =>

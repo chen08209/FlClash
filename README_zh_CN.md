@@ -4,13 +4,13 @@
 
 </div>
 
-## FlClash
+## FlClashPlus
 
-[![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/nekobyran/flclashplus/total?style=flat-square&logo=github)](https://github.com/nekobyran/flclashplus/releases/)[![Last Version](https://img.shields.io/github/release/nekobyran/flclashplus/all.svg?style=flat-square)](https://github.com/nekobyran/flclashplus/releases/)[![License](https://img.shields.io/github/license/nekobyran/flclashplus?style=flat-square)](LICENSE)
 
-[![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/FlClash)
+FlClashPlus 是基于上游 [FlClash](https://github.com/chen08209/FlClash) 的修改发行版，不代表上游官方版本；归属信息见 [NOTICE.md](NOTICE.md)。
 
-基于ClashMeta的多平台代理客户端，简单易用，开源无广告。
+基于 ClashMeta 的多平台代理客户端，简单易用，开源无广告。项目采用 GNU GPL v3.0，允许商用，但须遵守 GPL 的源码公开、许可证保留和修改声明等条件。
 
 on Desktop:
 <p style="text-align: center;">
@@ -51,15 +51,15 @@ on Mobile:
 
    ```bash
     com.follow.clash.action.START
-    
+
     com.follow.clash.action.STOP
-    
+
     com.follow.clash.action.TOGGLE
    ```
 
 ## Download
 
-<a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" width="200px"/></a> <a href="https://github.com/chen08209/FlClash/releases"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" width="200px"/></a>
+项目下载：[flclashplus.nkbr.cc](https://flclashplus.nkbr.cc/) · [GitHub Releases](https://github.com/nekobyran/flclashplus/releases)
 
 ## Build
 
@@ -126,7 +126,7 @@ on Mobile:
 支持开发者的最简单方式是点击页面顶部的星标（⭐）。
 
 <p style="text-align: center;">
-    <a href="https://api.star-history.com/svg?repos=chen08209/FlClash&Date">
-        <img alt="start" width=50% src="https://api.star-history.com/svg?repos=chen08209/FlClash&Date"/>
+    <a href="https://api.star-history.com/svg?repos=nekobyran/flclashplus&Date">
+        <img alt="start" width=50% src="https://api.star-history.com/svg?repos=nekobyran/flclashplus&Date"/>
     </a>
 </p>

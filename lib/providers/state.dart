@@ -1,5 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/free_nodes.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -30,13 +32,25 @@ GroupsState currentGroupsState(Ref ref) {
       }),
     ),
   );
+  final currentProfile = ref.watch(currentProfileProvider);
+  final normalizedGroups = groups.toList();
+  final shouldFilterFreeNodesGroups = shouldFilterVisibleFreeNodesGroups(
+    groups: normalizedGroups,
+    profile: currentProfile,
+  );
+  final visibleGroups = shouldFilterFreeNodesGroups
+      ? normalizeVisibleFreeNodesGroups(
+          normalizedGroups,
+          selectedGroupName: currentProfile?.currentGroupName,
+        )
+      : normalizedGroups;
   return GroupsState(
     value: switch (mode) {
       Mode.direct => [],
-      Mode.global => groups.toList(),
+      Mode.global => visibleGroups,
       Mode.rule =>
-        groups
-            .where((item) => item.hidden == false)
+        visibleGroups
+            .where((item) => item.hidden != true)
             .where((element) => element.name != GroupName.GLOBAL.name)
             .toList(),
     },
@@ -49,14 +63,13 @@ NavigationItemsState navigationItemsState(Ref ref) {
   final hasProfiles = ref.watch(
     profilesProvider.select((state) => state.isNotEmpty),
   );
-  final hasProxies = ref.watch(
+  final hasGroups = ref.watch(
     currentGroupsStateProvider.select((state) => state.value.isNotEmpty),
   );
-  final isInit = ref.watch(initProvider);
   return NavigationItemsState(
     value: navigation.getItems(
       openLogs: openLogs,
-      hasProxies: !isInit ? hasProfiles : hasProxies,
+      hasProxies: hasProfiles || hasGroups,
     ),
   );
 }
@@ -206,8 +219,12 @@ DashboardState dashboardState(Ref ref) {
     appSettingProvider.select((state) => state.dashboardWidgets),
   );
   final contentWidth = ref.watch(contentWidthProvider);
+  final normalizedDashboardWidgets =
+      dashboardWidgets.contains(DashboardWidget.freeNodesStatus)
+      ? dashboardWidgets
+      : [DashboardWidget.freeNodesStatus, ...dashboardWidgets];
   return DashboardState(
-    dashboardWidgets: dashboardWidgets,
+    dashboardWidgets: normalizedDashboardWidgets,
     contentWidth: contentWidth,
   );
 }
@@ -287,13 +304,21 @@ ProxiesTabState proxiesTabState(Ref ref) {
   final currentGroupName = ref.watch(
     currentProfileProvider.select((state) => state?.currentGroupName),
   );
+  final normalizedCurrentGroupName =
+      currentGroupName != null &&
+          shouldFilterVisibleFreeNodesGroups(
+            groups: currentGroups.value,
+            profile: ref.watch(currentProfileProvider),
+          )
+      ? normalizeFreeNodesGroupName(currentGroupName)
+      : currentGroupName;
   final cardType = ref.watch(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );
   final columns = ref.watch(proxiesColumnsProvider);
   return ProxiesTabState(
     groups: currentGroups.value,
-    currentGroupName: currentGroupName,
+    currentGroupName: normalizedCurrentGroupName,
     proxyCardType: cardType,
     columns: columns,
   );
@@ -306,13 +331,31 @@ bool isStart(Ref ref) {
 
 @riverpod
 VM2<List<String>, String?> proxiesTabControllerState(Ref ref) {
+  final profile = ref.watch(currentProfileProvider);
   return ref.watch(
-    proxiesTabStateProvider.select(
-      (state) => VM2(
-        state.groups.map((group) => group.name).toList(),
-        state.currentGroupName,
-      ),
-    ),
+    proxiesTabStateProvider.select((state) {
+      final visibleGroups =
+          shouldFilterVisibleFreeNodesGroups(
+            groups: state.groups,
+            profile: profile,
+          )
+          ? normalizeVisibleFreeNodesGroups(
+              state.groups,
+              selectedGroupName: state.currentGroupName,
+            )
+          : state.groups;
+      final normalizedCurrentGroupName = state.currentGroupName == null
+          ? null
+          : normalizeFreeNodesGroupName(state.currentGroupName!);
+      final currentGroupName =
+          visibleGroups.any((group) => group.name == normalizedCurrentGroupName)
+          ? normalizedCurrentGroupName
+          : visibleGroups.firstOrNull?.name;
+      return VM2(
+        visibleGroups.map((group) => group.name).toList(),
+        currentGroupName,
+      );
+    }),
   );
 }
 
@@ -416,7 +459,11 @@ int? delay(Ref ref, {required String proxyName, String? testUrl}) {
   final effectiveProxyName = proxyState.proxyName;
   return ref.watch(
     delayDataSourceProvider.select(
-      (state) => state[effectiveTestUrl]?[effectiveProxyName],
+      (state) => visibleDelayValueForProxy(
+        delayMap: state,
+        testUrl: effectiveTestUrl,
+        proxyName: effectiveProxyName,
+      ),
     ),
   );
 }

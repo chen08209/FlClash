@@ -90,7 +90,7 @@ class NotificationModule(private val service: Service) : Module() {
             service, GlobalState.NOTIFICATION_CHANNEL
         ).apply {
             setSmallIcon(R.drawable.ic_service)
-            setContentTitle("FlClash")
+            setContentTitle("flclash++")
             setContentIntent(intent.toPendingIntent)
             setPriority(NotificationCompat.PRIORITY_HIGH)
             setCategory(NotificationCompat.CATEGORY_SERVICE)

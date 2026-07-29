@@ -259,8 +259,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
   }
 
   PreferredSizeWidget _buildAppBar(VoidCallback? backAction) {
+    final appBarHeight = widget.appBar?.preferredSize.height ?? kToolbarHeight;
     return PreferredSize(
-      preferredSize: const Size.fromHeight(kToolbarHeight),
+      preferredSize: Size.fromHeight(appBarHeight),
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [

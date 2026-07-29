@@ -11,11 +11,8 @@ extension TextStyleExtension on TextStyle {
 
   TextStyle get toBold => copyWith(fontWeight: FontWeight.bold);
 
-  TextStyle get toJetBrainsMono => copyWith(
-        fontFamily: FontFamily.jetBrainsMono.value,
-      );
+  TextStyle get toJetBrainsMono =>
+      copyWith(fontFamily: FontFamily.jetBrainsMono.value);
 
-  TextStyle adjustSize(int size) => copyWith(
-        fontSize: fontSize! + size,
-      );
+  TextStyle adjustSize(int size) => copyWith(fontSize: fontSize! + size);
 }

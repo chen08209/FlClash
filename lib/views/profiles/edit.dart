@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/free_nodes.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -29,23 +30,56 @@ class EditProfileView extends StatefulWidget {
 class _EditProfileViewState extends State<EditProfileView> {
   late final TextEditingController _labelController;
   late final TextEditingController _urlController;
+  late final TextEditingController _sourceUrlController;
   late final TextEditingController _autoUpdateDurationController;
+  late final TextEditingController _freeNodesConcurrencyController;
   late bool _autoUpdate;
+  bool _freeNodesAutoPrefer = false;
+  bool _freeNodesDeleteExpiredOnPrefer = false;
   String? _rawText;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final _fileInfoNotifier = ValueNotifier<FileInfo?>(null);
   Uint8List? _fileData;
+  List<FreeNodeSourceOption> _freeNodeSourceOptions = const [];
+  Set<String> _enabledFreeNodeSourceIds = {};
+  bool _isLoadingFreeNodeSources = false;
 
   @override
   void initState() {
     super.initState();
     _labelController = TextEditingController(text: widget.profile.label);
     _urlController = TextEditingController(text: widget.profile.url);
+    _sourceUrlController = TextEditingController(
+      text: widget.profile.sourceUrl,
+    );
     _autoUpdate = widget.profile.autoUpdate;
     _autoUpdateDurationController = TextEditingController(
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
     );
+    _freeNodesConcurrencyController = TextEditingController(text: '4');
     _updateFileInfo();
+    if (widget.profile.isFreeNodesProfile) {
+      _loadFreeNodeSources();
+    }
+  }
+
+  Future<void> _loadFreeNodeSources() async {
+    setState(() {
+      _isLoadingFreeNodeSources = true;
+    });
+    final options = await freeNodesService.getSourceOptions();
+    final enabledIds = await freeNodesService.getEnabledSourceIds();
+    final preferenceState = await freeNodesService.getPreferenceState();
+    if (!mounted) return;
+    setState(() {
+      _freeNodeSourceOptions = options;
+      _enabledFreeNodeSourceIds = enabledIds;
+      _freeNodesConcurrencyController.text = preferenceState.fetchConcurrency
+          .toString();
+      _freeNodesAutoPrefer = preferenceState.autoPrefer;
+      _freeNodesDeleteExpiredOnPrefer = preferenceState.deleteExpiredOnPrefer;
+      _isLoadingFreeNodeSources = false;
+    });
   }
 
   Future<void> _updateFileInfo() async {
@@ -63,8 +97,30 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
+    final appLocalizations = context.appLocalizations;
+    if (widget.profile.isFreeNodesProfile) {
+      if (_enabledFreeNodeSourceIds.isEmpty) {
+        context.showNotifier(
+          '\u81f3\u5c11\u5f00\u542f\u4e00\u4e2a\u8282\u70b9\u6765\u6e90',
+        );
+        return;
+      }
+      await freeNodesService.saveEnabledSourceIds(_enabledFreeNodeSourceIds);
+      await freeNodesService.saveFetchConcurrency(
+        int.parse(_freeNodesConcurrencyController.text),
+      );
+      await freeNodesService.saveAutoPrefer(_freeNodesAutoPrefer);
+      await freeNodesService.saveDeleteExpiredOnPrefer(
+        _freeNodesDeleteExpiredOnPrefer,
+      );
+    }
     var profile = widget.profile.copyWith(
-      url: _urlController.text,
+      url: widget.profile.isFreeNodesProfile
+          ? freeNodesProfileUrl
+          : _urlController.text,
+      sourceUrl: widget.profile.isFreeNodesProfile
+          ? ''
+          : _sourceUrlController.text.trim(),
       label: _labelController.text,
       autoUpdate: _autoUpdate,
       autoUpdateDuration: Duration(
@@ -77,7 +133,6 @@ class _EditProfileViewState extends State<EditProfileView> {
     final hasUpdate = widget.profile.url != profile.url;
     if (_fileData != null) {
       if (profile.type == ProfileType.url && _autoUpdate) {
-        final appLocalizations = context.appLocalizations;
         final res = await globalState.showMessage(
           title: appLocalizations.tip,
           message: TextSpan(text: appLocalizations.profileHasUpdate),
@@ -106,6 +161,20 @@ class _EditProfileViewState extends State<EditProfileView> {
     if (_autoUpdate == value) return;
     setState(() {
       _autoUpdate = value;
+    });
+  }
+
+  void _setFreeNodesAutoPrefer(bool value) {
+    if (_freeNodesAutoPrefer == value) return;
+    setState(() {
+      _freeNodesAutoPrefer = value;
+    });
+  }
+
+  void _setFreeNodesDeleteExpiredOnPrefer(bool value) {
+    if (_freeNodesDeleteExpiredOnPrefer == value) return;
+    setState(() {
+      _freeNodesDeleteExpiredOnPrefer = value;
     });
   }
 
@@ -202,12 +271,137 @@ class _EditProfileViewState extends State<EditProfileView> {
     }
   }
 
+  Widget _buildFreeNodeSourcesItem() {
+    if (_isLoadingFreeNodeSources) {
+      return const ListItem(
+        title: Text('\u8282\u70b9\u94fe\u63a5\u6e90'),
+        subtitle: Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: LinearProgressIndicator(),
+        ),
+      );
+    }
+    return ListItem(
+      title: const Text('\u8282\u70b9\u94fe\u63a5\u6e90'),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Column(
+          children: [
+            for (final option in _freeNodeSourceOptions)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                value: _enabledFreeNodeSourceIds.contains(option.id),
+                onChanged: (value) {
+                  setState(() {
+                    if (value == true) {
+                      _enabledFreeNodeSourceIds.add(option.id);
+                    } else {
+                      _enabledFreeNodeSourceIds.remove(option.id);
+                    }
+                  });
+                },
+                title: Text(option.label),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '\u81ea\u52a8\u66f4\u65b0\u95f4\u9694\uff1a${option.updateIntervalLabel}',
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text('获取超时：${option.fetchTimeoutLabel}'),
+                        Text('最近获取：${_formatFetchTime(option)}'),
+                        TextButton.icon(
+                          onPressed: () => _editSourceTimeout(option),
+                          icon: const Icon(Icons.timer_outlined, size: 16),
+                          label: const Text('设置获取超时'),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      option.seed,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatFetchTime(FreeNodeSourceOption option) {
+    final lastFetchTime = option.lastFetchTime;
+    if (lastFetchTime == null) return '未获取';
+    return lastFetchTime.getLastUpdateTimeDesc(context);
+  }
+
+  Future<void> _editSourceTimeout(FreeNodeSourceOption option) async {
+    final controller = TextEditingController(
+      text: option.fetchTimeoutSeconds.toString(),
+    );
+    final formKey = GlobalKey<FormState>();
+    final value = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('${option.label} 获取超时'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: '获取超时秒数',
+                suffixText: '秒',
+              ),
+              validator: (value) {
+                final intValue = int.tryParse(value ?? '');
+                if (intValue == null || intValue < 3 || intValue > 120) {
+                  return '请输入 3-120 秒';
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(context.appLocalizations.cancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() != true) return;
+                Navigator.of(context).pop(int.parse(controller.text));
+              },
+              child: Text(context.appLocalizations.confirm),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (value == null) return;
+    await freeNodesService.saveSourceFetchTimeoutSeconds(option.id, value);
+    await _loadFreeNodeSources();
+  }
+
   @override
   void dispose() {
     _labelController.dispose();
     _urlController.dispose();
+    _sourceUrlController.dispose();
     _fileInfoNotifier.dispose();
     _autoUpdateDurationController.dispose();
+    _freeNodesConcurrencyController.dispose();
     super.dispose();
     globalState.container.read(setupActionProvider.notifier).autoApplyProfile();
   }
@@ -232,7 +426,8 @@ class _EditProfileViewState extends State<EditProfileView> {
           },
         ),
       ),
-      if (widget.profile.type == ProfileType.url) ...[
+      if (widget.profile.type == ProfileType.url &&
+          !widget.profile.isFreeNodesProfile)
         ListItem(
           title: TextFormField(
             textInputAction: TextInputAction.next,
@@ -255,14 +450,41 @@ class _EditProfileViewState extends State<EditProfileView> {
             },
           ),
         ),
+      if (!widget.profile.isFreeNodesProfile)
+        ListItem(
+          title: TextFormField(
+            textInputAction: TextInputAction.next,
+            keyboardType: TextInputType.url,
+            controller: _sourceUrlController,
+            maxLines: 4,
+            minLines: 1,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: '原订阅网站（可选）',
+              helperText: '订阅卡片和菜单可直接打开原订阅网站',
+            ),
+            validator: (String? value) {
+              final text = value?.trim() ?? '';
+              if (text.isEmpty) return null;
+              if (!text.isUrl) {
+                return appLocalizations.profileUrlInvalidValidationDesc;
+              }
+              return null;
+            },
+          ),
+        ),
+      if (widget.profile.type == ProfileType.url) ...[
         ListItem.switchItem(
           title: Text(appLocalizations.autoUpdate),
+          subtitle: widget.profile.isFreeNodesProfile
+              ? const Text('按每个节点来源的默认更新时间检查')
+              : null,
           delegate: SwitchDelegate<bool>(
             value: _autoUpdate,
             onChanged: _setAutoUpdate,
           ),
         ),
-        if (_autoUpdate)
+        if (_autoUpdate && !widget.profile.isFreeNodesProfile)
           ListItem(
             title: TextFormField(
               textInputAction: TextInputAction.next,
@@ -287,6 +509,44 @@ class _EditProfileViewState extends State<EditProfileView> {
             ),
           ),
       ],
+      if (widget.profile.isFreeNodesProfile) ...[
+        ListItem(
+          title: TextFormField(
+            textInputAction: TextInputAction.next,
+            controller: _freeNodesConcurrencyController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: '并发获取',
+              suffixText: '路',
+            ),
+            validator: (String? value) {
+              final intValue = int.tryParse(value ?? '');
+              if (intValue == null || intValue < 1 || intValue > 32) {
+                return '请输入 1-32';
+              }
+              return null;
+            },
+          ),
+        ),
+        ListItem.switchItem(
+          title: const Text('是否自动优选'),
+          subtitle: const Text('开启后自动整合优选节点，不删除日期分类'),
+          delegate: SwitchDelegate<bool>(
+            value: _freeNodesAutoPrefer,
+            onChanged: _setFreeNodesAutoPrefer,
+          ),
+        ),
+        ListItem.switchItem(
+          title: const Text('优选时删除旧日期分类'),
+          subtitle: const Text('开启后自动或手动优选会删除非本日且超时的日期分类'),
+          delegate: SwitchDelegate<bool>(
+            value: _freeNodesDeleteExpiredOnPrefer,
+            onChanged: _setFreeNodesDeleteExpiredOnPrefer,
+          ),
+        ),
+      ],
+      if (widget.profile.isFreeNodesProfile) _buildFreeNodeSourcesItem(),
       ValueListenableBuilder<FileInfo?>(
         valueListenable: _fileInfoNotifier,
         builder: (_, fileInfo, _) {

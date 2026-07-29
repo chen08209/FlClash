@@ -4,11 +4,7 @@ class KeepScope extends StatefulWidget {
   final Widget child;
   final bool keep;
 
-  const KeepScope({
-    super.key,
-    required this.child,
-    this.keep = true,
-  });
+  const KeepScope({super.key, required this.child, this.keep = true});
 
   @override
   State<KeepScope> createState() => _KeepContainerState();

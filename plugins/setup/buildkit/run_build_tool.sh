@@ -12,6 +12,13 @@ fi
 
 BUILD_TOOL_PKG_DIR="$BASEDIR/build_tool"
 BUILD_TOOL_TEMP_DIR="$PROJECT_DIR/build/setup_build_tool"
+BUILD_TOOL_PKG_DIR_FOR_DART="$BUILD_TOOL_PKG_DIR"
+PROJECT_DIR_FOR_DART="$PROJECT_DIR"
+
+if [ -x "$(command -v cygpath)" ]; then
+  BUILD_TOOL_PKG_DIR_FOR_DART=$(cygpath -m "$BUILD_TOOL_PKG_DIR")
+  PROJECT_DIR_FOR_DART=$(cygpath -m "$PROJECT_DIR")
+fi
 
 mkdir -p "$BUILD_TOOL_TEMP_DIR"
 cd "$BUILD_TOOL_TEMP_DIR"
@@ -32,7 +39,7 @@ environment:
 
 dependencies:
   build_tool:
-    path: "$BUILD_TOOL_PKG_DIR"
+    path: "$BUILD_TOOL_PKG_DIR_FOR_DART"
 EOF
 
 mkdir -p "bin"
@@ -76,14 +83,14 @@ fi
 
 set +e
 
-"$DART" bin/build_tool_runner.dill "$@" --root-dir "$PROJECT_DIR"
+"$DART" bin/build_tool_runner.dill "$@" --root-dir "$PROJECT_DIR_FOR_DART"
 
 exit_code=$?
 
 if [ $exit_code == 253 ]; then
   "$DART" pub get --no-precompile
   "$DART" compile kernel bin/build_tool_runner.dart
-  "$DART" bin/build_tool_runner.dill "$@" --root-dir "$PROJECT_DIR"
+  "$DART" bin/build_tool_runner.dill "$@" --root-dir "$PROJECT_DIR_FOR_DART"
   exit_code=$?
 fi
 

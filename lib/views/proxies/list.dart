@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
 import 'common.dart';
+import 'free_nodes_group_menu.dart';
 
 typedef GroupNameProxiesMap = Map<String, List<Proxy>>;
 
@@ -128,6 +129,9 @@ class _ProxiesListViewState extends State<ProxiesListView> {
           onScrollToSelected: _scrollToGroupSelected,
           isExpand: isExpand,
           group: group,
+          onLongPress: (groupName) {
+            showFreeNodesGroupMenu(context, groupName);
+          },
           onChange: (String groupName) {
             _handleChange(currentUnfoldSet, groupName);
           },
@@ -185,6 +189,9 @@ class _ProxiesListViewState extends State<ProxiesListView> {
         key: Key(groupName),
         isExpand: isExpand,
         group: group,
+        onLongPress: (groupName) {
+          showFreeNodesGroupMenu(context, groupName);
+        },
         onChange: (String groupName) {
           _handleChange(currentUnfoldSet, groupName);
         },
@@ -380,6 +387,7 @@ class ListHeader extends StatefulWidget {
 
   final Function(String groupName) onChange;
   final Function(String groupName) onScrollToSelected;
+  final Function(String groupName)? onLongPress;
   final bool isExpand;
 
   final bool enterAnimated;
@@ -390,6 +398,7 @@ class ListHeader extends StatefulWidget {
     required this.group,
     required this.onChange,
     required this.onScrollToSelected,
+    this.onLongPress,
     required this.isExpand,
   });
 
@@ -475,6 +484,14 @@ class _ListHeaderState extends State<ListHeader> {
       key: widget.key,
       radius: 18.ap,
       type: CommonCardType.filled,
+      onPressed: () {
+        _handleChange(groupName);
+      },
+      onLongPress: widget.onLongPress == null
+          ? null
+          : () {
+              widget.onLongPress!(groupName);
+            },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -578,6 +595,23 @@ class _ListHeaderState extends State<ListHeader> {
                   const SizedBox(width: 6),
                 ] else
                   const SizedBox(width: 6),
+                if (widget.onLongPress != null &&
+                    canShowFreeNodesGroupMenu(groupName)) ...[
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(2),
+                    tooltip: '分类操作',
+                    onPressed: () {
+                      widget.onLongPress!(groupName);
+                    },
+                    style: const ButtonStyle(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    iconSize: 21,
+                    icon: const Icon(Icons.more_vert),
+                  ),
+                  const SizedBox(width: 2),
+                ],
                 IconButton.filledTonal(
                   visualDensity: VisualDensity.compact,
                   padding: const EdgeInsets.all(2),
@@ -595,9 +629,6 @@ class _ListHeaderState extends State<ListHeader> {
           ],
         ),
       ),
-      onPressed: () {
-        _handleChange(groupName);
-      },
     );
   }
 }

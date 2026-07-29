@@ -45,7 +45,11 @@ class _PreviewProfileViewState extends State<PreviewProfileView> {
       builder: (_, content, _) {
         final title = widget.profile.realLabel;
 
-        return EditorPage(key: const Key('content'), title: title, content: content);
+        return EditorPage(
+          key: const Key('content'),
+          title: title,
+          content: content,
+        );
       },
     );
   }

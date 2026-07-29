@@ -22,10 +22,7 @@ class CommonChip extends StatelessWidget {
     if (type == ChipType.delete) {
       return Chip(
         avatar: avatar,
-        labelPadding: const EdgeInsets.symmetric(
-          vertical: 0,
-          horizontal: 4,
-        ),
+        labelPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
         clipBehavior: Clip.antiAlias,
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         onDeleted: onPressed ?? () {},
@@ -37,10 +34,7 @@ class CommonChip extends StatelessWidget {
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       avatar: avatar,
       clipBehavior: Clip.antiAlias,
-      labelPadding: const EdgeInsets.symmetric(
-        vertical: 0,
-        horizontal: 4,
-      ),
+      labelPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
       onPressed: onPressed ?? () {},
       labelStyle: labelStyle,
       label: Text(label),

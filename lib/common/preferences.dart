@@ -85,6 +85,46 @@ class Preferences {
     return preferences?.setString(configKey, json.encode(config)) ?? false;
   }
 
+  Future<List<String>?> getStringList(String key) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.getStringList(key);
+  }
+
+  Future<bool> setStringList(String key, List<String> value) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.setStringList(key, value) ?? false;
+  }
+
+  Future<bool> getBool(String key, {bool defaultValue = false}) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.getBool(key) ?? defaultValue;
+  }
+
+  Future<bool> setBool(String key, bool value) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.setBool(key, value) ?? false;
+  }
+
+  Future<int?> getInt(String key) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.getInt(key);
+  }
+
+  Future<bool> setInt(String key, int value) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.setInt(key, value) ?? false;
+  }
+
+  Future<String?> getString(String key) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.getString(key);
+  }
+
+  Future<bool> setString(String key, String value) async {
+    final preferences = await sharedPreferencesCompleter.future;
+    return preferences?.setString(key, value) ?? false;
+  }
+
   Future<void> clearPreferences() async {
     final sharedPreferencesIns = await sharedPreferencesCompleter.future;
     await sharedPreferencesIns?.clear();

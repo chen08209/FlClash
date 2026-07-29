@@ -61,13 +61,17 @@ class CommonSafeArea extends StatelessWidget {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties
-        .add(FlagProperty('left', value: left, ifTrue: 'avoid left padding'));
-    properties
-        .add(FlagProperty('top', value: top, ifTrue: 'avoid top padding'));
     properties.add(
-        FlagProperty('right', value: right, ifTrue: 'avoid right padding'));
+      FlagProperty('left', value: left, ifTrue: 'avoid left padding'),
+    );
     properties.add(
-        FlagProperty('bottom', value: bottom, ifTrue: 'avoid bottom padding'));
+      FlagProperty('top', value: top, ifTrue: 'avoid top padding'),
+    );
+    properties.add(
+      FlagProperty('right', value: right, ifTrue: 'avoid right padding'),
+    );
+    properties.add(
+      FlagProperty('bottom', value: bottom, ifTrue: 'avoid bottom padding'),
+    );
   }
 }

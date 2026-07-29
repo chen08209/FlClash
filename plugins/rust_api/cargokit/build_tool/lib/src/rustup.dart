@@ -134,8 +134,8 @@ class Rustup {
         ? Platform.environment['USERPROFILE']
         : Platform.environment['HOME'];
     final paths = [
-      if (home != null) path.join(home, '.cargo', 'bin'),
       if (envPath != null) ...envPath.split(envPathSeparator),
+      if (home != null) path.join(home, '.cargo', 'bin'),
     ];
     for (final p in paths) {
       final rustup = Platform.isWindows ? 'rustup.exe' : 'rustup';

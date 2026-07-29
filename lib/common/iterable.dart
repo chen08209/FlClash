@@ -1,3 +1,5 @@
+import 'dart:async';
+
 extension IterableExt<E> on Iterable<E> {
   Iterable<E> separated(E separator) sync* {
     final iterator = this.iterator;
@@ -39,6 +41,27 @@ extension IterableExt<E> on Iterable<E> {
   Iterable<E> takeLast({int count = 50}) {
     if (count <= 0) return Iterable.empty();
     return count >= length ? this : toList().skip(length - count);
+  }
+
+  Future<void> forEachConcurrent(
+    FutureOr<void> Function(E item) action, {
+    int concurrency = 8,
+  }) async {
+    final items = toList(growable: false);
+    if (items.isEmpty) return;
+    final workerCount = concurrency.clamp(1, items.length).toInt();
+    var nextIndex = 0;
+
+    Future<void> worker() async {
+      while (true) {
+        final index = nextIndex;
+        if (index >= items.length) return;
+        nextIndex = index + 1;
+        await action(items[index]);
+      }
+    }
+
+    await Future.wait([for (var i = 0; i < workerCount; i++) worker()]);
   }
 }
 
