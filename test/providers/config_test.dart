@@ -194,6 +194,103 @@ void main() {
     });
   });
 
+  group('TailscaleSetting provider', () {
+    test('default is disabled with no nodes', () {
+      final value = container.read(tailscaleSettingProvider);
+      expect(value.enable, false);
+      expect(value.proxies, isEmpty);
+    });
+
+    test('setEnable toggles the feature without touching nodes', () {
+      final notifier = container.read(tailscaleSettingProvider.notifier);
+      notifier.addOrUpdate(const TailscaleProxy(name: 'ts-node'));
+      notifier.setEnable(true);
+      final value = container.read(tailscaleSettingProvider);
+      expect(value.enable, true);
+      expect(value.proxies.length, 1);
+    });
+
+    test('setBypassTraffic toggles bypass independently of enable', () {
+      final notifier = container.read(tailscaleSettingProvider.notifier);
+      notifier.setBypassTraffic(true);
+      final value = container.read(tailscaleSettingProvider);
+      expect(value.bypassTraffic, true);
+      expect(value.enable, false);
+    });
+
+    test('setBypassTraffic adds and removes DNS fake-ip filters', () {
+      final notifier = container.read(tailscaleSettingProvider.notifier);
+      notifier.setBypassTraffic(true);
+      expect(
+        container.read(patchClashConfigProvider).dns.fakeIpFilter,
+        containsAll(tailscaleFakeIpFilters),
+      );
+
+      notifier.setBypassTraffic(false);
+      final filters = container.read(patchClashConfigProvider).dns.fakeIpFilter;
+      for (final filter in tailscaleFakeIpFilters) {
+        expect(filters, isNot(contains(filter)));
+      }
+    });
+
+    test('setBypassTraffic preserves unrelated fake-ip filters', () {
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update(
+            (state) => state.copyWith.dns(
+              fakeIpFilter: ['*.lan', 'custom.example'],
+            ),
+          );
+      final notifier = container.read(tailscaleSettingProvider.notifier);
+      notifier.setBypassTraffic(true);
+      notifier.setBypassTraffic(false);
+      expect(
+        container.read(patchClashConfigProvider).dns.fakeIpFilter,
+        ['*.lan', 'custom.example'],
+      );
+    });
+
+    test('addOrUpdate appends a new node', () {
+      container
+          .read(tailscaleSettingProvider.notifier)
+          .addOrUpdate(const TailscaleProxy(name: 'ts-node'));
+      final value = container.read(tailscaleSettingProvider);
+      expect(value.proxies.length, 1);
+      expect(value.proxies.first.name, 'ts-node');
+    });
+
+    test('addOrUpdate replaces a node with the same name', () {
+      final notifier = container.read(tailscaleSettingProvider.notifier);
+      notifier.addOrUpdate(const TailscaleProxy(name: 'ts-node'));
+      notifier.addOrUpdate(
+        const TailscaleProxy(name: 'ts-node', authKey: 'new-key'),
+      );
+      final value = container.read(tailscaleSettingProvider);
+      expect(value.proxies.length, 1);
+      expect(value.proxies.first.authKey, 'new-key');
+    });
+
+    test('addOrUpdate renames without duplicating', () {
+      final notifier = container.read(tailscaleSettingProvider.notifier);
+      notifier.addOrUpdate(const TailscaleProxy(name: 'old-name'));
+      notifier.addOrUpdate(
+        const TailscaleProxy(name: 'new-name', authKey: 'key'),
+        previousName: 'old-name',
+      );
+      final value = container.read(tailscaleSettingProvider);
+      expect(value.proxies.length, 1);
+      expect(value.proxies.first.name, 'new-name');
+      expect(value.proxies.first.authKey, 'key');
+    });
+
+    test('remove deletes a node by name', () {
+      final notifier = container.read(tailscaleSettingProvider.notifier);
+      notifier.addOrUpdate(const TailscaleProxy(name: 'ts-node'));
+      notifier.remove('ts-node');
+      expect(container.read(tailscaleSettingProvider).proxies, isEmpty);
+    });
+  });
+
   group('configProvider (composite)', () {
     test('composes all sub-providers with defaults', () {
       final config = container.read(configProvider);
@@ -206,6 +303,8 @@ void main() {
       expect(config.hotKeyActions, isEmpty);
       expect(config.patchClashConfig, const PatchClashConfig());
       expect(config.excludeSSIDs, isEmpty);
+      expect(config.tailscaleProps.enable, false);
+      expect(config.tailscaleProps.proxies, isEmpty);
     });
 
     test('reflects updated sub-provider values', () {
@@ -234,7 +333,7 @@ void main() {
         overrideDns: true,
       );
       final overrides = buildConfigOverrides(config);
-      expect(overrides.length, 12);
+      expect(overrides.length, 13);
 
       final overrideContainer = ProviderContainer(overrides: overrides);
       addTearDown(overrideContainer.dispose);

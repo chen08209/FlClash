@@ -105,6 +105,61 @@ class ExcludeSSIDs extends _$ExcludeSSIDs with AutoDisposeNotifierMixin {
   }
 }
 
+@riverpod
+class TailscaleSetting extends _$TailscaleSetting with AutoDisposeNotifierMixin {
+  @override
+  TailscaleProps build() {
+    return const TailscaleProps();
+  }
+
+  void setEnable(bool enable) {
+    update((state) => state.copyWith(enable: enable));
+  }
+
+  void setBypassTraffic(bool bypassTraffic) {
+    update((state) => state.copyWith(bypassTraffic: bypassTraffic));
+    // Keep Config → DNS → Fake IP Filter in sync with the toggle so the user
+    // can see the entries appear/disappear, and so override-DNS mode also
+    // picks them up without a separate hand edit.
+    ref.read(patchClashConfigProvider.notifier).update((state) {
+      final filters = List<String>.from(state.dns.fakeIpFilter);
+      if (bypassTraffic) {
+        for (final filter in tailscaleFakeIpFilters) {
+          if (!filters.contains(filter)) {
+            filters.add(filter);
+          }
+        }
+      } else {
+        filters.removeWhere(tailscaleFakeIpFilters.contains);
+      }
+      return state.copyWith.dns(fakeIpFilter: filters);
+    });
+  }
+
+  void addOrUpdate(TailscaleProxy proxy, {String? previousName}) {
+    update((state) {
+      final next = List<TailscaleProxy>.from(state.proxies);
+      final lookupName = previousName ?? proxy.name;
+      final index = next.indexWhere((item) => item.name == lookupName);
+      if (index == -1) {
+        next.add(proxy);
+      } else {
+        next[index] = proxy;
+      }
+      return state.copyWith(proxies: next);
+    });
+  }
+
+  void remove(String name) {
+    update((state) {
+      return state.copyWith(
+        proxies: state.proxies.where((item) => item.name != name).toList(),
+      );
+    });
+  }
+}
+
+
 @Riverpod(name: 'configProvider')
 Config _config(Ref ref) {
   final appSettingProps = ref.watch(appSettingProvider);
@@ -119,6 +174,7 @@ Config _config(Ref ref) {
   final proxiesStyleProps = ref.watch(proxiesStyleSettingProvider);
   final patchClashConfig = ref.watch(patchClashConfigProvider);
   final excludeSSIDs = ref.watch(excludeSSIDsProvider);
+  final tailscaleProps = ref.watch(tailscaleSettingProvider);
   return Config(
     appSettingProps: appSettingProps,
     windowProps: windowProps,
@@ -132,6 +188,7 @@ Config _config(Ref ref) {
     proxiesStyleProps: proxiesStyleProps,
     patchClashConfig: patchClashConfig,
     excludeSSIDs: excludeSSIDs,
+    tailscaleProps: tailscaleProps,
   );
 }
 
@@ -155,5 +212,8 @@ List<Override> buildConfigOverrides(Config config) {
       (_, _) => config.patchClashConfig,
     ),
     excludeSSIDsProvider.overrideWithBuild((_, _) => config.excludeSSIDs),
+    tailscaleSettingProvider.overrideWithBuild(
+      (_, _) => config.tailscaleProps,
+    ),
   ];
 }

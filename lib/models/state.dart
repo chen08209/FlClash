@@ -7,6 +7,7 @@ import 'app.dart';
 import 'clash_config.dart';
 import 'common.dart';
 import 'config.dart';
+import 'tailscale.dart';
 import 'core.dart';
 import 'profile.dart';
 
@@ -345,6 +346,9 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required List<Rule> rules,
     required List<Rule> addedRules,
     required String defaultUA,
+    @Default([]) List<TailscaleProxy> tailscaleProxies,
+    @Default([]) List<String> tailscaleRules,
+    @Default([]) List<String> tailscaleFakeIpFilters,
   }) = _MakeRealProfileState;
 }
 
