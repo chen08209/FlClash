@@ -314,6 +314,10 @@ class SetupAction extends _$SetupAction {
     final overrideDns = ref.read(overrideDnsProvider);
     final appendSystemDns = networkSetting.appendSystemDns;
     final routeMode = networkSetting.routeMode;
+    final tailscaleProps = ref.read(tailscaleSettingProvider);
+    final tailscaleProxies = tailscaleProps.activeProxies;
+    final tailscaleRules = tailscaleProps.buildInjectedRules();
+    final tailscaleFakeIpFilters = tailscaleProps.buildFakeIpFilters();
     final configMap = await _core.getConfig(profileId);
     String? scriptContent;
     final List<Rule> addedRules = [];
@@ -347,6 +351,9 @@ class SetupAction extends _$SetupAction {
         appendSystemDns: appendSystemDns,
         addedRules: addedRules,
         defaultUA: defaultUA,
+        tailscaleProxies: tailscaleProxies,
+        tailscaleRules: tailscaleRules,
+        tailscaleFakeIpFilters: tailscaleFakeIpFilters,
       ),
     );
     return res;
