@@ -6,9 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 abstract mixin class TileListener {
-  void onStart() {}
+  Future<bool> onStart() async => false;
 
-  void onStop() {}
+  Future<bool> onStop() async => false;
 
   void onDetached() {}
 }
@@ -24,20 +24,25 @@ class Tile {
 
   final ObserverList<TileListener> _listeners = ObserverList<TileListener>();
 
-  Future<void> _methodCallHandler(MethodCall call) async {
+  Future<bool> _methodCallHandler(MethodCall call) async {
+    if (_listeners.isEmpty) {
+      return false;
+    }
+    var handled = false;
     for (final TileListener listener in _listeners) {
       switch (call.method) {
         case 'start':
-          listener.onStart();
+          handled = await listener.onStart() || handled;
           break;
         case 'stop':
-          listener.onStop();
+          handled = await listener.onStop() || handled;
           break;
         case 'detached':
           listener.onDetached();
           break;
       }
     }
+    return handled;
   }
 
   bool get hasListeners {

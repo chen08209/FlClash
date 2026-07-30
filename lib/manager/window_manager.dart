@@ -56,6 +56,12 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   }
 
   @override
+  Future<void> onWindowActivated() async {
+    await window?.show();
+    await super.onWindowActivated();
+  }
+
+  @override
   Future<void> onShouldTerminate() async {
     await ref.read(systemActionProvider.notifier).handleExit();
     super.onShouldTerminate();

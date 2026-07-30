@@ -6,20 +6,29 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import com.follow.clash.common.GlobalState
 import com.follow.clash.common.QuickAction
 import com.follow.clash.common.action
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class QuickActionActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        when (intent.action) {
-            QuickAction.START.action -> GlobalState.launch { ServiceState.handleStartAction() }
-            QuickAction.STOP.action -> GlobalState.launch { ServiceState.handleStopAction() }
-            QuickAction.TOGGLE.action -> {
-                ShortcutManagerCompat.reportShortcutUsed(this, SHORTCUT_ID)
-                GlobalState.launch { ServiceState.handleToggleAction() }
+        GlobalState.launch {
+            try {
+                when (intent.action) {
+                    QuickAction.START.action -> ServiceState.handleStartAction()
+                    QuickAction.STOP.action -> ServiceState.handleStopAction()
+                    QuickAction.TOGGLE.action -> {
+                        ShortcutManagerCompat.reportShortcutUsed(this@QuickActionActivity, SHORTCUT_ID)
+                        ServiceState.handleToggleAction()
+                    }
+                }
+            } finally {
+                withContext(Dispatchers.Main) {
+                    finish()
+                }
             }
         }
-        finish()
     }
 
     private companion object {

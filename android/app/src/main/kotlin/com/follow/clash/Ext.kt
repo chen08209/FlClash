@@ -17,10 +17,12 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.resume
 
 private const val ICON_TTL_DAYS = 1L
 
@@ -96,6 +98,34 @@ private fun isExpired(file: File): Boolean {
 
 inline fun <reified T : FlutterPlugin> FlutterEngine.plugin(): T? {
     return plugins.get(T::class.java) as T?
+}
+
+suspend fun <T> MethodChannel.awaitResult(
+    method: String,
+    arguments: Any? = null,
+): T? = withContext(Dispatchers.Main) {
+    suspendCancellableCoroutine { continuation ->
+        invokeMethod(method, arguments, object : MethodChannel.Result {
+            override fun success(result: Any?) {
+                if (continuation.isActive) {
+                    @Suppress("UNCHECKED_CAST")
+                    continuation.resume(result as T?)
+                }
+            }
+
+            override fun error(code: String, message: String?, details: Any?) {
+                if (continuation.isActive) {
+                    continuation.resume(null)
+                }
+            }
+
+            override fun notImplemented() {
+                if (continuation.isActive) {
+                    continuation.resume(null)
+                }
+            }
+        })
+    }
 }
 
 fun MethodChannel.invokeMethodOnMainThread(method: String, arguments: Any? = null) {
