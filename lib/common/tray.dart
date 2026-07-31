@@ -125,8 +125,8 @@ class Tray {
                   ref.read(selectedProxyNameProvider(group.name)) == proxy.name,
               onClick: (_) {
                 ref
-                    .read(profilesActionProvider.notifier)
-                    .updateCurrentSelectedMap(group.name, proxy.name);
+                    .read(proxiesActionProvider.notifier)
+                    .updateSelectedProxyMap(group.name, proxy.name);
                 ref
                     .read(proxiesActionProvider.notifier)
                     .changeProxy(groupName: group.name, proxyName: proxy.name);
@@ -136,7 +136,9 @@ class Tray {
         }
         menuItems.add(
           MenuItem.submenu(
-            label: group.name,
+            label: group.name == chainProxyGroupInternalName
+                ? appLocalizations.chainProxy
+                : group.name,
             submenu: Menu(items: subMenuItems),
           ),
         );

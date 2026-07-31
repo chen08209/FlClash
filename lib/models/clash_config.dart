@@ -110,6 +110,23 @@ const defaultBypassPrivateRouteAddress = [
 ];
 
 @freezed
+abstract class ChainProxyNode with _$ChainProxyNode {
+  const factory ChainProxyNode({
+    required String type,
+    String? proxy,
+    String? provider,
+    int? savedProxyId,
+    String? server,
+    int? port,
+    String? username,
+    String? password,
+  }) = _ChainProxyNode;
+
+  factory ChainProxyNode.fromJson(Map<String, Object?> json) =>
+      _$ChainProxyNodeFromJson(json);
+}
+
+@freezed
 abstract class ProxyGroup with _$ProxyGroup {
   const factory ProxyGroup({
     int? profileId,
@@ -134,6 +151,7 @@ abstract class ProxyGroup with _$ProxyGroup {
     bool? hidden,
     String? icon,
     String? order,
+    @JsonKey(name: 'chain-nodes') List<ChainProxyNode>? chainNodes,
   }) = _ProxyGroup;
 
   factory ProxyGroup.fromJson(Map<String, Object?> json) =>

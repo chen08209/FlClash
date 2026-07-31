@@ -5,6 +5,13 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart';
+
+String getProxyGroupDisplayName(BuildContext context, String name) {
+  return name == chainProxyGroupInternalName
+      ? context.appLocalizations.chainProxy
+      : name;
+}
 
 double get listHeaderHeight {
   final measure = globalState.measure;

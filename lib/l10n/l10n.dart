@@ -4523,6 +4523,271 @@ class AppLocalizations {
       args: [count],
     );
   }
+
+  /// `Chain proxy`
+  String get chainProxy {
+    return Intl.message('Chain proxy', name: 'chainProxy', desc: '', args: []);
+  }
+
+  /// `Chain proxy manager`
+  String get chainProxyManager {
+    return Intl.message(
+      'Chain proxy manager',
+      name: 'chainProxyManager',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable chain proxy`
+  String get enableChainProxy {
+    return Intl.message(
+      'Enable chain proxy',
+      name: 'enableChainProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disable chain proxy`
+  String get disableChainProxy {
+    return Intl.message(
+      'Disable chain proxy',
+      name: 'disableChainProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A chain proxy requires at least two proxies`
+  String get chainProxyMinNodes {
+    return Intl.message(
+      'A chain proxy requires at least two proxies',
+      name: 'chainProxyMinNodes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chain proxy configuration`
+  String get chainProxyConfig {
+    return Intl.message(
+      'Chain proxy configuration',
+      name: 'chainProxyConfig',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `First node`
+  String get firstNode {
+    return Intl.message('First node', name: 'firstNode', desc: '', args: []);
+  }
+
+  /// `Second node`
+  String get secondNode {
+    return Intl.message('Second node', name: 'secondNode', desc: '', args: []);
+  }
+
+  /// `Existing proxy`
+  String get existingProxy {
+    return Intl.message(
+      'Existing proxy',
+      name: 'existingProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select proxy`
+  String get selectProxy {
+    return Intl.message(
+      'Select proxy',
+      name: 'selectProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username`
+  String get username {
+    return Intl.message('Username', name: 'username', desc: '', args: []);
+  }
+
+  /// `Chain proxy saved`
+  String get chainProxySaved {
+    return Intl.message(
+      'Chain proxy saved',
+      name: 'chainProxySaved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No saved chains`
+  String get chainProxyEmpty {
+    return Intl.message(
+      'No saved chains',
+      name: 'chainProxyEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Saved proxy`
+  String get savedProxy {
+    return Intl.message('Saved proxy', name: 'savedProxy', desc: '', args: []);
+  }
+
+  /// `Proxy node library`
+  String get savedProxies {
+    return Intl.message(
+      'Proxy node library',
+      name: 'savedProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy chains`
+  String get savedChains {
+    return Intl.message(
+      'Proxy chains',
+      name: 'savedChains',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No saved proxy nodes`
+  String get savedProxyEmpty {
+    return Intl.message(
+      'No saved proxy nodes',
+      name: 'savedProxyEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy node saved`
+  String get savedProxySaved {
+    return Intl.message(
+      'Proxy node saved',
+      name: 'savedProxySaved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This proxy node is used by a saved chain`
+  String get savedProxyInUse {
+    return Intl.message(
+      'This proxy node is used by a saved chain',
+      name: 'savedProxyInUse',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete this saved proxy node?`
+  String get confirmDeleteSavedProxy {
+    return Intl.message(
+      'Delete this saved proxy node?',
+      name: 'confirmDeleteSavedProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A proxy node with this name already exists`
+  String get savedProxyNameDuplicate {
+    return Intl.message(
+      'A proxy node with this name already exists',
+      name: 'savedProxyNameDuplicate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All`
+  String get allItems {
+    return Intl.message('All', name: 'allItems', desc: '', args: []);
+  }
+
+  /// `Profile proxies`
+  String get profileProxies {
+    return Intl.message(
+      'Profile proxies',
+      name: 'profileProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add proxy node`
+  String get addProxyNode {
+    return Intl.message(
+      'Add proxy node',
+      name: 'addProxyNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add proxy chain`
+  String get addProxyChain {
+    return Intl.message(
+      'Add proxy chain',
+      name: 'addProxyChain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add chain node`
+  String get addChainNode {
+    return Intl.message(
+      'Add chain node',
+      name: 'addChainNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chain node {index}`
+  String chainNodeIndex(Object index) {
+    return Intl.message(
+      'Chain node $index',
+      name: 'chainNodeIndex',
+      desc: '',
+      args: [index],
+    );
+  }
+
+  /// `Chain node {index} is invalid`
+  String chainNodeInvalid(Object index) {
+    return Intl.message(
+      'Chain node $index is invalid',
+      name: 'chainNodeInvalid',
+      desc: '',
+      args: [index],
+    );
+  }
+
+  /// `Node library`
+  String get proxyNodesTab {
+    return Intl.message(
+      'Node library',
+      name: 'proxyNodesTab',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chains`
+  String get proxyChainsTab {
+    return Intl.message('Chains', name: 'proxyChainsTab', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

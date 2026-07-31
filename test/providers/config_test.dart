@@ -232,9 +232,19 @@ void main() {
         themeProps: ThemeProps(),
         currentProfileId: 7,
         overrideDns: true,
+        chainProxyEnabled: true,
+        savedProxies: [
+          SavedProxy(
+            id: 9,
+            name: 'Office HTTPS',
+            type: 'https',
+            server: 'proxy.example.com',
+            port: 443,
+          ),
+        ],
       );
       final overrides = buildConfigOverrides(config);
-      expect(overrides.length, 12);
+      expect(overrides.length, 14);
 
       final overrideContainer = ProviderContainer(overrides: overrides);
       addTearDown(overrideContainer.dispose);
@@ -246,6 +256,8 @@ void main() {
         config.patchClashConfig,
       );
       expect(overrideContainer.read(excludeSSIDsProvider), config.excludeSSIDs);
+      expect(overrideContainer.read(chainProxyEnabledProvider), true);
+      expect(overrideContainer.read(savedProxiesProvider), config.savedProxies);
       expect(
         overrideContainer.read(appSettingProvider).onlyStatisticsProxy,
         false,

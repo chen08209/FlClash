@@ -306,6 +306,27 @@ const _$DynamicSchemeVariantEnumMap = {
   DynamicSchemeVariant.fruitSalad: 'fruitSalad',
 };
 
+_SavedProxy _$SavedProxyFromJson(Map<String, dynamic> json) => _SavedProxy(
+  id: Snowflake.buildId((json['id'] as num?)?.toInt()),
+  name: json['name'] as String,
+  type: json['type'] as String,
+  server: json['server'] as String,
+  port: (json['port'] as num).toInt(),
+  username: json['username'] as String?,
+  password: json['password'] as String?,
+);
+
+Map<String, dynamic> _$SavedProxyToJson(_SavedProxy instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'type': instance.type,
+      'server': instance.server,
+      'port': instance.port,
+      'username': instance.username,
+      'password': instance.password,
+    };
+
 _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
   currentProfileId: (json['currentProfileId'] as num?)?.toInt(),
   overrideDns: json['overrideDns'] as bool? ?? false,
@@ -349,6 +370,12 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  chainProxyEnabled: json['chainProxyEnabled'] as bool? ?? false,
+  savedProxies:
+      (json['savedProxies'] as List<dynamic>?)
+          ?.map((e) => SavedProxy.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -364,4 +391,6 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'windowProps': instance.windowProps,
   'patchClashConfig': instance.patchClashConfig,
   'excludeSSIDs': instance.excludeSSIDs,
+  'chainProxyEnabled': instance.chainProxyEnabled,
+  'savedProxies': instance.savedProxies,
 };

@@ -6,6 +6,30 @@ part of '../clash_config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_ChainProxyNode _$ChainProxyNodeFromJson(Map<String, dynamic> json) =>
+    _ChainProxyNode(
+      type: json['type'] as String,
+      proxy: json['proxy'] as String?,
+      provider: json['provider'] as String?,
+      savedProxyId: (json['savedProxyId'] as num?)?.toInt(),
+      server: json['server'] as String?,
+      port: (json['port'] as num?)?.toInt(),
+      username: json['username'] as String?,
+      password: json['password'] as String?,
+    );
+
+Map<String, dynamic> _$ChainProxyNodeToJson(_ChainProxyNode instance) =>
+    <String, dynamic>{
+      'type': instance.type,
+      'proxy': instance.proxy,
+      'provider': instance.provider,
+      'savedProxyId': instance.savedProxyId,
+      'server': instance.server,
+      'port': instance.port,
+      'username': instance.username,
+      'password': instance.password,
+    };
+
 _ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) => _ProxyGroup(
   profileId: (json['profileId'] as num?)?.toInt(),
   id: Snowflake.buildId((json['id'] as num?)?.toInt()),
@@ -31,6 +55,9 @@ _ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) => _ProxyGroup(
   hidden: json['hidden'] as bool?,
   icon: json['icon'] as String?,
   order: json['order'] as String?,
+  chainNodes: (json['chain-nodes'] as List<dynamic>?)
+      ?.map((e) => ChainProxyNode.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$ProxyGroupToJson(_ProxyGroup instance) =>
@@ -57,6 +84,7 @@ Map<String, dynamic> _$ProxyGroupToJson(_ProxyGroup instance) =>
       'hidden': instance.hidden,
       'icon': instance.icon,
       'order': instance.order,
+      'chain-nodes': instance.chainNodes,
     };
 
 const _$GroupTypeEnumMap = {

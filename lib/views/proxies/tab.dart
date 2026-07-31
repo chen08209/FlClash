@@ -117,7 +117,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                     children: [
                       for (final groupName in groupNames)
                         SettingTextCard(
-                          groupName,
+                          getProxyGroupDisplayName(context, groupName),
                           onPressed: () {
                             final index = groupNames.indexWhere(
                               (item) => item == groupName,
@@ -222,7 +222,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                           child: Builder(
                             builder: (context) {
                               return EmojiText(
-                                group.name,
+                                getProxyGroupDisplayName(context, group.name),
                                 style: DefaultTextStyle.of(context).style,
                               );
                             },

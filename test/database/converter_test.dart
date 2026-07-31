@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_clash/database/database.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -78,6 +79,28 @@ void main() {
       final decoded = converter.fromSql(encoded);
       expect(decoded.length, 2);
       expect(decoded, containsAll(['a', 'b']));
+    });
+  });
+
+  group('ChainProxyNodeListConverter', () {
+    test('roundtrip preserves existing, saved, and manual nodes', () {
+      const converter = ChainProxyNodeListConverter();
+      const original = [
+        ChainProxyNode(type: 'existing', proxy: 'Node A'),
+        ChainProxyNode(type: 'saved', savedProxyId: 123456789),
+        ChainProxyNode(
+          type: 'socks5',
+          server: 'proxy.example',
+          port: 1080,
+          username: 'user',
+          password: 'pass',
+        ),
+      ];
+
+      final decoded = converter.fromSql(converter.toSql(original));
+
+      expect(decoded, original);
+      expect(decoded[1].savedProxyId, 123456789);
     });
   });
 }

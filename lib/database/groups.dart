@@ -58,6 +58,9 @@ class ProxyGroups extends Table {
 
   TextColumn get order => text().nullable()();
 
+  TextColumn get chainNodes =>
+      text().map(const ChainProxyNodeListConverter()).nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -66,6 +69,10 @@ class ProxyGroups extends Table {
 class ProxyGroupsDao extends DatabaseAccessor<Database>
     with _$ProxyGroupsDaoMixin {
   ProxyGroupsDao(super.attachedDatabase);
+
+  Selectable<ProxyGroup> queryAll() {
+    return proxyGroups.select().map((item) => item.toProxyGroup());
+  }
 
   Selectable<ProxyGroup> query(int profileId) {
     final stmt = proxyGroups.select();
@@ -83,6 +90,19 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
       (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
     ]);
     return stmt.count;
+  }
+
+  Selectable<ProxyGroup> queryChains(int profileId) {
+    final stmt = proxyGroups.select();
+    stmt.where(
+      (row) =>
+          row.profileId.equals(profileId) &
+          row.type.equals(GroupType.Relay.value),
+    );
+    stmt.orderBy([
+      (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
+    ]);
+    return stmt.map((item) => item.toProxyGroup());
   }
 
   Future<int> order(
@@ -156,6 +176,7 @@ extension RawProxyGroupExt on RawProxyGroup {
       hidden: hidden,
       icon: icon,
       order: order,
+      chainNodes: chainNodes,
     );
   }
 }
@@ -185,6 +206,7 @@ extension ProxyGroupsCompanionExt on ProxyGroup {
       hidden: Value(hidden),
       icon: Value(icon),
       order: Value(order ?? this.order),
+      chainNodes: Value(chainNodes),
     );
   }
 }

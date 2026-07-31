@@ -230,6 +230,22 @@ abstract class ThemeProps with _$ThemeProps {
 }
 
 @freezed
+abstract class SavedProxy with _$SavedProxy {
+  const factory SavedProxy({
+    @JsonKey(fromJson: Snowflake.buildId) required int id,
+    required String name,
+    required String type,
+    required String server,
+    required int port,
+    String? username,
+    String? password,
+  }) = _SavedProxy;
+
+  factory SavedProxy.fromJson(Map<String, Object?> json) =>
+      _$SavedProxyFromJson(json);
+}
+
+@freezed
 abstract class Config with _$Config {
   const factory Config({
     int? currentProfileId,
@@ -246,6 +262,8 @@ abstract class Config with _$Config {
     @Default(defaultWindowProps) WindowProps windowProps,
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
     @Default([]) List<String> excludeSSIDs,
+    @Default(false) bool chainProxyEnabled,
+    @Default([]) List<SavedProxy> savedProxies,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);

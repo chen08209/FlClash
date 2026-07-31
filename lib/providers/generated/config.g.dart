@@ -632,6 +632,110 @@ abstract class _$ExcludeSSIDs extends $Notifier<List<String>> {
   }
 }
 
+@ProviderFor(ChainProxyEnabled)
+final chainProxyEnabledProvider = ChainProxyEnabledProvider._();
+
+final class ChainProxyEnabledProvider
+    extends $NotifierProvider<ChainProxyEnabled, bool> {
+  ChainProxyEnabledProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'chainProxyEnabledProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$chainProxyEnabledHash();
+
+  @$internal
+  @override
+  ChainProxyEnabled create() => ChainProxyEnabled();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$chainProxyEnabledHash() => r'9de360f594408d2570e5525a63488f302a704af1';
+
+abstract class _$ChainProxyEnabled extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(SavedProxies)
+final savedProxiesProvider = SavedProxiesProvider._();
+
+final class SavedProxiesProvider
+    extends $NotifierProvider<SavedProxies, List<SavedProxy>> {
+  SavedProxiesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'savedProxiesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$savedProxiesHash();
+
+  @$internal
+  @override
+  SavedProxies create() => SavedProxies();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<SavedProxy> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<SavedProxy>>(value),
+    );
+  }
+}
+
+String _$savedProxiesHash() => r'e9fb0de42da122f7c046d0ef2884cb35cc1c9c3b';
+
+abstract class _$SavedProxies extends $Notifier<List<SavedProxy>> {
+  List<SavedProxy> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<SavedProxy>, List<SavedProxy>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<SavedProxy>, List<SavedProxy>>,
+              List<SavedProxy>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(_config)
 final configProvider = _ConfigProvider._();
 
@@ -670,4 +774,4 @@ final class _ConfigProvider extends $FunctionalProvider<Config, Config, Config>
   }
 }
 
-String _$_configHash() => r'7f29da1e31a3393fb36ab43c21f0d1b38223afec';
+String _$_configHash() => r'8fa6d562d33a7d0092071919536adf26450d363e';

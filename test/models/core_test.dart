@@ -130,6 +130,7 @@ void main() {
       final json = {
         'name': 'TestProvider',
         'type': 'Proxy',
+        'proxies': ['Node A', 'Node B'],
         'count': 10,
         'vehicle-type': 'HTTP',
         'update-at': '2024-01-01T00:00:00.000Z',
@@ -143,6 +144,7 @@ void main() {
       final provider = ExternalProvider.fromJson(json);
       expect(provider.name, 'TestProvider');
       expect(provider.count, 10);
+      expect(provider.proxies, ['Node A', 'Node B']);
       expect(provider.subscriptionInfo!.upload, 100);
       expect(provider.subscriptionInfo!.download, 200);
       expect(provider.subscriptionInfo!.total, 1000);

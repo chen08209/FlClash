@@ -152,6 +152,7 @@ abstract class ExternalProvider with _$ExternalProvider {
   const factory ExternalProvider({
     required String name,
     required String type,
+    @Default([]) List<String> proxies,
     String? path,
     required int count,
     @JsonKey(name: 'subscription-info', fromJson: subscriptionInfoFormCore)

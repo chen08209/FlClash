@@ -41,3 +41,20 @@ class StringSetConverter extends TypeConverter<Set<String>, String> {
     return json.encode(value.toList());
   }
 }
+
+class ChainProxyNodeListConverter
+    extends TypeConverter<List<ChainProxyNode>, String> {
+  const ChainProxyNodeListConverter();
+
+  @override
+  List<ChainProxyNode> fromSql(String fromDb) {
+    return (json.decode(fromDb) as List)
+        .map((item) => ChainProxyNode.fromJson(Map<String, Object?>.from(item)))
+        .toList();
+  }
+
+  @override
+  String toSql(List<ChainProxyNode> value) {
+    return json.encode(value.map((item) => item.toJson()).toList());
+  }
+}

@@ -770,12 +770,17 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
   List<Rule> addedRules = [];
   Script? script;
   if (profileId != null) {
+    final chainGroups = await database.proxyGroupsDao
+        .queryChains(profileId)
+        .get();
     if (overwriteType == OverwriteType.standard) {
       addedRules = await database.rulesDao.queryAddedRules(profileId).get();
+      proxyGroups = chainGroups;
     } else if (overwriteType == OverwriteType.script) {
       script = scriptId == null
           ? null
           : await database.scriptsDao.get(scriptId).getSingleOrNull();
+      proxyGroups = chainGroups;
     } else {
       rules = await database.rulesDao.queryProfileCustomRules(profileId).get();
       proxyGroups = await database.proxyGroupsDao.query(profileId).get();

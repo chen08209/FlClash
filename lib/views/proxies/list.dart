@@ -5,11 +5,13 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
+import 'chain_proxy.dart';
 import 'common.dart';
 
 typedef GroupNameProxiesMap = Map<String, List<Proxy>>;
@@ -25,6 +27,19 @@ class _ProxiesListViewState extends State<ProxiesListView> {
   final _controller = ScrollController();
   List<double> _groupOffsets = [];
   double containerHeight = 0;
+
+  void _openChainProxy(WidgetRef ref) {
+    final profileId = ref.read(currentProfileIdProvider);
+    if (profileId == null) {
+      globalState.showNotifier(context.appLocalizations.nullProfileDesc);
+      return;
+    }
+    showSheet(
+      context: context,
+      props: const SheetProps(isScrollControlled: true),
+      builder: (_) => ChainProxyManagerView(profileId: profileId),
+    );
+  }
 
   @override
   void dispose() {
@@ -96,6 +111,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
 
   Widget _buildGroup(
     BuildContext context, {
+    required WidgetRef ref,
     required Group group,
     required Set<String> currentUnfoldSet,
     required int columns,
@@ -123,6 +139,11 @@ class _ProxiesListViewState extends State<ProxiesListView> {
                   key: ValueKey(groupName),
                   isExpand: isExpand,
                   group: group,
+                  onManageChainProxy:
+                      ref.watch(chainProxyEnabledProvider) &&
+                          groupName == chainProxyGroupInternalName
+                      ? () => _openChainProxy(ref)
+                      : null,
                   onChange: (groupName) {
                     _handleChange(currentUnfoldSet, groupName);
                   },
@@ -284,6 +305,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
                       for (final group in state.groups)
                         _buildGroup(
                           context,
+                          ref: ref,
                           group: group,
                           currentUnfoldSet: state.currentUnfoldSet,
                           columns: columns,
@@ -310,10 +332,12 @@ class ListHeader extends StatefulWidget {
   final bool isExpand;
 
   final bool enterAnimated;
+  final VoidCallback? onManageChainProxy;
 
   const ListHeader({
     super.key,
     this.enterAnimated = true,
+    this.onManageChainProxy,
     required this.group,
     required this.onChange,
     required this.onScrollToSelected,
@@ -418,7 +442,7 @@ class _ListHeaderState extends State<ListHeader> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         EmojiText(
-                          groupName,
+                          getProxyGroupDisplayName(context, groupName),
                           style: context.textTheme.titleMedium,
                         ),
                         const SizedBox(height: 4),
@@ -493,6 +517,20 @@ class _ListHeaderState extends State<ListHeader> {
                     icon: const Icon(Icons.adjust),
                   ),
                   const SizedBox(width: 2),
+                  if (widget.onManageChainProxy != null) ...[
+                    IconButton(
+                      tooltip: context.appLocalizations.chainProxyConfig,
+                      iconSize: 20,
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.all(2),
+                      onPressed: widget.onManageChainProxy,
+                      style: const ButtonStyle(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      icon: const Icon(Icons.add),
+                    ),
+                    const SizedBox(width: 2),
+                  ],
                   IconButton(
                     iconSize: 20,
                     visualDensity: VisualDensity.compact,
