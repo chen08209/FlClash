@@ -12,8 +12,11 @@ class ProxyService : Service(), ManagedService {
     private val binder = LocalBinder()
 
     override fun onDestroy() {
-        modules.stop()
-        super.onDestroy()
+        try {
+            cleanup()
+        } finally {
+            super.onDestroy()
+        }
     }
 
     override fun onLowMemory() {
@@ -38,7 +41,12 @@ class ProxyService : Service(), ManagedService {
     }
 
     override fun stop() {
-        modules.stop()
-        stopSelf()
+        try {
+            cleanup()
+        } finally {
+            stopSelf()
+        }
     }
+
+    private fun cleanup() = modules.stop()
 }

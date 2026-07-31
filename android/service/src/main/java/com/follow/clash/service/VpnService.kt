@@ -30,13 +30,9 @@ class VpnService : SystemVpnService(), ManagedService {
 
     override fun onDestroy() {
         try {
-            modules.stop()
+            cleanup()
         } finally {
-            try {
-                stopTun()
-            } finally {
-                super.onDestroy()
-            }
+            super.onDestroy()
         }
     }
 
@@ -234,13 +230,17 @@ class VpnService : SystemVpnService(), ManagedService {
 
     override fun stop() {
         try {
+            cleanup()
+        } finally {
+            stopSelf()
+        }
+    }
+
+    private fun cleanup() {
+        try {
             modules.stop()
         } finally {
-            try {
-                stopTun()
-            } finally {
-                stopSelf()
-            }
+            stopTun()
         }
     }
 
