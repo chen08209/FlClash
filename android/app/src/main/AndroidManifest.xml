@@ -107,8 +107,7 @@
             android:exported="true"
             android:permission="${applicationId}.permission.RECEIVE_BROADCASTS">
             <intent-filter>
-                <action android:name="${applicationId}.intent.action.SERVICE_CREATED" />
-                <action android:name="${applicationId}.intent.action.SERVICE_DESTROYED" />
+                <action android:name="${applicationId}.intent.action.VPN_REVOKED" />
             </intent-filter>
         </receiver>
 

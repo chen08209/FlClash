@@ -27,9 +27,14 @@ func (response MethodResponse) send() {
 }
 
 func sendMessageBatch(messages []Message) {
+	arguments, err := json.Marshal(messages)
+	if err != nil {
+		logError("Message batch marshal error: %v", err)
+		return
+	}
 	call := MethodCall{
 		Method:    messageMethod,
-		Arguments: mustMarshalJSON(messages),
+		Arguments: arguments,
 	}
 	data, err := json.Marshal(call)
 	if err != nil {

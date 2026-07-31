@@ -106,6 +106,59 @@ void main() {
       },
     );
 
+    test(
+      'preserves legacy clash config when current-shaped data has version zero',
+      () async {
+        final configMap = _createConfigMap()..remove('patchClashConfig');
+        final clashConfigMap = _createClashConfigMap(mixedPort: 1234);
+        final store = _FakeMigrationStore(
+          configMap: configMap,
+          version: 0,
+          clashConfigMap: clashConfigMap,
+        );
+
+        final config = await Migration(store: store).run();
+
+        expect(config.patchClashConfig.mixedPort, 1234);
+        expect(store.savedConfig?.patchClashConfig.mixedPort, 1234);
+        expect(store.didClearClashConfig, isTrue);
+        expect(store.events, [
+          'getConfigMap',
+          'getVersion',
+          'getClashConfigMap',
+          'restore',
+          'saveConfig',
+          'clearClashConfig',
+          'setVersion',
+        ]);
+      },
+    );
+
+    test('does not clear legacy clash config when saving fails', () async {
+      final configMap = _createConfigMap()..remove('patchClashConfig');
+      final store = _FakeMigrationStore(
+        configMap: configMap,
+        version: 0,
+        clashConfigMap: _createClashConfigMap(mixedPort: 1234),
+        configSaveResult: false,
+      );
+
+      await expectLater(
+        Migration(store: store).run(),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(store.didClearClashConfig, isFalse);
+      expect(store.version, 0);
+      expect(store.events, [
+        'getConfigMap',
+        'getVersion',
+        'getClashConfigMap',
+        'restore',
+        'saveConfig',
+      ]);
+    });
+
     test('keeps the current version when password obfuscation fails', () async {
       final configMap = _createConfigMap(
         davProps: const DAVProps(uri: 'https://example.com/dav', user: 'user'),
@@ -133,6 +186,11 @@ Map<String, Object?> _createConfigMap({DAVProps? davProps}) {
   return jsonDecode(
         jsonEncode(Config(themeProps: defaultThemeProps, davProps: davProps)),
       )
+      as Map<String, Object?>;
+}
+
+Map<String, Object?> _createClashConfigMap({required int mixedPort}) {
+  return jsonDecode(jsonEncode(PatchClashConfig(mixedPort: mixedPort)))
       as Map<String, Object?>;
 }
 

@@ -185,6 +185,16 @@ void main() {
     expect(legacy.single.data, 'provider-b');
   });
 
+  test('event contract skips malformed entries without dropping the batch', () {
+    final events = coreEventsFromData([
+      {'type': 'loaded', 'data': 'provider-a'},
+      {'type': 'invalid-event', 'data': null},
+      {'type': 'loaded', 'data': 'provider-b'},
+    ]);
+
+    expect(events.map((event) => event.data), ['provider-a', 'provider-b']);
+  });
+
   test('core interface converts structured method results', () async {
     final handler = _RecordingCoreHandler();
 

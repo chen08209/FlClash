@@ -325,8 +325,8 @@ func handleUpdateGeoData(geoType string) {
 func handleUpdateExternalProvider(providerName string, fn func(value string)) {
 	go func() {
 		runLock.Lock()
-		defer runLock.Unlock()
 		externalProvider, exist := externalProviders[providerName]
+		runLock.Unlock()
 		if !exist {
 			fn("external provider is not exist")
 			return

@@ -9,8 +9,7 @@ enum class QuickAction {
 }
 
 enum class BroadcastAction {
-    SERVICE_CREATED,
-    SERVICE_DESTROYED,
+    VPN_REVOKED,
 }
 
 enum class AccessControlMode {

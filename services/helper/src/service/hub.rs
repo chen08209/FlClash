@@ -2,6 +2,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::VecDeque;
+use std::convert::Infallible;
 use std::fs::{File, OpenOptions};
 #[cfg(not(all(feature = "windows-service", target_os = "windows")))]
 use std::future::pending;
@@ -89,18 +90,20 @@ static LOGS: Lazy<Arc<Mutex<VecDeque<String>>>> =
     Lazy::new(|| Arc::new(Mutex::new(VecDeque::with_capacity(100))));
 static PROCESS: Lazy<Arc<Mutex<Option<std::process::Child>>>> =
     Lazy::new(|| Arc::new(Mutex::new(None)));
+static PROCESS_OPERATION: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
-fn start(start_params: StartParams) -> impl Reply {
+fn start(start_params: StartParams) -> String {
     if !is_allowed_core_pipe(&start_params.address) {
         return "invalid Core pipe address".to_string();
     }
 
+    let _operation = PROCESS_OPERATION.lock().unwrap();
     let (core_path, _core_file) = match open_fixed_verified_core() {
         Ok(core) => core,
         Err(error) => return error.to_string(),
     };
 
-    stop_core();
+    stop_core_locked();
     let mut process = PROCESS.lock().unwrap();
     match Command::new(&core_path)
         .current_dir(core_path.parent().unwrap())
@@ -137,13 +140,18 @@ fn start(start_params: StartParams) -> impl Reply {
 }
 
 fn stop_core() -> String {
+    let _operation = PROCESS_OPERATION.lock().unwrap();
+    stop_core_locked();
+    String::new()
+}
+
+fn stop_core_locked() {
     let mut process = PROCESS.lock().unwrap();
     if let Some(mut child) = process.take() {
         let _ = child.kill();
         let _ = child.wait();
     }
     *process = None;
-    String::new()
 }
 
 fn log_message(message: String) {
@@ -189,22 +197,44 @@ fn ping() -> warp::reply::Response {
     ping_response(result)
 }
 
+async fn start_request(start_params: StartParams) -> Result<String, Infallible> {
+    Ok(tokio::task::spawn_blocking(move || start(start_params))
+        .await
+        .unwrap_or_else(|error| format!("Core start task failed: {error}")))
+}
+
+async fn stop_request() -> Result<String, Infallible> {
+    Ok(tokio::task::spawn_blocking(stop_core)
+        .await
+        .unwrap_or_else(|error| format!("Core stop task failed: {error}")))
+}
+
+async fn ping_request() -> Result<warp::reply::Response, Infallible> {
+    Ok(tokio::task::spawn_blocking(ping)
+        .await
+        .unwrap_or_else(|error| {
+            ping_response(Err(Error::other(format!(
+                "Helper ping task failed: {error}"
+            ))))
+        }))
+}
+
 fn routes() -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     let api_ping = warp::get()
         .and(warp::path("ping"))
         .and(warp::path::end())
-        .map(ping);
+        .and_then(ping_request);
 
     let api_start = warp::post()
         .and(warp::path("start"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(start);
+        .and_then(start_request);
 
     let api_stop = warp::post()
         .and(warp::path("stop"))
         .and(warp::path::end())
-        .map(stop_core);
+        .and_then(stop_request);
 
     let api_logs = warp::get()
         .and(warp::path("logs"))

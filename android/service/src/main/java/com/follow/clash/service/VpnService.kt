@@ -25,10 +25,19 @@ import android.net.VpnService as SystemVpnService
 class VpnService : SystemVpnService(), ManagedService {
     private val modules = ServiceModules(this)
     private val binder = LocalBinder()
+    private val tunLock = Any()
+    private var tunRunning = false
 
     override fun onDestroy() {
-        modules.stop()
-        super.onDestroy()
+        try {
+            modules.stop()
+        } finally {
+            try {
+                stopTun()
+            } finally {
+                super.onDestroy()
+            }
+        }
     }
 
     private val connectivity by lazy {
@@ -98,14 +107,9 @@ class VpnService : SystemVpnService(), ManagedService {
             binder
         }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        notifyCreated()
-        return super.onStartCommand(intent, flags, startId)
-    }
-
     override fun onRevoke() {
         stop()
-        notifyDestroyed()
+        notifyVpnRevoked()
     }
 
     private fun handleStart(options: VpnOptions) {
@@ -135,14 +139,22 @@ class VpnService : SystemVpnService(), ManagedService {
             establish()?.detachFd()
                 ?: error("VPN establishment was rejected by the system")
         }
-        Core.startTun(
-            fd = fd,
-            protect = this::protect,
-            resolverProcess = this::resolverProcess,
-            stack = options.stack,
-            address = options.tunAddress,
-            dns = options.tunDns,
-        )
+        synchronized(tunLock) {
+            tunRunning = true
+            try {
+                Core.startTun(
+                    fd = fd,
+                    protect = this::protect,
+                    resolverProcess = this::resolverProcess,
+                    stack = options.stack,
+                    address = options.tunAddress,
+                    dns = options.tunDns,
+                )
+            } catch (error: Exception) {
+                stopTunLocked()
+                throw error
+            }
+        }
     }
 
     private fun Builder.addAddressAndRoutes(options: VpnOptions) {
@@ -221,9 +233,26 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     override fun stop() {
-        modules.stop()
-        Core.stopTun()
-        stopSelf()
+        try {
+            modules.stop()
+        } finally {
+            try {
+                stopTun()
+            } finally {
+                stopSelf()
+            }
+        }
+    }
+
+    private fun stopTun() = synchronized(tunLock) {
+        stopTunLocked()
+    }
+
+    private fun stopTunLocked() {
+        if (tunRunning) {
+            Core.stopTun()
+            tunRunning = false
+        }
     }
 
     companion object {

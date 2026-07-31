@@ -114,6 +114,10 @@ object ServiceController {
         runTimeMillis
     }
 
+    suspend fun isVpnServiceActive(): Boolean = lock.withLock {
+        runTimeMillis != 0L && binding?.component == VpnService::class.intent.component
+    }
+
     fun getRunTimeMillis(): Long = runTimeMillis
 
     private fun handleServiceDisconnected(

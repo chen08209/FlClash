@@ -94,7 +94,7 @@ void main() {
 
     test('fails when the Rust event stream closes before ready', () async {
       var disconnected = false;
-      transport.onDisconnect = () => disconnected = true;
+      transport.onDisconnect = (_) => disconnected = true;
       final initFuture = transport.init();
       await events.close();
 
@@ -131,10 +131,12 @@ void main() {
 
     test('forwards data and reports client disconnection', () async {
       var disconnected = false;
-      transport.onDisconnect = () => disconnected = true;
+      transport.onDisconnect = (_) => disconnected = true;
       final initFuture = transport.init();
       events.add(_frame(0x00));
       await initFuture;
+      events.add(_frame(0x01));
+      await transport.connectionCompleter.future;
 
       final dataFuture = transport.dataStream.first;
       events.add(_frame(0x03, utf8.encode('payload')));
@@ -143,6 +145,7 @@ void main() {
       events.add(_frame(0x02));
       await pumpEventQueue();
       expect(disconnected, isTrue);
+      expect(transport.isConnected, isFalse);
     });
 
     test('waits for a fresh connection across a disconnection', () async {
@@ -182,6 +185,31 @@ void main() {
       events.add(_frame(0x01, _processIdPayload(1234)));
 
       expect(await nextConnection, 1234);
+      expect(transport.isConnected, isTrue);
+      expect(transport.connectionGeneration, 1);
+    });
+
+    test('waits for the captured connection to disconnect', () async {
+      final initFuture = transport.init();
+      events.add(_frame(0x00));
+      await initFuture;
+
+      events.add(_frame(0x01, _processIdPayload(1234)));
+      await transport.connectionCompleter.future;
+      final generation = transport.connectionGeneration;
+      var completed = false;
+      final disconnection = transport
+          .waitForDisconnectionAfter(generation)
+          .then((_) => completed = true);
+
+      await pumpEventQueue();
+      expect(completed, isFalse);
+
+      events.add(_frame(0x02));
+      await disconnection;
+
+      expect(completed, isTrue);
+      expect(transport.lastDisconnectedGeneration, generation);
     });
 
     test(

@@ -39,14 +39,9 @@ class ServiceBroadcastReceiver : BroadcastReceiver() {
 
     private suspend fun handleAction(action: String) {
         when (action) {
-            BroadcastAction.SERVICE_CREATED.action -> {
-                GlobalState.log("Background service created")
-                ServiceState.handleStartAction()
-            }
-
-            BroadcastAction.SERVICE_DESTROYED.action -> {
-                GlobalState.log("Background service destroyed")
-                ServiceState.handleStopAction()
+            BroadcastAction.VPN_REVOKED.action -> {
+                GlobalState.log("VPN permission revoked")
+                ServiceState.handleVpnRevokeAction()
             }
         }
     }

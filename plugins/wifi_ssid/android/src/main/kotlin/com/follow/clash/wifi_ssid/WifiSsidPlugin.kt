@@ -11,6 +11,8 @@ import android.net.NetworkRequest
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -33,6 +35,9 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var pendingPermissionResult: Result? = null
     private var wifiNetworkCallback: ConnectivityManager.NetworkCallback? = null
     private val wifiInfoByNetwork = ConcurrentHashMap<Network, WifiInfo>()
+    private val pendingSsidResults = mutableListOf<Result>()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var ssidTimeout: Runnable? = null
 
     private val permissionResultListener = RequestPermissionsResultListener { requestCode, _, _ ->
         if (requestCode != REQUEST_CODE_LOCATION) {
@@ -64,6 +69,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         private const val ERROR_UNAVAILABLE = "UNAVAILABLE"
         private const val ERROR_IN_PROGRESS = "IN_PROGRESS"
         private const val REQUEST_CODE_LOCATION = 1001
+        private const val SSID_TIMEOUT_MILLIS = 3_000L
 
         // Values must match WifiSsidPermission enum index in Dart
         private const val PERMISSION_GRANTED = 0
@@ -85,6 +91,9 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        completePendingSsidResults(
+            errorMessage = "Plugin detached before SSID lookup completed",
+        )
         channel.setMethodCallHandler(null)
         unregisterWifiNetworkCallback()
         detachFromActivity(cancelPermissionRequest = true)
@@ -188,29 +197,46 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     private fun getSsid(result: Result) {
-        val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val cm = connectivityManager ?: run {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val ctx = context ?: run {
+                result.error(ERROR_UNAVAILABLE, "Context not available", null)
+                return
+            }
+            if (permissionState(ctx) != PERMISSION_GRANTED) {
+                result.success(null)
+                return
+            }
+            if (connectivityManager == null) {
                 result.error(ERROR_UNAVAILABLE, "ConnectivityManager not available", null)
                 return
             }
-            registerWifiNetworkCallback()
-            val activeNetwork = cm.activeNetwork
-            val activeInfo = activeNetwork?.let(wifiInfoByNetwork::get)
-                ?: activeNetwork
-                    ?.let(cm::getNetworkCapabilities)
-                    ?.takeIf { capabilities ->
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                    }?.transportInfo as? WifiInfo
-            activeInfo ?: wifiInfoByNetwork.values.firstOrNull()
-        } else {
-            val wm = wifiManager ?: run {
-                result.error(ERROR_UNAVAILABLE, "WifiManager not available", null)
+            val ssid = currentSsid()
+            if (ssid != null) {
+                result.success(ssid)
                 return
             }
-            @Suppress("DEPRECATION")
-            wm.connectionInfo
+            pendingSsidResults.add(result)
+            if (!registerWifiNetworkCallback()) {
+                completePendingSsidResults(ssid = null)
+                return
+            }
+            scheduleSsidTimeout()
+            return
         }
-        result.success(normalizeSsid(info?.ssid))
+
+        val wm = wifiManager ?: run {
+            result.error(ERROR_UNAVAILABLE, "WifiManager not available", null)
+            return
+        }
+        @Suppress("DEPRECATION")
+        result.success(normalizeSsid(wm.connectionInfo?.ssid))
+    }
+
+    private fun currentSsid(): String? {
+        val activeNetwork = connectivityManager?.activeNetwork
+        val info = activeNetwork?.let(wifiInfoByNetwork::get)
+            ?: wifiInfoByNetwork.values.firstOrNull()
+        return normalizeSsid(info?.ssid)
     }
 
     private fun normalizeSsid(ssid: String?): String? {
@@ -225,19 +251,19 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         registerWifiNetworkCallback()
     }
 
-    private fun registerWifiNetworkCallback() {
+    private fun registerWifiNetworkCallback(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            return
+            return false
         }
-        val ctx = context ?: return
+        val ctx = context ?: return false
         if (permissionState(ctx) != PERMISSION_GRANTED) {
             unregisterWifiNetworkCallback()
-            return
+            return false
         }
         if (wifiNetworkCallback != null) {
-            return
+            return true
         }
-        val cm = connectivityManager ?: return
+        val cm = connectivityManager ?: return false
         val callback = object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
             override fun onCapabilitiesChanged(
                 network: Network,
@@ -249,6 +275,11 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 } else {
                     wifiInfoByNetwork[network] = wifiInfo
                 }
+                currentSsid()?.let { ssid ->
+                    mainHandler.post {
+                        completePendingSsidResults(ssid = ssid)
+                    }
+                }
             }
 
             override fun onLost(network: Network) {
@@ -258,8 +289,41 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         val request = NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
             .build()
-        runCatching { cm.registerNetworkCallback(request, callback) }
+        return runCatching { cm.registerNetworkCallback(request, callback) }
             .onSuccess { wifiNetworkCallback = callback }
+            .isSuccess
+    }
+
+    private fun scheduleSsidTimeout() {
+        if (ssidTimeout != null) {
+            return
+        }
+        val timeout = Runnable {
+            ssidTimeout = null
+            completePendingSsidResults(ssid = currentSsid())
+        }
+        ssidTimeout = timeout
+        mainHandler.postDelayed(timeout, SSID_TIMEOUT_MILLIS)
+    }
+
+    private fun completePendingSsidResults(
+        ssid: String? = null,
+        errorMessage: String? = null,
+    ) {
+        val timeout = ssidTimeout
+        ssidTimeout = null
+        if (timeout != null) {
+            mainHandler.removeCallbacks(timeout)
+        }
+        val results = pendingSsidResults.toList()
+        pendingSsidResults.clear()
+        results.forEach { result ->
+            if (errorMessage == null) {
+                result.success(ssid)
+            } else {
+                result.error(ERROR_UNAVAILABLE, errorMessage, null)
+            }
+        }
     }
 
     private fun unregisterWifiNetworkCallback() {

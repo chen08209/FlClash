@@ -263,12 +263,18 @@ func sendMessageBatch(messages []Message) {
 	if eventListener == nil {
 		return
 	}
+	arguments, err := json.Marshal(messages)
+	if err != nil {
+		logError("Message batch marshal error: %v", err)
+		return
+	}
 	call := MethodCall{
 		Method:    messageMethod,
-		Arguments: mustMarshalJSON(messages),
+		Arguments: arguments,
 	}
 	data, err := json.Marshal(call)
 	if err != nil {
+		logError("MethodCall marshal error: method=%s err=%v", call.Method, err)
 		return
 	}
 	invokeResult(eventListener, string(data))

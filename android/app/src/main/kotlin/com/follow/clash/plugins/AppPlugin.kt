@@ -48,7 +48,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private var vpnPrepareCallback: ((Boolean) -> Unit)? = null
 
-    private var requestNotificationCallback: (() -> Unit)? = null
+    private var requestNotificationCallback: ((Boolean) -> Unit)? = null
 
     private var isRequestingNotificationPermission = false
 
@@ -207,8 +207,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         task?.setExcludeFromRecents(value ?: false)
     }
 
-    fun requestNotificationPermission(callback: () -> Unit) {
-        requestNotificationCallback?.invoke()
+    fun requestNotificationPermission(callback: (Boolean) -> Unit) {
+        requestNotificationCallback?.invoke(false)
         requestNotificationCallback = callback
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permission = ContextCompat.checkSelfPermission(
@@ -216,7 +216,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 Manifest.permission.POST_NOTIFICATIONS,
             )
             if (permission == PackageManager.PERMISSION_GRANTED || skipNotificationPermissionRequest) {
-                invokeRequestNotificationCallback()
+                invokeRequestNotificationCallback(true)
                 return
             }
             if (isRequestingNotificationPermission) {
@@ -229,19 +229,20 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                     NOTIFICATION_PERMISSION_REQUEST_CODE,
                 )
-            } ?: invokeRequestNotificationCallback()
+            } ?: invokeRequestNotificationCallback(true)
             return
         }
-        invokeRequestNotificationCallback()
+        invokeRequestNotificationCallback(true)
     }
 
-    private fun invokeRequestNotificationCallback() {
+    private fun invokeRequestNotificationCallback(shouldStart: Boolean) {
         isRequestingNotificationPermission = false
-        requestNotificationCallback?.invoke()
+        requestNotificationCallback?.invoke(shouldStart)
         requestNotificationCallback = null
     }
 
     fun prepareVpn(needPrepare: Boolean, callback: (Boolean) -> Unit) {
+        invokeVpnPrepareCallback(false)
         vpnPrepareCallback = callback
         if (!needPrepare) {
             invokeVpnPrepareCallback(true)
@@ -261,6 +262,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         invokeVpnPrepareCallback(true)
     }
 
+    fun cancelVpnPreparation(callback: (Boolean) -> Unit) {
+        if (vpnPrepareCallback === callback) {
+            vpnPrepareCallback = null
+        }
+    }
+
     private fun invokeVpnPrepareCallback(granted: Boolean) {
         vpnPrepareCallback?.invoke(granted)
         vpnPrepareCallback = null
@@ -276,9 +283,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
         scope.cancel()
-        vpnPrepareCallback = null
-        requestNotificationCallback = null
-        isRequestingNotificationPermission = false
+        invokeVpnPrepareCallback(false)
+        invokeRequestNotificationCallback(false)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -302,9 +308,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     override fun onDetachedFromActivity() {
         channel.invokeMethod("exit", null)
         activity = null
-        vpnPrepareCallback = null
-        requestNotificationCallback = null
-        isRequestingNotificationPermission = false
+        invokeVpnPrepareCallback(false)
+        invokeRequestNotificationCallback(false)
     }
 
     private fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
@@ -324,7 +329,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             return false
         }
         skipNotificationPermissionRequest = true
-        invokeRequestNotificationCallback()
+        invokeRequestNotificationCallback(true)
         return true
     }
 

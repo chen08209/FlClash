@@ -31,12 +31,15 @@ class IPCCoreTransport {
   Completer<void> _completer = Completer<void>();
   Completer<int?> _connectionSignal = Completer<int?>();
   Completer<void> _readyCompleter = Completer<void>();
+  Completer<void> _disconnectionSignal = Completer<void>();
   int _connectionGeneration = 0;
+  int _lastDisconnectedGeneration = 0;
   bool _ready = false;
   bool _initialized = false;
   bool _closing = false;
+  bool _connected = false;
 
-  void Function()? onDisconnect;
+  void Function(int generation)? onDisconnect;
 
   IPCCoreTransport({
     required this.address,
@@ -60,8 +63,24 @@ class IPCCoreTransport {
 
   Stream<Uint8List> get dataStream => _dataController.stream;
 
+  bool get isConnected => _connected;
+
+  int get connectionGeneration => _connectionGeneration;
+
+  int get lastDisconnectedGeneration => _lastDisconnectedGeneration;
+
   Future<int?> waitForNextConnection() {
     return _waitForConnectionAfter(_connectionGeneration);
+  }
+
+  Future<void> waitForDisconnectionAfter(int connectionGeneration) async {
+    while (_lastDisconnectedGeneration < connectionGeneration) {
+      final signal = _disconnectionSignal.future;
+      if (_lastDisconnectedGeneration >= connectionGeneration) {
+        return;
+      }
+      await signal;
+    }
   }
 
   Future<int?> _waitForConnectionAfter(int connectionGeneration) async {
@@ -125,6 +144,7 @@ class IPCCoreTransport {
           'IPC Connected${processId == null ? '' : ': $processId'}',
         );
         _connectionGeneration++;
+        _connected = true;
         final connectionSignal = _connectionSignal;
         _connectionSignal = Completer<int?>();
         connectionSignal.complete(processId);
@@ -134,9 +154,9 @@ class IPCCoreTransport {
         break;
       case _typeDisconnected:
         commonPrint.log('IPC Disconnected');
-        disconnected();
-        if (!_closing) {
-          onDisconnect?.call();
+        final generation = disconnected();
+        if (!_closing && generation != null) {
+          onDisconnect?.call(generation);
         }
         break;
       case _typeData:
@@ -187,8 +207,10 @@ class IPCCoreTransport {
       );
     }
     if (_ready && !_closing) {
-      disconnected();
-      onDisconnect?.call();
+      final generation = disconnected();
+      if (generation != null) {
+        onDisconnect?.call(generation);
+      }
     }
   }
 
@@ -196,10 +218,19 @@ class IPCCoreTransport {
     return _sendMessage(utf8.encode(message));
   }
 
-  void disconnected() {
+  int? disconnected() {
     if (_completer.isCompleted) {
       _completer = Completer<void>();
     }
+    if (!_connected) {
+      return null;
+    }
+    _connected = false;
+    _lastDisconnectedGeneration = _connectionGeneration;
+    final disconnectionSignal = _disconnectionSignal;
+    _disconnectionSignal = Completer<void>();
+    disconnectionSignal.complete();
+    return _lastDisconnectedGeneration;
   }
 
   Future<void> close() async {
@@ -207,6 +238,7 @@ class IPCCoreTransport {
     try {
       await _stopServer();
     } finally {
+      disconnected();
       await _subscription?.cancel();
       _subscription = null;
       _ready = false;

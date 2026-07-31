@@ -13,7 +13,6 @@ class ProxyService : Service(), ManagedService {
 
     override fun onDestroy() {
         modules.stop()
-        notifyDestroyed()
         super.onDestroy()
     }
 

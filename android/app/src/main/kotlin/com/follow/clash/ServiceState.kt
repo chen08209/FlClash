@@ -102,23 +102,34 @@ object ServiceState {
         requestStop().await()
     }
 
+    suspend fun handleVpnRevokeAction() {
+        if (!ServiceController.isVpnServiceActive()) {
+            return
+        }
+        handleStopAction()
+    }
+
     fun requestStart(): Deferred<Boolean> {
         val request = createRequest(running = true)
         val result = CompletableDeferred<Boolean>()
-        val launchRequest = {
-            GlobalState.launch {
-                result.complete(
-                    runCatching { start(request) }
-                        .onFailure { error ->
-                            GlobalState.log("Unable to process service start request: $error")
-                            fail(request)
-                        }
-                        .getOrDefault(false),
-                )
+        val launchRequest: (Boolean) -> Unit = { shouldStart ->
+            if (!shouldStart) {
+                fail(request)
+                result.complete(false)
+            } else {
+                GlobalState.launch {
+                    result.complete(
+                        runCatching { start(request) }
+                            .onFailure { error ->
+                                GlobalState.log("Unable to process service start request: $error")
+                                fail(request)
+                            }
+                            .getOrDefault(false),
+                    )
+                }
             }
-            Unit
         }
-        appPlugin?.requestNotificationPermission(launchRequest) ?: launchRequest()
+        appPlugin?.requestNotificationPermission(launchRequest) ?: launchRequest(true)
         return result
     }
 
@@ -259,11 +270,15 @@ object ServiceState {
         val plugin = appPlugin
             ?: return !options.enable || VpnService.prepare(GlobalState.application) == null
         return suspendCancellableCoroutine { continuation ->
-            plugin.prepareVpn(options.enable) { granted ->
+            val callback: (Boolean) -> Unit = { granted ->
                 if (continuation.isActive) {
                     continuation.resume(granted)
                 }
             }
+            continuation.invokeOnCancellation {
+                plugin.cancelVpnPreparation(callback)
+            }
+            plugin.prepareVpn(options.enable, callback)
         }
     }
 

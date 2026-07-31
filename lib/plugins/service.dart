@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -37,7 +38,15 @@ class Service {
           );
           for (final event in coreEventsFromData(methodCall.arguments)) {
             for (final listener in _listeners) {
-              listener.onServiceEvent(event);
+              try {
+                listener.onServiceEvent(event);
+              } catch (error) {
+                commonPrint.log(
+                  'Unable to dispatch Android Core event '
+                  '${event.type.name}: $error',
+                  logLevel: LogLevel.error,
+                );
+              }
             }
           }
           break;

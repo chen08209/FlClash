@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/core.dart';
+import 'package:flutter/foundation.dart';
 
 import 'event.dart';
 import 'interface.dart';
@@ -18,12 +19,12 @@ class CoreService extends CoreHandlerInterface {
   late final Future<void> _serverInitialization;
   StreamSubscription<String>? _dataSubscription;
 
-  Completer<bool> _shutdownCompleter = Completer();
-
   final Map<String, Completer<Object?>> _responseCompleters = {};
+  final Set<int> _expectedDisconnectGenerations = {};
 
   Process? _process;
   Future<void>? _startOperation;
+  Future<bool> Function()? _stopCoreForTesting;
 
   factory CoreService() {
     _instance ??= CoreService._internal();
@@ -34,6 +35,16 @@ class CoreService extends CoreHandlerInterface {
     _transport = IPCCoreTransport(
       address: system.isWindows ? windowsPipeName : unixSocketPath,
     );
+    _serverInitialization = _initServer();
+  }
+
+  @visibleForTesting
+  CoreService.forTesting(
+    IPCCoreTransport transport, {
+    Future<bool> Function()? stopCore,
+  }) {
+    _transport = transport;
+    _stopCoreForTesting = stopCore;
     _serverInitialization = _initServer();
   }
 
@@ -71,11 +82,15 @@ class CoreService extends CoreHandlerInterface {
   }
 
   Future<void> _initServer() async {
-    _transport.onDisconnect = () {
-      _clearCompleter();
-      _handleInvokeCrashEvent();
-      if (!_shutdownCompleter.isCompleted) {
-        _shutdownCompleter.complete(true);
+    _transport.onDisconnect = (generation) {
+      _clearCompleter(
+        const CoreMethodException(
+          code: 'transport_disconnected',
+          message: 'Core transport disconnected',
+        ),
+      );
+      if (!_expectedDisconnectGenerations.remove(generation)) {
+        _handleInvokeCrashEvent();
       }
     };
 
@@ -203,32 +218,84 @@ class CoreService extends CoreHandlerInterface {
     return true;
   }
 
-  Future<void> sendMessage(String message) async {
+  Future<void> sendMessage(
+    String message, {
+    required Duration connectionTimeout,
+  }) async {
     await _serverInitialization;
-    await _transport.connectionCompleter.future;
+    await _transport.connectionCompleter.future.timeout(connectionTimeout);
     await _transport.send(message);
   }
 
   @override
   Future<bool> shutdown(bool isUser) async {
-    _shutdownCompleter = Completer();
-    if (system.isWindows) {
-      await request.stopCoreByHelper();
+    final wasConnected = _transport.isConnected;
+    final connectionGeneration = _transport.connectionGeneration;
+    if (wasConnected) {
+      _expectedDisconnectGenerations.add(connectionGeneration);
     }
-    _transport.disconnected();
-    _process?.kill();
+
+    var stopped = true;
+    try {
+      final stopCoreForTesting = _stopCoreForTesting;
+      if (stopCoreForTesting != null) {
+        stopped = await stopCoreForTesting();
+      } else if (system.isWindows) {
+        stopped = await request.stopCoreByHelper();
+      } else {
+        stopped = _process?.kill() ?? true;
+      }
+    } catch (error) {
+      stopped = false;
+      commonPrint.log(
+        'Unable to request Core shutdown: $error',
+        logLevel: LogLevel.error,
+      );
+    }
     _process = null;
-    _clearCompleter();
-    if (isUser) {
-      return _shutdownCompleter.future;
-    } else {
-      return true;
+
+    if (!wasConnected) {
+      _clearCompleter(
+        const CoreMethodException(
+          code: 'transport_disconnected',
+          message: 'Core transport is not connected',
+        ),
+      );
+      return stopped;
     }
+
+    try {
+      await _transport
+          .waitForDisconnectionAfter(connectionGeneration)
+          .timeout(const Duration(seconds: 10));
+    } on TimeoutException catch (error) {
+      _expectedDisconnectGenerations.remove(connectionGeneration);
+      _clearCompleter(
+        CoreMethodException(
+          code: 'shutdown_timeout',
+          message: 'Core did not disconnect during shutdown',
+          details: error.toString(),
+        ),
+      );
+      commonPrint.log(
+        'Core ${isUser ? 'user' : 'internal'} shutdown timed out: $error',
+        logLevel: LogLevel.error,
+      );
+      return false;
+    }
+    return stopped;
   }
 
-  void _clearCompleter() {
+  void _clearCompleter([Object? error]) {
     for (final completer in _responseCompleters.values) {
-      completer.safeCompleter(null);
+      if (completer.isCompleted) {
+        continue;
+      }
+      if (error == null) {
+        completer.complete(null);
+      } else {
+        completer.completeError(error);
+      }
     }
     _responseCompleters.clear();
   }
@@ -253,26 +320,41 @@ class CoreService extends CoreHandlerInterface {
     final id = nextMethodCallId;
     final completer = Completer<Object?>();
     _responseCompleters[id] = completer;
+    final requestTimeout = timeout ?? const Duration(minutes: 3);
+    final stopwatch = Stopwatch()..start();
     try {
       await sendMessage(
         json.encode(
           CoreMethodCall(id: id, method: method, arguments: arguments),
         ),
+        connectionTimeout: requestTimeout < const Duration(seconds: 10)
+            ? requestTimeout
+            : const Duration(seconds: 10),
       );
-    } catch (_) {
-      _responseCompleters.remove(id);
+      final remainingTimeout = requestTimeout - stopwatch.elapsed;
+      if (remainingTimeout <= Duration.zero) {
+        throw TimeoutException('Core method ${method.name} timed out');
+      }
+      final result = await completer.future.timeout(remainingTimeout);
+      return result as T?;
+    } on TimeoutException {
+      final pendingResponse = _responseCompleters.remove(id);
+      pendingResponse?.safeCompleter(null);
       return null;
+    } on CoreMethodException {
+      _responseCompleters.remove(id);
+      rethrow;
+    } catch (error) {
+      final pendingResponse = _responseCompleters.remove(id);
+      pendingResponse?.safeCompleter(null);
+      throw CoreMethodException(
+        code: 'transport_error',
+        message: 'Unable to send ${method.name} to Core',
+        details: error.toString(),
+      );
+    } finally {
+      stopwatch.stop();
     }
-    final result = await completer.future.withTimeout(
-      timeout: timeout,
-      onLast: () {
-        final pendingResponse = _responseCompleters.remove(id);
-        pendingResponse?.safeCompleter(null);
-      },
-      tag: id,
-      onTimeout: () => null,
-    );
-    return result as T?;
   }
 
   @override

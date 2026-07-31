@@ -11,12 +11,7 @@ interface ManagedService {
     fun stop()
 }
 
-internal fun Service.notifyCreated() {
-    GlobalState.log("Service created")
-    BroadcastAction.SERVICE_CREATED.sendBroadcast()
-}
-
-internal fun Service.notifyDestroyed() {
-    GlobalState.log("Service destroyed")
-    BroadcastAction.SERVICE_DESTROYED.sendBroadcast()
+internal fun Service.notifyVpnRevoked() {
+    GlobalState.log("VPN permission revoked")
+    BroadcastAction.VPN_REVOKED.sendBroadcast()
 }

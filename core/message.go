@@ -6,6 +6,7 @@ const (
 	messageBatchInterval = 16 * time.Millisecond
 	messageBatchSize     = 32
 	messageQueueSize     = 256
+	messagePriorityBurst = 8
 )
 
 var (
@@ -68,7 +69,25 @@ func runMessageBatcher(
 		}
 	}
 
+	priorityBurst := 0
 	for priorityMessages != nil || bulkMessages != nil {
+		// Give bulk events one guaranteed opportunity after a bounded priority
+		// burst, while retaining priority preference under ordinary load.
+		if priorityBurst >= messagePriorityBurst && bulkMessages != nil {
+			select {
+			case message, ok := <-bulkMessages:
+				if !ok {
+					bulkMessages = nil
+				} else {
+					appendMessage(message)
+				}
+				priorityBurst = 0
+				continue
+			default:
+				priorityBurst = 0
+			}
+		}
+
 		// Prefer state-bearing events whenever both queues have work.
 		select {
 		case message, ok := <-priorityMessages:
@@ -76,6 +95,7 @@ func runMessageBatcher(
 				priorityMessages = nil
 			} else {
 				appendMessage(message)
+				priorityBurst++
 			}
 			continue
 		default:
@@ -87,6 +107,7 @@ func runMessageBatcher(
 				priorityMessages = nil
 			} else {
 				appendMessage(message)
+				priorityBurst++
 			}
 		case message, ok := <-bulkMessages:
 			if !ok {
@@ -94,6 +115,7 @@ func runMessageBatcher(
 			} else {
 				appendMessage(message)
 			}
+			priorityBurst = 0
 		case <-ticker.C:
 			flush()
 		}

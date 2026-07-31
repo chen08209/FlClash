@@ -103,12 +103,20 @@ class Migration {
     var shouldClearClashConfig = false;
     if (oldVersion == 0) {
       final clashConfigMap = await _store.getClashConfigMap();
-      shouldClearClashConfig = clashConfigMap != null;
       if (_isV0(configMap) && configMap != null) {
+        final legacyConfigMap = Map<String, Object?>.from(configMap);
         if (clashConfigMap != null) {
-          configMap['patchClashConfig'] = clashConfigMap;
+          legacyConfigMap['patchClashConfig'] = clashConfigMap;
+          shouldClearClashConfig = true;
         }
-        data = await _migrateV0(configMap);
+        data = await _migrateV0(legacyConfigMap);
+      } else if (clashConfigMap != null) {
+        final currentConfigMap = Map<String, Object?>.from(
+          configMap ?? const {},
+        );
+        currentConfigMap.putIfAbsent('patchClashConfig', () => clashConfigMap);
+        data = MigrationData(configMap: currentConfigMap);
+        shouldClearClashConfig = true;
       }
     }
 

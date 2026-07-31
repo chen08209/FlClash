@@ -45,14 +45,6 @@ type MethodResponse struct {
 	callback unsafe.Pointer
 }
 
-func mustMarshalJSON(value any) json.RawMessage {
-	data, err := json.Marshal(value)
-	if err != nil {
-		panic(err)
-	}
-	return data
-}
-
 func (response MethodResponse) JSON() ([]byte, error) {
 	return json.Marshal(response)
 }

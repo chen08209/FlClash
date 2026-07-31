@@ -11,11 +11,19 @@ extension FutureExt<T> on Future<T> {
     FutureOr<T> Function()? onTimeout,
   }) {
     final realTimeout = timeout ?? const Duration(minutes: 3);
-    Timer(realTimeout + commonDuration, () {
-      if (onLast != null) {
-        onLast();
-      }
-    });
+    final cleanupTimer = onLast == null
+        ? null
+        : Timer(realTimeout + commonDuration, onLast);
+    if (cleanupTimer != null) {
+      unawaited(
+        then<void>(
+          (_) => cleanupTimer.cancel(),
+          onError: (Object _, StackTrace _) {
+            cleanupTimer.cancel();
+          },
+        ),
+      );
+    }
     return this.timeout(
       realTimeout,
       onTimeout: () async {
