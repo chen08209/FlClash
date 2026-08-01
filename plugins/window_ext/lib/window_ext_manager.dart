@@ -18,10 +18,13 @@ class WindowExtManager {
   Future<void> _methodCallHandler(MethodCall call) async {
     for (final WindowExtListener listener in _listeners) {
       switch (call.method) {
-        case "taskbarCreated":
+        case 'taskbarCreated':
           listener.onTaskbarCreated();
           break;
-        case "shouldTerminate":
+        case 'windowActivated':
+          await listener.onWindowActivated();
+          break;
+        case 'shouldTerminate':
           listener.onShouldTerminate();
           break;
       }
@@ -41,9 +44,7 @@ class WindowExtManager {
   }
 
   Future<void> setWindowCornerPreference({required bool round}) async {
-    await _channel.invokeMethod('setWindowCornerPreference', {
-      'round': round,
-    });
+    await _channel.invokeMethod('setWindowCornerPreference', {'round': round});
   }
 }
 

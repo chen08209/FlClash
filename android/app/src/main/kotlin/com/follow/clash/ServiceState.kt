@@ -83,8 +83,7 @@ object ServiceState {
         if (isRunningRequested()) {
             return
         }
-        if (flutterEngine != null) {
-            tilePlugin?.handleStart()
+        if (tilePlugin?.handleStart() == true) {
             return
         }
         loadPreferencesAndStart()
@@ -94,8 +93,7 @@ object ServiceState {
         if (!isRunningRequested()) {
             return
         }
-        if (flutterEngine != null) {
-            tilePlugin?.handleStop()
+        if (tilePlugin?.handleStop() == true) {
             return
         }
         GlobalState.application.showToast(sharedState.stopTip)
