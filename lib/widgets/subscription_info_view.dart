@@ -12,13 +12,10 @@ class SubscriptionInfoView extends StatelessWidget {
     if (subscriptionInfo == null) {
       return Container();
     }
-    if (subscriptionInfo?.total == 0) {
-      return Container();
-    }
+
     final use = subscriptionInfo!.upload + subscriptionInfo!.download;
     final total = subscriptionInfo!.total;
-    final progress = use / total;
-
+    final progress = total == 0 ? 0.0 : use / total;
     final useShow = use.traffic.show;
     final totalShow = total.traffic.show;
     final expireShow =
@@ -27,17 +24,22 @@ class SubscriptionInfoView extends StatelessWidget {
             subscriptionInfo!.expire * 1000,
           ).show
         : context.appLocalizations.infiniteTime;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        LinearProgressIndicator(
-          minHeight: 6,
-          value: progress,
-          backgroundColor: context.colorScheme.primary.opacity15,
-        ),
-        const SizedBox(height: 8),
+        if (total != 0) ...[
+          LinearProgressIndicator(
+            minHeight: 6,
+            value: progress,
+            backgroundColor: context.colorScheme.primary.opacity15,
+          ),
+          const SizedBox(height: 8),
+        ],
         Text(
-          '$useShow / $totalShow · $expireShow',
+          total == 0
+              ? '$useShow / ∞ · $expireShow'
+              : '$useShow / $totalShow · $expireShow',
           style: context.textTheme.labelMedium?.toLight,
         ),
         const SizedBox(height: 4),
