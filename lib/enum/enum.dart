@@ -126,6 +126,16 @@ enum AccessControlMode { acceptSelected, rejectSelected }
 
 enum AccessSortType { none, name, time }
 
+enum ConnectionSortType {
+  none,
+  downloadDesc,
+  downloadAsc,
+  uploadDesc,
+  uploadAsc,
+  processAsc,
+  processDesc,
+}
+
 enum ProfileType { file, url }
 
 enum ResultType {

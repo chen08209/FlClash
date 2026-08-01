@@ -76,6 +76,77 @@ void main() {
       expect(trackerInfo.desc, 'tcp://example.com/1.1.1.1:443');
       expect(trackerInfo.progressText, 'Browser(501)');
     });
+
+    test('calculates speeds from consecutive snapshots', () {
+      final start = DateTime(2026);
+      final previous = TrackerInfo(
+        id: '1',
+        upload: 100,
+        download: 200,
+        start: start,
+        metadata: const Metadata(process: 'Browser'),
+        chains: const [],
+        rule: 'MATCH',
+        rulePayload: '',
+      );
+      final current = previous.copyWith(upload: 400, download: 800);
+
+      final result = current.withSpeedFrom(
+        previous,
+        const Duration(milliseconds: 1500),
+      );
+
+      expect(result.uploadSpeed, 200);
+      expect(result.downloadSpeed, 400);
+      expect(current.withSpeedFrom(null, Duration.zero).uploadSpeed, 0);
+    });
+
+    test('sorts connections by speed and process', () {
+      final start = DateTime(2026);
+      TrackerInfo connection(
+        String id,
+        String process,
+        int uploadSpeed,
+        int downloadSpeed,
+      ) {
+        return TrackerInfo(
+          id: id,
+          start: start.add(Duration(seconds: int.parse(id))),
+          metadata: Metadata(process: process),
+          chains: const [],
+          rule: 'MATCH',
+          rulePayload: '',
+          uploadSpeed: uploadSpeed,
+          downloadSpeed: downloadSpeed,
+        );
+      }
+
+      final connections = [
+        connection('1', 'Zulu', 10, 30),
+        connection('2', 'alpha', 30, 20),
+        connection('3', 'Bravo', 20, 10),
+      ];
+
+      expect(
+        connections
+            .sortedBy(ConnectionSortType.downloadDesc)
+            .map((item) => item.id),
+        ['1', '2', '3'],
+      );
+      expect(
+        connections
+            .sortedBy(ConnectionSortType.uploadAsc)
+            .map((item) => item.id),
+        ['1', '3', '2'],
+      );
+      expect(
+        connections
+            .sortedBy(ConnectionSortType.processAsc)
+            .map((item) => item.id),
+        ['2', '3', '1'],
+      );
+      expect(connections.sortedBy(ConnectionSortType.none), same(connections));
+    });
   });
 
   group('TrafficExt', () {
