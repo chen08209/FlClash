@@ -90,6 +90,7 @@ class HomePage extends StatelessWidget {
                     final navigationItem = navigationItems[index];
                     final navigationView = navigationItem.builder(context);
                     final view = KeepScope(
+                      key: ValueKey(navigationItem.label),
                       keep: navigationItem.keep,
                       child: isMobile
                           ? navigationView
@@ -199,6 +200,15 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
       controller: _pageController,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: itemCount,
+      findChildIndexCallback: (key) {
+        if (key is! ValueKey<PageLabel>) {
+          return null;
+        }
+        final index = widget.navigationItems.indexWhere(
+          (item) => item.label == key.value,
+        );
+        return index == -1 ? null : index;
+      },
       itemBuilder: (context, index) {
         return widget.pageBuilder(context, index);
       },
