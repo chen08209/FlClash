@@ -1,5 +1,6 @@
 export 'activate_box.dart';
 export 'animate_grid.dart';
+export 'animated_visibility.dart';
 export 'builder.dart';
 export 'button.dart';
 export 'card.dart';

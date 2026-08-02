@@ -49,21 +49,24 @@ class HomePage extends StatelessWidget {
                   selectedIndex: currentIndex,
                 ),
               );
-              if (isMobile) {
-                return Column(
-                  children: [
-                    Flexible(
-                      flex: 1,
-                      child: MediaQuery.removePadding(
-                        removeTop: false,
-                        removeBottom: true,
-                        removeLeft: true,
-                        removeRight: true,
-                        context: context,
-                        child: child!,
-                      ),
+              return Column(
+                children: [
+                  Flexible(
+                    flex: 1,
+                    child: MediaQuery.removePadding(
+                      removeTop: false,
+                      removeBottom: isMobile,
+                      removeLeft: isMobile,
+                      removeRight: isMobile,
+                      context: context,
+                      child: child!,
                     ),
-                    MediaQuery.removePadding(
+                  ),
+                  AnimatedVisibility(
+                    visible: isMobile,
+                    axis: Axis.vertical,
+                    backgroundColor: context.colorScheme.surfaceContainer,
+                    child: MediaQuery.removePadding(
                       removeTop: true,
                       removeBottom: false,
                       removeLeft: true,
@@ -71,11 +74,9 @@ class HomePage extends StatelessWidget {
                       context: context,
                       child: bottomNavigationBar,
                     ),
-                  ],
-                );
-              } else {
-                return child!;
-              }
+                  ),
+                ],
+              );
             },
             child: Consumer(
               builder: (_, ref, _) {
@@ -93,6 +94,9 @@ class HomePage extends StatelessWidget {
                       child: isMobile
                           ? navigationView
                           : Navigator(
+                              key: ValueKey(
+                                '${navigationItem.label.name}_navigator',
+                              ),
                               pages: [MaterialPage(child: navigationView)],
                               onDidRemovePage: (_) {},
                             ),

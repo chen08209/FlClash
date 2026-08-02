@@ -295,12 +295,10 @@ class ProfileItem extends StatelessWidget {
               );
               return FadeThroughBox(
                 child: isUpdating
-                    ? Padding(
+                    ? const Padding(
                         key: ValueKey('loading'),
                         padding: EdgeInsets.all(8),
-                        child: CommonCircleLoading(
-                          color: context.colorScheme.tertiary,
-                        ),
+                        child: CommonCircleLoading(),
                       )
                     : CommonPopupBox(
                         key: const ValueKey('menu'),
