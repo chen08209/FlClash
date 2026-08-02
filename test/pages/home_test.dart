@@ -2,6 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/manager/app_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/home.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -57,6 +58,22 @@ void main() {
       );
       await tester.pump();
 
+      final sidebarBackground = find.descendant(
+        of: find.byType(AppSidebarContainer),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Container && widget.child is Row,
+        ),
+      );
+      final sidebarContainer = tester.widget<Container>(
+        sidebarBackground.first,
+      );
+      expect(
+        sidebarContainer.color,
+        Theme.of(
+          tester.element(find.byType(AppSidebarContainer)),
+        ).colorScheme.surfaceContainer,
+      );
+
       await tester.tap(find.text('count: 0'));
       await tester.pump();
       expect(find.text('count: 1'), findsOneWidget);
@@ -85,7 +102,8 @@ void main() {
       expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
 
       await tester.pump(
-        AnimatedVisibility.defaultDuration + const Duration(milliseconds: 1),
+        AnimatedVisibility.defaultExitDuration +
+            const Duration(milliseconds: 1),
       );
       expect(find.byType(NavigationRail), findsNothing);
       expect(find.byType(NavigationBar), findsOneWidget);
@@ -99,7 +117,8 @@ void main() {
       expect(find.byType(NavigationBar), findsOneWidget);
 
       await tester.pump(
-        AnimatedVisibility.defaultDuration + const Duration(milliseconds: 1),
+        AnimatedVisibility.defaultExitDuration +
+            const Duration(milliseconds: 1),
       );
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);

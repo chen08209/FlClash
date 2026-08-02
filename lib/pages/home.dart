@@ -65,7 +65,6 @@ class HomePage extends StatelessWidget {
                   AnimatedVisibility(
                     visible: isMobile,
                     axis: Axis.vertical,
-                    backgroundColor: context.colorScheme.surfaceContainer,
                     child: MediaQuery.removePadding(
                       removeTop: true,
                       removeBottom: false,
