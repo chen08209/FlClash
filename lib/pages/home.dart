@@ -62,9 +62,8 @@ class HomePage extends StatelessWidget {
                       child: child!,
                     ),
                   ),
-                  AnimatedVisibility(
+                  AnimatedVisibility.bottomNavigation(
                     visible: isMobile,
-                    axis: Axis.vertical,
                     child: MediaQuery.removePadding(
                       removeTop: true,
                       removeBottom: false,

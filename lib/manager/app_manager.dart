@@ -197,9 +197,8 @@ class AppSidebarContainer extends ConsumerWidget {
       color: context.colorScheme.surfaceContainer,
       child: Row(
         children: [
-          AnimatedVisibility(
+          AnimatedVisibility.sidebar(
             visible: !isMobileView,
-            axis: Axis.horizontal,
             child: _buildBackground(
               context: context,
               child: SafeArea(

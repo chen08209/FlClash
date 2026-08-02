@@ -9,7 +9,6 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/application_setting.dart';
 import 'package:fl_clash/views/tools.dart';
-import 'package:fl_clash/widgets/animated_visibility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,10 +100,7 @@ void main() {
       await tester.pump();
       expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
 
-      await tester.pump(
-        AnimatedVisibility.defaultExitDuration +
-            const Duration(milliseconds: 1),
-      );
+      await tester.pump(const Duration(milliseconds: 301));
       expect(find.byType(NavigationRail), findsNothing);
       expect(find.byType(NavigationBar), findsOneWidget);
 
@@ -116,10 +112,7 @@ void main() {
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(find.byType(NavigationBar), findsOneWidget);
 
-      await tester.pump(
-        AnimatedVisibility.defaultExitDuration +
-            const Duration(milliseconds: 1),
-      );
+      await tester.pump(const Duration(milliseconds: 301));
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
       expect(tester.takeException(), isNull);

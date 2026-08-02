@@ -14,10 +14,9 @@ void main() {
         home: Scaffold(
           body: Row(
             children: [
-              AnimatedVisibility(
+              AnimatedVisibility.sidebar(
                 key: visibilityKey,
                 visible: visible,
-                axis: Axis.horizontal,
                 child: const SizedBox(width: 180, height: 80),
               ),
               Expanded(child: SizedBox(key: contentKey)),
@@ -40,6 +39,7 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 149));
     final nearEndContentWidth = tester.getSize(find.byKey(contentKey)).width;
+    expect(tester.getSize(find.byKey(visibilityKey)).width, greaterThan(0));
 
     await tester.pump(const Duration(milliseconds: 2));
 
@@ -61,10 +61,9 @@ void main() {
           body: Column(
             children: [
               Expanded(child: SizedBox(key: contentKey)),
-              AnimatedVisibility(
+              AnimatedVisibility.bottomNavigation(
                 key: visibilityKey,
                 visible: visible,
-                axis: Axis.vertical,
                 child: const SizedBox(width: 180, height: 80),
               ),
             ],
@@ -107,9 +106,8 @@ void main() {
         home: Scaffold(
           body: Row(
             children: [
-              AnimatedVisibility(
+              AnimatedVisibility.sidebar(
                 visible: visible,
-                axis: Axis.horizontal,
                 child: SizedBox(key: contentKey, width: 180, height: 80),
               ),
               const Expanded(child: SizedBox()),
@@ -133,10 +131,9 @@ void main() {
         home: Scaffold(
           body: Row(
             children: [
-              AnimatedVisibility(
+              AnimatedVisibility.sidebar(
                 key: visibilityKey,
                 visible: visible,
-                axis: Axis.horizontal,
                 child: SizedBox(key: contentKey, width: 180, height: 80),
               ),
               const Expanded(child: SizedBox()),
@@ -170,10 +167,9 @@ void main() {
         home: Scaffold(
           body: Row(
             children: [
-              AnimatedVisibility(
+              AnimatedVisibility.sidebar(
                 key: visibilityKey,
                 visible: visible,
-                axis: Axis.horizontal,
                 child: const SizedBox(width: 180, height: 80),
               ),
               const Expanded(child: SizedBox()),
@@ -198,6 +194,51 @@ void main() {
     );
   });
 
+  testWidgets('decelerates entry and accelerates exit', (tester) async {
+    final visibilityKey = GlobalKey();
+
+    Widget buildApp(bool visible) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Row(
+            children: [
+              AnimatedVisibility.sidebar(
+                key: visibilityKey,
+                visible: visible,
+                child: const SizedBox(width: 180, height: 80),
+              ),
+              const Expanded(child: SizedBox()),
+            ],
+          ),
+        ),
+      );
+    }
+
+    double opacity() {
+      final fadeTransition = find.descendant(
+        of: find.byKey(visibilityKey),
+        matching: find.byType(FadeTransition),
+      );
+      return tester.widget<FadeTransition>(fadeTransition).opacity.value;
+    }
+
+    await tester.pumpWidget(buildApp(false));
+    await tester.pumpWidget(buildApp(true));
+    await tester.pump(const Duration(milliseconds: 75));
+    expect(opacity(), greaterThan(0.6));
+
+    await tester.pump(const Duration(milliseconds: 225));
+    await tester.pumpWidget(buildApp(false));
+    await tester.pump(const Duration(milliseconds: 75));
+    expect(opacity(), greaterThan(0.75));
+
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(opacity(), greaterThan(0.5));
+
+    await tester.pump(const Duration(milliseconds: 74));
+    expect(opacity(), lessThan(0.1));
+  });
+
   testWidgets('horizontal content exits from right to left', (tester) async {
     final contentKey = GlobalKey();
 
@@ -206,9 +247,8 @@ void main() {
         home: Scaffold(
           body: Row(
             children: [
-              AnimatedVisibility(
+              AnimatedVisibility.sidebar(
                 visible: visible,
-                axis: Axis.horizontal,
                 child: SizedBox(key: contentKey, width: 180, height: 80),
               ),
               const Expanded(child: SizedBox()),
@@ -229,7 +269,9 @@ void main() {
     expect(exitingPosition.dy, closeTo(visiblePosition.dy, 0.01));
   });
 
-  testWidgets('vertical content exits from top to bottom', (tester) async {
+  testWidgets('bottom navigation remains visible while moving down', (
+    tester,
+  ) async {
     final contentKey = GlobalKey();
 
     Widget buildApp(bool visible) {
@@ -237,12 +279,11 @@ void main() {
         home: Scaffold(
           body: Column(
             children: [
-              AnimatedVisibility(
+              const Expanded(child: SizedBox()),
+              AnimatedVisibility.bottomNavigation(
                 visible: visible,
-                axis: Axis.vertical,
                 child: SizedBox(key: contentKey, width: 180, height: 80),
               ),
-              const Expanded(child: SizedBox()),
             ],
           ),
         ),
@@ -253,11 +294,12 @@ void main() {
     final visiblePosition = tester.getTopLeft(find.byKey(contentKey));
 
     await tester.pumpWidget(buildApp(false));
-    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 250));
 
     final exitingPosition = tester.getTopLeft(find.byKey(contentKey));
     expect(exitingPosition.dx, closeTo(visiblePosition.dx, 0.01));
     expect(exitingPosition.dy, greaterThan(visiblePosition.dy + 20));
+    expect(exitingPosition.dy, lessThan(600));
   });
 
   testWidgets('horizontal transition clips without narrowing its child', (
@@ -271,10 +313,9 @@ void main() {
         home: Scaffold(
           body: Row(
             children: [
-              AnimatedVisibility(
+              AnimatedVisibility.sidebar(
                 key: visibilityKey,
                 visible: visible,
-                axis: Axis.horizontal,
                 child: SizedBox(
                   key: contentKey,
                   width: 180,
@@ -316,10 +357,9 @@ void main() {
         home: Scaffold(
           body: Row(
             children: [
-              AnimatedVisibility(
+              AnimatedVisibility.sidebar(
                 key: visibilityKey,
                 visible: visible,
-                axis: Axis.horizontal,
                 child: const SizedBox(width: 180),
               ),
               const Expanded(child: SizedBox()),
@@ -345,4 +385,49 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('rapid reversal keeps a single child subtree', (tester) async {
+    final contentKey = GlobalKey<_StatefulContentState>();
+
+    Widget buildApp(bool visible) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Row(
+            children: [
+              AnimatedVisibility.sidebar(
+                visible: visible,
+                child: _StatefulContent(key: contentKey),
+              ),
+              const Expanded(child: SizedBox()),
+            ],
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildApp(true));
+    final initialState = contentKey.currentState;
+    await tester.pumpWidget(buildApp(false));
+    await tester.pump(const Duration(milliseconds: 60));
+    await tester.pumpWidget(buildApp(true));
+    await tester.pump();
+
+    expect(find.byKey(contentKey), findsOneWidget);
+    expect(contentKey.currentState, same(initialState));
+    expect(tester.takeException(), isNull);
+  });
+}
+
+class _StatefulContent extends StatefulWidget {
+  const _StatefulContent({super.key});
+
+  @override
+  State<_StatefulContent> createState() => _StatefulContentState();
+}
+
+class _StatefulContentState extends State<_StatefulContent> {
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(width: 180);
+  }
 }
