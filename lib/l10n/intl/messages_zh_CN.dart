@@ -227,6 +227,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerMode": MessageLookupByLibrary.simpleMessage("开发者模式"),
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage("开发者模式已启用。"),
     "direct": MessageLookupByLibrary.simpleMessage("直连"),
+    "directProfileUpdate": MessageLookupByLibrary.simpleMessage("订阅更新使用直连"),
+    "directProfileUpdateDesc": MessageLookupByLibrary.simpleMessage(
+      "更新订阅时使用 DIRECT，不经过当前代理",
+    ),
     "disableUDP": MessageLookupByLibrary.simpleMessage("禁用UDP"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("免责声明"),
     "disclaimerDesc": MessageLookupByLibrary.simpleMessage(

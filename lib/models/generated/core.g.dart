@@ -138,6 +138,34 @@ Map<String, dynamic> _$ChangeProxyParamsToJson(_ChangeProxyParams instance) =>
       'proxy-name': instance.proxyName,
     };
 
+_DownloadFileParams _$DownloadFileParamsFromJson(Map<String, dynamic> json) =>
+    _DownloadFileParams(
+      url: json['url'] as String,
+      path: json['path'] as String,
+      userAgent: json['user-agent'] as String,
+    );
+
+Map<String, dynamic> _$DownloadFileParamsToJson(_DownloadFileParams instance) =>
+    <String, dynamic>{
+      'url': instance.url,
+      'path': instance.path,
+      'user-agent': instance.userAgent,
+    };
+
+_DownloadFileResult _$DownloadFileResultFromJson(Map<String, dynamic> json) =>
+    _DownloadFileResult(
+      contentDisposition: json['content-disposition'] as String? ?? '',
+      subscriptionUserinfo: json['subscription-userinfo'] as String? ?? '',
+      error: json['error'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$DownloadFileResultToJson(_DownloadFileResult instance) =>
+    <String, dynamic>{
+      'content-disposition': instance.contentDisposition,
+      'subscription-userinfo': instance.subscriptionUserinfo,
+      'error': instance.error,
+    };
+
 _UpdateGeoDataParams _$UpdateGeoDataParamsFromJson(Map<String, dynamic> json) =>
     _UpdateGeoDataParams(
       geoType: json['geo-type'] as String,
@@ -277,6 +305,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.getTotalTraffic: 'getTotalTraffic',
   ActionMethod.resetTraffic: 'resetTraffic',
   ActionMethod.asyncTestDelay: 'asyncTestDelay',
+  ActionMethod.downloadFile: 'downloadFile',
   ActionMethod.getConnections: 'getConnections',
   ActionMethod.closeConnections: 'closeConnections',
   ActionMethod.resetConnections: 'resetConnections',

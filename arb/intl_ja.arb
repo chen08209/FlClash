@@ -550,5 +550,7 @@
   "geoSkipped": "{name} スキップ済み",
   "geoUpdated": "{name} 更新済み",
   "secondsCount": "{count} 秒",
-  "entriesCount": "{count} エントリ"
+  "entriesCount": "{count} エントリ",
+  "directProfileUpdate": "プロファイル更新に直接接続を使用",
+  "directProfileUpdateDesc": "プロファイル更新時に現在のプロキシではなく DIRECT を使用します"
 }

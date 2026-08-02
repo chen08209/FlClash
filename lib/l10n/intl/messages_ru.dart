@@ -330,6 +330,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Режим разработчика активирован.",
     ),
     "direct": MessageLookupByLibrary.simpleMessage("Прямой"),
+    "directProfileUpdate": MessageLookupByLibrary.simpleMessage(
+      "Прямое подключение для обновления профилей",
+    ),
+    "directProfileUpdateDesc": MessageLookupByLibrary.simpleMessage(
+      "Использовать DIRECT вместо текущего прокси при обновлении профилей",
+    ),
     "disableUDP": MessageLookupByLibrary.simpleMessage("Отключить UDP"),
     "disclaimer": MessageLookupByLibrary.simpleMessage(
       "Отказ от ответственности",

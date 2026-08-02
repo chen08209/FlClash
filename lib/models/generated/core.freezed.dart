@@ -1451,6 +1451,544 @@ as String,
 
 
 /// @nodoc
+mixin _$DownloadFileParams {
+
+ String get url; String get path;@JsonKey(name: 'user-agent') String get userAgent;
+/// Create a copy of DownloadFileParams
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DownloadFileParamsCopyWith<DownloadFileParams> get copyWith => _$DownloadFileParamsCopyWithImpl<DownloadFileParams>(this as DownloadFileParams, _$identity);
+
+  /// Serializes this DownloadFileParams to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DownloadFileParams&&(identical(other.url, url) || other.url == url)&&(identical(other.path, path) || other.path == path)&&(identical(other.userAgent, userAgent) || other.userAgent == userAgent));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,url,path,userAgent);
+
+@override
+String toString() {
+  return 'DownloadFileParams(url: $url, path: $path, userAgent: $userAgent)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DownloadFileParamsCopyWith<$Res>  {
+  factory $DownloadFileParamsCopyWith(DownloadFileParams value, $Res Function(DownloadFileParams) _then) = _$DownloadFileParamsCopyWithImpl;
+@useResult
+$Res call({
+ String url, String path,@JsonKey(name: 'user-agent') String userAgent
+});
+
+
+
+
+}
+/// @nodoc
+class _$DownloadFileParamsCopyWithImpl<$Res>
+    implements $DownloadFileParamsCopyWith<$Res> {
+  _$DownloadFileParamsCopyWithImpl(this._self, this._then);
+
+  final DownloadFileParams _self;
+  final $Res Function(DownloadFileParams) _then;
+
+/// Create a copy of DownloadFileParams
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? url = null,Object? path = null,Object? userAgent = null,}) {
+  return _then(_self.copyWith(
+url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,userAgent: null == userAgent ? _self.userAgent : userAgent // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DownloadFileParams].
+extension DownloadFileParamsPatterns on DownloadFileParams {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DownloadFileParams value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DownloadFileParams() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DownloadFileParams value)  $default,){
+final _that = this;
+switch (_that) {
+case _DownloadFileParams():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DownloadFileParams value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DownloadFileParams() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String url,  String path, @JsonKey(name: 'user-agent')  String userAgent)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DownloadFileParams() when $default != null:
+return $default(_that.url,_that.path,_that.userAgent);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String url,  String path, @JsonKey(name: 'user-agent')  String userAgent)  $default,) {final _that = this;
+switch (_that) {
+case _DownloadFileParams():
+return $default(_that.url,_that.path,_that.userAgent);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String url,  String path, @JsonKey(name: 'user-agent')  String userAgent)?  $default,) {final _that = this;
+switch (_that) {
+case _DownloadFileParams() when $default != null:
+return $default(_that.url,_that.path,_that.userAgent);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _DownloadFileParams implements DownloadFileParams {
+  const _DownloadFileParams({required this.url, required this.path, @JsonKey(name: 'user-agent') required this.userAgent});
+  factory _DownloadFileParams.fromJson(Map<String, dynamic> json) => _$DownloadFileParamsFromJson(json);
+
+@override final  String url;
+@override final  String path;
+@override@JsonKey(name: 'user-agent') final  String userAgent;
+
+/// Create a copy of DownloadFileParams
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DownloadFileParamsCopyWith<_DownloadFileParams> get copyWith => __$DownloadFileParamsCopyWithImpl<_DownloadFileParams>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$DownloadFileParamsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DownloadFileParams&&(identical(other.url, url) || other.url == url)&&(identical(other.path, path) || other.path == path)&&(identical(other.userAgent, userAgent) || other.userAgent == userAgent));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,url,path,userAgent);
+
+@override
+String toString() {
+  return 'DownloadFileParams(url: $url, path: $path, userAgent: $userAgent)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DownloadFileParamsCopyWith<$Res> implements $DownloadFileParamsCopyWith<$Res> {
+  factory _$DownloadFileParamsCopyWith(_DownloadFileParams value, $Res Function(_DownloadFileParams) _then) = __$DownloadFileParamsCopyWithImpl;
+@override @useResult
+$Res call({
+ String url, String path,@JsonKey(name: 'user-agent') String userAgent
+});
+
+
+
+
+}
+/// @nodoc
+class __$DownloadFileParamsCopyWithImpl<$Res>
+    implements _$DownloadFileParamsCopyWith<$Res> {
+  __$DownloadFileParamsCopyWithImpl(this._self, this._then);
+
+  final _DownloadFileParams _self;
+  final $Res Function(_DownloadFileParams) _then;
+
+/// Create a copy of DownloadFileParams
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? url = null,Object? path = null,Object? userAgent = null,}) {
+  return _then(_DownloadFileParams(
+url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,userAgent: null == userAgent ? _self.userAgent : userAgent // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$DownloadFileResult {
+
+@JsonKey(name: 'content-disposition') String get contentDisposition;@JsonKey(name: 'subscription-userinfo') String get subscriptionUserinfo; String get error;
+/// Create a copy of DownloadFileResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DownloadFileResultCopyWith<DownloadFileResult> get copyWith => _$DownloadFileResultCopyWithImpl<DownloadFileResult>(this as DownloadFileResult, _$identity);
+
+  /// Serializes this DownloadFileResult to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DownloadFileResult&&(identical(other.contentDisposition, contentDisposition) || other.contentDisposition == contentDisposition)&&(identical(other.subscriptionUserinfo, subscriptionUserinfo) || other.subscriptionUserinfo == subscriptionUserinfo)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,contentDisposition,subscriptionUserinfo,error);
+
+@override
+String toString() {
+  return 'DownloadFileResult(contentDisposition: $contentDisposition, subscriptionUserinfo: $subscriptionUserinfo, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DownloadFileResultCopyWith<$Res>  {
+  factory $DownloadFileResultCopyWith(DownloadFileResult value, $Res Function(DownloadFileResult) _then) = _$DownloadFileResultCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'content-disposition') String contentDisposition,@JsonKey(name: 'subscription-userinfo') String subscriptionUserinfo, String error
+});
+
+
+
+
+}
+/// @nodoc
+class _$DownloadFileResultCopyWithImpl<$Res>
+    implements $DownloadFileResultCopyWith<$Res> {
+  _$DownloadFileResultCopyWithImpl(this._self, this._then);
+
+  final DownloadFileResult _self;
+  final $Res Function(DownloadFileResult) _then;
+
+/// Create a copy of DownloadFileResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? contentDisposition = null,Object? subscriptionUserinfo = null,Object? error = null,}) {
+  return _then(_self.copyWith(
+contentDisposition: null == contentDisposition ? _self.contentDisposition : contentDisposition // ignore: cast_nullable_to_non_nullable
+as String,subscriptionUserinfo: null == subscriptionUserinfo ? _self.subscriptionUserinfo : subscriptionUserinfo // ignore: cast_nullable_to_non_nullable
+as String,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DownloadFileResult].
+extension DownloadFileResultPatterns on DownloadFileResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DownloadFileResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DownloadFileResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DownloadFileResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _DownloadFileResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DownloadFileResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DownloadFileResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'content-disposition')  String contentDisposition, @JsonKey(name: 'subscription-userinfo')  String subscriptionUserinfo,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DownloadFileResult() when $default != null:
+return $default(_that.contentDisposition,_that.subscriptionUserinfo,_that.error);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'content-disposition')  String contentDisposition, @JsonKey(name: 'subscription-userinfo')  String subscriptionUserinfo,  String error)  $default,) {final _that = this;
+switch (_that) {
+case _DownloadFileResult():
+return $default(_that.contentDisposition,_that.subscriptionUserinfo,_that.error);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'content-disposition')  String contentDisposition, @JsonKey(name: 'subscription-userinfo')  String subscriptionUserinfo,  String error)?  $default,) {final _that = this;
+switch (_that) {
+case _DownloadFileResult() when $default != null:
+return $default(_that.contentDisposition,_that.subscriptionUserinfo,_that.error);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _DownloadFileResult implements DownloadFileResult {
+  const _DownloadFileResult({@JsonKey(name: 'content-disposition') this.contentDisposition = '', @JsonKey(name: 'subscription-userinfo') this.subscriptionUserinfo = '', this.error = ''});
+  factory _DownloadFileResult.fromJson(Map<String, dynamic> json) => _$DownloadFileResultFromJson(json);
+
+@override@JsonKey(name: 'content-disposition') final  String contentDisposition;
+@override@JsonKey(name: 'subscription-userinfo') final  String subscriptionUserinfo;
+@override@JsonKey() final  String error;
+
+/// Create a copy of DownloadFileResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DownloadFileResultCopyWith<_DownloadFileResult> get copyWith => __$DownloadFileResultCopyWithImpl<_DownloadFileResult>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$DownloadFileResultToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DownloadFileResult&&(identical(other.contentDisposition, contentDisposition) || other.contentDisposition == contentDisposition)&&(identical(other.subscriptionUserinfo, subscriptionUserinfo) || other.subscriptionUserinfo == subscriptionUserinfo)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,contentDisposition,subscriptionUserinfo,error);
+
+@override
+String toString() {
+  return 'DownloadFileResult(contentDisposition: $contentDisposition, subscriptionUserinfo: $subscriptionUserinfo, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DownloadFileResultCopyWith<$Res> implements $DownloadFileResultCopyWith<$Res> {
+  factory _$DownloadFileResultCopyWith(_DownloadFileResult value, $Res Function(_DownloadFileResult) _then) = __$DownloadFileResultCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'content-disposition') String contentDisposition,@JsonKey(name: 'subscription-userinfo') String subscriptionUserinfo, String error
+});
+
+
+
+
+}
+/// @nodoc
+class __$DownloadFileResultCopyWithImpl<$Res>
+    implements _$DownloadFileResultCopyWith<$Res> {
+  __$DownloadFileResultCopyWithImpl(this._self, this._then);
+
+  final _DownloadFileResult _self;
+  final $Res Function(_DownloadFileResult) _then;
+
+/// Create a copy of DownloadFileResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? contentDisposition = null,Object? subscriptionUserinfo = null,Object? error = null,}) {
+  return _then(_DownloadFileResult(
+contentDisposition: null == contentDisposition ? _self.contentDisposition : contentDisposition // ignore: cast_nullable_to_non_nullable
+as String,subscriptionUserinfo: null == subscriptionUserinfo ? _self.subscriptionUserinfo : subscriptionUserinfo // ignore: cast_nullable_to_non_nullable
+as String,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$UpdateGeoDataParams {
 
 @JsonKey(name: 'geo-type') String get geoType;@JsonKey(name: 'geo-name') String get geoName;

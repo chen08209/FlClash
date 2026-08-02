@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
@@ -40,6 +42,52 @@ var (
 	mBatch, _     = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 	debugError    = false
 )
+
+const tunReadyPollInterval = 100 * time.Millisecond
+
+func waitForTunInterface(ctx context.Context) error {
+	return waitForTunInterfaceWithInterval(ctx, tunReadyPollInterval)
+}
+
+func waitForTunInterfaceWithInterval(ctx context.Context, interval time.Duration) error {
+	if runtime.GOOS != "linux" {
+		return nil
+	}
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		if isTunInterfaceReady() {
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+func isTunInterfaceReady() bool {
+	runLock.Lock()
+	needsInterface := currentConfig != nil &&
+		currentConfig.General != nil &&
+		currentConfig.General.Tun.Enable &&
+		currentConfig.General.Tun.AutoDetectInterface
+	runLock.Unlock()
+	if !needsInterface {
+		return true
+	}
+
+	finder := dialer.DefaultInterfaceFinder.Load()
+	if finder == nil {
+		return false
+	}
+	name := finder.FindInterfaceName(netip.IPv4Unspecified())
+	return name != "" && name != "<invalid>"
+}
 
 func getExternalProvidersRaw() map[string]cp.Provider {
 	eps := make(map[string]cp.Provider)
@@ -230,6 +278,7 @@ func updateConfig(params *UpdateParams) {
 	if params.Tun != nil {
 		general.Tun.Enable = params.Tun.Enable
 		general.Tun.AutoRoute = *params.Tun.AutoRoute
+		general.Tun.AutoDetectInterface = *params.Tun.AutoDetectInterface
 		general.Tun.Device = *params.Tun.Device
 		general.Tun.RouteAddress = *params.Tun.RouteAddress
 		general.Tun.DNSHijack = *params.Tun.DNSHijack

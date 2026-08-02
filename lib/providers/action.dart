@@ -373,7 +373,12 @@ class SetupAction extends _$SetupAction {
     FutureOr Function()? onUpdated,
   }) async {
     var profile = ref.read(currentProfileProvider);
-    final nextProfile = await profile?.checkAndUpdateAndCopy();
+    final useDirectForProfileUpdate = ref
+        .read(networkSettingProvider)
+        .useDirectForProfileUpdate;
+    final nextProfile = await profile?.checkAndUpdateAndCopy(
+      useDirect: useDirectForProfileUpdate,
+    );
     if (nextProfile != null) {
       profile = nextProfile;
       ref.read(profilesProvider.notifier).put(nextProfile);
@@ -898,7 +903,10 @@ class ProfilesAction extends _$ProfilesAction {
         ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = true;
       }
       ref.read(profilesProvider.notifier).put(profile);
-      final newProfile = await profile.update();
+      final useDirect = ref
+          .read(networkSettingProvider)
+          .useDirectForProfileUpdate;
+      final newProfile = await profile.update(useDirect: useDirect);
       ref.read(profilesProvider.notifier).put(newProfile);
       if (profile.id == ref.read(currentProfileIdProvider)) {
         ref
@@ -936,7 +944,10 @@ class ProfilesAction extends _$ProfilesAction {
     final profile = await globalState.loadingRun(
       tag: LoadingTag.profiles,
       () async {
-        return Profile.normal(url: url).update();
+        final useDirect = ref
+            .read(networkSettingProvider)
+            .useDirectForProfileUpdate;
+        return Profile.normal(url: url).update(useDirect: useDirect);
       },
       title: currentAppLocalizations.addProfile,
     );

@@ -1,0 +1,101 @@
+diff --git a/packages/flutter_app_packager/lib/src/makers/appimage/make_appimage_config.dart b/packages/flutter_app_packager/lib/src/makers/appimage/make_appimage_config.dart
+index 95504e9..3c02bc6 100644
+--- a/packages/flutter_app_packager/lib/src/makers/appimage/make_appimage_config.dart
++++ b/packages/flutter_app_packager/lib/src/makers/appimage/make_appimage_config.dart
+@@ -39,6 +39,7 @@ class MakeAppImageConfig extends MakeConfig {
+     this.actions = const [],
+     this.include = const [],
+     this.startupNotify = true,
++    this.startupWMClass,
+     this.genericName = 'A Flutter Application',
+   });
+   factory MakeAppImageConfig.fromJson(Map<String, dynamic> map) {
+@@ -50,6 +51,7 @@ class MakeAppImageConfig extends MakeConfig {
+       keywords: (map['keywords'] as List<dynamic>? ?? []).cast<String>(),
+       categories: (map['categories'] as List<dynamic>? ?? []).cast<String>(),
+       startupNotify: map['startup_notify'] as bool? ?? false,
++      startupWMClass: map['startup_wm_class'] as String?,
+       genericName: map['generic_name'] as String? ?? 'A Flutter Application',
+       actions: (map['actions'] as List? ?? [])
+           .map(
+@@ -72,6 +74,7 @@ class MakeAppImageConfig extends MakeConfig {
+   final List<String> categories;
+   final List<AppImageAction> actions;
+   final bool startupNotify;
++  final String? startupWMClass;
+   final String genericName;
+   final String displayName;
+   final List<String> include;
+@@ -86,6 +89,7 @@ class MakeAppImageConfig extends MakeConfig {
+       'Icon': appName,
+       'Type': 'Application',
+       'StartupNotify': startupNotify ? 'true' : 'false',
++      if (startupWMClass != null) 'StartupWMClass': startupWMClass!,
+       if (categories.isNotEmpty) 'Categories': categories.join(';'),
+       if (keywords.isNotEmpty) 'Keywords': keywords.join(';'),
+       if (this.actions.isNotEmpty)
+diff --git a/packages/flutter_app_packager/lib/src/makers/deb/make_deb_config.dart b/packages/flutter_app_packager/lib/src/makers/deb/make_deb_config.dart
+index 7cb3d27..ab46d6c 100644
+--- a/packages/flutter_app_packager/lib/src/makers/deb/make_deb_config.dart
++++ b/packages/flutter_app_packager/lib/src/makers/deb/make_deb_config.dart
+@@ -128,4 +128,5 @@ class MakeDebConfig extends MakeLinuxPackageConfig {
+     this.startupNotify = true,
++    this.startupWMClass,
+     this.essential = false,
+     List<String>? postinstallScripts,
+     List<String>? postuninstallScripts,
+@@ -221,5 +222,6 @@ class MakeDebConfig extends MakeLinuxPackageConfig {
+       genericName: map['generic_name'],
+       startupNotify: map['startup_notify'],
++      startupWMClass: map['startup_wm_class'],
+       installedSize: map['installed_size'],
+       icon: map['icon'],
+     );
+@@ -236,6 +238,7 @@ class MakeDebConfig extends MakeLinuxPackageConfig {
+   String? icon;
+   String? genericName;
+   bool? startupNotify;
++  String? startupWMClass;
+   List<String>? coAuthors;
+   List<String>? dependencies;
+   List<String>? buildDependenciesIndep;
+@@ -314,5 +317,6 @@ class MakeDebConfig extends MakeLinuxPackageConfig {
+             : null,
+         'StartupNotify': startupNotify,
++        'StartupWMClass': startupWMClass,
+       }..removeWhere((key, value) => value == null),
+     };
+   }
+diff --git a/packages/flutter_app_packager/lib/src/makers/rpm/make_rpm_config.dart b/packages/flutter_app_packager/lib/src/makers/rpm/make_rpm_config.dart
+index ee20c22..cd84a41 100644
+--- a/packages/flutter_app_packager/lib/src/makers/rpm/make_rpm_config.dart
++++ b/packages/flutter_app_packager/lib/src/makers/rpm/make_rpm_config.dart
+@@ -8,5 +8,6 @@ class MakeRPMConfig extends MakeConfig {
+     required this.displayName,
+     this.startupNotify = true,
++    this.startupWMClass,
+     this.actions,
+     this.categories,
+     this.genericName,
+@@ -51,5 +52,6 @@ class MakeRPMConfig extends MakeConfig {
+       genericName: json['generic_name'] as String?,
+       startupNotify: json['startup_notify'] as bool?,
++      startupWMClass: json['startup_wm_class'] as String?,
+       keywords: (json['keywords'] as List<dynamic>?)?.cast<String>(),
+       supportedMimeType:
+           (json['supported_mime_type'] as List<dynamic>?)?.cast<String>(),
+@@ -70,6 +72,7 @@ class MakeRPMConfig extends MakeConfig {
+   String? icon;
+   String? genericName;
+   bool? startupNotify;
++  String? startupWMClass;
+   List<String>? keywords;
+   List<String>? supportedMimeType;
+   List<String>? actions;
+@@ -174,5 +177,6 @@ class MakeRPMConfig extends MakeConfig {
+             : null,
+         'StartupNotify': startupNotify,
++        'StartupWMClass': startupWMClass,
+       }..removeWhere((key, value) => value == null),
+     };
+   }

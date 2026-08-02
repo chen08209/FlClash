@@ -173,6 +173,32 @@ class AutoSetSystemDnsItem extends ConsumerWidget {
   }
 }
 
+class DirectProfileUpdateItem extends ConsumerWidget {
+  const DirectProfileUpdateItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
+    final useDirect = ref.watch(
+      networkSettingProvider.select((state) => state.useDirectForProfileUpdate),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.directProfileUpdate),
+      subtitle: Text(appLocalizations.directProfileUpdateDesc),
+      delegate: SwitchDelegate(
+        value: useDirect,
+        onChanged: (bool value) {
+          ref
+              .read(networkSettingProvider.notifier)
+              .update(
+                (state) => state.copyWith(useDirectForProfileUpdate: value),
+              );
+        },
+      ),
+    );
+  }
+}
+
 class TunStackItem extends ConsumerWidget {
   const TunStackItem({super.key});
 
@@ -357,6 +383,7 @@ class NetworkListView extends StatelessWidget {
       ...generateSection(
         title: appLocalizations.options,
         items: [
+          const DirectProfileUpdateItem(),
           if (system.isDesktop) const TUNItem(),
           if (system.isMacOS) const AutoSetSystemDnsItem(),
           const TunStackItem(),

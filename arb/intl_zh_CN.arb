@@ -550,5 +550,7 @@
   "geoSkipped": "{name} 已跳过",
   "geoUpdated": "{name} 已更新",
   "secondsCount": "{count} 秒",
-  "entriesCount": "{count} 个条目"
+  "entriesCount": "{count} 个条目",
+  "directProfileUpdate": "订阅更新使用直连",
+  "directProfileUpdateDesc": "更新订阅时使用 DIRECT，不经过当前代理"
 }

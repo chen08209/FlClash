@@ -73,6 +73,34 @@ void main() {
     });
   });
 
+  group('DownloadFile', () {
+    test('params use kebab-case user-agent key', () {
+      const params = DownloadFileParams(
+        url: 'https://example.com/profile',
+        path: '/tmp/profile.yaml',
+        userAgent: 'FlClash/Test',
+      );
+
+      expect(params.toJson(), {
+        'url': 'https://example.com/profile',
+        'path': '/tmp/profile.yaml',
+        'user-agent': 'FlClash/Test',
+      });
+    });
+
+    test('result parses response headers and error', () {
+      final result = DownloadFileResult.fromJson({
+        'content-disposition': 'attachment; filename=profile.yaml',
+        'subscription-userinfo': 'upload=1; total=10',
+        'error': '',
+      });
+
+      expect(result.contentDisposition, 'attachment; filename=profile.yaml');
+      expect(result.subscriptionUserinfo, 'upload=1; total=10');
+      expect(result.error, isEmpty);
+    });
+  });
+
   group('UpdateGeoDataParams', () {
     test('fromJson with snake-case keys', () {
       final json = {'geo-type': 'mmdb', 'geo-name': 'Country'};

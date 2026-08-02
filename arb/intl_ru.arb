@@ -550,5 +550,7 @@
   "geoSkipped": "{name} пропущено",
   "geoUpdated": "{name} обновлено",
   "secondsCount": "{count} секунд",
-  "entriesCount": "{count} записей"
+  "entriesCount": "{count} записей",
+  "directProfileUpdate": "Прямое подключение для обновления профилей",
+  "directProfileUpdateDesc": "Использовать DIRECT вместо текущего прокси при обновлении профилей"
 }

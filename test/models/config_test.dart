@@ -223,6 +223,7 @@ void main() {
       expect(props.routeMode, RouteMode.config);
       expect(props.autoSetSystemDns, true);
       expect(props.appendSystemDns, false);
+      expect(props.useDirectForProfileUpdate, false);
     });
 
     test('round-trip with custom values', () {
@@ -230,11 +231,27 @@ void main() {
         systemProxy: false,
         bypassDomain: ['example.com'],
         routeMode: RouteMode.bypassPrivate,
+        useDirectForProfileUpdate: true,
       );
       final restored = roundTrip(() => props.toJson(), NetworkProps.fromJson);
       expect(restored.systemProxy, false);
       expect(restored.bypassDomain, ['example.com']);
       expect(restored.routeMode, RouteMode.bypassPrivate);
+      expect(restored.useDirectForProfileUpdate, true);
+    });
+  });
+
+  group('Tun', () {
+    test('serializes auto-detect-interface', () {
+      final json = const Tun(autoDetectInterface: true).toJson();
+
+      expect(json['auto-detect-interface'], true);
+    });
+
+    test('enables interface detection for Linux desktop TUN', () {
+      final tun = const Tun().getRealTun(RouteMode.config);
+
+      expect(tun.autoDetectInterface, system.isLinux);
     });
   });
 
