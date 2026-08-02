@@ -4,10 +4,22 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/url"
+	"os"
+	"runtime"
+	"runtime/debug"
+	"strconv"
+	"time"
+
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/common/observable"
 	"github.com/metacubex/mihomo/common/utils"
+	mihomoHttp "github.com/metacubex/mihomo/component/http"
 	"github.com/metacubex/mihomo/component/mmdb"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/component/updater"
@@ -21,12 +33,8 @@ import (
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 	"golang.org/x/exp/slices"
-	"net"
-	"os"
-	"runtime"
-	"runtime/debug"
-	"strconv"
-	"time"
+
+	"github.com/metacubex/http"
 )
 
 var (
@@ -245,6 +253,12 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			testUrl = params.TestUrl
 		}
 		delayData.Url = testUrl
+		if err := waitForTunInterface(ctx); err != nil {
+			delayData.Value = -1
+			data, _ := json.Marshal(delayData)
+			fn(string(data))
+			return false, nil
+		}
 		delay, err := proxy.URLTest(ctx, testUrl, expectedStatus)
 		if err != nil || delay == 0 {
 			delayData.Value = -1
@@ -258,6 +272,99 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 		fn(string(data))
 		return false, nil
 	})
+}
+
+func handleDownloadFile(paramsString string, fn func(string)) {
+	go func() {
+		result, err := downloadFile(paramsString)
+		if err != nil {
+			result.Error = err.Error()
+		}
+		data, err := json.Marshal(result)
+		if err != nil {
+			fn(`{"error":"failed to encode download result"}`)
+			return
+		}
+		fn(string(data))
+	}()
+}
+
+func downloadFile(paramsString string) (result *DownloadFileResult, err error) {
+	params := &DownloadFileParams{}
+	result = &DownloadFileResult{}
+	if err = json.Unmarshal([]byte(paramsString), params); err != nil {
+		return result, err
+	}
+	if params.URL == "" || params.Path == "" {
+		return result, fmt.Errorf("download url and path are required")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+	headers := map[string][]string{}
+	if params.UserAgent != "" {
+		headers["User-Agent"] = []string{params.UserAgent}
+	}
+	if err = waitForTunInterface(ctx); err != nil {
+		return result, fmt.Errorf("direct interface is not ready: %w", err)
+	}
+	resp, err := mihomoHttp.HttpRequest(
+		ctx,
+		params.URL,
+		http.MethodGet,
+		headers,
+		nil,
+		mihomoHttp.WithSpecialProxy("DIRECT"),
+	)
+	if err != nil {
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			return result, fmt.Errorf("download request failed: %w", urlErr.Err)
+		}
+		return result, fmt.Errorf("download request failed")
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return result, fmt.Errorf("download failed with status %d", resp.StatusCode)
+	}
+
+	fileCreated := false
+	defer func() {
+		if err == nil || !fileCreated {
+			return
+		}
+		if removeErr := os.Remove(params.Path); removeErr != nil &&
+			!errors.Is(removeErr, os.ErrNotExist) {
+			err = errors.Join(
+				err,
+				fmt.Errorf("remove partial download: %w", removeErr),
+			)
+		}
+	}()
+
+	file, err := os.OpenFile(params.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	if err != nil {
+		return result, err
+	}
+	fileCreated = true
+	_, copyErr := io.Copy(file, resp.Body)
+	closeErr := file.Close()
+	if copyErr != nil {
+		copyErr = fmt.Errorf("write download file: %w", copyErr)
+	}
+	if closeErr != nil {
+		closeErr = fmt.Errorf("close download file: %w", closeErr)
+	}
+	if err = errors.Join(copyErr, closeErr); err != nil {
+		return result, err
+	}
+	if err = restoreFileOwnership(params.Path); err != nil {
+		return result, fmt.Errorf("restore download file ownership: %w", err)
+	}
+
+	result.ContentDisposition = resp.Header.Get("Content-Disposition")
+	result.SubscriptionUserinfo = resp.Header.Get("Subscription-Userinfo")
+	return result, nil
 }
 
 func handleGetConnections() string {

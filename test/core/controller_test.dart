@@ -44,6 +44,13 @@ void main() {
     registerFallbackValue(
       const UpdateGeoDataParams(geoType: 't', geoName: 'n'),
     );
+    registerFallbackValue(
+      const DownloadFileParams(
+        url: 'https://example.com/profile',
+        path: '/tmp/profile.yaml',
+        userAgent: 'FlClash/Test',
+      ),
+    );
   });
 
   setUp(() {
@@ -113,6 +120,51 @@ void main() {
       when(() => mock.updateConfig(params)).thenAnswer((_) async => 'ok');
       final result = await controller.updateConfig(params);
       expect(result, 'ok');
+    });
+  });
+
+  group('downloadFile', () {
+    const params = DownloadFileParams(
+      url: 'https://example.com/profile',
+      path: '/tmp/profile.yaml',
+      userAgent: 'FlClash/Test',
+    );
+
+    test('parses successful response', () async {
+      when(() => mock.downloadFile(params)).thenAnswer(
+        (_) async => json.encode({
+          'content-disposition': 'attachment; filename=profile.yaml',
+          'subscription-userinfo': 'upload=1; total=10',
+          'error': '',
+        }),
+      );
+
+      final result = await controller.downloadFile(params);
+
+      expect(result.contentDisposition, 'attachment; filename=profile.yaml');
+      expect(result.subscriptionUserinfo, 'upload=1; total=10');
+      verify(() => mock.downloadFile(params)).called(1);
+    });
+
+    test('throws core download errors', () async {
+      when(() => mock.downloadFile(params)).thenAnswer(
+        (_) async => json.encode({
+          'content-disposition': '',
+          'subscription-userinfo': '',
+          'error': 'download failed',
+        }),
+      );
+
+      await expectLater(
+        controller.downloadFile(params),
+        throwsA('download failed'),
+      );
+    });
+
+    test('throws for an empty core response', () async {
+      when(() => mock.downloadFile(params)).thenAnswer((_) async => '');
+
+      await expectLater(controller.downloadFile(params), throwsA(anything));
     });
   });
 

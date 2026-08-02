@@ -550,5 +550,7 @@
   "geoSkipped": "{name} skipped",
   "geoUpdated": "{name} updated",
   "secondsCount": "{count} seconds",
-  "entriesCount": "{count} entries"
+  "entriesCount": "{count} entries",
+  "directProfileUpdate": "Use direct connection for profile updates",
+  "directProfileUpdateDesc": "Use DIRECT instead of the current proxy when updating profiles"
 }

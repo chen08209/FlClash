@@ -23,6 +23,10 @@ const _hostPlatform = {
   'windows': 'windows',
 };
 
+const _flutterDistributorUrl =
+    'https://github.com/chen08209/flutter_distributor.git';
+const _flutterDistributorRef = 'FlClash';
+
 Future<void> main(List<String> args) async {
   final parser = createSetupArgParser();
 
@@ -156,22 +160,8 @@ Future<int> _package(
   final depExit = await _ensureDependencies(platform, arch);
   if (depExit != 0) return depExit;
 
-  final activateResult = await Process.run('dart', [
-    'pub',
-    'global',
-    'activate',
-    '-s',
-    'git',
-    'https://github.com/chen08209/flutter_distributor.git',
-    '--git-ref',
-    'FlClash',
-    '--git-path',
-    'packages/flutter_distributor',
-  ]);
-  if (activateResult.exitCode != 0) {
-    stderr.write(activateResult.stderr);
-    return activateResult.exitCode;
-  }
+  final activateExit = await _activateFlutterDistributor(platform, rootDir);
+  if (activateExit != 0) return activateExit;
 
   final process = await Process.start(
     'flutter_distributor',
@@ -201,6 +191,73 @@ Future<int> _package(
   });
   final exitCode = await process.exitCode;
   return exitCode;
+}
+
+Future<int> _activateFlutterDistributor(String platform, String rootDir) async {
+  if (platform != 'linux') {
+    final result = await Process.run('dart', [
+      'pub',
+      'global',
+      'activate',
+      '-s',
+      'git',
+      _flutterDistributorUrl,
+      '--git-ref',
+      _flutterDistributorRef,
+      '--git-path',
+      'packages/flutter_distributor',
+    ]);
+    if (result.exitCode != 0) stderr.write(result.stderr);
+    return result.exitCode;
+  }
+
+  final sourceDir = Directory(
+    p.join(rootDir, '.dart_tool', 'flutter_distributor'),
+  );
+  if (sourceDir.existsSync()) {
+    sourceDir.deleteSync(recursive: true);
+  }
+
+  final cloneResult = await Process.run('git', [
+    'clone',
+    '--depth',
+    '1',
+    '--branch',
+    _flutterDistributorRef,
+    _flutterDistributorUrl,
+    sourceDir.path,
+  ]);
+  if (cloneResult.exitCode != 0) {
+    stderr.write(cloneResult.stderr);
+    return cloneResult.exitCode;
+  }
+
+  final patchFile = p.join(
+    rootDir,
+    'linux',
+    'packaging',
+    'flutter_distributor_startup_wm_class.patch',
+  );
+  final patchResult = await Process.run('git', [
+    'apply',
+    patchFile,
+  ], workingDirectory: sourceDir.path);
+  if (patchResult.exitCode != 0) {
+    stderr.writeln('flutter_distributor patch failed.');
+    stderr.write(patchResult.stderr);
+    return patchResult.exitCode;
+  }
+
+  final result = await Process.run('dart', [
+    'pub',
+    'global',
+    'activate',
+    '-s',
+    'path',
+    p.join(sourceDir.path, 'packages', 'flutter_distributor'),
+  ]);
+  if (result.exitCode != 0) stderr.write(result.stderr);
+  return result.exitCode;
 }
 
 Future<String?> _buildGoCore(String rootDir) async {

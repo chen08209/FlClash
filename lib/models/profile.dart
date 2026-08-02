@@ -4,9 +4,11 @@ import 'dart:typed_data';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/state.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'clash_config.dart';
+import 'core.dart';
 
 part 'generated/profile.freezed.dart';
 part 'generated/profile.g.dart';
@@ -24,12 +26,18 @@ abstract class SubscriptionInfo with _$SubscriptionInfo {
       _$SubscriptionInfoFromJson(json);
 
   factory SubscriptionInfo.formHString(String? info) {
-    if (info == null) return const SubscriptionInfo();
-    final list = info.split(';');
-    final Map<String, int?> map = {};
-    for (final i in list) {
-      final keyValue = i.trim().split('=');
-      map[keyValue[0]] = int.tryParse(keyValue[1]);
+    if (info == null || info.trim().isEmpty) {
+      return const SubscriptionInfo();
+    }
+    final Map<String, int> map = {};
+    for (final item in info.split(';')) {
+      final separatorIndex = item.indexOf('=');
+      if (separatorIndex <= 0) continue;
+      final key = item.substring(0, separatorIndex).trim();
+      final value = int.tryParse(item.substring(separatorIndex + 1).trim());
+      if (key.isNotEmpty && value != null) {
+        map[key] = value;
+      }
     }
     return SubscriptionInfo(
       upload: map['upload'] ?? 0,
@@ -161,13 +169,13 @@ extension ProfileExtension on Profile {
 
   String get updatingKey => 'profile_$id';
 
-  Future<Profile?> checkAndUpdateAndCopy() async {
+  Future<Profile?> checkAndUpdateAndCopy({bool useDirect = false}) async {
     final mFile = await _getFile(false);
     final isExists = await mFile.exists();
     if (isExists || url.isEmpty) {
       return null;
     }
-    return update();
+    return update(useDirect: useDirect);
   }
 
   Future<File> _getFile([bool autoCreate = true]) async {
@@ -178,54 +186,84 @@ extension ProfileExtension on Profile {
       return file.create(recursive: true);
     }
     return file;
-    // final oldPath = await appPath.getProfilePath(id);
-    // final newPath = await appPath.getProfilePath(fileName);
-    // final oldFile = oldPath == newPath ? null : File(oldPath);
-    // final oldIsExists = await oldFile?.exists() ?? false;
-    // if (oldIsExists) {
-    //   return await oldFile!.rename(newPath);
-    // }
-    // final file = File(newPath);
-    // final isExists = await file.exists();
-    // if (!isExists && autoCreate) {
-    //   return await file.create(recursive: true);
-    // }
-    // return file;
   }
 
   Future<File> get file async {
     return _getFile();
   }
 
-  Future<Profile> update() async {
+  Future<Profile> update({bool useDirect = false}) async {
+    if (useDirect) {
+      return updateDirect(
+        controller: coreController,
+        userAgent: globalState.ua,
+      );
+    }
     final response = await request.getFileResponseForUrl(url);
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
+    return _withDownloadMetadata(
+      disposition: disposition,
+      userinfo: userinfo,
+    ).saveFile(response.data ?? Uint8List.fromList([]));
+  }
+
+  @visibleForTesting
+  Future<Profile> updateDirect({
+    required CoreController controller,
+    required String userAgent,
+  }) async {
+    final path = await appPath.tempFilePath;
+    final tempFile = File(path);
+    try {
+      final result = await controller.downloadFile(
+        DownloadFileParams(url: url, path: path, userAgent: userAgent),
+      );
+      return await _withDownloadMetadata(
+        disposition: result.contentDisposition,
+        userinfo: result.subscriptionUserinfo,
+      )._saveFileWithPath(path, controller: controller);
+    } finally {
+      try {
+        await tempFile.safeDelete();
+      } on FileSystemException {
+        final message = await controller.deleteFile(path);
+        if (message.isNotEmpty) {
+          throw message;
+        }
+      }
+    }
+  }
+
+  Future<Profile> saveFile(Uint8List bytes) async {
+    final path = await appPath.tempFilePath;
+    final tempFile = File(path);
+    try {
+      await tempFile.safeWriteAsBytes(bytes);
+      return await _saveFileWithPath(path, controller: coreController);
+    } finally {
+      await tempFile.safeDelete();
+    }
+  }
+
+  Profile _withDownloadMetadata({
+    required String? disposition,
+    required String? userinfo,
+  }) {
     return copyWith(
       label: label.takeFirstValid([
         utils.getFileNameForDisposition(disposition),
         id.toString(),
       ]),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
-    ).saveFile(response.data ?? Uint8List.fromList([]));
+    );
   }
 
-  Future<Profile> saveFile(Uint8List bytes) async {
-    final path = await appPath.tempFilePath;
-    final tempFile = File(path);
-    await tempFile.safeWriteAsBytes(bytes);
-    final message = await coreController.validateConfig(path);
-    if (message.isNotEmpty) {
-      throw message;
-    }
-    final mFile = await file;
-    await tempFile.copy(mFile.path);
-    await tempFile.safeDelete();
-    return copyWith(lastUpdateDate: DateTime.now());
-  }
-
-  Future<Profile> saveFileWithPath(String path) async {
-    final message = await coreController.validateConfig(path);
+  Future<Profile> _saveFileWithPath(
+    String path, {
+    required CoreController controller,
+  }) async {
+    final message = await controller.validateConfig(path);
     if (message.isNotEmpty) {
       throw message;
     }

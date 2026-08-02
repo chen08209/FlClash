@@ -81,6 +81,34 @@ abstract class ChangeProxyParams with _$ChangeProxyParams {
 }
 
 @freezed
+abstract class DownloadFileParams with _$DownloadFileParams {
+  const factory DownloadFileParams({
+    required String url,
+    required String path,
+    @JsonKey(name: 'user-agent') required String userAgent,
+  }) = _DownloadFileParams;
+
+  factory DownloadFileParams.fromJson(Map<String, Object?> json) =>
+      _$DownloadFileParamsFromJson(json);
+}
+
+@freezed
+abstract class DownloadFileResult with _$DownloadFileResult {
+  const factory DownloadFileResult({
+    @Default('')
+    @JsonKey(name: 'content-disposition')
+    String contentDisposition,
+    @Default('')
+    @JsonKey(name: 'subscription-userinfo')
+    String subscriptionUserinfo,
+    @Default('') String error,
+  }) = _DownloadFileResult;
+
+  factory DownloadFileResult.fromJson(Map<String, Object?> json) =>
+      _$DownloadFileResultFromJson(json);
+}
+
+@freezed
 abstract class UpdateGeoDataParams with _$UpdateGeoDataParams {
   const factory UpdateGeoDataParams({
     @JsonKey(name: 'geo-type') required String geoType,

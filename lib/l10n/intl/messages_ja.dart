@@ -255,6 +255,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "デベロッパーモードが有効になりました。",
     ),
     "direct": MessageLookupByLibrary.simpleMessage("ダイレクト"),
+    "directProfileUpdate": MessageLookupByLibrary.simpleMessage(
+      "プロファイル更新に直接接続を使用",
+    ),
+    "directProfileUpdateDesc": MessageLookupByLibrary.simpleMessage(
+      "プロファイル更新時に現在のプロキシではなく DIRECT を使用します",
+    ),
     "disableUDP": MessageLookupByLibrary.simpleMessage("UDPを無効化"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("免責事項"),
     "disclaimerDesc": MessageLookupByLibrary.simpleMessage(

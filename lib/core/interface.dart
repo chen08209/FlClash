@@ -22,6 +22,8 @@ mixin CoreInterface {
 
   Future<String> asyncTestDelay(String url, String proxyName);
 
+  Future<String> downloadFile(DownloadFileParams params);
+
   Future<String> updateConfig(UpdateParams updateParams);
 
   Future<String> setupConfig(SetupParams setupParams);
@@ -93,9 +95,13 @@ abstract class CoreHandlerInterface with CoreInterface {
       );
       return null;
     }
+    final logData = switch (method) {
+      ActionMethod.downloadFile => '<redacted>',
+      _ => data,
+    };
     return await utils.handleWatch(
       onStart: () {
-        commonPrint.log('Invoke ${method.name} ${DateTime.now()} $data');
+        commonPrint.log('Invoke ${method.name} ${DateTime.now()} $logData');
       },
       function: () async {
         return invoke<T>(method: method, data: data, timeout: timeout);
@@ -329,6 +335,15 @@ abstract class CoreHandlerInterface with CoreInterface {
           timeout: const Duration(seconds: 6),
         ) ??
         json.encode(Delay(name: proxyName, value: -1, url: url));
+  }
+
+  @override
+  Future<String> downloadFile(DownloadFileParams params) async {
+    return await _invoke<String>(
+          method: ActionMethod.downloadFile,
+          data: json.encode(params),
+        ) ??
+        '';
   }
 
   @override

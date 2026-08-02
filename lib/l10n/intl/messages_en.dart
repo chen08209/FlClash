@@ -325,6 +325,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Developer mode is enabled.",
     ),
     "direct": MessageLookupByLibrary.simpleMessage("Direct"),
+    "directProfileUpdate": MessageLookupByLibrary.simpleMessage(
+      "Use direct connection for profile updates",
+    ),
+    "directProfileUpdateDesc": MessageLookupByLibrary.simpleMessage(
+      "Use DIRECT instead of the current proxy when updating profiles",
+    ),
     "disableUDP": MessageLookupByLibrary.simpleMessage("Disable UDP"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("Disclaimer"),
     "disclaimerDesc": MessageLookupByLibrary.simpleMessage(

@@ -219,6 +219,9 @@ abstract class Tun with _$Tun {
     @Default(false) bool enable,
     @Default(appName) String device,
     @JsonKey(name: 'auto-route') @Default(false) bool autoRoute,
+    @JsonKey(name: 'auto-detect-interface')
+    @Default(false)
+    bool autoDetectInterface,
     @Default(TunStack.mixed) TunStack stack,
     @JsonKey(name: 'dns-hijack') @Default(['any:53']) List<String> dnsHijack,
     @JsonKey(name: 'route-address') @Default([]) List<String> routeAddress,
@@ -244,7 +247,11 @@ extension TunExt on Tun {
         ? defaultBypassPrivateRouteAddress
         : routeAddress;
     return switch (system.isDesktop) {
-      true => copyWith(autoRoute: true, routeAddress: []),
+      true => copyWith(
+        autoRoute: true,
+        autoDetectInterface: system.isLinux,
+        routeAddress: [],
+      ),
       false => copyWith(
         autoRoute: mRouteAddress.isEmpty ? true : false,
         routeAddress: mRouteAddress,

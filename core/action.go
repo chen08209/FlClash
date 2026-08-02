@@ -101,6 +101,12 @@ func handleAction(action *Action, result ActionResult) {
 			result.success(value)
 		})
 		return
+	case downloadFileMethod:
+		data := action.Data.(string)
+		handleDownloadFile(data, func(value string) {
+			result.success(value)
+		})
+		return
 	case getConnectionsMethod:
 		result.success(handleGetConnections())
 		return

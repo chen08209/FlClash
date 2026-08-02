@@ -100,6 +100,18 @@ class CoreController {
     return _interface.updateConfig(updateParams);
   }
 
+  Future<DownloadFileResult> downloadFile(DownloadFileParams params) async {
+    final data = await _interface.downloadFile(params);
+    if (data.isEmpty) {
+      throw currentAppLocalizations.unknownNetworkError;
+    }
+    final result = DownloadFileResult.fromJson(json.decode(data));
+    if (result.error.isNotEmpty) {
+      throw result.error;
+    }
+    return result;
+  }
+
   Future<String> setupConfig({
     required SetupParams params,
     required SetupState setupState,

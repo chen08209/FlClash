@@ -39,12 +39,13 @@ type UpdateParams struct {
 }
 
 type tunSchema struct {
-	Enable       bool               `yaml:"enable" json:"enable"`
-	Device       *string            `yaml:"device" json:"device"`
-	Stack        *constant.TUNStack `yaml:"stack" json:"stack"`
-	DNSHijack    *[]string          `yaml:"dns-hijack" json:"dns-hijack"`
-	AutoRoute    *bool              `yaml:"auto-route" json:"auto-route"`
-	RouteAddress *[]netip.Prefix    `yaml:"route-address" json:"route-address,omitempty"`
+	Enable              bool               `yaml:"enable" json:"enable"`
+	Device              *string            `yaml:"device" json:"device"`
+	Stack               *constant.TUNStack `yaml:"stack" json:"stack"`
+	DNSHijack           *[]string          `yaml:"dns-hijack" json:"dns-hijack"`
+	AutoRoute           *bool              `yaml:"auto-route" json:"auto-route"`
+	AutoDetectInterface *bool              `yaml:"auto-detect-interface" json:"auto-detect-interface"`
+	RouteAddress        *[]netip.Prefix    `yaml:"route-address" json:"route-address,omitempty"`
 }
 
 type ChangeProxyParams struct {
@@ -56,6 +57,18 @@ type TestDelayParams struct {
 	ProxyName string `json:"proxy-name"`
 	TestUrl   string `json:"test-url"`
 	Timeout   int64  `json:"timeout"`
+}
+
+type DownloadFileParams struct {
+	URL       string `json:"url"`
+	Path      string `json:"path"`
+	UserAgent string `json:"user-agent"`
+}
+
+type DownloadFileResult struct {
+	ContentDisposition   string `json:"content-disposition"`
+	SubscriptionUserinfo string `json:"subscription-userinfo"`
+	Error                string `json:"error"`
 }
 
 type ExternalProvider struct {
@@ -87,6 +100,7 @@ const (
 	getTotalTrafficMethod          Method = "getTotalTraffic"
 	resetTrafficMethod             Method = "resetTraffic"
 	asyncTestDelayMethod           Method = "asyncTestDelay"
+	downloadFileMethod             Method = "downloadFile"
 	getConnectionsMethod           Method = "getConnections"
 	closeConnectionsMethod         Method = "closeConnections"
 	resetConnectionsMethod         Method = "resetConnections"

@@ -4493,6 +4493,26 @@ class AppLocalizations {
       args: [count],
     );
   }
+
+  /// `Use direct connection for profile updates`
+  String get directProfileUpdate {
+    return Intl.message(
+      'Use direct connection for profile updates',
+      name: 'directProfileUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use DIRECT instead of the current proxy when updating profiles`
+  String get directProfileUpdateDesc {
+    return Intl.message(
+      'Use DIRECT instead of the current proxy when updating profiles',
+      name: 'directProfileUpdateDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
