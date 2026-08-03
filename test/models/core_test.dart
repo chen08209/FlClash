@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
@@ -166,6 +167,56 @@ void main() {
       final event = CoreEvent.fromJson({'type': 'log', 'data': 'test log'});
       expect(event.type, CoreEventType.log);
       expect(event.data, 'test log');
+    });
+
+    test('fromJson parses traffic push payload', () {
+      final event = CoreEvent.fromJson({
+        'type': 'traffic',
+        'data': {
+          'up': 1,
+          'down': 2,
+          'totalUp': 3,
+          'totalDown': 4,
+          'proxyUp': 5,
+          'proxyDown': 6,
+          'proxyTotalUp': 7,
+          'proxyTotalDown': 8,
+        },
+      });
+      expect(event.type, CoreEventType.traffic);
+      expect((event.data as Map)['proxyUp'], 5);
+    });
+
+    test('fromJson parses connections push payload', () {
+      final event = CoreEvent.fromJson({
+        'type': 'connections',
+        'data': {
+          'connections': [
+            {
+              'id': 'abc',
+              'metadata': {
+                'network': 'tcp',
+                'type': 'HTTP',
+                'sourceIP': '127.0.0.1',
+                'destinationIP': '1.1.1.1',
+                'sourcePort': '1234',
+                'destinationPort': '443',
+                'host': 'example.com',
+              },
+              'upload': 1,
+              'download': 2,
+              'start': '2026-01-01T00:00:00.000Z',
+              'chains': ['DIRECT'],
+              'rule': '',
+              'rulePayload': '',
+            },
+          ],
+        },
+      });
+      expect(event.type, CoreEventType.connections);
+      final connections = parseConnectionsEventData(event.data);
+      expect(connections, hasLength(1));
+      expect(connections.first.id, 'abc');
     });
   });
 

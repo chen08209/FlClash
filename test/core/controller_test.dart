@@ -243,6 +243,22 @@ void main() {
       expect(result.down, 4);
     });
 
+    test('getTrafficSnapshot parses combined payload', () async {
+      when(() => mock.getTrafficSnapshot(false)).thenAnswer(
+        (_) async => <String, dynamic>{
+          'up': 1,
+          'down': 2,
+          'totalUp': 10,
+          'totalDown': 20,
+        },
+      );
+      final result = await controller.getTrafficSnapshot(false);
+      expect(result.now.up, 1);
+      expect(result.now.down, 2);
+      expect(result.total.up, 10);
+      expect(result.total.down, 20);
+    });
+
     test('getMemory delegates numeric memory', () async {
       when(() => mock.getMemory()).thenAnswer((_) async => 2048);
       final result = await controller.getMemory();

@@ -33,7 +33,8 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
     if (!ref.mounted) {
       return;
     }
-    this.value = state.copyWith()..add(value);
+    state.add(value);
+    this.value = state.notifyClone();
   }
 
   Future<bool> exportLogs() async {
@@ -55,7 +56,8 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
   }
 
   void addRequest(TrackerInfo value) {
-    this.value = state.copyWith()..add(value);
+    state.add(value);
+    this.value = state.notifyClone();
   }
 }
 
@@ -104,11 +106,13 @@ class Traffics extends _$Traffics with AutoDisposeNotifierMixin {
   }
 
   void addTraffic(Traffic value) {
-    this.value = state.copyWith()..add(value);
+    state.add(value);
+    this.value = state.notifyClone();
   }
 
   void clear() {
-    value = state.copyWith()..clear();
+    state.clear();
+    value = state.notifyClone();
   }
 }
 
@@ -117,6 +121,19 @@ class TotalTraffic extends _$TotalTraffic with AutoDisposeNotifierMixin {
   @override
   Traffic build() {
     return const Traffic();
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ConnectionsSnapshot extends _$ConnectionsSnapshot
+    with AutoDisposeNotifierMixin {
+  @override
+  List<TrackerInfo> build() {
+    return const [];
+  }
+
+  void apply(List<TrackerInfo> next) {
+    value = next;
   }
 }
 

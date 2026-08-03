@@ -24,6 +24,8 @@ class _AccessViewState extends ConsumerState<AccessView> {
   List<String>? _pinedList;
   bool _isInit = false;
   AccessControlMode? _lastMode;
+  List<Package>? _cachedViewPackages;
+  String? _viewCacheKey;
 
   final _completer = Completer();
 
@@ -306,7 +308,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
 
   Widget _buildContent({
     required List<Package> packages,
-    required List<String> valueList,
+    required Set<String> selectedSet,
   }) {
     return FutureBuilder(
       future: _completer.future,
@@ -328,7 +330,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
                     return PackageListItem(
                       key: Key(package.packageName),
                       package: package,
-                      value: valueList.contains(package.packageName),
+                      value: selectedSet.contains(package.packageName),
                       onChanged: (value) {
                         _handleSelected(package.packageName);
                       },
@@ -374,23 +376,28 @@ class _AccessViewState extends ConsumerState<AccessView> {
   }
 
   void _onSearch(String value) {
-    ref.read(queryProvider(QueryTag.access).notifier).value = value;
-    _pinedList = null;
+    debouncer.call(FunctionTag.accessQuery, () {
+      if (!mounted) {
+        return;
+      }
+      ref.read(queryProvider(QueryTag.access).notifier).value = value;
+      _pinedList = null;
+      _cachedViewPackages = null;
+    }, duration: const Duration(milliseconds: 200));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isLoading = ref.watch(loadingProvider(LoadingTag.access));
-    final query = ref.watch(queryProvider(QueryTag.access));
-    final packages = ref.watch(packagesProvider);
-    final accessControl = ref.watch(accessControlStateProvider);
-    if (_isInit) {
-      if (_lastMode != accessControl.mode) {
-        _lastMode = accessControl.mode;
-        _pinedList = accessControl.currentList;
-      } else {
-        _pinedList ??= accessControl.currentList;
-      }
+  List<Package> _viewPackages({
+    required List<Package> packages,
+    required AccessControlProps accessControl,
+    required String query,
+  }) {
+    final cacheKey =
+        '${identityHashCode(packages)}|${accessControl.mode}|${accessControl.sort}|'
+        '${accessControl.isFilterNonInternetApp}|${accessControl.isFilterSystemApp}|'
+        '${_pinedList?.length}|$query';
+    final cached = _cachedViewPackages;
+    if (cached != null && _viewCacheKey == cacheKey) {
+      return cached;
     }
     final viewPackages = packages
         .getViewList(
@@ -405,10 +412,36 @@ class _AccessViewState extends ConsumerState<AccessView> {
               package.packageName.contains(query),
         )
         .toList();
+    _viewCacheKey = cacheKey;
+    _cachedViewPackages = viewPackages;
+    return viewPackages;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLoading = ref.watch(loadingProvider(LoadingTag.access));
+    final query = ref.watch(queryProvider(QueryTag.access));
+    final packages = ref.watch(packagesProvider);
+    final accessControl = ref.watch(accessControlStateProvider);
+    if (_isInit) {
+      if (_lastMode != accessControl.mode) {
+        _lastMode = accessControl.mode;
+        _pinedList = accessControl.currentList;
+        _cachedViewPackages = null;
+      } else {
+        _pinedList ??= accessControl.currentList;
+      }
+    }
+    final viewPackages = _viewPackages(
+      packages: packages,
+      accessControl: accessControl,
+      query: query,
+    );
     final mode = accessControl.mode;
     final currentList = accessControl.currentList;
     final viewPackageNameList = viewPackages.map((e) => e.packageName).toList();
     final valueList = currentList.intersection(viewPackageNameList);
+    final selectedSet = valueList.toSet();
     return CommonScaffold(
       key: _scaffoldKey,
       isLoading: isLoading,
@@ -425,7 +458,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
             Expanded(
               child: _buildContent(
                 packages: viewPackages,
-                valueList: valueList,
+                selectedSet: selectedSet,
               ),
             ),
           ],
@@ -444,12 +477,22 @@ class PackageListItem extends StatelessWidget {
   final bool value;
   final void Function(bool?) onChanged;
 
+  static final Map<String, Future<ImageProvider?>> _iconFutures = {};
+
   const PackageListItem({
     super.key,
     required this.package,
     required this.value,
     required this.onChanged,
   });
+
+  Future<ImageProvider?> _iconFuture() {
+    return _iconFutures.putIfAbsent(
+      package.packageName,
+      () => app?.getPackageIcon(package.packageName) ??
+          Future<ImageProvider?>.value(null),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -458,7 +501,7 @@ class PackageListItem extends StatelessWidget {
         width: 48,
         height: 48,
         child: FutureBuilder<ImageProvider?>(
-          future: app?.getPackageIcon(package.packageName),
+          future: _iconFuture(),
           builder: (_, snapshot) {
             if (!snapshot.hasData && snapshot.data == null) {
               return Container();

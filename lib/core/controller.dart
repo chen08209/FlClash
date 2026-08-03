@@ -10,6 +10,20 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
+
+({Traffic now, Traffic total}) _parseTrafficSnapshot(Map<String, dynamic> map) {
+  return (
+    now: Traffic(
+      up: map['up'] as num? ?? 0,
+      down: map['down'] as num? ?? 0,
+    ),
+    total: Traffic(
+      up: map['totalUp'] as num? ?? 0,
+      down: map['totalDown'] as num? ?? 0,
+    ),
+  );
+}
+
 class CoreController {
   static CoreController? _instance;
   late CoreHandlerInterface _interface;
@@ -202,6 +216,14 @@ class CoreController {
   Future<Traffic> getTraffic(bool onlyStatisticsProxy) async {
     return _interface.getTraffic(onlyStatisticsProxy);
   }
+
+  Future<({Traffic now, Traffic total})> getTrafficSnapshot(
+    bool onlyStatisticsProxy,
+  ) async {
+    final raw = await _interface.getTrafficSnapshot(onlyStatisticsProxy);
+    return _parseTrafficSnapshot(raw);
+  }
+
 
   Future<IpInfo?> getCountryCode(String ip) async {
     final countryCode = await _interface.getCountryCode(ip);

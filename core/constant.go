@@ -90,6 +90,7 @@ const (
 	changeProxyMethod              CoreMethod = "changeProxy"
 	getTrafficMethod               CoreMethod = "getTraffic"
 	getTotalTrafficMethod          CoreMethod = "getTotalTraffic"
+	getTrafficSnapshotMethod       CoreMethod = "getTrafficSnapshot"
 	resetTrafficMethod             CoreMethod = "resetTraffic"
 	asyncTestDelayMethod           CoreMethod = "asyncTestDelay"
 	getConnectionsMethod           CoreMethod = "getConnections"
@@ -134,7 +135,9 @@ const (
 	DelayMessage     MessageType = "delay"
 	RequestMessage   MessageType = "request"
 	LoadedMessage    MessageType = "loaded"
-	GeoUpdateMessage MessageType = "geoUpdate"
+	GeoUpdateMessage   MessageType = "geoUpdate"
+	TrafficMessage     MessageType = "traffic"
+	ConnectionsMessage MessageType = "connections"
 )
 
 type GeoUpdateStatus struct {

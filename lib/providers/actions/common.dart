@@ -31,10 +31,44 @@ class CommonAction extends _$CommonAction {
     final onlyStatisticsProxy = ref.read(
       appSettingProvider.select((state) => state.onlyStatisticsProxy),
     );
-    final traffic = await coreController.getTraffic(onlyStatisticsProxy);
-    ref.read(trafficsProvider.notifier).addTraffic(traffic);
-    ref.read(totalTrafficProvider.notifier).value = await coreController
-        .getTotalTraffic(onlyStatisticsProxy);
+    final snapshot = await coreController.getTrafficSnapshot(
+      onlyStatisticsProxy,
+    );
+    applyTrafficSnapshot(now: snapshot.now, total: snapshot.total);
+  }
+
+  void applyTrafficSnapshot({required Traffic now, required Traffic total}) {
+    final lastTraffic = ref
+        .read(trafficsProvider)
+        .list
+        .safeLast(const Traffic());
+    if (lastTraffic != now) {
+      ref.read(trafficsProvider.notifier).addTraffic(now);
+    }
+    if (ref.read(totalTrafficProvider) != total) {
+      ref.read(totalTrafficProvider.notifier).value = total;
+    }
+  }
+
+  void applyTrafficPush(Map<String, dynamic> snapshot) {
+    final onlyStatisticsProxy = ref.read(
+      appSettingProvider.select((state) => state.onlyStatisticsProxy),
+    );
+    num read(String key) => snapshot[key] as num? ?? 0;
+    if (onlyStatisticsProxy) {
+      applyTrafficSnapshot(
+        now: Traffic(up: read('proxyUp'), down: read('proxyDown')),
+        total: Traffic(
+          up: read('proxyTotalUp'),
+          down: read('proxyTotalDown'),
+        ),
+      );
+      return;
+    }
+    applyTrafficSnapshot(
+      now: Traffic(up: read('up'), down: read('down')),
+      total: Traffic(up: read('totalUp'), down: read('totalDown')),
+    );
   }
 
   Future<void> autoCheckUpdate() async {

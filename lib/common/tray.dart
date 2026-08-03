@@ -115,14 +115,36 @@ class Tray {
     }
     menuItems.add(MenuItem.separator());
     if (system.isMacOS) {
+      const maxProxiesPerGroup = 30;
       for (final group in trayState.groups) {
         final List<MenuItem> subMenuItems = [];
-        for (final proxy in group.all) {
+        final selectedName = ref.read(selectedProxyNameProvider(group.name));
+        final proxies = group.all;
+        final List<Proxy> limited;
+        if (proxies.length <= maxProxiesPerGroup) {
+          limited = proxies;
+        } else {
+          limited = proxies.take(maxProxiesPerGroup).toList();
+          if (selectedName != null &&
+              selectedName.isNotEmpty &&
+              !limited.any((proxy) => proxy.name == selectedName)) {
+            Proxy? selected;
+            for (final proxy in proxies) {
+              if (proxy.name == selectedName) {
+                selected = proxy;
+                break;
+              }
+            }
+            if (selected != null) {
+              limited[limited.length - 1] = selected;
+            }
+          }
+        }
+        for (final proxy in limited) {
           subMenuItems.add(
             MenuItem.checkbox(
               label: proxy.name,
-              checked:
-                  ref.read(selectedProxyNameProvider(group.name)) == proxy.name,
+              checked: selectedName == proxy.name,
               onClick: (_) {
                 ref
                     .read(profilesActionProvider.notifier)
@@ -130,6 +152,16 @@ class Tray {
                 ref
                     .read(proxiesActionProvider.notifier)
                     .changeProxy(groupName: group.name, proxyName: proxy.name);
+              },
+            ),
+          );
+        }
+        if (proxies.length > maxProxiesPerGroup) {
+          subMenuItems.add(
+            MenuItem(
+              label: '${appLocalizations.proxies}…',
+              onClick: (_) {
+                window?.show();
               },
             ),
           );

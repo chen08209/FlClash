@@ -45,7 +45,9 @@ GroupsState currentGroupsState(Ref ref) {
 
 @riverpod
 NavigationItemsState navigationItemsState(Ref ref) {
-  final openLogs = ref.watch(appSettingProvider).openLogs;
+  final openLogs = ref.watch(
+    appSettingProvider.select((state) => state.openLogs),
+  );
   final hasProfiles = ref.watch(
     profilesProvider.select((state) => state.isNotEmpty),
   );
@@ -181,7 +183,9 @@ NavigationState navigationState(Ref ref) {
   final pageLabel = ref.watch(currentPageLabelProvider);
   final navigationItems = ref.watch(currentNavigationItemsStateProvider).value;
   final viewMode = ref.watch(viewModeProvider);
-  final locale = ref.watch(appSettingProvider).locale;
+  final locale = ref.watch(
+    appSettingProvider.select((state) => state.locale),
+  );
   final index = navigationItems.lastIndexWhere(
     (element) => element.label == pageLabel,
   );
@@ -324,7 +328,11 @@ ProxyGroupSelectorState proxyGroupSelectorState(
   String groupName,
   String query,
 ) {
-  final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
+  final proxiesStyle = ref.watch(
+    proxiesStyleSettingProvider.select(
+      (state) => VM2(state.sortType, state.cardType),
+    ),
+  );
   final group = ref.watch(
     currentGroupsStateProvider.select(
       (state) => state.value.getGroup(groupName),
@@ -340,8 +348,8 @@ ProxyGroupSelectorState proxyGroupSelectorState(
       [];
   return ProxyGroupSelectorState(
     testUrl: group?.testUrl,
-    proxiesSortType: proxiesStyle.sortType,
-    proxyCardType: proxiesStyle.cardType,
+    proxiesSortType: proxiesStyle.a,
+    proxyCardType: proxiesStyle.b,
     sortNum: sortNum,
     groupType: group?.type ?? GroupType.Selector,
     proxies: proxies,
@@ -406,7 +414,9 @@ bool isCurrentPage(
 
 @riverpod
 String realTestUrl(Ref ref, [String? testUrl]) {
-  final currentTestUrl = ref.watch(appSettingProvider).testUrl;
+  final currentTestUrl = ref.watch(
+    appSettingProvider.select((state) => state.testUrl),
+  );
   return testUrl.takeFirstValid([currentTestUrl]);
 }
 
@@ -467,13 +477,40 @@ int proxiesColumns(Ref ref) {
 }
 
 @riverpod
-SelectedProxyState realSelectedProxyState(Ref ref, String proxyName) {
+Map<String, SelectedProxyState> realSelectedProxyStateMap(Ref ref) {
   final groups = ref.watch(groupsProvider);
   final selectedMap = ref.watch(selectedMapProvider);
-  return computeRealSelectedProxyState(
-    proxyName,
-    groups: groups,
-    selectedMap: selectedMap,
+  final map = <String, SelectedProxyState>{};
+  for (final group in groups) {
+    map.putIfAbsent(
+      group.name,
+      () => computeRealSelectedProxyState(
+        group.name,
+        groups: groups,
+        selectedMap: selectedMap,
+      ),
+    );
+    for (final proxy in group.all) {
+      map.putIfAbsent(
+        proxy.name,
+        () => computeRealSelectedProxyState(
+          proxy.name,
+          groups: groups,
+          selectedMap: selectedMap,
+        ),
+      );
+    }
+  }
+  return map;
+}
+
+@riverpod
+SelectedProxyState realSelectedProxyState(Ref ref, String proxyName) {
+  return ref.watch(
+    realSelectedProxyStateMapProvider.select(
+      (state) =>
+          state[proxyName] ?? SelectedProxyState(proxyName: proxyName),
+    ),
   );
 }
 
@@ -616,7 +653,18 @@ SharedState sharedState(Ref ref) {
       (state) => VM2(state.tun.stack.name, state.mixedPort),
     ),
   );
-  final vpnSetting = ref.watch(vpnSettingProvider);
+  final vpnSetting = ref.watch(
+    vpnSettingProvider.select(
+      (state) => (
+        enable: state.enable,
+        systemProxy: state.systemProxy,
+        ipv6: state.ipv6,
+        dnsHijacking: state.dnsHijacking,
+        accessControlProps: state.accessControlProps,
+        allowBypass: state.allowBypass,
+      ),
+    ),
+  );
   final currentProfileName = currentProfileVM2.a;
   final selectedMap = currentProfileVM2.b;
   final onlyStatisticsProxy = appSettingVM3.a;

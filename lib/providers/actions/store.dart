@@ -21,9 +21,13 @@ class StoreAction extends _$StoreAction {
   }
 
   void savePreferencesDebounce() {
-    debouncer.call(FunctionTag.savePreferences, () async {
-      await preferences.saveConfig(ref.read(configProvider));
-    });
+    debouncer.call(
+      FunctionTag.savePreferences,
+      () async {
+        await preferences.saveConfig(ref.read(configProvider));
+      },
+      duration: const Duration(milliseconds: 1200),
+    );
   }
 
   Future handleClear() async {

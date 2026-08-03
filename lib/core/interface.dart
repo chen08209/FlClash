@@ -54,6 +54,8 @@ mixin CoreInterface {
 
   FutureOr<Traffic> getTraffic(bool onlyStatisticsProxy);
 
+  FutureOr<Map<String, dynamic>> getTrafficSnapshot(bool onlyStatisticsProxy);
+
   FutureOr<Traffic> getTotalTraffic(bool onlyStatisticsProxy);
 
   FutureOr<String> getCountryCode(String ip);
@@ -306,6 +308,16 @@ abstract class CoreHandlerInterface with CoreInterface {
     );
     return data == null ? const Traffic() : Traffic.fromJson(data);
   }
+
+  @override
+  Future<Map<String, dynamic>> getTrafficSnapshot(bool onlyStatisticsProxy) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getTrafficSnapshot,
+      arguments: onlyStatisticsProxy,
+    );
+    return data ?? const <String, dynamic>{};
+  }
+
 
   @override
   Future<String> clearEffect(int profileId) async {

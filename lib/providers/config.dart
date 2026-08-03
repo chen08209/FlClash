@@ -105,6 +105,12 @@ class ExcludeSSIDs extends _$ExcludeSSIDs with AutoDisposeNotifierMixin {
   }
 }
 
+
+
+/// Aggregate Config for save/load and tests only.
+///
+/// UI and derived providers should watch leaf setting providers (with
+/// `.select` when possible) instead of this aggregate (PERF-12).
 @Riverpod(name: 'configProvider')
 Config _config(Ref ref) {
   final appSettingProps = ref.watch(appSettingProvider);

@@ -632,11 +632,25 @@ abstract class _$ExcludeSSIDs extends $Notifier<List<String>> {
   }
 }
 
+/// Aggregate Config for save/load and tests only.
+///
+/// UI and derived providers should watch leaf setting providers (with
+/// `.select` when possible) instead of this aggregate (PERF-12).
+
 @ProviderFor(_config)
 final configProvider = _ConfigProvider._();
 
+/// Aggregate Config for save/load and tests only.
+///
+/// UI and derived providers should watch leaf setting providers (with
+/// `.select` when possible) instead of this aggregate (PERF-12).
+
 final class _ConfigProvider extends $FunctionalProvider<Config, Config, Config>
     with $Provider<Config> {
+  /// Aggregate Config for save/load and tests only.
+  ///
+  /// UI and derived providers should watch leaf setting providers (with
+  /// `.select` when possible) instead of this aggregate (PERF-12).
   _ConfigProvider._()
     : super(
         from: null,

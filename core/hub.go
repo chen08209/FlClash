@@ -26,6 +26,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -34,6 +35,8 @@ var (
 	isInit            atomic.Bool
 	externalProviders = map[string]cp.Provider{}
 	logSubscriber     observable.Subscription[log.Event]
+	trafficStopCh     chan struct{}
+	trafficPushMu     sync.Mutex
 )
 
 func handleInitClash(params *InitParams) bool {
@@ -51,6 +54,7 @@ func handleStartListener() bool {
 	isRunning = true
 	updateListeners()
 	resolver.ResetConnection()
+	startTrafficPush()
 	return true
 }
 
@@ -58,6 +62,7 @@ func handleStopListener() bool {
 	runLock.Lock()
 	defer runLock.Unlock()
 	isRunning = false
+	stopTrafficPush()
 	listener.StopListener()
 	resolver.ResetConnection()
 	return true
@@ -76,6 +81,7 @@ func handleForceGC() {
 }
 
 func handleShutdown() bool {
+	stopTrafficPush()
 	stopListeners()
 	executor.Shutdown()
 	handleForceGC()
@@ -188,6 +194,92 @@ func handleGetTotalTraffic(onlyStatisticsProxy bool) Traffic {
 func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
 }
+
+func handleGetTrafficSnapshot(onlyStatisticsProxy bool) map[string]int64 {
+	up, down := statistic.DefaultManager.NowTraffic(onlyStatisticsProxy)
+	totalUp, totalDown := statistic.DefaultManager.TotalTraffic(onlyStatisticsProxy)
+	return map[string]int64{
+		"up":        up,
+		"down":      down,
+		"totalUp":   totalUp,
+		"totalDown": totalDown,
+	}
+}
+
+func trafficSnapshotPayload() map[string]int64 {
+	up, down := statistic.DefaultManager.NowTraffic(false)
+	totalUp, totalDown := statistic.DefaultManager.TotalTraffic(false)
+	proxyUp, proxyDown := statistic.DefaultManager.NowTraffic(true)
+	proxyTotalUp, proxyTotalDown := statistic.DefaultManager.TotalTraffic(true)
+	return map[string]int64{
+		"up":             up,
+		"down":           down,
+		"totalUp":        totalUp,
+		"totalDown":      totalDown,
+		"proxyUp":        proxyUp,
+		"proxyDown":      proxyDown,
+		"proxyTotalUp":   proxyTotalUp,
+		"proxyTotalDown": proxyTotalDown,
+	}
+}
+
+func sendTrafficSnapshotMessage() {
+	sendMessage(Message{
+		Type: TrafficMessage,
+		Data: trafficSnapshotPayload(),
+	})
+}
+
+func sendConnectionsSnapshotMessage() {
+	runLock.Lock()
+	snapshot := statistic.DefaultManager.Snapshot()
+	runLock.Unlock()
+	sendMessage(Message{
+		Type: ConnectionsMessage,
+		Data: snapshot,
+	})
+}
+
+func startTrafficPush() {
+	trafficPushMu.Lock()
+	defer trafficPushMu.Unlock()
+	stopTrafficPushLocked()
+	stopCh := make(chan struct{})
+	trafficStopCh = stopCh
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		sendTrafficSnapshotMessage()
+		sendConnectionsSnapshotMessage()
+		ticks := 0
+		for {
+			select {
+			case <-ticker.C:
+				sendTrafficSnapshotMessage()
+				ticks++
+				if ticks%2 == 0 {
+					sendConnectionsSnapshotMessage()
+				}
+			case <-stopCh:
+				return
+			}
+		}
+	}()
+}
+
+func stopTrafficPush() {
+	trafficPushMu.Lock()
+	defer trafficPushMu.Unlock()
+	stopTrafficPushLocked()
+}
+
+func stopTrafficPushLocked() {
+	if trafficStopCh != nil {
+		close(trafficStopCh)
+		trafficStopCh = nil
+	}
+}
+
 
 func handleAsyncTestDelay(params *TestDelayParams, fn func(*Delay)) {
 	batchKey := params.ProxyName + "\x00" + params.TestUrl
