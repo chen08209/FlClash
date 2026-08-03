@@ -725,6 +725,8 @@ class FreeNodesProgress {
   final String operation;
   final int completed;
   final int total;
+  final int successfulSources;
+  final int failedSources;
   final int proxyCount;
   final String? sourceId;
   final String? url;
@@ -737,6 +739,8 @@ class FreeNodesProgress {
     required this.operation,
     this.completed = 0,
     this.total = 0,
+    this.successfulSources = 0,
+    this.failedSources = 0,
     this.proxyCount = 0,
     this.sourceId,
     this.url,
@@ -748,7 +752,6 @@ class FreeNodesProgress {
 
   double? get value {
     if (total <= 0) return null;
-    if (!done && completed <= 0) return null;
     return completed.clamp(0, total) / total;
   }
 
@@ -756,6 +759,8 @@ class FreeNodesProgress {
     String? operation,
     int? completed,
     int? total,
+    int? successfulSources,
+    int? failedSources,
     int? proxyCount,
     String? sourceId,
     String? url,
@@ -768,6 +773,8 @@ class FreeNodesProgress {
       operation: operation ?? this.operation,
       completed: completed ?? this.completed,
       total: total ?? this.total,
+      successfulSources: successfulSources ?? this.successfulSources,
+      failedSources: failedSources ?? this.failedSources,
       proxyCount: proxyCount ?? this.proxyCount,
       sourceId: sourceId ?? this.sourceId,
       url: url ?? this.url,
@@ -1090,6 +1097,14 @@ class _DiscoveryResult {
   const _DiscoveryResult({required this.configUrls, required this.pageUrls});
 }
 
+class _RustSourceFetchResult {
+  final _FreeNodeSourceDefinition source;
+  final Map<String, dynamic>? output;
+  final Object? error;
+
+  const _RustSourceFetchResult({required this.source, this.output, this.error});
+}
+
 class FreeNodesService {
   final FreeNodesFetcher fetcher;
   final Duration fetchTimeout;
@@ -1141,6 +1156,12 @@ class FreeNodesService {
       existingConfigText: existingConfigText,
       sourceIds: sourceIds,
       onProgress: onProgress,
+      onPartialResult: onPartialProfile == null
+          ? null
+          : (result) async {
+              if (result.proxyCount <= 0) return;
+              await onPartialProfile(await saveResult(result));
+            },
     );
     if (result.proxyCount == 0) {
       throw '\u672a\u4ece\u514d\u8d39\u8282\u70b9\u6765\u6e90\u83b7\u53d6\u5230\u53ef\u7528 Clash \u8282\u70b9';
@@ -1219,137 +1240,269 @@ class FreeNodesService {
     final plannedSources = catalog.sources
         .where((source) => targetEnabledIds.contains(source.id))
         .toList(growable: false);
-    final plannedCandidateCount = plannedSources
-        .fold<int>(0, (count, source) {
-          return count +
-              1 +
-              source.rawCandidates.length +
-              _sourceCandidates(source, catalog.lookbackDays).length +
-              (source.githubDiscovery
-                  ? _freeNodesGithubDiscoveryInitialCandidateEstimate
-                  : 0);
-        })
-        .clamp(1, _freeNodesConfigCandidateLimit);
-    final input = {
-      'catalog': {
-        'historyTimeoutHours': catalog.historyTimeoutHours,
-        'sources': catalog.sources
-            .map((source) {
-              return {
-                'id': source.id,
-                'label': source.label,
-                'seed': source.seed,
-                'rank': source.rank,
-                'updateIntervalHours': source.updateIntervalHours,
-                'staleTimeoutHours': source.staleTimeoutHours,
-                'pageDiscovery': source.pageDiscovery,
-                'githubDiscovery': source.githubDiscovery,
-                'rawCandidates': source.rawCandidates,
-                'candidateUrls': _sourceCandidates(
-                  source,
-                  catalog.lookbackDays,
-                ).toList(growable: false),
-              };
-            })
-            .toList(growable: false),
-      },
-      'enabledSourceIds': enabledIds.toList(growable: false),
-      'sourceIds': sourceIds?.toList(growable: false),
-      'existingConfigText': existingConfigText,
-      'preference': {
-        'fetchConcurrency': preferenceState.fetchConcurrency,
-        'autoPrefer': autoPreferDuringFetch,
-        'deleteExpiredOnPrefer': preferenceState.deleteExpiredOnPrefer,
-      },
-      'fetchTimeoutSecondsBySource': timeoutOverrides,
-      'defaultFetchTimeoutSeconds': fetchTimeout.inSeconds.clamp(3, 120),
-      'proxyUrl': _currentProxyUrl(),
-      'userAgent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-          'AppleWebKit/537.36 (KHTML, like Gecko) FlClashPlusPlus/1.0',
-      'todayLabel': _formatDateGroupLabel(now),
-      'todayToken': _todayDateToken(),
-      'nowDayNumber':
-          DateTime.utc(now.year, now.month, now.day).millisecondsSinceEpoch ~/
-          Duration.millisecondsPerDay,
-      'nowIso': now.toIso8601String(),
-    };
+    final totalSources = plannedSources.length;
     onProgress?.call(
-      FreeNodesProgress(
-        operation: '获取中',
-        completed: 0,
-        total: plannedCandidateCount,
-      ),
+      FreeNodesProgress(operation: '获取中', completed: 0, total: totalSources),
     );
-    await ensureRustApiInitialized();
-    final outputText = await fetchMergeFreeNodesJson(
-      inputJson: json.encode(input),
-    );
-    final output = json.decode(outputText);
-    if (output is! Map) {
-      throw '\u514d\u8d39\u8282\u70b9 Rust \u8f93\u51fa\u683c\u5f0f\u9519\u8bef';
+    if (plannedSources.isEmpty) {
+      final existingProxies = _extractExistingDatedProxies(
+        existingConfigText,
+        catalog,
+        cleanupExpired: false,
+      );
+      final result = _buildUpdateResult(
+        existingProxies,
+        catalog: catalog,
+        autoPrefer: autoPreferDuringFetch,
+        sources: const [],
+      );
+      onProgress?.call(
+        FreeNodesProgress(
+          operation: '已完成',
+          proxyCount: result.proxyCount,
+          done: true,
+        ),
+      );
+      return result;
     }
-    final yamlText = output['yaml']?.toString() ?? '';
-    final proxyCount = int.tryParse('${output['proxyCount'] ?? 0}') ?? 0;
-    final fetchTimes = output['fetchTimes'];
-    if (fetchTimes is Map) {
-      await _saveSourceFetchTimes(
-        fetchTimes.map(
-          (key, value) => MapEntry(key.toString(), value.toString()),
+    await ensureRustApiInitialized();
+    final sourceFetchTimes = <String, String>{};
+    final sourceStatuses = <FreeNodeSourceStatus>[];
+    final freshProxies = <_DatedProxy>[];
+    final existingProxies = _extractExistingDatedProxies(
+      existingConfigText,
+      catalog,
+      cleanupExpired: false,
+    );
+    var completedSources = 0;
+    var successfulSources = 0;
+    var failedSources = 0;
+    var nextSourceIndex = 0;
+    final resultStream = StreamController<_RustSourceFetchResult>();
+
+    Future<_RustSourceFetchResult> fetchSource(
+      _FreeNodeSourceDefinition source,
+    ) async {
+      final timeoutSeconds =
+          timeoutOverrides[source.id] ?? fetchTimeout.inSeconds.clamp(3, 120);
+      final input = {
+        'catalog': {
+          'historyTimeoutHours': catalog.historyTimeoutHours,
+          'sources': [
+            {
+              'id': source.id,
+              'label': source.label,
+              'seed': source.seed,
+              'rank': source.rank,
+              'updateIntervalHours': source.updateIntervalHours,
+              'staleTimeoutHours': source.staleTimeoutHours,
+              'pageDiscovery': source.pageDiscovery,
+              'githubDiscovery': source.githubDiscovery,
+              'rawCandidates': source.rawCandidates,
+              'candidateUrls': _sourceCandidates(
+                source,
+                catalog.lookbackDays,
+              ).toList(growable: false),
+            },
+          ],
+        },
+        'enabledSourceIds': [source.id],
+        'sourceIds': [source.id],
+        'existingConfigText': existingConfigText,
+        'preference': {
+          'fetchConcurrency': 1,
+          'autoPrefer': autoPreferDuringFetch,
+          'deleteExpiredOnPrefer': preferenceState.deleteExpiredOnPrefer,
+        },
+        'fetchTimeoutSecondsBySource': {source.id: timeoutSeconds},
+        'defaultFetchTimeoutSeconds': timeoutSeconds,
+        'proxyUrl': _currentProxyUrl(),
+        'userAgent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) FlClashPlusPlus/1.0',
+        'todayLabel': _formatDateGroupLabel(now),
+        'todayToken': _todayDateToken(),
+        'nowDayNumber':
+            DateTime.utc(now.year, now.month, now.day).millisecondsSinceEpoch ~/
+            Duration.millisecondsPerDay,
+        'nowIso': DateTime.now().toIso8601String(),
+      };
+      try {
+        final outputText = await fetchMergeFreeNodesJson(
+          inputJson: json.encode(input),
+        ).timeout(Duration(seconds: timeoutSeconds + 2));
+        final decoded = json.decode(outputText);
+        if (decoded is! Map) {
+          throw const FormatException('免费节点 Rust 输出格式错误');
+        }
+        return _RustSourceFetchResult(
+          source: source,
+          output: Map<String, dynamic>.from(decoded),
+        );
+      } catch (error) {
+        return _RustSourceFetchResult(source: source, error: error);
+      }
+    }
+
+    Future<void> worker() async {
+      while (nextSourceIndex < plannedSources.length) {
+        final source = plannedSources[nextSourceIndex++];
+        resultStream.add(await fetchSource(source));
+      }
+    }
+
+    final workers = [
+      for (
+        var i = 0;
+        i < preferenceState.fetchConcurrency.clamp(1, totalSources);
+        i++
+      )
+        worker(),
+    ];
+    final workersDone = Future.wait(workers);
+    unawaited(workersDone.whenComplete(resultStream.close));
+
+    FreeNodesUpdateResult buildCurrentResult() {
+      final retainedExisting = freshProxies.isEmpty
+          ? existingProxies
+          : existingProxies
+                .where((proxy) => _shouldKeepExistingProxy(proxy, catalog))
+                .toList(growable: false);
+      return _buildUpdateResult(
+        <_DatedProxy>[...freshProxies, ...retainedExisting],
+        catalog: catalog,
+        autoPrefer: autoPreferDuringFetch,
+        sources: List.unmodifiable(sourceStatuses),
+      );
+    }
+
+    await for (final sourceResult in resultStream.stream) {
+      final source = sourceResult.source;
+      final output = sourceResult.output;
+      final rawStatuses = output?['sources'];
+      final candidateStatuses = rawStatuses is List
+          ? rawStatuses
+                .whereType<Map>()
+                .map(_freeNodeSourceStatusFromMap)
+                .toList(growable: false)
+          : const <FreeNodeSourceStatus>[];
+      final sourceSucceeded = candidateStatuses.any((status) => status.success);
+      var sourceProxyCount = 0;
+      if (sourceSucceeded) {
+        final yamlText = output?['yaml']?.toString() ?? '';
+        final sourceProxies =
+            _extractExistingDatedProxies(
+                  yamlText,
+                  catalog,
+                  cleanupExpired: false,
+                )
+                .where((proxy) {
+                  return proxy.sourceId == source.id ||
+                      (proxy.sourceId == null &&
+                          proxy.sourceLabel == source.label);
+                })
+                .toList(growable: false);
+        sourceProxyCount = sourceProxies.length;
+        freshProxies.addAll(sourceProxies);
+        successfulSources++;
+      } else {
+        failedSources++;
+      }
+      final messages = candidateStatuses
+          .map((status) => status.message)
+          .whereType<String>()
+          .where((message) => message.trim().isNotEmpty)
+          .toSet();
+      sourceStatuses.add(
+        FreeNodeSourceStatus(
+          url: source.seed,
+          success: sourceSucceeded,
+          proxyCount: sourceProxyCount,
+          sourceId: source.id,
+          sourceLabel: source.label,
+          updateIntervalHours: source.updateIntervalHours,
+          fetchedAt: DateTime.now(),
+          message:
+              sourceResult.error?.toString() ?? messages.take(3).join('; '),
+        ),
+      );
+      final fetchTimes = output?['fetchTimes'];
+      if (fetchTimes is Map) {
+        sourceFetchTimes.addAll(
+          fetchTimes.map(
+            (key, value) => MapEntry(key.toString(), value.toString()),
+          ),
+        );
+      } else {
+        sourceFetchTimes[source.id] = DateTime.now().toIso8601String();
+      }
+      completedSources++;
+      final partial = buildCurrentResult();
+      if (sourceSucceeded) {
+        await onPartialResult?.call(partial);
+      }
+      onProgress?.call(
+        FreeNodesProgress(
+          operation: '已完成 $completedSources/$totalSources 个来源',
+          completed: completedSources,
+          total: totalSources,
+          successfulSources: successfulSources,
+          failedSources: failedSources,
+          proxyCount: partial.proxyCount,
+          sourceId: source.id,
+          url: source.seed,
         ),
       );
     }
-    final rawSources = output['sources'];
-    final sources = rawSources is List
-        ? rawSources
-              .whereType<Map>()
-              .map(
-                (source) => FreeNodeSourceStatus(
-                  url: source['url']?.toString() ?? '',
-                  success: source['success'] == true,
-                  proxyCount: int.tryParse('${source['proxyCount'] ?? 0}') ?? 0,
-                  sourceId: source['sourceId']?.toString(),
-                  sourceLabel: source['sourceLabel']?.toString(),
-                  updateIntervalHours: int.tryParse(
-                    '${source['updateIntervalHours'] ?? ''}',
-                  ),
-                  fetchedAt: DateTime.tryParse(
-                    source['fetchedAt']?.toString() ?? '',
-                  ),
-                  message: source['message']?.toString(),
-                ),
-              )
-              .toList(growable: false)
-        : const <FreeNodeSourceStatus>[];
-    final result = FreeNodesUpdateResult(
-      bytes: Uint8List.fromList(utf8.encode(yamlText)),
-      proxyCount: proxyCount,
-      sources: sources,
-    );
-    final candidateCount =
-        int.tryParse('${output['candidateCount'] ?? plannedCandidateCount}') ??
-        plannedCandidateCount;
-    final successSourceCount =
-        int.tryParse('${output['successSourceCount'] ?? ''}') ??
-        sources.where((source) => source.success).length;
+    await workersDone;
+    await _saveSourceFetchTimes(sourceFetchTimes);
+    final result = buildCurrentResult();
     onProgress?.call(
       FreeNodesProgress(
-        operation: '\u5df2\u83b7\u53d6 $successSourceCount \u4e2a\u6765\u6e90',
-        completed: successSourceCount,
-        total: candidateCount <= 0 ? plannedCandidateCount : candidateCount,
-        proxyCount: result.proxyCount,
-      ),
-    );
-    onProgress?.call(
-      FreeNodesProgress(
-        operation: '\u5df2\u5b8c\u6210',
-        completed: sources.length,
-        total: sources.length,
+        operation: '已完成',
+        completed: completedSources,
+        total: totalSources,
+        successfulSources: successfulSources,
+        failedSources: failedSources,
         proxyCount: result.proxyCount,
         done: true,
       ),
     );
     return result;
+  }
+
+  FreeNodeSourceStatus _freeNodeSourceStatusFromMap(Map source) {
+    return FreeNodeSourceStatus(
+      url: source['url']?.toString() ?? '',
+      success: source['success'] == true,
+      proxyCount: int.tryParse('${source['proxyCount'] ?? 0}') ?? 0,
+      sourceId: source['sourceId']?.toString(),
+      sourceLabel: source['sourceLabel']?.toString(),
+      updateIntervalHours: int.tryParse(
+        '${source['updateIntervalHours'] ?? ''}',
+      ),
+      fetchedAt: DateTime.tryParse(source['fetchedAt']?.toString() ?? ''),
+      message: source['message']?.toString(),
+    );
+  }
+
+  FreeNodesUpdateResult _buildUpdateResult(
+    List<_DatedProxy> proxies, {
+    required _FreeNodeSourceCatalog catalog,
+    required bool autoPrefer,
+    required List<FreeNodeSourceStatus> sources,
+  }) {
+    final merged = _deduplicateAndName(proxies);
+    final config = _buildClashConfig(
+      merged,
+      catalog: catalog,
+      autoPrefer: autoPrefer,
+    );
+    return FreeNodesUpdateResult(
+      bytes: Uint8List.fromList(utf8.encode(yaml.encode(config))),
+      proxyCount: merged.length,
+      sources: sources,
+    );
   }
 
   Future<FreeNodesUpdateResult> _fetchMergedConfigDart({
@@ -1376,9 +1529,22 @@ class FreeNodesService {
     final proxies = <_DatedProxy>[];
     final successfulFamilies = <String>{};
     final sourceFetchTimes = <String, String>{};
-    var completed = 0;
-    var lastPartialProxyCount = 0;
-    var lastPartialEmitTime = DateTime.fromMillisecondsSinceEpoch(0);
+    final sourceStartedAt = <String, DateTime>{};
+    final completedSourceIds = <String>{};
+    final remainingCandidatesBySource = <String, int>{};
+    for (final candidate in candidates) {
+      remainingCandidatesBySource.update(
+        candidate.source.id,
+        (count) => count + 1,
+        ifAbsent: () => 1,
+      );
+    }
+    final totalSources = remainingCandidatesBySource.length;
+    var completedSources = 0;
+
+    int successfulCompletedSources() {
+      return completedSourceIds.where(successfulFamilies.contains).length;
+    }
 
     FreeNodesUpdateResult buildResultFrom(List<_DatedProxy> freshProxies) {
       final existingProxies = _extractExistingDatedProxies(
@@ -1408,15 +1574,26 @@ class FreeNodesService {
       onProgress?.call(
         FreeNodesProgress(
           operation: '\u6b63\u5728\u83b7\u53d6 ${source.label}',
-          completed: completed,
-          total: candidates.length,
+          completed: completedSources,
+          total: totalSources,
+          successfulSources: successfulCompletedSources(),
+          failedSources: completedSources - successfulCompletedSources(),
           proxyCount: proxies.length,
           sourceId: source.id,
           url: url,
         ),
       );
       try {
-        final text = await fetcher(url).timeout(fetchTimeout);
+        final sourceStart = sourceStartedAt.putIfAbsent(
+          source.id,
+          DateTime.now,
+        );
+        final remainingTimeout =
+            fetchTimeout - DateTime.now().difference(sourceStart);
+        if (remainingTimeout <= Duration.zero) {
+          throw TimeoutException('${source.label} 来源获取超时');
+        }
+        final text = await fetcher(url).timeout(remainingTimeout);
         final fetchedAt = DateTime.now();
         sourceFetchTimes[source.id] = fetchedAt.toIso8601String();
         var parsed = await parseProxiesFast(text);
@@ -1458,16 +1635,6 @@ class FreeNodesService {
           ),
         );
         successfulFamilies.add(source.id);
-        final now = DateTime.now();
-        final shouldEmitPartial =
-            proxies.length >= lastPartialProxyCount + 200 ||
-            now.difference(lastPartialEmitTime) >= const Duration(seconds: 5);
-        if (shouldEmitPartial) {
-          final partial = buildResultFrom(proxies);
-          lastPartialProxyCount = partial.proxyCount;
-          lastPartialEmitTime = now;
-          await onPartialResult?.call(partial);
-        }
       } catch (e) {
         final fetchedAt = DateTime.now();
         sourceFetchTimes[source.id] = fetchedAt.toIso8601String();
@@ -1482,12 +1649,22 @@ class FreeNodesService {
           message: e.toString(),
         );
       } finally {
-        completed++;
+        final remaining = (remainingCandidatesBySource[source.id] ?? 1) - 1;
+        remainingCandidatesBySource[source.id] = remaining;
+        if (remaining <= 0) {
+          completedSourceIds.add(source.id);
+          completedSources++;
+          if (successfulFamilies.contains(source.id)) {
+            await onPartialResult?.call(buildResultFrom(proxies));
+          }
+        }
         onProgress?.call(
           FreeNodesProgress(
-            operation: '\u5df2\u83b7\u53d6 ${source.label}',
-            completed: completed,
-            total: candidates.length,
+            operation: '已完成 $completedSources/$totalSources 个来源',
+            completed: completedSources,
+            total: totalSources,
+            successfulSources: successfulCompletedSources(),
+            failedSources: completedSources - successfulCompletedSources(),
             proxyCount: proxies.length,
             sourceId: source.id,
             url: url,
@@ -1500,7 +1677,6 @@ class FreeNodesService {
     final concurrency = preferenceState.fetchConcurrency.clamp(1, 12);
     Future<void> worker() async {
       while (nextIndex < candidates.length) {
-        if (proxies.length >= 1800 && successfulFamilies.length >= 12) return;
         final candidate = candidates[nextIndex++];
         await fetchCandidate(candidate);
       }
@@ -1512,8 +1688,10 @@ class FreeNodesService {
     onProgress?.call(
       FreeNodesProgress(
         operation: '\u6b63\u5728\u5408\u5e76\u8282\u70b9',
-        completed: completed,
-        total: candidates.length,
+        completed: completedSources,
+        total: totalSources,
+        successfulSources: successfulCompletedSources(),
+        failedSources: completedSources - successfulCompletedSources(),
         proxyCount: proxies.length,
       ),
     );
@@ -1521,8 +1699,10 @@ class FreeNodesService {
     onProgress?.call(
       FreeNodesProgress(
         operation: '\u5df2\u5b8c\u6210',
-        completed: candidates.length,
-        total: candidates.length,
+        completed: totalSources,
+        total: totalSources,
+        successfulSources: successfulFamilies.length,
+        failedSources: totalSources - successfulFamilies.length,
         proxyCount: result.proxyCount,
         done: true,
       ),

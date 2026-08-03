@@ -2697,7 +2697,7 @@ proxy-groups:
   });
 
   test(
-    'asset catalog keeps 187 unique reserves and declares exactly 60 defaults',
+    'asset catalog keeps 187 unique sources and enables all by default',
     () async {
       final sourceCatalogJson = await File(
         'assets/data/free_node_sources.json',
@@ -2731,9 +2731,9 @@ proxy-groups:
       final canonicalSeeds = seeds.map(canonicalSeed).toList();
 
       expect(sources, hasLength(187));
-      expect(defaultSourceIds, hasLength(60));
-      expect(defaultSourceIds.toSet(), hasLength(60));
-      expect(defaultSourceIds, sources.take(60).map((source) => source['id']));
+      expect(defaultSourceIds, hasLength(187));
+      expect(defaultSourceIds.toSet(), hasLength(187));
+      expect(defaultSourceIds, sources.map((source) => source['id']));
       expect(defaultSourceIds.every(ids.toSet().contains), isTrue);
       expect(ids.every((value) => value.trim().isNotEmpty), isTrue);
       expect(labels.every((value) => value.trim().isNotEmpty), isTrue);
@@ -2748,7 +2748,7 @@ proxy-groups:
         ..complete(await SharedPreferences.getInstance());
       final service = FreeNodesService(sourceCatalogJson: sourceCatalogJson);
       expect(await service.getSourceOptions(), hasLength(187));
-      expect(await service.getEnabledSourceIds(), defaultSourceIds.toSet());
+      expect(await service.getEnabledSourceIds(), ids.toSet());
     },
   );
 
@@ -2794,9 +2794,31 @@ proxy-groups:
     expect(result.proxyCount, 2);
     expect(fetchedUrls, isNotEmpty);
     expect(
+      fetchedUrls.any((url) => url.contains('default.example.com')),
+      isTrue,
+    );
+    expect(
       fetchedUrls.every((url) => url.contains('default.example.com')),
       isTrue,
     );
+  });
+
+  test('saved source selection overrides the all-source app default', () async {
+    final sourceCatalogJson = await File(
+      'assets/data/free_node_sources.json',
+    ).readAsString();
+    final data = json.decode(sourceCatalogJson) as Map<String, dynamic>;
+    final sources = (data['sources'] as List).cast<Map<String, dynamic>>();
+    final selectedId = sources.last['id'].toString();
+    await preferences.sharedPreferencesCompleter.future;
+    SharedPreferences.setMockInitialValues({
+      freeNodesSelectedSourcesKey: [selectedId],
+    });
+    preferences.sharedPreferencesCompleter = Completer<SharedPreferences?>()
+      ..complete(await SharedPreferences.getInstance());
+    final service = FreeNodesService(sourceCatalogJson: sourceCatalogJson);
+
+    expect(await service.getEnabledSourceIds(), {selectedId});
   });
 
   test('uses enabled free node sources only', () async {
@@ -4004,6 +4026,9 @@ proxy-groups:
     expect(progressEvents, isNotEmpty);
     expect(progressEvents.last.done, isTrue);
     expect(progressEvents.last.proxyCount, 2);
+    expect(progressEvents.last.total, 1);
+    expect(progressEvents.last.successfulSources, 1);
+    expect(progressEvents.last.failedSources, 0);
   });
 
   test('reports partial merged config before later sources finish', () async {

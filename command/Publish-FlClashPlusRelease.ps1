@@ -1111,7 +1111,8 @@ function Initialize-SourceMirror {
     }
     foreach ($relative in @(
             'command/Publish-FlClashPlusRelease.ps1',
-            'command/Deploy-FlClashPlusSite.ps1'
+            'command/Deploy-FlClashPlusSite.ps1',
+            'command/gitpush.cmd'
         )) {
         $source = Join-Path $ProjectRoot $relative
         if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
@@ -1214,7 +1215,7 @@ function Push-SourceMirror {
             'diff', '--cached', '--check', '--',
             'README.md', 'README_zh_CN.md', 'NOTICE.md', 'RELEASE_CHANNEL.md',
             '.gitignore', 'command/Publish-FlClashPlusRelease.ps1',
-            'command/Deploy-FlClashPlusSite.ps1'
+            'command/Deploy-FlClashPlusSite.ps1', 'command/gitpush.cmd'
         ) -AllowFailure `
         -LogPath (Join-Path $LogsRoot 'source-mirror-diff-check.log')
     if ($diffCheck.ExitCode -ne 0) {

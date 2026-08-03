@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::Write as _;
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use ureq::{Agent, Proxy};
 use url::Url;
 
@@ -718,6 +718,7 @@ struct FetchQueueState {
 }
 
 type SharedFetchQueue = Arc<(Mutex<FetchQueueState>, Condvar)>;
+type SharedSourceDeadlines = Arc<Mutex<HashMap<String, Instant>>>;
 
 impl FetchQueueState {
     fn new(candidates: Vec<ConfigCandidate>) -> Self {
@@ -895,7 +896,8 @@ fn stability_variance(values: &[i64]) -> f64 {
 }
 
 fn fetch_merge_free_nodes(input: FreeNodesInput) -> Result<FreeNodesOutput, String> {
-    let candidates = resolve_candidates(&input);
+    let source_deadlines = Arc::new(Mutex::new(HashMap::<String, Instant>::new()));
+    let candidates = resolve_candidates_with_deadlines(&input, &source_deadlines);
     let candidate_count = candidates.len();
     let concurrency = normalized_free_nodes_fetch_concurrency(
         input.preference.fetch_concurrency,
@@ -910,6 +912,7 @@ fn fetch_merge_free_nodes(input: FreeNodesInput) -> Result<FreeNodesOutput, Stri
         for _ in 0..concurrency {
             let queue = Arc::clone(&queue);
             let input = Arc::clone(&shared_input);
+            let source_deadlines = Arc::clone(&source_deadlines);
             handles.push(thread::spawn(move || {
                 let mut agent_cache = AgentCache::default();
                 let mut local_proxies = Vec::<DatedProxy>::with_capacity(worker_result_capacity);
@@ -926,6 +929,7 @@ fn fetch_merge_free_nodes(input: FreeNodesInput) -> Result<FreeNodesOutput, Stri
                                 &mut local_proxies,
                                 &mut local_statuses,
                                 &mut agent_cache,
+                                &source_deadlines,
                             );
                             finish_fetch_candidate_and_notify(&queue, fetch_key, success);
                         }
@@ -1034,6 +1038,7 @@ fn fetch_candidate(
     proxies: &mut Vec<DatedProxy>,
     statuses: &mut Vec<SourceStatus>,
     agent_cache: &mut AgentCache,
+    source_deadlines: &SharedSourceDeadlines,
 ) -> bool {
     fetch_candidate_with_fetcher(
         input,
@@ -1041,7 +1046,8 @@ fn fetch_candidate(
         proxies,
         statuses,
         agent_cache,
-        &|input, source, url, timeout, agent_cache| {
+        &|input, source, url, _timeout, agent_cache| {
+            let timeout = remaining_source_timeout(input, source, source_deadlines)?;
             fetch_text_for_source_with_timeout(input, source, url, timeout, agent_cache)
         },
     )
@@ -1466,6 +1472,14 @@ fn finish_fetch_candidate(state: &mut FetchQueueState, fetch_key: String, succes
 }
 
 fn resolve_candidates(input: &FreeNodesInput) -> Vec<ConfigCandidate> {
+    let source_deadlines = Arc::new(Mutex::new(HashMap::<String, Instant>::new()));
+    resolve_candidates_with_deadlines(input, &source_deadlines)
+}
+
+fn resolve_candidates_with_deadlines(
+    input: &FreeNodesInput,
+    source_deadlines: &SharedSourceDeadlines,
+) -> Vec<ConfigCandidate> {
     if input.enabled_source_ids.is_empty() || input.source_ids.as_ref().is_some_and(Vec::is_empty) {
         return Vec::new();
     }
@@ -1546,7 +1560,14 @@ fn resolve_candidates(input: &FreeNodesInput) -> Vec<ConfigCandidate> {
     }
 
     let max_pages = discovery_page_limit(configs.len(), &page_queue);
-    configs = discover_pages_parallel(input, configs, page_queue, visited_pages, max_pages);
+    configs = discover_pages_parallel_with_deadlines(
+        input,
+        configs,
+        page_queue,
+        visited_pages,
+        max_pages,
+        source_deadlines,
+    );
 
     build_config_candidates(configs)
 }
@@ -1865,12 +1886,13 @@ fn discovery_page_limit(config_count: usize, page_queue: &VecDeque<ConfigCandida
         .min(CONFIG_CANDIDATE_LIMIT)
 }
 
-fn discover_pages_parallel(
+fn discover_pages_parallel_with_deadlines(
     input: &FreeNodesInput,
     configs: HashMap<String, Arc<CandidateSource>>,
     page_queue: VecDeque<ConfigCandidate>,
     visited_pages: HashSet<String>,
     max_pages: usize,
+    source_deadlines: &SharedSourceDeadlines,
 ) -> HashMap<String, Arc<CandidateSource>> {
     discover_pages_with_fetcher(
         input,
@@ -1879,13 +1901,8 @@ fn discover_pages_parallel(
         visited_pages,
         max_pages,
         &|input, source, url, agent_cache| {
-            fetch_text_for_source_with_timeout(
-                input,
-                source,
-                url,
-                source_fetch_timeout(input, source),
-                agent_cache,
-            )
+            let timeout = remaining_source_timeout(input, source, source_deadlines)?;
+            fetch_text_for_source_with_timeout(input, source, url, timeout, agent_cache)
         },
     )
 }
@@ -2242,6 +2259,33 @@ fn source_fetch_timeout(input: &FreeNodesInput, source: &CandidateSource) -> u64
         .copied()
         .unwrap_or(input.default_fetch_timeout_seconds)
         .clamp(3, 120)
+}
+
+fn remaining_source_timeout(
+    input: &FreeNodesInput,
+    source: &CandidateSource,
+    source_deadlines: &SharedSourceDeadlines,
+) -> Result<u64, String> {
+    let timeout_seconds = source_fetch_timeout(input, source);
+    let started_at = {
+        let mut guard = source_deadlines
+            .lock()
+            .map_err(|_| format!("{} source deadline lock poisoned", source.label))?;
+        *guard.entry(source.id.clone()).or_insert_with(Instant::now)
+    };
+    let limit = Duration::from_secs(timeout_seconds);
+    let elapsed = started_at.elapsed();
+    if elapsed >= limit {
+        return Err(format!(
+            "{} source fetch timed out after {}s",
+            source.label, timeout_seconds
+        ));
+    }
+    Ok(limit
+        .saturating_sub(elapsed)
+        .as_secs()
+        .max(1)
+        .min(timeout_seconds))
 }
 
 fn build_agent(timeout_seconds: u64, proxy_url: Option<&str>) -> Result<Agent, String> {
@@ -22717,6 +22761,54 @@ proxy-groups:
         assert_eq!(*seen_timeouts.lock().unwrap(), vec![3, 3]);
         assert!(proxies.is_empty());
         assert_eq!(statuses.len(), 2);
+    }
+
+    #[test]
+    fn test_source_deadline_bounds_the_whole_source_fetch() {
+        let source = SourceInput {
+            id: "deadline".into(),
+            label: "Deadline".into(),
+            seed: "https://deadline.example.com/".into(),
+            rank: 0,
+            update_interval_hours: 24,
+            page_discovery: true,
+            github_discovery: false,
+            raw_candidates: vec![],
+            candidate_urls: vec![],
+        };
+        let mut fetch_timeout_seconds_by_source = HashMap::new();
+        fetch_timeout_seconds_by_source.insert(source.id.clone(), 3);
+        let input = FreeNodesInput {
+            catalog: CatalogInput {
+                history_timeout_hours: 72,
+                sources: vec![source.clone()],
+            },
+            enabled_source_ids: vec![source.id.clone()],
+            source_ids: None,
+            existing_config_text: None,
+            preference: PreferenceInput {
+                fetch_concurrency: 1,
+                auto_prefer: false,
+            },
+            fetch_timeout_seconds_by_source,
+            default_fetch_timeout_seconds: 10,
+            proxy_url: None,
+            user_agent: "test".into(),
+            today_label: "2026-06-19".into(),
+            today_token: 20260619,
+            now_day_number: 0,
+            now_iso: "2026-06-19T00:00:00".into(),
+        };
+        let source = CandidateSource::from_source(&source);
+        let source_deadlines = Arc::new(Mutex::new(HashMap::from([(
+            source.id.clone(),
+            Instant::now() - Duration::from_secs(4),
+        )])));
+
+        let error = remaining_source_timeout(&input, &source, &source_deadlines)
+            .expect_err("expired source deadline must stop more candidates");
+
+        assert!(error.contains("source fetch timed out after 3s"));
     }
 
     #[test]

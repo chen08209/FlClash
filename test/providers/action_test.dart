@@ -648,7 +648,7 @@ proxy-groups:
       expect(progress.completed, 0);
       expect(progress.total, 64);
       expect(progress.startedAt, startedAt);
-      expect(progress.value, isNull);
+      expect(progress.value, 0);
     });
 
     test('uses completed fetch wording after automatic update finishes', () {

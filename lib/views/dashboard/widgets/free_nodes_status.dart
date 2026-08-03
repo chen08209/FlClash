@@ -20,10 +20,24 @@ String buildFreeNodesStatusText({
     isUpdating: isUpdating,
   )) {
     if (progress?.operation == '正在检查更新') return '检查更新中';
+    if ((progress?.total ?? 0) > 0) {
+      return '已获取 ${progress!.successfulSources}/${progress.total} 源'
+          ' · 失败 ${progress.failedSources} 源';
+    }
     return '获取中';
   }
-  if (progress?.error == true) return '更新失败 · $proxyCount 个';
+  if (progress?.error == true) {
+    if ((progress?.total ?? 0) > 0) {
+      return '更新失败 · 已获取 ${progress!.successfulSources}/${progress.total} 源'
+          ' · 失败 ${progress.failedSources} 源';
+    }
+    return '更新失败 · $proxyCount 个';
+  }
   if (progress?.done == true && (progress?.operation ?? '').isNotEmpty) {
+    if ((progress?.total ?? 0) > 0) {
+      return '已获取 ${progress!.successfulSources}/${progress.total} 源'
+          ' · 失败 ${progress.failedSources} 源 · $proxyCount 个节点';
+    }
     return '${progress!.operation} · $proxyCount 个';
   }
   if (profile == null) return '已删除';

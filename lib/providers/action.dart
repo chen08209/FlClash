@@ -1388,6 +1388,13 @@ class ProfilesAction extends _$ProfilesAction {
       return await freeNodesService.updateProfile(
         profile,
         sourceIds: sourceIds,
+        onPartialProfile: silent
+            ? null
+            : (partialProfile) async {
+                if (!ref.mounted) return;
+                await _putProfileAndPersist(partialProfile);
+                await _applyFreeNodesProfileIfCurrent(partialProfile);
+              },
         onProgress: silent
             ? null
             : (progress) {

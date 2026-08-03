@@ -79,7 +79,7 @@ void main() {
     expect(count, 5555);
   });
 
-  test('hides technical progress details during first Rust fetch', () {
+  test('shows source-level progress during first Rust fetch', () {
     final text = buildFreeNodesStatusText(
       profile: freeNodesService.createProfile(),
       progress: const FreeNodesProgress(
@@ -91,7 +91,7 @@ void main() {
       proxyCount: 0,
     );
 
-    expect(text, '获取中');
+    expect(text, '已获取 0/128 源 · 失败 0 源');
   });
 
   test('startup due check is not presented as a node fetch', () {
@@ -155,14 +155,49 @@ void main() {
     );
   });
 
-  test('uses indeterminate progress before the first Rust result returns', () {
+  test('uses real zero progress before the first source returns', () {
     const progress = FreeNodesProgress(
       operation: 'Rust 高并发获取免费节点',
       completed: 0,
       total: 128,
     );
 
-    expect(progress.value, isNull);
+    expect(progress.value, 0);
+  });
+
+  test('shows successful and failed source counts while fetching', () {
+    final text = buildFreeNodesStatusText(
+      profile: freeNodesService.createProfile(),
+      progress: const FreeNodesProgress(
+        operation: '获取中',
+        completed: 7,
+        total: 10,
+        successfulSources: 5,
+        failedSources: 2,
+      ),
+      isUpdating: true,
+      proxyCount: 120,
+    );
+
+    expect(text, '已获取 5/10 源 · 失败 2 源');
+  });
+
+  test('keeps source result counts after fetching completes', () {
+    final text = buildFreeNodesStatusText(
+      profile: freeNodesService.createProfile(),
+      progress: const FreeNodesProgress(
+        operation: '已完成',
+        completed: 10,
+        total: 10,
+        successfulSources: 8,
+        failedSources: 2,
+        done: true,
+      ),
+      isUpdating: false,
+      proxyCount: 320,
+    );
+
+    expect(text, '已获取 8/10 源 · 失败 2 源 · 320 个节点');
   });
 
   test('shows remaining estimate while updating', () {
