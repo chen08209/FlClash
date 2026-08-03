@@ -115,7 +115,8 @@ class Traffics extends _$Traffics with AutoDisposeNotifierMixin {
   }
 
   void clear() {
-    value = state.copyWith()..clear();
+    state.clear();
+    value = state.notifyClone();
   }
 }
 
@@ -132,6 +133,19 @@ class LoadedLocale extends _$LoadedLocale with AutoDisposeNotifierMixin {
   @override
   Locale? build() {
     return null;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ConnectionsSnapshot extends _$ConnectionsSnapshot
+    with AutoDisposeNotifierMixin {
+  @override
+  List<TrackerInfo> build() {
+    return const [];
+  }
+
+  void apply(List<TrackerInfo> next) {
+    value = next;
   }
 }
 

@@ -175,22 +175,58 @@ class AppTray implements TrayPort {
     if (trayState.groups.isEmpty) {
       return const [];
     }
+    const maxProxiesPerGroup = 30;
     return [
       for (final group in trayState.groups)
         TrayMenuSubmenu(
           label: group.name,
           items: [
-            for (final proxy in group.all)
-              TrayMenuCheckbox(
-                label: proxy.name,
-                checked:
-                    read(selectedProxyNameProvider(group.name)) == proxy.name,
-                onSelected: () {
-                  read(
-                    proxiesActionProvider.notifier,
-                  ).changeProxy(groupName: group.name, proxyName: proxy.name);
-                },
-              ),
+            ...() {
+              final selectedName = read(selectedProxyNameProvider(group.name));
+              final proxies = group.all;
+              final List<Proxy> limited;
+              if (proxies.length <= maxProxiesPerGroup) {
+                limited = proxies;
+              } else {
+                limited = proxies.take(maxProxiesPerGroup).toList();
+                if (selectedName != null &&
+                    selectedName.isNotEmpty &&
+                    !limited.any((proxy) => proxy.name == selectedName)) {
+                  Proxy? selected;
+                  for (final proxy in proxies) {
+                    if (proxy.name == selectedName) {
+                      selected = proxy;
+                      break;
+                    }
+                  }
+                  if (selected != null) {
+                    limited[limited.length - 1] = selected;
+                  }
+                }
+              }
+              return [
+                for (final proxy in limited)
+                  TrayMenuCheckbox(
+                    label: proxy.name,
+                    checked: selectedName == proxy.name,
+                    onSelected: () {
+                      read(
+                        proxiesActionProvider.notifier,
+                      ).changeProxy(
+                        groupName: group.name,
+                        proxyName: proxy.name,
+                      );
+                    },
+                  ),
+                if (proxies.length > maxProxiesPerGroup)
+                  TrayMenuAction(
+                    label: '${currentAppLocalizations.proxies}…',
+                    onSelected: () {
+                      window?.show();
+                    },
+                  ),
+              ];
+            }(),
           ],
         ),
       const TrayMenuSeparator(),

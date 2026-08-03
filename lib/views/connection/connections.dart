@@ -1,11 +1,10 @@
-import 'dart:async';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
@@ -22,7 +21,7 @@ class ConnectionsView extends ConsumerStatefulWidget {
 }
 
 class _ConnectionsViewState extends ConsumerState<ConnectionsView>
-    with WidgetsBindingObserver, ActivePollingMixin<ConnectionsView> {
+    with WidgetsBindingObserver {
   CoreController get _core => ref.read(coreHandlerProvider);
 
   final _connectionsStateNotifier = ValueNotifier<TrackerInfosState>(
@@ -30,8 +29,43 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   );
   final ScrollController _scrollController = ScrollController();
 
+  bool get _isPageActive {
+    if (!mounted) {
+      return false;
+    }
+    final route = ModalRoute.of(context);
+    if (route != null && !route.isCurrent) {
+      return false;
+    }
+    return WidgetsBinding.instance.lifecycleState ==
+            AppLifecycleState.resumed ||
+        WidgetsBinding.instance.lifecycleState == null;
+  }
+
   @override
-  Duration get pollInterval => const Duration(seconds: 1);
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    ref.listenManual(connectionsSnapshotProvider, (prev, next) {
+      if (!_isPageActive) {
+        return;
+      }
+      _applyConnections(next);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+      await _refreshConnections();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      unawaited(_refreshConnections());
+    }
+  }
 
   List<Widget> _buildActions() {
     return [
@@ -58,15 +92,6 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     );
   }
 
-  @override
-  Future<void> poll(PollGuard isCurrent) async {
-    final trackerInfos = await _readConnections();
-    if (trackerInfos == null || !isCurrent()) {
-      return;
-    }
-    _applyConnections(trackerInfos);
-  }
-
   Future<void> _refreshConnections() async {
     final trackerInfos = await _readConnections();
     if (trackerInfos == null || !mounted) {
@@ -90,8 +115,35 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     }
   }
 
+  bool _isSameSnapshot(List<TrackerInfo> previous, List<TrackerInfo> next) {
+    if (identical(previous, next)) {
+      return true;
+    }
+    if (previous.length != next.length) {
+      return false;
+    }
+    for (var i = 0; i < previous.length; i++) {
+      final a = previous[i];
+      final b = next[i];
+      if (a.id != b.id ||
+          a.upload != b.upload ||
+          a.download != b.download ||
+          a.uploadSpeed != b.uploadSpeed ||
+          a.downloadSpeed != b.downloadSpeed ||
+          a.rule != b.rule ||
+          a.rulePayload != b.rulePayload) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   void _applyConnections(List<TrackerInfo> trackerInfos) {
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
+    final current = _connectionsStateNotifier.value;
+    if (_isSameSnapshot(current.trackerInfos, trackerInfos)) {
+      return;
+    }
+    _connectionsStateNotifier.value = current.copyWith(
       trackerInfos: trackerInfos,
     );
   }
@@ -103,6 +155,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectionsStateNotifier.dispose();
     _scrollController.dispose();
     super.dispose();

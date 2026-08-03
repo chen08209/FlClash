@@ -245,6 +245,7 @@ void main() {
       expect(config.mixedPort, defaultMixedPort);
       expect(config.allowLan, false);
       expect(config.mode, Mode.rule);
+      expect(config.findProcessMode, FindProcessMode.off);
       expect(config.externalController, ExternalControllerStatus.close);
       expect(config.geodataLoader, GeodataLoader.memconservative);
     });

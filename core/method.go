@@ -200,6 +200,9 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	getTotalTrafficMethod: withArguments(func(onlyStatisticsProxy *bool, response MethodResponse) {
 		response.success(handleGetTotalTraffic(*onlyStatisticsProxy))
 	}),
+	getTrafficSnapshotMethod: withArguments(func(onlyStatisticsProxy *bool, response MethodResponse) {
+		response.success(handleGetTrafficSnapshot(*onlyStatisticsProxy))
+	}),
 	resetTrafficMethod: withoutArguments(func(response MethodResponse) {
 		handleResetTraffic()
 		response.success(true)

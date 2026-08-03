@@ -130,4 +130,16 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         .handleCoreUpdate(geoType, updating, skipped, error);
     super.onGeoUpdate(geoType, updating, skipped, error);
   }
+
+  @override
+  void onTraffic(Map<String, dynamic> snapshot) {
+    ref.read(commonActionProvider.notifier).applyTrafficPush(snapshot);
+    super.onTraffic(snapshot);
+  }
+
+  @override
+  void onConnections(List<TrackerInfo> connections) {
+    ref.read(connectionsSnapshotProvider.notifier).apply(connections);
+    super.onConnections(connections);
+  }
 }
