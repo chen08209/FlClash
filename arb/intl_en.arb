@@ -440,6 +440,7 @@
   "expectedStatus": "Expected status",
   "selectProxies": "Select proxies",
   "inputProxyGroupName": "Input proxy group name",
+  "helperCorruptTip": "Helper service unavailable; TUN mode cannot be enabled. Reinstall FlClash to restore it.",
   "hideFromList": "Hide from list",
   "testWhenUsed": "Test when used",
   "disableUDP": "Disable UDP",

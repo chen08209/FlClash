@@ -71,7 +71,7 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   } catch (error) {
     commonPrint.log(
       'Delay test failed for ${state.proxyName}: $error',
-      logLevel: LogLevel.error,
+      logLevel: coreFailureLogLevel(error),
     );
     ref
         .read(proxiesActionProvider.notifier)

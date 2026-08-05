@@ -14,8 +14,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CoreManager extends ConsumerStatefulWidget {
   final Widget child;
+  final CoreController controller;
 
-  const CoreManager({super.key, required this.child});
+  CoreManager({super.key, required this.child, CoreController? controller})
+    : controller = controller ?? coreController;
 
   @override
   ConsumerState<CoreManager> createState() => _CoreContainerState();
@@ -49,15 +51,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       next,
     ) {
       if (next) {
-        coreController.startLog();
+        widget.controller.startLog();
       } else {
-        coreController.stopLog();
+        widget.controller.stopLog();
       }
     }, fireImmediately: true);
   }
 
   @override
-  Future<void> dispose() async {
+  void dispose() {
     coreEventManager.removeListener(this);
     super.dispose();
   }
@@ -92,7 +94,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     final ref = globalState.container;
     ref
         .read(providersProvider.notifier)
-        .setProvider(await coreController.getExternalProvider(providerName));
+        .setProvider(await widget.controller.getExternalProvider(providerName));
     debouncer.call(FunctionTag.loadedProvider, () async {
       ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
     }, duration: const Duration(milliseconds: 5000));
@@ -108,7 +110,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
       context.showNotifier(message);
     }
-    await coreController.shutdown(false);
     super.onCrash(message);
   }
 

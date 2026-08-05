@@ -49,8 +49,16 @@ Read `.agents/architecture.md` for the current core modes, manager stack, build 
 
 - Keep the Windows Helper protocol and Core SHA256 validation identical across
   Flutter build modes; the Helper owns executable integrity checks.
-- Protocol version 5 uses a 32-character lowercase-hex session ID. `/start` must return the submitted session and PID;
+- Protocol version 6 uses a 32-character lowercase-hex session ID. `/start` must return the submitted session and PID;
   `/stop` must never terminate a different session; Dart must verify the connected named-pipe peer PID.
+- `/start` must release the previously managed Core before it verifies, so no `/start` outcome leaves a Helper-managed
+  Core behind for the caller's direct-launch fallback to race.
+- The Helper owns a managed Core until its exit is confirmed. A `200` from `/stop` means the Core is gone; when
+  termination cannot be confirmed the Helper keeps the child and answers `coreStopFailed`, and `/start` reports the same
+  code instead of spawning a replacement. Keep that code out of the Dart pre-spawn fallback set in
+  `helper_client.dart`, or the direct launch will race a Core the Helper still owns.
+- TUN is not a required run condition. Degrading to the unelevated direct Core — and silently losing TUN — is the
+  expected outcome whenever the Helper path fails; do not fail the launch instead.
 - A desktop process lease with unconfirmed exit must remain owned until cleanup succeeds. Do not discard it and start a
   replacement Core.
 - `CoreController.close()` is terminal. Do not call it from a reusable manager lifecycle or recover by starting it again.

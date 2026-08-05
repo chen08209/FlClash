@@ -220,6 +220,16 @@ class BuildWindowsCommand extends BuildCommand {
           : null,
     );
 
+    writeCoreManifest(
+      path: p.join(
+        _rootDir,
+        config.outputDir,
+        targets.first.platformDir,
+        coreManifestName,
+      ),
+      coreSha256: coreSha256,
+    );
+
     if (helperResult.rebuilt || coreResults.any((result) => result.rebuilt)) {
       _log.info('Build complete: $corePaths');
     }

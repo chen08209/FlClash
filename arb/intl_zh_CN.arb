@@ -440,6 +440,7 @@
   "expectedStatus": "预期状态",
   "selectProxies": "选择代理",
   "inputProxyGroupName": "输入策略组名称",
+  "helperCorruptTip": "Helper 服务不可用，无法启用 TUN 模式，请重新安装 FlClash。",
   "hideFromList": "从列表中隐藏",
   "testWhenUsed": "使用时测试",
   "disableUDP": "禁用UDP",
