@@ -6,6 +6,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/window_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/animated_visibility.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -87,9 +88,6 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ref = globalState.container;
         ref.read(setupActionProvider.notifier).tryCheckIp();
-        if (system.isAndroid) {
-          ref.read(coreActionProvider.notifier).tryStartCore();
-        }
       });
     }
   }
@@ -128,7 +126,7 @@ class AppEnvManager extends StatelessWidget {
     }
     if (globalState.isPre) {
       return Banner(
-        message: 'PRE',
+        message: globalState.appEnv.toUpperCase(),
         location: BannerLocation.topEnd,
         child: child,
       );
@@ -183,9 +181,21 @@ class AppSidebarContainer extends ConsumerWidget {
   }
 
   void _handleToPage(PageLabel pageLabel) {
+    final focusNode = FocusManager.instance.primaryFocus;
+    final preserveNavigationFocus =
+        focusNode?.context?.findAncestorWidgetOfExactType<NavigationRail>() !=
+        null;
     globalState.container
         .read(currentPageLabelProvider.notifier)
         .toPage(pageLabel);
+    if (!preserveNavigationFocus || focusNode == null) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (focusNode.context != null && focusNode.canRequestFocus) {
+        focusNode.requestFocus();
+      }
+    });
   }
 
   @override
@@ -193,98 +203,105 @@ class AppSidebarContainer extends ConsumerWidget {
     final navigationState = ref.watch(navigationStateProvider);
     final navigationItems = navigationState.navigationItems;
     final isMobileView = navigationState.viewMode == ViewMode.mobile;
-    if (isMobileView) {
-      return child;
-    }
     final currentIndex = navigationState.currentIndex;
     final showLabel = ref.watch(appSettingProvider).showLabel;
-    return Row(
-      children: [
-        _buildBackground(
-          context: context,
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (system.isMacOS) const SizedBox(height: 22),
-                const SizedBox(height: 10),
-                if (!system.isMacOS) ...[
-                  const ClipRect(child: AppIcon()),
-                  const SizedBox(height: 12),
-                ],
-                Expanded(
-                  child: ScrollConfiguration(
-                    behavior: HiddenBarScrollBehavior(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: NavigationRail(
-                            scrollable: true,
-                            minExtendedWidth: 200,
-                            backgroundColor: Colors.transparent,
-                            selectedLabelTextStyle: context
-                                .textTheme
-                                .labelLarge!
-                                .copyWith(color: context.colorScheme.onSurface),
-                            unselectedLabelTextStyle: context
-                                .textTheme
-                                .labelLarge!
-                                .copyWith(color: context.colorScheme.onSurface),
-                            destinations: navigationItems
-                                .map(
-                                  (e) => NavigationRailDestination(
-                                    icon: e.icon,
-                                    label: Text(Intl.message(e.label.name)),
-                                  ),
-                                )
-                                .toList(),
-                            onDestinationSelected: (index) {
-                              _handleToPage(navigationItems[index].label);
-                            },
-                            extended: false,
-                            selectedIndex: currentIndex,
-                            labelType: showLabel
-                                ? NavigationRailLabelType.all
-                                : NavigationRailLabelType.none,
-                          ),
+    return Container(
+      color: context.colorScheme.surfaceContainer,
+      child: Row(
+        children: [
+          AnimatedVisibility.sidebar(
+            visible: !isMobileView,
+            child: _buildBackground(
+              context: context,
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (system.isMacOS) const SizedBox(height: 22),
+                    const SizedBox(height: 10),
+                    if (!system.isMacOS) ...[
+                      const ClipRect(child: AppIcon()),
+                      const SizedBox(height: 12),
+                    ],
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: HiddenBarScrollBehavior(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: NavigationRail(
+                                scrollable: true,
+                                minExtendedWidth: 200,
+                                backgroundColor: Colors.transparent,
+                                selectedLabelTextStyle: context
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(
+                                      color: context.colorScheme.onSurface,
+                                    ),
+                                unselectedLabelTextStyle: context
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(
+                                      color: context.colorScheme.onSurface,
+                                    ),
+                                destinations: navigationItems
+                                    .map(
+                                      (e) => NavigationRailDestination(
+                                        icon: e.icon,
+                                        label: Text(Intl.message(e.label.name)),
+                                      ),
+                                    )
+                                    .toList(),
+                                onDestinationSelected: (index) {
+                                  _handleToPage(navigationItems[index].label);
+                                },
+                                extended: false,
+                                selectedIndex: currentIndex,
+                                labelType: showLabel
+                                    ? NavigationRailLabelType.all
+                                    : NavigationRailLabelType.none,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    IconButton(
+                      onPressed: () {
+                        ref
+                            .read(appSettingProvider.notifier)
+                            .update(
+                              (state) =>
+                                  state.copyWith(showLabel: !state.showLabel),
+                            );
+                      },
+                      icon: Icon(
+                        Icons.menu,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                IconButton(
-                  onPressed: () {
-                    ref
-                        .read(appSettingProvider.notifier)
-                        .update(
-                          (state) =>
-                              state.copyWith(showLabel: !state.showLabel),
-                        );
-                  },
-                  icon: Icon(
-                    Icons.menu,
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
+              ),
             ),
           ),
-        ),
-        Expanded(
-          flex: 1,
-          child: ClipRect(
-            child: LayoutBuilder(
-              builder: (_, constraints) {
-                _updateSideBarWidth(ref, constraints.maxWidth);
-                return child;
-              },
+          Expanded(
+            flex: 1,
+            child: ClipRect(
+              child: LayoutBuilder(
+                builder: (_, constraints) {
+                  _updateSideBarWidth(ref, constraints.maxWidth);
+                  return child;
+                },
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'fade_box.dart';
 import 'text.dart';
@@ -89,16 +90,18 @@ class CommonCard extends StatelessWidget {
     this.onPressed,
     this.selectWidget,
     this.radius,
-    required this.child,
     this.padding,
     this.enterAnimated = false,
     this.info,
     this.onLongPress,
     this.shape,
     this.isError = false,
+    this.enterActionsOnRight = false,
+    required this.child,
   }) : isSelected = isSelected ?? false;
 
   final bool enterAnimated;
+  final bool enterActionsOnRight;
   final bool isSelected;
   final bool isError;
   final void Function()? onPressed;
@@ -222,7 +225,7 @@ class CommonCard extends StatelessWidget {
       childWidget = Stack(children: children);
     }
 
-    final card = switch (type == CommonCardType.filled) {
+    final button = switch (type == CommonCardType.filled) {
       true => FilledButton(
         onLongPress: onLongPress,
         clipBehavior: Clip.antiAlias,
@@ -275,6 +278,28 @@ class CommonCard extends StatelessWidget {
         child: childWidget,
       ),
     };
+    final card = !enterActionsOnRight
+        ? button
+        : Focus(
+            canRequestFocus: false,
+            onKeyEvent: (_, event) {
+              if (event is! KeyDownEvent ||
+                  event.logicalKey != LogicalKeyboardKey.arrowRight) {
+                return KeyEventResult.ignored;
+              }
+              final focusNode = FocusManager.instance.primaryFocus;
+              final context = focusNode?.context;
+              if (focusNode == null ||
+                  context == null ||
+                  context.findAncestorWidgetOfExactType<IconButton>() != null) {
+                return KeyEventResult.ignored;
+              }
+              return focusNode.nextFocus()
+                  ? KeyEventResult.handled
+                  : KeyEventResult.ignored;
+            },
+            child: button,
+          );
 
     return switch (enterAnimated) {
       true => FadeScaleEnterBox(child: card),
