@@ -318,6 +318,8 @@
   "messageTest": "Message test",
   "messageTestTip": "This is a message.",
   "crashTest": "Crash test",
+  "crashDetected": "Crash detected",
+  "crashDetectedTip": "The app crashed during the previous run. To prevent repeated crashes, the current profile has been cleared and automatic configuration setup was skipped.",
   "clearData": "Clear Data",
   "textScale": "Text Scaling",
   "internet": "Internet",
@@ -547,7 +549,7 @@
   "hoursCount": "{count} hours",
   "geoResources": "Geo Resources",
   "geoUpdating": "Updating {name}...",
-  "geoSkipped": "{name} skipped",
+  "geoSkipped": "{name} is already up to date",
   "geoUpdated": "{name} updated",
   "secondsCount": "{count} seconds",
   "entriesCount": "{count} entries"

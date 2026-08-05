@@ -47,7 +47,7 @@ abstract class _$AppSetting extends $Notifier<AppSettingProps> {
   AppSettingProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AppSettingProps, AppSettingProps>;
     final element =
         ref.element
@@ -57,7 +57,7 @@ abstract class _$AppSetting extends $Notifier<AppSettingProps> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -99,7 +99,7 @@ abstract class _$WindowSetting extends $Notifier<WindowProps> {
   WindowProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<WindowProps, WindowProps>;
     final element =
         ref.element
@@ -109,7 +109,7 @@ abstract class _$WindowSetting extends $Notifier<WindowProps> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -150,7 +150,7 @@ abstract class _$VpnSetting extends $Notifier<VpnProps> {
   VpnProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<VpnProps, VpnProps>;
     final element =
         ref.element
@@ -160,7 +160,7 @@ abstract class _$VpnSetting extends $Notifier<VpnProps> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -202,7 +202,7 @@ abstract class _$NetworkSetting extends $Notifier<NetworkProps> {
   NetworkProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<NetworkProps, NetworkProps>;
     final element =
         ref.element
@@ -212,7 +212,7 @@ abstract class _$NetworkSetting extends $Notifier<NetworkProps> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -254,7 +254,7 @@ abstract class _$ThemeSetting extends $Notifier<ThemeProps> {
   ThemeProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ThemeProps, ThemeProps>;
     final element =
         ref.element
@@ -264,7 +264,7 @@ abstract class _$ThemeSetting extends $Notifier<ThemeProps> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -306,7 +306,7 @@ abstract class _$CurrentProfileId extends $Notifier<int?> {
   int? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<int?, int?>;
     final element =
         ref.element
@@ -316,7 +316,7 @@ abstract class _$CurrentProfileId extends $Notifier<int?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -358,7 +358,7 @@ abstract class _$DavSetting extends $Notifier<DAVProps?> {
   DAVProps? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<DAVProps?, DAVProps?>;
     final element =
         ref.element
@@ -368,7 +368,7 @@ abstract class _$DavSetting extends $Notifier<DAVProps?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -409,7 +409,7 @@ abstract class _$OverrideDns extends $Notifier<bool> {
   bool build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<bool, bool>;
     final element =
         ref.element
@@ -419,7 +419,7 @@ abstract class _$OverrideDns extends $Notifier<bool> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -461,7 +461,7 @@ abstract class _$HotKeyActions extends $Notifier<List<HotKeyAction>> {
   List<HotKeyAction> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<List<HotKeyAction>, List<HotKeyAction>>;
     final element =
         ref.element
@@ -471,7 +471,7 @@ abstract class _$HotKeyActions extends $Notifier<List<HotKeyAction>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -514,7 +514,7 @@ abstract class _$ProxiesStyleSetting extends $Notifier<ProxiesStyleProps> {
   ProxiesStyleProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ProxiesStyleProps, ProxiesStyleProps>;
     final element =
         ref.element
@@ -524,7 +524,7 @@ abstract class _$ProxiesStyleSetting extends $Notifier<ProxiesStyleProps> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -566,7 +566,7 @@ abstract class _$PatchClashConfig extends $Notifier<PatchClashConfig> {
   PatchClashConfig build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<PatchClashConfig, PatchClashConfig>;
     final element =
         ref.element
@@ -576,7 +576,7 @@ abstract class _$PatchClashConfig extends $Notifier<PatchClashConfig> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -618,7 +618,7 @@ abstract class _$ExcludeSSIDs extends $Notifier<List<String>> {
   List<String> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<List<String>, List<String>>;
     final element =
         ref.element
@@ -628,7 +628,7 @@ abstract class _$ExcludeSSIDs extends $Notifier<List<String>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
