@@ -5,12 +5,12 @@ import android.content.ComponentName
 object Components {
     const val PACKAGE_NAME = "com.follow.clash"
 
-    val MAIN_ACTIVITY =
+    val mainActivity =
         ComponentName(GlobalState.packageName, "${PACKAGE_NAME}.MainActivity")
 
-    val TEMP_ACTIVITY =
-        ComponentName(GlobalState.packageName, "${PACKAGE_NAME}.TempActivity")
+    val quickActionActivity =
+        ComponentName(GlobalState.packageName, "${PACKAGE_NAME}.QuickActionActivity")
 
-    val BROADCAST_RECEIVER =
-        ComponentName(GlobalState.packageName, "${PACKAGE_NAME}.BroadcastReceiver")
+    val serviceBroadcastReceiver =
+        ComponentName(GlobalState.packageName, "${PACKAGE_NAME}.ServiceBroadcastReceiver")
 }

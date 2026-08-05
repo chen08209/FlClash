@@ -3,7 +3,6 @@ package com.follow.clash
 import android.annotation.SuppressLint
 import android.os.Build
 import android.service.quicksettings.Tile
-import android.service.quicksettings.TileService
 import com.follow.clash.common.QuickAction
 import com.follow.clash.common.quickIntent
 import com.follow.clash.common.toPendingIntent
@@ -13,49 +12,50 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class TileService : TileService() {
+class TileService : android.service.quicksettings.TileService() {
     private var scope: CoroutineScope? = null
-    private fun updateTile(runState: RunState) {
-        if (qsTile != null) {
-            qsTile.state = when (runState) {
-                RunState.START -> Tile.STATE_ACTIVE
-                RunState.PENDING -> Tile.STATE_UNAVAILABLE
-                RunState.STOP -> Tile.STATE_INACTIVE
-            }
-            qsTile.updateTile()
-        }
-    }
 
     override fun onStartListening() {
         super.onStartListening()
         scope?.cancel()
-        scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        scope?.launch {
-            State.handleSyncState()
-            State.runStateFlow.collect {
-                updateTile(it)
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).also { scope ->
+            scope.launch {
+                ServiceState.refresh()
+                ServiceState.runState.collect(::updateTile)
             }
-        }
-    }
-
-    @SuppressLint("StartActivityAndCollapseDeprecated")
-    private fun handleToggle() {
-        val intent = QuickAction.TOGGLE.quickIntent
-        val pendingIntent = intent.toPendingIntent
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startActivityAndCollapse(pendingIntent)
-        } else {
-            @Suppress("DEPRECATION") startActivityAndCollapse(intent)
         }
     }
 
     override fun onClick() {
         super.onClick()
-        handleToggle()
+        openQuickAction()
     }
 
     override fun onStopListening() {
         scope?.cancel()
+        scope = null
         super.onStopListening()
+    }
+
+    private fun updateTile(runState: RunState) {
+        qsTile?.apply {
+            state = when (runState) {
+                RunState.STARTED -> Tile.STATE_ACTIVE
+                RunState.STARTING, RunState.STOPPING -> Tile.STATE_UNAVAILABLE
+                RunState.STOPPED -> Tile.STATE_INACTIVE
+            }
+            updateTile()
+        }
+    }
+
+    @SuppressLint("StartActivityAndCollapseDeprecated")
+    private fun openQuickAction() {
+        val intent = QuickAction.TOGGLE.quickIntent
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startActivityAndCollapse(intent.toPendingIntent)
+        } else {
+            @Suppress("DEPRECATION")
+            startActivityAndCollapse(intent)
+        }
     }
 }
