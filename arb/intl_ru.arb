@@ -318,6 +318,8 @@
   "messageTest": "Тестирование сообщения",
   "messageTestTip": "Это сообщение.",
   "crashTest": "Тест на сбои",
+  "crashDetected": "Обнаружен сбой",
+  "crashDetectedTip": "Во время предыдущего запуска произошёл сбой приложения. Чтобы предотвратить повторный сбой, текущий профиль был сброшен, а автоматическая настройка конфигурации пропущена.",
   "clearData": "Очистить данные",
   "textScale": "Масштабирование текста",
   "internet": "Интернет",
@@ -547,7 +549,7 @@
   "hoursCount": "{count} часов",
   "geoResources": "Ресурсы Geo",
   "geoUpdating": "Обновление {name}...",
-  "geoSkipped": "{name} пропущено",
+  "geoSkipped": "Для {name} уже установлена последняя версия",
   "geoUpdated": "{name} обновлено",
   "secondsCount": "{count} секунд",
   "entriesCount": "{count} записей"

@@ -318,6 +318,8 @@
   "messageTest": "メッセージテスト",
   "messageTestTip": "これはメッセージです。",
   "crashTest": "クラッシュテスト",
+  "crashDetected": "クラッシュを検出しました",
+  "crashDetectedTip": "前回の実行中にアプリがクラッシュしました。クラッシュの繰り返しを防ぐため、現在のプロファイルを解除し、設定の自動セットアップをスキップしました。",
   "clearData": "データを消去",
   "textScale": "テキストスケーリング",
   "internet": "インターネット",
@@ -547,7 +549,7 @@
   "hoursCount": "{count} 時間",
   "geoResources": "Geoリソース",
   "geoUpdating": "{name}を更新中...",
-  "geoSkipped": "{name} スキップ済み",
+  "geoSkipped": "{name} はすでに最新です",
   "geoUpdated": "{name} 更新済み",
   "secondsCount": "{count} 秒",
   "entriesCount": "{count} エントリ"

@@ -13,11 +13,12 @@ import 'package:wifi_ssid/wifi_ssid.dart';
 
 part 'generated/app.g.dart';
 
-@riverpod
-class RealTunEnable extends _$RealTunEnable with AutoDisposeNotifierMixin {
+@Riverpod(keepAlive: true)
+class AuthorizedTunEnable extends _$AuthorizedTunEnable
+    with AutoDisposeNotifierMixin {
   @override
-  bool build() {
-    return false;
+  TunAuthorizationState build() {
+    return TunAuthorizationState.none;
   }
 }
 
@@ -481,7 +482,9 @@ List<Override> buildAppStateOverrides(AppState appState) {
     logsProvider.overrideWithBuild((_, _) => appState.logs),
     trafficsProvider.overrideWithBuild((_, _) => appState.traffics),
     totalTrafficProvider.overrideWithBuild((_, _) => appState.totalTraffic),
-    realTunEnableProvider.overrideWithBuild((_, _) => appState.realTunEnable),
+    authorizedTunEnableProvider.overrideWithBuild(
+      (_, _) => appState.authorizedTunEnable,
+    ),
     systemUiOverlayStyleStateProvider.overrideWithBuild(
       (_, _) => appState.systemUiOverlayStyle,
     ),

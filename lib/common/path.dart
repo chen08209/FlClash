@@ -8,7 +8,7 @@ import 'package:path_provider/path_provider.dart';
 class AppPath {
   static AppPath? _instance;
   Completer<Directory> dataDir = Completer();
-  Completer<Directory> downloadDir = Completer();
+  late final Future<Directory?> _downloadDir = getDownloadsDirectory();
   Completer<Directory> tempDir = Completer();
   Completer<Directory> cacheDir = Completer();
   late String appDirPath;
@@ -20,9 +20,6 @@ class AppPath {
     });
     getTemporaryDirectory().then((value) {
       tempDir.complete(value);
-    });
-    getDownloadsDirectory().then((value) {
-      downloadDir.complete(value);
     });
     getApplicationCacheDirectory().then((value) {
       cacheDir.complete(value);
@@ -52,8 +49,8 @@ class AppPath {
   }
 
   Future<String> get downloadDirPath async {
-    final directory = await downloadDir.future;
-    return directory.path;
+    final directory = await _downloadDir;
+    return directory?.path ?? await homeDirPath;
   }
 
   Future<String> get homeDirPath async {
