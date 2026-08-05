@@ -999,57 +999,6 @@ abstract class _$CheckIpNum extends $Notifier<int> {
   }
 }
 
-@ProviderFor(BackBlock)
-final backBlockProvider = BackBlockProvider._();
-
-final class BackBlockProvider extends $NotifierProvider<BackBlock, bool> {
-  BackBlockProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'backBlockProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$backBlockHash();
-
-  @$internal
-  @override
-  BackBlock create() => BackBlock();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(bool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<bool>(value),
-    );
-  }
-}
-
-String _$backBlockHash() => r'c867df920425f9b063807ca758dff8d849ca069e';
-
-abstract class _$BackBlock extends $Notifier<bool> {
-  bool build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<bool, bool>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<bool, bool>,
-              bool,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
-
 @ProviderFor(Version)
 final versionProvider = VersionProvider._();
 
