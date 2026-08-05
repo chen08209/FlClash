@@ -22,6 +22,7 @@ class CommonScaffold extends StatefulWidget {
   final List<Widget>? actions;
   final bool? centerTitle;
   final Widget? floatingActionButton;
+  final bool? isTV;
   final AppBarEditState? editState;
   final AppBarSearchState? searchState;
   final OnKeywordsUpdateCallback? onKeywordsUpdate;
@@ -39,6 +40,7 @@ class CommonScaffold extends StatefulWidget {
     this.isLoading = false,
     this.searchState,
     this.floatingActionButton,
+    this.isTV,
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
   });
@@ -305,10 +307,19 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget build(BuildContext context) {
     assert(widget.appBar != null || widget.title != null);
     final backActionProvider = CommonScaffoldBackActionProvider.of(context);
+    final isTV = widget.isTV ?? system.isTV;
     final body = SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isTV && widget.floatingActionButton != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: CommonScaffoldFabExtendedProvider(
+                isExtended: true,
+                child: widget.floatingActionButton!,
+              ),
+            ),
           ValueListenableBuilder(
             valueListenable: _keywordsNotifier,
             builder: (_, keywords, _) {
@@ -361,7 +372,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
       ),
       resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
       backgroundColor: widget.backgroundColor,
-      floatingActionButton: widget.floatingActionButton != null
+      floatingActionButton: !isTV && widget.floatingActionButton != null
           ? ValueListenableBuilder<bool>(
               valueListenable: _isFabExtendedNotifier,
               builder: (_, isExtended, child) {
