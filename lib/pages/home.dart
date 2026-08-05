@@ -11,7 +11,7 @@ import 'package:intl/intl.dart';
 
 typedef OnSelected = void Function(int index);
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   void _handleToPage(PageLabel pageLabel) {
@@ -21,7 +21,13 @@ class HomePage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasViewSize = ref.watch(
+      viewSizeProvider.select((size) => !size.isEmpty),
+    );
+    if (!hasViewSize) {
+      return const SizedBox.shrink();
+    }
     return HomeBackScopeContainer(
       child: AppSidebarContainer(
         child: Material(

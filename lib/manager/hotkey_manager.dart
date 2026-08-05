@@ -37,7 +37,7 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
       case HotAction.mode:
         commonAction.updateMode();
       case HotAction.start:
-        commonAction.updateStart();
+        commonAction.toggleRunning();
       case HotAction.view:
         systemAction.updateVisible();
       case HotAction.proxy:

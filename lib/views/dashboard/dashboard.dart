@@ -14,7 +14,7 @@ import 'widgets/start_button.dart';
 
 typedef _IsEditWidgetBuilder = Widget Function(bool isEdit);
 
-const _maxCrossAxisCount = 12;
+const _maxCrossAxisCount = 16;
 const _maxGridWidth = 280.0 * _maxCrossAxisCount / 4;
 
 class DashboardView extends ConsumerStatefulWidget {

@@ -1,27 +1,25 @@
 name: wifi_ssid
-description: "A Flutter plugin to retrieve the current WiFi SSID."
+description: A Flutter plugin to retrieve the current Wi-Fi SSID.
 version: 0.0.1
-homepage:
 
 environment:
-  sdk: '>=3.4.4 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
   flutter: '>=3.3.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  plugin_platform_interface: ^2.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   plugin:
     platforms:
       android:
-        package: com.example.wifi_ssid
+        package: com.follow.clash.wifi_ssid
         pluginClass: WifiSsidPlugin
       macos:
         pluginClass: WifiSsidPlugin
