@@ -63,15 +63,13 @@ class Profiles extends _$Profiles {
     );
   }
 
-  void del(int id) {
+  Future<void> del(int id) async {
     final previous = List<Profile>.from(state);
     state = previous.where((e) => e.id != id).toList();
-    unawaited(
-      withRollback(
-        snapshot: previous,
-        action: () => database.profiles.remove((t) => t.id.equals(id)),
-        rollback: (v) => state = v,
-      ),
+    await withRollback(
+      snapshot: previous,
+      action: () => database.profiles.remove((t) => t.id.equals(id)),
+      rollback: (v) => state = v,
     );
   }
 

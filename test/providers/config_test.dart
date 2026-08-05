@@ -115,12 +115,13 @@ void main() {
       const davProps = DAVProps(
         uri: 'https://dav.example.com',
         user: 'user',
-        password: 'password',
+        password: 'secret',
       );
 
       container.read(davSettingProvider.notifier).update((_) => davProps);
 
       expect(container.read(davSettingProvider), davProps);
+      expect(container.read(configProvider).davProps?.password, 'secret');
     });
   });
 

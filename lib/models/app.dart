@@ -10,7 +10,7 @@ part 'generated/app.freezed.dart';
 
 typedef DelayMap = Map<String, Map<String, int?>>;
 
-@freezed
+@Freezed(toStringOverride: false)
 abstract class AppState with _$AppState {
   const factory AppState({
     @Default(false) bool isInit,
@@ -32,7 +32,8 @@ abstract class AppState with _$AppState {
     required FixedList<Log> logs,
     required FixedList<Traffic> traffics,
     required Traffic totalTraffic,
-    @Default(false) bool realTunEnable,
+    @Default(TunAuthorizationState.none)
+    TunAuthorizationState authorizedTunEnable,
     @Default(false) bool loading,
     required SystemUiOverlayStyle systemUiOverlayStyle,
     @Default(CoreStatus.connecting) CoreStatus coreStatus,
