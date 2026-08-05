@@ -1,4 +1,4 @@
-group 'com.example.wifi_ssid'
+group 'com.follow.clash.wifi_ssid'
 version '1.0'
 
 buildscript {
@@ -22,7 +22,7 @@ allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    namespace 'com.example.wifi_ssid'
+    namespace 'com.follow.clash.wifi_ssid'
     compileSdk 36
 
     compileOptions {

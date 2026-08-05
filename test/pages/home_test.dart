@@ -18,6 +18,60 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('initial desktop layout does not animate mobile navigation out', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                icon: const Icon(Icons.space_dashboard),
+                label: PageLabel.dashboard,
+                builder: (_) => const SizedBox.shrink(),
+              ),
+              NavigationItem(
+                icon: const Icon(Icons.construction),
+                label: PageLabel.tools,
+                builder: (_) => const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    expect(container.read(viewSizeProvider), Size.zero);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const _ThemeManagedTestApp(),
+      ),
+    );
+
+    expect(globalState.navigatorKey.currentContext, isNotNull);
+    expect(container.read(viewSizeProvider), const Size(1200, 800));
+    expect(find.byType(NavigationBar), findsNothing);
+
+    await tester.pump();
+
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 150));
+
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'screen-size transition preserves current content and animates navigation',
     (tester) async {
@@ -606,6 +660,26 @@ class _TestApp extends StatelessWidget {
         return child!;
       },
       home: child,
+    );
+  }
+}
+
+class _ThemeManagedTestApp extends StatelessWidget {
+  const _ThemeManagedTestApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      navigatorKey: globalState.navigatorKey,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.delegate.supportedLocales,
+      builder: (_, child) => ThemeManager(child: child!),
+      home: const HomePage(),
     );
   }
 }
