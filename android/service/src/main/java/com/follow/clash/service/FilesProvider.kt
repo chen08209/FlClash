@@ -6,60 +6,34 @@ import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
 import android.provider.DocumentsProvider
+import com.follow.clash.common.R as CommonR
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 
 class FilesProvider : DocumentsProvider() {
+    override fun onCreate() = true
 
-    companion object {
-        private const val DEFAULT_ROOT_ID = "0"
-
-        private val DEFAULT_DOCUMENT_COLUMNS = arrayOf(
-            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-            DocumentsContract.Document.COLUMN_MIME_TYPE,
-            DocumentsContract.Document.COLUMN_FLAGS,
-            DocumentsContract.Document.COLUMN_SIZE,
-        )
-        private val DEFAULT_ROOT_COLUMNS = arrayOf(
-            DocumentsContract.Root.COLUMN_ROOT_ID,
-            DocumentsContract.Root.COLUMN_FLAGS,
-            DocumentsContract.Root.COLUMN_ICON,
-            DocumentsContract.Root.COLUMN_TITLE,
-            DocumentsContract.Root.COLUMN_SUMMARY,
-            DocumentsContract.Root.COLUMN_DOCUMENT_ID
-        )
-    }
-
-    override fun onCreate(): Boolean {
-        return true
-    }
-
-    override fun queryRoots(projection: Array<String>?): Cursor {
-        return MatrixCursor(projection ?: DEFAULT_ROOT_COLUMNS).apply {
-            newRow().apply {
-                add(DocumentsContract.Root.COLUMN_ROOT_ID, DEFAULT_ROOT_ID)
-                add(DocumentsContract.Root.COLUMN_FLAGS, DocumentsContract.Root.FLAG_LOCAL_ONLY)
-                add(DocumentsContract.Root.COLUMN_ICON, R.drawable.ic_service)
-                add(DocumentsContract.Root.COLUMN_TITLE, "FlClash")
-                add(DocumentsContract.Root.COLUMN_SUMMARY, "Data")
-                add(DocumentsContract.Root.COLUMN_DOCUMENT_ID, "/")
-            }
+    override fun queryRoots(projection: Array<String>?): Cursor =
+        MatrixCursor(projection ?: DEFAULT_ROOT_COLUMNS).apply {
+            newRow()
+                .add(DocumentsContract.Root.COLUMN_ROOT_ID, DEFAULT_ROOT_ID)
+                .add(DocumentsContract.Root.COLUMN_FLAGS, DocumentsContract.Root.FLAG_LOCAL_ONLY)
+                .add(DocumentsContract.Root.COLUMN_ICON, R.drawable.ic_service)
+                .add(
+                    DocumentsContract.Root.COLUMN_TITLE,
+                    context?.getString(CommonR.string.app_name).orEmpty(),
+                )
+                .add(DocumentsContract.Root.COLUMN_DOCUMENT_ID, ROOT_DOCUMENT_ID)
         }
-    }
-
 
     override fun queryChildDocuments(
         parentDocumentId: String,
         projection: Array<String>?,
-        sortOrder: String?
+        sortOrder: String?,
     ): Cursor {
-        val result = MatrixCursor(resolveDocumentProjection(projection))
-        val parentFile = if (parentDocumentId == "/") {
-            context?.filesDir
-        } else {
-            File(parentDocumentId)
-        } ?: throw FileNotFoundException("Parent directory not found")
+        val result = MatrixCursor(projection ?: DEFAULT_DOCUMENT_COLUMNS)
+        val parentFile = resolveFile(parentDocumentId)
         parentFile.listFiles()?.forEach { file ->
             includeFile(result, file)
         }
@@ -67,20 +41,18 @@ class FilesProvider : DocumentsProvider() {
     }
 
     override fun queryDocument(documentId: String, projection: Array<String>?): Cursor {
-        val result = MatrixCursor(resolveDocumentProjection(projection))
-        val file = File(documentId)
-        includeFile(result, file)
+        val result = MatrixCursor(projection ?: DEFAULT_DOCUMENT_COLUMNS)
+        includeFile(result, resolveFile(documentId))
         return result
     }
 
     override fun openDocument(
         documentId: String,
         mode: String,
-        signal: CancellationSignal?
+        signal: CancellationSignal?,
     ): ParcelFileDescriptor {
-        val file = File(documentId)
         val accessMode = ParcelFileDescriptor.parseMode(mode)
-        return ParcelFileDescriptor.open(file, accessMode)
+        return ParcelFileDescriptor.open(resolveFile(documentId), accessMode)
     }
 
     private fun includeFile(result: MatrixCursor, file: File) {
@@ -88,23 +60,54 @@ class FilesProvider : DocumentsProvider() {
             add(DocumentsContract.Document.COLUMN_DOCUMENT_ID, file.absolutePath)
             add(DocumentsContract.Document.COLUMN_DISPLAY_NAME, file.name)
             add(DocumentsContract.Document.COLUMN_SIZE, file.length())
-            add(
-                DocumentsContract.Document.COLUMN_FLAGS,
-                DocumentsContract.Document.FLAG_SUPPORTS_WRITE or DocumentsContract.Document.FLAG_SUPPORTS_DELETE
-            )
-            add(DocumentsContract.Document.COLUMN_MIME_TYPE, getDocumentType(file))
+            val flags = if (file.isFile) {
+                DocumentsContract.Document.FLAG_SUPPORTS_WRITE
+            } else {
+                0
+            }
+            val mimeType = if (file.isDirectory) {
+                DocumentsContract.Document.MIME_TYPE_DIR
+            } else {
+                "application/octet-stream"
+            }
+            add(DocumentsContract.Document.COLUMN_FLAGS, flags)
+            add(DocumentsContract.Document.COLUMN_MIME_TYPE, mimeType)
         }
     }
 
-    private fun getDocumentType(file: File): String {
-        return if (file.isDirectory) {
-            DocumentsContract.Document.MIME_TYPE_DIR
-        } else {
-            "application/octet-stream"
+    private fun resolveFile(documentId: String): File {
+        val root = context?.filesDir?.canonicalFile
+            ?: throw FileNotFoundException("App files directory is unavailable")
+        val file = try {
+            if (documentId == ROOT_DOCUMENT_ID) root else File(documentId).canonicalFile
+        } catch (error: IOException) {
+            throw FileNotFoundException(error.message).apply { initCause(error) }
         }
+        val isInsideRoot = file == root || file.path.startsWith("${root.path}${File.separator}")
+        if (!isInsideRoot) {
+            throw FileNotFoundException("Document is outside the app files directory")
+        }
+        return file
     }
 
-    private fun resolveDocumentProjection(projection: Array<String>?): Array<String> {
-        return projection ?: DEFAULT_DOCUMENT_COLUMNS
+    private companion object {
+        const val DEFAULT_ROOT_ID = "0"
+        const val ROOT_DOCUMENT_ID = "/"
+
+        val DEFAULT_DOCUMENT_COLUMNS = arrayOf(
+            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+            DocumentsContract.Document.COLUMN_MIME_TYPE,
+            DocumentsContract.Document.COLUMN_FLAGS,
+            DocumentsContract.Document.COLUMN_SIZE,
+        )
+        val DEFAULT_ROOT_COLUMNS = arrayOf(
+            DocumentsContract.Root.COLUMN_ROOT_ID,
+            DocumentsContract.Root.COLUMN_FLAGS,
+            DocumentsContract.Root.COLUMN_ICON,
+            DocumentsContract.Root.COLUMN_TITLE,
+            DocumentsContract.Root.COLUMN_SUMMARY,
+            DocumentsContract.Root.COLUMN_DOCUMENT_ID,
+        )
     }
 }

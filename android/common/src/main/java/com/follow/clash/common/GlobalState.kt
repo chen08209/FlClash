@@ -1,47 +1,47 @@
 package com.follow.clash.common
 
-
 import android.app.Application
 import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
-object GlobalState : CoroutineScope by CoroutineScope(Dispatchers.Default) {
-
+object GlobalState : CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.Default) {
     const val NOTIFICATION_CHANNEL = "FlClash"
-
     const val NOTIFICATION_ID = 1
 
     val packageName: String
         get() = application.packageName
 
-    val RECEIVE_BROADCASTS_PERMISSIONS: String
-        get() = "${packageName}.permission.RECEIVE_BROADCASTS"
-
-
-    private var _application: Application? = null
+    val receiveBroadcastPermission: String
+        get() = "$packageName.permission.RECEIVE_BROADCASTS"
 
     val application: Application
-        get() = _application!!
+        get() = checkNotNull(appInstance) { "GlobalState is not initialized" }
 
-
-    fun log(text: String) {
-        Log.d("[FlClash]", text)
-    }
+    @Volatile
+    private var appInstance: Application? = null
 
     fun init(application: Application) {
-        _application = application
+        appInstance = application
+    }
+
+    fun log(text: String) {
+        Log.d("FlClash", text)
     }
 
     fun setCrashlytics(enable: Boolean) {
-        _application?.let {
-            FirebaseApp.initializeApp(it)
-            FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = enable
-            if (enable) {
-                log("init crashlytics ${it.processName}")
-            }
+        FirebaseApp.initializeApp(application)
+        FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = enable
+        if (enable) {
+            log("Crashlytics enabled for ${application.processName}")
         }
+    }
+
+    fun didCrashOnPreviousExecution(): Boolean {
+        FirebaseApp.initializeApp(application)
+        return FirebaseCrashlytics.getInstance().didCrashOnPreviousExecution()
     }
 }
