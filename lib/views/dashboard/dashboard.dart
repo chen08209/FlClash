@@ -69,12 +69,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             ? IconButton(
                 key: const ValueKey(true),
                 icon: const Icon(Icons.save, key: ValueKey('save-icon')),
-                onPressed: _handleUpdateIsEdit,
+                onPressed: _handleSaveAndExit,
               )
             : IconButton(
                 key: const ValueKey(false),
                 icon: const Icon(Icons.edit, key: ValueKey('edit-icon')),
-                onPressed: _handleUpdateIsEdit,
+                onPressed: _handleEnterEdit,
               ),
       ),
     ];
@@ -102,11 +102,32 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     );
   }
 
-  Future<void> _handleUpdateIsEdit() async {
-    if (_isEditNotifier.value == true) {
-      await _handleSave();
+  void _handleEnterEdit() {
+    if (_isEditNotifier.value) {
+      return;
     }
-    _isEditNotifier.value = !_isEditNotifier.value;
+    _isEditNotifier.value = true;
+  }
+
+  void _handleExitEdit() {
+    if (!_isEditNotifier.value) {
+      return;
+    }
+    final dashboardWidgets = _getDashboardWidgets(key.currentState);
+    if (dashboardWidgets != null) {
+      _saveDashboardWidgets(dashboardWidgets);
+    }
+    _isEditNotifier.value = false;
+  }
+
+  Future<void> _handleSaveAndExit() async {
+    if (!_isEditNotifier.value) {
+      return;
+    }
+    await _handleSave();
+    if (mounted) {
+      _isEditNotifier.value = false;
+    }
   }
 
   Future<void> _handleSave() async {
@@ -114,7 +135,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     if (currentState == null) {
       return;
     }
-    if (!mounted || currentState.children.isEmpty) {
+    if (!mounted || currentState.snapshotChildren.isEmpty) {
       return;
     }
     final transformCompleted = await currentState.isTransformCompleter;
@@ -124,9 +145,25 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         !identical(key.currentState, currentState)) {
       return;
     }
-    final dashboardWidgets = currentState.children
-        .map((item) => DashboardWidget.getDashboardWidget(item))
-        .toList();
+    final dashboardWidgets = _getDashboardWidgets(currentState);
+    if (dashboardWidgets == null) {
+      return;
+    }
+    _saveDashboardWidgets(dashboardWidgets);
+  }
+
+  List<DashboardWidget>? _getDashboardWidgets(SuperGridState? currentState) {
+    if (currentState == null) {
+      return null;
+    }
+    final children = currentState.snapshotChildren;
+    if (children.isEmpty) {
+      return null;
+    }
+    return children.map(DashboardWidget.getDashboardWidget).toList();
+  }
+
+  void _saveDashboardWidgets(List<DashboardWidget> dashboardWidgets) {
     ref
         .read(appSettingProvider.notifier)
         .update((state) => state.copyWith(dashboardWidgets: dashboardWidgets));
@@ -173,21 +210,16 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                       _maxCrossAxisCount,
                     );
                     return isEdit
-                        ? SystemBackBlock(
-                            child: CommonPopScope(
-                              child: SuperGrid(
-                                key: key,
-                                crossAxisCount: columns,
-                                crossAxisSpacing: spacing,
-                                mainAxisSpacing: spacing,
-                                children: children,
-                                onUpdate: () {
-                                  _handleSave();
-                                },
-                              ),
-                              onPop: (context) {
-                                _handleUpdateIsEdit();
-                                return false;
+                        ? BackLayerScope(
+                            onBack: _handleExitEdit,
+                            child: SuperGrid(
+                              key: key,
+                              crossAxisCount: columns,
+                              crossAxisSpacing: spacing,
+                              mainAxisSpacing: spacing,
+                              children: children,
+                              onUpdate: () {
+                                _handleSave();
                               },
                             ),
                           )

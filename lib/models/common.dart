@@ -581,6 +581,10 @@ class CloseWindowIntent extends Intent {
   const CloseWindowIntent();
 }
 
+class EscapeBackIntent extends Intent {
+  const EscapeBackIntent();
+}
+
 @freezed
 abstract class Result<T> with _$Result<T> {
   const factory Result({
