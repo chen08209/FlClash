@@ -2,23 +2,95 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::VecDeque;
-use std::fs::File;
+use std::convert::Infallible;
+use std::fs::{File, OpenOptions};
+#[cfg(not(all(feature = "windows-service", target_os = "windows")))]
+use std::future::pending;
+use std::future::Future;
 use std::io::{BufRead, Error, Read};
+#[cfg(windows)]
+use std::os::windows::fs::OpenOptionsExt;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::{io, thread};
-use warp::{Filter, Reply};
+use warp::http::StatusCode;
+use warp::{Filter, Rejection, Reply};
+#[cfg(windows)]
+use windows_sys::Win32::Storage::FileSystem::FILE_SHARE_READ;
 
 const LISTEN_PORT: u16 = 47890;
+const CORE_PIPE_PREFIX: &str = r"\\.\pipe\FlClashCore_";
+const PROTOCOL_VERSION_HEADER: &str = "x-flclash-helper-protocol";
+const PROTOCOL_VERSION: &str = "5";
+const EXPECTED_CORE_SHA256: &str = env!("CORE_SHA256");
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct StartParams {
-    pub path: String,
-    pub arg: String,
+    pub address: String,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
 }
 
-fn sha256_file(path: &str) -> Result<String, Error> {
-    let mut file = File::open(path)?;
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct StopParams {
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StartResponse {
+    session_id: String,
+    pid: u32,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StopResponse {
+    session_id: String,
+    stopped: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<&'static str>,
+}
+
+#[derive(Serialize)]
+struct ErrorResponse {
+    code: &'static str,
+    message: String,
+}
+
+struct ManagedCore {
+    session_id: String,
+    child: std::process::Child,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum StopDecision {
+    NotRunning,
+    Stop,
+    SessionMismatch,
+}
+
+fn core_path() -> Result<PathBuf, Error> {
+    let helper_path = std::env::current_exe()?;
+    let directory = helper_path
+        .parent()
+        .ok_or_else(|| Error::other("helper executable has no parent directory"))?;
+    Ok(directory.join(env!("CORE_NAME")))
+}
+
+fn open_core(path: &Path) -> Result<File, Error> {
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(windows)]
+    options.share_mode(FILE_SHARE_READ);
+    options.open(path)
+}
+
+fn sha256_file(file: &mut File) -> Result<String, Error> {
     let mut hasher = Sha256::new();
     let mut buffer = [0; 4096];
 
@@ -33,29 +105,107 @@ fn sha256_file(path: &str) -> Result<String, Error> {
     Ok(format!("{:x}", hasher.finalize()))
 }
 
+fn open_verified_core(path: &Path, expected_sha256: &str) -> Result<File, Error> {
+    if expected_sha256.is_empty() {
+        return Err(Error::other("expected Core SHA256 is empty"));
+    }
+    let mut core_file = open_core(path)?;
+    if sha256_file(&mut core_file)? != expected_sha256 {
+        return Err(Error::other("Core executable SHA256 mismatch"));
+    }
+    Ok(core_file)
+}
+
+fn open_fixed_verified_core() -> Result<(PathBuf, File), Error> {
+    let path = core_path()?;
+    let file = open_verified_core(&path, EXPECTED_CORE_SHA256)?;
+    Ok((path, file))
+}
+
+fn is_allowed_core_pipe(address: &str) -> bool {
+    let Some(suffix) = address.strip_prefix(CORE_PIPE_PREFIX) else {
+        return false;
+    };
+    is_valid_session_id(suffix)
+}
+
+fn is_valid_session_id(value: &str) -> bool {
+    value.len() == 32
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+}
+
+fn stop_decision(current: Option<&str>, requested: &str) -> StopDecision {
+    match current {
+        None => StopDecision::NotRunning,
+        Some(session_id) if session_id == requested => StopDecision::Stop,
+        Some(_) => StopDecision::SessionMismatch,
+    }
+}
+
 static LOGS: Lazy<Arc<Mutex<VecDeque<String>>>> =
     Lazy::new(|| Arc::new(Mutex::new(VecDeque::with_capacity(100))));
-static PROCESS: Lazy<Arc<Mutex<Option<std::process::Child>>>> =
-    Lazy::new(|| Arc::new(Mutex::new(None)));
+static PROCESS: Lazy<Arc<Mutex<Option<ManagedCore>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
+static PROCESS_OPERATION: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
-fn start(start_params: StartParams) -> impl Reply {
-    if !cfg!(debug_assertions) {
-        let sha256 = sha256_file(start_params.path.as_str()).unwrap_or("".to_string());
-        if sha256 != env!("TOKEN") {
-            return format!("The SHA256 hash of the program requesting execution is: {}. The helper program only allows execution of applications with the SHA256 hash: {}.", sha256,  env!("TOKEN"),);
-        }
+fn json_response<T: Serialize>(value: &T, status: StatusCode) -> warp::reply::Response {
+    warp::reply::with_status(warp::reply::json(value), status).into_response()
+}
+
+fn error_response(
+    code: &'static str,
+    message: impl Into<String>,
+    status: StatusCode,
+) -> warp::reply::Response {
+    json_response(
+        &ErrorResponse {
+            code,
+            message: message.into(),
+        },
+        status,
+    )
+}
+
+fn start(start_params: StartParams) -> warp::reply::Response {
+    if !is_allowed_core_pipe(&start_params.address) {
+        return error_response(
+            "invalidRequest",
+            "invalid Core pipe address",
+            StatusCode::BAD_REQUEST,
+        );
     }
-    stop();
+    if !is_valid_session_id(&start_params.session_id) {
+        return error_response(
+            "invalidRequest",
+            "invalid Core session ID",
+            StatusCode::BAD_REQUEST,
+        );
+    }
+
+    let _operation = PROCESS_OPERATION.lock().unwrap();
+    let (core_path, _core_file) = match open_fixed_verified_core() {
+        Ok(core) => core,
+        Err(error) => {
+            return error_response(
+                "coreVerificationFailed",
+                error.to_string(),
+                StatusCode::CONFLICT,
+            )
+        }
+    };
+
+    stop_core_locked();
     let mut process = PROCESS.lock().unwrap();
-    match Command::new(&start_params.path)
+    match Command::new(&core_path)
+        .current_dir(core_path.parent().unwrap())
         .stderr(Stdio::piped())
-        .arg(&start_params.arg)
+        .arg(&start_params.address)
         .spawn()
     {
-        Ok(child) => {
-            *process = Some(child);
-            if let Some(ref mut child) = *process {
-                let stderr = child.stderr.take().unwrap();
+        Ok(mut child) => {
+            let process_id = child.id();
+            if let Some(stderr) = child.stderr.take() {
                 let reader = io::BufReader::new(stderr);
                 thread::spawn(move || {
                     for line in reader.lines() {
@@ -70,23 +220,88 @@ fn start(start_params: StartParams) -> impl Reply {
                     }
                 });
             }
-            "".to_string()
+            *process = Some(ManagedCore {
+                session_id: start_params.session_id.clone(),
+                child,
+            });
+            json_response(
+                &StartResponse {
+                    session_id: start_params.session_id,
+                    pid: process_id,
+                },
+                StatusCode::OK,
+            )
         }
         Err(e) => {
             log_message(e.to_string());
-            e.to_string()
+            error_response(
+                "processLaunchFailed",
+                e.to_string(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )
         }
     }
 }
 
-fn stop() -> impl Reply {
+fn stop_core(stop_params: StopParams) -> warp::reply::Response {
+    if !is_valid_session_id(&stop_params.session_id) {
+        return error_response(
+            "invalidRequest",
+            "invalid Core session ID",
+            StatusCode::BAD_REQUEST,
+        );
+    }
+    let _operation = PROCESS_OPERATION.lock().unwrap();
     let mut process = PROCESS.lock().unwrap();
-    if let Some(mut child) = process.take() {
-        let _ = child.kill();
-        let _ = child.wait();
+    match stop_decision(
+        process.as_ref().map(|managed| managed.session_id.as_str()),
+        &stop_params.session_id,
+    ) {
+        StopDecision::NotRunning => json_response(
+            &StopResponse {
+                session_id: stop_params.session_id,
+                stopped: false,
+                reason: Some("notRunning"),
+            },
+            StatusCode::OK,
+        ),
+        StopDecision::SessionMismatch => json_response(
+            &StopResponse {
+                session_id: stop_params.session_id,
+                stopped: false,
+                reason: Some("sessionMismatch"),
+            },
+            StatusCode::CONFLICT,
+        ),
+        StopDecision::Stop => {
+            if let Some(mut managed) = process.take() {
+                let _ = managed.child.kill();
+                let _ = managed.child.wait();
+            }
+            json_response(
+                &StopResponse {
+                    session_id: stop_params.session_id,
+                    stopped: true,
+                    reason: None,
+                },
+                StatusCode::OK,
+            )
+        }
+    }
+}
+
+fn stop_core_unconditional() {
+    let _operation = PROCESS_OPERATION.lock().unwrap();
+    stop_core_locked();
+}
+
+fn stop_core_locked() {
+    let mut process = PROCESS.lock().unwrap();
+    if let Some(mut managed) = process.take() {
+        let _ = managed.child.kill();
+        let _ = managed.child.wait();
     }
     *process = None;
-    "".to_string()
 }
 
 fn log_message(message: String) {
@@ -104,24 +319,370 @@ fn get_logs() -> impl Reply {
         .cloned()
         .collect::<Vec<String>>()
         .join("\n");
-    warp::reply::with_header(value, "Content-Type", "text/plain")
+    warp::reply::with_header(
+        warp::reply::with_header(value, "Content-Type", "text/plain; charset=utf-8"),
+        "Cache-Control",
+        "no-store",
+    )
 }
 
-pub async fn run_service() -> anyhow::Result<()> {
-    let api_ping = warp::get().and(warp::path("ping")).map(|| env!("TOKEN"));
+fn ping_response(result: Result<PathBuf, Error>) -> warp::reply::Response {
+    let (value, status) = match result {
+        Ok(path) => (path.to_string_lossy().into_owned(), StatusCode::OK),
+        Err(error) => (error.to_string(), StatusCode::CONFLICT),
+    };
+    warp::reply::with_header(
+        warp::reply::with_status(value, status),
+        PROTOCOL_VERSION_HEADER,
+        PROTOCOL_VERSION,
+    )
+    .into_response()
+}
+
+fn ping() -> warp::reply::Response {
+    let result = open_fixed_verified_core().and_then(|_| std::env::current_exe());
+    if let Err(error) = &result {
+        log_message(format!("Helper ping failed: {error}"));
+    }
+    ping_response(result)
+}
+
+async fn start_request(start_params: StartParams) -> Result<warp::reply::Response, Infallible> {
+    Ok(
+        match tokio::task::spawn_blocking(move || start(start_params)).await {
+            Ok(response) => response,
+            Err(error) => error_response(
+                "internalError",
+                format!("Core start task failed: {error}"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+        },
+    )
+}
+
+async fn stop_request(stop_params: StopParams) -> Result<warp::reply::Response, Infallible> {
+    Ok(
+        match tokio::task::spawn_blocking(move || stop_core(stop_params)).await {
+            Ok(response) => response,
+            Err(error) => error_response(
+                "internalError",
+                format!("Core stop task failed: {error}"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+        },
+    )
+}
+
+async fn ping_request() -> Result<warp::reply::Response, Infallible> {
+    Ok(tokio::task::spawn_blocking(ping)
+        .await
+        .unwrap_or_else(|error| {
+            ping_response(Err(Error::other(format!(
+                "Helper ping task failed: {error}"
+            ))))
+        }))
+}
+
+async fn handle_rejection(rejection: Rejection) -> Result<warp::reply::Response, Infallible> {
+    if rejection
+        .find::<warp::filters::body::BodyDeserializeError>()
+        .is_some()
+    {
+        return Ok(error_response(
+            "invalidRequest",
+            "invalid JSON request body",
+            StatusCode::BAD_REQUEST,
+        ));
+    }
+    if rejection.is_not_found() {
+        return Ok(error_response(
+            "notFound",
+            "Helper endpoint not found",
+            StatusCode::NOT_FOUND,
+        ));
+    }
+    Ok(error_response(
+        "internalError",
+        "unhandled Helper request rejection",
+        StatusCode::INTERNAL_SERVER_ERROR,
+    ))
+}
+
+fn routes() -> impl Filter<Extract = (impl Reply,), Error = Infallible> + Clone {
+    let api_ping = warp::get()
+        .and(warp::path("ping"))
+        .and(warp::path::end())
+        .and_then(ping_request);
 
     let api_start = warp::post()
         .and(warp::path("start"))
+        .and(warp::path::end())
         .and(warp::body::json())
-        .map(|start_params: StartParams| start(start_params));
+        .and_then(start_request);
 
-    let api_stop = warp::post().and(warp::path("stop")).map(|| stop());
+    let api_stop = warp::post()
+        .and(warp::path("stop"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .and_then(stop_request);
 
-    let api_logs = warp::get().and(warp::path("logs")).map(|| get_logs());
+    let api_logs = warp::get()
+        .and(warp::path("logs"))
+        .and(warp::path::end())
+        .map(get_logs);
 
-    warp::serve(api_ping.or(api_start).or(api_stop).or(api_logs))
-        .run(([127, 0, 0, 1], LISTEN_PORT))
-        .await;
+    api_ping
+        .or(api_start)
+        .or(api_stop)
+        .or(api_logs)
+        .recover(handle_rejection)
+}
+
+#[cfg(not(all(feature = "windows-service", target_os = "windows")))]
+pub async fn run_service() -> anyhow::Result<()> {
+    run_service_until(pending(), || Ok(())).await
+}
+
+pub(super) async fn run_service_until<F, S>(shutdown: F, on_started: S) -> anyhow::Result<()>
+where
+    F: Future<Output = ()> + Send + 'static,
+    S: FnOnce() -> anyhow::Result<()>,
+{
+    if EXPECTED_CORE_SHA256.is_empty() {
+        anyhow::bail!("expected Core SHA256 is empty");
+    }
+
+    let (_, server) = warp::serve(routes())
+        .try_bind_with_graceful_shutdown(([127, 0, 0, 1], LISTEN_PORT), shutdown)
+        .map_err(|error| anyhow::anyhow!("bind helper server: {error}"))?;
+    on_started()?;
+    server.await;
+    stop_core_unconditional();
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn protocol_5_uses_lowercase_session_ownership() {
+        assert_eq!(PROTOCOL_VERSION, "5");
+        assert!(is_valid_session_id("0123456789abcdef0123456789abcdef"));
+        assert!(!is_valid_session_id("ABCDEF0123456789abcdef0123456789"));
+        assert!(!is_valid_session_id("0123456789abcdef"));
+    }
+
+    #[test]
+    fn stop_decision_never_touches_another_session() {
+        let requested = "0123456789abcdef0123456789abcdef";
+        let other = "fedcba9876543210fedcba9876543210";
+
+        assert_eq!(stop_decision(None, requested), StopDecision::NotRunning);
+        assert_eq!(
+            stop_decision(Some(requested), requested),
+            StopDecision::Stop
+        );
+        assert_eq!(
+            stop_decision(Some(other), requested),
+            StopDecision::SessionMismatch
+        );
+    }
+
+    #[tokio::test]
+    async fn ping_returns_running_helper_path_for_verified_core() {
+        let response = ping_response(Ok(PathBuf::from("FlClashHelperService.exe")));
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response.headers().get(PROTOCOL_VERSION_HEADER).unwrap(),
+            PROTOCOL_VERSION
+        );
+        assert_eq!(
+            warp::hyper::body::to_bytes(response.into_body())
+                .await
+                .unwrap(),
+            "FlClashHelperService.exe"
+        );
+    }
+
+    #[tokio::test]
+    async fn ping_rejects_unverified_core() {
+        let response = ping_response(Err(Error::other("Core executable SHA256 mismatch")));
+
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        assert_eq!(
+            response.headers().get(PROTOCOL_VERSION_HEADER).unwrap(),
+            PROTOCOL_VERSION
+        );
+        assert_eq!(
+            warp::hyper::body::to_bytes(response.into_body())
+                .await
+                .unwrap(),
+            "Core executable SHA256 mismatch"
+        );
+    }
+
+    #[tokio::test]
+    async fn ping_is_available_without_authentication() {
+        let response = warp::test::request()
+            .method("GET")
+            .path("/ping")
+            .reply(&routes())
+            .await;
+
+        assert!(response.status() == StatusCode::OK || response.status() == StatusCode::CONFLICT);
+        assert_eq!(
+            response.headers().get(PROTOCOL_VERSION_HEADER).unwrap(),
+            PROTOCOL_VERSION
+        );
+    }
+
+    #[tokio::test]
+    async fn logs_are_available_without_authentication() {
+        let response = warp::test::request()
+            .method("GET")
+            .path("/logs")
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response.headers().get("content-type").unwrap(),
+            "text/plain; charset=utf-8"
+        );
+        assert_eq!(response.headers().get("cache-control").unwrap(), "no-store");
+    }
+
+    #[tokio::test]
+    async fn start_rejects_a_caller_supplied_core_argument() {
+        let response = warp::test::request()
+            .method("POST")
+            .path("/start")
+            .header("content-type", "application/json")
+            .body(
+                r#"{"address":"\\\\.\\pipe\\FlClashCore_0123456789abcdef0123456789abcdef","sessionId":"0123456789abcdef0123456789abcdef","path":"attacker.exe"}"#,
+            )
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["code"], "invalidRequest");
+    }
+
+    #[tokio::test]
+    async fn start_rejects_an_invalid_session_before_core_verification() {
+        let response = warp::test::request()
+            .method("POST")
+            .path("/start")
+            .json(&StartParams {
+                address: r"\\.\pipe\FlClashCore_0123456789abcdef0123456789abcdef".to_string(),
+                session_id: "ABCDEF0123456789abcdef0123456789".to_string(),
+            })
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["code"], "invalidRequest");
+    }
+
+    #[test]
+    fn verifies_core_sha256_in_all_build_modes() {
+        let path =
+            std::env::temp_dir().join(format!("flclash-helper-core-sha256-{}", std::process::id()));
+        let mut file = File::create(&path).unwrap();
+        file.write_all(b"test").unwrap();
+        drop(file);
+
+        assert!(open_verified_core(
+            &path,
+            "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        )
+        .is_ok());
+        assert_eq!(
+            open_verified_core(&path, "invalid")
+                .unwrap_err()
+                .to_string(),
+            "Core executable SHA256 mismatch"
+        );
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[tokio::test]
+    async fn stop_is_available_without_authentication() {
+        let response = warp::test::request()
+            .method("POST")
+            .path("/stop")
+            .json(&StopParams {
+                session_id: "0123456789abcdef0123456789abcdef".to_string(),
+            })
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["sessionId"], "0123456789abcdef0123456789abcdef");
+        assert_eq!(body["stopped"], false);
+        assert_eq!(body["reason"], "notRunning");
+    }
+
+    #[tokio::test]
+    async fn stop_requires_a_session_json_body() {
+        let response = warp::test::request()
+            .method("POST")
+            .path("/stop")
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["code"], "invalidRequest");
+    }
+
+    #[tokio::test]
+    async fn stop_rejects_unknown_fields() {
+        let response = warp::test::request()
+            .method("POST")
+            .path("/stop")
+            .header("content-type", "application/json")
+            .body(r#"{"sessionId":"0123456789abcdef0123456789abcdef","force":true}"#)
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["code"], "invalidRequest");
+    }
+
+    #[test]
+    fn core_path_is_fixed_beside_the_helper() {
+        assert_eq!(
+            core_path().unwrap().file_name().unwrap(),
+            std::ffi::OsStr::new(env!("CORE_NAME"))
+        );
+    }
+
+    #[test]
+    fn only_accepts_random_core_pipe_namespace() {
+        assert!(is_allowed_core_pipe(
+            r"\\.\pipe\FlClashCore_0123456789abcdef0123456789abcdef"
+        ));
+        assert!(!is_allowed_core_pipe(r"\\.\pipe\FlClashCore"));
+        assert!(!is_allowed_core_pipe(
+            r"\\.\pipe\Other_0123456789abcdef0123456789abcdef"
+        ));
+        assert!(!is_allowed_core_pipe(
+            r"\\.\pipe\FlClashCore_0123456789abcdef"
+        ));
+        assert!(!is_allowed_core_pipe(
+            r"\\.\pipe\FlClashCore_0123456789abcdef0123456789abcdeg"
+        ));
+        assert!(!is_allowed_core_pipe(
+            r"\\.\pipe\FlClashCore_ABCDEF0123456789abcdef0123456789"
+        ));
+    }
 }
