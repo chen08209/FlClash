@@ -1,15 +1,12 @@
 # proxy
 
-A new Flutter plugin project.
+FlClash's desktop system-proxy integration.
 
-## Getting Started
+- Windows uses a Flutter method channel and WinINet settings.
+- macOS uses `/usr/sbin/networksetup` for each active network service.
+- Linux uses GNOME/MATE `gsettings` or KDE `kwriteconfig` based on the active
+  desktop environment.
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
-
-For help getting started with Flutter development, view the
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
+The public `Proxy` API validates the port, applies HTTP, HTTPS, and SOCKS
+settings to `127.0.0.1`, and returns `false` when the selected platform backend
+is unavailable or a command fails.

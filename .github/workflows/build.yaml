@@ -18,6 +18,10 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Test release notes generation
+        shell: bash
+        run: bash .github/scripts/generate_release_notes_test.sh
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -34,8 +38,73 @@ jobs:
       - name: Run tests
         run: flutter test --reporter expanded
 
+      - name: Validate local Flutter packages
+        shell: bash
+        run: |
+          for package in plugins/proxy plugins/wifi_ssid plugins/window_ext plugins/setup; do
+            (
+              cd "$package"
+              flutter pub get
+              flutter analyze --no-fatal-infos
+            )
+          done
+
+      - name: Run local plugin tests
+        shell: bash
+        run: |
+          (
+            cd plugins/proxy
+            flutter test --reporter expanded
+          )
+          (
+            cd plugins/wifi_ssid
+            flutter test --reporter expanded
+          )
+
+      - name: Validate setup build tool
+        working-directory: plugins/setup/buildkit/build_tool
+        run: |
+          dart pub get
+          dart analyze
+          dart test
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.4'
+          cache-dependency-path: core/go.sum
+
+      - name: Validate Go core wrapper
+        working-directory: core
+        env:
+          CGO_ENABLED: 0
+        run: |
+          go test .
+          go vet .
+
+      - name: Validate Rust components
+        run: |
+          cargo fmt --manifest-path services/helper/Cargo.toml -- --check
+          cargo test --manifest-path services/helper/Cargo.toml
+          cargo fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
+          cargo test --manifest-path plugins/rust_api/rust/Cargo.toml
+
+  windows-helper-test:
+    name: Windows helper test
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check format
+        run: cargo fmt --manifest-path services/helper/Cargo.toml -- --check
+
+      - name: Run Windows service tests
+        run: cargo test --manifest-path services/helper/Cargo.toml --features windows-service
+
   build:
-    needs: [ test ]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [ test, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -149,18 +218,19 @@ jobs:
       - name: Generate
         run: |
           last_ver=$(grep -m1 '^## ' CHANGELOG.md 2>/dev/null | sed 's/^## //')
-          
-          tags=($(git tag --merged HEAD --sort=-creatordate))
-          
-          temp="NEW_CHANGELOG.md" > "$temp"
-          
+
+          mapfile -t tags < <(git tag --merged HEAD --sort=-creatordate)
+
+          temp="NEW_CHANGELOG.md"
+          : > "$temp"
+
           for i in "${!tags[@]}"; do
               curr="${tags[i]}"
               [[ "$curr" == "$last_ver" ]] && break
-          
+
               prev="${tags[i+1]}"
               range="${prev:+$prev..}$curr"
-          
+
               echo -e "## $curr\n" >> "$temp"
               git log --no-merges --pretty=format:"%B" "$range" | \
               awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$temp"
@@ -215,25 +285,13 @@ jobs:
           merge-multiple: true
 
       - name: Generate release.md
+        shell: bash
         run: |
-          tags=($(git tag --merged HEAD --sort=-creatordate))
-          preTag=$(curl -s "https://api.github.com/repos/chen08209/FlClash/releases/latest" | \
-          sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p')
-          
-          [ -z "$preTag" ] && preTag=""
-          
-          out="release.md" > "$out"
-          
-          for i in "${!tags[@]}"; do
-            curr="${tags[i]}"
-            [[ "$curr" == "$preTag" ]] && break
-          
-            prev="${tags[i+1]}"
-            range="${prev:+$prev..}$curr"
-          
-            git log --no-merges --pretty=format:"%B" "$range" | \
-            awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$out"
-          done
+          pre_tag=$(
+            curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" |
+              sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p'
+          )
+          bash .github/scripts/generate_release_notes.sh "$pre_tag" release.md
       - name: Push to telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
