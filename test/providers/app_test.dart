@@ -219,20 +219,6 @@ void main() {
     });
   });
 
-  group('BackBlock provider', () {
-    test('default is false', () {
-      expect(container.read(backBlockProvider), false);
-    });
-
-    test('can block and unblock back navigation', () {
-      container.read(backBlockProvider.notifier).backBlock();
-      expect(container.read(backBlockProvider), true);
-
-      container.read(backBlockProvider.notifier).unBackBlock();
-      expect(container.read(backBlockProvider), false);
-    });
-  });
-
   group('Version provider', () {
     test('default is 0', () {
       expect(container.read(versionProvider), 0);

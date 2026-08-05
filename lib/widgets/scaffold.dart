@@ -139,7 +139,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
       _handleClearInput();
       return;
     }
-    _updateSearchState((state) => state?.copyWith(query: null));
+    _popAppBarLayer();
   }
 
   void handleExitSearching() {
@@ -148,6 +148,20 @@ class CommonScaffoldState extends State<CommonScaffold> {
     }
     _handleClearInput();
     _updateSearchState((state) => state?.copyWith(query: null));
+  }
+
+  void _handleExitAppBarLayer() {
+    handleExitSearching();
+    if (_isEdit) {
+      _appBarState.value.editState?.onExit();
+    }
+  }
+
+  void _popAppBarLayer() {
+    if (!_isEdit && !_isSearch) {
+      return;
+    }
+    Navigator.of(context).pop();
   }
 
   @override
@@ -177,13 +191,13 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget? _buildLeading(VoidCallback? backAction) {
     if (_isEdit) {
       return IconButton(
-        onPressed: _appBarState.value.editState?.onExit,
+        onPressed: _popAppBarLayer,
         icon: const Icon(Icons.close),
       );
     }
     if (_isSearch) {
       return IconButton(
-        onPressed: handleExitSearching,
+        onPressed: _popAppBarLayer,
         icon: const Icon(Icons.arrow_back),
       );
     }
@@ -244,19 +258,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget _buildAppBarWrap(Widget child) {
     final appBar = _isSearch ? _buildSearchingAppBarTheme(child) : child;
     if (_isEdit || _isSearch) {
-      return SystemBackBlock(
-        child: CommonPopScope(
-          onPop: (context) {
-            if (_isEdit || _isSearch) {
-              handleExitSearching();
-              _appBarState.value.editState?.onExit();
-              return false;
-            }
-            return true;
-          },
-          child: appBar,
-        ),
-      );
+      return BackLayerScope(onBack: _handleExitAppBarLayer, child: appBar);
     }
     return appBar;
   }
