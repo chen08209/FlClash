@@ -6,19 +6,14 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `cleanup_socket`, `io_loop`, `is_current_gen`, `make_frame`, `read_frame`, `write_frame`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `ServerState`
+// These functions are ignored because they are not marked as `pub`: `cleanup_socket`, `finish_server`, `io_loop`, `make_frame`, `poll`, `report_error`, `reset`, `server_active`, `stop_server_thread`, `validate_frame_len`, `write_all_interruptible`, `write_frame`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `FrameReader`, `ServerState`
+// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
 
 Stream<Uint8List> restartIpcServer({required String name}) =>
     RustLib.instance.api.crateApiIpcRestartIpcServer(name: name);
 
 Future<void> stopIpcServer() => RustLib.instance.api.crateApiIpcStopIpcServer();
-
-Future<bool> ipcServerStatus() =>
-    RustLib.instance.api.crateApiIpcIpcServerStatus();
-
-Future<bool> isIpcConnected() =>
-    RustLib.instance.api.crateApiIpcIsIpcConnected();
 
 Future<void> sendIpcMessage({required List<int> data}) =>
     RustLib.instance.api.crateApiIpcSendIpcMessage(data: data);

@@ -24,6 +24,8 @@ Read these only when the task touches their area:
 - When the user explicitly requests a scoped, low-risk change, inspect the relevant context and implement it directly.
   Do not require brainstorming, design documents, implementation plans, multiple-option proposals, or repeated confirmation.
   Ask only when material ambiguity, destructive impact, additional authority, or scope expansion could change the result.
+- Do not add code or configuration comments unless the user explicitly asks for comments. This includes explanatory,
+  narrative, TODO, and documentation comments.
 - Use `flutter test`, not `dart test`, because models pull in Flutter types.
 - Run code generation after modifying models, providers, or database schema.
 - Do not manually edit generated files.

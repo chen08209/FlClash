@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -36,11 +35,13 @@ class CoreController {
     return _instance!;
   }
 
-  bool get isCompleted => _interface.completer.isCompleted;
+  Future<CoreLifecycleResult> start() => _interface.start();
 
-  Future<String> preload() {
-    return _interface.preload();
-  }
+  Future<CoreLifecycleResult> restart() => _interface.restart();
+
+  Future<CoreLifecycleResult> stop() => _interface.stop();
+
+  Future<CoreLifecycleResult> close() => _interface.close();
 
   static Future<void> initGeo() async {
     final homePath = await appPath.homeDirPath;
@@ -76,10 +77,6 @@ class CoreController {
     return _interface.init(InitParams(homeDir: homeDirPath, version: version));
   }
 
-  Future<void> shutdown(bool isUser) async {
-    await _interface.shutdown(isUser);
-  }
-
   FutureOr<bool> get isInit => _interface.isInit;
 
   Future<String> validateConfig(String path) async {
@@ -102,14 +99,16 @@ class CoreController {
 
   Future<String> setupConfig({
     required SetupParams params,
-    required SetupState setupState,
-    VoidCallback? preloadInvoke,
+    Future<void> Function()? preloadInvoke,
   }) async {
-    final res = _interface.setupConfig(params);
-    if (preloadInvoke != null) {
-      preloadInvoke();
+    if (preloadInvoke == null) {
+      return _interface.setupConfig(params);
     }
-    return res;
+    final (result, _) = await (
+      _interface.setupConfig(params),
+      preloadInvoke(),
+    ).wait;
+    return result;
   }
 
   Future<List<Group>> getProxiesGroups({
@@ -135,10 +134,7 @@ class CoreController {
   }
 
   Future<List<TrackerInfo>> getConnections() async {
-    final res = await _interface.getConnections();
-    final connectionsData = json.decode(res) as Map;
-    final connectionsRaw = connectionsData['connections'] as List? ?? [];
-    return connectionsRaw.map((e) => TrackerInfo.fromJson(e)).toList();
+    return _interface.getConnections();
   }
 
   Future<void> closeConnection(String id) async {
@@ -154,27 +150,13 @@ class CoreController {
   }
 
   Future<List<ExternalProvider>> getExternalProviders() async {
-    final externalProvidersRawString = await _interface.getExternalProviders();
-    if (externalProvidersRawString.isEmpty) {
-      return [];
-    }
-    final externalProviders =
-        (await externalProvidersRawString.commonToJSON<List<dynamic>>())
-            .map((item) => ExternalProvider.fromJson(item))
-            .toList();
-    return externalProviders;
+    return _interface.getExternalProviders();
   }
 
   Future<ExternalProvider?> getExternalProvider(
     String externalProviderName,
   ) async {
-    final externalProvidersRawString = await _interface.getExternalProvider(
-      externalProviderName,
-    );
-    if (externalProvidersRawString.isEmpty) {
-      return null;
-    }
-    return ExternalProvider.fromJson(json.decode(externalProvidersRawString));
+    return _interface.getExternalProvider(externalProviderName);
   }
 
   Future<String> updateGeoData(String type) {
@@ -204,29 +186,21 @@ class CoreController {
   }
 
   Future<Delay> getDelay(String url, String proxyName) async {
-    final data = await _interface.asyncTestDelay(url, proxyName);
-    return Delay.fromJson(json.decode(data));
+    return _interface.asyncTestDelay(url, proxyName);
   }
 
   Future<Map<String, dynamic>> getConfig(int id) async {
     final profilePath = await appPath.getProfilePath(id.toString());
-    final res = await _interface.getConfig(profilePath);
-    if (res.isSuccess) {
-      final data = Map<String, dynamic>.from(res.data);
-      data['rules'] = data['rule'];
-      data.remove('rule');
-      return data;
-    } else {
-      throw res.message;
-    }
+    final data = Map<String, dynamic>.from(
+      await _interface.getConfig(profilePath),
+    );
+    data['rules'] = data['rule'];
+    data.remove('rule');
+    return data;
   }
 
   Future<Traffic> getTraffic(bool onlyStatisticsProxy) async {
-    final trafficString = await _interface.getTraffic(onlyStatisticsProxy);
-    if (trafficString.isEmpty) {
-      return const Traffic();
-    }
-    return Traffic.fromJson(json.decode(trafficString));
+    return _interface.getTraffic(onlyStatisticsProxy);
   }
 
   Future<IpInfo?> getCountryCode(String ip) async {
@@ -238,21 +212,11 @@ class CoreController {
   }
 
   Future<Traffic> getTotalTraffic(bool onlyStatisticsProxy) async {
-    final totalTrafficString = await _interface.getTotalTraffic(
-      onlyStatisticsProxy,
-    );
-    if (totalTrafficString.isEmpty) {
-      return const Traffic();
-    }
-    return Traffic.fromJson(json.decode(totalTrafficString));
+    return _interface.getTotalTraffic(onlyStatisticsProxy);
   }
 
   Future<int> getMemory() async {
-    final value = await _interface.getMemory();
-    if (value.isEmpty) {
-      return 0;
-    }
-    return int.parse(value);
+    return _interface.getMemory();
   }
 
   void resetTraffic() {
@@ -271,16 +235,12 @@ class CoreController {
     await _interface.forceGc();
   }
 
-  Future<void> destroy() async {
-    await _interface.destroy();
-  }
-
   Future<void> crash() async {
     await _interface.crash();
   }
 
-  Future<String> deleteFile(String path) async {
-    return _interface.deleteFile(path);
+  Future<String> clearEffect(int profileId) async {
+    return _interface.clearEffect(profileId);
   }
 }
 

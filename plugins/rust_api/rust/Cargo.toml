@@ -10,8 +10,8 @@ crate-type = ["cdylib", "staticlib"]
 flutter_rust_bridge = "=2.12.0"
 interprocess = "2"
 
-[target.'cfg(unix)'.dependencies]
-libc = "0.2"
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Pipes"] }
 
 [profile.release]
 opt-level = "s"

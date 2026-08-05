@@ -439,6 +439,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "hasCacheChange": MessageLookupByLibrary.simpleMessage(
       "Do you want to cache the changes?",
     ),
+    "helperCorruptTip": MessageLookupByLibrary.simpleMessage(
+      "Helper service unavailable; TUN mode cannot be enabled. Reinstall FlClash to restore it.",
+    ),
     "hideFromList": MessageLookupByLibrary.simpleMessage("Hide from list"),
     "host": MessageLookupByLibrary.simpleMessage("Host"),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("Add Hosts"),

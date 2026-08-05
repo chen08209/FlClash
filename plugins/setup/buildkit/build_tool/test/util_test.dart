@@ -29,6 +29,51 @@ void main() {
     });
   });
 
+  group('writeCoreManifest', () {
+    test('writes only the Core SHA256 field', () {
+      final directory = Directory.systemTemp.createTempSync(
+        'build_tool_manifest_test_',
+      );
+      final path = '${directory.path}/manifest.json';
+      const hash =
+          '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      try {
+        writeCoreManifest(path: path, coreSha256: hash);
+
+        expect(File(path).readAsStringSync(), '{"coreSha256":"$hash"}\n');
+      } finally {
+        directory.deleteSync(recursive: true);
+      }
+    });
+
+    test('replaces an existing manifest', () {
+      final directory = Directory.systemTemp.createTempSync(
+        'build_tool_manifest_test_',
+      );
+      final path = '${directory.path}/manifest.json';
+      const oldHash =
+          '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      const newHash =
+          'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
+      try {
+        File(path).writeAsStringSync('{"coreSha256":"$oldHash"}\n');
+
+        writeCoreManifest(path: path, coreSha256: newHash);
+
+        expect(File(path).readAsStringSync(), '{"coreSha256":"$newHash"}\n');
+      } finally {
+        directory.deleteSync(recursive: true);
+      }
+    });
+
+    test('rejects an invalid Core SHA256', () {
+      expect(
+        () => writeCoreManifest(path: '/tmp/manifest.json', coreSha256: 'bad'),
+        throwsA(isA<BuildException>()),
+      );
+    });
+  });
+
   group('ensureDir', () {
     test('creates directory recursively', () {
       final tmp = '${Directory.systemTemp.path}/build_tool_test_dir/a/b/c';

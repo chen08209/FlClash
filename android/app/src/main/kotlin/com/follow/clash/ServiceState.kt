@@ -47,8 +47,8 @@ object ServiceState {
 
     val runState = mutableRunState.asStateFlow()
 
-    var runTimeMillis = 0L
-        private set
+    private val runTimeMillis: Long
+        get() = ServiceController.getRunTimeMillis()
 
     private val appPlugin: AppPlugin?
         get() = flutterEngine?.plugin<AppPlugin>()
@@ -74,17 +74,35 @@ object ServiceState {
         }
     }
 
-    suspend fun refresh() = transitionLock.withLock {
-        runTimeMillis = ServiceController.getRunTimeMillis()
-        mutableRunState.value = if (runTimeMillis == 0L) RunState.STOPPED else RunState.STARTED
+    suspend fun refresh(): Long = transitionLock.withLock {
+        val current = runTimeMillis
+        mutableRunState.value = if (current == 0L) RunState.STOPPED else RunState.STARTED
+        current
+    }
+
+    internal fun captureRequestToken(): RunRequest = latestRequest.get()
+
+    /**
+     * Settles the state after the bound service was lost. [token] is the request that was current
+     * when the loss was observed, so a start that raced ahead of this callback keeps its intent.
+     */
+    internal suspend fun handleServiceLost(token: RunRequest) = transitionLock.withLock {
+        if (runTimeMillis != 0L) {
+            return@withLock
+        }
+        if (!latestRequest.compareAndSet(token, RunRequest(running = false))) {
+            return@withLock
+        }
+        mutableRunState.value = RunState.STOPPED
     }
 
     suspend fun handleStartAction() {
         if (isRunningRequested()) {
             return
         }
-        if (flutterEngine != null) {
-            tilePlugin?.handleStart()
+        val plugin = tilePlugin
+        if (plugin != null) {
+            plugin.handleStart()
             return
         }
         loadPreferencesAndStart()
@@ -94,8 +112,9 @@ object ServiceState {
         if (!isRunningRequested()) {
             return
         }
-        if (flutterEngine != null) {
-            tilePlugin?.handleStop()
+        val plugin = tilePlugin
+        if (plugin != null) {
+            plugin.handleStop()
             return
         }
         GlobalState.application.showToast(sharedState.stopTip)
@@ -129,7 +148,12 @@ object ServiceState {
                 }
             }
         }
-        appPlugin?.requestNotificationPermission(launchRequest) ?: launchRequest(true)
+        val plugin = appPlugin
+        if (plugin != null) {
+            plugin.requestNotificationPermission(launchRequest)
+        } else {
+            launchRequest(true)
+        }
         return result
     }
 
@@ -242,10 +266,10 @@ object ServiceState {
                 return@transition true
             }
             mutableRunState.value = RunState.STARTING
-            runTimeMillis = ServiceController.start(options, runTimeMillis)
+            val startedAtMillis = ServiceController.start(options)
             mutableRunState.value =
-                if (runTimeMillis == 0L) RunState.STOPPED else RunState.STARTED
-            if (runTimeMillis == 0L) {
+                if (startedAtMillis == 0L) RunState.STOPPED else RunState.STARTED
+            if (startedAtMillis == 0L) {
                 fail(request)
                 return@transition false
             }
@@ -261,7 +285,7 @@ object ServiceState {
             return@withLock true
         }
         mutableRunState.value = RunState.STOPPING
-        runTimeMillis = ServiceController.stop()
+        ServiceController.stop()
         mutableRunState.value = RunState.STOPPED
         isCurrent(request)
     }
@@ -293,7 +317,7 @@ object ServiceState {
         latestRequest.compareAndSet(request, RunRequest(running = false))
     }
 
-    private class RunRequest(
+    internal class RunRequest(
         val running: Boolean,
     )
 }
