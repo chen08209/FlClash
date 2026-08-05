@@ -70,12 +70,10 @@ class OutboundMode extends StatelessWidget {
                                 left: 12.ap,
                                 right: 16.ap,
                               ),
-                              delegate: RadioDelegate(
-                                onTab: () {
-                                  _handleChangeMode(item);
-                                },
-                                value: item,
-                              ),
+                              onTap: () {
+                                _handleChangeMode(item);
+                              },
+                              value: item,
                               title: Text(
                                 Intl.message(item.name),
                                 style: Theme.of(

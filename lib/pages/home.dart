@@ -49,21 +49,25 @@ class HomePage extends StatelessWidget {
                   selectedIndex: currentIndex,
                 ),
               );
-              if (isMobile) {
-                return Column(
-                  children: [
-                    Flexible(
-                      flex: 1,
+              return Column(
+                children: [
+                  Flexible(
+                    flex: 1,
+                    child: FocusTraversalGroup(
+                      policy: PageTraversalPolicy(),
                       child: MediaQuery.removePadding(
                         removeTop: false,
-                        removeBottom: true,
-                        removeLeft: true,
-                        removeRight: true,
+                        removeBottom: isMobile,
+                        removeLeft: isMobile,
+                        removeRight: isMobile,
                         context: context,
                         child: child!,
                       ),
                     ),
-                    MediaQuery.removePadding(
+                  ),
+                  AnimatedVisibility.bottomNavigation(
+                    visible: isMobile,
+                    child: MediaQuery.removePadding(
                       removeTop: true,
                       removeBottom: false,
                       removeLeft: true,
@@ -71,11 +75,9 @@ class HomePage extends StatelessWidget {
                       context: context,
                       child: bottomNavigationBar,
                     ),
-                  ],
-                );
-              } else {
-                return child!;
-              }
+                  ),
+                ],
+              );
             },
             child: Consumer(
               builder: (_, ref, _) {
@@ -88,12 +90,17 @@ class HomePage extends StatelessWidget {
                   pageBuilder: (_, index) {
                     final navigationItem = navigationItems[index];
                     final navigationView = navigationItem.builder(context);
+                    final scopedView = PageFocusScope(child: navigationView);
                     final view = KeepScope(
+                      key: ValueKey(navigationItem.label),
                       keep: navigationItem.keep,
                       child: isMobile
-                          ? navigationView
+                          ? scopedView
                           : Navigator(
-                              pages: [MaterialPage(child: navigationView)],
+                              key: ValueKey(
+                                '${navigationItem.label.name}_navigator',
+                              ),
+                              pages: [MaterialPage(child: scopedView)],
                               onDidRemovePage: (_) {},
                             ),
                     );
@@ -191,12 +198,31 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     final itemCount = ref.watch(
       currentNavigationItemsStateProvider.select((state) => state.value.length),
     );
+    final currentIndex = ref.watch(
+      currentPageLabelProvider.select(
+        (label) =>
+            widget.navigationItems.indexWhere((item) => item.label == label),
+      ),
+    );
     return PageView.builder(
       controller: _pageController,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: itemCount,
+      findChildIndexCallback: (key) {
+        if (key is! ValueKey<PageLabel>) {
+          return null;
+        }
+        final index = widget.navigationItems.indexWhere(
+          (item) => item.label == key.value,
+        );
+        return index == -1 ? null : index;
+      },
       itemBuilder: (context, index) {
-        return widget.pageBuilder(context, index);
+        return ExcludeFocus(
+          key: ValueKey(widget.navigationItems[index].label),
+          excluding: index != currentIndex,
+          child: widget.pageBuilder(context, index),
+        );
       },
     );
   }

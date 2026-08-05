@@ -108,7 +108,6 @@ abstract class ProfilesState with _$ProfilesState {
   const factory ProfilesState({
     required List<Profile> profiles,
     required int? currentProfileId,
-    required int columns,
   }) = _ProfilesState;
 }
 
@@ -173,7 +172,6 @@ abstract class ProxiesListState with _$ProxiesListState {
     required List<Group> groups,
     required Set<String> currentUnfoldSet,
     required ProxyCardType proxyCardType,
-    required int columns,
   }) = _ProxiesListState;
 }
 
@@ -183,7 +181,6 @@ abstract class ProxiesTabState with _$ProxiesTabState {
     required List<Group> groups,
     required String? currentGroupName,
     required ProxyCardType proxyCardType,
-    required int columns,
   }) = _ProxiesTabState;
 }
 
@@ -196,7 +193,6 @@ abstract class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
     required num sortNum,
     required GroupType groupType,
     required List<Proxy> proxies,
-    required int columns,
   }) = _ProxyGroupSelectorState;
 }
 
@@ -279,7 +275,6 @@ abstract class ProxyState with _$ProxyState {
 abstract class DashboardState with _$DashboardState {
   const factory DashboardState({
     required List<DashboardWidget> dashboardWidgets,
-    required double contentWidth,
   }) = _DashboardState;
 }
 

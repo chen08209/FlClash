@@ -3520,7 +3520,7 @@ as bool,
 /// @nodoc
 mixin _$ProfilesState {
 
- List<Profile> get profiles; int? get currentProfileId; int get columns;
+ List<Profile> get profiles; int? get currentProfileId;
 /// Create a copy of ProfilesState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3531,16 +3531,16 @@ $ProfilesStateCopyWith<ProfilesState> get copyWith => _$ProfilesStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfilesState&&const DeepCollectionEquality().equals(other.profiles, profiles)&&(identical(other.currentProfileId, currentProfileId) || other.currentProfileId == currentProfileId)&&(identical(other.columns, columns) || other.columns == columns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfilesState&&const DeepCollectionEquality().equals(other.profiles, profiles)&&(identical(other.currentProfileId, currentProfileId) || other.currentProfileId == currentProfileId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(profiles),currentProfileId,columns);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(profiles),currentProfileId);
 
 @override
 String toString() {
-  return 'ProfilesState(profiles: $profiles, currentProfileId: $currentProfileId, columns: $columns)';
+  return 'ProfilesState(profiles: $profiles, currentProfileId: $currentProfileId)';
 }
 
 
@@ -3551,7 +3551,7 @@ abstract mixin class $ProfilesStateCopyWith<$Res>  {
   factory $ProfilesStateCopyWith(ProfilesState value, $Res Function(ProfilesState) _then) = _$ProfilesStateCopyWithImpl;
 @useResult
 $Res call({
- List<Profile> profiles, int? currentProfileId, int columns
+ List<Profile> profiles, int? currentProfileId
 });
 
 
@@ -3568,12 +3568,11 @@ class _$ProfilesStateCopyWithImpl<$Res>
 
 /// Create a copy of ProfilesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? profiles = null,Object? currentProfileId = freezed,Object? columns = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? profiles = null,Object? currentProfileId = freezed,}) {
   return _then(_self.copyWith(
 profiles: null == profiles ? _self.profiles : profiles // ignore: cast_nullable_to_non_nullable
 as List<Profile>,currentProfileId: freezed == currentProfileId ? _self.currentProfileId : currentProfileId // ignore: cast_nullable_to_non_nullable
-as int?,columns: null == columns ? _self.columns : columns // ignore: cast_nullable_to_non_nullable
-as int,
+as int?,
   ));
 }
 
@@ -3658,10 +3657,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Profile> profiles,  int? currentProfileId,  int columns)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Profile> profiles,  int? currentProfileId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProfilesState() when $default != null:
-return $default(_that.profiles,_that.currentProfileId,_that.columns);case _:
+return $default(_that.profiles,_that.currentProfileId);case _:
   return orElse();
 
 }
@@ -3679,10 +3678,10 @@ return $default(_that.profiles,_that.currentProfileId,_that.columns);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Profile> profiles,  int? currentProfileId,  int columns)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Profile> profiles,  int? currentProfileId)  $default,) {final _that = this;
 switch (_that) {
 case _ProfilesState():
-return $default(_that.profiles,_that.currentProfileId,_that.columns);case _:
+return $default(_that.profiles,_that.currentProfileId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3699,10 +3698,10 @@ return $default(_that.profiles,_that.currentProfileId,_that.columns);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Profile> profiles,  int? currentProfileId,  int columns)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Profile> profiles,  int? currentProfileId)?  $default,) {final _that = this;
 switch (_that) {
 case _ProfilesState() when $default != null:
-return $default(_that.profiles,_that.currentProfileId,_that.columns);case _:
+return $default(_that.profiles,_that.currentProfileId);case _:
   return null;
 
 }
@@ -3714,7 +3713,7 @@ return $default(_that.profiles,_that.currentProfileId,_that.columns);case _:
 
 
 class _ProfilesState implements ProfilesState {
-  const _ProfilesState({required final  List<Profile> profiles, required this.currentProfileId, required this.columns}): _profiles = profiles;
+  const _ProfilesState({required final  List<Profile> profiles, required this.currentProfileId}): _profiles = profiles;
   
 
  final  List<Profile> _profiles;
@@ -3725,7 +3724,6 @@ class _ProfilesState implements ProfilesState {
 }
 
 @override final  int? currentProfileId;
-@override final  int columns;
 
 /// Create a copy of ProfilesState
 /// with the given fields replaced by the non-null parameter values.
@@ -3737,16 +3735,16 @@ _$ProfilesStateCopyWith<_ProfilesState> get copyWith => __$ProfilesStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfilesState&&const DeepCollectionEquality().equals(other._profiles, _profiles)&&(identical(other.currentProfileId, currentProfileId) || other.currentProfileId == currentProfileId)&&(identical(other.columns, columns) || other.columns == columns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfilesState&&const DeepCollectionEquality().equals(other._profiles, _profiles)&&(identical(other.currentProfileId, currentProfileId) || other.currentProfileId == currentProfileId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_profiles),currentProfileId,columns);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_profiles),currentProfileId);
 
 @override
 String toString() {
-  return 'ProfilesState(profiles: $profiles, currentProfileId: $currentProfileId, columns: $columns)';
+  return 'ProfilesState(profiles: $profiles, currentProfileId: $currentProfileId)';
 }
 
 
@@ -3757,7 +3755,7 @@ abstract mixin class _$ProfilesStateCopyWith<$Res> implements $ProfilesStateCopy
   factory _$ProfilesStateCopyWith(_ProfilesState value, $Res Function(_ProfilesState) _then) = __$ProfilesStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Profile> profiles, int? currentProfileId, int columns
+ List<Profile> profiles, int? currentProfileId
 });
 
 
@@ -3774,12 +3772,11 @@ class __$ProfilesStateCopyWithImpl<$Res>
 
 /// Create a copy of ProfilesState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? profiles = null,Object? currentProfileId = freezed,Object? columns = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? profiles = null,Object? currentProfileId = freezed,}) {
   return _then(_ProfilesState(
 profiles: null == profiles ? _self._profiles : profiles // ignore: cast_nullable_to_non_nullable
 as List<Profile>,currentProfileId: freezed == currentProfileId ? _self.currentProfileId : currentProfileId // ignore: cast_nullable_to_non_nullable
-as int?,columns: null == columns ? _self.columns : columns // ignore: cast_nullable_to_non_nullable
-as int,
+as int?,
   ));
 }
 
@@ -5451,7 +5448,7 @@ as List<NavigationItem>,
 /// @nodoc
 mixin _$ProxiesListState {
 
- List<Group> get groups; Set<String> get currentUnfoldSet; ProxyCardType get proxyCardType; int get columns;
+ List<Group> get groups; Set<String> get currentUnfoldSet; ProxyCardType get proxyCardType;
 /// Create a copy of ProxiesListState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -5462,16 +5459,16 @@ $ProxiesListStateCopyWith<ProxiesListState> get copyWith => _$ProxiesListStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxiesListState&&const DeepCollectionEquality().equals(other.groups, groups)&&const DeepCollectionEquality().equals(other.currentUnfoldSet, currentUnfoldSet)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType)&&(identical(other.columns, columns) || other.columns == columns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxiesListState&&const DeepCollectionEquality().equals(other.groups, groups)&&const DeepCollectionEquality().equals(other.currentUnfoldSet, currentUnfoldSet)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(groups),const DeepCollectionEquality().hash(currentUnfoldSet),proxyCardType,columns);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(groups),const DeepCollectionEquality().hash(currentUnfoldSet),proxyCardType);
 
 @override
 String toString() {
-  return 'ProxiesListState(groups: $groups, currentUnfoldSet: $currentUnfoldSet, proxyCardType: $proxyCardType, columns: $columns)';
+  return 'ProxiesListState(groups: $groups, currentUnfoldSet: $currentUnfoldSet, proxyCardType: $proxyCardType)';
 }
 
 
@@ -5482,7 +5479,7 @@ abstract mixin class $ProxiesListStateCopyWith<$Res>  {
   factory $ProxiesListStateCopyWith(ProxiesListState value, $Res Function(ProxiesListState) _then) = _$ProxiesListStateCopyWithImpl;
 @useResult
 $Res call({
- List<Group> groups, Set<String> currentUnfoldSet, ProxyCardType proxyCardType, int columns
+ List<Group> groups, Set<String> currentUnfoldSet, ProxyCardType proxyCardType
 });
 
 
@@ -5499,13 +5496,12 @@ class _$ProxiesListStateCopyWithImpl<$Res>
 
 /// Create a copy of ProxiesListState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? groups = null,Object? currentUnfoldSet = null,Object? proxyCardType = null,Object? columns = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? groups = null,Object? currentUnfoldSet = null,Object? proxyCardType = null,}) {
   return _then(_self.copyWith(
 groups: null == groups ? _self.groups : groups // ignore: cast_nullable_to_non_nullable
 as List<Group>,currentUnfoldSet: null == currentUnfoldSet ? _self.currentUnfoldSet : currentUnfoldSet // ignore: cast_nullable_to_non_nullable
 as Set<String>,proxyCardType: null == proxyCardType ? _self.proxyCardType : proxyCardType // ignore: cast_nullable_to_non_nullable
-as ProxyCardType,columns: null == columns ? _self.columns : columns // ignore: cast_nullable_to_non_nullable
-as int,
+as ProxyCardType,
   ));
 }
 
@@ -5590,10 +5586,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Group> groups,  Set<String> currentUnfoldSet,  ProxyCardType proxyCardType,  int columns)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Group> groups,  Set<String> currentUnfoldSet,  ProxyCardType proxyCardType)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProxiesListState() when $default != null:
-return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType,_that.columns);case _:
+return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType);case _:
   return orElse();
 
 }
@@ -5611,10 +5607,10 @@ return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType,_that.co
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Group> groups,  Set<String> currentUnfoldSet,  ProxyCardType proxyCardType,  int columns)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Group> groups,  Set<String> currentUnfoldSet,  ProxyCardType proxyCardType)  $default,) {final _that = this;
 switch (_that) {
 case _ProxiesListState():
-return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType,_that.columns);case _:
+return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -5631,10 +5627,10 @@ return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType,_that.co
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Group> groups,  Set<String> currentUnfoldSet,  ProxyCardType proxyCardType,  int columns)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Group> groups,  Set<String> currentUnfoldSet,  ProxyCardType proxyCardType)?  $default,) {final _that = this;
 switch (_that) {
 case _ProxiesListState() when $default != null:
-return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType,_that.columns);case _:
+return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType);case _:
   return null;
 
 }
@@ -5646,7 +5642,7 @@ return $default(_that.groups,_that.currentUnfoldSet,_that.proxyCardType,_that.co
 
 
 class _ProxiesListState implements ProxiesListState {
-  const _ProxiesListState({required final  List<Group> groups, required final  Set<String> currentUnfoldSet, required this.proxyCardType, required this.columns}): _groups = groups,_currentUnfoldSet = currentUnfoldSet;
+  const _ProxiesListState({required final  List<Group> groups, required final  Set<String> currentUnfoldSet, required this.proxyCardType}): _groups = groups,_currentUnfoldSet = currentUnfoldSet;
   
 
  final  List<Group> _groups;
@@ -5664,7 +5660,6 @@ class _ProxiesListState implements ProxiesListState {
 }
 
 @override final  ProxyCardType proxyCardType;
-@override final  int columns;
 
 /// Create a copy of ProxiesListState
 /// with the given fields replaced by the non-null parameter values.
@@ -5676,16 +5671,16 @@ _$ProxiesListStateCopyWith<_ProxiesListState> get copyWith => __$ProxiesListStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxiesListState&&const DeepCollectionEquality().equals(other._groups, _groups)&&const DeepCollectionEquality().equals(other._currentUnfoldSet, _currentUnfoldSet)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType)&&(identical(other.columns, columns) || other.columns == columns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxiesListState&&const DeepCollectionEquality().equals(other._groups, _groups)&&const DeepCollectionEquality().equals(other._currentUnfoldSet, _currentUnfoldSet)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_groups),const DeepCollectionEquality().hash(_currentUnfoldSet),proxyCardType,columns);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_groups),const DeepCollectionEquality().hash(_currentUnfoldSet),proxyCardType);
 
 @override
 String toString() {
-  return 'ProxiesListState(groups: $groups, currentUnfoldSet: $currentUnfoldSet, proxyCardType: $proxyCardType, columns: $columns)';
+  return 'ProxiesListState(groups: $groups, currentUnfoldSet: $currentUnfoldSet, proxyCardType: $proxyCardType)';
 }
 
 
@@ -5696,7 +5691,7 @@ abstract mixin class _$ProxiesListStateCopyWith<$Res> implements $ProxiesListSta
   factory _$ProxiesListStateCopyWith(_ProxiesListState value, $Res Function(_ProxiesListState) _then) = __$ProxiesListStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Group> groups, Set<String> currentUnfoldSet, ProxyCardType proxyCardType, int columns
+ List<Group> groups, Set<String> currentUnfoldSet, ProxyCardType proxyCardType
 });
 
 
@@ -5713,13 +5708,12 @@ class __$ProxiesListStateCopyWithImpl<$Res>
 
 /// Create a copy of ProxiesListState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? groups = null,Object? currentUnfoldSet = null,Object? proxyCardType = null,Object? columns = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? groups = null,Object? currentUnfoldSet = null,Object? proxyCardType = null,}) {
   return _then(_ProxiesListState(
 groups: null == groups ? _self._groups : groups // ignore: cast_nullable_to_non_nullable
 as List<Group>,currentUnfoldSet: null == currentUnfoldSet ? _self._currentUnfoldSet : currentUnfoldSet // ignore: cast_nullable_to_non_nullable
 as Set<String>,proxyCardType: null == proxyCardType ? _self.proxyCardType : proxyCardType // ignore: cast_nullable_to_non_nullable
-as ProxyCardType,columns: null == columns ? _self.columns : columns // ignore: cast_nullable_to_non_nullable
-as int,
+as ProxyCardType,
   ));
 }
 
@@ -5729,7 +5723,7 @@ as int,
 /// @nodoc
 mixin _$ProxiesTabState {
 
- List<Group> get groups; String? get currentGroupName; ProxyCardType get proxyCardType; int get columns;
+ List<Group> get groups; String? get currentGroupName; ProxyCardType get proxyCardType;
 /// Create a copy of ProxiesTabState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -5740,16 +5734,16 @@ $ProxiesTabStateCopyWith<ProxiesTabState> get copyWith => _$ProxiesTabStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxiesTabState&&const DeepCollectionEquality().equals(other.groups, groups)&&(identical(other.currentGroupName, currentGroupName) || other.currentGroupName == currentGroupName)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType)&&(identical(other.columns, columns) || other.columns == columns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxiesTabState&&const DeepCollectionEquality().equals(other.groups, groups)&&(identical(other.currentGroupName, currentGroupName) || other.currentGroupName == currentGroupName)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(groups),currentGroupName,proxyCardType,columns);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(groups),currentGroupName,proxyCardType);
 
 @override
 String toString() {
-  return 'ProxiesTabState(groups: $groups, currentGroupName: $currentGroupName, proxyCardType: $proxyCardType, columns: $columns)';
+  return 'ProxiesTabState(groups: $groups, currentGroupName: $currentGroupName, proxyCardType: $proxyCardType)';
 }
 
 
@@ -5760,7 +5754,7 @@ abstract mixin class $ProxiesTabStateCopyWith<$Res>  {
   factory $ProxiesTabStateCopyWith(ProxiesTabState value, $Res Function(ProxiesTabState) _then) = _$ProxiesTabStateCopyWithImpl;
 @useResult
 $Res call({
- List<Group> groups, String? currentGroupName, ProxyCardType proxyCardType, int columns
+ List<Group> groups, String? currentGroupName, ProxyCardType proxyCardType
 });
 
 
@@ -5777,13 +5771,12 @@ class _$ProxiesTabStateCopyWithImpl<$Res>
 
 /// Create a copy of ProxiesTabState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? groups = null,Object? currentGroupName = freezed,Object? proxyCardType = null,Object? columns = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? groups = null,Object? currentGroupName = freezed,Object? proxyCardType = null,}) {
   return _then(_self.copyWith(
 groups: null == groups ? _self.groups : groups // ignore: cast_nullable_to_non_nullable
 as List<Group>,currentGroupName: freezed == currentGroupName ? _self.currentGroupName : currentGroupName // ignore: cast_nullable_to_non_nullable
 as String?,proxyCardType: null == proxyCardType ? _self.proxyCardType : proxyCardType // ignore: cast_nullable_to_non_nullable
-as ProxyCardType,columns: null == columns ? _self.columns : columns // ignore: cast_nullable_to_non_nullable
-as int,
+as ProxyCardType,
   ));
 }
 
@@ -5868,10 +5861,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Group> groups,  String? currentGroupName,  ProxyCardType proxyCardType,  int columns)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Group> groups,  String? currentGroupName,  ProxyCardType proxyCardType)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProxiesTabState() when $default != null:
-return $default(_that.groups,_that.currentGroupName,_that.proxyCardType,_that.columns);case _:
+return $default(_that.groups,_that.currentGroupName,_that.proxyCardType);case _:
   return orElse();
 
 }
@@ -5889,10 +5882,10 @@ return $default(_that.groups,_that.currentGroupName,_that.proxyCardType,_that.co
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Group> groups,  String? currentGroupName,  ProxyCardType proxyCardType,  int columns)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Group> groups,  String? currentGroupName,  ProxyCardType proxyCardType)  $default,) {final _that = this;
 switch (_that) {
 case _ProxiesTabState():
-return $default(_that.groups,_that.currentGroupName,_that.proxyCardType,_that.columns);case _:
+return $default(_that.groups,_that.currentGroupName,_that.proxyCardType);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -5909,10 +5902,10 @@ return $default(_that.groups,_that.currentGroupName,_that.proxyCardType,_that.co
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Group> groups,  String? currentGroupName,  ProxyCardType proxyCardType,  int columns)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Group> groups,  String? currentGroupName,  ProxyCardType proxyCardType)?  $default,) {final _that = this;
 switch (_that) {
 case _ProxiesTabState() when $default != null:
-return $default(_that.groups,_that.currentGroupName,_that.proxyCardType,_that.columns);case _:
+return $default(_that.groups,_that.currentGroupName,_that.proxyCardType);case _:
   return null;
 
 }
@@ -5924,7 +5917,7 @@ return $default(_that.groups,_that.currentGroupName,_that.proxyCardType,_that.co
 
 
 class _ProxiesTabState implements ProxiesTabState {
-  const _ProxiesTabState({required final  List<Group> groups, required this.currentGroupName, required this.proxyCardType, required this.columns}): _groups = groups;
+  const _ProxiesTabState({required final  List<Group> groups, required this.currentGroupName, required this.proxyCardType}): _groups = groups;
   
 
  final  List<Group> _groups;
@@ -5936,7 +5929,6 @@ class _ProxiesTabState implements ProxiesTabState {
 
 @override final  String? currentGroupName;
 @override final  ProxyCardType proxyCardType;
-@override final  int columns;
 
 /// Create a copy of ProxiesTabState
 /// with the given fields replaced by the non-null parameter values.
@@ -5948,16 +5940,16 @@ _$ProxiesTabStateCopyWith<_ProxiesTabState> get copyWith => __$ProxiesTabStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxiesTabState&&const DeepCollectionEquality().equals(other._groups, _groups)&&(identical(other.currentGroupName, currentGroupName) || other.currentGroupName == currentGroupName)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType)&&(identical(other.columns, columns) || other.columns == columns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxiesTabState&&const DeepCollectionEquality().equals(other._groups, _groups)&&(identical(other.currentGroupName, currentGroupName) || other.currentGroupName == currentGroupName)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_groups),currentGroupName,proxyCardType,columns);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_groups),currentGroupName,proxyCardType);
 
 @override
 String toString() {
-  return 'ProxiesTabState(groups: $groups, currentGroupName: $currentGroupName, proxyCardType: $proxyCardType, columns: $columns)';
+  return 'ProxiesTabState(groups: $groups, currentGroupName: $currentGroupName, proxyCardType: $proxyCardType)';
 }
 
 
@@ -5968,7 +5960,7 @@ abstract mixin class _$ProxiesTabStateCopyWith<$Res> implements $ProxiesTabState
   factory _$ProxiesTabStateCopyWith(_ProxiesTabState value, $Res Function(_ProxiesTabState) _then) = __$ProxiesTabStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Group> groups, String? currentGroupName, ProxyCardType proxyCardType, int columns
+ List<Group> groups, String? currentGroupName, ProxyCardType proxyCardType
 });
 
 
@@ -5985,13 +5977,12 @@ class __$ProxiesTabStateCopyWithImpl<$Res>
 
 /// Create a copy of ProxiesTabState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? groups = null,Object? currentGroupName = freezed,Object? proxyCardType = null,Object? columns = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? groups = null,Object? currentGroupName = freezed,Object? proxyCardType = null,}) {
   return _then(_ProxiesTabState(
 groups: null == groups ? _self._groups : groups // ignore: cast_nullable_to_non_nullable
 as List<Group>,currentGroupName: freezed == currentGroupName ? _self.currentGroupName : currentGroupName // ignore: cast_nullable_to_non_nullable
 as String?,proxyCardType: null == proxyCardType ? _self.proxyCardType : proxyCardType // ignore: cast_nullable_to_non_nullable
-as ProxyCardType,columns: null == columns ? _self.columns : columns // ignore: cast_nullable_to_non_nullable
-as int,
+as ProxyCardType,
   ));
 }
 
@@ -6001,7 +5992,7 @@ as int,
 /// @nodoc
 mixin _$ProxyGroupSelectorState {
 
- String? get testUrl; ProxiesSortType get proxiesSortType; ProxyCardType get proxyCardType; num get sortNum; GroupType get groupType; List<Proxy> get proxies; int get columns;
+ String? get testUrl; ProxiesSortType get proxiesSortType; ProxyCardType get proxyCardType; num get sortNum; GroupType get groupType; List<Proxy> get proxies;
 /// Create a copy of ProxyGroupSelectorState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -6012,16 +6003,16 @@ $ProxyGroupSelectorStateCopyWith<ProxyGroupSelectorState> get copyWith => _$Prox
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyGroupSelectorState&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.proxiesSortType, proxiesSortType) || other.proxiesSortType == proxiesSortType)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType)&&(identical(other.sortNum, sortNum) || other.sortNum == sortNum)&&(identical(other.groupType, groupType) || other.groupType == groupType)&&const DeepCollectionEquality().equals(other.proxies, proxies)&&(identical(other.columns, columns) || other.columns == columns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyGroupSelectorState&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.proxiesSortType, proxiesSortType) || other.proxiesSortType == proxiesSortType)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType)&&(identical(other.sortNum, sortNum) || other.sortNum == sortNum)&&(identical(other.groupType, groupType) || other.groupType == groupType)&&const DeepCollectionEquality().equals(other.proxies, proxies));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,testUrl,proxiesSortType,proxyCardType,sortNum,groupType,const DeepCollectionEquality().hash(proxies),columns);
+int get hashCode => Object.hash(runtimeType,testUrl,proxiesSortType,proxyCardType,sortNum,groupType,const DeepCollectionEquality().hash(proxies));
 
 @override
 String toString() {
-  return 'ProxyGroupSelectorState(testUrl: $testUrl, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, groupType: $groupType, proxies: $proxies, columns: $columns)';
+  return 'ProxyGroupSelectorState(testUrl: $testUrl, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, groupType: $groupType, proxies: $proxies)';
 }
 
 
@@ -6032,7 +6023,7 @@ abstract mixin class $ProxyGroupSelectorStateCopyWith<$Res>  {
   factory $ProxyGroupSelectorStateCopyWith(ProxyGroupSelectorState value, $Res Function(ProxyGroupSelectorState) _then) = _$ProxyGroupSelectorStateCopyWithImpl;
 @useResult
 $Res call({
- String? testUrl, ProxiesSortType proxiesSortType, ProxyCardType proxyCardType, num sortNum, GroupType groupType, List<Proxy> proxies, int columns
+ String? testUrl, ProxiesSortType proxiesSortType, ProxyCardType proxyCardType, num sortNum, GroupType groupType, List<Proxy> proxies
 });
 
 
@@ -6049,7 +6040,7 @@ class _$ProxyGroupSelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of ProxyGroupSelectorState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? testUrl = freezed,Object? proxiesSortType = null,Object? proxyCardType = null,Object? sortNum = null,Object? groupType = null,Object? proxies = null,Object? columns = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? testUrl = freezed,Object? proxiesSortType = null,Object? proxyCardType = null,Object? sortNum = null,Object? groupType = null,Object? proxies = null,}) {
   return _then(_self.copyWith(
 testUrl: freezed == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
 as String?,proxiesSortType: null == proxiesSortType ? _self.proxiesSortType : proxiesSortType // ignore: cast_nullable_to_non_nullable
@@ -6057,8 +6048,7 @@ as ProxiesSortType,proxyCardType: null == proxyCardType ? _self.proxyCardType : 
 as ProxyCardType,sortNum: null == sortNum ? _self.sortNum : sortNum // ignore: cast_nullable_to_non_nullable
 as num,groupType: null == groupType ? _self.groupType : groupType // ignore: cast_nullable_to_non_nullable
 as GroupType,proxies: null == proxies ? _self.proxies : proxies // ignore: cast_nullable_to_non_nullable
-as List<Proxy>,columns: null == columns ? _self.columns : columns // ignore: cast_nullable_to_non_nullable
-as int,
+as List<Proxy>,
   ));
 }
 
@@ -6143,10 +6133,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? testUrl,  ProxiesSortType proxiesSortType,  ProxyCardType proxyCardType,  num sortNum,  GroupType groupType,  List<Proxy> proxies,  int columns)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? testUrl,  ProxiesSortType proxiesSortType,  ProxyCardType proxyCardType,  num sortNum,  GroupType groupType,  List<Proxy> proxies)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProxyGroupSelectorState() when $default != null:
-return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.sortNum,_that.groupType,_that.proxies,_that.columns);case _:
+return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.sortNum,_that.groupType,_that.proxies);case _:
   return orElse();
 
 }
@@ -6164,10 +6154,10 @@ return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.so
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? testUrl,  ProxiesSortType proxiesSortType,  ProxyCardType proxyCardType,  num sortNum,  GroupType groupType,  List<Proxy> proxies,  int columns)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? testUrl,  ProxiesSortType proxiesSortType,  ProxyCardType proxyCardType,  num sortNum,  GroupType groupType,  List<Proxy> proxies)  $default,) {final _that = this;
 switch (_that) {
 case _ProxyGroupSelectorState():
-return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.sortNum,_that.groupType,_that.proxies,_that.columns);case _:
+return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.sortNum,_that.groupType,_that.proxies);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -6184,10 +6174,10 @@ return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.so
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? testUrl,  ProxiesSortType proxiesSortType,  ProxyCardType proxyCardType,  num sortNum,  GroupType groupType,  List<Proxy> proxies,  int columns)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? testUrl,  ProxiesSortType proxiesSortType,  ProxyCardType proxyCardType,  num sortNum,  GroupType groupType,  List<Proxy> proxies)?  $default,) {final _that = this;
 switch (_that) {
 case _ProxyGroupSelectorState() when $default != null:
-return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.sortNum,_that.groupType,_that.proxies,_that.columns);case _:
+return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.sortNum,_that.groupType,_that.proxies);case _:
   return null;
 
 }
@@ -6199,7 +6189,7 @@ return $default(_that.testUrl,_that.proxiesSortType,_that.proxyCardType,_that.so
 
 
 class _ProxyGroupSelectorState implements ProxyGroupSelectorState {
-  const _ProxyGroupSelectorState({required this.testUrl, required this.proxiesSortType, required this.proxyCardType, required this.sortNum, required this.groupType, required final  List<Proxy> proxies, required this.columns}): _proxies = proxies;
+  const _ProxyGroupSelectorState({required this.testUrl, required this.proxiesSortType, required this.proxyCardType, required this.sortNum, required this.groupType, required final  List<Proxy> proxies}): _proxies = proxies;
   
 
 @override final  String? testUrl;
@@ -6214,7 +6204,6 @@ class _ProxyGroupSelectorState implements ProxyGroupSelectorState {
   return EqualUnmodifiableListView(_proxies);
 }
 
-@override final  int columns;
 
 /// Create a copy of ProxyGroupSelectorState
 /// with the given fields replaced by the non-null parameter values.
@@ -6226,16 +6215,16 @@ _$ProxyGroupSelectorStateCopyWith<_ProxyGroupSelectorState> get copyWith => __$P
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyGroupSelectorState&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.proxiesSortType, proxiesSortType) || other.proxiesSortType == proxiesSortType)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType)&&(identical(other.sortNum, sortNum) || other.sortNum == sortNum)&&(identical(other.groupType, groupType) || other.groupType == groupType)&&const DeepCollectionEquality().equals(other._proxies, _proxies)&&(identical(other.columns, columns) || other.columns == columns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyGroupSelectorState&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.proxiesSortType, proxiesSortType) || other.proxiesSortType == proxiesSortType)&&(identical(other.proxyCardType, proxyCardType) || other.proxyCardType == proxyCardType)&&(identical(other.sortNum, sortNum) || other.sortNum == sortNum)&&(identical(other.groupType, groupType) || other.groupType == groupType)&&const DeepCollectionEquality().equals(other._proxies, _proxies));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,testUrl,proxiesSortType,proxyCardType,sortNum,groupType,const DeepCollectionEquality().hash(_proxies),columns);
+int get hashCode => Object.hash(runtimeType,testUrl,proxiesSortType,proxyCardType,sortNum,groupType,const DeepCollectionEquality().hash(_proxies));
 
 @override
 String toString() {
-  return 'ProxyGroupSelectorState(testUrl: $testUrl, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, groupType: $groupType, proxies: $proxies, columns: $columns)';
+  return 'ProxyGroupSelectorState(testUrl: $testUrl, proxiesSortType: $proxiesSortType, proxyCardType: $proxyCardType, sortNum: $sortNum, groupType: $groupType, proxies: $proxies)';
 }
 
 
@@ -6246,7 +6235,7 @@ abstract mixin class _$ProxyGroupSelectorStateCopyWith<$Res> implements $ProxyGr
   factory _$ProxyGroupSelectorStateCopyWith(_ProxyGroupSelectorState value, $Res Function(_ProxyGroupSelectorState) _then) = __$ProxyGroupSelectorStateCopyWithImpl;
 @override @useResult
 $Res call({
- String? testUrl, ProxiesSortType proxiesSortType, ProxyCardType proxyCardType, num sortNum, GroupType groupType, List<Proxy> proxies, int columns
+ String? testUrl, ProxiesSortType proxiesSortType, ProxyCardType proxyCardType, num sortNum, GroupType groupType, List<Proxy> proxies
 });
 
 
@@ -6263,7 +6252,7 @@ class __$ProxyGroupSelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of ProxyGroupSelectorState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? testUrl = freezed,Object? proxiesSortType = null,Object? proxyCardType = null,Object? sortNum = null,Object? groupType = null,Object? proxies = null,Object? columns = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? testUrl = freezed,Object? proxiesSortType = null,Object? proxyCardType = null,Object? sortNum = null,Object? groupType = null,Object? proxies = null,}) {
   return _then(_ProxyGroupSelectorState(
 testUrl: freezed == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
 as String?,proxiesSortType: null == proxiesSortType ? _self.proxiesSortType : proxiesSortType // ignore: cast_nullable_to_non_nullable
@@ -6271,8 +6260,7 @@ as ProxiesSortType,proxyCardType: null == proxyCardType ? _self.proxyCardType : 
 as ProxyCardType,sortNum: null == sortNum ? _self.sortNum : sortNum // ignore: cast_nullable_to_non_nullable
 as num,groupType: null == groupType ? _self.groupType : groupType // ignore: cast_nullable_to_non_nullable
 as GroupType,proxies: null == proxies ? _self._proxies : proxies // ignore: cast_nullable_to_non_nullable
-as List<Proxy>,columns: null == columns ? _self.columns : columns // ignore: cast_nullable_to_non_nullable
-as int,
+as List<Proxy>,
   ));
 }
 
@@ -7624,7 +7612,7 @@ as int,
 /// @nodoc
 mixin _$DashboardState {
 
- List<DashboardWidget> get dashboardWidgets; double get contentWidth;
+ List<DashboardWidget> get dashboardWidgets;
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -7635,16 +7623,16 @@ $DashboardStateCopyWith<DashboardState> get copyWith => _$DashboardStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardState&&const DeepCollectionEquality().equals(other.dashboardWidgets, dashboardWidgets)&&(identical(other.contentWidth, contentWidth) || other.contentWidth == contentWidth));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardState&&const DeepCollectionEquality().equals(other.dashboardWidgets, dashboardWidgets));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(dashboardWidgets),contentWidth);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(dashboardWidgets));
 
 @override
 String toString() {
-  return 'DashboardState(dashboardWidgets: $dashboardWidgets, contentWidth: $contentWidth)';
+  return 'DashboardState(dashboardWidgets: $dashboardWidgets)';
 }
 
 
@@ -7655,7 +7643,7 @@ abstract mixin class $DashboardStateCopyWith<$Res>  {
   factory $DashboardStateCopyWith(DashboardState value, $Res Function(DashboardState) _then) = _$DashboardStateCopyWithImpl;
 @useResult
 $Res call({
- List<DashboardWidget> dashboardWidgets, double contentWidth
+ List<DashboardWidget> dashboardWidgets
 });
 
 
@@ -7672,11 +7660,10 @@ class _$DashboardStateCopyWithImpl<$Res>
 
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? dashboardWidgets = null,Object? contentWidth = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? dashboardWidgets = null,}) {
   return _then(_self.copyWith(
 dashboardWidgets: null == dashboardWidgets ? _self.dashboardWidgets : dashboardWidgets // ignore: cast_nullable_to_non_nullable
-as List<DashboardWidget>,contentWidth: null == contentWidth ? _self.contentWidth : contentWidth // ignore: cast_nullable_to_non_nullable
-as double,
+as List<DashboardWidget>,
   ));
 }
 
@@ -7761,10 +7748,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DashboardWidget> dashboardWidgets,  double contentWidth)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DashboardWidget> dashboardWidgets)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DashboardState() when $default != null:
-return $default(_that.dashboardWidgets,_that.contentWidth);case _:
+return $default(_that.dashboardWidgets);case _:
   return orElse();
 
 }
@@ -7782,10 +7769,10 @@ return $default(_that.dashboardWidgets,_that.contentWidth);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DashboardWidget> dashboardWidgets,  double contentWidth)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DashboardWidget> dashboardWidgets)  $default,) {final _that = this;
 switch (_that) {
 case _DashboardState():
-return $default(_that.dashboardWidgets,_that.contentWidth);case _:
+return $default(_that.dashboardWidgets);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -7802,10 +7789,10 @@ return $default(_that.dashboardWidgets,_that.contentWidth);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DashboardWidget> dashboardWidgets,  double contentWidth)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DashboardWidget> dashboardWidgets)?  $default,) {final _that = this;
 switch (_that) {
 case _DashboardState() when $default != null:
-return $default(_that.dashboardWidgets,_that.contentWidth);case _:
+return $default(_that.dashboardWidgets);case _:
   return null;
 
 }
@@ -7817,7 +7804,7 @@ return $default(_that.dashboardWidgets,_that.contentWidth);case _:
 
 
 class _DashboardState implements DashboardState {
-  const _DashboardState({required final  List<DashboardWidget> dashboardWidgets, required this.contentWidth}): _dashboardWidgets = dashboardWidgets;
+  const _DashboardState({required final  List<DashboardWidget> dashboardWidgets}): _dashboardWidgets = dashboardWidgets;
   
 
  final  List<DashboardWidget> _dashboardWidgets;
@@ -7827,7 +7814,6 @@ class _DashboardState implements DashboardState {
   return EqualUnmodifiableListView(_dashboardWidgets);
 }
 
-@override final  double contentWidth;
 
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
@@ -7839,16 +7825,16 @@ _$DashboardStateCopyWith<_DashboardState> get copyWith => __$DashboardStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardState&&const DeepCollectionEquality().equals(other._dashboardWidgets, _dashboardWidgets)&&(identical(other.contentWidth, contentWidth) || other.contentWidth == contentWidth));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardState&&const DeepCollectionEquality().equals(other._dashboardWidgets, _dashboardWidgets));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_dashboardWidgets),contentWidth);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_dashboardWidgets));
 
 @override
 String toString() {
-  return 'DashboardState(dashboardWidgets: $dashboardWidgets, contentWidth: $contentWidth)';
+  return 'DashboardState(dashboardWidgets: $dashboardWidgets)';
 }
 
 
@@ -7859,7 +7845,7 @@ abstract mixin class _$DashboardStateCopyWith<$Res> implements $DashboardStateCo
   factory _$DashboardStateCopyWith(_DashboardState value, $Res Function(_DashboardState) _then) = __$DashboardStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<DashboardWidget> dashboardWidgets, double contentWidth
+ List<DashboardWidget> dashboardWidgets
 });
 
 
@@ -7876,11 +7862,10 @@ class __$DashboardStateCopyWithImpl<$Res>
 
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? dashboardWidgets = null,Object? contentWidth = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? dashboardWidgets = null,}) {
   return _then(_DashboardState(
 dashboardWidgets: null == dashboardWidgets ? _self._dashboardWidgets : dashboardWidgets // ignore: cast_nullable_to_non_nullable
-as List<DashboardWidget>,contentWidth: null == contentWidth ? _self.contentWidth : contentWidth // ignore: cast_nullable_to_non_nullable
-as double,
+as List<DashboardWidget>,
   ));
 }
 
