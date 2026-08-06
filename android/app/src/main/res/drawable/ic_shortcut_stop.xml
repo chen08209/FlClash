@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Background matches the toggle/app adaptive icon (ic_launcher_background)
+         so Start/Stop shortcuts share the same backdrop as the toggle shortcut. -->
+    <path
+        android:pathData="M0,0 L48,0 L48,48 L0,48 Z"
+        android:fillColor="#FAFAFA"/>
+    <!-- Deep-blue stop square glyph, centered like the adaptive-icon logomark -->
+    <path
+        android:pathData="M15,15 L33,15 L33,33 L15,33 Z"
+        android:fillColor="#336AB6"/>
+</vector>

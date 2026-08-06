@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Background matches the toggle/app adaptive icon (ic_launcher_background)
+         so Start/Stop shortcuts share the same backdrop as the toggle shortcut. -->
+    <path
+        android:pathData="M0,0 L48,0 L48,48 L0,48 Z"
+        android:fillColor="#FAFAFA"/>
+    <!-- Brand-blue play triangle glyph, centered like the adaptive-icon logomark -->
+    <path
+        android:pathData="M18.5,14 L18.5,34 L36,24 Z"
+        android:fillColor="#6666FB"/>
+</vector>
