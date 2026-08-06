@@ -199,9 +199,24 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         val stopLabel = labels["stop"] ?: "Stop"
         val toggleLabel = labels["toggle"] ?: return
         val shortcuts = listOf(
-            buildShortcut("start", startLabel, QuickAction.START),
-            buildShortcut("stop", stopLabel, QuickAction.STOP),
-            buildShortcut("toggle", toggleLabel, QuickAction.TOGGLE),
+            buildShortcut(
+                id = "start",
+                label = startLabel,
+                action = QuickAction.START,
+                iconRes = R.drawable.ic_shortcut_start,
+            ),
+            buildShortcut(
+                id = "stop",
+                label = stopLabel,
+                action = QuickAction.STOP,
+                iconRes = R.drawable.ic_shortcut_stop,
+            ),
+            buildShortcut(
+                id = "toggle",
+                label = toggleLabel,
+                action = QuickAction.TOGGLE,
+                iconRes = R.mipmap.ic_launcher_round,
+            ),
         )
         ShortcutManagerCompat.setDynamicShortcuts(
             GlobalState.application, shortcuts
@@ -212,13 +227,14 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         id: String,
         label: String,
         action: QuickAction,
+        iconRes: Int,
     ): ShortcutInfoCompat {
         return ShortcutInfoCompat.Builder(GlobalState.application, id)
             .setShortLabel(label)
             .setIcon(
                 IconCompat.createWithResource(
                     GlobalState.application,
-                    R.mipmap.ic_launcher_round,
+                    iconRes,
                 )
             )
             .setIntent(action.quickIntent)
