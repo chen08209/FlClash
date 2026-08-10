@@ -19,6 +19,12 @@ class ProxiesAction extends _$ProxiesAction {
     }, args: [groupName, proxyName]);
   }
 
+  void updateSelectedProxyMap(String groupName, String proxyName) {
+    ref
+        .read(profilesActionProvider.notifier)
+        .updateCurrentSelectedMap(groupName, proxyName);
+  }
+
   Future<void> updateGroups() async {
     try {
       commonPrint.log('updateGroups');

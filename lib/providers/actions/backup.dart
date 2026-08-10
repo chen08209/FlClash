@@ -54,6 +54,9 @@ class BackupAction extends _$BackupAction {
       ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
       ref.read(networkSettingProvider.notifier).value = config.networkProps;
       ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
+      ref.read(chainProxyEnabledProvider.notifier).value =
+          config.chainProxyEnabled;
+      ref.read(savedProxiesProvider.notifier).value = config.savedProxies;
       return;
     } finally {
       await restoreDir.safeDelete(recursive: true);

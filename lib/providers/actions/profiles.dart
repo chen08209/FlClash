@@ -6,11 +6,26 @@ class ProfilesAction extends _$ProfilesAction {
   void build() {}
 
   void updateCurrentSelectedMap(String groupName, String proxyName) {
+    updateCurrentSelectedMaps({groupName: proxyName});
+  }
+
+  void updateCurrentSelectedMaps(
+    Map<String, String> values, {
+    Iterable<String> removeKeys = const [],
+  }) {
     final currentProfile = ref.read(currentProfileProvider);
-    if (currentProfile != null &&
-        currentProfile.selectedMap[groupName] != proxyName) {
+    if (currentProfile != null) {
       final selectedMap = Map<String, String>.from(currentProfile.selectedMap)
-        ..[groupName] = proxyName;
+        ..addAll(values);
+      for (final key in removeKeys) {
+        selectedMap.remove(key);
+      }
+      if (stringAndStringMapEquality.equals(
+        currentProfile.selectedMap,
+        selectedMap,
+      )) {
+        return;
+      }
       ref
           .read(profilesProvider.notifier)
           .put(currentProfile.copyWith(selectedMap: selectedMap));

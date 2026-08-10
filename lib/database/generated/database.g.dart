@@ -2178,6 +2178,18 @@ class $ProxyGroupsTable extends ProxyGroups
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<List<ChainProxyNode>?, String>
+  chainNodes =
+      GeneratedColumn<String>(
+        'chain_nodes',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<List<ChainProxyNode>?>(
+        $ProxyGroupsTable.$converterchainNodesn,
+      );
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     profileId,
@@ -2201,6 +2213,7 @@ class $ProxyGroupsTable extends ProxyGroups
     hidden,
     icon,
     order,
+    chainNodes,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2457,6 +2470,12 @@ class $ProxyGroupsTable extends ProxyGroups
         DriftSqlType.string,
         data['${effectivePrefix}order'],
       ),
+      chainNodes: $ProxyGroupsTable.$converterchainNodesn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}chain_nodes'],
+        ),
+      ),
     );
   }
 
@@ -2473,6 +2492,10 @@ class $ProxyGroupsTable extends ProxyGroups
       const StringListConverter();
   static TypeConverter<List<String>?, String?> $converterusen =
       NullAwareTypeConverter.wrap($converteruse);
+  static TypeConverter<List<ChainProxyNode>, String> $converterchainNodes =
+      const ChainProxyNodeListConverter();
+  static TypeConverter<List<ChainProxyNode>?, String?> $converterchainNodesn =
+      NullAwareTypeConverter.wrap($converterchainNodes);
 }
 
 class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
@@ -2498,6 +2521,7 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
   final bool? hidden;
   final String? icon;
   final String? order;
+  final List<ChainProxyNode>? chainNodes;
   const RawProxyGroup({
     required this.id,
     this.profileId,
@@ -2521,6 +2545,7 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     this.hidden,
     this.icon,
     this.order,
+    this.chainNodes,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2589,6 +2614,11 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     if (!nullToAbsent || order != null) {
       map['order'] = Variable<String>(order);
     }
+    if (!nullToAbsent || chainNodes != null) {
+      map['chain_nodes'] = Variable<String>(
+        $ProxyGroupsTable.$converterchainNodesn.toSql(chainNodes),
+      );
+    }
     return map;
   }
 
@@ -2646,6 +2676,9 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       order: order == null && nullToAbsent
           ? const Value.absent()
           : Value(order),
+      chainNodes: chainNodes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(chainNodes),
     );
   }
 
@@ -2679,6 +2712,9 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       hidden: serializer.fromJson<bool?>(json['hidden']),
       icon: serializer.fromJson<String?>(json['icon']),
       order: serializer.fromJson<String?>(json['order']),
+      chainNodes: serializer.fromJson<List<ChainProxyNode>?>(
+        json['chainNodes'],
+      ),
     );
   }
   @override
@@ -2707,6 +2743,7 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       'hidden': serializer.toJson<bool?>(hidden),
       'icon': serializer.toJson<String?>(icon),
       'order': serializer.toJson<String?>(order),
+      'chainNodes': serializer.toJson<List<ChainProxyNode>?>(chainNodes),
     };
   }
 
@@ -2733,6 +2770,7 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     Value<bool?> hidden = const Value.absent(),
     Value<String?> icon = const Value.absent(),
     Value<String?> order = const Value.absent(),
+    Value<List<ChainProxyNode>?> chainNodes = const Value.absent(),
   }) => RawProxyGroup(
     id: id ?? this.id,
     profileId: profileId.present ? profileId.value : this.profileId,
@@ -2766,6 +2804,7 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     hidden: hidden.present ? hidden.value : this.hidden,
     icon: icon.present ? icon.value : this.icon,
     order: order.present ? order.value : this.order,
+    chainNodes: chainNodes.present ? chainNodes.value : this.chainNodes,
   );
   RawProxyGroup copyWithCompanion(ProxyGroupsCompanion data) {
     return RawProxyGroup(
@@ -2807,6 +2846,9 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       hidden: data.hidden.present ? data.hidden.value : this.hidden,
       icon: data.icon.present ? data.icon.value : this.icon,
       order: data.order.present ? data.order.value : this.order,
+      chainNodes: data.chainNodes.present
+          ? data.chainNodes.value
+          : this.chainNodes,
     );
   }
 
@@ -2834,7 +2876,8 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
           ..write('includeAllProviders: $includeAllProviders, ')
           ..write('hidden: $hidden, ')
           ..write('icon: $icon, ')
-          ..write('order: $order')
+          ..write('order: $order, ')
+          ..write('chainNodes: $chainNodes')
           ..write(')'))
         .toString();
   }
@@ -2863,6 +2906,7 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     hidden,
     icon,
     order,
+    chainNodes,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2889,7 +2933,8 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
           other.includeAllProviders == this.includeAllProviders &&
           other.hidden == this.hidden &&
           other.icon == this.icon &&
-          other.order == this.order);
+          other.order == this.order &&
+          other.chainNodes == this.chainNodes);
 }
 
 class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
@@ -2915,6 +2960,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
   final Value<bool?> hidden;
   final Value<String?> icon;
   final Value<String?> order;
+  final Value<List<ChainProxyNode>?> chainNodes;
   const ProxyGroupsCompanion({
     this.id = const Value.absent(),
     this.profileId = const Value.absent(),
@@ -2938,6 +2984,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     this.hidden = const Value.absent(),
     this.icon = const Value.absent(),
     this.order = const Value.absent(),
+    this.chainNodes = const Value.absent(),
   });
   ProxyGroupsCompanion.insert({
     this.id = const Value.absent(),
@@ -2962,6 +3009,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     this.hidden = const Value.absent(),
     this.icon = const Value.absent(),
     this.order = const Value.absent(),
+    this.chainNodes = const Value.absent(),
   }) : name = Value(name),
        type = Value(type);
   static Insertable<RawProxyGroup> custom({
@@ -2987,6 +3035,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     Expression<bool>? hidden,
     Expression<String>? icon,
     Expression<String>? order,
+    Expression<String>? chainNodes,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3012,6 +3061,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
       if (hidden != null) 'hidden': hidden,
       if (icon != null) 'icon': icon,
       if (order != null) 'order': order,
+      if (chainNodes != null) 'chain_nodes': chainNodes,
     });
   }
 
@@ -3038,6 +3088,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     Value<bool?>? hidden,
     Value<String?>? icon,
     Value<String?>? order,
+    Value<List<ChainProxyNode>?>? chainNodes,
   }) {
     return ProxyGroupsCompanion(
       id: id ?? this.id,
@@ -3062,6 +3113,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
       hidden: hidden ?? this.hidden,
       icon: icon ?? this.icon,
       order: order ?? this.order,
+      chainNodes: chainNodes ?? this.chainNodes,
     );
   }
 
@@ -3138,6 +3190,11 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     if (order.present) {
       map['order'] = Variable<String>(order.value);
     }
+    if (chainNodes.present) {
+      map['chain_nodes'] = Variable<String>(
+        $ProxyGroupsTable.$converterchainNodesn.toSql(chainNodes.value),
+      );
+    }
     return map;
   }
 
@@ -3165,7 +3222,8 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
           ..write('includeAllProviders: $includeAllProviders, ')
           ..write('hidden: $hidden, ')
           ..write('icon: $icon, ')
-          ..write('order: $order')
+          ..write('order: $order, ')
+          ..write('chainNodes: $chainNodes')
           ..write(')'))
         .toString();
   }
@@ -4987,6 +5045,7 @@ typedef $$ProxyGroupsTableCreateCompanionBuilder =
       Value<bool?> hidden,
       Value<String?> icon,
       Value<String?> order,
+      Value<List<ChainProxyNode>?> chainNodes,
     });
 typedef $$ProxyGroupsTableUpdateCompanionBuilder =
     ProxyGroupsCompanion Function({
@@ -5012,6 +5071,7 @@ typedef $$ProxyGroupsTableUpdateCompanionBuilder =
       Value<bool?> hidden,
       Value<String?> icon,
       Value<String?> order,
+      Value<List<ChainProxyNode>?> chainNodes,
     });
 
 final class $$ProxyGroupsTableReferences
@@ -5152,6 +5212,16 @@ class $$ProxyGroupsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnWithTypeConverterFilters<
+    List<ChainProxyNode>?,
+    List<ChainProxyNode>,
+    String
+  >
+  get chainNodes => $composableBuilder(
+    column: $table.chainNodes,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
   $$ProfilesTableFilterComposer get profileId {
     final $$ProfilesTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -5290,6 +5360,11 @@ class $$ProxyGroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get chainNodes => $composableBuilder(
+    column: $table.chainNodes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ProfilesTableOrderingComposer get profileId {
     final $$ProfilesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5402,6 +5477,12 @@ class $$ProxyGroupsTableAnnotationComposer
   GeneratedColumn<String> get order =>
       $composableBuilder(column: $table.order, builder: (column) => column);
 
+  GeneratedColumnWithTypeConverter<List<ChainProxyNode>?, String>
+  get chainNodes => $composableBuilder(
+    column: $table.chainNodes,
+    builder: (column) => column,
+  );
+
   $$ProfilesTableAnnotationComposer get profileId {
     final $$ProfilesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -5476,6 +5557,7 @@ class $$ProxyGroupsTableTableManager
                 Value<bool?> hidden = const Value.absent(),
                 Value<String?> icon = const Value.absent(),
                 Value<String?> order = const Value.absent(),
+                Value<List<ChainProxyNode>?> chainNodes = const Value.absent(),
               }) => ProxyGroupsCompanion(
                 id: id,
                 profileId: profileId,
@@ -5499,6 +5581,7 @@ class $$ProxyGroupsTableTableManager
                 hidden: hidden,
                 icon: icon,
                 order: order,
+                chainNodes: chainNodes,
               ),
           createCompanionCallback:
               ({
@@ -5524,6 +5607,7 @@ class $$ProxyGroupsTableTableManager
                 Value<bool?> hidden = const Value.absent(),
                 Value<String?> icon = const Value.absent(),
                 Value<String?> order = const Value.absent(),
+                Value<List<ChainProxyNode>?> chainNodes = const Value.absent(),
               }) => ProxyGroupsCompanion.insert(
                 id: id,
                 profileId: profileId,
@@ -5547,6 +5631,7 @@ class $$ProxyGroupsTableTableManager
                 hidden: hidden,
                 icon: icon,
                 order: order,
+                chainNodes: chainNodes,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -105,6 +105,27 @@ class ExcludeSSIDs extends _$ExcludeSSIDs with AutoDisposeNotifierMixin {
   }
 }
 
+@riverpod
+class ChainProxyEnabled extends _$ChainProxyEnabled
+    with AutoDisposeNotifierMixin {
+  @override
+  bool build() => false;
+}
+
+@riverpod
+class SavedProxies extends _$SavedProxies with AutoDisposeNotifierMixin {
+  @override
+  List<SavedProxy> build() => [];
+
+  void put(SavedProxy proxy) {
+    state = state.copyAndPut(proxy, (item) => item.id == proxy.id);
+  }
+
+  void del(int id) {
+    state = state.where((item) => item.id != id).toList();
+  }
+}
+
 @Riverpod(name: 'configProvider')
 Config _config(Ref ref) {
   final appSettingProps = ref.watch(appSettingProvider);
@@ -119,6 +140,8 @@ Config _config(Ref ref) {
   final proxiesStyleProps = ref.watch(proxiesStyleSettingProvider);
   final patchClashConfig = ref.watch(patchClashConfigProvider);
   final excludeSSIDs = ref.watch(excludeSSIDsProvider);
+  final chainProxyEnabled = ref.watch(chainProxyEnabledProvider);
+  final savedProxies = ref.watch(savedProxiesProvider);
   return Config(
     appSettingProps: appSettingProps,
     windowProps: windowProps,
@@ -132,6 +155,8 @@ Config _config(Ref ref) {
     proxiesStyleProps: proxiesStyleProps,
     patchClashConfig: patchClashConfig,
     excludeSSIDs: excludeSSIDs,
+    chainProxyEnabled: chainProxyEnabled,
+    savedProxies: savedProxies,
   );
 }
 
@@ -155,5 +180,9 @@ List<Override> buildConfigOverrides(Config config) {
       (_, _) => config.patchClashConfig,
     ),
     excludeSSIDsProvider.overrideWithBuild((_, _) => config.excludeSSIDs),
+    chainProxyEnabledProvider.overrideWithBuild(
+      (_, _) => config.chainProxyEnabled,
+    ),
+    savedProxiesProvider.overrideWithBuild((_, _) => config.savedProxies),
   ];
 }

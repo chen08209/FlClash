@@ -60,9 +60,15 @@ func toExternalProvider(p cp.Provider) (*ExternalProvider, error) {
 	switch p.(type) {
 	case *provider.ProxySetProvider:
 		psp := p.(*provider.ProxySetProvider)
+		proxies := psp.Proxies()
+		proxyNames := make([]string, 0, len(proxies))
+		for _, proxy := range proxies {
+			proxyNames = append(proxyNames, proxy.Name())
+		}
 		return &ExternalProvider{
 			Name:             psp.Name(),
 			Type:             psp.Type().String(),
+			Proxies:          proxyNames,
 			VehicleType:      psp.VehicleType().String(),
 			Count:            psp.Count(),
 			UpdateAt:         psp.UpdatedAt(),

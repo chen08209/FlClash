@@ -269,6 +269,8 @@ class SetupAction extends _$SetupAction {
   Future<VM2<String, String>> getProfile({
     required SetupState setupState,
     required PatchClashConfig patchConfig,
+    bool? chainProxyEnabled,
+    List<SavedProxy>? savedProxies,
   }) async {
     final profileId = setupState.profileId;
     if (profileId == null) return const VM2('', '');
@@ -284,14 +286,13 @@ class SetupAction extends _$SetupAction {
     final configMap = await coreController.getConfig(profileId);
     String? scriptContent;
     final List<Rule> addedRules = [];
-    final List<ProxyGroup> proxyGroups = [];
+    final List<ProxyGroup> proxyGroups = [...setupState.proxyGroups];
     final List<Rule> rules = [];
     if (setupState.overwriteType == OverwriteType.script) {
       scriptContent = await setupState.script?.content;
     } else if (setupState.overwriteType == OverwriteType.standard) {
       addedRules.addAll(setupState.addedRules);
     } else {
-      proxyGroups.addAll(setupState.proxyGroups);
       rules.addAll(setupState.rules);
     }
     final realPatchConfig = patchConfig.copyWith(
@@ -313,10 +314,35 @@ class SetupAction extends _$SetupAction {
         overrideDns: overrideDns,
         appendSystemDns: appendSystemDns,
         addedRules: addedRules,
+        replaceProxyGroups: setupState.overwriteType == OverwriteType.custom,
+        chainProxyGroupName: chainProxyGroupInternalName,
+        chainProxyEnabled:
+            chainProxyEnabled ?? ref.read(chainProxyEnabledProvider),
+        savedProxies: savedProxies ?? ref.read(savedProxiesProvider),
         defaultUA: defaultUA,
       ),
     );
     return res;
+  }
+
+  Future<void> validateChainProxyProfile({
+    required int profileId,
+    List<ProxyGroup>? proxyGroups,
+    List<SavedProxy>? savedProxies,
+    bool? enabled,
+  }) async {
+    final setupState = await ref.read(setupStateProvider(profileId).future);
+    final patchClashConfig = ref.read(patchClashConfigProvider);
+    final result = await getProfile(
+      setupState: setupState.copyWith(
+        proxyGroups: proxyGroups ?? setupState.proxyGroups,
+      ),
+      patchConfig: patchClashConfig,
+      chainProxyEnabled: enabled,
+      savedProxies: savedProxies,
+    );
+    final message = await coreController.validateConfigWithData(result.a);
+    if (message.isNotEmpty) throw message;
   }
 
   Future<String> getProfileWithId(int profileId) async {

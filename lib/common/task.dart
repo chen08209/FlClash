@@ -263,12 +263,275 @@ Future<VM2<String, String>> _makeRealProfileTask(
   } else {
     rules = data.rules.map((item) => item.rawValue).toList();
   }
-  if (data.proxyGroups.isNotEmpty) {
-    rawConfig['proxy-groups'] = data.proxyGroups;
-  }
+  rules = applyProxyGroups(
+    rawConfig,
+    data.proxyGroups,
+    rules: rules,
+    replaceProxyGroups: data.replaceProxyGroups,
+    chainProxyGroupName: data.chainProxyGroupName,
+    chainProxyEnabled: data.chainProxyEnabled,
+    savedProxies: data.savedProxies,
+  );
   rawConfig['rules'] = rules;
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
   return VM2(yaml, yaml.toMd5());
+}
+
+List<String> applyProxyGroups(
+  Map<dynamic, dynamic> rawConfig,
+  List<ProxyGroup> proxyGroups, {
+  List<String> rules = const [],
+  bool replaceProxyGroups = true,
+  String chainProxyGroupName = chainProxyGroupInternalName,
+  bool chainProxyEnabled = true,
+  List<SavedProxy> savedProxies = const [],
+}) {
+  final effectiveRules = List<String>.from(rules);
+  final rawProxies = List<dynamic>.from(rawConfig['proxies'] as List? ?? []);
+  final rawProxyProviders = Map<String, dynamic>.from(
+    rawConfig['proxy-providers'] as Map? ?? const {},
+  );
+  final proxiesByName = <String, Map<String, dynamic>>{
+    for (final proxy in rawProxies)
+      if (proxy is Map && proxy['name'] is String)
+        proxy['name'] as String: Map<String, dynamic>.from(proxy),
+  };
+  final generatedProxies = <Map<String, dynamic>>[];
+  final realProxyGroups = <dynamic>[];
+  final chainOptions = <String>[];
+  final savedProxiesById = {for (final proxy in savedProxies) proxy.id: proxy};
+
+  if (chainProxyEnabled) {
+    final originalGroups = List<dynamic>.from(
+      rawConfig['proxy-groups'] as List? ?? const [],
+    );
+    final hasReservedGroup =
+        originalGroups.any(
+          (item) => item is Map && item['name'] == chainProxyGroupName,
+        ) ||
+        proxyGroups.any(
+          (item) =>
+              item.type != GroupType.Relay && item.name == chainProxyGroupName,
+        );
+    if (hasReservedGroup || proxiesByName.containsKey(chainProxyGroupName)) {
+      throw ArgumentError.value(
+        chainProxyGroupName,
+        'chainProxyGroupName',
+        'The reserved chain proxy name is already in use',
+      );
+    }
+  }
+
+  Map<String, dynamic> savedProxyToRaw(SavedProxy proxy) {
+    return {
+      'type': proxy.type == 'https' ? 'http' : proxy.type,
+      'server': proxy.server,
+      'port': proxy.port,
+      if (proxy.type == 'https') 'tls': true,
+      if (proxy.username?.isNotEmpty == true) 'username': proxy.username,
+      if (proxy.password?.isNotEmpty == true) 'password': proxy.password,
+    };
+  }
+
+  for (final proxyGroup in proxyGroups) {
+    if (proxyGroup.type != GroupType.Relay) {
+      realProxyGroups.add(proxyGroup);
+      continue;
+    }
+    if (!chainProxyEnabled) continue;
+
+    final chainNodes = proxyGroup.chainNodes;
+    final chain = proxyGroup.proxies ?? [];
+    final chainLength = chainNodes?.length ?? chain.length;
+    if (chainLength < 2) {
+      throw ArgumentError.value(
+        chain,
+        'chain',
+        'At least two proxies required',
+      );
+    }
+
+    final nodeLabels = List.generate(chainLength, (index) {
+      final node = chainNodes?[index];
+      if (node == null || node.type == 'existing') {
+        final proxyName = node?.proxy ?? chain[index];
+        return node?.provider == null
+            ? proxyName
+            : '$proxyName (${node!.provider})';
+      }
+      if (node.type == 'saved') {
+        final savedProxy = savedProxiesById[node.savedProxyId];
+        if (savedProxy == null) return 'Unknown saved proxy';
+        return '${savedProxy.name} (${savedProxy.type.toUpperCase()} '
+            '${savedProxy.server}:${savedProxy.port})';
+      }
+      return '${node.type.toUpperCase()} ${node.server}:${node.port}';
+    });
+    String? previousProxyName;
+    for (int index = 0; index < chainLength; index++) {
+      final node = chainNodes?[index];
+      final sourceName = node == null ? chain[index] : node.proxy;
+      final isExitNode = index == chainLength - 1;
+      final generatedName = isExitNode
+          ? '${proxyGroup.name} · ${nodeLabels.join(' → ')}'
+          : '${proxyGroup.name} · ${index + 1}. ${nodeLabels[index]}';
+      if (node?.provider != null) {
+        if (sourceName == null || sourceName.isEmpty) {
+          throw ArgumentError.value(sourceName, 'chain', 'Proxy not found');
+        }
+        final providerName = node!.provider!;
+        final originalProvider = rawProxyProviders[providerName];
+        if (originalProvider is! Map) {
+          throw ArgumentError.value(
+            providerName,
+            'chain',
+            'Proxy provider not found',
+          );
+        }
+        final providerConfig = Map<String, dynamic>.from(originalProvider);
+        final override = Map<String, dynamic>.from(
+          providerConfig['override'] as Map? ?? const {},
+        );
+        final providerSuffix = ' ($providerName)';
+        final generatedSuffix = '$sourceName$providerSuffix';
+        if (!generatedName.endsWith(generatedSuffix)) {
+          throw StateError('Unable to generate provider proxy name');
+        }
+        final generatedPrefix = generatedName.substring(
+          0,
+          generatedName.length - generatedSuffix.length,
+        );
+        override['additional-prefix'] = generatedPrefix;
+        override['additional-suffix'] = providerSuffix;
+        if (previousProxyName != null) {
+          override['dialer-proxy'] = previousProxyName;
+        }
+        providerConfig['filter'] =
+            '^${RegExp.escape(sourceName)}'
+            r'$';
+        providerConfig['override'] = override;
+        final generatedProviderName =
+            '__FLCLASH_CHAIN_PROVIDER_${proxyGroup.id}_$index';
+        if (rawProxyProviders.containsKey(generatedProviderName)) {
+          throw ArgumentError.value(
+            generatedProviderName,
+            'proxy-providers',
+            'The reserved chain provider name is already in use',
+          );
+        }
+        rawProxyProviders[generatedProviderName] = providerConfig;
+        previousProxyName = generatedName;
+        continue;
+      }
+      final Map<String, dynamic> source;
+      if (node == null || node.type == 'existing') {
+        final existing = proxiesByName[sourceName];
+        if (existing == null) {
+          throw ArgumentError.value(sourceName, 'chain', 'Proxy not found');
+        }
+        source = existing;
+      } else if (node.type == 'saved') {
+        final savedProxy = savedProxiesById[node.savedProxyId];
+        if (savedProxy == null) {
+          throw ArgumentError.value(
+            node.savedProxyId,
+            'chain',
+            'Saved proxy not found',
+          );
+        }
+        source = savedProxyToRaw(savedProxy);
+      } else {
+        source = {
+          'type': node.type == 'https' ? 'http' : node.type,
+          'server': node.server,
+          'port': node.port,
+          if (node.type == 'https') 'tls': true,
+          if (node.username?.isNotEmpty == true) 'username': node.username,
+          if (node.password?.isNotEmpty == true) 'password': node.password,
+        };
+      }
+      final generatedProxy = Map<String, dynamic>.from(source)
+        ..['name'] = generatedName
+        ..remove('dialer-proxy');
+      if (previousProxyName != null) {
+        generatedProxy['dialer-proxy'] = previousProxyName;
+      }
+      generatedProxies.add(generatedProxy);
+      previousProxyName = generatedName;
+    }
+    chainOptions.add(previousProxyName!);
+  }
+
+  if (chainProxyEnabled) {
+    final originalTarget = _routeRulesThroughChainProxy(
+      effectiveRules,
+      chainProxyGroupName: chainProxyGroupName,
+    );
+    realProxyGroups.add({
+      'name': chainProxyGroupName,
+      'type': GroupType.Selector.value,
+      'proxies': {originalTarget, ...chainOptions}.toList(),
+    });
+  }
+
+  if (generatedProxies.isNotEmpty) {
+    rawConfig['proxies'] = [...rawProxies, ...generatedProxies];
+  }
+  if (rawProxyProviders.isNotEmpty) {
+    rawConfig['proxy-providers'] = rawProxyProviders;
+  }
+  if (replaceProxyGroups) {
+    rawConfig['proxy-groups'] = realProxyGroups;
+  } else {
+    final originalGroups = List<dynamic>.from(
+      rawConfig['proxy-groups'] as List? ?? [],
+    );
+    final names = realProxyGroups
+        .map((item) => item is ProxyGroup ? item.name : item['name'])
+        .toSet();
+    rawConfig['proxy-groups'] = [
+      ...originalGroups.where(
+        (item) => item is! Map || !names.contains(item['name']),
+      ),
+      ...realProxyGroups,
+    ];
+  }
+  return effectiveRules;
+}
+
+String _routeRulesThroughChainProxy(
+  List<String> rules, {
+  required String chainProxyGroupName,
+}) {
+  for (int index = rules.length - 1; index >= 0; index--) {
+    final Rule rule;
+    try {
+      rule = Rule.parse(rules[index]);
+    } catch (_) {
+      continue;
+    }
+    if (rule.ruleAction != RuleAction.MATCH) continue;
+    final originalTarget =
+        rule.ruleTarget?.takeFirstValid(['DIRECT']) ?? 'DIRECT';
+    if (originalTarget == chainProxyGroupName) {
+      throw ArgumentError.value(
+        originalTarget,
+        'rules',
+        'The reserved chain proxy name is already in use',
+      );
+    }
+    final parts = rules[index].split(',');
+    for (int partIndex = parts.length - 1; partIndex > 0; partIndex--) {
+      final part = parts[partIndex].trim();
+      if (part == 'src' || part == 'no-resolve' || part.isEmpty) continue;
+      parts[partIndex] = chainProxyGroupName;
+      break;
+    }
+    rules[index] = parts.join(',');
+    return originalTarget;
+  }
+  rules.add('MATCH,$chainProxyGroupName');
+  return 'DIRECT';
 }
 
 Future<List<String>> shakingProfileTask(

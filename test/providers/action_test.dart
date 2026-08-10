@@ -118,6 +118,28 @@ void main() {
       expect(container.read(profilesProvider), [current, other]);
       expect(container.read(currentProfileIdProvider), current.id);
     });
+
+    test('updates only the selected chain route', () {
+      final original = Profile.normal().copyWith(
+        selectedMap: const {'Main': 'Node A'},
+      );
+      final container = ProviderContainer(
+        overrides: [
+          currentProfileIdProvider.overrideWithBuild((_, _) => original.id),
+          profilesProvider.overrideWith(() => _TestProfiles([original])),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container
+          .read(proxiesActionProvider.notifier)
+          .updateSelectedProxyMap('__FLCLASH_CHAIN_PROXY__', 'Route A');
+
+      expect(container.read(currentProfileProvider)?.selectedMap, {
+        'Main': 'Node A',
+        '__FLCLASH_CHAIN_PROXY__': 'Route A',
+      });
+    });
   });
 
   group('GeoResourceAction', () {

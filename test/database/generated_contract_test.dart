@@ -266,10 +266,11 @@ void main() {
       hidden: false,
       icon: 'icon',
       order: 'a0',
+      chainNodes: const [ChainProxyNode(type: 'existing', proxy: 'DIRECT')],
     );
 
-    expect(group.toColumns(true), hasLength(22));
-    expect(group.toCompanion(true).toColumns(true), hasLength(22));
+    expect(group.toColumns(true), hasLength(23));
+    expect(group.toCompanion(true).toColumns(true), hasLength(23));
     expect(RawProxyGroup.fromJson(group.toJson()).toJson(), group.toJson());
     expect(group.copyWith(name: 'Changed').name, 'Changed');
     expect(
@@ -289,7 +290,7 @@ void main() {
 
     const emptyGroup = RawProxyGroup(id: 21, name: 'Empty', type: 'select');
     expect(emptyGroup.toColumns(true), hasLength(3));
-    expect(emptyGroup.toColumns(false), hasLength(22));
+    expect(emptyGroup.toColumns(false), hasLength(23));
 
     final companion =
         ProxyGroupsCompanion.insert(name: 'Inserted', type: 'select').copyWith(
@@ -313,8 +314,11 @@ void main() {
           hidden: const Value(false),
           icon: const Value('icon'),
           order: const Value('a0'),
+          chainNodes: const Value([
+            ChainProxyNode(type: 'existing', proxy: 'DIRECT'),
+          ]),
         );
-    expect(companion.toColumns(true), hasLength(22));
+    expect(companion.toColumns(true), hasLength(23));
     expect(companion.toString(), contains('Inserted'));
     expect(
       ProxyGroupsCompanion.custom(
@@ -340,8 +344,9 @@ void main() {
         hidden: const Variable(false),
         icon: const Variable('icon'),
         order: const Variable('a0'),
+        chainNodes: const Variable('[]'),
       ).toColumns(false),
-      hasLength(22),
+      hasLength(23),
     );
 
     const icon = IconRecord(

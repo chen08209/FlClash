@@ -393,6 +393,7 @@ void main() {
       final restored = roundTrip(() => config.toJson(), Config.fromJson);
       expect(restored.currentProfileId, null);
       expect(restored.overrideDns, false);
+      expect(restored.chainProxyEnabled, false);
       expect(restored.networkProps.systemProxy, true);
       expect(restored.vpnProps.enable, true);
       expect(restored.hotKeyActions, isEmpty);
@@ -416,6 +417,18 @@ void main() {
           themeMode: ThemeMode.system,
         ),
         windowProps: WindowProps(width: 1280, height: 720),
+        chainProxyEnabled: true,
+        savedProxies: [
+          SavedProxy(
+            id: 7,
+            name: 'Gateway',
+            type: 'https',
+            server: 'gateway.example',
+            port: 443,
+            username: 'user',
+            password: 'pass',
+          ),
+        ],
       );
       final restored = roundTrip(() => config.toJson(), Config.fromJson);
       expect(restored.currentProfileId, 42);
@@ -426,6 +439,10 @@ void main() {
       expect(restored.vpnProps.enable, false);
       expect(restored.windowProps.width, 1280);
       expect(restored.windowProps.height, 720);
+      expect(restored.chainProxyEnabled, true);
+      expect(restored.savedProxies.single.name, 'Gateway');
+      expect(restored.savedProxies.single.type, 'https');
+      expect(restored.savedProxies.single.password, 'pass');
     });
   });
 }

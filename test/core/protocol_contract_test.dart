@@ -61,6 +61,7 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
         {
           'name': 'provider-1',
           'type': 'Proxy',
+          'proxies': ['Node A'],
           'count': 1,
           'vehicle-type': 'HTTP',
           'update-at': '2024-01-01T00:00:00.000Z',
@@ -69,6 +70,7 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
       CoreMethod.getExternalProvider => {
         'name': 'provider-1',
         'type': 'Proxy',
+        'proxies': ['Node A'],
         'count': 1,
         'vehicle-type': 'HTTP',
         'update-at': '2024-01-01T00:00:00.000Z',
@@ -210,7 +212,9 @@ void main() {
       const Delay(name: 'DIRECT', url: 'https://example.com', value: 42),
     );
     expect((await handler.getConnections()).single.id, 'connection-1');
-    expect((await handler.getExternalProviders()).single.name, 'provider-1');
+    final provider = (await handler.getExternalProviders()).single;
+    expect(provider.name, 'provider-1');
+    expect(provider.proxies, ['Node A']);
     expect(
       (await handler.getExternalProvider('provider-1'))?.name,
       'provider-1',

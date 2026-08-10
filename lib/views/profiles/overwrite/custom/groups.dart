@@ -16,6 +16,12 @@ import 'icon.dart';
 import 'proxies.dart';
 import 'widgets.dart';
 
+String _getProxyGroupTypeLabel(BuildContext context, GroupType type) {
+  return type == GroupType.Relay
+      ? context.appLocalizations.chainProxy
+      : type.name;
+}
+
 class CustomProxyGroupsView extends ConsumerStatefulWidget {
   final int profileId;
 
@@ -223,7 +229,7 @@ class _ProxyGroupItem extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              subtitle: Text(proxyGroup.type.name),
+              subtitle: Text(_getProxyGroupTypeLabel(context, proxyGroup.type)),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -256,6 +262,14 @@ bool _handleSaveProxyGroup(BuildContext context, WidgetRef ref) {
   if (proxyGroup.name.isEmpty) {
     globalState.showMessage(
       message: TextSpan(text: appLocalizations.proxyGroupNameEmpty),
+      cancelable: false,
+    );
+    return false;
+  }
+  if (proxyGroup.type == GroupType.Relay &&
+      (proxyGroup.proxies?.length ?? 0) < 2) {
+    globalState.showMessage(
+      message: TextSpan(text: appLocalizations.chainProxyMinNodes),
       cancelable: false,
     );
     return false;
@@ -426,8 +440,10 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
     final value = await globalState.showCommonDialog<GroupType>(
       child: OptionsDialog<GroupType>(
         title: context.appLocalizations.proxyType,
-        options: GroupType.values,
-        textBuilder: (item) => item.name,
+        options: GroupType.values
+            .where((item) => item != GroupType.Relay || type == GroupType.Relay)
+            .toList(),
+        textBuilder: (item) => _getProxyGroupTypeLabel(context, item),
         value: type,
       ),
     );
@@ -717,7 +733,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       onPressed: () {
         _showTypeOptions(type);
       },
-      trailing: Text(type.name),
+      trailing: Text(_getProxyGroupTypeLabel(context, type)),
     );
   }
 
@@ -851,6 +867,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
         SheetProvider.of(context)?.type == SheetType.bottomSheet;
     final profileId = ProfileIdProvider.of(context)!.profileId;
     final proxyGroup = ref.watch(proxyGroupProvider);
+    final isChainProxy = proxyGroup.type == GroupType.Relay;
     final height = isBottomSheet
         ? globalState.container.read(viewSizeProvider).height * 0.65
         : double.maxFinite;
@@ -878,28 +895,31 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
               title: appLocalizations.proxies,
               items: [
                 _buildProxiesItem(
-                  proxyGroup.includeAllProxies ?? false,
+                  isChainProxy ? false : proxyGroup.includeAllProxies ?? false,
                   proxyGroup.proxies ?? [],
                 ),
-                _buildProvidersItem(
-                  proxyGroup.includeAllProviders ?? false,
-                  proxyGroup.use ?? [],
-                ),
-                _buildFilterItem(proxyGroup.filter),
-                _buildExcludeFilterItem(proxyGroup.excludeFilter),
-                _buildExcludeTypeItem(proxyGroup.excludeType),
-                _buildExpectedStatusItem(proxyGroup.expectedStatus),
+                if (!isChainProxy) ...[
+                  _buildProvidersItem(
+                    proxyGroup.includeAllProviders ?? false,
+                    proxyGroup.use ?? [],
+                  ),
+                  _buildFilterItem(proxyGroup.filter),
+                  _buildExcludeFilterItem(proxyGroup.excludeFilter),
+                  _buildExcludeTypeItem(proxyGroup.excludeType),
+                  _buildExpectedStatusItem(proxyGroup.expectedStatus),
+                ],
               ],
             ),
-            generateSectionV3(
-              title: appLocalizations.other,
-              items: [
-                _buildUrlItem(proxyGroup.url),
-                _buildMaxFailedTimesItem(proxyGroup.maxFailedTimes),
-                _buildLazyItem(proxyGroup.lazy),
-                _buildIntervalItem(proxyGroup.interval),
-              ],
-            ),
+            if (!isChainProxy)
+              generateSectionV3(
+                title: appLocalizations.other,
+                items: [
+                  _buildUrlItem(proxyGroup.url),
+                  _buildMaxFailedTimesItem(proxyGroup.maxFailedTimes),
+                  _buildLazyItem(proxyGroup.lazy),
+                  _buildIntervalItem(proxyGroup.interval),
+                ],
+              ),
             generateSectionV3(
               title: appLocalizations.action,
               items: [

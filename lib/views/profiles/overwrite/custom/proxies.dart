@@ -433,12 +433,17 @@ class _AddProxiesViewState extends ConsumerState<_AddProxiesView>
         return VM2(filteredProxies, filteredGroups);
       }),
     );
+    final isChainProxy = ref.watch(
+      proxyGroupProvider.select((state) => state.type == GroupType.Relay),
+    );
     final proxies = vm2.a;
-    final proxyGroups = vm2.b;
+    final proxyGroups = isChainProxy ? <ProxyGroup>[] : vm2.b;
     final targets = <String>[];
-    for (final item in RuleTarget.baseTargets) {
-      if (!excludeProxyNames.contains(item)) {
-        targets.add(item);
+    if (!isChainProxy) {
+      for (final item in RuleTarget.baseTargets) {
+        if (!excludeProxyNames.contains(item)) {
+          targets.add(item);
+        }
       }
     }
     final groupNames = proxyGroups.map((item) => item.name).toList();

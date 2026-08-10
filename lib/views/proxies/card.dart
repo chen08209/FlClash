@@ -106,8 +106,8 @@ class ProxyCard extends StatelessWidget {
         false => proxy.name,
       };
       ref
-          .read(profilesActionProvider.notifier)
-          .updateCurrentSelectedMap(groupName, nextProxyName);
+          .read(proxiesActionProvider.notifier)
+          .updateSelectedProxyMap(groupName, nextProxyName);
       ref
           .read(proxiesActionProvider.notifier)
           .changeProxyDebounce(groupName, nextProxyName);

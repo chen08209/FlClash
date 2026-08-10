@@ -230,6 +230,11 @@ _ExternalProvider _$ExternalProviderFromJson(Map<String, dynamic> json) =>
     _ExternalProvider(
       name: json['name'] as String,
       type: json['type'] as String,
+      proxies:
+          (json['proxies'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       path: json['path'] as String?,
       count: (json['count'] as num).toInt(),
       subscriptionInfo: subscriptionInfoFormCore(
@@ -243,6 +248,7 @@ Map<String, dynamic> _$ExternalProviderToJson(_ExternalProvider instance) =>
     <String, dynamic>{
       'name': instance.name,
       'type': instance.type,
+      'proxies': instance.proxies,
       'path': instance.path,
       'count': instance.count,
       'subscription-info': instance.subscriptionInfo,

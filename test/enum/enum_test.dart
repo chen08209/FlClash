@@ -10,6 +10,7 @@ void main() {
       expect(GroupType.parse('URLTEST'), GroupType.URLTest);
       expect(GroupType.parse('selector'), GroupType.Selector);
       expect(GroupType.parse('loadbalance'), GroupType.LoadBalance);
+      expect(GroupType.parse('relay'), GroupType.Relay);
     });
 
     test('throws for unsupported group type', () {
@@ -28,6 +29,7 @@ void main() {
       expect(GroupType.URLTest.isComputedSelected, isTrue);
       expect(GroupType.Fallback.isComputedSelected, isTrue);
       expect(GroupType.Selector.isComputedSelected, isFalse);
+      expect(GroupType.Relay.isComputedSelected, isFalse);
     });
   });
 
