@@ -4493,6 +4493,56 @@ class AppLocalizations {
       args: [count],
     );
   }
+
+  /// `Favorite proxies`
+  String get favoriteProxies {
+    return Intl.message(
+      'Favorite proxies',
+      name: 'favoriteProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Star proxies on the Proxies page to show them here.`
+  String get favoriteProxiesEmpty {
+    return Intl.message(
+      'Star proxies on the Proxies page to show them here.',
+      name: 'favoriteProxiesEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You can favorite up to 8 proxies.`
+  String get favoriteProxyLimitReached {
+    return Intl.message(
+      'You can favorite up to 8 proxies.',
+      name: 'favoriteProxyLimitReached',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add to favorites`
+  String get addFavoriteProxy {
+    return Intl.message(
+      'Add to favorites',
+      name: 'addFavoriteProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove from favorites`
+  String get removeFavoriteProxy {
+    return Intl.message(
+      'Remove from favorites',
+      name: 'removeFavoriteProxy',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

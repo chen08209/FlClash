@@ -1,4 +1,5 @@
 export 'intranet_ip.dart';
+export 'favorite_proxies.dart';
 export 'network_detection.dart';
 export 'network_speed.dart';
 export 'outbound_mode.dart';

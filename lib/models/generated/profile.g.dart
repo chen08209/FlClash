@@ -6,6 +6,18 @@ part of '../profile.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_FavoriteProxy _$FavoriteProxyFromJson(Map<String, dynamic> json) =>
+    _FavoriteProxy(
+      groupName: json['groupName'] as String,
+      proxyName: json['proxyName'] as String,
+    );
+
+Map<String, dynamic> _$FavoriteProxyToJson(_FavoriteProxy instance) =>
+    <String, dynamic>{
+      'groupName': instance.groupName,
+      'proxyName': instance.proxyName,
+    };
+
 _SubscriptionInfo _$SubscriptionInfoFromJson(Map<String, dynamic> json) =>
     _SubscriptionInfo(
       upload: (json['upload'] as num?)?.toInt() ?? 0,
@@ -47,6 +59,11 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   unfoldSet:
       (json['unfoldSet'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
       const {},
+  favoriteProxies:
+      (json['favoriteProxies'] as List<dynamic>?)
+          ?.map((e) => FavoriteProxy.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   overwriteType:
       $enumDecodeNullable(_$OverwriteTypeEnumMap, json['overwriteType']) ??
       OverwriteType.standard,
@@ -65,6 +82,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'autoUpdate': instance.autoUpdate,
   'selectedMap': instance.selectedMap,
   'unfoldSet': instance.unfoldSet.toList(),
+  'favoriteProxies': instance.favoriteProxies,
   'overwriteType': _$OverwriteTypeEnumMap[instance.overwriteType]!,
   'scriptId': instance.scriptId,
   'order': instance.order,

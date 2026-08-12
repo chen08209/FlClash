@@ -104,6 +104,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "action_tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "action_view": MessageLookupByLibrary.simpleMessage("Показать/Скрыть"),
     "add": MessageLookupByLibrary.simpleMessage("Добавить"),
+    "addFavoriteProxy": MessageLookupByLibrary.simpleMessage(
+      "Добавить в избранное",
+    ),
     "addProfile": MessageLookupByLibrary.simpleMessage("Добавить профиль"),
     "addProxies": MessageLookupByLibrary.simpleMessage("Добавить прокси"),
     "addProxyGroup": MessageLookupByLibrary.simpleMessage(
@@ -403,6 +406,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "fallbackFilter": MessageLookupByLibrary.simpleMessage(
       "Фильтр резервного DNS",
+    ),
+    "favoriteProxies": MessageLookupByLibrary.simpleMessage("Избранные узлы"),
+    "favoriteProxiesEmpty": MessageLookupByLibrary.simpleMessage(
+      "Отметьте узлы звездой на странице прокси, чтобы они появились здесь.",
+    ),
+    "favoriteProxyLimitReached": MessageLookupByLibrary.simpleMessage(
+      "Можно добавить в избранное не более 8 узлов.",
     ),
     "fidelityScheme": MessageLookupByLibrary.simpleMessage("Точная передача"),
     "file": MessageLookupByLibrary.simpleMessage("Файл"),
@@ -784,6 +794,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Удалённое назначение",
     ),
     "remove": MessageLookupByLibrary.simpleMessage("Удалить"),
+    "removeFavoriteProxy": MessageLookupByLibrary.simpleMessage(
+      "Удалить из избранного",
+    ),
     "rename": MessageLookupByLibrary.simpleMessage("Переименовать"),
     "request": MessageLookupByLibrary.simpleMessage("Запрос"),
     "requests": MessageLookupByLibrary.simpleMessage("Запросы"),

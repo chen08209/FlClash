@@ -11,6 +11,19 @@ import 'clash_config.dart';
 part 'generated/profile.freezed.dart';
 part 'generated/profile.g.dart';
 
+const maxFavoriteProxies = 8;
+
+@freezed
+abstract class FavoriteProxy with _$FavoriteProxy {
+  const factory FavoriteProxy({
+    required String groupName,
+    required String proxyName,
+  }) = _FavoriteProxy;
+
+  factory FavoriteProxy.fromJson(Map<String, Object?> json) =>
+      _$FavoriteProxyFromJson(json);
+}
+
 @freezed
 abstract class SubscriptionInfo with _$SubscriptionInfo {
   const factory SubscriptionInfo({
@@ -53,6 +66,7 @@ abstract class Profile with _$Profile {
     @Default(true) bool autoUpdate,
     @Default({}) Map<String, String> selectedMap,
     @Default({}) Set<String> unfoldSet,
+    @Default([]) List<FavoriteProxy> favoriteProxies,
     @Default(OverwriteType.standard) OverwriteType overwriteType,
     int? scriptId,
     int? order,

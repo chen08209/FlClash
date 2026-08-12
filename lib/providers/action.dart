@@ -741,7 +741,7 @@ class ProxiesAction extends _$ProxiesAction {
   Future<void> updateGroups() async {
     try {
       commonPrint.log('updateGroups');
-      ref.read(groupsProvider.notifier).value = await retry(
+      final groups = await retry(
         task: () async {
           final sortType = ref.read(
             proxiesStyleSettingProvider.select((state) => state.sortType),
@@ -762,6 +762,12 @@ class ProxiesAction extends _$ProxiesAction {
         },
         retryIf: (res) => res.isEmpty,
       );
+      ref.read(groupsProvider.notifier).value = groups;
+      if (groups.isNotEmpty) {
+        ref
+            .read(profilesActionProvider.notifier)
+            .reconcileFavoriteProxies(groups);
+      }
     } catch (e) {
       commonPrint.log('updateGroups error: $e');
       ref.read(groupsProvider.notifier).value = [];
@@ -841,6 +847,42 @@ class ProfilesAction extends _$ProfilesAction {
           .read(profilesProvider.notifier)
           .put(currentProfile.copyWith(selectedMap: selectedMap));
     }
+  }
+
+  bool toggleFavoriteProxy(FavoriteProxy favorite) {
+    final currentProfile = ref.read(currentProfileProvider);
+    if (currentProfile == null) return false;
+    final favoriteProxies = List<FavoriteProxy>.from(
+      currentProfile.favoriteProxies,
+    );
+    final index = favoriteProxies.indexOf(favorite);
+    if (index != -1) {
+      favoriteProxies.removeAt(index);
+    } else {
+      if (favoriteProxies.length >= maxFavoriteProxies) return false;
+      favoriteProxies.add(favorite);
+    }
+    ref
+        .read(profilesProvider.notifier)
+        .put(currentProfile.copyWith(favoriteProxies: favoriteProxies));
+    return true;
+  }
+
+  void reconcileFavoriteProxies(List<Group> groups) {
+    final currentProfile = ref.read(currentProfileProvider);
+    if (currentProfile == null || groups.isEmpty) return;
+    final favoriteProxies = currentProfile.favoriteProxies.where((favorite) {
+      final group = groups.getGroup(favorite.groupName);
+      return group != null &&
+          group.type.isSelectable &&
+          group.all.any((proxy) => proxy.name == favorite.proxyName);
+    }).toList();
+    if (favoriteProxies.length == currentProfile.favoriteProxies.length) {
+      return;
+    }
+    ref
+        .read(profilesProvider.notifier)
+        .put(currentProfile.copyWith(favoriteProxies: favoriteProxies));
   }
 
   Future<void> deleteProfile(int id) async {

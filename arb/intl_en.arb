@@ -550,5 +550,10 @@
   "geoSkipped": "{name} skipped",
   "geoUpdated": "{name} updated",
   "secondsCount": "{count} seconds",
-  "entriesCount": "{count} entries"
+  "entriesCount": "{count} entries",
+  "favoriteProxies": "Favorite proxies",
+  "favoriteProxiesEmpty": "Star proxies on the Proxies page to show them here.",
+  "favoriteProxyLimitReached": "You can favorite up to 8 proxies.",
+  "addFavoriteProxy": "Add to favorites",
+  "removeFavoriteProxy": "Remove from favorites"
 }

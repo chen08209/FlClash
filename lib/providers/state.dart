@@ -44,6 +44,29 @@ GroupsState currentGroupsState(Ref ref) {
 }
 
 @riverpod
+List<FavoriteProxy> favoriteProxies(Ref ref) {
+  final favorites = ref.watch(
+    currentProfileProvider.select((state) => state?.favoriteProxies ?? []),
+  );
+  final groups = ref.watch(groupsProvider);
+  return favorites.where((favorite) {
+    final group = groups.getGroup(favorite.groupName);
+    return group != null &&
+        group.type.isSelectable &&
+        group.all.any((proxy) => proxy.name == favorite.proxyName);
+  }).toList();
+}
+
+@riverpod
+bool isFavoriteProxy(Ref ref, FavoriteProxy favorite) {
+  return ref.watch(
+    currentProfileProvider.select(
+      (state) => state?.favoriteProxies.contains(favorite) ?? false,
+    ),
+  );
+}
+
+@riverpod
 NavigationItemsState navigationItemsState(Ref ref) {
   final openLogs = ref.watch(appSettingProvider).openLogs;
   final hasProfiles = ref.watch(

@@ -51,6 +51,130 @@ final class CurrentGroupsStateProvider
 String _$currentGroupsStateHash() =>
     r'dbf8f02606a31486c99d7b89d19914cd5a1fc496';
 
+@ProviderFor(favoriteProxies)
+final favoriteProxiesProvider = FavoriteProxiesProvider._();
+
+final class FavoriteProxiesProvider
+    extends
+        $FunctionalProvider<
+          List<FavoriteProxy>,
+          List<FavoriteProxy>,
+          List<FavoriteProxy>
+        >
+    with $Provider<List<FavoriteProxy>> {
+  FavoriteProxiesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'favoriteProxiesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$favoriteProxiesHash();
+
+  @$internal
+  @override
+  $ProviderElement<List<FavoriteProxy>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  List<FavoriteProxy> create(Ref ref) {
+    return favoriteProxies(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<FavoriteProxy> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<FavoriteProxy>>(value),
+    );
+  }
+}
+
+String _$favoriteProxiesHash() => r'b50ef83373338cdd1174435059c61b66580d8237';
+
+@ProviderFor(isFavoriteProxy)
+final isFavoriteProxyProvider = IsFavoriteProxyFamily._();
+
+final class IsFavoriteProxyProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  IsFavoriteProxyProvider._({
+    required IsFavoriteProxyFamily super.from,
+    required FavoriteProxy super.argument,
+  }) : super(
+         retry: null,
+         name: r'isFavoriteProxyProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$isFavoriteProxyHash();
+
+  @override
+  String toString() {
+    return r'isFavoriteProxyProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as FavoriteProxy;
+    return isFavoriteProxy(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IsFavoriteProxyProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$isFavoriteProxyHash() => r'b61a7884d6c37610e786d32c7e1326d78fb9b260';
+
+final class IsFavoriteProxyFamily extends $Family
+    with $FunctionalFamilyOverride<bool, FavoriteProxy> {
+  IsFavoriteProxyFamily._()
+    : super(
+        retry: null,
+        name: r'isFavoriteProxyProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  IsFavoriteProxyProvider call(FavoriteProxy favorite) =>
+      IsFavoriteProxyProvider._(argument: favorite, from: this);
+
+  @override
+  String toString() => r'isFavoriteProxyProvider';
+}
+
 @ProviderFor(navigationItemsState)
 final navigationItemsStateProvider = NavigationItemsStateProvider._();
 

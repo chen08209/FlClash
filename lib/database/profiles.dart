@@ -30,6 +30,10 @@ class Profiles extends Table {
 
   TextColumn get unfoldSet => text().map(const StringSetConverter())();
 
+  TextColumn get favoriteProxies => text()
+      .map(const FavoriteProxiesConverter())
+      .withDefault(const Constant('[]'))();
+
   IntColumn get order => integer().nullable()();
 
   @override
@@ -50,6 +54,26 @@ class SubscriptionInfoConverter
   String? toSql(SubscriptionInfo? value) {
     if (value == null) return null;
     return json.encode(value.toJson());
+  }
+}
+
+class FavoriteProxiesConverter
+    extends TypeConverter<List<FavoriteProxy>, String> {
+  const FavoriteProxiesConverter();
+
+  @override
+  List<FavoriteProxy> fromSql(String fromDb) {
+    return (json.decode(fromDb) as List<dynamic>)
+        .map(
+          (item) =>
+              FavoriteProxy.fromJson(Map<String, Object?>.from(item as Map)),
+        )
+        .toList();
+  }
+
+  @override
+  String toSql(List<FavoriteProxy> value) {
+    return json.encode(value.map((item) => item.toJson()).toList());
   }
 }
 
@@ -117,6 +141,7 @@ extension RawProfilExt on RawProfile {
       autoUpdate: autoUpdate,
       selectedMap: selectedMap,
       unfoldSet: unfoldSet,
+      favoriteProxies: favoriteProxies,
       overwriteType: overwriteType,
       scriptId: scriptId,
       order: order,
@@ -137,6 +162,7 @@ extension ProfilesCompanionExt on Profile {
       autoUpdate: autoUpdate,
       selectedMap: selectedMap,
       unfoldSet: unfoldSet,
+      favoriteProxies: Value(favoriteProxies),
       overwriteType: overwriteType,
       scriptId: Value(scriptId),
       order: Value(order ?? this.order),

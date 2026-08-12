@@ -1,9 +1,27 @@
 import 'dart:convert';
 
 import 'package:fl_clash/database/database.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('FavoriteProxiesConverter', () {
+    const converter = FavoriteProxiesConverter();
+
+    test('roundtrips favorites in insertion order', () {
+      const favorites = [
+        FavoriteProxy(groupName: 'GLOBAL', proxyName: 'Hong Kong'),
+        FavoriteProxy(groupName: 'Streaming', proxyName: 'Japan'),
+      ];
+
+      expect(converter.fromSql(converter.toSql(favorites)), favorites);
+    });
+
+    test('handles an empty list', () {
+      expect(converter.fromSql(converter.toSql([])), isEmpty);
+    });
+  });
+
   group('StringMapConverter', () {
     const converter = StringMapConverter();
 

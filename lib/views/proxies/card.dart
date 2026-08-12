@@ -95,11 +95,10 @@ class ProxyCard extends StatelessWidget {
     }
   }
 
-  Future<void> _changeProxy(WidgetRef ref) async {
+  Future<void> _changeProxy() async {
     final isComputedSelected = groupType.isComputedSelected;
-    final isSelector = groupType == GroupType.Selector;
     final ref = globalState.container;
-    if (isComputedSelected || isSelector) {
+    if (groupType.isSelectable) {
       final currentProxyName = ref.read(proxyNameProvider(groupName));
       final nextProxyName = switch (isComputedSelected) {
         true => currentProxyName == proxy.name ? '' : proxy.name,
@@ -131,7 +130,7 @@ class ProxyCard extends StatelessWidget {
             return CommonCard(
               key: key,
               onPressed: () {
-                _changeProxy(ref);
+                _changeProxy();
               },
               isSelected: selectedProxyName == proxy.name,
               child: child!,
@@ -184,13 +183,60 @@ class ProxyCard extends StatelessWidget {
             ),
           ),
         ),
+        if (groupType.isSelectable)
+          Positioned(
+            top: 4,
+            right: 4,
+            child: _FavoriteProxyButton(
+              favorite: FavoriteProxy(
+                groupName: groupName,
+                proxyName: proxy.name,
+              ),
+            ),
+          ),
         if (groupType.isComputedSelected)
           Positioned(
-            top: 0,
-            right: 0,
+            top: 4,
+            left: 4,
             child: _ProxyComputedMark(groupName: groupName, proxy: proxy),
           ),
       ],
+    );
+  }
+}
+
+class _FavoriteProxyButton extends ConsumerWidget {
+  final FavoriteProxy favorite;
+
+  const _FavoriteProxyButton({required this.favorite});
+
+  void _handleToggleFavorite() {
+    final updated = globalState.container
+        .read(profilesActionProvider.notifier)
+        .toggleFavoriteProxy(favorite);
+    if (!updated) {
+      globalState.showNotifier(
+        currentAppLocalizations.favoriteProxyLimitReached,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFavorite = ref.watch(isFavoriteProxyProvider(favorite));
+    return Tooltip(
+      message: isFavorite
+          ? context.appLocalizations.removeFavoriteProxy
+          : context.appLocalizations.addFavoriteProxy,
+      child: SizedBox.square(
+        dimension: 32,
+        child: IconButton.filledTonal(
+          iconSize: 18,
+          padding: EdgeInsets.zero,
+          onPressed: _handleToggleFavorite,
+          icon: Icon(isFavorite ? Icons.star : Icons.star_border),
+        ),
+      ),
     );
   }
 }

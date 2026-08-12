@@ -75,6 +75,10 @@ extension GroupTypeExtension on GroupType {
     return [GroupType.URLTest, GroupType.Fallback].contains(this);
   }
 
+  bool get isSelectable {
+    return this == GroupType.Selector || isComputedSelected;
+  }
+
   static GroupType? getGroupType(String value) {
     final index = GroupTypeExtension.valueList.indexOf(value);
     if (index == -1) return null;
@@ -296,6 +300,7 @@ enum FunctionTag {
 
 enum DashboardWidget {
   networkSpeed(GridItem(crossAxisCellCount: 8, child: NetworkSpeed())),
+  favoriteProxies(GridItem(crossAxisCellCount: 8, child: FavoriteProxies())),
   outboundModeV2(GridItem(crossAxisCellCount: 8, child: OutboundModeV2())),
   outboundMode(GridItem(crossAxisCellCount: 4, child: OutboundMode())),
   trafficUsage(GridItem(crossAxisCellCount: 4, child: TrafficUsage())),

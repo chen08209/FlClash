@@ -550,5 +550,10 @@
   "geoSkipped": "{name} 已跳过",
   "geoUpdated": "{name} 已更新",
   "secondsCount": "{count} 秒",
-  "entriesCount": "{count} 个条目"
+  "entriesCount": "{count} 个条目",
+  "favoriteProxies": "常用节点",
+  "favoriteProxiesEmpty": "请前往节点页面点击星标，将常用节点显示在这里。",
+  "favoriteProxyLimitReached": "最多可收藏 8 个节点。",
+  "addFavoriteProxy": "添加到常用节点",
+  "removeFavoriteProxy": "从常用节点移除"
 }

@@ -1,9 +1,39 @@
+import 'dart:convert';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('FavoriteProxy', () {
+    test('roundtrips through profile JSON while preserving order', () {
+      const favorites = [
+        FavoriteProxy(groupName: 'GLOBAL', proxyName: 'Hong Kong'),
+        FavoriteProxy(groupName: 'Streaming', proxyName: 'Japan'),
+      ];
+      const profile = Profile(
+        id: 1,
+        autoUpdateDuration: defaultUpdateDuration,
+        favoriteProxies: favorites,
+      );
+
+      final json = jsonDecode(jsonEncode(profile.toJson()));
+      final decoded = Profile.fromJson(Map<String, Object?>.from(json));
+
+      expect(decoded.favoriteProxies, favorites);
+    });
+
+    test('defaults to an empty list for older profile JSON', () {
+      final profile = Profile.fromJson({
+        'id': 1,
+        'autoUpdateDuration': defaultUpdateDuration.inMicroseconds,
+      });
+
+      expect(profile.favoriteProxies, isEmpty);
+    });
+  });
+
   group('SubscriptionInfo', () {
     test('parses subscription-userinfo header values', () {
       final info = SubscriptionInfo.formHString(

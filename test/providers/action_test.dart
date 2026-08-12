@@ -1,9 +1,11 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -37,6 +39,82 @@ void main() {
       expect(profile?.label, edited.label);
       expect(profile?.url, edited.url);
     });
+
+    test('toggles favorites, deduplicates, and preserves order', () {
+      const profile = Profile(id: 1, autoUpdateDuration: defaultUpdateDuration);
+      final container = _buildProfilesActionContainer(profile);
+      addTearDown(container.dispose);
+      const first = FavoriteProxy(groupName: 'GLOBAL', proxyName: 'HK');
+      const second = FavoriteProxy(groupName: 'GLOBAL', proxyName: 'JP');
+      final action = container.read(profilesActionProvider.notifier);
+
+      expect(action.toggleFavoriteProxy(first), true);
+      expect(action.toggleFavoriteProxy(second), true);
+      expect(container.read(currentProfileProvider)?.favoriteProxies, [
+        first,
+        second,
+      ]);
+
+      expect(action.toggleFavoriteProxy(first), true);
+      expect(container.read(currentProfileProvider)?.favoriteProxies, [second]);
+    });
+
+    test('rejects a ninth favorite', () {
+      final favorites = List.generate(
+        maxFavoriteProxies,
+        (index) =>
+            FavoriteProxy(groupName: 'GLOBAL', proxyName: 'proxy-$index'),
+      );
+      final profile = Profile(
+        id: 1,
+        autoUpdateDuration: defaultUpdateDuration,
+        favoriteProxies: favorites,
+      );
+      final container = _buildProfilesActionContainer(profile);
+      addTearDown(container.dispose);
+
+      final updated = container
+          .read(profilesActionProvider.notifier)
+          .toggleFavoriteProxy(
+            const FavoriteProxy(groupName: 'GLOBAL', proxyName: 'overflow'),
+          );
+
+      expect(updated, false);
+      expect(
+        container.read(currentProfileProvider)?.favoriteProxies,
+        favorites,
+      );
+    });
+
+    test('removes stale and non-selectable favorites after group refresh', () {
+      const valid = FavoriteProxy(groupName: 'Selectable', proxyName: 'HK');
+      const missing = FavoriteProxy(groupName: 'Selectable', proxyName: 'US');
+      const automatic = FavoriteProxy(groupName: 'Relay', proxyName: 'JP');
+      const profile = Profile(
+        id: 1,
+        autoUpdateDuration: defaultUpdateDuration,
+        favoriteProxies: [valid, missing, automatic],
+      );
+      final container = _buildProfilesActionContainer(profile);
+      addTearDown(container.dispose);
+
+      container.read(profilesActionProvider.notifier).reconcileFavoriteProxies(
+        const [
+          Group(
+            name: 'Selectable',
+            type: GroupType.Selector,
+            all: [Proxy(name: 'HK', type: 'ss')],
+          ),
+          Group(
+            name: 'Relay',
+            type: GroupType.Relay,
+            all: [Proxy(name: 'JP', type: 'ss')],
+          ),
+        ],
+      );
+
+      expect(container.read(currentProfileProvider)?.favoriteProxies, [valid]);
+    });
   });
 
   group('GeoResourceAction', () {
@@ -61,6 +139,15 @@ void main() {
       expect(container.read(isUpdatingProvider(key)), false);
     });
   });
+}
+
+ProviderContainer _buildProfilesActionContainer(Profile profile) {
+  return ProviderContainer(
+    overrides: [
+      currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+      profilesProvider.overrideWith(() => _TestProfiles([profile])),
+    ],
+  );
 }
 
 class _TestProfiles extends Profiles {
