@@ -20,6 +20,7 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
 import com.follow.clash.R
+import com.follow.clash.State
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
 import com.follow.clash.common.QuickAction
@@ -260,9 +261,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
 
+    // Concurrent calls (getPackages / getChinaPackageNames) would otherwise
+    // append to the shared list at the same time and duplicate entries.
+    @Synchronized
     private fun getPackages(): List<Package> {
         val packageManager = GlobalState.application.packageManager
-        if (packages.isNotEmpty()) return packages
+        if (packages.isNotEmpty()) return packages.toList()
         packageManager?.getInstalledPackages(PackageManager.GET_META_DATA or PackageManager.GET_PERMISSIONS)
             ?.filter {
                 it.packageName != GlobalState.application.packageName && it.packageName != "android"
@@ -275,7 +279,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                     internet = it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
                 )
             }?.let { packages.addAll(it) }
-        return packages
+        return packages.toList()
     }
 
     private suspend fun getPackagesToJson(): String {
@@ -329,7 +333,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
         val intent = VpnService.prepare(GlobalState.application)
         if (intent != null) {
-            activityRef?.get()?.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
+            val activity = activityRef?.get()
+            if (activity == null) {
+                cancelVpnPrepareCallback()
+                return
+            }
+            activity.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
             return
         }
         invokeVpnPrepareCallback()
@@ -340,6 +349,13 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             vpnPrepareCallback?.invoke()
             vpnPrepareCallback = null
         }
+    }
+
+    // Without this, a denied VPN consent leaves the pending start stuck in
+    // PENDING forever and the quick-settings tile becomes unusable.
+    fun cancelVpnPrepareCallback() {
+        vpnPrepareCallback = null
+        State.settleStartFailure()
     }
 
 
@@ -443,6 +459,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         if (requestCode == VPN_PERMISSION_REQUEST_CODE) {
             if (resultCode == FlutterActivity.RESULT_OK) {
                 invokeVpnPrepareCallback()
+            } else {
+                cancelVpnPrepareCallback()
             }
         }
         return true

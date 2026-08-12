@@ -74,7 +74,7 @@ class CoreLib extends CoreHandlerInterface {
     final id = '${method.name}#${utils.id}';
     final result = await service
         ?.invokeAction(Action(id: id, method: method, data: data))
-        .withTimeout(onTimeout: () => null);
+        .withTimeout(timeout: timeout, tag: id, onTimeout: () => null);
     if (result == null) {
       return null;
     }

@@ -257,8 +257,12 @@ class ProfileItem extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final res = await globalState.safeRun<bool>(() async {
       final mFile = await profile.file;
+      final label = profile.realLabel;
+      final fileName = label.endsWith('.yaml') || label.endsWith('.yml')
+          ? label
+          : '$label.yaml';
       final value = await picker.saveFile(
-        profile.realLabel,
+        fileName,
         mFile.readAsBytesSync(),
       );
       if (value == null) return false;

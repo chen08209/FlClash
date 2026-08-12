@@ -52,14 +52,18 @@ object State {
         runLock.withLock {
             try {
                 Service.bind()
-                runTime = Service.getRunTime()
-                val runState = when (runTime == 0L) {
+                // A failed or slow cross-process bind is not evidence the
+                // service stopped, so keep the last known state instead of
+                // showing the tile as inactive while the VPN is running.
+                val nextRunTime = Service.getRunTimeOrNull() ?: return@withLock
+                runTime = nextRunTime
+                val runState = when (nextRunTime == 0L) {
                     true -> RunState.STOP
                     false -> RunState.START
                 }
                 runStateFlow.tryEmit(runState)
             } catch (_: Exception) {
-                runStateFlow.tryEmit(RunState.STOP)
+                // Same reasoning: leave the last known state untouched.
             }
         }
     }
@@ -156,26 +160,49 @@ object State {
                 if (runStateFlow.value != RunState.STOP) {
                     return@launch
                 }
+                // Whether the outcome has been settled or handed off to an
+                // async continuation (the VPN prepare callback); only when
+                // neither happened may the finally block roll PENDING back.
+                var settled = false
                 try {
                     runStateFlow.tryEmit(RunState.PENDING)
                     val options = sharedState.vpnOptions ?: return@launch
                     appPlugin?.let {
                         it.prepare(options.enable) {
+                            // Runs later on its own coroutine: settle from
+                            // the actual start result instead of assuming
+                            // the service came up.
                             runTime = Service.startService(options, runTime)
-                            runStateFlow.tryEmit(RunState.START)
+                            runStateFlow.tryEmit(
+                                if (runTime != 0L) RunState.START else RunState.STOP
+                            )
                         }
+                        settled = true
                     } ?: run {
                         val intent = VpnService.prepare(GlobalState.application)
                         if (intent != null) {
                             return@launch
                         }
                         runTime = Service.startService(options, runTime)
-                        runStateFlow.tryEmit(RunState.START)
+                        runStateFlow.tryEmit(
+                            if (runTime != 0L) RunState.START else RunState.STOP
+                        )
+                        settled = true
                     }
                 } finally {
-                    if (runStateFlow.value == RunState.PENDING) {
+                    if (!settled && runStateFlow.value == RunState.PENDING) {
                         runStateFlow.tryEmit(RunState.STOP)
                     }
+                }
+            }
+        }
+    }
+
+    fun settleStartFailure() {
+        GlobalState.launch {
+            runLock.withLock {
+                if (runStateFlow.value == RunState.PENDING) {
+                    runStateFlow.tryEmit(RunState.STOP)
                 }
             }
         }

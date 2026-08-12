@@ -23,6 +23,83 @@ std::unique_ptr<
     channel = nullptr;
 
 constexpr int kPermissionGranted = 0;
+constexpr int kPermissionPermanentlyDenied = 2;
+
+bool IsValidUtf8(const std::string &value) {
+  const auto *bytes = reinterpret_cast<const unsigned char *>(value.data());
+  const size_t size = value.size();
+  for (size_t i = 0; i < size;) {
+    const unsigned char byte = bytes[i];
+    size_t length = 0;
+    if (byte <= 0x7F) {
+      length = 1;
+    } else if ((byte & 0xE0) == 0xC0 && byte >= 0xC2) {
+      length = 2;
+    } else if ((byte & 0xF0) == 0xE0) {
+      length = 3;
+    } else if ((byte & 0xF8) == 0xF0 && byte <= 0xF4) {
+      length = 4;
+    } else {
+      return false;
+    }
+    if (i + length > size) {
+      return false;
+    }
+    for (size_t j = 1; j < length; j++) {
+      if ((bytes[i + j] & 0xC0) != 0x80) {
+        return false;
+      }
+    }
+    i += length;
+  }
+  return true;
+}
+
+// Probes whether the current Windows location-privacy settings allow WLAN
+// SSID queries. Without location access the WLAN APIs report
+// ERROR_ACCESS_DENIED and the SSID silently reads as null, so surface that
+// state as permanently denied instead of pretending permission is granted.
+int CheckPermission() {
+  HANDLE hClient = nullptr;
+  DWORD dwCurVersion = 0;
+  DWORD dwResult = WlanOpenHandle(2, nullptr, &dwCurVersion, &hClient);
+  if (dwResult == ERROR_ACCESS_DENIED) {
+    return kPermissionPermanentlyDenied;
+  }
+  if (dwResult != ERROR_SUCCESS) {
+    // No WLAN service/adapter: report granted to avoid a false warning.
+    return kPermissionGranted;
+  }
+
+  PWLAN_INTERFACE_INFO_LIST pIfList = nullptr;
+  dwResult = WlanEnumInterfaces(hClient, nullptr, &pIfList);
+  if (dwResult != ERROR_SUCCESS) {
+    WlanCloseHandle(hClient, nullptr);
+    return dwResult == ERROR_ACCESS_DENIED ? kPermissionPermanentlyDenied
+                                           : kPermissionGranted;
+  }
+
+  int permission = kPermissionGranted;
+  for (DWORD i = 0; i < pIfList->dwNumberOfItems; i++) {
+    PWLAN_CONNECTION_ATTRIBUTES pConnAttrib = nullptr;
+    DWORD dwDataSize = sizeof(WLAN_CONNECTION_ATTRIBUTES);
+    dwResult = WlanQueryInterface(
+        hClient, &pIfList->InterfaceInfo[i].InterfaceGuid,
+        wlan_intf_opcode_current_connection, nullptr, &dwDataSize,
+        (PVOID *)&pConnAttrib, nullptr);
+    if (dwResult == ERROR_ACCESS_DENIED) {
+      permission = kPermissionPermanentlyDenied;
+      break;
+    }
+    if (dwResult == ERROR_SUCCESS && pConnAttrib != nullptr) {
+      WlanFreeMemory(pConnAttrib);
+    }
+  }
+
+  WlanFreeMemory(pIfList);
+  WlanCloseHandle(hClient, nullptr);
+  return permission;
+}
 
 }  // namespace
 
@@ -54,7 +131,8 @@ void WifiSsidPlugin::HandleMethodCall(
     GetSsid(std::move(result));
   } else if (method_call.method_name().compare("checkPermission") == 0 ||
              method_call.method_name().compare("requestPermission") == 0) {
-    result->Success(flutter::EncodableValue(kPermissionGranted));
+    // Windows has no in-app location prompt, so requesting simply re-checks.
+    result->Success(flutter::EncodableValue(CheckPermission()));
   } else {
     result->NotImplemented();
   }
@@ -128,6 +206,13 @@ void WifiSsidPlugin::GetSsid(
   WlanCloseHandle(hClient, nullptr);
 
   if (query_error == ERROR_ACCESS_DENIED || ssid.empty()) {
+    result->Success(flutter::EncodableValue());
+    return;
+  }
+
+  // 802.11 SSIDs are arbitrary bytes; sending non-UTF-8 over the channel
+  // makes the Dart side throw and leaves the SSID state stale.
+  if (!IsValidUtf8(ssid)) {
     result->Success(flutter::EncodableValue());
     return;
   }

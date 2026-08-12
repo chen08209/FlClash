@@ -828,12 +828,12 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
     );
   }
 
-  Future<void> _handleDelete(int profileId, String name) async {
+  Future<void> _handleDelete(int profileId, int id) async {
     final res = await globalState.showMessage(
       message: TextSpan(text: context.appLocalizations.confirmDeleteProxyGroup),
     );
     if (res == true && mounted) {
-      ref.read(proxyGroupsProvider(profileId).notifier).del(name);
+      ref.read(proxyGroupsProvider(profileId).notifier).del(id);
       context.safeNestedPop();
     }
   }
@@ -912,7 +912,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
                       ),
                     ),
                     onPressed: () {
-                      _handleDelete(profileId, proxyGroup.name);
+                      _handleDelete(profileId, proxyGroup.id);
                     },
                   ),
               ],

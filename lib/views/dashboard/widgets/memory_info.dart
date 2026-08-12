@@ -33,9 +33,19 @@ class _MemoryInfoState extends State<MemoryInfo> {
 
   Future<void> _updateMemory() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // A post-frame callback cannot be cancelled and the core call is
+      // async, so without these guards a disposed widget would re-arm the
+      // timer and poll the core forever.
+      if (!mounted) {
+        return;
+      }
       final rss = ProcessInfo.currentRss;
       if (coreController.isCompleted) {
-        _memoryStateNotifier.value = await coreController.getMemory() + rss;
+        final memory = await coreController.getMemory();
+        if (!mounted) {
+          return;
+        }
+        _memoryStateNotifier.value = memory + rss;
       } else {
         _memoryStateNotifier.value = rss;
       }

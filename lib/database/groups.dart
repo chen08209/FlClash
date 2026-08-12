@@ -112,6 +112,34 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
     );
   }
 
+  /// Highest order key currently stored, so a merge restore can allocate
+  /// keys after it instead of colliding with the local ones.
+  Future<String?> maxOrder() async {
+    final maxOrder = proxyGroups.order.max();
+    final query = selectOnly(proxyGroups)..addColumns([maxOrder]);
+    final row = await query.getSingleOrNull();
+    return row?.read(maxOrder);
+  }
+
+  /// Inserts or updates without deleting local rows, for merge restores.
+  void putAllWithBatch(
+    Batch batch,
+    Iterable<ProxyGroup> proxyGroups, {
+    String? afterKey,
+  }) {
+    final keys = indexing.generateNKeysBetween(
+      afterKey,
+      null,
+      proxyGroups.length,
+    );
+    batch.insertAllOnConflictUpdate(
+      this.proxyGroups,
+      proxyGroups.mapIndexed(
+        (index, item) => item.toCompanion(null, keys[index]),
+      ),
+    );
+  }
+
   void setAllWithBatch(
     int? profileId,
     Batch batch,

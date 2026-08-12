@@ -85,21 +85,15 @@ func toExternalProvider(p cp.Provider) (*ExternalProvider, error) {
 }
 
 func sideUpdateExternalProvider(p cp.Provider, bytes []byte) error {
-	switch p.(type) {
+	// Providers are stored as pointers, and the error must be returned in
+	// both branches: the previous form reported every failure as success.
+	switch sp := p.(type) {
 	case *provider.ProxySetProvider:
-		psp := p.(*provider.ProxySetProvider)
-		_, _, err := psp.SideUpdate(bytes)
-		if err == nil {
-			return err
-		}
-		return nil
-	case rp.RuleSetProvider:
-		rsp := p.(*rp.RuleSetProvider)
-		_, _, err := rsp.SideUpdate(bytes)
-		if err == nil {
-			return err
-		}
-		return nil
+		_, _, err := sp.SideUpdate(bytes)
+		return err
+	case *rp.RuleSetProvider:
+		_, _, err := sp.SideUpdate(bytes)
+		return err
 	default:
 		return errors.New("not external provider")
 	}
@@ -187,6 +181,11 @@ func updateConfig(params *UpdateParams) {
 	general := currentConfig.General
 	if params.MixedPort != nil {
 		general.MixedPort = *params.MixedPort
+	}
+	// updateListeners reads general.AllowLan; without this the toggle only
+	// took effect after a full config re-apply.
+	if params.AllowLan != nil {
+		general.AllowLan = *params.AllowLan
 	}
 	if params.Sniffing != nil {
 		general.Sniffing = *params.Sniffing

@@ -53,7 +53,7 @@ class Permissions {
   }
 
   Future<void> checkLocationPermissions() async {
-    if (!(system.isAndroid || system.isMacOS)) {
+    if (!(system.isAndroid || system.isMacOS || system.isWindows)) {
       return;
     }
     final res = await WifiSsidManager.instance.checkPermission();
@@ -75,8 +75,18 @@ class Permissions {
         globalState.container.read(locationPermissionsProvider.notifier).value =
             res;
         if (res != WifiSsidPermission.granted) {
-          final ssid = await WifiSsidManager.instance.getSsid();
-          globalState.container.read(currentSSIDProvider.notifier).value = ssid;
+          try {
+            final ssid = await WifiSsidManager.instance.getSsid();
+            globalState.container.read(currentSSIDProvider.notifier).value =
+                ssid;
+          } catch (e) {
+            // Keep the last known SSID rather than clearing it on a failed
+            // read; getSsid throws on timeout/platform error.
+            commonPrint.log(
+              'get Wi-fi SSID failed: $e',
+              logLevel: LogLevel.warning,
+            );
+          }
         }
       } finally {
         _isRequestingLocation = false;

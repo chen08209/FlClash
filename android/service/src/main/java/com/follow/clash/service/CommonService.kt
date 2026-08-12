@@ -52,8 +52,11 @@ class CommonService : Service(), IBaseService,
     override fun start() {
         try {
             loader.load()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             stop()
+            // Propagate so the caller records the start as failed instead
+            // of reporting a running state for a dead service.
+            throw e
         }
     }
 

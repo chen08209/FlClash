@@ -27,6 +27,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     null,
   );
   List<double> _headerOffset = [];
+  List<Group> _renderedGroups = [];
   double containerHeight = 0;
 
   @override
@@ -120,6 +121,9 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     required ProxyCardType cardType,
   }) {
     final items = <Widget>[];
+    // The rendered groups are search-filtered, so offsets must be resolved
+    // against this list rather than against all current groups.
+    _renderedGroups = groups;
     for (final group in groups) {
       final groupName = group.name;
       final isExpand = currentUnfoldSet.contains(groupName);
@@ -196,11 +200,13 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     if (_controller.position.maxScrollExtent == 0) {
       return 0;
     }
-    final currentGroups = getCurrentGroups();
-    final findIndex = currentGroups.indexWhere(
+    final findIndex = _renderedGroups.indexWhere(
       (item) => item.name == groupName,
     );
     final index = findIndex != -1 ? findIndex : 0;
+    if (index >= _headerOffset.length) {
+      return 0;
+    }
     return _headerOffset[index];
   }
 
@@ -256,8 +262,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
 
   void _scrollToGroupSelected(String groupName) {
     final currentInitOffset = _getGroupOffset(groupName);
-    final currentGroups = getCurrentGroups();
-    final proxies = currentGroups.getGroup(groupName)?.all;
+    final proxies = _renderedGroups.getGroup(groupName)?.all;
     _jumpTo(
       currentInitOffset +
           8 +

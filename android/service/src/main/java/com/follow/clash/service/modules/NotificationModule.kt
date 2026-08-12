@@ -47,6 +47,13 @@ class NotificationModule(private val service: Service) : Module() {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     override fun onInstall() {
+        // Promote to foreground right away. Gating the first startForeground
+        // on the screen being on leaves a service started with the screen off
+        // unpromoted, and the system then kills it.
+        update(
+            State.notificationParamsFlow.value?.extended
+                ?: NotificationParams().extended
+        )
         scope.launch {
             val screenFlow = service.receiveBroadcastFlow {
                 addAction(Intent.ACTION_SCREEN_ON)
@@ -66,12 +73,6 @@ class NotificationModule(private val service: Service) : Module() {
                 .collect { (params, _) ->
                     update(params!!)
                 }
-
-            State.notificationParamsFlow.value?.let {
-                update(it.extended)
-            } ?: run {
-                update(NotificationParams().extended)
-            }
         }
     }
 

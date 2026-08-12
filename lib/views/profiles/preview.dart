@@ -1,4 +1,3 @@
-import 'package:fl_clash/common/task.dart';
 import 'package:fl_clash/models/profile.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -21,10 +20,11 @@ class _PreviewProfileViewState extends State<PreviewProfileView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final configMap = await globalState.container
+      // getProfileWithId already returns the rendered YAML document;
+      // encoding it again would emit it as a single YAML scalar.
+      final content = await globalState.container
           .read(setupActionProvider.notifier)
           .getProfileWithId(widget.profile.id);
-      final content = await encodeYamlTask(configMap);
       if (!mounted) {
         return;
       }

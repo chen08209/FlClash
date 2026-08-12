@@ -77,6 +77,13 @@ class _StartButtonState extends ConsumerState<StartButton>
     final suspend = ref.watch(suspendProvider);
     final theme = Theme.of(context);
     final appLocalizations = context.appLocalizations;
+    final hourDigits = ref.watch(
+      runTimeProvider.select((state) {
+        final hours = (state ?? 0) ~/ 3600000;
+        final digits = hours.toString().length;
+        return digits < 2 ? 2 : digits;
+      }),
+    );
     return RepaintBoundary(
       child: Theme(
         data: theme.copyWith(
@@ -100,7 +107,7 @@ class _StartButtonState extends ConsumerState<StartButton>
                 : globalState.measure
                           .computeTextSize(
                             Text(
-                              utils.getTimeDifference(DateTime.now()),
+                              '${'0' * hourDigits}:00:00',
                               style: context.textTheme.titleMedium?.toSoftBold,
                             ),
                           )

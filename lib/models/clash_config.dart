@@ -319,6 +319,30 @@ abstract class Dns with _$Dns {
   }
 }
 
+/// Splits a rule line on commas that are not inside parentheses, so logic
+/// rules such as `AND,((NETWORK,udp),(DST-PORT,443)),REJECT` keep their
+/// payload intact.
+List<String> _splitRuleValue(String value) {
+  final result = <String>[];
+  final buffer = StringBuffer();
+  var depth = 0;
+  for (final code in value.codeUnits) {
+    final char = String.fromCharCode(code);
+    if (char == '(') {
+      depth++;
+    } else if (char == ')') {
+      depth = depth > 0 ? depth - 1 : 0;
+    } else if (char == ',' && depth == 0) {
+      result.add(buffer.toString());
+      buffer.clear();
+      continue;
+    }
+    buffer.write(char);
+  }
+  result.add(buffer.toString());
+  return result;
+}
+
 @freezed
 abstract class Rule with _$Rule {
   const factory Rule({
@@ -346,54 +370,52 @@ abstract class Rule with _$Rule {
 
   factory Rule.parse(String value, {int? id}) {
     id ??= snowflake.id;
-    if (value.isEmpty) {
+    final segments = _splitRuleValue(value)
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+    if (segments.isEmpty) {
       return Rule(
         id: id,
         ruleAction: RuleAction.DOMAIN,
         ruleTarget: RuleTarget.DIRECT.name,
       );
     }
-    final splits = value.split(',');
-    final shortSplits = splits
-        .where(
-          (item) =>
-              !item.contains('src') &&
-              !item.contains('no-resolve') &&
-              item.isNotEmpty,
-        )
-        .map((item) => item.trim())
-        .toList();
+    var src = false;
+    var noResolve = false;
+    // Params are trailing tokens; matching them as substrings would eat
+    // payloads such as 'imgsrc.ru'.
+    while (segments.length > 1) {
+      final last = segments.last;
+      if (last == 'src') {
+        src = true;
+      } else if (last == 'no-resolve') {
+        noResolve = true;
+      } else {
+        break;
+      }
+      segments.removeLast();
+    }
     final ruleAction = RuleAction.values.firstWhere(
-      (item) => item.value == shortSplits.first,
+      (item) => item.value == segments.first,
       orElse: () => RuleAction.DOMAIN,
     );
-    String? subRule;
-    String? ruleTarget;
-
-    if (ruleAction == RuleAction.SUB_RULE) {
-      subRule = shortSplits.last;
-    } else {
-      ruleTarget = shortSplits.last;
-    }
-
-    String? content;
-    String? ruleProvider;
-
-    if (ruleAction == RuleAction.RULE_SET) {
-      ruleProvider = shortSplits[1];
-    } else {
-      content = shortSplits[1];
-    }
+    final target = segments.length > 1 ? segments.last : null;
+    final payload = segments.length > 2
+        ? segments.sublist(1, segments.length - 1).join(',')
+        : null;
+    final isSubRule = ruleAction == RuleAction.SUB_RULE;
+    final isRuleSet = ruleAction == RuleAction.RULE_SET;
 
     return Rule(
       id: id,
       ruleAction: ruleAction,
-      content: content,
-      src: splits.contains('src'),
-      ruleProvider: ruleProvider,
-      noResolve: splits.contains('no-resolve'),
-      subRule: subRule,
-      ruleTarget: ruleTarget,
+      content: isRuleSet ? null : payload,
+      src: src,
+      ruleProvider: isRuleSet ? payload : null,
+      noResolve: noResolve,
+      subRule: isSubRule ? target : null,
+      ruleTarget: isSubRule ? null : target,
     );
   }
 
@@ -430,10 +452,12 @@ extension RuleExt on Rule {
   }
 
   String get rawValue {
+    final content = realContent;
+    final target = realTarget;
     return [
       ruleAction.value,
-      realContent,
-      realTarget,
+      if (content != null) content,
+      if (target != null) target,
       if (ruleAction.hasParams) ...[
         if (src) 'src',
         if (noResolve) 'no-resolve',

@@ -109,6 +109,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       context.showNotifier(message);
     }
     await coreController.shutdown(false);
+    if (system.isDesktop) {
+      // The core is gone and desktop has no auto-restart: release the
+      // started state so ProxyManager clears the system proxy instead of
+      // leaving it pointed at a dead port. Not awaited: stopListener would
+      // block on the dead transport's 10s timeout first, which is exactly
+      // the window this is meant to avoid.
+      unawaited(ref.read(setupActionProvider.notifier).handleStop());
+      ref.read(runTimeProvider.notifier).value = null;
+    }
     super.onCrash(message);
   }
 
@@ -117,15 +126,18 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     final geoResource = GeoResource.fromJson(geoType.toLowerCase());
     final key = geoResource.updatingKey;
     final l10n = currentAppLocalizations;
+    final hasError = error != null && error.isNotEmpty;
     if (updating) {
       globalState.showNotifier(l10n.geoUpdating(geoResource.name));
+    } else if (hasError) {
+      // Only the error below; announcing 'updated' first is misleading.
     } else if (skipped) {
       globalState.showNotifier(l10n.geoSkipped(geoResource.name));
     } else {
       globalState.showNotifier(l10n.geoUpdated(geoResource.name));
     }
     ref.read(isUpdatingProvider(key).notifier).value = updating;
-    if (!updating && error != null && error.isNotEmpty) {
+    if (!updating && hasError) {
       globalState.showNotifier(error);
     }
     super.onGeoUpdate(geoType, updating, skipped, error);

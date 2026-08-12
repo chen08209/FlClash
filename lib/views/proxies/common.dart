@@ -74,13 +74,13 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
 }
 
 Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final delayProxies = proxies.map<Future>((proxy) async {
-    await proxyDelayTest(proxy, testUrl);
-  }).toList();
-
-  final batchesDelayProxies = delayProxies.batch(100);
-  for (final batchDelayProxies in batchesDelayProxies) {
-    await Future.wait(batchDelayProxies);
+  // Batch the proxies, not futures: mapping to futures first starts every
+  // test immediately, so the concurrency limit would never take effect.
+  final batchesProxies = proxies.batch(100);
+  for (final batchProxies in batchesProxies) {
+    await Future.wait(
+      batchProxies.map((proxy) => proxyDelayTest(proxy, testUrl)),
+    );
   }
   globalState.container.read(sortNumProvider.notifier).add();
 }

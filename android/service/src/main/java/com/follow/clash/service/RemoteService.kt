@@ -16,6 +16,7 @@ import com.follow.clash.service.models.VpnOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.withLock
@@ -62,12 +63,22 @@ class RemoteService : Service(),
                     intent = nextIntent
                     delegate?.bind()
                 }
-                delegate?.useService { service ->
+                val startResult = delegate?.useService { service ->
                     service.start()
                 }
-                State.runTime = when (runTime != 0L) {
-                    true -> runTime
-                    false -> System.currentTimeMillis()
+                // Only record a running timestamp when the service actually
+                // started; otherwise later tile syncs would show the proxy
+                // as running while nothing is up. A timeout is not a failure:
+                // useService caps the blocking start() call, which keeps
+                // running and usually succeeds, and reporting 0 there would
+                // leave a live tunnel that can no longer be stopped.
+                val startError = startResult?.exceptionOrNull()
+                val started = startResult != null &&
+                        (startError == null || startError is TimeoutCancellationException)
+                State.runTime = when {
+                    !started -> 0
+                    runTime != 0L -> runTime
+                    else -> System.currentTimeMillis()
                 }
                 result.onResult(State.runTime)
             }

@@ -12,16 +12,20 @@ Future<Map<String, dynamic>> handleEvaluate(
   }
   final configJs = json.encode(config);
   final runtime = getJavascriptRuntime();
-  final res = await runtime.evaluateAsync('''
+  try {
+    final res = await runtime.evaluateAsync('''
       $scriptContent
       main($configJs)
     ''');
-  if (res.isError) {
-    throw res.stringResult;
+    if (res.isError) {
+      throw res.stringResult;
+    }
+    final value = switch (res.rawResult is ffi.Pointer) {
+      true => runtime.convertValue<Map<String, dynamic>>(res),
+      false => Map<String, dynamic>.from(res.rawResult),
+    };
+    return value ?? config;
+  } finally {
+    runtime.dispose();
   }
-  final value = switch (res.rawResult is ffi.Pointer) {
-    true => runtime.convertValue<Map<String, dynamic>>(res),
-    false => Map<String, dynamic>.from(res.rawResult),
-  };
-  return value ?? config;
 }

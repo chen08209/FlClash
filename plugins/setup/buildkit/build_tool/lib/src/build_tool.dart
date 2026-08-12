@@ -22,7 +22,7 @@ String _findProjectRoot() {
   var dir = Directory.current;
   while (true) {
     if (File(p.join(dir.path, 'pubspec.yaml')).existsSync() &&
-        File(p.join(dir.path, 'core')).existsSync()) {
+        Directory(p.join(dir.path, 'core')).existsSync()) {
       return dir.path;
     }
     final parent = dir.parent;

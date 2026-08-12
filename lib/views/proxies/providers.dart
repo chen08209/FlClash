@@ -90,17 +90,19 @@ class ProviderItem extends StatelessWidget {
       final platformFile = await picker.pickerFile();
       if (platformFile == null || provider.path == null) return;
       final bytes = await platformFile.readBytes();
-      await File(provider.path!).safeWriteAsBytes(bytes);
+      // Decode and let the core validate before touching the existing file:
+      // a rejected or non-UTF-8 pick must not destroy a working provider.
+      final data = utf8.decode(bytes);
       final providerName = provider.name;
       final message = await coreController.sideLoadExternalProvider(
         providerName: providerName,
-        data: utf8.decode(bytes),
+        data: data,
       );
       if (message.isNotEmpty) throw message;
+      await File(provider.path!).safeWriteAsBytes(bytes);
       ref
           .read(providersProvider.notifier)
           .setProvider(await coreController.getExternalProvider(provider.name));
-      if (message.isNotEmpty) throw message;
     });
     ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
   }

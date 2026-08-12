@@ -24,7 +24,11 @@ class FlClashHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final client = super.createHttpClient(context);
-    client.badCertificateCallback = (_, _, _) => true;
+    // Only local endpoints (helper/core) may present an untrusted
+    // certificate. Accepting them everywhere would let anyone on the
+    // network swap a subscription profile or read WebDAV credentials.
+    client.badCertificateCallback = (_, host, _) =>
+        host == localhost || host == 'localhost' || host == '::1';
     client.findProxy = handleFindProxy;
     return client;
   }

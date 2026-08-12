@@ -89,8 +89,10 @@ func handleShutdown() bool {
 
 func handleValidateConfig(path string) string {
 	buf, err := readFile(path)
-	_, err = config.UnmarshalRawConfig(buf)
 	if err != nil {
+		return err.Error()
+	}
+	if _, err = config.UnmarshalRawConfig(buf); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -368,7 +370,11 @@ func handleUpdateGeoData(geoType string) {
 
 func handleUpdateExternalProvider(providerName string, fn func(value string)) {
 	go func() {
+		// The map is rebuilt by handleGetExternalProviders under runLock;
+		// reading it from this goroutine without the lock races that write.
+		runLock.Lock()
 		externalProvider, exist := externalProviders[providerName]
+		runLock.Unlock()
 		if !exist {
 			fn("external provider is not exist")
 			return
@@ -485,8 +491,11 @@ func handleDelFile(path string, result ActionResult) {
 	go func() {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
+			// One request gets exactly one response; the missing return
+			// here sent a second one over an already-released callback.
 			if !os.IsNotExist(err) {
 				result.success(err.Error())
+				return
 			}
 			result.success("")
 			return

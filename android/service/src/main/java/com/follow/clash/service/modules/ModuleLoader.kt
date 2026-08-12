@@ -3,6 +3,7 @@ package com.follow.clash.service.modules
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -40,7 +41,10 @@ fun CoroutineScope.moduleLoader(block: suspend ModuleLoaderScope.() -> Unit): Mo
 
         override fun cancel() {
             launch(Dispatchers.IO) {
-                job?.cancel()
+                // Join so a half-finished install cannot keep running while
+                // (or after) the modules are being uninstalled.
+                job?.cancelAndJoin()
+                job = null
                 mutex.withLock {
                     modules.asReversed().forEach { it.uninstall() }
                     modules.clear()

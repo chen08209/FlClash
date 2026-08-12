@@ -21,6 +21,8 @@ class CoreService extends CoreHandlerInterface {
 
   Process? _process;
 
+  bool _isShuttingDown = false;
+
   factory CoreService() {
     _instance ??= CoreService._internal();
     return _instance!;
@@ -49,7 +51,11 @@ class CoreService extends CoreHandlerInterface {
     await _transport.init();
 
     _transport.onDisconnect = () {
-      _handleInvokeCrashEvent();
+      // A disconnect we asked for is not a crash; reporting it pops a
+      // spurious 'core done' notice during quit and re-enters shutdown.
+      if (!_isShuttingDown) {
+        _handleInvokeCrashEvent();
+      }
       if (!_shutdownCompleter.isCompleted) {
         _shutdownCompleter.complete(true);
       }
@@ -85,7 +91,9 @@ class CoreService extends CoreHandlerInterface {
     );
   }
 
-  Future<void> start() async {
+  /// Returns an empty string on success, or the reason the core could not
+  /// be started so callers do not report a dead core as connected.
+  Future<String> start() async {
     if (_process != null) {
       await shutdown(false);
     }
@@ -93,7 +101,8 @@ class CoreService extends CoreHandlerInterface {
       final isSuccess = await request.startCoreByHelper(_transport.address);
       if (isSuccess) {
         await _transport.connectionCompleter.future;
-        return;
+        _isShuttingDown = false;
+        return '';
       }
     }
     try {
@@ -104,7 +113,7 @@ class CoreService extends CoreHandlerInterface {
         logLevel: LogLevel.error,
       );
       _handleInvokeCrashEvent();
-      return;
+      return e.toString();
     }
     _process?.stdout.listen((_) {});
     _process?.stderr.listen((e) {
@@ -114,6 +123,8 @@ class CoreService extends CoreHandlerInterface {
       }
     });
     await _transport.connectionCompleter.future;
+    _isShuttingDown = false;
+    return '';
   }
 
   @override
@@ -131,6 +142,7 @@ class CoreService extends CoreHandlerInterface {
   @override
   Future<bool> shutdown(bool isUser) async {
     _shutdownCompleter = Completer();
+    _isShuttingDown = true;
     if (system.isWindows) {
       await request.stopCoreByHelper();
     }
@@ -139,7 +151,12 @@ class CoreService extends CoreHandlerInterface {
     _process = null;
     _clearCompleter();
     if (isUser) {
-      return _shutdownCompleter.future;
+      // Nothing completes this when no core client was ever connected, so
+      // a restart in that state would hang forever.
+      return _shutdownCompleter.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => true,
+      );
     } else {
       return true;
     }
@@ -153,8 +170,7 @@ class CoreService extends CoreHandlerInterface {
 
   @override
   Future<String> preload() async {
-    await start();
-    return '';
+    return await start();
   }
 
   @override

@@ -74,13 +74,13 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     );
 
     query.orderBy([
-      OrderingTerm.desc(
+      OrderingTerm.asc(
         profileRuleLinks.profileId.isNull().caseMatch<int>(
           when: {const Constant(true): const Constant(1)},
           orElse: const Constant(0),
         ),
       ),
-      OrderingTerm.desc(profileRuleLinks.order),
+      OrderingTerm.asc(profileRuleLinks.order),
     ]);
 
     return query.map((row) {
@@ -110,24 +110,39 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     });
   }
 
+  /// Highest order key currently stored, so a merge restore can allocate
+  /// keys after it instead of colliding with the local ones.
+  Future<String?> maxLinkOrder() async {
+    final maxOrder = profileRuleLinks.order.max();
+    final query = selectOnly(profileRuleLinks)..addColumns([maxOrder]);
+    final row = await query.getSingleOrNull();
+    return row?.read(maxOrder);
+  }
+
   void restoreWithBatch(
     Batch batch,
     Iterable<Rule> rules,
-    Iterable<ProfileRuleLink> links,
-  ) {
+    Iterable<ProfileRuleLink> links, {
+    bool isOverride = true,
+    String? afterKey,
+  }) {
     batch.insertAllOnConflictUpdate(
       this.rules,
       rules.map((item) => item.toCompanion()),
     );
-    final ruleIds = rules.map((item) => item.id);
-    batch.deleteWhere(this.rules, (t) => t.id.isNotIn(ruleIds));
-    final keys = indexing.generateNKeys(links.length);
+    if (isOverride) {
+      final ruleIds = rules.map((item) => item.id);
+      batch.deleteWhere(this.rules, (t) => t.id.isNotIn(ruleIds));
+    }
+    final keys = indexing.generateNKeysBetween(afterKey, null, links.length);
     batch.insertAllOnConflictUpdate(
       profileRuleLinks,
       links.mapIndexed((index, item) => item.toCompanion(keys[index])),
     );
-    final linkKeys = links.map((item) => item.key);
-    batch.deleteWhere(profileRuleLinks, (t) => t.id.isNotIn(linkKeys));
+    if (isOverride) {
+      final linkKeys = links.map((item) => item.key);
+      batch.deleteWhere(profileRuleLinks, (t) => t.id.isNotIn(linkKeys));
+    }
   }
 
   Future<void> delRules(Iterable<int> ruleIds) {
@@ -290,7 +305,20 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
   }
 
   Future<void> _delAll(Iterable<int> ruleIds) async {
-    await rules.deleteWhere((t) => t.id.isIn(ruleIds));
+    await batch((b) {
+      b.deleteWhere(profileRuleLinks, (t) => t.ruleId.isIn(ruleIds));
+      b.deleteWhere(rules, (t) => t.id.isIn(ruleIds));
+    });
+  }
+
+  /// Removes rules that no link references any more. Cascades are declared
+  /// but inert because SQLite foreign keys are disabled by default.
+  Future<void> deleteOrphanRules() async {
+    await rules.deleteWhere((r) {
+      final linkedIds = selectOnly(profileRuleLinks);
+      linkedIds.addColumns([profileRuleLinks.ruleId]);
+      return r.id.isNotInQuery(linkedIds);
+    });
   }
 
   void _setWithBatch(

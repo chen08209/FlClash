@@ -35,11 +35,6 @@ class Utils {
     return '$timestamp$randomStr';
   }
 
-  String getDateStringLast2(int value) {
-    final valueRaw = '0$value';
-    return valueRaw.substring(valueRaw.length - 2);
-  }
-
   String generateRandomString({int minLength = 10, int maxLength = 100}) {
     const latinChars =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -75,29 +70,16 @@ class Utils {
     return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}';
   }
 
-  String getTimeDifference(DateTime dateTime) {
-    final currentDateTime = DateTime.now();
-    final difference = currentDateTime.difference(dateTime);
-    final inHours = difference.inHours;
-    final inMinutes = difference.inMinutes;
-    final inSeconds = difference.inSeconds;
-
-    return '${getDateStringLast2(inHours)}:${getDateStringLast2(inMinutes)}:${getDateStringLast2(inSeconds)}';
-  }
-
   String getTimeText(int? timeStamp) {
-    if (timeStamp == null) {
+    if (timeStamp == null || timeStamp < 0) {
       return '00:00:00';
     }
-    final diff = timeStamp / 1000;
-    final inHours = (diff / 3600).floor();
-    if (inHours > 99) {
-      return '99:59:59';
-    }
-    final inMinutes = (diff / 60 % 60).floor();
-    final inSeconds = (diff % 60).floor();
+    final diff = timeStamp ~/ 1000;
+    final inHours = diff ~/ 3600;
+    final inMinutes = diff ~/ 60 % 60;
+    final inSeconds = diff % 60;
 
-    return '${getDateStringLast2(inHours)}:${getDateStringLast2(inMinutes)}:${getDateStringLast2(inSeconds)}';
+    return '${inHours.toString().padLeft(2, '0')}:${inMinutes.toString().padLeft(2, '0')}:${inSeconds.toString().padLeft(2, '0')}';
   }
 
   Locale? getLocaleForString(String? localString) {

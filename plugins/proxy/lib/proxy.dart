@@ -116,7 +116,9 @@ class Proxy extends ProxyPlatform {
   Future<bool> _stopProxyWithMacos() async {
     final devices = await _getNetworkDeviceListWithMacos();
     final commands = devices.expand(_buildMacosStopCommands);
-    return _runCommands(commands);
+    // Disabling must be attempted on every service: aborting on the first
+    // failure would leave the remaining ones proxied.
+    return _runAllCommands(commands);
   }
 
   Future<List<String>> _getNetworkDeviceListWithMacos() async {
@@ -146,6 +148,26 @@ class Proxy extends ProxyPlatform {
     } catch (_) {
       return false;
     }
+  }
+
+  /// Runs every command even if one fails, reporting whether all succeeded.
+  Future<bool> _runAllCommands(Iterable<ProxyCommand> commands) async {
+    var success = true;
+    for (final command in commands) {
+      try {
+        final result = await _processRunner(
+          command.executable,
+          command.args,
+          runInShell: command.runInShell,
+        );
+        if (result.exitCode != 0) {
+          success = false;
+        }
+      } catch (_) {
+        success = false;
+      }
+    }
+    return success;
   }
 
   Future<List<ProxyCommand>> _resolveLinuxStartCommands(
@@ -214,8 +236,14 @@ class Proxy extends ProxyPlatform {
   }
 
   static Future<bool> _hasExecutable(String executable) async {
-    final result = await Process.run('which', [executable]);
-    return result.exitCode == 0;
+    try {
+      final result = await Process.run('which', [executable]);
+      return result.exitCode == 0;
+    } catch (_) {
+      // Minimal images may not ship `which`; a failed probe must not abort
+      // system-proxy configuration.
+      return false;
+    }
   }
 
   static LinuxProxyBackend? _preferredLinuxBackend(String? desktop) {

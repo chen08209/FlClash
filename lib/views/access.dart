@@ -238,7 +238,10 @@ class _AccessViewState extends ConsumerState<AccessView> {
       final data = await Clipboard.getData('text/plain');
       final text = data?.text;
       if (text == null) return;
-      final list = text.split('\n');
+      final list = text
+          .split(RegExp(r'\r?\n'))
+          .map((item) => item.trim())
+          .where((item) => item.isNotEmpty);
       ref
           .read(accessControlStateProvider.notifier)
           .update((state) => state.copyWithNewList(list.toSet().toList()));
@@ -381,7 +384,9 @@ class _AccessViewState extends ConsumerState<AccessView> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(loadingProvider(LoadingTag.access));
-    final query = ref.watch(queryProvider(QueryTag.access));
+    final lowQuery = ref
+        .watch(queryProvider(QueryTag.access))
+        .toLowerCase();
     final packages = ref.watch(packagesProvider);
     final accessControl = ref.watch(accessControlStateProvider);
     if (_isInit) {
@@ -401,8 +406,8 @@ class _AccessViewState extends ConsumerState<AccessView> {
         )
         .where(
           (package) =>
-              package.label.toLowerCase().contains(query) ||
-              package.packageName.contains(query),
+              package.label.toLowerCase().contains(lowQuery) ||
+              package.packageName.toLowerCase().contains(lowQuery),
         )
         .toList();
     final mode = accessControl.mode;

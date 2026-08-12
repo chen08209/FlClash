@@ -29,6 +29,10 @@ import (
 
 var eventListener unsafe.Pointer
 
+// Guards eventListener: it is replaced (and the old object released) from
+// the platform thread while sendMessage reads it from core goroutines.
+var eventListenerLock sync.RWMutex
+
 type TunHandler struct {
 	listener *sing_tun.Listener
 	callback unsafe.Pointer
@@ -226,27 +230,31 @@ func quickSetup(callback unsafe.Pointer, initParamsChar *C.char, setupParamsChar
 
 //export setEventListener
 func setEventListener(listener unsafe.Pointer) {
+	eventListenerLock.Lock()
+	defer eventListenerLock.Unlock()
 	if eventListener != nil || listener == nil {
 		releaseObject(eventListener)
 	}
 	eventListener = listener
 }
 
+// The deferred free ran before the caller could read the pointer, so the
+// returned string was already freed memory. Ownership now passes to the
+// caller, which must free it.
+
 //export getTotalTraffic
 func getTotalTraffic(onlyStatisticsProxy bool) *C.char {
-	data := C.CString(handleGetTotalTraffic(onlyStatisticsProxy))
-	defer C.free(unsafe.Pointer(data))
-	return data
+	return C.CString(handleGetTotalTraffic(onlyStatisticsProxy))
 }
 
 //export getTraffic
 func getTraffic(onlyStatisticsProxy bool) *C.char {
-	data := C.CString(handleGetTraffic(onlyStatisticsProxy))
-	defer C.free(unsafe.Pointer(data))
-	return data
+	return C.CString(handleGetTraffic(onlyStatisticsProxy))
 }
 
 func sendMessage(message Message) {
+	eventListenerLock.RLock()
+	defer eventListenerLock.RUnlock()
 	if eventListener == nil {
 		return
 	}

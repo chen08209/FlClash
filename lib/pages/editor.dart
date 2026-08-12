@@ -108,6 +108,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     _toolbarController.hide(context);
     _findController.dispose();
     _controller.dispose();
+    _titleController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -135,12 +136,14 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   }
 
   Future<void> _handleImportFormFile() async {
-    final file = await picker.pickerFile();
-    if (file == null) {
-      return;
-    }
-    final res = utf8.decode(await file.readBytes());
-    _controller.text = res;
+    await globalState.safeRun(() async {
+      final file = await picker.pickerFile();
+      if (file == null) {
+        return;
+      }
+      // A non-UTF-8 pick throws; surface it instead of failing silently.
+      _controller.text = utf8.decode(await file.readBytes());
+    }, silence: false);
   }
 
   Future<void> _handleImportFormUrl() async {
@@ -165,8 +168,10 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     if (url == null) {
       return;
     }
-    final res = await request.getTextResponseForUrl(url);
-    _controller.text = res.data ?? '';
+    await globalState.safeRun(() async {
+      final res = await request.getTextResponseForUrl(url);
+      _controller.text = res.data ?? '';
+    }, silence: false);
   }
 
   @override

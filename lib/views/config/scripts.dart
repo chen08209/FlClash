@@ -90,7 +90,6 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     final appLocalizations = context.appLocalizations;
     Script newScript =
         (script?.copyWith(label: title) ?? Script.create(label: title));
-    newScript = await newScript.save(content);
     if (newScript.label.isEmpty) {
       final res = await globalState.showCommonDialog<String>(
         child: InputDialog(
@@ -130,6 +129,9 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         return;
       }
     }
+    // Write the file only after every early return, otherwise an aborted
+    // save leaves an untracked script file behind.
+    newScript = await newScript.save(content);
     ref.read(scriptsProvider.notifier).put(newScript);
     if (mounted) {
       Navigator.of(context).pop();

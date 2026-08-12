@@ -106,6 +106,18 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     COMPONENT Runtime)
 endforeach(bundled_library)
 
+# flutter_js's Linux plugin exports its prebuilt QuickJS bridge under a
+# misspelled variable (flutter_qjs_bundled_libraries), so the generated
+# plugin bundling above never installs it and script-mode overrides fail
+# with "Failed to load dynamic library 'libquickjs_c_bridge_plugin.so'".
+set(QUICKJS_BRIDGE_LIBRARY
+  "${CMAKE_CURRENT_SOURCE_DIR}/flutter/ephemeral/.plugin_symlinks/flutter_js/linux/shared/libquickjs_c_bridge_plugin.so")
+if(EXISTS "${QUICKJS_BRIDGE_LIBRARY}")
+  install(FILES "${QUICKJS_BRIDGE_LIBRARY}"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+endif()
+
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"

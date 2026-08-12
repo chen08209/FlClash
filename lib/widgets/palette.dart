@@ -135,10 +135,12 @@ class _ChromaSlider extends StatelessWidget {
         thumbColor: Color(Hct.from(hue, chroma, 80).toInt()),
       ),
       child: Slider(
+        // Must match the range painted by _ChromaTrackShape (0-150),
+        // otherwise most of the track is unreachable.
         padding: EdgeInsets.zero,
-        value: chroma.clamp(0, 10),
+        value: chroma.clamp(0, 150),
         min: 0,
-        max: 10,
+        max: 150,
         onChanged: onChanged,
       ),
     );

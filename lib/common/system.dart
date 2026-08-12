@@ -42,7 +42,9 @@ class System {
   }
 
   Future<bool> checkIsAdmin() async {
-    final corePath = appPath.corePath.replaceAll(' ', '\\\\ ');
+    // Passed as an argv element, not through a shell, so escaping spaces
+    // would make stat look for a path that does not exist.
+    final corePath = appPath.corePath;
     if (system.isWindows) {
       final result = await windows?.checkService();
       return result == WindowsHelperServiceStatus.running;
@@ -375,13 +377,16 @@ class MacOS {
           (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
           orElse: () => '',
         );
-    final currentServiceNameLineSplits = currentServiceNameLine.trim().split(
-      ' ',
-    );
-    if (currentServiceNameLineSplits.length < 2) {
+    // Service names contain spaces ('Thunderbolt Bridge', 'iPhone USB'),
+    // so take everything after the '(N) ' prefix instead of one token.
+    final match = RegExp(
+      r'^\(\d+\)\s+(.*)$',
+    ).firstMatch(currentServiceNameLine.trim());
+    final serviceName = match?.group(1)?.trim();
+    if (serviceName == null || serviceName.isEmpty) {
       return null;
     }
-    return currentServiceNameLineSplits[1];
+    return serviceName;
   }
 
   Future<List<String>?> get systemDns async {
@@ -394,7 +399,11 @@ class MacOS {
       deviceServiceName,
     ]);
     final output = result.stdout.toString().trim();
-    if (output.startsWith("There aren't any DNS Servers set on")) {
+    // networksetup reports failures on stdout too; storing an error string
+    // as the original DNS would write it back verbatim on restore.
+    if (output.isEmpty ||
+        output.startsWith("There aren't any DNS Servers set on") ||
+        output.contains('not a recognized network service')) {
       originDns = [];
     } else {
       originDns = output.split('\n');

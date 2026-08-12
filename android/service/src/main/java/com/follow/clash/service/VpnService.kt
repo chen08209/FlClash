@@ -24,6 +24,7 @@ import com.follow.clash.service.modules.moduleLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentHashMap
 import android.net.VpnService as SystemVpnService
 
 class VpnService : SystemVpnService(), IBaseService,
@@ -51,7 +52,8 @@ class VpnService : SystemVpnService(), IBaseService,
     private val connectivity by lazy {
         getSystemService<ConnectivityManager>()
     }
-    private val uidPageNameMap = mutableMapOf<Int, String>()
+    // Populated from native callback threads, so it must be thread-safe.
+    private val uidPageNameMap = ConcurrentHashMap<Int, String>()
 
     private fun resolverProcess(
         protocol: Int,
@@ -67,10 +69,11 @@ class VpnService : SystemVpnService(), IBaseService,
         if (nextUid == -1) {
             return ""
         }
-        if (!uidPageNameMap.containsKey(nextUid)) {
-            uidPageNameMap[nextUid] = this.packageManager?.getPackagesForUid(nextUid)?.first() ?: ""
+        // Called from native threads: firstOrNull avoids a crash when the
+        // uid has no packages (shared/removed uid).
+        return uidPageNameMap.getOrPut(nextUid) {
+            this.packageManager?.getPackagesForUid(nextUid)?.firstOrNull() ?: ""
         }
-        return uidPageNameMap[nextUid] ?: ""
     }
 
     val VpnOptions.address
@@ -239,8 +242,11 @@ class VpnService : SystemVpnService(), IBaseService,
             State.options?.let {
                 handleStart(it)
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             stop()
+            // Propagate so the caller records the start as failed instead
+            // of reporting a running state for a dead VPN.
+            throw e
         }
     }
 

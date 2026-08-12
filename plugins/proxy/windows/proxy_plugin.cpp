@@ -21,6 +21,10 @@
 namespace
 {
 
+// Tracks whether this process enabled the system proxy, so the
+// session-end hook only clears settings FlClash itself applied.
+bool proxy_enabled = false;
+
 std::wstring Utf8ToWide(const std::string& value)
 {
   if (value.empty())
@@ -133,6 +137,7 @@ bool startProxy(const int port, const flutter::EncodableList& bypassDomain)
   options[2].dwOption = INTERNET_PER_CONN_PROXY_BYPASS;
   options[2].Value.pszValue = bypassList.data();
 
+  proxy_enabled = true;
   return ApplyOptionsToConnections(list) && NotifySettingsChanged();
 }
 
@@ -148,6 +153,7 @@ bool stopProxy()
   options[0].dwOption = INTERNET_PER_CONN_FLAGS;
   options[0].Value.dwValue = PROXY_TYPE_DIRECT;
 
+  proxy_enabled = false;
   return ApplyOptionsToConnections(list) && NotifySettingsChanged();
 }
 
@@ -165,7 +171,7 @@ namespace proxy
             registrar->messenger(), "proxy",
             &flutter::StandardMethodCodec::GetInstance());
 
-    auto plugin = std::make_unique<ProxyPlugin>();
+    auto plugin = std::make_unique<ProxyPlugin>(registrar);
 
     channel->SetMethodCallHandler(
         [plugin_pointer = plugin.get()](const auto &call, auto result)
@@ -176,9 +182,37 @@ namespace proxy
     registrar->AddPlugin(std::move(plugin));
   }
 
-  ProxyPlugin::ProxyPlugin() {}
+  ProxyPlugin::ProxyPlugin(flutter::PluginRegistrarWindows *registrar)
+      : registrar_(registrar)
+  {
+    window_proc_id_ = registrar_->RegisterTopLevelWindowProcDelegate(
+        [this](HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+        {
+          return HandleWindowProc(hwnd, message, wparam, lparam);
+        });
+  }
 
-  ProxyPlugin::~ProxyPlugin() {}
+  ProxyPlugin::~ProxyPlugin()
+  {
+    if (registrar_ != nullptr && window_proc_id_ >= 0)
+    {
+      registrar_->UnregisterTopLevelWindowProcDelegate(window_proc_id_);
+    }
+  }
+
+  std::optional<LRESULT> ProxyPlugin::HandleWindowProc(
+      HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+  {
+    // Windows shutdown/logoff terminates the process without running the
+    // Dart exit path, which would leave a dead 127.0.0.1 system proxy
+    // behind for the next boot. WM_ENDSESSION with wParam == TRUE is the
+    // last reliable notification, so clear the proxy synchronously here.
+    if (message == WM_ENDSESSION && wparam != 0 && proxy_enabled)
+    {
+      stopProxy();
+    }
+    return std::nullopt;
+  }
 
   void ProxyPlugin::HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue> &method_call,

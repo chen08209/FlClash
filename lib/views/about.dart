@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/list.dart';
@@ -26,13 +27,22 @@ class AboutView extends StatelessWidget {
   const AboutView({super.key});
 
   Future<void> _checkUpdate(BuildContext context) async {
-    final data = await globalState.safeRun<Map<String, dynamic>?>(
+    final appLocalizations = context.appLocalizations;
+    final res = await globalState.safeRun<Result<Map<String, dynamic>?>>(
       request.checkForUpdate,
-      title: context.appLocalizations.checkUpdate,
+      title: appLocalizations.checkUpdate,
     );
+    if (res == null || res.isError) {
+      // A failed request is not evidence of being up to date.
+      globalState.showMessage(
+        title: appLocalizations.checkUpdate,
+        message: TextSpan(text: appLocalizations.unknownNetworkError),
+      );
+      return;
+    }
     globalState.container
         .read(commonActionProvider.notifier)
-        .checkUpdateResultHandle(data: data, isUser: true);
+        .checkUpdateResultHandle(data: res.data, isUser: true);
   }
 
   List<Widget> _buildMoreSection(BuildContext context) {

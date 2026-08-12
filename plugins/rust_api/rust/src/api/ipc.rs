@@ -140,17 +140,28 @@ pub fn stop_ipc_server() -> Result<(), String> {
         return Err("IPC server is not running".into());
     }
 
+    // Bump the generation so a still-parked io_loop cannot clear RUNNING or
+    // STATE out from under a server started later.
+    GENERATION.fetch_add(1, Ordering::SeqCst);
+
     shutdown_old_fd();
 
     RUNNING.store(false, Ordering::SeqCst);
     CONNECTED.store(false, Ordering::SeqCst);
-    if let Ok(mut guard) = STATE.lock() {
-        guard.tx = None;
-        if let Some(handle) = guard.handle.take() {
-            ipc_debug!("[IPC] stop_ipc_server: joining old thread...");
-            let _ = handle.join();
-            ipc_debug!("[IPC] stop_ipc_server: old thread joined");
-        }
+
+    // The guard must be released before joining: io_loop needs STATE on its
+    // exit path, so joining while holding it deadlocks both threads.
+    let old_handle = STATE
+        .lock()
+        .map(|mut guard| {
+            guard.tx = None;
+            guard.handle.take()
+        })
+        .unwrap_or(None);
+    if let Some(handle) = old_handle {
+        ipc_debug!("[IPC] stop_ipc_server: joining old thread...");
+        let _ = handle.join();
+        ipc_debug!("[IPC] stop_ipc_server: old thread joined");
     }
     Ok(())
 }

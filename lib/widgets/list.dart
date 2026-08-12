@@ -367,15 +367,17 @@ class ListItem<T> extends StatelessWidget {
       final optionsDelegate = delegate as OptionsDelegate<T>;
       return _buildListTile(
         onTap: () async {
-          final value = await globalState.showCommonDialog<T>(
+          // Delivered through onSelected so a dismissed dialog is not
+          // mistaken for picking a null option (e.g. 'follow system').
+          await globalState.showCommonDialog<void>(
             child: OptionsDialog<T>(
               title: optionsDelegate.title,
               options: optionsDelegate.options,
               textBuilder: optionsDelegate.textBuilder,
               value: optionsDelegate.value,
+              onSelected: optionsDelegate.onChanged,
             ),
           );
-          optionsDelegate.onChanged(value);
         },
       );
     }

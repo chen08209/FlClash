@@ -21,8 +21,8 @@ void main() {
     test('exposes lowercase GeoResource values', () {
       expect(GeoResource.MMDB.value, 'mmdb');
       expect(GeoResource.ASN.value, 'asn');
-      expect(GeoResource.GEOIP.value, 'geo-ip');
-      expect(GeoResource.GEOSITE.value, 'geo-site');
+      expect(GeoResource.GEOIP.value, 'geoip');
+      expect(GeoResource.GEOSITE.value, 'geosite');
     });
 
     test('parses current lowercase GeoResource keys from config JSON', () {
@@ -66,7 +66,7 @@ void main() {
         geoXUrl: {GeoResource.GEOIP: 'https://example.com/geoip.dat'},
       ).toJson();
 
-      expect(json['geox-url'], {'geo-ip': 'https://example.com/geoip.dat'});
+      expect(json['geox-url'], {'geoip': 'https://example.com/geoip.dat'});
     });
 
     test('converts geoXUrl map to raw config map', () {
@@ -77,7 +77,7 @@ void main() {
 
       expect(geoXUrl.raw, {
         'mmdb': 'https://example.com/mmdb',
-        'geo-site': 'https://example.com/geosite.dat',
+        'geosite': 'https://example.com/geosite.dat',
       });
     });
 

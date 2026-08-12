@@ -67,7 +67,8 @@ class CommonAction extends _$CommonAction {
   Future<void> autoCheckUpdate() async {
     if (!ref.read(appSettingProvider).autoCheckUpdate) return;
     final res = await request.checkForUpdate();
-    checkUpdateResultHandle(data: res);
+    if (res.isError) return;
+    checkUpdateResultHandle(data: res.data);
   }
 
   Future<void> checkUpdateResultHandle({
@@ -144,6 +145,9 @@ class SetupAction extends _$SetupAction {
     if (!ref.read(suspendProvider)) {
       await coreController.startListener();
     }
+    // Core restarts re-enter here without a stop, so an old timer would be
+    // orphaned and keep polling the core for the rest of the session.
+    _updateTimer?.cancel();
     _updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       ref.read(commonActionProvider.notifier).updateRunTime();
       ref.read(commonActionProvider.notifier).updateTraffic();
@@ -192,15 +196,34 @@ class SetupAction extends _$SetupAction {
         applyProfileDebounce(force: true, silence: true);
       } else {
         globalState.needInitStatus = false;
+        // On Android startTime is adopted from a service that may already be
+        // running; tearing that tunnel down over a transient setup error
+        // would be worse than leaving it up.
+        final wasRunning = startTime != null;
+        // Load-bearing: a nested restartCore() (admin authorization) checks
+        // isStartProvider to decide whether to re-enter this branch, and
+        // only that branch runs _handleStart.
         ref.read(runTimeProvider.notifier).value = 0;
+        bool success = false;
         try {
-          await applyProfile(
+          success = await applyProfile(
             force: true,
             preloadInvoke: () async {
               await _handleStart();
             },
           );
         } catch (_) {
+          success = false;
+        }
+        if (success) {
+          ref.read(commonActionProvider.notifier).updateRunTime();
+        } else {
+          // Setup failed (e.g. boot before the network is up): roll back the
+          // started state so the system proxy is released instead of
+          // pointing at a dead port until the user toggles manually.
+          if (!wasRunning) {
+            await handleStop();
+          }
           ref.read(runTimeProvider.notifier).value = null;
         }
       }
@@ -263,12 +286,12 @@ class SetupAction extends _$SetupAction {
     });
   }
 
-  Future<void> applyProfile({
+  Future<bool> applyProfile({
     bool silence = false,
     bool force = false,
     VoidCallback? preloadInvoke,
   }) async {
-    await _setupConfig(
+    return await _setupConfig(
       force: force,
       silence: silence,
       preloadInvoke: preloadInvoke,
@@ -366,7 +389,7 @@ class SetupAction extends _$SetupAction {
     return Result.success(enableTun);
   }
 
-  Future<void> _setupConfig({
+  Future<bool> _setupConfig({
     bool force = false,
     bool silence = false,
     VoidCallback? preloadInvoke,
@@ -381,7 +404,9 @@ class SetupAction extends _$SetupAction {
     commonPrint.log('setup ===> ${profile?.id}');
     final patchConfig = ref.read(patchClashConfigProvider);
     final res = await _requestAdmin(patchConfig.tun.enable);
-    if (res.isError) return;
+    // An error result here only means authorization succeeded and
+    // restartCore() has taken the setup over — not that setup failed.
+    if (res.isError) return true;
     final realTunEnable = ref.read(realTunEnableProvider);
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
     final setupState = await ref.read(setupStateProvider(profile?.id).future);
@@ -396,8 +421,8 @@ class SetupAction extends _$SetupAction {
     );
     final yamlString = vm2.a;
     final yamlMd5 = vm2.b;
-    if (yamlMd5 == globalState.lastConfigMd5 && force == false) return;
-    await globalState.loadingRun(
+    if (yamlMd5 == globalState.lastConfigMd5 && force == false) return true;
+    final setupRes = await globalState.loadingRun<bool>(
       () async {
         final configFilePath = await appPath.configFilePath;
         await File(configFilePath).safeWriteAsString(yamlString);
@@ -412,10 +437,12 @@ class SetupAction extends _$SetupAction {
         }
         ref.read(checkIpNumProvider.notifier).add();
         await onUpdated?.call();
+        return true;
       },
       silence: true,
       tag: !silence ? LoadingTag.proxies : null,
     );
+    return setupRes == true;
   }
 }
 
@@ -471,6 +498,7 @@ class BackupAction extends _$BackupAction {
       ref.read(proxiesStyleSettingProvider.notifier).value =
           config.proxiesStyleProps;
       ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
+      ref.read(excludeSSIDsProvider.notifier).value = config.excludeSSIDs;
       ref.read(networkSettingProvider.notifier).value = config.networkProps;
       ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
       return;
@@ -603,7 +631,9 @@ class SystemAction extends _$SystemAction {
       }
       await system.back();
     } else {
-      await handleExit();
+      // Config saves are debounced; quitting without a flush loses whatever
+      // the user changed in the last few hundred milliseconds.
+      await handleExit(true);
     }
   }
 

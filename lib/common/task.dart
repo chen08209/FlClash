@@ -184,6 +184,8 @@ Future<VM2<String, String>> _makeRealProfileTask(
   }
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
+  rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;
+  rawConfig['geo-update-interval'] = realPatchConfig.geoUpdateInterval;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
   if (rawConfig['hosts'] == null) {
     rawConfig['hosts'] = {};
@@ -295,6 +297,7 @@ Future<List<String>> _shakingProfileTask(
     Directory dir,
     Iterable<int> baseNames, {
     bool skipProvidersFolder = false,
+    bool includeDirectories = false,
   }) {
     if (!dir.existsSync()) return;
     final entities = dir.listSync(recursive: false, followLinks: false);
@@ -305,16 +308,24 @@ Future<List<String>> _shakingProfileTask(
         if (!baseNames.contains(int.tryParse(id))) {
           targets.add(entity.path);
         }
-      } else if (skipProvidersFolder && entity is Directory) {
-        if (basename(entity.path) == 'providers') {
+      } else if (entity is Directory) {
+        if (skipProvidersFolder && basename(entity.path) == 'providers') {
           continue;
+        }
+        if (includeDirectories) {
+          final id = basename(entity.path);
+          if (!baseNames.contains(int.tryParse(id))) {
+            targets.add(entity.path);
+          }
         }
       }
     }
   }
 
   scanDirectory(profilesDir, profileIds, skipProvidersFolder: true);
-  scanDirectory(providersDir, profileIds);
+  // Provider payloads live in providers/<profileId>/<type>/<md5>, so the
+  // orphans to reclaim here are directories, not files.
+  scanDirectory(providersDir, profileIds, includeDirectories: true);
   scanDirectory(scriptsDir, scriptIds);
   return targets;
 }
@@ -548,7 +559,19 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   final dir = Directory(restoreDirPath);
   await dir.create(recursive: true);
   for (final file in archive.files) {
-    final outPath = join(restoreDirPath, posix.normalize(file.name));
+    final entryPath = posix.normalize(file.name);
+    // Zip entries are attacker controlled; '..' segments or an absolute
+    // path would otherwise let a crafted backup write outside the
+    // restore directory.
+    if (posix.isAbsolute(entryPath) ||
+        entryPath == '..' ||
+        entryPath.startsWith('../')) {
+      continue;
+    }
+    final outPath = join(restoreDirPath, entryPath);
+    if (!isWithin(restoreDirPath, outPath)) {
+      continue;
+    }
     final outputStream = OutputFileStream(outPath);
     file.writeContent(outputStream);
     await outputStream.close();

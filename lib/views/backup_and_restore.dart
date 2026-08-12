@@ -31,6 +31,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
   final _isCompleter = ValueNotifier<bool?>(null);
   DAVProps? _lastProps;
   DAVClient? _client;
+  int _pingGeneration = 0;
 
   Future<void> _updateDAVClient(DAVProps? props) async {
     _client = props == null ? null : DAVClient(props);
@@ -40,9 +41,12 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     if (rawProps == rawLastProps) {
       return;
     } else {
-      _isCompleter.value == null;
+      _isCompleter.value = null;
+      final generation = ++_pingGeneration;
       final res = await _client?.ping() ?? false;
-      if (mounted) {
+      // A slower ping for a previous server must not overwrite the
+      // verdict for the one the user is now configured against.
+      if (mounted && generation == _pingGeneration) {
         _isCompleter.value = res;
       }
     }
@@ -412,11 +416,19 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    ref.read(davSettingProvider.notifier).value = DAVProps(
-      uri: _uriController.text,
-      user: _userController.text,
-      password: _passwordController.text,
-    );
+    final dav = widget.dav;
+    // Preserve fields the dialog does not edit, such as a custom file name.
+    ref.read(davSettingProvider.notifier).value = dav != null
+        ? dav.copyWith(
+            uri: _uriController.text,
+            user: _userController.text,
+            password: _passwordController.text,
+          )
+        : DAVProps(
+            uri: _uriController.text,
+            user: _userController.text,
+            password: _passwordController.text,
+          );
     Navigator.pop(context);
   }
 

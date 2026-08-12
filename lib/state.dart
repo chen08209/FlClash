@@ -394,7 +394,10 @@ class GlobalState {
     }
     final isDisclaimerAccepted = await showDisclaimer();
     if (!isDisclaimerAccepted) {
+      // Without the return, declining still records acceptance and the
+      // disclaimer is never shown again.
       await container.read(systemActionProvider.notifier).handleExit();
+      return;
     }
     container
         .read(appSettingProvider.notifier)

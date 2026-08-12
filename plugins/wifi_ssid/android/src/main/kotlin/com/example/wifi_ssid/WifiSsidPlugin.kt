@@ -118,6 +118,9 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             result.success(PERMISSION_GRANTED)
             return
         }
+        // Replacing a pending result would leave the first caller's future
+        // uncompleted forever.
+        pendingPermissionResult?.success(PERMISSION_DENIED)
         pendingPermissionResult = result
         ActivityCompat.requestPermissions(act, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_CODE_LOCATION)
     }

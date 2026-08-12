@@ -179,9 +179,15 @@ object Service {
         }.getOrNull() ?: 0L
     }
 
-    suspend fun getRunTime(): Long {
+    /// Returns null when the remote service could not be reached, which is
+    /// not the same as "not running" (0).
+    suspend fun getRunTimeOrNull(): Long? {
         return delegate.useService {
             it.runTime
-        }.getOrNull() ?: 0L
+        }.getOrNull()
+    }
+
+    suspend fun getRunTime(): Long {
+        return getRunTimeOrNull() ?: 0L
     }
 }

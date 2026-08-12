@@ -55,12 +55,19 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
           child: RepaintBoundary(
             child: RotationTransition(
               turns: _rotateController,
-              child: CustomPaint(
-                size: Size.square(dimension),
-                painter: _StarPainter(
-                  points: _pointsAnimation.value,
-                  color: color,
-                ),
+              // RotationTransition does not rebuild its child, so without
+              // listening here the star-morph animation never renders.
+              child: AnimatedBuilder(
+                animation: _pointsAnimation,
+                builder: (_, _) {
+                  return CustomPaint(
+                    size: Size.square(dimension),
+                    painter: _StarPainter(
+                      points: _pointsAnimation.value,
+                      color: color,
+                    ),
+                  );
+                },
               ),
             ),
           ),

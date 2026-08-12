@@ -30,6 +30,9 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   TabController? _tabController;
   final _hasMoreButtonNotifier = ValueNotifier<bool>(false);
   ProxyGroupViewKeyMap _keyMap = {};
+  // Tabs are built from the search-filtered group names, so a tab index can
+  // only be resolved against that same list.
+  List<String> _tabGroupNames = [];
 
   @override
   void initState() {
@@ -43,7 +46,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
         final groupNames = next.a;
         final currentGroupName = next.b;
         final index = groupNames.indexWhere((item) => item == currentGroupName);
-        _updateTabController(groupNames.length, index);
+        _updateTabController(groupNames, index);
       }
     }, fireImmediately: true);
   }
@@ -135,12 +138,12 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
         final currentIndex = _tabController?.index;
         groupIndex = currentIndex;
       }
-      final currentGroups = getCurrentGroups();
-      if (groupIndex == null || groupIndex > currentGroups.length) {
+      if (groupIndex == null ||
+          groupIndex < 0 ||
+          groupIndex >= _tabGroupNames.length) {
         return;
       }
-      final currentGroup = currentGroups[groupIndex];
-      updateCurrentGroupName(currentGroup.name);
+      updateCurrentGroupName(_tabGroupNames[groupIndex]);
     });
   }
 
@@ -150,14 +153,15 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     _tabController = null;
   }
 
-  void _updateTabController(int length, int index) {
+  void _updateTabController(List<String> groupNames, int index) {
     _destroyTabController();
-    if (length == 0) {
+    _tabGroupNames = groupNames;
+    if (groupNames.isEmpty) {
       return;
     }
     final realIndex = index == -1 ? 0 : index;
     _tabController ??= TabController(
-      length: length,
+      length: groupNames.length,
       initialIndex: realIndex,
       vsync: this,
     );

@@ -50,10 +50,14 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
             result(0) // granted
             return
         }
-        if status == .denied {
+        // .restricted can never be granted by a prompt, so replying here
+        // keeps the Dart future from waiting forever.
+        if status == .denied || status == .restricted {
             result(2) // permanentlyDenied
             return
         }
+        // A second request would otherwise strand the first caller.
+        pendingPermissionResult?(mapAuthStatus(status).rawValue)
         pendingPermissionResult = result
         locationManager.requestWhenInUseAuthorization()
     }
@@ -84,14 +88,18 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
     // MARK: - SSID
 
     private func getSsid(result: @escaping FlutterResult) {
-        if #available(macOS 10.10, *) {
-            if let interface = CWWiFiClient.shared().interface() {
-                result(interface.ssid())
-            } else {
-                result(nil)
-            }
-        } else {
+        // SSID access is location-gated on modern macOS; touching CoreWLAN
+        // without authorization can block the platform thread indefinitely,
+        // so treat missing permission as "no SSID" and never read inline.
+        guard mapAuthStatus(locationManager.authorizationStatus) == .granted else {
             result(nil)
+            return
+        }
+        DispatchQueue.global(qos: .utility).async {
+            let ssid = CWWiFiClient.shared().interface()?.ssid()
+            DispatchQueue.main.async {
+                result(ssid)
+            }
         }
     }
 }

@@ -194,18 +194,21 @@ static gchar* get_ssid_from_iwd() {
     return nullptr;
   }
 
+  // g_variant_iter_loop only releases the unpacked values when it is called
+  // again, so leaving any of these loops early (via break or a short-circuited
+  // condition) leaks them. Let every iterator drain and skip the work once the
+  // SSID is known.
   gchar* ssid = nullptr;
   const gchar* object_path = nullptr;
   GVariantIter* interfaces = nullptr;
-  while (ssid == nullptr &&
-         g_variant_iter_loop(objects, "{&oa{sa{sv}}}", &object_path,
+  while (g_variant_iter_loop(objects, "{&oa{sa{sv}}}", &object_path,
                              &interfaces)) {
     const gchar* interface_name = nullptr;
     GVariantIter* properties = nullptr;
-    while (ssid == nullptr &&
-           g_variant_iter_loop(interfaces, "{&sa{sv}}", &interface_name,
+    while (g_variant_iter_loop(interfaces, "{&sa{sv}}", &interface_name,
                                &properties)) {
-      if (g_strcmp0(interface_name, "net.connman.iwd.Station") != 0) {
+      if (ssid != nullptr ||
+          g_strcmp0(interface_name, "net.connman.iwd.Station") != 0) {
         continue;
       }
 
@@ -213,19 +216,20 @@ static gchar* get_ssid_from_iwd() {
       GVariant* property_value = nullptr;
       while (g_variant_iter_loop(properties, "{&sv}", &property_name,
                                  &property_value)) {
-        if (g_strcmp0(property_name, "ConnectedNetwork") != 0) {
+        if (ssid != nullptr ||
+            g_strcmp0(property_name, "ConnectedNetwork") != 0) {
           continue;
         }
 
         const gchar* network_path = g_variant_get_string(property_value, nullptr);
         if (network_path == nullptr || g_strcmp0(network_path, "/") == 0) {
-          break;
+          continue;
         }
 
         g_autoptr(GDBusProxy) network = new_system_proxy(
             "net.connman.iwd", network_path, "net.connman.iwd.Network");
         if (network == nullptr) {
-          break;
+          continue;
         }
 
         g_autoptr(GVariant) name =
@@ -233,7 +237,6 @@ static gchar* get_ssid_from_iwd() {
         if (name != nullptr) {
           ssid = g_strdup(g_variant_get_string(name, nullptr));
         }
-        break;
       }
     }
   }
@@ -267,30 +270,36 @@ static gchar* get_ssid_from_connman() {
   gchar* ssid = nullptr;
   const gchar* service_path = nullptr;
   GVariantIter* properties = nullptr;
-  while (ssid == nullptr &&
-         g_variant_iter_loop(services, "(&oa{sv})", &service_path,
+  while (g_variant_iter_loop(services, "(&oa{sv})", &service_path,
                              &properties)) {
-    const gchar* type = nullptr;
-    const gchar* state = nullptr;
-    const gchar* name = nullptr;
+    if (ssid != nullptr) {
+      continue;
+    }
+    gboolean is_wifi = FALSE;
+    gboolean is_connected = FALSE;
+    // Must own this copy: the strings borrowed from property_value are
+    // released by the iterator before the check below runs.
+    g_autofree gchar* name = nullptr;
     const gchar* property_name = nullptr;
     GVariant* property_value = nullptr;
 
     while (g_variant_iter_loop(properties, "{&sv}", &property_name,
                                &property_value)) {
       if (g_strcmp0(property_name, "Type") == 0) {
-        type = g_variant_get_string(property_value, nullptr);
+        is_wifi =
+            g_strcmp0(g_variant_get_string(property_value, nullptr), "wifi") ==
+            0;
       } else if (g_strcmp0(property_name, "State") == 0) {
-        state = g_variant_get_string(property_value, nullptr);
+        const gchar* state = g_variant_get_string(property_value, nullptr);
+        is_connected =
+            g_strcmp0(state, "online") == 0 || g_strcmp0(state, "ready") == 0;
       } else if (g_strcmp0(property_name, "Name") == 0) {
-        name = g_variant_get_string(property_value, nullptr);
+        g_free(name);
+        name = g_variant_dup_string(property_value, nullptr);
       }
     }
 
-    if (g_strcmp0(type, "wifi") == 0 &&
-        (g_strcmp0(state, "online") == 0 ||
-         g_strcmp0(state, "ready") == 0) &&
-        name != nullptr && strlen(name) > 0) {
+    if (is_wifi && is_connected && name != nullptr && strlen(name) > 0) {
       ssid = g_strdup(name);
     }
   }

@@ -29,7 +29,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
     return [
       IconButton(
         onPressed: () async {
-          coreController.closeConnections();
+          await coreController.closeConnections();
           await _updateConnections();
         },
         icon: const Icon(Icons.delete_sweep_outlined),
@@ -67,8 +67,12 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
   }
 
   Future<void> _updateConnections() async {
+    final trackerInfos = await coreController.getConnections();
+    if (!mounted) {
+      return;
+    }
     _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      trackerInfos: await coreController.getConnections(),
+      trackerInfos: trackerInfos,
     );
   }
 
@@ -133,7 +137,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
             itemBuilder: (context, index) {
               return items[index];
             },
-            itemCount: connections.length,
+            itemCount: items.length,
           );
         },
       ),

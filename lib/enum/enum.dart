@@ -353,12 +353,15 @@ enum GeoResource {
 }
 
 extension GeoResourceExt on GeoResource {
+  // Keys must match the core's RawGeoXUrl yaml tags (geoip/geosite);
+  // 'geo-ip'/'geo-site' are silently dropped there and the default
+  // MetaCubeX urls win over user-configured ones.
   String get value {
     return switch (this) {
       GeoResource.MMDB => 'mmdb',
       GeoResource.ASN => 'asn',
-      GeoResource.GEOIP => 'geo-ip',
-      GeoResource.GEOSITE => 'geo-site',
+      GeoResource.GEOIP => 'geoip',
+      GeoResource.GEOSITE => 'geosite',
     };
   }
 
