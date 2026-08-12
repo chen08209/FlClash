@@ -456,8 +456,8 @@ extension RuleExt on Rule {
     final target = realTarget;
     return [
       ruleAction.value,
-      if (content != null) content,
-      if (target != null) target,
+      ?content,
+      ?target,
       if (ruleAction.hasParams) ...[
         if (src) 'src',
         if (noResolve) 'no-resolve',

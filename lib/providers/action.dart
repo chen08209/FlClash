@@ -290,8 +290,8 @@ class SetupAction extends _$SetupAction {
     bool silence = false,
     bool force = false,
     VoidCallback? preloadInvoke,
-  }) async {
-    return await _setupConfig(
+  }) {
+    return _setupConfig(
       force: force,
       silence: silence,
       preloadInvoke: preloadInvoke,
