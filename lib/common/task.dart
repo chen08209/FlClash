@@ -558,8 +558,17 @@ String? resolveArchiveEntryPath(String rootPath, String name) {
       entryPath.startsWith('../')) {
     return null;
   }
+  final segments = posix.split(entryPath);
+  // A drive-qualified segment such as `C:` is not posix-absolute, so it
+  // survives the checks above and would be joined as an ordinary segment.
+  // The resulting path stays inside the root but cannot be created on
+  // Windows, which would abort the whole restore instead of skipping one
+  // entry.
+  if (segments.any((segment) => segment.contains(':'))) {
+    return null;
+  }
   // Join per segment so the result uses the platform separator.
-  final outPath = joinAll([rootPath, ...posix.split(entryPath)]);
+  final outPath = joinAll([rootPath, ...segments]);
   if (!isWithin(rootPath, outPath)) {
     return null;
   }

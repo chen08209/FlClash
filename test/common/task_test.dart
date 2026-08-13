@@ -41,6 +41,18 @@ void main() {
       expect(resolveArchiveEntryPath(root, '/etc/passwd'), isNull);
     });
 
+    // Not posix-absolute, so it reaches the join as an ordinary segment and
+    // yields a path inside the root that Windows cannot create.
+    test('rejects a drive-qualified entry', () {
+      expect(resolveArchiveEntryPath(root, 'C:/evil.txt'), isNull);
+      expect(resolveArchiveEntryPath(root, r'C:\evil.txt'), isNull);
+      expect(resolveArchiveEntryPath(root, 'profiles/C:/evil.txt'), isNull);
+    });
+
+    test('rejects a UNC entry', () {
+      expect(resolveArchiveEntryPath(root, r'\\server\share\evil.txt'), isNull);
+    });
+
     test('rejects backslash traversal', () {
       expect(resolveArchiveEntryPath(root, r'..\evil'), isNull);
       expect(resolveArchiveEntryPath(root, r'profiles\..\..\evil'), isNull);
