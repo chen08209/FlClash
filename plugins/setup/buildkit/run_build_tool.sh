@@ -15,6 +15,13 @@ fi
 BUILD_TOOL_PKG_DIR="$BASEDIR/build_tool"
 BUILD_TOOL_TEMP_DIR="$PROJECT_DIR/build/setup_build_tool"
 
+# Dart resolves the path dependency below itself, so on Windows it has to be a
+# Windows path: under Git Bash `pwd` yields a POSIX one ("/f/...") that the
+# native Dart SDK cannot resolve.
+if command -v cygpath >/dev/null 2>&1; then
+  BUILD_TOOL_PKG_DIR=$(cygpath -m "$BUILD_TOOL_PKG_DIR")
+fi
+
 mkdir -p "$BUILD_TOOL_TEMP_DIR"
 cd "$BUILD_TOOL_TEMP_DIR"
 
