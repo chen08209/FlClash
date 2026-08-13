@@ -109,6 +109,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "agree": MessageLookupByLibrary.simpleMessage("同意"),
     "allowBypass": MessageLookupByLibrary.simpleMessage("允许应用绕过VPN"),
     "allowBypassDesc": MessageLookupByLibrary.simpleMessage("开启后部分应用可绕过VPN"),
+    "allowInsecureCertificate": MessageLookupByLibrary.simpleMessage("允许不安全证书"),
+    "allowInsecureCertificateDesc": MessageLookupByLibrary.simpleMessage(
+      "订阅与 WebDAV 接受自签名或已过期的证书，仅在服务器可信时开启",
+    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("局域网代理"),
     "allowLanDesc": MessageLookupByLibrary.simpleMessage("允许通过局域网访问代理"),
     "app": MessageLookupByLibrary.simpleMessage("应用"),

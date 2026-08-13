@@ -181,7 +181,9 @@ class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
     // smaller than the lower one, which clamp rejects with an error.
     final maxX = size.width - safeOffset.dx - childSize.width;
     final maxY = size.height - safeOffset.dy - childSize.height;
-    final double x = maxX <= 0 ? 0 : (offset.dx - childSize.width).clamp(0, maxX);
+    final double x = maxX <= 0
+        ? 0
+        : (offset.dx - childSize.width).clamp(0, maxX);
     final double y = maxY <= 0 ? 0 : offset.dy.clamp(0, maxY);
     return Offset(x, y);
   }

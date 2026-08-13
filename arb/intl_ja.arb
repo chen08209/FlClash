@@ -550,5 +550,7 @@
   "geoSkipped": "{name} スキップ済み",
   "geoUpdated": "{name} 更新済み",
   "secondsCount": "{count} 秒",
-  "entriesCount": "{count} エントリ"
+  "entriesCount": "{count} エントリ",
+  "allowInsecureCertificate": "安全でない証明書を許可",
+  "allowInsecureCertificateDesc": "サブスクリプションと WebDAV で自己署名または期限切れの証明書を受け入れます。信頼できるサーバーの場合のみ有効にしてください"
 }

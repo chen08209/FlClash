@@ -550,5 +550,7 @@
   "geoSkipped": "{name} 已跳过",
   "geoUpdated": "{name} 已更新",
   "secondsCount": "{count} 秒",
-  "entriesCount": "{count} 个条目"
+  "entriesCount": "{count} 个条目",
+  "allowInsecureCertificate": "允许不安全证书",
+  "allowInsecureCertificateDesc": "订阅与 WebDAV 接受自签名或已过期的证书，仅在服务器可信时开启"
 }

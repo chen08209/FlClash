@@ -550,5 +550,7 @@
   "geoSkipped": "{name} skipped",
   "geoUpdated": "{name} updated",
   "secondsCount": "{count} seconds",
-  "entriesCount": "{count} entries"
+  "entriesCount": "{count} entries",
+  "allowInsecureCertificate": "Allow insecure certificates",
+  "allowInsecureCertificateDesc": "Accept self-signed or expired certificates for subscriptions and WebDAV. Only enable this for servers you trust"
 }

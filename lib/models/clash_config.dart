@@ -370,10 +370,9 @@ abstract class Rule with _$Rule {
 
   factory Rule.parse(String value, {int? id}) {
     id ??= snowflake.id;
-    final segments = _splitRuleValue(value)
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
+    final segments = _splitRuleValue(
+      value,
+    ).map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
     if (segments.isEmpty) {
       return Rule(
         id: id,

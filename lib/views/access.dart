@@ -384,9 +384,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(loadingProvider(LoadingTag.access));
-    final lowQuery = ref
-        .watch(queryProvider(QueryTag.access))
-        .toLowerCase();
+    final lowQuery = ref.watch(queryProvider(QueryTag.access)).toLowerCase();
     final packages = ref.watch(packagesProvider);
     final accessControl = ref.watch(accessControlStateProvider);
     if (_isInit) {

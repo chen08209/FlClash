@@ -186,8 +186,4 @@ object Service {
             it.runTime
         }.getOrNull()
     }
-
-    suspend fun getRunTime(): Long {
-        return getRunTimeOrNull() ?: 0L
-    }
 }

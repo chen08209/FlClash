@@ -541,6 +541,31 @@ Future<String> _backupTask<T>(
   return tempZipFilePath;
 }
 
+/// Resolves an archive entry to an absolute path inside [rootPath], or null
+/// when the entry would escape it.
+///
+/// Entry names come from the archive and are therefore attacker controlled: a
+/// crafted backup can carry `../` segments or an absolute path, which would
+/// otherwise let it write anywhere the user can write.
+String? resolveArchiveEntryPath(String rootPath, String name) {
+  // Archive entries are specified with forward slashes, but a crafted one
+  // can use backslashes, which are separators on Windows.
+  final entryPath = posix.normalize(name.replaceAll(r'\', '/'));
+  if (entryPath.isEmpty ||
+      entryPath == '.' ||
+      entryPath == '..' ||
+      posix.isAbsolute(entryPath) ||
+      entryPath.startsWith('../')) {
+    return null;
+  }
+  // Join per segment so the result uses the platform separator.
+  final outPath = joinAll([rootPath, ...posix.split(entryPath)]);
+  if (!isWithin(rootPath, outPath)) {
+    return null;
+  }
+  return outPath;
+}
+
 Future<MigrationData> restoreTask() async {
   return compute<RootIsolateToken, MigrationData>(
     _restoreTask,
@@ -559,17 +584,8 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   final dir = Directory(restoreDirPath);
   await dir.create(recursive: true);
   for (final file in archive.files) {
-    final entryPath = posix.normalize(file.name);
-    // Zip entries are attacker controlled; '..' segments or an absolute
-    // path would otherwise let a crafted backup write outside the
-    // restore directory.
-    if (posix.isAbsolute(entryPath) ||
-        entryPath == '..' ||
-        entryPath.startsWith('../')) {
-      continue;
-    }
-    final outPath = join(restoreDirPath, entryPath);
-    if (!isWithin(restoreDirPath, outPath)) {
+    final outPath = resolveArchiveEntryPath(restoreDirPath, file.name);
+    if (outPath == null) {
       continue;
     }
     final outputStream = OutputFileStream(outPath);

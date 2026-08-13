@@ -476,7 +476,10 @@ class ProxyGroups extends _$ProxyGroups with AsyncNotifierMixin {
     final newProxyGroup = index != -1
         ? proxyGroup
         : proxyGroup.copyWith(
-            order: indexing.generateKeyBetween(previous.lastOrNull?.order, null),
+            order: indexing.generateKeyBetween(
+              previous.lastOrNull?.order,
+              null,
+            ),
           );
     if (index != -1) {
       next[index] = newProxyGroup;

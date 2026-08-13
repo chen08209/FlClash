@@ -100,5 +100,32 @@ void main() {
         expect(nonNullKeys[i].compareTo(nonNullKeys[i - 1]), greaterThan(0));
       }
     });
+
+    // A merge restore allocates keys after the highest key already stored,
+    // so restored rows cannot collide with the local ones.
+    test('keys generated after an existing key all sort after it', () {
+      final existing = indexing.generateNKeys(5).whereType<String>().toList();
+      final last = existing.last;
+      final restored = indexing
+          .generateNKeysBetween(last, null, 5)
+          .whereType<String>()
+          .toList();
+
+      expect(restored.length, 5);
+      for (final key in restored) {
+        expect(key.compareTo(last), greaterThan(0));
+        expect(existing, isNot(contains(key)));
+      }
+      for (int i = 1; i < restored.length; i++) {
+        expect(restored[i].compareTo(restored[i - 1]), greaterThan(0));
+      }
+    });
+
+    test('generating after a null key behaves like generateNKeys', () {
+      expect(
+        indexing.generateNKeysBetween(null, null, 4),
+        indexing.generateNKeys(4),
+      );
+    });
   });
 }

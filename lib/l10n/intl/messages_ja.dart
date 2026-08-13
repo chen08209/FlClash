@@ -113,6 +113,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
       "有効化すると一部アプリがVPNをバイパス",
     ),
+    "allowInsecureCertificate": MessageLookupByLibrary.simpleMessage(
+      "安全でない証明書を許可",
+    ),
+    "allowInsecureCertificateDesc": MessageLookupByLibrary.simpleMessage(
+      "サブスクリプションと WebDAV で自己署名または期限切れの証明書を受け入れます。信頼できるサーバーの場合のみ有効にしてください",
+    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("LANを許可"),
     "allowLanDesc": MessageLookupByLibrary.simpleMessage("LAN経由でのプロキシアクセスを許可"),
     "app": MessageLookupByLibrary.simpleMessage("アプリ"),

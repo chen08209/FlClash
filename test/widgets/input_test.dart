@@ -75,6 +75,81 @@ void main() {
     expect(_top(tester, 'b'), lessThan(_top(tester, 'c')));
     expect(_top(tester, 'c'), lessThan(_top(tester, 'a')));
   });
+
+  testWidgets('ListItem.options reports the selected option', (tester) async {
+    String? changedValue;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 1000)),
+        ],
+        child: _TestApp(
+          child: Scaffold(
+            body: ListItem.options(
+              title: const Text('Mode'),
+              delegate: OptionsDelegate<String>(
+                title: 'Mode',
+                options: const ['rule', 'global'],
+                value: 'rule',
+                textBuilder: (value) => value,
+                onChanged: (value) {
+                  changedValue = value;
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Mode'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('global'));
+    await tester.pumpAndSettle();
+
+    expect(changedValue, 'global');
+  });
+
+  // Dismissing used to deliver null, which reset settings whose option list
+  // legitimately contains null - the app language among them.
+  testWidgets('ListItem.options reports nothing when dismissed', (
+    tester,
+  ) async {
+    var changed = false;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 1000)),
+        ],
+        child: _TestApp(
+          child: Scaffold(
+            body: ListItem.options(
+              title: const Text('Mode'),
+              delegate: OptionsDelegate<String?>(
+                title: 'Mode',
+                options: const [null, 'rule'],
+                value: 'rule',
+                textBuilder: (value) => value ?? 'system',
+                onChanged: (_) {
+                  changed = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Mode'));
+    await tester.pumpAndSettle();
+
+    globalState.navigatorKey.currentState!.pop();
+    await tester.pumpAndSettle();
+
+    expect(changed, isFalse);
+  });
 }
 
 Widget _textBuilder(String value) {

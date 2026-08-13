@@ -550,5 +550,7 @@
   "geoSkipped": "{name} пропущено",
   "geoUpdated": "{name} обновлено",
   "secondsCount": "{count} секунд",
-  "entriesCount": "{count} записей"
+  "entriesCount": "{count} записей",
+  "allowInsecureCertificate": "Разрешить небезопасные сертификаты",
+  "allowInsecureCertificateDesc": "Принимать самоподписанные или просроченные сертификаты для подписок и WebDAV. Включайте только для доверенных серверов"
 }
