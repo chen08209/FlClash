@@ -1,3 +1,21 @@
+## v0.8.95
+
+- Optimize core service
+
+- Optimize Android TV launcher icon
+
+- Optimize back navigation
+
+- Optimize more details
+
+- Fix some issues
+
+- Optimize app layout
+
+- Optimize focus control
+
+- Adjust android process
+
 ## v0.8.94
 
 - Fix macos performance issue
