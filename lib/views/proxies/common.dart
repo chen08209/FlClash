@@ -30,12 +30,6 @@ List<Group> getGroups() {
   return globalState.container.read(groupsProvider);
 }
 
-String? getCurrentGroupName() {
-  return globalState.container.read(
-    currentProfileProvider.select((state) => state?.currentGroupName),
-  );
-}
-
 void updateCurrentGroupName(String groupName) {
   globalState.container
       .read(proxiesActionProvider.notifier)
@@ -68,18 +62,30 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   ref
       .read(proxiesActionProvider.notifier)
       .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: 0));
-  ref
-      .read(proxiesActionProvider.notifier)
-      .setDelay(await coreController.getDelay(currentTestUrl, state.proxyName));
+  try {
+    final delay = await coreController.getDelay(
+      currentTestUrl,
+      state.proxyName,
+    );
+    ref.read(proxiesActionProvider.notifier).setDelay(delay);
+  } catch (error) {
+    commonPrint.log(
+      'Delay test failed for ${state.proxyName}: $error',
+      logLevel: coreFailureLogLevel(error),
+    );
+    ref
+        .read(proxiesActionProvider.notifier)
+        .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: -1));
+  }
 }
 
 Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  // Batch the proxies, not futures: mapping to futures first starts every
-  // test immediately, so the concurrency limit would never take effect.
-  final batchesProxies = proxies.batch(100);
-  for (final batchProxies in batchesProxies) {
+  final batches = proxies.batch(100);
+  for (final batch in batches) {
     await Future.wait(
-      batchProxies.map((proxy) => proxyDelayTest(proxy, testUrl)),
+      batch.map((proxy) async {
+        await proxyDelayTest(proxy, testUrl);
+      }),
     );
   }
   globalState.container.read(sortNumProvider.notifier).add();
@@ -88,9 +94,9 @@ Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
 double getScrollToSelectedOffset({
   required String groupName,
   required List<Proxy> proxies,
+  required int columns,
 }) {
   final ref = globalState.container;
-  final columns = ref.read(proxiesColumnsProvider);
   final proxyCardType = ref.read(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );

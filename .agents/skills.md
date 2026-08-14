@@ -6,8 +6,9 @@ Repo-scoped Codex skills live under `.agents/skills/*/SKILL.md`. Codex can disco
 
 - `localization`: hardcoded UI text scans, ARB updates, locale generation, and localization verification.
 - `provider-tests`: Riverpod provider, notifier, and state-management tests.
-- `ui-work`: Flutter UI, widgets, Material You styling, navigation surfaces, and user-facing interactions.
-- `core-platform`: core integration, platform managers, Go core communication, desktop/mobile behavior, and Windows helper flow.
+- `ui-work`: Flutter UI, widgets, Material You styling, navigation surfaces, async feedback, and user-facing interactions.
+- `core-platform`: Core lifecycle/process ownership, Android services, Go event delivery, desktop IPC, platform managers,
+  VPN/TUN, and Windows Helper flow.
 
 ## Authoring Notes
 

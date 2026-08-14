@@ -5,22 +5,24 @@ import 'proxy_platform_interface.dart';
 
 /// An implementation of [ProxyPlatform] that uses method channels.
 class MethodChannelProxy extends ProxyPlatform {
+  static const _startProxyMethod = 'StartProxy';
+  static const _stopProxyMethod = 'StopProxy';
+
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('proxy');
 
-  MethodChannelProxy();
-
   @override
-  Future<bool?> startProxy(int port, List<String> bypassDomain) async {
-    return await methodChannel.invokeMethod<bool>("StartProxy", {
-      'port': port,
-      'bypassDomain': bypassDomain,
-    });
+  Future<bool> startProxy(int port, List<String> bypassDomain) async {
+    return await methodChannel.invokeMethod<bool>(_startProxyMethod, {
+          'port': port,
+          'bypassDomain': bypassDomain,
+        }) ??
+        false;
   }
 
   @override
-  Future<bool?> stopProxy() async {
-    return await methodChannel.invokeMethod<bool>("StopProxy");
+  Future<bool> stopProxy() async {
+    return await methodChannel.invokeMethod<bool>(_stopProxyMethod) ?? false;
   }
 }

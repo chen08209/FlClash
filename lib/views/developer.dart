@@ -40,7 +40,7 @@ class DeveloperView extends ConsumerWidget {
             }
           },
         ),
-        if (globalState.isPre)
+        if (globalState.canCrashCore)
           ListItem(
             title: Text(appLocalizations.crashTest),
             minVerticalPadding: 12,
@@ -106,19 +106,15 @@ class DeveloperView extends ConsumerWidget {
             CommonCard(
               type: CommonCardType.filled,
               radius: 18,
-              child: ListItem.switchItem(
+              child: ListItem.toggle(
                 padding: const EdgeInsets.only(left: 16, right: 16),
                 title: Text(appLocalizations.developerMode),
-                delegate: SwitchDelegate(
-                  value: enable,
-                  onChanged: (value) {
-                    ref
-                        .read(appSettingProvider.notifier)
-                        .update(
-                          (state) => state.copyWith(developerMode: value),
-                        );
-                  },
-                ),
+                value: enable,
+                onChanged: (value) {
+                  ref
+                      .read(appSettingProvider.notifier)
+                      .update((state) => state.copyWith(developerMode: value));
+                },
               ),
             ),
             const SizedBox(height: 16),

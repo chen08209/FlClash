@@ -135,6 +135,7 @@ class ProviderItem extends StatelessWidget {
             runSpacing: 6,
             spacing: 12,
             runAlignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               CommonChip(
                 avatar: const Icon(Icons.upload),
@@ -153,7 +154,7 @@ class ProviderItem extends StatelessWidget {
                             width: 30,
                             child: Padding(
                               padding: EdgeInsets.all(2),
-                              child: CircularProgressIndicator(),
+                              child: CommonCircleLoading(),
                             ),
                           )
                         : CommonChip(

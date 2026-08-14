@@ -15,7 +15,7 @@ class ProxyPlugin : public flutter::Plugin {
 
   explicit ProxyPlugin(flutter::PluginRegistrarWindows *registrar);
 
-  virtual ~ProxyPlugin();
+  ~ProxyPlugin() override;
 
   // Disallow copy and assign.
   ProxyPlugin(const ProxyPlugin&) = delete;

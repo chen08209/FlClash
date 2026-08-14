@@ -2,6 +2,28 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/widgets/sheet.dart';
 import 'package:flutter/material.dart';
 
+class PageActivityScope extends InheritedWidget {
+  final bool isActive;
+
+  const PageActivityScope({
+    super.key,
+    required this.isActive,
+    required super.child,
+  });
+
+  static bool isActiveOf(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<PageActivityScope>()
+            ?.isActive ??
+        true;
+  }
+
+  @override
+  bool updateShouldNotify(PageActivityScope oldWidget) {
+    return isActive != oldWidget.isActive;
+  }
+}
+
 class CommonScaffoldBackActionProvider extends InheritedWidget {
   final VoidCallback? backAction;
 

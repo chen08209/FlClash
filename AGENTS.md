@@ -21,9 +21,20 @@ Read these only when the task touches their area:
 
 ## Highest Priority Rules
 
+- When the user explicitly requests a scoped, low-risk change, inspect the relevant context and implement it directly.
+  Do not require brainstorming, design documents, implementation plans, multiple-option proposals, or repeated confirmation.
+  Ask only when material ambiguity, destructive impact, additional authority, or scope expansion could change the result.
+- Do not add code or configuration comments unless the user explicitly asks for comments. This includes explanatory,
+  narrative, TODO, and documentation comments.
 - Use `flutter test`, not `dart test`, because models pull in Flutter types.
 - Run code generation after modifying models, providers, or database schema.
 - Do not manually edit generated files.
+- Preserve lifecycle ownership: desktop Core process convergence belongs to `lib/core/desktop/`; Android service intent
+  arbitration belongs to `ServiceState`. UI/provider code may request a transition but must not become a second source of
+  truth.
+- Keep start/stop/restart paths latest-intent-safe. Flutter-to-Android service commands are deliberately optimistic, while
+  native state serializes the actual work; desktop lifecycle results distinguish applied, coalesced, and superseded
+  requests.
 - Follow `analysis_options.yaml`, especially single quotes, trailing commas, `child:` last, no `print()`, const/final
   preferences, and declared return types.
 - For CI parity, verify with `flutter pub get`, `flutter analyze --no-fatal-infos`, and

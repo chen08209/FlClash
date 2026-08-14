@@ -1,7 +1,7 @@
 name: fl_clash
 description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
-version: 0.8.94+2026071102
+version: 0.8.95+2026081401
 environment:
   sdk: '>=3.8.0 <4.0.0'
 
@@ -28,9 +28,9 @@ dependencies:
     git:
       url: https://github.com/chen08209/launch_at_startup.git
       ref: main
-  json_annotation: ^4.11.0
+  json_annotation: ^4.12.0
   file_picker: ^12.0.0-beta.7
-  mobile_scanner: ^7.2.0
+  mobile_scanner: ^7.4.0
   app_links: ^7.1.2
   win32_registry: ^3.0.3
   tray_manager:
@@ -42,7 +42,7 @@ dependencies:
     path: plugins/wifi_ssid
   collection: ^1.19.1
   animations: ^2.1.1
-  package_info_plus: ^10.1.0
+  package_info_plus: ^10.2.1
   url_launcher: ^6.3.2
   freezed_annotation: ^3.1.0
   image_picker: ^1.2.0
@@ -51,19 +51,19 @@ dependencies:
   webdav_client: ^1.2.2
   dio: ^5.8.0+1
   win32: ^6.0.1
-  re_editor: ^0.9.0
+  re_editor: ^0.10.0
   re_highlight: ^0.0.3
   archive: ^4.0.7
   emoji_regex: ^0.0.5
   hotkey_manager: ^0.2.3
   uni_platform: ^0.1.3
-  device_info_plus: ^13.1.0
-  connectivity_plus: ^7.2.0
+  device_info_plus: ^13.2.0
+  connectivity_plus: 7.2.0
   screen_retriever: ^0.2.1
   defer_pointer: ^0.0.2
-  flutter_riverpod: ^3.3.1
-  riverpod_annotation: ^4.0.2
-  riverpod: ^3.2.1
+  flutter_riverpod: ^3.3.2
+  riverpod_annotation: ^4.0.3
+  riverpod: ^3.3.2
   material_color_utilities: ^0.13.0
   flutter_js: ^0.8.7
   flutter_svg: ^2.1.0
@@ -74,8 +74,8 @@ dependencies:
       url: https://github.com/chen08209/yaml_writer
       ref: master
   super_sliver_list: ^0.4.1
-  drift: ^2.31.0
-  drift_flutter: ^0.2.8
+  drift: ^2.34.3
+  drift_flutter: ^0.3.1
   fractional_indexing: ^1.0.0
   reorderable_grid: ^1.0.13
   smooth_sheets: ^1.0.2
@@ -87,17 +87,18 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  json_serializable: ^6.8.0
-  build_runner: ^2.14.1
+  json_serializable: ^6.14.1
+  build_runner: ^2.15.1
   args: ^2.4.2
-  freezed: ^3.2.5
-  riverpod_generator: ^4.0.3
-  riverpod_lint: ^3.1.3
+  freezed: 3.2.6-dev.1
+  riverpod_generator: ^4.0.4
 
-  drift_dev: ^2.31.0
-  intl_utils: ^2.8.14
-  test: ^1.30.0
+  drift_dev: ^2.34.0
+  intl_utils: ^2.8.15
+  test: ^1.31.0
   mocktail: ^1.0.4
+  yaml: ^3.1.3
+  path_provider_platform_interface: ^2.1.3
 
 flutter:
   uses-material-design: true

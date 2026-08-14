@@ -6,6 +6,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/list.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
+import 'common/migration.dart';
 import 'database/database.dart';
 import 'enum/enum.dart';
 import 'l10n/l10n.dart';
@@ -24,15 +26,24 @@ import 'providers/providers.dart';
 class GlobalState {
   static GlobalState? _instance;
   final navigatorKey = GlobalKey<NavigatorState>();
-  bool isPre = true;
-  late final String coreSHA256;
+  late final String appEnv;
   late final PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;
   late CommonTheme theme;
-  late Color accentColor;
+  Color accentColor = const Color(defaultPrimaryColor);
   late ProviderContainer container;
   bool needInitStatus = true;
+  bool _didCrashOnPreviousExecution = false;
+
+  bool get isPre => appEnv != 'stable';
+
+  bool get canCrashCore => canCrashCoreFor(isDebug: kDebugMode, appEnv: appEnv);
+
+  @visibleForTesting
+  static bool canCrashCoreFor({required bool isDebug, required String appEnv}) {
+    return isDebug || appEnv == 'dev';
+  }
 
   // ignore: deprecated_member_use
   CorePalette? corePalette;
@@ -48,8 +59,7 @@ class GlobalState {
   }
 
   Future<ProviderContainer> init(int version) async {
-    coreSHA256 = const String.fromEnvironment('CORE_SHA256');
-    isPre = const String.fromEnvironment('APP_ENV') != 'stable';
+    appEnv = const String.fromEnvironment('APP_ENV', defaultValue: 'pre');
     await _initDynamicColor();
     return _initData(version);
   }
@@ -57,10 +67,13 @@ class GlobalState {
   Future<void> _initDynamicColor() async {
     try {
       corePalette = await DynamicColorPlugin.getCorePalette();
-      accentColor =
-          await DynamicColorPlugin.getAccentColor() ??
-          const Color(defaultPrimaryColor);
-    } catch (_) {}
+      accentColor = await DynamicColorPlugin.getAccentColor() ?? accentColor;
+    } catch (error) {
+      commonPrint.log(
+        'Failed to initialize dynamic color: $error',
+        logLevel: LogLevel.warning,
+      );
+    }
   }
 
   String get ua => container
@@ -70,6 +83,13 @@ class GlobalState {
   BuildContext get _context => navigatorKey.currentContext!;
 
   Future<ProviderContainer> _initData(int version) async {
+    packageInfo = await PackageInfo.fromPlatform();
+    var config = await migration.run();
+    _didCrashOnPreviousExecution = await system.didCrashOnPreviousExecution();
+    if (_didCrashOnPreviousExecution) {
+      config = config.copyWith(currentProfileId: null);
+      await preferences.saveConfig(config);
+    }
     final appState = AppState(
       brightness: WidgetsBinding.instance.platformDispatcher.platformBrightness,
       version: version,
@@ -81,26 +101,6 @@ class GlobalState {
       systemUiOverlayStyle: const SystemUiOverlayStyle(),
     );
     final appStateOverrides = buildAppStateOverrides(appState);
-    packageInfo = await PackageInfo.fromPlatform();
-    final configMap = await preferences.getConfigMap();
-    final config = await migration.migrationIfNeeded(
-      configMap,
-      sync: (data) async {
-        final newConfigMap = data.configMap;
-        final config = Config.realFromJson(newConfigMap);
-        await Future.wait([
-          database.restore(
-            data.profiles,
-            data.scripts,
-            data.rules,
-            data.links,
-            data.proxyGroups,
-          ),
-          preferences.saveConfig(config),
-        ]);
-        return config;
-      },
-    );
     final configOverrides = buildConfigOverrides(config);
     container = ProviderContainer(
       overrides: [...appStateOverrides, ...configOverrides],
@@ -323,12 +323,24 @@ class GlobalState {
     }
     await _handleFailedPreference();
     await _handlerDisclaimer();
+    await _showCrashRecoveryTip();
     await _showCrashlyticsTip();
-    await container.read(coreActionProvider.notifier).connectCore();
-    await container.read(coreActionProvider.notifier).initCore();
-    await container.read(setupActionProvider.notifier).initStatus();
+    await container.read(coreActionProvider.notifier).startCore();
+    if (!_didCrashOnPreviousExecution) {
+      await container.read(setupActionProvider.notifier).initStatus();
+    }
     container.read(initProvider.notifier).value = true;
     permissions.check();
+  }
+
+  Future<void> _showCrashRecoveryTip() async {
+    if (!_didCrashOnPreviousExecution) return;
+    await showMessage(
+      title: currentAppLocalizations.crashDetected,
+      cancelable: false,
+      dismissible: false,
+      message: TextSpan(text: currentAppLocalizations.crashDetectedTip),
+    );
   }
 
   Future<void> _handleFailedPreference() async {

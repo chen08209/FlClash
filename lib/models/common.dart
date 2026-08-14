@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
@@ -218,29 +220,138 @@ extension TrackerInfosStateExt on TrackerInfosState {
 }
 
 const defaultDavFileName = 'backup.zip';
+const _davPasswordFormatVersion = 'v1';
+const _davPasswordNonceLength = 16;
+const _davPasswordObfuscationMask = <int>[
+  0x9d,
+  0x42,
+  0xe7,
+  0x1b,
+  0x68,
+  0xb4,
+  0x35,
+  0xca,
+  0x7f,
+  0x20,
+  0xd1,
+  0x56,
+  0x83,
+  0xfa,
+  0x0c,
+  0xa9,
+];
 
-@freezed
+// This only prevents accidental plain-text disclosure. It is deliberately not
+// a security boundary against reverse engineering or same-user access.
+String _encodeDavPassword(String password) {
+  if (password.isEmpty) {
+    return '';
+  }
+  final random = Random.secure();
+  final nonce = List<int>.generate(
+    _davPasswordNonceLength,
+    (_) => random.nextInt(256),
+    growable: false,
+  );
+  final passwordBytes = utf8.encode(password);
+  final obfuscated = List<int>.generate(
+    passwordBytes.length,
+    (index) =>
+        passwordBytes[index] ^
+        nonce[index % nonce.length] ^
+        _davPasswordObfuscationMask[index % _davPasswordObfuscationMask.length],
+    growable: false,
+  );
+  return [
+    _davPasswordFormatVersion,
+    base64UrlEncode(nonce),
+    base64UrlEncode(obfuscated),
+  ].join('.');
+}
+
+String _decodeDavPassword(String? value) {
+  if (value == null || value.isEmpty) {
+    return '';
+  }
+  final parts = value.split('.');
+  if (parts.length != 3 || parts[0] != _davPasswordFormatVersion) {
+    return value;
+  }
+  try {
+    final nonce = base64Url.decode(parts[1]);
+    final obfuscated = base64Url.decode(parts[2]);
+    if (nonce.length != _davPasswordNonceLength) {
+      return '';
+    }
+    final passwordBytes = List<int>.generate(
+      obfuscated.length,
+      (index) =>
+          obfuscated[index] ^
+          nonce[index % nonce.length] ^
+          _davPasswordObfuscationMask[index %
+              _davPasswordObfuscationMask.length],
+      growable: false,
+    );
+    return utf8.decode(passwordBytes);
+  } on FormatException {
+    return '';
+  }
+}
+
+@Freezed(toStringOverride: false)
 abstract class DAVProps with _$DAVProps {
+  const DAVProps._();
+
   const factory DAVProps({
     required String uri,
     required String user,
-    required String password,
+    @JsonKey(fromJson: _decodeDavPassword, toJson: _encodeDavPassword)
+    @Default('')
+    String password,
     @Default(defaultDavFileName) String fileName,
   }) = _DAVProps;
 
   factory DAVProps.fromJson(Map<String, Object?> json) =>
       _$DAVPropsFromJson(json);
+
+  @override
+  String toString() =>
+      'DAVProps(uri: $uri, user: $user, password: ***, fileName: $fileName)';
 }
 
 @freezed
 abstract class FileInfo with _$FileInfo {
-  const factory FileInfo({required int size, required DateTime lastModified}) =
+  const factory FileInfo({required int size, DateTime? lastModified}) =
       _FileInfo;
 }
 
+extension FileInfoFileExt on File {
+  Future<FileInfo?> getFileInfo() async {
+    if (!await exists()) {
+      return null;
+    }
+    final size = await length();
+    final lastModified = await _getValidLastModified();
+    return FileInfo(size: size, lastModified: lastModified);
+  }
+
+  Future<DateTime?> _getValidLastModified() async {
+    try {
+      final value = await lastModified();
+      return value.year > 1970 ? value : null;
+    } on FileSystemException {
+      return null;
+    }
+  }
+}
+
 extension FileInfoExt on FileInfo {
-  String getDesc(BuildContext context) =>
-      '${size.traffic.show}  ·  ${lastModified.getLastUpdateTimeDesc(context)}';
+  String getDesc(BuildContext context) {
+    final lastModifiedDesc =
+        lastModified?.getLastUpdateTimeDesc(context) ??
+        context.appLocalizations.unknown;
+    return '${size.traffic.show}  ·  $lastModifiedDesc';
+  }
 }
 
 @freezed
@@ -468,6 +579,10 @@ class PopupMenuItemData {
 
 class CloseWindowIntent extends Intent {
   const CloseWindowIntent();
+}
+
+class EscapeBackIntent extends Intent {
+  const EscapeBackIntent();
 }
 
 @freezed

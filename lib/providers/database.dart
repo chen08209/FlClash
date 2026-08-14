@@ -58,9 +58,9 @@ class Profiles extends _$Profiles {
     if (index != -1) {
       next[index] = newProfile;
     } else {
-      // The query sorts null order last, so a new profile lands at the end;
-      // inserting it first would make the card visibly jump on the next
-      // stream emission.
+      // copyAndPut inserts at the front, but the query sorts null order last,
+      // so a new profile would show at the top and then visibly jump to the
+      // bottom on the next stream emission.
       next.add(newProfile);
     }
     state = next;
@@ -73,15 +73,16 @@ class Profiles extends _$Profiles {
     );
   }
 
-  void del(int id) {
+  Future<void> del(int id) async {
     final previous = List<Profile>.from(state);
     state = previous.where((e) => e.id != id).toList();
-    unawaited(
-      withRollback(
-        snapshot: previous,
-        action: () => database.deleteProfileWithRelations(id),
-        rollback: (v) => state = v,
-      ),
+    await withRollback(
+      snapshot: previous,
+      // The cascade declared on the referencing tables is inert: sqlite3
+      // disables foreign keys by default and beforeOpen does not turn them
+      // on, so a plain delete leaves orphaned groups, links and rules.
+      action: () => database.deleteProfileWithRelations(id),
+      rollback: (v) => state = v,
     );
   }
 
@@ -423,8 +424,9 @@ class ProxyGroups extends _$ProxyGroups with AsyncNotifierMixin {
     return !proxyGroupsEquality.equals(previous.value, next.value);
   }
 
-  // Deletes by the stable id: the name can be mid-edit in the sheet, which
-  // would either delete nothing or, worse, delete a different group.
+  // Deletes by the stable id: the sheet passes its live, possibly renamed
+  // group, so deleting by name either deletes nothing or deletes whichever
+  // other group happens to already carry that name.
   void del(int id) {
     final previous = List<ProxyGroup>.from(value);
     value = List.from(previous.where((item) => item.id != id));
@@ -473,13 +475,11 @@ class ProxyGroups extends _$ProxyGroups with AsyncNotifierMixin {
     final next = List<ProxyGroup>.from(previous);
     // The generated order key must also be persisted, otherwise the row keeps
     // a null order and later reordering computes keys from a null neighbour.
+    // The new group is appended, so its key belongs after the last one.
     final newProxyGroup = index != -1
         ? proxyGroup
         : proxyGroup.copyWith(
-            order: indexing.generateKeyBetween(
-              previous.lastOrNull?.order,
-              null,
-            ),
+            order: indexing.generateKeyBetween(previous.lastOrNull?.order, null),
           );
     if (index != -1) {
       next[index] = newProxyGroup;

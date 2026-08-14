@@ -6,6 +6,7 @@
 #include <WinInet.h>
 #include <Ras.h>
 #include <RasError.h>
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -21,8 +22,11 @@
 namespace
 {
 
-// Tracks whether this process enabled the system proxy, so the
-// session-end hook only clears settings FlClash itself applied.
+constexpr int kMinProxyPort = 1;
+constexpr int kMaxProxyPort = 65535;
+
+// Tracks whether this process enabled the system proxy, so the session-end
+// hook only clears settings FlClash itself applied.
 bool proxy_enabled = false;
 
 std::wstring Utf8ToWide(const std::string& value)
@@ -47,18 +51,25 @@ std::wstring Utf8ToWide(const std::string& value)
 std::wstring BuildBypassList(const flutter::EncodableList& bypassDomain)
 {
   std::wstring bypassList;
-  for (const auto& domain : bypassDomain) {
-    const auto* value = std::get_if<std::string>(&domain);
-    if (value == nullptr)
+  for (const auto& domain : bypassDomain)
+  {
+    const auto& value = std::get<std::string>(domain);
+    if (!bypassList.empty())
     {
-      continue;
+      bypassList += L";";
     }
-    if (!bypassList.empty()) {
-       bypassList += L";";
-    }
-    bypassList += Utf8ToWide(*value);
+    bypassList += Utf8ToWide(value);
   }
   return bypassList;
+}
+
+bool IsStringList(const flutter::EncodableList& values)
+{
+  return std::all_of(
+      values.begin(), values.end(), [](const auto& value)
+      {
+        return std::holds_alternative<std::string>(value);
+      });
 }
 
 bool SetOptionsForConnection(
@@ -138,7 +149,9 @@ bool startProxy(const int port, const flutter::EncodableList& bypassDomain)
   options[2].Value.pszValue = bypassList.data();
 
   proxy_enabled = true;
-  return ApplyOptionsToConnections(list) && NotifySettingsChanged();
+  const bool optionsApplied = ApplyOptionsToConnections(list);
+  const bool settingsNotified = NotifySettingsChanged();
+  return optionsApplied && settingsNotified;
 }
 
 bool stopProxy()
@@ -154,7 +167,9 @@ bool stopProxy()
   options[0].Value.dwValue = PROXY_TYPE_DIRECT;
 
   proxy_enabled = false;
-  return ApplyOptionsToConnections(list) && NotifySettingsChanged();
+  const bool optionsApplied = ApplyOptionsToConnections(list);
+  const bool settingsNotified = NotifySettingsChanged();
+  return optionsApplied && settingsNotified;
 }
 
 }  // namespace
@@ -204,9 +219,9 @@ namespace proxy
       HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
   {
     // Windows shutdown/logoff terminates the process without running the
-    // Dart exit path, which would leave a dead 127.0.0.1 system proxy
-    // behind for the next boot. WM_ENDSESSION with wParam == TRUE is the
-    // last reliable notification, so clear the proxy synchronously here.
+    // Dart exit path, which would leave a dead 127.0.0.1 system proxy behind
+    // for the next boot. WM_ENDSESSION with wParam == TRUE is the last
+    // reliable notification, so clear the proxy synchronously here.
     if (message == WM_ENDSESSION && wparam != 0 && proxy_enabled)
     {
       stopProxy();
@@ -218,11 +233,11 @@ namespace proxy
       const flutter::MethodCall<flutter::EncodableValue> &method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result)
   {
-    if (method_call.method_name().compare("StopProxy") == 0)
+    if (method_call.method_name() == "StopProxy")
     {
       result->Success(stopProxy());
     }
-    else if (method_call.method_name().compare("StartProxy") == 0)
+    else if (method_call.method_name() == "StartProxy")
     {
       auto *arguments = std::get_if<flutter::EncodableMap>(method_call.arguments());
       if (arguments == nullptr)
@@ -242,6 +257,17 @@ namespace proxy
       if (port == nullptr || bypassDomain == nullptr)
       {
         result->Error("bad_args", "StartProxy argument types are invalid");
+        return;
+      }
+      if (*port < kMinProxyPort || *port > kMaxProxyPort)
+      {
+        result->Error("bad_args", "StartProxy port must be between 1 and 65535");
+        return;
+      }
+      if (!IsStringList(*bypassDomain))
+      {
+        result->Error(
+            "bad_args", "StartProxy bypassDomain must contain only strings");
         return;
       }
       result->Success(startProxy(*port, *bypassDomain));

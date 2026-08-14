@@ -53,9 +53,14 @@ class OptionsDialog<T> extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: RadioGroup(
         onChanged: (value) {
-          // Toggleable radios deliver null when the selected option is
-          // tapped again; close with no result instead of casting.
-          if (value is! T) {
+          // The radios are toggleable, so re-tapping the selected option
+          // deselects it and delivers null. Treat every null from here as
+          // "no selection": `is! T` cannot tell that apart when T is itself
+          // nullable, and reporting it would reset settings whose option
+          // list legitimately contains null - the app language among them.
+          // Picking the null option is still reachable through the row tap
+          // below, which carries the option itself.
+          if (value == null) {
             Navigator.of(context).pop();
             return;
           }
@@ -73,12 +78,10 @@ class OptionsDialog<T> extends StatelessWidget {
                     });
                   }
                   return ListItem.radio(
-                    delegate: RadioDelegate(
-                      value: option,
-                      onTab: () {
-                        _handleSelected(context, option);
-                      },
-                    ),
+                    value: option,
+                    onTap: () {
+                      _handleSelected(context, option);
+                    },
                     title: Text(textBuilder(option)),
                   );
                 },
@@ -190,26 +193,19 @@ class _InputDialogState extends State<InputDialog> {
     return CommonDialog(
       title: title,
       actions: [
-        // Rebuild with the live text so the reset/cancel choice tracks
-        // what the user has typed.
-        ValueListenableBuilder(
-          valueListenable: _textController,
-          builder: (_, textValue, _) {
-            if (widget.resetValue != null &&
-                textValue.text != widget.resetValue) {
-              return TextButton(
-                onPressed: _handleReset,
-                child: Text(appLocalizations.reset),
-              );
-            }
-            return TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(appLocalizations.cancel),
-            );
-          },
-        ),
+        if (widget.resetValue != null &&
+            _textController.value.text != widget.resetValue) ...[
+          TextButton(
+            onPressed: _handleReset,
+            child: Text(appLocalizations.reset),
+          ),
+        ] else
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(appLocalizations.cancel),
+          ),
         TextButton(
           onPressed: _handleUpdate,
           child: Text(appLocalizations.submit),

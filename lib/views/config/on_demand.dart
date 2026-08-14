@@ -8,7 +8,6 @@ import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
 class OnDemandView extends ConsumerStatefulWidget {
@@ -33,8 +32,6 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       );
     } else if (system.isAndroid) {
       app?.openAppSettings();
-    } else if (system.isWindows) {
-      launchUrl(Uri.parse('ms-settings:privacy-location'));
     }
   }
 
@@ -51,8 +48,17 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     final res = await wifiSsidManager.requestPermission();
     globalState.container.read(locationPermissionsProvider.notifier).value =
         res;
-    if (res == WifiSsidPermission.granted || !mounted) {
+    if (!mounted) {
       return;
+    }
+    switch (getLocationPermissionFollowUp(res)) {
+      case LocationPermissionFollowUp.none:
+        return;
+      case LocationPermissionFollowUp.openSettings:
+        _handlePermanentlyDeniedLocationPermission();
+        return;
+      case LocationPermissionFollowUp.showDeniedMessage:
+        break;
     }
     final needGo = await globalState.showMessage(
       title: appLocalizations.locationPermissionRequired,
@@ -245,7 +251,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                               ],
                             ),
                     ),
-                  if (system.isAndroid || system.isMacOS || system.isWindows)
+                  if (system.isAndroid || system.isMacOS)
                     DecorationListItem(
                       minVerticalPadding: 8,
                       title: Text(appLocalizations.locationPermission),

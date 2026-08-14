@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
     return [
       IconButton(
         onPressed: () async {
-          await coreController.closeConnections();
+          coreController.closeConnections();
           await _updateConnections();
         },
         icon: const Icon(Icons.delete_sweep_outlined),
@@ -67,13 +68,21 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
   }
 
   Future<void> _updateConnections() async {
-    final trackerInfos = await coreController.getConnections();
-    if (!mounted) {
-      return;
+    try {
+      final trackerInfos = await coreController.getConnections();
+      // dispose() releases the notifier, so a view torn down while the core
+      // call was in flight would otherwise write to a disposed one.
+      if (!mounted) {
+        return;
+      }
+      _connectionsStateNotifier.value = _connectionsStateNotifier.value
+          .copyWith(trackerInfos: trackerInfos);
+    } catch (error) {
+      commonPrint.log(
+        'updateConnections error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
     }
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      trackerInfos: trackerInfos,
-    );
   }
 
   Future<void> _handleBlockConnection(String id) async {
@@ -137,7 +146,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
             itemBuilder: (context, index) {
               return items[index];
             },
-            itemCount: items.length,
+            itemCount: connections.length,
           );
         },
       ),

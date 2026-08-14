@@ -2,7 +2,6 @@ package com.follow.clash.common
 
 import com.google.gson.annotations.SerializedName
 
-
 enum class QuickAction {
     STOP,
     START,
@@ -10,8 +9,8 @@ enum class QuickAction {
 }
 
 enum class BroadcastAction {
-    SERVICE_CREATED,
-    SERVICE_DESTROYED,
+    VPN_START_REQUESTED,
+    VPN_REVOKED,
 }
 
 enum class AccessControlMode {

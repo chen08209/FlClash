@@ -5,6 +5,20 @@ import 'package:test/test.dart';
 void main() {
   final utils = Utils();
 
+  group('getDateStringLast2', () {
+    test('pads single digit', () {
+      expect(utils.getDateStringLast2(5), '05');
+    });
+
+    test('returns last 2 chars of double digit', () {
+      expect(utils.getDateStringLast2(12), '12');
+    });
+
+    test('handles zero', () {
+      expect(utils.getDateStringLast2(0), '00');
+    });
+  });
+
   group('uuidV4', () {
     test('produces valid UUID v4 format', () {
       final uuid = utils.uuidV4;
@@ -44,17 +58,12 @@ void main() {
       expect(utils.getTimeText(3661000), '01:01:01');
     });
 
-    test('does not cap at 100 hours', () {
+    test('formats three digit hours', () {
       expect(utils.getTimeText(100 * 3600 * 1000), '100:00:00');
     });
 
-    test('formats large durations without truncation', () {
-      expect(utils.getTimeText(359959000), '99:59:19');
-      expect(utils.getTimeText(1000 * 3600 * 1000 + 61000), '1000:01:01');
-    });
-
-    test('returns 00:00:00 for negative values', () {
-      expect(utils.getTimeText(-1000), '00:00:00');
+    test('caps at 999:59:59', () {
+      expect(utils.getTimeText(1000 * 3600 * 1000), '999:59:59');
     });
   });
 

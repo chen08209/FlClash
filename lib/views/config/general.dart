@@ -24,20 +24,18 @@ class LogLevelItem extends ConsumerWidget {
       leading: const Icon(Icons.info_outline),
       title: Text(appLocalizations.logLevel),
       subtitle: Text(logLevel.name),
-      delegate: OptionsDelegate<LogLevel>(
-        title: appLocalizations.logLevel,
-        options: LogLevel.values,
-        onChanged: (LogLevel? value) {
-          if (value == null) {
-            return;
-          }
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update((state) => state.copyWith(logLevel: value));
-        },
-        textBuilder: (logLevel) => logLevel.name,
-        value: logLevel,
-      ),
+      dialogTitle: appLocalizations.logLevel,
+      options: LogLevel.values,
+      onChanged: (LogLevel? value) {
+        if (value == null) {
+          return;
+        }
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(logLevel: value));
+      },
+      textBuilder: (logLevel) => logLevel.name,
+      value: logLevel,
     );
   }
 }
@@ -181,40 +179,34 @@ class _UaDialogState extends State<_UaDialog> {
             runSpacing: 8,
             children: [
               ListItem.radio(
-                delegate: RadioDelegate(
-                  value: _defaultUaValue,
-                  onTab: () {
-                    Navigator.of(context).pop(
-                      const _UaDialogResult(
-                        value: _defaultUaValue,
-                        isCustom: false,
-                      ),
-                    );
-                  },
-                ),
+                value: _defaultUaValue,
+                onTap: () {
+                  Navigator.of(context).pop(
+                    const _UaDialogResult(
+                      value: _defaultUaValue,
+                      isCustom: false,
+                    ),
+                  );
+                },
                 title: Text(appLocalizations.defaultText),
               ),
               for (final ua in _presetUas)
                 ListItem.radio(
-                  delegate: RadioDelegate(
-                    value: ua,
-                    onTab: () {
-                      Navigator.of(
-                        context,
-                      ).pop(_UaDialogResult(value: ua, isCustom: false));
-                    },
-                  ),
+                  value: ua,
+                  onTap: () {
+                    Navigator.of(
+                      context,
+                    ).pop(_UaDialogResult(value: ua, isCustom: false));
+                  },
                   title: Text(ua),
                 ),
               ListItem.radio(
-                delegate: RadioDelegate(
-                  value: _customUaValue,
-                  onTab: () {
-                    setState(() {
-                      _groupValue = _customUaValue;
-                    });
-                  },
-                ),
+                value: _customUaValue,
+                onTap: () {
+                  setState(() {
+                    _groupValue = _customUaValue;
+                  });
+                },
                 title: Builder(
                   builder: (context) {
                     final titleStyle = DefaultTextStyle.of(context).style;
@@ -278,32 +270,30 @@ class KeepAliveIntervalItem extends ConsumerWidget {
       leading: const Icon(Icons.timer_outlined),
       title: Text(appLocalizations.keepAliveIntervalDesc),
       subtitle: Text(appLocalizations.secondsCount(keepAliveInterval)),
-      delegate: InputDelegate(
-        title: appLocalizations.keepAliveIntervalDesc,
-        suffixText: appLocalizations.seconds,
-        resetValue: '$defaultKeepAliveInterval',
-        value: '$keepAliveInterval',
-        maxLength: TextInputLimits.interval,
-        validator: (String? value) {
-          if (value == null || value.isEmpty) {
-            return appLocalizations.emptyTip(appLocalizations.interval);
-          }
-          final intValue = int.tryParse(value);
-          if (intValue == null) {
-            return appLocalizations.numberTip(appLocalizations.interval);
-          }
-          return null;
-        },
-        onChanged: (String? value) {
-          if (value == null) {
-            return;
-          }
-          final intValue = int.parse(value);
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update((state) => state.copyWith(keepAliveInterval: intValue));
-        },
-      ),
+      dialogTitle: appLocalizations.keepAliveIntervalDesc,
+      suffixText: appLocalizations.seconds,
+      resetValue: '$defaultKeepAliveInterval',
+      value: '$keepAliveInterval',
+      maxLength: TextInputLimits.interval,
+      validator: (String? value) {
+        if (value == null || value.isEmpty) {
+          return appLocalizations.emptyTip(appLocalizations.interval);
+        }
+        final intValue = int.tryParse(value);
+        if (intValue == null) {
+          return appLocalizations.numberTip(appLocalizations.interval);
+        }
+        return null;
+      },
+      onChanged: (String? value) {
+        if (value == null) {
+          return;
+        }
+        final intValue = int.parse(value);
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(keepAliveInterval: intValue));
+      },
     );
   }
 }
@@ -321,29 +311,27 @@ class TestUrlItem extends ConsumerWidget {
       leading: const Icon(Icons.timeline),
       title: Text(appLocalizations.testUrl),
       subtitle: Text(testUrl),
-      delegate: InputDelegate(
-        resetValue: defaultTestUrl,
-        title: appLocalizations.testUrl,
-        value: testUrl,
-        maxLength: TextInputLimits.url,
-        validator: (String? value) {
-          if (value == null || value.isEmpty) {
-            return appLocalizations.emptyTip(appLocalizations.testUrl);
-          }
-          if (!value.isUrl) {
-            return appLocalizations.urlTip(appLocalizations.testUrl);
-          }
-          return null;
-        },
-        onChanged: (String? value) {
-          if (value == null) {
-            return;
-          }
-          ref
-              .read(appSettingProvider.notifier)
-              .update((state) => state.copyWith(testUrl: value));
-        },
-      ),
+      resetValue: defaultTestUrl,
+      dialogTitle: appLocalizations.testUrl,
+      value: testUrl,
+      maxLength: TextInputLimits.url,
+      validator: (String? value) {
+        if (value == null || value.isEmpty) {
+          return appLocalizations.emptyTip(appLocalizations.testUrl);
+        }
+        if (!value.isUrl) {
+          return appLocalizations.urlTip(appLocalizations.testUrl);
+        }
+        return null;
+      },
+      onChanged: (String? value) {
+        if (value == null) {
+          return;
+        }
+        ref
+            .read(appSettingProvider.notifier)
+            .update((state) => state.copyWith(testUrl: value));
+      },
     );
   }
 }
@@ -353,7 +341,6 @@ class PortItem extends ConsumerWidget {
 
   Future<void> handleShowPortDialog() async {
     await globalState.showCommonDialog(child: const _PortDialog());
-    // inputDelegate.onChanged(value);
   }
 
   @override
@@ -369,35 +356,6 @@ class PortItem extends ConsumerWidget {
       onTap: () {
         handleShowPortDialog();
       },
-      // delegate: InputDelegate(
-      //   title: appLocalizations.port,
-      //   value: "$mixedPort",
-      //   validator: (String? value) {
-      //     if (value == null || value.isEmpty) {
-      //       return appLocalizations.emptyTip(appLocalizations.proxyPort);
-      //     }
-      //     final mixedPort = int.tryParse(value);
-      //     if (mixedPort == null) {
-      //       return appLocalizations.numberTip(appLocalizations.proxyPort);
-      //     }
-      //     if (mixedPort < 1024 || mixedPort > 49151) {
-      //       return appLocalizations.proxyPortTip;
-      //     }
-      //     return null;
-      //   },
-      //   onChanged: (String? value) {
-      //     if (value == null) {
-      //       return;
-      //     }
-      //     final mixedPort = int.parse(value);
-      //     ref.read(patchClashConfigProvider.notifier).update(
-      //           (state) => state.copyWith(
-      //             mixedPort: mixedPort,
-      //           ),
-      //         );
-      //   },
-      //   resetValue: "$defaultMixedPort",
-      // ),
     );
   }
 }
@@ -415,22 +373,20 @@ class HostsItem extends ConsumerWidget {
       leading: const Icon(Icons.view_list_outlined),
       title: const Text('Hosts'),
       subtitle: Text(appLocalizations.hostsDesc),
-      delegate: OpenDelegate(
-        blur: false,
-        widget: MapInputPage(
-          title: 'Hosts',
-          map: hosts,
-          keyMaxLength: TextInputLimits.domain,
-          valueMaxLength: TextInputLimits.hostValue,
-          titleBuilder: (item) => Text(item.key),
-          subtitleBuilder: (item) => Text(item.value),
-        ),
-        onChanged: (value) {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update((state) => state.copyWith(hosts: value));
-        },
+      blur: false,
+      widget: MapInputPage(
+        title: 'Hosts',
+        map: hosts,
+        keyMaxLength: TextInputLimits.domain,
+        valueMaxLength: TextInputLimits.hostValue,
+        titleBuilder: (item) => Text(item.key),
+        subtitleBuilder: (item) => Text(item.value),
       ),
+      onChanged: (value) {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(hosts: value));
+      },
     );
   }
 }
@@ -444,18 +400,16 @@ class Ipv6Item extends ConsumerWidget {
     final ipv6 = ref.watch(
       patchClashConfigProvider.select((state) => state.ipv6),
     );
-    return ListItem.switchItem(
+    return ListItem.toggle(
       leading: const Icon(Icons.water_outlined),
       title: const Text('IPv6'),
       subtitle: Text(appLocalizations.ipv6Desc),
-      delegate: SwitchDelegate(
-        value: ipv6,
-        onChanged: (bool value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update((state) => state.copyWith(ipv6: value));
-        },
-      ),
+      value: ipv6,
+      onChanged: (bool value) async {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(ipv6: value));
+      },
     );
   }
 }
@@ -469,18 +423,16 @@ class AppendSystemDNSItem extends ConsumerWidget {
     final appendSystemDNS = ref.watch(
       networkSettingProvider.select((state) => state.appendSystemDns),
     );
-    return ListItem.switchItem(
+    return ListItem.toggle(
       leading: const Icon(Icons.dns_outlined),
       title: Text(appLocalizations.appendSystemDns),
       subtitle: Text(appLocalizations.appendSystemDnsTip),
-      delegate: SwitchDelegate(
-        value: appendSystemDNS,
-        onChanged: (bool value) async {
-          ref
-              .read(networkSettingProvider.notifier)
-              .update((state) => state.copyWith(appendSystemDns: value));
-        },
-      ),
+      value: appendSystemDNS,
+      onChanged: (bool value) async {
+        ref
+            .read(networkSettingProvider.notifier)
+            .update((state) => state.copyWith(appendSystemDns: value));
+      },
     );
   }
 }
@@ -494,18 +446,16 @@ class AllowLanItem extends ConsumerWidget {
     final allowLan = ref.watch(
       patchClashConfigProvider.select((state) => state.allowLan),
     );
-    return ListItem.switchItem(
+    return ListItem.toggle(
       leading: const Icon(Icons.device_hub),
       title: Text(appLocalizations.allowLan),
       subtitle: Text(appLocalizations.allowLanDesc),
-      delegate: SwitchDelegate(
-        value: allowLan,
-        onChanged: (bool value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update((state) => state.copyWith(allowLan: value));
-        },
-      ),
+      value: allowLan,
+      onChanged: (bool value) async {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(allowLan: value));
+      },
     );
   }
 }
@@ -520,18 +470,16 @@ class UnifiedDelayItem extends ConsumerWidget {
       patchClashConfigProvider.select((state) => state.unifiedDelay),
     );
 
-    return ListItem.switchItem(
+    return ListItem.toggle(
       leading: const Icon(Icons.compress_outlined),
       title: Text(appLocalizations.unifiedDelay),
       subtitle: Text(appLocalizations.unifiedDelayDesc),
-      delegate: SwitchDelegate(
-        value: unifiedDelay,
-        onChanged: (bool value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update((state) => state.copyWith(unifiedDelay: value));
-        },
-      ),
+      value: unifiedDelay,
+      onChanged: (bool value) async {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(unifiedDelay: value));
+      },
     );
   }
 }
@@ -548,24 +496,22 @@ class FindProcessItem extends ConsumerWidget {
       ),
     );
 
-    return ListItem.switchItem(
+    return ListItem.toggle(
       leading: const Icon(Icons.polymer_outlined),
       title: Text(appLocalizations.findProcessMode),
       subtitle: Text(appLocalizations.findProcessModeDesc),
-      delegate: SwitchDelegate(
-        value: findProcess,
-        onChanged: (bool value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update(
-                (state) => state.copyWith(
-                  findProcessMode: value
-                      ? FindProcessMode.always
-                      : FindProcessMode.off,
-                ),
-              );
-        },
-      ),
+      value: findProcess,
+      onChanged: (bool value) async {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                findProcessMode: value
+                    ? FindProcessMode.always
+                    : FindProcessMode.off,
+              ),
+            );
+      },
     );
   }
 }
@@ -579,18 +525,16 @@ class TcpConcurrentItem extends ConsumerWidget {
     final tcpConcurrent = ref.watch(
       patchClashConfigProvider.select((state) => state.tcpConcurrent),
     );
-    return ListItem.switchItem(
+    return ListItem.toggle(
       leading: const Icon(Icons.double_arrow_outlined),
       title: Text(appLocalizations.tcpConcurrent),
       subtitle: Text(appLocalizations.tcpConcurrentDesc),
-      delegate: SwitchDelegate(
-        value: tcpConcurrent,
-        onChanged: (value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update((state) => state.copyWith(tcpConcurrent: value));
-        },
-      ),
+      value: tcpConcurrent,
+      onChanged: (value) async {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(tcpConcurrent: value));
+      },
     );
   }
 }
@@ -606,24 +550,22 @@ class GeodataLoaderItem extends ConsumerWidget {
         (state) => state.geodataLoader == GeodataLoader.memconservative,
       ),
     );
-    return ListItem.switchItem(
+    return ListItem.toggle(
       leading: const Icon(Icons.memory),
       title: Text(appLocalizations.geodataLoader),
       subtitle: Text(appLocalizations.geodataLoaderDesc),
-      delegate: SwitchDelegate(
-        value: isMemconservative,
-        onChanged: (bool value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update(
-                (state) => state.copyWith(
-                  geodataLoader: value
-                      ? GeodataLoader.memconservative
-                      : GeodataLoader.standard,
-                ),
-              );
-        },
-      ),
+      value: isMemconservative,
+      onChanged: (bool value) async {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                geodataLoader: value
+                    ? GeodataLoader.memconservative
+                    : GeodataLoader.standard,
+              ),
+            );
+      },
     );
   }
 }
@@ -639,24 +581,22 @@ class ExternalControllerItem extends ConsumerWidget {
         (state) => state.externalController == ExternalControllerStatus.open,
       ),
     );
-    return ListItem.switchItem(
+    return ListItem.toggle(
       leading: const Icon(Icons.api_outlined),
       title: Text(appLocalizations.externalController),
       subtitle: Text(appLocalizations.externalControllerDesc),
-      delegate: SwitchDelegate(
-        value: hasExternalController,
-        onChanged: (bool value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update(
-                (state) => state.copyWith(
-                  externalController: value
-                      ? ExternalControllerStatus.open
-                      : ExternalControllerStatus.close,
-                ),
-              );
-        },
-      ),
+      value: hasExternalController,
+      onChanged: (bool value) async {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                externalController: value
+                    ? ExternalControllerStatus.open
+                    : ExternalControllerStatus.close,
+              ),
+            );
+      },
     );
   }
 }

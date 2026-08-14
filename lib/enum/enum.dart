@@ -219,58 +219,13 @@ enum FontFamily {
 
 enum RouteMode { bypassPrivate, config }
 
-enum ActionMethod {
-  message,
-  initClash,
-  getIsInit,
-  forceGc,
-  shutdown,
-  validateConfig,
-  updateConfig,
-  getConfig,
-  getProxies,
-  changeProxy,
-  getTraffic,
-  getTotalTraffic,
-  resetTraffic,
-  asyncTestDelay,
-  getConnections,
-  closeConnections,
-  resetConnections,
-  closeConnection,
-  getExternalProviders,
-  getExternalProvider,
-  updateGeoData,
-  updateExternalProvider,
-  sideLoadExternalProvider,
-  startLog,
-  stopLog,
-  startListener,
-  stopListener,
-  getCountryCode,
-  getMemory,
-  crash,
-  setupConfig,
-  deleteFile,
-
-  ///Android,
-  setState,
-  startTun,
-  stopTun,
-  getRunTime,
-  updateDns,
-  getAndroidVpnOptions,
-  getCurrentProfileName,
-}
-
 enum AuthorizeCode { none, success, error }
 
-enum WindowsHelperServiceStatus { none, presence, running }
+enum TunAuthorizationState { none, authorized, unauthorized }
 
 enum FunctionTag {
   updateConfig,
   setupConfig,
-  updateStatus,
   updateGroups,
   addCheckIpNum,
   applyProfile,
@@ -336,9 +291,9 @@ enum GeoResource {
   MMDB,
   @JsonValue('asn')
   ASN,
-  @JsonValue('geo-ip')
+  @JsonValue('geoip')
   GEOIP,
-  @JsonValue('geo-site')
+  @JsonValue('geosite')
   GEOSITE;
 
   static GeoResource fromJson(String value) {
@@ -353,10 +308,7 @@ enum GeoResource {
 }
 
 extension GeoResourceExt on GeoResource {
-  // Keys must match the core's RawGeoXUrl yaml tags (geoip/geosite);
-  // 'geo-ip'/'geo-site' are silently dropped there and the default
-  // MetaCubeX urls win over user-configured ones.
-  String get value {
+  String get configKey {
     return switch (this) {
       GeoResource.MMDB => 'mmdb',
       GeoResource.ASN => 'asn',

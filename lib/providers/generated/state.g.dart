@@ -395,47 +395,6 @@ final class NavigationStateProvider
 
 String _$navigationStateHash() => r'657dc47ecc35ba0807b58cb37e7f1baa14f6c2f9';
 
-@ProviderFor(contentWidth)
-final contentWidthProvider = ContentWidthProvider._();
-
-final class ContentWidthProvider
-    extends $FunctionalProvider<double, double, double>
-    with $Provider<double> {
-  ContentWidthProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'contentWidthProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$contentWidthHash();
-
-  @$internal
-  @override
-  $ProviderElement<double> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  double create(Ref ref) {
-    return contentWidth(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(double value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<double>(value),
-    );
-  }
-}
-
-String _$contentWidthHash() => r'4710fee8f91b08dc88520798fb6b1d4f61f090e6';
-
 @ProviderFor(dashboardState)
 final dashboardStateProvider = DashboardStateProvider._();
 
@@ -475,7 +434,7 @@ final class DashboardStateProvider
   }
 }
 
-String _$dashboardStateHash() => r'e8616e327c1b96658d917e4e4950f70ecb099d85';
+String _$dashboardStateHash() => r'33838f85f2b6a0ab601891aa2f26adc8870302b6';
 
 @ProviderFor(proxiesActionsState)
 final proxiesActionsStateProvider = ProxiesActionsStateProvider._();
@@ -564,7 +523,7 @@ final class ProfilesStateProvider
   }
 }
 
-String _$profilesStateHash() => r'8b07eeacb83b9002ba7e6283ff7a7f451a0845a6';
+String _$profilesStateHash() => r'6bcfd61de84c930251ade72b9fe804c4f5ac2be9';
 
 @ProviderFor(filterGroupsState)
 final filterGroupsStateProvider = FilterGroupsStateFamily._();
@@ -687,7 +646,7 @@ final class ProxiesListStateProvider
   }
 }
 
-String _$proxiesListStateHash() => r'4d83ff3e3d337c9a6eadddfa747c11939676b8bd';
+String _$proxiesListStateHash() => r'212d21f79e9c149076e13d1d19ccd83ccb4b471b';
 
 @ProviderFor(proxiesTabState)
 final proxiesTabStateProvider = ProxiesTabStateProvider._();
@@ -729,7 +688,7 @@ final class ProxiesTabStateProvider
   }
 }
 
-String _$proxiesTabStateHash() => r'b16734b2578c4e9a91880af8af41faa2e293b257';
+String _$proxiesTabStateHash() => r'e4eccd77c3848489c8ec620f4e515cec7cdd5a31';
 
 @ProviderFor(isStart)
 final isStartProvider = IsStartProvider._();
@@ -884,7 +843,7 @@ final class ProxyGroupSelectorStateProvider
 }
 
 String _$proxyGroupSelectorStateHash() =>
-    r'd393702a1fea16f8ab0362c2888b70300795e829';
+    r'26326b400a0a2570188560a553ba8c600ad13b80';
 
 final class ProxyGroupSelectorStateFamily extends $Family
     with $FunctionalFamilyOverride<ProxyGroupSelectorState, (String, String)> {
@@ -1463,46 +1422,6 @@ final class CurrentProfileProvider
 
 String _$currentProfileHash() => r'55f3cb9570a0aa6b9e0b83a36693b69d52e753ab';
 
-@ProviderFor(proxiesColumns)
-final proxiesColumnsProvider = ProxiesColumnsProvider._();
-
-final class ProxiesColumnsProvider extends $FunctionalProvider<int, int, int>
-    with $Provider<int> {
-  ProxiesColumnsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'proxiesColumnsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$proxiesColumnsHash();
-
-  @$internal
-  @override
-  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  int create(Ref ref) {
-    return proxiesColumns(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
-    );
-  }
-}
-
-String _$proxiesColumnsHash() => r'e93f980da3d857bd38957635ef944a0db60aaef3';
-
 @ProviderFor(realSelectedProxyState)
 final realSelectedProxyStateProvider = RealSelectedProxyStateFamily._();
 
@@ -2041,7 +1960,7 @@ final class AutoSetSystemDnsStateProvider
 }
 
 String _$autoSetSystemDnsStateHash() =>
-    r'a8805965efe78241613bfde55f4ea8fa12a6ea32';
+    r'60135ce263c5c31200006f4a9f342f8241a872cc';
 
 @ProviderFor(needUpdateGroups)
 final needUpdateGroupsProvider = NeedUpdateGroupsProvider._();
@@ -3021,7 +2940,7 @@ abstract class _$AccessControlState extends $Notifier<AccessControlProps> {
   AccessControlProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AccessControlProps, AccessControlProps>;
     final element =
         ref.element
@@ -3031,7 +2950,7 @@ abstract class _$AccessControlState extends $Notifier<AccessControlProps> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -3074,7 +2993,7 @@ abstract class _$ProxyGroupProvider extends $Notifier<ProxyGroup> {
   ProxyGroup build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ProxyGroup, ProxyGroup>;
     final element =
         ref.element
@@ -3084,7 +3003,7 @@ abstract class _$ProxyGroupProvider extends $Notifier<ProxyGroup> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -3125,7 +3044,7 @@ abstract class _$RuleProvider extends $Notifier<Rule> {
   Rule build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<Rule, Rule>;
     final element =
         ref.element
@@ -3135,7 +3054,7 @@ abstract class _$RuleProvider extends $Notifier<Rule> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 

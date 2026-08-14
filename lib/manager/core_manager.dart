@@ -14,8 +14,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CoreManager extends ConsumerStatefulWidget {
   final Widget child;
+  final CoreController controller;
 
-  const CoreManager({super.key, required this.child});
+  CoreManager({super.key, required this.child, CoreController? controller})
+    : controller = controller ?? coreController;
 
   @override
   ConsumerState<CoreManager> createState() => _CoreContainerState();
@@ -49,15 +51,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       next,
     ) {
       if (next) {
-        coreController.startLog();
+        widget.controller.startLog();
       } else {
-        coreController.stopLog();
+        widget.controller.stopLog();
       }
     }, fireImmediately: true);
   }
 
   @override
-  Future<void> dispose() async {
+  void dispose() {
     coreEventManager.removeListener(this);
     super.dispose();
   }
@@ -92,7 +94,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     final ref = globalState.container;
     ref
         .read(providersProvider.notifier)
-        .setProvider(await coreController.getExternalProvider(providerName));
+        .setProvider(await widget.controller.getExternalProvider(providerName));
     debouncer.call(FunctionTag.loadedProvider, () async {
       ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
     }, duration: const Duration(milliseconds: 5000));
@@ -108,15 +110,13 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
       context.showNotifier(message);
     }
-    await coreController.shutdown(false);
     if (system.isDesktop) {
-      // The core is gone and desktop has no auto-restart: release the
-      // started state so ProxyManager clears the system proxy instead of
-      // leaving it pointed at a dead port. Not awaited: stopListener would
-      // block on the dead transport's 10s timeout first, which is exactly
-      // the window this is meant to avoid.
-      unawaited(ref.read(setupActionProvider.notifier).handleStop());
-      ref.read(runTimeProvider.notifier).value = null;
+      // Desktop has no auto-restart, and isStartProvider still reads as
+      // started, so ProxyManager would keep the system proxy pointed at the
+      // dead core's port. Release the app-side state only: the core is
+      // already gone, so stopping it here would just block on a dead
+      // transport.
+      ref.read(setupActionProvider.notifier).markStopped();
     }
     super.onCrash(message);
   }
