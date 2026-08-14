@@ -192,12 +192,10 @@ Future<int> _package(
     runInShell: Platform.isWindows,
   );
 
-  process.stdout.listen((data) {
-    stdout.write(utf8.decode(data));
-  });
-  process.stderr.listen((data) {
-    stderr.write(utf8.decode(data));
-  });
+  // Chunk boundaries can split a multi-byte sequence, which strict decoding
+  // rejects; decode the stream instead of each raw chunk.
+  process.stdout.transform(utf8.decoder).listen(stdout.write);
+  process.stderr.transform(utf8.decoder).listen(stderr.write);
   final exitCode = await process.exitCode;
   return exitCode;
 }
@@ -365,12 +363,8 @@ Future<int> _runLinuxDependencyCommand(List<String> command) async {
   ];
   stdout.writeln('exec: sudo ${sudoCommand.join(' ')}');
   final result = await Process.start('sudo', sudoCommand);
-  result.stdout.listen((data) {
-    stdout.write(utf8.decode(data));
-  });
-  result.stderr.listen((data) {
-    stderr.write(utf8.decode(data));
-  });
+  result.stdout.transform(utf8.decoder).listen(stdout.write);
+  result.stderr.transform(utf8.decoder).listen(stderr.write);
   final exitCode = await result.exitCode;
   if (exitCode != 0) {
     stderr.writeln('Linux dependency command failed with exit code $exitCode.');

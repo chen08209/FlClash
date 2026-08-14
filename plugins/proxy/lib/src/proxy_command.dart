@@ -55,4 +55,29 @@ class ProxyCommandRunner {
     }
     return executed;
   }
+
+  /// Runs every command even when one fails, reporting whether all succeeded.
+  ///
+  /// Use this for teardown, where stopping at the first failure would leave
+  /// the remaining targets configured.
+  Future<bool> runAll(Iterable<ProxyCommand> commands) async {
+    var executed = false;
+    var success = true;
+    for (final command in commands) {
+      executed = true;
+      try {
+        final result = await process(
+          command.executable,
+          command.args,
+          runInShell: command.runInShell,
+        );
+        if (result.exitCode != 0) {
+          success = false;
+        }
+      } on ProcessException {
+        success = false;
+      }
+    }
+    return executed && success;
+  }
 }

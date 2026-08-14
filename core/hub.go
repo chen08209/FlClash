@@ -85,8 +85,10 @@ func handleShutdown() bool {
 
 func handleValidateConfig(path string) string {
 	buf, err := readFile(path)
-	_, err = config.UnmarshalRawConfig(buf)
 	if err != nil {
+		return err.Error()
+	}
+	if _, err = config.UnmarshalRawConfig(buf); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -324,6 +326,8 @@ func handleUpdateGeoData(geoType string) {
 
 func handleUpdateExternalProvider(providerName string, fn func(value string)) {
 	go func() {
+		// The map is rebuilt by handleGetExternalProviders under runLock;
+		// reading it from this goroutine without the lock races that write.
 		runLock.Lock()
 		externalProvider, exist := externalProviders[providerName]
 		runLock.Unlock()

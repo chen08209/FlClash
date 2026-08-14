@@ -174,6 +174,98 @@ void main() {
     expect(selected, 'Two');
   });
 
+  testWidgets('ListItem.options reports the selected option', (tester) async {
+    String? changedValue;
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: Scaffold(
+          body: ListItem<String>.options(
+            title: const Text('Mode'),
+            dialogTitle: 'Mode',
+            options: const ['rule', 'global'],
+            value: 'rule',
+            textBuilder: _optionText,
+            onChanged: (value) {
+              changedValue = value;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Mode'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('global'));
+    await tester.pumpAndSettle();
+
+    expect(changedValue, 'global');
+  });
+
+  // Dismissing used to deliver null, which reset settings whose option list
+  // legitimately contains null - the app language among them.
+  testWidgets('ListItem.options reports nothing when dismissed', (
+    tester,
+  ) async {
+    var changed = false;
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: Scaffold(
+          body: ListItem<String?>.options(
+            title: const Text('Mode'),
+            dialogTitle: 'Mode',
+            options: const [null, 'rule'],
+            value: 'rule',
+            textBuilder: (value) => value ?? 'system',
+            onChanged: (_) {
+              changed = true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Mode'));
+    await tester.pumpAndSettle();
+    Navigator.of(globalState.navigatorKey.currentContext!).pop();
+    await tester.pumpAndSettle();
+
+    expect(changed, isFalse);
+  });
+
+  // The radios are toggleable, so re-tapping the current option delivers
+  // null; that is a dismissal, not a selection.
+  testWidgets('ListItem.options reports nothing when re-tapping the value', (
+    tester,
+  ) async {
+    var changed = false;
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: Scaffold(
+          body: ListItem<String?>.options(
+            title: const Text('Mode'),
+            dialogTitle: 'Mode',
+            options: const [null, 'rule'],
+            value: 'rule',
+            textBuilder: (value) => value ?? 'system',
+            onChanged: (_) {
+              changed = true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Mode'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Radio<String?>).last);
+    await tester.pumpAndSettle();
+
+    expect(changed, isFalse);
+  });
+
   testWidgets('InputDialog validates, submits, and resets values', (
     tester,
   ) async {

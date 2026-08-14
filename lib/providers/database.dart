@@ -53,7 +53,17 @@ class Profiles extends _$Profiles {
   void put(Profile profile) {
     final previous = List<Profile>.from(state);
     final newProfile = previous.optimizeLabel(profile);
-    state = previous.copyAndPut(newProfile, (item) => item.id == newProfile.id);
+    final index = previous.indexWhere((item) => item.id == newProfile.id);
+    final next = List<Profile>.from(previous);
+    if (index != -1) {
+      next[index] = newProfile;
+    } else {
+      // copyAndPut inserts at the front, but the query sorts null order last,
+      // so a new profile would show at the top and then visibly jump to the
+      // bottom on the next stream emission.
+      next.add(newProfile);
+    }
+    state = next;
     unawaited(
       withRollback(
         snapshot: previous,
@@ -68,7 +78,10 @@ class Profiles extends _$Profiles {
     state = previous.where((e) => e.id != id).toList();
     await withRollback(
       snapshot: previous,
-      action: () => database.profiles.remove((t) => t.id.equals(id)),
+      // The cascade declared on the referencing tables is inert: sqlite3
+      // disables foreign keys by default and beforeOpen does not turn them
+      // on, so a plain delete leaves orphaned groups, links and rules.
+      action: () => database.deleteProfileWithRelations(id),
       rollback: (v) => state = v,
     );
   }
@@ -104,7 +117,14 @@ class Profiles extends _$Profiles {
 
   void reorder(List<Profile> profiles) {
     final previous = List<Profile>.from(state);
-    final next = List<Profile>.from(profiles);
+    // Callers may hold a snapshot taken when a sort sheet was opened; write
+    // back the current row so a concurrent profile update is not rolled back.
+    final next = List<Profile>.from(
+      profiles.map(
+        (item) =>
+            state.firstWhereOrNull((current) => current.id == item.id) ?? item,
+      ),
+    );
     final needUpdate = <ProfilesCompanion>[];
     next.forEachIndexed((index, item) {
       if (item.order != index) {
@@ -404,14 +424,17 @@ class ProxyGroups extends _$ProxyGroups with AsyncNotifierMixin {
     return !proxyGroupsEquality.equals(previous.value, next.value);
   }
 
-  void del(String name) {
+  // Deletes by the stable id: the sheet passes its live, possibly renamed
+  // group, so deleting by name either deletes nothing or deletes whichever
+  // other group happens to already carry that name.
+  void del(int id) {
     final previous = List<ProxyGroup>.from(value);
-    value = List.from(previous.where((item) => item.name != name));
+    value = List.from(previous.where((item) => item.id != id));
     unawaited(
       withRollback(
         snapshot: previous,
         action: () => database.proxyGroups.remove(
-          (t) => t.profileId.equals(profileId) & t.name.equals(name),
+          (t) => t.profileId.equals(profileId) & t.id.equals(id),
         ),
         rollback: (v) => value = v,
       ),
@@ -421,8 +444,12 @@ class ProxyGroups extends _$ProxyGroups with AsyncNotifierMixin {
   bool put(ProxyGroup proxyGroup) {
     final previous = List<ProxyGroup>.from(value);
     final index = previous.indexWhere((item) => item.id == proxyGroup.id);
-    if (index == -1 &&
-        previous.indexWhere((item) => item.name == proxyGroup.name) != -1) {
+    // A name already used by a *different* group is a conflict whether the
+    // group is new or renamed; duplicates make the core reject the config.
+    final nameTaken = previous.indexWhere(
+      (item) => item.name == proxyGroup.name && item.id != proxyGroup.id,
+    );
+    if (nameTaken != -1) {
       return false;
     }
     if (index != -1) {
@@ -446,21 +473,25 @@ class ProxyGroups extends _$ProxyGroups with AsyncNotifierMixin {
       database.iconRecordsDao.put(icon);
     }
     final next = List<ProxyGroup>.from(previous);
+    // The generated order key must also be persisted, otherwise the row keeps
+    // a null order and later reordering computes keys from a null neighbour.
+    // The new group is appended, so its key belongs after the last one.
+    final newProxyGroup = index != -1
+        ? proxyGroup
+        : proxyGroup.copyWith(
+            order: indexing.generateKeyBetween(previous.lastOrNull?.order, null),
+          );
     if (index != -1) {
-      next[index] = proxyGroup;
+      next[index] = newProxyGroup;
     } else {
-      next.add(
-        proxyGroup.copyWith(
-          order: indexing.generateKeyBetween(null, proxyGroup.order),
-        ),
-      );
+      next.add(newProxyGroup);
     }
     value = next;
     unawaited(
       withRollback(
         snapshot: previous,
         action: () =>
-            database.proxyGroups.put(proxyGroup.toCompanion(profileId)),
+            database.proxyGroups.put(newProxyGroup.toCompanion(profileId)),
         rollback: (v) => value = v,
       ),
     );

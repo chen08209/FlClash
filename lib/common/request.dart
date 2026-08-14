@@ -69,23 +69,28 @@ class Request {
     return MemoryImage(data);
   }
 
-  Future<Map<String, dynamic>?> checkForUpdate() async {
+  /// Success carries the release data, or null when already up to date.
+  /// A failed request must stay distinguishable from 'no update', otherwise
+  /// an offline check is reported as 'already the latest version'.
+  Future<Result<Map<String, dynamic>?>> checkForUpdate() async {
     try {
       final response = await dio.get(
         'https://api.github.com/repos/$repository/releases/latest',
         options: Options(responseType: ResponseType.json),
       );
-      if (response.statusCode != 200) return null;
+      if (response.statusCode != 200) {
+        return Result.error('${response.statusCode}');
+      }
       final data = response.data as Map<String, dynamic>;
       final remoteVersion = data['tag_name'];
       final version = globalState.packageInfo.version;
       final hasUpdate =
           utils.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
-      if (!hasUpdate) return null;
-      return data;
+      if (!hasUpdate) return Result.success(null);
+      return Result.success(data);
     } catch (e) {
       commonPrint.log('checkForUpdate failed', logLevel: LogLevel.warning);
-      return null;
+      return Result.error(e.toString());
     }
   }
 

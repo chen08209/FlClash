@@ -246,6 +246,30 @@ class AutoCheckUpdateItem extends ConsumerWidget {
   }
 }
 
+class AllowInsecureCertificateItem extends ConsumerWidget {
+  const AllowInsecureCertificateItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final allowInsecureCertificate = ref.watch(
+      appSettingProvider.select((state) => state.allowInsecureCertificate),
+    );
+    return ListItem.toggle(
+      title: Text(appLocalizations.allowInsecureCertificate),
+      subtitle: Text(appLocalizations.allowInsecureCertificateDesc),
+      value: allowInsecureCertificate,
+      onChanged: (bool value) {
+        ref
+            .read(appSettingProvider.notifier)
+            .update(
+              (state) => state.copyWith(allowInsecureCertificate: value),
+            );
+      },
+    );
+  }
+}
+
 class ApplicationSettingView extends StatelessWidget {
   const ApplicationSettingView({super.key});
 
@@ -265,6 +289,7 @@ class ApplicationSettingView extends StatelessWidget {
       const UsageItem(),
       if (system.isAndroid) const CrashlyticsItem(),
       const AutoCheckUpdateItem(),
+      const AllowInsecureCertificateItem(),
     ];
     return BaseScaffold(
       title: context.appLocalizations.application,

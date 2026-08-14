@@ -69,8 +69,14 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
 
   Future<void> _updateConnections() async {
     try {
+      final trackerInfos = await coreController.getConnections();
+      // dispose() releases the notifier, so a view torn down while the core
+      // call was in flight would otherwise write to a disposed one.
+      if (!mounted) {
+        return;
+      }
       _connectionsStateNotifier.value = _connectionsStateNotifier.value
-          .copyWith(trackerInfos: await coreController.getConnections());
+          .copyWith(trackerInfos: trackerInfos);
     } catch (error) {
       commonPrint.log(
         'updateConnections error: $error',

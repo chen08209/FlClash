@@ -24,16 +24,34 @@ class ConnectivityManager extends StatefulWidget {
 
 class _ConnectivityManagerState extends State<ConnectivityManager> {
   late StreamSubscription subscription;
+  // Guards against a slow getSsid() completing after a newer connectivity
+  // event has already updated (or cleared) the current SSID.
+  int _ssidEpoch = 0;
 
   @override
   void initState() {
     super.initState();
     subscription = Connectivity().onConnectivityChanged.listen((results) {
+      final epoch = ++_ssidEpoch;
       if (results.contains(ConnectivityResult.wifi)) {
-        WifiSsidManager.instance.getSsid().then((ssid) {
-          globalState.container.read(currentSSIDProvider.notifier).value = ssid;
-          commonPrint.log('Wi-fi SSID: $ssid ', logLevel: LogLevel.info);
-        });
+        WifiSsidManager.instance
+            .getSsid()
+            .then((ssid) {
+              if (epoch != _ssidEpoch) {
+                return;
+              }
+              globalState.container.read(currentSSIDProvider.notifier).value =
+                  ssid;
+              commonPrint.log('Wi-fi SSID: $ssid ', logLevel: LogLevel.info);
+            })
+            .catchError((Object error) {
+              // Keep the last known SSID: clearing it here would un-suspend
+              // an excluded network just because the read failed.
+              commonPrint.log(
+                'get Wi-fi SSID failed: $error',
+                logLevel: LogLevel.warning,
+              );
+            });
       } else {
         globalState.container.read(currentSSIDProvider.notifier).value = null;
       }

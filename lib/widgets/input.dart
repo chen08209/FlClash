@@ -22,13 +22,29 @@ class OptionsDialog<T> extends StatelessWidget {
   final T value;
   final String Function(T value) textBuilder;
 
+  /// When set, the selection is delivered here instead of as the pop result.
+  /// Callers whose option list contains null need this to tell a real
+  /// selection apart from a dismissed dialog.
+  final void Function(T value)? onSelected;
+
   const OptionsDialog({
     super.key,
     required this.title,
     required this.options,
     required this.textBuilder,
     required this.value,
+    this.onSelected,
   });
+
+  void _handleSelected(BuildContext context, T option) {
+    final onSelected = this.onSelected;
+    if (onSelected != null) {
+      onSelected(option);
+      Navigator.of(context).pop();
+      return;
+    }
+    Navigator.of(context).pop(option);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +53,18 @@ class OptionsDialog<T> extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: RadioGroup(
         onChanged: (value) {
-          Navigator.of(context).pop(value);
+          // The radios are toggleable, so re-tapping the selected option
+          // deselects it and delivers null. Treat every null from here as
+          // "no selection": `is! T` cannot tell that apart when T is itself
+          // nullable, and reporting it would reset settings whose option
+          // list legitimately contains null - the app language among them.
+          // Picking the null option is still reachable through the row tap
+          // below, which carries the option itself.
+          if (value == null) {
+            Navigator.of(context).pop();
+            return;
+          }
+          _handleSelected(context, value);
         },
         groupValue: value,
         child: Wrap(
@@ -53,7 +80,7 @@ class OptionsDialog<T> extends StatelessWidget {
                   return ListItem.radio(
                     value: option,
                     onTap: () {
-                      Navigator.of(context).pop(option);
+                      _handleSelected(context, option);
                     },
                     title: Text(textBuilder(option)),
                   );

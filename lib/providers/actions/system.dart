@@ -64,7 +64,10 @@ class SystemAction extends _$SystemAction {
       }
       await system.back();
     } else {
-      await handleExit();
+      // Config saves are debounced, so quitting without a flush loses
+      // whatever the user changed in the last debounce window. The minimize
+      // branch above already saves for the same reason.
+      await handleExit(true);
     }
   }
 

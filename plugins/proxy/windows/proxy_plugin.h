@@ -5,6 +5,7 @@
 #include <flutter/plugin_registrar_windows.h>
 
 #include <memory>
+#include <optional>
 
 namespace proxy {
 
@@ -12,9 +13,9 @@ class ProxyPlugin : public flutter::Plugin {
  public:
   static void RegisterWithRegistrar(flutter::PluginRegistrarWindows *registrar);
 
-  ProxyPlugin() = default;
+  explicit ProxyPlugin(flutter::PluginRegistrarWindows *registrar);
 
-  ~ProxyPlugin() override = default;
+  ~ProxyPlugin() override;
 
   // Disallow copy and assign.
   ProxyPlugin(const ProxyPlugin&) = delete;
@@ -24,6 +25,13 @@ class ProxyPlugin : public flutter::Plugin {
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue> &method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+
+ private:
+  std::optional<LRESULT> HandleWindowProc(HWND hwnd, UINT message,
+                                          WPARAM wparam, LPARAM lparam);
+
+  flutter::PluginRegistrarWindows *registrar_ = nullptr;
+  int window_proc_id_ = -1;
 };
 
 }  // namespace proxy

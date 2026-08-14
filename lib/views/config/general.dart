@@ -681,15 +681,21 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
 
   void _handleUpdate() {
     if (_formKey.currentState?.validate() == false) return;
+    // Collapsed fields are removed from the form, so their validators do not
+    // run and their text may be empty; keep the previous value in that case.
     ref
         .read(patchClashConfigProvider.notifier)
         .update(
           (state) => state.copyWith(
-            mixedPort: int.parse(_mixedPortController.text),
-            port: int.parse(_portController.text),
-            socksPort: int.parse(_socksPortController.text),
-            redirPort: int.parse(_redirPortController.text),
-            tproxyPort: int.parse(_tProxyPortController.text),
+            mixedPort:
+                int.tryParse(_mixedPortController.text) ?? state.mixedPort,
+            port: int.tryParse(_portController.text) ?? state.port,
+            socksPort:
+                int.tryParse(_socksPortController.text) ?? state.socksPort,
+            redirPort:
+                int.tryParse(_redirPortController.text) ?? state.redirPort,
+            tproxyPort:
+                int.tryParse(_tProxyPortController.text) ?? state.tproxyPort,
           ),
         );
     Navigator.of(context).pop();

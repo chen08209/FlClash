@@ -185,7 +185,7 @@ class Tray {
     final exitMenuItem = MenuItem(
       label: appLocalizations.exit,
       onClick: (_) async {
-        await systemAction.handleExit();
+        await systemAction.handleExit(true);
       },
     );
     menuItems.add(exitMenuItem);
@@ -218,7 +218,7 @@ class Tray {
     final url = 'http://127.0.0.1:$port';
 
     final cmdline = system.isWindows
-        ? 'set \$env:all_proxy=$url'
+        ? '\$env:all_proxy="$url"'
         : 'export all_proxy=$url';
 
     await Clipboard.setData(ClipboardData(text: cmdline));

@@ -123,7 +123,16 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _editProfileFile() async {
-    if (_rawText == null) {
+    final fileData = _fileData;
+    if (fileData != null) {
+      // A pending upload has not been written to disk yet; editing must show
+      // that content, otherwise saving here would discard the upload.
+      try {
+        _rawText = utf8.decode(fileData);
+      } on FormatException {
+        _rawText ??= '';
+      }
+    } else if (_rawText == null) {
       final profilePath = await appPath.getProfilePath(
         widget.profile.id.toString(),
       );

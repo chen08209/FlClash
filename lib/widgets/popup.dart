@@ -177,14 +177,14 @@ class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
   @override
   Offset getPositionForChild(Size size, Size childSize) {
     const safeOffset = Offset(16, 16);
-    final double x = (offset.dx - childSize.width).clamp(
-      0,
-      size.width - safeOffset.dx - childSize.width,
-    );
-    final double y = (offset.dy).clamp(
-      0,
-      size.height - safeOffset.dy - childSize.height,
-    );
+    // A child wider or taller than the viewport makes the upper bound
+    // smaller than the lower one, which clamp rejects with an error.
+    final maxX = size.width - safeOffset.dx - childSize.width;
+    final maxY = size.height - safeOffset.dy - childSize.height;
+    final double x = maxX <= 0
+        ? 0
+        : (offset.dx - childSize.width).clamp(0, maxX);
+    final double y = maxY <= 0 ? 0 : offset.dy.clamp(0, maxY);
     return Offset(x, y);
   }
 

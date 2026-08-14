@@ -630,17 +630,41 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
 
   Widget _buildNoResolveItem(bool? noResolve) {
     final appLocalizations = context.appLocalizations;
+    void handleChange() {
+      ref
+          .read(ruleProvider.notifier)
+          .update((state) => state.copyWith(noResolve: !(noResolve ?? false)));
+    }
+
     return _buildItem(
       title: Text(appLocalizations.noResolveHostname),
-      trailing: Switch(value: noResolve ?? false, onChanged: (_) {}),
+      onPressed: handleChange,
+      trailing: Switch(
+        value: noResolve ?? false,
+        onChanged: (_) {
+          handleChange();
+        },
+      ),
     );
   }
 
   Widget _buildSrcItem(bool? src) {
     final appLocalizations = context.appLocalizations;
+    void handleChange() {
+      ref
+          .read(ruleProvider.notifier)
+          .update((state) => state.copyWith(src: !(src ?? false)));
+    }
+
     return _buildItem(
       title: Text(appLocalizations.matchSourceIp),
-      trailing: Switch(value: src ?? false, onChanged: (_) {}),
+      onPressed: handleChange,
+      trailing: Switch(
+        value: src ?? false,
+        onChanged: (_) {
+          handleChange();
+        },
+      ),
     );
   }
 
@@ -650,7 +674,20 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
     }
   }
 
-  void _handleDelete() {}
+  Future<void> _handleDelete(int profileId, int ruleId) async {
+    final appLocalizations = context.appLocalizations;
+    final res = await globalState.showMessage(
+      title: appLocalizations.tip,
+      message: TextSpan(
+        text: appLocalizations.deleteMultipTip(appLocalizations.rule),
+      ),
+    );
+    if (res != true || !mounted) {
+      return;
+    }
+    ref.read(profileCustomRulesProvider(profileId).notifier).delAll([ruleId]);
+    context.safeNestedPop();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -706,7 +743,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
                       ),
                     ),
                     onPressed: () {
-                      _handleDelete();
+                      _handleDelete(profileId, rule.id);
                     },
                   ),
               ],

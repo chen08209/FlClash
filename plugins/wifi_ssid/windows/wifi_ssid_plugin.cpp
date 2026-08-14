@@ -15,6 +15,7 @@ namespace wifi_ssid {
 namespace {
 
 constexpr int kPermissionGranted = 0;
+constexpr int kPermissionPermanentlyDenied = 2;
 constexpr char kChannelName[] = "wifi_ssid";
 constexpr char kGetSsidMethod[] = "getSsid";
 constexpr char kCheckPermissionMethod[] = "checkPermission";
@@ -45,6 +46,83 @@ using ScopedInterfaceList =
 using ScopedConnectionAttributes =
     std::unique_ptr<WLAN_CONNECTION_ATTRIBUTES, WlanMemoryDeleter>;
 
+// 802.11 SSIDs are arbitrary octets, but the standard codec encodes strings
+// as UTF-8; handing it invalid bytes makes the Dart side throw while
+// decoding, which leaves the SSID state stale.
+bool IsValidUtf8(const std::string &value) {
+  const auto *bytes = reinterpret_cast<const unsigned char *>(value.data());
+  const size_t size = value.size();
+  for (size_t i = 0; i < size;) {
+    const unsigned char byte = bytes[i];
+    size_t length = 0;
+    if (byte <= 0x7F) {
+      length = 1;
+    } else if ((byte & 0xE0) == 0xC0 && byte >= 0xC2) {
+      length = 2;
+    } else if ((byte & 0xF0) == 0xE0) {
+      length = 3;
+    } else if ((byte & 0xF8) == 0xF0 && byte <= 0xF4) {
+      length = 4;
+    } else {
+      return false;
+    }
+    if (i + length > size) {
+      return false;
+    }
+    for (size_t j = 1; j < length; ++j) {
+      if ((bytes[i + j] & 0xC0) != 0x80) {
+        return false;
+      }
+    }
+    i += length;
+  }
+  return true;
+}
+
+// Probes whether the current Windows location-privacy settings allow WLAN
+// SSID queries. Without location access the WLAN APIs report
+// ERROR_ACCESS_DENIED and GetSsid reads as null, so reporting granted
+// unconditionally leaves the user with a silently broken per-SSID feature
+// and no indication of why.
+int CheckPermission() {
+  HANDLE client_handle = nullptr;
+  DWORD current_version = 0;
+  DWORD result_code = WlanOpenHandle(WLAN_API_VERSION_2_0, nullptr,
+                                     &current_version, &client_handle);
+  if (result_code == ERROR_ACCESS_DENIED) {
+    return kPermissionPermanentlyDenied;
+  }
+  if (result_code != ERROR_SUCCESS) {
+    // No WLAN service or adapter is not a permission problem; reporting
+    // denied there would show a misleading prompt.
+    return kPermissionGranted;
+  }
+  ScopedWlanHandle client(client_handle);
+
+  PWLAN_INTERFACE_INFO_LIST interface_list = nullptr;
+  result_code = WlanEnumInterfaces(client.get(), nullptr, &interface_list);
+  if (result_code != ERROR_SUCCESS) {
+    return result_code == ERROR_ACCESS_DENIED ? kPermissionPermanentlyDenied
+                                              : kPermissionGranted;
+  }
+  ScopedInterfaceList interfaces(interface_list);
+
+  for (DWORD i = 0; i < interfaces->dwNumberOfItems; ++i) {
+    PWLAN_CONNECTION_ATTRIBUTES connection_attributes = nullptr;
+    DWORD data_size = 0;
+    result_code = WlanQueryInterface(
+        client.get(), &interfaces->InterfaceInfo[i].InterfaceGuid,
+        wlan_intf_opcode_current_connection, nullptr, &data_size,
+        reinterpret_cast<PVOID *>(&connection_attributes), nullptr);
+    if (result_code == ERROR_ACCESS_DENIED) {
+      return kPermissionPermanentlyDenied;
+    }
+    ScopedConnectionAttributes connection(connection_attributes);
+  }
+
+  return kPermissionGranted;
+}
+
 }  // namespace
 
 void WifiSsidPlugin::RegisterWithRegistrar(
@@ -73,7 +151,8 @@ void WifiSsidPlugin::HandleMethodCall(
     GetSsid(std::move(result));
   } else if (method_call.method_name() == kCheckPermissionMethod ||
              method_call.method_name() == kRequestPermissionMethod) {
-    result->Success(flutter::EncodableValue(kPermissionGranted));
+    // Windows has no in-app location prompt, so requesting simply re-checks.
+    result->Success(flutter::EncodableValue(CheckPermission()));
   } else {
     result->NotImplemented();
   }
@@ -144,7 +223,7 @@ void WifiSsidPlugin::GetSsid(
     break;
   }
 
-  if (access_denied || ssid.empty()) {
+  if (access_denied || ssid.empty() || !IsValidUtf8(ssid)) {
     result->Success(flutter::EncodableValue());
     return;
   }

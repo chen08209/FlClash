@@ -110,6 +110,14 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
       context.showNotifier(message);
     }
+    if (system.isDesktop) {
+      // Desktop has no auto-restart, and isStartProvider still reads as
+      // started, so ProxyManager would keep the system proxy pointed at the
+      // dead core's port. Release the app-side state only: the core is
+      // already gone, so stopping it here would just block on a dead
+      // transport.
+      ref.read(setupActionProvider.notifier).markStopped();
+    }
     super.onCrash(message);
   }
 
@@ -118,15 +126,18 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     final geoResource = GeoResource.fromJson(geoType.toLowerCase());
     final key = geoResource.updatingKey;
     final l10n = currentAppLocalizations;
+    final hasError = error != null && error.isNotEmpty;
     if (updating) {
       globalState.showNotifier(l10n.geoUpdating(geoResource.name));
+    } else if (hasError) {
+      // Only the error below; announcing 'updated' first is misleading.
     } else if (skipped) {
       globalState.showNotifier(l10n.geoSkipped(geoResource.name));
     } else {
       globalState.showNotifier(l10n.geoUpdated(geoResource.name));
     }
     ref.read(isUpdatingProvider(key).notifier).value = updating;
-    if (!updating && error != null && error.isNotEmpty) {
+    if (!updating && hasError) {
       globalState.showNotifier(error);
     }
     super.onGeoUpdate(geoType, updating, skipped, error);

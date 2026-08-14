@@ -184,6 +184,8 @@ Future<VM2<String, String>> _makeRealProfileTask(
   }
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
+  rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;
+  rawConfig['geo-update-interval'] = realPatchConfig.geoUpdateInterval;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
   if (rawConfig['hosts'] == null) {
     rawConfig['hosts'] = {};
@@ -295,6 +297,7 @@ Future<List<String>> _shakingProfileTask(
     Directory dir,
     Iterable<int> baseNames, {
     bool skipProvidersFolder = false,
+    bool includeDirectories = false,
   }) {
     if (!dir.existsSync()) return;
     final entities = dir.listSync(recursive: false, followLinks: false);
@@ -305,16 +308,24 @@ Future<List<String>> _shakingProfileTask(
         if (!baseNames.contains(int.tryParse(id))) {
           targets.add(entity.path);
         }
-      } else if (skipProvidersFolder && entity is Directory) {
-        if (basename(entity.path) == 'providers') {
+      } else if (entity is Directory) {
+        if (skipProvidersFolder && basename(entity.path) == 'providers') {
           continue;
+        }
+        if (includeDirectories) {
+          final id = basename(entity.path);
+          if (!baseNames.contains(int.tryParse(id))) {
+            targets.add(entity.path);
+          }
         }
       }
     }
   }
 
   scanDirectory(profilesDir, profileIds, skipProvidersFolder: true);
-  scanDirectory(providersDir, profileIds);
+  // Provider payloads live in providers/<profileId>/<type>/<md5>, so the
+  // orphans to reclaim here are directories, not files.
+  scanDirectory(providersDir, profileIds, includeDirectories: true);
   scanDirectory(scriptsDir, scriptIds);
   return targets;
 }
@@ -530,6 +541,40 @@ Future<String> _backupTask<T>(
   return tempZipFilePath;
 }
 
+/// Resolves an archive entry to an absolute path inside [rootPath], or null
+/// when the entry would escape it.
+///
+/// Entry names come from the archive and are therefore attacker controlled: a
+/// crafted backup can carry `../` segments or an absolute path, which would
+/// otherwise let it write anywhere the user can write.
+String? resolveArchiveEntryPath(String rootPath, String name) {
+  // Archive entries are specified with forward slashes, but a crafted one
+  // can use backslashes, which are separators on Windows.
+  final entryPath = posix.normalize(name.replaceAll(r'\', '/'));
+  if (entryPath.isEmpty ||
+      entryPath == '.' ||
+      entryPath == '..' ||
+      posix.isAbsolute(entryPath) ||
+      entryPath.startsWith('../')) {
+    return null;
+  }
+  final segments = posix.split(entryPath);
+  // A drive-qualified segment such as `C:` is not posix-absolute, so it
+  // survives the checks above and would be joined as an ordinary segment.
+  // The resulting path stays inside the root but cannot be created on
+  // Windows, which would abort the whole restore instead of skipping one
+  // entry.
+  if (segments.any((segment) => segment.contains(':'))) {
+    return null;
+  }
+  // Join per segment so the result uses the platform separator.
+  final outPath = joinAll([rootPath, ...segments]);
+  if (!isWithin(rootPath, outPath)) {
+    return null;
+  }
+  return outPath;
+}
+
 Future<MigrationData> restoreTask() async {
   return compute<RootIsolateToken, MigrationData>(
     _restoreTask,
@@ -548,7 +593,10 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   final dir = Directory(restoreDirPath);
   await dir.create(recursive: true);
   for (final file in archive.files) {
-    final outPath = join(restoreDirPath, posix.normalize(file.name));
+    final outPath = resolveArchiveEntryPath(restoreDirPath, file.name);
+    if (outPath == null) {
+      continue;
+    }
     final outputStream = OutputFileStream(outPath);
     file.writeContent(outputStream);
     await outputStream.close();

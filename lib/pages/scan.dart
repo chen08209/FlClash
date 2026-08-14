@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/color.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/state.dart';
@@ -23,6 +24,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
 
   StreamSubscription<Object?>? _subscription;
 
+  bool _handled = false;
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +35,16 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   }
 
   void _handleBarcode(BarcodeCapture barcodeCapture) {
-    final barcode = barcodeCapture.barcodes.first;
+    // The stream keeps emitting while the camera sees the code; popping
+    // more than once would dismiss the page underneath too.
+    if (_handled) {
+      return;
+    }
+    final barcode = barcodeCapture.barcodes.firstOrNull;
+    if (barcode == null) {
+      return;
+    }
+    _handled = true;
     if (barcode.type == BarcodeType.url) {
       Navigator.pop<String>(context, barcode.rawValue);
     } else {
@@ -155,11 +167,13 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   }
 
   @override
-  Future<void> dispose() async {
+  void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_subscription?.cancel());
     _subscription = null;
-    await controller.dispose();
+    // super.dispose() must run synchronously; awaiting first trips the
+    // framework's lifecycle assertion.
+    unawaited(controller.dispose());
     super.dispose();
   }
 }

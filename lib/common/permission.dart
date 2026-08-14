@@ -28,7 +28,10 @@ class Permissions {
   Permissions._internal({bool Function()? supportsLocationPermissions})
     : _supportsLocationPermissions =
           supportsLocationPermissions ??
-          (() => system.isAndroid || system.isMacOS);
+          // The Windows plugin implements getSsid/checkPermission/
+          // requestPermission too, so leaving it out disables the whole
+          // per-SSID feature there.
+          (() => system.isAndroid || system.isMacOS || system.isWindows);
 
   factory Permissions() {
     _instance ??= Permissions._internal();
@@ -101,8 +104,19 @@ class Permissions {
         globalState.container.read(locationPermissionsProvider.notifier).value =
             res;
         if (res == WifiSsidPermission.granted) {
-          final ssid = await WifiSsidManager.instance.getSsid();
-          globalState.container.read(currentSSIDProvider.notifier).value = ssid;
+          try {
+            final ssid = await WifiSsidManager.instance.getSsid();
+            globalState.container.read(currentSSIDProvider.notifier).value =
+                ssid;
+          } catch (e) {
+            // getSsid is a platform channel call and throws on a platform
+            // error or a missing implementation; keep the last known SSID
+            // rather than letting that escape the permission flow.
+            commonPrint.log(
+              'get Wi-Fi SSID failed: $e',
+              logLevel: LogLevel.warning,
+            );
+          }
         }
       } finally {
         _isRequestingLocation = false;

@@ -292,7 +292,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'610b51558ceaf0dc12795756e9bd8e4f73880e22';
+String _$profilesHash() => r'0243c03d8ccac8a2e3529768b21f0055c2a53d8c';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -689,7 +689,7 @@ final class ProxyGroupsProvider
   }
 }
 
-String _$proxyGroupsHash() => r'78aa494f41c48600612d1376e1f4a931e8a21aef';
+String _$proxyGroupsHash() => r'dff7806725e4d25548602f6018b63481f5acea3e';
 
 final class ProxyGroupsFamily extends $Family
     with

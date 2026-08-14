@@ -24,6 +24,9 @@ class ProxiesListView extends StatefulWidget {
 class _ProxiesListViewState extends State<ProxiesListView> {
   final _controller = ScrollController();
   List<double> _groupOffsets = [];
+  // The offsets are built from the search-filtered groups, so a group name can
+  // only be resolved to an offset against that same list.
+  List<Group> _renderedGroups = [];
   double containerHeight = 0;
 
   @override
@@ -154,11 +157,13 @@ class _ProxiesListViewState extends State<ProxiesListView> {
         _groupOffsets.isEmpty) {
       return 0;
     }
-    final currentGroups = getCurrentGroups();
-    final findIndex = currentGroups.indexWhere(
+    final findIndex = _renderedGroups.indexWhere(
       (item) => item.name == groupName,
     );
     final index = findIndex != -1 ? findIndex : 0;
+    if (index >= _groupOffsets.length) {
+      return 0;
+    }
     return _groupOffsets[index];
   }
 
@@ -214,8 +219,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
 
   void _scrollToGroupSelected(String groupName, int columns) {
     final currentInitOffset = _getGroupOffset(groupName);
-    final currentGroups = getCurrentGroups();
-    final proxies = currentGroups.getGroup(groupName)?.all;
+    final proxies = _renderedGroups.getGroup(groupName)?.all;
     _jumpTo(
       currentInitOffset +
           8 +
@@ -262,6 +266,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
               max(constraints.maxWidth - 32, 0),
               proxiesLayout,
             );
+            _renderedGroups = state.groups;
             _groupOffsets = _getGroupOffsets(
               groups: state.groups,
               currentUnfoldSet: state.currentUnfoldSet,

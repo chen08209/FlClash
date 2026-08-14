@@ -129,7 +129,7 @@ class SheetProvider<T> extends InheritedWidget {
 
   @override
   bool updateShouldNotify(SheetProvider oldWidget) =>
-      type != oldWidget.type &&
+      type != oldWidget.type ||
       nestedNavigatorPop != oldWidget.nestedNavigatorPop;
 }
 

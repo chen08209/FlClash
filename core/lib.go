@@ -29,6 +29,10 @@ import (
 
 var eventListener unsafe.Pointer
 
+// Guards eventListener: it is replaced (and the old object released) from the
+// platform thread while sendMessageBatch reads it from core goroutines.
+var eventListenerLock sync.RWMutex
+
 type TunHandler struct {
 	listener *sing_tun.Listener
 	callback unsafe.Pointer
@@ -234,6 +238,8 @@ func quickSetup(callback unsafe.Pointer, initParamsChar *C.char, setupParamsChar
 
 //export setEventListener
 func setEventListener(listener unsafe.Pointer) {
+	eventListenerLock.Lock()
+	defer eventListenerLock.Unlock()
 	if eventListener != nil || listener == nil {
 		releaseObject(eventListener)
 	}
@@ -260,6 +266,10 @@ func marshalResult(value any) string {
 }
 
 func sendMessageBatch(messages []Message) {
+	// Held across invokeResult so setEventListener cannot release the object
+	// this call is still using.
+	eventListenerLock.RLock()
+	defer eventListenerLock.RUnlock()
 	if eventListener == nil {
 		return
 	}

@@ -136,6 +136,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
       "Некоторые приложения могут обходить VPN при включении",
     ),
+    "allowInsecureCertificate": MessageLookupByLibrary.simpleMessage(
+      "Разрешить небезопасные сертификаты",
+    ),
+    "allowInsecureCertificateDesc": MessageLookupByLibrary.simpleMessage(
+      "Принимать самоподписанные или просроченные сертификаты для подписок и WebDAV. Включайте только для доверенных серверов",
+    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("Разрешить LAN"),
     "allowLanDesc": MessageLookupByLibrary.simpleMessage(
       "Разрешить доступ к прокси через локальную сеть",

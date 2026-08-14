@@ -107,6 +107,17 @@ class SetupAction extends _$SetupAction {
     return running ? _start(request) : _stop(request);
   }
 
+  /// Releases the app-side running state without touching the core.
+  ///
+  /// Used when the core is already gone: isStartProvider would otherwise keep
+  /// reading as started, so ProxyManager leaves the system proxy pointed at a
+  /// dead port. Claiming the latest request also invalidates a start that was
+  /// still in flight when the core died.
+  void markStopped() {
+    _latestRunRequest = const _RunRequest(running: false, initialize: false);
+    _setLocalRunning(false);
+  }
+
   Future<void> _start(_RunRequest request) async {
     if (request.initialize) {
       try {

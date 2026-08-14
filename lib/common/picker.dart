@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:image_picker/image_picker.dart';
@@ -49,7 +50,7 @@ class Picker {
       xFile.path,
       formats: [BarcodeFormat.qrCode],
     );
-    final result = capture?.barcodes.first.rawValue;
+    final result = capture?.barcodes.firstOrNull?.rawValue;
     if (result == null || !result.isUrl) {
       throw currentAppLocalizations.pleaseUploadValidQrcode;
     }

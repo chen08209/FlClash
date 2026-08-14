@@ -52,7 +52,7 @@ class CustomContent extends ConsumerWidget {
         final clashConfig = state.value;
         return VM2(
           clashConfig?.proxyGroups.isNotEmpty ?? false,
-          clashConfig?.rules.isEmpty ?? false,
+          clashConfig?.rules.isNotEmpty ?? false,
         );
       }),
     );

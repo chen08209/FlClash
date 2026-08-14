@@ -179,7 +179,7 @@ extension LogsStateExt on LogsState {
     final lowQuery = query.toLowerCase();
     return logs.where((log) {
       final logLevelName = log.logLevel.name;
-      return {logLevelName}.containsAll(keywords) &&
+      return (keywords.isEmpty || keywords.contains(logLevelName)) &&
           ((log.payload.toLowerCase().contains(lowQuery)) ||
               logLevelName.contains(lowQuery));
     }).toList();

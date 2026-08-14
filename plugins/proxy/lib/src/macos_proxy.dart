@@ -19,7 +19,10 @@ class MacosProxy {
 
   Future<bool> stop() async {
     final services = await _networkServices();
-    return _commandRunner.run(services.expand(MacosProxyCommands.buildStop));
+    // Disabling must be attempted on every service: stopping at the first
+    // failure would leave the remaining ones proxied at a port that is
+    // about to go away.
+    return _commandRunner.runAll(services.expand(MacosProxyCommands.buildStop));
   }
 
   Future<List<String>> _networkServices() async {

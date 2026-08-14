@@ -4523,6 +4523,26 @@ class AppLocalizations {
       args: [count],
     );
   }
+
+  /// `Allow insecure certificates`
+  String get allowInsecureCertificate {
+    return Intl.message(
+      'Allow insecure certificates',
+      name: 'allowInsecureCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Accept self-signed or expired certificates for subscriptions and WebDAV. Only enable this for servers you trust`
+  String get allowInsecureCertificateDesc {
+    return Intl.message(
+      'Accept self-signed or expired certificates for subscriptions and WebDAV. Only enable this for servers you trust',
+      name: 'allowInsecureCertificateDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

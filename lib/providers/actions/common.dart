@@ -47,7 +47,10 @@ class CommonAction extends _$CommonAction {
   Future<void> autoCheckUpdate() async {
     if (!ref.read(appSettingProvider).autoCheckUpdate) return;
     final res = await request.checkForUpdate();
-    checkUpdateResultHandle(data: res);
+    // A failed request carries no release data; passing the Result straight
+    // through would report an offline check as "already up to date".
+    if (res.isError) return;
+    checkUpdateResultHandle(data: res.data);
   }
 
   Future<void> checkUpdateResultHandle({

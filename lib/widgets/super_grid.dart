@@ -355,9 +355,19 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     await _transform();
   }
 
-  Future<void> _handleDelete(int index) async {
+  // Takes the item rather than a position: the delete animation outlives list
+  // changes, so by the time it finishes the captured slot may show a
+  // different card.
+  Future<void> _handleDelete(GridItem target) async {
+    final index = _childrenNotifier.value.indexOf(target);
+    if (index == -1) {
+      return;
+    }
     _preTransformState();
     final indexWhere = _tempIndexList.indexWhere((i) => i == index);
+    if (indexWhere == -1) {
+      return;
+    }
     _tempIndexList.removeAt(indexWhere);
     final nextChildren = List<GridItem>.from(_childrenNotifier.value)
       ..removeAt(index);
@@ -464,6 +474,10 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     required Widget item,
     required int index,
   }) {
+    // Bound to this slot's item at build time: the delete animation outlives
+    // list changes, and by the time it finishes this slot may show another
+    // item.
+    final gridItem = _childrenNotifier.value[index];
     final target = DragTarget<int>(
       builder: (_, _, _) {
         return AbsorbPointer(child: item);
@@ -496,7 +510,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
           return _buildShake(
             _DeletableContainer(
               onDelete: () {
-                _handleDelete(index);
+                _handleDelete(gridItem);
               },
               child: child!,
             ),
@@ -673,6 +687,7 @@ class _DeletableContainerState extends State<_DeletableContainer>
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   bool _deleteButtonVisible = true;
+  bool _deleting = false;
 
   @override
   void initState() {
@@ -691,7 +706,9 @@ class _DeletableContainerState extends State<_DeletableContainer>
   @override
   void didUpdateWidget(_DeletableContainer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.child != widget.child) {
+    // Resetting the controller mid-delete cancels the ticker future below,
+    // so onDelete would never fire for this card.
+    if (!_deleting && oldWidget.child != widget.child) {
       setState(() {
         _controller.value = 0;
         _deleteButtonVisible = true;
@@ -700,11 +717,19 @@ class _DeletableContainerState extends State<_DeletableContainer>
   }
 
   Future<void> _handleDel() async {
+    if (_deleting) {
+      return;
+    }
+    _deleting = true;
+    // Captured now: this state can be rebound to another item while the
+    // animation runs, and widget.onDelete would then target that item.
+    final onDelete = widget.onDelete;
     setState(() {
       _deleteButtonVisible = false;
     });
     await _controller.forward(from: 0);
-    widget.onDelete();
+    onDelete();
+    _deleting = false;
   }
 
   @override

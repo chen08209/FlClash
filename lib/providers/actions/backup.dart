@@ -52,6 +52,9 @@ class BackupAction extends _$BackupAction {
       ref.read(proxiesStyleSettingProvider.notifier).value =
           config.proxiesStyleProps;
       ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
+      // Backed up as a top-level Config field, so restoring networkProps
+      // alone silently drops the user's excluded SSIDs.
+      ref.read(excludeSSIDsProvider.notifier).value = config.excludeSSIDs;
       ref.read(networkSettingProvider.notifier).value = config.networkProps;
       ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
       return;
