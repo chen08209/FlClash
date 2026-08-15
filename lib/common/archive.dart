@@ -19,9 +19,4 @@ extension ArchiveExt on Archive {
       }
     }
   }
-
-  // void addTextFile<T>(String name, T raw) {
-  //   final data = json.encode(raw);
-  //   addFile(ArchiveFile.string(name, data));
-  // }
 }

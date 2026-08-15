@@ -95,7 +95,6 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
 
     stmt.orderBy([
       (t) => OrderingTerm.asc(t.scene),
-      //v0.8.92 ordering desc
       (t) => OrderingTerm.desc(t.order),
       (t) => OrderingTerm.desc(t.id),
     ]);

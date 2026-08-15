@@ -25,7 +25,11 @@ Read these only when the task touches their area:
   Do not require brainstorming, design documents, implementation plans, multiple-option proposals, or repeated confirmation.
   Ask only when material ambiguity, destructive impact, additional authority, or scope expansion could change the result.
 - Do not add code or configuration comments unless the user explicitly asks for comments. This includes explanatory,
-  narrative, TODO, and documentation comments.
+  narrative, TODO, and documentation comments. Never annotate line by line; comments belong only at the few key points
+  that cannot be understood without one, and there you must propose the exact text and wait for approval. Delete
+  commented-out code and stale notes whenever you touch the surrounding code. Put assertable behavior in a test,
+  repository-wide invariants in `.agents/`, and keep a comment only for a fact that is local to one call site.
+  See [.agents/rules.md](.agents/rules.md) for the full policy.
 - Use `flutter test`, not `dart test`, because models pull in Flutter types.
 - Run code generation after modifying models, providers, or database schema.
 - Do not manually edit generated files.

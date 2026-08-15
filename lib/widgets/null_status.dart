@@ -203,12 +203,10 @@ class _ThemeAwareSvg extends StatelessWidget {
             '#E8DEF8',
             '#${_colorToHex(colorScheme.secondaryContainer)}',
           );
-          // primary ??
           svgString = svgString.replaceAll(
             '#6750A4',
             '#${_colorToHex(colorScheme.primary)}',
           );
-          // surface ??
           svgString = svgString.replaceAll(
             '#FDF7FF',
             '#${_colorToHex(colorScheme.surface)}',

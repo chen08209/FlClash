@@ -364,9 +364,6 @@ Future<MigrationData> _oldToNowTask(
   configMap['appSettingProps'] = appSettingProps;
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
-  // final overwriteMap = configMap['overwrite'] as Map? ?? {};
-  // configMap['overwriteType'] = overwriteMap['type'];
-  // configMap['scriptId'] = overwriteMap['scriptOverwrite'];
   List rawScripts = configMap['scripts'] as List<dynamic>? ?? [];
   if (rawScripts.isEmpty) {
     final scriptPropsJson = configMap['scriptProps'] as Map<String, dynamic>?;
