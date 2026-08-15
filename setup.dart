@@ -193,10 +193,10 @@ Future<int> _package(
   );
 
   process.stdout.listen((data) {
-    stdout.write(utf8.decode(data));
+    stdout.write(utf8.decode(data, allowMalformed: true));
   });
   process.stderr.listen((data) {
-    stderr.write(utf8.decode(data));
+    stderr.write(utf8.decode(data, allowMalformed: true));
   });
   final exitCode = await process.exitCode;
   return exitCode;
@@ -366,10 +366,10 @@ Future<int> _runLinuxDependencyCommand(List<String> command) async {
   stdout.writeln('exec: sudo ${sudoCommand.join(' ')}');
   final result = await Process.start('sudo', sudoCommand);
   result.stdout.listen((data) {
-    stdout.write(utf8.decode(data));
+    stdout.write(utf8.decode(data, allowMalformed: true));
   });
   result.stderr.listen((data) {
-    stderr.write(utf8.decode(data));
+    stderr.write(utf8.decode(data, allowMalformed: true));
   });
   final exitCode = await result.exitCode;
   if (exitCode != 0) {
