@@ -518,7 +518,7 @@ abstract class ClashConfig with _$ClashConfig {
 
 extension GeoResourceUrlMapExt on Map<GeoResource, String> {
   Map<String, String> get raw =>
-      map((key, value) => MapEntry(key.value, value));
+      map((key, value) => MapEntry(key.configKey, value));
 }
 
 Map<GeoResource, String> _geoXUrlFromJson(Map<String, Object?>? json) {

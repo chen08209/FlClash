@@ -31,12 +31,6 @@ List<Group> getGroups() {
   return globalState.container.read(groupsProvider);
 }
 
-String? getCurrentGroupName() {
-  return globalState.container.read(
-    currentProfileProvider.select((state) => state?.currentGroupName),
-  );
-}
-
 void updateCurrentGroupName(String groupName) {
   globalState.container
       .read(proxiesActionProvider.notifier)
@@ -63,7 +57,7 @@ Future<Delay> requestProxyDelayWithFallback({
   } catch (error) {
     commonPrint.log(
       'Delay test failed for $proxyName: $error',
-      logLevel: LogLevel.error,
+      logLevel: coreFailureLogLevel(error),
     );
     return Delay(url: testUrl, name: proxyName, value: -1);
   }
@@ -83,9 +77,7 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   final currentTestUrl = state.testUrl.takeFirstValid([
     ref.read(realTestUrlProvider(testUrl)),
   ]);
-  if (state.proxyName.isEmpty) {
-    return;
-  }
+  if (state.proxyName.isEmpty) return;
   ref
       .read(proxiesActionProvider.notifier)
       .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: 0));
@@ -115,7 +107,6 @@ Future<void> runProxyDelayTestBatches({
   final runner = testProxy ?? proxyDelayTest;
   Object? firstError;
   StackTrace? firstStackTrace;
-
   for (final batch in proxies.batch(batchSize)) {
     await Future.wait(
       batch.map((proxy) async {
@@ -128,7 +119,6 @@ Future<void> runProxyDelayTestBatches({
       }),
     );
   }
-
   if (firstError != null) {
     Error.throwWithStackTrace(firstError!, firstStackTrace!);
   }
@@ -146,9 +136,9 @@ Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
 double getScrollToSelectedOffset({
   required String groupName,
   required List<Proxy> proxies,
+  required int columns,
 }) {
   final ref = globalState.container;
-  final columns = ref.read(proxiesColumnsProvider);
   final proxyCardType = ref.read(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );

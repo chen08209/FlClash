@@ -23,15 +23,6 @@ const _hostPlatform = {
   'windows': 'windows',
 };
 
-const _splitDebugInfoDir = 'build/symbols';
-
-String _decodeProcessOutput(List<int> data) {
-  return const Utf8Decoder(allowMalformed: true).convert(data);
-}
-
-String _asFlutterArgPath(String path) =>
-    p.normalize(path).replaceAll('\\', '/');
-
 Future<void> main(List<String> args) async {
   final parser = createSetupArgParser();
 
@@ -83,8 +74,8 @@ ArgParser createSetupArgParser() {
   return ArgParser()
     ..addOption(
       'env',
-      defaultsTo: 'stable',
-      allowed: ['pre', 'stable'],
+      defaultsTo: 'pre',
+      allowed: ['dev', 'pre', 'stable'],
       help: 'Application environment',
     )
     ..addOption(
@@ -108,23 +99,20 @@ ArgParser createSetupArgParser() {
 
 List<String> createFlutterBuildArgs({
   required String platform,
-  required String rootDir,
   required bool verbose,
 }) {
-  final splitDebugInfoPath = _asFlutterArgPath(
-    p.join(rootDir, _splitDebugInfoDir, platform),
-  );
   final flutterBuildArgs = <String>[
     if (verbose) 'verbose',
     'dart-define-from-file=env.json',
-    'obfuscate',
-    'split-debug-info=$splitDebugInfoPath',
-    'tree-shake-icons',
   ];
   if (platform == 'android') {
     flutterBuildArgs.add('split-per-abi');
   }
   return flutterBuildArgs;
+}
+
+Map<String, String> createBuildEnvironment(String env) {
+  return {'APP_ENV': env};
 }
 
 String _getTargets(String platform, String arch, String? customTargets) {
@@ -152,17 +140,11 @@ Future<int> _package(
   String? androidArch,
   required bool verbose,
 }) async {
-  final coreSha256 = platform == 'windows' ? await _buildGoCore(rootDir) : null;
-
   final file = File(p.join(rootDir, 'env.json'));
-
-  await file.writeAsString(
-    jsonEncode({'APP_ENV': env, 'CORE_SHA256': ?coreSha256}),
-  );
+  await file.writeAsString(jsonEncode(createBuildEnvironment(env)));
 
   final flutterBuildArgs = createFlutterBuildArgs(
     platform: platform,
-    rootDir: rootDir,
     verbose: verbose,
   );
   final descriptionArgs = <String>[];
@@ -173,20 +155,17 @@ Future<int> _package(
   final depExit = await _ensureDependencies(platform, arch);
   if (depExit != 0) return depExit;
 
-  final distributorDir = p.join(
-    rootDir,
-    'plugins',
-    'flutter_distributor',
-    'packages',
-    'flutter_distributor',
-  );
   final activateResult = await Process.run('dart', [
     'pub',
     'global',
     'activate',
     '-s',
-    'path',
-    distributorDir,
+    'git',
+    'https://github.com/chen08209/flutter_distributor.git',
+    '--git-ref',
+    'FlClash',
+    '--git-path',
+    'packages/flutter_distributor',
   ]);
   if (activateResult.exitCode != 0) {
     stderr.write(activateResult.stderr);
@@ -194,12 +173,8 @@ Future<int> _package(
   }
 
   final process = await Process.start(
-    'dart',
+    'flutter_distributor',
     [
-      'pub',
-      'global',
-      'run',
-      'flutter_distributor:main',
       'package',
       '--skip-clean',
       '--platform',
@@ -218,39 +193,13 @@ Future<int> _package(
   );
 
   process.stdout.listen((data) {
-    stdout.write(_decodeProcessOutput(data));
+    stdout.write(utf8.decode(data));
   });
   process.stderr.listen((data) {
-    stderr.write(_decodeProcessOutput(data));
+    stderr.write(utf8.decode(data));
   });
   final exitCode = await process.exitCode;
   return exitCode;
-}
-
-Future<String?> _buildGoCore(String rootDir) async {
-  final buildToolDir = p.join(
-    rootDir,
-    'plugins',
-    'setup',
-    'buildkit',
-    'build_tool',
-  );
-  final result = await Process.run('dart', [
-    'run',
-    'build_tool',
-    'windows',
-    '--root-dir',
-    rootDir,
-  ], workingDirectory: buildToolDir);
-  if (result.exitCode != 0) {
-    stderr.write(result.stderr);
-    return null;
-  }
-  final shaFile = File(p.join(rootDir, 'core_sha256.json'));
-  if (!shaFile.existsSync()) return null;
-  final content =
-      jsonDecode(shaFile.readAsStringSync()) as Map<String, dynamic>;
-  return content['CORE_SHA256'] as String?;
 }
 
 String _detectArch() {
@@ -301,6 +250,7 @@ Future<int> _ensureLinuxDependencies(String arch) async {
     ['ninja-build', 'libgtk-3-dev'],
     ['libayatana-appindicator3-dev'],
     ['libkeybinder-3.0-dev'],
+    ['libsecret-1-dev'],
     ['locate'],
   ];
   if (arch == 'amd64') {
@@ -416,10 +366,10 @@ Future<int> _runLinuxDependencyCommand(List<String> command) async {
   stdout.writeln('exec: sudo ${sudoCommand.join(' ')}');
   final result = await Process.start('sudo', sudoCommand);
   result.stdout.listen((data) {
-    stdout.write(_decodeProcessOutput(data));
+    stdout.write(utf8.decode(data));
   });
   result.stderr.listen((data) {
-    stderr.write(_decodeProcessOutput(data));
+    stderr.write(utf8.decode(data));
   });
   final exitCode = await result.exitCode;
   if (exitCode != 0) {

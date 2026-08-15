@@ -47,7 +47,7 @@ class ProxyCard extends StatelessWidget {
                     height: measure.labelSmallHeight,
                     width: measure.labelSmallHeight,
                     child: delay == 0
-                        ? const CircularProgressIndicator(strokeWidth: 2)
+                        ? const CommonCircleLoading()
                         : IconButton(
                             icon: const Icon(Icons.bolt),
                             iconSize: globalState.measure.labelSmallHeight,

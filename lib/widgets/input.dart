@@ -51,12 +51,10 @@ class OptionsDialog<T> extends StatelessWidget {
                     });
                   }
                   return ListItem.radio(
-                    delegate: RadioDelegate(
-                      value: option,
-                      onTab: () {
-                        Navigator.of(context).pop(option);
-                      },
-                    ),
+                    value: option,
+                    onTap: () {
+                      Navigator.of(context).pop(option);
+                    },
                     title: Text(textBuilder(option)),
                   );
                 },

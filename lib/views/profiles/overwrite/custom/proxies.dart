@@ -197,7 +197,7 @@ class _EditProxiesViewState extends ConsumerState<EditProxiesView>
                 child: CommonCard(
                   radius: 20,
                   type: CommonCardType.filled,
-                  child: ListItem.switchItem(
+                  child: ListItem.toggle(
                     minTileHeight: 54,
                     title: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -224,12 +224,10 @@ class _EditProxiesViewState extends ConsumerState<EditProxiesView>
                         ),
                       ],
                     ),
-                    delegate: SwitchDelegate(
-                      value: includeAllProxies,
-                      onChanged: (_) {
-                        _handleChangeIncludeAllProxies();
-                      },
-                    ),
+                    value: includeAllProxies,
+                    onChanged: (_) {
+                      _handleChangeIncludeAllProxies();
+                    },
                   ),
                 ),
               ),

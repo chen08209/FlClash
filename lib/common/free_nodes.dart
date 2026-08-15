@@ -850,6 +850,26 @@ class FreeNodesPreferenceState {
   });
 }
 
+class FreeNodesResumeSession {
+  final String sessionKey;
+  final DateTime day;
+  final Set<String> sourceIds;
+  final int completedSources;
+  final int successfulSources;
+  final int failedSources;
+  final int proxyCount;
+
+  const FreeNodesResumeSession({
+    required this.sessionKey,
+    required this.day,
+    required this.sourceIds,
+    this.completedSources = 0,
+    this.successfulSources = 0,
+    this.failedSources = 0,
+    this.proxyCount = 0,
+  });
+}
+
 class FreeNodesPreferResult {
   final Profile? profile;
   final Uint8List bytes;
@@ -1158,11 +1178,11 @@ class FreeNodesService {
     FreeNodesPartialProfileCallback? onPartialProfile,
   }) async {
     String? existingConfigPath;
+    String? resumeDirectoryPath;
     try {
-      final existingFile = await profile.file;
-      if (await existingFile.exists()) {
-        existingConfigPath = existingFile.path;
-      }
+      final existingFile = await profile.existingFile;
+      existingConfigPath = existingFile.path;
+      resumeDirectoryPath = '${existingFile.path}.free-nodes-resume';
     } catch (_) {}
 
     Future<Profile> saveResult(FreeNodesUpdateResult result) async {
@@ -1185,6 +1205,7 @@ class FreeNodesService {
 
     final result = await fetchMergedConfig(
       existingConfigPath: existingConfigPath,
+      resumeDirectoryPath: resumeDirectoryPath,
       sourceIds: sourceIds,
       onProgress: onProgress,
       onPartialResult: onPartialProfile == null
@@ -1197,7 +1218,13 @@ class FreeNodesService {
     if (result.proxyCount == 0) {
       throw '\u672a\u4ece\u514d\u8d39\u8282\u70b9\u6765\u6e90\u83b7\u53d6\u5230\u53ef\u7528 Clash \u8282\u70b9';
     }
-    return saveResult(result);
+    final savedProfile = await saveResult(result);
+    if (resumeDirectoryPath != null) {
+      try {
+        await Directory(resumeDirectoryPath).delete(recursive: true);
+      } catch (_) {}
+    }
+    return savedProfile;
   }
 
   Future<Profile?> normalizeExistingProfile(Profile profile) async {
@@ -1243,6 +1270,7 @@ class FreeNodesService {
   Future<FreeNodesUpdateResult> fetchMergedConfig({
     String? existingConfigText,
     String? existingConfigPath,
+    String? resumeDirectoryPath,
     Set<String>? sourceIds,
     FreeNodesProgressCallback? onProgress,
     FreeNodesPartialResultCallback? onPartialResult,
@@ -1266,17 +1294,35 @@ class FreeNodesService {
         onPartialResult: onPartialResult,
       );
     }
-    onProgress?.call(
-      const FreeNodesProgress(
-        operation: '\u6b63\u5728\u51c6\u5907\u6765\u6e90',
-      ),
-    );
+    final now = DateTime.now();
+    var hasSameDayResumeProgress = false;
+    if (resumeDirectoryPath != null && resumeDirectoryPath.trim().isNotEmpty) {
+      try {
+        final sessionFile = File('$resumeDirectoryPath/session.json');
+        if (await sessionFile.exists()) {
+          final decoded = json.decode(await sessionFile.readAsString());
+          if (decoded is Map) {
+            final day = DateTime.tryParse(decoded['day']?.toString() ?? '');
+            final completed =
+                int.tryParse('${decoded['completedSources'] ?? 0}') ?? 0;
+            hasSameDayResumeProgress =
+                day != null &&
+                completed > 0 &&
+                day.year == now.year &&
+                day.month == now.month &&
+                day.day == now.day;
+          }
+        }
+      } catch (_) {}
+    }
+    if (!hasSameDayResumeProgress) {
+      onProgress?.call(const FreeNodesProgress(operation: r'正在准备来源'));
+    }
     final catalog = await _loadEffectiveSourceCatalog();
     final preferenceState = await getPreferenceState();
     final autoPreferDuringFetch = preferenceState.autoPrefer;
     final enabledIds = await _loadEnabledSourceIds(catalog);
     final timeoutOverrides = await getSourceFetchTimeoutOverrides();
-    final now = DateTime.now();
     final targetEnabledIds = sourceIds == null
         ? enabledIds
         : enabledIds.intersection(sourceIds);
@@ -1284,9 +1330,11 @@ class FreeNodesService {
         .where((source) => targetEnabledIds.contains(source.id))
         .toList(growable: false);
     final totalSources = plannedSources.length;
-    onProgress?.call(
-      FreeNodesProgress(operation: '获取中', completed: 0, total: totalSources),
-    );
+    if (!hasSameDayResumeProgress) {
+      onProgress?.call(
+        FreeNodesProgress(operation: '获取中', completed: 0, total: totalSources),
+      );
+    }
     if (plannedSources.isEmpty) {
       var resolvedExistingConfigText = existingConfigText;
       if ((resolvedExistingConfigText == null ||
@@ -1335,7 +1383,16 @@ class FreeNodesService {
     final plannedSourcesById = {
       for (final source in plannedSources) source.id: source,
     };
+    final resolvedSourceIds =
+        plannedSources.map((source) => source.id).toList(growable: false)
+          ..sort();
+    final localDay = DateTime(now.year, now.month, now.day);
+    final resumeSessionKey =
+        '${localDay.toIso8601String().substring(0, 10)}:${resolvedSourceIds.join(',')}';
     final rustInput = {
+      'resumeDirectoryPath': resumeDirectoryPath,
+      'resumeSessionKey': resumeSessionKey,
+      'resumeDay': localDay.toIso8601String(),
       'catalog': {
         'historyTimeoutHours': catalog.historyTimeoutHours,
         'sources': [
@@ -1422,11 +1479,22 @@ class FreeNodesService {
       if (eventKind == 'started') {
         progressProxyCount =
             int.tryParse('${decodedEvent['proxyCount'] ?? 0}') ?? 0;
+        completedSources =
+            int.tryParse('${decodedEvent['completedSources'] ?? 0}') ?? 0;
+        successfulSources =
+            int.tryParse('${decodedEvent['successfulSources'] ?? 0}') ?? 0;
+        failedSources =
+            int.tryParse('${decodedEvent['failedSources'] ?? 0}') ?? 0;
+        final isResuming = completedSources > 0;
         onProgress?.call(
           FreeNodesProgress(
-            operation: '获取中',
-            completed: 0,
+            operation: isResuming
+                ? '继续获取 $completedSources/$totalSources 个来源'
+                : '获取中',
+            completed: completedSources,
             total: totalSources,
+            successfulSources: successfulSources,
+            failedSources: failedSources,
             proxyCount: progressProxyCount,
           ),
         );
@@ -1456,10 +1524,13 @@ class FreeNodesService {
       final sourceProxyCount =
           int.tryParse('${output?['proxyCount'] ?? 0}') ?? 0;
       final sourceSucceeded = candidateSucceeded && sourceProxyCount > 0;
-      if (sourceSucceeded) {
-        successfulSources++;
-      } else {
-        failedSources++;
+      final restored = decodedEvent['restored'] == true;
+      if (!restored) {
+        if (sourceSucceeded) {
+          successfulSources++;
+        } else {
+          failedSources++;
+        }
       }
       progressProxyCount =
           int.tryParse(
@@ -1496,7 +1567,7 @@ class FreeNodesService {
           sourceFetchTimes[source.id] = DateTime.now().toIso8601String();
         }
       }
-      completedSources++;
+      if (!restored) completedSources++;
       onProgress?.call(
         FreeNodesProgress(
           operation: '已完成 $completedSources/$totalSources 个来源',
@@ -1924,6 +1995,44 @@ class FreeNodesService {
           ),
         )
         .toList(growable: false);
+  }
+
+  Future<FreeNodesResumeSession?> getInterruptedFetchSession(
+    Profile profile,
+  ) async {
+    try {
+      final file = await profile.existingFile;
+      final sessionFile = File('${file.path}.free-nodes-resume/session.json');
+      if (!await sessionFile.exists()) return null;
+      final decoded = json.decode(await sessionFile.readAsString());
+      if (decoded is! Map) return null;
+      final sessionKey = decoded['sessionKey']?.toString() ?? '';
+      final dayText = decoded['day']?.toString() ?? '';
+      final day = DateTime.tryParse(dayText);
+      final rawSourceIds = decoded['sourceIds'];
+      if (sessionKey.isEmpty || day == null || rawSourceIds is! List) {
+        return null;
+      }
+      final today = DateTime.now();
+      if (day.year != today.year ||
+          day.month != today.month ||
+          day.day != today.day) {
+        return null;
+      }
+      return FreeNodesResumeSession(
+        sessionKey: sessionKey,
+        day: day,
+        sourceIds: rawSourceIds.map((value) => value.toString()).toSet(),
+        completedSources:
+            int.tryParse('${decoded['completedSources'] ?? 0}') ?? 0,
+        successfulSources:
+            int.tryParse('${decoded['successfulSources'] ?? 0}') ?? 0,
+        failedSources: int.tryParse('${decoded['failedSources'] ?? 0}') ?? 0,
+        proxyCount: int.tryParse('${decoded['proxyCount'] ?? 0}') ?? 0,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<Set<String>> getDueSourceIds({DateTime? now}) async {

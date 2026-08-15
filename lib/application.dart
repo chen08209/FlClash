@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
@@ -11,18 +10,14 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'pages/pages.dart';
 
 @visibleForTesting
-bool shouldRunStartupFreeNodesEnsure({required bool didAttachInitializeApp}) {
-  return !didAttachInitializeApp;
-}
-
-@visibleForTesting
-bool shouldRunNavigatorFallbackFreeNodesEnsure({
+bool shouldScheduleDeferredFreeNodesFallback({
   required bool mounted,
   required bool hasNavigatorContext,
 }) {
@@ -38,6 +33,7 @@ class Application extends ConsumerStatefulWidget {
 
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
+  Timer? _deferredFreeNodesStartupTimer;
   bool _preHasVpn = false;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
@@ -59,13 +55,14 @@ class ApplicationState extends ConsumerState<Application> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+    SystemNavigator.setFrameworkHandlesBack(true);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final hasNavigatorContext = await _waitForNavigatorContext();
-      if (shouldRunNavigatorFallbackFreeNodesEnsure(
+      if (shouldScheduleDeferredFreeNodesFallback(
         mounted: mounted,
         hasNavigatorContext: hasNavigatorContext,
       )) {
-        _startFallbackFreeNodesEnsure();
+        _scheduleDeferredFreeNodesStartup();
       }
       if (!mounted || !hasNavigatorContext) {
         commonPrint.log(
@@ -74,35 +71,41 @@ class ApplicationState extends ConsumerState<Application> {
         );
         return;
       }
-      var didAttachInitializeApp = false;
-      didAttachInitializeApp = await globalState.attach();
-      _startAutoUpdateProfilesTask(
-        didAttachInitializeApp: didAttachInitializeApp,
-      );
+      await globalState.attach();
+      if (!mounted) return;
+      _scheduleDeferredFreeNodesStartup();
+      _autoUpdateProfilesTask();
       _initLink();
       app?.initShortcuts();
     });
-  }
-
-  void _startFallbackFreeNodesEnsure() {
-    unawaited(
-      ref
-          .read(profilesActionProvider.notifier)
-          .ensureFreeNodesProfile()
-          .catchError((e) {
-            commonPrint.log(e.toString(), logLevel: LogLevel.warning);
-            return false;
-          }),
-    );
   }
 
   Future<bool> _waitForNavigatorContext() async {
     for (var attempt = 0; attempt < 30; attempt++) {
       if (!mounted) return false;
       if (globalState.navigatorKey.currentContext != null) return true;
-      await WidgetsBinding.instance.endOfFrame;
+      await Future<void>.delayed(const Duration(milliseconds: 16));
     }
     return globalState.navigatorKey.currentContext != null;
+  }
+
+  void _scheduleDeferredFreeNodesStartup() {
+    _deferredFreeNodesStartupTimer?.cancel();
+    _deferredFreeNodesStartupTimer = Timer(
+      const Duration(milliseconds: 1800),
+      () {
+        if (!mounted) return;
+        unawaited(
+          ref
+              .read(profilesActionProvider.notifier)
+              .ensureFreeNodesProfile(normalizeExisting: false)
+              .catchError((e) {
+                commonPrint.log(e.toString(), logLevel: LogLevel.warning);
+                return false;
+              }),
+        );
+      },
+    );
   }
 
   void _initLink() {
@@ -129,41 +132,10 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  void _startAutoUpdateProfilesTask({required bool didAttachInitializeApp}) {
-    unawaited(
-      _runStartupProfileAutoUpdate(
-        didAttachInitializeApp: didAttachInitializeApp,
-      ),
-    );
-    _scheduleAutoUpdateProfilesTask();
-  }
-
-  Future<void> _runStartupProfileAutoUpdate({
-    required bool didAttachInitializeApp,
-  }) async {
-    try {
-      final profilesAction = ref.read(profilesActionProvider.notifier);
-      var freeNodesEnsureAlreadyStarted = didAttachInitializeApp;
-      if (shouldRunStartupFreeNodesEnsure(
-        didAttachInitializeApp: didAttachInitializeApp,
-      )) {
-        freeNodesEnsureAlreadyStarted = await profilesAction
-            .ensureFreeNodesProfile();
-      }
-      await profilesAction.autoUpdateProfiles(
-        includeFreeNodes: shouldIncludeFreeNodesInStartupProfileAutoUpdate(
-          freeNodesEnsureAlreadyStarted: freeNodesEnsureAlreadyStarted,
-        ),
-      );
-    } catch (e) {
-      commonPrint.log(e.toString(), logLevel: LogLevel.warning);
-    }
-  }
-
-  void _scheduleAutoUpdateProfilesTask() {
+  void _autoUpdateProfilesTask() {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
       await ref.read(profilesActionProvider.notifier).autoUpdateProfiles();
-      _scheduleAutoUpdateProfilesTask();
+      _autoUpdateProfilesTask();
     });
   }
 
@@ -219,6 +191,7 @@ class ApplicationState extends ConsumerState<Application> {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: globalState.navigatorKey,
+          onNavigationNotification: (_) => true,
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -263,11 +236,10 @@ class ApplicationState extends ConsumerState<Application> {
   }
 
   @override
-  Future<void> dispose() async {
+  void dispose() {
     linkManager.destroy();
+    _deferredFreeNodesStartupTimer?.cancel();
     _autoUpdateProfilesTaskTimer?.cancel();
-    await coreController.destroy();
-    await ref.read(systemActionProvider.notifier).handleExit();
     super.dispose();
   }
 }

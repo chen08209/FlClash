@@ -58,8 +58,12 @@ void main() {
       expect(utils.getTimeText(3661000), '01:01:01');
     });
 
-    test('caps at 99:59:59', () {
-      expect(utils.getTimeText(100 * 3600 * 1000), '99:59:59');
+    test('formats three digit hours', () {
+      expect(utils.getTimeText(100 * 3600 * 1000), '100:00:00');
+    });
+
+    test('caps at 999:59:59', () {
+      expect(utils.getTimeText(1000 * 3600 * 1000), '999:59:59');
     });
   });
 

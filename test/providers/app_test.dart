@@ -26,14 +26,26 @@ void main() {
     container.dispose();
   });
 
-  group('RealTunEnable provider', () {
-    test('default is false', () {
-      expect(container.read(realTunEnableProvider), false);
+  group('AuthorizedTunEnable provider', () {
+    test('default is none', () {
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.none,
+      );
     });
 
-    test('can update to true', () {
-      container.read(realTunEnableProvider.notifier).update((_) => true);
-      expect(container.read(realTunEnableProvider), true);
+    test('can store authorized and unauthorized results', () {
+      final notifier = container.read(authorizedTunEnableProvider.notifier);
+      notifier.update((_) => TunAuthorizationState.authorized);
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.authorized,
+      );
+      notifier.update((_) => TunAuthorizationState.unauthorized);
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.unauthorized,
+      );
     });
   });
 
@@ -233,20 +245,6 @@ void main() {
     test('can update', () {
       container.read(sortNumProvider.notifier).update((_) => 5);
       expect(container.read(sortNumProvider), 5);
-    });
-  });
-
-  group('BackBlock provider', () {
-    test('default is false', () {
-      expect(container.read(backBlockProvider), false);
-    });
-
-    test('can block and unblock back navigation', () {
-      container.read(backBlockProvider.notifier).backBlock();
-      expect(container.read(backBlockProvider), true);
-
-      container.read(backBlockProvider.notifier).unBackBlock();
-      expect(container.read(backBlockProvider), false);
     });
   });
 
@@ -497,7 +495,7 @@ class _TestProfiles extends Profiles {
   }
 
   @override
-  void del(int id) {
+  Future<void> del(int id) async {
     state = state.where((profile) => profile.id != id).toList();
   }
 }

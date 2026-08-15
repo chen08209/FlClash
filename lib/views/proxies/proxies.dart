@@ -40,7 +40,6 @@ class ProxiesView extends ConsumerStatefulWidget {
 }
 
 class _ProxiesViewState extends ConsumerState<ProxiesView> {
-  final GlobalKey<CommonScaffoldState> _scaffoldKey = GlobalKey();
   final GlobalKey<ProxiesTabViewState> _proxiesTabKey = GlobalKey();
   bool _hasProviders = false;
   bool _isTab = false;
@@ -148,6 +147,15 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
   @override
   void initState() {
     super.initState();
+    ref.listenManual(
+      currentPageLabelProvider.select((state) => state == PageLabel.proxies),
+      (prev, next) {
+        if (prev != next && next) {
+          _refreshGroupsIfNeededOnEnter(true);
+        }
+      },
+      fireImmediately: true,
+    );
     ref.listenManual(providersProvider.select((state) => state.isNotEmpty), (
       prev,
       next,
@@ -171,18 +179,6 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       },
       fireImmediately: true,
     );
-    ref.listenManual(
-      currentPageLabelProvider.select((state) => state == PageLabel.proxies),
-      (prev, next) {
-        if (prev != next && next == false) {
-          _scaffoldKey.currentState?.handleExitSearching();
-        }
-        if (prev != next && next == true) {
-          _refreshGroupsIfNeededOnEnter(next);
-        }
-      },
-      fireImmediately: true,
-    );
   }
 
   @override
@@ -192,7 +188,6 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     );
     final isLoading = ref.watch(loadingProvider(LoadingTag.proxies));
     return CommonScaffold(
-      key: _scaffoldKey,
       isLoading: isLoading,
       resizeToAvoidBottomInset: false,
       floatingActionButton: _buildFAB(),

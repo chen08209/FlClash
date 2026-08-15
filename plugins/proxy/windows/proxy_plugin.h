@@ -12,9 +12,9 @@ class ProxyPlugin : public flutter::Plugin {
  public:
   static void RegisterWithRegistrar(flutter::PluginRegistrarWindows *registrar);
 
-  ProxyPlugin();
+  ProxyPlugin() = default;
 
-  virtual ~ProxyPlugin();
+  ~ProxyPlugin() override = default;
 
   // Disallow copy and assign.
   ProxyPlugin(const ProxyPlugin&) = delete;

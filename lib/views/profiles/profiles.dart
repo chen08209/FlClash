@@ -162,7 +162,9 @@ class _ProfilesViewState extends State<ProfilesView> {
                         Grid(
                           mainAxisSpacing: spacing,
                           crossAxisSpacing: spacing,
-                          crossAxisCount: state.columns,
+                          crossAxisCount: utils.getProfilesColumns(
+                            MediaQuery.sizeOf(context).width - 32,
+                          ),
                           children: [
                             for (int i = 0; i < state.profiles.length; i++)
                               GridItem(
@@ -203,7 +205,7 @@ class _ProfilesTitleBar extends StatelessWidget {
     return InkWell(
       key: key,
       borderRadius: BorderRadius.circular(8),
-      onTap: () => globalState.openUrl(url, confirm: false),
+      onTap: () => globalState.openUrl(url),
       child: Container(
         width: double.infinity,
         constraints: const BoxConstraints(minHeight: 40),
@@ -531,7 +533,7 @@ class ProfileItem extends StatelessWidget {
       await opener(context, sourceUrl);
       return;
     }
-    await globalState.openUrl(sourceUrl, confirm: false);
+    await globalState.openUrl(sourceUrl);
   }
 
   Future<void> _handleExportFile(BuildContext context) async {

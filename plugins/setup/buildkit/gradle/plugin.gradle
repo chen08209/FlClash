@@ -3,29 +3,28 @@
 // Apply this from the setup plugin's android/build.gradle:
 //   apply from: "${project.projectDir}/../buildkit/gradle/plugin.gradle"
 //
-// It adds a task that runs build_tool android before mergeNativeLibs.
+// It runs build_tool before the :core module configures or builds its native
+// library. The Go output is consumed by :core's CMake project.
 
 def buildkitDir = file("${project.projectDir}/../buildkit").absolutePath
 def projectRoot = file("${buildkitDir}/../../..").absolutePath
-def isWindows = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
-def launcher = isWindows
-        ? "${buildkitDir}/run_build_tool.cmd"
-        : "${buildkitDir}/run_build_tool.sh"
+def isWindows = System.getProperty('os.name').toLowerCase().contains('windows')
+def launcher = "${buildkitDir}/run_build_tool.${isWindows ? 'cmd' : 'sh'}"
 def androidArch = System.getenv('ANDROID_ARCH')
 def targetPlatform = project.findProperty('target-platform') ?:
         rootProject.findProperty('target-platform')
-def androidNdk = System.getenv('ANDROID_NDK') ?: project.android.ndkDirectory?.absolutePath
+def androidNdk = System.getenv('ANDROID_NDK')
 def archArgs = androidArch
         ? ['--arch', androidArch]
         : (targetPlatform ? ['--target-platform', targetPlatform.toString()] : [])
 
 task buildGoCore(type: Exec) {
+    def command = isWindows ? ['cmd', '/c', launcher] : [launcher]
+    command.add('android')
+    command.addAll(archArgs)
+
     workingDir projectRoot
-    if (isWindows) {
-        commandLine 'cmd', '/c', launcher, 'android', *archArgs
-    } else {
-        commandLine 'bash', launcher, 'android', *archArgs
-    }
+    commandLine command
 
     environment 'ANDROID_NDK', androidNdk
     environment 'APP_ENV', project.hasProperty('appEnv') ? project.appEnv : 'pre'
@@ -34,15 +33,19 @@ task buildGoCore(type: Exec) {
 
 def goCoreTask = buildGoCore
 
-// Wire into the Android build across all subprojects
+// CMake checks for libclash and its generated header while configuring :core,
+// so setup must run before both configure and native-build entry points. This
+// is the equivalent consumer boundary to Cargokit's mergeNativeLibs hook.
 afterEvaluate {
-    rootProject.subprojects { sub ->
-        sub.tasks.matching {
-            it.name.startsWith('configureCMake') ||
-                    it.name.startsWith('externalNativeBuild') ||
-                    it.name.startsWith('mergeNativeLibs')
-        }.configureEach {
-            dependsOn goCoreTask
-        }
+    def coreProject = rootProject.findProject(':core')
+    if (coreProject == null) {
+        throw new GradleException('The setup plugin requires the :core Android module.')
+    }
+    coreProject.tasks.matching {
+        it.name.startsWith('configureCMake') ||
+                it.name.startsWith('externalNativeBuild') ||
+                it.name.startsWith('mergeNativeLibs')
+    }.configureEach {
+        dependsOn goCoreTask
     }
 }

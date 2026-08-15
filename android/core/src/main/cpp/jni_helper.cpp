@@ -1,7 +1,6 @@
 #include "jni_helper.h"
 
 #include <cstdlib>
-#include <malloc.h>
 #include <cstring>
 
 static JavaVM *global_vm;
@@ -18,15 +17,15 @@ void initialize_jni(JavaVM *vm, JNIEnv *env) {
     m_get_bytes = find_method(c_string, "getBytes", "()[B");
 }
 
-JavaVM *global_java_vm() {
-    return global_vm;
-}
-
 char *jni_get_string(JNIEnv *env, jstring str) {
+    if (str == nullptr) {
+        return static_cast<char *>(calloc(1, 1));
+    }
     const auto array = reinterpret_cast<jbyteArray>(env->CallObjectMethod(str, m_get_bytes));
     const int length = env->GetArrayLength(array);
     const auto content = static_cast<char *>(malloc(length + 1));
     env->GetByteArrayRegion(array, 0, length, reinterpret_cast<jbyte *>(content));
+    env->DeleteLocalRef(array);
     content[length] = 0;
     return content;
 }
@@ -35,37 +34,28 @@ jstring jni_new_string(JNIEnv *env, const char *str) {
     const auto length = static_cast<int>(strlen(str));
     const auto array = env->NewByteArray(length);
     env->SetByteArrayRegion(array, 0, length, reinterpret_cast<const jbyte *>(str));
-    return reinterpret_cast<jstring>(env->NewObject(c_string, m_new_string, array));
-}
-
-int jni_catch_exception(JNIEnv *env) {
-    const int result = env->ExceptionCheck();
-    if (result) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
+    const auto result = reinterpret_cast<jstring>(env->NewObject(c_string, m_new_string, array));
+    env->DeleteLocalRef(array);
     return result;
 }
 
 void jni_attach_thread(scoped_jni *jni) {
-    JavaVM *vm = global_java_vm();
-    if (vm->GetEnv(reinterpret_cast<void **>(&jni->env), JNI_VERSION_1_6) == JNI_OK) {
+    if (global_vm->GetEnv(reinterpret_cast<void **>(&jni->env), JNI_VERSION_1_6) == JNI_OK) {
         jni->require_release = 0;
         return;
     }
-    if (vm->AttachCurrentThread(&jni->env, nullptr) != JNI_OK) {
+    if (global_vm->AttachCurrentThread(&jni->env, nullptr) != JNI_OK) {
         abort();
     }
     jni->require_release = 1;
 }
 
 void jni_detach_thread(const scoped_jni *env) {
-    JavaVM *vm = global_java_vm();
     if (env->require_release) {
-        vm->DetachCurrentThread();
+        global_vm->DetachCurrentThread();
     }
 }
 
-void release_string(char **str) {
-    free(*str);
+void release_string(char **value) {
+    free(*value);
 }

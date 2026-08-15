@@ -1,38 +1,23 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
-import 'package:fl_clash/common/free_nodes.dart';
-import 'package:fl_clash/common/preferences.dart';
+import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/views/dashboard/widgets/free_nodes_status.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences.setMockInitialValues({});
-
   group('ProfilesAction', () {
-    setUp(() async {
-      await preferences.setBool(freeNodesDisabledKey, false);
-    });
-
     test('keeps edited profile data when remote update fails', () async {
-      final original = Profile.normal(
-        label: 'old label',
-        url: 'bad-url',
-      ).copyWith(sourceUrl: 'https://old.example.com');
+      final original = Profile.normal(label: 'old label', url: 'bad-url');
       final edited = original.copyWith(
         label: 'new label',
         url: 'still-bad-url',
-        sourceUrl: 'https://source.example.com/profile',
       );
       final container = ProviderContainer(
         overrides: [
@@ -55,936 +40,83 @@ void main() {
       final profile = container.read(profilesProvider).getProfile(original.id);
       expect(profile?.label, edited.label);
       expect(profile?.url, edited.url);
-      expect(profile?.sourceUrl, edited.sourceUrl);
     });
 
-    test('does not delete the built-in free nodes profile', () async {
-      final profile = freeNodesService.createProfile();
+    test('updates selection, inserts first profile, and reorders profiles', () {
+      final first = Profile.normal(label: 'First');
+      final second = Profile.normal(label: 'Second');
       final container = ProviderContainer(
         overrides: [
-          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
-          profilesProvider.overrideWith(() => _TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => first.id),
+          profilesProvider.overrideWith(() => _TestProfiles([first])),
         ],
       );
       addTearDown(container.dispose);
+      final action = container.read(profilesActionProvider.notifier);
 
-      await container
-          .read(profilesActionProvider.notifier)
-          .deleteProfile(profile.id);
+      action.updateCurrentSelectedMap('Group', 'Proxy');
+      final updatedFirst = container.read(profilesProvider).single;
+      expect(updatedFirst.selectedMap['Group'], 'Proxy');
 
-      expect(container.read(profilesProvider), [profile]);
-      expect(container.read(currentProfileIdProvider), profile.id);
+      action.updateCurrentSelectedMap('Group', 'Proxy');
+      expect(container.read(profilesProvider), hasLength(1));
+
+      container.read(currentProfileIdProvider.notifier).value = null;
+      action.putProfile(second);
+      expect(container.read(currentProfileIdProvider), second.id);
+      expect(container.read(profilesProvider), [updatedFirst, second]);
+
+      action.reorder([second, updatedFirst]);
+      expect(container.read(profilesProvider), [second, updatedFirst]);
     });
 
     test(
-      'creates and selects the free nodes profile on first launch',
+      'skips profile updates that are disabled, fresh, or file-based',
       () async {
+        final profiles = [
+          Profile.normal(label: 'Disabled').copyWith(autoUpdate: false),
+          Profile.normal(label: 'Fresh').copyWith(
+            autoUpdate: true,
+            lastUpdateDate: DateTime.now().add(const Duration(days: 1)),
+          ),
+          Profile.normal(label: 'File').copyWith(
+            autoUpdate: true,
+            lastUpdateDate: DateTime.now().subtract(const Duration(days: 1)),
+          ),
+        ];
         final container = ProviderContainer(
           overrides: [
             currentProfileIdProvider.overrideWithBuild((_, _) => null),
-            profilesProvider.overrideWith(() => _TestProfiles([])),
+            profilesProvider.overrideWith(() => _TestProfiles(profiles)),
           ],
         );
         addTearDown(container.dispose);
-
-        final startedVisibleCheck = await container
-            .read(profilesActionProvider.notifier)
-            .ensureFreeNodesProfile(update: false);
-
-        final profiles = container.read(profilesProvider);
-        expect(profiles.length, 1);
-        expect(profiles.single.isFreeNodesProfile, true);
-        expect(container.read(currentProfileIdProvider), profiles.single.id);
-        expect(startedVisibleCheck, false);
-        expect(profiles.single.autoUpdate, true);
-      },
-    );
-
-    test('startup ensure respects disabled free nodes auto update', () async {
-      final profile = freeNodesService.createProfile().copyWith(
-        autoUpdate: false,
-      );
-      final container = ProviderContainer(
-        overrides: [
-          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
-          profilesProvider.overrideWith(() => _TestProfiles([profile])),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final started = await container
-          .read(profilesActionProvider.notifier)
-          .ensureFreeNodesProfile();
-
-      expect(started, false);
-      expect(container.read(itemProvider(freeNodesProgressKey)), isNull);
-    });
-
-    test(
-      'keeps and selects free nodes profile when reset is requested',
-      () async {
-        await preferences.setBool(freeNodesDisabledKey, true);
-        final profile = freeNodesService.createProfile();
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => null),
-            profilesProvider.overrideWith(() => _TestProfiles([profile])),
-          ],
-        );
-        addTearDown(container.dispose);
-        await container
-            .read(profilesActionProvider.notifier)
-            .removeFreeNodesProfile(update: false);
-
-        final profiles = container.read(profilesProvider);
-        expect(profiles, [profile]);
-        expect(container.read(currentProfileIdProvider), profile.id);
-        expect(await preferences.getBool(freeNodesDisabledKey), false);
-      },
-    );
-
-    test(
-      'recreates free nodes profile when a legacy delete flag exists',
-      () async {
-        await preferences.setBool(freeNodesDisabledKey, true);
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => null),
-            profilesProvider.overrideWith(() => _TestProfiles([])),
-          ],
-        );
-        addTearDown(container.dispose);
-
-        final startedVisibleCheck = await container
-            .read(profilesActionProvider.notifier)
-            .ensureFreeNodesProfile(update: false);
-
-        final profiles = container.read(profilesProvider);
-        expect(profiles.length, 1);
-        expect(profiles.single.isFreeNodesProfile, true);
-        expect(container.read(currentProfileIdProvider), profiles.single.id);
-        expect(await preferences.getBool(freeNodesDisabledKey), false);
-        expect(startedVisibleCheck, false);
-      },
-    );
-
-    test(
-      'selects free nodes profile when the saved current profile is stale',
-      () async {
-        final profile = freeNodesService.createProfile();
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => 404),
-            profilesProvider.overrideWith(() => _TestProfiles([profile])),
-          ],
-        );
-        addTearDown(container.dispose);
-
-        final startedVisibleCheck = await container
-            .read(profilesActionProvider.notifier)
-            .ensureFreeNodesProfile(update: false);
-
-        expect(container.read(currentProfileIdProvider), profile.id);
-        expect(startedVisibleCheck, false);
-      },
-    );
-
-    test(
-      'does not persist a free nodes profile before remote update succeeds',
-      () {
-        final normalProfile = Profile.normal(
-          label: 'remote',
-          url: 'https://example.com/profile.yaml',
-        );
-        final freeNodesProfile = freeNodesService.createProfile();
-
-        expect(shouldPersistProfileBeforeRemoteUpdate(normalProfile), true);
-        expect(shouldPersistProfileBeforeRemoteUpdate(freeNodesProfile), false);
-      },
-    );
-
-    test(
-      'profile selection only checks auto update for a different enabled free nodes profile',
-      () {
-        expect(
-          shouldCheckFreeNodesAutoUpdateOnProfileSelection(
-            currentProfileId: 1,
-            selectedProfileId: 2,
-            isFreeNodesProfile: true,
-            autoUpdate: true,
-          ),
-          true,
-        );
-        expect(
-          shouldCheckFreeNodesAutoUpdateOnProfileSelection(
-            currentProfileId: 2,
-            selectedProfileId: 2,
-            isFreeNodesProfile: true,
-            autoUpdate: true,
-          ),
-          false,
-        );
-        expect(
-          shouldCheckFreeNodesAutoUpdateOnProfileSelection(
-            currentProfileId: 1,
-            selectedProfileId: 2,
-            isFreeNodesProfile: false,
-            autoUpdate: true,
-          ),
-          false,
-        );
-        expect(
-          shouldCheckFreeNodesAutoUpdateOnProfileSelection(
-            currentProfileId: 1,
-            selectedProfileId: 2,
-            isFreeNodesProfile: true,
-            autoUpdate: false,
-          ),
-          false,
-        );
-      },
-    );
-
-    test(
-      'selecting a free nodes profile with auto update disabled does not start a check',
-      () async {
-        final normal = Profile.normal(label: 'normal');
-        final freeNodes = freeNodesService.createProfile().copyWith(
-          autoUpdate: false,
-        );
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => normal.id),
-            profilesProvider.overrideWith(
-              () => _TestProfiles([normal, freeNodes]),
-            ),
-          ],
-        );
-        addTearDown(container.dispose);
-        final currentProfileSubscription = container.listen<int?>(
-          currentProfileIdProvider,
-          (_, _) {},
-          fireImmediately: true,
-        );
-        addTearDown(currentProfileSubscription.close);
-
-        final checked = await container
-            .read(profilesActionProvider.notifier)
-            .selectProfile(freeNodes.id);
-
-        expect(container.read(currentProfileIdProvider), freeNodes.id);
-        expect(container.read(itemProvider(freeNodesProgressKey)), isNull);
-        expect(checked, false);
-      },
-    );
-
-    test(
-      'selecting an enabled free nodes profile checks whether an update is needed',
-      () async {
-        final normal = Profile.normal(label: 'normal');
-        final now = DateTime.now();
-        final freeNodes = freeNodesService.createProfile().copyWith(
-          lastUpdateDate: now.subtract(const Duration(days: 1)),
-          autoUpdate: true,
-          subscriptionInfo: const SubscriptionInfo(total: 1),
-        );
-        final profileFile = await freeNodes.existingFile;
-        await profileFile.parent.create(recursive: true);
-        await profileFile.writeAsString('''
-proxies:
-  - {name: test-node, type: ss, server: 127.0.0.1, port: 443, cipher: aes-128-gcm, password: test}
-proxy-groups:
-  - name: "日期 ${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}"
-    type: select
-    proxies: [test-node]
-''');
-        final sourceOptions = await freeNodesService.getSourceOptions();
-        await preferences.setString(
-          freeNodesFetchTimesKey,
-          json.encode({
-            for (final option in sourceOptions)
-              option.id: now.toIso8601String(),
-          }),
-        );
-        addTearDown(() async {
-          await preferences.setString(freeNodesFetchTimesKey, '{}');
-          if (await profileFile.exists()) await profileFile.delete();
-        });
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => normal.id),
-            profilesProvider.overrideWith(
-              () => _TestProfiles([normal, freeNodes]),
-            ),
-            groupsProvider.overrideWithBuild(
-              (_, _) => const [Group(type: GroupType.Selector, name: 'loaded')],
-            ),
-          ],
-        );
-        addTearDown(container.dispose);
-        final enabledCurrentProfileSubscription = container.listen<int?>(
-          currentProfileIdProvider,
-          (_, _) {},
-          fireImmediately: true,
-        );
-        addTearDown(enabledCurrentProfileSubscription.close);
-        final progressSubscription = container.listen<Object?>(
-          itemProvider(freeNodesProgressKey),
-          (_, _) {},
-          fireImmediately: true,
-        );
-        addTearDown(progressSubscription.close);
-
-        final checked = await container
-            .read(profilesActionProvider.notifier)
-            .selectProfile(freeNodes.id);
-
-        final progress = container.read(itemProvider(freeNodesProgressKey));
-        expect(container.read(currentProfileIdProvider), freeNodes.id);
-        expect(progress, isA<FreeNodesProgress>());
-        expect((progress as FreeNodesProgress).operation, '已检查，无需更新');
-        expect(progress.done, true);
-        expect(checked, true);
-      },
-    );
-
-    test(
-      'duplicate ensure preserves terminal progress until active update cleanup',
-      () async {
-        final now = DateTime.now();
-        final profile = freeNodesService.createProfile().copyWith(
-          lastUpdateDate: now,
-          autoUpdate: true,
-          subscriptionInfo: const SubscriptionInfo(total: 5555),
-        );
-        final profileFile = await profile.existingFile;
-        await profileFile.parent.create(recursive: true);
-        await profileFile.writeAsString('''
-proxies:
-  - {name: test-node, type: ss, server: 127.0.0.1, port: 443, cipher: aes-128-gcm, password: test}
-proxy-groups:
-  - name: "日期 ${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}"
-    type: select
-    proxies: [test-node]
-''');
-        final sourceOptions = await freeNodesService.getSourceOptions();
-        await preferences.setString(
-          freeNodesFetchTimesKey,
-          json.encode({
-            for (final option in sourceOptions)
-              option.id: now.toIso8601String(),
-          }),
-        );
-        addTearDown(() async {
-          await preferences.setString(freeNodesFetchTimesKey, '{}');
-          if (await profileFile.exists()) await profileFile.delete();
-        });
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
-            profilesProvider.overrideWith(() => _TestProfiles([profile])),
-            groupsProvider.overrideWithBuild(
-              (_, _) => const [Group(type: GroupType.Selector, name: 'loaded')],
-            ),
-          ],
-        );
-        addTearDown(container.dispose);
-        final progressSubscription = container.listen<Object?>(
-          itemProvider(freeNodesProgressKey),
-          (_, _) {},
-          fireImmediately: true,
-        );
-        addTearDown(progressSubscription.close);
         final action = container.read(profilesActionProvider.notifier);
 
-        expect(await action.ensureFreeNodesProfile(), isTrue);
-        const terminal = FreeNodesProgress(
-          operation: '已完成',
-          proxyCount: 5555,
-          done: true,
-        );
-        container.read(itemProvider(freeNodesProgressKey).notifier).value =
-            terminal;
+        await action.autoUpdateProfiles();
+        await action.updateProfiles();
 
-        expect(await action.ensureFreeNodesProfile(update: false), isFalse);
-        expect(
-          container.read(itemProvider(freeNodesProgressKey)),
-          same(terminal),
-        );
-        expect(await action.ensureFreeNodesProfile(), isTrue);
-        expect(
-          container.read(itemProvider(freeNodesProgressKey)),
-          same(terminal),
-        );
-
-        await Future<void>.delayed(const Duration(milliseconds: 1300));
-      },
-    );
-  });
-
-  group('SetupAction port selection', () {
-    test(
-      'uses another mixed port when the preferred port is occupied',
-      () async {
-        final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
-        addTearDown(socket.close);
-
-        final resolved = await resolveAvailableMixedPort(socket.port);
-
-        expect(resolved, isNot(socket.port));
-        expect(resolved, greaterThan(0));
-      },
-    );
-  });
-
-  group('SetupAction delay test controller', () {
-    test(
-      'opens only the loopback external controller for Rust delay tests',
-      () {
-        expect(ExternalControllerStatus.open.value, '127.0.0.1:9090');
-        expect(ExternalControllerStatus.close.value, '');
+        expect(container.read(profilesProvider), profiles);
       },
     );
 
-    test(
-      'waits until the local delay test controller port is listening',
-      () async {
-        final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
-        addTearDown(server.close);
-
-        final ready = await waitForTcpEndpoint(
-          '127.0.0.1:${server.port}',
-          timeout: const Duration(milliseconds: 300),
-          interval: const Duration(milliseconds: 20),
-        );
-
-        expect(ready, true);
-      },
-    );
-
-    test(
-      'does not report an unavailable delay test controller as ready',
-      () async {
-        final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
-        final port = server.port;
-        await server.close();
-
-        final ready = await waitForTcpEndpoint(
-          '127.0.0.1:$port',
-          timeout: const Duration(milliseconds: 120),
-          interval: const Duration(milliseconds: 20),
-        );
-
-        expect(ready, false);
-      },
-    );
-  });
-
-  group('Free nodes auto update decision', () {
-    test('uses first-launch progress before async update checks finish', () {
-      final progress = buildFreeNodesAutoUpdateStartProgress(
-        firstLaunch: true,
-        proxyCount: 0,
-      );
-
-      expect(progress.operation, '正在首次获取节点');
-      expect(progress.proxyCount, 0);
-      expect(progress.done, false);
-    });
-
-    test(
-      'uses check progress before existing-profile update checks finish',
-      () {
-        final progress = buildFreeNodesAutoUpdateStartProgress(
-          firstLaunch: false,
-          proxyCount: 5555,
-        );
-
-        expect(progress.operation, '正在检查更新');
-        expect(progress.proxyCount, 5555);
-        expect(progress.done, false);
-      },
-    );
-
-    test(
-      'keeps visible running progress for duplicate auto update requests',
-      () {
-        final startedAt = DateTime(2026, 6, 20, 9);
-        final current = FreeNodesProgress(
-          operation: '正在更新到期来源',
-          proxyCount: 5555,
-          startedAt: startedAt,
-        );
-
-        final progress = buildFreeNodesAutoUpdateRunningProgress(
-          proxyCount: 5000,
-          currentProgress: current,
-        );
-
-        expect(progress.operation, '正在更新到期来源');
-        expect(progress.proxyCount, 5555);
-        expect(progress.startedAt, startedAt);
-        expect(progress.done, false);
-        expect(progress.error, false);
-      },
-    );
-
-    test('keeps first-launch operation when auto update starts internally', () {
-      final startedAt = DateTime(2026, 6, 20, 9);
-      final current = FreeNodesProgress(
-        operation: '正在首次获取节点',
-        proxyCount: 0,
-        startedAt: startedAt,
-      );
-
-      final progress = buildFreeNodesAutoUpdateRunningProgress(
-        proxyCount: 0,
-        currentProgress: current,
-      );
-
-      expect(progress.operation, '正在首次获取节点');
-      expect(progress.startedAt, startedAt);
-      expect(progress.done, false);
-      expect(progress.error, false);
-    });
-
-    test(
-      'creates visible progress when duplicate update has no active progress',
-      () {
-        final startedAt = DateTime(2026, 6, 20, 9);
-
-        final progress = buildFreeNodesAutoUpdateRunningProgress(
-          proxyCount: 5000,
-          currentProgress: const FreeNodesProgress(
-            operation: '已检查，无需更新',
-            done: true,
-          ),
-          startedAt: startedAt,
-        );
-
-        expect(progress.operation, '正在检查更新');
-        expect(progress.proxyCount, 5000);
-        expect(progress.startedAt, startedAt);
-        expect(progress.done, false);
-        expect(progress.error, false);
-      },
-    );
-
-    test('duplicate update preserves a terminal progress state', () {
-      const completed = FreeNodesProgress(
-        operation: '已完成',
-        proxyCount: 5555,
-        done: true,
-      );
-
-      final progress = buildFreeNodesAutoUpdateRunningProgress(
-        proxyCount: 5555,
-        currentProgress: completed,
-        preserveTerminalProgress: true,
-      );
-
-      expect(progress, same(completed));
-      expect(progress.done, isTrue);
-      expect(progress.operation, '已完成');
-    });
-
-    test('uses actual time for no-op auto update checks', () {
-      final startedAt = DateTime(2026, 6, 20, 9);
-      final finishedAt = startedAt.add(const Duration(seconds: 3));
-
-      final progress = buildFreeNodesAutoUpdateNoopProgress(
-        proxyCount: 5555,
-        startedAt: startedAt,
-        finishedAt: finishedAt,
-      );
-
-      expect(progress.operation, '已检查，无需更新');
-      expect(progress.proxyCount, 5555);
-      expect(progress.done, true);
-      expect(progress.startedAt, startedAt);
-      expect(progress.finishedAt, finishedAt);
-    });
-
-    test(
-      'keeps due-source wording while fetch progress reports technical work',
-      () {
-        final startedAt = DateTime(2026, 6, 20, 9);
-        final progress = buildFreeNodesAutoUpdateFetchProgress(
-          progress: const FreeNodesProgress(
-            operation: 'Rust 高并发获取免费节点',
-            completed: 8,
-            total: 16,
-            proxyCount: 1500,
-          ),
-          runningOperation: '正在更新到期来源',
-          startedAt: startedAt,
-          proxyCount: 1200,
-        );
-
-        expect(progress.operation, '正在更新到期来源');
-        expect(progress.completed, 8);
-        expect(progress.total, 16);
-        expect(progress.proxyCount, 1500);
-        expect(progress.startedAt, startedAt);
-        expect(progress.done, false);
-        expect(progress.error, false);
-      },
-    );
-
-    test('keeps automatic first launch wording before first fetch result', () {
-      final startedAt = DateTime(2026, 6, 20, 9);
-      final progress = buildFreeNodesAutoUpdateFetchProgress(
-        progress: const FreeNodesProgress(
-          operation: '开始获取节点',
-          completed: 0,
-          total: 64,
-        ),
-        runningOperation: '正在首次获取节点',
-        startedAt: startedAt,
-        proxyCount: 0,
-      );
-
-      expect(progress.operation, '正在首次获取节点');
-      expect(progress.completed, 0);
-      expect(progress.total, 64);
-      expect(progress.startedAt, startedAt);
-      expect(progress.value, 0);
-    });
-
-    test('uses completed fetch wording after automatic update finishes', () {
-      final startedAt = DateTime(2026, 6, 20, 9);
-      final progress = buildFreeNodesAutoUpdateFetchProgress(
-        progress: FreeNodesProgress(
-          operation: '已完成',
-          completed: 16,
-          total: 16,
-          proxyCount: 1800,
-          done: true,
-          finishedAt: startedAt.add(const Duration(seconds: 7)),
-        ),
-        runningOperation: '正在更新到期来源',
-        startedAt: startedAt,
-        proxyCount: 1200,
-      );
-
-      expect(progress.operation, '已完成');
-      expect(progress.proxyCount, 1800);
-      expect(progress.startedAt, startedAt);
-      expect(progress.finishedAt, startedAt.add(const Duration(seconds: 7)));
-      expect(progress.done, true);
-    });
-
-    test('keeps automatic no-op checks visible for a minimum duration', () {
-      final startedAt = DateTime(2026, 6, 20, 9);
-
-      expect(
-        remainingFreeNodesAutoUpdateVisibleDelay(
-          startedAt: startedAt,
-          now: startedAt.add(const Duration(milliseconds: 300)),
-        ),
-        const Duration(milliseconds: 900),
-      );
-      expect(
-        remainingFreeNodesAutoUpdateVisibleDelay(
-          startedAt: startedAt,
-          now: startedAt.add(const Duration(milliseconds: 1300)),
-        ),
-        Duration.zero,
-      );
-    });
-
-    test(
-      'checks profile file existence without creating an empty file',
-      () async {
-        final profile = freeNodesService.createProfile();
-        final initialFile = await profile.existingFile;
-        if (await initialFile.exists()) {
-          await initialFile.delete();
-        }
-        addTearDown(() async {
-          final cleanupFile = await profile.existingFile;
-          if (await cleanupFile.exists()) {
-            await cleanupFile.delete();
-          }
-        });
-
-        final checkedFile = await profile.existingFile;
-
-        expect(await checkedFile.exists(), false);
-
-        final createdFile = await profile.file;
-        expect(await createdFile.exists(), true);
-      },
-    );
-
-    test('updates all sources on first launch', () {
-      final decision = resolveFreeNodesAutoUpdateDecision(
-        fileExists: false,
-        hasLastUpdateDate: false,
-        hasDueSources: false,
-      );
-
-      expect(decision.kind, FreeNodesAutoUpdateKind.firstFetch);
-      expect(decision.operation, '正在首次获取节点');
-      expect(decision.shouldFetchAllSources, true);
-      expect(
-        shouldAutoUpdateFreeNodesProfile(
-          fileExists: false,
-          hasLastUpdateDate: false,
-          hasDueSources: false,
-        ),
-        true,
-      );
-    });
-
-    test('updates existing free nodes profile when update record is missing', () {
-      final decision = resolveFreeNodesAutoUpdateDecision(
-        fileExists: true,
-        hasLastUpdateDate: false,
-        hasDueSources: false,
-      );
-
-      expect(decision.kind, FreeNodesAutoUpdateKind.firstFetch);
-      expect(decision.operation, '正在首次获取节点');
-      expect(decision.shouldFetchAllSources, true);
-      expect(
-        shouldAutoUpdateFreeNodesProfile(
-          fileExists: true,
-          hasLastUpdateDate: false,
-          hasDueSources: false,
-        ),
-        true,
-        reason:
-            'an existing config without lastUpdateDate is still an unverified first-run state',
-      );
-    });
-
-    test('existing profile checks only when no source is due', () {
-      final decision = resolveFreeNodesAutoUpdateDecision(
-        fileExists: true,
-        hasLastUpdateDate: true,
-        hasDueSources: false,
-      );
-
-      expect(decision.kind, FreeNodesAutoUpdateKind.checkOnly);
-      expect(decision.operation, '正在检查更新');
-      expect(decision.shouldFetchAllSources, false);
-
-      expect(
-        shouldAutoUpdateFreeNodesProfile(
-          fileExists: true,
-          hasLastUpdateDate: true,
-          hasDueSources: false,
-        ),
-        false,
-      );
-    });
-
-    test('updates only due sources regardless of the calendar day', () {
-      final decision = resolveFreeNodesAutoUpdateDecision(
-        fileExists: true,
-        hasLastUpdateDate: true,
-        hasDueSources: true,
-      );
-
-      expect(decision.kind, FreeNodesAutoUpdateKind.dueSources);
-      expect(decision.operation, '正在更新到期来源');
-      expect(decision.shouldFetchAllSources, false);
-      expect(
-        shouldAutoUpdateFreeNodesProfile(
-          fileExists: true,
-          hasLastUpdateDate: true,
-          hasDueSources: true,
-        ),
-        true,
-        reason:
-            'source schedules, not app entry or date categories, decide updates',
-      );
-    });
-
-    test('applies current free nodes after no-op when core groups are empty', () {
-      expect(
-        shouldApplyCurrentFreeNodesProfileAfterNoopAutoUpdate(
-          isCurrentProfile: true,
-          shouldUpdate: false,
-          hasLoadedGroups: false,
-        ),
-        true,
-        reason:
-            'startup can have a valid free nodes profile file while the core has not loaded any groups yet',
-      );
-      expect(
-        shouldApplyCurrentFreeNodesProfileAfterNoopAutoUpdate(
-          isCurrentProfile: true,
-          shouldUpdate: false,
-          hasLoadedGroups: true,
-        ),
-        false,
-        reason: 'avoid reloading the core when groups are already available',
-      );
-      expect(
-        shouldApplyCurrentFreeNodesProfileAfterNoopAutoUpdate(
-          isCurrentProfile: false,
-          shouldUpdate: false,
-          hasLoadedGroups: false,
-        ),
-        false,
-      );
-      expect(
-        shouldApplyCurrentFreeNodesProfileAfterNoopAutoUpdate(
-          isCurrentProfile: true,
-          shouldUpdate: true,
-          hasLoadedGroups: false,
-        ),
-        false,
-      );
-    });
-
-    test(
-      'can skip free nodes when startup already triggered visible check',
-      () async {
-        final profile = freeNodesService.createProfile();
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
-            profilesProvider.overrideWith(() => _TestProfiles([profile])),
-          ],
-        );
-        addTearDown(container.dispose);
-        final progressSubscription = container.listen(
-          itemProvider(freeNodesProgressKey),
-          (_, _) {},
-          fireImmediately: true,
-        );
-        addTearDown(progressSubscription.close);
-
-        await container
-            .read(profilesActionProvider.notifier)
-            .autoUpdateProfiles(includeFreeNodes: false);
-
-        expect(container.read(itemProvider(freeNodesProgressKey)), isNull);
-        expect(container.read(profilesProvider), [profile]);
-      },
-    );
-
-    test(
-      'existing free nodes startup check is visually updating before no-op finishes',
-      () async {
-        final now = DateTime.now();
-        final sourceOptions = await freeNodesService.getSourceOptions();
-        await preferences.setString(
-          freeNodesFetchTimesKey,
-          json.encode({
-            for (final option in sourceOptions)
-              if (option.updateIntervalHours < 24)
-                option.id: now.toIso8601String(),
-          }),
-        );
-        final profile = freeNodesService.createProfile().copyWith(
-          lastUpdateDate: now,
-          subscriptionInfo: const SubscriptionInfo(total: 1234),
-          autoUpdate: true,
-        );
-        final profileFile = await profile.file;
-        await profileFile.writeAsString(
-          'proxies: []\nproxy-groups: []\nrules: []\n',
-        );
-        addTearDown(() async {
-          if (await profileFile.exists()) {
-            await profileFile.delete();
-          }
-        });
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
-            profilesProvider.overrideWith(() => _TestProfiles([profile])),
-          ],
-        );
-        addTearDown(container.dispose);
-
-        final startedVisibleCheck = await container
-            .read(profilesActionProvider.notifier)
-            .ensureFreeNodesProfile();
-
-        final visibleProgress =
-            container.read(itemProvider(freeNodesProgressKey))
-                as FreeNodesProgress;
-        expect(visibleProgress.operation, '正在检查更新');
-        expect(
-          buildFreeNodesVisibleUpdating(
-            progress: visibleProgress,
-            isUpdating: false,
-          ),
-          true,
-        );
-        expect(
-          buildFreeNodesStatusText(
-            profile: profile,
-            progress: visibleProgress,
-            isUpdating: false,
-            proxyCount: profile.subscriptionInfo?.total ?? 0,
-          ),
-          '检查更新中',
-        );
-        expect(container.read(isUpdatingProvider(profile.updatingKey)), true);
-        expect(startedVisibleCheck, true);
-
-        await Future<void>.delayed(Duration.zero);
-      },
-    );
-  });
-
-  group('Reality option sanitation', () {
-    test('normalizes public-key and removes invalid short-id', () {
-      final config = {
-        'proxies': [
-          {
-            'name': 'bad',
-            'type': 'vless',
-            'reality-opts': {
-              'public-key': '%2DFQM2tUbpiBjwjgla2mwkSkFhFIKQU0FQOvRi0ZD_mY',
-              'short-id': 'Infinity',
-            },
-          },
-          {
-            'name': 'good',
-            'type': 'vless',
-            'reality-opts': {'short-id': 'abcd'},
-          },
+    test('setProfileAndAutoApply stores a non-current profile', () {
+      final current = Profile.normal(label: 'Current');
+      final other = Profile.normal(label: 'Other');
+      final container = ProviderContainer(
+        overrides: [
+          currentProfileIdProvider.overrideWithBuild((_, _) => current.id),
+          profilesProvider.overrideWith(() => _TestProfiles([current])),
         ],
-      };
-
-      sanitizeRealityShortIds(config);
-
-      final proxies = config['proxies'] as List;
-      final badRealityOpts = proxies[0]['reality-opts'] as Map;
-      final goodRealityOpts = proxies[1]['reality-opts'] as Map;
-      expect(badRealityOpts.containsKey('short-id'), false);
-      expect(
-        badRealityOpts['public-key'],
-        '-FQM2tUbpiBjwjgla2mwkSkFhFIKQU0FQOvRi0ZD_mY',
       );
-      expect(goodRealityOpts['short-id'], 'abcd');
-    });
+      addTearDown(container.dispose);
 
-    test('removes reality opts with invalid public-key', () {
-      final config = {
-        'proxies': [
-          {
-            'name': 'bad',
-            'type': 'vless',
-            'reality-opts': {
-              'public-key': 'not-a-public-key',
-              'short-id': 'abcd',
-            },
-          },
-        ],
-      };
+      container
+          .read(profilesActionProvider.notifier)
+          .setProfileAndAutoApply(other);
 
-      sanitizeRealityShortIds(config);
-
-      final proxies = config['proxies'] as List;
-      expect(proxies[0].containsKey('reality-opts'), false);
+      expect(container.read(profilesProvider), [current, other]);
+      expect(container.read(currentProfileIdProvider), current.id);
     });
   });
 
@@ -1009,6 +141,458 @@ proxy-groups:
       container.read(isUpdatingProvider(key).notifier).value = false;
       expect(container.read(isUpdatingProvider(key)), false);
     });
+
+    test('updates valid resource URLs and rejects malformed URLs', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final action = container.read(geoResourceActionProvider.notifier);
+
+      expect(
+        () => action.updateGeoResourceUrl(GeoResource.MMDB, 'not-a-url'),
+        throwsA('Invalid url'),
+      );
+
+      const url = 'https://example.com/Country.mmdb';
+      action.updateGeoResourceUrl(GeoResource.MMDB, url);
+      expect(
+        container.read(patchClashConfigProvider).geoXUrl[GeoResource.MMDB],
+        url,
+      );
+    });
+  });
+
+  group('CoreAction', () {
+    test('applies the profile after restarting a stopped core', () async {
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(_TestSetupAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      final setupAction =
+          container.read(setupActionProvider.notifier) as _TestSetupAction;
+
+      await coreAction.restartCore();
+
+      expect(coreAction.lifecycleRestartCount, 1);
+      expect(setupAction.setRunningCount, 0);
+      expect(setupAction.applyProfileCount, 1);
+    });
+
+    test(
+      'restores the started state after restarting a running core',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            coreActionProvider.overrideWith(_TestCoreAction.new),
+            setupActionProvider.overrideWith(_TestSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        container.read(runTimeProvider.notifier).value = 0;
+        final coreAction =
+            container.read(coreActionProvider.notifier) as _TestCoreAction;
+        final setupAction =
+            container.read(setupActionProvider.notifier) as _TestSetupAction;
+
+        await coreAction.restartCore();
+
+        expect(coreAction.lifecycleRestartCount, 1);
+        expect(setupAction.setRunningCount, 1);
+        expect(setupAction.applyProfileCount, 0);
+      },
+    );
+
+    test(
+      'coalesces concurrent restart requests into one lifecycle restart',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            coreActionProvider.overrideWith(_TestCoreAction.new),
+            setupActionProvider.overrideWith(_TestSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        final coreAction =
+            container.read(coreActionProvider.notifier) as _TestCoreAction;
+        final setupAction =
+            container.read(setupActionProvider.notifier) as _TestSetupAction;
+        final restartCompleter = Completer<CoreLifecycleResult>();
+        coreAction.restartCompleter = restartCompleter;
+
+        final first = coreAction.restartCore();
+        final second = coreAction.restartCore();
+        await Future<void>.delayed(Duration.zero);
+
+        expect(coreAction.lifecycleRestartCount, 1);
+        restartCompleter.complete(_restartResult);
+        await Future.wait([first, second]);
+
+        expect(setupAction.applyProfileCount, 1);
+      },
+    );
+
+    test('reapplies the latest request without restarting twice', () async {
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(_TestSetupAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      final setupAction =
+          container.read(setupActionProvider.notifier) as _TestSetupAction;
+      final restartCompleter = Completer<CoreLifecycleResult>();
+      final firstApplyStarted = Completer<void>();
+      final firstApplyCompleter = Completer<void>();
+      coreAction.restartCompleter = restartCompleter;
+      setupAction.firstApplyStarted = firstApplyStarted;
+      setupAction.firstApplyCompleter = firstApplyCompleter;
+
+      final first = coreAction.restartCore();
+      await Future<void>.delayed(Duration.zero);
+      restartCompleter.complete(_restartResult);
+      await firstApplyStarted.future;
+
+      final second = coreAction.restartCore();
+      firstApplyCompleter.complete();
+      await Future.wait([first, second]);
+
+      expect(coreAction.lifecycleRestartCount, 1);
+      expect(setupAction.applyProfileCount, 2);
+    });
+
+    test('surfaces a failed restart to its caller as a rejection', () async {
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(_TestSetupAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      final restartCompleter = Completer<CoreLifecycleResult>();
+      coreAction.restartCompleter = restartCompleter;
+
+      final restart = coreAction.restartCore();
+      restartCompleter.completeError(StateError('core is gone'));
+
+      await expectLater(restart, throwsA(isA<StateError>()));
+      expect(container.read(coreStatusProvider), CoreStatus.disconnected);
+
+      // The failed operation must not latch: a later restart still runs.
+      coreAction.restartCompleter = null;
+      await coreAction.restartCore();
+      expect(coreAction.lifecycleRestartCount, 2);
+      expect(container.read(coreStatusProvider), CoreStatus.connected);
+    });
+  });
+
+  group('SetupAction', () {
+    group('rapid status changes', () {
+      test('updates runtime and traffic while core start is pending', () async {
+        final startCompleter = Completer<bool>();
+        final container = ProviderContainer(
+          overrides: [
+            initProvider.overrideWithBuild((_, _) => true),
+            commonActionProvider.overrideWith(_RaceCommonAction.new),
+            setupActionProvider.overrideWith(_RaceSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        final action =
+            container.read(setupActionProvider.notifier) as _RaceSetupAction;
+        final commonAction =
+            container.read(commonActionProvider.notifier) as _RaceCommonAction;
+        action.startCompleter = startCompleter;
+
+        final startFuture = action.setRunning(true);
+        final initialRunTime = container.read(runTimeProvider)!;
+        await Future<void>.delayed(const Duration(milliseconds: 1100));
+
+        expect(container.read(runTimeProvider), greaterThan(initialRunTime));
+        expect(commonAction.updateTrafficCount, greaterThanOrEqualTo(2));
+
+        startCompleter.complete(true);
+        await startFuture;
+
+        expect(action.transitions, [true]);
+        await action.setRunning(false);
+      });
+
+      test('serializes listener changes while latest start owns UI', () async {
+        final stopCompleter = Completer<bool>();
+        final container = ProviderContainer(
+          overrides: [
+            initProvider.overrideWithBuild((_, _) => true),
+            commonActionProvider.overrideWith(_RaceCommonAction.new),
+            setupActionProvider.overrideWith(_RaceSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        final action =
+            container.read(setupActionProvider.notifier) as _RaceSetupAction;
+        await action.setRunning(true);
+        action.transitions.clear();
+        action.applyProfileDebounceCount = 0;
+        action.stopCompleter = stopCompleter;
+
+        final stopFuture = action.setRunning(false);
+        await Future<void>.delayed(Duration.zero);
+        expect(action.transitions, [false]);
+
+        final startFuture = action.setRunning(true);
+
+        expect(container.read(runTimeProvider), isNotNull);
+
+        stopCompleter.complete(true);
+        await Future.wait([stopFuture, startFuture]);
+
+        expect(action.transitions, [false, true]);
+        expect(container.read(runTimeProvider), isNotNull);
+        expect(container.read(isStartProvider), isTrue);
+        expect(action.applyProfileDebounceCount, 1);
+        expect(action.resetCoreTrafficCount, 0);
+
+        await action.setRunning(false);
+      });
+
+      test('newer stop prevents stale start continuation', () async {
+        final startCompleter = Completer<bool>();
+        final container = ProviderContainer(
+          overrides: [
+            initProvider.overrideWithBuild((_, _) => true),
+            commonActionProvider.overrideWith(_RaceCommonAction.new),
+            setupActionProvider.overrideWith(_RaceSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        final action =
+            container.read(setupActionProvider.notifier) as _RaceSetupAction;
+        action.startCompleter = startCompleter;
+
+        final startFuture = action.setRunning(true);
+        await Future<void>.delayed(Duration.zero);
+        expect(action.transitions, [true]);
+
+        final stopFuture = action.setRunning(false);
+        expect(container.read(runTimeProvider), isNull);
+
+        startCompleter.complete(true);
+        await Future.wait([startFuture, stopFuture]);
+
+        expect(action.transitions, [true, false]);
+        expect(container.read(runTimeProvider), isNull);
+        expect(container.read(isStartProvider), isFalse);
+        expect(action.applyProfileDebounceCount, 0);
+        expect(action.resetCoreTrafficCount, 1);
+      });
+
+      test('skips an intermediate stop when a newer start is queued', () async {
+        final startCompleter = Completer<bool>();
+        final container = ProviderContainer(
+          overrides: [
+            initProvider.overrideWithBuild((_, _) => true),
+            commonActionProvider.overrideWith(_RaceCommonAction.new),
+            setupActionProvider.overrideWith(_RaceSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        final action =
+            container.read(setupActionProvider.notifier) as _RaceSetupAction;
+        action.startCompleter = startCompleter;
+
+        final firstStart = action.setRunning(true);
+        await Future<void>.delayed(Duration.zero);
+        final stop = action.setRunning(false);
+        final latestStart = action.setRunning(true);
+
+        startCompleter.complete(true);
+        await Future.wait([firstStart, stop, latestStart]);
+
+        expect(action.transitions, [true, true]);
+        expect(container.read(isStartProvider), isTrue);
+        expect(action.applyProfileDebounceCount, 1);
+        expect(action.resetCoreTrafficCount, 0);
+
+        await action.setRunning(false);
+      });
+
+      test('stale initialization cannot start after a newer stop', () async {
+        final container = ProviderContainer(
+          overrides: [
+            initProvider.overrideWithBuild((_, _) => true),
+            commonActionProvider.overrideWith(_RaceCommonAction.new),
+            setupActionProvider.overrideWith(_InitializingSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        final action =
+            container.read(setupActionProvider.notifier)
+                as _InitializingSetupAction;
+
+        final start = action.setRunning(true, initialize: true);
+        final stop = action.setRunning(false);
+        await stop;
+
+        expect(action.transitions, [false]);
+        expect(container.read(isStartProvider), isFalse);
+
+        action.continueInitialization();
+        await start;
+
+        expect(action.transitions, [false]);
+        expect(container.read(isStartProvider), isFalse);
+      });
+
+      test(
+        'keeps suspended startup local until the listener resumes',
+        () async {
+          final container = ProviderContainer(
+            overrides: [
+              initProvider.overrideWithBuild((_, _) => true),
+              suspendProvider.overrideWithValue(true),
+              commonActionProvider.overrideWith(_RaceCommonAction.new),
+              setupActionProvider.overrideWith(_RaceSetupAction.new),
+            ],
+          );
+          addTearDown(container.dispose);
+          final action =
+              container.read(setupActionProvider.notifier) as _RaceSetupAction;
+
+          await action.setRunning(true);
+
+          expect(action.transitions, isEmpty);
+          expect(container.read(isStartProvider), isTrue);
+          expect(action.applyProfileDebounceCount, 1);
+
+          await action.setRunning(false);
+          expect(action.transitions, [false]);
+        },
+      );
+    });
+
+    test(
+      'restarts core after newly granting admin during config update',
+      () async {
+        late _AuthorizationSetupAction setupAction;
+        late _RestartRecordingCoreAction coreAction;
+        final container = ProviderContainer(
+          overrides: [
+            setupActionProvider.overrideWith(() {
+              setupAction = _AuthorizationSetupAction([AuthorizeCode.success]);
+              return setupAction;
+            }),
+            coreActionProvider.overrideWith(() {
+              coreAction = _RestartRecordingCoreAction();
+              return coreAction;
+            }),
+          ],
+        );
+        addTearDown(container.dispose);
+        container
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith.tun(enable: true));
+        container.read(setupActionProvider);
+        container.read(coreActionProvider);
+
+        await setupAction.updateConfig();
+
+        expect(setupAction.authorizationRequestCount, 1);
+        expect(
+          container.read(authorizedTunEnableProvider),
+          TunAuthorizationState.authorized,
+        );
+        expect(coreAction.restartCount, 1);
+      },
+    );
+
+    test('reopens authorization and propagates a failed restart', () async {
+      late _AuthorizationSetupAction setupAction;
+      final container = ProviderContainer(
+        overrides: [
+          currentProfileProvider.overrideWithValue(null),
+          setupActionProvider.overrideWith(() {
+            setupAction = _AuthorizationSetupAction([AuthorizeCode.success]);
+            return setupAction;
+          }),
+          coreActionProvider.overrideWith(_FailingRestartCoreAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith.tun(enable: true));
+      container.read(setupActionProvider);
+      container.read(coreActionProvider);
+
+      await expectLater(
+        setupAction.applyProfile(force: true),
+        throwsA(same(_restartFailure)),
+      );
+
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.none,
+      );
+    });
+
+    test('requests admin authorization once per app lifecycle', () async {
+      late _AuthorizationSetupAction setupAction;
+      final container = ProviderContainer(
+        overrides: [
+          setupActionProvider.overrideWith(() {
+            setupAction = _AuthorizationSetupAction([
+              AuthorizeCode.error,
+              AuthorizeCode.success,
+            ]);
+            return setupAction;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.read(setupActionProvider);
+
+      expect(await setupAction.requestAdmin(true), isTrue);
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.unauthorized,
+      );
+
+      expect(await setupAction.requestAdmin(true), isTrue);
+      expect(setupAction.authorizationRequestCount, 1);
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.unauthorized,
+      );
+    });
+
+    test('keeps tun disabled while authorization stays unauthorized', () async {
+      late _AuthorizationSetupAction setupAction;
+      final container = ProviderContainer(
+        overrides: [
+          setupActionProvider.overrideWith(() {
+            setupAction = _AuthorizationSetupAction([AuthorizeCode.error]);
+            return setupAction;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith.tun(enable: true));
+      container.read(setupActionProvider);
+
+      await setupAction.requestAdmin(true);
+
+      expect(container.read(autoSetSystemDnsStateProvider).a, isFalse);
+    });
   });
 }
 
@@ -1022,11 +606,6 @@ class _TestProfiles extends Profiles {
 
   @override
   void put(Profile profile) {
-    unawaited(putAndWait(profile));
-  }
-
-  @override
-  Future<void> putAndWait(Profile profile) async {
     final next = List<Profile>.from(state);
     final index = next.indexWhere((item) => item.id == profile.id);
     if (index == -1) {
@@ -1038,7 +617,139 @@ class _TestProfiles extends Profiles {
   }
 
   @override
-  void del(int id) {
+  Future<void> del(int id) async {
     state = state.where((profile) => profile.id != id).toList();
+  }
+
+  @override
+  void reorder(List<Profile> profiles) {
+    state = List.of(profiles);
+  }
+}
+
+class _TestCoreAction extends CoreAction {
+  int lifecycleRestartCount = 0;
+  Completer<CoreLifecycleResult>? restartCompleter;
+
+  @override
+  Future<void> initCore() async {}
+
+  @override
+  Future<CoreLifecycleResult> restartLifecycle() {
+    lifecycleRestartCount++;
+    return restartCompleter?.future ?? Future.value(_restartResult);
+  }
+}
+
+class _TestSetupAction extends SetupAction {
+  int setRunningCount = 0;
+  int applyProfileCount = 0;
+  Completer<void>? firstApplyStarted;
+  Completer<void>? firstApplyCompleter;
+
+  @override
+  Future<void> setRunning(bool running, {bool initialize = false}) async {
+    setRunningCount++;
+  }
+
+  @override
+  Future<void> applyProfile({
+    bool silence = false,
+    bool force = false,
+    Future<void> Function()? preloadInvoke,
+  }) async {
+    applyProfileCount++;
+    if (applyProfileCount == 1) {
+      firstApplyStarted?.complete();
+      await firstApplyCompleter?.future;
+    }
+  }
+}
+
+const _restartResult = CoreLifecycleResult(
+  revision: 1,
+  outcome: CoreLifecycleOutcome.applied,
+);
+
+class _RestartRecordingCoreAction extends CoreAction {
+  int restartCount = 0;
+
+  @override
+  Future<void> restartCore() async {
+    restartCount++;
+  }
+}
+
+class _FailingRestartCoreAction extends CoreAction {
+  @override
+  Future<void> restartCore() async {
+    throw _restartFailure;
+  }
+}
+
+final _restartFailure = Exception('restart failed');
+
+class _AuthorizationSetupAction extends SetupAction {
+  final List<AuthorizeCode> authorizationResults;
+  int authorizationRequestCount = 0;
+
+  _AuthorizationSetupAction(this.authorizationResults);
+
+  @override
+  Future<AuthorizeCode> authorizeCore() async {
+    return authorizationResults[authorizationRequestCount++];
+  }
+}
+
+class _RaceSetupAction extends SetupAction {
+  int applyProfileDebounceCount = 0;
+  int resetCoreTrafficCount = 0;
+  final transitions = <bool>[];
+  Completer<bool>? startCompleter;
+  Completer<bool>? stopCompleter;
+
+  @override
+  void applyProfileDebounce({bool silence = false, bool force = false}) {
+    applyProfileDebounceCount++;
+  }
+
+  @override
+  Future<bool> setCoreRunning(bool running) async {
+    transitions.add(running);
+    return running
+        ? await startCompleter?.future ?? true
+        : await stopCompleter?.future ?? true;
+  }
+
+  @override
+  void resetCoreTraffic() {
+    resetCoreTrafficCount++;
+  }
+}
+
+class _InitializingSetupAction extends _RaceSetupAction {
+  final _initializationCompleter = Completer<void>();
+
+  void continueInitialization() {
+    _initializationCompleter.complete();
+  }
+
+  @override
+  Future<void> applyProfile({
+    bool silence = false,
+    bool force = false,
+    Future<void> Function()? preloadInvoke,
+  }) async {
+    await _initializationCompleter.future;
+    await preloadInvoke?.call();
+  }
+}
+
+class _RaceCommonAction extends CommonAction {
+  int updateTrafficCount = 0;
+
+  @override
+  Future<void> updateTraffic() async {
+    updateTrafficCount++;
   }
 }

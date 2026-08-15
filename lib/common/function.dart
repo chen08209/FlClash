@@ -28,6 +28,22 @@ class Debouncer {
   }
 }
 
+class SerialTaskScheduler {
+  Future<void> _serialTail = Future<void>.value();
+
+  Future<T> run<T>(Future<T> Function() task) {
+    final completer = Completer<T>();
+    _serialTail = _serialTail.then((_) async {
+      try {
+        completer.complete(await task());
+      } catch (error, stackTrace) {
+        completer.completeError(error, stackTrace);
+      }
+    });
+    return completer.future;
+  }
+}
+
 class Throttler {
   final Map<dynamic, Timer?> _operations = {};
 

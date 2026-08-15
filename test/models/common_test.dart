@@ -1,8 +1,122 @@
+import 'dart:io';
+
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:test/test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockFile extends Mock implements File {}
 
 void main() {
+  group('FileInfo', () {
+    late MockFile file;
+
+    setUp(() {
+      file = MockFile();
+    });
+
+    test('reads size and valid last modified time', () async {
+      final lastModified = DateTime(2026, 7, 29);
+      when(() => file.exists()).thenAnswer((_) async => true);
+      when(() => file.length()).thenAnswer((_) async => 2048);
+      when(() => file.lastModified()).thenAnswer((_) async => lastModified);
+
+      final fileInfo = await file.getFileInfo();
+
+      expect(fileInfo, FileInfo(size: 2048, lastModified: lastModified));
+    });
+
+    test(
+      'treats positive timestamps within the epoch year as unknown',
+      () async {
+        when(() => file.exists()).thenAnswer((_) async => true);
+        when(() => file.length()).thenAnswer((_) async => 1024);
+        when(
+          () => file.lastModified(),
+        ).thenAnswer((_) async => DateTime(1970, 12, 31, 23, 59, 59));
+
+        final fileInfo = await file.getFileInfo();
+
+        expect(fileInfo, const FileInfo(size: 1024));
+      },
+    );
+
+    test('keeps size when last modified time cannot be read', () async {
+      when(() => file.exists()).thenAnswer((_) async => true);
+      when(() => file.length()).thenAnswer((_) async => 1024);
+      when(
+        () => file.lastModified(),
+      ).thenThrow(const FileSystemException('last modified unavailable'));
+
+      final fileInfo = await file.getFileInfo();
+
+      expect(fileInfo, const FileInfo(size: 1024));
+    });
+
+    test('returns null when file does not exist', () async {
+      when(() => file.exists()).thenAnswer((_) async => false);
+
+      expect(await file.getFileInfo(), isNull);
+      verifyNever(() => file.length());
+      verifyNever(() => file.lastModified());
+    });
+
+    testWidgets('shows unknown while preserving file size', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              return Text(const FileInfo(size: 1024).getDesc(context));
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('1KB  ·  Unknown'), findsOneWidget);
+    });
+
+    testWidgets('shows relative time for valid last modified time', (
+      tester,
+    ) async {
+      final lastModified = DateTime.now().subtract(const Duration(days: 2));
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              return Text(
+                FileInfo(
+                  size: 1024,
+                  lastModified: lastModified,
+                ).getDesc(context),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('1KB  ·  2 days ago'), findsOneWidget);
+    });
+  });
+
   group('PackagesExt', () {
     const packages = [
       Package(

@@ -16,8 +16,8 @@ serde_yaml_ng = "0.10"
 ureq = "3.3"
 url = "2.5"
 
-[target.'cfg(unix)'.dependencies]
-libc = "0.2"
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Pipes"] }
 
 [profile.release]
 opt-level = "s"

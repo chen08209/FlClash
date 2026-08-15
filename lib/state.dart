@@ -4,41 +4,47 @@ import 'dart:io';
 import 'package:animations/animations.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/pages/inner_browser.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/list.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'common/common.dart';
+import 'common/free_nodes.dart';
+import 'common/migration.dart';
 import 'database/database.dart';
 import 'enum/enum.dart';
 import 'l10n/l10n.dart';
 import 'models/models.dart';
 import 'providers/providers.dart';
 
-bool shouldIncludeFreeNodesInStartupProfileAutoUpdate({
-  required bool freeNodesEnsureAlreadyStarted,
-}) {
-  return !freeNodesEnsureAlreadyStarted;
-}
-
 class GlobalState {
   static GlobalState? _instance;
   final navigatorKey = GlobalKey<NavigatorState>();
-  bool isPre = true;
-  late final String coreSHA256;
+  late final String appEnv;
   late final PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;
   late CommonTheme theme;
-  late Color accentColor;
+  Color accentColor = const Color(defaultPrimaryColor);
   late ProviderContainer container;
   bool needInitStatus = true;
+  bool _didCrashOnPreviousExecution = false;
+
+  bool get isPre => appEnv != 'stable';
+
+  bool get canCrashCore => canCrashCoreFor(isDebug: kDebugMode, appEnv: appEnv);
+
+  @visibleForTesting
+  static bool canCrashCoreFor({required bool isDebug, required String appEnv}) {
+    return isDebug || appEnv == 'dev';
+  }
 
   // ignore: deprecated_member_use
   CorePalette? corePalette;
@@ -54,8 +60,7 @@ class GlobalState {
   }
 
   Future<ProviderContainer> init(int version) async {
-    coreSHA256 = const String.fromEnvironment('CORE_SHA256');
-    isPre = const String.fromEnvironment('APP_ENV') != 'stable';
+    appEnv = const String.fromEnvironment('APP_ENV', defaultValue: 'pre');
     await _initDynamicColor();
     return _initData(version);
   }
@@ -63,10 +68,13 @@ class GlobalState {
   Future<void> _initDynamicColor() async {
     try {
       corePalette = await DynamicColorPlugin.getCorePalette();
-      accentColor =
-          await DynamicColorPlugin.getAccentColor() ??
-          const Color(defaultPrimaryColor);
-    } catch (_) {}
+      accentColor = await DynamicColorPlugin.getAccentColor() ?? accentColor;
+    } catch (error) {
+      commonPrint.log(
+        'Failed to initialize dynamic color: $error',
+        logLevel: LogLevel.warning,
+      );
+    }
   }
 
   String get ua => container
@@ -76,6 +84,13 @@ class GlobalState {
   BuildContext get _context => navigatorKey.currentContext!;
 
   Future<ProviderContainer> _initData(int version) async {
+    packageInfo = await PackageInfo.fromPlatform();
+    var config = await migration.run();
+    _didCrashOnPreviousExecution = await system.didCrashOnPreviousExecution();
+    if (_didCrashOnPreviousExecution) {
+      config = config.copyWith(currentProfileId: null);
+      await preferences.saveConfig(config);
+    }
     final appState = AppState(
       brightness: WidgetsBinding.instance.platformDispatcher.platformBrightness,
       version: version,
@@ -87,26 +102,6 @@ class GlobalState {
       systemUiOverlayStyle: const SystemUiOverlayStyle(),
     );
     final appStateOverrides = buildAppStateOverrides(appState);
-    packageInfo = await PackageInfo.fromPlatform();
-    final configMap = await preferences.getConfigMap();
-    final config = await migration.migrationIfNeeded(
-      configMap,
-      sync: (data) async {
-        final newConfigMap = data.configMap;
-        final config = Config.realFromJson(newConfigMap);
-        await Future.wait([
-          database.restore(
-            data.profiles,
-            data.scripts,
-            data.rules,
-            data.links,
-            data.proxyGroups,
-          ),
-          preferences.saveConfig(config),
-        ]);
-        return config;
-      },
-    );
     final configOverrides = buildConfigOverrides(config);
     container = ProviderContainer(
       overrides: [...appStateOverrides, ...configOverrides],
@@ -289,30 +284,24 @@ class GlobalState {
     navigatorKey.currentContext?.showNotifier(text, actionState: actionState);
   }
 
-  Future<void> openUrl(String url, {bool confirm = true}) async {
-    if (confirm) {
-      final res = await showMessage(
-        message: TextSpan(text: url),
-        title: currentAppLocalizations.externalLink,
-        confirmText: currentAppLocalizations.go,
-      );
-      if (res != true) {
-        return;
-      }
+  Future<void> openUrl(String url) async {
+    final res = await showMessage(
+      message: TextSpan(text: url),
+      title: currentAppLocalizations.externalLink,
+      confirmText: currentAppLocalizations.go,
+    );
+    if (res != true) {
+      return;
     }
-    final context = navigatorKey.currentContext;
-    if (context == null) return;
-    if (!context.mounted) return;
-    await BaseNavigator.push(context, InnerBrowserPage(url: url));
+    launchUrl(Uri.parse(url));
   }
 
-  Future<bool> attach() async {
+  Future<void> attach() async {
     if (isAttach == true) {
-      return false;
+      return;
     }
     await _initApp();
     isAttach = true;
-    return true;
   }
 
   Future<void> _initApp() async {
@@ -325,6 +314,10 @@ class GlobalState {
       });
     };
     container.read(systemActionProvider.notifier).updateTray();
+    container
+        .read(profilesActionProvider.notifier)
+        .autoUpdateProfiles(includeFreeNodes: false);
+    container.read(commonActionProvider.notifier).autoCheckUpdate();
     autoLaunch?.updateStatus(container.read(appSettingProvider).autoLaunch);
     if (!container.read(appSettingProvider).silentLaunch) {
       window?.show();
@@ -333,25 +326,37 @@ class GlobalState {
     }
     await _handleFailedPreference();
     await _handlerDisclaimer();
-    await _showFreeNodesForkTip();
+    await _showCrashRecoveryTip();
     await _showCrashlyticsTip();
-    await container.read(coreActionProvider.notifier).connectCore();
-    await container.read(coreActionProvider.notifier).initCore();
-    final freeNodesEnsureAlreadyStarted = await container
-        .read(profilesActionProvider.notifier)
-        .ensureFreeNodesProfile();
-    await container.read(setupActionProvider.notifier).initStatus();
+    await container.read(coreActionProvider.notifier).startCore();
+    if (!_didCrashOnPreviousExecution) {
+      final currentProfile = container.read(currentProfileProvider);
+      if (currentProfile?.isFreeNodesProfile == true) {
+        unawaited(
+          Future<void>.delayed(const Duration(milliseconds: 900), () async {
+            try {
+              await container.read(setupActionProvider.notifier).initStatus();
+            } catch (e) {
+              commonPrint.log(e.toString(), logLevel: LogLevel.warning);
+            }
+          }),
+        );
+      } else {
+        await container.read(setupActionProvider.notifier).initStatus();
+      }
+    }
     container.read(initProvider.notifier).value = true;
-    unawaited(
-      container
-          .read(profilesActionProvider.notifier)
-          .autoUpdateProfiles(
-            includeFreeNodes: shouldIncludeFreeNodesInStartupProfileAutoUpdate(
-              freeNodesEnsureAlreadyStarted: freeNodesEnsureAlreadyStarted,
-            ),
-          ),
-    );
     permissions.check();
+  }
+
+  Future<void> _showCrashRecoveryTip() async {
+    if (!_didCrashOnPreviousExecution) return;
+    await showMessage(
+      title: currentAppLocalizations.crashDetected,
+      cancelable: false,
+      dismissible: false,
+      message: TextSpan(text: currentAppLocalizations.crashDetectedTip),
+    );
   }
 
   Future<void> _handleFailedPreference() async {
@@ -407,20 +412,6 @@ class GlobalState {
     container
         .read(appSettingProvider.notifier)
         .update((state) => state.copyWith(crashlyticsTip: true));
-  }
-
-  Future<void> _showFreeNodesForkTip() async {
-    const key = 'free_nodes_fork_tip_shown';
-    if (await preferences.getBool(key)) return;
-    await showMessage(
-      title: currentAppLocalizations.tip,
-      cancelable: false,
-      message: const TextSpan(
-        text:
-            '\u8be5\u7248\u672c\u4e3a\u52a0\u5165\u4e86\u514d\u8d39\u8282\u70b9\u7684\u6539\u7248\uff0c\u975e\u539f\u7248',
-      ),
-    );
-    await preferences.setBool(key, true);
   }
 
   Future<void> _handlerDisclaimer() async {

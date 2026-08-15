@@ -1,5 +1,4 @@
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/free_nodes.dart';
 import 'package:fl_clash/core/controller.dart';
@@ -50,7 +49,7 @@ GroupsState currentGroupsState(Ref ref) {
       Mode.global => visibleGroups,
       Mode.rule =>
         visibleGroups
-            .where((item) => item.hidden != true)
+            .where((item) => item.hidden == false)
             .where((element) => element.name != GroupName.GLOBAL.name)
             .toList(),
     },
@@ -63,13 +62,14 @@ NavigationItemsState navigationItemsState(Ref ref) {
   final hasProfiles = ref.watch(
     profilesProvider.select((state) => state.isNotEmpty),
   );
-  final hasGroups = ref.watch(
+  final hasProxies = ref.watch(
     currentGroupsStateProvider.select((state) => state.value.isNotEmpty),
   );
+  final isInit = ref.watch(initProvider);
   return NavigationItemsState(
     value: navigation.getItems(
       openLogs: openLogs,
-      hasProxies: hasProfiles || hasGroups,
+      hasProxies: !isInit ? hasProfiles : hasProxies,
     ),
   );
 }
@@ -209,26 +209,11 @@ NavigationState navigationState(Ref ref) {
 }
 
 @riverpod
-double contentWidth(Ref ref) {
-  final viewWidth = ref.watch(viewWidthProvider);
-  final sideWidth = ref.watch(sideWidthProvider);
-  return viewWidth - sideWidth;
-}
-
-@riverpod
 DashboardState dashboardState(Ref ref) {
   final dashboardWidgets = ref.watch(
     appSettingProvider.select((state) => state.dashboardWidgets),
   );
-  final contentWidth = ref.watch(contentWidthProvider);
-  final normalizedDashboardWidgets =
-      dashboardWidgets.contains(DashboardWidget.freeNodesStatus)
-      ? dashboardWidgets
-      : [DashboardWidget.freeNodesStatus, ...dashboardWidgets];
-  return DashboardState(
-    dashboardWidgets: normalizedDashboardWidgets,
-    contentWidth: contentWidth,
-  );
+  return DashboardState(dashboardWidgets: dashboardWidgets);
 }
 
 @riverpod
@@ -251,14 +236,7 @@ ProxiesActionsState proxiesActionsState(Ref ref) {
 ProfilesState profilesState(Ref ref) {
   final currentProfileId = ref.watch(currentProfileIdProvider);
   final profiles = ref.watch(profilesProvider);
-  final columns = ref.watch(
-    contentWidthProvider.select((state) => utils.getProfilesColumns(state)),
-  );
-  return ProfilesState(
-    profiles: profiles,
-    currentProfileId: currentProfileId,
-    columns: columns,
-  );
+  return ProfilesState(profiles: profiles, currentProfileId: currentProfileId);
 }
 
 @riverpod
@@ -289,13 +267,10 @@ ProxiesListState proxiesListState(Ref ref) {
   final cardType = ref.watch(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );
-
-  final columns = ref.watch(proxiesColumnsProvider);
   return ProxiesListState(
     groups: currentGroups.value,
     currentUnfoldSet: currentUnfoldSet,
     proxyCardType: cardType,
-    columns: columns,
   );
 }
 
@@ -303,26 +278,29 @@ ProxiesListState proxiesListState(Ref ref) {
 ProxiesTabState proxiesTabState(Ref ref) {
   final query = ref.watch(queryProvider(QueryTag.proxies));
   final currentGroups = ref.watch(filterGroupsStateProvider(query));
-  final currentGroupName = ref.watch(
-    currentProfileProvider.select((state) => state?.currentGroupName),
-  );
-  final normalizedCurrentGroupName =
-      currentGroupName != null &&
-          shouldFilterVisibleFreeNodesGroups(
-            groups: currentGroups.value,
-            profile: ref.watch(currentProfileProvider),
-          )
-      ? normalizeFreeNodesGroupName(currentGroupName)
-      : currentGroupName;
+  final currentProfile = ref.watch(currentProfileProvider);
+  final currentGroupName = currentProfile?.currentGroupName;
   final cardType = ref.watch(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );
-  final columns = ref.watch(proxiesColumnsProvider);
-  return ProxiesTabState(
+  final shouldFilterFreeNodesGroups = shouldFilterVisibleFreeNodesGroups(
     groups: currentGroups.value,
-    currentGroupName: normalizedCurrentGroupName,
+    profile: currentProfile,
+  );
+  final resolvedCurrentGroupName =
+      shouldFilterFreeNodesGroups && currentGroupName != null
+      ? normalizeFreeNodesGroupName(currentGroupName)
+      : currentGroupName;
+  final groups = shouldFilterFreeNodesGroups
+      ? normalizeVisibleFreeNodesGroups(
+          currentGroups.value,
+          selectedGroupName: resolvedCurrentGroupName,
+        )
+      : currentGroups.value;
+  return ProxiesTabState(
+    groups: groups,
+    currentGroupName: resolvedCurrentGroupName,
     proxyCardType: cardType,
-    columns: columns,
   );
 }
 
@@ -333,31 +311,13 @@ bool isStart(Ref ref) {
 
 @riverpod
 VM2<List<String>, String?> proxiesTabControllerState(Ref ref) {
-  final profile = ref.watch(currentProfileProvider);
   return ref.watch(
-    proxiesTabStateProvider.select((state) {
-      final visibleGroups =
-          shouldFilterVisibleFreeNodesGroups(
-            groups: state.groups,
-            profile: profile,
-          )
-          ? normalizeVisibleFreeNodesGroups(
-              state.groups,
-              selectedGroupName: state.currentGroupName,
-            )
-          : state.groups;
-      final normalizedCurrentGroupName = state.currentGroupName == null
-          ? null
-          : normalizeFreeNodesGroupName(state.currentGroupName!);
-      final currentGroupName =
-          visibleGroups.any((group) => group.name == normalizedCurrentGroupName)
-          ? normalizedCurrentGroupName
-          : visibleGroups.firstOrNull?.name;
-      return VM2(
-        visibleGroups.map((group) => group.name).toList(),
-        currentGroupName,
-      );
-    }),
+    proxiesTabStateProvider.select(
+      (state) => VM2(
+        state.groups.map((group) => group.name).toList(),
+        state.currentGroupName,
+      ),
+    ),
   );
 }
 
@@ -374,7 +334,6 @@ ProxyGroupSelectorState proxyGroupSelectorState(
     ),
   );
   final sortNum = ref.watch(sortNumProvider);
-  final columns = ref.watch(proxiesColumnsProvider);
   final lowQuery = query.toLowerCase();
   final proxies =
       group?.all.where((item) {
@@ -388,7 +347,6 @@ ProxyGroupSelectorState proxyGroupSelectorState(
     sortNum: sortNum,
     groupType: group?.type ?? GroupType.Selector,
     proxies: proxies,
-    columns: columns,
   );
 }
 
@@ -461,11 +419,7 @@ int? delay(Ref ref, {required String proxyName, String? testUrl}) {
   final effectiveProxyName = proxyState.proxyName;
   return ref.watch(
     delayDataSourceProvider.select(
-      (state) => visibleDelayValueForProxy(
-        delayMap: state,
-        testUrl: effectiveTestUrl,
-        proxyName: effectiveProxyName,
-      ),
+      (state) => state[effectiveTestUrl]?[effectiveProxyName],
     ),
   );
 }
@@ -502,15 +456,6 @@ Profile? currentProfile(Ref ref) {
   return ref.watch(
     profilesProvider.select((state) => state.getProfile(profileId)),
   );
-}
-
-@riverpod
-int proxiesColumns(Ref ref) {
-  final contentWidth = ref.watch(contentWidthProvider);
-  final proxiesLayout = ref.watch(
-    proxiesStyleSettingProvider.select((state) => state.layout),
-  );
-  return utils.getProxiesColumns(contentWidth, proxiesLayout);
 }
 
 @riverpod
@@ -617,11 +562,16 @@ Brightness currentBrightness(Ref ref) {
 @riverpod
 VM2<bool, bool> autoSetSystemDnsState(Ref ref) {
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
-  final realTunEnable = ref.watch(realTunEnableProvider);
+  final tunEnable = ref.watch(
+    patchClashConfigProvider.select((state) => state.tun.enable),
+  );
+  final authorizationState = ref.watch(authorizedTunEnableProvider);
   final autoSetSystemDns = ref.watch(
     networkSettingProvider.select((state) => state.autoSetSystemDns),
   );
-  return VM2(isStart ? realTunEnable : false, autoSetSystemDns);
+  final effectiveTunEnable =
+      tunEnable && authorizationState == TunAuthorizationState.authorized;
+  return VM2(isStart ? effectiveTunEnable : false, autoSetSystemDns);
 }
 
 @riverpod

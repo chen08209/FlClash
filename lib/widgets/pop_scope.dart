@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'inherited.dart';
 
 class CommonPopScope extends StatelessWidget {
   final Widget child;
@@ -19,8 +18,10 @@ class CommonPopScope extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final route = ModalRoute.of(context);
+    final hasBackLayer = route?.willHandlePopInternally == true;
     return PopScope(
-      canPop: onPop == null ? true : false,
+      canPop: onPop == null || hasBackLayer,
       onPopInvokedWithResult: onPop == null
           ? null
           : (didPop, _) async {
@@ -44,30 +45,90 @@ class CommonPopScope extends StatelessWidget {
   }
 }
 
-class SystemBackBlock extends ConsumerStatefulWidget {
+class BackLayerScope extends StatefulWidget {
   final Widget child;
+  final VoidCallback onBack;
+  @visibleForTesting
+  final void Function(void Function(Duration) callback)?
+  schedulePostFrameCallback;
 
-  const SystemBackBlock({super.key, required this.child});
+  const BackLayerScope({
+    super.key,
+    required this.onBack,
+    required this.child,
+    @visibleForTesting this.schedulePostFrameCallback,
+  });
 
   @override
-  ConsumerState<SystemBackBlock> createState() => _SystemBackBlockState();
+  State<BackLayerScope> createState() => _BackLayerScopeState();
 }
 
-class _SystemBackBlockState extends ConsumerState<SystemBackBlock> {
+class _BackLayerScopeState extends State<BackLayerScope> {
+  ModalRoute<dynamic>? _route;
+  LocalHistoryEntry? _entry;
+  bool _isDetaching = false;
+  bool _isPageActive = true;
+  int _syncRevision = 0;
+
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      globalState.container.read(backBlockProvider.notifier).backBlock();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    final isPageActive = PageActivityScope.isActiveOf(context);
+    if (identical(_route, route) && _isPageActive == isPageActive) {
+      return;
+    }
+    _detach();
+    _route = route;
+    _isPageActive = isPageActive;
+    final revision = ++_syncRevision;
+    final schedulePostFrameCallback =
+        widget.schedulePostFrameCallback ??
+        WidgetsBinding.instance.addPostFrameCallback;
+    schedulePostFrameCallback((_) {
+      if (!mounted || revision != _syncRevision) {
+        return;
+      }
+      if (!_isPageActive) {
+        widget.onBack();
+        return;
+      }
+      if (route == null) {
+        return;
+      }
+      final entry = LocalHistoryEntry(
+        impliesAppBarDismissal: false,
+        onRemove: _handleRemove,
+      );
+      _entry = entry;
+      route.addLocalHistoryEntry(entry);
     });
+  }
+
+  void _handleRemove() {
+    _entry = null;
+    if (!_isDetaching && mounted) {
+      widget.onBack();
+    }
+  }
+
+  void _detach() {
+    final entry = _entry;
+    if (entry == null) {
+      return;
+    }
+    _entry = null;
+    _isDetaching = true;
+    entry.remove();
+    _isDetaching = false;
   }
 
   @override
   void dispose() {
+    _syncRevision++;
+    _detach();
+    _route = null;
     super.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      globalState.container.read(backBlockProvider.notifier).unBackBlock();
-    });
   }
 
   @override

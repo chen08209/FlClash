@@ -34,7 +34,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m6(label) => "${label}当前已存在";
 
-  static String m7(name) => "${name} 已跳过";
+  static String m7(name) => "${name} 已是最新版本";
 
   static String m8(name) => "${name} 已更新";
 
@@ -190,6 +190,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "core": MessageLookupByLibrary.simpleMessage("内核"),
     "coreStatus": MessageLookupByLibrary.simpleMessage("核心状态"),
     "country": MessageLookupByLibrary.simpleMessage("区域"),
+    "crashDetected": MessageLookupByLibrary.simpleMessage("检测到崩溃"),
+    "crashDetectedTip": MessageLookupByLibrary.simpleMessage(
+      "检测到应用上次运行发生崩溃。为避免重复崩溃，已清除当前配置选择，并跳过本次自动配置。",
+    ),
     "crashTest": MessageLookupByLibrary.simpleMessage("崩溃测试"),
     "crashlytics": MessageLookupByLibrary.simpleMessage("崩溃分析"),
     "crashlyticsTip": MessageLookupByLibrary.simpleMessage(
@@ -305,6 +309,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "goDownload": MessageLookupByLibrary.simpleMessage("前往下载"),
     "goToConfigureScript": MessageLookupByLibrary.simpleMessage("前往配置脚本"),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage("是否缓存修改"),
+    "helperCorruptTip": MessageLookupByLibrary.simpleMessage(
+      "Helper 服务不可用，无法启用 TUN 模式，请重新安装 FlClash。",
+    ),
     "hideFromList": MessageLookupByLibrary.simpleMessage("从列表中隐藏"),
     "host": MessageLookupByLibrary.simpleMessage("主机"),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("追加Hosts"),

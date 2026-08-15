@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
@@ -7,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import 'environment.dart';
 import 'error.dart';
+import 'build_cache.dart';
 import 'go_builder.dart';
 import 'logging.dart';
 import 'options.dart';
@@ -45,6 +45,16 @@ Future<String> _hostGoArch() async {
 }
 
 abstract class BuildCommand extends Command {
+  BuildCommand() {
+    argParser.addFlag(
+      'force',
+      negatable: false,
+      help: 'Rebuild requested artifacts even when inputs are unchanged',
+    );
+  }
+
+  bool get force => argResults?['force'] as bool? ?? false;
+
   Future<void> runBuildCommand();
 
   @override
@@ -84,10 +94,21 @@ class BuildAndroidCommand extends BuildCommand {
       flutterTargetPlatforms: flutterTargetPlatforms,
     );
 
-    final builder = GoBuilder(rootDir: _rootDir, config: config);
-    final corePaths = await builder.buildAll(targets);
+    final cache = BuildCache(rootDir: _rootDir);
+    final notice = BuildNotice();
+    final builder = GoBuilder(
+      rootDir: _rootDir,
+      config: config,
+      cache: cache,
+      notice: notice,
+    );
+    final results = await builder.buildAll(targets, force: force);
 
-    _log.info('Build complete: $corePaths');
+    if (results.any((result) => result.rebuilt)) {
+      _log.info(
+        'Build complete: ${results.map((result) => result.primaryOutput)}',
+      );
+    }
   }
 }
 
@@ -119,10 +140,21 @@ class BuildLinuxCommand extends BuildCommand {
       throw BuildException('Invalid arch: $arch');
     }
 
-    final builder = GoBuilder(rootDir: _rootDir, config: config);
-    final corePaths = await builder.buildAll(targets);
+    final cache = BuildCache(rootDir: _rootDir);
+    final notice = BuildNotice();
+    final builder = GoBuilder(
+      rootDir: _rootDir,
+      config: config,
+      cache: cache,
+      notice: notice,
+    );
+    final results = await builder.buildAll(targets, force: force);
 
-    _log.info('Build complete: $corePaths');
+    if (results.any((result) => result.rebuilt)) {
+      _log.info(
+        'Build complete: ${results.map((result) => result.primaryOutput)}',
+      );
+    }
   }
 }
 
@@ -155,28 +187,52 @@ class BuildWindowsCommand extends BuildCommand {
       throw BuildException('Invalid arch: $arch');
     }
 
-    final goBuilder = GoBuilder(rootDir: _rootDir, config: config);
-    final corePaths = await goBuilder.buildAll(targets);
+    final cache = BuildCache(rootDir: _rootDir);
+    final notice = BuildNotice();
+    final goBuilder = GoBuilder(
+      rootDir: _rootDir,
+      config: config,
+      cache: cache,
+      notice: notice,
+    );
+    final coreResults = await goBuilder.buildAll(targets, force: force);
+    final corePaths =
+        coreResults.map((result) => result.primaryOutput).toList();
+    final rustBuilder = RustBuilder(
+      rootDir: _rootDir,
+      config: config,
+      cache: cache,
+      notice: notice,
+    );
+    final coreSha256 = await calcSha256(corePaths.first);
+    final helperResult = await rustBuilder.build(
+      targets.first,
+      coreSha256,
+      force: force,
+      beforeBuild: debug
+          ? () async {
+              await Process.run('taskkill', [
+                '/F',
+                '/IM',
+                '${config.helperName}${targets.first.executableExtension}',
+              ]);
+            }
+          : null,
+    );
 
-    _log.info('Build mode: ${debug ? 'debug' : 'release'}');
+    writeCoreManifest(
+      path: p.join(
+        _rootDir,
+        config.outputDir,
+        targets.first.platformDir,
+        coreManifestName,
+      ),
+      coreSha256: coreSha256,
+    );
 
-    if (debug) {
-      await Process.run('taskkill', [
-        '/F',
-        '/IM',
-        '${config.helperName}${targets.first.executableExtension}',
-      ]);
-      final rustBuilder = RustBuilder(rootDir: _rootDir, config: config);
-      await rustBuilder.build(targets.first, '', release: false);
-    } else {
-      final coreSha256 = await calcSha256(corePaths.first);
-      final rustBuilder = RustBuilder(rootDir: _rootDir, config: config);
-      await rustBuilder.build(targets.first, coreSha256);
-      await File(p.join(_rootDir, 'core_sha256.json'))
-          .writeAsString(jsonEncode({'CORE_SHA256': coreSha256}));
+    if (helperResult.rebuilt || coreResults.any((result) => result.rebuilt)) {
+      _log.info('Build complete: $corePaths');
     }
-
-    _log.info('Build complete: $corePaths');
   }
 }
 
@@ -208,10 +264,21 @@ class BuildMacosCommand extends BuildCommand {
       throw BuildException('Invalid arch: $arch');
     }
 
-    final builder = GoBuilder(rootDir: _rootDir, config: config);
-    final corePaths = await builder.buildAll(targets);
+    final cache = BuildCache(rootDir: _rootDir);
+    final notice = BuildNotice();
+    final builder = GoBuilder(
+      rootDir: _rootDir,
+      config: config,
+      cache: cache,
+      notice: notice,
+    );
+    final results = await builder.buildAll(targets, force: force);
 
-    _log.info('Build complete: $corePaths');
+    if (results.any((result) => result.rebuilt)) {
+      _log.info(
+        'Build complete: ${results.map((result) => result.primaryOutput)}',
+      );
+    }
   }
 }
 

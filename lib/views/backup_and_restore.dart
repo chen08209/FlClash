@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dynamic_color/dynamic_color.dart';
@@ -13,6 +14,7 @@ import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
+import 'package:fl_clash/widgets/loading.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:fl_clash/widgets/text.dart';
 import 'package:flutter/material.dart';
@@ -28,29 +30,24 @@ class BackupAndRestore extends ConsumerStatefulWidget {
 
 class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     with UniqueKeyStateMixin {
-  final _isCompleter = ValueNotifier<bool?>(null);
-  DAVProps? _lastProps;
-  DAVClient? _client;
-
-  Future<void> _updateDAVClient(DAVProps? props) async {
-    _client = props == null ? null : DAVClient(props);
-    final rawProps = props?.copyWith(fileName: '');
-    final rawLastProps = _lastProps?.copyWith(fileName: '');
-    _lastProps = props;
-    if (rawProps == rawLastProps) {
-      return;
-    } else {
-      _isCompleter.value == null;
-      final res = await _client?.ping() ?? false;
-      if (mounted) {
-        _isCompleter.value = res;
-      }
-    }
-  }
+  final _davConnection = DAVConnectionController();
 
   @override
   void initState() {
     super.initState();
+    ref.listenManual(davSettingProvider, (_, _) {
+      _updateDAVClient();
+    }, fireImmediately: true);
+  }
+
+  void _updateDAVClient() {
+    unawaited(_davConnection.update(ref.read(davSettingProvider)));
+  }
+
+  @override
+  void dispose() {
+    _davConnection.dispose();
+    super.dispose();
   }
 
   Future<void> _showAddWebDAV(DAVProps? dav) async {
@@ -63,13 +60,17 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     final appLocalizations = context.appLocalizations;
     final res = await globalState.loadingRun<bool>(
       () async {
+        final client = _davConnection.client;
+        if (client == null) {
+          return false;
+        }
         final path = await globalState.container
             .read(backupActionProvider.notifier)
             .backup();
         if (path.isEmpty) {
           return false;
         }
-        return _client!.backup(path);
+        return client.backup(path);
       },
       tag: LoadingTag.backup_restore,
       title: appLocalizations.backup,
@@ -85,7 +86,11 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     final appLocalizations = context.appLocalizations;
     final res = await globalState.loadingRun<bool>(
       () async {
-        await _client?.restore();
+        final client = _davConnection.client;
+        if (client == null) {
+          return false;
+        }
+        await client.restore();
         await globalState.container
             .read(backupActionProvider.notifier)
             .restore(option);
@@ -201,7 +206,6 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     final appLocalizations = context.appLocalizations;
     final dav = ref.watch(davSettingProvider);
     final isLoading = ref.watch(loadingProvider(LoadingTag.backup_restore));
-    _updateDAVClient(dav);
     return CommonScaffold(
       isLoading: isLoading,
       title: appLocalizations.backupAndRestore,
@@ -237,7 +241,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                   children: [
                     Text(appLocalizations.connectivity),
                     ValueListenableBuilder(
-                      valueListenable: _isCompleter,
+                      valueListenable: _davConnection,
                       builder: (_, isCompleter, _) {
                         return Center(
                           child: FadeThroughBox(
@@ -245,9 +249,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                                 ? const SizedBox(
                                     width: 12,
                                     height: 12,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1,
-                                    ),
+                                    child: CommonCircleLoading(),
                                   )
                                 : Container(
                                     decoration: BoxDecoration(
@@ -279,15 +281,13 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
             ListItem.input(
               title: Text(appLocalizations.file),
               subtitle: Text(dav.fileName),
-              delegate: InputDelegate(
-                title: appLocalizations.file,
-                value: dav.fileName,
-                resetValue: defaultDavFileName,
-                maxLength: TextInputLimits.fileName,
-                onChanged: (value) {
-                  _handleChange(value, ref);
-                },
-              ),
+              dialogTitle: appLocalizations.file,
+              value: dav.fileName,
+              resetValue: defaultDavFileName,
+              maxLength: TextInputLimits.fileName,
+              onChanged: (value) {
+                _handleChange(value, ref);
+              },
             ),
             ListItem(
               onTap: () {
@@ -412,16 +412,21 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    ref.read(davSettingProvider.notifier).value = DAVProps(
-      uri: _uriController.text,
-      user: _userController.text,
-      password: _passwordController.text,
-    );
+    ref
+        .read(davSettingProvider.notifier)
+        .update(
+          (_) => DAVProps(
+            uri: _uriController.text,
+            user: _userController.text,
+            password: _passwordController.text,
+            fileName: widget.dav?.fileName ?? defaultDavFileName,
+          ),
+        );
     Navigator.pop(context);
   }
 
   void _delete() {
-    ref.read(davSettingProvider.notifier).value = null;
+    ref.read(davSettingProvider.notifier).update((_) => null);
     Navigator.pop(context);
   }
 

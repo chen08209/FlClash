@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -67,9 +68,15 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
   }
 
   Future<void> _updateConnections() async {
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      trackerInfos: await coreController.getConnections(),
-    );
+    try {
+      _connectionsStateNotifier.value = _connectionsStateNotifier.value
+          .copyWith(trackerInfos: await coreController.getConnections());
+    } catch (error) {
+      commonPrint.log(
+        'updateConnections error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
   }
 
   Future<void> _handleBlockConnection(String id) async {

@@ -220,6 +220,8 @@ function Initialize-ReleaseEnvironment {
     $env:PUB_CACHE = Join-Path $SdkRoot 'pub-cache'
     $env:GRADLE_USER_HOME = Join-Path $SdkRoot 'gradle-user-home'
     $env:CARGO_HOME = Join-Path $SdkRoot 'cargo-home'
+    $env:RUSTUP_HOME = Join-Path $SdkRoot 'rust\rustup'
+    $env:RUSTUP_TOOLCHAIN = 'stable'
     $env:CARGO_TARGET_DIR = $TaskCargoTarget
     $rustToolchainBin = Join-Path $SdkRoot 'rust\rustup\toolchains\stable-x86_64-pc-windows-msvc\bin'
     $rustupShimBin = Join-Path $TaskTempRoot '.cargo\bin'
@@ -324,11 +326,11 @@ function Assert-DiskBudget {
     $dDrive = Get-PSDrive -Name D -ErrorAction Stop
     $cFree = [math]::Round($cDrive.Free / 1GB, 2)
     $dFree = [math]::Round($dDrive.Free / 1GB, 2)
-    if ($cFree -lt 20) {
-        throw "C drive free space is below 20 GiB ($cFree GiB)."
+    if ($cFree -lt 16) {
+        throw "C drive free space is below 16 GiB ($cFree GiB)."
     }
-    if ($dFree -lt 100) {
-        throw "D drive free space is below 100 GiB ($dFree GiB)."
+    if ($dFree -lt 64) {
+        throw "D drive free space is below 64 GiB ($dFree GiB)."
     }
     return [pscustomobject]@{ CFreeGiB = $cFree; DFreeGiB = $dFree }
 }
@@ -895,9 +897,20 @@ function Invoke-ReleaseBuild {
 
     [void](Write-Checksums)
     Write-SiteManifest
-    Invoke-Captured -FilePath 'node' -WorkingDirectory $SiteRoot `
-        -Arguments @('.\scripts\check.mjs') `
-        -LogPath (Join-Path $LogsRoot 'release-site-check.log') | Out-Null
+    $siteCheckSource = Join-Path $SiteRoot 'scripts\check.mjs'
+    $siteCheckScript = Join-Path $TaskTempRoot 'release-site-check.mjs'
+    $siteCheckText = Get-Content -LiteralPath $siteCheckSource -Raw
+    $siteRootMarker = 'const siteRoot = join(scriptDirectory, "..");'
+    $projectRootMarker = 'const projectRoot = join(siteRoot, "..");'
+    if (-not $siteCheckText.Contains($siteRootMarker) -or -not $siteCheckText.Contains($projectRootMarker)) {
+        throw 'release-site checker root markers are missing.'
+    }
+    $siteRootJson = $SiteRoot | ConvertTo-Json -Compress
+    $projectRootJson = $ProjectRoot | ConvertTo-Json -Compress
+    $siteCheckText = $siteCheckText.Replace($siteRootMarker, "const siteRoot = $siteRootJson;")
+    $siteCheckText = $siteCheckText.Replace($projectRootMarker, "const projectRoot = $projectRootJson;")
+    [IO.File]::WriteAllText($siteCheckScript, $siteCheckText, [Text.UTF8Encoding]::new($false))
+    Invoke-Captured -FilePath 'node' -WorkingDirectory $ProjectRoot -Arguments @($siteCheckScript) -LogPath (Join-Path $LogsRoot 'release-site-check.log') | Out-Null
     [ordered]@{
         result = 'built'
         tag = $Tag
@@ -974,14 +987,14 @@ function Copy-SourceTree {
     )
 
     $excludedSegments = @(
-        '.git', '.dart_tool', '.visual-qa', '.wrangler', '.npm', '=',
+        '.git', '.dart_tool', '.flutter', '.visual-qa', '.wrangler', '.npm', '=',
         'npm-cache', 'build', 'coverage', 'target', '.gradle', '.kotlin',
         '.idea', '.vs', '.cxx', 'Pods', '.plugin_symlinks', 'node_modules',
         'jniLibs'
     )
     $excludedFiles = @(
         'local.properties', 'keystore.jks', 'google-services.json',
-        'env.json', 'core_sha256.json'
+        'env.json', 'core_sha256.json', '.flutter_tool_state'
     )
     if (Test-Path -LiteralPath $Source -PathType Leaf) {
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Destination) |

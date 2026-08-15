@@ -40,7 +40,7 @@ class _ConfigTitleBar extends StatelessWidget {
     return InkWell(
       key: key,
       borderRadius: BorderRadius.circular(8),
-      onTap: () => globalState.openUrl(url, confirm: false),
+      onTap: () => globalState.openUrl(url),
       child: Container(
         width: double.infinity,
         constraints: const BoxConstraints(minHeight: 40),

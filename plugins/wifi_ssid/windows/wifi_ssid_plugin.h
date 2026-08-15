@@ -15,7 +15,7 @@ class WifiSsidPlugin : public flutter::Plugin {
       flutter::PluginRegistrarWindows *registrar);
 
   WifiSsidPlugin();
-  virtual ~WifiSsidPlugin();
+  ~WifiSsidPlugin() override;
 
   WifiSsidPlugin(const WifiSsidPlugin &) = delete;
   WifiSsidPlugin &operator=(const WifiSsidPlugin &) = delete;
@@ -27,6 +27,7 @@ class WifiSsidPlugin : public flutter::Plugin {
 
   void GetSsid(
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+
 };
 
 }  // namespace wifi_ssid

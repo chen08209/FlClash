@@ -305,7 +305,7 @@ Future<void> _pumpProfileItem(
   final container = ProviderContainer();
   addTearDown(container.dispose);
   if (freeNodesProgress != null) {
-    container.read(itemProvider(freeNodesProgressKey).notifier).value =
+    container.read(freeNodesFetchProgressProvider.notifier).value =
         freeNodesProgress;
   }
   await tester.pumpWidget(

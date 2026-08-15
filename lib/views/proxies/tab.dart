@@ -1,16 +1,12 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/free_nodes.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/models/profile.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,31 +14,12 @@ import 'card.dart';
 import 'common.dart';
 import 'free_nodes_group_menu.dart';
 
-typedef ProxyGroupViewKeyMap =
-    Map<String, GlobalObjectKey<_ProxyGroupViewState>>;
-
-const _proxyGroupLongPressDelay = Duration(milliseconds: 360);
-const _proxyGroupMoveTolerance = kTouchSlop * 6;
-const _proxyGroupHardDragMoveTolerance = kTouchSlop * 12;
-
 @visibleForTesting
-bool shouldUseScrollableProxyGroupTabs({
+bool shouldUseTwoRowFreeNodesGroupTabs({
+  required bool isFreeNodesProfile,
   required int groupCount,
-  required double maxWidth,
 }) {
-  if (groupCount <= 0) return false;
-  if (!maxWidth.isFinite || maxWidth <= 0) return groupCount > 3;
-  const horizontalPadding = 32.0;
-  final requiredWidth =
-      groupCount * _ProxyGroupTabLabel.minInteractiveWidth + horizontalPadding;
-  return requiredWidth > maxWidth;
-}
-
-@visibleForTesting
-bool shouldCancelProxyGroupTabLongPressOnScrollNotification(
-  ScrollNotification notification,
-) {
-  return false;
+  return isFreeNodesProfile && groupCount > 1;
 }
 
 @visibleForTesting
@@ -63,6 +40,9 @@ Group? resolveCurrentDelayTestGroup({
   return null;
 }
 
+typedef ProxyGroupViewKeyMap =
+    Map<String, GlobalObjectKey<_ProxyGroupViewState>>;
+
 class ProxiesTabView extends ConsumerStatefulWidget {
   const ProxiesTabView({super.key});
 
@@ -75,10 +55,8 @@ class ProxiesTabView extends ConsumerStatefulWidget {
 class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     with TickerProviderStateMixin {
   TabController? _tabController;
+  final _hasMoreButtonNotifier = ValueNotifier<bool>(false);
   ProxyGroupViewKeyMap _keyMap = {};
-  DateTime? _lastGroupMenuOpenAt;
-  String? _lastGroupMenuOpenName;
-  Future<void>? _delayTestOperation;
 
   @override
   void initState() {
@@ -104,154 +82,48 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   }
 
   void scrollToGroupSelected() {
-    final currentGroupName = getCurrentGroupName();
-    _keyMap[currentGroupName]?.currentState?.scrollToSelected();
+    final group = currentGroup;
+    if (group == null) {
+      return;
+    }
+    _keyMap[group.name]?.currentState?.scrollToSelected();
   }
 
   Future<void> delayTestCurrentGroup() async {
-    final runningOperation = _delayTestOperation;
-    if (runningOperation != null) {
-      await runningOperation;
+    final group = currentGroup;
+    if (group == null) {
       return;
     }
-
-    final state = ref.read(proxiesTabStateProvider);
-    final groups = _visibleGroups(
-      state.groups,
-      ref.read(currentProfileProvider),
-    );
-    final group = resolveCurrentDelayTestGroup(
-      groups: groups,
-      activeIndex: _tabController?.index,
-      selectedGroupName: state.currentGroupName,
-    );
-    if (group == null || group.all.isEmpty) return;
-
-    final operation = delayTest(
-      List<Proxy>.unmodifiable(group.all),
-      group.testUrl,
-    );
-    _delayTestOperation = operation;
-    try {
-      await operation;
-    } finally {
-      if (identical(_delayTestOperation, operation)) {
-        _delayTestOperation = null;
-      }
-    }
+    await delayTest(group.all, group.testUrl);
   }
 
-  Widget _buildMoreButton({
-    required String currentGroupName,
-    required bool canOpenCurrentGroupMenu,
-  }) {
+  Group? get currentGroup {
+    return _getGroup(_tabController?.index);
+  }
+
+  Group? _getGroup(int? index) {
+    final groups = ref.read(proxiesTabStateProvider).groups;
+    if (index == null || index < 0 || index >= groups.length) {
+      return null;
+    }
+    return groups[index];
+  }
+
+  Widget _buildMoreButton() {
     return Consumer(
       builder: (_, ref, _) {
         final isMobileView = ref.watch(isMobileViewProvider);
-        final icon = canOpenCurrentGroupMenu
-            ? Icons.more_vert
-            : isMobileView
-            ? Icons.expand_more
-            : Icons.chevron_right;
-        final opensFreeNodesSwitch =
-            _shouldOpenFreeNodesDateSwitchFromMoreButton(currentGroupName);
-        final onTap = opensFreeNodesSwitch
-            ? _showFreeNodesDateSwitchMenu
-            : _showMoreMenu;
-        final onLongPress = canOpenCurrentGroupMenu
-            ? () => _openFreeNodesActionMenuNow(currentGroupName)
-            : onTap;
-        return Tooltip(
-          message: context.appLocalizations.proxyGroup,
-          child: Semantics(
-            button: true,
-            onTap: onTap,
-            onLongPress: onLongPress,
-            child: InkResponse(
-              key: const ValueKey('proxy-group-category-action-button'),
-              onTap: onTap,
-              onLongPress: onLongPress,
-              radius: 24,
-              containedInkWell: true,
-              child: Center(child: Icon(icon)),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  bool _shouldOpenFreeNodesDateSwitchFromMoreButton(String groupName) {
-    return isActionableFreeNodesGroupName(groupName);
-  }
-
-  void _showFreeNodesDateSwitchMenu() {
-    showSheet(
-      context: context,
-      props: const SheetProps(isScrollControlled: false),
-      builder: (_) {
-        return AdaptiveSheetScaffold(
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Consumer(
-              builder: (_, ref, _) {
-                final state = ref.watch(proxiesTabStateProvider);
-                final groups = freeNodesDateSwitchGroups(
-                  ref.watch(groupsProvider),
-                );
-                final groupNames = groups.map((group) => group.name).toList();
-                final normalizedCurrentGroupName =
-                    state.currentGroupName == null
-                    ? null
-                    : normalizeFreeNodesGroupName(state.currentGroupName!);
-                final currentGroupName =
-                    groupNames.contains(normalizedCurrentGroupName)
-                    ? normalizedCurrentGroupName
-                    : null;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 8,
-                  children: [
-                    for (final groupName in groupNames)
-                      SizedBox(
-                        width: double.infinity,
-                        child: SettingTextCard(
-                          groupName,
-                          onPressed: () {
-                            final index = groupNames.indexWhere(
-                              (item) => item == groupName,
-                            );
-                            if (index == -1) return;
-                            final tabState = ref.read(proxiesTabStateProvider);
-                            final visibleGroups = _visibleGroups(
-                              tabState.groups,
-                              ref.read(currentProfileProvider),
-                            );
-                            final visibleIndex = visibleGroups.indexWhere(
-                              (group) => group.name == groupName,
-                            );
-                            if (visibleIndex >= 0) {
-                              _tabController?.animateTo(visibleIndex);
-                            }
-                            updateCurrentGroupName(groupName);
-                            Navigator.of(context).pop();
-                          },
-                          isSelected: groupName == currentGroupName,
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-          title: '切换日期或优选节点',
+        return IconButton(
+          onPressed: _showMoreMenu,
+          icon: isMobileView
+              ? const Icon(Icons.expand_more)
+              : const Icon(Icons.chevron_right),
         );
       },
     );
   }
 
   void _showMoreMenu() {
-    final parentContext = context;
     showSheet(
       context: context,
       props: const SheetProps(isScrollControlled: false),
@@ -261,24 +133,18 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
             padding: const EdgeInsets.all(16),
             child: Consumer(
               builder: (_, ref, _) {
-                final state = ref.watch(proxiesTabStateProvider);
-                final groups = _visibleGroups(
-                  state.groups,
-                  ref.watch(currentProfileProvider),
-                );
-                final groupNames = groups.map((group) => group.name).toList();
-                final currentGroupName = _visibleCurrentGroupName(
-                  groups,
-                  state.currentGroupName,
-                );
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 8,
-                  children: [
-                    for (final groupName in groupNames)
-                      SizedBox(
-                        width: double.infinity,
-                        child: SettingTextCard(
+                final state = ref.watch(proxiesTabControllerStateProvider);
+                final groupNames = state.a;
+                final currentGroupName = state.b;
+                return SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    runSpacing: 8,
+                    spacing: 8,
+                    children: [
+                      for (final groupName in groupNames)
+                        SettingTextCard(
                           groupName,
                           onPressed: () {
                             final index = groupNames.indexWhere(
@@ -289,17 +155,10 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                             updateCurrentGroupName(groupName);
                             Navigator.of(context).pop();
                           },
-                          onLongPress: () {
-                            Navigator.of(context).pop();
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (!mounted) return;
-                              showFreeNodesGroupMenu(parentContext, groupName);
-                            });
-                          },
                           isSelected: groupName == currentGroupName,
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),
@@ -310,60 +169,16 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     );
   }
 
-  List<Group> _visibleGroups(List<Group> groups, Profile? profile) {
-    return shouldFilterVisibleFreeNodesGroups(groups: groups, profile: profile)
-        ? normalizeVisibleFreeNodesGroups(
-            groups,
-            selectedGroupName: getCurrentGroupName(),
-          )
-        : groups;
-  }
-
-  String? _visibleCurrentGroupName(List<Group> groups, String? groupName) {
-    if (groups.isEmpty) return groupName;
-    final normalizedGroupName = groupName == null
-        ? null
-        : normalizeFreeNodesGroupName(groupName);
-    final hasCurrent = groups.any((group) => group.name == normalizedGroupName);
-    return hasCurrent ? normalizedGroupName : groups.first.name;
-  }
-
-  bool _canOpenCurrentGroupMenu(
-    String? groupName,
-    List<Group> groups,
-    Profile? profile,
-  ) {
-    if (groupName == null || groupName.trim().isEmpty) return false;
-    if (isActionableFreeNodesGroupName(groupName)) return true;
-    if (!shouldFilterVisibleFreeNodesGroups(groups: groups, profile: profile)) {
-      return false;
-    }
-    final normalizedGroupName = normalizeFreeNodesGroupName(groupName);
-    return groups.any(
-      (group) => normalizeFreeNodesGroupName(group.name) == normalizedGroupName,
-    );
-  }
-
   void _tabControllerListener([int? index]) {
+    final group = _getGroup(index ?? _tabController?.index);
+    if (group == null) {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      int? groupIndex = index;
-      if (groupIndex == -1) {
+      if (!mounted) {
         return;
       }
-      if (groupIndex == null) {
-        final currentIndex = _tabController?.index;
-        groupIndex = currentIndex;
-      }
-      final tabState = ref.read(proxiesTabStateProvider);
-      final currentGroups = _visibleGroups(
-        tabState.groups,
-        ref.read(currentProfileProvider),
-      );
-      if (groupIndex == null || groupIndex >= currentGroups.length) {
-        return;
-      }
-      final currentGroup = currentGroups[groupIndex];
-      updateCurrentGroupName(currentGroup.name);
+      updateCurrentGroupName(group.name);
     });
   }
 
@@ -388,34 +203,177 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     _tabController?.addListener(_tabControllerListener);
   }
 
-  void _openFreeNodesGroupMenuNow(String groupName) {
-    if (!mounted) return;
-    final normalizedGroupName = normalizeFreeNodesGroupName(groupName);
-    if (normalizedGroupName == freeNodesGroupName) {
-      _showFreeNodesDateSwitchMenu();
-      return;
-    }
-    _openFreeNodesActionMenuNow(normalizedGroupName);
+  Widget _buildGroupTabLabel(String groupName, {required bool selected}) {
+    final colorScheme = context.colorScheme;
+    return Material(
+      color: selected
+          ? colorScheme.secondaryContainer
+          : colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(10),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          final groups = ref.read(proxiesTabStateProvider).groups;
+          final index = groups.indexWhere((group) => group.name == groupName);
+          if (index < 0) return;
+          _tabController?.animateTo(index);
+          updateCurrentGroupName(groupName);
+        },
+        onLongPress: canShowFreeNodesGroupMenu(groupName)
+            ? () => showFreeNodesGroupMenu(context, groupName)
+            : null,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 112, maxWidth: 188),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Center(
+              child: EmojiText(
+                groupName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: DefaultTextStyle.of(context).style.copyWith(
+                  color: selected
+                      ? colorScheme.onSecondaryContainer
+                      : colorScheme.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  void _openFreeNodesActionMenuNow(String groupName) {
-    if (!mounted) return;
-    final normalizedGroupName = normalizeFreeNodesGroupName(groupName);
-    final now = DateTime.now();
-    final lastOpenAt = _lastGroupMenuOpenAt;
-    if (_lastGroupMenuOpenName == normalizedGroupName &&
-        lastOpenAt != null &&
-        now.difference(lastOpenAt) < const Duration(milliseconds: 700)) {
-      return;
-    }
-    _lastGroupMenuOpenName = normalizedGroupName;
-    _lastGroupMenuOpenAt = now;
-    unawaited(showFreeNodesGroupMenu(context, normalizedGroupName));
+  Widget _buildTwoRowFreeNodesTabs(
+    List<Group> groups,
+    String? currentGroupName,
+  ) {
+    final pairCount = (groups.length / 2).ceil();
+    return SizedBox(
+      height: 88,
+      child: Stack(
+        alignment: AlignmentDirectional.centerStart,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(left: 16, right: 64),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var pairIndex = 0; pairIndex < pairCount; pairIndex++)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildGroupTabLabel(
+                          groups[pairIndex * 2].name,
+                          selected:
+                              groups[pairIndex * 2].name == currentGroupName,
+                        ),
+                        const SizedBox(height: 6),
+                        if (pairIndex * 2 + 1 < groups.length)
+                          _buildGroupTabLabel(
+                            groups[pairIndex * 2 + 1].name,
+                            selected:
+                                groups[pairIndex * 2 + 1].name ==
+                                currentGroupName,
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Positioned(
+            right: 0,
+            top: 20,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    context.colorScheme.surface.opacity10,
+                    context.colorScheme.surface,
+                  ],
+                  stops: const [0.0, 0.22],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: _buildMoreButton(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  void _selectGroup(int index, String groupName) {
-    _tabController?.animateTo(index);
-    updateCurrentGroupName(groupName);
+  Widget _buildSingleRowTabs(List<Group> groups) {
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: (scrollNotification) {
+        _hasMoreButtonNotifier.value =
+            scrollNotification.metrics.maxScrollExtent > 0;
+        return false;
+      },
+      child: ValueListenableBuilder(
+        valueListenable: _hasMoreButtonNotifier,
+        builder: (_, value, child) {
+          return Stack(
+            alignment: AlignmentDirectional.centerStart,
+            children: [
+              TabBar(
+                controller: _tabController,
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16 + (value ? 16 : 0),
+                ),
+                dividerColor: Colors.transparent,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                tabs: [
+                  for (final group in groups)
+                    Tab(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onLongPress: canShowFreeNodesGroupMenu(group.name)
+                            ? () => showFreeNodesGroupMenu(context, group.name)
+                            : null,
+                        child: Builder(
+                          builder: (context) {
+                            return EmojiText(
+                              group.name,
+                              style: DefaultTextStyle.of(context).style,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (value) Positioned(right: 0, child: child!),
+            ],
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                context.colorScheme.surface.opacity10,
+                context.colorScheme.surface,
+              ],
+              stops: const [0.0, 0.1],
+            ),
+          ),
+          child: _buildMoreButton(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -423,11 +381,14 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     final appLocalizations = context.appLocalizations;
     ref.watch(themeSettingProvider.select((state) => state.textScale));
     final state = ref.watch(proxiesTabStateProvider.select((state) => state));
-    final currentProfile = ref.watch(currentProfileProvider);
-    final groups = _visibleGroups(state.groups, currentProfile);
-    final currentGroupName = _visibleCurrentGroupName(
-      groups,
-      state.currentGroupName,
+    final proxiesLayout = ref.watch(
+      proxiesStyleSettingProvider.select((state) => state.layout),
+    );
+    final groups = state.groups;
+    final isFreeNodesProfile = ref.watch(
+      currentProfileProvider.select(
+        (profile) => profile?.isFreeNodesProfile ?? false,
+      ),
     );
     if (groups.isEmpty || _tabController == null) {
       return NullStatus(
@@ -435,458 +396,45 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
         label: appLocalizations.nullTip(appLocalizations.proxies),
       );
     }
-    final currentIndex = groups.indexWhere(
-      (group) => group.name == currentGroupName,
-    );
-    if (_tabController?.length != groups.length) {
-      _updateTabController(groups.length, currentIndex);
-    }
     _keyMap = {};
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final useScrollableTabs = shouldUseScrollableProxyGroupTabs(
-              groupCount: groups.length,
-              maxWidth: constraints.maxWidth,
-            );
-            return _ProxyGroupTabBar(
-              groups: groups,
-              selectedGroupName:
-                  currentGroupName ?? getCurrentGroupName() ?? '',
-              useScrollableTabs: useScrollableTabs,
-              moreButton: _buildMoreButton(
-                currentGroupName:
-                    currentGroupName ?? getCurrentGroupName() ?? '',
-                canOpenCurrentGroupMenu: _canOpenCurrentGroupMenu(
-                  currentGroupName,
-                  groups,
-                  currentProfile,
-                ),
-              ),
-              onTap: _selectGroup,
-              onLongPress: _openFreeNodesGroupMenuNow,
-            );
-          },
-        ),
+        if (shouldUseTwoRowFreeNodesGroupTabs(
+          isFreeNodesProfile: isFreeNodesProfile,
+          groupCount: groups.length,
+        ))
+          _buildTwoRowFreeNodesTabs(groups, state.currentGroupName)
+        else
+          _buildSingleRowTabs(groups),
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              for (final group in groups)
-                ProxyGroupView(
-                  key: _keyMap.updateCacheValue(
-                    group.name,
-                    () => GlobalObjectKey<_ProxyGroupViewState>(group.name),
-                  ),
-                  group: group,
-                  columns: state.columns,
-                  cardType: state.proxyCardType,
-                ),
-            ],
+          child: LayoutBuilder(
+            builder: (_, constraints) {
+              final columns = utils.getProxiesColumns(
+                max(constraints.maxWidth - 32, 0),
+                proxiesLayout,
+              );
+              return TabBarView(
+                controller: _tabController,
+                children: [
+                  for (final group in groups)
+                    ProxyGroupView(
+                      key: _keyMap.updateCacheValue(
+                        group.name,
+                        () => GlobalObjectKey<_ProxyGroupViewState>(group.name),
+                      ),
+                      group: group,
+                      columns: columns,
+                      cardType: state.proxyCardType,
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ],
     );
-  }
-}
-
-class _ProxyGroupTabBar extends StatefulWidget {
-  const _ProxyGroupTabBar({
-    required this.groups,
-    required this.selectedGroupName,
-    required this.useScrollableTabs,
-    required this.moreButton,
-    required this.onTap,
-    required this.onLongPress,
-  });
-
-  final List<Group> groups;
-  final String selectedGroupName;
-  final bool useScrollableTabs;
-  final Widget moreButton;
-  final void Function(int index, String groupName) onTap;
-  final ValueChanged<String> onLongPress;
-
-  @override
-  State<_ProxyGroupTabBar> createState() => _ProxyGroupTabBarState();
-}
-
-class _ProxyGroupTabBarState extends State<_ProxyGroupTabBar> {
-  int _longPressCancelGeneration = 0;
-
-  void _cancelPendingLongPresses() {
-    if (!mounted) return;
-    setState(() {
-      _longPressCancelGeneration++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tabs = [
-      for (var index = 0; index < widget.groups.length; index++)
-        ProxyGroupTab(
-          groupName: widget.groups[index].name,
-          fillWidth: !widget.useScrollableTabs,
-          isSelected: widget.groups[index].name == widget.selectedGroupName,
-          onTap: () => widget.onTap(index, widget.groups[index].name),
-          onLongPress: () => widget.onLongPress(widget.groups[index].name),
-          longPressCancelGeneration: _longPressCancelGeneration,
-          cancelOnEarlyHorizontalDrag: true,
-        ),
-    ];
-
-    final tabContent = widget.useScrollableTabs
-        ? NotificationListener<ScrollNotification>(
-            onNotification: (notification) {
-              if (shouldCancelProxyGroupTabLongPressOnScrollNotification(
-                notification,
-              )) {
-                _cancelPendingLongPresses();
-              }
-              return false;
-            },
-            child: SingleChildScrollView(
-              key: const ValueKey('proxy-group-tab-bar-scroll-view'),
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(left: 16),
-              child: Row(children: tabs),
-            ),
-          )
-        : Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [for (final tab in tabs) Expanded(child: tab)],
-            ),
-          );
-
-    return SizedBox(
-      key: const ValueKey('proxy-group-tab-bar'),
-      width: double.infinity,
-      height: 48,
-      child: Row(
-        children: [
-          Expanded(child: tabContent),
-          SizedBox(width: 48, height: 48, child: widget.moreButton),
-        ],
-      ),
-    );
-  }
-}
-
-@visibleForTesting
-class ProxyGroupTab extends StatelessWidget implements PreferredSizeWidget {
-  const ProxyGroupTab({
-    super.key,
-    required this.groupName,
-    required this.onLongPress,
-    this.fillWidth = false,
-    this.isSelected = false,
-    this.onTap,
-    this.onPointerDown,
-    this.useInternalLongPressTimer = true,
-    this.longPressCancelGeneration = 0,
-    this.cancelOnEarlyHorizontalDrag = false,
-  });
-
-  final String groupName;
-  final VoidCallback onLongPress;
-  final bool fillWidth;
-  final bool isSelected;
-  final VoidCallback? onTap;
-  final ValueChanged<PointerDownEvent>? onPointerDown;
-  final bool useInternalLongPressTimer;
-  final int longPressCancelGeneration;
-  final bool cancelOnEarlyHorizontalDrag;
-
-  @override
-  Size get preferredSize => const Size.fromHeight(48);
-
-  @override
-  Widget build(BuildContext context) {
-    final label = _ProxyGroupTabLabel(
-      groupName: groupName,
-      fillWidth: fillWidth,
-      isSelected: isSelected,
-    );
-    if (!useInternalLongPressTimer) {
-      return KeyedSubtree(
-        key: ValueKey('proxy-group-tab-$groupName'),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onLongPress: onLongPress,
-          onSecondaryTap: onLongPress,
-          child: Semantics(
-            button: true,
-            onTap: onTap,
-            onLongPress: onLongPress,
-            child: label,
-          ),
-        ),
-      );
-    }
-    return _ProxyGroupLongPressRegion(
-      key: ValueKey('proxy-group-tab-$groupName'),
-      onLongPress: onLongPress,
-      onTap: onTap,
-      onPointerDown: onPointerDown,
-      cancelGeneration: longPressCancelGeneration,
-      cancelOnEarlyHorizontalDrag: cancelOnEarlyHorizontalDrag,
-      child: label,
-    );
-  }
-}
-
-@visibleForTesting
-class ProxyGroupTabLabel extends StatelessWidget {
-  const ProxyGroupTabLabel({
-    super.key,
-    required this.groupName,
-    required this.onLongPress,
-    this.fillWidth = false,
-    this.isSelected = false,
-    this.onTap,
-    this.onPointerDown,
-  });
-
-  final String groupName;
-  final VoidCallback onLongPress;
-  final bool fillWidth;
-  final bool isSelected;
-  final VoidCallback? onTap;
-  final ValueChanged<PointerDownEvent>? onPointerDown;
-
-  @override
-  Widget build(BuildContext context) {
-    return ProxyGroupTab(
-      groupName: groupName,
-      fillWidth: fillWidth,
-      isSelected: isSelected,
-      onTap: onTap,
-      onLongPress: onLongPress,
-      onPointerDown: onPointerDown,
-    );
-  }
-}
-
-class _ProxyGroupLongPressRegion extends StatefulWidget {
-  const _ProxyGroupLongPressRegion({
-    super.key,
-    required this.onLongPress,
-    required this.child,
-    this.onTap,
-    this.onPointerDown,
-    this.cancelGeneration = 0,
-    this.cancelOnEarlyHorizontalDrag = false,
-  });
-
-  final VoidCallback onLongPress;
-  final VoidCallback? onTap;
-  final ValueChanged<PointerDownEvent>? onPointerDown;
-  final int cancelGeneration;
-  final bool cancelOnEarlyHorizontalDrag;
-  final Widget child;
-
-  @override
-  State<_ProxyGroupLongPressRegion> createState() =>
-      _ProxyGroupLongPressRegionState();
-}
-
-class _ProxyGroupLongPressRegionState
-    extends State<_ProxyGroupLongPressRegion> {
-  Timer? _longPressTimer;
-  Timer? _earlyDragCancelTimer;
-  Offset? _pointerDownPosition;
-  bool _canCancelAsEarlyDrag = false;
-  bool _longPressTriggered = false;
-  bool _longPressOpened = false;
-
-  @override
-  void dispose() {
-    _cancelLongPressTimer();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(_ProxyGroupLongPressRegion oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.cancelGeneration != widget.cancelGeneration) {
-      _cancelLongPressTimer();
-    }
-  }
-
-  void _startLongPressTimer(PointerDownEvent event) {
-    _cancelLongPressTimer();
-    _longPressTriggered = false;
-    _longPressOpened = false;
-    _canCancelAsEarlyDrag = true;
-    _pointerDownPosition = event.position;
-    if ((event.buttons & kSecondaryMouseButton) != 0) {
-      _openLongPressMenu();
-      return;
-    }
-    _earlyDragCancelTimer = Timer(const Duration(milliseconds: 220), () {
-      _canCancelAsEarlyDrag = false;
-      _earlyDragCancelTimer = null;
-    });
-    _longPressTimer = Timer(_proxyGroupLongPressDelay, () {
-      _openLongPressMenu();
-    });
-  }
-
-  void _cancelLongPressTimer() {
-    _longPressTimer?.cancel();
-    _earlyDragCancelTimer?.cancel();
-    _longPressTimer = null;
-    _earlyDragCancelTimer = null;
-    _canCancelAsEarlyDrag = false;
-    _pointerDownPosition = null;
-  }
-
-  void _openLongPressMenu() {
-    if (_longPressOpened || !mounted) return;
-    _longPressOpened = true;
-    _longPressTriggered = true;
-    _longPressTimer?.cancel();
-    _earlyDragCancelTimer?.cancel();
-    _longPressTimer = null;
-    _earlyDragCancelTimer = null;
-    _canCancelAsEarlyDrag = false;
-    widget.onLongPress();
-  }
-
-  void _openReadyLongPressMenu() {
-    if (!_longPressTriggered || !mounted) return;
-    _openLongPressMenu();
-  }
-
-  void _handleTap() {
-    if (_longPressOpened || _longPressTriggered) {
-      _longPressOpened = false;
-      _longPressTriggered = false;
-      return;
-    }
-    widget.onTap?.call();
-  }
-
-  void _handlePointerMove(PointerMoveEvent event) {
-    final pointerDownPosition = _pointerDownPosition;
-    if (pointerDownPosition == null || _longPressTriggered) return;
-    final distance = (event.position - pointerDownPosition).distance;
-    if (distance <= _proxyGroupMoveTolerance) return;
-    if (widget.cancelOnEarlyHorizontalDrag && _canCancelAsEarlyDrag) {
-      _cancelLongPressTimer();
-      return;
-    }
-    if (distance >= _proxyGroupHardDragMoveTolerance) {
-      _cancelLongPressTimer();
-    }
-  }
-
-  void _handlePointerCancel(PointerCancelEvent event) {
-    if (_longPressTriggered) {
-      _openReadyLongPressMenu();
-      return;
-    }
-    // Keep the timer alive after a parent gesture cancels this pointer. On
-    // Android tablets a horizontal scroll ancestor can cancel the child before
-    // the long-press timeout, while the user's finger is still held in place.
-    if (_longPressTimer == null) return;
-  }
-
-  void _finishPointer() {
-    if (_longPressOpened) {
-      _cancelLongPressTimer();
-      _longPressTriggered = false;
-      return;
-    }
-    _openReadyLongPressMenu();
-    if (!_longPressTriggered) {
-      _cancelLongPressTimer();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Listener(
-      behavior: HitTestBehavior.opaque,
-      onPointerDown: (event) {
-        widget.onPointerDown?.call(event);
-        _startLongPressTimer(event);
-      },
-      onPointerMove: _handlePointerMove,
-      onPointerCancel: _handlePointerCancel,
-      onPointerUp: (_) => _finishPointer(),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap == null ? null : _handleTap,
-        onSecondaryTap: _openLongPressMenu,
-        child: Semantics(
-          button: true,
-          onTap: widget.onTap,
-          onLongPress: widget.onLongPress,
-          child: widget.child,
-        ),
-      ),
-    );
-  }
-}
-
-class _ProxyGroupTabLabel extends StatelessWidget {
-  const _ProxyGroupTabLabel({
-    required this.groupName,
-    this.fillWidth = false,
-    this.isSelected = false,
-  });
-
-  final String groupName;
-  final bool fillWidth;
-  final bool isSelected;
-  static const double minInteractiveWidth = 112;
-
-  @override
-  Widget build(BuildContext context) {
-    final labelStyle = DefaultTextStyle.of(context).style.merge(
-      TextStyle(
-        color: isSelected ? context.colorScheme.primary : null,
-        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-      ),
-    );
-    final label = AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      curve: Curves.easeOut,
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            width: 2,
-            color: isSelected
-                ? context.colorScheme.primary
-                : Colors.transparent,
-          ),
-        ),
-      ),
-      child: EmojiText(
-        groupName,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: labelStyle,
-      ),
-    );
-    return fillWidth
-        ? SizedBox(width: double.infinity, height: 48, child: label)
-        : ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: 48,
-              minWidth: _ProxyGroupTabLabel.minInteractiveWidth,
-            ),
-            child: label,
-          );
   }
 }
 
@@ -908,9 +456,6 @@ class ProxyGroupView extends ConsumerStatefulWidget {
 
 class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   late final ScrollController _controller;
-
-  List<Proxy> currentProxies = [];
-  String? testUrl;
 
   @override
   void initState() {
@@ -943,7 +488,8 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
         16 +
             getScrollToSelectedOffset(
               groupName: widget.group.name,
-              proxies: currentProxies,
+              proxies: widget.group.all,
+              columns: widget.columns,
             ),
         _controller.position.maxScrollExtent,
       ),
@@ -956,8 +502,6 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   Widget build(BuildContext context) {
     final group = widget.group;
     final proxies = group.all;
-    testUrl = group.testUrl;
-    currentProxies = proxies;
     return CommonScrollBar(
       controller: _controller,
       child: GridView.builder(
@@ -975,9 +519,9 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
           crossAxisSpacing: 8,
           mainAxisExtent: getItemHeight(widget.cardType),
         ),
-        itemCount: currentProxies.length,
+        itemCount: proxies.length,
         itemBuilder: (_, index) {
-          final proxy = currentProxies[index];
+          final proxy = proxies[index];
           return ProxyCard(
             testUrl: group.testUrl,
             groupType: group.type,
@@ -992,7 +536,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
 }
 
 class DelayTestButton extends StatefulWidget {
-  final Future<void> Function() onClick;
+  final Future Function() onClick;
 
   const DelayTestButton({super.key, required this.onClick});
 
@@ -1004,23 +548,20 @@ class _DelayTestButtonState extends State<DelayTestButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  bool _isRunning = false;
 
   Future<void> _healthcheck() async {
-    if (_isRunning || _controller.isAnimating) {
+    if (_controller.isAnimating) {
       return;
     }
-    _isRunning = true;
     _controller.forward();
     try {
       await widget.onClick();
     } catch (error) {
       commonPrint.log(
-        'Proxy delay test failed: $error',
-        logLevel: LogLevel.error,
+        'Delay test action failed: $error',
+        logLevel: LogLevel.warning,
       );
     } finally {
-      _isRunning = false;
       if (mounted) {
         _controller.reverse();
       }

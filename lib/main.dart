@@ -14,7 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await ensureRustApiInitialized();
-    final version = await system.version;
+    final version = await system.init();
     final container = await globalState.init(version);
     HttpOverrides.global = FlClashHttpOverrides();
     runApp(

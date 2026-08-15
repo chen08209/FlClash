@@ -1,5 +1,4 @@
 [versions]
-#agp = "8.10.1"
 firebaseBom = "34.15.0"
 minSdk = "23"
 targetSdk = "36"
@@ -9,10 +8,7 @@ coreKtx = "1.17.0"
 annotationJvm = "1.9.1"
 coreSplashscreen = "1.0.1"
 gson = "2.13.1"
-kotlin = "2.2.20"
 smaliDexlib2 = "3.0.9"
-firebaseCrashlyticsKtx = "20.0.6"
-firebaseCommonKtx = "22.1.0"
 
 [libraries]
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -23,5 +19,3 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-crashlytics-ndk = { module = "com.google.firebase:firebase-crashlytics-ndk" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 smali-dexlib2 = { module = "com.android.tools.smali:smali-dexlib2", version.ref = "smaliDexlib2" }
-firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx", version.ref = "firebaseCrashlyticsKtx" }
-firebase-common-ktx = { group = "com.google.firebase", name = "firebase-common-ktx", version.ref = "firebaseCommonKtx" }

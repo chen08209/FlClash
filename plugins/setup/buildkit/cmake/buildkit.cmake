@@ -21,12 +21,16 @@ function(apply_buildkit)
 
   # The output files the build_tool produces
   if(WIN32)
-    set(_output "${PROJECT_ROOT}/libclash/windows/FlClashCore.exe")
+    set(_outputs
+      "${PROJECT_ROOT}/libclash/windows/FlClashCore.exe"
+      "${PROJECT_ROOT}/libclash/windows/manifest.json"
+    )
     set(_platform_args "windows")
   else()
-    set(_output "${PROJECT_ROOT}/libclash/linux/FlClashCore")
+    set(_outputs "${PROJECT_ROOT}/libclash/linux/FlClashCore")
     set(_platform_args "linux")
   endif()
+  set(_phony "${CMAKE_CURRENT_BINARY_DIR}/buildkit_phony")
 
   set(BUILDKIT_ENV
     "BUILDKIT_CONFIGURATION=$<CONFIG>"
@@ -34,13 +38,15 @@ function(apply_buildkit)
   )
 
   add_custom_command(
-    OUTPUT ${_output}
+    OUTPUT ${_outputs} "${_phony}"
     COMMAND ${CMAKE_COMMAND} -E env ${BUILDKIT_ENV}
     "${_launcher}" ${_platform_args}
     WORKING_DIRECTORY "${PROJECT_ROOT}"
-    COMMENT "Building Go core via buildkit..."
     VERBATIM
   )
 
-  add_custom_target(setup_buildkit_build DEPENDS ${_output})
+  # Match Cargokit's symbolic-output and ALL-target structure so the native
+  # generator reevaluates this build rule on each build.
+  set_source_files_properties("${_phony}" PROPERTIES SYMBOLIC TRUE)
+  add_custom_target(setup_buildkit_build ALL DEPENDS ${_outputs})
 endfunction()

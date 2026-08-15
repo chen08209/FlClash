@@ -34,7 +34,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m6(label) => "現在の${label}は既に存在しています";
 
-  static String m7(name) => "${name} スキップ済み";
+  static String m7(name) => "${name} はすでに最新です";
 
   static String m8(name) => "${name} 更新済み";
 
@@ -212,6 +212,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "core": MessageLookupByLibrary.simpleMessage("コア"),
     "coreStatus": MessageLookupByLibrary.simpleMessage("コアステータス"),
     "country": MessageLookupByLibrary.simpleMessage("国"),
+    "crashDetected": MessageLookupByLibrary.simpleMessage("クラッシュを検出しました"),
+    "crashDetectedTip": MessageLookupByLibrary.simpleMessage(
+      "前回の実行中にアプリがクラッシュしました。クラッシュの繰り返しを防ぐため、現在のプロファイルを解除し、設定の自動セットアップをスキップしました。",
+    ),
     "crashTest": MessageLookupByLibrary.simpleMessage("クラッシュテスト"),
     "crashlytics": MessageLookupByLibrary.simpleMessage("クラッシュ分析"),
     "crashlyticsTip": MessageLookupByLibrary.simpleMessage(
@@ -343,6 +347,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "goDownload": MessageLookupByLibrary.simpleMessage("ダウンロードへ"),
     "goToConfigureScript": MessageLookupByLibrary.simpleMessage("スクリプト設定に移動"),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage("変更をキャッシュしますか？"),
+    "helperCorruptTip": MessageLookupByLibrary.simpleMessage(
+      "Helper サービスが利用できないため、TUN モードを有効にできません。再インストールしてください。",
+    ),
     "hideFromList": MessageLookupByLibrary.simpleMessage("リストから隠す"),
     "host": MessageLookupByLibrary.simpleMessage("ホスト"),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("ホストを追加"),

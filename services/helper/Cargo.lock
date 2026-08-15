@@ -284,10 +284,12 @@ dependencies = [
  "anyhow",
  "once_cell",
  "serde",
+ "serde_json",
  "sha2",
  "tokio",
  "warp",
  "windows-service",
+ "windows-sys",
 ]
 
 [[package]]

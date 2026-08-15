@@ -269,6 +269,10 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
 
   final _FlippableTweenSequence<double> _closedOpacityTween;
   final _FlippableTweenSequence<double> _openOpacityTween;
+  final Animatable<Color?> _scrimTween = ColorTween(
+    begin: Colors.transparent,
+    end: Colors.transparent,
+  );
   late _FlippableTweenSequence<Color?> _colorTween;
   final GlobalKey _openBuilderKey = GlobalKey();
   final RectTween _rectTween = RectTween();
@@ -475,60 +479,64 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
 
           final Rect rect = _rectTween.evaluate(curvedAnimation)!;
           return SizedBox.expand(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Transform.translate(
-                offset: Offset(rect.left, rect.top),
-                child: SizedBox(
-                  width: rect.width,
-                  height: rect.height,
-                  child: Material(
-                    clipBehavior: Clip.antiAlias,
-                    animationDuration: Duration.zero,
-                    color: colorTween!.evaluate(animation),
-                    child: Stack(
-                      fit: StackFit.passthrough,
-                      children: <Widget>[
-                        // Closed child fading out.
-                        FittedBox(
-                          fit: BoxFit.fitWidth,
-                          alignment: Alignment.topLeft,
-                          child: SizedBox(
-                            width: _rectTween.begin!.width,
-                            height: _rectTween.begin!.height,
-                            child: (hideableKey.currentState?.isInTree ?? false)
-                                ? null
-                                : FadeTransition(
-                                    opacity: closedOpacityTween!.animate(
-                                      animation,
+            child: Container(
+              color: _scrimTween.evaluate(curvedAnimation),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Transform.translate(
+                  offset: Offset(rect.left, rect.top),
+                  child: SizedBox(
+                    width: rect.width,
+                    height: rect.height,
+                    child: Material(
+                      clipBehavior: Clip.antiAlias,
+                      animationDuration: Duration.zero,
+                      color: colorTween!.evaluate(animation),
+                      child: Stack(
+                        fit: StackFit.passthrough,
+                        children: <Widget>[
+                          // Closed child fading out.
+                          FittedBox(
+                            fit: BoxFit.fitWidth,
+                            alignment: Alignment.topLeft,
+                            child: SizedBox(
+                              width: _rectTween.begin!.width,
+                              height: _rectTween.begin!.height,
+                              child:
+                                  (hideableKey.currentState?.isInTree ?? false)
+                                  ? null
+                                  : FadeTransition(
+                                      opacity: closedOpacityTween!.animate(
+                                        animation,
+                                      ),
+                                      child: Builder(
+                                        key: closedBuilderKey,
+                                        builder: (BuildContext context) {
+                                          // Use dummy "open container" callback
+                                          // since we are in the process of opening.
+                                          return closedBuilder(context, () {});
+                                        },
+                                      ),
                                     ),
-                                    child: Builder(
-                                      key: closedBuilderKey,
-                                      builder: (BuildContext context) {
-                                        // Use dummy "open container" callback
-                                        // since we are in the process of opening.
-                                        return closedBuilder(context, () {});
-                                      },
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        // Open child fading in.
-                        OverflowBox(
-                          maxWidth: _rectTween.end!.width,
-                          maxHeight: _rectTween.end!.height,
-                          alignment: Alignment.topLeft,
-                          child: FadeTransition(
-                            opacity: openOpacityTween!.animate(animation),
-                            child: Builder(
-                              key: _openBuilderKey,
-                              builder: (BuildContext context) {
-                                return openBuilder(context, closeContainer);
-                              },
                             ),
                           ),
-                        ),
-                      ],
+                          // Open child fading in.
+                          OverflowBox(
+                            maxWidth: _rectTween.end!.width,
+                            maxHeight: _rectTween.end!.height,
+                            alignment: Alignment.topLeft,
+                            child: FadeTransition(
+                              opacity: openOpacityTween!.animate(animation),
+                              child: Builder(
+                                key: _openBuilderKey,
+                                builder: (BuildContext context) {
+                                  return openBuilder(context, closeContainer);
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

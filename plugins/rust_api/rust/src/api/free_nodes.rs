@@ -524,6 +524,9 @@ struct FreeNodesInput {
     enabled_source_ids: Vec<String>,
     source_ids: Option<Vec<String>>,
     existing_config_text: Option<String>,
+    resume_directory_path: Option<String>,
+    resume_session_key: Option<String>,
+    resume_day: Option<String>,
     preference: PreferenceInput,
     fetch_timeout_seconds_by_source: HashMap<String, u64>,
     default_fetch_timeout_seconds: u64,
@@ -771,7 +774,7 @@ impl AgentCache {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct SourceStatus {
     url: String,
@@ -784,7 +787,7 @@ struct SourceStatus {
     message: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct FreeNodesOutput {
     yaml: String,
@@ -797,7 +800,7 @@ struct FreeNodesOutput {
     success_source_count: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct FreeNodeSourceStreamEvent {
     kind: &'static str,
@@ -808,7 +811,28 @@ struct FreeNodeSourceStreamEvent {
     error: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct FreeNodeResumeRecord {
+    source_id: String,
+    output: Option<FreeNodesOutput>,
+    error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct FreeNodeResumeSessionMetadata {
+    version: u32,
+    session_key: String,
+    day: String,
+    source_ids: Vec<String>,
+    completed_sources: usize,
+    successful_sources: usize,
+    failed_sources: usize,
+    proxy_count: usize,
+}
 #[derive(Debug, Clone)]
+#[frb(ignore)]
 struct BatchDatedProxy {
     proxy: Map<String, Value>,
     date_label: String,
@@ -818,6 +842,7 @@ struct BatchDatedProxy {
 }
 
 #[derive(Debug, Default, Clone)]
+#[frb(ignore)]
 struct BatchProxyAccumulator {
     indexes: HashMap<String, usize>,
     proxies: Vec<BatchDatedProxy>,
@@ -1071,21 +1096,198 @@ fn write_free_nodes_stream_yaml(yaml: String, kind: &str) -> Result<String, Stri
     Ok(path.to_string_lossy().into_owned())
 }
 
+fn sanitize_resume_file_component(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    for ch in value.chars() {
+        if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.') {
+            out.push(ch);
+        } else {
+            out.push('_');
+        }
+    }
+    if out.is_empty() {
+        "source".to_string()
+    } else {
+        out
+    }
+}
+
+fn atomic_write_resume_file(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|error| format!("free node resume mkdir: {error}"))?;
+    }
+    let thread_name =
+        sanitize_resume_file_component(std::thread::current().name().unwrap_or("worker"));
+    let temp_path = path.with_extension(format!("tmp-{}-{thread_name}", std::process::id(),));
+    std::fs::write(&temp_path, bytes)
+        .map_err(|error| format!("free node resume temp write: {error}"))?;
+    if path.exists() {
+        let _ = std::fs::remove_file(path);
+    }
+    std::fs::rename(&temp_path, path)
+        .map_err(|error| format!("free node resume rename: {error}"))?;
+    Ok(())
+}
+
+fn resume_record_path(directory: &std::path::Path, source_id: &str) -> std::path::PathBuf {
+    directory.join(format!(
+        "{}.json",
+        sanitize_resume_file_component(source_id)
+    ))
+}
+
+fn write_resume_metadata(
+    directory: &std::path::Path,
+    session_key: &str,
+    day: &str,
+    source_ids: &[String],
+    completed_sources: usize,
+    successful_sources: usize,
+    failed_sources: usize,
+    proxy_count: usize,
+) -> Result<(), String> {
+    let metadata = FreeNodeResumeSessionMetadata {
+        version: 1,
+        session_key: session_key.to_string(),
+        day: day.to_string(),
+        source_ids: source_ids.to_vec(),
+        completed_sources,
+        successful_sources,
+        failed_sources,
+        proxy_count,
+    };
+    let bytes = serde_json::to_vec(&metadata)
+        .map_err(|error| format!("free node resume metadata json: {error}"))?;
+    atomic_write_resume_file(&directory.join("session.json"), &bytes)
+}
+
+fn prepare_resume_session(
+    input: &FreeNodesInput,
+    sources: &[SourceInput],
+) -> Result<(Option<std::path::PathBuf>, Vec<FreeNodeSourceStreamEvent>), String> {
+    let Some(directory_text) = input
+        .resume_directory_path
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    else {
+        return Ok((None, Vec::new()));
+    };
+    let Some(session_key) = input
+        .resume_session_key
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    else {
+        return Ok((None, Vec::new()));
+    };
+    let day = input.resume_day.as_deref().unwrap_or_default();
+    let directory = std::path::PathBuf::from(directory_text);
+    let source_ids = sources
+        .iter()
+        .map(|source| source.id.clone())
+        .collect::<Vec<_>>();
+    let metadata_path = directory.join("session.json");
+    let existing_metadata = std::fs::read(&metadata_path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<FreeNodeResumeSessionMetadata>(&bytes).ok());
+    let compatible = existing_metadata.as_ref().is_some_and(|metadata| {
+        metadata.version == 1
+            && metadata.session_key == session_key
+            && metadata.day == day
+            && metadata.source_ids == source_ids
+    });
+    if !compatible && directory.exists() {
+        std::fs::remove_dir_all(&directory)
+            .map_err(|error| format!("free node resume reset: {error}"))?;
+    }
+    std::fs::create_dir_all(&directory)
+        .map_err(|error| format!("free node resume mkdir: {error}"))?;
+
+    let mut restored = Vec::new();
+    if compatible {
+        for source in sources {
+            let path = resume_record_path(&directory, &source.id);
+            let Ok(bytes) = std::fs::read(path) else {
+                continue;
+            };
+            let Ok(record) = serde_json::from_slice::<FreeNodeResumeRecord>(&bytes) else {
+                continue;
+            };
+            if record.source_id != source.id {
+                continue;
+            }
+            restored.push(FreeNodeSourceStreamEvent {
+                kind: "source",
+                source_id: record.source_id,
+                output: record.output,
+                error: record.error,
+            });
+        }
+    }
+    write_resume_metadata(
+        &directory,
+        session_key,
+        day,
+        &source_ids,
+        existing_metadata
+            .as_ref()
+            .filter(|_| compatible)
+            .map(|metadata| metadata.completed_sources)
+            .unwrap_or(0),
+        existing_metadata
+            .as_ref()
+            .filter(|_| compatible)
+            .map(|metadata| metadata.successful_sources)
+            .unwrap_or(0),
+        existing_metadata
+            .as_ref()
+            .filter(|_| compatible)
+            .map(|metadata| metadata.failed_sources)
+            .unwrap_or(0),
+        existing_metadata
+            .as_ref()
+            .filter(|_| compatible)
+            .map(|metadata| metadata.proxy_count)
+            .unwrap_or(0),
+    )?;
+    Ok((Some(directory), restored))
+}
+
+fn persist_resume_record(
+    directory: Option<&std::path::Path>,
+    event: &FreeNodeSourceStreamEvent,
+) -> Result<(), String> {
+    let Some(directory) = directory else {
+        return Ok(());
+    };
+    let record = FreeNodeResumeRecord {
+        source_id: event.source_id.clone(),
+        output: event.output.clone(),
+        error: event.error.clone(),
+    };
+    let bytes = serde_json::to_vec(&record)
+        .map_err(|error| format!("free node resume record json: {error}"))?;
+    atomic_write_resume_file(&resume_record_path(directory, &event.source_id), &bytes)
+}
+
 fn stream_fetch_free_node_sources(
     mut input: FreeNodesInput,
     sink: StreamSink<String, SseCodec>,
 ) -> Result<(), String> {
-    let sources = selected_batch_sources(&input);
-    if sources.is_empty() {
+    let all_sources = selected_batch_sources(&input);
+    if all_sources.is_empty() {
         return Ok(());
     }
-    let requested_concurrency = input.preference.fetch_concurrency.clamp(1, sources.len());
+    let total_source_count = all_sources.len();
+    let requested_concurrency = input
+        .preference
+        .fetch_concurrency
+        .clamp(1, total_source_count);
     let parallelism = thread::available_parallelism()
         .map(|value| value.get())
         .unwrap_or(1);
-    let concurrency =
-        adaptive_source_worker_count(requested_concurrency, sources.len(), parallelism);
-    let queue_capacity = parallelism.min(concurrency).max(1);
 
     let existing = extract_existing_dated_proxies(
         input.existing_config_text.as_deref(),
@@ -1099,9 +1301,63 @@ fn stream_fetch_free_node_sources(
     for dated in &existing {
         progress_seen.insert(proxy_fingerprint(&dated.proxy));
     }
+
+    let (resume_directory, mut restored_events) = prepare_resume_session(&input, &all_sources)?;
+    let restored_ids = restored_events
+        .iter()
+        .map(|event| event.source_id.as_str())
+        .collect::<HashSet<_>>();
+    let remaining_sources = all_sources
+        .iter()
+        .filter(|source| !restored_ids.contains(source.id.as_str()))
+        .cloned()
+        .collect::<Vec<_>>();
+    let concurrency =
+        adaptive_source_worker_count(requested_concurrency, remaining_sources.len(), parallelism);
+    let queue_capacity = parallelism.min(concurrency.max(1)).max(1);
+
+    let sources_by_id = input
+        .catalog
+        .sources
+        .iter()
+        .map(|source| (source.id.clone(), source.clone()))
+        .collect::<HashMap<_, _>>();
+    let mut batch = BatchProxyAccumulator::default();
+    let mut restored_successful = 0usize;
+    let mut restored_failed = 0usize;
+    for event in &mut restored_events {
+        let source_succeeded = event
+            .output
+            .as_ref()
+            .is_some_and(|output| output.success_source_count > 0 && output.proxy_count > 0);
+        if source_succeeded {
+            restored_successful += 1;
+        } else {
+            restored_failed += 1;
+        }
+        if let (Some(source), Some(output)) =
+            (sources_by_id.get(&event.source_id), event.output.as_mut())
+        {
+            if let Some(proxies) = output.fresh_proxies.as_ref() {
+                if source_succeeded {
+                    for proxy in proxies {
+                        progress_seen.insert(proxy_fingerprint(proxy));
+                    }
+                }
+            }
+            if let Some(proxies) = output.fresh_proxies.take() {
+                batch.add_source_proxies(source, proxies, &input.today_label, input.today_token);
+            }
+        }
+    }
+
+    let restored_completed = restored_events.len();
     let started_event = serde_json::to_string(&json!({
         "kind": "started",
         "proxyCount": progress_seen.len(),
+        "completedSources": restored_completed,
+        "successfulSources": restored_successful,
+        "failedSources": restored_failed,
         "effectiveConcurrency": concurrency,
         "requestedConcurrency": requested_concurrency,
     }))
@@ -1109,7 +1365,21 @@ fn stream_fetch_free_node_sources(
     sink.add(started_event)
         .map_err(|error| format!("free node started stream closed: {error}"))?;
 
-    let sources = Arc::new(sources);
+    for event in &restored_events {
+        let encoded = serde_json::to_string(&json!({
+            "kind": event.kind,
+            "sourceId": event.source_id,
+            "output": event.output,
+            "error": event.error,
+            "cumulativeProxyCount": progress_seen.len(),
+            "restored": true,
+        }))
+        .map_err(|error| format!("free node restored stream json: {error}"))?;
+        sink.add(encoded)
+            .map_err(|error| format!("free node restored stream closed: {error}"))?;
+    }
+
+    let sources = Arc::new(remaining_sources);
     let next_source = AtomicUsize::new(0);
     let (sender, receiver) = mpsc::sync_channel::<FreeNodeSourceStreamEvent>(queue_capacity);
 
@@ -1153,23 +1423,30 @@ fn stream_fetch_free_node_sources(
         }
         drop(sender);
 
-        let sources_by_id = input
-            .catalog
-            .sources
+        let mut completed_sources = restored_completed;
+        let mut successful_sources = restored_successful;
+        let mut failed_sources = restored_failed;
+        let mut emitted_partial = restored_completed > 0;
+        let source_ids = all_sources
             .iter()
-            .map(|source| (source.id.clone(), source.clone()))
-            .collect::<HashMap<_, _>>();
-        let mut batch = BatchProxyAccumulator::default();
-        let mut completed_sources = 0usize;
-        let mut emitted_partial = false;
+            .map(|source| source.id.clone())
+            .collect::<Vec<_>>();
+        let session_key = input.resume_session_key.as_deref().unwrap_or_default();
+        let resume_day = input.resume_day.as_deref().unwrap_or_default();
 
         for mut event in receiver {
+            persist_resume_record(resume_directory.as_deref(), &event)?;
             completed_sources += 1;
             let source = sources_by_id.get(&event.source_id);
             let source_succeeded = event
                 .output
                 .as_ref()
                 .is_some_and(|output| output.success_source_count > 0 && output.proxy_count > 0);
+            if source_succeeded {
+                successful_sources += 1;
+            } else {
+                failed_sources += 1;
+            }
             if let (Some(source), Some(output)) = (source, event.output.as_mut()) {
                 if let Some(proxies) = output.fresh_proxies.take() {
                     if source_succeeded {
@@ -1186,12 +1463,24 @@ fn stream_fetch_free_node_sources(
                 }
             }
             let cumulative_proxy_count = progress_seen.len();
+            if let Some(directory) = resume_directory.as_deref() {
+                write_resume_metadata(
+                    directory,
+                    session_key,
+                    resume_day,
+                    &source_ids,
+                    completed_sources,
+                    successful_sources,
+                    failed_sources,
+                    cumulative_proxy_count,
+                )?;
+            }
 
             let mut partial_yaml = None::<String>;
             let mut partial_proxy_count = None::<usize>;
             if !has_existing_config
                 && source_succeeded
-                && completed_sources < sources.len()
+                && completed_sources < total_source_count
                 && !emitted_partial
             {
                 let (yaml, count) = build_stream_partial_yaml(&batch, &input)?;
@@ -1250,7 +1539,6 @@ fn stream_fetch_free_node_sources(
         Ok(())
     })
 }
-
 fn normalize_batch_source_label(label: &str) -> String {
     label.split_whitespace().collect::<Vec<_>>().join(" ")
 }
@@ -1516,6 +1804,9 @@ fn single_source_free_nodes_input(input: &FreeNodesInput, source: SourceInput) -
         enabled_source_ids: vec![source_id.clone()],
         source_ids: Some(vec![source_id]),
         existing_config_text: None,
+        resume_directory_path: None,
+        resume_session_key: None,
+        resume_day: None,
         preference: PreferenceInput {
             fetch_concurrency: 1,
             auto_prefer: false,
@@ -12240,6 +12531,169 @@ fn percent_decode(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    fn resume_test_source(id: &str) -> SourceInput {
+        SourceInput {
+            id: id.to_string(),
+            label: id.to_string(),
+            seed: format!("https://{id}.example.com"),
+            rank: 1,
+            update_interval_hours: 24,
+            page_discovery: false,
+            github_discovery: false,
+            raw_candidates: Vec::new(),
+            candidate_urls: Vec::new(),
+        }
+    }
+
+    fn resume_test_input(
+        directory: &std::path::Path,
+        day: &str,
+        sources: &[SourceInput],
+    ) -> FreeNodesInput {
+        let source_ids = sources
+            .iter()
+            .map(|source| source.id.clone())
+            .collect::<Vec<_>>();
+        FreeNodesInput {
+            catalog: CatalogInput {
+                history_timeout_hours: 72,
+                sources: sources.to_vec(),
+            },
+            enabled_source_ids: source_ids.clone(),
+            source_ids: Some(source_ids.clone()),
+            existing_config_text: None,
+            resume_directory_path: Some(directory.to_string_lossy().into_owned()),
+            resume_session_key: Some(format!("{day}:{}", source_ids.join(","))),
+            resume_day: Some(day.to_string()),
+            preference: PreferenceInput {
+                fetch_concurrency: sources.len().max(1),
+                auto_prefer: false,
+            },
+            fetch_timeout_seconds_by_source: HashMap::new(),
+            default_fetch_timeout_seconds: 10,
+            proxy_url: None,
+            user_agent: "resume-test".into(),
+            today_label: day.into(),
+            today_token: 20260815,
+            now_day_number: days_from_civil(2026, 8, 15),
+            now_iso: format!("{day}T12:00:00"),
+        }
+    }
+
+    #[test]
+    fn test_resume_session_restores_matching_source_records() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = std::env::temp_dir().join(format!(
+            "flclashplus-free-nodes-resume-test-{}-{unique}",
+            std::process::id()
+        ));
+        let sources = vec![
+            resume_test_source("source-a"),
+            resume_test_source("source-b"),
+        ];
+        let input = resume_test_input(&directory, "2026-08-15", &sources);
+        let (prepared_directory, restored) = prepare_resume_session(&input, &sources).unwrap();
+        assert_eq!(prepared_directory.as_deref(), Some(directory.as_path()));
+        assert!(restored.is_empty());
+
+        let mut proxy = Map::new();
+        proxy.insert("name".into(), json!("resume-node"));
+        proxy.insert("type".into(), json!("socks5"));
+        proxy.insert("server".into(), json!("resume.example.com"));
+        proxy.insert("port".into(), json!(1080));
+        let output = FreeNodesOutput {
+            yaml: String::new(),
+            proxy_count: 1,
+            fresh_proxies: Some(vec![proxy]),
+            sources: vec![SourceStatus {
+                url: sources[0].seed.clone(),
+                success: true,
+                proxy_count: 1,
+                source_id: sources[0].id.clone(),
+                source_label: sources[0].label.clone(),
+                update_interval_hours: 24,
+                fetched_at: "2026-08-15T12:00:00".into(),
+                message: None,
+            }],
+            fetch_times: HashMap::from([(sources[0].id.clone(), "2026-08-15T12:00:00".into())]),
+            candidate_count: 1,
+            success_source_count: 1,
+        };
+        let event = FreeNodeSourceStreamEvent {
+            kind: "source",
+            source_id: sources[0].id.clone(),
+            output: Some(output),
+            error: None,
+        };
+        persist_resume_record(Some(directory.as_path()), &event).unwrap();
+        write_resume_metadata(
+            directory.as_path(),
+            input.resume_session_key.as_deref().unwrap(),
+            input.resume_day.as_deref().unwrap(),
+            &sources
+                .iter()
+                .map(|source| source.id.clone())
+                .collect::<Vec<_>>(),
+            1,
+            1,
+            0,
+            1,
+        )
+        .unwrap();
+
+        let (_, restored) = prepare_resume_session(&input, &sources).unwrap();
+        assert_eq!(restored.len(), 1);
+        assert_eq!(restored[0].source_id, "source-a");
+        let restored_output = restored[0].output.as_ref().unwrap();
+        assert_eq!(restored_output.proxy_count, 1);
+        assert_eq!(restored_output.fresh_proxies.as_ref().unwrap().len(), 1);
+
+        let _ = std::fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn test_resume_session_resets_records_from_a_different_day() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = std::env::temp_dir().join(format!(
+            "flclashplus-free-nodes-resume-stale-test-{}-{unique}",
+            std::process::id()
+        ));
+        let sources = vec![resume_test_source("source-a")];
+        let day_one = resume_test_input(&directory, "2026-08-15", &sources);
+        let (prepared_directory, _) = prepare_resume_session(&day_one, &sources).unwrap();
+        let directory = prepared_directory.unwrap();
+        let event = FreeNodeSourceStreamEvent {
+            kind: "source",
+            source_id: "source-a".into(),
+            output: None,
+            error: Some("simulated failure".into()),
+        };
+        persist_resume_record(Some(directory.as_path()), &event).unwrap();
+        write_resume_metadata(
+            directory.as_path(),
+            day_one.resume_session_key.as_deref().unwrap(),
+            day_one.resume_day.as_deref().unwrap(),
+            &["source-a".into()],
+            1,
+            0,
+            1,
+            0,
+        )
+        .unwrap();
+
+        let day_two = resume_test_input(&directory, "2026-08-16", &sources);
+        let (_, restored) = prepare_resume_session(&day_two, &sources).unwrap();
+        assert!(restored.is_empty());
+        assert!(!resume_record_path(&directory, "source-a").exists());
+
+        let _ = std::fs::remove_dir_all(directory);
+    }
 
     #[test]
     fn test_adaptive_source_worker_count_scales_without_fixed_global_cap() {
@@ -20875,6 +21329,9 @@ window.node = "vless%3A%2F%2F00000000-0000-0000-0000-000000000000%40example.net%
             },
             enabled_source_ids: vec![],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: Some(
                 r#"
 proxies:
@@ -22998,6 +23455,9 @@ proxy-groups:
             },
             enabled_source_ids: vec!["puddincat".into()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 8,
@@ -23082,6 +23542,9 @@ proxy-groups:
             },
             enabled_source_ids: vec!["github-static".into()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 8,
@@ -23598,6 +24061,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -23674,6 +24140,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -23728,6 +24197,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -23810,6 +24282,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -23902,6 +24377,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -23992,6 +24470,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -24120,6 +24601,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -24207,6 +24691,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -24299,6 +24786,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -24442,6 +24932,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -24520,6 +25013,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -24982,6 +25478,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -25075,6 +25574,9 @@ proxy-groups:
             },
             enabled_source_ids: vec!["bulk".into()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 8,
@@ -25119,6 +25621,9 @@ proxy-groups:
             },
             enabled_source_ids: vec!["github".into()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 8,
@@ -25205,6 +25710,9 @@ proxy-groups:
             },
             enabled_source_ids: vec!["github".into(), "web".into()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 8,
@@ -25344,6 +25852,9 @@ proxy-groups:
             },
             enabled_source_ids: vec!["page".into()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 4,
@@ -25402,6 +25913,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 2,
@@ -25469,6 +25983,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -25541,6 +26058,9 @@ proxy-groups:
             },
             enabled_source_ids: vec![source.id.clone()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,
@@ -27028,6 +27548,9 @@ proxy-providers:
             },
             enabled_source_ids: vec!["page".into()],
             source_ids: None,
+            resume_directory_path: None,
+            resume_session_key: None,
+            resume_day: None,
             existing_config_text: None,
             preference: PreferenceInput {
                 fetch_concurrency: 1,

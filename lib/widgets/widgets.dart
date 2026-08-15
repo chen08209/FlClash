@@ -1,5 +1,6 @@
 export 'activate_box.dart';
 export 'animate_grid.dart';
+export 'animated_visibility.dart';
 export 'builder.dart';
 export 'button.dart';
 export 'card.dart';
@@ -13,6 +14,7 @@ export 'donut_chart.dart';
 export 'effect.dart';
 export 'fade_box.dart';
 export 'float_layout.dart';
+export 'focus.dart';
 export 'grid.dart';
 export 'icon.dart';
 export 'inherited.dart';

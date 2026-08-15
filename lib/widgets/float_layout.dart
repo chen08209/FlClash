@@ -1,18 +1,29 @@
+import 'package:fl_clash/common/system.dart';
 import 'package:flutter/material.dart';
 
 class FloatLayout extends StatelessWidget {
   final Widget floatingWidget;
-
   final Widget child;
+  final bool? isTV;
 
   const FloatLayout({
     super.key,
     required this.floatingWidget,
+    this.isTV,
     required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (isTV ?? system.isTV) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          floatingWidget,
+          Expanded(child: Center(child: child)),
+        ],
+      );
+    }
     return Stack(
       fit: StackFit.loose,
       children: [

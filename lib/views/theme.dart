@@ -428,7 +428,7 @@ class _PrueBlackItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.pureBlack),
     );
     return SliverToBoxAdapter(
-      child: ListItem.switchItem(
+      child: ListItem.toggle(
         leading: const Icon(Icons.contrast),
         horizontalTitleGap: 12,
         title: Text(
@@ -437,14 +437,12 @@ class _PrueBlackItem extends ConsumerWidget {
             color: context.colorScheme.onSurfaceVariant,
           ),
         ),
-        delegate: SwitchDelegate(
-          value: prueBlack,
-          onChanged: (value) {
-            ref
-                .read(themeSettingProvider.notifier)
-                .update((state) => state.copyWith(pureBlack: value));
-          },
-        ),
+        value: prueBlack,
+        onChanged: (value) {
+          ref
+              .read(themeSettingProvider.notifier)
+              .update((state) => state.copyWith(pureBlack: value));
+        },
       ),
     );
   }
@@ -466,7 +464,7 @@ class _TextScaleFactorItem extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: ListItem.switchItem(
+            child: ListItem.toggle(
               leading: const Icon(Icons.text_fields),
               horizontalTitleGap: 12,
               title: Text(
@@ -475,16 +473,12 @@ class _TextScaleFactorItem extends ConsumerWidget {
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
-              delegate: SwitchDelegate(
-                value: textScale.enable,
-                onChanged: (value) {
-                  ref
-                      .read(themeSettingProvider.notifier)
-                      .update(
-                        (state) => state.copyWith.textScale(enable: value),
-                      );
-                },
-              ),
+              value: textScale.enable,
+              onChanged: (value) {
+                ref
+                    .read(themeSettingProvider.notifier)
+                    .update((state) => state.copyWith.textScale(enable: value));
+              },
             ),
           ),
           Padding(

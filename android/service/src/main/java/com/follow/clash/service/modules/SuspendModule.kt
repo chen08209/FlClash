@@ -7,55 +7,41 @@ import androidx.core.content.getSystemService
 import com.follow.clash.common.receiveBroadcastFlow
 import com.follow.clash.core.Core
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
+internal class SuspendModule(
+    private val service: Service,
+    private val scope: CoroutineScope,
+) : ServiceModule {
+    private fun isScreenOn() =
+        service.getSystemService<PowerManager>()?.isInteractive ?: true
 
-class SuspendModule(private val service: Service) : Module() {
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val isDeviceIdle: Boolean
+        get() = service.getSystemService<PowerManager>()?.isDeviceIdleMode ?: true
 
-    private fun isScreenOn(): Boolean {
-        val pm = service.getSystemService<PowerManager>()
-        return when (pm != null) {
-            true -> pm.isInteractive
-            false -> true
-        }
+    private fun updateSuspension(screenOn: Boolean) {
+        Core.suspended(!screenOn && isDeviceIdle)
     }
 
-    val isDeviceIdleMode: Boolean
-        get() {
-            return service.getSystemService<PowerManager>()?.isDeviceIdleMode ?: true
-        }
-
-    private fun onUpdate(isScreenOn: Boolean) {
-        if (isScreenOn) {
-            Core.suspended(false)
-            return
-        }
-        Core.suspended(isDeviceIdleMode)
-    }
-
-    override fun onInstall() {
+    override fun start() {
         scope.launch {
             val screenFlow = service.receiveBroadcastFlow {
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(Intent.ACTION_SCREEN_OFF)
-            }.map { intent ->
-                intent.action == Intent.ACTION_SCREEN_ON
+                addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            }.map {
+                isScreenOn()
             }.onStart {
                 emit(isScreenOn())
             }
 
-            screenFlow.collect {
-                    onUpdate(it)
-                }
+            screenFlow.collect(::updateSuspension)
         }
     }
 
-    override fun onUninstall() {
-        scope.cancel()
+    override fun stop() {
+        Core.suspended(false)
     }
 }

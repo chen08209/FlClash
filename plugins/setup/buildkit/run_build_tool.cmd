@@ -3,10 +3,8 @@ setlocal
 
 setlocal ENABLEDELAYEDEXPANSION
 
-echo warning: [setup] Plugin triggered
-
 SET BASEDIR=%~dp0
-SET PROJECT_DIR=%CD%
+if not defined PROJECT_DIR SET PROJECT_DIR=%CD%
 
 if not exist "%PROJECT_DIR%\pubspec.yaml" (
     echo Error: Could not find project root at "%PROJECT_DIR%"

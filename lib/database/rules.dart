@@ -74,13 +74,13 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     );
 
     query.orderBy([
-      OrderingTerm.desc(
+      OrderingTerm.asc(
         profileRuleLinks.profileId.isNull().caseMatch<int>(
           when: {const Constant(true): const Constant(1)},
           orElse: const Constant(0),
         ),
       ),
-      OrderingTerm.desc(profileRuleLinks.order),
+      OrderingTerm.asc(profileRuleLinks.order),
     ]);
 
     return query.map((row) {
