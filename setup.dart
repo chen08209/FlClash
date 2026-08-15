@@ -155,7 +155,7 @@ Future<int> _package(
   final depExit = await _ensureDependencies(platform, arch);
   if (depExit != 0) return depExit;
 
-  final activateResult = await Process.run('dart', [
+  final activateResult = await Process.run(Platform.resolvedExecutable, [
     'pub',
     'global',
     'activate',
@@ -173,8 +173,12 @@ Future<int> _package(
   }
 
   final process = await Process.start(
-    'flutter_distributor',
+    Platform.resolvedExecutable,
     [
+      'pub',
+      'global',
+      'run',
+      'flutter_distributor:main',
       'package',
       '--skip-clean',
       '--platform',
@@ -189,7 +193,6 @@ Future<int> _package(
     ],
     includeParentEnvironment: true,
     environment: {'ANDROID_ARCH': ?androidArch},
-    runInShell: Platform.isWindows,
   );
 
   process.stdout.listen((data) {
