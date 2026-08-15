@@ -45,22 +45,6 @@ class TrackerInfoItem extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(trackerInfo.desc, style: context.textTheme.bodyLarge),
-        // Row(
-        //   mainAxisSize: MainAxisSize.max,
-        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //   spacing: 8,
-        //   children: [
-        //     Flexible(
-        //       child: Text(trackerInfo.desc, style: context.textTheme.bodyLarge),
-        //     ),
-        //     Text(
-        //       trackerInfo.start.lastUpdateTimeDesc,
-        //       style: context.textTheme.bodySmall?.copyWith(
-        //         color: context.colorScheme.onSurface.opacity60,
-        //       ),
-        //     ),
-        //   ],
-        // ),
         const SizedBox(height: 6),
         Text(
           _getSourceText(context, trackerInfo),

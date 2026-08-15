@@ -93,18 +93,6 @@ extension ProfileRuleLinkExt on ProfileRuleLink {
   }
 }
 
-// @freezed
-// abstract class Overwrite with _$Overwrite {
-//   const factory Overwrite({
-//     @Default(OverwriteType.standard) OverwriteType type,
-//     @Default(StandardOverwrite()) StandardOverwrite standardOverwrite,
-//     @Default(ScriptOverwrite()) ScriptOverwrite scriptOverwrite,
-//   }) = _Overwrite;
-//
-//   factory Overwrite.fromJson(Map<String, Object?> json) =>
-//       _$OverwriteFromJson(json);
-// }
-
 @freezed
 abstract class StandardOverwrite with _$StandardOverwrite {
   const factory StandardOverwrite({
@@ -178,19 +166,6 @@ extension ProfileExtension on Profile {
       return file.create(recursive: true);
     }
     return file;
-    // final oldPath = await appPath.getProfilePath(id);
-    // final newPath = await appPath.getProfilePath(fileName);
-    // final oldFile = oldPath == newPath ? null : File(oldPath);
-    // final oldIsExists = await oldFile?.exists() ?? false;
-    // if (oldIsExists) {
-    //   return await oldFile!.rename(newPath);
-    // }
-    // final file = File(newPath);
-    // final isExists = await file.exists();
-    // if (!isExists && autoCreate) {
-    //   return await file.create(recursive: true);
-    // }
-    // return file;
   }
 
   Future<File> get file async {

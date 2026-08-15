@@ -179,18 +179,6 @@ class OutboundModeV2 extends StatelessWidget {
                       height: 8.ap,
                       width: constraints.maxWidth,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      // child: Row(
-                      //   children: [
-                      //     Container(
-                      //       width: (constraints.maxWidth - 32) / 3,
-                      //       height: 3,
-                      //       decoration: BoxDecoration(
-                      //         color: _getTextColor(context, mode),
-                      //         borderRadius: BorderRadius.circular(2),
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
                     ),
                   ],
                 );

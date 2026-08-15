@@ -154,16 +154,6 @@ class CommonCard extends StatelessWidget {
 
   Color? _buildBackgroundColor(BuildContext context) {
     final colorScheme = context.colorScheme;
-    // if (isError) {
-    //   if (type == CommonCardType.filled) {
-    //     return isSelected
-    //         ? colorScheme.errorContainer.opacity80
-    //         : colorScheme.errorContainer;
-    //   }
-    //   return isSelected
-    //       ? colorScheme.errorContainer.opacity60
-    //       : colorScheme.errorContainer.opacity12;
-    // }
     if (type == CommonCardType.filled) {
       if (isSelected) {
         return colorScheme.secondaryContainer.opacity80;

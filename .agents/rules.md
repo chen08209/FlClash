@@ -21,6 +21,46 @@ Generated directories are excluded from analysis:
 - `lib/**/generated/**`
 - `plugins/**`
 
+## Comments
+
+Comments are opt-in and reserved for the few places that genuinely need one. Density is the point: every comment that
+restates the code devalues the comments that carry real information, until readers skim past all of them. A file with
+three comments that matter is more readable than one with thirty.
+
+### Writing Comments
+
+- Never add a comment on your own initiative. This covers explanatory, narrative, TODO, section-divider, and
+  documentation comments, in Dart, Kotlin, Swift, Go, Rust, YAML, Gradle, and any other file you touch.
+- Never annotate line by line or statement by statement, and never restate in prose what the code already says. If a
+  block needs a comment per step, the block needs better names or a smaller decomposition instead.
+- When a change genuinely cannot be understood without a comment, do not write it silently. Explain what is unclear,
+  propose the exact comment text, and wait for the user to approve it before adding it.
+- Delete commented-out code, stale version notes, and comments that only restate the code, whenever you edit the file
+  that contains them. This does not need approval.
+- These are not comments and must be preserved: analyzer and linter directives (`// ignore:`, `// ignore_for_file:`,
+  `// coverage:ignore`), license and copyright headers, code-generation markers, and comments inside vendored upstream
+  code such as `lib/widgets/open_container.dart`.
+
+### Where Knowledge Belongs
+
+Pick the destination by where the constraint would be violated, not by how important it feels.
+
+- **Assertable behavior goes in a test.** A test is the only form that cannot drift, because it fails when the behavior
+  it describes is broken. Prefer it over both a comment and a document whenever the fact can be checked in code.
+- **Repository-wide defaults, ownership, and invariants go in `.agents/*.md` or a `.agents/skills/*/SKILL.md`.** They
+  are violated from many files, so they must reach every future agent at session start. A comment in one file cannot do
+  that.
+- **A fact that is true only at one call site, and is not visible from that call site, stays a comment there.** Its
+  value is being in the reader's line of sight at the moment of the edit. `lib/common/constant.dart` is the model case:
+  the delay-test concurrency cap is bound to `mBatch` in `core/common.go`, and whoever changes that number must see the
+  constraint on the same screen.
+
+Both failure directions are real. Moving a local constraint into `.agents/` hides it from the person editing the line;
+leaving a repo-wide policy as a comment reaches only the reader of that one file.
+
+Before any of the three, prefer encoding the intent in structure and naming — a named mixin, type, or method that makes
+the invariant hard to break beats prose that asks the next reader not to break it.
+
 ## Core API Safety
 
 - Do not expose direct filesystem deletion APIs through Core or helper IPC; use

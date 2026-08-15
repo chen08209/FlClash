@@ -500,9 +500,6 @@ ColorScheme genColorScheme(
     ),
   );
   if (color == null && (ignoreConfig == true || vm2.a == null)) {
-    // if (globalState.corePalette != null) {
-    //   return globalState.corePalette!.toColorScheme(brightness: brightness);
-    // }
     return ColorScheme.fromSeed(
       seedColor:
           globalState.corePalette
