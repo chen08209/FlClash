@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
@@ -20,85 +20,31 @@ class MemoryInfo extends StatefulWidget {
   State<MemoryInfo> createState() => _MemoryInfoState();
 }
 
-class _MemoryInfoState extends State<MemoryInfo> with WidgetsBindingObserver {
-  Timer? _timer;
-  bool _isForeground = false;
-  bool _isUpdating = false;
-  int _updateGeneration = 0;
+class _MemoryInfoState extends State<MemoryInfo>
+    with WidgetsBindingObserver, ActivePollingMixin<MemoryInfo> {
+  @override
+  Duration get pollInterval => const Duration(seconds: 2);
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _isForeground =
-        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _isForeground) {
-        _startUpdating();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _isForeground = false;
-    _stopUpdating();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    final isForeground = state == AppLifecycleState.resumed;
-    if (_isForeground == isForeground) {
-      return;
-    }
-    _isForeground = isForeground;
-    if (isForeground) {
-      _startUpdating();
-    } else {
-      _stopUpdating();
-    }
-  }
-
-  void _startUpdating() {
-    if (!mounted || !_isForeground || _isUpdating) {
-      return;
-    }
-    _isUpdating = true;
-    final generation = ++_updateGeneration;
-    unawaited(_updateMemory(generation));
-  }
-
-  void _stopUpdating() {
-    _isUpdating = false;
-    _updateGeneration++;
-    _timer?.cancel();
-    _timer = null;
-  }
-
-  Future<void> _updateMemory(int generation) async {
-    final memoryReader = widget.memoryReader;
-    final memory = memoryReader != null
-        ? await memoryReader()
-        : await _readMemory();
-    if (!mounted ||
-        !_isForeground ||
-        !_isUpdating ||
-        generation != _updateGeneration) {
+  Future<void> poll(PollGuard isCurrent) async {
+    final memory = await _readMemory();
+    if (memory == null || !isCurrent()) {
       return;
     }
     _memoryStateNotifier.value = memory;
-    _timer = Timer(const Duration(seconds: 2), () {
-      _timer = null;
-      if (mounted &&
-          _isForeground &&
-          _isUpdating &&
-          generation == _updateGeneration) {
-        unawaited(_updateMemory(generation));
-      }
-    });
+  }
+
+  Future<num?> _readMemory() async {
+    try {
+      final memoryReader = widget.memoryReader;
+      return memoryReader != null ? await memoryReader() : await _readTotal();
+    } catch (error) {
+      commonPrint.log(
+        'updateMemory error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+      return null;
+    }
   }
 
   @override
@@ -156,7 +102,7 @@ class _MemoryInfoState extends State<MemoryInfo> with WidgetsBindingObserver {
   }
 }
 
-Future<num> _readMemory() async {
+Future<num> _readTotal() async {
   final rss = ProcessInfo.currentRss;
   final coreConnected =
       globalState.container.read(coreStatusProvider) == CoreStatus.connected;
