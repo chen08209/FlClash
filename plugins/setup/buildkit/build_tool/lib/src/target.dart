@@ -147,6 +147,11 @@ class Target {
     }
   }
 
+  String get ndkCcExecutableName {
+    final name = ndkCcName;
+    return Environment.hostOs == 'windows' ? '$name.cmd' : name;
+  }
+
   @override
   String toString() => '$goos/$goarch${abi != null ? ' ($abi)' : ''}';
 }

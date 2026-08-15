@@ -27,7 +27,7 @@ String _resolveCc(Target target) {
   if (entries.isEmpty) {
     throw BuildException('No NDK prebuilt toolchain found in $prebuiltDir');
   }
-  return p.join(entries.first.path, 'bin', target.ndkCcName);
+  return p.join(entries.first.path, 'bin', target.ndkCcExecutableName);
 }
 
 class GoBuilder {

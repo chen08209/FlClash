@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:build_tool/src/error.dart';
 import 'package:build_tool/src/target.dart';
 import 'package:test/test.dart';
@@ -39,6 +41,15 @@ void main() {
           flutterTargetPlatforms: 'android-riscv64',
         ),
         throwsA(isA<BuildException>()),
+      );
+    });
+
+    test('uses the NDK cmd compiler wrapper on Windows', () {
+      if (!Platform.isWindows) return;
+
+      expect(
+        Target.androidArm64.ndkCcExecutableName,
+        'aarch64-linux-android21-clang.cmd',
       );
     });
   });
