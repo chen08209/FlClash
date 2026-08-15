@@ -1,5 +1,4 @@
-import 'dart:async';
-
+import 'package:fl_clash/widgets/active_polling.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:flutter/material.dart';
 
@@ -16,38 +15,29 @@ class TickBuilder extends StatefulWidget {
   State<TickBuilder> createState() => _TickBuilderState();
 }
 
-class _TickBuilderState extends State<TickBuilder> {
-  Timer? _timer;
+class _TickBuilderState extends State<TickBuilder>
+    with WidgetsBindingObserver, ActivePollingMixin<TickBuilder> {
   int _tick = 0;
 
   @override
-  void initState() {
-    super.initState();
-    _startTimer();
+  Duration get pollInterval => widget.duration;
+
+  @override
+  bool get pollOnStart => false;
+
+  @override
+  Future<void> poll(PollGuard isCurrent) async {
+    setState(() {
+      _tick++;
+    });
   }
 
   @override
   void didUpdateWidget(covariant TickBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.duration != widget.duration) {
-      _startTimer();
+      restartPolling();
     }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(widget.duration, (_) {
-      if (!mounted) return;
-      setState(() {
-        _tick++;
-      });
-    });
   }
 
   @override

@@ -1,7 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -24,10 +23,6 @@ class TrackerInfoItem extends ConsumerWidget {
 
   static double get subTitleHeight {
     return globalState.measure.bodySmallHeight + 20;
-  }
-
-  Future<ImageProvider?> _getPackageIcon(TrackerInfo connection) async {
-    return await app?.getPackageIcon(connection.metadata.process);
   }
 
   String _getSourceText(BuildContext context, TrackerInfo trackerInfo) {
@@ -121,20 +116,9 @@ class TrackerInfoItem extends ConsumerWidget {
               margin: const EdgeInsets.only(top: 4),
               width: 42,
               height: 42,
-              child: FutureBuilder<ImageProvider?>(
-                future: _getPackageIcon(trackerInfo),
-                builder: (_, snapshot) {
-                  if (!snapshot.hasData && snapshot.data == null) {
-                    return Container();
-                  } else {
-                    return Image(
-                      image: snapshot.data!,
-                      gaplessPlayback: true,
-                      width: 42,
-                      height: 42,
-                    );
-                  }
-                },
+              child: PackageIcon(
+                packageName: trackerInfo.metadata.process,
+                size: 42,
               ),
             ),
           )
