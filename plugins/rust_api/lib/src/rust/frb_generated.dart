@@ -67,7 +67,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -536058832;
+  int get rustContentHash => 812894163;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -98,6 +98,10 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiIpcSendIpcMessage({required List<int> data});
 
   Future<void> crateApiIpcStopIpcServer();
+
+  Stream<String> crateApiFreeNodesStreamFetchFreeNodeSourcesJson({
+    required String inputJson,
+  });
 
   Future<String> crateApiFreeNodesSummarizeFreeNodeStabilityJson({
     required String inputJson,
@@ -351,6 +355,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "stop_ipc_server", argNames: []);
 
   @override
+  Stream<String> crateApiFreeNodesStreamFetchFreeNodeSourcesJson({
+    required String inputJson,
+  }) {
+    final sink = RustStreamSink<String>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_String(inputJson, serializer);
+            sse_encode_StreamSink_String_Sse(sink, serializer);
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 9,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: sse_decode_String,
+          ),
+          constMeta: kCrateApiFreeNodesStreamFetchFreeNodeSourcesJsonConstMeta,
+          argValues: [inputJson, sink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return sink.stream;
+  }
+
+  TaskConstMeta get kCrateApiFreeNodesStreamFetchFreeNodeSourcesJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: "stream_fetch_free_node_sources_json",
+        argNames: ["inputJson", "sink"],
+      );
+
+  @override
   Future<String> crateApiFreeNodesSummarizeFreeNodeStabilityJson({
     required String inputJson,
   }) {
@@ -362,7 +404,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 10,
             port: port_,
           );
         },
@@ -387,6 +429,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return AnyhowException(raw as String);
+  }
+
+  @protected
+  RustStreamSink<String> dco_decode_StreamSink_String_Sse(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
   }
 
   @protected
@@ -438,6 +486,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_String(deserializer);
     return AnyhowException(inner);
+  }
+
+  @protected
+  RustStreamSink<String> sse_decode_StreamSink_String_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
   }
 
   @protected
@@ -499,6 +555,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.message, serializer);
+  }
+
+  @protected
+  void sse_encode_StreamSink_String_Sse(
+    RustStreamSink<String> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
   }
 
   @protected

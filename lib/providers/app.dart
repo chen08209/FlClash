@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/free_nodes.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -342,6 +343,15 @@ class Items extends _$Items with AutoDisposeNotifierMixin {
 class Item extends _$Item with AutoDisposeNotifierMixin {
   @override
   dynamic build(String key) {
+    return null;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class FreeNodesFetchProgress extends _$FreeNodesFetchProgress
+    with AutoDisposeNotifierMixin {
+  @override
+  FreeNodesProgress? build() {
     return null;
   }
 }

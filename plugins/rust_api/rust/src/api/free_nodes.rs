@@ -1,11 +1,15 @@
+use crate::frb_generated::StreamSink;
 use base64::engine::general_purpose::{STANDARD, URL_SAFE, URL_SAFE_NO_PAD};
 use base64::Engine;
+use flutter_rust_bridge::for_generated::SseCodec;
 use flutter_rust_bridge::frb;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::Write as _;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::mpsc;
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -37,15 +41,16 @@ const EMBEDDED_BASE64_MAX_LEN: usize = 128 * 1024;
 const DECODED_CANDIDATE_LIMIT: usize = 16;
 const DECIMAL_BYTE_STREAM_MIN_TOKENS: usize = 12;
 const DISCOVERY_URL_INITIAL_CAPACITY: usize = 16;
+const FREE_NODES_RESPONSE_BODY_LIMIT_BYTES: u64 = 64 * 1024 * 1024;
 const GITHUB_RAW_MIRROR_PREFIXES: [&str; 13] = [
-    "https://ghfile.geekertao.top/",
+    "https://gh.llkk.cc/",
     "https://ghfast.top/",
     "https://ghproxy.net/",
     "https://gh-proxy.com/",
     "https://ghproxy.imciel.com/",
     "https://gh.monlor.com/",
     "https://gh.ddlc.top/",
-    "https://gh.llkk.cc/",
+    "https://ghfile.geekertao.top/",
     "https://ghproxy.cc/",
     "https://gh.con.sh/",
     "https://hub.gitmirror.com/",
@@ -784,10 +789,108 @@ struct SourceStatus {
 struct FreeNodesOutput {
     yaml: String,
     proxy_count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fresh_proxies: Option<Vec<Map<String, Value>>>,
     sources: Vec<SourceStatus>,
     fetch_times: HashMap<String, String>,
     candidate_count: usize,
     success_source_count: usize,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FreeNodeSourceStreamEvent {
+    kind: &'static str,
+    source_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    output: Option<FreeNodesOutput>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct BatchDatedProxy {
+    proxy: Map<String, Value>,
+    date_label: String,
+    date_token: i64,
+    source_ids: Vec<String>,
+    source_labels: Vec<String>,
+}
+
+#[derive(Debug, Default, Clone)]
+struct BatchProxyAccumulator {
+    indexes: HashMap<String, usize>,
+    proxies: Vec<BatchDatedProxy>,
+}
+
+impl BatchProxyAccumulator {
+    fn add_source_proxies(
+        &mut self,
+        source: &SourceInput,
+        proxies: Vec<Map<String, Value>>,
+        date_label: &str,
+        date_token: i64,
+    ) {
+        for proxy in proxies {
+            self.add_proxy(
+                proxy,
+                date_label.to_string(),
+                date_token,
+                source.id.clone(),
+                source.label.clone(),
+            );
+        }
+    }
+
+    fn add_existing_proxy(&mut self, dated: DatedProxy) {
+        self.add_proxy(
+            dated.proxy,
+            dated.date_label,
+            dated.date_token,
+            dated.source_id.unwrap_or_default(),
+            dated.source_label.unwrap_or_default(),
+        );
+    }
+
+    fn add_proxy(
+        &mut self,
+        proxy: Map<String, Value>,
+        date_label: String,
+        date_token: i64,
+        source_id: String,
+        source_label: String,
+    ) {
+        let key = proxy_fingerprint(&proxy);
+        if let Some(index) = self.indexes.get(&key).copied() {
+            if let Some(existing) = self.proxies.get_mut(index) {
+                push_unique_non_empty(&mut existing.source_ids, source_id);
+                push_unique_non_empty(&mut existing.source_labels, source_label);
+            }
+            return;
+        }
+
+        let index = self.proxies.len();
+        self.indexes.insert(key, index);
+        let mut source_ids = Vec::with_capacity(1);
+        let mut source_labels = Vec::with_capacity(1);
+        push_unique_non_empty(&mut source_ids, source_id);
+        push_unique_non_empty(&mut source_labels, source_label);
+        self.proxies.push(BatchDatedProxy {
+            proxy,
+            date_label,
+            date_token,
+            source_ids,
+            source_labels,
+        });
+    }
+}
+
+fn push_unique_non_empty(values: &mut Vec<String>, value: String) {
+    let value = value.trim();
+    if value.is_empty() || values.iter().any(|existing| existing == value) {
+        return;
+    }
+    values.push(value.to_string());
 }
 
 #[derive(Debug, Deserialize)]
@@ -811,10 +914,41 @@ struct StabilitySampleOutput {
 
 #[frb]
 pub fn fetch_merge_free_nodes_json(input_json: String) -> Result<String, String> {
-    let input: FreeNodesInput =
+    let raw_input: Value =
         serde_json::from_str(&input_json).map_err(|e| format!("free nodes input json: {e}"))?;
-    let output = fetch_merge_free_nodes(input)?;
+    let fresh_proxies_only = raw_input
+        .get("freshProxiesOnly")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    let input: FreeNodesInput =
+        serde_json::from_value(raw_input).map_err(|e| format!("free nodes input json: {e}"))?;
+    let output = fetch_merge_free_nodes_with_mode(input, fresh_proxies_only)?;
     serde_json::to_string(&output).map_err(|e| format!("free nodes output json: {e}"))
+}
+
+#[frb]
+pub fn stream_fetch_free_node_sources_json(
+    input_json: String,
+    sink: StreamSink<String, SseCodec>,
+) -> Result<(), String> {
+    let raw_input: Value =
+        serde_json::from_str(&input_json).map_err(|e| format!("free nodes input json: {e}"))?;
+    let existing_config_path = raw_input
+        .get("existingConfigPath")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
+    let mut input: FreeNodesInput =
+        serde_json::from_value(raw_input).map_err(|e| format!("free nodes input json: {e}"))?;
+    if input.existing_config_text.is_none() {
+        if let Some(path) = existing_config_path {
+            if let Ok(text) = std::fs::read_to_string(path) {
+                input.existing_config_text = Some(text);
+            }
+        }
+    }
+    stream_fetch_free_node_sources(input, sink)
 }
 
 #[frb]
@@ -896,8 +1030,517 @@ fn stability_variance(values: &[i64]) -> f64 {
 }
 
 fn fetch_merge_free_nodes(input: FreeNodesInput) -> Result<FreeNodesOutput, String> {
+    fetch_merge_free_nodes_with_mode(input, false)
+}
+
+fn adaptive_source_worker_count(
+    requested_concurrency: usize,
+    source_count: usize,
+    parallelism: usize,
+) -> usize {
+    if source_count == 0 {
+        return 0;
+    }
+    let upper_bound = requested_concurrency.clamp(1, source_count);
+    let device_parallelism = parallelism.max(1).min(upper_bound);
+    let responsive_window = device_parallelism
+        .saturating_add(device_parallelism.div_ceil(4))
+        .max(1);
+    responsive_window.min(upper_bound)
+}
+
+fn build_stream_partial_yaml(
+    batch: &BatchProxyAccumulator,
+    input: &FreeNodesInput,
+) -> Result<(String, usize), String> {
+    let snapshot = batch.clone();
+    let proxy_count = snapshot.proxies.len();
+    let yaml = build_batch_clash_yaml(snapshot.proxies, input)?;
+    Ok((yaml, proxy_count))
+}
+
+fn write_free_nodes_stream_yaml(yaml: String, kind: &str) -> Result<String, String> {
+    static FILE_SEQUENCE: AtomicUsize = AtomicUsize::new(0);
+    let sequence = FILE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let path = std::env::temp_dir().join(format!(
+        "flclashplus-free-nodes-{}-{kind}-{sequence}.yaml",
+        std::process::id(),
+    ));
+    std::fs::write(&path, yaml.as_bytes())
+        .map_err(|error| format!("free nodes stream temp write: {error}"))?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
+fn stream_fetch_free_node_sources(
+    mut input: FreeNodesInput,
+    sink: StreamSink<String, SseCodec>,
+) -> Result<(), String> {
+    let sources = selected_batch_sources(&input);
+    if sources.is_empty() {
+        return Ok(());
+    }
+    let requested_concurrency = input.preference.fetch_concurrency.clamp(1, sources.len());
+    let parallelism = thread::available_parallelism()
+        .map(|value| value.get())
+        .unwrap_or(1);
+    let concurrency =
+        adaptive_source_worker_count(requested_concurrency, sources.len(), parallelism);
+    let queue_capacity = parallelism.min(concurrency).max(1);
+
+    let existing = extract_existing_dated_proxies(
+        input.existing_config_text.as_deref(),
+        input.catalog.history_timeout_hours,
+        input.now_day_number,
+        false,
+    );
+    input.existing_config_text = None;
+    let has_existing_config = !existing.is_empty();
+    let mut progress_seen = HashSet::<String>::with_capacity(existing.len());
+    for dated in &existing {
+        progress_seen.insert(proxy_fingerprint(&dated.proxy));
+    }
+    let started_event = serde_json::to_string(&json!({
+        "kind": "started",
+        "proxyCount": progress_seen.len(),
+        "effectiveConcurrency": concurrency,
+        "requestedConcurrency": requested_concurrency,
+    }))
+    .map_err(|error| format!("free node started stream json: {error}"))?;
+    sink.add(started_event)
+        .map_err(|error| format!("free node started stream closed: {error}"))?;
+
+    let sources = Arc::new(sources);
+    let next_source = AtomicUsize::new(0);
+    let (sender, receiver) = mpsc::sync_channel::<FreeNodeSourceStreamEvent>(queue_capacity);
+
+    thread::scope(|scope| -> Result<(), String> {
+        for worker_index in 0..concurrency {
+            let sender = sender.clone();
+            let sources = Arc::clone(&sources);
+            let input = &input;
+            let next_source = &next_source;
+            thread::Builder::new()
+                .name(format!("free-node-source-{worker_index}"))
+                .stack_size(1024 * 1024)
+                .spawn_scoped(scope, move || loop {
+                    let index = next_source.fetch_add(1, Ordering::Relaxed);
+                    let Some(source) = sources.get(index).cloned() else {
+                        break;
+                    };
+                    let source_id = source.id.clone();
+                    let event = match fetch_merge_free_nodes_with_mode(
+                        single_source_free_nodes_input(input, source),
+                        true,
+                    ) {
+                        Ok(output) => FreeNodeSourceStreamEvent {
+                            kind: "source",
+                            source_id,
+                            output: Some(output),
+                            error: None,
+                        },
+                        Err(error) => FreeNodeSourceStreamEvent {
+                            kind: "source",
+                            source_id,
+                            output: None,
+                            error: Some(error),
+                        },
+                    };
+                    if sender.send(event).is_err() {
+                        break;
+                    }
+                })
+                .map_err(|error| format!("free node source worker spawn: {error}"))?;
+        }
+        drop(sender);
+
+        let sources_by_id = input
+            .catalog
+            .sources
+            .iter()
+            .map(|source| (source.id.clone(), source.clone()))
+            .collect::<HashMap<_, _>>();
+        let mut batch = BatchProxyAccumulator::default();
+        let mut completed_sources = 0usize;
+        let mut emitted_partial = false;
+
+        for mut event in receiver {
+            completed_sources += 1;
+            let source = sources_by_id.get(&event.source_id);
+            let source_succeeded = event
+                .output
+                .as_ref()
+                .is_some_and(|output| output.success_source_count > 0 && output.proxy_count > 0);
+            if let (Some(source), Some(output)) = (source, event.output.as_mut()) {
+                if let Some(proxies) = output.fresh_proxies.take() {
+                    if source_succeeded {
+                        for proxy in &proxies {
+                            progress_seen.insert(proxy_fingerprint(proxy));
+                        }
+                    }
+                    batch.add_source_proxies(
+                        source,
+                        proxies,
+                        &input.today_label,
+                        input.today_token,
+                    );
+                }
+            }
+            let cumulative_proxy_count = progress_seen.len();
+
+            let mut partial_yaml = None::<String>;
+            let mut partial_proxy_count = None::<usize>;
+            if !has_existing_config
+                && source_succeeded
+                && completed_sources < sources.len()
+                && !emitted_partial
+            {
+                let (yaml, count) = build_stream_partial_yaml(&batch, &input)?;
+                emitted_partial = true;
+                partial_yaml = Some(yaml);
+                partial_proxy_count = Some(count);
+            }
+
+            let encoded = serde_json::to_string(&json!({
+                "kind": event.kind,
+                "sourceId": event.source_id,
+                "output": event.output,
+                "error": event.error,
+                "cumulativeProxyCount": cumulative_proxy_count,
+            }))
+            .map_err(|error| format!("free node source stream json: {error}"))?;
+            sink.add(encoded)
+                .map_err(|error| format!("free node source stream closed: {error}"))?;
+            if let (Some(yaml), Some(count)) = (partial_yaml, partial_proxy_count) {
+                let file_path = write_free_nodes_stream_yaml(yaml, "partial")?;
+                let control = serde_json::to_string(&json!({
+                    "kind": "partial",
+                    "proxyCount": count,
+                    "filePath": file_path,
+                }))
+                .map_err(|error| format!("free node partial control json: {error}"))?;
+                sink.add(control)
+                    .map_err(|error| format!("free node partial control closed: {error}"))?;
+            }
+        }
+
+        let has_fresh = !batch.proxies.is_empty();
+        for dated in existing {
+            if !has_fresh
+                || should_keep_existing_proxy(
+                    &dated,
+                    input.catalog.history_timeout_hours,
+                    input.now_day_number,
+                )
+            {
+                batch.add_existing_proxy(dated);
+            }
+        }
+        let proxy_count = batch.proxies.len();
+        let yaml = build_batch_clash_yaml(batch.proxies, &input)?;
+        let file_path = write_free_nodes_stream_yaml(yaml, "final")?;
+        let final_control = serde_json::to_string(&json!({
+            "kind": "final",
+            "proxyCount": proxy_count,
+            "effectiveConcurrency": concurrency,
+            "filePath": file_path,
+        }))
+        .map_err(|error| format!("free node final control json: {error}"))?;
+        sink.add(final_control)
+            .map_err(|error| format!("free node final control closed: {error}"))?;
+        Ok(())
+    })
+}
+
+fn normalize_batch_source_label(label: &str) -> String {
+    label.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn batch_source_group_names(sources: &[SourceInput]) -> HashMap<String, String> {
+    let mut label_counts = HashMap::<String, usize>::with_capacity(sources.len());
+    for source in sources {
+        let label = normalize_batch_source_label(&source.label);
+        *label_counts.entry(label).or_insert(0) += 1;
+    }
+    let mut groups = HashMap::<String, String>::with_capacity(sources.len());
+    for source in sources {
+        let label = normalize_batch_source_label(&source.label);
+        let suffix = if label_counts.get(&label).copied().unwrap_or_default() > 1 {
+            format!(" · {}", source.id)
+        } else {
+            String::new()
+        };
+        groups.insert(
+            source.id.clone(),
+            format!("{FREE_NODES_SOURCE_GROUP_PREFIX}{label}{suffix}"),
+        );
+    }
+    groups
+}
+
+fn build_batch_clash_yaml(
+    mut proxies: Vec<BatchDatedProxy>,
+    input: &FreeNodesInput,
+) -> Result<String, String> {
+    let candidate_count = proxies.len();
+    let mut used_names = HashSet::<String>::with_capacity(candidate_count);
+    let mut next_name_suffixes = HashMap::<String, usize>::with_capacity(candidate_count);
+    for item in &mut proxies {
+        let name = item
+            .proxy
+            .get("name")
+            .and_then(scalar_text_value)
+            .filter(|value| !value.trim().is_empty())
+            .unwrap_or_else(|| {
+                let proxy_type = item.proxy.get("type").and_then(scalar_text_value);
+                let server = item.proxy.get("server").and_then(scalar_text_value);
+                Cow::Owned(format!(
+                    "{}-{}",
+                    proxy_type.as_deref().unwrap_or_default(),
+                    server.as_deref().unwrap_or_default()
+                ))
+            });
+        let name = unique_name(name.as_ref(), &mut used_names, &mut next_name_suffixes);
+        item.proxy.insert("name".into(), json!(name));
+        item.date_label = normalize_date_group_label(&item.date_label);
+    }
+
+    let source_groups_by_id = batch_source_group_names(&input.catalog.sources);
+    let mut source_labels_by_id =
+        HashMap::<String, String>::with_capacity(input.catalog.sources.len());
+    for source in &input.catalog.sources {
+        source_labels_by_id.insert(
+            source.id.clone(),
+            normalize_batch_source_label(&source.label),
+        );
+    }
+    let mut date_proxy_names = HashMap::<i64, Vec<String>>::new();
+    let mut source_proxy_names = HashMap::<String, Vec<String>>::new();
+    let mut treasure_proxy_names = Vec::<String>::new();
+
+    for item in &proxies {
+        let Some(name) = item.proxy.get("name").and_then(string_value) else {
+            continue;
+        };
+        if is_free_nodes_treasure_group(&item.date_label) {
+            treasure_proxy_names.push(name.clone());
+        } else if item.date_token > 0 {
+            date_proxy_names
+                .entry(item.date_token)
+                .or_default()
+                .push(name.clone());
+        }
+
+        let mut covered_labels = HashSet::<String>::with_capacity(item.source_ids.len());
+        for source_id in &item.source_ids {
+            if let Some(label) = source_labels_by_id.get(source_id) {
+                covered_labels.insert(label.clone());
+            }
+            let group_name = source_groups_by_id
+                .get(source_id)
+                .cloned()
+                .unwrap_or_else(|| format!("{FREE_NODES_SOURCE_GROUP_PREFIX}{source_id}"));
+            source_proxy_names
+                .entry(group_name)
+                .or_default()
+                .push(name.clone());
+        }
+        for source_label in &item.source_labels {
+            let label = normalize_batch_source_label(source_label);
+            if label.is_empty() || covered_labels.contains(&label) {
+                continue;
+            }
+            source_proxy_names
+                .entry(format!("{FREE_NODES_SOURCE_GROUP_PREFIX}{label}"))
+                .or_default()
+                .push(name.clone());
+        }
+    }
+
+    let mut date_keys = date_proxy_names.keys().copied().collect::<Vec<_>>();
+    date_keys.sort_unstable_by(|a, b| b.cmp(a));
+    if input.today_token > 0 {
+        if let Some(position) = date_keys
+            .iter()
+            .position(|value| *value == input.today_token)
+        {
+            date_keys.rotate_left(position);
+        }
+    }
+    let mut source_group_names = source_proxy_names.keys().cloned().collect::<Vec<_>>();
+    source_group_names.sort_unstable();
+    let has_treasure = !treasure_proxy_names.is_empty();
+
+    let mut groups = Vec::<Value>::with_capacity(
+        2 + date_keys.len() + source_group_names.len() + usize::from(has_treasure),
+    );
+    let mut main_group = Map::<String, Value>::new();
+    main_group.insert("name".into(), json!(FREE_NODES_GROUP_NAME));
+    main_group.insert("type".into(), json!("url-test"));
+    main_group.insert("hidden".into(), json!(true));
+    if input.preference.auto_prefer && (!date_keys.is_empty() || has_treasure) {
+        let mut names = date_keys
+            .iter()
+            .map(|value| date_label_from_token(*value))
+            .collect::<Vec<_>>();
+        if has_treasure {
+            names.push(FREE_NODES_TREASURE_GROUP_NAME.to_string());
+        }
+        main_group.insert("proxies".into(), json!(names));
+    } else if input.preference.auto_prefer && !source_group_names.is_empty() {
+        main_group.insert("proxies".into(), json!(source_group_names.clone()));
+    } else {
+        main_group.insert("include-all-proxies".into(), json!(true));
+    }
+    main_group.insert("url".into(), json!(DEFAULT_TEST_URL));
+    main_group.insert("interval".into(), json!(300));
+    main_group.insert("timeout".into(), json!(5000));
+    main_group.insert("lazy".into(), json!(true));
+    groups.push(Value::Object(main_group));
+
+    if has_treasure {
+        groups.push(json!({
+            "name": FREE_NODES_TREASURE_GROUP_NAME,
+            "type": "url-test",
+            "hidden": false,
+            "proxies": treasure_proxy_names,
+            "url": DEFAULT_TEST_URL,
+            "interval": 300,
+            "timeout": 5000,
+            "lazy": true,
+        }));
+    }
+    for value in &date_keys {
+        let label = date_label_from_token(*value);
+        let names = date_proxy_names.remove(value).unwrap_or_default();
+        groups.push(json!({
+            "name": label,
+            "type": "url-test",
+            "hidden": true,
+            "proxies": names,
+            "url": DEFAULT_TEST_URL,
+            "interval": 300,
+            "timeout": 5000,
+            "lazy": true,
+        }));
+    }
+    for group_name in &source_group_names {
+        let names = source_proxy_names.remove(group_name).unwrap_or_default();
+        groups.push(json!({
+            "name": group_name,
+            "type": "url-test",
+            "hidden": false,
+            "proxies": names,
+            "url": DEFAULT_TEST_URL,
+            "interval": 300,
+            "timeout": 5000,
+            "lazy": true,
+        }));
+    }
+
+    let mut global_group_names = Vec::<String>::with_capacity(
+        date_keys.len() + source_group_names.len() + 3 + usize::from(has_treasure),
+    );
+    global_group_names.push(FREE_NODES_GROUP_NAME.to_string());
+    if has_treasure {
+        global_group_names.push(FREE_NODES_TREASURE_GROUP_NAME.to_string());
+    }
+    global_group_names.extend(date_keys.iter().map(|value| date_label_from_token(*value)));
+    global_group_names.extend(source_group_names);
+    global_group_names.push("DIRECT".to_string());
+    groups.push(json!({
+        "name": "GLOBAL",
+        "type": "select",
+        "hidden": false,
+        "proxies": global_group_names,
+        "include-all-proxies": true,
+    }));
+
+    let normalized_proxies = proxies
+        .into_iter()
+        .map(|item| Value::Object(item.proxy))
+        .collect::<Vec<_>>();
+    let value = json!({
+        "mixed-port": DEFAULT_MIXED_PORT,
+        "allow-lan": false,
+        "mode": "rule",
+        "log-level": "info",
+        "unified-delay": true,
+        "proxies": normalized_proxies,
+        "proxy-groups": groups,
+        "rules": [format!("MATCH,{FREE_NODES_GROUP_NAME}")],
+    });
+    serde_yaml_ng::to_string(&value).map_err(|error| format!("free nodes batch yaml: {error}"))
+}
+
+fn selected_batch_sources(input: &FreeNodesInput) -> Vec<SourceInput> {
+    let enabled = input
+        .enabled_source_ids
+        .iter()
+        .map(String::as_str)
+        .collect::<HashSet<_>>();
+    let targets = input.source_ids.as_ref().map(|source_ids| {
+        source_ids
+            .iter()
+            .map(String::as_str)
+            .collect::<HashSet<_>>()
+    });
+    input
+        .catalog
+        .sources
+        .iter()
+        .filter(|source| enabled.contains(source.id.as_str()))
+        .filter(|source| {
+            targets
+                .as_ref()
+                .is_none_or(|targets| targets.contains(source.id.as_str()))
+        })
+        .cloned()
+        .collect()
+}
+
+fn single_source_free_nodes_input(input: &FreeNodesInput, source: SourceInput) -> FreeNodesInput {
+    let source_id = source.id.clone();
+    let mut fetch_timeout_seconds_by_source = HashMap::with_capacity(1);
+    if let Some(timeout) = input
+        .fetch_timeout_seconds_by_source
+        .get(&source_id)
+        .copied()
+    {
+        fetch_timeout_seconds_by_source.insert(source_id.clone(), timeout);
+    }
+    FreeNodesInput {
+        catalog: CatalogInput {
+            history_timeout_hours: input.catalog.history_timeout_hours,
+            sources: vec![source],
+        },
+        enabled_source_ids: vec![source_id.clone()],
+        source_ids: Some(vec![source_id]),
+        existing_config_text: None,
+        preference: PreferenceInput {
+            fetch_concurrency: 1,
+            auto_prefer: false,
+        },
+        fetch_timeout_seconds_by_source,
+        default_fetch_timeout_seconds: input.default_fetch_timeout_seconds,
+        proxy_url: input.proxy_url.clone(),
+        user_agent: input.user_agent.clone(),
+        today_label: input.today_label.clone(),
+        today_token: input.today_token,
+        now_day_number: input.now_day_number,
+        now_iso: input.now_iso.clone(),
+    }
+}
+
+fn fetch_merge_free_nodes_with_mode(
+    input: FreeNodesInput,
+    fresh_proxies_only: bool,
+) -> Result<FreeNodesOutput, String> {
     let source_deadlines = Arc::new(Mutex::new(HashMap::<String, Instant>::new()));
     let candidates = resolve_candidates_with_deadlines(&input, &source_deadlines);
+    source_deadlines
+        .lock()
+        .map_err(|_| "free nodes source deadline lock poisoned".to_string())?
+        .clear();
     let candidate_count = candidates.len();
     let concurrency = normalized_free_nodes_fetch_concurrency(
         input.preference.fetch_concurrency,
@@ -905,54 +1548,117 @@ fn fetch_merge_free_nodes(input: FreeNodesInput) -> Result<FreeNodesOutput, Stri
     );
     let shared_input = Arc::new(input);
 
-    let mut handles = Vec::with_capacity(concurrency);
-    if concurrency > 0 {
+    let mut fresh_proxies = Vec::<DatedProxy>::with_capacity(candidate_count);
+    let mut status_list = Vec::<SourceStatus>::with_capacity(candidate_count);
+    if fresh_proxies_only {
         let queue = shared_fetch_queue(candidates);
-        let worker_result_capacity = candidate_count.div_ceil(concurrency);
-        for _ in 0..concurrency {
-            let queue = Arc::clone(&queue);
-            let input = Arc::clone(&shared_input);
-            let source_deadlines = Arc::clone(&source_deadlines);
-            handles.push(thread::spawn(move || {
-                let mut agent_cache = AgentCache::default();
-                let mut local_proxies = Vec::<DatedProxy>::with_capacity(worker_result_capacity);
-                let mut local_statuses = Vec::<SourceStatus>::with_capacity(worker_result_capacity);
-                while let Some(action) = next_fetch_action_blocking(&queue) {
-                    match action {
-                        FetchQueueAction::Fetch {
-                            candidate,
-                            fetch_key,
-                        } => {
-                            let success = fetch_candidate(
-                                &input,
-                                candidate,
-                                &mut local_proxies,
-                                &mut local_statuses,
-                                &mut agent_cache,
-                                &source_deadlines,
-                            );
-                            finish_fetch_candidate_and_notify(&queue, fetch_key, success);
-                        }
-                        FetchQueueAction::Skip(candidate) => {
-                            push_skipped_duplicate_status(&input, &mut local_statuses, candidate);
-                        }
-                        FetchQueueAction::Wait => {}
-                        FetchQueueAction::Done => break,
-                    };
+        let mut agent_cache = AgentCache::default();
+        while let Some(action) = next_fetch_action_blocking(&queue) {
+            match action {
+                FetchQueueAction::Fetch {
+                    candidate,
+                    fetch_key,
+                } => {
+                    let success = fetch_candidate(
+                        &shared_input,
+                        candidate,
+                        &mut fresh_proxies,
+                        &mut status_list,
+                        &mut agent_cache,
+                        &source_deadlines,
+                    );
+                    finish_fetch_candidate_and_notify(&queue, fetch_key, success);
                 }
-                (local_proxies, local_statuses)
-            }));
+                FetchQueueAction::Skip(candidate) => {
+                    push_skipped_duplicate_status(&shared_input, &mut status_list, candidate);
+                }
+                FetchQueueAction::Wait => {}
+                FetchQueueAction::Done => break,
+            };
+        }
+    } else {
+        let mut handles = Vec::with_capacity(concurrency);
+        if concurrency > 0 {
+            let queue = shared_fetch_queue(candidates);
+            let worker_result_capacity = candidate_count.div_ceil(concurrency);
+            for _ in 0..concurrency {
+                let queue = Arc::clone(&queue);
+                let input = Arc::clone(&shared_input);
+                let source_deadlines = Arc::clone(&source_deadlines);
+                handles.push(thread::spawn(move || {
+                    let mut agent_cache = AgentCache::default();
+                    let mut local_proxies =
+                        Vec::<DatedProxy>::with_capacity(worker_result_capacity);
+                    let mut local_statuses =
+                        Vec::<SourceStatus>::with_capacity(worker_result_capacity);
+                    while let Some(action) = next_fetch_action_blocking(&queue) {
+                        match action {
+                            FetchQueueAction::Fetch {
+                                candidate,
+                                fetch_key,
+                            } => {
+                                let success = fetch_candidate(
+                                    &input,
+                                    candidate,
+                                    &mut local_proxies,
+                                    &mut local_statuses,
+                                    &mut agent_cache,
+                                    &source_deadlines,
+                                );
+                                finish_fetch_candidate_and_notify(&queue, fetch_key, success);
+                            }
+                            FetchQueueAction::Skip(candidate) => {
+                                push_skipped_duplicate_status(
+                                    &input,
+                                    &mut local_statuses,
+                                    candidate,
+                                );
+                            }
+                            FetchQueueAction::Wait => {}
+                            FetchQueueAction::Done => break,
+                        };
+                    }
+                    (local_proxies, local_statuses)
+                }));
+            }
+        }
+
+        for handle in handles {
+            let (mut local_proxies, mut local_statuses) = handle
+                .join()
+                .map_err(|_| "free nodes worker panicked".to_string())?;
+            fresh_proxies.append(&mut local_proxies);
+            status_list.append(&mut local_statuses);
         }
     }
 
-    let mut fresh_proxies = Vec::<DatedProxy>::with_capacity(candidate_count);
-    let mut status_list = Vec::<SourceStatus>::with_capacity(candidate_count);
-    for handle in handles {
-        let (mut local_proxies, mut local_statuses) = handle
-            .join()
-            .map_err(|_| "free nodes worker panicked".to_string())?;
-        fresh_proxies.append(&mut local_proxies);
-        status_list.append(&mut local_statuses);
+    if fresh_proxies_only {
+        status_list.sort_by(|a, b| {
+            b.success
+                .cmp(&a.success)
+                .then_with(|| b.proxy_count.cmp(&a.proxy_count))
+                .then_with(|| a.source_label.cmp(&b.source_label))
+        });
+        let mut fetch_times = HashMap::with_capacity(status_list.len());
+        for status in &status_list {
+            fetch_times.insert(status.source_id.clone(), status.fetched_at.clone());
+        }
+        let success_source_count = status_list.iter().filter(|status| status.success).count();
+        let fresh_proxies = deduplicate_and_name(fresh_proxies);
+        let proxy_count = fresh_proxies.len();
+        let fresh_proxies = fresh_proxies
+            .into_iter()
+            .map(|dated| dated.proxy)
+            .collect::<Vec<_>>();
+        return Ok(FreeNodesOutput {
+            yaml: String::new(),
+            proxy_count,
+            fresh_proxies: Some(fresh_proxies),
+            sources: status_list,
+            fetch_times,
+            candidate_count,
+            success_source_count,
+        });
     }
 
     let merged = merge_fresh_and_existing_dated_proxies(&shared_input, fresh_proxies);
@@ -976,6 +1682,7 @@ fn fetch_merge_free_nodes(input: FreeNodesInput) -> Result<FreeNodesOutput, Stri
     Ok(FreeNodesOutput {
         yaml,
         proxy_count: merged.len(),
+        fresh_proxies: None,
         sources: status_list,
         fetch_times,
         candidate_count,
@@ -1512,14 +2219,18 @@ fn resolve_candidates_with_deadlines(
             }
         }
         let candidate_source = Arc::new(CandidateSource::from_source(source));
-        add_config_or_page(
-            &mut configs,
-            &mut page_queue,
-            &mut visited_pages,
-            &mut visited_page_fetch_keys,
-            &source.seed,
-            &candidate_source,
-        );
+        let has_explicit_config_candidates = source_has_explicit_config_candidates(source);
+        let normalized_seed = normalize_url(&source.seed);
+        if !has_explicit_config_candidates || is_strong_config_candidate(&normalized_seed) {
+            add_config_or_page(
+                &mut configs,
+                &mut page_queue,
+                &mut visited_pages,
+                &mut visited_page_fetch_keys,
+                &source.seed,
+                &candidate_source,
+            );
+        }
         for url in source
             .candidate_urls
             .iter()
@@ -1547,7 +2258,7 @@ fn resolve_candidates_with_deadlines(
                 );
             }
         }
-        if source.github_discovery {
+        if source.github_discovery && !has_explicit_config_candidates {
             for url in github_discovery_candidates(&source.seed) {
                 let candidate = ConfigCandidate::from_candidate_source_ref(url, &candidate_source);
                 if visited_pages.insert(candidate.url.clone())
@@ -1609,7 +2320,23 @@ fn github_seed_candidate_capacity_estimate(source: &SourceInput) -> usize {
     }
 }
 
+fn source_has_explicit_config_candidates(source: &SourceInput) -> bool {
+    source
+        .candidate_urls
+        .iter()
+        .chain(source.raw_candidates.iter())
+        .any(|url| {
+            let normalized = normalize_url(url);
+            !normalized.is_empty()
+                && is_strong_config_candidate(&normalized)
+                && !is_unsupported_config_candidate_url(&canonical_config_url(&normalized))
+        })
+}
+
 fn should_expand_github_seed_candidates(source: &SourceInput) -> bool {
+    if source_has_explicit_config_candidates(source) {
+        return false;
+    }
     source.github_discovery
         || (!source.page_discovery
             && !source.raw_candidates.is_empty()
@@ -2266,26 +2993,27 @@ fn remaining_source_timeout(
     source: &CandidateSource,
     source_deadlines: &SharedSourceDeadlines,
 ) -> Result<u64, String> {
-    let timeout_seconds = source_fetch_timeout(input, source);
+    let request_timeout_seconds = source_fetch_timeout(input, source);
+    let source_budget_seconds = request_timeout_seconds.saturating_mul(3).clamp(30, 120);
     let started_at = {
         let mut guard = source_deadlines
             .lock()
             .map_err(|_| format!("{} source deadline lock poisoned", source.label))?;
         *guard.entry(source.id.clone()).or_insert_with(Instant::now)
     };
-    let limit = Duration::from_secs(timeout_seconds);
+    let limit = Duration::from_secs(source_budget_seconds);
     let elapsed = started_at.elapsed();
     if elapsed >= limit {
         return Err(format!(
             "{} source fetch timed out after {}s",
-            source.label, timeout_seconds
+            source.label, source_budget_seconds
         ));
     }
     Ok(limit
         .saturating_sub(elapsed)
         .as_secs()
         .max(1)
-        .min(timeout_seconds))
+        .min(request_timeout_seconds))
 }
 
 fn build_agent(timeout_seconds: u64, proxy_url: Option<&str>) -> Result<Agent, String> {
@@ -2321,6 +3049,9 @@ fn fetch_text(
     let mut response = request.call().map_err(|e| format!("{url}: {e}"))?;
     response
         .body_mut()
+        .with_config()
+        .limit(FREE_NODES_RESPONSE_BODY_LIMIT_BYTES)
+        .lossy_utf8(true)
         .read_to_string()
         .map_err(|e| format!("{url}: {e}"))
 }
@@ -5866,6 +6597,20 @@ fn insert_sing_box_hysteria2_opts(proxy: &mut Map<String, Value>, outbound: &Map
     }
 }
 
+const MAX_FREE_NODE_PROXY_URI_BYTES: usize = 64 * 1024;
+const MAX_FREE_NODE_PROXY_URI_QUERY_PAIRS: usize = 256;
+
+fn proxy_uri_exceeds_complexity_limit(value: &str) -> bool {
+    if value.len() > MAX_FREE_NODE_PROXY_URI_BYTES {
+        return true;
+    }
+    let Some((_, tail)) = value.split_once('?') else {
+        return false;
+    };
+    let query = tail.split('#').next().unwrap_or(tail);
+    query_pair_capacity(query) > MAX_FREE_NODE_PROXY_URI_QUERY_PAIRS
+}
+
 fn parse_uri_proxies(text: &str) -> Vec<Map<String, Value>> {
     let mut seen = UriDedupSet::new();
     let mut seen_values = Vec::<String>::new();
@@ -5883,12 +6628,15 @@ fn parse_uri_proxies(text: &str) -> Vec<Map<String, Value>> {
         }
         let start = cursor;
         let end = find_proxy_uri_end(text, start);
-        let value = normalize_proxy_uri_text(&text[start..end]);
         cursor = if end < text.len() {
             next_char_boundary(text, end)
         } else {
             text.len()
         };
+        if end.saturating_sub(start) > MAX_FREE_NODE_PROXY_URI_BYTES {
+            continue;
+        }
+        let value = normalize_proxy_uri_text(&text[start..end]);
         if value.is_empty() {
             continue;
         }
@@ -5935,6 +6683,9 @@ fn push_uri_proxy(proxies: &mut Option<Vec<Map<String, Value>>>, proxy: Map<Stri
 }
 
 fn parse_uri_proxy(value: &str) -> Option<Map<String, Value>> {
+    if proxy_uri_exceeds_complexity_limit(value) {
+        return None;
+    }
     let first = value.as_bytes().first()?.to_ascii_lowercase();
     match first {
         b'a' if starts_with_ascii_case_insensitive(value, "anytls://") => parse_anytls_proxy(value),
@@ -6359,16 +7110,29 @@ fn decode_proxy_uri_json_escape(high: u8, low: u8) -> Option<char> {
 }
 
 fn parse_ss_proxy(value: &str) -> Option<Map<String, Value>> {
+    parse_ss_proxy_inner(value, true)
+}
+
+fn parse_ss_proxy_inner(value: &str, allow_base64_decode: bool) -> Option<Map<String, Value>> {
     let uri = Url::parse(value).ok()?;
     let fragment = uri.fragment().unwrap_or("SS");
     let name = percent_decode(fragment);
     if uri.username().is_empty() {
+        if !allow_base64_decode {
+            return None;
+        }
         let payload = value
             .trim_start_matches("ss://")
             .split(['?', '#'])
             .next()
             .unwrap_or_default();
+        if payload.trim().is_empty() {
+            return None;
+        }
         let decoded = decode_base64_text(payload)?;
+        if decoded.trim().is_empty() {
+            return None;
+        }
         let query = uri.query();
         let mut rebuilt = String::with_capacity(
             "ss://".len()
@@ -6385,7 +7149,7 @@ fn parse_ss_proxy(value: &str) -> Option<Map<String, Value>> {
         }
         rebuilt.push('#');
         rebuilt.push_str(fragment);
-        return parse_ss_proxy(&rebuilt);
+        return parse_ss_proxy_inner(&rebuilt, false);
     }
     let (cipher, password) = parse_ss_credentials(uri.username(), uri.password())?;
     let mut proxy = Map::new();
@@ -8398,6 +9162,7 @@ fn deduplicate_and_name(proxies: Vec<DatedProxy>) -> Vec<DatedProxy> {
     let candidate_count = proxies.len();
     let mut seen = HashSet::<String>::with_capacity(candidate_count);
     let mut used_names = HashSet::<String>::with_capacity(candidate_count);
+    let mut next_name_suffixes = HashMap::<String, usize>::with_capacity(candidate_count);
     let mut result = Vec::<DatedProxy>::with_capacity(candidate_count);
     for dated in proxies {
         let mut proxy = dated.proxy;
@@ -8431,7 +9196,7 @@ fn deduplicate_and_name(proxies: Vec<DatedProxy>) -> Vec<DatedProxy> {
                     server.as_deref().unwrap_or_default()
                 ))
             });
-        let name = unique_name(name.as_ref(), &mut used_names);
+        let name = unique_name(name.as_ref(), &mut used_names, &mut next_name_suffixes);
         proxy.insert("name".into(), json!(name));
         let date_label = normalize_date_group_label(&dated.date_label);
         result.push(DatedProxy {
@@ -8469,33 +9234,31 @@ fn push_ascii_lowercase(out: &mut String, value: &str) {
     out.extend(value.chars().map(|c| c.to_ascii_lowercase()));
 }
 
-fn unique_name(name: &str, used_names: &mut HashSet<String>) -> String {
+fn unique_name(
+    name: &str,
+    used_names: &mut HashSet<String>,
+    next_name_suffixes: &mut HashMap<String, usize>,
+) -> String {
     let base_name = clean_proxy_base_name(name);
-    let mut candidate_key = String::with_capacity(base_name.len());
-    push_ascii_lowercase(&mut candidate_key, base_name.as_ref());
-    match used_names.replace(candidate_key) {
-        None => return base_name.into_owned(),
-        Some(existing_key) => {
-            candidate_key = existing_key;
-        }
+    let mut base_key = String::with_capacity(base_name.len());
+    push_ascii_lowercase(&mut base_key, base_name.as_ref());
+    if used_names.insert(base_key.clone()) {
+        return base_name.into_owned();
     }
     let base_name = base_name.into_owned();
+    let next_index = next_name_suffixes.entry(base_key).or_insert(1);
     let mut candidate = String::with_capacity(base_name.len() + 4);
-    let mut index = 1;
     loop {
         candidate.clear();
         candidate.push_str(&base_name);
         candidate.push(' ');
-        let _ = write!(&mut candidate, "{index}");
-        candidate_key.clear();
+        let _ = write!(&mut candidate, "{}", *next_index);
+        *next_index += 1;
+        let mut candidate_key = String::with_capacity(candidate.len());
         push_ascii_lowercase(&mut candidate_key, &candidate);
-        match used_names.replace(candidate_key) {
-            None => return candidate,
-            Some(existing_key) => {
-                candidate_key = existing_key;
-            }
+        if used_names.insert(candidate_key) {
+            return candidate;
         }
-        index += 1;
     }
 }
 
@@ -11477,6 +12240,27 @@ fn percent_decode(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn test_adaptive_source_worker_count_scales_without_fixed_global_cap() {
+        let low_parallelism = adaptive_source_worker_count(187, 187, 8);
+        let high_parallelism = adaptive_source_worker_count(187, 187, 32);
+        assert_eq!(low_parallelism, 10);
+        assert_eq!(high_parallelism, 40);
+        assert!(low_parallelism < 187);
+        assert!(high_parallelism > low_parallelism);
+        assert!(high_parallelism <= 187);
+        assert_eq!(adaptive_source_worker_count(8, 187, 32), 8);
+        assert_eq!(adaptive_source_worker_count(187, 0, 32), 0);
+    }
+
+    #[test]
+    fn test_adaptive_source_worker_count_never_exceeds_source_count() {
+        for source_count in 1..=187 {
+            let workers = adaptive_source_worker_count(usize::MAX, source_count, 16);
+            assert!((1..=source_count).contains(&workers));
+        }
+    }
     use super::*;
 
     #[test]
@@ -15594,6 +16378,36 @@ outbounds:
     }
 
     #[test]
+    fn test_parse_uri_proxies_skips_oversized_uri_and_keeps_following_proxy() {
+        let oversized = format!(
+            "vless://uuid@oversized.example.com:443?path={}#Oversized",
+            "a".repeat(MAX_FREE_NODE_PROXY_URI_BYTES)
+        );
+        let text =
+            format!("{oversized}\nvless://uuid@good.example.com:443?security=tls&type=ws#Good");
+
+        let proxies = parse_uri_proxies(&text);
+
+        assert_eq!(proxies.len(), 1);
+        assert_eq!(
+            proxies[0].get("server").and_then(string_value).as_deref(),
+            Some("good.example.com")
+        );
+    }
+
+    #[test]
+    fn test_parse_uri_proxy_rejects_excessive_query_pairs() {
+        let query = (0..=MAX_FREE_NODE_PROXY_URI_QUERY_PAIRS)
+            .map(|index| format!("k{index}=v"))
+            .collect::<Vec<_>>()
+            .join("&");
+        let value = format!("vless://uuid@example.com:443?{query}#TooManyPairs");
+
+        assert!(proxy_uri_exceeds_complexity_limit(&value));
+        assert!(parse_uri_proxy(&value).is_none());
+    }
+
+    #[test]
     fn test_parse_uri_proxies_reads_vless() {
         let proxies = parse_proxies("vless://uuid@example.com:443?security=tls&type=ws#Node");
 
@@ -16781,6 +17595,18 @@ proxies:
             opts.get("host").and_then(string_value).as_deref(),
             Some("cdn-b64.example.com")
         );
+    }
+
+    #[test]
+    fn test_parse_uri_proxies_rejects_empty_ss_payload_without_recursion() {
+        assert!(parse_proxies("ss://").is_empty());
+        assert!(parse_proxies("ss://#empty").is_empty());
+    }
+
+    #[test]
+    fn test_parse_uri_proxies_bounds_ss_payload_decode_to_one_pass() {
+        let payload = STANDARD.encode("not-an-ss-authority");
+        assert!(parse_proxies(&format!("ss://{payload}")).is_empty());
     }
 
     #[test]
@@ -19476,38 +20302,84 @@ window.node = "vless%3A%2F%2F00000000-0000-0000-0000-000000000000%40example.net%
     #[test]
     fn test_unique_name_cleans_dirty_names_and_preserves_case_insensitive_suffixes() {
         let mut used_names = HashSet::new();
+        let mut next_name_suffixes = HashMap::new();
 
         assert_eq!(
-            unique_name("  Fast\r\nNode  ", &mut used_names),
+            unique_name("  Fast\r\nNode  ", &mut used_names, &mut next_name_suffixes,),
             "Fast  Node"
         );
-        assert_eq!(unique_name("fast  node", &mut used_names), "fast  node 1");
-        assert_eq!(unique_name("   ", &mut used_names), "proxy");
-        assert_eq!(unique_name("\nproxy\r", &mut used_names), "proxy 1");
+        assert_eq!(
+            unique_name("fast  node", &mut used_names, &mut next_name_suffixes),
+            "fast  node 1"
+        );
+        assert_eq!(
+            unique_name("   ", &mut used_names, &mut next_name_suffixes),
+            "proxy"
+        );
+        assert_eq!(
+            unique_name("\nproxy\r", &mut used_names, &mut next_name_suffixes),
+            "proxy 1"
+        );
     }
 
     #[test]
-    fn test_unique_name_reuses_collision_key_buffer_across_many_suffixes() {
+    fn test_unique_name_advances_collision_suffix_without_rescanning_old_suffixes() {
         let mut used_names = HashSet::new();
+        let mut next_name_suffixes = HashMap::new();
 
-        assert_eq!(unique_name("Node", &mut used_names), "Node");
-        assert_eq!(unique_name("node", &mut used_names), "node 1");
-        assert_eq!(unique_name("NODE", &mut used_names), "NODE 2");
-        assert_eq!(unique_name("node 1", &mut used_names), "node 1 1");
+        assert_eq!(
+            unique_name("Node", &mut used_names, &mut next_name_suffixes),
+            "Node"
+        );
+        assert_eq!(
+            unique_name("node", &mut used_names, &mut next_name_suffixes),
+            "node 1"
+        );
+        assert_eq!(
+            unique_name("NODE", &mut used_names, &mut next_name_suffixes),
+            "NODE 2"
+        );
+        assert_eq!(
+            unique_name("node 1", &mut used_names, &mut next_name_suffixes),
+            "node 1 1"
+        );
 
         assert_eq!(used_names.len(), 4);
         assert!(used_names.contains("node"));
         assert!(used_names.contains("node 1"));
         assert!(used_names.contains("node 2"));
         assert!(used_names.contains("node 1 1"));
+        assert_eq!(next_name_suffixes.get("node"), Some(&3));
+    }
+
+    #[test]
+    fn test_unique_name_large_duplicate_run_keeps_monotonic_suffixes() {
+        let mut used_names = HashSet::new();
+        let mut next_name_suffixes = HashMap::new();
+        let mut last = String::new();
+
+        for _ in 0..10_000 {
+            last = unique_name("same", &mut used_names, &mut next_name_suffixes);
+        }
+
+        assert_eq!(last, "same 9999");
+        assert_eq!(used_names.len(), 10_000);
+        assert_eq!(next_name_suffixes.get("same"), Some(&10_000));
     }
 
     #[test]
     fn test_unique_name_ascii_fast_path_preserves_non_ascii_names() {
         let mut used_names = HashSet::new();
+        let mut next_name_suffixes = HashMap::new();
 
-        assert_eq!(unique_name("香港 FAST", &mut used_names), "香港 FAST");
-        assert_eq!(unique_name("香港 fast", &mut used_names), "香港 fast 1");
+        assert_eq!(
+            unique_name("香港 FAST", &mut used_names, &mut next_name_suffixes),
+            "香港 FAST"
+        );
+        assert_eq!(
+            unique_name("香港 fast", &mut used_names, &mut next_name_suffixes),
+            "香港 fast 1"
+        );
 
         let mut key = String::new();
         push_ascii_lowercase(&mut key, "节点 FAST🚀");
@@ -20185,14 +21057,20 @@ proxy-groups:
                     .next()
             })
             .expect("fetch_merge_free_nodes body");
-        let guard_index = body.find("if concurrency > 0").expect("concurrency guard");
-        let queue_index = body
+        let threaded_branch_start = body
+            .find("let mut handles = Vec::with_capacity(concurrency);")
+            .expect("threaded branch");
+        let threaded_body = &body[threaded_branch_start..];
+        let guard_index = threaded_body
+            .find("if concurrency > 0")
+            .expect("concurrency guard");
+        let queue_index = threaded_body
             .find("shared_fetch_queue(candidates)")
-            .expect("queue creation");
+            .expect("threaded queue creation");
 
         assert!(
             guard_index < queue_index,
-            "shared fetch queue should only be initialized when workers exist"
+            "threaded shared fetch queue should only be initialized when workers exist"
         );
     }
 
@@ -20854,7 +21732,7 @@ proxy-groups:
         assert_eq!(
             &GITHUB_RAW_MIRROR_PREFIXES[..4],
             [
-                "https://ghfile.geekertao.top/",
+                "https://gh.llkk.cc/",
                 "https://ghfast.top/",
                 "https://ghproxy.net/",
                 "https://gh-proxy.com/",
@@ -20970,7 +21848,7 @@ proxy-groups:
 
         let mirror = first_github_mirror_url(raw).expect("first mirror");
 
-        assert!(mirror.starts_with("https://ghfile.geekertao.top/"));
+        assert!(mirror.starts_with("https://gh.llkk.cc/"));
         assert_eq!(canonical_fetch_key(raw), canonical_fetch_key(&mirror));
     }
 
@@ -21887,7 +22765,7 @@ proxy-groups:
                 .map(|candidate| candidate.url.as_str())
                 .collect::<Vec<_>>(),
             vec![
-                "https://ghfile.geekertao.top/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
+                "https://gh.llkk.cc/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
                 "https://gcore.jsdelivr.net/gh/owner/repo@main/clash.yaml",
                 "https://fastly.jsdelivr.net/gh/owner/repo@main/clash.yaml",
                 "https://cdn.jsdelivr.net/gh/owner/repo@main/clash.yaml",
@@ -21898,7 +22776,7 @@ proxy-groups:
                 "https://ghproxy.imciel.com/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
                 "https://gh.monlor.com/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
                 "https://gh.ddlc.top/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
-                "https://gh.llkk.cc/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
+                "https://ghfile.geekertao.top/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
                 "https://ghproxy.cc/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
                 "https://gh.con.sh/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
                 "https://hub.gitmirror.com/https://raw.githubusercontent.com/owner/repo/main/clash.yaml",
@@ -21937,7 +22815,7 @@ proxy-groups:
         assert_eq!(
             candidates.first().map(|candidate| candidate.url.as_str()),
             Some(
-            "https://ghfile.geekertao.top/https://raw.githubusercontent.com/PuddinCat/BestClash/main/proxies.yaml"
+            "https://gh.llkk.cc/https://raw.githubusercontent.com/PuddinCat/BestClash/main/proxies.yaml"
             )
         );
     }
@@ -22145,7 +23023,7 @@ proxy-groups:
         assert_eq!(candidates.len(), MAX_EQUIVALENT_FETCH_CANDIDATES);
         assert_eq!(
             candidates[0].url,
-            "https://ghfile.geekertao.top/https://raw.githubusercontent.com/PuddinCat/BestClash/main/proxies.yaml"
+            "https://gh.llkk.cc/https://raw.githubusercontent.com/PuddinCat/BestClash/main/proxies.yaml"
         );
         assert_eq!(
             candidates[1].url,
@@ -22184,7 +23062,7 @@ proxy-groups:
     }
 
     #[test]
-    fn test_resolve_candidates_expands_github_seed_when_raw_candidates_exist_without_flag() {
+    fn test_resolve_candidates_prefers_explicit_raw_without_github_seed_expansion() {
         let input = FreeNodesInput {
             catalog: CatalogInput {
                 history_timeout_hours: 72,
@@ -22220,13 +23098,18 @@ proxy-groups:
         };
 
         let candidates = resolve_candidates(&input);
+        let expected_fetch_key = "https://raw.githubusercontent.com/owner/repo/main/known.yaml";
 
-        assert!(candidates.iter().any(|candidate| {
-            candidate.fetch_key
-                == "https://raw.githubusercontent.com/owner/repo/main/config/clash.yaml"
-                && candidate.url
-                    == "https://ghfile.geekertao.top/https://raw.githubusercontent.com/owner/repo/main/config/clash.yaml"
-        }));
+        assert_eq!(candidates.len(), MAX_EQUIVALENT_FETCH_CANDIDATES);
+        assert!(candidates
+            .iter()
+            .all(|candidate| candidate.fetch_key == expected_fetch_key));
+        assert_eq!(
+            candidates.first().map(|candidate| candidate.url.as_str()),
+            Some("https://gh.llkk.cc/https://raw.githubusercontent.com/owner/repo/main/known.yaml")
+        );
+        assert!(!candidates.iter().any(|candidate| candidate.fetch_key
+            == "https://raw.githubusercontent.com/owner/repo/main/config/clash.yaml"));
     }
 
     #[test]
@@ -22764,7 +23647,13 @@ proxy-groups:
     }
 
     #[test]
-    fn test_source_deadline_bounds_the_whole_source_fetch() {
+    fn test_free_nodes_response_body_limit_covers_large_aggregate_feeds() {
+        assert_eq!(FREE_NODES_RESPONSE_BODY_LIMIT_BYTES, 64 * 1024 * 1024);
+        assert!(FREE_NODES_RESPONSE_BODY_LIMIT_BYTES > 33 * 1024 * 1024);
+    }
+
+    #[test]
+    fn test_source_budget_allows_multiple_request_timeouts_and_bounds_source_fetch() {
         let source = SourceInput {
             id: "deadline".into(),
             label: "Deadline".into(),
@@ -22805,10 +23694,18 @@ proxy-groups:
             Instant::now() - Duration::from_secs(4),
         )])));
 
-        let error = remaining_source_timeout(&input, &source, &source_deadlines)
-            .expect_err("expired source deadline must stop more candidates");
+        let request_timeout = remaining_source_timeout(&input, &source, &source_deadlines)
+            .expect("source budget must outlive one request timeout");
+        assert_eq!(request_timeout, 3);
 
-        assert!(error.contains("source fetch timed out after 3s"));
+        source_deadlines
+            .lock()
+            .unwrap()
+            .insert(source.id.clone(), Instant::now() - Duration::from_secs(31));
+        let error = remaining_source_timeout(&input, &source, &source_deadlines)
+            .expect_err("expired source budget must stop more candidates");
+
+        assert!(error.contains("source fetch timed out after 30s"));
     }
 
     #[test]
@@ -24588,7 +25485,7 @@ proxy-groups:
         };
         let api_page = "https://api.github.com/repos/owner/repo/contents?ref=main";
         let canonical_api_page = "https://api.github.com/repos/owner/repo/contents";
-        let mirrored_api_page = format!("https://ghfile.geekertao.top/{canonical_api_page}");
+        let mirrored_api_page = format!("https://gh.llkk.cc/{canonical_api_page}");
         let pages = VecDeque::from([ConfigCandidate::from_source_ref(api_page.into(), &source)]);
         let fetched = Arc::new(Mutex::new(Vec::<String>::new()));
         let fetched_urls = Arc::clone(&fetched);

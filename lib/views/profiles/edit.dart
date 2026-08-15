@@ -522,13 +522,19 @@ class _EditProfileViewState extends State<EditProfileView> {
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
-              labelText: '并发获取',
-              suffixText: '路',
+              labelText: '并发上限',
+              suffixText: '源',
+              helperText: '实际活跃并发会按设备性能自动调节',
             ),
             validator: (String? value) {
               final intValue = int.tryParse(value ?? '');
-              if (intValue == null || intValue < 1 || intValue > 32) {
-                return '请输入 1-32';
+              final maxConcurrency = _freeNodeSourceOptions.isEmpty
+                  ? intValue ?? 1
+                  : _freeNodeSourceOptions.length;
+              if (intValue == null ||
+                  intValue < 1 ||
+                  intValue > maxConcurrency) {
+                return '请输入 1-$maxConcurrency';
               }
               return null;
             },

@@ -1670,6 +1670,59 @@ abstract class _$Item extends $Notifier<dynamic> {
   }
 }
 
+@ProviderFor(FreeNodesFetchProgress)
+final freeNodesFetchProgressProvider = FreeNodesFetchProgressProvider._();
+
+final class FreeNodesFetchProgressProvider
+    extends $NotifierProvider<FreeNodesFetchProgress, FreeNodesProgress?> {
+  FreeNodesFetchProgressProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'freeNodesFetchProgressProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$freeNodesFetchProgressHash();
+
+  @$internal
+  @override
+  FreeNodesFetchProgress create() => FreeNodesFetchProgress();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FreeNodesProgress? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FreeNodesProgress?>(value),
+    );
+  }
+}
+
+String _$freeNodesFetchProgressHash() =>
+    r'095ac6faf3e69b53babc0bed326f41ca6057a792';
+
+abstract class _$FreeNodesFetchProgress extends $Notifier<FreeNodesProgress?> {
+  FreeNodesProgress? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<FreeNodesProgress?, FreeNodesProgress?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<FreeNodesProgress?, FreeNodesProgress?>,
+              FreeNodesProgress?,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(IsUpdating)
 final isUpdatingProvider = IsUpdatingFamily._();
 

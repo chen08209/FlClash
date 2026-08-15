@@ -1365,7 +1365,7 @@ class ProfilesAction extends _$ProfilesAction {
 
   void _setFreeNodesProgress(FreeNodesProgress progress) {
     if (!ref.mounted) return;
-    ref.read(itemProvider(freeNodesProgressKey).notifier).value = progress;
+    ref.read(freeNodesFetchProgressProvider.notifier).value = progress;
   }
 
   Future<Profile> _updateFreeNodesProfile(
@@ -1393,7 +1393,6 @@ class ProfilesAction extends _$ProfilesAction {
             : (partialProfile) async {
                 if (!ref.mounted) return;
                 await _putProfileAndPersist(partialProfile);
-                await _applyFreeNodesProfileIfCurrent(partialProfile);
               },
         onProgress: silent
             ? null
@@ -1433,7 +1432,7 @@ class ProfilesAction extends _$ProfilesAction {
   Future<void> _autoUpdateFreeNodesProfile(Profile profile) async {
     if (!_freeNodesAutoUpdatingIds.add(profile.id)) {
       if (!ref.mounted) return;
-      final currentProgress = ref.read(itemProvider(freeNodesProgressKey));
+      final currentProgress = ref.read(freeNodesFetchProgressProvider);
       _setFreeNodesProgress(
         buildFreeNodesAutoUpdateRunningProgress(
           proxyCount: profile.subscriptionInfo?.total ?? 0,
@@ -1453,7 +1452,7 @@ class ProfilesAction extends _$ProfilesAction {
     ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = true;
     try {
       if (!ref.mounted) return;
-      final currentProgress = ref.read(itemProvider(freeNodesProgressKey));
+      final currentProgress = ref.read(freeNodesFetchProgressProvider);
       _setFreeNodesProgress(
         buildFreeNodesAutoUpdateRunningProgress(
           proxyCount: profile.subscriptionInfo?.total ?? 0,

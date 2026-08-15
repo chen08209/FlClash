@@ -769,7 +769,7 @@ class ProfileItem extends StatelessWidget {
                     Consumer(
                       builder: (_, ref, _) {
                         final progress = ref.watch(
-                          itemProvider(freeNodesProgressKey),
+                          freeNodesFetchProgressProvider,
                         );
                         final fallbackProgress =
                             profile.subscriptionInfo != null

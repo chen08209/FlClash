@@ -2093,6 +2093,93 @@ proxies:
     },
   );
 
+  test(
+    'deduplicates one physical proxy across sources while preserving source groups',
+    () async {
+      final catalog = json.encode({
+        'lookbackDays': 1,
+        'historyTimeoutHours': 10000,
+        'sources': [
+          {
+            'id': 'source-a',
+            'label': 'Source A',
+            'seed': 'https://source-a.example.com/',
+            'rank': 0,
+            'rawCandidates': ['https://source-a.example.com/config.yaml'],
+          },
+          {
+            'id': 'source-b',
+            'label': 'Source   B',
+            'seed': 'https://source-b.example.com/',
+            'rank': 1,
+            'rawCandidates': ['https://source-b.example.com/config.yaml'],
+          },
+        ],
+      });
+      const sharedProxy = '''
+proxies:
+  - name: shared-node
+    type: socks5
+    server: shared.example.com
+    port: 1080
+''';
+      final service = FreeNodesService(
+        sourceCatalogJson: catalog,
+        fetcher: (_) async => sharedProxy,
+      );
+
+      final result = await service.fetchMergedConfig();
+      final value = loadYaml(utf8.decode(result.bytes)) as YamlMap;
+      final proxies = (value['proxies'] as YamlList).cast<YamlMap>();
+      final groups = (value['proxy-groups'] as YamlList).cast<YamlMap>();
+      final sourceA = groups.singleWhere(
+        (group) => group['name'] == '来源 Source A',
+      );
+      final sourceB = groups.singleWhere(
+        (group) => group['name'] == '来源 Source B',
+      );
+
+      expect(result.proxyCount, 1);
+      expect(proxies, hasLength(1));
+      expect(proxies.single['name'], 'shared-node');
+      expect((sourceA['proxies'] as YamlList).cast<String>(), ['shared-node']);
+      expect((sourceB['proxies'] as YamlList).cast<String>(), ['shared-node']);
+      expect(
+        groups.where((group) => group['name'] == '来源 Source   B'),
+        isEmpty,
+        reason: 'source membership labels must collapse repeated whitespace',
+      );
+
+      final refreshed = await service.fetchMergedConfig(
+        existingConfigText: utf8.decode(result.bytes),
+        sourceIds: const {'source-a'},
+      );
+      final refreshedValue = loadYaml(utf8.decode(refreshed.bytes)) as YamlMap;
+      final refreshedProxies = (refreshedValue['proxies'] as YamlList)
+          .cast<YamlMap>();
+      final refreshedGroups = (refreshedValue['proxy-groups'] as YamlList)
+          .cast<YamlMap>();
+
+      expect(refreshed.proxyCount, 1);
+      expect(refreshedProxies, hasLength(1));
+      expect(
+        (refreshedGroups.singleWhere(
+                  (group) => group['name'] == '来源 Source A',
+                )['proxies']
+                as YamlList)
+            .cast<String>(),
+        ['shared-node'],
+      );
+      expect(
+        (refreshedGroups.singleWhere(
+                  (group) => group['name'] == '来源 Source B',
+                )['proxies']
+                as YamlList)
+            .cast<String>(),
+        ['shared-node'],
+      );
+    },
+  );
   test('all 60 default sources produce 60 isolated source groups', () async {
     final sourceIds = List.generate(60, (index) => 'source-$index');
     final catalog = json.encode({
@@ -2752,6 +2839,133 @@ proxy-groups:
     },
   );
 
+  test('defaults fetch concurrency to all enabled free node sources', () async {
+    final sourceCatalogJson = await File(
+      'assets/data/free_node_sources.json',
+    ).readAsString();
+    await preferences.sharedPreferencesCompleter.future;
+    SharedPreferences.setMockInitialValues({});
+    preferences.sharedPreferencesCompleter = Completer<SharedPreferences?>()
+      ..complete(await SharedPreferences.getInstance());
+    final service = FreeNodesService(sourceCatalogJson: sourceCatalogJson);
+
+    final enabledSourceIds = await service.getEnabledSourceIds();
+    final preferenceState = await service.getPreferenceState();
+
+    expect(enabledSourceIds, isNotEmpty);
+    expect(preferenceState.fetchConcurrency, enabledSourceIds.length);
+  });
+
+  test('keeps saved free node fetch concurrency above legacy limit', () async {
+    final sourceCatalogJson = await File(
+      'assets/data/free_node_sources.json',
+    ).readAsString();
+    await preferences.sharedPreferencesCompleter.future;
+    SharedPreferences.setMockInitialValues({freeNodesFetchConcurrencyKey: 96});
+    preferences.sharedPreferencesCompleter = Completer<SharedPreferences?>()
+      ..complete(await SharedPreferences.getInstance());
+    final service = FreeNodesService(sourceCatalogJson: sourceCatalogJson);
+
+    expect((await service.getPreferenceState()).fetchConcurrency, 96);
+  });
+
+  test('clamps saved free node fetch concurrency to catalog size', () async {
+    final sourceCatalogJson = await File(
+      'assets/data/free_node_sources.json',
+    ).readAsString();
+    await preferences.sharedPreferencesCompleter.future;
+    SharedPreferences.setMockInitialValues({});
+    preferences.sharedPreferencesCompleter = Completer<SharedPreferences?>()
+      ..complete(await SharedPreferences.getInstance());
+    final service = FreeNodesService(sourceCatalogJson: sourceCatalogJson);
+    final sourceCount = (await service.getSourceOptions()).length;
+
+    await service.saveFetchConcurrency(999);
+
+    expect((await service.getPreferenceState()).fetchConcurrency, sourceCount);
+  });
+
+  test('Dart fallback gives every source candidate its own timeout', () async {
+    const catalog = '''
+{
+  "lookbackDays": 1,
+  "sources": [
+    {
+      "id": "timeout-retry",
+      "label": "Timeout Retry",
+      "seed": "https://timeout-retry.example.com/",
+      "rank": 0,
+      "configTemplates": [
+        "https://a-timeout.example.com/config.yaml",
+        "https://b-success.example.com/config.yaml"
+      ]
+    }
+  ]
+}
+''';
+    await preferences.sharedPreferencesCompleter.future;
+    SharedPreferences.setMockInitialValues({freeNodesFetchConcurrencyKey: 1});
+    preferences.sharedPreferencesCompleter = Completer<SharedPreferences?>()
+      ..complete(await SharedPreferences.getInstance());
+    final fetchedUrls = <String>[];
+    final service = FreeNodesService(
+      sourceCatalogJson: catalog,
+      fetchTimeout: const Duration(milliseconds: 20),
+      fetcher: (url) async {
+        fetchedUrls.add(url);
+        if (url.contains('a-timeout')) {
+          await Future<void>.delayed(const Duration(milliseconds: 40));
+          return sampleConfig;
+        }
+        if (url.contains('b-success')) {
+          return sampleConfig;
+        }
+        throw StateError('unexpected URL: $url');
+      },
+    );
+
+    final result = await service.fetchMergedConfig();
+
+    expect(fetchedUrls, contains('https://a-timeout.example.com/config.yaml'));
+    expect(fetchedUrls, contains('https://b-success.example.com/config.yaml'));
+    expect(result.proxyCount, 2);
+  });
+
+  test('failed free node source stays due for retry', () async {
+    const catalog = '''
+{
+  "lookbackDays": 1,
+  "sources": [
+    {
+      "id": "failed-source",
+      "label": "Failed Source",
+      "seed": "https://failed-source.example.com/",
+      "rank": 0,
+      "updateIntervalHours": 24,
+      "configTemplates": ["https://failed-source.example.com/config.yaml"]
+    }
+  ]
+}
+''';
+    await preferences.sharedPreferencesCompleter.future;
+    SharedPreferences.setMockInitialValues({freeNodesFetchConcurrencyKey: 1});
+    preferences.sharedPreferencesCompleter = Completer<SharedPreferences?>()
+      ..complete(await SharedPreferences.getInstance());
+    final service = FreeNodesService(
+      sourceCatalogJson: catalog,
+      fetcher: (_) async => throw StateError('fetch failed'),
+    );
+
+    await service.fetchMergedConfig();
+
+    expect(await service.getDueSourceIds(), contains('failed-source'));
+    expect(
+      (await service.getSourceOptions())
+          .singleWhere((option) => option.id == 'failed-source')
+          .lastFetchTime,
+      isNull,
+    );
+  });
   test('catalog defaults enable only explicitly declared source ids', () async {
     const catalog = '''
 {
@@ -4534,42 +4748,20 @@ proxy-groups:
         (findSource('gfpcom-free-proxy-list-wiki')['rawCandidates'] as List)
             .cast<String>();
 
-    expect(findSource('rtwo2-fastnodes')['githubDiscovery'], true);
-    expect(fastNodesCandidates.first, startsWith('https://cdn.jsdelivr.net/'));
+    expect(findSource('rtwo2-fastnodes')['githubDiscovery'], false);
     expect(
       fastNodesCandidates,
-      containsAll([
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vless.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/trojan.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vmess.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/ss.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/hysteria2.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/continents/Europe.yaml',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/continents/Asia.yaml',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/continents/NorthAmerica.yaml',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/countries/IR.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/countries/US.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/countries/SG.txt',
-        'https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/countries/HK.txt',
-        'https://gh.con.sh/https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vless.txt',
-        'https://gh.con.sh/https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/continents/Asia.yaml',
-        'https://gh.con.sh/https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/countries/HK.txt',
-        'https://ghfile.geekertao.top/https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/everything.txt',
-        'https://ghfile.geekertao.top/https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vless.txt',
-        'https://ghfile.geekertao.top/https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/continents/Asia.yaml',
-        'https://ghfile.geekertao.top/https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/countries/US.txt',
+      equals([
+        'https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vless.txt',
+        'https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/trojan.txt',
         'https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vmess.txt',
-        'https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/countries/HK.txt',
+        'https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/ss.txt',
+        'https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/hysteria2.txt',
       ]),
     );
     expect(
-      fastNodesCandidates,
-      isNot(
-        contains(
-          'https://raw.githubusercontent.com/Flikify/getNode/main/clash.yaml',
-        ),
-      ),
+      fastNodesCandidates.every((url) => url.contains('/protocols/')),
+      isTrue,
     );
 
     expect(findSource('gfpcom-free-proxy-list-wiki')['githubDiscovery'], true);

@@ -358,8 +358,7 @@ class FreeNodesStatus extends ConsumerWidget {
             profiles.firstWhereOrNull((profile) => profile.isFreeNodesProfile),
       ),
     );
-    final progressValue = ref.watch(itemProvider(freeNodesProgressKey));
-    final progress = progressValue is FreeNodesProgress ? progressValue : null;
+    final progress = ref.watch(freeNodesFetchProgressProvider);
     final isUpdating = profile == null
         ? false
         : ref.watch(isUpdatingProvider(profile.updatingKey));
