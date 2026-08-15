@@ -235,6 +235,12 @@ function Initialize-ReleaseEnvironment {
     $env:GOMODCACHE = Join-Path $SdkRoot 'go/pkg/mod'
     $env:ANDROID_HOME = Join-Path $SdkRoot 'android'
     $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
+    $ndkVersionFile = Join-Path $ProjectRoot 'android\gradle\libs.versions.toml'
+    $ndkVersionText = [IO.File]::ReadAllText($ndkVersionFile)
+    $ndkVersionMatch = [regex]::Match($ndkVersionText, '(?m)^ndkVersion\s*=\s*"(?<version>[^\"]+)"')
+    if (-not $ndkVersionMatch.Success) { throw 'Android NDK version is missing from libs.versions.toml.' }
+    $env:ANDROID_NDK = Join-Path $env:ANDROID_HOME ("ndk\" + $ndkVersionMatch.Groups['version'].Value)
+    if (-not (Test-Path -LiteralPath $env:ANDROID_NDK -PathType Container)) { throw "Configured Android NDK is missing: $env:ANDROID_NDK" }
     $env:JAVA_HOME = Join-Path $SdkRoot 'jdk'
     $env:INNO_SETUP_HOME = Join-Path $SdkRoot 'inno-setup-6'
 }
