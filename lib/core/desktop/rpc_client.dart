@@ -6,8 +6,17 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import 'transport.dart';
+
+/// How many timeout windows a request may be extended across while Core keeps
+/// answering other requests, before it fails regardless.
+const _maxTimeoutExtension = 3;
+
+const _maxExtensionGrace = Duration(seconds: 30);
+
+const _connectTimeout = Duration(seconds: 10);
 
 abstract interface class CoreRpcChannel {
   Future<T?> invoke<T>({
@@ -21,6 +30,7 @@ abstract interface class CoreRpcChannel {
 
 final class CoreRpcClient implements CoreRpcChannel {
   final DesktopCoreTransport transport;
+  final Duration extensionGrace;
   final Map<String, Completer<Object?>> _pending = {};
   late final StreamSubscription<Uint8List> _frameSubscription;
   late final StreamSubscription<DesktopTransportEvent> _eventSubscription;
@@ -28,7 +38,17 @@ final class CoreRpcClient implements CoreRpcChannel {
   int _methodCallId = 0;
   Future<void>? _closeOperation;
 
-  CoreRpcClient(this.transport) {
+  /// Time since Core last answered any request. A method timeout is a liveness
+  /// guard for a stalled link (a restart mid-flight, a stream that stopped
+  /// carrying data), not a budget for how long a single method may take — so a
+  /// request that is still waiting while Core demonstrably keeps replying to
+  /// its siblings gets its window re-armed instead of being failed.
+  final Stopwatch _sinceLastResponse = Stopwatch()..start();
+
+  CoreRpcClient(
+    this.transport, {
+    @visibleForTesting this.extensionGrace = _maxExtensionGrace,
+  }) {
     _frameSubscription = transport.frames.listen(
       _handleFrame,
       onError: _handleFrameError,
@@ -57,23 +77,36 @@ final class CoreRpcClient implements CoreRpcChannel {
     final stopwatch = Stopwatch()..start();
     try {
       await Future.any<Object?>([
-        transport.waitUntilConnected(const Duration(seconds: 10)),
+        transport.waitUntilConnected(_shorter(_connectTimeout, requestTimeout)),
         completer.future,
       ]);
       if (completer.isCompleted) {
         return await completer.future as T?;
       }
-      await transport.send(
-        json.encode(
-          CoreMethodCall(id: id, method: method, arguments: arguments),
-        ),
-      );
-      final remainingTimeout = requestTimeout - stopwatch.elapsed;
-      if (remainingTimeout <= Duration.zero) {
+      final sendTimeout = requestTimeout - stopwatch.elapsed;
+      if (sendTimeout <= Duration.zero) {
         throw TimeoutException('Core method ${method.name} timed out');
       }
-      return await completer.future.timeout(remainingTimeout) as T?;
+      await transport
+          .send(
+            json.encode(
+              CoreMethodCall(id: id, method: method, arguments: arguments),
+            ),
+          )
+          .timeout(sendTimeout);
+      return await _awaitResponse(
+            method: method,
+            completer: completer,
+            idleTimeout: requestTimeout,
+            elapsed: stopwatch,
+          )
+          as T?;
     } on TimeoutException {
+      commonPrint.log(
+        'Core method ${method.name} timed out after '
+        '${stopwatch.elapsedMilliseconds}ms',
+        logLevel: LogLevel.warning,
+      );
       _removePending(id, completer);
       return null;
     } on CoreMethodException {
@@ -90,6 +123,43 @@ final class CoreRpcClient implements CoreRpcChannel {
       stopwatch.stop();
     }
   }
+
+  /// Waits for [completer], re-arming the window every time Core proves the
+  /// link is still alive by answering some other request, so a slow method is
+  /// not failed on behalf of a healthy link. Two things still end the wait:
+  /// [idleTimeout] of silence, and a hard deadline set by whichever of
+  /// [_maxTimeoutExtension] windows and [extensionGrace] on top binds first —
+  /// a Core answering everything except this request has to surface as well.
+  Future<Object?> _awaitResponse({
+    required CoreMethod method,
+    required Completer<Object?> completer,
+    required Duration idleTimeout,
+    required Stopwatch elapsed,
+  }) async {
+    final hardDeadline = _shorter(
+      idleTimeout * _maxTimeoutExtension,
+      idleTimeout + extensionGrace,
+    );
+    while (true) {
+      // Silence is measured from the last response or from this request's own
+      // start, whichever is later: an idle app must not shorten a fresh window.
+      final silence = _shorter(_sinceLastResponse.elapsed, elapsed.elapsed);
+      final remaining = _shorter(
+        idleTimeout - silence,
+        hardDeadline - elapsed.elapsed,
+      );
+      if (remaining <= Duration.zero) {
+        throw TimeoutException('Core method ${method.name} timed out');
+      }
+      try {
+        return await completer.future.timeout(remaining);
+      } on TimeoutException {
+        continue;
+      }
+    }
+  }
+
+  static Duration _shorter(Duration a, Duration b) => a < b ? a : b;
 
   void _removePending(String id, Completer<Object?> completer) {
     final removed = _pending.remove(id);
@@ -132,6 +202,11 @@ final class CoreRpcClient implements CoreRpcChannel {
   }
 
   void _handleResponse(CoreMethodResponse response) {
+    // Proof of life for every pending request, including a late response whose
+    // own caller already gave up.
+    _sinceLastResponse
+      ..reset()
+      ..start();
     final id = response.id;
     final completer = id == null ? null : _pending.remove(id);
     if (completer == null || completer.isCompleted) {

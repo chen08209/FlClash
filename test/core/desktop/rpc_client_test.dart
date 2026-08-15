@@ -118,6 +118,129 @@ void main() {
     await transport.close();
   });
 
+  test('waiting for a connection never outlives the request timeout', () async {
+    final transport = FakeDesktopCoreTransport();
+    final client = CoreRpcClient(transport);
+    final stopwatch = Stopwatch()..start();
+
+    final result = await client.invoke<bool>(
+      method: CoreMethod.asyncTestDelay,
+      timeout: const Duration(milliseconds: 150),
+    );
+
+    expect(result, isNull);
+    expect(stopwatch.elapsed, lessThan(const Duration(seconds: 5)));
+    expect(transport.sentMessages, isEmpty);
+    expect(client.pendingCount, 0);
+    await client.close();
+    await transport.close();
+  });
+
+  test('a silent link times out the pending request', () async {
+    final transport = FakeDesktopCoreTransport.connected();
+    final client = CoreRpcClient(transport);
+
+    final result = await client.invoke<bool>(
+      method: CoreMethod.getIsInit,
+      timeout: const Duration(milliseconds: 150),
+    );
+
+    expect(result, isNull);
+    expect(client.pendingCount, 0);
+    await client.close();
+    await transport.close();
+  });
+
+  test('a pending request survives while Core answers its siblings', () async {
+    final transport = FakeDesktopCoreTransport.connected();
+    final client = CoreRpcClient(transport);
+    const timeout = Duration(milliseconds: 300);
+
+    final slow = client.invoke<bool>(
+      method: CoreMethod.asyncTestDelay,
+      timeout: timeout,
+    );
+    final sibling = client.invoke<bool>(
+      method: CoreMethod.asyncTestDelay,
+      timeout: timeout,
+    );
+    await pumpEventQueue();
+    final requests = transport.sentMessages
+        .map((message) => jsonDecode(message) as Map<String, Object?>)
+        .toList();
+    expect(requests, hasLength(2));
+
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    transport.addJson({'id': requests[1]['id'], 'result': true});
+    expect(await sibling, isTrue);
+
+    // Past the original window, but the link proved itself 200ms in.
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(client.pendingCount, 1);
+    transport.addJson({'id': requests[0]['id'], 'result': true});
+    expect(await slow, isTrue);
+
+    await client.close();
+    await transport.close();
+  });
+
+  test('extension is capped so a wedged request still fails', () async {
+    final transport = FakeDesktopCoreTransport.connected();
+    final client = CoreRpcClient(transport);
+    const timeout = Duration(milliseconds: 200);
+
+    final wedged = client.invoke<bool>(
+      method: CoreMethod.asyncTestDelay,
+      timeout: timeout,
+    );
+    await pumpEventQueue();
+    final request = jsonDecode(transport.sentMessages.first) as Map;
+
+    // Core stays chatty about everything except this request.
+    final chatter = Timer.periodic(
+      const Duration(milliseconds: 50),
+      (_) => transport.addJson({'id': 'other', 'result': true}),
+    );
+    addTearDown(chatter.cancel);
+
+    expect(await wedged, isNull);
+    expect(client.pendingCount, 0);
+    expect(request['id'], isNotNull);
+
+    await client.close();
+    await transport.close();
+  });
+
+  test(
+    'a long request budget stops extending once the grace is spent',
+    () async {
+      const timeout = Duration(milliseconds: 200);
+      const grace = Duration(milliseconds: 100);
+      expect(timeout + grace, lessThan(timeout * 3));
+
+      final transport = FakeDesktopCoreTransport.connected();
+      final client = CoreRpcClient(transport, extensionGrace: grace);
+
+      final stopwatch = Stopwatch()..start();
+      final wedged = client.invoke<bool>(
+        method: CoreMethod.getIsInit,
+        timeout: timeout,
+      );
+      final chatter = Timer.periodic(
+        const Duration(milliseconds: 30),
+        (_) => transport.addJson({'id': 'other', 'result': true}),
+      );
+      addTearDown(chatter.cancel);
+
+      expect(await wedged, isNull);
+      expect(stopwatch.elapsed, lessThan(const Duration(milliseconds: 500)));
+      expect(client.pendingCount, 0);
+
+      await client.close();
+      await transport.close();
+    },
+  );
+
   test('malformed data does not terminate response processing', () async {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
