@@ -80,7 +80,7 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
 }
 
 Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final batches = proxies.batch(100);
+  final batches = proxies.batch(maxConcurrentDelayTests);
   for (final batch in batches) {
     await Future.wait(
       batch.map((proxy) async {
