@@ -12,18 +12,36 @@ class AppPath {
   Completer<Directory> tempDir = Completer();
   Completer<Directory> cacheDir = Completer();
   late String appDirPath;
+  bool isPortable = false;
 
   AppPath._internal() {
     appDirPath = join(dirname(Platform.resolvedExecutable));
-    getApplicationSupportDirectory().then((value) {
-      dataDir.complete(value);
-    });
+    _initDataDir();
     getTemporaryDirectory().then((value) {
       tempDir.complete(value);
     });
     getApplicationCacheDirectory().then((value) {
       cacheDir.complete(value);
     });
+  }
+
+  bool get _isDesktop =>
+      Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+
+  Future<void> _initDataDir() async {
+    // Portable mode: if a 'config' directory exists next to the executable on
+    // desktop platforms, use it as the data directory instead of the
+    // platform-specific application support directory.
+    if (_isDesktop) {
+      final portableConfigDir = Directory(join(appDirPath, 'config'));
+      if (await portableConfigDir.exists()) {
+        isPortable = true;
+        dataDir.complete(portableConfigDir);
+        return;
+      }
+    }
+    final dir = await getApplicationSupportDirectory();
+    dataDir.complete(dir);
   }
 
   factory AppPath() {
