@@ -107,6 +107,9 @@ call_tun_interface_resolve_process_impl(void *tun_interface, const int protocol,
                                         const char *source,
                                         const char *target,
                                         const int uid) {
+    if (tun_interface == nullptr) {
+        return strdup("");
+    }
     ATTACH_JNI();
     const auto source_string = new_string(source);
     const auto target_string = new_string(target);

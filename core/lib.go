@@ -84,7 +84,7 @@ func (th *TunHandler) handleResolveProcess(source, target net.Addr) string {
 	_ = th.limit.Acquire(context.Background(), 1)
 	defer th.limit.Release(1)
 
-	if th.listener == nil {
+	if th.listener == nil || th.callback == nil {
 		return ""
 	}
 	var protocol int
