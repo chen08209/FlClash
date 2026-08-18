@@ -545,7 +545,12 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   final dir = Directory(restoreDirPath);
   await dir.create(recursive: true);
   for (final file in archive.files) {
-    final outPath = join(restoreDirPath, posix.normalize(file.name));
+    final outPath = join(restoreDirPath, file.name);
+    final resolvedDir = normalize(restoreDirPath);
+    final resolvedOut = normalize(outPath);
+    if (!resolvedOut.startsWith(resolvedDir)) {
+      throw Exception('Zip entry path escapes target directory: ${file.name}');
+    }
     final outputStream = OutputFileStream(outPath);
     file.writeContent(outputStream);
     await outputStream.close();
