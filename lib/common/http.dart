@@ -24,7 +24,9 @@ class FlClashHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final client = super.createHttpClient(context);
-    client.badCertificateCallback = (_, _, _) => true;
+    client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+      return [localhost, 'localhost'].contains(host);
+    };
     client.findProxy = handleFindProxy;
     return client;
   }
