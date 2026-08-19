@@ -314,6 +314,32 @@ class FreeNodesStatus extends ConsumerWidget {
     );
   }
 
+  Widget _buildDetailText(
+    BuildContext context, {
+    required String lastUpdateText,
+    required String nextUpdateText,
+    required FreeNodesProgress? progress,
+    required bool isUpdating,
+  }) {
+    final detailLines = buildFreeNodesDetailLines(
+      lastUpdateText: lastUpdateText,
+      nextUpdateText: nextUpdateText,
+      progress: progress,
+      isUpdating: isUpdating,
+    );
+    return TooltipText(
+      text: Text(
+        detailLines.join('\n'),
+        maxLines: detailLines.length,
+        overflow: TextOverflow.ellipsis,
+        style: context.textTheme.bodySmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+          height: 1.0,
+        ),
+      ),
+    );
+  }
+
   String _getLastUpdateText(BuildContext context, Profile? profile) {
     final lastUpdateDate = profile?.lastUpdateDate;
     if (lastUpdateDate == null) return '上次更新：无记录';
@@ -476,31 +502,30 @@ class FreeNodesStatus extends ConsumerWidget {
                       ),
                       const SizedBox(height: 1),
                     ],
-                    FutureBuilder<String>(
-                      future: _getFreeNodesNextUpdateText(profile),
-                      initialData: _getNextUpdateText(profile),
-                      builder: (context, snapshot) {
-                        final nextUpdateText =
-                            snapshot.data ?? _getNextUpdateText(profile);
-                        final detailLines = buildFreeNodesDetailLines(
-                          lastUpdateText: lastUpdateText,
-                          nextUpdateText: nextUpdateText,
-                          progress: progress,
-                          isUpdating: isVisibleUpdating,
-                        );
-                        return TooltipText(
-                          text: Text(
-                            detailLines.join('\n'),
-                            maxLines: detailLines.length,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.bodySmall?.copyWith(
-                              color: context.colorScheme.onSurfaceVariant,
-                              height: 1.0,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                    if (isVisibleUpdating)
+                      _buildDetailText(
+                        context,
+                        lastUpdateText: lastUpdateText,
+                        nextUpdateText: _getNextUpdateText(profile),
+                        progress: progress,
+                        isUpdating: isVisibleUpdating,
+                      )
+                    else
+                      FutureBuilder<String>(
+                        future: _getFreeNodesNextUpdateText(profile),
+                        initialData: _getNextUpdateText(profile),
+                        builder: (context, snapshot) {
+                          final nextUpdateText =
+                              snapshot.data ?? _getNextUpdateText(profile);
+                          return _buildDetailText(
+                            context,
+                            lastUpdateText: lastUpdateText,
+                            nextUpdateText: nextUpdateText,
+                            progress: progress,
+                            isUpdating: isVisibleUpdating,
+                          );
+                        },
+                      ),
                     if (isVisibleUpdating) ...[
                       const SizedBox(height: 3),
                       LinearProgressIndicator(value: progress?.value),

@@ -2,11 +2,22 @@ part of '../action.dart';
 
 @Riverpod(keepAlive: true)
 class ProfilesAction extends _$ProfilesAction {
+  static const _freeNodesProgressMinInterval = Duration(milliseconds: 250);
+
   final Set<int> _freeNodesAutoUpdatingIds = {};
   final Set<int> _freeNodesAutoPreferringIds = {};
+  Timer? _freeNodesProgressThrottleTimer;
+  DateTime? _lastFreeNodesProgressEmittedAt;
+  FreeNodesProgress? _pendingFreeNodesProgress;
 
   @override
-  void build() {}
+  void build() {
+    ref.onDispose(() {
+      _freeNodesProgressThrottleTimer?.cancel();
+      _freeNodesProgressThrottleTimer = null;
+      _pendingFreeNodesProgress = null;
+    });
+  }
 
   void updateCurrentSelectedMap(String groupName, String proxyName) {
     final currentProfile = ref.read(currentProfileProvider);
@@ -106,7 +117,46 @@ class ProfilesAction extends _$ProfilesAction {
 
   void _setFreeNodesProgress(FreeNodesProgress progress) {
     if (!ref.mounted) return;
+    final now = DateTime.now();
+    if (_shouldEmitFreeNodesProgressImmediately(progress, now)) {
+      _freeNodesProgressThrottleTimer?.cancel();
+      _freeNodesProgressThrottleTimer = null;
+      _pendingFreeNodesProgress = null;
+      _emitFreeNodesProgress(progress, now);
+      return;
+    }
+    _pendingFreeNodesProgress = progress;
+    if (_freeNodesProgressThrottleTimer != null) return;
+    final lastEmittedAt = _lastFreeNodesProgressEmittedAt;
+    final delay = lastEmittedAt == null
+        ? Duration.zero
+        : _freeNodesProgressMinInterval - now.difference(lastEmittedAt);
+    _freeNodesProgressThrottleTimer = Timer(
+      delay.isNegative ? Duration.zero : delay,
+      () {
+        _freeNodesProgressThrottleTimer = null;
+        final pendingProgress = _pendingFreeNodesProgress;
+        _pendingFreeNodesProgress = null;
+        if (pendingProgress == null || !ref.mounted) return;
+        _emitFreeNodesProgress(pendingProgress, DateTime.now());
+      },
+    );
+  }
+
+  bool _shouldEmitFreeNodesProgressImmediately(
+    FreeNodesProgress progress,
+    DateTime now,
+  ) {
+    if (progress.done || progress.error) return true;
+    if (progress.completed <= 0 && progress.total <= 0) return true;
+    final lastEmittedAt = _lastFreeNodesProgressEmittedAt;
+    if (lastEmittedAt == null) return true;
+    return now.difference(lastEmittedAt) >= _freeNodesProgressMinInterval;
+  }
+
+  void _emitFreeNodesProgress(FreeNodesProgress progress, DateTime now) {
     ref.read(freeNodesFetchProgressProvider.notifier).value = progress;
+    _lastFreeNodesProgressEmittedAt = now;
   }
 
   Future<Profile> _updateFreeNodesProfile(
