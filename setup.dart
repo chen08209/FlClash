@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 
@@ -199,7 +200,39 @@ Future<int> _package(
     stderr.write(utf8.decode(data));
   });
   final exitCode = await process.exitCode;
+  if (exitCode == 0 && platform == 'windows') {
+    await _injectPortableConfigDir(rootDir);
+  }
   return exitCode;
+}
+
+Future<void> _injectPortableConfigDir(String rootDir) async {
+  final distDir = Directory(p.join(rootDir, 'dist'));
+  if (!await distDir.exists()) return;
+  await for (final entity in distDir.list(recursive: true)) {
+    if (entity is! File || !entity.path.toLowerCase().endsWith('.zip')) {
+      continue;
+    }
+    try {
+      await injectPortableConfigDirIntoZip(entity.path);
+      stdout.writeln('Injected config/ into ${entity.path}');
+    } catch (e) {
+      stderr.writeln('Failed to inject config/ into ${entity.path}: $e');
+    }
+  }
+}
+
+Future<void> injectPortableConfigDirIntoZip(String zipPath) async {
+  final bytes = await File(zipPath).readAsBytes();
+  final archive = ZipDecoder().decodeBytes(bytes);
+  if (archive.find('config/') != null) {
+    return;
+  }
+  archive.addFile(ArchiveFile.directory('config/'));
+  final encoded = ZipEncoder().encode(archive);
+  final tmp = File('$zipPath.tmp');
+  await tmp.writeAsBytes(encoded, flush: true);
+  await tmp.rename(zipPath);
 }
 
 String _detectArch() {
