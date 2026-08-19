@@ -154,6 +154,13 @@ func handleMethodCall(call *MethodCall, response MethodResponse) {
 		}
 		response.success(handleGetTotalTraffic(onlyStatisticsProxy))
 		return
+	case getTrafficSnapshotMethod:
+		onlyStatisticsProxy := false
+		if !decodeMethodArguments(call, response, &onlyStatisticsProxy) {
+			return
+		}
+		response.success(handleGetTrafficSnapshot(onlyStatisticsProxy))
+		return
 	case resetTrafficMethod:
 		handleResetTraffic()
 		response.success(true)

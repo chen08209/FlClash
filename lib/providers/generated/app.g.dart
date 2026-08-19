@@ -93,7 +93,7 @@ final class LogsProvider extends $NotifierProvider<Logs, FixedList<Log>> {
   }
 }
 
-String _$logsHash() => r'2f10830d8a103688a59afce45ab6c52a82f38ca2';
+String _$logsHash() => r'ae3b2ff2f6cf8d68ebdcec2bbac5a3df8f60e95c';
 
 abstract class _$Logs extends $Notifier<FixedList<Log>> {
   FixedList<Log> build();
@@ -145,7 +145,7 @@ final class RequestsProvider
   }
 }
 
-String _$requestsHash() => r'32e4f0141a66b27732f8156a55a6fb23d74cfc07';
+String _$requestsHash() => r'ef05719338a44d68893d04495dbe00ecfaa899fe';
 
 abstract class _$Requests extends $Notifier<FixedList<TrackerInfo>> {
   FixedList<TrackerInfo> build();
@@ -355,7 +355,7 @@ final class TrafficsProvider
   }
 }
 
-String _$trafficsHash() => r'00b83d393175b51abcef277417fb3d9b70cc247f';
+String _$trafficsHash() => r'9c6cf8a7f3fc9917a19bc577412e7bc224904e79';
 
 abstract class _$Traffics extends $Notifier<FixedList<Traffic>> {
   FixedList<Traffic> build();
@@ -420,6 +420,59 @@ abstract class _$TotalTraffic extends $Notifier<Traffic> {
             as $ClassProviderElement<
               AnyNotifier<Traffic, Traffic>,
               Traffic,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ConnectionsSnapshot)
+final connectionsSnapshotProvider = ConnectionsSnapshotProvider._();
+
+final class ConnectionsSnapshotProvider
+    extends $NotifierProvider<ConnectionsSnapshot, List<TrackerInfo>> {
+  ConnectionsSnapshotProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'connectionsSnapshotProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$connectionsSnapshotHash();
+
+  @$internal
+  @override
+  ConnectionsSnapshot create() => ConnectionsSnapshot();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<TrackerInfo> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<TrackerInfo>>(value),
+    );
+  }
+}
+
+String _$connectionsSnapshotHash() =>
+    r'4ffa6dea2505521a9a428002f5f6fbcb9a417bc7';
+
+abstract class _$ConnectionsSnapshot extends $Notifier<List<TrackerInfo>> {
+  List<TrackerInfo> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<TrackerInfo>, List<TrackerInfo>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<TrackerInfo>, List<TrackerInfo>>,
+              List<TrackerInfo>,
               Object?,
               Object?
             >;

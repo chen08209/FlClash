@@ -38,6 +38,25 @@ abstract mixin class CoreEventListener {
     bool skipped,
     String? error,
   ) {}
+
+  void onTraffic(Map<String, dynamic> snapshot) {}
+
+  void onConnections(List<TrackerInfo> connections) {}
+}
+
+List<TrackerInfo> parseConnectionsEventData(dynamic data) {
+  List<dynamic>? raw;
+  if (data is Map) {
+    raw = data['connections'] as List?;
+  } else if (data is List) {
+    raw = data;
+  }
+  if (raw == null || raw.isEmpty) {
+    return const [];
+  }
+  return raw
+      .map((e) => TrackerInfo.fromJson(Map<String, Object?>.from(e as Map)))
+      .toList();
 }
 
 class CoreEventManager {
@@ -71,6 +90,15 @@ class CoreEventManager {
                 data['skipped'] as bool? ?? false,
                 data['error'] as String?,
               );
+              break;
+            case CoreEventType.traffic:
+              final raw = event.data;
+              if (raw is Map) {
+                listener.onTraffic(Map<String, dynamic>.from(raw));
+              }
+              break;
+            case CoreEventType.connections:
+              listener.onConnections(parseConnectionsEventData(event.data));
               break;
           }
         } catch (error) {

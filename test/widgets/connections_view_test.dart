@@ -132,7 +132,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
 
-    expect(readCount, 2);
+    expect(readCount, 1);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -147,7 +147,7 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 3));
 
-    expect(readCount, 2);
+    expect(readCount, 1);
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());

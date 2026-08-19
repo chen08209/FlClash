@@ -33,6 +33,16 @@ void main() {
       expect(copy.list, [2, 3, 4]);
     });
 
+    test('notifyClone shares storage but has new identity', () {
+      final original = FixedList(3, list: [1, 2]);
+      final clone = original.notifyClone();
+      expect(identical(original, clone), isFalse);
+      original.add(3);
+      expect(clone.list, [1, 2, 3]);
+      clone.add(4);
+      expect(original.list, [2, 3, 4]);
+    });
+
     test('operator [] returns correct element', () {
       final list = FixedList(5, list: [10, 20, 30]);
       expect(list[0], 10);

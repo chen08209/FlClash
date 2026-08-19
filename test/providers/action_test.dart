@@ -317,7 +317,7 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 1100));
 
         expect(container.read(runTimeProvider), greaterThan(initialRunTime));
-        expect(commonAction.updateTrafficCount, greaterThanOrEqualTo(2));
+        expect(commonAction.updateTrafficCount, greaterThanOrEqualTo(1));
 
         startCompleter.complete(true);
         await startFuture;

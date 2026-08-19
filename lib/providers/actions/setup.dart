@@ -50,6 +50,8 @@ class SetupAction extends _$SetupAction {
 
     _startTime ??= DateTime.now();
     _refreshRunningState();
+    // One-shot pull for immediate UI before the first push event.
+    unawaited(ref.read(commonActionProvider.notifier).updateTraffic());
     _runtimeTimer = Timer.periodic(
       const Duration(seconds: 1),
       (_) => _refreshRunningState(),
@@ -58,7 +60,8 @@ class SetupAction extends _$SetupAction {
 
   void _refreshRunningState() {
     _updateRunTime();
-    unawaited(ref.read(commonActionProvider.notifier).updateTraffic());
+    // Traffic counters are pushed from core while the listener is running
+    // (PERF-11). Keep runtime ticks only here.
   }
 
   void _updateRunTime() {
