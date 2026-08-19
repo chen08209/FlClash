@@ -211,11 +211,7 @@ DashboardState dashboardState(Ref ref) {
   final dashboardWidgets = ref.watch(
     appSettingProvider.select((state) => state.dashboardWidgets),
   );
-  final contentWidth = ref.watch(contentWidthProvider);
-  return DashboardState(
-    dashboardWidgets: dashboardWidgets,
-    contentWidth: contentWidth,
-  );
+  return DashboardState(dashboardWidgets: dashboardWidgets);
 }
 
 @riverpod
@@ -238,14 +234,7 @@ ProxiesActionsState proxiesActionsState(Ref ref) {
 ProfilesState profilesState(Ref ref) {
   final currentProfileId = ref.watch(currentProfileIdProvider);
   final profiles = ref.watch(profilesProvider);
-  final columns = ref.watch(
-    contentWidthProvider.select((state) => utils.getProfilesColumns(state)),
-  );
-  return ProfilesState(
-    profiles: profiles,
-    currentProfileId: currentProfileId,
-    columns: columns,
-  );
+  return ProfilesState(profiles: profiles, currentProfileId: currentProfileId);
 }
 
 @riverpod
@@ -276,7 +265,6 @@ ProxiesListState proxiesListState(Ref ref) {
   final cardType = ref.watch(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );
-
   final columns = ref.watch(proxiesColumnsProvider);
   return ProxiesListState(
     groups: currentGroups.value,
@@ -296,12 +284,10 @@ ProxiesTabState proxiesTabState(Ref ref) {
   final cardType = ref.watch(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );
-  final columns = ref.watch(proxiesColumnsProvider);
   return ProxiesTabState(
     groups: currentGroups.value,
     currentGroupName: currentGroupName,
     proxyCardType: cardType,
-    columns: columns,
   );
 }
 
@@ -339,7 +325,6 @@ ProxyGroupSelectorState proxyGroupSelectorState(
     ),
   );
   final sortNum = ref.watch(sortNumProvider);
-  final columns = ref.watch(proxiesColumnsProvider);
   final lowQuery = query.toLowerCase();
   final proxies =
       group?.all.where((item) {
@@ -353,7 +338,6 @@ ProxyGroupSelectorState proxyGroupSelectorState(
     sortNum: sortNum,
     groupType: group?.type ?? GroupType.Selector,
     proxies: proxies,
-    columns: columns,
   );
 }
 
@@ -571,9 +555,6 @@ ColorScheme genColorScheme(
     ),
   );
   if (color == null && (ignoreConfig == true || vm2.a == null)) {
-    // if (globalState.corePalette != null) {
-    //   return globalState.corePalette!.toColorScheme(brightness: brightness);
-    // }
     return ColorScheme.fromSeed(
       seedColor:
           globalState.corePalette

@@ -440,6 +440,7 @@
   "expectedStatus": "期待されるステータス",
   "selectProxies": "プロキシを選択",
   "inputProxyGroupName": "プロキシグループ名を入力",
+  "helperCorruptTip": "Helper サービスが利用できないため、TUN モードを有効にできません。再インストールしてください。",
   "hideFromList": "リストから隠す",
   "testWhenUsed": "使用時にテスト",
   "disableUDP": "UDPを無効化",

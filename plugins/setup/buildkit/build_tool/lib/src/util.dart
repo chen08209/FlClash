@@ -91,6 +91,24 @@ Future<String> calcSha256(String filePath) async {
   return hash.toString();
 }
 
+const coreManifestName = 'manifest.json';
+
+void writeCoreManifest({
+  required String path,
+  required String coreSha256,
+}) {
+  if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(coreSha256)) {
+    throw BuildException('Invalid Core SHA256: $coreSha256');
+  }
+
+  final manifest = File(path);
+  ensureDir(manifest.parent.path);
+  manifest.writeAsStringSync(
+    '${jsonEncode({'coreSha256': coreSha256})}\n',
+    flush: true,
+  );
+}
+
 void ensureDir(String dirPath) {
   final dir = Directory(dirPath);
   if (!dir.existsSync()) {

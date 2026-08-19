@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -10,7 +13,9 @@ import 'package:super_sliver_list/super_sliver_list.dart';
 import 'item.dart';
 
 class ConnectionsView extends ConsumerStatefulWidget {
-  const ConnectionsView({super.key});
+  final Future<List<TrackerInfo>> Function()? connectionsReader;
+
+  const ConnectionsView({super.key, @visibleForTesting this.connectionsReader});
 
   @override
   ConsumerState<ConnectionsView> createState() => _ConnectionsViewState();
@@ -22,6 +27,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     const TrackerInfosState(),
   );
   final ScrollController _scrollController = ScrollController();
+  bool _wasPageActive = false;
 
   List<Widget> _buildActions() {
     return [
@@ -51,6 +57,9 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     if (!mounted) {
       return false;
     }
+    if (!PageActivityScope.isActiveOf(context)) {
+      return false;
+    }
     final route = ModalRoute.of(context);
     if (route != null && !route.isCurrent) {
       return false;
@@ -58,6 +67,20 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     return WidgetsBinding.instance.lifecycleState ==
             AppLifecycleState.resumed ||
         WidgetsBinding.instance.lifecycleState == null;
+  }
+
+  void _syncConnectionsOnActivation() {
+    final isPageActive = _isPageActive;
+    if (isPageActive && !_wasPageActive) {
+      unawaited(_updateConnections());
+    }
+    _wasPageActive = isPageActive;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncConnectionsOnActivation();
   }
 
   @override
@@ -69,12 +92,6 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
         return;
       }
       _applyTrackerInfos(next);
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) {
-        return;
-      }
-      await _updateConnections();
     });
   }
 
@@ -119,11 +136,21 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   }
 
   Future<void> _updateConnections() async {
-    final trackerInfos = await coreController.getConnections();
-    if (!mounted) {
-      return;
+    try {
+      final connectionsReader = widget.connectionsReader;
+      final trackerInfos = connectionsReader != null
+          ? await connectionsReader()
+          : await coreController.getConnections();
+      if (!mounted) {
+        return;
+      }
+      _applyTrackerInfos(trackerInfos);
+    } catch (error) {
+      commonPrint.log(
+        'updateConnections error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
     }
-    _applyTrackerInfos(trackerInfos);
   }
 
   Future<void> _handleBlockConnection(String id) async {

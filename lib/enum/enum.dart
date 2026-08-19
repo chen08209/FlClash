@@ -146,10 +146,6 @@ enum RestoreOption { all, onlyProfiles }
 enum ChipType { action, delete }
 
 enum CommonCardType { plain, filled }
-//
-// extension CommonCardTypeExt on CommonCardType {
-//   CommonCardType get variant => CommonCardType.plain;
-// }
 
 enum ProxiesType { tab, list }
 
@@ -439,12 +435,7 @@ extension RuleActionExt on RuleAction {
 
 enum OverrideRuleType { override, added }
 
-enum OverwriteType {
-  // none,
-  standard,
-  script,
-  custom,
-}
+enum OverwriteType { standard, script, custom }
 
 enum RuleTarget {
   DIRECT,
@@ -452,13 +443,6 @@ enum RuleTarget {
 
   static Set<String> get baseTargets =>
       RuleTarget.values.map((item) => item.name).toSet();
-
-  // static bool isBaseRuleTarget(String? target) {
-  //   return RuleTarget.values.indexWhere(
-  //         (item) => item.name == target?.toUpperCase(),
-  //       ) !=
-  //       -1;
-  // }
 }
 
 enum RestoreStrategy { compatible, override }

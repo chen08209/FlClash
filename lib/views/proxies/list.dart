@@ -55,6 +55,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
   );
   List<double> _headerOffset = [];
   double containerHeight = 0;
+  int _columns = 1;
 
   @override
   void initState() {
@@ -309,12 +310,14 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     final currentInitOffset = _getGroupOffset(groupName);
     final currentGroups = getCurrentGroups();
     final proxies = currentGroups.getGroup(groupName)?.all;
+    final columns = _columns;
     _jumpTo(
       currentInitOffset +
           8 +
           getScrollToSelectedOffset(
             groupName: groupName,
             proxies: proxies ?? [],
+            columns: columns,
           ),
     );
   }
@@ -338,6 +341,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     return Consumer(
       builder: (_, ref, _) {
         final state = ref.watch(proxiesListStateProvider);
+        _columns = state.columns;
         ref.watch(themeSettingProvider.select((state) => state.textScale));
         if (state.groups.isEmpty) {
           return NullStatus(
@@ -525,6 +529,7 @@ class _ListHeaderState extends State<ListHeader> {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
+      enterActionsOnRight: true,
       enterAnimated: widget.enterAnimated,
       key: widget.key,
       radius: 18.ap,

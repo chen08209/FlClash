@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/core/desktop/lifecycle.dart';
 import 'package:fl_clash/core/desktop/model.dart';
+import 'package:fl_clash/core/desktop/transport.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'fakes.dart';
@@ -141,6 +142,237 @@ void main() {
     expect(lifecycle.state, isA<DesktopCoreIdle>());
     expect(launcher.startCount, 0);
     await lifecycle.close();
+  });
+
+  test('stop queued behind a failing start still runs', () async {
+    final transport = FakeDesktopCoreTransport();
+    final launcher = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42)
+      ..startGate = Completer<void>()
+      ..startError = StateError('spawn failed');
+    final lifecycle = _createLifecycle(
+      transport: transport,
+      resolver: MutableLauncherResolver(launcher),
+    );
+
+    final start = lifecycle.start();
+    transport.ready();
+    await launcher.started;
+    final stop = lifecycle.stop();
+    launcher.startGate!.complete();
+
+    await expectLater(start, throwsA(isA<DesktopCoreFailure>()));
+    final stopResult = await stop;
+    expect(stopResult.outcome, CoreLifecycleOutcome.applied);
+    expect(lifecycle.state, isA<DesktopCoreIdle>());
+    await lifecycle.close();
+  });
+
+  test('stop queued behind a start that leaks a lease releases it', () async {
+    final transport = FakeDesktopCoreTransport();
+    final launcher = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42);
+    launcher.lease.stopResult = const CoreProcessStopResult(
+      stopped: true,
+      exitConfirmed: false,
+    );
+    final lifecycle = _createLifecycle(
+      transport: transport,
+      resolver: MutableLauncherResolver(launcher),
+    );
+
+    final start = lifecycle.start();
+    transport.ready();
+    await launcher.started;
+    // A session mismatch forces `_startSession` to clean the lease, which
+    // cannot confirm the exit and parks it as `_unconfirmedLease`.
+    transport.connect(pid: 7, generation: 1);
+    final stop = lifecycle.stop();
+
+    await expectLater(start, throwsA(isA<DesktopCoreFailure>()));
+    launcher.lease.stopResult = const CoreProcessStopResult(
+      stopped: true,
+      exitConfirmed: true,
+    );
+    final stopResult = await stop;
+    expect(stopResult.outcome, CoreLifecycleOutcome.applied);
+    expect(launcher.lease.stopCount, greaterThanOrEqualTo(2));
+    expect(lifecycle.state, isA<DesktopCoreIdle>());
+    await lifecycle.close();
+  });
+
+  test('start queued behind a failing stop keeps one Core', () async {
+    final transport = FakeDesktopCoreTransport();
+    final direct = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42);
+    final helper = FakeLauncher(owner: CoreProcessOwner.windowsHelper, pid: 84);
+    final resolver = MutableLauncherResolver(direct);
+    final lifecycle = _createLifecycle(
+      transport: transport,
+      resolver: resolver,
+    );
+    await _startConnected(lifecycle, transport, direct, pid: 42);
+    direct.lease.stopResult = const CoreProcessStopResult(
+      stopped: true,
+      exitConfirmed: false,
+    );
+    direct.lease.stopGate = Completer<void>();
+    resolver.launcher = helper;
+
+    final stop = lifecycle.stop();
+    await direct.lease.stopStarted;
+    final start = lifecycle.start();
+    direct.lease.stopGate!.complete();
+
+    await expectLater(stop, throwsA(_hasCode('process_exit_unconfirmed')));
+    await expectLater(start, throwsA(_hasCode('process_exit_unconfirmed')));
+    expect(helper.startCount, 0);
+    expect(direct.lease.stopCount, 2);
+    expect(lifecycle.state, isA<DesktopCoreFailed>());
+    await lifecycle.close();
+  });
+
+  test('start after a failed stop keeps one Core', () async {
+    final transport = FakeDesktopCoreTransport();
+    final direct = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42);
+    final helper = FakeLauncher(owner: CoreProcessOwner.windowsHelper, pid: 84);
+    final resolver = MutableLauncherResolver(direct);
+    final lifecycle = _createLifecycle(
+      transport: transport,
+      resolver: resolver,
+    );
+    await _startConnected(lifecycle, transport, direct, pid: 42);
+    direct.lease.stopResult = const CoreProcessStopResult(
+      stopped: true,
+      exitConfirmed: false,
+    );
+    resolver.launcher = helper;
+
+    await expectLater(
+      lifecycle.stop(),
+      throwsA(_hasCode('process_exit_unconfirmed')),
+    );
+    await expectLater(
+      lifecycle.start(),
+      throwsA(_hasCode('process_exit_unconfirmed')),
+    );
+
+    expect(helper.startCount, 0);
+    expect(direct.lease.stopCount, 2);
+    await lifecycle.close();
+  });
+
+  test(
+    'disconnect between stop attempts is retained for the owned session',
+    () async {
+      final transports = <FakeDesktopCoreTransport>[];
+      FakeDesktopCoreTransport createTransport() {
+        final transport = FakeDesktopCoreTransport(
+          address: 'test-address-${transports.length + 1}',
+        );
+        transports.add(transport);
+        return transport;
+      }
+
+      final direct = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42);
+      final helper = FakeLauncher(
+        owner: CoreProcessOwner.windowsHelper,
+        pid: 84,
+      );
+      final resolver = MutableLauncherResolver(direct);
+      final lifecycle = DesktopCoreLifecycle(
+        transportFactory: createTransport,
+        launcherResolver: resolver,
+        sessionIdFactory: () => _sessionId,
+        verifyPeerPid: true,
+        timeouts: const DesktopCoreTimeouts(
+          ready: Duration(seconds: 1),
+          connection: Duration(seconds: 1),
+          disconnection: Duration(milliseconds: 10),
+        ),
+      );
+      final firstTransport = transports.single;
+      await _startConnected(lifecycle, firstTransport, direct, pid: 42);
+      direct.lease.stopResult = const CoreProcessStopResult(
+        stopped: true,
+        exitConfirmed: false,
+      );
+
+      await expectLater(
+        lifecycle.stop(),
+        throwsA(_hasCode('process_exit_unconfirmed')),
+      );
+      firstTransport.disconnect(1);
+      await pumpEventQueue();
+      direct.lease.stopResult = const CoreProcessStopResult(
+        stopped: true,
+        exitConfirmed: true,
+      );
+      direct.lease.stopGate = Completer<void>();
+      resolver.launcher = helper;
+
+      final start = lifecycle.start();
+      await pumpEventQueue();
+      expect(direct.lease.stopCount, 2);
+      expect(helper.startCount, 0);
+      direct.lease.stopGate!.complete();
+      await helper.started;
+      final activeTransport = transports.last;
+      if (activeTransport.state != DesktopTransportState.ready &&
+          activeTransport.state != DesktopTransportState.connected) {
+        activeTransport.ready();
+      }
+      final generation = identical(activeTransport, firstTransport) ? 2 : 1;
+      activeTransport.connect(pid: 84, generation: generation);
+      await start;
+      final transportCount = transports.length;
+      await _closeRunning(lifecycle, activeTransport, helper.lease, generation);
+
+      expect(transportCount, 1);
+    },
+  );
+
+  test('start superseded while connecting never publishes running', () async {
+    for (var microtasks = 0; microtasks <= 12; microtasks++) {
+      final reason = 'microtasks: $microtasks';
+      final transport = FakeDesktopCoreTransport();
+      final launcher = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42)
+        ..startGate = Completer<void>();
+      final lifecycle = _createLifecycle(
+        transport: transport,
+        resolver: MutableLauncherResolver(launcher),
+      );
+      final states = <DesktopCoreState>[];
+      final subscription = lifecycle.states.listen((state) {
+        states.add(state);
+        if (state is DesktopCoreStopping) {
+          scheduleMicrotask(() => transport.disconnect(1));
+        }
+      });
+
+      final start = lifecycle.start();
+      transport.ready();
+      await launcher.started;
+      transport.connect(pid: 42, generation: 1);
+      await pumpEventQueue();
+
+      Future<CoreLifecycleResult>? stop;
+      var runningBeforeStop = false;
+      launcher.startGate!.complete();
+      _afterMicrotasks(microtasks, () {
+        runningBeforeStop = lifecycle.state is DesktopCoreRunning;
+        stop = lifecycle.stop();
+      });
+      await pumpEventQueue();
+
+      final stopResult = await stop!;
+      await start;
+      if (!runningBeforeStop) {
+        expect(states.whereType<DesktopCoreRunning>(), isEmpty, reason: reason);
+      }
+      expect(stopResult.outcome, CoreLifecycleOutcome.applied, reason: reason);
+      expect(launcher.lease.stopCount, 1, reason: reason);
+      expect(lifecycle.state, isA<DesktopCoreIdle>(), reason: reason);
+      await subscription.cancel();
+      await lifecycle.close();
+    }
   });
 
   test(
@@ -337,7 +569,7 @@ void main() {
         timeouts: const DesktopCoreTimeouts(
           ready: Duration(seconds: 1),
           connection: Duration(seconds: 1),
-          disconnection: Duration(milliseconds: 10),
+          disconnection: Duration(minutes: 1),
         ),
       );
       final firstTransport = transports.single;
@@ -345,17 +577,27 @@ void main() {
       resolver.launcher = helper;
 
       final restart = lifecycle.restart();
-      await firstTransport.closed;
-      expect(transports, hasLength(2));
-      final replacement = transports.last;
-      replacement.ready();
+      await direct.lease.stopStarted;
+      await pumpEventQueue();
+      final replacedBeforeDisconnectionTimeout = firstTransport.closeCount == 1;
+      if (!replacedBeforeDisconnectionTimeout) {
+        firstTransport.disconnect(1);
+      }
+      final activeTransport = transports.last;
+      if (activeTransport.state != DesktopTransportState.ready &&
+          activeTransport.state != DesktopTransportState.connected) {
+        activeTransport.ready();
+      }
       await helper.started;
-      replacement.connect(pid: 84, generation: 1);
+      final generation = identical(activeTransport, firstTransport) ? 2 : 1;
+      activeTransport.connect(pid: 84, generation: generation);
 
       final result = await restart;
       expect(result.session?.owner, CoreProcessOwner.windowsHelper);
+      await _closeRunning(lifecycle, activeTransport, helper.lease, generation);
+      expect(transports, hasLength(2));
       expect(firstTransport.closeCount, 1);
-      await _closeRunning(lifecycle, replacement, helper.lease, 1);
+      expect(replacedBeforeDisconnectionTimeout, isTrue);
     },
   );
 
@@ -453,6 +695,18 @@ void main() {
       await lifecycle.close();
     },
   );
+}
+
+Matcher _hasCode(String code) {
+  return isA<DesktopCoreFailure>().having((error) => error.code, 'code', code);
+}
+
+void _afterMicrotasks(int count, void Function() action) {
+  if (count == 0) {
+    action();
+    return;
+  }
+  scheduleMicrotask(() => _afterMicrotasks(count - 1, action));
 }
 
 DesktopCoreLifecycle _createLifecycle({

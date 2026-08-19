@@ -199,9 +199,6 @@ class Avatar extends StatelessWidget {
           Text(contributor.name, style: context.textTheme.bodySmall),
         ],
       ),
-      // onTap: () {
-      //   globalState.openUrl(contributor.link);
-      // },
     );
   }
 }

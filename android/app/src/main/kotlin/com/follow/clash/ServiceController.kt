@@ -42,9 +42,9 @@ object ServiceController {
         binding = null
     }
 
-    fun invokeMethod(data: String, callback: ((String) -> Unit)?): Result<Unit> = runCatching {
+    fun invokeMethod(data: String, callback: (String) -> Unit): Result<Unit> = runCatching {
         Core.invokeMethod(data) { result ->
-            callback?.invoke(result.orEmpty())
+            callback(result.orEmpty())
         }
     }
 
@@ -63,7 +63,7 @@ object ServiceController {
         Core.updateEventListener(callback)
     }
 
-    suspend fun start(options: VpnOptions, previousRunTimeMillis: Long): Long = lock.withLock {
+    suspend fun start(options: VpnOptions): Long = lock.withLock {
         ServiceConfig.updateVpnOptions(options)
         val nextIntent = if (options.enable) {
             VpnService::class.intent
@@ -99,19 +99,19 @@ object ServiceController {
             return@withLock runTimeMillis
         }
 
-        runTimeMillis = previousRunTimeMillis.takeIf { it != 0L }
-            ?: System.currentTimeMillis()
+        if (runTimeMillis == 0L) {
+            runTimeMillis = System.currentTimeMillis()
+        }
         runTimeMillis
     }
 
-    suspend fun stop(): Long = lock.withLock {
+    suspend fun stop() = lock.withLock {
         binding?.useService { service -> service.stop() }
             ?.onFailure { error ->
                 GlobalState.log("Unable to stop background service: $error")
             }
         clearBinding()
         runTimeMillis = 0L
-        runTimeMillis
     }
 
     suspend fun isVpnServiceActive(): Boolean = lock.withLock {
@@ -124,14 +124,19 @@ object ServiceController {
         disconnectedBinding: ManagedServiceBinding,
         message: String,
     ) {
+        val token = ServiceState.captureRequestToken()
         GlobalState.launch {
-            lock.withLock {
+            val wasCurrent = lock.withLock {
                 if (binding !== disconnectedBinding) {
-                    return@withLock
+                    return@withLock false
                 }
                 GlobalState.log("Background service disconnected: $message")
                 clearBinding()
                 runTimeMillis = 0L
+                true
+            }
+            if (wasCurrent) {
+                ServiceState.handleServiceLost(token)
             }
         }
     }

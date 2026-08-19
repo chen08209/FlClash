@@ -31,10 +31,17 @@ class CommonAction extends _$CommonAction {
     final onlyStatisticsProxy = ref.read(
       appSettingProvider.select((state) => state.onlyStatisticsProxy),
     );
-    final snapshot = await coreController.getTrafficSnapshot(
-      onlyStatisticsProxy,
-    );
-    applyTrafficSnapshot(now: snapshot.now, total: snapshot.total);
+    try {
+      final snapshot = await coreController.getTrafficSnapshot(
+        onlyStatisticsProxy,
+      );
+      applyTrafficSnapshot(now: snapshot.now, total: snapshot.total);
+    } catch (error) {
+      commonPrint.log(
+        'updateTraffic error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
   }
 
   void applyTrafficSnapshot({required Traffic now, required Traffic total}) {

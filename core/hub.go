@@ -280,7 +280,6 @@ func stopTrafficPushLocked() {
 	}
 }
 
-
 func handleAsyncTestDelay(params *TestDelayParams, fn func(*Delay)) {
 	batchKey := params.ProxyName + "\x00" + params.TestUrl
 	mBatch.Go(batchKey, func() (bool, error) {

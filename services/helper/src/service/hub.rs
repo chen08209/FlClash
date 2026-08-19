@@ -11,8 +11,9 @@ use std::io::{BufRead, Error, Read};
 #[cfg(windows)]
 use std::os::windows::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::sync::{Arc, Mutex};
+use std::process::{Child, Command, Stdio};
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
 use std::{io, thread};
 use warp::http::StatusCode;
 use warp::{Filter, Rejection, Reply};
@@ -22,8 +23,11 @@ use windows_sys::Win32::Storage::FileSystem::FILE_SHARE_READ;
 const LISTEN_PORT: u16 = 47890;
 const CORE_PIPE_PREFIX: &str = r"\\.\pipe\FlClashCore_";
 const PROTOCOL_VERSION_HEADER: &str = "x-flclash-helper-protocol";
-const PROTOCOL_VERSION: &str = "5";
+const PROTOCOL_VERSION: &str = "6";
 const EXPECTED_CORE_SHA256: &str = env!("CORE_SHA256");
+const LOG_CAPACITY: usize = 100;
+const CORE_EXIT_TIMEOUT: Duration = Duration::from_millis(1500);
+const CORE_EXIT_POLL_INTERVAL: Duration = Duration::from_millis(20);
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
@@ -38,6 +42,13 @@ pub struct StartParams {
 pub struct StopParams {
     #[serde(rename = "sessionId")]
     pub session_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PingParams {
+    #[serde(rename = "coreSha256")]
+    core_sha256: String,
 }
 
 #[derive(Serialize)]
@@ -64,7 +75,53 @@ struct ErrorResponse {
 
 struct ManagedCore {
     session_id: String,
-    child: std::process::Child,
+    child: Child,
+}
+
+impl ManagedCore {
+    fn terminate(&mut self) -> Result<(), Error> {
+        let _ = self.child.kill();
+        let deadline = Instant::now() + CORE_EXIT_TIMEOUT;
+        loop {
+            if self.child.try_wait()?.is_some() {
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                return Err(Error::other("Core did not exit after termination"));
+            }
+            thread::sleep(CORE_EXIT_POLL_INTERVAL);
+        }
+    }
+}
+
+struct VerifiedCore {
+    path: PathBuf,
+    directory: PathBuf,
+    _handle: File,
+}
+
+impl VerifiedCore {
+    fn open() -> Result<Self, Error> {
+        let path = core_path()?;
+        let directory = path
+            .parent()
+            .ok_or_else(|| Error::other("Core executable has no parent directory"))?
+            .to_path_buf();
+        let handle = open_verified_core(&path, EXPECTED_CORE_SHA256)?;
+        Ok(Self {
+            path,
+            directory,
+            _handle: handle,
+        })
+    }
+
+    fn spawn(&self, address: &str) -> Result<Child, Error> {
+        Command::new(&self.path)
+            .current_dir(&self.directory)
+            .stderr(Stdio::piped())
+            .arg(address)
+            .spawn()
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -116,12 +173,6 @@ fn open_verified_core(path: &Path, expected_sha256: &str) -> Result<File, Error>
     Ok(core_file)
 }
 
-fn open_fixed_verified_core() -> Result<(PathBuf, File), Error> {
-    let path = core_path()?;
-    let file = open_verified_core(&path, EXPECTED_CORE_SHA256)?;
-    Ok((path, file))
-}
-
 fn is_allowed_core_pipe(address: &str) -> bool {
     let Some(suffix) = address.strip_prefix(CORE_PIPE_PREFIX) else {
         return false;
@@ -144,10 +195,18 @@ fn stop_decision(current: Option<&str>, requested: &str) -> StopDecision {
     }
 }
 
-static LOGS: Lazy<Arc<Mutex<VecDeque<String>>>> =
-    Lazy::new(|| Arc::new(Mutex::new(VecDeque::with_capacity(100))));
-static PROCESS: Lazy<Arc<Mutex<Option<ManagedCore>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
-static PROCESS_OPERATION: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+static LOGS: Lazy<Mutex<VecDeque<String>>> =
+    Lazy::new(|| Mutex::new(VecDeque::with_capacity(LOG_CAPACITY)));
+static MANAGED_CORE: Lazy<Mutex<Option<ManagedCore>>> = Lazy::new(|| Mutex::new(None));
+
+fn release_managed_core(managed: &mut Option<ManagedCore>) -> Result<(), Error> {
+    let Some(core) = managed.as_mut() else {
+        return Ok(());
+    };
+    core.terminate()?;
+    *managed = None;
+    Ok(())
+}
 
 fn json_response<T: Serialize>(value: &T, status: StatusCode) -> warp::reply::Response {
     warp::reply::with_status(warp::reply::json(value), status).into_response()
@@ -183,8 +242,18 @@ fn start(start_params: StartParams) -> warp::reply::Response {
         );
     }
 
-    let _operation = PROCESS_OPERATION.lock().unwrap();
-    let (core_path, _core_file) = match open_fixed_verified_core() {
+    let mut managed = MANAGED_CORE.lock().unwrap();
+    if let Err(error) = release_managed_core(&mut managed) {
+        log_message(format!(
+            "Helper could not release the managed Core: {error}"
+        ));
+        return error_response(
+            "coreStopFailed",
+            error.to_string(),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        );
+    }
+    let core = match VerifiedCore::open() {
         Ok(core) => core,
         Err(error) => {
             return error_response(
@@ -195,14 +264,7 @@ fn start(start_params: StartParams) -> warp::reply::Response {
         }
     };
 
-    stop_core_locked();
-    let mut process = PROCESS.lock().unwrap();
-    match Command::new(&core_path)
-        .current_dir(core_path.parent().unwrap())
-        .stderr(Stdio::piped())
-        .arg(&start_params.address)
-        .spawn()
-    {
+    match core.spawn(&start_params.address) {
         Ok(mut child) => {
             let process_id = child.id();
             if let Some(stderr) = child.stderr.take() {
@@ -220,7 +282,7 @@ fn start(start_params: StartParams) -> warp::reply::Response {
                     }
                 });
             }
-            *process = Some(ManagedCore {
+            *managed = Some(ManagedCore {
                 session_id: start_params.session_id.clone(),
                 child,
             });
@@ -251,10 +313,9 @@ fn stop_core(stop_params: StopParams) -> warp::reply::Response {
             StatusCode::BAD_REQUEST,
         );
     }
-    let _operation = PROCESS_OPERATION.lock().unwrap();
-    let mut process = PROCESS.lock().unwrap();
+    let mut managed = MANAGED_CORE.lock().unwrap();
     match stop_decision(
-        process.as_ref().map(|managed| managed.session_id.as_str()),
+        managed.as_ref().map(|core| core.session_id.as_str()),
         &stop_params.session_id,
     ) {
         StopDecision::NotRunning => json_response(
@@ -273,43 +334,33 @@ fn stop_core(stop_params: StopParams) -> warp::reply::Response {
             },
             StatusCode::CONFLICT,
         ),
-        StopDecision::Stop => {
-            if let Some(mut managed) = process.take() {
-                let _ = managed.child.kill();
-                let _ = managed.child.wait();
-            }
-            json_response(
+        StopDecision::Stop => match release_managed_core(&mut managed) {
+            Ok(()) => json_response(
                 &StopResponse {
                     session_id: stop_params.session_id,
                     stopped: true,
                     reason: None,
                 },
                 StatusCode::OK,
-            )
-        }
+            ),
+            Err(error) => {
+                log_message(format!("Helper could not stop the managed Core: {error}"));
+                error_response(
+                    "coreStopFailed",
+                    error.to_string(),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )
+            }
+        },
     }
-}
-
-fn stop_core_unconditional() {
-    let _operation = PROCESS_OPERATION.lock().unwrap();
-    stop_core_locked();
-}
-
-fn stop_core_locked() {
-    let mut process = PROCESS.lock().unwrap();
-    if let Some(mut managed) = process.take() {
-        let _ = managed.child.kill();
-        let _ = managed.child.wait();
-    }
-    *process = None;
 }
 
 fn log_message(message: String) {
     let mut log_buffer = LOGS.lock().unwrap();
-    if log_buffer.len() == 100 {
+    while log_buffer.len() >= LOG_CAPACITY {
         log_buffer.pop_front();
     }
-    log_buffer.push_back(format!("{}\n", message));
+    log_buffer.push_back(message);
 }
 
 fn get_logs() -> impl Reply {
@@ -339,8 +390,31 @@ fn ping_response(result: Result<PathBuf, Error>) -> warp::reply::Response {
     .into_response()
 }
 
-fn ping() -> warp::reply::Response {
-    let result = open_fixed_verified_core().and_then(|_| std::env::current_exe());
+fn ping_core_sha256_mismatch() -> warp::reply::Response {
+    warp::reply::with_header(
+        error_response(
+            "coreSha256Mismatch",
+            "Core SHA256 mismatch",
+            StatusCode::CONFLICT,
+        ),
+        PROTOCOL_VERSION_HEADER,
+        PROTOCOL_VERSION,
+    )
+    .into_response()
+}
+
+fn probe_helper_path() -> Result<PathBuf, Error> {
+    open_core(&core_path()?)?;
+    std::env::current_exe()
+}
+
+fn ping(ping_params: PingParams) -> warp::reply::Response {
+    if ping_params.core_sha256 != EXPECTED_CORE_SHA256 {
+        log_message("Helper ping rejected a Core SHA256 mismatch".to_string());
+        return ping_core_sha256_mismatch();
+    }
+
+    let result = probe_helper_path();
     if let Err(error) = &result {
         log_message(format!("Helper ping failed: {error}"));
     }
@@ -373,8 +447,8 @@ async fn stop_request(stop_params: StopParams) -> Result<warp::reply::Response, 
     )
 }
 
-async fn ping_request() -> Result<warp::reply::Response, Infallible> {
-    Ok(tokio::task::spawn_blocking(ping)
+async fn ping_request(ping_params: PingParams) -> Result<warp::reply::Response, Infallible> {
+    Ok(tokio::task::spawn_blocking(move || ping(ping_params))
         .await
         .unwrap_or_else(|error| {
             ping_response(Err(Error::other(format!(
@@ -384,6 +458,18 @@ async fn ping_request() -> Result<warp::reply::Response, Infallible> {
 }
 
 async fn handle_rejection(rejection: Rejection) -> Result<warp::reply::Response, Infallible> {
+    if rejection.find::<warp::reject::InvalidQuery>().is_some() {
+        return Ok(warp::reply::with_header(
+            error_response(
+                "invalidRequest",
+                "invalid ping query",
+                StatusCode::BAD_REQUEST,
+            ),
+            PROTOCOL_VERSION_HEADER,
+            PROTOCOL_VERSION,
+        )
+        .into_response());
+    }
     if rejection
         .find::<warp::filters::body::BodyDeserializeError>()
         .is_some()
@@ -412,6 +498,7 @@ fn routes() -> impl Filter<Extract = (impl Reply,), Error = Infallible> + Clone 
     let api_ping = warp::get()
         .and(warp::path("ping"))
         .and(warp::path::end())
+        .and(warp::query::<PingParams>())
         .and_then(ping_request);
 
     let api_start = warp::post()
@@ -457,7 +544,12 @@ where
         .map_err(|error| anyhow::anyhow!("bind helper server: {error}"))?;
     on_started()?;
     server.await;
-    stop_core_unconditional();
+    let mut managed = MANAGED_CORE.lock().unwrap();
+    if let Err(error) = release_managed_core(&mut managed) {
+        log_message(format!(
+            "Helper could not stop the managed Core on shutdown: {error}"
+        ));
+    }
 
     Ok(())
 }
@@ -467,9 +559,60 @@ mod tests {
     use super::*;
     use std::io::Write;
 
+    static PROCESS_STATE: Mutex<()> = Mutex::new(());
+
+    fn lock_process_state() -> std::sync::MutexGuard<'static, ()> {
+        PROCESS_STATE
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+    }
+
+    fn spawn_placeholder_core() -> Child {
+        #[cfg(windows)]
+        let mut command = {
+            let mut command = Command::new("cmd");
+            command.args(["/c", "exit"]);
+            command
+        };
+        #[cfg(not(windows))]
+        let mut command = Command::new("true");
+        command
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("spawn placeholder Core")
+    }
+
+    fn spawn_running_core() -> Child {
+        #[cfg(windows)]
+        let mut command = {
+            let mut command = Command::new("ping");
+            command.args(["-n", "60", "127.0.0.1"]);
+            command
+        };
+        #[cfg(not(windows))]
+        let mut command = {
+            let mut command = Command::new("sleep");
+            command.arg("60");
+            command
+        };
+        command
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("spawn running Core")
+    }
+
+    fn adopt_core(session_id: &str) {
+        *MANAGED_CORE.lock().unwrap() = Some(ManagedCore {
+            session_id: session_id.to_string(),
+            child: spawn_running_core(),
+        });
+    }
+
     #[test]
-    fn protocol_5_uses_lowercase_session_ownership() {
-        assert_eq!(PROTOCOL_VERSION, "5");
+    fn protocol_6_uses_lowercase_session_ownership() {
+        assert_eq!(PROTOCOL_VERSION, "6");
         assert!(is_valid_session_id("0123456789abcdef0123456789abcdef"));
         assert!(!is_valid_session_id("ABCDEF0123456789abcdef0123456789"));
         assert!(!is_valid_session_id("0123456789abcdef"));
@@ -509,7 +652,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn ping_rejects_unverified_core() {
+    async fn ping_response_renders_core_verification_error() {
         let response = ping_response(Err(Error::other("Core executable SHA256 mismatch")));
 
         assert_eq!(response.status(), StatusCode::CONFLICT);
@@ -529,7 +672,7 @@ mod tests {
     async fn ping_is_available_without_authentication() {
         let response = warp::test::request()
             .method("GET")
-            .path("/ping")
+            .path(&format!("/ping?coreSha256={EXPECTED_CORE_SHA256}"))
             .reply(&routes())
             .await;
 
@@ -538,6 +681,45 @@ mod tests {
             response.headers().get(PROTOCOL_VERSION_HEADER).unwrap(),
             PROTOCOL_VERSION
         );
+    }
+
+    #[tokio::test]
+    async fn ping_requires_the_core_sha256_query_parameter() {
+        let response = warp::test::request()
+            .method("GET")
+            .path("/ping")
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(
+            response.headers().get(PROTOCOL_VERSION_HEADER).unwrap(),
+            PROTOCOL_VERSION
+        );
+    }
+
+    #[tokio::test]
+    async fn ping_rejects_a_core_sha256_that_does_not_match() {
+        let requested = if EXPECTED_CORE_SHA256.starts_with('0') {
+            format!("1{}", EXPECTED_CORE_SHA256.get(1..).unwrap_or(""))
+        } else {
+            format!("0{}", EXPECTED_CORE_SHA256.get(1..).unwrap_or(""))
+        };
+        assert_ne!(requested, EXPECTED_CORE_SHA256);
+
+        let response = warp::test::request()
+            .method("GET")
+            .path(&format!("/ping?coreSha256={requested}"))
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        assert_eq!(
+            response.headers().get(PROTOCOL_VERSION_HEADER).unwrap(),
+            PROTOCOL_VERSION
+        );
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["code"], "coreSha256Mismatch");
     }
 
     #[tokio::test]
@@ -571,6 +753,93 @@ mod tests {
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
         assert_eq!(body["code"], "invalidRequest");
+    }
+
+    #[tokio::test]
+    #[allow(clippy::await_holding_lock)]
+    async fn start_releases_the_managed_core_before_rejecting_an_unverified_core() {
+        let _state = lock_process_state();
+        *MANAGED_CORE.lock().unwrap() = Some(ManagedCore {
+            session_id: "fedcba9876543210fedcba9876543210".to_string(),
+            child: spawn_placeholder_core(),
+        });
+
+        let response = warp::test::request()
+            .method("POST")
+            .path("/start")
+            .json(&StartParams {
+                address: r"\\.\pipe\FlClashCore_0123456789abcdef0123456789abcdef".to_string(),
+                session_id: "0123456789abcdef0123456789abcdef".to_string(),
+            })
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["code"], "coreVerificationFailed");
+        assert!(MANAGED_CORE.lock().unwrap().is_none());
+    }
+
+    #[tokio::test]
+    #[allow(clippy::await_holding_lock)]
+    async fn stop_confirms_the_exit_before_reporting_success() {
+        let _state = lock_process_state();
+        let session_id = "0123456789abcdef0123456789abcdef";
+        adopt_core(session_id);
+
+        let response = warp::test::request()
+            .method("POST")
+            .path("/stop")
+            .json(&StopParams {
+                session_id: session_id.to_string(),
+            })
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["stopped"], true);
+        assert!(body.get("reason").is_none());
+        assert!(MANAGED_CORE.lock().unwrap().is_none());
+    }
+
+    #[tokio::test]
+    #[allow(clippy::await_holding_lock)]
+    async fn stop_keeps_another_session_owned_and_running() {
+        let _state = lock_process_state();
+        adopt_core("fedcba9876543210fedcba9876543210");
+
+        let response = warp::test::request()
+            .method("POST")
+            .path("/stop")
+            .json(&StopParams {
+                session_id: "0123456789abcdef0123456789abcdef".to_string(),
+            })
+            .reply(&routes())
+            .await;
+
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        assert_eq!(body["reason"], "sessionMismatch");
+
+        let mut managed = MANAGED_CORE.lock().unwrap();
+        let core = managed.as_mut().expect("Core stays owned");
+        assert_eq!(core.session_id, "fedcba9876543210fedcba9876543210");
+        assert!(core.child.try_wait().unwrap().is_none());
+        release_managed_core(&mut managed).unwrap();
+    }
+
+    #[test]
+    fn terminate_confirms_the_exit_of_a_running_core() {
+        let mut managed = Some(ManagedCore {
+            session_id: "0123456789abcdef0123456789abcdef".to_string(),
+            child: spawn_running_core(),
+        });
+
+        release_managed_core(&mut managed).unwrap();
+
+        assert!(managed.is_none());
+        assert!(release_managed_core(&mut managed).is_ok());
     }
 
     #[tokio::test]
@@ -613,7 +882,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[allow(clippy::await_holding_lock)]
     async fn stop_is_available_without_authentication() {
+        let _state = lock_process_state();
         let response = warp::test::request()
             .method("POST")
             .path("/stop")

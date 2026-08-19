@@ -74,8 +74,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private fun getRunTime(result: MethodChannel.Result) {
         scope.launch {
-            ServiceState.refresh()
-            result.success(ServiceState.runTimeMillis)
+            result.success(ServiceState.refresh())
         }
     }
 

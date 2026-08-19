@@ -1,7 +1,6 @@
 package com.follow.clash.common
 
 import android.annotation.SuppressLint
-import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -15,7 +14,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
 import android.os.Build
-import androidx.core.content.getSystemService
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -35,17 +33,11 @@ val QuickAction.action: String
 val QuickAction.quickIntent: Intent
     get() = Components.quickActionActivity.intent.apply {
         action = this@quickIntent.action
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
     }
 
 val BroadcastAction.action: String
     get() = "${GlobalState.application.packageName}.intent.action.${this.name}"
-
-val Context.processName: String?
-    get() = getSystemService<ActivityManager>()
-        ?.runningAppProcesses
-        ?.firstOrNull { it.pid == android.os.Process.myPid() }
-        ?.processName
 
 fun BroadcastAction.sendBroadcast() {
     val broadcastAction = action

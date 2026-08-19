@@ -11,8 +11,6 @@ typedef CoreProcessStarter =
     Future<Process> Function(String executable, List<String> arguments);
 
 abstract interface class CoreProcessLauncher {
-  CoreProcessOwner get owner;
-
   Future<CoreProcessLease> start({
     required String sessionId,
     required String address,
@@ -30,9 +28,6 @@ final class DirectCoreLauncher implements CoreProcessLauncher {
   DirectCoreLauncher({CoreProcessStarter? startProcess, String? corePath})
     : _startProcess = startProcess ?? Process.start,
       corePath = corePath ?? appPath.corePath;
-
-  @override
-  CoreProcessOwner get owner => CoreProcessOwner.direct;
 
   @override
   Future<CoreProcessLease> start({

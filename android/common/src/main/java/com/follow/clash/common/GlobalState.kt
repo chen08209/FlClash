@@ -36,7 +36,7 @@ object GlobalState : CoroutineScope by CoroutineScope(SupervisorJob() + Dispatch
         FirebaseApp.initializeApp(application)
         FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = enable
         if (enable) {
-            log("Crashlytics enabled for ${application.processName}")
+            log("Crashlytics enabled")
         }
     }
 

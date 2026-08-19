@@ -1,14 +1,19 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/print.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:path/path.dart' as p;
 
+import 'core_manifest.dart';
 import 'launcher.dart';
 import 'model.dart';
+
+enum WindowsHelperReadiness { ready, notReady, manifestMissing }
 
 final class HelperStartResponse {
   final String sessionId;
@@ -47,14 +52,53 @@ final class WindowsHelperException implements Exception {
 final class WindowsHelperClient {
   final Dio _dio;
   final String Function() _expectedHelperPath;
+  final Future<String> Function() _readCoreSha256;
   final String baseUrl;
+  String? _coreSha256Cache;
 
   WindowsHelperClient({
     Dio? dio,
     String Function()? expectedHelperPath,
+    Future<String> Function()? readCoreSha256,
     this.baseUrl = 'http://$localhost:$helperPort',
-  }) : _dio = dio ?? Dio(),
-       _expectedHelperPath = expectedHelperPath ?? _defaultHelperPath;
+  }) : _dio = dio ?? _createLoopbackDio(),
+       _expectedHelperPath = expectedHelperPath ?? _defaultHelperPath,
+       _readCoreSha256 = readCoreSha256 ?? _readBundledCoreSha256;
+
+  // The bundled manifest.json is a fixed build artifact; a usable value is read
+  // once. An empty result means it is unusable now, so the Helper is skipped.
+  Future<String> _readCoreSha256Once() async {
+    final cached = _coreSha256Cache;
+    if (cached != null) {
+      return cached;
+    }
+    String coreSha256;
+    try {
+      coreSha256 = await _readCoreSha256();
+    } catch (_) {
+      coreSha256 = '';
+    }
+    if (coreSha256.isNotEmpty) {
+      _coreSha256Cache = coreSha256;
+    }
+    return coreSha256;
+  }
+
+  // The Helper protocol is loopback-only; never route it through a proxy.
+  static Dio _createLoopbackDio() {
+    return Dio()
+      ..httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          client.findProxy = (uri) => 'DIRECT';
+          return client;
+        },
+      );
+  }
+
+  static Future<String> _readBundledCoreSha256() async {
+    return (await CoreManifest.readCoreSha256()) ?? '';
+  }
 
   static String _defaultHelperPath() {
     final context = p.Context(style: p.Style.windows);
@@ -64,9 +108,12 @@ final class WindowsHelperClient {
     );
   }
 
-  Future<bool> isReady({Duration? timeout, bool logFailure = true}) async {
+  Future<WindowsHelperReadiness> readiness({
+    Duration? timeout,
+    bool logFailure = true,
+  }) async {
     if (timeout != null && timeout <= Duration.zero) {
-      return false;
+      return WindowsHelperReadiness.notReady;
     }
     final cancelToken = CancelToken();
     final timeoutTimer = timeout == null
@@ -76,39 +123,84 @@ final class WindowsHelperClient {
             () => cancelToken.cancel('helper ping deadline exceeded'),
           );
     try {
+      final coreSha256 = await _readCoreSha256Once();
+      if (coreSha256.isEmpty) {
+        _logPingFailure('Core manifest is missing or invalid', logFailure);
+        return WindowsHelperReadiness.manifestMissing;
+      }
       final response = await _dio.get<Object?>(
         '$baseUrl/ping',
+        queryParameters: {'coreSha256': coreSha256},
         cancelToken: cancelToken,
-        options: _options(ResponseType.plain),
+        options: _options(ResponseType.plain, acceptAnyStatus: true),
       );
-      final helperPath = response.data;
-      if (response.statusCode != HttpStatus.ok || helperPath is! String) {
-        _logPingFailure('helper ping returned invalid response', logFailure);
-        return false;
-      }
-      final protocolVersion = response.headers.value(
-        helperProtocolVersionHeader,
-      );
-      if (protocolVersion != helperProtocolVersion) {
-        _logPingFailure(
-          'helper protocol mismatch: $protocolVersion',
-          logFailure,
-        );
-        return false;
-      }
-      final matches = p.Context(
-        style: p.Style.windows,
-      ).equals(helperPath.trim(), _expectedHelperPath());
-      if (!matches) {
-        _logPingFailure('helper executable path mismatch', logFailure);
-      }
-      return matches;
+      return response.statusCode == HttpStatus.ok
+          ? _readyFromOk(response, logFailure)
+          : _notReadyFromPing(response, logFailure);
     } catch (error) {
       _logPingFailure('helper ping failed: $error', logFailure);
-      return false;
+      return WindowsHelperReadiness.notReady;
     } finally {
       timeoutTimer?.cancel();
     }
+  }
+
+  WindowsHelperReadiness _readyFromOk(
+    Response<Object?> response,
+    bool logFailure,
+  ) {
+    final protocolVersion = response.headers.value(helperProtocolVersionHeader);
+    final helperPath = response.data;
+    if (helperPath is! String) {
+      _logPingFailure('helper ping returned invalid response', logFailure);
+      return WindowsHelperReadiness.notReady;
+    }
+    if (protocolVersion != helperProtocolVersion) {
+      _logPingFailure('helper protocol mismatch: $protocolVersion', logFailure);
+      return WindowsHelperReadiness.notReady;
+    }
+    final matches = p.Context(
+      style: p.Style.windows,
+    ).equals(helperPath.trim(), _expectedHelperPath());
+    if (!matches) {
+      _logPingFailure('helper executable path mismatch', logFailure);
+      return WindowsHelperReadiness.notReady;
+    }
+    return WindowsHelperReadiness.ready;
+  }
+
+  WindowsHelperReadiness _notReadyFromPing(
+    Response<Object?> response,
+    bool logFailure,
+  ) {
+    final statusCode = response.statusCode;
+    final protocolVersion = response.headers.value(helperProtocolVersionHeader);
+    if (statusCode == HttpStatus.conflict) {
+      final code = _mapFrom(response.data)?['code'];
+      if (code == 'coreSha256Mismatch') {
+        _logPingFailure('Helper Core SHA256 mismatch', logFailure);
+        return WindowsHelperReadiness.notReady;
+      }
+      if (protocolVersion == helperProtocolVersion) {
+        _logPingFailure(
+          'helper could not access the Core executable',
+          logFailure,
+        );
+        return WindowsHelperReadiness.notReady;
+      }
+      _logPingFailure(
+        'helper returned an unrecognized conflict '
+        '(protocol $protocolVersion)',
+        logFailure,
+      );
+      return WindowsHelperReadiness.notReady;
+    }
+    _logPingFailure(
+      'helper ping returned HTTP $statusCode '
+      '(protocol $protocolVersion)',
+      logFailure,
+    );
+    return WindowsHelperReadiness.notReady;
   }
 
   void _logPingFailure(String message, bool enabled) {
@@ -256,6 +348,13 @@ final class WindowsHelperClient {
   }
 
   Map<String, Object?>? _mapFrom(Object? data) {
+    if (data is String) {
+      try {
+        data = jsonDecode(data);
+      } on FormatException {
+        return null;
+      }
+    }
     if (data is! Map) {
       return null;
     }
@@ -271,11 +370,14 @@ final class WindowsHelperClient {
     }
   }
 
-  Options _options(ResponseType responseType) {
+  Options _options(ResponseType responseType, {bool acceptAnyStatus = false}) {
     return Options(
       responseType: responseType,
       connectTimeout: const Duration(milliseconds: 300),
       receiveTimeout: const Duration(seconds: 2),
+      // The Helper reports readiness via non-2xx (400, 409, ...), so only
+      // transport errors should surface as DioExceptions.
+      validateStatus: acceptAnyStatus ? (_) => true : null,
     );
   }
 }
@@ -284,9 +386,6 @@ final class WindowsHelperLauncher implements CoreProcessLauncher {
   final WindowsHelperClient client;
 
   const WindowsHelperLauncher(this.client);
-
-  @override
-  CoreProcessOwner get owner => CoreProcessOwner.windowsHelper;
 
   @override
   Future<CoreProcessLease> start({
@@ -312,7 +411,37 @@ final class WindowsHelperLauncher implements CoreProcessLauncher {
   }
 }
 
-typedef HelperReadinessProbe = Future<bool> Function();
+// The Helper reports these codes before it spawns a Core, and /start releases
+// the previously managed Core first, so no Helper-managed Core is left behind
+// and a direct launch is safe to retry.
+const _preSpawnHelperErrors = {'coreVerificationFailed', 'processLaunchFailed'};
+
+final class FallbackCoreLauncher implements CoreProcessLauncher {
+  final CoreProcessLauncher primary;
+  final CoreProcessLauncher fallback;
+
+  const FallbackCoreLauncher({required this.primary, required this.fallback});
+
+  @override
+  Future<CoreProcessLease> start({
+    required String sessionId,
+    required String address,
+  }) async {
+    try {
+      return await primary.start(sessionId: sessionId, address: address);
+    } on WindowsHelperException catch (error) {
+      if (!_preSpawnHelperErrors.contains(error.code)) rethrow;
+      commonPrint.log(
+        'Helper could not start the Core ($error); '
+        'falling back to direct Core',
+        logLevel: LogLevel.warning,
+      );
+      return fallback.start(sessionId: sessionId, address: address);
+    }
+  }
+}
+
+typedef HelperReadinessProbe = Future<WindowsHelperReadiness> Function();
 
 final class WindowsHelperLauncherResolver
     implements DesktopCoreLauncherResolver {
@@ -330,8 +459,13 @@ final class WindowsHelperLauncherResolver
 
   @override
   Future<CoreProcessLauncher> resolve() async {
-    if (isWindows && await helperReady()) {
-      return helperLauncher;
+    if (!isWindows) return directLauncher;
+    final readiness = await helperReady();
+    if (readiness == WindowsHelperReadiness.ready) {
+      return FallbackCoreLauncher(
+        primary: helperLauncher,
+        fallback: directLauncher,
+      );
     }
     return directLauncher;
   }

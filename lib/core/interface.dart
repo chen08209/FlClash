@@ -310,6 +310,7 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
+  @override
   Future<Map<String, dynamic>> getTrafficSnapshot(bool onlyStatisticsProxy) async {
     final data = await _invokeMethod<Map<String, dynamic>>(
       method: CoreMethod.getTrafficSnapshot,
@@ -317,7 +318,6 @@ abstract class CoreHandlerInterface with CoreInterface {
     );
     return data ?? const <String, dynamic>{};
   }
-
 
   @override
   Future<String> clearEffect(int profileId) async {

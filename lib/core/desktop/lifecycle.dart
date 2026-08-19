@@ -41,6 +41,23 @@ final class _PendingLifecycleCommand {
   _PendingLifecycleCommand(this.intent);
 }
 
+final class _SessionDisconnect {
+  final DesktopCoreSession session;
+  final Completer<void> _completed = Completer<void>();
+
+  _SessionDisconnect(this.session);
+
+  Future<void> get future => _completed.future;
+
+  bool get isCompleted => _completed.isCompleted;
+
+  void record(int generation) {
+    if (generation == session.connectionGeneration && !_completed.isCompleted) {
+      _completed.complete();
+    }
+  }
+}
+
 final class _TransportConnectionWaiter {
   final Completer<void> _settled = Completer<void>();
   late final StreamSubscription<DesktopTransportEvent> _subscription;
@@ -123,6 +140,7 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
   late final StreamSubscription<DesktopTransportEvent> _transportSubscription;
   DesktopCoreState _state = const DesktopCoreIdle();
   DesktopCoreSession? _session;
+  _SessionDisconnect? _sessionDisconnect;
   Future<void>? _worker;
   Future<void>? _unexpectedDisconnectOperation;
   CoreProcessLease? _unconfirmedLease;
@@ -261,12 +279,14 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
                 stackTrace: stackTrace,
               );
         final desired = _desired;
-        if (desired.target == _LifecycleTarget.closed &&
-            intent.target != _LifecycleTarget.closed) {
+        if (desired.revision != intent.revision) {
+          if (desired.target != _LifecycleTarget.closed) {
+            _failCommands(intent.revision, failure);
+          }
           continue;
         }
         _publish(DesktopCoreFailed(failure));
-        _failCommands(desired.revision, failure);
+        _failCommands(intent.revision, failure);
       }
     }
   }
@@ -289,16 +309,21 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
     }
     switch (intent.target) {
       case _LifecycleTarget.running:
-        if (_session != null && _state is DesktopCoreRunning) {
-          return _LifecycleAchievement.runningExisting;
+        final running = _session;
+        if (running != null) {
+          if (_state is DesktopCoreRunning) {
+            return _LifecycleAchievement.runningExisting;
+          }
+          await _stopSession(
+            running,
+            intent.revision,
+            allowUnconfirmedExit: _terminalRequested,
+          );
+          if (!_wantsRunning) {
+            return _abandonedStart();
+          }
         }
-        final started = await _startSession(intent.revision);
-        if (!started && _desired.target == _LifecycleTarget.stopped) {
-          _publish(const DesktopCoreIdle());
-        }
-        return started
-            ? _LifecycleAchievement.runningFresh
-            : _LifecycleAchievement.idle;
+        return _startForIntent(intent);
       case _LifecycleTarget.restarted:
         final session = _session;
         if (session != null) {
@@ -309,12 +334,9 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
           );
         }
         if (!_wantsRunning) {
-          return _LifecycleAchievement.idle;
+          return _abandonedStart();
         }
-        final started = await _startSession(_desired.revision);
-        return started
-            ? _LifecycleAchievement.runningFresh
-            : _LifecycleAchievement.idle;
+        return _startForIntent(intent);
       case _LifecycleTarget.stopped:
         final session = _session;
         if (session != null) {
@@ -349,6 +371,20 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
   bool get _wantsRunning {
     return _desired.target == _LifecycleTarget.running ||
         _desired.target == _LifecycleTarget.restarted;
+  }
+
+  Future<_LifecycleAchievement> _startForIntent(_LifecycleIntent intent) async {
+    if (await _startSession(intent.revision)) {
+      return _LifecycleAchievement.runningFresh;
+    }
+    return _abandonedStart();
+  }
+
+  _LifecycleAchievement _abandonedStart() {
+    if (_desired.target == _LifecycleTarget.stopped) {
+      _publish(const DesktopCoreIdle());
+    }
+    return _LifecycleAchievement.idle;
   }
 
   Future<bool> _startSession(int revision) async {
@@ -394,7 +430,6 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
       }
       if (!_wantsRunning) {
         await releaseLease();
-        _publish(const DesktopCoreIdle());
         return false;
       }
       final connected = await _waitForConnectionWhileWanted(
@@ -402,7 +437,6 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
       );
       if (connected == null || !_wantsRunning) {
         await releaseLease();
-        _publish(const DesktopCoreIdle());
         return false;
       }
       if (verifyPeerPid && connected.pid != lease.pid) {
@@ -424,6 +458,7 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
         connectionGeneration: connected.generation,
       );
       _session = session;
+      _sessionDisconnect = _SessionDisconnect(session);
       leaseReleased = true;
       _publish(DesktopCoreRunning(session));
       return true;
@@ -555,17 +590,7 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
     required bool allowUnconfirmedExit,
   }) async {
     _publish(DesktopCoreStopping(revision: revision, session: session));
-    final disconnected = Completer<void>();
-    late final StreamSubscription<DesktopTransportEvent> subscription;
-    subscription = _transport.events.listen((event) {
-      if (event case TransportDisconnected(
-        :final generation,
-      ) when generation == session.connectionGeneration) {
-        if (!disconnected.isCompleted) {
-          disconnected.complete();
-        }
-      }
-    });
+    final disconnected = _disconnectFor(session);
     try {
       final stopResult = await session.lease.stop(timeouts.disconnection);
       if (!stopResult.exitConfirmed) {
@@ -577,24 +602,28 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
             session: session,
           );
         }
-        _session = null;
+        _clearSession(session);
         return;
       }
-      try {
-        await disconnected.future.timeout(timeouts.disconnection);
-      } on TimeoutException {
-        _session = null;
+      if (!disconnected.isCompleted) {
+        await Future.any<void>([
+          disconnected.future,
+          Future<void>.delayed(Duration.zero),
+        ]);
+      }
+      if (!disconnected.isCompleted) {
+        _clearSession(session);
         if (!_terminalRequested) {
           await _transport.replace(transportFactory());
         }
         return;
       }
-      _session = null;
+      _clearSession(session);
     } on DesktopCoreFailure {
       rethrow;
     } catch (error, stackTrace) {
       if (allowUnconfirmedExit) {
-        _session = null;
+        _clearSession(session);
         return;
       }
       throw _failure(
@@ -605,8 +634,23 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
         cause: error,
         stackTrace: stackTrace,
       );
-    } finally {
-      await subscription.cancel();
+    }
+  }
+
+  _SessionDisconnect _disconnectFor(DesktopCoreSession session) {
+    final current = _sessionDisconnect;
+    if (current != null && identical(current.session, session)) {
+      return current;
+    }
+    return _sessionDisconnect = _SessionDisconnect(session);
+  }
+
+  void _clearSession(DesktopCoreSession session) {
+    if (identical(_session, session)) {
+      _session = null;
+    }
+    if (identical(_sessionDisconnect?.session, session)) {
+      _sessionDisconnect = null;
     }
   }
 
@@ -666,6 +710,9 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
   }
 
   void _handleTransportEvent(DesktopTransportEvent event) {
+    if (event case TransportDisconnected(:final generation)) {
+      _sessionDisconnect?.record(generation);
+    }
     final running = _state;
     if (running is! DesktopCoreRunning) {
       return;
@@ -699,7 +746,7 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
         !identical(_session, session)) {
       return;
     }
-    _session = null;
+    _clearSession(session);
     final failure = _failure(
       code: code,
       phase: DesktopCorePhase.running,

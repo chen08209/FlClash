@@ -440,6 +440,7 @@
   "expectedStatus": "Ожидаемый статус",
   "selectProxies": "Выбрать прокси",
   "inputProxyGroupName": "Введите имя группы прокси",
+  "helperCorruptTip": "Служба Helper недоступна, поэтому TUN-режим включить нельзя. Переустановите FlClash.",
   "hideFromList": "Скрыть из списка",
   "testWhenUsed": "Тестировать при использовании",
   "disableUDP": "Отключить UDP",

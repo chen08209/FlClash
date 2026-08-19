@@ -108,7 +108,6 @@ abstract class ProfilesState with _$ProfilesState {
   const factory ProfilesState({
     required List<Profile> profiles,
     required int? currentProfileId,
-    required int columns,
   }) = _ProfilesState;
 }
 
@@ -183,7 +182,6 @@ abstract class ProxiesTabState with _$ProxiesTabState {
     required List<Group> groups,
     required String? currentGroupName,
     required ProxyCardType proxyCardType,
-    required int columns,
   }) = _ProxiesTabState;
 }
 
@@ -196,7 +194,6 @@ abstract class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
     required num sortNum,
     required GroupType groupType,
     required List<Proxy> proxies,
-    required int columns,
   }) = _ProxyGroupSelectorState;
 }
 
@@ -279,7 +276,6 @@ abstract class ProxyState with _$ProxyState {
 abstract class DashboardState with _$DashboardState {
   const factory DashboardState({
     required List<DashboardWidget> dashboardWidgets,
-    required double contentWidth,
   }) = _DashboardState;
 }
 
@@ -374,42 +370,3 @@ abstract class SetupState with _$SetupState {
     required Dns dns,
   }) = _SetupState;
 }
-
-// extension SetupStateExt on SetupState {
-//   bool needSetup(SetupState? lastSetupState) {
-//     if (lastSetupState == null) {
-//       return false;
-//     }
-//     if (profileId != lastSetupState.profileId) {
-//       return true;
-//     }
-//     if (profileLastUpdateDate != lastSetupState.profileLastUpdateDate) {
-//       return true;
-//     }
-//     final scriptIsChange = script != lastSetupState.script;
-//     if (overwriteType != lastSetupState.overwriteType) {
-//       if (!ruleListEquality.equals(addedRules, lastSetupState.addedRules) ||
-//           scriptIsChange) {
-//         return true;
-//       }
-//     } else {
-//       if (overwriteType == OverwriteType.script) {
-//         if (scriptIsChange) {
-//           return true;
-//         }
-//       }
-//       if (overwriteType == OverwriteType.standard) {
-//         if (!ruleListEquality.equals(addedRules, lastSetupState.addedRules)) {
-//           return true;
-//         }
-//       }
-//     }
-//     if (overrideDns != lastSetupState.overrideDns) {
-//       return true;
-//     }
-//     if (overrideDns == true && dns != lastSetupState.dns) {
-//       return true;
-//     }
-//     return false;
-//   }
-// }
