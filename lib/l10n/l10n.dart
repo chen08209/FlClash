@@ -4523,6 +4523,591 @@ class AppLocalizations {
       args: [count],
     );
   }
+
+  /// `Features`
+  String get features {
+    return Intl.message('Features', name: 'features', desc: '', args: []);
+  }
+
+  /// `Hide advanced`
+  String get hideAdvanced {
+    return Intl.message(
+      'Hide advanced',
+      name: 'hideAdvanced',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show advanced`
+  String get showAdvanced {
+    return Intl.message(
+      'Show advanced',
+      name: 'showAdvanced',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tailscale`
+  String get tailscale {
+    return Intl.message('Tailscale', name: 'tailscale', desc: '', args: []);
+  }
+
+  /// `Manage Tailscale outbound nodes`
+  String get tailscaleDesc {
+    return Intl.message(
+      'Manage Tailscale outbound nodes',
+      name: 'tailscaleDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable Tailscale`
+  String get tailscaleEnable {
+    return Intl.message(
+      'Enable Tailscale',
+      name: 'tailscaleEnable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inject Tailscale nodes as outbounds. Turning this off stops Tailscale from handling traffic; normal traffic is unaffected.`
+  String get tailscaleEnableDesc {
+    return Intl.message(
+      'Inject Tailscale nodes as outbounds. Turning this off stops Tailscale from handling traffic; normal traffic is unaffected.',
+      name: 'tailscaleEnableDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No Tailscale nodes yet. Add one to route traffic through your tailnet.`
+  String get tailscaleEmptyTip {
+    return Intl.message(
+      'No Tailscale nodes yet. Add one to route traffic through your tailnet.',
+      name: 'tailscaleEmptyTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add Tailscale node`
+  String get addTailscaleNode {
+    return Intl.message(
+      'Add Tailscale node',
+      name: 'addTailscaleNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit Tailscale node`
+  String get editTailscaleNode {
+    return Intl.message(
+      'Edit Tailscale node',
+      name: 'editTailscaleNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auth key`
+  String get tailscaleAuthKey {
+    return Intl.message(
+      'Auth key',
+      name: 'tailscaleAuthKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hostname`
+  String get tailscaleHostname {
+    return Intl.message(
+      'Hostname',
+      name: 'tailscaleHostname',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Control URL`
+  String get tailscaleControlUrl {
+    return Intl.message(
+      'Control URL',
+      name: 'tailscaleControlUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `State directory`
+  String get tailscaleStateDir {
+    return Intl.message(
+      'State directory',
+      name: 'tailscaleStateDir',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ephemeral`
+  String get tailscaleEphemeral {
+    return Intl.message(
+      'Ephemeral',
+      name: 'tailscaleEphemeral',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `UDP relay`
+  String get tailscaleUdp {
+    return Intl.message('UDP relay', name: 'tailscaleUdp', desc: '', args: []);
+  }
+
+  /// `Accept routes`
+  String get tailscaleAcceptRoutes {
+    return Intl.message(
+      'Accept routes',
+      name: 'tailscaleAcceptRoutes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Exit node`
+  String get tailscaleExitNode {
+    return Intl.message(
+      'Exit node',
+      name: 'tailscaleExitNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allow LAN access via exit node`
+  String get tailscaleExitNodeAllowLanAccess {
+    return Intl.message(
+      'Allow LAN access via exit node',
+      name: 'tailscaleExitNodeAllowLanAccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A node with this name already exists`
+  String get tailscaleNameExistsTip {
+    return Intl.message(
+      'A node with this name already exists',
+      name: 'tailscaleNameExistsTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `How Tailscale works`
+  String get tailscaleGuideTitle {
+    return Intl.message(
+      'How Tailscale works',
+      name: 'tailscaleGuideTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `From the Tailscale admin console → Settings → Keys. Required to authenticate the node.`
+  String get tailscaleAuthKeyHint {
+    return Intl.message(
+      'From the Tailscale admin console → Settings → Keys. Required to authenticate the node.',
+      name: 'tailscaleAuthKeyHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Optional. Device name shown in your tailnet.`
+  String get tailscaleHostnameHint {
+    return Intl.message(
+      'Optional. Device name shown in your tailnet.',
+      name: 'tailscaleHostnameHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Optional. Only for self-hosted control servers such as Headscale.`
+  String get tailscaleControlUrlHint {
+    return Intl.message(
+      'Optional. Only for self-hosted control servers such as Headscale.',
+      name: 'tailscaleControlUrlHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Optional. Directory used to persist Tailscale state.`
+  String get tailscaleStateDirHint {
+    return Intl.message(
+      'Optional. Directory used to persist Tailscale state.',
+      name: 'tailscaleStateDirHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Optional. IP or name of a tailnet exit node to route all traffic through.`
+  String get tailscaleExitNodeHint {
+    return Intl.message(
+      'Optional. IP or name of a tailnet exit node to route all traffic through.',
+      name: 'tailscaleExitNodeHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep Tailscale traffic direct`
+  String get tailscaleBypass {
+    return Intl.message(
+      'Keep Tailscale traffic direct',
+      name: 'tailscaleBypass',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Route destinations`
+  String get tailscaleRoutes {
+    return Intl.message(
+      'Route destinations',
+      name: 'tailscaleRoutes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domains or IPs sent through this node, one per line (e.g. your home PC's Tailscale IP or MagicDNS name).`
+  String get tailscaleRoutesHint {
+    return Intl.message(
+      'Domains or IPs sent through this node, one per line (e.g. your home PC\'s Tailscale IP or MagicDNS name).',
+      name: 'tailscaleRoutesHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android client setup`
+  String get tailscaleScenarioAndroidTitle {
+    return Intl.message(
+      'Android client setup',
+      name: 'tailscaleScenarioAndroidTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep FlClash as the only VPN. Do not run the Tailscale app VPN at the same time (Android allows only one). Use an embedded Tailscale node below, then add your home device to Route destinations.`
+  String get tailscaleScenarioAndroidBody {
+    return Intl.message(
+      'Keep FlClash as the only VPN. Do not run the Tailscale app VPN at the same time (Android allows only one). Use an embedded Tailscale node below, then add your home device to Route destinations.',
+      name: 'tailscaleScenarioAndroidBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Desktop / host setup`
+  String get tailscaleScenarioDesktopTitle {
+    return Intl.message(
+      'Desktop / host setup',
+      name: 'tailscaleScenarioDesktopTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You can run FlClash and the real Tailscale app together. Turn on "Keep Tailscale traffic direct" so FlClash does not hijack Tailscale's control plane or fake-IP DNS.`
+  String get tailscaleScenarioDesktopBody {
+    return Intl.message(
+      'You can run FlClash and the real Tailscale app together. Turn on "Keep Tailscale traffic direct" so FlClash does not hijack Tailscale\'s control plane or fake-IP DNS.',
+      name: 'tailscaleScenarioDesktopBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Get an auth key from the Tailscale admin console (Settings → Keys).`
+  String get tailscaleAndroidStep1 {
+    return Intl.message(
+      'Get an auth key from the Tailscale admin console (Settings → Keys).',
+      name: 'tailscaleAndroidStep1',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add a node, paste the auth key, and put your home device IP or MagicDNS name in Route destinations.`
+  String get tailscaleAndroidStep2 {
+    return Intl.message(
+      'Add a node, paste the auth key, and put your home device IP or MagicDNS name in Route destinations.',
+      name: 'tailscaleAndroidStep2',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Turn on Enable Tailscale. Leave "Keep Tailscale traffic direct" off unless the Tailscale app is also installed.`
+  String get tailscaleAndroidStep3 {
+    return Intl.message(
+      'Turn on Enable Tailscale. Leave "Keep Tailscale traffic direct" off unless the Tailscale app is also installed.',
+      name: 'tailscaleAndroidStep3',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start FlClash VPN, then tap the ping button on a node to verify the connection.`
+  String get tailscaleAndroidStep4 {
+    return Intl.message(
+      'Start FlClash VPN, then tap the ping button on a node to verify the connection.',
+      name: 'tailscaleAndroidStep4',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `If this PC also runs the Tailscale app/service, turn on "Keep Tailscale traffic direct".`
+  String get tailscaleDesktopStep1 {
+    return Intl.message(
+      'If this PC also runs the Tailscale app/service, turn on "Keep Tailscale traffic direct".',
+      name: 'tailscaleDesktopStep1',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Optional: add an embedded Tailscale node with an auth key to route selected traffic through the tailnet from FlClash.`
+  String get tailscaleDesktopStep2 {
+    return Intl.message(
+      'Optional: add an embedded Tailscale node with an auth key to route selected traffic through the tailnet from FlClash.',
+      name: 'tailscaleDesktopStep2',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Put destinations (home IPs / MagicDNS) in Route destinations, then turn on Enable Tailscale.`
+  String get tailscaleDesktopStep3 {
+    return Intl.message(
+      'Put destinations (home IPs / MagicDNS) in Route destinations, then turn on Enable Tailscale.',
+      name: 'tailscaleDesktopStep3',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start FlClash, then tap the ping button on a node to verify the connection is solid.`
+  String get tailscaleDesktopStep4 {
+    return Intl.message(
+      'Start FlClash, then tap the ping button on a node to verify the connection is solid.',
+      name: 'tailscaleDesktopStep4',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recommended on desktop when the Tailscale app/service is installed. Auto-manages DIRECT rules and Fake IP Filter.`
+  String get tailscaleBypassRecommended {
+    return Intl.message(
+      'Recommended on desktop when the Tailscale app/service is installed. Auto-manages DIRECT rules and Fake IP Filter.',
+      name: 'tailscaleBypassRecommended',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Usually leave this off on Android. Turn on only if the Tailscale app is also installed on this phone.`
+  String get tailscaleBypassAndroidHint {
+    return Intl.message(
+      'Usually leave this off on Android. Turn on only if the Tailscale app is also installed on this phone.',
+      name: 'tailscaleBypassAndroidHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tailscale is off — nodes are not injected into the running profile.`
+  String get tailscaleStatusDisabled {
+    return Intl.message(
+      'Tailscale is off — nodes are not injected into the running profile.',
+      name: 'tailscaleStatusDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enabled, but no nodes yet. Add a node to get started.`
+  String get tailscaleStatusNoNodes {
+    return Intl.message(
+      'Enabled, but no nodes yet. Add a node to get started.',
+      name: 'tailscaleStatusNoNodes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nodes are ready. Start FlClash VPN, then tap ping to test.`
+  String get tailscaleStatusNeedStart {
+    return Intl.message(
+      'Nodes are ready. Start FlClash VPN, then tap ping to test.',
+      name: 'tailscaleStatusNeedStart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} node(s) active. Tap ping on a node to test connectivity.`
+  String tailscaleStatusReady(Object count) {
+    return Intl.message(
+      '$count node(s) active. Tap ping on a node to test connectivity.',
+      name: 'tailscaleStatusReady',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Nodes are added, but no route destinations yet — traffic will not match until you add routes (or pick the node manually).`
+  String get tailscaleStatusNeedRoutes {
+    return Intl.message(
+      'Nodes are added, but no route destinations yet — traffic will not match until you add routes (or pick the node manually).',
+      name: 'tailscaleStatusNeedRoutes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This device likely runs Tailscale already — turn on “Keep Tailscale traffic direct” to avoid fake-IP / control-plane breakage.`
+  String get tailscaleBypassNudge {
+    return Intl.message(
+      'This device likely runs Tailscale already — turn on “Keep Tailscale traffic direct” to avoid fake-IP / control-plane breakage.',
+      name: 'tailscaleBypassNudge',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Setup guide`
+  String get tailscaleShowSetupGuide {
+    return Intl.message(
+      'Setup guide',
+      name: 'tailscaleShowSetupGuide',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable`
+  String get tailscaleEnableBypassAction {
+    return Intl.message(
+      'Enable',
+      name: 'tailscaleEnableBypassAction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Outbound name used in Proxies. Renaming changes how selections and delay tests key this node.`
+  String get tailscaleNameHelper {
+    return Intl.message(
+      'Outbound name used in Proxies. Renaming changes how selections and delay tests key this node.',
+      name: 'tailscaleNameHelper',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Turn on Enable Tailscale before testing.`
+  String get tailscaleTestNeedEnable {
+    return Intl.message(
+      'Turn on Enable Tailscale before testing.',
+      name: 'tailscaleTestNeedEnable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start FlClash VPN before testing the connection.`
+  String get tailscaleTestNeedStart {
+    return Intl.message(
+      'Start FlClash VPN before testing the connection.',
+      name: 'tailscaleTestNeedStart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Test connection`
+  String get tailscaleTestNode {
+    return Intl.message(
+      'Test connection',
+      name: 'tailscaleTestNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not tested`
+  String get tailscaleNotTested {
+    return Intl.message(
+      'Not tested',
+      name: 'tailscaleNotTested',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No route destinations`
+  String get tailscaleNoRoutes {
+    return Intl.message(
+      'No route destinations',
+      name: 'tailscaleNoRoutes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} route(s)`
+  String tailscaleRoutesCount(Object count) {
+    return Intl.message(
+      '$count route(s)',
+      name: 'tailscaleRoutesCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Nodes`
+  String get tailscaleNodesTitle {
+    return Intl.message(
+      'Nodes',
+      name: 'tailscaleNodesTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use the ping button next to a node to check whether the Tailscale outbound can dial out. A latency value means the connection is working; Timeout means check the auth key, Enable switch, and that FlClash VPN is started.`
+  String get tailscaleTestTip {
+    return Intl.message(
+      'Use the ping button next to a node to check whether the Tailscale outbound can dial out. A latency value means the connection is working; Timeout means check the auth key, Enable switch, and that FlClash VPN is started.',
+      name: 'tailscaleTestTip',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
