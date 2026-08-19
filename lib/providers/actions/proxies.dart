@@ -44,7 +44,10 @@ class ProxiesAction extends _$ProxiesAction {
         retryIf: (res) => res.isEmpty,
       );
     } catch (e) {
-      commonPrint.log('updateGroups error: $e');
+      commonPrint.log(
+        'updateGroups error: $e',
+        logLevel: coreFailureLogLevel(e),
+      );
       ref.read(groupsProvider.notifier).value = [];
     }
   }

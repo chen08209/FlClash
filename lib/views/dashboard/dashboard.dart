@@ -14,7 +14,7 @@ import 'widgets/start_button.dart';
 
 typedef _IsEditWidgetBuilder = Widget Function(bool isEdit);
 
-const _maxCrossAxisCount = 12;
+const _maxCrossAxisCount = 16;
 const _maxGridWidth = 280.0 * _maxCrossAxisCount / 4;
 
 class DashboardView extends ConsumerStatefulWidget {
@@ -69,12 +69,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             ? IconButton(
                 key: const ValueKey(true),
                 icon: const Icon(Icons.save, key: ValueKey('save-icon')),
-                onPressed: _handleUpdateIsEdit,
+                onPressed: _handleSaveAndExit,
               )
             : IconButton(
                 key: const ValueKey(false),
                 icon: const Icon(Icons.edit, key: ValueKey('edit-icon')),
-                onPressed: _handleUpdateIsEdit,
+                onPressed: _handleEnterEdit,
               ),
       ),
     ];
@@ -102,11 +102,32 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     );
   }
 
-  Future<void> _handleUpdateIsEdit() async {
-    if (_isEditNotifier.value == true) {
-      await _handleSave();
+  void _handleEnterEdit() {
+    if (_isEditNotifier.value) {
+      return;
     }
-    _isEditNotifier.value = !_isEditNotifier.value;
+    _isEditNotifier.value = true;
+  }
+
+  void _handleExitEdit() {
+    if (!_isEditNotifier.value) {
+      return;
+    }
+    final dashboardWidgets = _getDashboardWidgets(key.currentState);
+    if (dashboardWidgets != null) {
+      _saveDashboardWidgets(dashboardWidgets);
+    }
+    _isEditNotifier.value = false;
+  }
+
+  Future<void> _handleSaveAndExit() async {
+    if (!_isEditNotifier.value) {
+      return;
+    }
+    await _handleSave();
+    if (mounted) {
+      _isEditNotifier.value = false;
+    }
   }
 
   Future<void> _handleSave() async {
@@ -114,7 +135,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     if (currentState == null) {
       return;
     }
-    if (!mounted || currentState.children.isEmpty) {
+    if (!mounted || currentState.snapshotChildren.isEmpty) {
       return;
     }
     final transformCompleted = await currentState.isTransformCompleter;
@@ -124,9 +145,25 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         !identical(key.currentState, currentState)) {
       return;
     }
-    final dashboardWidgets = currentState.children
-        .map((item) => DashboardWidget.getDashboardWidget(item))
-        .toList();
+    final dashboardWidgets = _getDashboardWidgets(currentState);
+    if (dashboardWidgets == null) {
+      return;
+    }
+    _saveDashboardWidgets(dashboardWidgets);
+  }
+
+  List<DashboardWidget>? _getDashboardWidgets(SuperGridState? currentState) {
+    if (currentState == null) {
+      return null;
+    }
+    final children = currentState.snapshotChildren;
+    if (children.isEmpty) {
+      return null;
+    }
+    return children.map(DashboardWidget.getDashboardWidget).toList();
+  }
+
+  void _saveDashboardWidgets(List<DashboardWidget> dashboardWidgets) {
     ref
         .read(appSettingProvider.notifier)
         .update((state) => state.copyWith(dashboardWidgets: dashboardWidgets));
@@ -135,10 +172,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardStateProvider);
-    final columns = min(
-      max(4 * ((dashboardState.contentWidth / 280).ceil()), 8),
-      _maxCrossAxisCount,
-    );
     final spacing = 14.mAp;
     final children = [
       ...dashboardState.dashboardWidgets
@@ -170,31 +203,34 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: _maxGridWidth),
-                child: isEdit
-                    ? SystemBackBlock(
-                        child: CommonPopScope(
-                          child: SuperGrid(
-                            key: key,
+                child: LayoutBuilder(
+                  builder: (_, constraints) {
+                    final columns = min(
+                      max(4 * ((constraints.maxWidth / 280).ceil()), 8),
+                      _maxCrossAxisCount,
+                    );
+                    return isEdit
+                        ? BackLayerScope(
+                            onBack: _handleExitEdit,
+                            child: SuperGrid(
+                              key: key,
+                              crossAxisCount: columns,
+                              crossAxisSpacing: spacing,
+                              mainAxisSpacing: spacing,
+                              children: children,
+                              onUpdate: () {
+                                _handleSave();
+                              },
+                            ),
+                          )
+                        : Grid(
                             crossAxisCount: columns,
                             crossAxisSpacing: spacing,
                             mainAxisSpacing: spacing,
                             children: children,
-                            onUpdate: () {
-                              _handleSave();
-                            },
-                          ),
-                          onPop: (context) {
-                            _handleUpdateIsEdit();
-                            return false;
-                          },
-                        ),
-                      )
-                    : Grid(
-                        crossAxisCount: columns,
-                        crossAxisSpacing: spacing,
-                        mainAxisSpacing: spacing,
-                        children: children,
-                      ),
+                          );
+                  },
+                ),
               ),
             ),
           ),

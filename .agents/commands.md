@@ -40,16 +40,7 @@ The Makefile wraps `plugins/setup/buildkit/run_build_tool.sh`; prefer the `make`
 
 ## Flutter Development
 
-The project follows FVM's `stable` channel locally. Release CI pins an exact
-Flutter version separately; see `.agents/project.md`.
-
-```bash
-fvm flutter pub get
-fvm flutter run
-fvm flutter test
-```
-
-Plain Flutter also works when the global SDK matches project constraints:
+Use the default Flutter SDK directly:
 
 ```bash
 flutter pub get

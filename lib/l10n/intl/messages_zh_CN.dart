@@ -318,6 +318,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "goDownload": MessageLookupByLibrary.simpleMessage("前往下载"),
     "goToConfigureScript": MessageLookupByLibrary.simpleMessage("前往配置脚本"),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage("是否缓存修改"),
+    "helperCorruptTip": MessageLookupByLibrary.simpleMessage(
+      "Helper 服务不可用，无法启用 TUN 模式，请重新安装 FlClash。",
+    ),
     "hideAdvanced": MessageLookupByLibrary.simpleMessage("隐藏高级选项"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("从列表中隐藏"),
     "host": MessageLookupByLibrary.simpleMessage("主机"),

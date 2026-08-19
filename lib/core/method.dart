@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:fl_clash/enum/enum.dart';
+
 enum CoreMethod {
   message,
   initClash,
@@ -132,6 +136,19 @@ class CoreMethodException implements Exception {
     this.details,
   });
 
+  bool get isCoreUnavailable =>
+      const {'transport_disconnected', 'transport_error'}.contains(code);
+
   @override
   String toString() => 'CoreMethodException($code, $message, $details)';
+}
+
+LogLevel coreFailureLogLevel(Object? error) {
+  if (error is TimeoutException) {
+    return LogLevel.debug;
+  }
+  if (error is! CoreMethodException) {
+    return LogLevel.warning;
+  }
+  return error.isCoreUnavailable ? LogLevel.debug : LogLevel.warning;
 }

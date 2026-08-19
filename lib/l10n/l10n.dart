@@ -3479,6 +3479,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Helper service unavailable; TUN mode cannot be enabled. Reinstall FlClash to restore it.`
+  String get helperCorruptTip {
+    return Intl.message(
+      'Helper service unavailable; TUN mode cannot be enabled. Reinstall FlClash to restore it.',
+      name: 'helperCorruptTip',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Hide from list`
   String get hideFromList {
     return Intl.message(

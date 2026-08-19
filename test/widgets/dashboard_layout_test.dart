@@ -12,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('dashboard limits a wide grid to 12 centered columns', (
+  testWidgets('dashboard limits a wide grid to 16 centered columns', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1600, 1000);
@@ -23,7 +23,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         dashboardStateProvider.overrideWithValue(
-          const DashboardState(dashboardWidgets: [], contentWidth: 1600),
+          const DashboardState(dashboardWidgets: []),
         ),
       ],
     );
@@ -39,9 +39,9 @@ void main() {
     await tester.pump();
 
     final grid = find.byType(Grid);
-    expect(tester.widget<Grid>(grid).crossAxisCount, 12);
-    expect(tester.getSize(grid).width, 840);
-    expect(tester.getTopLeft(grid).dx, 380);
+    expect(tester.widget<Grid>(grid).crossAxisCount, 16);
+    expect(tester.getSize(grid).width, 1120);
+    expect(tester.getTopLeft(grid).dx, 240);
     expect(tester.takeException(), null);
   });
 }

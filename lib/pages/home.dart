@@ -11,7 +11,7 @@ import 'package:intl/intl.dart';
 
 typedef OnSelected = void Function(int index);
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   void _handleToPage(PageLabel pageLabel) {
@@ -21,7 +21,13 @@ class HomePage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasViewSize = ref.watch(
+      viewSizeProvider.select((size) => !size.isEmpty),
+    );
+    if (!hasViewSize) {
+      return const SizedBox.shrink();
+    }
     return HomeBackScopeContainer(
       child: AppSidebarContainer(
         child: Material(
@@ -53,13 +59,16 @@ class HomePage extends StatelessWidget {
                 children: [
                   Flexible(
                     flex: 1,
-                    child: MediaQuery.removePadding(
-                      removeTop: false,
-                      removeBottom: isMobile,
-                      removeLeft: isMobile,
-                      removeRight: isMobile,
-                      context: context,
-                      child: child!,
+                    child: FocusTraversalGroup(
+                      policy: PageTraversalPolicy(),
+                      child: MediaQuery.removePadding(
+                        removeTop: false,
+                        removeBottom: isMobile,
+                        removeLeft: isMobile,
+                        removeRight: isMobile,
+                        context: context,
+                        child: child!,
+                      ),
                     ),
                   ),
                   AnimatedVisibility.bottomNavigation(
@@ -87,20 +96,38 @@ class HomePage extends StatelessWidget {
                   pageBuilder: (_, index) {
                     final navigationItem = navigationItems[index];
                     final navigationView = navigationItem.builder(context);
+                    final scopedView = PageFocusScope(child: navigationView);
                     final view = KeepScope(
                       key: ValueKey(navigationItem.label),
                       keep: navigationItem.keep,
                       child: isMobile
-                          ? navigationView
+                          ? scopedView
                           : Navigator(
                               key: ValueKey(
                                 '${navigationItem.label.name}_navigator',
                               ),
-                              pages: [MaterialPage(child: navigationView)],
+                              pages: [MaterialPage(child: scopedView)],
                               onDidRemovePage: (_) {},
                             ),
                     );
-                    return view;
+                    return Consumer(
+                      key: ValueKey(navigationItem.label),
+                      builder: (_, ref, child) {
+                        final isActive = ref.watch(
+                          currentPageLabelProvider.select(
+                            (label) => label == navigationItem.label,
+                          ),
+                        );
+                        return PageActivityScope(
+                          isActive: isActive,
+                          child: ExcludeFocus(
+                            excluding: !isActive,
+                            child: child!,
+                          ),
+                        );
+                      },
+                      child: view,
+                    );
                   },
                 );
               },

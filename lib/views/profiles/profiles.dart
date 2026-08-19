@@ -24,22 +24,9 @@ class _ProfilesViewState extends State<ProfilesView> {
   Function? applyConfigDebounce;
   bool _isUpdating = false;
 
-  // final GlobalKey _targetKey = GlobalKey();
-
   @override
   void initState() {
     super.initState();
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   final context = _targetKey.currentContext;
-    //   if (context == null) {
-    //     return;
-    //   }
-    //   Scrollable.ensureVisible(
-    //     context,
-    //     duration: commonDuration,
-    //     alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
-    //   );
-    // });
   }
 
   void _handleShowAddExtendPage() {
@@ -132,37 +119,47 @@ class _ProfilesViewState extends State<ProfilesView> {
                   label: appLocalizations.nullProfileDesc,
                   illustration: const ProfileEmptyIllustration(),
                 )
-              : Align(
-                  alignment: Alignment.topCenter,
-                  child: SingleChildScrollView(
-                    key: profilesStoreKey,
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      top: 16,
-                      bottom: 88,
-                    ),
-                    child: Grid(
-                      mainAxisSpacing: spacing,
-                      crossAxisSpacing: spacing,
-                      crossAxisCount: state.columns,
-                      children: [
-                        for (int i = 0; i < state.profiles.length; i++)
-                          GridItem(
-                            child: ProfileItem(
-                              profile: state.profiles[i],
-                              groupValue: state.currentProfileId,
-                              onChanged: (profileId) {
-                                ref
-                                        .read(currentProfileIdProvider.notifier)
-                                        .value =
-                                    profileId;
-                              },
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+              : LayoutBuilder(
+                  builder: (_, constraints) {
+                    const horizontalPadding = 16.0;
+                    final columns = utils.getProfilesColumns(
+                      constraints.maxWidth - horizontalPadding * 2,
+                    );
+                    return Align(
+                      alignment: Alignment.topCenter,
+                      child: SingleChildScrollView(
+                        key: profilesStoreKey,
+                        padding: const EdgeInsets.only(
+                          left: horizontalPadding,
+                          right: horizontalPadding,
+                          top: 16,
+                          bottom: 88,
+                        ),
+                        child: Grid(
+                          mainAxisSpacing: spacing,
+                          crossAxisSpacing: spacing,
+                          crossAxisCount: columns,
+                          children: [
+                            for (int i = 0; i < state.profiles.length; i++)
+                              GridItem(
+                                child: ProfileItem(
+                                  profile: state.profiles[i],
+                                  groupValue: state.currentProfileId,
+                                  onChanged: (profileId) {
+                                    ref
+                                            .read(
+                                              currentProfileIdProvider.notifier,
+                                            )
+                                            .value =
+                                        profileId;
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
         );
       },
@@ -277,6 +274,7 @@ class ProfileItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return CommonCard(
+      enterActionsOnRight: true,
       isSelected: profile.id == groupValue,
       onPressed: () {
         onChanged(profile.id);
@@ -341,19 +339,6 @@ class ProfileItem extends StatelessWidget {
                                     );
                                   },
                                 ),
-                                // PopupMenuItemData(
-                                //   icon: Icons.extension_outlined,
-                                //   label: appLocalizations.override + "1",
-                                //   onPressed: () {
-                                //     final overrideProfileView = OverrideProfileView(
-                                //       profileId: profile.id,
-                                //     );
-                                //     BaseNavigator.push(
-                                //       context,
-                                //       overrideProfileView,
-                                //     );
-                                //   },
-                                // ),
                                 if (profile.type == ProfileType.url) ...[
                                   PopupMenuItemData(
                                     icon: Icons.copy,

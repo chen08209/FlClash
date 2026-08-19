@@ -324,36 +324,40 @@ class _EditProfileViewState extends State<EditProfileView> {
         },
       ),
     ];
-    return CommonPopScope(
-      onPop: (context) {
-        if (_fileData == null) {
-          return true;
-        }
-        _handleBack();
-        return false;
-      },
-      child: FloatLayout(
-        floatingWidget: FloatWrapper(
-          child: FloatingActionButton.extended(
-            heroTag: null,
-            onPressed: _handleConfirm,
-            label: Text(appLocalizations.save),
-            icon: const Icon(Icons.save),
-          ),
-        ),
-        child: Form(
-          key: _formKey,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: ListView.separated(
-              padding: kMaterialListPadding.copyWith(bottom: 72),
-              itemBuilder: (_, index) {
-                return items[index];
-              },
-              separatorBuilder: (_, _) {
-                return const SizedBox(height: 24);
-              },
-              itemCount: items.length,
+    return FocusTraversalGroup(
+      policy: PageTraversalPolicy(),
+      child: PageFocusScope(
+        child: CommonPopScope(
+          onPop: (context) {
+            if (_fileData == null) {
+              return true;
+            }
+            _handleBack();
+            return false;
+          },
+          child: FloatLayout(
+            floatingWidget: FloatWrapper(
+              child: CommonFloatingActionButton(
+                onPressed: _handleConfirm,
+                icon: const Icon(Icons.save),
+                label: appLocalizations.save,
+              ),
+            ),
+            child: Form(
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: ListView.separated(
+                  padding: kMaterialListPadding.copyWith(bottom: 72),
+                  itemBuilder: (_, index) {
+                    return items[index];
+                  },
+                  separatorBuilder: (_, _) {
+                    return const SizedBox(height: 24);
+                  },
+                  itemCount: items.length,
+                ),
+              ),
             ),
           ),
         ),

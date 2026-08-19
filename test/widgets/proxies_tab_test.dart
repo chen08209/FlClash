@@ -52,7 +52,6 @@ void main() {
               groups: renderedGroups,
               currentGroupName: 'B',
               proxyCardType: ProxyCardType.expand,
-              columns: 2,
             ),
           ),
         ],

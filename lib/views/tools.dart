@@ -267,7 +267,6 @@ class _AdvancedConfigItem extends StatelessWidget {
   }
 }
 
-
 class _TailscaleItem extends StatelessWidget {
   const _TailscaleItem();
 

@@ -274,13 +274,16 @@ Responsibilities are deliberately split:
 - `core/` and `services/helper/` remain source owners; `libclash/` and Android `jniLibs`/header directories are generated
   output locations.
 - `setup.dart` remains the release/package orchestrator and does not pre-build
-  platform artifacts or pass Core integrity data into Dart.
+  platform artifacts or use `dart-define` for Core integrity data. The Windows
+  build tool writes the runtime `manifest.json` beside the Core output, and the
+  Windows bundle copies it beside the application executable.
 
 Platform outputs remain explicit:
 
 - Android builds the Go core as `c-shared`, then copies `libclash.so` and generated headers into the `:core` Android module.
 - macOS and Linux build a standalone `FlClashCore` process used by the desktop socket integration.
-- Windows builds `FlClashCore.exe` plus the Rust `FlClashHelperService.exe` privileged helper.
+- Windows builds `FlClashCore.exe`, the Rust `FlClashHelperService.exe` privileged helper, and a
+  `manifest.json` containing only `coreSha256`.
 
 The hooks follow rust_api/Cargokit's phony-output scheduling pattern, but setup uses its own cache because it builds both a
 Go core and, on Windows, a separate Rust helper. Per-target records live under `.dart_tool/setup_build_cache/v1/`:
@@ -303,11 +306,23 @@ Windows helper integrity/version check:
 
 - The build tool constructs the Core first, calculates its SHA256, and always
   builds the Rust Helper with release hardening and that expected hash.
-- Flutter does not embed or send the Core SHA256. Debug, Profile, and Release
+- Flutter reads the Core SHA256 from the bundled `manifest.json` and sends it with `/ping`. Debug, Profile, and Release
   builds use the same Helper protocol and may use TUN through the same flow.
-- `/ping` is loopback-only and requires no request token. The Helper verifies the fixed `FlClashCore.exe` beside it against
-  its embedded SHA256 before reporting readiness, and repeats verification before every launch. The response includes the
-  running Helper path and protocol header; Dart checks both against the current installation.
+- `/ping` is loopback-only and requires no request token. The Helper compares the requested SHA256 with its embedded value
+  and checks that the fixed `FlClashCore.exe` beside it exists; `/start` performs the actual Core SHA256 verification before
+  every launch. The response includes the running Helper path and protocol header; Dart checks both against the current
+  installation. The launcher selects the Helper only when `/ping` reports ready; any other readiness (missing manifest,
+  unavailable Helper, or a Helper built for a different Core) falls back to the direct Core without requesting elevation.
+  If `/start` reports a pre-spawn failure — `coreVerificationFailed` (the on-disk Core no longer matches the SHA the
+  Helper and manifest agree on) or `processLaunchFailed` (the Core process could not be spawned) — the launcher degrades
+  to the direct Core rather than failing the launch. `/start` releases the previously managed Core before it verifies,
+  so the Helper owns no Core when either code is reported and the direct retry cannot race a Helper-managed Core.
+  A mismatched Helper is reinstalled through the explicit TUN authorization flow, not at startup.
+- TUN is not a required run condition. A direct Core runs unelevated and cannot bring up TUN, so any degrade to the
+  direct Core — an unready Helper at resolve time, or a pre-spawn `/start` failure — silently drops TUN and keeps the
+  Core running. Degrading is preferred over failing the launch: an unverified Core carries no privilege the direct
+  launch path did not already have. `manifestMissing` is the one readiness that is surfaced to the user, because it
+  means the installation itself is incomplete.
 - Flutter creates a 128-bit lowercase-hex session ID and uses it as the random named-pipe suffix. `/start` receives only
   that address and session ID, validates the fixed `FlClashCore_<session>` namespace, starts the fixed Core beside the
   Helper, and returns the same session ID plus the spawned PID. Flutter verifies both the session and named-pipe peer PID.
@@ -350,13 +365,16 @@ The helper owns its Windows Service Control Manager lifecycle through two elevat
 The Dart layer only launches the helper's `install` command through `ShellExecuteW`; it does not compose `sc.exe`,
 `taskkill`, or `cmd.exe` command lines.
 
-In every Flutter build mode it opens the fixed Core executable beside the Helper without write/delete sharing, validates
-it against the SHA256 embedded only in the Helper, and keeps that handle open through process creation. Protocol version 5
-uses 32-character lowercase-hex session ownership:
+In every Flutter build mode `/start` opens the fixed Core executable beside the Helper without write/delete sharing,
+validates it against the SHA256 embedded only in the Helper, and keeps that handle open through process creation.
+`/ping` only compares the requested `coreSha256` with the Helper's embedded value and checks the fixed Core path exists;
+it never hashes the Core. Protocol version 6 uses 32-character lowercase-hex session ownership:
 
-- `GET /ping` verifies Core and returns the current Helper executable path with `x-flclash-helper-protocol`.
-- `POST /start` rejects unknown JSON fields, validates `{address, sessionId}`, replaces any previously managed Core, and
-  returns `{sessionId, pid}`.
+- `GET /ping?coreSha256=...` returns the current Helper executable path with `x-flclash-helper-protocol` when the
+  requested SHA matches.
+- `POST /start` rejects unknown JSON fields, validates `{address, sessionId}`, then releases any previously managed Core
+  before verifying the Core — so every outcome, including a rejected one, leaves the Helper owning no Core — and returns
+  `{sessionId, pid}`.
 - `POST /stop` validates `{sessionId}` and only stops the matching managed Core. A session mismatch is HTTP 409.
 - `GET /logs` exposes the bounded recent Helper/Core stderr buffer with `no-store` caching.
 

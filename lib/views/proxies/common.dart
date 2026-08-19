@@ -71,7 +71,7 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   } catch (error) {
     commonPrint.log(
       'Delay test failed for ${state.proxyName}: $error',
-      logLevel: LogLevel.error,
+      logLevel: coreFailureLogLevel(error),
     );
     ref
         .read(proxiesActionProvider.notifier)
@@ -80,7 +80,7 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
 }
 
 Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final batches = proxies.batch(100);
+  final batches = proxies.batch(maxConcurrentDelayTests);
   for (final batch in batches) {
     await Future.wait(
       batch.map((proxy) async {
@@ -94,9 +94,9 @@ Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
 double getScrollToSelectedOffset({
   required String groupName,
   required List<Proxy> proxies,
+  required int columns,
 }) {
   final ref = globalState.container;
-  final columns = ref.read(proxiesColumnsProvider);
   final proxyCardType = ref.read(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );

@@ -37,6 +37,10 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
 
   late final ValueNotifier<List<GridItem>> _childrenNotifier;
   List<GridItem> children = [];
+  List<GridItem>? _pendingChildren;
+
+  List<GridItem> get snapshotChildren =>
+      List<GridItem>.unmodifiable(_pendingChildren ?? children);
 
   int get length => _childrenNotifier.value.length;
   List<int> _tempIndexList = [];
@@ -355,13 +359,16 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     _preTransformState();
     final indexWhere = _tempIndexList.indexWhere((i) => i == index);
     _tempIndexList.removeAt(indexWhere);
+    final nextChildren = List<GridItem>.from(_childrenNotifier.value)
+      ..removeAt(index);
+    _pendingChildren = nextChildren;
     final completed = await _transform();
     if (!completed || !mounted) {
+      _pendingChildren = null;
       return;
     }
-    final children = List<GridItem>.from(_childrenNotifier.value);
-    children.removeAt(index);
-    _childrenNotifier.value = children;
+    _childrenNotifier.value = nextChildren;
+    _pendingChildren = null;
     _initState();
   }
 
@@ -606,6 +613,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     _childrenNotifier.removeListener(_handleChildrenChanged);
     _childrenNotifier.value = const [];
     children = const [];
+    _pendingChildren = null;
     _itemContexts = [];
     _sizes = [];
     _offsets = [];

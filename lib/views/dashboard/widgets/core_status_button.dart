@@ -26,7 +26,6 @@ class _CoreStatusButtonState extends ConsumerState<CoreStatusButton> {
   void initState() {
     super.initState();
     _status = ref.read(coreStatusProvider);
-    // The hold arms only on a connecting transition, not on initial mount.
     ref.listenManual(coreStatusProvider, (_, next) {
       _onStatusChanged(next);
     });
@@ -76,7 +75,13 @@ class _CoreStatusButtonState extends ConsumerState<CoreStatusButton> {
     if (res != true) {
       return;
     }
-    globalState.container.read(coreActionProvider.notifier).restartCore();
+    try {
+      await globalState.container
+          .read(coreActionProvider.notifier)
+          .restartCore();
+    } catch (error) {
+      globalState.showNotifier(error.toString());
+    }
   }
 
   @override

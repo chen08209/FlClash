@@ -14,6 +14,7 @@ import 'package:path/path.dart';
 
 class System {
   static System? _instance;
+  bool _isTV = false;
 
   System._internal();
 
@@ -32,8 +33,19 @@ class System {
 
   bool get isLinux => Platform.isLinux;
 
-  Future<int> get version async {
+  bool get isTV => _isTV;
+
+  Future<int> init() async {
     final deviceInfo = await DeviceInfoPlugin().deviceInfo;
+    _isTV = switch (deviceInfo) {
+      AndroidDeviceInfo(:final systemFeatures) => systemFeatures.any(
+        const {
+          'android.hardware.type.television',
+          'android.software.leanback',
+        }.contains,
+      ),
+      _ => false,
+    };
     return switch (Platform.operatingSystem) {
       'macos' => (deviceInfo as MacOsDeviceInfo).majorVersion,
       'android' => (deviceInfo as AndroidDeviceInfo).version.sdkInt,
@@ -50,7 +62,8 @@ class System {
   Future<bool> checkIsAdmin() async {
     final corePath = appPath.corePath.replaceAll(' ', '\\\\ ');
     if (system.isWindows) {
-      return windowsHelperClient.isReady();
+      return await windowsHelperClient.readiness() ==
+          WindowsHelperReadiness.ready;
     } else if (system.isMacOS) {
       final result = await Process.run('stat', ['-f', '%Su:%Sg %Sp', corePath]);
       final output = result.stdout.trim();
@@ -203,9 +216,21 @@ class Windows {
   }
 
   Future<AuthorizeCode> registerService() async {
-    if (await windowsHelperClient.isReady()) {
-      commonPrint.log('helper service is ready');
-      return AuthorizeCode.none;
+    final readiness = await windowsHelperClient.readiness();
+    switch (readiness) {
+      case WindowsHelperReadiness.ready:
+        commonPrint.log('helper service is ready');
+        return AuthorizeCode.none;
+      case WindowsHelperReadiness.manifestMissing:
+        commonPrint.log(
+          'Core manifest is missing or invalid; Helper service unavailable, '
+          'falling back to direct Core',
+          logLevel: LogLevel.warning,
+        );
+        globalState.showNotifier(currentAppLocalizations.helperCorruptTip);
+        return AuthorizeCode.error;
+      case WindowsHelperReadiness.notReady:
+        break;
     }
 
     commonPrint.log(
@@ -238,10 +263,12 @@ class Windows {
     for (var attempt = 0; attempt < maxAttempts; attempt++) {
       final remaining = timeout - stopwatch.elapsed;
       if (remaining <= Duration.zero) return false;
-      final isRunning = await windowsHelperClient.isReady(
-        timeout: remaining,
-        logFailure: false,
-      );
+      final isRunning =
+          await windowsHelperClient.readiness(
+            timeout: remaining,
+            logFailure: false,
+          ) ==
+          WindowsHelperReadiness.ready;
       if (isRunning) return true;
       final delay = timeout - stopwatch.elapsed;
       if (delay <= Duration.zero || attempt == maxAttempts - 1) return false;

@@ -98,14 +98,11 @@ void main() {
         .update((_) => const Size(1000, 800));
     container.read(sideWidthProvider.notifier).update((_) => 200);
 
-    expect(container.read(contentWidthProvider), 800);
     final profiles = container.read(profilesStateProvider);
     expect(profiles.profiles.single.label, 'Primary');
     expect(profiles.currentProfileId, profile.id);
-    expect(profiles.columns, greaterThan(0));
 
     final dashboard = container.read(dashboardStateProvider);
-    expect(dashboard.contentWidth, 800);
     expect(dashboard.dashboardWidgets, isNotEmpty);
 
     final actions = container.read(proxiesActionsStateProvider);
@@ -175,7 +172,6 @@ void main() {
       );
       expect(selector.proxies.single.name, 'Beta');
       expect(selector.groupType, GroupType.Selector);
-      expect(selector.columns, greaterThanOrEqualTo(2));
 
       final missing = container.read(
         proxyGroupSelectorStateProvider('Missing', ''),

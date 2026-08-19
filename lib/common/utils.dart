@@ -184,12 +184,6 @@ class Utils {
     return build1.compareTo(build2);
   }
 
-  // String getPinyin(String value) {
-  //   return value.isNotEmpty
-  //       ? PinyinHelper.getFirstWordPinyin(value.substring(0, 1))
-  //       : '';
-  // }
-
   String? getFileNameForDisposition(String? disposition) {
     if (disposition == null) return null;
     final parseValue = HeaderValue.parse(disposition);

@@ -15,21 +15,6 @@ class BaseNavigator {
       context,
     ).push<T>(CommonRoute(builder: (context) => child));
   }
-
-  // static Future<T?> modal<T>(BuildContext context, Widget child) async {
-  //   if (globalState.appState.viewMode != ViewMode.mobile) {
-  //     return await globalState.showCommonDialog<T>(
-  //       child: CommonModal(
-  //         child: child,
-  //       ),
-  //     );
-  //   }
-  //   return await Navigator.of(context).push<T>(
-  //     CommonRoute(
-  //       builder: (context) => child,
-  //     ),
-  //   );
-  // }
 }
 
 const commonSharedXPageTransitions = SharedAxisPageTransitionsBuilder(

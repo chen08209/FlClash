@@ -140,36 +140,11 @@ class AppSidebarContainer extends ConsumerWidget {
 
   const AppSidebarContainer({super.key, required this.child});
 
-  // Widget _buildLoading() {
-  //   return Consumer(
-  //     builder: (_, ref, _) {
-  //       final loading = ref.watch(loadingProvider);
-  //       final isMobileView = ref.watch(isMobileViewProvider);
-  //       return loading && !isMobileView
-  //           ? RotatedBox(
-  //               quarterTurns: 1,
-  //               child: const LinearProgressIndicator(),
-  //             )
-  //           : Container();
-  //     },
-  //   );
-  // }
-
   Widget _buildBackground({
     required BuildContext context,
     required Widget child,
   }) {
     return Material(color: context.colorScheme.surfaceContainer, child: child);
-    // if (!system.isMacOS) {
-    //   return Material(
-    //     color: context.colorScheme.surfaceContainer,
-    //     child: child,
-    //   );
-    // }
-    // return child;
-    // return TransparentMacOSSidebar(
-    //   child: Material(color: Colors.transparent, child: child),
-    // );
   }
 
   void _updateSideBarWidth(WidgetRef ref, double contentWidth) {
@@ -181,9 +156,21 @@ class AppSidebarContainer extends ConsumerWidget {
   }
 
   void _handleToPage(PageLabel pageLabel) {
+    final focusNode = FocusManager.instance.primaryFocus;
+    final preserveNavigationFocus =
+        focusNode?.context?.findAncestorWidgetOfExactType<NavigationRail>() !=
+        null;
     globalState.container
         .read(currentPageLabelProvider.notifier)
         .toPage(pageLabel);
+    if (!preserveNavigationFocus || focusNode == null) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (focusNode.context != null && focusNode.canRequestFocus) {
+        focusNode.requestFocus();
+      }
+    });
   }
 
   @override

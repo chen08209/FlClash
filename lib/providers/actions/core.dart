@@ -4,7 +4,6 @@ part of '../action.dart';
 class CoreAction extends _$CoreAction {
   int _requestedRestartRevision = 0;
   Future<void>? _restartOperation;
-  bool _latestExplicitStart = false;
 
   @override
   void build() {}
@@ -38,9 +37,8 @@ class CoreAction extends _$CoreAction {
     return coreController.restart();
   }
 
-  Future<void> restartCore([bool start = false]) {
+  Future<void> restartCore() {
     _requestedRestartRevision++;
-    _latestExplicitStart = start;
     final activeOperation = _restartOperation;
     if (activeOperation != null) {
       return activeOperation;
@@ -61,8 +59,7 @@ class CoreAction extends _$CoreAction {
       var appliedRevision = 0;
       while (appliedRevision < _requestedRestartRevision) {
         final revision = _requestedRestartRevision;
-        final explicitStart = _latestExplicitStart;
-        if (explicitStart || ref.read(isStartProvider)) {
+        if (ref.read(isStartProvider)) {
           await ref
               .read(setupActionProvider.notifier)
               .setRunning(true, initialize: true);

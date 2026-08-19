@@ -336,7 +336,7 @@ final class IPCCoreTransport implements DesktopCoreTransport {
         _state == DesktopTransportState.closed) {
       return;
     }
-    commonPrint.log('IPC error: $error', logLevel: LogLevel.error);
+    commonPrint.log('IPC error: $error', logLevel: LogLevel.debug);
     _state = DesktopTransportState.failed;
     _failure = TransportFailed(error, stackTrace);
     _eventController.add(_failure!);

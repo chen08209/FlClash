@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -125,7 +124,7 @@ class CoreLib extends CoreHandlerInterface {
     } catch (error) {
       commonPrint.log(
         'Invoke method ${method.name} before connection timed out: $error',
-        logLevel: LogLevel.error,
+        logLevel: coreFailureLogLevel(error),
       );
       return null;
     }

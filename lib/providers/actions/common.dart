@@ -31,10 +31,17 @@ class CommonAction extends _$CommonAction {
     final onlyStatisticsProxy = ref.read(
       appSettingProvider.select((state) => state.onlyStatisticsProxy),
     );
-    final traffic = await coreController.getTraffic(onlyStatisticsProxy);
-    ref.read(trafficsProvider.notifier).addTraffic(traffic);
-    ref.read(totalTrafficProvider.notifier).value = await coreController
-        .getTotalTraffic(onlyStatisticsProxy);
+    try {
+      final traffic = await coreController.getTraffic(onlyStatisticsProxy);
+      ref.read(trafficsProvider.notifier).addTraffic(traffic);
+      ref.read(totalTrafficProvider.notifier).value = await coreController
+          .getTotalTraffic(onlyStatisticsProxy);
+    } catch (error) {
+      commonPrint.log(
+        'updateTraffic error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
   }
 
   Future<void> autoCheckUpdate() async {

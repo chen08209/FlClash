@@ -202,6 +202,7 @@ final class FakeProcessLease implements CoreProcessLease {
 final class FakeLauncher implements CoreProcessLauncher {
   final FakeProcessLease lease;
   Completer<void>? startGate;
+  Object? startError;
   final Completer<void> _started = Completer<void>();
   int startCount = 0;
 
@@ -209,9 +210,6 @@ final class FakeLauncher implements CoreProcessLauncher {
     : lease = FakeProcessLease(owner: owner, pid: pid);
 
   FakeLauncher.withLease(this.lease);
-
-  @override
-  CoreProcessOwner get owner => lease.owner;
 
   Future<void> get started => _started.future;
 
@@ -225,6 +223,10 @@ final class FakeLauncher implements CoreProcessLauncher {
       _started.complete();
     }
     await startGate?.future;
+    final error = startError;
+    if (error != null) {
+      throw error;
+    }
     return lease;
   }
 }

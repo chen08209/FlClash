@@ -266,6 +266,32 @@ void main() {
       expect(coreAction.lifecycleRestartCount, 1);
       expect(setupAction.applyProfileCount, 2);
     });
+
+    test('surfaces a failed restart to its caller as a rejection', () async {
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(_TestSetupAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      final restartCompleter = Completer<CoreLifecycleResult>();
+      coreAction.restartCompleter = restartCompleter;
+
+      final restart = coreAction.restartCore();
+      restartCompleter.completeError(StateError('core is gone'));
+
+      await expectLater(restart, throwsA(isA<StateError>()));
+      expect(container.read(coreStatusProvider), CoreStatus.disconnected);
+
+      // The failed operation must not latch: a later restart still runs.
+      coreAction.restartCompleter = null;
+      await coreAction.restartCore();
+      expect(coreAction.lifecycleRestartCount, 2);
+      expect(container.read(coreStatusProvider), CoreStatus.connected);
+    });
   });
 
   group('SetupAction', () {
@@ -487,7 +513,37 @@ void main() {
       },
     );
 
-    test('retries admin authorization after a failed attempt', () async {
+    test('reopens authorization and propagates a failed restart', () async {
+      late _AuthorizationSetupAction setupAction;
+      final container = ProviderContainer(
+        overrides: [
+          currentProfileProvider.overrideWithValue(null),
+          setupActionProvider.overrideWith(() {
+            setupAction = _AuthorizationSetupAction([AuthorizeCode.success]);
+            return setupAction;
+          }),
+          coreActionProvider.overrideWith(_FailingRestartCoreAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith.tun(enable: true));
+      container.read(setupActionProvider);
+      container.read(coreActionProvider);
+
+      await expectLater(
+        setupAction.applyProfile(force: true),
+        throwsA(same(_restartFailure)),
+      );
+
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.none,
+      );
+    });
+
+    test('requests admin authorization once per app lifecycle', () async {
       late _AuthorizationSetupAction setupAction;
       final container = ProviderContainer(
         overrides: [
@@ -509,12 +565,33 @@ void main() {
         TunAuthorizationState.unauthorized,
       );
 
-      expect(await setupAction.requestAdmin(true), isFalse);
-      expect(setupAction.authorizationRequestCount, 2);
+      expect(await setupAction.requestAdmin(true), isTrue);
+      expect(setupAction.authorizationRequestCount, 1);
       expect(
         container.read(authorizedTunEnableProvider),
-        TunAuthorizationState.authorized,
+        TunAuthorizationState.unauthorized,
       );
+    });
+
+    test('keeps tun disabled while authorization stays unauthorized', () async {
+      late _AuthorizationSetupAction setupAction;
+      final container = ProviderContainer(
+        overrides: [
+          setupActionProvider.overrideWith(() {
+            setupAction = _AuthorizationSetupAction([AuthorizeCode.error]);
+            return setupAction;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith.tun(enable: true));
+      container.read(setupActionProvider);
+
+      await setupAction.requestAdmin(true);
+
+      expect(container.read(autoSetSystemDnsStateProvider).a, isFalse);
     });
   });
 }
@@ -598,10 +675,19 @@ class _RestartRecordingCoreAction extends CoreAction {
   int restartCount = 0;
 
   @override
-  Future<void> restartCore([bool start = false]) async {
+  Future<void> restartCore() async {
     restartCount++;
   }
 }
+
+class _FailingRestartCoreAction extends CoreAction {
+  @override
+  Future<void> restartCore() async {
+    throw _restartFailure;
+  }
+}
+
+final _restartFailure = Exception('restart failed');
 
 class _AuthorizationSetupAction extends SetupAction {
   final List<AuthorizeCode> authorizationResults;
