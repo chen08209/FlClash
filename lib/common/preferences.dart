@@ -11,6 +11,7 @@ import 'constant.dart';
 import 'file.dart';
 import 'path.dart';
 import 'print.dart';
+import 'system.dart';
 
 const _legacyKeyPrefix = 'flutter.';
 
@@ -134,7 +135,7 @@ class Preferences {
   Preferences._internal({String? pathOverride})
     : _store = pathOverride != null
           ? _FileStore(pathOverride: pathOverride)
-          : Platform.isWindows || Platform.isMacOS || Platform.isLinux
+          : system.isDesktop
           ? _FileStore()
           : _SharedPreferencesStore() {
     _init();

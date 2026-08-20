@@ -43,7 +43,7 @@ class AppPath {
   }
 
   Future<void> _initDataDir() async {
-    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    if (system.isDesktop) {
       final portableConfigDir = Directory(join(appDirPath, 'config'));
       if (await portableConfigDir.exists()) {
         isPortable = true;
