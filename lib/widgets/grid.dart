@@ -17,7 +17,7 @@ class Grid extends MultiChildRenderObjectWidget {
 
   final AxisDirection axisDirection;
 
-  final TextDirection textDirection;
+  final TextDirection? _textDirection;
 
   const Grid({
     super.key,
@@ -30,7 +30,7 @@ class Grid extends MultiChildRenderObjectWidget {
     List<Widget>? children,
   }) : crossAxisCount = crossAxisCount ?? 1,
        axisDirection = axisDirection ?? AxisDirection.down,
-       textDirection = textDirection ?? TextDirection.ltr,
+       _textDirection = textDirection,
        super(children: children ?? const []);
 
   const Grid.baseGap({
@@ -56,7 +56,7 @@ class Grid extends MultiChildRenderObjectWidget {
   @override
   RenderObject createRenderObject(BuildContext context) {
     return RenderGrid(
-      textDirection: textDirection,
+      textDirection: _textDirection ?? Directionality.of(context),
       crossAxisCount: crossAxisCount,
       mainAxisSpacing: mainAxisSpacing,
       crossAxisSpacing: crossAxisSpacing,
@@ -71,7 +71,7 @@ class Grid extends MultiChildRenderObjectWidget {
       ..mainAxisSpacing = mainAxisSpacing
       ..mainAxisExtent = mainAxisExtent
       ..crossAxisSpacing = crossAxisSpacing
-      ..textDirection = textDirection
+      ..textDirection = _textDirection ?? Directionality.of(context)
       ..axisDirection = axisDirection
       ..crossAxisCount = crossAxisCount;
   }

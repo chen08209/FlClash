@@ -119,6 +119,9 @@ flutter:
     - family: Icons
       fonts:
         - asset: assets/fonts/Icons.ttf
+    - family: Vazirmatn
+      fonts:
+        - asset: assets/fonts/Vazirmatn.ttf
 flutter_intl:
   enabled: true
   class_name: AppLocalizations

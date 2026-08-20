@@ -860,5 +860,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "yearsAgo": m25,
     "zh_CN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
+    "fa": MessageLookupByLibrary.simpleMessage("ペルシア語"),
   };
 }

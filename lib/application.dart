@@ -139,6 +139,9 @@ class ApplicationState extends ConsumerState<Application> {
           appSettingProvider.select((state) => state.locale),
         );
         final themeProps = ref.watch(themeSettingProvider);
+        final effectiveLocale = utils.getLocaleForString(locale);
+        final fontFamily =
+            effectiveLocale?.languageCode == 'fa' ? 'Vazirmatn' : null;
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: globalState.navigatorKey,
@@ -160,7 +163,7 @@ class ApplicationState extends ConsumerState<Application> {
           },
           scrollBehavior: BaseScrollBehavior(),
           title: appName,
-          locale: utils.getLocaleForString(locale),
+          locale: effectiveLocale,
           supportedLocales: AppLocalizations.delegate.supportedLocales,
           themeMode: themeProps.themeMode,
           theme: ThemeData(
@@ -170,6 +173,7 @@ class ApplicationState extends ConsumerState<Application> {
               brightness: Brightness.light,
               primaryColor: themeProps.primaryColor,
             ),
+            fontFamily: fontFamily,
           ),
           darkTheme: ThemeData(
             useMaterial3: true,
@@ -178,6 +182,7 @@ class ApplicationState extends ConsumerState<Application> {
               brightness: Brightness.dark,
               primaryColor: themeProps.primaryColor,
             ).toPureBlack(themeProps.pureBlack),
+            fontFamily: fontFamily,
           ),
           home: child!,
         );

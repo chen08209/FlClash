@@ -18,7 +18,7 @@ class Measure {
       textScaler: _textScaler,
       ellipsis: '...',
       locale: Localizations.localeOf(context),
-      textDirection: text.textDirection ?? TextDirection.ltr,
+      textDirection: text.textDirection ?? Directionality.of(context),
     )..layout(maxWidth: maxWidth ?? double.infinity);
   }
 
