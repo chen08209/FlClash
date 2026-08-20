@@ -545,7 +545,16 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   final dir = Directory(restoreDirPath);
   await dir.create(recursive: true);
   for (final file in archive.files) {
-    final outPath = join(restoreDirPath, posix.normalize(file.name));
+    final outPath = canonicalize(join(restoreDirPath, file.name));
+    final canonicalRestoreDir = canonicalize(restoreDirPath);
+    if (!outPath.startsWith('$canonicalRestoreDir${Platform.pathSeparator}') &&
+        outPath != canonicalRestoreDir) {
+      throw 'Invalid zip entry: path traversal detected in "${file.name}"';
+    }
+    final parent = Directory(dirname(outPath));
+    if (!await parent.exists()) {
+      await parent.create(recursive: true);
+    }
     final outputStream = OutputFileStream(outPath);
     file.writeContent(outputStream);
     await outputStream.close();
