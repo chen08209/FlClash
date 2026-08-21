@@ -1,0 +1,53 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Style
+    prefer_single_quotes: true
+    require_trailing_commas: true
+    sort_child_properties_last: true
+
+    # Avoid unnecessary code
+    unnecessary_new: true
+    unnecessary_this: true
+    unnecessary_const: true
+    avoid_print: true
+    avoid_unnecessary_containers: true
+    sized_box_for_whitespace: true
+
+    # Prefer best practices
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+    prefer_is_empty: true
+    prefer_is_not_empty: true
+    prefer_interpolation_to_compose_strings: true
+
+    # Type safety
+    always_declare_return_types: true
+    annotate_overrides: true
+    use_key_in_widget_constructors: true
+    no_leading_underscores_for_local_identifiers: true
+
+    # Async
+    use_build_context_synchronously: true
+    unnecessary_await_in_return: true
+
+    # Resource lifecycle. `cancel_subscriptions` and `close_sinks` guard the
+    # dispose contract that `pages/scan.dart` broke by awaiting before calling
+    # `super.dispose()`; the rest are latent-bug rules the tree already passes,
+    # so they cost nothing to keep and stop a regression from landing quietly.
+    cancel_subscriptions: true
+    close_sinks: true
+
+    # Correctness
+    only_throw_errors: true
+    test_types_in_equals: true
+    avoid_type_to_string: true
+    literal_only_boolean_expressions: true
+    no_adjacent_strings_in_list: true
+    empty_statements: true
+    throw_in_finally: true
+    control_flow_in_finally: true
+    unawaited_futures: true

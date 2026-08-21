@@ -17,9 +17,9 @@ dependencies:
   window_manager:
     git:
       url: https://github.com/chen08209/window_manager
-      ref: main
+      ref: 5a489acfe5799c38909e3e96abd11b78354f1809
       path: packages/window_manager
-  dynamic_color: ^1.8.1
+  dynamic_color: ^1.9.0
   proxy:
     path: plugins/proxy
   window_ext:
@@ -27,17 +27,14 @@ dependencies:
   launch_at_startup:
     git:
       url: https://github.com/chen08209/launch_at_startup.git
-      ref: main
+      ref: e930ce65c5804343103447e01d39fccabedc8681
   json_annotation: ^4.12.0
-  file_picker: ^12.0.0-beta.7
+  file_picker: ^12.0.0
   mobile_scanner: ^7.4.0
   app_links: ^7.1.2
   win32_registry: ^3.0.3
-  tray_manager:
-    git:
-      url: https://github.com/chen08209/tray_manager.git
-      ref: main
-      path: packages/tray_manager
+  tray:
+    path: plugins/tray
   wifi_ssid:
     path: plugins/wifi_ssid
   collection: ^1.19.1
@@ -50,7 +47,7 @@ dependencies:
 
   webdav_client: ^1.2.2
   dio: ^5.8.0+1
-  win32: ^6.0.1
+  win32: ^6.4.0
   re_editor: ^0.10.0
   re_highlight: ^0.0.3
   archive: ^4.0.7
@@ -58,7 +55,7 @@ dependencies:
   hotkey_manager: ^0.2.3
   uni_platform: ^0.1.3
   device_info_plus: ^13.2.0
-  connectivity_plus: 7.2.0
+  connectivity_plus: ^7.3.1
   screen_retriever: ^0.2.1
   defer_pointer: ^0.0.2
   flutter_riverpod: ^3.3.2
@@ -72,13 +69,13 @@ dependencies:
   yaml_writer:
     git:
       url: https://github.com/chen08209/yaml_writer
-      ref: master
+      ref: 79c78a44ec9c2f5f5f97da1a65610c6fb2ead8b3
   super_sliver_list: ^0.4.1
   drift: ^2.34.3
   drift_flutter: ^0.3.1
   fractional_indexing: ^1.0.0
   reorderable_grid: ^1.0.13
-  smooth_sheets: ^1.0.2
+  smooth_sheets: ^1.1.1
   rust_api:
     path: plugins/rust_api
   setup:
@@ -96,6 +93,8 @@ dev_dependencies:
   drift_dev: ^2.34.0
   intl_utils: ^2.8.15
   test: ^1.31.0
+  sqlite3: ^3.5.1
+  cross_file: ^0.3.4+2
   mocktail: ^1.0.4
   yaml: ^3.1.3
   path_provider_platform_interface: ^2.1.3

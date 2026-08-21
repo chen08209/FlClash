@@ -2,8 +2,15 @@ name: build
 
 on:
   push:
+    branches:
+      - '**'
     tags:
       - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
   FLUTTER_VERSION: '3.44.4'
@@ -17,10 +24,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
-      - name: Test release notes generation
+      - name: Test commit message hook
         shell: bash
-        run: bash .github/scripts/generate_release_notes_test.sh
+        run: bash tool/check_commit_msg_test.sh
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -32,34 +40,25 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Check format
+        run: dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
+
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
+      - name: Verify changelog
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        run: dart run tool/changelog.dart verify
+
       - name: Run tests
-        run: flutter test --reporter expanded
+        run: flutter test --reporter expanded --coverage
+
+      - name: Check coverage
+        run: dart run tool/check_coverage.dart coverage/lcov.info 75
 
       - name: Validate local Flutter packages
         shell: bash
-        run: |
-          for package in plugins/proxy plugins/wifi_ssid plugins/window_ext plugins/setup; do
-            (
-              cd "$package"
-              flutter pub get
-              flutter analyze --no-fatal-infos
-            )
-          done
-
-      - name: Run local plugin tests
-        shell: bash
-        run: |
-          (
-            cd plugins/proxy
-            flutter test --reporter expanded
-          )
-          (
-            cd plugins/wifi_ssid
-            flutter test --reporter expanded
-          )
+        run: bash tool/check_plugins.sh
 
       - name: Validate setup build tool
         working-directory: plugins/setup/buildkit/build_tool
@@ -76,11 +75,73 @@ jobs:
 
       - name: Validate Go core wrapper
         working-directory: core
+        shell: bash
         env:
           CGO_ENABLED: 0
         run: |
-          go test .
+          # `go test` succeeds silently when a package has no test files, so
+          # assert the wrapper actually ships tests before trusting the result.
+          if ! compgen -G '*_test.go' > /dev/null; then
+            echo 'No Go tests found in core/; the test step would pass vacuously.' >&2
+            exit 1
+          fi
+          test -z "$(gofmt -l ./*.go ./platform ./tun)" || {
+            gofmt -l ./*.go ./platform ./tun >&2
+            exit 1
+          }
+          go test -count=1 .
           go vet .
+          # `go vet .` only reaches the root package. `platform` and `tun` are
+          # behind build constraints, so they need an explicit GOOS to compile
+          # at all; without this they ship unvetted.
+          GOOS=linux go vet ./platform
+
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        id: core-ndk
+        with:
+          ndk-version: r28c
+
+      - name: Validate the Android core library
+        working-directory: core
+        shell: bash
+        env:
+          ANDROID_NDK_HOME: ${{ steps.core-ndk.outputs.ndk-path }}
+        run: |
+          # The step above pins CGO_ENABLED=0, which excludes every `android &&
+          # cgo` file: lib.go, bride.go, tun/ and platform/limit.go. The job
+          # that builds them needs the NDK and only runs on a `v*` tag, so
+          # without this the entire Android surface of the core first compiles
+          # at release time.
+          CC="$(echo "$ANDROID_NDK_HOME"/toolchains/llvm/prebuilt/*/bin/aarch64-linux-android21-clang)"
+          test -x "$CC" || { echo "NDK clang not found at $CC" >&2; exit 1; }
+          # Same tags the shipped library is built with; read from the build
+          # tool's config so the two cannot drift.
+          tags="$(sed -n 's/^tags: *//p' ../plugins/setup/buildkit/build_tool/build_config.yaml)"
+          test -n "$tags" || { echo 'Could not read tags from build_config.yaml' >&2; exit 1; }
+          export CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC
+          go vet "-tags=$tags" . ./tun ./platform
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run Android unit tests
+        working-directory: android
+        shell: bash
+        run: |
+          # settings.gradle.kts resolves the Flutter tooling through local.properties,
+          # which only the Flutter build itself would otherwise generate.
+          {
+            echo "flutter.sdk=$FLUTTER_ROOT"
+            echo "sdk.dir=$ANDROID_HOME"
+          } > local.properties
+          # Modules are listed explicitly: the aggregate testDebugUnitTest task would
+          # also run third-party Flutter plugin suites. `:core` is omitted because its
+          # only class loads the native library through System.loadLibrary.
+          ./gradlew :common:testDebugUnitTest :service:testDebugUnitTest :app:testDebugUnitTest
 
       - name: Validate Rust components
         run: |
@@ -144,6 +205,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Setup Android Signing
         if: startsWith(matrix.platform,'android')
@@ -203,61 +265,6 @@ jobs:
           path: ./dist
           overwrite: true
 
-  changelog:
-    if: ${{ !contains(github.ref, '-') }}
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    needs: [ build ]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: refs/heads/main
-      - name: Generate
-        run: |
-          last_ver=$(grep -m1 '^## ' CHANGELOG.md 2>/dev/null | sed 's/^## //')
-
-          mapfile -t tags < <(git tag --merged HEAD --sort=-creatordate)
-
-          temp="NEW_CHANGELOG.md"
-          : > "$temp"
-
-          for i in "${!tags[@]}"; do
-              curr="${tags[i]}"
-              [[ "$curr" == "$last_ver" ]] && break
-
-              prev="${tags[i+1]}"
-              range="${prev:+$prev..}$curr"
-
-              echo -e "## $curr\n" >> "$temp"
-              git log --no-merges --pretty=format:"%B" "$range" | \
-              awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$temp"
-          done
-          [ -f CHANGELOG.md ] && cat CHANGELOG.md >> "$temp"
-          
-          mv "$temp" CHANGELOG.md
-
-      - name: Commit
-        run: |
-          git add CHANGELOG.md
-          if ! git diff --cached --quiet; then
-            echo "Commit pushing"
-            git config --local user.email "chen08209@gmail.com"
-            git config --local user.name "chen08209"
-            git commit -m "Update changelog"
-            if git push; then
-              echo "Push succeeded"
-            else
-              echo "Push failed"
-              exit 1
-            fi
-          fi
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   upload:
     permissions:
       contents: write
@@ -284,14 +291,31 @@ jobs:
           pattern: artifact-*
           merge-multiple: true
 
-      - name: Generate release.md
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate release notes
         shell: bash
+        env:
+          IS_STABLE: ${{ env.IS_STABLE }}
+          TAG: ${{ github.ref_name }}
         run: |
-          pre_tag=$(
-            curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" |
-              sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p'
-          )
-          bash .github/scripts/generate_release_notes.sh "$pre_tag" release.md
+          target=()
+          if [[ "$IS_STABLE" == 'true' ]]; then
+            target=(--tag "$TAG")
+          else
+            dart run tool/changelog.dart build --unreleased
+          fi
+          dart run tool/changelog.dart render release "${target[@]}" --out release.md
+          dart run tool/changelog.dart render telegram "${target[@]}" --out telegram.md
+
       - name: Push to telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

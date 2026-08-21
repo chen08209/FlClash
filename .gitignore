@@ -68,7 +68,6 @@ docs/
 /macos/build/
 /env.json
 /core_sha256.json
-/core/*.exe
 /plugins/rust_api/.claude/
 devtools_options.yaml
 
