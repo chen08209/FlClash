@@ -1,7 +1,6 @@
 import 'package:fl_clash/common/permission.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
@@ -19,7 +18,6 @@ void main() {
         excludeSSIDsProvider.overrideWithValue(const ['Office Wi-Fi']),
       ],
     );
-    globalState.container = container;
   });
 
   tearDown(() async {
@@ -60,7 +58,7 @@ void main() {
 
       await Permissions.test(
         supportsLocationPermissions: true,
-      ).checkLocationPermissions();
+      ).checkLocationPermissions(container.read);
 
       expect(calls, ['checkPermission', 'requestPermission', 'getSsid']);
       expect(
@@ -81,7 +79,7 @@ void main() {
 
     await Permissions.test(
       supportsLocationPermissions: true,
-    ).checkLocationPermissions();
+    ).checkLocationPermissions(container.read);
 
     expect(calls, ['checkPermission', 'requestPermission']);
     expect(

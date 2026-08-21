@@ -1,12 +1,8 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/palette.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/test_app.dart';
 
 void main() {
   testWidgets('Palette updates color from hue, chroma, and tone controls', (
@@ -16,7 +12,8 @@ void main() {
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      _TestApp(
+      TestApp(
+        wrapInProviderScope: true,
         child: Scaffold(
           body: SingleChildScrollView(
             child: SizedBox(width: 700, child: Palette(controller: controller)),
@@ -52,7 +49,8 @@ void main() {
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      _TestApp(
+      TestApp(
+        wrapInProviderScope: true,
         child: Scaffold(
           body: SingleChildScrollView(
             child: SizedBox(width: 32, child: Palette(controller: controller)),
@@ -67,32 +65,4 @@ void main() {
     expect(find.text('Primary'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-}
-
-class _TestApp extends StatelessWidget {
-  const _TestApp({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ProviderScope(
-      child: MaterialApp(
-        navigatorKey: globalState.navigatorKey,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
-        builder: (context, child) {
-          globalState.theme = CommonTheme.of(context, 1);
-          globalState.measure = Measure.of(context, 1);
-          return child!;
-        },
-        home: child,
-      ),
-    );
-  }
 }

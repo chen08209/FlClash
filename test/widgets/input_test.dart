@@ -1,23 +1,25 @@
 import 'dart:ui' as ui;
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/test_app.dart';
+
+final _viewSizeOverride = viewSizeProvider.overrideWithBuild(
+  (_, _) => const Size(1200, 1000),
+);
 
 void main() {
   testWidgets('ListItem.toggle toggles when tapping the row', (tester) async {
     bool? changedValue;
 
     await tester.pumpWidget(
-      _TestApp(
+      TestApp(
+        overrides: [_viewSizeOverride],
         child: Scaffold(
           body: ListItem.toggle(
             title: const Text('Enabled'),
@@ -37,7 +39,8 @@ void main() {
 
   testWidgets('ListItem.toggle is disabled without onChanged', (tester) async {
     await tester.pumpWidget(
-      _TestApp(
+      TestApp(
+        overrides: [_viewSizeOverride],
         child: Scaffold(
           body: ListItem.toggle(title: const Text('Disabled'), value: false),
         ),
@@ -58,7 +61,8 @@ void main() {
     bool? changedValue;
 
     await tester.pumpWidget(
-      _TestApp(
+      TestApp(
+        overrides: [_viewSizeOverride],
         child: Scaffold(
           body: ListItem.checkbox(
             title: const Text('Selected'),
@@ -83,7 +87,12 @@ void main() {
         overrides: [
           viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 1000)),
         ],
-        child: _TestApp(
+        child: TestApp(
+          overrides: [
+            viewSizeProvider.overrideWithBuild(
+              (_, _) => const Size(1200, 1000),
+            ),
+          ],
           child: Scaffold(
             body: ListItem.input(
               title: const Text('Port'),
@@ -118,9 +127,14 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const ProviderScope(
-        child: _TestApp(
-          child: ListInputPage(
+      ProviderScope(
+        child: TestApp(
+          overrides: [
+            viewSizeProvider.overrideWithBuild(
+              (_, _) => const Size(1200, 1000),
+            ),
+          ],
+          child: const ListInputPage(
             title: 'Items',
             items: ['a', 'b', 'c'],
             titleBuilder: _textBuilder,
@@ -144,7 +158,8 @@ void main() {
     String? selected;
 
     await tester.pumpWidget(
-      _TestApp(
+      TestApp(
+        overrides: [_viewSizeOverride],
         child: Builder(
           builder: (context) {
             return FilledButton(
@@ -180,7 +195,8 @@ void main() {
     String? result;
 
     await tester.pumpWidget(
-      _TestApp(
+      TestApp(
+        overrides: [_viewSizeOverride],
         child: Builder(
           builder: (context) {
             return FilledButton(
@@ -227,7 +243,8 @@ void main() {
     Object? result;
 
     await tester.pumpWidget(
-      _TestApp(
+      TestApp(
+        overrides: [_viewSizeOverride],
         child: Builder(
           builder: (context) {
             return Column(
@@ -292,9 +309,14 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: _TestApp(
-          child: ListInputPage(
+      ProviderScope(
+        child: TestApp(
+          overrides: [
+            viewSizeProvider.overrideWithBuild(
+              (_, _) => const Size(1200, 1000),
+            ),
+          ],
+          child: const ListInputPage(
             title: 'Items',
             items: ['a', 'b'],
             titleBuilder: _textBuilder,
@@ -334,9 +356,14 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: _TestApp(
-          child: MapInputPage(
+      ProviderScope(
+        child: TestApp(
+          overrides: [
+            viewSizeProvider.overrideWithBuild(
+              (_, _) => const Size(1200, 1000),
+            ),
+          ],
+          child: const MapInputPage(
             title: 'Map',
             map: {'a': '1', 'b': '2'},
             titleBuilder: _entryTitle,
@@ -409,35 +436,4 @@ Widget _entrySubtitle(MapEntry<String, String> value) => Text(value.value);
 
 double _top(WidgetTester tester, String text) {
   return tester.getTopLeft(find.text(text)).dy;
-}
-
-class _TestApp extends StatelessWidget {
-  final Widget child;
-
-  const _TestApp({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ProviderScope(
-      overrides: [
-        viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 1000)),
-      ],
-      child: MaterialApp(
-        navigatorKey: globalState.navigatorKey,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
-        builder: (context, child) {
-          globalState.measure = Measure.of(context, 1);
-          globalState.theme = CommonTheme.of(context, 1);
-          return child!;
-        },
-        home: child,
-      ),
-    );
-  }
 }

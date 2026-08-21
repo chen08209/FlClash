@@ -3,6 +3,8 @@ import 'package:fl_clash/widgets/super_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/test_app.dart';
+
 GridItem _item(String label, {int crossAxisCellCount = 2}) {
   return GridItem(
     crossAxisCellCount: crossAxisCellCount,
@@ -26,8 +28,8 @@ void main() {
     var updates = 0;
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      TestApp(
+        child: Scaffold(
           body: SingleChildScrollView(
             child: SuperGrid(
               key: key,
@@ -75,8 +77,8 @@ void main() {
     final key = GlobalKey<SuperGridState>();
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      TestApp(
+        child: Scaffold(
           body: SingleChildScrollView(
             child: SuperGrid(
               key: key,
@@ -109,14 +111,62 @@ void main() {
     expect(tester.takeException(), null);
   });
 
+  testWidgets('SuperGrid moves the dragged item into the hovered slot', (
+    tester,
+  ) async {
+    final key = GlobalKey<SuperGridState>();
+
+    await tester.pumpWidget(
+      TestApp(
+        child: Scaffold(
+          body: SingleChildScrollView(
+            child: SuperGrid(
+              key: key,
+              crossAxisCount: 4,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              children: [_item('A'), _item('B'), _item('C'), _item('D')],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    List<String> labels() => key.currentState!.snapshotChildren
+        .map(
+          (item) => ((item.child as SizedBox).key! as ValueKey).value as String,
+        )
+        .toList();
+
+    expect(labels(), ['A', 'B', 'C', 'D']);
+
+    final target = tester.getCenter(find.byKey(const ValueKey('D')));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('A'))),
+    );
+    await tester.pump();
+    await gesture.moveBy(const Offset(10, 0));
+    await tester.pump();
+    await gesture.moveTo(target);
+    // Past the hover delay, so the grid opens a slot at D's position.
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 500));
+    await gesture.up();
+    await tester.pump(const Duration(seconds: 2));
+
+    expect(labels(), ['B', 'C', 'D', 'A']);
+    expect(tester.takeException(), null);
+  });
+
   testWidgets('SuperGrid completes a pending drop when disposed', (
     tester,
   ) async {
     final key = GlobalKey<SuperGridState>();
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      TestApp(
+        child: Scaffold(
           body: SingleChildScrollView(
             child: SuperGrid(
               key: key,

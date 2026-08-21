@@ -13,12 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _TestProfiles extends Profiles {
-  final List<Profile> initial;
-  _TestProfiles(this.initial);
-  @override
-  List<Profile> build() => initial;
-}
+import '../helpers/test_profiles.dart';
 
 void main() {
   Future<ProviderContainer> pumpListLayout(
@@ -50,7 +45,7 @@ void main() {
     );
     final container = ProviderContainer(
       overrides: [
-        profilesProvider.overrideWith(() => _TestProfiles([profile])),
+        profilesProvider.overrideWith(() => TestProfiles([profile])),
         currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
         currentGroupsStateProvider.overrideWithValue(
           GroupsState(value: [group]),

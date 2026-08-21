@@ -133,7 +133,7 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
     }
     final error = sendError;
     if (error != null) {
-      throw error;
+      Error.throwWithStackTrace(error, StackTrace.current);
     }
     sentMessages.add(message);
   }
@@ -154,7 +154,7 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
     }
     final error = closeError;
     if (error != null) {
-      throw error;
+      Error.throwWithStackTrace(error, StackTrace.current);
     }
   }
 
@@ -225,7 +225,7 @@ final class FakeLauncher implements CoreProcessLauncher {
     await startGate?.future;
     final error = startError;
     if (error != null) {
-      throw error;
+      Error.throwWithStackTrace(error, StackTrace.current);
     }
     return lease;
   }
