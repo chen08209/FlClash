@@ -1,24 +1,38 @@
 import 'iterable.dart';
 
-typedef ValueCallback<T> = T Function();
-
 class FixedList<T> {
   final int maxLength;
   final List<T> _list;
 
+  final int _revision;
+  List<T>? _snapshot;
+
   FixedList(this.maxLength, {List<T>? list})
-    : _list = (list ?? [])..truncate(maxLength);
+    : assert(maxLength > 0, 'FixedList without a cap grows without bound'),
+      _list = (list ?? [])..truncate(maxLength),
+      _revision = 0;
+
+  FixedList._(this.maxLength, this._list, this._revision);
+
+  int get revision => _revision;
 
   void add(T item) {
     _list.add(item);
     _list.truncate(maxLength);
+    _snapshot = null;
   }
 
   void clear() {
     _list.clear();
+    _snapshot = null;
   }
 
-  List<T> get list => List.unmodifiable(_list);
+  FixedList<T> append(T item) {
+    add(item);
+    return FixedList._(maxLength, _list, _revision + 1);
+  }
+
+  List<T> get list => _snapshot ??= List.unmodifiable(_list);
 
   int get length => _list.length;
 
@@ -27,47 +41,13 @@ class FixedList<T> {
   FixedList<T> copyWith() {
     return FixedList(maxLength, list: List.of(_list));
   }
-}
 
-class FixedMap<K, V> {
-  int maxLength;
-  late Map<K, V> _map;
+  @override
+  bool operator ==(Object other) =>
+      other is FixedList<T> &&
+      identical(other._list, _list) &&
+      other._revision == _revision;
 
-  FixedMap(this.maxLength, {Map<K, V>? map}) {
-    _map = map ?? {};
-  }
-
-  V updateCacheValue(K key, ValueCallback<V> callback) {
-    final realValue = _map.updateCacheValue(key, callback);
-    _adjustMap();
-    return realValue;
-  }
-
-  void clear() {
-    _map.clear();
-  }
-
-  void updateMaxLength(int size) {
-    maxLength = size;
-    _adjustMap();
-  }
-
-  void updateMap(Map<K, V> map) {
-    _map = map;
-    _adjustMap();
-  }
-
-  void _adjustMap() {
-    if (_map.length > maxLength) {
-      _map = Map.fromEntries(map.entries.toList()..truncate(maxLength));
-    }
-  }
-
-  V? get(K key) => _map[key];
-
-  bool containsKey(K key) => _map.containsKey(key);
-
-  int get length => _map.length;
-
-  Map<K, V> get map => Map.unmodifiable(_map);
+  @override
+  int get hashCode => Object.hash(identityHashCode(_list), _revision);
 }

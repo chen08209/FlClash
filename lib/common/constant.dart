@@ -47,13 +47,16 @@ String _randomPipeId() {
 
 final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
+
 const httpTimeoutDuration = Duration(milliseconds: 5000);
 
-/// Keep at or below the Core's delay-test concurrency (`mBatch` in
-/// core/common.go). Surplus requests queue inside the Core behind a full wave
-/// of 5s timeouts, which no RPC timeout can cover.
-const maxConcurrentDelayTests = 50;
-const moreDuration = Duration(milliseconds: 100);
+const delayTestGuardDuration = Duration(seconds: 30);
+
+const coreConnectionWaitDuration = Duration(seconds: 10);
+
+/// Keep at or below the Core's delay-test concurrency (`delayTestConcurrency`
+/// in core/common.go).
+const maxConcurrentDelayTests = 16;
 const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);
 const commonDuration = Duration(milliseconds: 300);
@@ -71,9 +74,10 @@ const profilesDirectoryName = 'profiles';
 const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
+const systemDnsRecordKey = 'system_dns_record';
+const defaultSystemDnsFallback = '223.5.5.5';
 const double dialogCommonWidth = 300;
 const repository = 'chen08209/FlClash';
-const defaultExternalController = '127.0.0.1:9090';
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
 const defaultTestUrl = 'https://www.gstatic.com/generate_204';
@@ -83,36 +87,18 @@ final commonFilter = ImageFilter.blur(
   tileMode: TileMode.clamp,
 );
 
-const listEquality = ListEquality();
-const navigationItemListEquality = ListEquality<NavigationItem>();
 const trackerInfoListEquality = ListEquality<TrackerInfo>();
 const stringListEquality = ListEquality<String>();
 const intListEquality = ListEquality<int>();
 const logListEquality = ListEquality<Log>();
-const groupListEquality = ListEquality<Group>();
 const ruleListEquality = ListEquality<Rule>();
 const scriptListEquality = ListEquality<Script>();
-const externalProviderListEquality = ListEquality<ExternalProvider>();
-const packageListEquality = ListEquality<Package>();
 const profileListEquality = ListEquality<Profile>();
 const proxyGroupsEquality = ListEquality<ProxyGroup>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();
-const stringAndStringMapEquality = MapEquality<String, String>();
 const stringAndStringMapEntryListEquality =
     ListEquality<MapEntry<String, String>>();
-const stringAndStringMapEntryIterableEquality =
-    IterableEquality<MapEntry<String, String>>();
-const stringAndObjectMapEntryIterableEquality =
-    IterableEquality<MapEntry<String, Object?>>();
-const delayMapEquality = MapEquality<String, Map<String, int?>>();
-const stringSetEquality = SetEquality<String>();
 const keyboardModifierListEquality = SetEquality<KeyboardModifier>();
-
-const viewModeColumnsMap = {
-  ViewMode.mobile: [2, 1],
-  ViewMode.laptop: [3, 2],
-  ViewMode.desktop: [4, 3],
-};
 
 const proxiesListStoreKey = PageStorageKey<String>('proxies_list');
 const toolsStoreKey = PageStorageKey<String>('tools');
@@ -127,9 +113,7 @@ double getWidgetHeight(num lines) {
 
 const maxLength = 1000;
 
-const mainIsolate = 'FlClashMainIsolate';
-
-const serviceIsolate = 'FlClashServiceIsolate';
+const trafficSampleLength = 30;
 
 const defaultPrimaryColors = [
   0xFF795548,

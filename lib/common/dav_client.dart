@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:webdav_client/webdav_client.dart';
@@ -24,7 +25,11 @@ class DAVClient {
     try {
       await client.ping();
       return true;
-    } catch (_) {
+    } catch (e) {
+      commonPrint.log(
+        'dav ping error ${e.toString()}',
+        logLevel: LogLevel.warning,
+      );
       return false;
     }
   }

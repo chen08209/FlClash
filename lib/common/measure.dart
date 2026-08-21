@@ -11,7 +11,7 @@ class Measure {
     : _measureMap = {},
       _textScaler = TextScaler.linear(textScaleFactor);
 
-  TextPainter computeText(Text text, {TextStyle? style, double? maxWidth}) {
+  TextPainter _computeText(Text text, {TextStyle? style, double? maxWidth}) {
     return TextPainter(
       text: TextSpan(text: text.data, style: text.style ?? style),
       maxLines: text.maxLines,
@@ -22,14 +22,31 @@ class Measure {
     )..layout(maxWidth: maxWidth ?? double.infinity);
   }
 
+  R _measuring<R>(
+    Text text,
+    TextStyle? style,
+    double? maxWidth,
+    R Function(TextPainter painter) read,
+  ) {
+    final textPainter = _computeText(text, style: style, maxWidth: maxWidth);
+    try {
+      return read(textPainter);
+    } finally {
+      textPainter.dispose();
+    }
+  }
+
   Size computeTextSize(Text text, {TextStyle? style, double? maxWidth}) {
-    final textPainter = computeText(text, style: style, maxWidth: maxWidth);
-    return textPainter.size;
+    return _measuring(text, style, maxWidth, (painter) => painter.size);
   }
 
   bool computeTextIsOverflow(Text text, {TextStyle? style, double? maxWidth}) {
-    final textPainter = computeText(text, style: style, maxWidth: maxWidth);
-    return textPainter.didExceedMaxLines;
+    return _measuring(
+      text,
+      style,
+      maxWidth,
+      (painter) => painter.didExceedMaxLines,
+    );
   }
 
   double get bodyMediumHeight {

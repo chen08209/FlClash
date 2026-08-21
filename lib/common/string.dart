@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'dart:math';
 
 extension StringExtension on String {
   bool get isUrl {
@@ -56,6 +58,10 @@ extension StringExtension on String {
     try {
       return base64.decode(realValue);
     } catch (e) {
+      commonPrint.log(
+        'invalid base64 data ${e.toString()}',
+        logLevel: LogLevel.debug,
+      );
       return null;
     }
   }
@@ -79,7 +85,7 @@ extension StringExtension on String {
     return md5.convert(bytes).toString();
   }
 
-  Future<T> commonToJSON<T>() async {
+  Future<T> decodeJson<T>() async {
     const thresholdLimit = 51200;
     if (length < thresholdLimit) {
       return json.decode(this);
@@ -106,5 +112,38 @@ extension StringNullExt on String? {
       }
     }
     return defaultValue;
+  }
+}
+
+String generateRandomString({int minLength = 10, int maxLength = 100}) {
+  const latinChars =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  final random = Random();
+
+  final int length = minLength + random.nextInt(maxLength - minLength + 1);
+
+  String result = '';
+  for (int i = 0; i < length; i++) {
+    if (random.nextBool()) {
+      result += String.fromCharCode(
+        0x4E00 + random.nextInt(0x9FA5 - 0x4E00 + 1),
+      );
+    } else {
+      result += latinChars[random.nextInt(latinChars.length)];
+    }
+  }
+
+  return result;
+}
+
+String getOverwriteLabel(String label) {
+  final reg = RegExp(r'\((\d+)\)$');
+  final matches = reg.allMatches(label);
+  if (matches.isNotEmpty) {
+    final match = matches.last;
+    final number = int.parse(match[1] ?? '0') + 1;
+    return label.replaceFirst(reg, '($number)', label.length - 3 - 1);
+  } else {
+    return '$label(1)';
   }
 }
