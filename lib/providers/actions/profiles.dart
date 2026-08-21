@@ -2,6 +2,8 @@ part of '../action.dart';
 
 @Riverpod(keepAlive: true)
 class ProfilesAction extends _$ProfilesAction {
+  CoreController get _core => ref.read(coreHandlerProvider);
+
   @override
   void build() {}
 
@@ -28,9 +30,13 @@ class ProfilesAction extends _$ProfilesAction {
         ref.read(currentProfileIdProvider.notifier).value = updateId;
       } else {
         ref.read(currentProfileIdProvider.notifier).value = null;
-        ref.read(setupActionProvider.notifier).setRunning(false);
+        unawaited(ref.read(setupActionProvider.notifier).setRunning(false));
       }
     }
+  }
+
+  Future<String> validateConfigWithData(String data) async {
+    return _core.validateConfigWithData(data);
   }
 
   Future<void> autoUpdateProfiles() async {
@@ -45,7 +51,7 @@ class ProfilesAction extends _$ProfilesAction {
       try {
         await updateProfile(profile);
       } catch (e) {
-        commonPrint.log(e.toString(), logLevel: LogLevel.warning);
+        commonPrint.log(compactError(e), logLevel: LogLevel.warning);
       }
     }
   }
@@ -72,7 +78,9 @@ class ProfilesAction extends _$ProfilesAction {
         ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = true;
       }
       ref.read(profilesProvider.notifier).put(profile);
-      final newProfile = await profile.update();
+      final newProfile = await profile.update(
+        validate: (path) => _core.validateConfig(path),
+      );
       ref.read(profilesProvider.notifier).put(newProfile);
       if (profile.id == ref.read(currentProfileIdProvider)) {
         ref
@@ -93,7 +101,9 @@ class ProfilesAction extends _$ProfilesAction {
     final profile = await globalState.loadingRun(
       tag: LoadingTag.profiles,
       () async {
-        return Profile.normal(label: platformFile.name).saveFile(bytes);
+        return Profile.normal(
+          label: platformFile.name,
+        ).saveFile(bytes, validate: (path) => _core.validateConfig(path));
       },
       title: currentAppLocalizations.addProfile,
     );
@@ -110,7 +120,9 @@ class ProfilesAction extends _$ProfilesAction {
     final profile = await globalState.loadingRun(
       tag: LoadingTag.profiles,
       () async {
-        return Profile.normal(url: url).update();
+        return Profile.normal(
+          url: url,
+        ).update(validate: (path) => _core.validateConfig(path));
       },
       title: currentAppLocalizations.addProfile,
     );
@@ -129,7 +141,7 @@ class ProfilesAction extends _$ProfilesAction {
   Future<void> addProfileFormQrCode() async {
     final url = await globalState.safeRun(picker.pickerConfigQRCode);
     if (url == null) return;
-    addProfileFormURL(url);
+    unawaited(addProfileFormURL(url));
   }
 
   void reorder(List<Profile> profiles) {
@@ -143,9 +155,16 @@ class ProfilesAction extends _$ProfilesAction {
     if (isExists) {
       await profileFile.safeDelete(recursive: true);
     }
-    final error = await coreController.clearEffect(profileId);
-    if (error.isNotEmpty) {
-      commonPrint.log(error, logLevel: LogLevel.warning);
+    try {
+      final error = await _core.clearEffect(profileId);
+      if (error.isNotEmpty) {
+        commonPrint.log(error, logLevel: LogLevel.warning);
+      }
+    } catch (error) {
+      commonPrint.log(
+        'clearEffect($profileId) failed: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
     }
   }
 }

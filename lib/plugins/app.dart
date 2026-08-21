@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,7 +40,7 @@ class App {
       'getPackages',
     );
     final List<dynamic> packagesRaw =
-        (await packagesString?.commonToJSON<List<dynamic>>()) ?? [];
+        (await packagesString?.decodeJson<List<dynamic>>()) ?? [];
     return packagesRaw.map((e) => Package.fromJson(e)).toSet().toList();
   }
 
@@ -48,7 +49,7 @@ class App {
       'getChinaPackageNames',
     );
     final List<dynamic> packageNamesRaw =
-        await packageNamesString?.commonToJSON<List<dynamic>>() ?? [];
+        await packageNamesString?.decodeJson<List<dynamic>>() ?? [];
     return packageNamesRaw.map((e) => e.toString()).toList();
   }
 
@@ -93,7 +94,7 @@ class App {
       commonPrint.log('getPackageIcon error: $error');
     }
     _packageIcons[packageName] = icon;
-    _packageIconTasks.remove(packageName);
+    unawaited(_packageIconTasks.remove(packageName));
     return icon;
   }
 
@@ -141,7 +142,12 @@ class App {
             'didCrashOnPreviousExecution',
           ) ??
           false;
-    } catch (_) {
+    } catch (error) {
+      commonPrint.log(
+        'Failed to read the previous-execution crash flag: '
+        '${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
       return false;
     }
   }

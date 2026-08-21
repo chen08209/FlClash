@@ -4,7 +4,6 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/clash_config.dart';
-import 'package:fl_clash/models/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -34,38 +33,39 @@ class RuleItem extends StatelessWidget {
     this.hasMatch = false,
   });
 
-  VM2<bool, Color?> _checkInvalid(BuildContext context) {
+  ({bool invalid, Color? color}) _checkInvalid(BuildContext context) {
     if (rule.ruleAction != RuleAction.SUB_RULE) {
       final ruleTarget = rule.ruleTarget ?? '';
       if (ruleTarget.toUpperCase() == 'DIRECT') {
-        return VM2(
-          false,
-          Colors.green.harmonizeWith(context.colorScheme.primary),
+        return (
+          invalid: false,
+          color: Colors.green.harmonizeWith(context.colorScheme.primary),
         );
       } else if (ruleTarget.toUpperCase() == 'REJECT') {
-        return VM2(
-          false,
-          Colors.orange.harmonizeWith(context.colorScheme.primary),
+        return (
+          invalid: false,
+          color: Colors.orange.harmonizeWith(context.colorScheme.primary),
         );
       } else if (hasMatch && ruleTarget.toUpperCase() == 'MATCH') {
-        return VM2(false, context.colorScheme.tertiary);
+        return (invalid: false, color: context.colorScheme.tertiary);
       }
     }
     bool invalid = true;
     if (checkInvalidHandler != null) {
       invalid = checkInvalidHandler!(rule);
     }
-    return VM2(
-      invalid,
-      invalid ? context.colorScheme.error : context.colorScheme.tertiary,
+    return (
+      invalid: invalid,
+      color: invalid ? context.colorScheme.error : context.colorScheme.tertiary,
     );
   }
 
   Widget _buildInfoWidget(BuildContext context) {
     return CommonMinIconButtonTheme(
       child: IconButton(
+        tooltip: context.appLocalizations.tip,
         onPressed: () {
-          globalState.showMessage(
+          dialogs.showMessage(
             message: TextSpan(
               text: rule.targetErrorTip(
                 context.appLocalizations.invalidSubRule(rule.subRule ?? ''),
@@ -81,8 +81,8 @@ class RuleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm2 = _checkInvalid(context);
-    final invalid = vm2.a;
+    final checkResult = _checkInvalid(context);
+    final invalid = checkResult.invalid;
     return SelectedDecorationListItem(
       minVerticalPadding: 0,
       isSelected: isSelected,
@@ -98,46 +98,7 @@ class RuleItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  final style = DefaultTextStyle.of(
-                    context,
-                  ).style.toJetBrainsMono;
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        rule.ruleAction.name,
-                        style: style.copyWith(
-                          fontSize: context.textTheme.bodyLarge?.fontSize,
-                        ),
-                      ),
-                      Flexible(
-                        child: Builder(
-                          builder: (context) {
-                            return TooltipText(
-                              text: Text(
-                                rule.realContent ?? '',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: style.copyWith(
-                                  fontSize:
-                                      context.textTheme.bodyMedium?.fontSize,
-                                  color: style.color?.opacity60,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
+            Expanded(child: _RuleItemLabel(rule: rule)),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -146,7 +107,7 @@ class RuleItem extends StatelessWidget {
                   Text(
                     rule.realTarget!,
                     style: context.textTheme.bodyMedium?.toJetBrainsMono
-                        .copyWith(color: vm2.b),
+                        .copyWith(color: checkResult.color),
                   ),
               ],
             ),
@@ -156,6 +117,43 @@ class RuleItem extends StatelessWidget {
       onPressed: () {
         onEdit(rule);
       },
+    );
+  }
+}
+
+class _RuleItemLabel extends StatelessWidget {
+  const _RuleItemLabel({required this.rule});
+
+  final Rule rule;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = DefaultTextStyle.of(context).style.toJetBrainsMono;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          rule.ruleAction.name,
+          style: style.copyWith(
+            fontSize: context.textTheme.bodyLarge?.fontSize,
+          ),
+        ),
+        Flexible(
+          child: TooltipText(
+            text: Text(
+              rule.realContent ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: style.copyWith(
+                fontSize: context.textTheme.bodyMedium?.fontSize,
+                color: style.color?.opacity60,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -245,6 +243,13 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
     }
   }
 
+  @override
+  void dispose() {
+    _ruleTargetController.dispose();
+    _contentController.dispose();
+    super.dispose();
+  }
+
   void _handleSubmit() {
     final res = _formKey.currentState?.validate();
     if (res == false) {
@@ -293,7 +298,7 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
                   FilledButton.tonal(
                     onPressed: () async {
                       _ruleAction =
-                          await globalState.showCommonDialog<RuleAction>(
+                          await dialogs.showCommonDialog<RuleAction>(
                             filter: false,
                             child: OptionsDialog<RuleAction>(
                               title: appLocalizations.ruleName,
@@ -308,88 +313,32 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
                     child: Text(_ruleAction.value),
                   ),
                   const SizedBox(height: 24),
-                  TextFormField(
-                    keyboardType: TextInputType.text,
-                    inputFormatters: TextInputLimits.limit(
-                      TextInputLimits.rule,
-                    ),
-                    onFieldSubmitted: (_) {
-                      _handleSubmit();
-                    },
+                  _RuleContentField(
                     controller: _contentController,
-                    decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      labelText: appLocalizations.content,
-                    ),
-                    validator: (_) {
-                      if (_contentController.text.isEmpty) {
-                        return appLocalizations.emptyTip(
-                          appLocalizations.content,
-                        );
-                      }
-                      return null;
-                    },
+                    onSubmitted: _handleSubmit,
                   ),
                   const SizedBox(height: 24),
-                  FormField<String>(
-                    validator: (_) {
-                      if (_ruleTargetController.text.isEmpty) {
-                        return appLocalizations.emptyTip(
-                          appLocalizations.ruleTarget,
-                        );
-                      }
-                      return null;
-                    },
-                    builder: (filed) {
-                      return DropdownMenu(
-                        controller: _ruleTargetController,
-                        label: Text(appLocalizations.ruleTarget),
-                        width: 200,
-                        menuHeight: 250,
-                        enableFilter: false,
-                        enableSearch: false,
-                        dropdownMenuEntries: _targetItems,
-                        errorText: filed.errorText,
-                      );
-                    },
+                  _RuleTargetField(
+                    controller: _ruleTargetController,
+                    entries: _targetItems,
                   ),
                   if (_ruleAction.hasParams) ...[
                     const SizedBox(height: 20),
                     Wrap(
                       spacing: 8,
                       children: [
-                        CommonCard(
-                          radius: 8,
+                        _RuleFlagChip(
+                          label: appLocalizations.sourceIp,
                           isSelected: _src,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                            child: Text(
-                              appLocalizations.sourceIp,
-                              style: context.textTheme.bodyMedium,
-                            ),
-                          ),
                           onPressed: () {
                             setState(() {
                               _src = !_src;
                             });
                           },
                         ),
-                        CommonCard(
-                          radius: 8,
+                        _RuleFlagChip(
+                          label: appLocalizations.noResolve,
                           isSelected: _noResolve,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                            child: Text(
-                              appLocalizations.noResolve,
-                              style: context.textTheme.bodyMedium,
-                            ),
-                          ),
                           onPressed: () {
                             setState(() {
                               _noResolve = !_noResolve;
@@ -405,6 +354,96 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
             },
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RuleContentField extends StatelessWidget {
+  const _RuleContentField({
+    required this.controller,
+    required this.onSubmitted,
+  });
+
+  final TextEditingController controller;
+  final VoidCallback onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return TextFormField(
+      keyboardType: TextInputType.text,
+      inputFormatters: TextInputLimits.limit(TextInputLimits.rule),
+      onFieldSubmitted: (_) {
+        onSubmitted();
+      },
+      controller: controller,
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(),
+        labelText: appLocalizations.content,
+      ),
+      validator: (_) {
+        if (controller.text.isEmpty) {
+          return appLocalizations.emptyTip(appLocalizations.content);
+        }
+        return null;
+      },
+    );
+  }
+}
+
+class _RuleTargetField extends StatelessWidget {
+  const _RuleTargetField({required this.controller, required this.entries});
+
+  final TextEditingController controller;
+  final List<DropdownMenuEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return FormField<String>(
+      validator: (_) {
+        if (controller.text.isEmpty) {
+          return appLocalizations.emptyTip(appLocalizations.ruleTarget);
+        }
+        return null;
+      },
+      builder: (filed) {
+        return DropdownMenu(
+          controller: controller,
+          label: Text(appLocalizations.ruleTarget),
+          width: 200,
+          menuHeight: 250,
+          enableFilter: false,
+          enableSearch: false,
+          dropdownMenuEntries: entries,
+          errorText: filed.errorText,
+        );
+      },
+    );
+  }
+}
+
+class _RuleFlagChip extends StatelessWidget {
+  const _RuleFlagChip({
+    required this.label,
+    required this.isSelected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonCard(
+      radius: 8,
+      isSelected: isSelected,
+      onPressed: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Text(label, style: context.textTheme.bodyMedium),
       ),
     );
   }

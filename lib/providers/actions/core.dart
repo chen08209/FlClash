@@ -2,6 +2,8 @@ part of '../action.dart';
 
 @Riverpod(keepAlive: true)
 class CoreAction extends _$CoreAction {
+  CoreController get _core => ref.read(coreHandlerProvider);
+
   int _requestedRestartRevision = 0;
   Future<void>? _restartOperation;
 
@@ -9,11 +11,11 @@ class CoreAction extends _$CoreAction {
   void build() {}
 
   Future<void> initCore() async {
-    final isInit = await coreController.isInit;
+    final isInit = await _core.isInit;
 
     final version = ref.read(versionProvider);
     if (!isInit) {
-      final res = await coreController.init(version);
+      final res = await _core.init(version);
       commonPrint.log('init result: $res');
     } else {
       await ref.read(proxiesActionProvider.notifier).updateGroups();
@@ -23,18 +25,34 @@ class CoreAction extends _$CoreAction {
   Future<void> startCore() async {
     ref.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
     try {
-      await coreController.start();
-      ref.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await _core.start();
       await initCore();
+      ref.read(coreStatusProvider.notifier).value = CoreStatus.connected;
     } catch (error) {
       ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
-      globalState.showNotifier(error.toString());
+      dialogs.showNotifier(error.toString(), level: MessageLevel.error);
     }
   }
 
   @protected
   Future<CoreLifecycleResult> restartLifecycle() {
-    return coreController.restart();
+    return _core.restart();
+  }
+
+  Future<void> closeConnection(String id) async {
+    await _core.closeConnection(id);
+  }
+
+  Future<void> closeConnections() async {
+    await _core.closeConnections();
+  }
+
+  Future<void> requestGc() async {
+    await _core.requestGc();
+  }
+
+  Future<void> crash() async {
+    await _core.crash();
   }
 
   Future<void> restartCore() {

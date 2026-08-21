@@ -163,6 +163,42 @@ abstract class CustomOverwriteDate with _$CustomOverwriteDate {
 }
 
 @freezed
+abstract class CustomOverwriteSelectorState
+    with _$CustomOverwriteSelectorState {
+  const factory CustomOverwriteSelectorState({
+    required List<Proxy> proxies,
+    required List<String> subRules,
+    required List<String> proxyProviders,
+  }) = _CustomOverwriteSelectorState;
+}
+
+@freezed
+abstract class ProxiesAndGroupsSelectorState
+    with _$ProxiesAndGroupsSelectorState {
+  const factory ProxiesAndGroupsSelectorState({
+    required List<Proxy> proxies,
+    required List<ProxyGroup> proxyGroups,
+  }) = _ProxiesAndGroupsSelectorState;
+}
+
+@freezed
+abstract class RuleTargetsSelectorState with _$RuleTargetsSelectorState {
+  const factory RuleTargetsSelectorState({
+    required Set<String> ruleTargets,
+    required Set<String> subRules,
+  }) = _RuleTargetsSelectorState;
+}
+
+@freezed
+abstract class OverwriteIncludeSelectorState
+    with _$OverwriteIncludeSelectorState {
+  const factory OverwriteIncludeSelectorState({
+    required bool includeAll,
+    required List<String> names,
+  }) = _OverwriteIncludeSelectorState;
+}
+
+@freezed
 abstract class RuleProvider with _$RuleProvider {
   const factory RuleProvider({required String name}) = _RuleProvider;
 
@@ -230,11 +266,11 @@ abstract class Tun with _$Tun {
     if (json == null) {
       return defaultTun;
     }
-    try {
-      return Tun.fromJson(json);
-    } catch (_) {
-      return defaultTun;
-    }
+    return decodeOrRestoreDefault(
+      'tun config',
+      () => Tun.fromJson(json),
+      () => defaultTun,
+    );
   }
 }
 
@@ -311,11 +347,11 @@ abstract class Dns with _$Dns {
   factory Dns.fromJson(Map<String, Object?> json) => _$DnsFromJson(json);
 
   factory Dns.safeDnsFromJson(Map<String, Object?> json) {
-    try {
-      return Dns.fromJson(json);
-    } catch (_) {
-      return const Dns();
-    }
+    return decodeOrRestoreDefault(
+      'dns config',
+      () => Dns.fromJson(json),
+      () => const Dns(),
+    );
   }
 }
 
@@ -540,10 +576,10 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     if (json == null) {
       return defaultClashConfig;
     }
-    try {
-      return PatchClashConfig.fromJson(json);
-    } catch (_) {
-      return defaultClashConfig;
-    }
+    return decodeOrRestoreDefault(
+      'clash config',
+      () => PatchClashConfig.fromJson(json),
+      () => defaultClashConfig,
+    );
   }
 }

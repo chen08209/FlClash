@@ -14,28 +14,8 @@ part 'generated/state.freezed.dart';
 part 'generated/state.g.dart';
 
 @freezed
-abstract class VM<A> with _$VM<A> {
-  const factory VM(A a) = _VM;
-}
-
-@freezed
-abstract class VM2<A, B> with _$VM2<A, B> {
-  const factory VM2(A a, B b) = _VM2;
-}
-
-@freezed
-abstract class VM3<A, B, C> with _$VM3<A, B, C> {
-  const factory VM3(A a, B b, C c) = _VM3;
-}
-
-@freezed
-abstract class VM4<A, B, C, D> with _$VM4<A, B, C, D> {
-  const factory VM4(A a, B b, C c, D d) = _VM4;
-}
-
-@freezed
-abstract class VM5<A, B, C, D, E> with _$VM5<A, B, C, D, E> {
-  const factory VM5(A a, B b, C c, D d, E e) = _VM5;
+abstract class SelectValue<T> with _$SelectValue<T> {
+  const factory SelectValue(T value) = _SelectValue;
 }
 
 @freezed
@@ -56,6 +36,7 @@ abstract class CommonMessage with _$CommonMessage {
   const factory CommonMessage({
     required String id,
     required String text,
+    @Default(MessageLevel.info) MessageLevel level,
     @Default(Duration(seconds: 3)) Duration duration,
     MessageActionState? actionState,
   }) = _CommonMessage;
@@ -129,7 +110,6 @@ abstract class TrayState with _$TrayState {
     required bool tunEnable,
     required bool isStart,
     required String? locale,
-    required Brightness? brightness,
     required List<Group> groups,
     required Map<String, String> selectedMap,
     required bool showTrayTitle,
@@ -182,6 +162,14 @@ abstract class ProxiesTabState with _$ProxiesTabState {
     required String? currentGroupName,
     required ProxyCardType proxyCardType,
   }) = _ProxiesTabState;
+}
+
+@freezed
+abstract class ProxiesTabControllerState with _$ProxiesTabControllerState {
+  const factory ProxiesTabControllerState({
+    required List<String> groupNames,
+    required String? currentGroupName,
+  }) = _ProxiesTabControllerState;
 }
 
 @freezed
@@ -269,6 +257,32 @@ abstract class ProxyState with _$ProxyState {
     required List<String> bassDomain,
     required int port,
   }) = _ProxyState;
+}
+
+@freezed
+abstract class ThemeColorsSelectorState with _$ThemeColorsSelectorState {
+  const factory ThemeColorsSelectorState({
+    required int? primaryColor,
+    required List<int> primaryColors,
+    required DynamicSchemeVariant schemeVariant,
+    required bool isDefault,
+  }) = _ThemeColorsSelectorState;
+}
+
+@freezed
+abstract class SystemProxySelectorState with _$SystemProxySelectorState {
+  const factory SystemProxySelectorState({
+    required bool systemProxy,
+    required List<String> bypassDomain,
+  }) = _SystemProxySelectorState;
+}
+
+@freezed
+abstract class CurrentProfileSelectorState with _$CurrentProfileSelectorState {
+  const factory CurrentProfileSelectorState({
+    required String label,
+    required Map<String, String> selectedMap,
+  }) = _CurrentProfileSelectorState;
 }
 
 @freezed

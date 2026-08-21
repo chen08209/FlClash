@@ -2,6 +2,8 @@ part of '../action.dart';
 
 @Riverpod(keepAlive: true)
 class SystemAction extends _$SystemAction {
+  CoreController get _core => ref.read(coreHandlerProvider);
+
   SystemExitCoordinator? _exitCoordinator;
 
   @override
@@ -33,28 +35,37 @@ class SystemAction extends _$SystemAction {
 
   @protected
   Future<void> cleanupExitResources(bool needSave) async {
+    final tray = trayPort;
+    if (tray != null) {
+      await tray.shutdown().onError<Object>((error, stackTrace) {
+        commonPrint.log(
+          'Tray shutdown failed: ${compactError(error)}',
+          logLevel: LogLevel.error,
+        );
+      });
+    }
     await Future.wait([
       if (needSave) preferences.saveConfig(ref.read(configProvider)),
-      if (macOS != null) macOS!.updateDns(true),
+      if (systemDnsCoordinator != null) systemDnsCoordinator!.shutdown(),
       if (proxy != null) proxy!.stopProxy(),
-      if (tray != null) tray!.destroy(),
     ]);
   }
 
   @protected
   Future<void> closeWindow() async {
-    await window?.close();
+    await windowPort?.close();
   }
 
   @protected
   Future<void> closeCore() async {
-    await coreController.close();
+    await _core.close();
     commonPrint.log('exit');
   }
 
   @protected
-  Future<void> exitApplication() {
-    return system.exit();
+  Future<void> exitApplication() async {
+    await system.exit();
+    windowPort?.forceExit();
   }
 
   Future<void> handleClose([bool exit = true]) async {
@@ -63,17 +74,18 @@ class SystemAction extends _$SystemAction {
         await preferences.saveConfig(ref.read(configProvider));
       }
       await system.back();
+      await windowPort?.hide();
     } else {
       await handleExit();
     }
   }
 
   Future<void> updateVisible() async {
-    final visible = await window?.isVisible;
+    final visible = await windowPort?.isVisible;
     if (visible != null && !visible) {
-      window?.show();
+      unawaited(windowPort?.show());
     } else {
-      window?.hide();
+      unawaited(windowPort?.hide());
     }
   }
 
@@ -96,19 +108,20 @@ class SystemAction extends _$SystemAction {
   }
 
   Future<void> updateTray() async {
-    tray?.update(
+    await trayPort?.update(
       trayState: ref.read(trayStateProvider),
       traffic: ref.read(
         trafficsProvider.select(
           (state) => state.list.safeLast(const Traffic()),
         ),
       ),
+      read: globalState.container.read,
     );
   }
 
   Future<void> updateLocalIp() async {
     ref.read(localIpProvider.notifier).value = null;
     await Future.delayed(commonDuration);
-    ref.read(localIpProvider.notifier).value = await utils.getLocalIpAddress();
+    ref.read(localIpProvider.notifier).value = await getLocalIpAddress();
   }
 }

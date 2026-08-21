@@ -93,7 +93,7 @@ final class LogsProvider extends $NotifierProvider<Logs, FixedList<Log>> {
   }
 }
 
-String _$logsHash() => r'2f10830d8a103688a59afce45ab6c52a82f38ca2';
+String _$logsHash() => r'c23da391e9662e863990fc68039fbaf126f85b83';
 
 abstract class _$Logs extends $Notifier<FixedList<Log>> {
   FixedList<Log> build();
@@ -145,7 +145,7 @@ final class RequestsProvider
   }
 }
 
-String _$requestsHash() => r'32e4f0141a66b27732f8156a55a6fb23d74cfc07';
+String _$requestsHash() => r'281a3333f8eca333d513e09b34cf5e568c44e07b';
 
 abstract class _$Requests extends $Notifier<FixedList<TrackerInfo>> {
   FixedList<TrackerInfo> build();
@@ -198,7 +198,7 @@ final class ProvidersProvider
   }
 }
 
-String _$providersHash() => r'21b9ada05ede3e9097621e2e5b10800e40ba7098';
+String _$providersHash() => r'51d9bc898e1af8a7179c1c53145705b57d9a5996';
 
 abstract class _$Providers extends $Notifier<List<ExternalProvider>> {
   List<ExternalProvider> build();
@@ -355,7 +355,7 @@ final class TrafficsProvider
   }
 }
 
-String _$trafficsHash() => r'00b83d393175b51abcef277417fb3d9b70cc247f';
+String _$trafficsHash() => r'1fea2cb24af6903156ffa46394a71d953092f33d';
 
 abstract class _$Traffics extends $Notifier<FixedList<Traffic>> {
   FixedList<Traffic> build();
@@ -711,7 +711,7 @@ final class ViewModeProvider
   }
 }
 
-String _$viewModeHash() => r'6822e9dc28c813afe1ed743feea464f0d33c805c';
+String _$viewModeHash() => r'56f81d519e3835bddef4a3905182991169c17619';
 
 @ProviderFor(isMobileView)
 final isMobileViewProvider = IsMobileViewProvider._();
@@ -1146,6 +1146,58 @@ abstract class _$DelayDataSource extends $Notifier<DelayMap> {
             as $ClassProviderElement<
               AnyNotifier<DelayMap, DelayMap>,
               DelayMap,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(PendingDelayTests)
+final pendingDelayTestsProvider = PendingDelayTestsProvider._();
+
+final class PendingDelayTestsProvider
+    extends $NotifierProvider<PendingDelayTests, Set<String>> {
+  PendingDelayTestsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pendingDelayTestsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingDelayTestsHash();
+
+  @$internal
+  @override
+  PendingDelayTests create() => PendingDelayTests();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$pendingDelayTestsHash() => r'ceaac9e42e13d87a1885d2f227971e34665b18ca';
+
+abstract class _$PendingDelayTests extends $Notifier<Set<String>> {
+  Set<String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
               Object?,
               Object?
             >;
