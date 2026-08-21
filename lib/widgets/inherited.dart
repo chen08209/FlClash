@@ -1,6 +1,8 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PageActivityScope extends InheritedWidget {
   final bool isActive;
@@ -131,6 +133,16 @@ class SheetProvider<T> extends InheritedWidget {
   bool updateShouldNotify(SheetProvider oldWidget) =>
       type != oldWidget.type &&
       nestedNavigatorPop != oldWidget.nestedNavigatorPop;
+}
+
+extension SheetHeightExt on WidgetRef {
+  double sheetHeight(BuildContext context, double factor) {
+    final viewHeight = watch(viewHeightProvider);
+    if (SheetProvider.of(context)?.type != SheetType.bottomSheet) {
+      return double.maxFinite;
+    }
+    return viewHeight * factor;
+  }
 }
 
 class ProfileIdProvider extends InheritedWidget {

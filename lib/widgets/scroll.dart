@@ -55,11 +55,6 @@ class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
   final equals = ListEquality<T>();
   bool _isFastToEnd = false;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   Future<bool> _handleTryToEnd() {
     final completer = Completer<bool>();
     WidgetsBinding.instance.addPostFrameCallback((_) async {

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -23,9 +22,12 @@ class OverwriteView extends ConsumerStatefulWidget {
 }
 
 class _OverwriteViewState extends ConsumerState<OverwriteView> {
+  late SetupAction _setupAction;
+
   @override
   void initState() {
     super.initState();
+    _setupAction = ref.read(setupActionProvider.notifier);
   }
 
   Future<void> _handlePreview() async {
@@ -33,7 +35,9 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
     if (profile == null) {
       return;
     }
-    BaseNavigator.push<String>(context, PreviewProfileView(profile: profile));
+    unawaited(
+      BaseNavigator.push<String>(context, PreviewProfileView(profile: profile)),
+    );
   }
 
   @override
@@ -59,8 +63,8 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
 
   @override
   void dispose() {
+    _setupAction.autoApplyProfile();
     super.dispose();
-    globalState.container.read(setupActionProvider.notifier).autoApplyProfile();
   }
 }
 

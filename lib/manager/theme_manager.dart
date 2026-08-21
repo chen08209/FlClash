@@ -77,7 +77,7 @@ class ThemeManager extends ConsumerWidget {
         ),
         child: LayoutBuilder(
           builder: (_, constraints) {
-            globalState.container
+            ref
                 .read(themeActionProvider.notifier)
                 .updateViewSize(
                   Size(constraints.maxWidth, constraints.maxHeight),

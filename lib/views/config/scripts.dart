@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -6,7 +7,6 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,11 +19,11 @@ class ScriptsView extends ConsumerStatefulWidget {
 }
 
 class _ScriptsViewState extends ConsumerState<ScriptsView> {
-  final _key = utils.id;
+  final _key = uniqueId;
 
   Future<void> _handleDelScript(int id) async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.script),
       ),
@@ -33,7 +33,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     }
     ref.read(scriptsProvider.notifier).del(id);
     ref.read(itemProvider(_key).notifier).value = null;
-    _clearEffect(id);
+    unawaited(_clearEffect(id));
   }
 
   Future<void> _clearEffect(int id) async {
@@ -92,7 +92,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         (script?.copyWith(label: title) ?? Script.create(label: title));
     newScript = await newScript.save(content);
     if (newScript.label.isEmpty) {
-      final res = await globalState.showCommonDialog<String>(
+      final res = await dialogs.showCommonDialog<String>(
         child: InputDialog(
           title: appLocalizations.save,
           value: '',
@@ -122,9 +122,11 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
           .read(scriptsProvider.notifier)
           .isExits(newScript.label);
       if (isExits) {
-        globalState.showMessage(
-          message: TextSpan(
-            text: appLocalizations.existsTip(appLocalizations.name),
+        unawaited(
+          dialogs.showMessage(
+            message: TextSpan(
+              text: appLocalizations.existsTip(appLocalizations.name),
+            ),
           ),
         );
         return;
@@ -147,11 +149,11 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     if (content == raw) {
       return true;
     }
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       message: TextSpan(text: appLocalizations.saveChanges),
     );
     if (res == true && mounted) {
-      _handleEditorSave(context, title, content, script: script);
+      unawaited(_handleEditorSave(context, title, content, script: script));
     } else {
       return true;
     }
@@ -165,20 +167,28 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     if (!mounted) {
       return;
     }
-    BaseNavigator.push(
-      context,
-      EditorPage(
-        titleEditable: true,
-        title: title,
-        supportRemoteDownload: true,
-        onSave: (context, title, content) {
-          _handleEditorSave(context, title, content, script: script);
-        },
-        onPop: (context, title, content) {
-          return _handleEditorPop(context, title, content, raw, script: script);
-        },
-        languages: const [Language.javaScript],
-        content: raw,
+    unawaited(
+      BaseNavigator.push(
+        context,
+        EditorPage(
+          titleEditable: true,
+          title: title,
+          supportRemoteDownload: true,
+          onSave: (context, title, content) {
+            _handleEditorSave(context, title, content, script: script);
+          },
+          onPop: (context, title, content) {
+            return _handleEditorPop(
+              context,
+              title,
+              content,
+              raw,
+              script: script,
+            );
+          },
+          languages: const [Language.javaScript],
+          content: raw,
+        ),
       ),
     );
   }
@@ -202,6 +212,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
           if (selectedScriptId != null) ...[
             CommonMinIconButtonTheme(
               child: IconButton.filledTonal(
+                tooltip: context.appLocalizations.delete,
                 onPressed: () {
                   _handleDelScript(selectedScriptId);
                 },

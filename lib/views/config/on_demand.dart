@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/permission.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +24,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   void _handlePermanentlyDeniedLocationPermission() {
     if (system.isMacOS) {
       final appLocalizations = context.appLocalizations;
-      globalState.showMessage(
+      dialogs.showMessage(
         title: appLocalizations.locationPermissionRequired,
         cancelable: false,
         message: TextSpan(
@@ -45,9 +47,9 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       _handlePermanentlyDeniedLocationPermission();
       return;
     }
+    final permissionsNotifier = ref.read(locationPermissionsProvider.notifier);
     final res = await wifiSsidManager.requestPermission();
-    globalState.container.read(locationPermissionsProvider.notifier).value =
-        res;
+    permissionsNotifier.value = res;
     if (!mounted) {
       return;
     }
@@ -60,7 +62,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       case LocationPermissionFollowUp.showDeniedMessage:
         break;
     }
-    final needGo = await globalState.showMessage(
+    final needGo = await dialogs.showMessage(
       title: appLocalizations.locationPermissionRequired,
       message: TextSpan(text: appLocalizations.locationPermissionDeniedMessage),
       confirmText: appLocalizations.go,
@@ -68,7 +70,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     if (needGo != true) {
       return;
     }
-    app?.openAppSettings();
+    unawaited(app?.openAppSettings());
   }
 
   void _handleOpenBatteryOptimizationSettings() {
@@ -83,7 +85,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   Future<void> _handleAddOrUpdate([String? ssid]) async {
     final ssids = ref.read(excludeSSIDsProvider);
     final appLocalizations = context.appLocalizations;
-    final newSSID = await globalState.showCommonDialog<String>(
+    final newSSID = await dialogs.showCommonDialog<String>(
       child: InputDialog(
         title: ssid == null
             ? appLocalizations.addSsid
@@ -104,7 +106,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     if (newSSID == null || ssid == newSSID) {
       return;
     }
-    globalState.container.read(excludeSSIDsProvider.notifier).update((state) {
+    ref.read(excludeSSIDsProvider.notifier).update((state) {
       final newSSIDS = state.toSet();
       if (ssid != null) {
         newSSIDS.remove(ssid);
@@ -114,7 +116,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   }
 
   void _handleReorder(int oldIndex, newIndex) {
-    globalState.container.read(excludeSSIDsProvider.notifier).update((value) {
+    ref.read(excludeSSIDsProvider.notifier).update((value) {
       return value.copyAndReorder(oldIndex, newIndex);
     });
   }
@@ -165,9 +167,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
 
   void _handleDelete() {
     final selectedItems = ref.read(itemsProvider(key));
-    globalState.container.read(excludeSSIDsProvider.notifier).update((
-      excludeSSIDs,
-    ) {
+    ref.read(excludeSSIDsProvider.notifier).update((excludeSSIDs) {
       return excludeSSIDs
           .where((item) => !selectedItems.contains(item))
           .toList();
@@ -175,190 +175,178 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     ref.read(itemsProvider(key).notifier).value = {};
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildAuthorizeButton({
+    required bool authorized,
+    required VoidCallback onPressed,
+  }) {
+    final appLocalizations = context.appLocalizations;
+    return CommonMinFilledButtonTheme(
+      child: FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: authorized ? null : context.colorScheme.error,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          minimumSize: const Size(80, 40),
+        ),
+        onPressed: onPressed,
+        child: Text(
+          authorized
+              ? appLocalizations.authorized
+              : appLocalizations.tapToAuthorize,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBatteryOptimizationItem() {
     final appLocalizations = context.appLocalizations;
     final isLoading = ref.watch(
       loadingProvider(LoadingTag.batteryOptimization),
     );
-    final batteryOptimizationDisable = ref.watch(
-      batteryOptimizationDisableProvider,
+    final disabled = ref.watch(batteryOptimizationDisableProvider);
+    return DecorationListItem(
+      minVerticalPadding: 8,
+      title: Text(appLocalizations.ignoreBatteryOptimization),
+      subtitle: Text(appLocalizations.batteryOptimizationDesc),
+      trailing: isLoading
+          ? const SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  SizedBox.square(dimension: 32, child: CommonCircleLoading()),
+                ],
+              ),
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 8,
+              children: [
+                InfoMessageButton(
+                  message: appLocalizations.batteryOptimizationStatusTip,
+                ),
+                _buildAuthorizeButton(
+                  authorized: disabled,
+                  onPressed: _handleOpenBatteryOptimizationSettings,
+                ),
+              ],
+            ),
     );
-    final excludeSSIDs = ref.watch(excludeSSIDsProvider);
-    final locationPermissionsGranted = ref.watch(
+  }
+
+  Widget _buildLocationPermissionItem() {
+    final appLocalizations = context.appLocalizations;
+    final granted = ref.watch(
       locationPermissionsProvider.select(
         (state) => state == WifiSsidPermission.granted,
       ),
     );
+    return DecorationListItem(
+      minVerticalPadding: 8,
+      title: Text(appLocalizations.locationPermission),
+      subtitle: Text(appLocalizations.locationPermissionDesc),
+      trailing: _buildAuthorizeButton(
+        authorized: granted,
+        onPressed: _handleRequestLocationPermission,
+      ),
+    );
+  }
+
+  Widget _buildPrerequisites() {
+    return generateSectionV3(
+      title: context.appLocalizations.prerequisites,
+      items: [
+        if (system.isAndroid) _buildBatteryOptimizationItem(),
+        if (system.isAndroid || system.isMacOS) _buildLocationPermissionItem(),
+      ],
+    );
+  }
+
+  Widget _buildExcludeSsidsHeader() {
+    final appLocalizations = context.appLocalizations;
+    final hasSelection = ref.watch(itemsProvider(key)).isNotEmpty;
+    return ListHeader(
+      title: appLocalizations.excludeSsids,
+      subTitle: appLocalizations.excludeSsidsDesc,
+      actions: [
+        const SizedBox(width: 8),
+        if (hasSelection)
+          CommonMinIconButtonTheme(
+            child: IconButton.filledTonal(
+              tooltip: context.appLocalizations.delete,
+              onPressed: _handleDelete,
+              icon: const Icon(Icons.delete),
+            ),
+          ),
+        const SizedBox(width: 2),
+        CommonMinFilledButtonTheme(
+          child: hasSelection
+              ? FilledButton(
+                  onPressed: _handleSelectAll,
+                  child: Text(appLocalizations.selectAll),
+                )
+              : FilledButton.tonal(
+                  onPressed: _handleAddOrUpdate,
+                  child: Text(appLocalizations.add),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExcludeSsidsList(
+    List<String> excludeSSIDs,
+    Set<dynamic> selectedItems,
+  ) {
+    if (excludeSSIDs.isEmpty) {
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 12),
+        sliver: SliverToBoxAdapter(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 48),
+            child: NullStatus(label: context.appLocalizations.ssidsEmpty),
+          ),
+        ),
+      );
+    }
+    Widget itemAt(int index) => _buildItem(
+      isEditing: selectedItems.isNotEmpty,
+      ssid: excludeSSIDs[index],
+      index: index,
+      isSelected: selectedItems.contains(excludeSSIDs[index]),
+      length: excludeSSIDs.length,
+    );
+    return SliverPadding(
+      padding: const EdgeInsets.only(top: 12),
+      sliver: SliverReorderableList(
+        itemBuilder: (_, index) => itemAt(index),
+        proxyDecorator: (child, index, animation) =>
+            commonProxyDecorator(itemAt(index), index, animation),
+        itemCount: excludeSSIDs.length,
+        onReorderItem: _handleReorder,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final excludeSSIDs = ref.watch(excludeSSIDsProvider);
     final selectedItems = ref.watch(itemsProvider(key));
     return CommonScaffold(
       body: CustomScrollView(
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverToBoxAdapter(
-              child: generateSectionV3(
-                title: appLocalizations.prerequisites,
-                items: [
-                  if (system.isAndroid)
-                    DecorationListItem(
-                      minVerticalPadding: 8,
-                      title: Text(appLocalizations.ignoreBatteryOptimization),
-                      subtitle: Text(appLocalizations.batteryOptimizationDesc),
-                      trailing: isLoading
-                          ? const SizedBox(
-                              width: 100,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  SizedBox.square(
-                                    dimension: 32,
-                                    child: CommonCircleLoading(),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : Row(
-                              mainAxisSize: MainAxisSize.min,
-                              spacing: 8,
-                              children: [
-                                InfoMessageButton(
-                                  message: appLocalizations
-                                      .batteryOptimizationStatusTip,
-                                ),
-                                CommonMinFilledButtonTheme(
-                                  child: FilledButton(
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor:
-                                          batteryOptimizationDisable
-                                          ? null
-                                          : context.colorScheme.error,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                      ),
-                                      minimumSize: const Size(80, 40),
-                                    ),
-                                    onPressed:
-                                        _handleOpenBatteryOptimizationSettings,
-                                    child: Text(
-                                      batteryOptimizationDisable
-                                          ? appLocalizations.authorized
-                                          : appLocalizations.tapToAuthorize,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  if (system.isAndroid || system.isMacOS)
-                    DecorationListItem(
-                      minVerticalPadding: 8,
-                      title: Text(appLocalizations.locationPermission),
-                      subtitle: Text(appLocalizations.locationPermissionDesc),
-                      trailing: CommonMinFilledButtonTheme(
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: locationPermissionsGranted
-                                ? null
-                                : context.colorScheme.error,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            minimumSize: const Size(80, 40),
-                          ),
-                          onPressed: _handleRequestLocationPermission,
-                          child: Text(
-                            locationPermissionsGranted
-                                ? appLocalizations.authorized
-                                : appLocalizations.tapToAuthorize,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            sliver: SliverToBoxAdapter(child: _buildPrerequisites()),
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverToBoxAdapter(
-              child: ListHeader(
-                title: appLocalizations.excludeSsids,
-                subTitle: appLocalizations.excludeSsidsDesc,
-                actions: [
-                  const SizedBox(width: 8),
-                  if (selectedItems.isNotEmpty)
-                    CommonMinIconButtonTheme(
-                      child: IconButton.filledTonal(
-                        onPressed: _handleDelete,
-                        icon: const Icon(Icons.delete),
-                      ),
-                    ),
-                  const SizedBox(width: 2),
-                  CommonMinFilledButtonTheme(
-                    child: selectedItems.isNotEmpty
-                        ? FilledButton(
-                            onPressed: _handleSelectAll,
-                            child: Text(appLocalizations.selectAll),
-                          )
-                        : FilledButton.tonal(
-                            onPressed: _handleAddOrUpdate,
-                            child: Text(appLocalizations.add),
-                          ),
-                  ),
-                ],
-              ),
-            ),
+            sliver: SliverToBoxAdapter(child: _buildExcludeSsidsHeader()),
           ),
-          if (excludeSSIDs.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-              ).copyWith(top: 12),
-              sliver: SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 0,
-                    vertical: 48,
-                  ),
-                  child: NullStatus(label: appLocalizations.ssidsEmpty),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.only(top: 12),
-              sliver: SliverReorderableList(
-                itemBuilder: (_, index) {
-                  final ssid = excludeSSIDs[index];
-                  return _buildItem(
-                    isEditing: selectedItems.isNotEmpty,
-                    ssid: ssid,
-                    index: index,
-                    isSelected: selectedItems.contains(ssid),
-                    length: excludeSSIDs.length,
-                  );
-                },
-                proxyDecorator: (child, index, animation) {
-                  final ssid = excludeSSIDs[index];
-                  return commonProxyDecorator(
-                    _buildItem(
-                      isEditing: selectedItems.isNotEmpty,
-                      ssid: ssid,
-                      index: index,
-                      isSelected: selectedItems.contains(ssid),
-                      length: excludeSSIDs.length,
-                    ),
-                    index,
-                    animation,
-                  );
-                },
-                itemCount: excludeSSIDs.length,
-                onReorderItem: _handleReorder,
-              ),
-            ),
+          _buildExcludeSsidsList(excludeSSIDs, selectedItems),
         ],
       ),
-      title: appLocalizations.onDemand,
+      title: context.appLocalizations.onDemand,
     );
   }
 }

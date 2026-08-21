@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -28,8 +29,8 @@ class _TileContainerState extends ConsumerState<TileManager> with TileListener {
     if (isStart && ref.read(coreStatusProvider) == CoreStatus.connected) {
       return;
     }
-    ref.read(setupActionProvider.notifier).setRunning(true);
-    app?.tip(currentAppLocalizations.startVpn);
+    unawaited(ref.read(setupActionProvider.notifier).setRunning(true));
+    unawaited(app?.tip(currentAppLocalizations.startVpn));
     super.onStart();
   }
 
@@ -38,8 +39,8 @@ class _TileContainerState extends ConsumerState<TileManager> with TileListener {
     if (!isStart) {
       return;
     }
-    ref.read(setupActionProvider.notifier).setRunning(false);
-    app?.tip(currentAppLocalizations.stopVpn);
+    unawaited(ref.read(setupActionProvider.notifier).setRunning(false));
+    unawaited(app?.tip(currentAppLocalizations.stopVpn));
     super.onStop();
   }
 

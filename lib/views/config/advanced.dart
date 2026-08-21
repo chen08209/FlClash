@@ -1,7 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/config/on_demand.dart';
@@ -48,7 +47,7 @@ class AdvancedConfigView extends StatelessWidget {
               builder: (_, ref, _) {
                 return IconButton(
                   onPressed: () async {
-                    final res = await globalState.showMessage(
+                    final res = await dialogs.showMessage(
                       title: appLocalizations.reset,
                       message: TextSpan(text: appLocalizations.resetTip),
                     );

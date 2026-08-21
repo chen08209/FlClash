@@ -1,12 +1,9 @@
-// ignore_for_file: deprecated_member_use
-
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -164,12 +161,8 @@ class _PrimaryColorItem extends ConsumerStatefulWidget {
 class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
   int? _removablePrimaryColor;
 
-  int _calcColumns(double maxWidth) {
-    return max((maxWidth / 96).ceil(), 3);
-  }
-
   Future<void> _handleReset() async {
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       message: TextSpan(text: context.appLocalizations.resetTip),
     );
     if (res != true) {
@@ -189,7 +182,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     if (_removablePrimaryColor == null) {
       return;
     }
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.colorSchemes),
       ),
@@ -220,7 +213,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
 
   Future<void> _handleAdd() async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showCommonDialog<int>(
+    final res = await dialogs.showCommonDialog<int>(
       child: const _PaletteDialog(),
     );
     if (res == null) {
@@ -232,6 +225,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     if (isExists && mounted) {
       context.showNotifier(
         appLocalizations.existsTip(appLocalizations.colorSchemes),
+        level: MessageLevel.warning,
       );
       return;
     }
@@ -246,7 +240,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     final schemeVariant = ref.read(
       themeSettingProvider.select((state) => state.schemeVariant),
     );
-    final value = await globalState.showCommonDialog<DynamicSchemeVariant>(
+    final value = await dialogs.showCommonDialog<DynamicSchemeVariant>(
       child: OptionsDialog<DynamicSchemeVariant>(
         title: context.appLocalizations.colorSchemes,
         options: DynamicSchemeVariant.values,
@@ -265,13 +259,14 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final vm4 = ref.watch(
+    final themeColors = ref.watch(
       themeSettingProvider.select(
-        (state) => VM4(
-          state.primaryColor,
-          state.primaryColors,
-          state.schemeVariant,
-          state.primaryColor == defaultPrimaryColor &&
+        (state) => ThemeColorsSelectorState(
+          primaryColor: state.primaryColor,
+          primaryColors: state.primaryColors,
+          schemeVariant: state.schemeVariant,
+          isDefault:
+              state.primaryColor == defaultPrimaryColor &&
               intListEquality.equals(
                 state.primaryColors,
                 defaultPrimaryColors,
@@ -280,10 +275,10 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
         ),
       ),
     );
-    final primaryColor = vm4.a;
-    final primaryColors = [null, ...vm4.b];
-    final schemeVariant = vm4.c;
-    final isEquals = vm4.d;
+    final primaryColor = themeColors.primaryColor;
+    final primaryColors = [null, ...themeColors.primaryColors];
+    final schemeVariant = themeColors.schemeVariant;
+    final isEquals = themeColors.isDefault;
 
     return SliverToBoxAdapter(
       child: CommonPopScope(
@@ -315,15 +310,12 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
                 style: FilledButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                 ),
-                onPressed: () {
-                  setState(() {
-                    _removablePrimaryColor = null;
-                  });
-                },
+                onPressed: _clearRemovable,
                 child: Text(appLocalizations.cancel),
               ),
             if (_removablePrimaryColor == null && !isEquals)
               IconButton.filledTonal(
+                tooltip: context.appLocalizations.reset,
                 iconSize: 20,
                 padding: const EdgeInsets.all(4),
                 visualDensity: VisualDensity.compact,
@@ -333,86 +325,161 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
           ], space: 8),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
-            child: LayoutBuilder(
-              builder: (_, constraints) {
-                final columns = _calcColumns(constraints.maxWidth);
-                final itemWidth =
-                    (constraints.maxWidth - (columns - 1) * 16) / columns;
-                return Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
-                    for (final color in primaryColors)
-                      Container(
-                        clipBehavior: Clip.none,
-                        width: itemWidth,
-                        height: itemWidth,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          clipBehavior: Clip.none,
-                          children: [
-                            EffectGestureDetector(
-                              child: ColorSchemeBox(
-                                isSelected: color == primaryColor,
-                                primaryColor: color != null
-                                    ? Color(color)
-                                    : null,
-                                onPressed: () {
-                                  setState(() {
-                                    _removablePrimaryColor = null;
-                                  });
-                                  ref
-                                      .read(themeSettingProvider.notifier)
-                                      .update(
-                                        (state) =>
-                                            state.copyWith(primaryColor: color),
-                                      );
-                                },
-                              ),
-                              onLongPress: () {
-                                setState(() {
-                                  _removablePrimaryColor = color;
-                                });
-                              },
-                            ),
-                            if (_removablePrimaryColor != null &&
-                                _removablePrimaryColor == color)
-                              Container(
-                                color: Colors.white.opacity0,
-                                padding: const EdgeInsets.all(8),
-                                child: IconButton.filledTonal(
-                                  onPressed: _handleDel,
-                                  padding: const EdgeInsets.all(12),
-                                  iconSize: 30,
-                                  icon: Icon(
-                                    color: context.colorScheme.primary,
-                                    Icons.delete,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    if (_removablePrimaryColor == null)
-                      Container(
-                        width: itemWidth,
-                        height: itemWidth,
-                        padding: const EdgeInsets.all(4),
-                        child: IconButton.filledTonal(
-                          onPressed: _handleAdd,
-                          iconSize: 32,
-                          icon: Icon(
-                            color: context.colorScheme.primary,
-                            Icons.add,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
+            child: _PrimaryColorGrid(
+              colors: primaryColors,
+              selectedColor: primaryColor,
+              removableColor: _removablePrimaryColor,
+              onSelect: _handleSelectColor,
+              onRequestRemove: _markRemovable,
+              onDelete: _handleDel,
+              onAdd: _handleAdd,
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _clearRemovable() {
+    setState(() {
+      _removablePrimaryColor = null;
+    });
+  }
+
+  void _markRemovable(int? color) {
+    setState(() {
+      _removablePrimaryColor = color;
+    });
+  }
+
+  void _handleSelectColor(int? color) {
+    _clearRemovable();
+    ref
+        .read(themeSettingProvider.notifier)
+        .update((state) => state.copyWith(primaryColor: color));
+  }
+}
+
+class _PrimaryColorGrid extends StatelessWidget {
+  const _PrimaryColorGrid({
+    required this.colors,
+    required this.selectedColor,
+    required this.removableColor,
+    required this.onSelect,
+    required this.onRequestRemove,
+    required this.onDelete,
+    required this.onAdd,
+  });
+
+  final List<int?> colors;
+  final int? selectedColor;
+  final int? removableColor;
+  final void Function(int? color) onSelect;
+  final void Function(int? color) onRequestRemove;
+  final VoidCallback onDelete;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final columns = max((constraints.maxWidth / 96).ceil(), 3);
+        final itemWidth = (constraints.maxWidth - (columns - 1) * 16) / columns;
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            for (final color in colors)
+              _PrimaryColorTile(
+                color: color,
+                width: itemWidth,
+                isSelected: color == selectedColor,
+                isRemovable: removableColor != null && removableColor == color,
+                onSelect: () => onSelect(color),
+                onRequestRemove: () => onRequestRemove(color),
+                onDelete: onDelete,
+              ),
+            if (removableColor == null)
+              _AddPrimaryColorTile(width: itemWidth, onPressed: onAdd),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PrimaryColorTile extends StatelessWidget {
+  const _PrimaryColorTile({
+    required this.color,
+    required this.width,
+    required this.isSelected,
+    required this.isRemovable,
+    required this.onSelect,
+    required this.onRequestRemove,
+    required this.onDelete,
+  });
+
+  final int? color;
+  final double width;
+  final bool isSelected;
+  final bool isRemovable;
+  final VoidCallback onSelect;
+  final VoidCallback onRequestRemove;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.none,
+      width: width,
+      height: width,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          EffectGestureDetector(
+            onLongPress: onRequestRemove,
+            child: ColorSchemeBox(
+              isSelected: isSelected,
+              primaryColor: color != null ? Color(color!) : null,
+              onPressed: onSelect,
+            ),
+          ),
+          if (isRemovable)
+            Container(
+              color: Colors.white.opacity0,
+              padding: const EdgeInsets.all(8),
+              child: IconButton.filledTonal(
+                tooltip: context.appLocalizations.delete,
+                onPressed: onDelete,
+                padding: const EdgeInsets.all(12),
+                iconSize: 30,
+                icon: Icon(color: context.colorScheme.primary, Icons.delete),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddPrimaryColorTile extends StatelessWidget {
+  const _AddPrimaryColorTile({required this.width, required this.onPressed});
+
+  final double width;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: width,
+      padding: const EdgeInsets.all(4),
+      child: IconButton.filledTonal(
+        tooltip: context.appLocalizations.add,
+        onPressed: onPressed,
+        iconSize: 32,
+        icon: Icon(color: context.colorScheme.primary, Icons.add),
       ),
     );
   }
@@ -535,6 +602,12 @@ class _PaletteDialog extends StatefulWidget {
 
 class _PaletteDialogState extends State<_PaletteDialog> {
   final _controller = ValueNotifier<Color>(Color(Hct.from(0, 0, 60).toInt()));
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

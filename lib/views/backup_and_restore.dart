@@ -51,7 +51,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
   }
 
   Future<void> _showAddWebDAV(DAVProps? dav) async {
-    await globalState.showCommonDialog<String>(
+    await dialogs.showCommonDialog<String>(
       child: WebDAVFormDialog(dav: dav?.copyWith()),
     );
   }
@@ -64,9 +64,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
         if (client == null) {
           return false;
         }
-        final path = await globalState.container
-            .read(backupActionProvider.notifier)
-            .backup();
+        final path = await ref.read(backupActionProvider.notifier).backup();
         if (path.isEmpty) {
           return false;
         }
@@ -76,9 +74,11 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
       title: appLocalizations.backup,
     );
     if (res != true) return;
-    globalState.showMessage(
-      title: appLocalizations.backup,
-      message: TextSpan(text: appLocalizations.backupSuccess),
+    unawaited(
+      dialogs.showMessage(
+        title: appLocalizations.backup,
+        message: TextSpan(text: appLocalizations.backupSuccess),
+      ),
     );
   }
 
@@ -91,43 +91,38 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
           return false;
         }
         await client.restore();
-        await globalState.container
-            .read(backupActionProvider.notifier)
-            .restore(option);
+        await ref.read(backupActionProvider.notifier).restore(option);
         return true;
       },
       tag: LoadingTag.backup_restore,
       title: appLocalizations.restore,
     );
     if (res != true) return;
-    globalState.showMessage(
-      title: appLocalizations.restore,
-      message: TextSpan(text: appLocalizations.restoreSuccess),
+    unawaited(
+      dialogs.showMessage(
+        title: appLocalizations.restore,
+        message: TextSpan(text: appLocalizations.restoreSuccess),
+      ),
     );
   }
 
   Future<void> _handleRestoreOnWebDAV() async {
-    final restoreOption = await globalState.showCommonDialog<RestoreOption>(
+    final restoreOption = await dialogs.showCommonDialog<RestoreOption>(
       child: const RestoreOptionsDialog(),
     );
     if (restoreOption == null || !context.mounted) return;
-    _restoreOnWebDAV(restoreOption);
+    unawaited(_restoreOnWebDAV(restoreOption));
   }
 
   Future<void> _backupOnLocal() async {
     final appLocalizations = context.appLocalizations;
     final res = await globalState.loadingRun<bool>(
       () async {
-        final path = await globalState.container
-            .read(backupActionProvider.notifier)
-            .backup();
+        final path = await ref.read(backupActionProvider.notifier).backup();
         if (path.isEmpty) {
           return false;
         }
-        final value = await picker.saveFileWithPath(
-          utils.getBackupFileName(),
-          path,
-        );
+        final value = await picker.saveFileWithPath(getBackupFileName(), path);
         if (value == null) return false;
         return true;
       },
@@ -135,13 +130,16 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
       tag: LoadingTag.backup_restore,
     );
     if (res != true) return;
-    globalState.showMessage(
-      title: appLocalizations.backup,
-      message: TextSpan(text: appLocalizations.backupSuccess),
+    unawaited(
+      dialogs.showMessage(
+        title: appLocalizations.backup,
+        message: TextSpan(text: appLocalizations.backupSuccess),
+      ),
     );
   }
 
   Future<void> _restoreOnLocal(RestoreOption option) async {
+    final backupAction = ref.read(backupActionProvider.notifier);
     final appLocalizations = context.appLocalizations;
     final file = await picker.pickerFile();
     final path = file?.path;
@@ -149,27 +147,27 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     await File(path).safeCopy(await appPath.backupFilePath);
     final res = await globalState.loadingRun<bool>(
       () async {
-        await globalState.container
-            .read(backupActionProvider.notifier)
-            .restore(option);
+        await backupAction.restore(option);
         return true;
       },
       tag: LoadingTag.backup_restore,
       title: appLocalizations.restore,
     );
     if (res != true) return;
-    globalState.showMessage(
-      title: appLocalizations.restore,
-      message: TextSpan(text: appLocalizations.restoreSuccess),
+    unawaited(
+      dialogs.showMessage(
+        title: appLocalizations.restore,
+        message: TextSpan(text: appLocalizations.restoreSuccess),
+      ),
     );
   }
 
   Future<void> _handleRestoreOnLocal() async {
-    final option = await globalState.showCommonDialog<RestoreOption>(
+    final option = await dialogs.showCommonDialog<RestoreOption>(
       child: const RestoreOptionsDialog(),
     );
     if (option == null || !mounted) return;
-    _restoreOnLocal(option);
+    unawaited(_restoreOnLocal(option));
   }
 
   void _handleChange(String? value, WidgetRef ref) {
@@ -185,7 +183,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     final restoreStrategy = ref.read(
       appSettingProvider.select((state) => state.restoreStrategy),
     );
-    final res = await globalState.showCommonDialog(
+    final res = await dialogs.showCommonDialog(
       child: OptionsDialog<RestoreStrategy>(
         title: currentAppLocalizations.restoreStrategy,
         options: RestoreStrategy.values,
@@ -240,33 +238,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(appLocalizations.connectivity),
-                    ValueListenableBuilder(
-                      valueListenable: _davConnection,
-                      builder: (_, isCompleter, _) {
-                        return Center(
-                          child: FadeThroughBox(
-                            child: isCompleter == null
-                                ? const SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CommonCircleLoading(),
-                                  )
-                                : Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: !isCompleter
-                                          ? context.colorScheme.error
-                                          : Colors.green.harmonizeWith(
-                                              context.colorScheme.primary,
-                                            ),
-                                    ),
-                                    width: 12,
-                                    height: 12,
-                                  ),
-                          ),
-                        );
-                      },
-                    ),
+                    _DavConnectionIndicator(connection: _davConnection),
                   ],
                 ),
               ),
@@ -320,28 +292,66 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
             subtitle: Text(appLocalizations.restoreFromFileDesc),
           ),
           ListHeader(title: appLocalizations.options),
-          Consumer(
-            builder: (_, ref, _) {
-              final restoreStrategy = ref.watch(
-                appSettingProvider.select((state) => state.restoreStrategy),
-              );
-              return ListItem(
-                onTap: () {
-                  _handleUpdateRestoreStrategy();
-                },
-                title: Text(appLocalizations.restoreStrategy),
-                trailing: FilledButton(
-                  onPressed: () {
-                    _handleUpdateRestoreStrategy();
-                  },
-                  child: Text(
-                    Intl.message('restoreStrategy_${restoreStrategy.name}'),
-                  ),
-                ),
-              );
-            },
-          ),
+          _RestoreStrategyItem(onPressed: _handleUpdateRestoreStrategy),
         ],
+      ),
+    );
+  }
+}
+
+class _DavConnectionIndicator extends StatelessWidget {
+  const _DavConnectionIndicator({required this.connection});
+
+  final ValueNotifier<bool?> connection;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: connection,
+      builder: (context, isConnected, _) {
+        return Center(
+          child: FadeThroughBox(
+            child: isConnected == null
+                ? const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CommonCircleLoading(),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: !isConnected
+                          ? context.colorScheme.error
+                          : Colors.green.harmonizeWith(
+                              context.colorScheme.primary,
+                            ),
+                    ),
+                    width: 12,
+                    height: 12,
+                  ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RestoreStrategyItem extends ConsumerWidget {
+  const _RestoreStrategyItem({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final restoreStrategy = ref.watch(
+      appSettingProvider.select((state) => state.restoreStrategy),
+    );
+    return ListItem(
+      onTap: onPressed,
+      title: Text(context.appLocalizations.restoreStrategy),
+      trailing: FilledButton(
+        onPressed: onPressed,
+        child: Text(Intl.message('restoreStrategy_${restoreStrategy.name}')),
       ),
     );
   }
@@ -500,6 +510,9 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
                     prefixIcon: const Icon(Icons.password),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
+                      tooltip: obscure
+                          ? context.appLocalizations.showPassword
+                          : context.appLocalizations.hidePassword,
                       icon: Icon(
                         obscure ? Icons.visibility : Icons.visibility_off,
                       ),

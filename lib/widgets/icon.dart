@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:fl_clash/common/cache.dart';
 import 'package:fl_clash/common/common.dart';
@@ -8,6 +9,23 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
+
+const _maxDecodedIcons = 64;
+
+final _decodedIcons = <String, Uint8List?>{};
+
+Uint8List? _decodeIcon(String src) {
+  if (!src.contains('base64,')) {
+    return null;
+  }
+  if (_decodedIcons.containsKey(src)) {
+    return _decodedIcons[src] = _decodedIcons.remove(src);
+  }
+  if (_decodedIcons.length >= _maxDecodedIcons) {
+    _decodedIcons.remove(_decodedIcons.keys.first);
+  }
+  return _decodedIcons[src] = src.getBase64;
+}
 
 class CommonTargetIcon extends StatelessWidget {
   final String src;
@@ -23,7 +41,7 @@ class CommonTargetIcon extends StatelessWidget {
       return _defaultIcon();
     }
 
-    final base64 = src.getBase64;
+    final base64 = _decodeIcon(src);
     if (base64 != null) {
       return Image.memory(
         base64,

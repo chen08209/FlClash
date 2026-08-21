@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:flutter/foundation.dart';
@@ -12,6 +11,7 @@ import 'input.dart';
 import 'open_container.dart';
 import 'scaffold.dart';
 import 'sheet.dart';
+part 'list_selected.dart';
 
 sealed class _ListItemAction {
   const _ListItemAction();
@@ -356,7 +356,7 @@ class ListItem<T> extends StatelessWidget {
         return OpenContainer<dynamic>(
           closedBuilder: (context, action) {
             Future<void> openAction() async {
-              final isMobile = globalState.container.read(isMobileViewProvider);
+              final isMobile = context.isMobileView;
               if (!isMobile || kDebugMode) {
                 final res = await showExtend(
                   context,
@@ -405,7 +405,7 @@ class ListItem<T> extends StatelessWidget {
         final optionsDelegate = options as _OptionsAction<T>;
         return _buildListTile(
           onTap: () async {
-            final value = await globalState.showCommonDialog<T>(
+            final value = await dialogs.showCommonDialog<T>(
               child: OptionsDialog<T>(
                 title: optionsDelegate.title,
                 options: optionsDelegate.options,
@@ -419,7 +419,7 @@ class ListItem<T> extends StatelessWidget {
       case final _InputAction inputDelegate:
         return _buildListTile(
           onTap: () async {
-            final value = await globalState.showCommonDialog<String>(
+            final value = await dialogs.showCommonDialog<String>(
               child: InputDialog(
                 title: inputDelegate.title,
                 value: inputDelegate.value,
@@ -566,7 +566,7 @@ Widget generateSectionV2({
 }) {
   final genItems = items
       .map<Widget>((item) {
-        return ClipRRect(
+        return ClipRSuperellipse(
           borderRadius: BorderRadius.circular(4),
           child: CommonCard(
             type: CommonCardType.filled,
@@ -580,7 +580,7 @@ Widget generateSectionV2({
     children: [
       if (items.isNotEmpty && title != null)
         ListHeader(title: title, actions: actions),
-      ClipRRect(
+      ClipRSuperellipse(
         borderRadius: BorderRadius.circular(18),
         child: Column(children: [...genItems]),
       ),
@@ -630,200 +630,4 @@ Widget generateListView(List<Widget> items) {
     itemBuilder: (_, index) => items[index],
     padding: const EdgeInsets.only(bottom: 16),
   );
-}
-
-class CommonSelectedListItem extends StatelessWidget {
-  final bool isSelected;
-  final bool isEditing;
-  final Widget title;
-  final VoidCallback onSelected;
-  final VoidCallback onPressed;
-
-  const CommonSelectedListItem({
-    super.key,
-    required this.isSelected,
-    required this.onSelected,
-    this.isEditing = false,
-    required this.title,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-        color: Colors.transparent,
-        child: CommonCard(
-          radius: 18,
-          type: CommonCardType.filled,
-          isSelected: isSelected,
-          onPressed: () {
-            if (isEditing) {
-              onSelected();
-              return;
-            }
-            onPressed();
-          },
-          child: ListTile(
-            minTileHeight: 32 + globalState.measure.bodyMediumHeight,
-            minVerticalPadding: 12,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            trailing: SizedBox(
-              width: 24,
-              height: 24,
-              child: CommonCheckBox(
-                value: isSelected,
-                isCircle: true,
-                onChanged: (_) {
-                  onSelected();
-                },
-              ),
-            ),
-            title: title,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class DecorationListItem extends StatelessWidget {
-  final Widget title;
-  final Widget? subtitle;
-  final Widget? leading;
-  final Widget? trailing;
-  final bool? isSelected;
-  final double? horizontalTitleGap;
-  final EdgeInsetsGeometry? contentPadding;
-  final VoidCallback? onPressed;
-  final double? minVerticalPadding;
-  final bool invalid;
-
-  const DecorationListItem({
-    super.key,
-    this.contentPadding,
-    required this.title,
-    this.leading,
-    this.trailing,
-    this.subtitle,
-    this.isSelected,
-    this.onPressed,
-    this.horizontalTitleGap,
-    this.minVerticalPadding,
-    this.invalid = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final proxyDecorator =
-        ProxyDecoratorProvider.of(context)?.isProxyDecorator ?? false;
-    final position = ItemPositionProvider.of(context)?.position;
-    final isStart = [
-      ItemPosition.start,
-      ItemPosition.startAndEnd,
-    ].contains(position);
-    final isEnd = [
-      ItemPosition.end,
-      ItemPosition.startAndEnd,
-    ].contains(position);
-    final borderRadius = BorderRadius.vertical(
-      top: isStart ? const Radius.circular(24) : Radius.zero,
-      bottom: isEnd ? const Radius.circular(24) : Radius.zero,
-    );
-    return CommonCard(
-      shape: proxyDecorator == true
-          ? LinearBorder.none
-          : RoundedSuperellipseBorder(borderRadius: borderRadius),
-      isError: invalid,
-      isSelected: isSelected,
-      padding: EdgeInsets.zero,
-      type: CommonCardType.filled,
-      onPressed: proxyDecorator ? null : onPressed,
-      child: LayoutBuilder(
-        builder: (_, constraints) {
-          final isInfinite = constraints.maxHeight >= double.infinity;
-          final tile = ListTile(
-            leading: leading,
-            contentPadding:
-                contentPadding ?? const EdgeInsets.only(right: 16, left: 16),
-            title: title,
-            subtitle: subtitle,
-            minVerticalPadding: minVerticalPadding ?? 6,
-            minTileHeight: 54,
-            horizontalTitleGap: horizontalTitleGap,
-            trailing: trailing,
-          );
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                fit: isInfinite ? FlexFit.loose : FlexFit.tight,
-                child: tile,
-              ),
-              if (!invalid && proxyDecorator != true && !isEnd)
-                const Divider(height: 0, indent: 14, endIndent: 14),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class SelectedDecorationListItem extends StatelessWidget {
-  final bool isSelected;
-  final bool isEditing;
-  final Widget title;
-  final Widget? subtitle;
-  final VoidCallback onSelected;
-  final VoidCallback onPressed;
-  final double? horizontalTitleGap;
-  final Widget? leading;
-  final bool invalid;
-  final double? minVerticalPadding;
-
-  const SelectedDecorationListItem({
-    super.key,
-    required this.isSelected,
-    required this.onSelected,
-    this.horizontalTitleGap,
-    this.isEditing = false,
-    this.invalid = false,
-    required this.title,
-    required this.onPressed,
-    this.minVerticalPadding,
-    this.subtitle,
-    this.leading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DecorationListItem(
-      title: title,
-      minVerticalPadding: minVerticalPadding,
-      contentPadding: const EdgeInsets.only(left: 16, right: 0),
-      isSelected: isSelected,
-      invalid: invalid,
-      leading: leading,
-      horizontalTitleGap: horizontalTitleGap,
-      onPressed: () {
-        if (isEditing) {
-          onSelected();
-          return;
-        }
-        onPressed();
-      },
-      subtitle: subtitle,
-      trailing: CommonCheckBox(
-        value: isSelected,
-        isCircle: true,
-        onChanged: (_) {
-          onSelected();
-        },
-      ),
-    );
-  }
 }

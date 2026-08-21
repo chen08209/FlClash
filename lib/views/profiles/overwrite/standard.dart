@@ -3,7 +3,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/rule.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,11 +15,11 @@ class StandardContent extends ConsumerStatefulWidget {
 }
 
 class _StandardContentState extends ConsumerState<StandardContent> {
-  final _key = utils.id;
+  final _key = uniqueId;
   late int _profileId;
 
   Future<void> _handleAddOrUpdate([Rule? rule]) async {
-    final res = await globalState.showCommonDialog<Rule>(
+    final res = await dialogs.showCommonDialog<Rule>(
       child: AddOrEditRuleDialog(rule: rule),
     );
     if (res == null) {
@@ -52,7 +51,7 @@ class _StandardContentState extends ConsumerState<StandardContent> {
 
   Future<void> _handleDelete() async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(
         text: appLocalizations.deleteMultipTip(appLocalizations.rule),
@@ -106,6 +105,7 @@ class _StandardContentState extends ConsumerState<StandardContent> {
                     if (selectedRules.isNotEmpty) ...[
                       CommonMinIconButtonTheme(
                         child: IconButton.filledTonal(
+                          tooltip: context.appLocalizations.delete,
                           onPressed: () {
                             _handleDelete();
                           },
@@ -135,42 +135,38 @@ class _StandardContentState extends ConsumerState<StandardContent> {
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
-          Consumer(
-            builder: (_, ref, _) {
-              return SliverReorderableList(
-                itemCount: addedRules.length,
-                itemBuilder: (_, index) {
-                  final rule = addedRules[index];
-                  final position = ItemPosition.get(index, addedRules.length);
-                  return ReorderableDelayedDragStartListener(
-                    key: ObjectKey(rule),
-                    index: index,
-                    child: ItemPositionProvider(
-                      position: position,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                        child: RuleItem(
-                          hasMatch: true,
-                          isEditing: selectedRules.isNotEmpty,
-                          isSelected: selectedRules.contains(rule.id),
-                          rule: rule,
-                          onSelected: () {
-                            _handleSelected(rule.id);
-                          },
-                          onEdit: (rule) {
-                            _handleAddOrUpdate(rule);
-                          },
-                        ),
-                      ),
+          SliverReorderableList(
+            itemCount: addedRules.length,
+            itemBuilder: (_, index) {
+              final rule = addedRules[index];
+              final position = ItemPosition.get(index, addedRules.length);
+              return ReorderableDelayedDragStartListener(
+                key: ObjectKey(rule),
+                index: index,
+                child: ItemPositionProvider(
+                  position: position,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    child: RuleItem(
+                      hasMatch: true,
+                      isEditing: selectedRules.isNotEmpty,
+                      isSelected: selectedRules.contains(rule.id),
+                      rule: rule,
+                      onSelected: () {
+                        _handleSelected(rule.id);
+                      },
+                      onEdit: (rule) {
+                        _handleAddOrUpdate(rule);
+                      },
                     ),
-                  );
-                },
-                itemExtent: ruleItemHeight,
-                onReorderItem: ref
-                    .read(profileAddedRulesProvider(_profileId).notifier)
-                    .order,
+                  ),
+                ),
               );
             },
+            itemExtent: ruleItemHeight,
+            onReorderItem: ref
+                .read(profileAddedRulesProvider(_profileId).notifier)
+                .order,
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           SliverToBoxAdapter(
@@ -202,7 +198,9 @@ class _EditGlobalAddedRules extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final disabledRuleIds =
-        ref.watch(profileDisabledRuleIdsProvider(profileId)).value ?? [];
+        (ref.watch(profileDisabledRuleIdsProvider(profileId)).value ??
+                const <int>[])
+            .toSet();
     final rules = ref.watch(globalRulesProvider).value ?? [];
     return BaseScaffold(
       title: appLocalizations.editGlobalRules,

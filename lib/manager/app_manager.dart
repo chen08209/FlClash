@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/common/permission.dart';
+import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/window_manager.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/animated_visibility.dart';
@@ -28,48 +30,39 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ref.listenManual(checkIpProvider, (prev, next) {
-      if (prev != next && next.a && next.c) {
+      if (prev != next && next.isInit && next.containsDetection) {
         ref.read(networkDetectionProvider.notifier).startCheck();
       }
     });
     ref.listenManual(configProvider, (prev, next) {
       if (prev != next) {
-        globalState.container
-            .read(storeActionProvider.notifier)
-            .savePreferencesDebounce();
+        ref.read(storeActionProvider.notifier).savePreferencesDebounce();
       }
     });
     ref.listenManual(needUpdateGroupsProvider, (prev, next) {
       if (prev != next) {
-        globalState.container
-            .read(proxiesActionProvider.notifier)
-            .updateGroupsDebounce();
+        ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
       }
     });
     ref.listenManual(suspendProvider, (prev, next) {
       final isStart = ref.read(isStartProvider);
       if (prev != next && isStart) {
         debouncer.call(FunctionTag.suspend, () async {
+          final core = ref.read(coreHandlerProvider);
           if (next == true) {
-            await coreController.stopListener();
+            await core.stopListener();
           } else {
-            await coreController.startListener();
+            await core.startListener();
           }
           ref.read(checkIpNumProvider.notifier).add();
         });
       }
     });
-    if (system.isMacOS) {
-      ref.listenManual(autoSetSystemDnsStateProvider, (prev, next) async {
-        if (prev == next) {
-          return;
-        }
-        if (next.a == true && next.b == true) {
-          macOS?.updateDns(false);
-        } else {
-          macOS?.updateDns(true);
-        }
-      });
+    final systemDns = systemDnsCoordinator;
+    if (systemDns != null) {
+      ref.listenManual(shouldPatchSystemDnsProvider, (prev, next) {
+        unawaited(systemDns.sync(next));
+      }, fireImmediately: true);
     }
   }
 
@@ -83,10 +76,12 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     commonPrint.log('$state');
     if (state == AppLifecycleState.resumed) {
-      permissions.check();
+      permissions.check(ref.read);
       render?.resume();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final ref = globalState.container;
+        if (!mounted) {
+          return;
+        }
         ref.read(setupActionProvider.notifier).tryCheckIp();
       });
     }
@@ -94,7 +89,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
 
   @override
   void didChangePlatformBrightness() {
-    globalState.container.read(themeActionProvider.notifier).updateBrightness();
+    ref.read(themeActionProvider.notifier).updateBrightness();
   }
 
   @override
@@ -135,6 +130,54 @@ class AppEnvManager extends StatelessWidget {
   }
 }
 
+class _SidebarRail extends StatelessWidget {
+  const _SidebarRail({
+    required this.items,
+    required this.currentIndex,
+    required this.showLabel,
+    required this.onSelected,
+  });
+
+  final List<NavigationItem> items;
+  final int currentIndex;
+  final bool showLabel;
+  final void Function(int index) onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = context.textTheme.labelLarge!.copyWith(
+      color: context.colorScheme.onSurface,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: NavigationRail(
+            scrollable: true,
+            minExtendedWidth: 200,
+            backgroundColor: Colors.transparent,
+            selectedLabelTextStyle: labelStyle,
+            unselectedLabelTextStyle: labelStyle,
+            destinations: [
+              for (final item in items)
+                NavigationRailDestination(
+                  icon: item.icon,
+                  label: Text(Intl.message(item.label.name)),
+                ),
+            ],
+            onDestinationSelected: onSelected,
+            extended: false,
+            selectedIndex: currentIndex,
+            labelType: showLabel
+                ? NavigationRailLabelType.all
+                : NavigationRailLabelType.none,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class AppSidebarContainer extends ConsumerWidget {
   final Widget child;
 
@@ -155,14 +198,12 @@ class AppSidebarContainer extends ConsumerWidget {
     });
   }
 
-  void _handleToPage(PageLabel pageLabel) {
+  void _handleToPage(WidgetRef ref, PageLabel pageLabel) {
     final focusNode = FocusManager.instance.primaryFocus;
     final preserveNavigationFocus =
         focusNode?.context?.findAncestorWidgetOfExactType<NavigationRail>() !=
         null;
-    globalState.container
-        .read(currentPageLabelProvider.notifier)
-        .toPage(pageLabel);
+    ref.read(currentPageLabelProvider.notifier).toPage(pageLabel);
     if (!preserveNavigationFocus || focusNode == null) {
       return;
     }
@@ -201,50 +242,19 @@ class AppSidebarContainer extends ConsumerWidget {
                     Expanded(
                       child: ScrollConfiguration(
                         behavior: HiddenBarScrollBehavior(),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: NavigationRail(
-                                scrollable: true,
-                                minExtendedWidth: 200,
-                                backgroundColor: Colors.transparent,
-                                selectedLabelTextStyle: context
-                                    .textTheme
-                                    .labelLarge!
-                                    .copyWith(
-                                      color: context.colorScheme.onSurface,
-                                    ),
-                                unselectedLabelTextStyle: context
-                                    .textTheme
-                                    .labelLarge!
-                                    .copyWith(
-                                      color: context.colorScheme.onSurface,
-                                    ),
-                                destinations: navigationItems
-                                    .map(
-                                      (e) => NavigationRailDestination(
-                                        icon: e.icon,
-                                        label: Text(Intl.message(e.label.name)),
-                                      ),
-                                    )
-                                    .toList(),
-                                onDestinationSelected: (index) {
-                                  _handleToPage(navigationItems[index].label);
-                                },
-                                extended: false,
-                                selectedIndex: currentIndex,
-                                labelType: showLabel
-                                    ? NavigationRailLabelType.all
-                                    : NavigationRailLabelType.none,
-                              ),
-                            ),
-                          ],
+                        child: _SidebarRail(
+                          items: navigationItems,
+                          currentIndex: currentIndex,
+                          showLabel: showLabel,
+                          onSelected: (index) {
+                            _handleToPage(ref, navigationItems[index].label);
+                          },
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
                     IconButton(
+                      tooltip: context.appLocalizations.toggleLabel,
                       onPressed: () {
                         ref
                             .read(appSettingProvider.notifier)

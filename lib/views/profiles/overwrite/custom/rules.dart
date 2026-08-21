@@ -1,12 +1,10 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/overwrite/rule.dart';
+import 'package:fl_clash/features/overwrite/overwrite.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/state.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,16 +19,8 @@ class CustomRulesView extends ConsumerStatefulWidget {
   ConsumerState createState() => _CustomRulesViewState();
 }
 
-class _CustomRulesViewState extends ConsumerState<CustomRulesView>
-    with UniqueKeyStateMixin {
+class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
   int get _profileId => widget.profileId;
-  late final ScrollController _scrollController;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-  }
 
   void _handleReorder(int oldIndex, int newIndex) {
     ref
@@ -38,64 +28,36 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView>
         .order(oldIndex, newIndex);
   }
 
-  void _handleSelected(int ruleId) {
-    ref.read(itemsProvider(key).notifier).update((selectedRules) {
-      final newSelectedRules = Set<int>.from(selectedRules)
-        ..addOrRemove(ruleId);
-      return newSelectedRules;
-    });
-  }
-
-  void _handleSelectAll() {
-    final ids =
-        ref
-            .read(profileCustomRulesProvider(_profileId))
-            .value
-            ?.map((item) => item.id)
-            .toSet() ??
-        {};
-    ref.read(itemsProvider(key).notifier).update((selected) {
-      return selected.containsAll(ids) ? {} : ids;
-    });
-  }
-
-  Future<void> _handleDelete() async {
+  Future<bool> _handleDelete(Set<dynamic> selectedRules) async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(
         text: appLocalizations.deleteMultipTip(appLocalizations.rule),
       ),
     );
     if (res != true) {
-      return;
+      return false;
     }
-    final selectedRules = ref.read(itemsProvider(key));
+    if (!mounted) {
+      return false;
+    }
     ref
         .read(profileCustomRulesProvider(_profileId).notifier)
         .delAll(selectedRules.cast<int>());
-    ref.read(itemsProvider(key).notifier).value = {};
+    return true;
   }
 
   void _handleAddOrUpdate({Rule? rule}) {
-    showSheet(
+    showOverwriteNestedSheet<Rule>(
       context: context,
-      props: const SheetProps(
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        maxWidth: double.maxFinite,
-      ),
-      builder: (context) {
-        return ProfileIdProvider(
-          profileId: widget.profileId,
-          child: ProviderScope(
-            overrides: [
-              ruleProvider.overrideWithBuild((_, _) => rule ?? Rule.init()),
-            ],
-            child: const _AddOrEditRuleNestedSheet(),
-          ),
-        );
-      },
+      profileId: widget.profileId,
+      overrides: [
+        ruleProvider.overrideWithBuild((_, _) => rule ?? Rule.init()),
+      ],
+      currentOf: (ref) => ref.read(ruleProvider),
+      save: _handleSaveRule,
+      formBuilder: (_) => const _AddOrEditRuleView(),
     );
   }
 
@@ -111,277 +73,49 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView>
     return !ruleTargets.contains(ruleTarget);
   }
 
-  Widget _buildItem({
-    required Rule rule,
-    required bool isEditing,
-    required bool isSelected,
-    required int index,
-    required int total,
-    required Function() onSelected,
-    required Function(Rule rule) onEdit,
-    required bool Function(Rule rule) checkInvalidHandler,
-  }) {
-    final position = ItemPosition.get(index, total);
-    return ReorderableDelayedDragStartListener(
-      key: ValueKey(rule),
-      index: index,
-      child: ItemPositionProvider(
-        position: position,
-        child: RuleItem(
-          checkInvalidHandler: checkInvalidHandler,
-          isEditing: isEditing,
-          isSelected: isSelected,
-          rule: rule,
-          onSelected: () {
-            _handleSelected(rule.id);
-          },
-          onEdit: (rule) {
-            _handleAddOrUpdate(rule: rule);
-          },
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(context) {
     final appLocalizations = context.appLocalizations;
-    final rules = ref.watch(profileCustomRulesProvider(_profileId)).value ?? [];
-    final selectedRules = ref.watch(itemsProvider(key));
-    final vm2 = ref.watch(
-      customOverwriteDateProvider(
-        widget.profileId,
-      ).select((state) => VM2(state.ruleTargets, state.subRules)),
-    );
-    final ruleTargets = vm2.a;
-    final subRules = vm2.b;
-    return CommonScaffold(
-      title: appLocalizations.rule,
-      actions: [
-        if (selectedRules.isNotEmpty) ...[
-          CommonMinIconButtonTheme(
-            child: IconButton.filledTonal(
-              onPressed: _handleDelete,
-              icon: const Icon(Icons.delete),
-            ),
-          ),
-          const SizedBox(width: 2),
-        ],
-        CommonMinFilledButtonTheme(
-          child: selectedRules.isNotEmpty
-              ? FilledButton(
-                  onPressed: _handleSelectAll,
-                  child: Text(appLocalizations.selectAll),
-                )
-              : FilledButton.tonal(
-                  onPressed: _handleAddOrUpdate,
-                  child: Text(appLocalizations.add),
-                ),
-        ),
-        const SizedBox(width: 8),
-      ],
-      body: rules.isEmpty
-          ? NullStatus(label: appLocalizations.ruleEmpty)
-          : CommonScrollBar(
-              controller: _scrollController,
-              child: ReorderableListView.builder(
-                scrollController: _scrollController,
-                buildDefaultDragHandles: false,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ).copyWith(bottom: 24),
-                itemBuilder: (_, index) {
-                  final rule = rules[index];
-                  return _buildItem(
-                    index: index,
-                    checkInvalidHandler: (rule) {
-                      return _handleCheckInvalid(rule, ruleTargets, subRules);
-                    },
-                    total: rules.length,
-                    isEditing: selectedRules.isNotEmpty,
-                    isSelected: selectedRules.contains(rule.id),
-                    rule: rule,
-                    onSelected: () {
-                      _handleSelected(rule.id);
-                    },
-                    onEdit: (rule) {
-                      _handleAddOrUpdate(rule: rule);
-                    },
-                  );
-                },
-                itemExtent: ruleItemHeight,
-                itemCount: rules.length,
-                proxyDecorator: (child, index, animation) {
-                  final rule = rules[index];
-                  return commonProxyDecorator(
-                    _buildItem(
-                      index: index,
-                      checkInvalidHandler: (target) {
-                        return _handleCheckInvalid(
-                          target,
-                          ruleTargets,
-                          subRules,
-                        );
-                      },
-                      total: rules.length,
-                      isEditing: selectedRules.isNotEmpty,
-                      isSelected: selectedRules.contains(rule.id),
-                      rule: rule,
-                      onSelected: () {
-                        _handleSelected(rule.id);
-                      },
-                      onEdit: (rule) {
-                        _handleAddOrUpdate(rule: rule);
-                      },
-                    ),
-                    index,
-                    animation,
-                  );
-                },
-                onReorderItem: _handleReorder,
-              ),
-            ),
-    );
-  }
-}
-
-class _AddOrEditRuleNestedSheet extends ConsumerStatefulWidget {
-  const _AddOrEditRuleNestedSheet();
-
-  @override
-  ConsumerState<_AddOrEditRuleNestedSheet> createState() =>
-      _AddOrEditRuleNestedSheetState();
-}
-
-class _AddOrEditRuleNestedSheetState
-    extends ConsumerState<_AddOrEditRuleNestedSheet> {
-  final GlobalKey<NavigatorState> _nestedNavigatorKey = GlobalKey();
-  late final Rule _originRule;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _originRule = ref.read(ruleProvider);
-    });
-  }
-
-  Future<void> _handleClose() async {
-    final state = _nestedNavigatorKey.currentState;
-    if (state != null && state.canPop()) {
-      final res = await globalState.showMessage(
-        message: TextSpan(text: context.appLocalizations.confirmExitWindow),
-      );
-      if (res != true) {
-        return;
-      }
-    }
-    if (context.mounted) {
-      _handleExit();
-    }
-  }
-
-  Future<void> _handleExit() async {
-    final rule = ref.read(ruleProvider);
-    if (_originRule == rule) {
-      Navigator.of(context).pop();
-      return;
-    }
-    final res = await globalState.showMessage(
-      message: TextSpan(text: context.appLocalizations.dataChangedSave),
-    );
-    if (!mounted) {
-      return;
-    }
-    if (res != true) {
-      Navigator.of(context).pop();
-      return;
-    }
-    if (_handleSaveRule(context, ref)) {
-      Navigator.of(context).pop();
-    }
-  }
-
-  Future<void> _handlePop() async {
-    final state = _nestedNavigatorKey.currentState;
-    if (state != null && state.canPop()) {
-      state.pop();
-    } else {
-      _handleExit();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final nestedNavigator = Navigator(
-      key: _nestedNavigatorKey,
-      onGenerateInitialRoutes: (navigator, initialRoute) {
-        return [
-          PagedSheetRoute(
-            builder: (context) {
-              return const _AddOrEditRuleView();
-            },
-          ),
-        ];
-      },
-    );
-    final sheetProvider = SheetProvider.of(context);
-    final fillColor = sheetProvider?.type == SheetType.bottomSheet
-        ? context.colorScheme.surfaceContainerLow
-        : context.colorScheme.surface;
-    return CommonPopScope(
-      onPop: (_) async {
-        _handlePop();
-        return false;
-      },
-      child: sheetProvider!.copyWith(
-        nestedNavigatorPop: ([_]) {
-          Navigator.of(context).pop();
-        },
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () async {
-                  _handleClose();
-                },
-              ),
-            ),
-            SizedBox(
-              width: sheetProvider.type == SheetType.sideSheet ? 400 : null,
-              child: SheetViewport(
-                child: PagedSheetRouteTheme(
-                  data: const PagedSheetRouteThemeData(
-                    transitionsBuilder: fadeAndSlideTransition,
-                    transitionDuration: Duration(milliseconds: 300),
-                  ),
-                  child: PagedSheet(
-                    decoration: MaterialSheetDecoration(
-                      animationDuration: Duration.zero,
-                      size: SheetSize.stretch,
-                      color: fillColor,
-                      borderRadius: sheetProvider.type == SheetType.bottomSheet
-                          ? const BorderRadius.vertical(
-                              top: Radius.circular(28),
-                            )
-                          : BorderRadius.zero,
-                      clipBehavior: Clip.antiAlias,
-                    ),
-                    navigator: nestedNavigator,
-                  ),
-                ),
-              ),
-            ),
-          ],
+    final ruleTargets = ref.watch(
+      customOverwriteDateProvider(_profileId).select(
+        (state) => RuleTargetsSelectorState(
+          ruleTargets: state.ruleTargets,
+          subRules: state.subRules,
         ),
       ),
+    );
+    return OverwriteEditorPage<Rule>(
+      title: appLocalizations.rule,
+      selectionEnabled: true,
+      dragFromRow: true,
+      idOf: (rule) => rule.id,
+      itemsOf: (ref) {
+        return ref.watch(profileCustomRulesProvider(_profileId)).value ?? [];
+      },
+      itemBuilder:
+          (context, ref, rule, index, isEditing, isSelected, onToggleSelected) {
+            return RuleItem(
+              checkInvalidHandler: (target) {
+                return _handleCheckInvalid(
+                  target,
+                  ruleTargets.ruleTargets,
+                  ruleTargets.subRules,
+                );
+              },
+              isEditing: isEditing,
+              isSelected: isSelected,
+              rule: rule,
+              onSelected: onToggleSelected,
+              onEdit: (rule) {
+                _handleAddOrUpdate(rule: rule);
+              },
+            );
+          },
+      onReorder: _handleReorder,
+      onAdd: () => _handleAddOrUpdate(),
+      onDelete: _handleDelete,
+      emptyLabel: appLocalizations.ruleEmpty,
+      itemExtent: ruleItemHeight,
     );
   }
 }
@@ -400,36 +134,31 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
     bool? invalid,
     final VoidCallback? onPressed,
   }) {
-    return DecorationListItem(
+    return OverwriteFormRow(
       invalid: invalid ?? false,
       onPressed: onPressed,
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        spacing: 16,
-        children: [
-          title,
-          if (trailing != null)
-            Flexible(
-              child: IconTheme(
-                data: IconThemeData(
-                  size: 16,
-                  color: context.colorScheme.onSurface.opacity60,
-                ),
-                child: Container(
-                  alignment: Alignment.centerRight,
-                  height: globalState.measure.bodyLargeHeight + 24,
-                  child: trailing,
-                ),
-              ),
-            ),
-        ],
-      ),
+      title: title,
+      trailing: trailing,
     );
   }
 
   Future<void> _handleSelectedType() async {
     final res = await Navigator.of(context).push(
-      PagedSheetRoute(builder: (context) => const _RuleTypeSelectedView()),
+      PagedSheetRoute(
+        builder: (context) => OverwriteSelectionSheet<RuleAction>(
+          title: context.appLocalizations.proxyType,
+          sections: [
+            OverwriteSelectionSection(
+              items: RuleAction.values,
+              subtitleBuilder: (context, item) => item.getDesc(context),
+            ),
+          ],
+          labelBuilder: (item) => item.name,
+          selectedOf: (ref) =>
+              ref.watch(ruleProvider.select((state) => state.ruleAction)),
+          onSelected: (item) => Navigator.of(context).pop(item),
+        ),
+      ),
     );
     if (res == null) {
       return;
@@ -485,7 +214,29 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
 
   Future<void> _handleSelectedRuleProvider() async {
     final res = await Navigator.of(context).push(
-      PagedSheetRoute(builder: (context) => const _RuleProviderSelectedView()),
+      PagedSheetRoute(
+        builder: (context) => Consumer(
+          builder: (_, ref, _) {
+            final profileId = ProfileIdProvider.of(context)!.profileId;
+            final ruleProviders = ref
+                .watch(
+                  clashConfigProvider(profileId).select(
+                    (state) => SelectValue(state.value?.ruleProviders ?? []),
+                  ),
+                )
+                .value;
+            return OverwriteSelectionSheet<String>(
+              title: context.appLocalizations.ruleSet,
+              sections: [OverwriteSelectionSection(items: ruleProviders)],
+              labelBuilder: (item) => item,
+              selectedOf: (ref) =>
+                  ref.watch(ruleProvider.select((state) => state.ruleProvider)),
+              onSelected: (item) => Navigator.of(context).pop(item),
+              emptyLabel: context.appLocalizations.proxyProvidersEmpty,
+            );
+          },
+        ),
+      ),
     );
     if (res == null) {
       return;
@@ -522,7 +273,51 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
 
   Future<void> _handleSelectedTarget() async {
     final res = await Navigator.of(context).push(
-      PagedSheetRoute(builder: (context) => const _RuleTargetSelectedView()),
+      PagedSheetRoute(
+        builder: (context) => Consumer(
+          builder: (_, ref, _) {
+            final profileId = ProfileIdProvider.of(context)!.profileId;
+            final proxiesAndGroups = ref.watch(
+              customOverwriteDateProvider(profileId).select((state) {
+                return ProxiesAndGroupsSelectorState(
+                  proxies: state.proxies,
+                  proxyGroups: state.proxyGroups,
+                );
+              }),
+            );
+            final groupTypes = {
+              for (final item in proxiesAndGroups.proxyGroups)
+                item.name: item.type.name,
+            };
+            final proxyTypes = {
+              for (final item in proxiesAndGroups.proxies) item.name: item.type,
+            };
+            return OverwriteSelectionSheet<String>(
+              title: context.appLocalizations.splitStrategy,
+              sections: [
+                OverwriteSelectionSection(
+                  label: context.appLocalizations.basicStrategy,
+                  items: RuleTarget.values.map((item) => item.name).toList(),
+                ),
+                OverwriteSelectionSection(
+                  label: context.appLocalizations.ruleTarget,
+                  items: groupTypes.keys.toList(),
+                  subtitleBuilder: (context, name) => groupTypes[name] ?? '',
+                ),
+                OverwriteSelectionSection(
+                  label: context.appLocalizations.proxies,
+                  items: proxyTypes.keys.toList(),
+                  subtitleBuilder: (context, name) => proxyTypes[name] ?? '',
+                ),
+              ],
+              labelBuilder: (item) => item,
+              selectedOf: (ref) =>
+                  ref.watch(ruleProvider.select((state) => state.ruleTarget)),
+              onSelected: (item) => Navigator.of(context).pop(item),
+            );
+          },
+        ),
+      ),
     );
     if (res == null) {
       return;
@@ -549,13 +344,14 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (invalid)
+              if (invalid && target != null)
                 CommonMinIconButtonTheme(
                   child: IconButton(
+                    tooltip: appLocalizations.tip,
                     onPressed: () {
-                      globalState.showMessage(
+                      dialogs.showMessage(
                         message: TextSpan(
-                          text: appLocalizations.invalidPolicy(target!),
+                          text: appLocalizations.invalidPolicy(target),
                         ),
                       );
                     },
@@ -585,9 +381,31 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   }
 
   Future<void> _handleSelectedSubRule() async {
-    final res = await Navigator.of(
-      context,
-    ).push(PagedSheetRoute(builder: (context) => const _SubRuleSelectedView()));
+    final res = await Navigator.of(context).push(
+      PagedSheetRoute(
+        builder: (context) => Consumer(
+          builder: (_, ref, _) {
+            final profileId = ProfileIdProvider.of(context)!.profileId;
+            final subRules = ref
+                .watch(
+                  clashConfigProvider(
+                    profileId,
+                  ).select((state) => SelectValue(state.value?.subRules ?? [])),
+                )
+                .value;
+            return OverwriteSelectionSheet<String>(
+              title: context.appLocalizations.subRule,
+              sections: [OverwriteSelectionSection(items: subRules)],
+              labelBuilder: (item) => item,
+              selectedOf: (ref) =>
+                  ref.watch(ruleProvider.select((state) => state.subRule)),
+              onSelected: (item) => Navigator.of(context).pop(item),
+              emptyLabel: context.appLocalizations.subRuleEmpty,
+            );
+          },
+        ),
+      ),
+    );
     if (res == null) {
       return;
     }
@@ -596,35 +414,31 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
         .update((state) => state.copyWith(subRule: res));
   }
 
-  Widget _buildSubRuleItem(int profileId, String? subRule) {
+  Widget _buildSubRuleItem(String? subRule) {
     final appLocalizations = context.appLocalizations;
-    return Consumer(
-      builder: (_, ref, _) {
-        return _buildItem(
-          title: Text(appLocalizations.subRule),
-          onPressed: _handleSelectedSubRule,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 4,
-            children: [
-              Flexible(
-                flex: 1,
-                child: TooltipText(
-                  text: Text(
-                    subRule ?? appLocalizations.selectSubRule,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.bodyLarge?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+    return _buildItem(
+      title: Text(appLocalizations.subRule),
+      onPressed: _handleSelectedSubRule,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          Flexible(
+            flex: 1,
+            child: TooltipText(
+              text: Text(
+                subRule ?? appLocalizations.selectSubRule,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.bodyLarge?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios),
-            ],
+            ),
           ),
-        );
-      },
+          const Icon(Icons.arrow_forward_ios),
+        ],
+      ),
     );
   }
 
@@ -656,14 +470,16 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final profileId = ProfileIdProvider.of(context)!.profileId;
-    final isBottomSheet =
-        SheetProvider.of(context)?.type == SheetType.bottomSheet;
     final rule = ref.watch(ruleProvider);
-    final height = isBottomSheet
-        ? globalState.container.read(viewSizeProvider).height * 0.60
-        : double.maxFinite;
+    final height = ref.sheetHeight(context, 0.60);
     return AdaptiveSheetScaffold(
-      actions: [IconButtonData(icon: Icons.check, onPressed: _handleSave)],
+      actions: [
+        IconButtonData(
+          icon: Icons.check,
+          onPressed: _handleSave,
+          tooltip: context.appLocalizations.save,
+        ),
+      ],
       sheetTransparentToolBar: true,
       body: Container(
         constraints: BoxConstraints(maxHeight: height),
@@ -683,7 +499,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
                       : _buildContentItem(rule.content),
                 rule.ruleAction != RuleAction.SUB_RULE
                     ? _buildTargetItem(profileId, rule.ruleTarget)
-                    : _buildSubRuleItem(profileId, rule.subRule),
+                    : _buildSubRuleItem(rule.subRule),
               ],
             ),
             if (rule.ruleAction.hasParams)
@@ -721,343 +537,11 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   }
 }
 
-class _RuleTypeSelectedView extends ConsumerWidget {
-  const _RuleTypeSelectedView();
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final isBottomSheet =
-        SheetProvider.of(context)?.type == SheetType.bottomSheet;
-    final height = isBottomSheet
-        ? globalState.container.read(viewSizeProvider).height * 0.70
-        : double.maxFinite;
-    final currentRuleAction = ref.watch(
-      ruleProvider.select((state) => state.ruleAction),
-    );
-    return AdaptiveSheetScaffold(
-      sheetTransparentToolBar: true,
-      body: SizedBox(
-        height: height,
-        child: ListView.builder(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-          ).copyWith(bottom: 20, top: context.sheetTopPadding),
-          itemCount: RuleAction.values.length,
-          itemBuilder: (_, index) {
-            final ruleAction = RuleAction.values[index];
-            final position = ItemPosition.get(index, RuleAction.values.length);
-            return ItemPositionProvider(
-              position: position,
-              child: DecorationListItem(
-                onPressed: () {
-                  Navigator.of(context).pop(ruleAction);
-                },
-                isSelected: ruleAction == currentRuleAction,
-                subtitle: Text(ruleAction.getDesc(context)),
-                title: Text(ruleAction.name),
-                trailing: ruleAction == currentRuleAction
-                    ? const Icon(Icons.check)
-                    : null,
-              ),
-            );
-          },
-        ),
-      ),
-      title: appLocalizations.proxyType,
-    );
-  }
-}
-
-class _RuleTargetSelectedView extends ConsumerWidget {
-  const _RuleTargetSelectedView();
-
-  Widget _buildItem({
-    required String title,
-    String? subtitle,
-    required ItemPosition position,
-    bool isSelected = true,
-    final VoidCallback? onPressed,
-  }) {
-    return ItemPositionProvider(
-      position: position,
-      child: DecorationListItem(
-        onPressed: onPressed,
-        subtitle: subtitle != null ? Text(subtitle) : null,
-        title: TooltipText(
-          text: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-        isSelected: isSelected,
-        trailing: isSelected ? const Icon(Icons.check) : null,
-      ),
-    );
-  }
-
-  void _handleSelected(BuildContext context, String target) {
-    Navigator.of(context).pop(target);
-  }
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final isBottomSheet =
-        SheetProvider.of(context)?.type == SheetType.bottomSheet;
-    final profileId = ProfileIdProvider.of(context)!.profileId;
-    final height = isBottomSheet
-        ? globalState.container.read(viewSizeProvider).height * 0.70
-        : double.maxFinite;
-    final vm2 = ref.watch(
-      customOverwriteDateProvider(profileId).select((state) {
-        return VM2(state.proxies, state.proxyGroups);
-      }),
-    );
-    final proxies = vm2.a;
-    final proxyGroups = vm2.b;
-    final currentRuleTarget = ref.watch(
-      ruleProvider.select((state) => state.ruleTarget),
-    );
-    return AdaptiveSheetScaffold(
-      sheetTransparentToolBar: true,
-      body: SizedBox(
-        height: height,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(height: context.sheetTopPadding),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverToBoxAdapter(
-                child: InfoHeader(
-                  info: Info(label: appLocalizations.basicStrategy),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList.builder(
-                itemBuilder: (_, index) {
-                  final target = RuleTarget.values[index];
-                  final position = ItemPosition.get(
-                    index,
-                    RuleTarget.values.length,
-                  );
-                  return _buildItem(
-                    title: target.name,
-                    position: position,
-                    onPressed: () {
-                      _handleSelected(context, target.name);
-                    },
-                    isSelected: currentRuleTarget == target.name,
-                  );
-                },
-                itemCount: RuleTarget.values.length,
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverToBoxAdapter(
-                child: InfoHeader(
-                  info: Info(label: appLocalizations.ruleTarget),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList.builder(
-                itemBuilder: (_, index) {
-                  final proxyGroup = proxyGroups[index];
-                  final position = ItemPosition.get(index, proxyGroups.length);
-                  return _buildItem(
-                    title: proxyGroup.name,
-                    subtitle: proxyGroup.type.name,
-                    position: position,
-                    onPressed: () {
-                      _handleSelected(context, proxyGroup.name);
-                    },
-                    isSelected: currentRuleTarget == proxyGroup.name,
-                  );
-                },
-                itemCount: proxyGroups.length,
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverToBoxAdapter(
-                child: InfoHeader(info: Info(label: appLocalizations.proxies)),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList.builder(
-                itemBuilder: (_, index) {
-                  final proxy = proxies[index];
-                  final position = ItemPosition.get(index, proxies.length);
-                  return _buildItem(
-                    title: proxy.name,
-                    subtitle: proxy.type,
-                    position: position,
-                    onPressed: () {
-                      _handleSelected(context, proxy.name);
-                    },
-                    isSelected: currentRuleTarget == proxy.name,
-                  );
-                },
-                itemCount: proxies.length,
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          ],
-        ),
-      ),
-      title: appLocalizations.splitStrategy,
-    );
-  }
-}
-
-class _RuleProviderSelectedView extends ConsumerWidget {
-  const _RuleProviderSelectedView();
-
-  Widget _buildItem({
-    required Widget title,
-    final VoidCallback? onPressed,
-    bool isSelected = false,
-  }) {
-    return DecorationListItem(
-      onPressed: onPressed,
-      isSelected: isSelected,
-      trailing: isSelected ? const Icon(Icons.check) : null,
-      title: title,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final isBottomSheet =
-        SheetProvider.of(context)?.type == SheetType.bottomSheet;
-    final profileId = ProfileIdProvider.of(context)!.profileId;
-    final height = isBottomSheet
-        ? globalState.container.read(viewSizeProvider).height * 0.70
-        : double.maxFinite;
-    final ruleProviders = ref
-        .watch(
-          clashConfigProvider(
-            profileId,
-          ).select((state) => VM(state.value?.ruleProviders ?? [])),
-        )
-        .a;
-    final currentRuleProvider = ref.watch(
-      ruleProvider.select((state) => state.ruleProvider),
-    );
-    return AdaptiveSheetScaffold(
-      sheetTransparentToolBar: true,
-      body: SizedBox(
-        height: height,
-        child: ruleProviders.isEmpty
-            ? NullStatus(label: appLocalizations.proxyProvidersEmpty)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                ).copyWith(bottom: 20, top: context.sheetTopPadding),
-                itemCount: ruleProviders.length,
-                itemBuilder: (_, index) {
-                  final ruleProvider = ruleProviders[index];
-                  final position = ItemPosition.get(
-                    index,
-                    ruleProviders.length,
-                  );
-                  return ItemPositionProvider(
-                    position: position,
-                    child: _buildItem(
-                      onPressed: () {
-                        Navigator.of(context).pop(ruleProvider);
-                      },
-                      title: Text(ruleProvider),
-                      isSelected: currentRuleProvider == ruleProvider,
-                    ),
-                  );
-                },
-              ),
-      ),
-      title: appLocalizations.ruleSet,
-    );
-  }
-}
-
-class _SubRuleSelectedView extends ConsumerWidget {
-  const _SubRuleSelectedView();
-
-  Widget _buildItem({
-    required Widget title,
-    final VoidCallback? onPressed,
-    bool isSelected = false,
-  }) {
-    return DecorationListItem(
-      isSelected: isSelected,
-      onPressed: onPressed,
-      title: title,
-      trailing: isSelected ? const Icon(Icons.check) : null,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final isBottomSheet =
-        SheetProvider.of(context)?.type == SheetType.bottomSheet;
-    final profileId = ProfileIdProvider.of(context)!.profileId;
-    final height = isBottomSheet
-        ? globalState.container.read(viewSizeProvider).height * 0.70
-        : double.maxFinite;
-
-    final subRules = ref
-        .watch(
-          clashConfigProvider(
-            profileId,
-          ).select((state) => VM(state.value?.subRules ?? [])),
-        )
-        .a;
-    final currentSubRule = ref.watch(
-      ruleProvider.select((state) => state.subRule),
-    );
-    return AdaptiveSheetScaffold(
-      sheetTransparentToolBar: true,
-      body: SizedBox(
-        height: height,
-        child: subRules.isEmpty
-            ? NullStatus(label: appLocalizations.subRuleEmpty)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                ).copyWith(bottom: 20, top: context.sheetTopPadding),
-                itemCount: subRules.length,
-                itemBuilder: (_, index) {
-                  final subRule = subRules[index];
-                  final position = ItemPosition.get(index, subRules.length);
-                  return ItemPositionProvider(
-                    position: position,
-                    child: _buildItem(
-                      onPressed: () {
-                        Navigator.of(context).pop(subRule);
-                      },
-                      title: Text(subRule),
-                      isSelected: currentSubRule == subRule,
-                    ),
-                  );
-                },
-              ),
-      ),
-      title: appLocalizations.subRule,
-    );
-  }
-}
-
 bool _handleSaveRule(BuildContext context, WidgetRef ref) {
   final rule = ref.read(ruleProvider);
   final appLocalizations = context.appLocalizations;
   if (rule.realContent?.isNotEmpty != true) {
-    globalState.showMessage(
+    dialogs.showMessage(
       cancelable: false,
       message: TextSpan(
         text: rule.ruleAction == RuleAction.RULE_SET
@@ -1068,7 +552,7 @@ bool _handleSaveRule(BuildContext context, WidgetRef ref) {
     return false;
   }
   if (rule.realTarget?.isNotEmpty != true) {
-    globalState.showMessage(
+    dialogs.showMessage(
       cancelable: false,
       message: TextSpan(
         text: rule.ruleAction == RuleAction.SUB_RULE

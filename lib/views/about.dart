@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -22,20 +23,19 @@ class Contributor {
   });
 }
 
-class AboutView extends StatelessWidget {
+class AboutView extends ConsumerWidget {
   const AboutView({super.key});
 
-  Future<void> _checkUpdate(BuildContext context) async {
+  Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
+    final commonAction = ref.read(commonActionProvider.notifier);
     final data = await globalState.safeRun<Map<String, dynamic>?>(
       request.checkForUpdate,
       title: context.appLocalizations.checkUpdate,
     );
-    globalState.container
-        .read(commonActionProvider.notifier)
-        .checkUpdateResultHandle(data: data, isUser: true);
+    unawaited(commonAction.checkUpdateResultHandle(data: data, isUser: true));
   }
 
-  List<Widget> _buildMoreSection(BuildContext context) {
+  List<Widget> _buildMoreSection(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     return generateSection(
       separated: false,
@@ -44,27 +44,27 @@ class AboutView extends StatelessWidget {
         ListItem(
           title: Text(appLocalizations.checkUpdate),
           onTap: () {
-            _checkUpdate(context);
+            _checkUpdate(context, ref);
           },
         ),
         ListItem(
           title: const Text('Telegram'),
           onTap: () {
-            globalState.openUrl('https://t.me/FlClash');
+            dialogs.openUrl('https://t.me/FlClash');
           },
           trailing: const Icon(Icons.launch),
         ),
         ListItem(
           title: Text(appLocalizations.project),
           onTap: () {
-            globalState.openUrl('https://github.com/$repository');
+            dialogs.openUrl('https://github.com/$repository');
           },
           trailing: const Icon(Icons.launch),
         ),
         ListItem(
           title: Text(appLocalizations.core),
           onTap: () {
-            globalState.openUrl(
+            dialogs.openUrl(
               'https://github.com/chen08209/Clash.Meta/tree/FlClash',
             );
           },
@@ -108,7 +108,7 @@ class AboutView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final items = [
       ListTile(
@@ -151,6 +151,7 @@ class AboutView extends StatelessWidget {
                         .update((state) => state.copyWith(developerMode: true));
                     context.showNotifier(
                       appLocalizations.developerModeEnableTip,
+                      level: MessageLevel.success,
                     );
                   },
                 );
@@ -166,7 +167,7 @@ class AboutView extends StatelessWidget {
       ),
       const SizedBox(height: 12),
       ..._buildContributorsSection(appLocalizations),
-      ..._buildMoreSection(context),
+      ..._buildMoreSection(context, ref),
     ];
     return BaseScaffold(
       title: appLocalizations.about,

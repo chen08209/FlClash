@@ -1,27 +1,57 @@
+import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
+
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/common.dart';
 import 'package:flutter/material.dart';
 
-import 'animated_cross_slide.dart';
+typedef PopupAnchorResolver = Rect? Function();
+
+typedef PopupOpen = void Function({Offset offset});
+
+const _screenMargin = 16.0;
+
+const _anchorOverlap = 8.0;
+
+const _cardInset = 8.0;
+
+const _cardRadius = 24.0;
+
+const _itemIconSize = 20.0;
+
+const _itemRadius = 12.0;
+
+const _itemPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 12);
 
 class CommonPopupRoute<T> extends PopupRoute<T> {
-  final WidgetBuilder builder;
-  ValueNotifier<Offset> offsetNotifier;
-
   CommonPopupRoute({
-    required this.barrierLabel,
     required this.builder,
-    required this.offsetNotifier,
+    required this.anchorOf,
+    required this.barrierLabel,
   });
 
+  final WidgetBuilder builder;
+  final PopupAnchorResolver anchorOf;
+
   @override
-  String? barrierLabel;
+  final String? barrierLabel;
 
   @override
   Color? get barrierColor => null;
 
   @override
   bool get barrierDismissible => true;
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 250);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 150);
+
+  void _handleDismiss() {
+    if (isCurrent) {
+      navigator?.pop();
+    }
+  }
 
   @override
   Widget buildPage(
@@ -39,357 +69,659 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    const align = Alignment.topRight;
-    final curveAnimation = animation
-        .drive(Tween(begin: 0.0, end: 1.0))
-        .drive(CurveTween(curve: Curves.easeOutBack));
-    return SafeArea(
-      child: ValueListenableBuilder(
-        valueListenable: offsetNotifier,
-        builder: (_, value, child) {
-          return Align(
-            alignment: align,
-            child: CustomSingleChildLayout(
-              delegate: OverflowAwareLayoutDelegate(
-                offset: value.translate(48, -8),
-              ),
-              child: child,
-            ),
-          );
-        },
-        child: AnimatedBuilder(
-          animation: animation,
-          builder: (_, child) {
-            return FadeTransition(
-              opacity: curveAnimation,
-              child: ScaleTransition(
-                alignment: align,
-                scale: curveAnimation,
-                child: SlideTransition(
-                  position: curveAnimation.drive(
-                    Tween(begin: const Offset(0, -0.02), end: Offset.zero),
-                  ),
-                  child: child,
-                ),
-              ),
-            );
-          },
-          child: builder(context),
+    const alignment = Alignment.topRight;
+    final fade = animation.drive(CurveTween(curve: Curves.easeOut));
+    final scale = animation.drive(CurveTween(curve: Curves.easeOutBack));
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            excludeFromSemantics: true,
+            onTap: _handleDismiss,
+          ),
         ),
+        _PopupAnchorTracker(
+          anchorOf: anchorOf,
+          builder: (anchor, safeInsets, child) => CustomSingleChildLayout(
+            delegate: _PopupLayoutDelegate(
+              anchor: anchor,
+              safeInsets: safeInsets,
+            ),
+            child: child,
+          ),
+          child: FadeTransition(
+            opacity: fade,
+            child: ScaleTransition(
+              alignment: alignment,
+              scale: scale,
+              child: SlideTransition(
+                position: scale.drive(
+                  Tween(begin: const Offset(0, -0.02), end: Offset.zero),
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PopupAnchorTracker extends StatefulWidget {
+  const _PopupAnchorTracker({
+    required this.anchorOf,
+    required this.builder,
+    required this.child,
+  });
+
+  final PopupAnchorResolver anchorOf;
+  final Widget Function(Rect anchor, EdgeInsets safeInsets, Widget child)
+  builder;
+  final Widget child;
+
+  @override
+  State<_PopupAnchorTracker> createState() => _PopupAnchorTrackerState();
+}
+
+class _PopupAnchorTrackerState extends State<_PopupAnchorTracker> {
+  Rect? _anchor;
+  bool _syncScheduled = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scheduleSync();
+  }
+
+  void _scheduleSync() {
+    if (_syncScheduled) {
+      return;
+    }
+    _syncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncScheduled = false;
+      if (!mounted) {
+        return;
+      }
+      final anchor = widget.anchorOf();
+      if (anchor == null || anchor == _anchor) {
+        return;
+      }
+      setState(() {
+        _anchor = anchor;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.of(context).padding;
+    final anchor = _anchor ??= widget.anchorOf() ?? Rect.zero;
+    return widget.builder(anchor, padding, widget.child);
+  }
+}
+
+class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
+  const _PopupLayoutDelegate({required this.anchor, required this.safeInsets});
+
+  final Rect anchor;
+  final EdgeInsets safeInsets;
+
+  EdgeInsets get _insets => safeInsets + const EdgeInsets.all(_screenMargin);
+
+  @override
+  Size getSize(BoxConstraints constraints) => constraints.biggest;
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
+    final insets = _insets;
+    return BoxConstraints.loose(
+      Size(
+        math.max(0.0, constraints.maxWidth - insets.horizontal),
+        math.max(0.0, constraints.maxHeight - insets.vertical),
       ),
     );
   }
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 250);
-}
-
-class PopupController extends ValueNotifier<bool> {
-  PopupController() : super(false);
-
-  void open() {
-    value = true;
+  Offset getPositionForChild(Size size, Size childSize) {
+    final insets = _insets;
+    final maxX = size.width - insets.right - childSize.width;
+    final maxY = size.height - insets.bottom - childSize.height;
+    return Offset(
+      (anchor.right - childSize.width).clamp(
+        insets.left,
+        math.max(insets.left, maxX),
+      ),
+      (anchor.top - _anchorOverlap).clamp(
+        insets.top,
+        math.max(insets.top, maxY),
+      ),
+    );
   }
 
-  void close() {
-    value = false;
+  @override
+  bool shouldRelayout(_PopupLayoutDelegate oldDelegate) {
+    return oldDelegate.anchor != anchor || oldDelegate.safeInsets != safeInsets;
   }
 }
-
-typedef PopupOpen = Function({Offset offset});
 
 class CommonPopupBox extends StatefulWidget {
-  final Widget Function(PopupOpen open) targetBuilder;
-  final Widget popup;
-
   const CommonPopupBox({
     super.key,
     required this.targetBuilder,
-    required this.popup,
+    required this.popupBuilder,
   });
+
+  final Widget Function(PopupOpen open) targetBuilder;
+
+  final WidgetBuilder popupBuilder;
 
   @override
   State<CommonPopupBox> createState() => _CommonPopupBoxState();
 }
 
 class _CommonPopupBoxState extends State<CommonPopupBox> {
-  bool _isOpen = false;
-  final _targetOffsetValueNotifier = ValueNotifier<Offset>(Offset.zero);
-  Offset _offset = Offset.zero;
-
-  void _open({Offset offset = Offset.zero}) {
-    _offset = offset;
-    _updateOffset();
-    _isOpen = true;
-    Navigator.of(context)
-        .push(
-          CommonPopupRoute(
-            barrierLabel: utils.id,
-            builder: (BuildContext context) {
-              return widget.popup;
-            },
-            offsetNotifier: _targetOffsetValueNotifier,
-          ),
-        )
-        .then((_) {
-          _isOpen = false;
-        });
+  Rect? _anchorOf(Offset offset) {
+    if (!mounted) {
+      return null;
+    }
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.attached || !renderBox.hasSize) {
+      return null;
+    }
+    final navigatorBox =
+        Navigator.maybeOf(context)?.context.findRenderObject() as RenderBox?;
+    final origin = renderBox.localToGlobal(Offset.zero, ancestor: navigatorBox);
+    return (origin & renderBox.size).shift(offset);
   }
 
-  void _updateOffset() {
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) {
-      return;
-    }
-    final viewPadding = MediaQuery.of(context).viewPadding;
-    _targetOffsetValueNotifier.value = renderBox
-        .localToGlobal(
-          Offset.zero.translate(viewPadding.right, viewPadding.top),
-        )
-        .translate(_offset.dx, _offset.dy);
+  void _open({Offset offset = Offset.zero}) {
+    Navigator.of(context).push(
+      CommonPopupRoute<void>(
+        barrierLabel: MaterialLocalizations.of(
+          context,
+        ).modalBarrierDismissLabel,
+        builder: (context) => widget.popupBuilder(context),
+        anchorOf: () => _anchorOf(offset),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (_, _) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_isOpen) {
-            _updateOffset();
-          }
-        });
-        return widget.targetBuilder(_open);
-      },
-    );
+    return widget.targetBuilder(_open);
   }
 }
 
-class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
-  final Offset offset;
+class _MenuStep {
+  const _MenuStep({
+    required this.index,
+    required this.top,
+    required this.ownerWidth,
+  });
 
-  OverflowAwareLayoutDelegate({required this.offset});
-
-  @override
-  Size getSize(BoxConstraints constraints) {
-    return Size(constraints.maxWidth, constraints.maxHeight);
-  }
-
-  @override
-  Offset getPositionForChild(Size size, Size childSize) {
-    const safeOffset = Offset(16, 16);
-    final double x = (offset.dx - childSize.width).clamp(
-      0,
-      size.width - safeOffset.dx - childSize.width,
-    );
-    final double y = (offset.dy).clamp(
-      0,
-      size.height - safeOffset.dy - childSize.height,
-    );
-    return Offset(x, y);
-  }
-
-  @override
-  bool shouldRelayout(covariant OverflowAwareLayoutDelegate oldDelegate) {
-    return oldDelegate.offset != offset;
-  }
+  final int index;
+  final double top;
+  final double ownerWidth;
 }
 
-class CommonPopupMenu extends StatelessWidget {
-  final List<PopupMenuItemData> items;
+class _MenuLevel {
+  const _MenuLevel({
+    required this.items,
+    required this.top,
+    required this.fromWidth,
+    required this.minWidth,
+    required this.maxWidth,
+    this.owner,
+  });
+
+  final List<CommonPopupMenuItem> items;
+  final CommonPopupMenuItem? owner;
+  final double top;
+  final double fromWidth;
   final double minWidth;
-  final double minItemVerticalPadding;
-  final double fontSize;
+  final double maxWidth;
+}
 
+class CommonPopupMenuItem {
+  const CommonPopupMenuItem({
+    required this.label,
+    this.icon,
+    this.onPressed,
+    this.danger = false,
+    this.subItems = const [],
+  });
+
+  final String label;
+  final IconData? icon;
+  final VoidCallback? onPressed;
+  final bool danger;
+  final List<CommonPopupMenuItem> subItems;
+}
+
+class CommonPopupMenu extends StatefulWidget {
   const CommonPopupMenu({
     super.key,
     required this.items,
-    this.minWidth = 200,
-    this.minItemVerticalPadding = 16,
-    this.fontSize = 15,
+    this.minWidth = 160,
+    this.maxWidth = 280,
   });
 
+  final List<CommonPopupMenuItem> items;
+  final double minWidth;
+  final double maxWidth;
+
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 12,
-      color: context.colorScheme.surfaceContainer,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(14)),
-      child: IntrinsicWidth(
-        child: _CommonPopupMenuItems(
-          items: items,
-          minWidth: minWidth,
-          minItemVerticalPadding: minItemVerticalPadding,
-          fontSize: fontSize,
-        ),
+  State<CommonPopupMenu> createState() => _CommonPopupMenuState();
+}
+
+class _CommonPopupMenuState extends State<CommonPopupMenu>
+    with SingleTickerProviderStateMixin {
+  static const _levelWidthScale = 1.12;
+  static const _levelScaleStep = 0.05;
+  static const _levelScrimStep = 0.06;
+  static const _activeElevation = 12.0;
+  static const _levelElevationStep = 4.0;
+  static const _minElevation = 2.0;
+  static final _arrowTween = Tween(begin: 0.0, end: 0.25);
+
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    value: 1,
+  );
+
+  late final CurvedAnimation _expand = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutCubic,
+    reverseCurve: Curves.easeInOutCubic,
+  );
+
+  late final CurvedAnimation _container = CurvedAnimation(
+    parent: _controller,
+    curve: const Interval(0, 0.4, curve: Curves.easeOutCubic),
+    reverseCurve: const Interval(0, 0.4, curve: Curves.easeInOutCubic),
+  );
+
+  late final CurvedAnimation _content = CurvedAnimation(
+    parent: _controller,
+    curve: const Interval(0.4, 1, curve: Curves.easeOut),
+    reverseCurve: const Interval(0.4, 1, curve: Curves.easeInOut),
+  );
+
+  final List<_MenuStep> _path = [];
+  bool _closing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addStatusListener(_handleStatusChanged);
+  }
+
+  @override
+  void dispose() {
+    _expand.dispose();
+    _container.dispose();
+    _content.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleStatusChanged(AnimationStatus status) {
+    if (status != AnimationStatus.dismissed || !_closing || _path.isEmpty) {
+      return;
+    }
+    _closing = false;
+    setState(() {
+      _path.removeLast();
+      _controller.value = 1;
+    });
+  }
+
+  List<_MenuLevel> _resolveLevels() {
+    final rootWidth = math.min(widget.minWidth, widget.maxWidth);
+    final levels = [
+      _MenuLevel(
+        items: widget.items,
+        top: 0,
+        fromWidth: rootWidth,
+        minWidth: rootWidth,
+        maxWidth: widget.maxWidth,
       ),
+    ];
+    var items = widget.items;
+    for (final step in _path) {
+      if (step.index >= items.length) {
+        break;
+      }
+      final item = items[step.index];
+      if (item.subItems.isEmpty) {
+        break;
+      }
+      final fromWidth = math.max(step.ownerWidth, levels.last.minWidth);
+      final minWidth = fromWidth * _levelWidthScale;
+      levels.add(
+        _MenuLevel(
+          items: item.subItems,
+          owner: item,
+          top: math.max(0, step.top - _cardInset),
+          fromWidth: fromWidth,
+          minWidth: minWidth,
+          maxWidth: math.max(minWidth, widget.maxWidth),
+        ),
+      );
+      items = item.subItems;
+    }
+    return levels;
+  }
+
+  Animation<double> _progressOf(bool expanding) =>
+      expanding ? _expand : kAlwaysCompleteAnimation;
+
+  Animation<double> _containerProgressOf(bool expanding) =>
+      expanding ? _container : kAlwaysCompleteAnimation;
+
+  Animation<double> _contentProgressOf(bool expanding) =>
+      expanding ? _content : kAlwaysCompleteAnimation;
+
+  double _elevationOf(int depth) {
+    return math.max(
+      _minElevation,
+      _activeElevation - depth * _levelElevationStep,
     );
   }
-}
 
-class _CommonPopupMenuItems extends StatefulWidget {
-  final List<PopupMenuItemData> items;
-  final double minWidth;
-  final double minItemVerticalPadding;
-  final double fontSize;
-
-  const _CommonPopupMenuItems({
-    required this.items,
-    required this.minWidth,
-    required this.minItemVerticalPadding,
-    required this.fontSize,
-  });
-
-  @override
-  State<_CommonPopupMenuItems> createState() => _CommonPopupMenuItemsState();
-}
-
-class _CommonPopupMenuItemsState extends State<_CommonPopupMenuItems> {
-  List<PopupMenuItemData> _nextItems = [];
-  String? _subTitle;
-  bool _status = false;
-
-  Widget _popupMenuItem(
-    BuildContext context, {
-    required PopupMenuItemData item,
-    required int index,
-  }) {
-    final onPressed = item.subItems.isNotEmpty
-        ? () {
-            _nextItems = item.subItems;
-            _subTitle = item.label;
-            setState(() {
-              _status = true;
-            });
-          }
-        : item.onPressed;
-    final disabled = onPressed == null;
-    final color = item.danger
-        ? context.colorScheme.onError
-        : context.colorScheme.onSurface;
-    final foregroundColor = disabled ? color.opacity30 : color;
-    final backgroundColor = item.danger
-        ? context.colorScheme.error
-        : context.colorScheme.surfaceContainer;
-    return TextButton(
-      style: TextButton.styleFrom(
-        padding: EdgeInsets.zero,
-        shape: LinearBorder.none,
-        foregroundColor: foregroundColor,
-        backgroundColor: backgroundColor,
-      ),
-      onPressed: onPressed != null
-          ? () {
-              if (item.subItems.isEmpty) {
-                Navigator.of(context).pop();
-              }
-              onPressed();
-            }
-          : null,
-      child: Container(
-        constraints: BoxConstraints(minWidth: widget.minWidth),
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 64,
-          top: widget.minItemVerticalPadding,
-          bottom: widget.minItemVerticalPadding,
+  void _push(BuildContext itemContext, int index) {
+    final itemBox = itemContext.findRenderObject() as RenderBox?;
+    final stackBox = context.findRenderObject() as RenderBox?;
+    final placed =
+        itemBox != null &&
+        stackBox != null &&
+        itemBox.hasSize &&
+        stackBox.hasSize;
+    _closing = false;
+    setState(() {
+      _path.add(
+        _MenuStep(
+          index: index,
+          top: placed
+              ? itemBox.localToGlobal(Offset.zero, ancestor: stackBox).dy
+              : 0,
+          ownerWidth: placed
+              ? itemBox.size.width + 2 * _cardInset
+              : widget.minWidth,
         ),
+      );
+    });
+    _controller.forward(from: 0);
+  }
+
+  void _pop() {
+    if (_path.isEmpty || _closing) {
+      return;
+    }
+    _closing = true;
+    _controller.reverse();
+  }
+
+  void _select(VoidCallback onPressed) {
+    Navigator.of(context).pop();
+    onPressed();
+  }
+
+  Widget _buildRow(
+    BuildContext context, {
+    required CommonPopupMenuItem item,
+    required VoidCallback? onTap,
+    Animation<double>? arrowTurns,
+  }) {
+    final colorScheme = context.colorScheme;
+    final enabled = onTap != null;
+    final color = item.danger ? colorScheme.error : colorScheme.onSurface;
+    final foregroundColor = enabled ? color : color.opacity30;
+    Widget? arrow;
+    if (item.subItems.isNotEmpty) {
+      arrow = Icon(
+        Icons.chevron_right,
+        size: _itemIconSize,
+        color: foregroundColor,
+      );
+      if (arrowTurns != null) {
+        arrow = RotationTransition(turns: arrowTurns, child: arrow);
+      }
+    }
+    final child = InkWell(
+      borderRadius: BorderRadius.circular(_itemRadius),
+      onTap: onTap,
+      splashColor: Colors.transparent,
+      hoverColor: item.danger ? colorScheme.error.opacity10 : null,
+      child: Padding(
+        padding: _itemPadding,
         child: Row(
-          mainAxisSize: MainAxisSize.max,
           children: [
             if (item.icon != null) ...[
-              Icon(
-                item.icon,
-                size: widget.fontSize + 4,
-                color: foregroundColor,
-              ),
-              const SizedBox(width: 16),
+              Icon(item.icon, size: _itemIconSize, color: foregroundColor),
+              const SizedBox(width: 12),
             ],
-            Flexible(
+            Expanded(
               child: Text(
                 item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodyMedium?.copyWith(
                   color: foregroundColor,
-                  fontSize: widget.fontSize,
                 ),
               ),
             ),
+            if (arrow != null) ...[const SizedBox(width: 8), arrow],
           ],
         ),
       ),
     );
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: ClipRSuperellipse(
+        borderRadius: const BorderRadius.all(Radius.circular(_itemRadius)),
+        child: child,
+      ),
+    );
   }
 
-  Widget _buildItems(List<PopupMenuItemData> items) {
+  Widget _buildItem(BuildContext context, CommonPopupMenuItem item, int index) {
+    if (item.subItems.isNotEmpty) {
+      return Builder(
+        builder: (itemContext) => _buildRow(
+          itemContext,
+          item: item,
+          onTap: () => _push(itemContext, index),
+        ),
+      );
+    }
+    final onPressed = item.onPressed;
+    return _buildRow(
+      context,
+      item: item,
+      onTap: onPressed == null ? null : () => _select(onPressed),
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context, {
+    required double minWidth,
+    required double maxWidth,
+    required double elevation,
+    required double radius,
+    required Widget child,
+  }) {
+    return Card(
+      elevation: elevation,
+      margin: EdgeInsets.zero,
+      color: context.colorScheme.surfaceContainer,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedSuperellipseBorder(
+        borderRadius: BorderRadius.circular(radius),
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minWidth: minWidth, maxWidth: maxWidth),
+        child: Padding(
+          padding: const EdgeInsets.all(_cardInset),
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: IntrinsicWidth(child: child),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    _MenuLevel level, {
+    required bool expanding,
+  }) {
+    final items = [
+      for (var index = 0; index < level.items.length; index++)
+        _buildItem(context, level.items[index], index),
+    ];
+    final owner = level.owner;
+    if (owner == null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: items,
+      );
+    }
+    final progress = _progressOf(expanding);
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final item in items.asMap().entries) ...[
-          _popupMenuItem(context, item: item.value, index: item.key),
-          if (item.value != items.last) const Divider(height: 0),
-        ],
+        _buildRow(
+          context,
+          item: owner,
+          onTap: _pop,
+          arrowTurns: progress.drive(_arrowTween),
+        ),
+        SizeTransition(
+          sizeFactor: progress,
+          alignment: Alignment.topCenter,
+          child: FadeTransition(
+            opacity: _contentProgressOf(expanding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [const Divider(height: 1, thickness: 1), ...items],
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildSubMenu() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8, top: 6, bottom: 2),
-          child: Row(
-            spacing: 4,
-            children: [
-              IconButton(
-                icon: Icon(
-                  Icons.arrow_back_outlined,
-                  color: context.colorScheme.onSurfaceVariant.opacity80,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _status = false;
-                  });
-                },
-                iconSize: 18,
-                style: const ButtonStyle(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  minimumSize: WidgetStatePropertyAll(Size.zero),
-                  padding: WidgetStatePropertyAll(EdgeInsets.all(8)),
-                ),
-              ),
-              if (_subTitle != null)
-                Text(
-                  _subTitle!,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant.opacity80,
+  Widget _buildActiveLevel(BuildContext context, _MenuLevel level) {
+    final progress = _containerProgressOf(level.owner != null);
+    return AnimatedBuilder(
+      animation: progress,
+      builder: (context, child) {
+        final value = progress.value;
+        return _buildCard(
+          context,
+          minWidth: lerpDouble(level.fromWidth, level.minWidth, value)!,
+          maxWidth: lerpDouble(level.fromWidth, level.maxWidth, value)!,
+          elevation: _activeElevation * value,
+          radius: lerpDouble(_itemRadius + _cardInset, _cardRadius, value)!,
+          child: child!,
+        );
+      },
+      child: _buildContent(context, level, expanding: level.owner != null),
+    );
+  }
+
+  Widget _buildRecedingLevel(
+    BuildContext context,
+    _MenuLevel level, {
+    required int depth,
+    required double origin,
+  }) {
+    final scrim = context.colorScheme.scrim;
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final distance = depth - (1 - _controller.value);
+            final scale = math.max(0.0, 1 - _levelScaleStep * distance);
+            return Transform(
+              transform: Matrix4.diagonal3Values(scale, scale, 1),
+              alignment: Alignment.topRight,
+              origin: Offset(0, origin),
+              child: DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: ShapeDecoration(
+                  color: scrim.withValues(
+                    alpha: math.min(1.0, _levelScrimStep * distance),
+                  ),
+                  shape: const RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(_cardRadius),
+                    ),
                   ),
                 ),
-            ],
+                child: child,
+              ),
+            );
+          },
+          child: RepaintBoundary(
+            child: _buildCard(
+              context,
+              minWidth: level.minWidth,
+              maxWidth: level.maxWidth,
+              elevation: _elevationOf(depth),
+              radius: _cardRadius,
+              child: _buildContent(context, level, expanding: false),
+            ),
           ),
         ),
-        _CommonPopupMenuItems(
-          items: _nextItems,
-          minWidth: widget.minWidth,
-          minItemVerticalPadding: widget.minItemVerticalPadding,
-          fontSize: widget.fontSize,
-        ),
-      ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedCrossSlide(
-      secondCurve: Curves.easeOut,
-      firstChild: _buildItems(widget.items),
-      secondChild: _nextItems.isEmpty ? Container() : _buildSubMenu(),
-      crossSlideState: _status
-          ? CrossSlideState.showSecond
-          : CrossSlideState.showFirst,
-      duration: const Duration(milliseconds: 250),
+    final levels = _resolveLevels();
+    final topIndex = levels.length - 1;
+    return PopScope(
+      canPop: topIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _pop();
+        }
+      },
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          for (var index = 0; index <= topIndex; index++)
+            Padding(
+              key: ValueKey(index),
+              padding: EdgeInsets.only(top: levels[index].top),
+              child: index == topIndex
+                  ? _buildActiveLevel(context, levels[index])
+                  : _buildRecedingLevel(
+                      context,
+                      levels[index],
+                      depth: topIndex - index,
+                      origin:
+                          levels[index + 1].top +
+                          _cardInset -
+                          levels[index].top,
+                    ),
+            ),
+        ],
+      ),
     );
   }
 }

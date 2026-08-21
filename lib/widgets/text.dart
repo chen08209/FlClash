@@ -123,7 +123,7 @@ class EmojiText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RichText(
-      textScaler: MediaQuery.of(context).textScaler,
+      textScaler: MediaQuery.textScalerOf(context),
       maxLines: maxLines,
       overflow: overflow ?? TextOverflow.clip,
       text: TextSpan(children: _buildTextSpans(text)),

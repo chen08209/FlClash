@@ -1,6 +1,5 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/state.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/proxies/list.dart';
@@ -29,6 +28,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     return [
       if (_isTab)
         IconButton(
+          tooltip: context.appLocalizations.scrollToSelected,
           onPressed: () {
             _proxiesTabKey.currentState?.scrollToGroupSelected();
           },
@@ -37,6 +37,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       CommonPopupBox(
         targetBuilder: (open) {
           return IconButton(
+            tooltip: context.appLocalizations.more,
             onPressed: () {
               final isMobile = ref.read(isMobileViewProvider);
               open(offset: Offset(0, isMobile ? 0 : 20));
@@ -44,9 +45,9 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
             icon: const Icon(Icons.more_vert),
           );
         },
-        popup: CommonPopupMenu(
+        popupBuilder: (_) => CommonPopupMenu(
           items: [
-            PopupMenuItemData(
+            CommonPopupMenuItem(
               icon: Icons.tune,
               label: appLocalizations.settings,
               onPressed: () {
@@ -63,7 +64,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
               },
             ),
             if (_hasProviders)
-              PopupMenuItemData(
+              CommonPopupMenuItem(
                 icon: Icons.poll_outlined,
                 label: appLocalizations.providers,
                 onPressed: () {

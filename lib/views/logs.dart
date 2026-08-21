@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -19,31 +20,22 @@ class _LogsViewState extends ConsumerState<LogsView> {
   final _logsStateNotifier = ValueNotifier<LogsState>(const LogsState());
   late ScrollController _scrollController;
 
-  List<Log> _logs = [];
-
   @override
   void initState() {
     super.initState();
-    _logs = ref.read(logsProvider).list;
     _scrollController = ScrollController(initialScrollOffset: double.maxFinite);
-    _logsStateNotifier.value = _logsStateNotifier.value.copyWith(logs: _logs);
-    ref.listenManual(logsProvider.select((state) => VM(state.list)), (
-      prev,
-      next,
-    ) {
-      if (prev != next) {
-        final isEquality = logListEquality.equals(prev?.a, next.a);
-        if (!isEquality) {
-          _logs = next.a;
-          updateLogsThrottler();
-        }
-      }
+    _logsStateNotifier.value = _logsStateNotifier.value.copyWith(
+      logs: ref.read(logsProvider).list,
+    );
+    ref.listenManual(logsProvider.select((state) => state.revision), (_, _) {
+      updateLogsThrottler();
     });
   }
 
   List<Widget> _buildActions() {
     return [
       IconButton(
+        tooltip: context.appLocalizations.exportLogs,
         onPressed: () {
           _handleExport();
         },
@@ -72,12 +64,14 @@ class _LogsViewState extends ConsumerState<LogsView> {
   Future<void> _handleExport() async {
     final appLocalizations = context.appLocalizations;
     final res = await globalState.safeRun<bool>(() async {
-      return globalState.container.read(logsProvider.notifier).exportLogs();
+      return ref.read(logsProvider.notifier).exportLogs();
     }, title: appLocalizations.exportLogs);
     if (res != true) return;
-    globalState.showMessage(
-      title: appLocalizations.tip,
-      message: TextSpan(text: appLocalizations.exportSuccess),
+    unawaited(
+      dialogs.showMessage(
+        title: appLocalizations.tip,
+        message: TextSpan(text: appLocalizations.exportSuccess),
+      ),
     );
   }
 
@@ -86,8 +80,9 @@ class _LogsViewState extends ConsumerState<LogsView> {
       if (!mounted) {
         return;
       }
+      final logs = ref.read(logsProvider).list;
       final isEquality = logListEquality.equals(
-        _logs,
+        logs,
         _logsStateNotifier.value.logs,
       );
       if (isEquality) {
@@ -96,7 +91,7 @@ class _LogsViewState extends ConsumerState<LogsView> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _logsStateNotifier.value = _logsStateNotifier.value.copyWith(
-            logs: _logs,
+            logs: logs,
           );
         }
       });

@@ -219,8 +219,15 @@ class RenderGrid extends RenderBox
     final crossAxisExtent = mainAxis == Axis.vertical
         ? constraints.maxWidth
         : constraints.maxHeight;
-    final stride = (crossAxisExtent + crossAxisSpacing) / crossAxisCount;
-    final offsets = List.filled(crossAxisCount, 0.0);
+    final stride = gridStride(
+      crossAxisExtent: crossAxisExtent,
+      crossAxisCount: crossAxisCount,
+      crossAxisSpacing: crossAxisSpacing,
+    );
+
+    final children = <RenderBox>[];
+    final crossAxisCellCounts = <int>[];
+    final mainAxisExtents = <double>[];
     RenderBox? child = firstChild;
     while (child != null) {
       final childParentData = _getParentData(child);
@@ -228,78 +235,78 @@ class RenderGrid extends RenderBox
         childParentData,
         crossAxisCount,
       );
-      final crossAxisExtent = stride * crossAxisCellCount - crossAxisSpacing;
-      final shouldFitContent = childParentData.mainAxisCellCount == null;
-
-      double mainAxisExtent = 0;
-
-      if (shouldFitContent) {
+      final childCrossAxisExtent =
+          stride * crossAxisCellCount - crossAxisSpacing;
+      final double childMainAxisExtent;
+      if (childParentData.mainAxisCellCount == null) {
         final childConstraints = mainAxis == Axis.vertical
-            ? BoxConstraints.tightFor(width: crossAxisExtent)
-            : BoxConstraints.tightFor(height: crossAxisExtent);
+            ? BoxConstraints.tightFor(width: childCrossAxisExtent)
+            : BoxConstraints.tightFor(height: childCrossAxisExtent);
         _layoutChild(child, childConstraints, parentUsesSize: true);
-        mainAxisExtent = mainAxis == Axis.vertical
+        childMainAxisExtent = mainAxis == Axis.vertical
             ? child.size.height
             : child.size.width;
       } else {
-        final mainAxisCellCount = childParentData.mainAxisCellCount ?? 1;
-        mainAxisExtent =
-            (this.mainAxisExtent ?? stride) * mainAxisCellCount -
+        childMainAxisExtent =
+            (this.mainAxisExtent ?? stride) *
+                childParentData.mainAxisCellCount! -
             mainAxisSpacing;
-        childParentData.realMainAxisExtent = mainAxisExtent;
         final childSize = mainAxis == Axis.vertical
-            ? Size(crossAxisExtent, mainAxisExtent)
-            : Size(mainAxisExtent, crossAxisExtent);
-        final childConstraints = BoxConstraints.tight(childSize);
-        _layoutChild(child, childConstraints);
+            ? Size(childCrossAxisExtent, childMainAxisExtent)
+            : Size(childMainAxisExtent, childCrossAxisExtent);
+        _layoutChild(child, BoxConstraints.tight(childSize));
       }
-      final origin = _getOrigin(offsets, crossAxisCellCount);
-      final mainAxisOffset = origin.mainAxisOffset;
-      final crossAxisOffset = origin.crossAxisIndex * stride;
-      final offset = mainAxis == Axis.vertical
-          ? Offset(crossAxisOffset, mainAxisOffset)
-          : Offset(mainAxisOffset, crossAxisOffset);
-      childParentData.offset = offset;
-      final nextOffset = mainAxisOffset + mainAxisExtent + mainAxisSpacing;
-      for (int i = 0; i < crossAxisCellCount; i++) {
-        offsets[origin.crossAxisIndex + i] = nextOffset;
-      }
+      childParentData.realMainAxisExtent = childMainAxisExtent;
+      children.add(child);
+      crossAxisCellCounts.add(crossAxisCellCount);
+      mainAxisExtents.add(childMainAxisExtent);
       child = childAfter(child);
     }
-    final mainAxisExtent = offsets.reduce(math.max) - mainAxisSpacing;
+
+    final geometry = packGridSlots(
+      crossAxisCellCounts: crossAxisCellCounts,
+      mainAxisExtents: mainAxisExtents,
+      crossAxisCount: crossAxisCount,
+      crossAxisExtent: crossAxisExtent,
+      crossAxisSpacing: crossAxisSpacing,
+      mainAxisSpacing: mainAxisSpacing,
+    );
+
+    for (int i = 0; i < children.length; i++) {
+      final slot = geometry.slots[i];
+      final crossAxisOffset = slot.crossAxisIndex * stride;
+      _getParentData(children[i]).offset = mainAxis == Axis.vertical
+          ? Offset(crossAxisOffset, slot.mainAxisOffset)
+          : Offset(slot.mainAxisOffset, crossAxisOffset);
+    }
+
+    final mainAxisExtent = geometry.mainAxisExtent;
 
     if (axisDirectionIsReversed(axisDirection)) {
-      child = firstChild;
-      while (child != null) {
-        final childParentData = _getParentData(child);
+      for (int i = 0; i < children.length; i++) {
+        final childParentData = _getParentData(children[i]);
         final offset = childParentData.offset;
         final crossAxisOffset = offset.getCrossAxisOffset(mainAxis);
         final mainAxisOffset =
             mainAxisExtent -
             offset.getMainAxisOffset(mainAxis) -
-            childParentData.realMainAxisExtent!;
-        final newOffset = mainAxis == Axis.vertical
+            mainAxisExtents[i];
+        childParentData.offset = mainAxis == Axis.vertical
             ? Offset(crossAxisOffset, mainAxisOffset)
             : Offset(mainAxisOffset, crossAxisOffset);
-        childParentData.offset = newOffset;
-        child = childAfter(child);
       }
     }
 
     if (mainAxis == Axis.vertical && textDirection == TextDirection.rtl) {
-      child = firstChild;
-      while (child != null) {
-        final childParentData = _getParentData(child);
-        final crossAxisCellCount = crossAxisCount;
-        final crossAxisCellExtent =
-            stride * crossAxisCellCount - crossAxisSpacing;
+      for (int i = 0; i < children.length; i++) {
+        final childParentData = _getParentData(children[i]);
+        final childCrossAxisExtent =
+            stride * crossAxisCellCounts[i] - crossAxisSpacing;
         final offset = childParentData.offset;
-        final crossAxisOffset =
-            crossAxisExtent - offset.dx - crossAxisCellExtent;
-        final mainAxisOffset = offset.dy;
-        final newOffset = Offset(crossAxisOffset, mainAxisOffset);
-        childParentData.offset = newOffset;
-        child = childAfter(child);
+        childParentData.offset = Offset(
+          crossAxisExtent - offset.dx - childCrossAxisExtent,
+          offset.dy,
+        );
       }
     }
 
@@ -368,16 +375,79 @@ class GridItem extends ParentDataWidget<GridParentData> {
   }
 }
 
-class _Origin {
+class GridSlot {
   final int crossAxisIndex;
   final double mainAxisOffset;
 
-  const _Origin(this.crossAxisIndex, this.mainAxisOffset);
+  const GridSlot(this.crossAxisIndex, this.mainAxisOffset);
 }
 
-_Origin _getOrigin(List<double> offsets, int crossAxisCount) {
+class GridGeometry {
+  /// Distance between the leading edges of two adjacent columns.
+  final double stride;
+
+  final List<GridSlot> slots;
+  final double mainAxisExtent;
+
+  const GridGeometry({
+    required this.stride,
+    required this.slots,
+    required this.mainAxisExtent,
+  });
+}
+
+double gridStride({
+  required double crossAxisExtent,
+  required int crossAxisCount,
+  required double crossAxisSpacing,
+}) {
+  return (crossAxisExtent + crossAxisSpacing) / crossAxisCount;
+}
+
+/// Packs children into a [crossAxisCount] column skyline, first fit by lowest
+/// main-axis offset.
+///
+/// [RenderGrid] positions its children with this, and `SuperGrid` animates a
+/// drag to the slot it reports, so the preview and the final layout agree by
+/// construction.
+GridGeometry packGridSlots({
+  required List<int> crossAxisCellCounts,
+  required List<double> mainAxisExtents,
+  required int crossAxisCount,
+  required double crossAxisExtent,
+  required double crossAxisSpacing,
+  required double mainAxisSpacing,
+}) {
+  assert(crossAxisCellCounts.length == mainAxisExtents.length);
+  final stride = gridStride(
+    crossAxisExtent: crossAxisExtent,
+    crossAxisCount: crossAxisCount,
+    crossAxisSpacing: crossAxisSpacing,
+  );
+  final frontiers = List.filled(crossAxisCount, 0.0);
+  final slots = <GridSlot>[];
+  for (int i = 0; i < crossAxisCellCounts.length; i++) {
+    final cellCount = crossAxisCellCounts[i].clamp(1, crossAxisCount);
+    final slot = _getOrigin(frontiers, cellCount);
+    slots.add(slot);
+    final nextOffset =
+        slot.mainAxisOffset + mainAxisExtents[i] + mainAxisSpacing;
+    for (int j = 0; j < cellCount; j++) {
+      frontiers[slot.crossAxisIndex + j] = nextOffset;
+    }
+  }
+  return GridGeometry(
+    stride: stride,
+    slots: slots,
+    mainAxisExtent: slots.isEmpty
+        ? 0.0
+        : frontiers.reduce(math.max) - mainAxisSpacing,
+  );
+}
+
+GridSlot _getOrigin(List<double> offsets, int crossAxisCount) {
   final length = offsets.length;
-  _Origin origin = const _Origin(0, double.infinity);
+  GridSlot origin = const GridSlot(0, double.infinity);
   for (int i = 0; i < length; i++) {
     final offset = offsets[i];
     if (offset.moreOrEqual(origin.mainAxisOffset)) {
@@ -395,7 +465,7 @@ _Origin _getOrigin(List<double> offsets, int crossAxisCount) {
       if (offset.moreOrEqual(offsets[j])) {
         span++;
         if (span == crossAxisCount) {
-          origin = _Origin(start, offset);
+          origin = GridSlot(start, offset);
         }
       } else {
         start = j + 1;

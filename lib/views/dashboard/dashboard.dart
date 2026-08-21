@@ -9,6 +9,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'widget_registry.dart';
 import 'widgets/core_status_button.dart';
 import 'widgets/start_button.dart';
 
@@ -28,6 +29,29 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   final key = GlobalKey<SuperGridState>();
   final _isEditNotifier = ValueNotifier<bool>(false);
   final _addedWidgetsNotifier = ValueNotifier<List<GridItem>>([]);
+
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(
+      dashboardStateProvider.select((state) => state.dashboardWidgets),
+      (_, dashboardWidgets) => _syncAddedWidgets(dashboardWidgets),
+      fireImmediately: true,
+    );
+  }
+
+  void _syncAddedWidgets(List<DashboardWidget> dashboardWidgets) {
+    bool onThisPlatform(DashboardWidget item) =>
+        item.platforms.contains(SupportPlatform.currentPlatform);
+    final shown = dashboardWidgets
+        .where(onThisPlatform)
+        .map((item) => item.widget)
+        .toSet();
+    _addedWidgetsNotifier.value = DashboardWidget.values
+        .where((item) => onThisPlatform(item) && !shown.contains(item.widget))
+        .map((item) => item.widget)
+        .toList();
+  }
 
   @override
   void dispose() {
@@ -58,6 +82,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             return child!;
           },
           child: IconButton(
+            tooltip: context.appLocalizations.addWidget,
             onPressed: () {
               _showAddWidgetsModal();
             },
@@ -67,11 +92,13 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       FadeRotationScaleBox(
         child: isEdit
             ? IconButton(
+                tooltip: context.appLocalizations.save,
                 key: const ValueKey(true),
                 icon: const Icon(Icons.save, key: ValueKey('save-icon')),
                 onPressed: _handleSaveAndExit,
               )
             : IconButton(
+                tooltip: context.appLocalizations.edit,
                 key: const ValueKey(false),
                 icon: const Icon(Icons.edit, key: ValueKey('edit-icon')),
                 onPressed: _handleEnterEdit,
@@ -160,7 +187,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     if (children.isEmpty) {
       return null;
     }
-    return children.map(DashboardWidget.getDashboardWidget).toList();
+    return children.map(dashboardWidgetOf).toList();
   }
 
   void _saveDashboardWidgets(List<DashboardWidget> dashboardWidgets) {
@@ -180,16 +207,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           )
           .map((item) => item.widget),
     ];
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _addedWidgetsNotifier.value = DashboardWidget.values
-          .where(
-            (item) =>
-                !children.contains(item.widget) &&
-                item.platforms.contains(SupportPlatform.currentPlatform),
-          )
-          .map((item) => item.widget)
-          .toList();
-    });
     return _buildIsEdit(
       (isEdit) => CommonScaffold(
         title: context.appLocalizations.dashboard,
@@ -320,6 +337,7 @@ class _AddedContainerState extends State<_AddedContainer> {
               width: 24,
               height: 24,
               child: IconButton.filled(
+                tooltip: context.appLocalizations.add,
                 iconSize: 20,
                 padding: const EdgeInsets.all(2),
                 onPressed: _handleAdd,
