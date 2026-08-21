@@ -28,7 +28,7 @@ func Start(fd int, stack string, address, dns string) *sing_tun.Listener {
 		}
 		prefix, err := netip.ParsePrefix(a)
 		if err != nil {
-			log.Errorln("TUN:", err)
+			log.Errorln("TUN: %v", err)
 			return nil
 		}
 		if prefix.Addr().Is4() {
@@ -63,7 +63,7 @@ func Start(fd int, stack string, address, dns string) *sing_tun.Listener {
 	listener, err := sing_tun.New(options, tunnel.Tunnel)
 
 	if err != nil {
-		log.Errorln("TUN:", err)
+		log.Errorln("TUN: %v", err)
 		return nil
 	}
 

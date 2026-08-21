@@ -258,10 +258,13 @@ final class IPCCoreTransport implements DesktopCoreTransport {
       return;
     }
     final type = data[0];
-    final payload = data.length > 1 ? data.sublist(1) : Uint8List(0);
+    final payload = data.length > 1
+        ? Uint8List.sublistView(data, 1)
+        : Uint8List(0);
     switch (type) {
       case _typeReady:
         commonPrint.log('IPC Ready');
+        _failure = null;
         _state = DesktopTransportState.ready;
         _eventController.add(const TransportReady());
       case _typeConnected:
@@ -273,6 +276,7 @@ final class IPCCoreTransport implements DesktopCoreTransport {
         commonPrint.log(
           'IPC Connected${processId == null ? '' : ': $processId'}',
         );
+        _failure = null;
         _connectionGeneration++;
         _connection = TransportConnected(
           pid: processId,

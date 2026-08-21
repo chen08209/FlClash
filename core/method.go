@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -43,19 +44,41 @@ type MethodResponse struct {
 	Result   any          `json:"result"`
 	Error    *MethodError `json:"error,omitempty"`
 	callback unsafe.Pointer
+	sent     *atomic.Bool
+}
+
+func newMethodResponse(id string, callback unsafe.Pointer) MethodResponse {
+	return MethodResponse{
+		ID:       id,
+		callback: callback,
+		sent:     &atomic.Bool{},
+	}
 }
 
 func (response MethodResponse) JSON() ([]byte, error) {
 	return json.Marshal(response)
 }
 
+func (response MethodResponse) claim() bool {
+	if response.sent == nil {
+		return true
+	}
+	return response.sent.CompareAndSwap(false, true)
+}
+
 func (response MethodResponse) success(result any) {
+	if !response.claim() {
+		return
+	}
 	response.Result = result
 	response.Error = nil
 	response.send()
 }
 
 func (response MethodResponse) failure(code, message string, details any) {
+	if !response.claim() {
+		return
+	}
 	response.Result = nil
 	response.Error = &MethodError{
 		Code:    code,
@@ -73,6 +96,183 @@ func (response MethodResponse) notImplemented(method CoreMethod) {
 	)
 }
 
+func stackTrace() []byte {
+	buf := make([]byte, 4096)
+	return buf[:runtime.Stack(buf, false)]
+}
+
+func safeGo(response MethodResponse, run func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logError("panic in async handler: %v\n%s", r, stackTrace())
+				response.failure("internal_error", fmt.Sprintf("internal panic: %v", r), nil)
+			}
+		}()
+		run()
+	}()
+}
+
+func safeGoDetached(name string, run func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logError("panic in %s: %v\n%s", name, r, stackTrace())
+			}
+		}()
+		run()
+	}()
+}
+
+type methodHandler func(call *MethodCall, response MethodResponse)
+
+func withArguments[T any](handle func(params *T, response MethodResponse)) methodHandler {
+	return func(call *MethodCall, response MethodResponse) {
+		var params T
+		if !decodeMethodArguments(call, response, &params) {
+			return
+		}
+		handle(&params, response)
+	}
+}
+
+func withDefaults[T any](
+	defaults func() *T,
+	handle func(params *T, response MethodResponse),
+) methodHandler {
+	return func(call *MethodCall, response MethodResponse) {
+		params := defaults()
+		if !decodeMethodArguments(call, response, params) {
+			return
+		}
+		handle(params, response)
+	}
+}
+
+func withoutArguments(handle func(response MethodResponse)) methodHandler {
+	return func(_ *MethodCall, response MethodResponse) {
+		handle(response)
+	}
+}
+
+var methodHandlers = map[CoreMethod]methodHandler{
+	initClashMethod: withArguments(func(params *InitParams, response MethodResponse) {
+		response.success(handleInitClash(params))
+	}),
+	getIsInitMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleGetIsInit())
+	}),
+	forceGcMethod: withoutArguments(func(response MethodResponse) {
+		handleForceGC()
+		response.success(true)
+	}),
+	shutdownMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleShutdown())
+	}),
+	validateConfigMethod: withArguments(func(path *string, response MethodResponse) {
+		response.success(handleValidateConfig(*path))
+	}),
+	updateConfigMethod: withArguments(func(params *UpdateParams, response MethodResponse) {
+		response.success(handleUpdateConfig(params))
+	}),
+	setupConfigMethod: withDefaults(defaultSetupParams, func(params *SetupParams, response MethodResponse) {
+		response.success(handleSetupConfig(params))
+	}),
+	getConfigMethod: withArguments(func(path *string, response MethodResponse) {
+		rawConfig, err := handleGetConfig(*path)
+		if err != nil {
+			response.failure("core_error", err.Error(), nil)
+			return
+		}
+		response.success(rawConfig)
+	}),
+	getProxiesMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleGetProxies())
+	}),
+	changeProxyMethod: withArguments(func(params *ChangeProxyParams, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleChangeProxy(params))
+		})
+	}),
+	getTrafficMethod: withArguments(func(onlyStatisticsProxy *bool, response MethodResponse) {
+		response.success(handleGetTraffic(*onlyStatisticsProxy))
+	}),
+	getTotalTrafficMethod: withArguments(func(onlyStatisticsProxy *bool, response MethodResponse) {
+		response.success(handleGetTotalTraffic(*onlyStatisticsProxy))
+	}),
+	resetTrafficMethod: withoutArguments(func(response MethodResponse) {
+		handleResetTraffic()
+		response.success(true)
+	}),
+	asyncTestDelayMethod: withArguments(func(params *TestDelayParams, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleTestDelay(params))
+		})
+	}),
+	getConnectionsMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleGetConnections())
+	}),
+	closeConnectionsMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleCloseConnections())
+	}),
+	resetConnectionsMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleResetConnections())
+	}),
+	closeConnectionMethod: withArguments(func(id *string, response MethodResponse) {
+		response.success(handleCloseConnection(*id))
+	}),
+	getExternalProvidersMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleGetExternalProviders())
+	}),
+	getExternalProviderMethod: withArguments(func(name *string, response MethodResponse) {
+		response.success(handleGetExternalProvider(*name))
+	}),
+	updateExternalProviderMethod: withArguments(func(name *string, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleUpdateExternalProvider(*name))
+		})
+	}),
+	sideLoadExternalProviderMethod: withArguments(func(params *SideLoadParams, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleSideLoadExternalProvider(params.ProviderName, []byte(params.Data)))
+		})
+	}),
+	updateGeoDataMethod: withArguments(func(geoType *string, response MethodResponse) {
+		response.success(handleUpdateGeoData(*geoType))
+	}),
+	startLogMethod: withoutArguments(func(response MethodResponse) {
+		handleStartLog()
+		response.success(true)
+	}),
+	stopLogMethod: withoutArguments(func(response MethodResponse) {
+		handleStopLog()
+		response.success(true)
+	}),
+	startListenerMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleStartListener())
+	}),
+	stopListenerMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleStopListener())
+	}),
+	getMemoryMethod: withoutArguments(func(response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleGetMemory())
+		})
+	}),
+	clearEffectMethod: withArguments(func(profileId *int64, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleClearEffect(*profileId))
+		})
+	}),
+}
+
+func registerMethod(method CoreMethod, handler methodHandler) {
+	if _, exists := methodHandlers[method]; exists {
+		panic(fmt.Sprintf("duplicate handler for method %s", method))
+	}
+	methodHandlers[method] = handler
+}
+
 func handleMethodCall(call *MethodCall, response MethodResponse) {
 	// The crash method is a developer-only fatal-path test. It must bypass the
 	// recovery below so the core process terminates; on Android this also
@@ -83,194 +283,15 @@ func handleMethodCall(call *MethodCall, response MethodResponse) {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			buf := make([]byte, 4096)
-			n := runtime.Stack(buf, false)
-			logError("panic in handleMethodCall(%s): %v\n%s", call.Method, r, buf[:n])
+			logError("panic in handleMethodCall(%s): %v\n%s", call.Method, r, stackTrace())
 			response.failure("internal_error", fmt.Sprintf("internal panic: %v", r), nil)
 		}
 	}()
-	switch call.Method {
-	case initClashMethod:
-		params := InitParams{}
-		if !decodeMethodArguments(call, response, &params) {
-			return
-		}
-		response.success(handleInitClash(&params))
+
+	handler, exists := methodHandlers[call.Method]
+	if !exists {
+		response.notImplemented(call.Method)
 		return
-	case getIsInitMethod:
-		response.success(handleGetIsInit())
-		return
-	case forceGcMethod:
-		handleForceGC()
-		response.success(true)
-		return
-	case shutdownMethod:
-		response.success(handleShutdown())
-		return
-	case validateConfigMethod:
-		path := ""
-		if !decodeMethodArguments(call, response, &path) {
-			return
-		}
-		response.success(handleValidateConfig(path))
-		return
-	case updateConfigMethod:
-		params := UpdateParams{}
-		if !decodeMethodArguments(call, response, &params) {
-			return
-		}
-		response.success(handleUpdateConfig(&params))
-		return
-	case setupConfigMethod:
-		params := defaultSetupParams()
-		if !decodeMethodArguments(call, response, params) {
-			return
-		}
-		response.success(handleSetupConfig(params))
-		return
-	case getProxiesMethod:
-		response.success(handleGetProxies())
-		return
-	case changeProxyMethod:
-		params := ChangeProxyParams{}
-		if !decodeMethodArguments(call, response, &params) {
-			return
-		}
-		handleChangeProxy(&params, func(value string) {
-			response.success(value)
-		})
-		return
-	case getTrafficMethod:
-		onlyStatisticsProxy := false
-		if !decodeMethodArguments(call, response, &onlyStatisticsProxy) {
-			return
-		}
-		response.success(handleGetTraffic(onlyStatisticsProxy))
-		return
-	case getTotalTrafficMethod:
-		onlyStatisticsProxy := false
-		if !decodeMethodArguments(call, response, &onlyStatisticsProxy) {
-			return
-		}
-		response.success(handleGetTotalTraffic(onlyStatisticsProxy))
-		return
-	case resetTrafficMethod:
-		handleResetTraffic()
-		response.success(true)
-		return
-	case asyncTestDelayMethod:
-		params := TestDelayParams{}
-		if !decodeMethodArguments(call, response, &params) {
-			return
-		}
-		handleAsyncTestDelay(&params, func(value *Delay) {
-			response.success(value)
-		})
-		return
-	case getConnectionsMethod:
-		response.success(handleGetConnections())
-		return
-	case closeConnectionsMethod:
-		response.success(handleCloseConnections())
-		return
-	case resetConnectionsMethod:
-		response.success(handleResetConnections())
-		return
-	case getConfigMethod:
-		path := ""
-		if !decodeMethodArguments(call, response, &path) {
-			return
-		}
-		config, err := handleGetConfig(path)
-		if err != nil {
-			response.failure("core_error", err.Error(), nil)
-			return
-		}
-		response.success(config)
-		return
-	case closeConnectionMethod:
-		id := ""
-		if !decodeMethodArguments(call, response, &id) {
-			return
-		}
-		response.success(handleCloseConnection(id))
-		return
-	case getExternalProvidersMethod:
-		response.success(handleGetExternalProviders())
-		return
-	case getExternalProviderMethod:
-		externalProviderName := ""
-		if !decodeMethodArguments(call, response, &externalProviderName) {
-			return
-		}
-		response.success(handleGetExternalProvider(externalProviderName))
-		return
-	case updateGeoDataMethod:
-		geoType := ""
-		if !decodeMethodArguments(call, response, &geoType) {
-			return
-		}
-		handleUpdateGeoData(geoType)
-		response.success("")
-		return
-	case updateExternalProviderMethod:
-		providerName := ""
-		if !decodeMethodArguments(call, response, &providerName) {
-			return
-		}
-		handleUpdateExternalProvider(providerName, func(value string) {
-			response.success(value)
-		})
-		return
-	case sideLoadExternalProviderMethod:
-		params := map[string]string{}
-		if !decodeMethodArguments(call, response, &params) {
-			return
-		}
-		providerName := params["providerName"]
-		data := params["data"]
-		handleSideLoadExternalProvider(providerName, []byte(data), func(value string) {
-			response.success(value)
-		})
-		return
-	case startLogMethod:
-		handleStartLog()
-		response.success(true)
-		return
-	case stopLogMethod:
-		handleStopLog()
-		response.success(true)
-		return
-	case startListenerMethod:
-		response.success(handleStartListener())
-		return
-	case stopListenerMethod:
-		response.success(handleStopListener())
-		return
-	case getCountryCodeMethod:
-		ip := ""
-		if !decodeMethodArguments(call, response, &ip) {
-			return
-		}
-		handleGetCountryCode(ip, func(value string) {
-			response.success(value)
-		})
-		return
-	case getMemoryMethod:
-		handleGetMemory(func(value uint64) {
-			response.success(value)
-		})
-		return
-	case clearEffectMethod:
-		var profileId int64
-		if !decodeMethodArguments(call, response, &profileId) {
-			return
-		}
-		handleClearEffect(profileId, response)
-		return
-	default:
-		if !handlePlatformMethodCall(call, response) {
-			response.notImplemented(call.Method)
-		}
 	}
+	handler(call, response)
 }

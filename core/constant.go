@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/metacubex/mihomo/adapter/provider"
 	P "github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/constant"
@@ -29,10 +28,8 @@ type UpdateParams struct {
 	Mode               *tunnel.TunnelMode `json:"mode"`
 	LogLevel           *log.LogLevel      `json:"log-level"`
 	IPv6               *bool              `json:"ipv6"`
-	Sniffing           *bool              `json:"sniffing"`
 	TCPConcurrent      *bool              `json:"tcp-concurrent"`
 	ExternalController *string            `json:"external-controller"`
-	Interface          *string            `json:"interface-name"`
 	UnifiedDelay       *bool              `json:"unified-delay"`
 	GeoAutoUpdate      *bool              `json:"geo-auto-update"`
 	GeoUpdateInterval  *int               `json:"geo-update-interval"`
@@ -45,6 +42,11 @@ type tunSchema struct {
 	DNSHijack    *[]string          `yaml:"dns-hijack" json:"dns-hijack"`
 	AutoRoute    *bool              `yaml:"auto-route" json:"auto-route"`
 	RouteAddress *[]netip.Prefix    `yaml:"route-address" json:"route-address,omitempty"`
+}
+
+type SideLoadParams struct {
+	ProviderName string `json:"providerName"`
+	Data         string `json:"data"`
 }
 
 type ChangeProxyParams struct {
@@ -98,7 +100,6 @@ const (
 	closeConnectionMethod          CoreMethod = "closeConnection"
 	getExternalProvidersMethod     CoreMethod = "getExternalProviders"
 	getExternalProviderMethod      CoreMethod = "getExternalProvider"
-	getCountryCodeMethod           CoreMethod = "getCountryCode"
 	getMemoryMethod                CoreMethod = "getMemory"
 	updateGeoDataMethod            CoreMethod = "updateGeoData"
 	updateExternalProviderMethod   CoreMethod = "updateExternalProvider"
@@ -126,7 +127,7 @@ type Delay struct {
 
 type Message struct {
 	Type MessageType `json:"type"`
-	Data interface{} `json:"data"`
+	Data any         `json:"data"`
 }
 
 const (
@@ -142,9 +143,4 @@ type GeoUpdateStatus struct {
 	Updating bool   `json:"updating"`
 	Skipped  bool   `json:"skipped,omitempty"`
 	Error    string `json:"error,omitempty"`
-}
-
-func (message *Message) Json() (string, error) {
-	data, err := json.Marshal(message)
-	return string(data), err
 }

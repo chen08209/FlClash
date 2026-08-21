@@ -10,12 +10,13 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
-	"github.com/metacubex/mihomo/common/batch"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/component/updater"
@@ -27,28 +28,53 @@ import (
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	"github.com/metacubex/mihomo/listener"
+	LC "github.com/metacubex/mihomo/listener/config"
 	"github.com/metacubex/mihomo/log"
 	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
 )
 
-var (
-	currentConfig *config.Config
-	version       = 0
-	isRunning     = false
-	runLock       sync.Mutex
-	mBatch, _     = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
-	debugError    = false
+const (
+	delayTestConcurrency    = 50
+	defaultTestURL          = "https://www.gstatic.com/generate_204"
+	defaultDelayTestTimeout = 5 * time.Second
 )
 
-func getExternalProvidersRaw() map[string]cp.Provider {
+var (
+	configMu      sync.Mutex
+	currentConfig *config.Config
+
+	// selectMu serialises proxy-group selection writes. mihomo's Selector.Set
+	// writes s.selected with no lock of its own, so something has to; configMu
+	// used to, which made a tap on a node wait out a whole config apply,
+	// provider downloads included, for a write that touches one field.
+	// patchSelectGroup takes it under configMu, fixing the order as
+	// configMu -> selectMu.
+	selectMu sync.Mutex
+
+	isInit     atomic.Bool
+	isRunning  atomic.Bool
+	sdkVersion atomic.Int32
+	testURL    atomic.Pointer[string]
+
+	delayTestSlots = make(chan struct{}, delayTestConcurrency)
+
+	debugStderr = os.Getenv("FLCLASH_CORE_DEBUG") != ""
+)
+
+var (
+	errConfigNotApplied    = errors.New("config is not applied")
+	errNotExternalProvider = errors.New("not external provider")
+)
+
+func externalProviders() map[string]cp.Provider {
 	eps := make(map[string]cp.Provider)
-	for n, p := range tunnel.Providers() {
+	for n, p := range tunnel.ProvidersSnapshot() {
 		if p.VehicleType() != cp.Compatible {
 			eps[n] = p
 		}
 	}
-	for n, p := range tunnel.RuleProviders() {
+	for n, p := range tunnel.RuleProvidersSnapshot() {
 		if p.VehicleType() != cp.Compatible {
 			eps[n] = p
 		}
@@ -56,74 +82,68 @@ func getExternalProvidersRaw() map[string]cp.Provider {
 	return eps
 }
 
+func lookupExternalProvider(name string) (cp.Provider, bool) {
+	if p, exist := tunnel.RuleProvidersSnapshot()[name]; exist && p.VehicleType() != cp.Compatible {
+		return p, true
+	}
+	if p, exist := tunnel.ProvidersSnapshot()[name]; exist && p.VehicleType() != cp.Compatible {
+		return p, true
+	}
+	return nil, false
+}
+
 func toExternalProvider(p cp.Provider) (*ExternalProvider, error) {
-	switch p.(type) {
+	switch typed := p.(type) {
 	case *provider.ProxySetProvider:
-		psp := p.(*provider.ProxySetProvider)
 		return &ExternalProvider{
-			Name:             psp.Name(),
-			Type:             psp.Type().String(),
-			VehicleType:      psp.VehicleType().String(),
-			Count:            psp.Count(),
-			UpdateAt:         psp.UpdatedAt(),
-			Path:             psp.Vehicle().Path(),
-			SubscriptionInfo: psp.GetSubscriptionInfo(),
+			Name:             typed.Name(),
+			Type:             typed.Type().String(),
+			VehicleType:      typed.VehicleType().String(),
+			Count:            typed.Count(),
+			UpdateAt:         typed.UpdatedAt(),
+			Path:             typed.Vehicle().Path(),
+			SubscriptionInfo: typed.GetSubscriptionInfo(),
 		}, nil
 	case *rp.RuleSetProvider:
-		rsp := p.(*rp.RuleSetProvider)
 		return &ExternalProvider{
-			Name:        rsp.Name(),
-			Type:        rsp.Type().String(),
-			VehicleType: rsp.VehicleType().String(),
-			Count:       rsp.Count(),
-			UpdateAt:    rsp.UpdatedAt(),
-			Path:        rsp.Vehicle().Path(),
+			Name:        typed.Name(),
+			Type:        typed.Type().String(),
+			VehicleType: typed.VehicleType().String(),
+			Count:       typed.Count(),
+			UpdateAt:    typed.UpdatedAt(),
+			Path:        typed.Vehicle().Path(),
 		}, nil
 	default:
-		return nil, errors.New("not external provider")
+		return nil, errNotExternalProvider
 	}
 }
 
-func sideUpdateExternalProvider(p cp.Provider, bytes []byte) error {
-	switch p.(type) {
+func sideUpdateExternalProvider(p cp.Provider, data []byte) error {
+	switch typed := p.(type) {
 	case *provider.ProxySetProvider:
-		psp := p.(*provider.ProxySetProvider)
-		_, _, err := psp.SideUpdate(bytes)
-		if err == nil {
-			return err
-		}
-		return nil
-	case rp.RuleSetProvider:
-		rsp := p.(*rp.RuleSetProvider)
-		_, _, err := rsp.SideUpdate(bytes)
-		if err == nil {
-			return err
-		}
-		return nil
+		_, _, err := typed.SideUpdate(data)
+		return err
+	case *rp.RuleSetProvider:
+		_, _, err := typed.SideUpdate(data)
+		return err
 	default:
-		return errors.New("not external provider")
+		return errNotExternalProvider
 	}
 }
 
-func updateListeners() {
-	if !isRunning {
+func updateListeners(cfg *config.Config) {
+	if cfg == nil || !isRunning.Load() {
 		return
 	}
-	if currentConfig == nil {
-		return
-	}
-	listeners := currentConfig.Listeners
-	general := currentConfig.General
-	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
+	general := cfg.General
+	listener.PatchInboundListeners(cfg.Listeners, tunnel.Tunnel, true)
 
-	allowLan := general.AllowLan
-	listener.SetAllowLan(allowLan)
+	listener.SetAllowLan(general.AllowLan)
 	inbound.SetSkipAuthPrefixes(general.SkipAuthPrefixes)
 	inbound.SetAllowedIPs(general.LanAllowedIPs)
 	inbound.SetDisAllowedIPs(general.LanDisAllowedIPs)
 
-	bindAddress := general.BindAddress
-	listener.SetBindAddress(bindAddress)
+	listener.SetBindAddress(general.BindAddress)
 	listener.ReCreateHTTP(general.Port, tunnel.Tunnel)
 	listener.ReCreateSocks(general.SocksPort, tunnel.Tunnel)
 	listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
@@ -137,11 +157,9 @@ func updateListeners() {
 	}
 }
 
-func stopListeners() {
-	listener.StopListener()
-}
-
 func patchSelectGroup(mapping map[string]string) {
+	selectMu.Lock()
+	defer selectMu.Unlock()
 	for name, proxy := range tunnel.AllProxies() {
 		outbound, ok := proxy.(*adapter.Proxy)
 		if !ok {
@@ -164,33 +182,97 @@ func patchSelectGroup(mapping map[string]string) {
 
 func defaultSetupParams() *SetupParams {
 	return &SetupParams{
-		TestURL:     "https://www.gstatic.com/generate_204",
+		TestURL:     defaultTestURL,
 		SelectedMap: map[string]string{},
 	}
 }
 
-func readFile(path string) ([]byte, error) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, err
+func setTestURL(url string) {
+	if url == "" {
+		return
 	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, err
+	constant.DefaultTestURL = url
+	testURL.Store(&url)
 }
 
-func updateConfig(params *UpdateParams) {
-	runLock.Lock()
-	defer runLock.Unlock()
+func currentTestURL() string {
+	if url := testURL.Load(); url != nil && *url != "" {
+		return *url
+	}
+	return defaultTestURL
+}
+
+func acquireDelayTestSlot(ctx context.Context) bool {
+	select {
+	case delayTestSlots <- struct{}{}:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
+func releaseDelayTestSlot() {
+	<-delayTestSlots
+}
+
+func routeConfig(cfg *config.Config) *route.Config {
+	controller := cfg.Controller
+	routeCfg := &route.Config{
+		Addr:        controller.ExternalController,
+		TLSAddr:     controller.ExternalControllerTLS,
+		UnixAddr:    controller.ExternalControllerUnix,
+		PipeAddr:    controller.ExternalControllerPipe,
+		RoutingMark: controller.ExternalControllerRoutingMark,
+		Secret:      controller.Secret,
+		DohServer:   controller.ExternalDohServer,
+		IsDebug:     cfg.General.LogLevel == log.DEBUG,
+		Cors: route.Cors{
+			AllowOrigins:        controller.Cors.AllowOrigins,
+			AllowPrivateNetwork: controller.Cors.AllowPrivateNetwork,
+		},
+	}
+	if cfg.TLS != nil {
+		routeCfg.Certificate = cfg.TLS.Certificate
+		routeCfg.PrivateKey = cfg.TLS.PrivateKey
+		routeCfg.ClientAuthType = cfg.TLS.ClientAuthType
+		routeCfg.ClientAuthCert = cfg.TLS.ClientAuthCert
+		routeCfg.EchKey = cfg.TLS.EchKey
+	}
+	return routeCfg
+}
+
+func patchTun(target *LC.Tun, params *tunSchema) {
+	target.Enable = params.Enable
+	if params.AutoRoute != nil {
+		target.AutoRoute = *params.AutoRoute
+	}
+	if params.Device != nil {
+		target.Device = *params.Device
+	}
+	if params.RouteAddress != nil {
+		target.RouteAddress = *params.RouteAddress
+	}
+	if params.DNSHijack != nil {
+		target.DNSHijack = *params.DNSHijack
+	}
+	if params.Stack != nil {
+		target.Stack = *params.Stack
+	}
+}
+
+func updateConfig(params *UpdateParams) error {
+	configMu.Lock()
+	defer configMu.Unlock()
+	if currentConfig == nil {
+		return errConfigNotApplied
+	}
+
 	general := currentConfig.General
 	if params.MixedPort != nil {
 		general.MixedPort = *params.MixedPort
 	}
-	if params.Sniffing != nil {
-		general.Sniffing = *params.Sniffing
-		tunnel.SetSniffing(general.Sniffing)
+	if params.AllowLan != nil {
+		general.AllowLan = *params.AllowLan
 	}
 	if params.FindProcessMode != nil {
 		general.FindProcessMode = *params.FindProcessMode
@@ -199,10 +281,6 @@ func updateConfig(params *UpdateParams) {
 	if params.TCPConcurrent != nil {
 		general.TCPConcurrent = *params.TCPConcurrent
 		dialer.SetTcpConcurrent(general.TCPConcurrent)
-	}
-	if params.Interface != nil {
-		general.Interface = *params.Interface
-		dialer.DefaultInterface.Store(general.Interface)
 	}
 	if params.UnifiedDelay != nil {
 		general.UnifiedDelay = *params.UnifiedDelay
@@ -220,74 +298,89 @@ func updateConfig(params *UpdateParams) {
 		general.IPv6 = *params.IPv6
 		resolver.DisableIPv6 = !general.IPv6
 	}
-	if params.ExternalController != nil {
-		currentConfig.Controller.ExternalController = *params.ExternalController
-		route.ReCreateServer(&route.Config{
-			Addr: currentConfig.Controller.ExternalController,
-		})
-	}
-
 	if params.Tun != nil {
-		general.Tun.Enable = params.Tun.Enable
-		if params.Tun.AutoRoute != nil {
-			general.Tun.AutoRoute = *params.Tun.AutoRoute
-		}
-		if params.Tun.Device != nil {
-			general.Tun.Device = *params.Tun.Device
-		}
-		if params.Tun.RouteAddress != nil {
-			general.Tun.RouteAddress = *params.Tun.RouteAddress
-		}
-		if params.Tun.DNSHijack != nil {
-			general.Tun.DNSHijack = *params.Tun.DNSHijack
-		}
-		if params.Tun.Stack != nil {
-			general.Tun.Stack = *params.Tun.Stack
-		}
+		patchTun(&general.Tun, params.Tun)
+	}
+	if params.ExternalController != nil &&
+		*params.ExternalController != currentConfig.Controller.ExternalController {
+		currentConfig.Controller.ExternalController = *params.ExternalController
+		route.ReCreateServer(routeConfig(currentConfig))
 	}
 
-	if params.GeoAutoUpdate != nil {
-		updater.SetGeoAutoUpdate(*params.GeoAutoUpdate)
-	}
-	if params.GeoUpdateInterval != nil {
-		updater.SetGeoUpdateInterval(*params.GeoUpdateInterval)
-	}
+	updateListeners(currentConfig)
+	syncGeoUpdater(params.GeoAutoUpdate, params.GeoUpdateInterval)
+	return nil
+}
 
-	updateListeners()
+func syncGeoUpdater(autoUpdate *bool, interval *int) {
+	changed := false
+	if autoUpdate != nil && *autoUpdate != updater.GeoAutoUpdate() {
+		updater.SetGeoAutoUpdate(*autoUpdate)
+		changed = true
+	}
+	if interval != nil && *interval != updater.GeoUpdateInterval() {
+		updater.SetGeoUpdateInterval(*interval)
+		changed = true
+	}
+	if !changed {
+		return
+	}
+	reconcileGeoUpdater()
+}
+
+var (
+	registerGeoUpdater = updater.RegisterGeoUpdaterWithCancel
+	stopGeoUpdater     = updater.StopGeoUpdater
+)
+
+func reconcileGeoUpdater() {
 	if updater.GeoAutoUpdate() {
-		updater.RegisterGeoUpdaterWithCancel()
+		registerGeoUpdater()
+		return
 	}
+	stopGeoUpdater()
+}
+
+func loadConfig(path string) (*config.Config, error) {
+	buf, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return executor.ParseWithBytes(buf)
 }
 
 func applyConfig(params *SetupParams) error {
 	runtime.GC()
-	runLock.Lock()
-	defer runLock.Unlock()
-	var err error
-	constant.DefaultTestURL = params.TestURL
-	currentConfig, err = executor.ParseWithPath(filepath.Join(constant.Path.HomeDir(), "config.yaml"))
+	configMu.Lock()
+	defer configMu.Unlock()
+
+	setTestURL(params.TestURL)
+	cfg, err := loadConfig(filepath.Join(constant.Path.HomeDir(), "config.yaml"))
 	if err != nil {
-		currentConfig, _ = config.ParseRawConfig(config.DefaultRawConfig())
+		fallback, fallbackErr := config.ParseRawConfig(config.DefaultRawConfig())
+		if fallbackErr != nil {
+			return err
+		}
+		cfg = fallback
 	}
-	hub.ApplyConfig(currentConfig)
+
+	currentConfig = cfg
+	hub.ApplyConfig(cfg)
 	patchSelectGroup(params.SelectedMap)
-	updateListeners()
-	if updater.GeoAutoUpdate() {
-		updater.RegisterGeoUpdaterWithCancel()
-	}
+	updateListeners(cfg)
+	reconcileGeoUpdater()
 	return err
 }
 
 func UnmarshalJson(data []byte, v any) error {
 	decoder := json.NewDecoder(b.NewReader(data))
 	decoder.UseNumber()
-	err := decoder.Decode(v)
-	return err
+	return decoder.Decode(v)
 }
 
-func logError(format string, args ...interface{}) {
+func logError(format string, args ...any) {
 	log.Errorln(format, args...)
-	if debugError {
+	if debugStderr {
 		fmt.Fprintf(os.Stderr, "[ERROR] "+format+"\n", args...)
 	}
 }
