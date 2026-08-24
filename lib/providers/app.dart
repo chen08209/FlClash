@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/providers/core.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
@@ -26,14 +26,14 @@ class AuthorizedTunEnable extends _$AuthorizedTunEnable
 class Logs extends _$Logs with AutoDisposeNotifierMixin {
   @override
   FixedList<Log> build() {
-    return FixedList(0);
+    return FixedList(maxLength);
   }
 
   void add(Log value) {
     if (!ref.mounted) {
       return;
     }
-    this.value = state.copyWith()..add(value);
+    this.value = state.append(value);
   }
 
   Future<bool> exportLogs() async {
@@ -42,7 +42,7 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
     final file = File(tempFilePath);
     await file.safeWriteAsString(logString);
     bool res = false;
-    res = await picker.saveFileWithPath(utils.logFile, tempFilePath) != null;
+    res = await picker.saveFileWithPath(logFileName, tempFilePath) != null;
     return res;
   }
 }
@@ -51,11 +51,14 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
 class Requests extends _$Requests with AutoDisposeNotifierMixin {
   @override
   FixedList<TrackerInfo> build() {
-    return FixedList(0);
+    return FixedList(maxLength);
   }
 
   void addRequest(TrackerInfo value) {
-    this.value = state.copyWith()..add(value);
+    if (!ref.mounted) {
+      return;
+    }
+    this.value = state.append(value);
   }
 }
 
@@ -75,7 +78,7 @@ class Providers extends _$Providers with AutoDisposeNotifierMixin {
   }
 
   Future<void> syncProviders() async {
-    value = await coreController.getExternalProviders();
+    value = await ref.read(coreHandlerProvider).getExternalProviders();
   }
 }
 
@@ -100,11 +103,14 @@ class SystemBrightness extends _$SystemBrightness
 class Traffics extends _$Traffics with AutoDisposeNotifierMixin {
   @override
   FixedList<Traffic> build() {
-    return FixedList(0);
+    return FixedList(trafficSampleLength);
   }
 
   void addTraffic(Traffic value) {
-    this.value = state.copyWith()..add(value);
+    if (!ref.mounted) {
+      return;
+    }
+    this.value = state.append(value);
   }
 
   void clear() {
@@ -159,7 +165,7 @@ double viewWidth(Ref ref) {
 
 @Riverpod(keepAlive: true)
 ViewMode viewMode(Ref ref) {
-  return utils.getViewMode(ref.watch(viewWidthProvider));
+  return getViewMode(ref.watch(viewWidthProvider));
 }
 
 @Riverpod(keepAlive: true)
@@ -249,6 +255,60 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
       newDelayMap[delay.url]![delay.name] = delay.value;
       value = newDelayMap;
     }
+  }
+}
+
+@Riverpod(keepAlive: true)
+class PendingDelayTests extends _$PendingDelayTests
+    with AutoDisposeNotifierMixin {
+  final Map<String, int> _counts = {};
+
+  @override
+  Set<String> build() {
+    return const <String>{};
+  }
+
+  void acquire(Iterable<String> keys) {
+    var added = false;
+    for (final key in keys) {
+      final count = _counts[key] ?? 0;
+      _counts[key] = count + 1;
+      added |= count == 0;
+    }
+    if (added) {
+      _publish();
+    }
+  }
+
+  void release(Iterable<String> keys) {
+    var removed = false;
+    for (final key in keys) {
+      final count = _counts[key];
+      if (count == null) {
+        continue;
+      }
+      if (count > 1) {
+        _counts[key] = count - 1;
+        continue;
+      }
+      _counts.remove(key);
+      removed = true;
+    }
+    if (removed) {
+      _publish();
+    }
+  }
+
+  void clear() {
+    if (_counts.isEmpty) {
+      return;
+    }
+    _counts.clear();
+    _publish();
+  }
+
+  void _publish() {
+    value = Set.unmodifiable(_counts.keys);
   }
 }
 

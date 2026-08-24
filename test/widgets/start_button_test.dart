@@ -1,13 +1,12 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widgets/start_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/test_app.dart';
 
 void main() {
   testWidgets('RunTimeText emphasizes the hundreds hour digit', (tester) async {
@@ -82,7 +81,12 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(child: StartButton()),
+        child: TestApp(
+          includeNavigatorKey: false,
+          setTheme: false,
+          homeBuilder: (child) => Scaffold(floatingActionButton: child),
+          child: const StartButton(),
+        ),
       ),
     );
     await tester.pump();
@@ -125,7 +129,12 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(child: StartButton()),
+        child: TestApp(
+          includeNavigatorKey: false,
+          setTheme: false,
+          homeBuilder: (child) => Scaffold(floatingActionButton: child),
+          child: const StartButton(),
+        ),
       ),
     );
     await tester.pump();
@@ -193,7 +202,12 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(child: StartButton()),
+        child: TestApp(
+          includeNavigatorKey: false,
+          setTheme: false,
+          homeBuilder: (child) => Scaffold(floatingActionButton: child),
+          child: const StartButton(),
+        ),
       ),
     );
 
@@ -219,29 +233,5 @@ class _RecordingSetupAction extends SetupAction {
     requests.add(running);
     ref.read(runTimeProvider.notifier).value = running ? 1 : null;
     return Future.value();
-  }
-}
-
-class _TestApp extends StatelessWidget {
-  final Widget child;
-
-  const _TestApp({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
-      builder: (context, child) {
-        globalState.measure = Measure.of(context, 1);
-        return child!;
-      },
-      home: Scaffold(floatingActionButton: child),
-    );
   }
 }

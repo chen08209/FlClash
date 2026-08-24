@@ -405,7 +405,13 @@ final class WindowsHelperLauncher implements CoreProcessLauncher {
     } catch (error, stackTrace) {
       try {
         await client.stop(sessionId);
-      } catch (_) {}
+      } catch (releaseError) {
+        commonPrint.log(
+          'Failed to release Helper session $sessionId after a start failure: '
+          '${compactError(releaseError)}',
+          logLevel: LogLevel.warning,
+        );
+      }
       Error.throwWithStackTrace(error, stackTrace);
     }
   }

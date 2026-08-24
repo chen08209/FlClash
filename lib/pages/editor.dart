@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -14,9 +13,6 @@ import 'package:re_highlight/languages/javascript.dart';
 import 'package:re_highlight/languages/json.dart';
 import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
-
-typedef EditingValueChangeBuilder = Widget Function(CodeLineEditingValue value);
-typedef TextEditingValueChangeBuilder = Widget Function(TextEditingValue value);
 
 class EditorPage extends ConsumerStatefulWidget {
   final String title;
@@ -108,26 +104,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     _toolbarController.hide(context);
     _findController.dispose();
     _controller.dispose();
+    _titleController.dispose();
     _focusNode.dispose();
     super.dispose();
-  }
-
-  Widget _wrapController(EditingValueChangeBuilder builder) {
-    return ValueListenableBuilder(
-      valueListenable: _controller,
-      builder: (_, value, _) {
-        return builder(value);
-      },
-    );
-  }
-
-  Widget _wrapTitleController(TextEditingValueChangeBuilder builder) {
-    return ValueListenableBuilder(
-      valueListenable: _titleController,
-      builder: (_, value, _) {
-        return builder(value);
-      },
-    );
   }
 
   void _handleSearch() {
@@ -140,12 +119,15 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       return;
     }
     final res = utf8.decode(await file.readBytes());
+    if (!mounted) {
+      return;
+    }
     _controller.text = res;
   }
 
   Future<void> _handleImportFormUrl() async {
     final appLocalizations = context.appLocalizations;
-    final url = await globalState.showCommonDialog(
+    final url = await dialogs.showCommonDialog(
       child: InputDialog(
         title: appLocalizations.import,
         value: '',
@@ -165,186 +147,325 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     if (url == null) {
       return;
     }
-    final res = await request.getTextResponseForUrl(url);
-    _controller.text = res.data ?? '';
+    try {
+      final res = await request.getTextResponseForUrl(url);
+      if (!mounted) {
+        return;
+      }
+      _controller.text = res.data ?? '';
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      final appLocalizations = context.appLocalizations;
+      context.showSnackBar(
+        networkErrorMessage(e, appLocalizations) ??
+            appLocalizations.unknownNetworkError,
+      );
+    }
+  }
+
+  Future<bool> _handlePop(BuildContext context) async {
+    final onPop = widget.onPop;
+    if (onPop == null) {
+      return true;
+    }
+    final res = await onPop(context, _titleController.text, _controller.text);
+    return res && context.mounted;
   }
 
   @override
   Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final isMobileView = ref.watch(isMobileViewProvider);
     return CommonPopScope(
-      onPop: (context) async {
-        if (widget.onPop == null) {
-          return true;
-        }
-        final res = await widget.onPop!(
-          context,
-          _titleController.text,
-          _controller.text,
-        );
-        if (res && context.mounted) {
-          return true;
-        }
-        return false;
-      },
+      onPop: _handlePop,
       child: CommonScaffold(
         appBar: AppBar(
-          title: TextField(
-            maxLength: 20,
-            enabled: widget.titleEditable,
+          title: _EditorTitleField(
             controller: _titleController,
-            decoration: InputDecoration(
-              border: const NoInputBorder(),
-              counter: const SizedBox(),
-              hintText: appLocalizations.unnamed,
-            ),
-            style: context.textTheme.titleLarge,
-            autofocus: false,
+            enabled: widget.titleEditable,
           ),
           actions: genActions([
             if (!readOnly)
-              _wrapController(
-                (value) => _wrapTitleController(
-                  (value) => IconButton(
-                    onPressed:
-                        _controller.text != widget.content ||
-                            _titleController.text != widget.title
-                        ? () {
-                            widget.onSave!(
-                              context,
-                              _titleController.text,
-                              _controller.text,
-                            );
-                          }
-                        : null,
-                    icon: const Icon(Icons.save),
-                  ),
-                ),
+              _EditorSaveAction(
+                controller: _controller,
+                titleController: _titleController,
+                savedContent: widget.content,
+                savedTitle: widget.title,
+                onSave: widget.onSave!,
               ),
-            _wrapController(
-              (value) => CommonPopupBox(
-                targetBuilder: (open) {
-                  return IconButton(
-                    onPressed: () {
-                      final isMobile = ref.read(isMobileViewProvider);
-                      open(offset: Offset(0, isMobile ? 0 : 20));
-                    },
-                    icon: const Icon(Icons.more_vert),
-                  );
-                },
-                popup: CommonPopupMenu(
-                  items: [
-                    PopupMenuItemData(
-                      icon: Icons.search,
-                      label: appLocalizations.search,
-                      onPressed: _handleSearch,
-                    ),
-                    PopupMenuItemData(
-                      icon: Icons.undo,
-                      label: appLocalizations.undo,
-                      onPressed: _controller.canUndo ? _controller.undo : null,
-                    ),
-                    PopupMenuItemData(
-                      icon: Icons.redo,
-                      label: appLocalizations.redo,
-                      onPressed: _controller.canRedo ? _controller.redo : null,
-                    ),
-                    if (widget.supportRemoteDownload && !readOnly)
-                      PopupMenuItemData(
-                        icon: Icons.arrow_downward,
-                        label: appLocalizations.externalFetch,
-                        subItems: [
-                          PopupMenuItemData(
-                            label: appLocalizations.importUrl,
-                            onPressed: _handleImportFormUrl,
-                          ),
-                          PopupMenuItemData(
-                            label: appLocalizations.importFile,
-                            onPressed: _handleImportFormFile,
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
+            _EditorMenuAction(
+              controller: _controller,
+              readOnly: readOnly,
+              supportRemoteDownload: widget.supportRemoteDownload,
+              onSearch: _handleSearch,
+              onImportFromUrl: _handleImportFormUrl,
+              onImportFromFile: _handleImportFormFile,
             ),
           ]),
         ),
-        body: Stack(
-          children: [
-            CodeEditor(
-              readOnly: readOnly,
-              autofocus: false,
-              showCursorWhenReadOnly: false,
-              findController: _findController,
-              findBuilder: (context, controller, readOnly) => FindPanel(
-                controller: controller,
-                readOnly: readOnly,
-                isMobileView: isMobileView,
-              ),
-              padding: const EdgeInsets.only(right: 16),
-              autocompleteSymbols: true,
-              focusNode: _focusNode,
-              scrollbarBuilder: (context, child, details) {
-                return CommonScrollBar(
-                  controller: details.controller,
-                  child: child,
-                );
-              },
-              toolbarController: _toolbarController,
-              indicatorBuilder:
-                  (context, editingController, chunkController, notifier) {
-                    return Row(
-                      children: [
-                        DefaultCodeLineNumber(
-                          controller: editingController,
-                          notifier: notifier,
-                        ),
-                        DefaultCodeChunkIndicator(
-                          width: 20,
-                          controller: chunkController,
-                          notifier: notifier,
-                        ),
-                      ],
-                    );
-                  },
-              shortcutsActivatorsBuilder:
-                  const DefaultCodeShortcutsActivatorsBuilder(),
-              controller: _controller,
-              style: CodeEditorStyle(
-                fontSize: context.textTheme.bodyLarge?.fontSize?.ap,
-                fontFamily: FontFamily.jetBrainsMono.value,
-                codeTheme: CodeHighlightTheme(
-                  languages: {
-                    if (widget.languages.contains(Language.yaml))
-                      'yaml': CodeHighlightThemeMode(mode: langYaml),
-                    if (widget.languages.contains(Language.javaScript))
-                      'javascript': CodeHighlightThemeMode(
-                        mode: langJavascript,
-                      ),
-                    if (widget.languages.contains(Language.json))
-                      'json': CodeHighlightThemeMode(mode: langJson),
-                  },
-                  theme: atomOneLightTheme,
-                ),
-              ),
-            ),
-            FadeBox(
-              child: widget.content == null
-                  ? Container(
-                      color: context.colorScheme.surface,
-                      alignment: Alignment.center,
-                      child: const SizedBox.square(
-                        dimension: 200,
-                        child: CommonCircleLoading(),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+        body: _EditorBody(
+          controller: _controller,
+          findController: _findController,
+          toolbarController: _toolbarController,
+          focusNode: _focusNode,
+          readOnly: readOnly,
+          languages: widget.languages,
+          isLoading: widget.content == null,
         ),
       ),
+    );
+  }
+}
+
+class _EditorTitleField extends StatelessWidget {
+  const _EditorTitleField({required this.controller, required this.enabled});
+
+  final TextEditingController controller;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      maxLength: 20,
+      enabled: enabled,
+      controller: controller,
+      decoration: InputDecoration(
+        border: const NoInputBorder(),
+        counter: const SizedBox(),
+        hintText: context.appLocalizations.unnamed,
+      ),
+      style: context.textTheme.titleLarge,
+      autofocus: false,
+    );
+  }
+}
+
+class _EditorSaveAction extends StatelessWidget {
+  const _EditorSaveAction({
+    required this.controller,
+    required this.titleController,
+    required this.savedContent,
+    required this.savedTitle,
+    required this.onSave,
+  });
+
+  final CodeLineEditingController controller;
+  final TextEditingController titleController;
+  final String? savedContent;
+  final String savedTitle;
+  final Function(BuildContext context, String title, String content) onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: controller,
+      builder: (_, _, _) => ValueListenableBuilder(
+        valueListenable: titleController,
+        builder: (context, _, _) {
+          final isDirty =
+              controller.text != savedContent ||
+              titleController.text != savedTitle;
+          return IconButton(
+            tooltip: context.appLocalizations.save,
+            onPressed: isDirty
+                ? () => onSave(context, titleController.text, controller.text)
+                : null,
+            icon: const Icon(Icons.save),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _EditorMenuAction extends ConsumerWidget {
+  const _EditorMenuAction({
+    required this.controller,
+    required this.readOnly,
+    required this.supportRemoteDownload,
+    required this.onSearch,
+    required this.onImportFromUrl,
+    required this.onImportFromFile,
+  });
+
+  final CodeLineEditingController controller;
+  final bool readOnly;
+  final bool supportRemoteDownload;
+  final VoidCallback onSearch;
+  final VoidCallback onImportFromUrl;
+  final VoidCallback onImportFromFile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    return ValueListenableBuilder(
+      valueListenable: controller,
+      builder: (_, _, _) {
+        return CommonPopupBox(
+          targetBuilder: (open) {
+            return IconButton(
+              tooltip: context.appLocalizations.more,
+              onPressed: () {
+                final isMobile = ref.read(isMobileViewProvider);
+                open(offset: Offset(0, isMobile ? 0 : 20));
+              },
+              icon: const Icon(Icons.more_vert),
+            );
+          },
+          popupBuilder: (_) => CommonPopupMenu(
+            items: [
+              CommonPopupMenuItem(
+                icon: Icons.search,
+                label: appLocalizations.search,
+                onPressed: onSearch,
+              ),
+              CommonPopupMenuItem(
+                icon: Icons.undo,
+                label: appLocalizations.undo,
+                onPressed: controller.canUndo ? controller.undo : null,
+              ),
+              CommonPopupMenuItem(
+                icon: Icons.redo,
+                label: appLocalizations.redo,
+                onPressed: controller.canRedo ? controller.redo : null,
+              ),
+              if (supportRemoteDownload && !readOnly)
+                CommonPopupMenuItem(
+                  icon: Icons.arrow_downward,
+                  label: appLocalizations.externalFetch,
+                  subItems: [
+                    CommonPopupMenuItem(
+                      label: appLocalizations.importUrl,
+                      onPressed: onImportFromUrl,
+                    ),
+                    CommonPopupMenuItem(
+                      label: appLocalizations.importFile,
+                      onPressed: onImportFromFile,
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _EditorBody extends ConsumerWidget {
+  const _EditorBody({
+    required this.controller,
+    required this.findController,
+    required this.toolbarController,
+    required this.focusNode,
+    required this.readOnly,
+    required this.languages,
+    required this.isLoading,
+  });
+
+  final CodeLineEditingController controller;
+  final CodeFindController findController;
+  final SelectionToolbarController toolbarController;
+  final FocusNode focusNode;
+  final bool readOnly;
+  final List<Language> languages;
+  final bool isLoading;
+
+  CodeHighlightTheme get _highlightTheme {
+    return CodeHighlightTheme(
+      languages: {
+        if (languages.contains(Language.yaml))
+          'yaml': CodeHighlightThemeMode(mode: langYaml),
+        if (languages.contains(Language.javaScript))
+          'javascript': CodeHighlightThemeMode(mode: langJavascript),
+        if (languages.contains(Language.json))
+          'json': CodeHighlightThemeMode(mode: langJson),
+      },
+      theme: atomOneLightTheme,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isMobileView = ref.watch(isMobileViewProvider);
+    return Stack(
+      children: [
+        CodeEditor(
+          readOnly: readOnly,
+          autofocus: false,
+          showCursorWhenReadOnly: false,
+          findController: findController,
+          findBuilder: (context, controller, readOnly) => FindPanel(
+            controller: controller,
+            readOnly: readOnly,
+            isMobileView: isMobileView,
+          ),
+          padding: const EdgeInsets.only(right: 16),
+          autocompleteSymbols: true,
+          focusNode: focusNode,
+          scrollbarBuilder: (context, child, details) {
+            return CommonScrollBar(
+              controller: details.controller,
+              child: child,
+            );
+          },
+          toolbarController: toolbarController,
+          indicatorBuilder:
+              (context, editingController, chunkController, notifier) {
+                return _EditorGutter(
+                  controller: editingController,
+                  chunkController: chunkController,
+                  notifier: notifier,
+                );
+              },
+          shortcutsActivatorsBuilder:
+              const DefaultCodeShortcutsActivatorsBuilder(),
+          controller: controller,
+          style: CodeEditorStyle(
+            fontSize: context.textTheme.bodyLarge?.fontSize?.ap,
+            fontFamily: FontFamily.jetBrainsMono.value,
+            codeTheme: _highlightTheme,
+          ),
+        ),
+        FadeBox(
+          child: isLoading
+              ? Container(
+                  color: context.colorScheme.surface,
+                  alignment: Alignment.center,
+                  child: const SizedBox.square(
+                    dimension: 200,
+                    child: CommonCircleLoading(),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditorGutter extends StatelessWidget {
+  const _EditorGutter({
+    required this.controller,
+    required this.chunkController,
+    required this.notifier,
+  });
+
+  final CodeLineEditingController controller;
+  final CodeChunkController chunkController;
+  final CodeIndicatorValueNotifier notifier;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        DefaultCodeLineNumber(controller: controller, notifier: notifier),
+        DefaultCodeChunkIndicator(
+          width: 20,
+          controller: chunkController,
+          notifier: notifier,
+        ),
+      ],
     );
   }
 }
@@ -419,6 +540,7 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
                           controller.previousMatch();
                         },
                   icon: Icons.arrow_upward,
+                  tooltip: context.appLocalizations.previousMatch,
                 ),
                 _buildIconButton(
                   onPressed: value.result == null
@@ -427,9 +549,11 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
                           controller.nextMatch();
                         },
                   icon: Icons.arrow_downward,
+                  tooltip: context.appLocalizations.nextMatch,
                 ),
                 const SizedBox(width: 2),
                 IconButton.filledTonal(
+                  tooltip: context.appLocalizations.close,
                   onPressed: controller.close,
                   icon: const Icon(Icons.close, size: 16),
                 ),
@@ -544,8 +668,16 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildIconButton({required IconData icon, VoidCallback? onPressed}) {
-    return IconButton(onPressed: onPressed, icon: Icon(icon, size: 16));
+  Widget _buildIconButton({
+    required IconData icon,
+    required String tooltip,
+    VoidCallback? onPressed,
+  }) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+    );
   }
 }
 
@@ -586,24 +718,24 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
             final isNotEmpty = controller.selectedText.isNotEmpty;
             final isAllSelected = controller.isAllSelected;
             final hasSelected = controller.selectedText.isNotEmpty;
-            final List<PopupMenuItemData> menus = [
+            final List<CommonPopupMenuItem> menus = [
               if (isNotEmpty)
-                PopupMenuItemData(
+                CommonPopupMenuItem(
                   label: appLocalizations.copy,
                   onPressed: controller.copy,
                 ),
               if (!readOnly)
-                PopupMenuItemData(
+                CommonPopupMenuItem(
                   label: appLocalizations.paste,
                   onPressed: controller.paste,
                 ),
               if (isNotEmpty && !readOnly)
-                PopupMenuItemData(
+                CommonPopupMenuItem(
                   label: appLocalizations.cut,
                   onPressed: controller.cut,
                 ),
               if (hasSelected && !isAllSelected)
-                PopupMenuItemData(
+                CommonPopupMenuItem(
                   label: appLocalizations.selectAll,
                   onPressed: controller.selectAll,
                 ),
@@ -621,7 +753,7 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
               anchorAbove: anchors.primaryAnchor,
               anchorBelow: anchors.secondaryAnchor ?? Offset.zero,
               children: menus.asMap().entries.map((
-                MapEntry<int, PopupMenuItemData> entry,
+                MapEntry<int, CommonPopupMenuItem> entry,
               ) {
                 return TextSelectionToolbarTextButton(
                   padding: TextSelectionToolbarTextButton.getPadding(
@@ -645,43 +777,5 @@ class ContextMenuControllerImpl implements SelectionToolbarController {
       ),
     );
     Overlay.of(context).insert(_overlayEntry!);
-  }
-}
-
-class _ImportOptionsDialog extends StatefulWidget {
-  const _ImportOptionsDialog();
-
-  @override
-  State<_ImportOptionsDialog> createState() => _ImportOptionsDialogState();
-}
-
-class _ImportOptionsDialogState extends State<_ImportOptionsDialog> {
-  void _handleOnTab(ImportOption value) {
-    Navigator.of(context).pop(value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    return CommonDialog(
-      title: appLocalizations.import,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-      child: Wrap(
-        children: [
-          ListItem(
-            onTap: () {
-              _handleOnTab(ImportOption.url);
-            },
-            title: Text(appLocalizations.importUrl),
-          ),
-          ListItem(
-            onTap: () {
-              _handleOnTab(ImportOption.file);
-            },
-            title: Text(appLocalizations.importFile),
-          ),
-        ],
-      ),
-    );
   }
 }

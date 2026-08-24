@@ -2,21 +2,24 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_clash/common/color.dart';
+import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/providers/action.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-class ScanPage extends StatefulWidget {
+class ScanPage extends ConsumerStatefulWidget {
   const ScanPage({super.key});
 
   @override
-  State<ScanPage> createState() => _ScanPageState();
+  ConsumerState<ScanPage> createState() => _ScanPageState();
 }
 
-class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
+class _ScanPageState extends ConsumerState<ScanPage>
+    with WidgetsBindingObserver {
   MobileScannerController controller = MobileScannerController(
+    autoStart: false,
     detectionSpeed: DetectionSpeed.noDuplicates,
     formats: const [BarcodeFormat.qrCode],
   );
@@ -27,17 +30,25 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _subscription = controller.barcodes.listen(_handleBarcode);
+    _listenBarcodes();
     unawaited(controller.start());
   }
 
   void _handleBarcode(BarcodeCapture barcodeCapture) {
+    if (!mounted) {
+      return;
+    }
     final barcode = barcodeCapture.barcodes.first;
     if (barcode.type == BarcodeType.url) {
       Navigator.pop<String>(context, barcode.rawValue);
     } else {
       Navigator.pop(context);
     }
+  }
+
+  void _listenBarcodes() {
+    unawaited(_subscription?.cancel());
+    _subscription = controller.barcodes.listen(_handleBarcode);
   }
 
   @override
@@ -49,8 +60,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
         return;
       case AppLifecycleState.resumed:
-        _subscription = controller.barcodes.listen(_handleBarcode);
-
+        _listenBarcodes();
         unawaited(controller.start());
       case AppLifecycleState.inactive:
         unawaited(_subscription?.cancel());
@@ -61,10 +71,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final double sideLength = min(
-      400,
-      MediaQuery.of(context).size.width * 0.67,
-    );
+    final double sideLength = min(400, MediaQuery.sizeOf(context).width * 0.67);
     final scanWindow = Rect.fromCenter(
       center: MediaQuery.sizeOf(context).center(Offset.zero),
       width: sideLength,
@@ -84,6 +91,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
             backgroundColor: Colors.transparent,
             automaticallyImplyLeading: false,
             leading: IconButton(
+              tooltip: context.appLocalizations.close,
               style: IconButton.styleFrom(
                 iconSize: 32,
                 foregroundColor: Colors.white,
@@ -118,6 +126,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                     child: ActivateBox(
                       active: state.torchState != TorchState.unavailable,
                       child: IconButton(
+                        tooltip: context.appLocalizations.torch,
                         color: Colors.white,
                         icon: icon,
                         style: IconButton.styleFrom(
@@ -136,6 +145,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
             margin: const EdgeInsets.only(bottom: 32),
             alignment: Alignment.bottomCenter,
             child: IconButton(
+              tooltip: context.appLocalizations.pickFromAlbum,
               color: Colors.white,
               style: IconButton.styleFrom(
                 foregroundColor: Colors.white,
@@ -143,7 +153,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               ),
               padding: const EdgeInsets.all(16),
               iconSize: 32.0,
-              onPressed: globalState.container
+              onPressed: ref
                   .read(profilesActionProvider.notifier)
                   .addProfileFormQrCode,
               icon: const Icon(Icons.photo_camera_back),
@@ -154,12 +164,15 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     );
   }
 
+  // `StatefulElement.unmount` asserts that `super.dispose()` already ran by the
+  // time `dispose()` returns, so nothing here may await first: the controller is
+  // torn down in the background instead.
   @override
-  Future<void> dispose() async {
+  void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_subscription?.cancel());
     _subscription = null;
-    await controller.dispose();
+    unawaited(controller.dispose());
     super.dispose();
   }
 }

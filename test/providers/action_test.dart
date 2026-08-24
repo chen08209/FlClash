@@ -11,6 +11,8 @@ import 'package:fl_clash/providers/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
 
+import '../helpers/test_profiles.dart';
+
 void main() {
   group('ProfilesAction', () {
     test('keeps edited profile data when remote update fails', () async {
@@ -22,7 +24,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => null),
-          profilesProvider.overrideWith(() => _TestProfiles([original])),
+          profilesProvider.overrideWith(() => TestProfiles([original])),
         ],
       );
       addTearDown(container.dispose);
@@ -48,7 +50,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => first.id),
-          profilesProvider.overrideWith(() => _TestProfiles([first])),
+          profilesProvider.overrideWith(() => TestProfiles([first])),
         ],
       );
       addTearDown(container.dispose);
@@ -87,7 +89,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             currentProfileIdProvider.overrideWithBuild((_, _) => null),
-            profilesProvider.overrideWith(() => _TestProfiles(profiles)),
+            profilesProvider.overrideWith(() => TestProfiles(profiles)),
           ],
         );
         addTearDown(container.dispose);
@@ -106,7 +108,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => current.id),
-          profilesProvider.overrideWith(() => _TestProfiles([current])),
+          profilesProvider.overrideWith(() => TestProfiles([current])),
         ],
       );
       addTearDown(container.dispose);
@@ -149,7 +151,7 @@ void main() {
 
       expect(
         () => action.updateGeoResourceUrl(GeoResource.MMDB, 'not-a-url'),
-        throwsA('Invalid url'),
+        throwsA(isA<ArgumentError>()),
       );
 
       const url = 'https://example.com/Country.mmdb';
@@ -591,40 +593,9 @@ void main() {
 
       await setupAction.requestAdmin(true);
 
-      expect(container.read(autoSetSystemDnsStateProvider).a, isFalse);
+      expect(container.read(shouldPatchSystemDnsProvider), isFalse);
     });
   });
-}
-
-class _TestProfiles extends Profiles {
-  final List<Profile> initial;
-
-  _TestProfiles(this.initial);
-
-  @override
-  List<Profile> build() => initial;
-
-  @override
-  void put(Profile profile) {
-    final next = List<Profile>.from(state);
-    final index = next.indexWhere((item) => item.id == profile.id);
-    if (index == -1) {
-      next.add(profile);
-    } else {
-      next[index] = profile;
-    }
-    state = next;
-  }
-
-  @override
-  Future<void> del(int id) async {
-    state = state.where((profile) => profile.id != id).toList();
-  }
-
-  @override
-  void reorder(List<Profile> profiles) {
-    state = List.of(profiles);
-  }
 }
 
 class _TestCoreAction extends CoreAction {

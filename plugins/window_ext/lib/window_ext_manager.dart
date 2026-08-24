@@ -16,12 +16,12 @@ class WindowExtManager {
       ObserverList<WindowExtListener>();
 
   Future<void> _methodCallHandler(MethodCall call) async {
-    for (final WindowExtListener listener in _listeners) {
+    for (final WindowExtListener listener in List.of(_listeners)) {
       switch (call.method) {
-        case "taskbarCreated":
+        case 'taskbarCreated':
           listener.onTaskbarCreated();
           break;
-        case "shouldTerminate":
+        case 'shouldTerminate':
           listener.onShouldTerminate();
           break;
       }

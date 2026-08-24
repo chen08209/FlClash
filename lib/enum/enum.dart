@@ -4,12 +4,9 @@ import 'dart:io';
 
 import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/common/system.dart';
-import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
-import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hotkey_manager/hotkey_manager.dart';
 
 enum SupportPlatform {
   Windows,
@@ -27,7 +24,7 @@ enum SupportPlatform {
     } else if (system.isAndroid) {
       return SupportPlatform.Android;
     }
-    throw 'invalid platform';
+    throw UnsupportedError('Unsupported platform: ${Platform.operatingSystem}');
   }
 }
 
@@ -110,7 +107,52 @@ extension LogLevelExt on LogLevel {
   }
 }
 
-enum TransportProtocol { udp, tcp }
+enum MessageLevel { info, success, warning, error }
+
+extension MessageLevelExt on MessageLevel {
+  IconData? get icon {
+    return switch (this) {
+      MessageLevel.info => null,
+      MessageLevel.success => Icons.check_circle_outline,
+      MessageLevel.warning => Icons.warning_amber_outlined,
+      MessageLevel.error => Icons.error_outline,
+    };
+  }
+
+  Color containerColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      MessageLevel.error => colorScheme.errorContainer,
+      _ => colorScheme.surfaceContainerHigh,
+    };
+  }
+
+  Color contentColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      MessageLevel.error => colorScheme.onErrorContainer,
+      _ => colorScheme.onSurfaceVariant,
+    };
+  }
+
+  Color iconColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      MessageLevel.info => colorScheme.onSurfaceVariant,
+      MessageLevel.success => colorScheme.primary,
+      MessageLevel.warning => colorScheme.tertiary,
+      MessageLevel.error => colorScheme.onErrorContainer,
+    };
+  }
+
+  Duration get duration {
+    return switch (this) {
+      MessageLevel.info || MessageLevel.success => const Duration(seconds: 3),
+      MessageLevel.warning => const Duration(seconds: 5),
+      MessageLevel.error => const Duration(seconds: 6),
+    };
+  }
+}
 
 enum TrafficUnit { B, KB, MB, GB, TB }
 
@@ -186,19 +228,6 @@ enum KeyboardModifier {
   const KeyboardModifier(this.physicalKeys);
 }
 
-extension KeyboardModifierExt on KeyboardModifier {
-  HotKeyModifier toHotKeyModifier() {
-    return switch (this) {
-      KeyboardModifier.alt => HotKeyModifier.alt,
-      KeyboardModifier.capsLock => HotKeyModifier.capsLock,
-      KeyboardModifier.control => HotKeyModifier.control,
-      KeyboardModifier.fn => HotKeyModifier.fn,
-      KeyboardModifier.meta => HotKeyModifier.meta,
-      KeyboardModifier.shift => HotKeyModifier.shift,
-    };
-  }
-}
-
 enum HotAction { start, view, mode, proxy, tun }
 
 enum ProxiesIconStyle { none, standard, icon }
@@ -243,41 +272,24 @@ enum FunctionTag {
   saveSharedFile,
   removeProxy,
   suspend,
+  coreErrorNotifier,
 }
 
 enum DashboardWidget {
-  networkSpeed(GridItem(crossAxisCellCount: 8, child: NetworkSpeed())),
-  outboundModeV2(GridItem(crossAxisCellCount: 8, child: OutboundModeV2())),
-  outboundMode(GridItem(crossAxisCellCount: 4, child: OutboundMode())),
-  trafficUsage(GridItem(crossAxisCellCount: 4, child: TrafficUsage())),
-  networkDetection(GridItem(crossAxisCellCount: 4, child: NetworkDetection())),
-  tunButton(
-    GridItem(crossAxisCellCount: 4, child: TUNButton()),
-    platforms: desktopPlatforms,
-  ),
-  vpnButton(
-    GridItem(crossAxisCellCount: 4, child: VpnButton()),
-    platforms: [SupportPlatform.Android],
-  ),
-  systemProxyButton(
-    GridItem(crossAxisCellCount: 4, child: SystemProxyButton()),
-    platforms: desktopPlatforms,
-  ),
-  intranetIp(GridItem(crossAxisCellCount: 4, child: IntranetIP())),
-  memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo()));
+  networkSpeed,
+  outboundModeV2,
+  outboundMode,
+  trafficUsage,
+  networkDetection,
+  tunButton(platforms: desktopPlatforms),
+  vpnButton(platforms: [SupportPlatform.Android]),
+  systemProxyButton(platforms: desktopPlatforms),
+  intranetIp,
+  memoryInfo;
 
-  final GridItem widget;
   final List<SupportPlatform> platforms;
 
-  const DashboardWidget(this.widget, {this.platforms = SupportPlatform.values});
-
-  static DashboardWidget getDashboardWidget(GridItem gridItem) {
-    const dashboardWidgets = DashboardWidget.values;
-    final index = dashboardWidgets.indexWhere(
-      (item) => item.widget == gridItem,
-    );
-    return dashboardWidgets[index];
-  }
+  const DashboardWidget({this.platforms = SupportPlatform.values});
 }
 
 enum GeodataLoader { standard, memconservative }
@@ -432,8 +444,6 @@ extension RuleActionExt on RuleAction {
   }
 }
 
-enum OverrideRuleType { override, added }
-
 enum OverwriteType { standard, script, custom }
 
 enum RuleTarget {
@@ -446,11 +456,7 @@ enum RuleTarget {
 
 enum RestoreStrategy { compatible, override }
 
-enum CacheTag { logs, rules, requests, proxiesList }
-
 enum Language { yaml, javaScript, json }
-
-enum ImportOption { file, url }
 
 enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }
 
@@ -491,6 +497,9 @@ enum ItemPosition {
     List<T> items,
     Set<T> deletedItems,
   ) {
+    if (deletedItems.isEmpty) {
+      return ItemPosition.get(currentIndex, items.length);
+    }
     final currentItem = items[currentIndex];
     if (deletedItems.contains(currentItem)) {
       return ItemPosition.middle;

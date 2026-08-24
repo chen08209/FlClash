@@ -2,26 +2,26 @@ import 'package:fl_clash/common/task.dart';
 import 'package:fl_clash/models/profile.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/action.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PreviewProfileView extends StatefulWidget {
+class PreviewProfileView extends ConsumerStatefulWidget {
   final Profile profile;
 
   const PreviewProfileView({super.key, required this.profile});
 
   @override
-  State<PreviewProfileView> createState() => _PreviewProfileViewState();
+  ConsumerState<PreviewProfileView> createState() => _PreviewProfileViewState();
 }
 
-class _PreviewProfileViewState extends State<PreviewProfileView> {
+class _PreviewProfileViewState extends ConsumerState<PreviewProfileView> {
   final contentNotifier = ValueNotifier<String?>(null);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final configMap = await globalState.container
+      final configMap = await ref
           .read(setupActionProvider.notifier)
           .getProfileWithId(widget.profile.id);
       final content = await encodeYamlTask(configMap);

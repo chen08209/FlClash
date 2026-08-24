@@ -4,17 +4,23 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/core/desktop/helper_client.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/input.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
-import 'package:path/path.dart';
+
+typedef ProcessRunner =
+    Future<ProcessResult> Function(String executable, List<String> arguments);
 
 class System {
   static System? _instance;
   bool _isTV = false;
+
+  @visibleForTesting
+  ProcessRunner runProcess = Process.run;
 
   System._internal();
 
@@ -59,25 +65,51 @@ class System {
     return await app?.didCrashOnPreviousExecution() ?? false;
   }
 
+  /// Arguments for the `stat` call behind [checkIsAdmin].
+  ///
+  /// [corePath] is handed to `Process.run` as an argv entry, so it must stay
+  /// verbatim. Shell-quoting or escaping it here reaches `stat` as part of the
+  /// file name and turns every path containing a space into a miss.
+  @visibleForTesting
+  static List<String> statArguments(String corePath, {required bool isMacOS}) {
+    return isMacOS
+        ? ['-f', '%Su:%Sg %Sp', corePath]
+        : ['-c', '%U:%G %A', corePath];
+  }
+
+  @visibleForTesting
+  static bool isPrivilegedStatOutput(
+    String output, {
+    required String ownerPrefix,
+  }) {
+    final trimmed = output.trim();
+    return trimmed.startsWith(ownerPrefix) && trimmed.contains('rws');
+  }
+
   Future<bool> checkIsAdmin() async {
-    final corePath = appPath.corePath.replaceAll(' ', '\\\\ ');
     if (system.isWindows) {
       return await windowsHelperClient.readiness() ==
           WindowsHelperReadiness.ready;
-    } else if (system.isMacOS) {
-      final result = await Process.run('stat', ['-f', '%Su:%Sg %Sp', corePath]);
-      final output = result.stdout.trim();
-      if (output.startsWith('root:admin') && output.contains('rws')) {
-        return true;
-      }
-      return false;
-    } else if (Platform.isLinux) {
-      final result = await Process.run('stat', ['-c', '%U:%G %A', corePath]);
-      final output = result.stdout.trim();
-      if (output.startsWith('root:') && output.contains('rws')) {
-        return true;
-      }
-      return false;
+    }
+    if (system.isMacOS) {
+      final result = await runProcess(
+        'stat',
+        statArguments(appPath.corePath, isMacOS: true),
+      );
+      return isPrivilegedStatOutput(
+        result.stdout.toString(),
+        ownerPrefix: 'root:admin',
+      );
+    }
+    if (system.isLinux) {
+      final result = await runProcess(
+        'stat',
+        statArguments(appPath.corePath, isMacOS: false),
+      );
+      return isPrivilegedStatOutput(
+        result.stdout.toString(),
+        ownerPrefix: 'root:',
+      );
     }
     return true;
   }
@@ -105,14 +137,14 @@ class System {
         '-e',
         'do shell script "$shell" with administrator privileges',
       ];
-      final result = await Process.run('osascript', arguments);
+      final result = await runProcess('osascript', arguments);
       if (result.exitCode != 0) {
         return AuthorizeCode.error;
       }
       return AuthorizeCode.success;
     } else if (Platform.isLinux) {
       final shell = Platform.environment['SHELL'] ?? 'bash';
-      final password = await globalState.showCommonDialog<String>(
+      final password = await dialogs.showCommonDialog<String>(
         child: InputDialog(
           obscureText: true,
           title: currentAppLocalizations.pleaseInputAdminPassword,
@@ -129,7 +161,7 @@ class System {
         '-c',
         'echo $escapedPassword | sudo -S chown root:root $escapedCorePath && echo $escapedPassword | sudo -S chmod +sx $escapedCorePath',
       ];
-      final result = await Process.run(shell, arguments);
+      final result = await runProcess(shell, arguments);
       if (result.exitCode != 0) {
         return AuthorizeCode.error;
       }
@@ -140,14 +172,12 @@ class System {
 
   Future<void> back() async {
     await app?.moveTaskToBack();
-    await window?.hide();
   }
 
   Future<void> exit() async {
     if (system.isAndroid) {
       await SystemNavigator.pop();
     }
-    window?.forceExit();
   }
 }
 
@@ -227,7 +257,10 @@ class Windows {
           'falling back to direct Core',
           logLevel: LogLevel.warning,
         );
-        globalState.showNotifier(currentAppLocalizations.helperCorruptTip);
+        dialogs.showNotifier(
+          currentAppLocalizations.helperCorruptTip,
+          level: MessageLevel.error,
+        );
         return AuthorizeCode.error;
       case WindowsHelperReadiness.notReady:
         break;
@@ -276,69 +309,15 @@ class Windows {
     }
     return false;
   }
-
-  Future<bool> registerTask(String appName) async {
-    final taskXml =
-        '''
-<?xml version="1.0" encoding="UTF-16"?>
-<Task version="1.3" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-  <Principals>
-    <Principal id="Author">
-      <LogonType>InteractiveToken</LogonType>
-      <RunLevel>HighestAvailable</RunLevel>
-    </Principal>
-  </Principals>
-  <Triggers>
-    <LogonTrigger/>
-  </Triggers>
-  <Settings>
-    <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>
-    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-    <AllowHardTerminate>false</AllowHardTerminate>
-    <StartWhenAvailable>false</StartWhenAvailable>
-    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
-    <IdleSettings>
-      <StopOnIdleEnd>false</StopOnIdleEnd>
-      <RestartOnIdle>false</RestartOnIdle>
-    </IdleSettings>
-    <AllowStartOnDemand>true</AllowStartOnDemand>
-    <Enabled>true</Enabled>
-    <Hidden>false</Hidden>
-    <RunOnlyIfIdle>false</RunOnlyIfIdle>
-    <WakeToRun>false</WakeToRun>
-    <ExecutionTimeLimit>PT72H</ExecutionTimeLimit>
-    <Priority>7</Priority>
-  </Settings>
-  <Actions Context="Author">
-    <Exec>
-      <Command>"${Platform.resolvedExecutable}"</Command>
-    </Exec>
-  </Actions>
-</Task>''';
-    final taskPath = join(await appPath.tempPath, 'task.xml');
-    await File(taskPath).create(recursive: true);
-    await File(
-      taskPath,
-    ).writeAsBytes(taskXml.encodeUtf16LeWithBom, flush: true);
-    final commandLine = [
-      '/Create',
-      '/TN',
-      appName,
-      '/XML',
-      '%s',
-      '/F',
-    ].join(' ');
-    return runas('schtasks', commandLine.replaceFirst('%s', taskPath));
-  }
 }
 
 final windows = system.isWindows ? Windows() : null;
 
-class MacOS {
+class MacOS implements SystemDnsPort {
   static MacOS? _instance;
 
-  List<String>? originDns;
+  @visibleForTesting
+  ProcessRunner runProcess = Process.run;
 
   MacOS._internal();
 
@@ -347,88 +326,112 @@ class MacOS {
     return _instance!;
   }
 
-  Future<String?> get defaultServiceName async {
-    final result = await Process.run('route', ['-n', 'get', 'default']);
-    final output = result.stdout.toString();
-    final deviceLine = output
+  @visibleForTesting
+  static String? parseDefaultInterface(String routeOutput) {
+    final deviceLine = routeOutput
         .split('\n')
         .firstWhere((s) => s.contains('interface:'), orElse: () => '');
     final lineSplits = deviceLine.trim().split(' ');
     if (lineSplits.length != 2) {
       return null;
     }
-    final device = lineSplits[1];
-    final serviceResult = await Process.run('networksetup', [
-      '-listnetworkserviceorder',
-    ]);
-    final serviceResultOutput = serviceResult.stdout.toString();
-    final currentService = serviceResultOutput
+    return lineSplits[1];
+  }
+
+  @visibleForTesting
+  static String? parseServiceName(String serviceOrderOutput, String device) {
+    final currentService = serviceOrderOutput
         .split('\n\n')
         .firstWhere((s) => s.contains('Device: $device'), orElse: () => '');
     if (currentService.isEmpty) {
       return null;
     }
-    final currentServiceNameLine = currentService
+    final nameLine = currentService
         .split('\n')
         .firstWhere(
           (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
           orElse: () => '',
         );
-    final currentServiceNameLineSplits = currentServiceNameLine.trim().split(
-      ' ',
-    );
-    if (currentServiceNameLineSplits.length < 2) {
+    final name = RegExp(
+      r'^\(\d+\)\s+(.+)$',
+    ).firstMatch(nameLine.trim())?.group(1)?.trim();
+    if (name == null || name.isEmpty) {
       return null;
     }
-    return currentServiceNameLineSplits[1];
+    return name;
   }
 
-  Future<List<String>?> get systemDns async {
-    final deviceServiceName = await defaultServiceName;
-    if (deviceServiceName == null) {
-      return null;
-    }
-    final result = await Process.run('networksetup', [
-      '-getdnsservers',
-      deviceServiceName,
-    ]);
-    final output = result.stdout.toString().trim();
+  @visibleForTesting
+  static List<String> parseDnsServers(String getDnsServersOutput) {
+    final output = getDnsServersOutput.trim();
     if (output.startsWith("There aren't any DNS Servers set on")) {
-      originDns = [];
-    } else {
-      originDns = output.split('\n');
+      return [];
     }
-    return originDns;
+    return output.split('\n');
   }
 
-  Future<void> updateDns(bool restore) async {
-    final serviceName = await defaultServiceName;
-    if (serviceName == null) {
-      return;
+  @override
+  Future<String?> resolveDefaultService() async {
+    final result = await _run('route', ['-n', 'get', 'default']);
+    if (result == null) {
+      return null;
     }
-    List<String>? nextDns;
-    if (restore) {
-      nextDns = originDns;
-    } else {
-      final originDns = await systemDns;
-      if (originDns == null) {
-        return;
-      }
-      const needAddDns = '223.5.5.5';
-      if (originDns.contains(needAddDns)) {
-        return;
-      }
-      nextDns = List.from(originDns)..add(needAddDns);
+    final device = parseDefaultInterface(result.stdout.toString());
+    if (device == null) {
+      return null;
     }
-    if (nextDns == null) {
-      return;
-    }
-    await Process.run('networksetup', [
-      '-setdnsservers',
-      serviceName,
-      if (nextDns.isNotEmpty) ...nextDns,
-      if (nextDns.isEmpty) 'Empty',
+    final serviceResult = await _run('networksetup', [
+      '-listnetworkserviceorder',
     ]);
+    if (serviceResult == null) {
+      return null;
+    }
+    return parseServiceName(serviceResult.stdout.toString(), device);
+  }
+
+  @override
+  Future<List<String>?> readDnsServers(String service) async {
+    final result = await _run('networksetup', ['-getdnsservers', service]);
+    if (result == null) {
+      return null;
+    }
+    return parseDnsServers(result.stdout.toString());
+  }
+
+  @override
+  Future<bool> writeDnsServers(String service, List<String> servers) async {
+    final result = await _run('networksetup', [
+      '-setdnsservers',
+      service,
+      if (servers.isEmpty) 'Empty',
+      if (servers.isNotEmpty) ...servers,
+    ], logLevel: LogLevel.error);
+    return result != null;
+  }
+
+  Future<ProcessResult?> _run(
+    String executable,
+    List<String> arguments, {
+    LogLevel logLevel = LogLevel.warning,
+  }) async {
+    final label = '$executable ${arguments.first}';
+    try {
+      final result = await runProcess(executable, arguments);
+      if (result.exitCode != 0) {
+        commonPrint.log(
+          '$label exited with ${result.exitCode}: ${result.stderr.toString().trim()}',
+          logLevel: logLevel,
+        );
+        return null;
+      }
+      return result;
+    } catch (error) {
+      commonPrint.log(
+        '$label failed: ${compactError(error)}',
+        logLevel: logLevel,
+      );
+      return null;
+    }
   }
 }
 

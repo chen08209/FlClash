@@ -1,14 +1,20 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/views/dashboard/widgets/memory_info.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../helpers/test_app.dart';
+
+class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 void main() {
   testWidgets('MemoryInfo refreshes only while the app is resumed', (
@@ -23,7 +29,11 @@ void main() {
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pumpWidget(
-      _TestApp(child: MemoryInfo(memoryReader: readMemory)),
+      TestApp(
+        wrapInProviderScope: true,
+        child: MemoryInfo(memoryReader: readMemory),
+        homeBuilder: (child) => Scaffold(body: child),
+      ),
     );
     await tester.pump();
 
@@ -65,7 +75,11 @@ void main() {
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpWidget(
-      _TestApp(child: MemoryInfo(memoryReader: readMemory)),
+      TestApp(
+        wrapInProviderScope: true,
+        child: MemoryInfo(memoryReader: readMemory),
+        homeBuilder: (child) => Scaffold(body: child),
+      ),
     );
     await tester.pump();
 
@@ -101,7 +115,11 @@ void main() {
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpWidget(
-      _TestApp(child: MemoryInfo(memoryReader: readMemory)),
+      TestApp(
+        wrapInProviderScope: true,
+        child: MemoryInfo(memoryReader: readMemory),
+        homeBuilder: (child) => Scaffold(body: child),
+      ),
     );
     await tester.pump();
 
@@ -128,11 +146,13 @@ void main() {
     }
 
     Widget buildApp({required bool isPageActive}) {
-      return _TestApp(
+      return TestApp(
+        wrapInProviderScope: true,
         child: PageActivityScope(
           isActive: isPageActive,
           child: MemoryInfo(memoryReader: readMemory),
         ),
+        homeBuilder: (child) => Scaffold(body: child),
       );
     }
 
@@ -159,30 +179,101 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets('the default reader adds Core memory while connected', (
+    tester,
+  ) async {
+    final coreInterface = _MockCoreHandlerInterface();
+    when(() => coreInterface.getMemory()).thenAnswer((_) async => 4096);
+    final container = _containerWith(coreInterface, CoreStatus.connected);
+    addTearDown(container.dispose);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(homeBuilder: _scaffoldBody, child: MemoryInfo()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    verify(() => coreInterface.getMemory()).called(greaterThanOrEqualTo(1));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('the default reader skips Core memory while disconnected', (
+    tester,
+  ) async {
+    final coreInterface = _MockCoreHandlerInterface();
+    when(() => coreInterface.getMemory()).thenAnswer((_) async => 4096);
+    final container = _containerWith(coreInterface, CoreStatus.disconnected);
+    addTearDown(container.dispose);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(homeBuilder: _scaffoldBody, child: MemoryInfo()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    verifyNever(() => coreInterface.getMemory());
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a remounted card never reuses a disposed notifier', (
+    tester,
+  ) async {
+    var readCount = 0;
+
+    Future<num> readMemory() async {
+      readCount++;
+      return readCount;
+    }
+
+    Widget app() => TestApp(
+      wrapInProviderScope: true,
+      homeBuilder: _scaffoldBody,
+      child: MemoryInfo(memoryReader: readMemory),
+    );
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    expect(readCount, 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(app());
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(readCount, greaterThan(1));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }
 
-class _TestApp extends StatelessWidget {
-  final Widget child;
+Widget _scaffoldBody(Widget child) => Scaffold(body: child);
 
-  const _TestApp({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: globalState.navigatorKey,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
-      builder: (context, child) {
-        globalState.measure = Measure.of(context, 1);
-        globalState.theme = CommonTheme.of(context, 1);
-        return child!;
-      },
-      home: Scaffold(body: child),
-    );
-  }
+ProviderContainer _containerWith(
+  CoreHandlerInterface coreInterface,
+  CoreStatus status,
+) {
+  final container = ProviderContainer(
+    overrides: [
+      coreHandlerProvider.overrideWithValue(
+        CoreController.scoped(coreInterface),
+      ),
+    ],
+  );
+  container.read(coreStatusProvider.notifier).value = status;
+  return container;
 }

@@ -229,11 +229,14 @@ class TrackerInfoDetailView extends StatelessWidget {
               if (quickCopy)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.content_copy, size: 18),
-                    onPressed: () {},
+                  child: Builder(
+                    builder: (context) => IconButton(
+                      tooltip: context.appLocalizations.copy,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.content_copy, size: 18),
+                      onPressed: () {},
+                    ),
                   ),
                 ),
             ],

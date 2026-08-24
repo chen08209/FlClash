@@ -99,10 +99,11 @@ class _ExternalDismissibleState extends State<ExternalDismissible>
     _isDismissing = true;
     updateKeepAlive();
     await _controller.forward();
-    if (mounted && widget.onDismissed != null) {
-      widget.onDismissed!();
-    }
     _isDismissing = false;
+    if (!mounted) {
+      return;
+    }
+    widget.onDismissed?.call();
     updateKeepAlive();
   }
 

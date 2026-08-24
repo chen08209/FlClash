@@ -1,24 +1,79 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+typedef _DnsUpdate<T> =
+    PatchClashConfig Function(PatchClashConfig state, T value);
+
+ProviderListenable<T> _dnsSelector<T>(T Function(Dns dns) select) {
+  return patchClashConfigProvider.select((state) => select(state.dns));
+}
+
+ConfigWriter<T> _dnsWriter<T>(_DnsUpdate<T> update) {
+  return (ref, value) => ref
+      .read(patchClashConfigProvider.notifier)
+      .update((state) => update(state, value));
+}
+
+ConfigToggleItem _dnsToggle({
+  required ConfigLabel title,
+  required bool Function(Dns dns) select,
+  required _DnsUpdate<bool> update,
+  ConfigLabel? subtitle,
+}) {
+  return ConfigToggleItem(
+    title: title,
+    subtitle: subtitle,
+    selector: _dnsSelector(select),
+    onChanged: _dnsWriter(update),
+  );
+}
+
+ConfigTextItem _dnsText({
+  required ConfigLabel title,
+  required String Function(Dns dns) select,
+  required _DnsUpdate<String> update,
+  required int maxLength,
+}) {
+  return ConfigTextItem(
+    title: title,
+    selector: _dnsSelector(select),
+    onChanged: _dnsWriter(update),
+    maxLength: maxLength,
+  );
+}
+
+ConfigListInputItem _dnsList({
+  required ConfigLabel title,
+  required List<String> Function(Dns dns) select,
+  required _DnsUpdate<List<String>> update,
+  required int itemMaxLength,
+  ConfigLabel? subtitle,
+}) {
+  return ConfigListInputItem(
+    title: title,
+    subtitle: subtitle,
+    selector: _dnsSelector(select),
+    onChanged: _dnsWriter(update),
+    itemMaxLength: itemMaxLength,
+  );
+}
 
 class OverrideItem extends ConsumerWidget {
   const OverrideItem({super.key});
 
   @override
   Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final override = ref.watch(overrideDnsProvider);
-    return ListItem.toggle(
-      title: Text(appLocalizations.overrideDns),
-      subtitle: Text(appLocalizations.overrideDnsDesc),
-      value: override,
-      onChanged: (bool value) async {
-        ref.read(overrideDnsProvider.notifier).value = value;
-      },
+    return ConfigToggleItem(
+      title: (l) => l.overrideDns,
+      subtitle: (l) => l.overrideDnsDesc,
+      selector: overrideDnsProvider,
+      onChanged: (ref, value) =>
+          ref.read(overrideDnsProvider.notifier).value = value,
     );
   }
 }
@@ -28,52 +83,11 @@ class StatusItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final enable = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.enable),
-    );
-    return ListItem.toggle(
-      title: Text(appLocalizations.status),
-      subtitle: Text(appLocalizations.statusDesc),
-      value: enable,
-      onChanged: (bool value) async {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(enable: value));
-      },
-    );
-  }
-}
-
-class ListenItem extends ConsumerWidget {
-  const ListenItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final listen = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.listen),
-    );
-    return ListItem.input(
-      title: Text(appLocalizations.listen),
-      subtitle: Text(listen),
-      dialogTitle: appLocalizations.listen,
-      value: listen,
-      maxLength: TextInputLimits.dnsListen,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return appLocalizations.emptyTip(appLocalizations.listen);
-        }
-        return null;
-      },
-      onChanged: (String? value) {
-        if (value == null) {
-          return;
-        }
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(listen: value));
-      },
+    return _dnsToggle(
+      title: (l) => l.status,
+      subtitle: (l) => l.statusDesc,
+      select: (dns) => dns.enable,
+      update: (state, value) => state.copyWith.dns(enable: value),
     );
   }
 }
@@ -83,19 +97,11 @@ class PreferH3Item extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final preferH3 = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.preferH3),
-    );
-    return ListItem.toggle(
-      title: const Text('PreferH3'),
-      subtitle: Text(appLocalizations.preferH3Desc),
-      value: preferH3,
-      onChanged: (bool value) async {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(preferH3: value));
-      },
+    return _dnsToggle(
+      title: (l) => 'PreferH3',
+      subtitle: (l) => l.preferH3Desc,
+      select: (dns) => dns.preferH3,
+      update: (state, value) => state.copyWith.dns(preferH3: value),
     );
   }
 }
@@ -105,39 +111,10 @@ class IPv6Item extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final ipv6 = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.ipv6),
-    );
-    return ListItem.toggle(
-      title: const Text('IPv6'),
-      value: ipv6,
-      onChanged: (bool value) async {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(ipv6: value));
-      },
-    );
-  }
-}
-
-class RespectRulesItem extends ConsumerWidget {
-  const RespectRulesItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final respectRules = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.respectRules),
-    );
-    return ListItem.toggle(
-      title: Text(appLocalizations.respectRules),
-      subtitle: Text(appLocalizations.respectRulesDesc),
-      value: respectRules,
-      onChanged: (bool value) async {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(respectRules: value));
-      },
+    return _dnsToggle(
+      title: (l) => 'IPv6',
+      select: (dns) => dns.ipv6,
+      update: (state, value) => state.copyWith.dns(ipv6: value),
     );
   }
 }
@@ -147,190 +124,14 @@ class DnsModeItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final enhancedMode = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.enhancedMode),
-    );
-    return ListItem<DnsMode>.options(
-      title: Text(appLocalizations.dnsMode),
-      subtitle: Text(enhancedMode.name),
-      dialogTitle: appLocalizations.dnsMode,
+    return ConfigOptionsItem<DnsMode>(
+      title: (l) => l.dnsMode,
       options: DnsMode.values,
-      onChanged: (value) {
-        if (value == null) {
-          return;
-        }
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(enhancedMode: value));
-      },
       textBuilder: (dnsMode) => dnsMode.name,
-      value: enhancedMode,
-    );
-  }
-}
-
-class FakeIpRangeItem extends ConsumerWidget {
-  const FakeIpRangeItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final fakeIpRange = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.fakeIpRange),
-    );
-    return ListItem.input(
-      title: Text(appLocalizations.fakeipRange),
-      subtitle: Text(fakeIpRange),
-      dialogTitle: appLocalizations.fakeipRange,
-      value: fakeIpRange,
-      maxLength: TextInputLimits.cidr,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return appLocalizations.emptyTip(appLocalizations.fakeipRange);
-        }
-        return null;
-      },
-      onChanged: (String? value) {
-        if (value == null) {
-          return;
-        }
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(fakeIpRange: value));
-      },
-    );
-  }
-}
-
-class FakeIpFilterItem extends ConsumerWidget {
-  const FakeIpFilterItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final fakeIpFilter = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.fakeIpFilter),
-    );
-    return ListItem.open(
-      title: Text(appLocalizations.fakeipFilter),
-      blur: false,
-      widget: ListInputPage(
-        title: appLocalizations.fakeipFilter,
-        items: fakeIpFilter,
-        itemMaxLength: TextInputLimits.domain,
-        titleBuilder: (item) => Text(item),
+      selector: _dnsSelector((dns) => dns.enhancedMode),
+      onChanged: _dnsWriter(
+        (state, value) => state.copyWith.dns(enhancedMode: value),
       ),
-      onChanged: (items) {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) => state.copyWith.dns(fakeIpFilter: List.from(items)),
-            );
-      },
-    );
-  }
-}
-
-class DefaultNameserverItem extends ConsumerWidget {
-  const DefaultNameserverItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final defaultNameserver = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.defaultNameserver),
-    );
-    return ListItem.open(
-      title: Text(appLocalizations.defaultNameserver),
-      subtitle: Text(appLocalizations.defaultNameserverDesc),
-      blur: false,
-      widget: ListInputPage(
-        title: appLocalizations.defaultNameserver,
-        items: defaultNameserver,
-        itemMaxLength: TextInputLimits.dnsServer,
-        titleBuilder: (item) => Text(item),
-      ),
-      onChanged: (items) {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) =>
-                  state.copyWith.dns(defaultNameserver: List.from(items)),
-            );
-      },
-    );
-  }
-}
-
-class NameserverItem extends ConsumerWidget {
-  const NameserverItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final nameserver = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.nameserver),
-    );
-    return ListItem.open(
-      title: Text(appLocalizations.nameserver),
-      subtitle: Text(appLocalizations.nameserverDesc),
-      blur: false,
-      widget: ListInputPage(
-        title: appLocalizations.nameserver,
-        items: nameserver,
-        itemMaxLength: TextInputLimits.dnsServer,
-        titleBuilder: (item) => Text(item),
-      ),
-      onChanged: (items) {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) => state.copyWith.dns(nameserver: List.from(items)),
-            );
-      },
-    );
-  }
-}
-
-class UseHostsItem extends ConsumerWidget {
-  const UseHostsItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final useHosts = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.useHosts),
-    );
-    return ListItem.toggle(
-      title: Text(appLocalizations.useHosts),
-      value: useHosts,
-      onChanged: (bool value) async {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(useHosts: value));
-      },
-    );
-  }
-}
-
-class UseSystemHostsItem extends ConsumerWidget {
-  const UseSystemHostsItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final useSystemHosts = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.useSystemHosts),
-    );
-    return ListItem.toggle(
-      title: Text(appLocalizations.useSystemHosts),
-      value: useSystemHosts,
-      onChanged: (bool value) async {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(useSystemHosts: value));
-      },
     );
   }
 }
@@ -342,7 +143,7 @@ class NameserverPolicyItem extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     final appLocalizations = context.appLocalizations;
     final nameserverPolicy = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.nameserverPolicy),
+      _dnsSelector((dns) => dns.nameserverPolicy),
     );
     return ListItem.open(
       title: Text(appLocalizations.nameserverPolicy),
@@ -365,246 +166,84 @@ class NameserverPolicyItem extends ConsumerWidget {
   }
 }
 
-class ProxyServerNameserverItem extends ConsumerWidget {
-  const ProxyServerNameserverItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final proxyServerNameserver = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.dns.proxyServerNameserver,
-      ),
-    );
-    return ListItem.open(
-      title: Text(appLocalizations.proxyNameserver),
-      subtitle: Text(appLocalizations.proxyNameserverDesc),
-      blur: false,
-      widget: ListInputPage(
-        title: appLocalizations.proxyNameserver,
-        items: proxyServerNameserver,
-        itemMaxLength: TextInputLimits.dnsServer,
-        titleBuilder: (item) => Text(item),
-      ),
-      onChanged: (items) {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) =>
-                  state.copyWith.dns(proxyServerNameserver: List.from(items)),
-            );
-      },
-    );
-  }
-}
-
-class FallbackItem extends ConsumerWidget {
-  const FallbackItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final fallback = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.fallback),
-    );
-    return ListItem.open(
-      title: Text(appLocalizations.fallback),
-      subtitle: Text(appLocalizations.fallbackDesc),
-      blur: false,
-      widget: ListInputPage(
-        title: appLocalizations.fallback,
-        items: fallback,
-        itemMaxLength: TextInputLimits.dnsServer,
-        titleBuilder: (item) => Text(item),
-      ),
-      onChanged: (items) {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns(fallback: List.from(items)));
-      },
-    );
-  }
-}
-
-class GeoipItem extends ConsumerWidget {
-  const GeoipItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final geoip = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.dns.fallbackFilter.geoip,
-      ),
-    );
-    return ListItem.toggle(
-      title: const Text('Geoip'),
-      value: geoip,
-      onChanged: (bool value) async {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.dns.fallbackFilter(geoip: value));
-      },
-    );
-  }
-}
-
-class GeoipCodeItem extends ConsumerWidget {
-  const GeoipCodeItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final geoipCode = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.dns.fallbackFilter.geoipCode,
-      ),
-    );
-    return ListItem.input(
-      title: Text(appLocalizations.geoipCode),
-      subtitle: Text(geoipCode),
-      dialogTitle: appLocalizations.geoipCode,
-      value: geoipCode,
-      maxLength: TextInputLimits.geoIpCode,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return appLocalizations.emptyTip(appLocalizations.geoipCode);
-        }
-        return null;
-      },
-      onChanged: (String? value) {
-        if (value == null) {
-          return;
-        }
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) => state.copyWith.dns.fallbackFilter(geoipCode: value),
-            );
-      },
-    );
-  }
-}
-
-class GeositeItem extends ConsumerWidget {
-  const GeositeItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final geosite = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.dns.fallbackFilter.geosite,
-      ),
-    );
-    return ListItem.open(
-      title: const Text('Geosite'),
-      blur: false,
-      widget: ListInputPage(
-        title: 'Geosite',
-        items: geosite,
-        itemMaxLength: TextInputLimits.geoSite,
-        titleBuilder: (item) => Text(item),
-      ),
-      onChanged: (items) {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) =>
-                  state.copyWith.dns.fallbackFilter(geosite: List.from(items)),
-            );
-      },
-    );
-  }
-}
-
-class IpcidrItem extends ConsumerWidget {
-  const IpcidrItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final ipcidr = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.dns.fallbackFilter.ipcidr,
-      ),
-    );
-    return ListItem.open(
-      title: Text(appLocalizations.ipcidr),
-      blur: false,
-      widget: ListInputPage(
-        title: appLocalizations.ipcidr,
-        items: ipcidr,
-        itemMaxLength: TextInputLimits.cidr,
-        titleBuilder: (item) => Text(item),
-      ),
-      onChanged: (items) {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) =>
-                  state.copyWith.dns.fallbackFilter(ipcidr: List.from(items)),
-            );
-      },
-    );
-  }
-}
-
-class DomainItem extends ConsumerWidget {
-  const DomainItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final domain = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.dns.fallbackFilter.domain,
-      ),
-    );
-    return ListItem.open(
-      title: Text(appLocalizations.domain),
-      blur: false,
-      widget: ListInputPage(
-        title: appLocalizations.domain,
-        items: domain,
-        itemMaxLength: TextInputLimits.domain,
-        titleBuilder: (item) => Text(item),
-      ),
-      onChanged: (items) {
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) =>
-                  state.copyWith.dns.fallbackFilter(domain: List.from(items)),
-            );
-      },
-    );
-  }
-}
-
 class DnsOptions extends StatelessWidget {
   const DnsOptions({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
     return Column(
       children: generateSection(
-        title: appLocalizations.options,
+        title: context.appLocalizations.options,
         items: [
           const StatusItem(),
-          const ListenItem(),
-          const UseHostsItem(),
-          const UseSystemHostsItem(),
+          _dnsText(
+            title: (l) => l.listen,
+            select: (dns) => dns.listen,
+            update: (state, value) => state.copyWith.dns(listen: value),
+            maxLength: TextInputLimits.dnsListen,
+          ),
+          _dnsToggle(
+            title: (l) => l.useHosts,
+            select: (dns) => dns.useHosts,
+            update: (state, value) => state.copyWith.dns(useHosts: value),
+          ),
+          _dnsToggle(
+            title: (l) => l.useSystemHosts,
+            select: (dns) => dns.useSystemHosts,
+            update: (state, value) => state.copyWith.dns(useSystemHosts: value),
+          ),
           const IPv6Item(),
-          const RespectRulesItem(),
+          _dnsToggle(
+            title: (l) => l.respectRules,
+            subtitle: (l) => l.respectRulesDesc,
+            select: (dns) => dns.respectRules,
+            update: (state, value) => state.copyWith.dns(respectRules: value),
+          ),
           const PreferH3Item(),
           const DnsModeItem(),
-          const FakeIpRangeItem(),
-          const FakeIpFilterItem(),
-          const DefaultNameserverItem(),
+          _dnsText(
+            title: (l) => l.fakeipRange,
+            select: (dns) => dns.fakeIpRange,
+            update: (state, value) => state.copyWith.dns(fakeIpRange: value),
+            maxLength: TextInputLimits.cidr,
+          ),
+          _dnsList(
+            title: (l) => l.fakeipFilter,
+            select: (dns) => dns.fakeIpFilter,
+            update: (state, value) => state.copyWith.dns(fakeIpFilter: value),
+            itemMaxLength: TextInputLimits.domain,
+          ),
+          _dnsList(
+            title: (l) => l.defaultNameserver,
+            subtitle: (l) => l.defaultNameserverDesc,
+            select: (dns) => dns.defaultNameserver,
+            update: (state, value) =>
+                state.copyWith.dns(defaultNameserver: value),
+            itemMaxLength: TextInputLimits.dnsServer,
+          ),
           const NameserverPolicyItem(),
-          const NameserverItem(),
-          const FallbackItem(),
-          const ProxyServerNameserverItem(),
+          _dnsList(
+            title: (l) => l.nameserver,
+            subtitle: (l) => l.nameserverDesc,
+            select: (dns) => dns.nameserver,
+            update: (state, value) => state.copyWith.dns(nameserver: value),
+            itemMaxLength: TextInputLimits.dnsServer,
+          ),
+          _dnsList(
+            title: (l) => l.fallback,
+            subtitle: (l) => l.fallbackDesc,
+            select: (dns) => dns.fallback,
+            update: (state, value) => state.copyWith.dns(fallback: value),
+            itemMaxLength: TextInputLimits.dnsServer,
+          ),
+          _dnsList(
+            title: (l) => l.proxyNameserver,
+            subtitle: (l) => l.proxyNameserverDesc,
+            select: (dns) => dns.proxyServerNameserver,
+            update: (state, value) =>
+                state.copyWith.dns(proxyServerNameserver: value),
+            itemMaxLength: TextInputLimits.dnsServer,
+          ),
         ],
       ),
     );
@@ -616,16 +255,44 @@ class FallbackFilterOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
     return Column(
       children: generateSection(
-        title: appLocalizations.fallbackFilter,
+        title: context.appLocalizations.fallbackFilter,
         items: [
-          const GeoipItem(),
-          const GeoipCodeItem(),
-          const GeositeItem(),
-          const IpcidrItem(),
-          const DomainItem(),
+          _dnsToggle(
+            title: (l) => 'Geoip',
+            select: (dns) => dns.fallbackFilter.geoip,
+            update: (state, value) =>
+                state.copyWith.dns.fallbackFilter(geoip: value),
+          ),
+          _dnsText(
+            title: (l) => l.geoipCode,
+            select: (dns) => dns.fallbackFilter.geoipCode,
+            update: (state, value) =>
+                state.copyWith.dns.fallbackFilter(geoipCode: value),
+            maxLength: TextInputLimits.geoIpCode,
+          ),
+          _dnsList(
+            title: (l) => 'Geosite',
+            select: (dns) => dns.fallbackFilter.geosite,
+            update: (state, value) =>
+                state.copyWith.dns.fallbackFilter(geosite: value),
+            itemMaxLength: TextInputLimits.geoSite,
+          ),
+          _dnsList(
+            title: (l) => l.ipcidr,
+            select: (dns) => dns.fallbackFilter.ipcidr,
+            update: (state, value) =>
+                state.copyWith.dns.fallbackFilter(ipcidr: value),
+            itemMaxLength: TextInputLimits.cidr,
+          ),
+          _dnsList(
+            title: (l) => l.domain,
+            select: (dns) => dns.fallbackFilter.domain,
+            update: (state, value) =>
+                state.copyWith.dns.fallbackFilter(domain: value),
+            itemMaxLength: TextInputLimits.domain,
+          ),
         ],
       ),
     );

@@ -552,22 +552,6 @@ abstract class Field with _$Field {
   }) = _Field;
 }
 
-class PopupMenuItemData {
-  const PopupMenuItemData({
-    this.icon,
-    required this.label,
-    this.onPressed,
-    this.danger = false,
-    this.subItems = const [],
-  });
-
-  final String label;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final bool danger;
-  final List<PopupMenuItemData> subItems;
-}
-
 class CloseWindowIntent extends Intent {
   const CloseWindowIntent();
 }
@@ -700,5 +684,6 @@ abstract class IconButtonData with _$IconButtonData {
   const factory IconButtonData({
     required IconData icon,
     required VoidCallback onPressed,
+    String? tooltip,
   }) = _IconButtonData;
 }

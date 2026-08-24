@@ -50,6 +50,29 @@ void main() {
     expect(groups.single.all.map((proxy) => proxy.name), ['Beta', 'Zulu']);
   });
 
+  test('toGroupsTask leaves the source proxy map untouched', () async {
+    final proxies = <String, dynamic>{
+      'Selector': {
+        'name': 'Selector',
+        'type': 'Selector',
+        'all': ['Beta'],
+      },
+      'Beta': {'name': 'Beta', 'type': 'Direct'},
+    };
+    final state = ComputeGroupsState(
+      proxiesData: ProxiesData(all: const ['Selector'], proxies: proxies),
+      sortType: ProxiesSortType.none,
+      delayMap: const {},
+      selectedMap: const {},
+      defaultTestUrl: '',
+    );
+
+    await buildGroups(state);
+    await buildGroups(state);
+
+    expect(proxies['Selector']['all'], ['Beta']);
+  });
+
   test('toGroupsTask returns empty data without proxies', () async {
     final groups = await toGroupsTask(
       const ComputeGroupsState(
@@ -119,9 +142,9 @@ void main() {
           defaultUA: 'FlClash-Test',
         ),
       );
-      final config = loadYaml(result.a) as YamlMap;
+      final config = loadYaml(result.yaml) as YamlMap;
 
-      expect(result.b, hasLength(32));
+      expect(result.md5, hasLength(32));
       expect(config['mixed-port'], 7893);
       expect(config['allow-lan'], true);
       expect(config['global-ua'], 'FlClash-Test');
@@ -145,6 +168,44 @@ void main() {
         'DOMAIN,existing.example,DIRECT',
         'MATCH,Original',
       ]);
+    },
+  );
+
+  // The core re-reads these two keys out of the generated config on every
+  // profile apply and adopts whatever it finds, so a subscription that ships
+  // them would otherwise decide whether GEO databases auto-update — including
+  // switching the updater back on after the user turned it off.
+  test(
+    'makeRealProfileTask lets the app setting own the geo updater',
+    () async {
+      final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
+        await encodeJSONTask({
+          'geo-auto-update': true,
+          'geo-update-interval': 6,
+        }),
+      );
+
+      final result = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 11,
+          rawConfig: rawConfig,
+          realPatchConfig: const PatchClashConfig(
+            geoAutoUpdate: false,
+            geoUpdateInterval: 48,
+          ),
+          overrideDns: false,
+          appendSystemDns: false,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules: const [],
+          defaultUA: 'FlClash-Test',
+        ),
+      );
+      final config = loadYaml(result.yaml) as YamlMap;
+
+      expect(config['geo-auto-update'], false);
+      expect(config['geo-update-interval'], 48);
     },
   );
 
@@ -176,7 +237,7 @@ void main() {
         defaultUA: 'Fallback-UA',
       ),
     );
-    final config = loadYaml(result.a) as YamlMap;
+    final config = loadYaml(result.yaml) as YamlMap;
 
     expect(config['dns']['enable'], true);
     expect(config['dns']['nameserver'], contains('system://'));

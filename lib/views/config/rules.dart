@@ -3,7 +3,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,10 +15,10 @@ class AddedRulesView extends ConsumerStatefulWidget {
 }
 
 class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
-  final _key = utils.id;
+  final _key = uniqueId;
 
   Future<void> _handleAddOrUpdate([Rule? rule]) async {
-    final res = await globalState.showCommonDialog<Rule>(
+    final res = await dialogs.showCommonDialog<Rule>(
       child: AddOrEditRuleDialog(rule: rule),
     );
     if (res == null) {
@@ -47,7 +46,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
 
   Future<void> _handleDelete() async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(
         text: appLocalizations.deleteMultipTip(appLocalizations.rule),
@@ -82,6 +81,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
           if (selectedRules.isNotEmpty) ...[
             CommonMinIconButtonTheme(
               child: IconButton.filledTonal(
+                tooltip: context.appLocalizations.delete,
                 onPressed: _handleDelete,
                 icon: const Icon(Icons.delete),
               ),

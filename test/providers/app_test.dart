@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/fixed.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -250,6 +251,73 @@ void main() {
       final t = container.read(totalTrafficProvider);
       expect(t.up, 0);
       expect(t.down, 0);
+    });
+  });
+
+  group('append-backed buffers notify on every arrival', () {
+    test('Logs.add advances the generation and reaches listeners', () {
+      container.read(logsProvider.notifier).value = FixedList(3);
+      final revisions = <int>[];
+      final subscription = container.listen(
+        logsProvider.select((state) => state.revision),
+        (_, next) => revisions.add(next),
+      );
+      addTearDown(subscription.close);
+
+      final notifier = container.read(logsProvider.notifier);
+      notifier.add(Log.app('a'));
+      notifier.add(Log.app('b'));
+
+      expect(revisions.length, 2, reason: 'one notification per log line');
+      expect(container.read(logsProvider).list.map((log) => log.payload), [
+        'a',
+        'b',
+      ]);
+    });
+
+    test('Requests.addRequest reaches listeners', () {
+      container.read(requestsProvider.notifier).value = FixedList(3);
+      var notifications = 0;
+      final subscription = container.listen(
+        requestsProvider.select((state) => state.revision),
+        (_, _) => notifications++,
+      );
+      addTearDown(subscription.close);
+
+      container
+          .read(requestsProvider.notifier)
+          .addRequest(
+            TrackerInfo(
+              id: '1',
+              start: DateTime.utc(2026),
+              metadata: const Metadata(network: 'tcp', host: 'example.com'),
+              chains: const ['Proxy'],
+              rule: 'DOMAIN',
+              rulePayload: 'example.com',
+            ),
+          );
+
+      expect(notifications, 1);
+      expect(container.read(requestsProvider).length, 1);
+    });
+
+    test('Traffics.addTraffic reaches listeners and clear resets', () {
+      container.read(trafficsProvider.notifier).value = FixedList(3);
+      var notifications = 0;
+      final subscription = container.listen(
+        trafficsProvider,
+        (_, _) => notifications++,
+      );
+      addTearDown(subscription.close);
+
+      final notifier = container.read(trafficsProvider.notifier);
+      notifier.addTraffic(const Traffic(up: 1, down: 2));
+      notifier.addTraffic(const Traffic(up: 3, down: 4));
+      expect(notifications, 2);
+
+      notifier.clear();
+      expect(notifications, 3);
+      expect(container.read(trafficsProvider).length, 0);
     });
   });
 

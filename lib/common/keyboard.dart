@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:uni_platform/uni_platform.dart';
 
 import 'system.dart';
+import 'package:flutter/widgets.dart';
 
 final Map<PhysicalKeyboardKey, String> _knownKeyLabels =
     <PhysicalKeyboardKey, String>{
@@ -100,4 +101,9 @@ extension KeyboardKeyExt on KeyboardKey {
     }
     return _knownKeyLabels[physicalKey] ?? physicalKey?.debugName ?? 'Unknown';
   }
+}
+
+SingleActivator controlSingleActivator(LogicalKeyboardKey trigger) {
+  final control = system.isMacOS ? false : true;
+  return SingleActivator(trigger, control: control, meta: !control);
 }

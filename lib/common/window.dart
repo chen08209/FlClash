@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
-class Window {
+class Window implements WindowPort {
   static Window? _instance;
 
   Window._internal();
@@ -68,6 +68,7 @@ class Window {
     }
   }
 
+  @override
   Future<void> show() async {
     render?.resume();
     await windowManager.show();
@@ -75,20 +76,24 @@ class Window {
     await windowManager.setSkipTaskbar(false);
   }
 
+  @override
   Future<bool> get isVisible async {
     final value = await windowManager.isVisible();
     commonPrint.log('window visible check: $value');
     return value;
   }
 
+  @override
   Future<void> close() async {
     await windowManager.close();
   }
 
+  @override
   void forceExit() {
     exit(0);
   }
 
+  @override
   Future<void> hide() async {
     render?.pause();
     await windowManager.hide();

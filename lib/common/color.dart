@@ -101,15 +101,6 @@ extension ColorExtension on Color {
       factor,
     )!;
   }
-
-  Color blendLighten(BuildContext context, {double factor = 0.1}) {
-    final brightness = Theme.of(context).brightness;
-    return Color.lerp(
-      this,
-      brightness == Brightness.dark ? Colors.black : Colors.white,
-      factor,
-    )!;
-  }
 }
 
 extension ColorSchemeExtension on ColorScheme {
@@ -119,4 +110,11 @@ extension ColorSchemeExtension on ColorScheme {
           surfaceContainer: surfaceContainer.darken(5),
         )
       : this;
+}
+
+Color? getDelayColor(int? delay) {
+  if (delay == null) return null;
+  if (delay < 0) return Colors.red;
+  if (delay < 600) return Colors.green;
+  return const Color(0xFFC57F0A);
 }

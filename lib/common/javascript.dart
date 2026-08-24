@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ffi' as ffi;
 
+import 'package:fl_clash/common/exception.dart';
 import 'package:flutter_js/flutter_js.dart';
 
 Future<Map<String, dynamic>> handleEvaluate(
@@ -17,7 +18,7 @@ Future<Map<String, dynamic>> handleEvaluate(
       main($configJs)
     ''');
   if (res.isError) {
-    throw res.stringResult;
+    throw MessageException(res.stringResult);
   }
   final value = switch (res.rawResult is ffi.Pointer) {
     true => runtime.convertValue<Map<String, dynamic>>(res),

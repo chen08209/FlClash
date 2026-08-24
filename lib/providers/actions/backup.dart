@@ -20,43 +20,49 @@ class BackupAction extends _$BackupAction {
   Future<void> restore(RestoreOption option) async {
     final restoreDirPath = await appPath.restoreDirPath;
     final restoreDir = Directory(restoreDirPath);
+    try {
+      final migrationData = await restoreTask();
+      if (!await restoreDir.exists()) {
+        throw MessageException(currentAppLocalizations.restoreException);
+      }
+      await applyRestore(migrationData, option);
+    } finally {
+      await restoreDir.safeDelete(recursive: true);
+    }
+  }
+
+  @visibleForTesting
+  Future<void> applyRestore(MigrationData data, RestoreOption option) async {
     final restoreStrategy = ref.read(
       appSettingProvider.select((state) => state.restoreStrategy),
     );
     final isOverride = restoreStrategy == RestoreStrategy.override;
-    try {
-      final migrationData = await restoreTask();
-      if (!await restoreDir.exists()) {
-        throw currentAppLocalizations.restoreException;
-      }
-      await database.restore(
-        migrationData.profiles,
-        migrationData.scripts,
-        migrationData.rules,
-        migrationData.links,
-        migrationData.proxyGroups,
-        isOverride: isOverride,
-      );
-      final configMap = migrationData.configMap;
-      if (option == RestoreOption.onlyProfiles || configMap == null) return;
-      final config = Config.fromJson(configMap);
-      ref.read(davSettingProvider.notifier).update((_) => config.davProps);
-      ref.read(patchClashConfigProvider.notifier).value =
-          config.patchClashConfig;
-      ref.read(appSettingProvider.notifier).value = config.appSettingProps;
-      ref.read(currentProfileIdProvider.notifier).value =
-          config.currentProfileId;
-      ref.read(themeSettingProvider.notifier).value = config.themeProps;
-      ref.read(windowSettingProvider.notifier).value = config.windowProps;
-      ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
-      ref.read(proxiesStyleSettingProvider.notifier).value =
-          config.proxiesStyleProps;
-      ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
-      ref.read(networkSettingProvider.notifier).value = config.networkProps;
-      ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
+    final configMap = data.configMap;
+    final config = option == RestoreOption.onlyProfiles || configMap == null
+        ? null
+        : Config.fromJson(configMap);
+    await database.restore(
+      data.profiles,
+      data.scripts,
+      data.rules,
+      data.links,
+      data.proxyGroups,
+      isOverride: isOverride,
+    );
+    if (config == null) {
       return;
-    } finally {
-      await restoreDir.safeDelete(recursive: true);
     }
+    ref.read(davSettingProvider.notifier).update((_) => config.davProps);
+    ref.read(patchClashConfigProvider.notifier).value = config.patchClashConfig;
+    ref.read(appSettingProvider.notifier).value = config.appSettingProps;
+    ref.read(currentProfileIdProvider.notifier).value = config.currentProfileId;
+    ref.read(themeSettingProvider.notifier).value = config.themeProps;
+    ref.read(windowSettingProvider.notifier).value = config.windowProps;
+    ref.read(vpnSettingProvider.notifier).value = config.vpnProps;
+    ref.read(proxiesStyleSettingProvider.notifier).value =
+        config.proxiesStyleProps;
+    ref.read(overrideDnsProvider.notifier).value = config.overrideDns;
+    ref.read(networkSettingProvider.notifier).value = config.networkProps;
+    ref.read(hotKeyActionsProvider.notifier).value = config.hotKeyActions;
   }
 }

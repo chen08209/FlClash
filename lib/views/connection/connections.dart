@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +22,8 @@ class ConnectionsView extends ConsumerStatefulWidget {
 
 class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     with WidgetsBindingObserver, ActivePollingMixin<ConnectionsView> {
+  CoreController get _core => ref.read(coreHandlerProvider);
+
   final _connectionsStateNotifier = ValueNotifier<TrackerInfosState>(
     const TrackerInfosState(),
   );
@@ -31,8 +35,9 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   List<Widget> _buildActions() {
     return [
       IconButton(
+        tooltip: context.appLocalizations.closeConnections,
         onPressed: () async {
-          coreController.closeConnections();
+          unawaited(_core.closeConnections());
           await _refreshConnections();
         },
         icon: const Icon(Icons.delete_sweep_outlined),
@@ -74,7 +79,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       final connectionsReader = widget.connectionsReader;
       return connectionsReader != null
           ? await connectionsReader()
-          : await coreController.getConnections();
+          : await _core.getConnections();
     } catch (error) {
       commonPrint.log(
         'updateConnections error: $error',
@@ -91,7 +96,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   }
 
   Future<void> _handleBlockConnection(String id) async {
-    await coreController.closeConnection(id);
+    await _core.closeConnection(id);
     await _refreshConnections();
   }
 
@@ -133,6 +138,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
                   context.commonScaffoldState?.addKeyword(value);
                 },
                 trailing: IconButton(
+                  tooltip: context.appLocalizations.blockConnection,
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                   style: IconButton.styleFrom(minimumSize: Size.zero),

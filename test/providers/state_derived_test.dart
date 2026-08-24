@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -5,16 +6,21 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/views/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
+
+import '../helpers/test_profiles.dart';
 
 void main() {
   late ProviderContainer container;
 
   setUp(() {
+    navigationPort = navigation;
+    addTearDown(() => navigationPort = null);
     container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(_TestProfiles.new)],
+      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
     );
   });
 
@@ -164,8 +170,8 @@ void main() {
       expect(tab.currentGroupName, 'Group B');
       expect(tab.groups.single.all.single.name, 'Gamma');
       final controller = container.read(proxiesTabControllerStateProvider);
-      expect(controller.a, ['Group B']);
-      expect(controller.b, 'Group B');
+      expect(controller.groupNames, ['Group B']);
+      expect(controller.currentGroupName, 'Group B');
 
       final selector = container.read(
         proxyGroupSelectorStateProvider('Group A', 'be'),
@@ -203,7 +209,7 @@ void main() {
             tun: state.tun.copyWith(enable: true),
           ),
         );
-    expect(container.read(autoSetSystemDnsStateProvider).a, isFalse);
+    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
 
     container
         .read(authorizedTunEnableProvider.notifier)
@@ -226,14 +232,20 @@ void main() {
     expect(vpn.stack, container.read(patchClashConfigProvider).tun.stack);
     expect(vpn.vpnProps, container.read(vpnSettingProvider));
 
-    final dns = container.read(autoSetSystemDnsStateProvider);
-    expect(dns.a, isTrue);
-    expect(dns.b, isTrue);
+    expect(container.read(shouldPatchSystemDnsProvider), isTrue);
+
+    container
+        .read(networkSettingProvider.notifier)
+        .update((state) => state.copyWith(autoSetSystemDns: false));
+    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
+    container
+        .read(networkSettingProvider.notifier)
+        .update((state) => state.copyWith(autoSetSystemDns: true));
 
     container
         .read(authorizedTunEnableProvider.notifier)
         .update((_) => TunAuthorizationState.unauthorized);
-    expect(container.read(autoSetSystemDnsStateProvider).a, isFalse);
+    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
 
     container.read(excludeSSIDsProvider.notifier).update((_) => ['Office']);
     container.read(currentSSIDProvider.notifier).update((_) => 'Office');
@@ -370,15 +382,6 @@ void main() {
   });
 }
 
-_TestProfiles _profiles(ProviderContainer container) {
-  return container.read(profilesProvider.notifier) as _TestProfiles;
-}
-
-class _TestProfiles extends Profiles {
-  @override
-  List<Profile> build() => [];
-
-  void replace(List<Profile> profiles) {
-    state = profiles;
-  }
+TestProfiles _profiles(ProviderContainer container) {
+  return container.read(profilesProvider.notifier) as TestProfiles;
 }

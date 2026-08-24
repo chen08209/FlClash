@@ -12,14 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _TestProfiles extends Profiles {
-  final List<Profile> initial;
-
-  _TestProfiles(this.initial);
-
-  @override
-  List<Profile> build() => initial;
-}
+import '../helpers/test_profiles.dart';
 
 Future<ProviderContainer> pumpProfiles(
   WidgetTester tester, {
@@ -32,7 +25,7 @@ Future<ProviderContainer> pumpProfiles(
 
   final container = ProviderContainer(
     overrides: [
-      profilesProvider.overrideWith(() => _TestProfiles(profiles)),
+      profilesProvider.overrideWith(() => TestProfiles(profiles)),
       currentProfileIdProvider.overrideWithBuild((_, _) => profiles.first.id),
     ],
   );

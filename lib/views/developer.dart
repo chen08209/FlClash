@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -22,7 +22,12 @@ class DeveloperView extends ConsumerWidget {
           title: Text(appLocalizations.messageTest),
           minVerticalPadding: 12,
           onTap: () {
-            context.showNotifier(appLocalizations.messageTestTip);
+            for (final level in MessageLevel.values) {
+              context.showNotifier(
+                '${level.name}: ${appLocalizations.messageTestTip}',
+                level: level,
+              );
+            }
           },
         ),
         ListItem(
@@ -30,11 +35,11 @@ class DeveloperView extends ConsumerWidget {
           minVerticalPadding: 12,
           onTap: () {
             for (int i = 0; i < 1000; i++) {
-              globalState.container
+              ref
                   .read(logsProvider.notifier)
                   .add(
                     Log.app(
-                      '[$i]${utils.generateRandomString(maxLength: 200, minLength: 20)}',
+                      '[$i]${generateRandomString(maxLength: 200, minLength: 20)}',
                     ),
                   );
             }
@@ -45,37 +50,35 @@ class DeveloperView extends ConsumerWidget {
             title: Text(appLocalizations.crashTest),
             minVerticalPadding: 12,
             onTap: () async {
-              final res = await globalState.showMessage(
+              final coreAction = ref.read(coreActionProvider.notifier);
+              final res = await dialogs.showMessage(
                 message: TextSpan(text: appLocalizations.confirmForceCrashCore),
               );
               if (res != true) {
                 return;
               }
-              coreController.crash();
+              unawaited(coreAction.crash());
             },
           ),
         ListItem(
           title: Text(appLocalizations.clearData),
           minVerticalPadding: 12,
           onTap: () async {
-            final res = await globalState.showMessage(
+            final storeAction = ref.read(storeActionProvider.notifier);
+            final res = await dialogs.showMessage(
               message: TextSpan(text: appLocalizations.confirmClearAllData),
             );
             if (res != true) {
               return;
             }
-            await globalState.container
-                .read(storeActionProvider.notifier)
-                .handleClear();
+            await storeAction.handleClear();
           },
         ),
         ListItem(
           title: Text(appLocalizations.pruneCache),
           minVerticalPadding: 12,
           onTap: () async {
-            await globalState.container
-                .read(storeActionProvider.notifier)
-                .shakingStore();
+            await ref.read(storeActionProvider.notifier).shakingStore();
           },
         ),
       ],

@@ -55,12 +55,14 @@ class VpnService : SystemVpnService(), ManagedService {
         if (nextUid == -1) {
             return ""
         }
-        return uidPackageNameMap.getOrPut(nextUid) {
-            packageManager
-                .getPackagesForUid(nextUid)
-                ?.firstOrNull()
-                .orEmpty()
-        }
+        val cached = uidPackageNameMap[nextUid]
+        if (cached != null) return cached
+        val packageName = packageManager
+            .getPackagesForUid(nextUid)
+            ?.firstOrNull()
+            ?.takeIf { it.isNotEmpty() }
+            .orEmpty()
+        return uidPackageNameMap.putIfAbsent(nextUid, packageName) ?: packageName
     }
 
     private val VpnOptions.tunAddress

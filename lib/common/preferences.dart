@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/system_dns.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'constant.dart';
 
 class Preferences {
   static Preferences? _instance;
@@ -46,7 +47,11 @@ class Preferences {
       if (configString == null) return null;
       final Map<String, Object?>? configMap = json.decode(configString);
       return configMap;
-    } catch (_) {
+    } catch (e) {
+      commonPrint.log(
+        'getConfigMap error ${e.toString()}',
+        logLevel: LogLevel.warning,
+      );
       return null;
     }
   }
@@ -57,7 +62,11 @@ class Preferences {
       final clashConfigString = preferences?.getString(clashConfigKey);
       if (clashConfigString == null) return null;
       return json.decode(clashConfigString);
-    } catch (_) {
+    } catch (e) {
+      commonPrint.log(
+        'getClashConfigMap error ${e.toString()}',
+        logLevel: LogLevel.warning,
+      );
       return null;
     }
   }
@@ -67,7 +76,11 @@ class Preferences {
       final preferences = await sharedPreferencesCompleter.future;
       await preferences?.remove(clashConfigKey);
       return;
-    } catch (_) {
+    } catch (e) {
+      commonPrint.log(
+        'clearClashConfig error ${e.toString()}',
+        logLevel: LogLevel.warning,
+      );
       return;
     }
   }
@@ -83,6 +96,36 @@ class Preferences {
   Future<bool> saveConfig(Config config) async {
     final preferences = await sharedPreferencesCompleter.future;
     return preferences?.setString(configKey, json.encode(config)) ?? false;
+  }
+
+  Future<SystemDnsRecord?> getSystemDnsRecord() async {
+    try {
+      final sharedPreferencesIns = await sharedPreferencesCompleter.future;
+      final raw = sharedPreferencesIns?.getString(systemDnsRecordKey);
+      if (raw == null) {
+        return null;
+      }
+      return SystemDnsRecord.fromJson(json.decode(raw));
+    } catch (e) {
+      commonPrint.log(
+        'getSystemDnsRecord error ${e.toString()}',
+        logLevel: LogLevel.warning,
+      );
+      return null;
+    }
+  }
+
+  Future<void> saveSystemDnsRecord(SystemDnsRecord record) async {
+    final sharedPreferencesIns = await sharedPreferencesCompleter.future;
+    await sharedPreferencesIns?.setString(
+      systemDnsRecordKey,
+      json.encode(record),
+    );
+  }
+
+  Future<void> clearSystemDnsRecord() async {
+    final sharedPreferencesIns = await sharedPreferencesCompleter.future;
+    await sharedPreferencesIns?.remove(systemDnsRecordKey);
   }
 
   Future<void> clearPreferences() async {

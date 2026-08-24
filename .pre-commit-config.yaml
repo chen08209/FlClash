@@ -6,9 +6,15 @@ repos:
         entry: dart format
         language: system
         files: \.dart$
+        stages: [pre-commit]
       - id: flutter-analyze
         name: flutter analyze (pre-push)
         entry: flutter analyze --no-fatal-infos
         language: system
         pass_filenames: false
         stages: [pre-push]
+      - id: commit-msg-format
+        name: conventional commit message
+        entry: tool/check_commit_msg.sh
+        language: system
+        stages: [commit-msg]

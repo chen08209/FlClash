@@ -170,6 +170,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _textController.dispose();
     _isFabExtendedNotifier.dispose();
     _loadingNotifier.dispose();
+    _keywordsNotifier.dispose();
     super.dispose();
   }
 
@@ -191,12 +192,14 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget? _buildLeading(VoidCallback? backAction) {
     if (_isEdit) {
       return IconButton(
+        tooltip: context.appLocalizations.close,
         onPressed: _popAppBarLayer,
         icon: const Icon(Icons.close),
       );
     }
     if (_isSearch) {
       return IconButton(
+        tooltip: context.appLocalizations.back,
         onPressed: _popAppBarLayer,
         icon: const Icon(Icons.arrow_back),
       );
@@ -240,12 +243,17 @@ class CommonScaffoldState extends State<CommonScaffold> {
   List<Widget> _buildActions(bool hasSearch, List<Widget> actions) {
     if (_isSearch) {
       return genActions([
-        IconButton(onPressed: _handleClear, icon: const Icon(Icons.close)),
+        IconButton(
+          tooltip: context.appLocalizations.clearSearch,
+          onPressed: _handleClear,
+          icon: const Icon(Icons.close),
+        ),
       ]);
     }
     return genActions([
       if (hasSearch && widget.searchState?.autoAddSearch == true)
         IconButton(
+          tooltip: context.appLocalizations.search,
           onPressed: () {
             _updateSearchState((state) => state?.copyWith(query: ''));
           },

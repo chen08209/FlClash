@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -23,9 +24,12 @@ class ResourcesView extends StatelessWidget {
       title: context.appLocalizations.resources,
       body: Consumer(
         builder: (_, ref, _) {
-          final vm2 = ref.watch(
+          final geoSetting = ref.watch(
             patchClashConfigProvider.select(
-              (state) => VM2(state.geoAutoUpdate, state.geoUpdateInterval),
+              (state) => (
+                autoUpdate: state.geoAutoUpdate,
+                updateInterval: state.geoUpdateInterval,
+              ),
             ),
           );
           return generateListView([
@@ -34,7 +38,7 @@ class ResourcesView extends StatelessWidget {
               items: [
                 ListItem.toggle(
                   title: Text(appLocalizations.geoAutoUpdate),
-                  value: vm2.a,
+                  value: geoSetting.autoUpdate,
                   onChanged: (value) {
                     ref
                         .read(patchClashConfigProvider.notifier)
@@ -46,7 +50,7 @@ class ResourcesView extends StatelessWidget {
                 ListItem.input(
                   title: Text(appLocalizations.geoAutoUpdateInterval),
                   trailing: Text(
-                    appLocalizations.hoursCount(vm2.b),
+                    appLocalizations.hoursCount(geoSetting.updateInterval),
                     style: context.textTheme.bodyMedium?.toSoftBold,
                   ),
                   suffixText: appLocalizations.hours,
@@ -69,7 +73,7 @@ class ResourcesView extends StatelessWidget {
                     }
                     return null;
                   },
-                  value: vm2.b.toString(),
+                  value: geoSetting.updateInterval.toString(),
                   onChanged: (value) {
                     final intValue = int.tryParse(value ?? '') ?? 0;
                     if (intValue <= 0) {
@@ -120,7 +124,7 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
   }
 
   Future<void> _updateUrl(String url) async {
-    final newUrl = await globalState.showCommonDialog<String>(
+    final newUrl = await dialogs.showCommonDialog<String>(
       child: UpdateGeoUrlFormDialog(
         title: widget.type.name,
         url: url,
@@ -133,9 +137,11 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
             .read(geoResourceActionProvider.notifier)
             .updateGeoResourceUrl(widget.type, newUrl);
       } catch (e) {
-        globalState.showMessage(
-          title: widget.type.name,
-          message: TextSpan(text: e.toString()),
+        unawaited(
+          dialogs.showMessage(
+            title: widget.type.name,
+            message: TextSpan(text: e.toString()),
+          ),
         );
       }
     }

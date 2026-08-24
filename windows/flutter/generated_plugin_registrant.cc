@@ -14,7 +14,7 @@
 #include <hotkey_manager_windows/hotkey_manager_windows_plugin_c_api.h>
 #include <proxy/proxy_plugin_c_api.h>
 #include <screen_retriever_windows/screen_retriever_windows_plugin_c_api.h>
-#include <tray_manager/tray_manager_plugin.h>
+#include <tray/tray_plugin_c_api.h>
 #include <url_launcher_windows/url_launcher_windows.h>
 #include <wifi_ssid/wifi_ssid_plugin_c_api.h>
 #include <window_ext/window_ext_plugin_c_api.h>
@@ -37,8 +37,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("ProxyPluginCApi"));
   ScreenRetrieverWindowsPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ScreenRetrieverWindowsPluginCApi"));
-  TrayManagerPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("TrayManagerPlugin"));
+  TrayPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("TrayPluginCApi"));
   UrlLauncherWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("UrlLauncherWindows"));
   WifiSsidPluginCApiRegisterWithRegistrar(

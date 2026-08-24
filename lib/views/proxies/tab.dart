@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,10 +37,10 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
       if (prev == next) {
         return;
       }
-      if (!stringListEquality.equals(prev?.a, next.a)) {
+      if (!stringListEquality.equals(prev?.groupNames, next.groupNames)) {
         _destroyTabController();
-        final groupNames = next.a;
-        final currentGroupName = next.b;
+        final groupNames = next.groupNames;
+        final currentGroupName = next.currentGroupName;
         final index = groupNames.indexWhere((item) => item == currentGroupName);
         _updateTabController(groupNames.length, index);
       }
@@ -50,6 +50,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   @override
   void dispose() {
     _destroyTabController();
+    _hasMoreButtonNotifier.dispose();
     super.dispose();
   }
 
@@ -66,7 +67,9 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     if (group == null) {
       return;
     }
-    await delayTest(group.all, group.testUrl);
+    await ref
+        .read(proxiesActionProvider.notifier)
+        .delayTest(group.all, group.testUrl);
   }
 
   Group? get currentGroup {
@@ -86,6 +89,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
       builder: (_, ref, _) {
         final isMobileView = ref.watch(isMobileViewProvider);
         return IconButton(
+          tooltip: context.appLocalizations.more,
           onPressed: _showMoreMenu,
           icon: isMobileView
               ? const Icon(Icons.expand_more)
@@ -106,8 +110,8 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
             child: Consumer(
               builder: (_, ref, _) {
                 final state = ref.watch(proxiesTabControllerStateProvider);
-                final groupNames = state.a;
-                final currentGroupName = state.b;
+                final groupNames = state.groupNames;
+                final currentGroupName = state.currentGroupName;
                 return SizedBox(
                   width: double.infinity,
                   child: Wrap(
@@ -124,7 +128,9 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                             );
                             if (index == -1) return;
                             _tabController?.animateTo(index);
-                            updateCurrentGroupName(groupName);
+                            ref
+                                .read(proxiesActionProvider.notifier)
+                                .updateCurrentGroupName(groupName);
                             Navigator.of(context).pop();
                           },
                           isSelected: groupName == currentGroupName,
@@ -150,7 +156,9 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
       if (!mounted) {
         return;
       }
-      updateCurrentGroupName(group.name);
+      ref
+          .read(proxiesActionProvider.notifier)
+          .updateCurrentGroupName(group.name);
     });
   }
 
@@ -253,7 +261,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
         Expanded(
           child: LayoutBuilder(
             builder: (_, constraints) {
-              final columns = utils.getProxiesColumns(
+              final columns = getProxiesColumns(
                 max(constraints.maxWidth - 32, 0),
                 proxiesLayout,
               );
@@ -306,7 +314,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   }
 
   PageStorageKey _getPageStorageKey() {
-    final profile = globalState.container.read(currentProfileProvider);
+    final profile = ref.read(currentProfileProvider);
     final key =
         '${profile?.id}_${ScrollPositionCacheKey.proxiesTabList.name}_${widget.group.name}';
     return ProxiesTabView.pageListStoreMap.updateCacheValue(
@@ -329,6 +337,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
       min(
         16 +
             getScrollToSelectedOffset(
+              ref: ref,
               groupName: widget.group.name,
               proxies: widget.group.all,
               columns: widget.columns,
@@ -391,16 +400,20 @@ class _DelayTestButtonState extends State<DelayTestButton>
   late AnimationController _controller;
   late Animation<double> _animation;
 
+  bool _running = false;
+
   Future<void> _healthcheck() async {
-    if (_controller.isAnimating) {
+    if (_running) {
       return;
     }
-    _controller.forward();
+    _running = true;
+    unawaited(_controller.forward());
     try {
       await widget.onClick();
     } finally {
+      _running = false;
       if (mounted) {
-        _controller.reverse();
+        unawaited(_controller.reverse());
       }
     }
   }

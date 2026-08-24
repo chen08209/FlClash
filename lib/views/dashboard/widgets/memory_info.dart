@@ -5,25 +5,35 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final _memoryStateNotifier = ValueNotifier<num>(0);
-
-class MemoryInfo extends StatefulWidget {
+class MemoryInfo extends ConsumerStatefulWidget {
   final Future<num> Function()? memoryReader;
 
   const MemoryInfo({super.key, @visibleForTesting this.memoryReader});
 
   @override
-  State<MemoryInfo> createState() => _MemoryInfoState();
+  ConsumerState<MemoryInfo> createState() => _MemoryInfoState();
 }
 
-class _MemoryInfoState extends State<MemoryInfo>
+class _MemoryInfoState extends ConsumerState<MemoryInfo>
     with WidgetsBindingObserver, ActivePollingMixin<MemoryInfo> {
+  final _memoryStateNotifier = ValueNotifier<num>(0);
+
+  CoreController get _core => ref.read(coreHandlerProvider);
+
   @override
   Duration get pollInterval => const Duration(seconds: 2);
+
+  @override
+  void dispose() {
+    _memoryStateNotifier.dispose();
+    super.dispose();
+  }
 
   @override
   Future<void> poll(PollGuard isCurrent) async {
@@ -47,6 +57,15 @@ class _MemoryInfoState extends State<MemoryInfo>
     }
   }
 
+  Future<num> _readTotal() async {
+    final rss = ProcessInfo.currentRss;
+    final coreConnected = ref.read(coreStatusProvider) == CoreStatus.connected;
+    if (system.isDesktop && coreConnected) {
+      return await _core.getMemory() + rss;
+    }
+    return rss;
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
@@ -59,7 +78,7 @@ class _MemoryInfoState extends State<MemoryInfo>
             label: appLocalizations.memoryInfo,
           ),
           onPressed: () {
-            coreController.requestGc();
+            _core.requestGc();
           },
           child: Container(
             padding: baseInfoEdgeInsets.copyWith(top: 0),
@@ -100,14 +119,4 @@ class _MemoryInfoState extends State<MemoryInfo>
       ),
     );
   }
-}
-
-Future<num> _readTotal() async {
-  final rss = ProcessInfo.currentRss;
-  final coreConnected =
-      globalState.container.read(coreStatusProvider) == CoreStatus.connected;
-  if (system.isDesktop && coreConnected) {
-    return await coreController.getMemory() + rss;
-  }
-  return rss;
 }

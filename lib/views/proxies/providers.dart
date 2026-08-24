@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/core.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -23,21 +23,28 @@ class ProvidersView extends ConsumerStatefulWidget {
 
 class _ProvidersViewState extends ConsumerState<ProvidersView> {
   Future<void> _updateProviders() async {
-    final ref = globalState.container;
     final providers = ref.read(providersProvider);
+    final proxiesAction = ref.read(proxiesActionProvider.notifier);
     final List<UpdatingMessage> messages = [];
     final updateProviders = providers.map<Future>((provider) async {
-      final message = await ref
-          .read(proxiesActionProvider.notifier)
-          .updateProvider(provider);
-      if (message.isNotEmpty) {
-        messages.add(UpdatingMessage(label: provider.name, message: message));
+      try {
+        final message = await proxiesAction.updateProvider(
+          provider,
+          showLoading: true,
+        );
+        if (message.isNotEmpty) {
+          messages.add(UpdatingMessage(label: provider.name, message: message));
+        }
+      } catch (error) {
+        messages.add(
+          UpdatingMessage(label: provider.name, message: compactError(error)),
+        );
       }
     });
     await Future.wait(updateProviders);
-    ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
+    proxiesAction.updateGroupsDebounce();
     if (messages.isNotEmpty) {
-      globalState.showAllUpdatingMessagesDialog(messages);
+      unawaited(dialogs.showAllUpdatingMessagesDialog(messages));
     }
   }
 
@@ -60,49 +67,51 @@ class _ProvidersViewState extends ConsumerState<ProvidersView> {
       items: ruleProviders,
     );
     return AdaptiveSheetScaffold(
-      actions: [IconButtonData(icon: Icons.sync, onPressed: _updateProviders)],
+      actions: [
+        IconButtonData(
+          icon: Icons.sync,
+          onPressed: _updateProviders,
+          tooltip: context.appLocalizations.update,
+        ),
+      ],
       body: generateListView([...proxySection, ...ruleSection]),
       title: appLocalizations.providers,
     );
   }
 }
 
-class ProviderItem extends StatelessWidget {
+class ProviderItem extends ConsumerWidget {
   final ExternalProvider provider;
 
   const ProviderItem({super.key, required this.provider});
 
-  Future<void> _handleUpdateProvider() async {
+  Future<void> _handleUpdateProvider(WidgetRef ref) async {
     if (provider.vehicleType != 'HTTP') return;
-    final ref = globalState.container;
+    final proxiesAction = ref.read(proxiesActionProvider.notifier);
     await globalState.safeRun(() async {
-      final message = await ref
-          .read(proxiesActionProvider.notifier)
-          .updateProvider(provider);
-      if (message.isNotEmpty) throw message;
+      final message = await proxiesAction.updateProvider(
+        provider,
+        showLoading: true,
+      );
+      if (message.isNotEmpty) throw MessageException(message);
     }, silence: false);
-    ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
+    proxiesAction.updateGroupsDebounce();
   }
 
-  Future<void> _handleSideLoadProvider() async {
-    final ref = globalState.container;
+  Future<void> _handleSideLoadProvider(WidgetRef ref) async {
+    final proxiesAction = ref.read(proxiesActionProvider.notifier);
     await globalState.safeRun<void>(() async {
       final platformFile = await picker.pickerFile();
       if (platformFile == null || provider.path == null) return;
       final bytes = await platformFile.readBytes();
       await File(provider.path!).safeWriteAsBytes(bytes);
-      final providerName = provider.name;
-      final message = await coreController.sideLoadExternalProvider(
-        providerName: providerName,
-        data: utf8.decode(bytes),
+      final message = await proxiesAction.sideLoadExternalProvider(
+        provider,
+        utf8.decode(bytes),
       );
-      if (message.isNotEmpty) throw message;
-      ref
-          .read(providersProvider.notifier)
-          .setProvider(await coreController.getExternalProvider(provider.name));
-      if (message.isNotEmpty) throw message;
+      if (message.isNotEmpty) throw MessageException(message);
     });
-    ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
+    proxiesAction.updateGroupsDebounce();
   }
 
   String _buildProviderDesc(BuildContext context) {
@@ -115,7 +124,7 @@ class ProviderItem extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListItem(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       title: Text(provider.name),
@@ -138,7 +147,7 @@ class ProviderItem extends StatelessWidget {
               CommonChip(
                 avatar: const Icon(Icons.upload),
                 label: context.appLocalizations.upload,
-                onPressed: _handleSideLoadProvider,
+                onPressed: () => _handleSideLoadProvider(ref),
               ),
               if (provider.vehicleType == 'HTTP')
                 Consumer(
@@ -158,7 +167,7 @@ class ProviderItem extends StatelessWidget {
                         : CommonChip(
                             avatar: const Icon(Icons.sync),
                             label: context.appLocalizations.sync,
-                            onPressed: _handleUpdateProvider,
+                            onPressed: () => _handleUpdateProvider(ref),
                           );
                   },
                 ),

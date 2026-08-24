@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/launch.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_ext/window_ext.dart';
@@ -65,6 +65,9 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   void onWindowMoved() {
     super.onWindowMoved();
     windowManager.getPosition().then((offset) {
+      if (!mounted) {
+        return;
+      }
       ref
           .read(windowSettingProvider.notifier)
           .update((state) => state.copyWith(top: offset.dy, left: offset.dx));
@@ -75,6 +78,9 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   Future<void> onWindowResized() async {
     super.onWindowResized();
     final size = await windowManager.getSize();
+    if (!mounted) {
+      return;
+    }
     ref
         .read(windowSettingProvider.notifier)
         .update(
@@ -98,7 +104,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   }
 
   @override
-  Future<void> dispose() async {
+  void dispose() {
     windowManager.removeListener(this);
     windowExtManager.removeListener(this);
     super.dispose();
@@ -136,14 +142,14 @@ class WindowHeaderContainer extends StatelessWidget {
   }
 }
 
-class WindowHeader extends StatefulWidget {
+class WindowHeader extends ConsumerStatefulWidget {
   const WindowHeader({super.key});
 
   @override
-  State<WindowHeader> createState() => _WindowHeaderState();
+  ConsumerState<WindowHeader> createState() => _WindowHeaderState();
 }
 
-class _WindowHeaderState extends State<WindowHeader> {
+class _WindowHeaderState extends ConsumerState<WindowHeader> {
   final isMaximizedNotifier = ValueNotifier<bool>(false);
   final isPinNotifier = ValueNotifier<bool>(false);
 
@@ -154,8 +160,11 @@ class _WindowHeaderState extends State<WindowHeader> {
   }
 
   Future<void> _initNotifier() async {
-    isMaximizedNotifier.value = await windowManager.isMaximized();
-    isPinNotifier.value = await windowManager.isAlwaysOnTop();
+    final isMaximized = await windowManager.isMaximized();
+    final isPin = await windowManager.isAlwaysOnTop();
+    if (!mounted) return;
+    isMaximizedNotifier.value = isMaximized;
+    isPinNotifier.value = isPin;
   }
 
   @override
@@ -170,12 +179,12 @@ class _WindowHeaderState extends State<WindowHeader> {
     if (isMaximized) {
       await windowManager.unmaximize();
       if (system.isWindows) {
-        windowExtManager.setWindowCornerPreference(round: true);
+        unawaited(windowExtManager.setWindowCornerPreference(round: true));
       }
     } else {
       await windowManager.maximize();
       if (system.isWindows) {
-        windowExtManager.setWindowCornerPreference(round: false);
+        unawaited(windowExtManager.setWindowCornerPreference(round: false));
       }
     }
     final res = await windowManager.isMaximized();
@@ -187,54 +196,9 @@ class _WindowHeaderState extends State<WindowHeader> {
   Future<void> _updatePin() async {
     final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
     await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
-    isPinNotifier.value = await windowManager.isAlwaysOnTop();
-  }
-
-  Widget _buildActions() {
-    return Row(
-      children: [
-        IconButton(
-          onPressed: () async {
-            _updatePin();
-          },
-          icon: ValueListenableBuilder(
-            valueListenable: isPinNotifier,
-            builder: (_, value, _) {
-              return value
-                  ? const Icon(Icons.push_pin)
-                  : const Icon(Icons.push_pin_outlined);
-            },
-          ),
-        ),
-        IconButton(
-          onPressed: () {
-            windowManager.minimize();
-          },
-          icon: const Icon(Icons.remove),
-        ),
-        IconButton(
-          onPressed: () async {
-            _updateMaximized();
-          },
-          icon: ValueListenableBuilder(
-            valueListenable: isMaximizedNotifier,
-            builder: (_, value, _) {
-              return value
-                  ? const Icon(Icons.filter_none, size: 20)
-                  : const Icon(Icons.crop_square);
-            },
-          ),
-        ),
-        IconButton(
-          onPressed: () {
-            globalState.container
-                .read(systemActionProvider.notifier)
-                .handleClose();
-          },
-          icon: const Icon(Icons.close),
-        ),
-      ],
-    );
+    final res = await windowManager.isAlwaysOnTop();
+    if (!mounted) return;
+    isPinNotifier.value = res;
   }
 
   @override
@@ -261,10 +225,88 @@ class _WindowHeaderState extends State<WindowHeader> {
           if (system.isMacOS)
             const Text(appName)
           else ...[
-            Positioned(right: 0, child: _buildActions()),
+            Positioned(
+              right: 0,
+              child: WindowHeaderActions(
+                isPinNotifier: isPinNotifier,
+                isMaximizedNotifier: isMaximizedNotifier,
+                onPin: _updatePin,
+                onMinimize: windowManager.minimize,
+                onMaximize: _updateMaximized,
+                onClose: () {
+                  ref.read(systemActionProvider.notifier).handleClose();
+                },
+              ),
+            ),
           ],
         ],
       ),
+    );
+  }
+}
+
+class WindowHeaderActions extends StatelessWidget {
+  const WindowHeaderActions({
+    super.key,
+    required this.isPinNotifier,
+    required this.isMaximizedNotifier,
+    required this.onPin,
+    required this.onMinimize,
+    required this.onMaximize,
+    required this.onClose,
+  });
+
+  final ValueNotifier<bool> isPinNotifier;
+  final ValueNotifier<bool> isMaximizedNotifier;
+  final VoidCallback onPin;
+  final VoidCallback onMinimize;
+  final VoidCallback onMaximize;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return Row(
+      children: [
+        ValueListenableBuilder(
+          valueListenable: isPinNotifier,
+          builder: (_, value, _) {
+            return IconButton(
+              tooltip: value
+                  ? appLocalizations.unpinWindow
+                  : appLocalizations.pinWindow,
+              onPressed: onPin,
+              icon: value
+                  ? const Icon(Icons.push_pin)
+                  : const Icon(Icons.push_pin_outlined),
+            );
+          },
+        ),
+        IconButton(
+          tooltip: appLocalizations.minimize,
+          onPressed: onMinimize,
+          icon: const Icon(Icons.remove),
+        ),
+        ValueListenableBuilder(
+          valueListenable: isMaximizedNotifier,
+          builder: (_, value, _) {
+            return IconButton(
+              tooltip: value
+                  ? appLocalizations.unmaximize
+                  : appLocalizations.maximize,
+              onPressed: onMaximize,
+              icon: value
+                  ? const Icon(Icons.filter_none, size: 20)
+                  : const Icon(Icons.crop_square),
+            );
+          },
+        ),
+        IconButton(
+          tooltip: appLocalizations.close,
+          onPressed: onClose,
+          icon: const Icon(Icons.close),
+        ),
+      ],
     );
   }
 }

@@ -23,7 +23,12 @@ class CoreController {
   }
 
   @visibleForTesting
-  CoreController.test(this._interface);
+  CoreController.test(this._interface) {
+    _instance = this;
+  }
+
+  @visibleForTesting
+  CoreController.scoped(this._interface);
 
   @visibleForTesting
   static void resetInstance() {
@@ -185,7 +190,7 @@ class CoreController {
     return _interface.stopListener();
   }
 
-  Future<Delay> getDelay(String url, String proxyName) async {
+  Future<Delay?> getDelay(String url, String proxyName) async {
     return _interface.asyncTestDelay(url, proxyName);
   }
 
@@ -201,14 +206,6 @@ class CoreController {
 
   Future<Traffic> getTraffic(bool onlyStatisticsProxy) async {
     return _interface.getTraffic(onlyStatisticsProxy);
-  }
-
-  Future<IpInfo?> getCountryCode(String ip) async {
-    final countryCode = await _interface.getCountryCode(ip);
-    if (countryCode.isEmpty) {
-      return null;
-    }
-    return IpInfo(ip: ip, countryCode: countryCode);
   }
 
   Future<Traffic> getTotalTraffic(bool onlyStatisticsProxy) async {

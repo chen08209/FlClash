@@ -393,6 +393,103 @@ void main() {
     },
   );
 
+  test(
+    'a compatible restore keeps records the backup does not carry',
+    () async {
+      const keptProfile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+      const keptRule = Rule(
+        id: 41,
+        content: 'kept.example',
+        ruleTarget: 'DIRECT',
+      );
+      const keptLink = ProfileRuleLink(
+        profileId: 1,
+        ruleId: 41,
+        scene: RuleScene.custom,
+      );
+      const keptGroup = ProxyGroup(
+        id: 42,
+        profileId: 1,
+        name: 'Kept',
+        type: GroupType.Selector,
+      );
+      await database.restore(
+        [keptProfile],
+        const [],
+        [keptRule],
+        [keptLink],
+        [keptGroup],
+        isOverride: true,
+      );
+
+      const backupProfile = Profile(id: 2, autoUpdateDuration: Duration.zero);
+      const backupGroup = ProxyGroup(
+        id: 43,
+        profileId: 2,
+        name: 'Backup',
+        type: GroupType.Selector,
+      );
+      await database.restore(
+        [backupProfile],
+        const [],
+        const [],
+        const [],
+        [backupGroup],
+      );
+
+      expect(
+        (await database.rulesDao.queryProfileCustomRules(1).get()).single.id,
+        keptRule.id,
+      );
+      expect(
+        (await database.proxyGroupsDao.query(1).get()).single.id,
+        keptGroup.id,
+      );
+      expect(
+        (await database.proxyGroupsDao.query(2).get()).single.id,
+        backupGroup.id,
+      );
+    },
+  );
+
+  test(
+    'a groups-only backup does not clear the rules of other profiles',
+    () async {
+      const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+      const rule = Rule(id: 41, content: 'kept.example', ruleTarget: 'DIRECT');
+      const link = ProfileRuleLink(
+        profileId: 1,
+        ruleId: 41,
+        scene: RuleScene.custom,
+      );
+      await database.restore(
+        [profile],
+        const [],
+        [rule],
+        [link],
+        const [],
+        isOverride: true,
+      );
+
+      const group = ProxyGroup(
+        id: 42,
+        profileId: 1,
+        name: 'Group',
+        type: GroupType.Selector,
+      );
+      await database.restore(const [], const [], const [], const [], [group]);
+
+      expect(
+        (await database.rulesDao.queryProfileCustomRules(1).get()).single.id,
+        rule.id,
+      );
+      expect(
+        (await database.proxyGroupsDao.query(1).get()).single.id,
+        group.id,
+      );
+    },
+  );
+
   test('database restore and custom data replace related records', () async {
     const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
     final script = Script(

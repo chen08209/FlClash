@@ -52,16 +52,16 @@ internal class PackageResolver(
     }
 
     private fun isChinaPackage(packageName: String): Boolean {
-        if (SKIPPED_PREFIXES.any { packageName == it || packageName.startsWith("$it.") }) {
+        if (ChinaPackageMatcher.isSkipped(packageName)) {
             return false
         }
-        if (packageName.matches(CHINA_PACKAGE_REGEX)) {
+        if (ChinaPackageMatcher.matchesKnownPrefix(packageName)) {
             return true
         }
 
         return runCatching {
             val packageInfo = getPackageInfo(packageName)
-            packageInfo.componentNames().any { it.matches(CHINA_PACKAGE_REGEX) } ||
+            packageInfo.componentNames().any(ChinaPackageMatcher::matchesKnownPrefix) ||
                 packageInfo.applicationInfo?.publicSourceDir?.let(::scanArchive) == true
         }.getOrDefault(false)
     }
@@ -100,11 +100,9 @@ internal class PackageResolver(
                     DexBackedDexFile.fromInputStream(null, input)
                 }
                 dexFile.classes.any { clazz ->
-                    clazz.type
-                        .removeSurrounding("L", ";")
-                        .replace('/', '.')
-                        .replace('$', '.')
-                        .matches(CHINA_PACKAGE_REGEX)
+                    ChinaPackageMatcher.matchesKnownPrefix(
+                        ChinaPackageMatcher.classNameOf(clazz.type),
+                    )
                 }
             }
     }
@@ -117,58 +115,5 @@ internal class PackageResolver(
             PackageManager.GET_SERVICES or
             PackageManager.GET_RECEIVERS or
             PackageManager.GET_PROVIDERS
-
-        val SKIPPED_PREFIXES = listOf(
-            "com.google",
-            "com.android.chrome",
-            "com.android.vending",
-            "com.microsoft",
-            "com.apple",
-            "com.zhiliaoapp.musically",
-        )
-
-        val CHINA_PACKAGE_REGEX = listOf(
-            "com.tencent",
-            "com.alibaba",
-            "com.umeng",
-            "com.qihoo",
-            "com.ali",
-            "com.alipay",
-            "com.amap",
-            "com.sina",
-            "com.weibo",
-            "com.vivo",
-            "com.xiaomi",
-            "com.huawei",
-            "com.taobao",
-            "com.secneo",
-            "s.h.e.l.l",
-            "com.stub",
-            "com.kiwisec",
-            "com.secshell",
-            "com.wrapper",
-            "cn.securitystack",
-            "com.mogosec",
-            "com.secoen",
-            "com.netease",
-            "com.mx",
-            "com.qq.e",
-            "com.baidu",
-            "com.bytedance",
-            "com.bugly",
-            "com.miui",
-            "com.oppo",
-            "com.coloros",
-            "com.iqoo",
-            "com.meizu",
-            "com.gionee",
-            "cn.nubia",
-            "com.oplus",
-            "andes.oplus",
-            "com.unionpay",
-            "cn.wps",
-        ).joinToString("|", prefix = "(", postfix = ").*") { prefix ->
-            Regex.escape(prefix)
-        }.toRegex()
     }
 }

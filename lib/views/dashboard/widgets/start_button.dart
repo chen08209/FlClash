@@ -44,7 +44,7 @@ class RunTimeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = utils.getTimeText(timeStamp);
+    final text = getTimeText(timeStamp);
     final style = _runTimeTextStyle(context);
     final textWidget = text.length < 9
         ? Text(text, maxLines: 1, overflow: TextOverflow.visible, style: style)

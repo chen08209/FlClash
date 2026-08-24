@@ -3,7 +3,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/app_manager.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,12 +12,6 @@ typedef OnSelected = void Function(int index);
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
-
-  void _handleToPage(PageLabel pageLabel) {
-    globalState.container
-        .read(currentPageLabelProvider.notifier)
-        .toPage(pageLabel);
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,111 +23,134 @@ class HomePage extends ConsumerWidget {
     }
     return HomeBackScopeContainer(
       child: AppSidebarContainer(
-        child: Material(
-          color: context.colorScheme.surface,
+        child: _HomeShell(
           child: Consumer(
-            builder: (context, ref, child) {
-              final state = ref.watch(navigationStateProvider);
-              final isMobile = state.viewMode == ViewMode.mobile;
-              final navigationItems = state.navigationItems;
-              final currentIndex = state.currentIndex;
-              final bottomNavigationBar = NavigationBarTheme(
-                data: _NavigationBarDefaultsM3(context),
-                child: NavigationBar(
-                  destinations: navigationItems
-                      .map(
-                        (e) => NavigationDestination(
-                          icon: e.icon,
-                          label: Intl.message(e.label.name),
-                        ),
-                      )
-                      .toList(),
-                  onDestinationSelected: (index) {
-                    _handleToPage(navigationItems[index].label);
-                  },
-                  selectedIndex: currentIndex,
-                ),
-              );
-              return Column(
-                children: [
-                  Flexible(
-                    flex: 1,
-                    child: FocusTraversalGroup(
-                      policy: PageTraversalPolicy(),
-                      child: MediaQuery.removePadding(
-                        removeTop: false,
-                        removeBottom: isMobile,
-                        removeLeft: isMobile,
-                        removeRight: isMobile,
-                        context: context,
-                        child: child!,
-                      ),
-                    ),
-                  ),
-                  AnimatedVisibility.bottomNavigation(
-                    visible: isMobile,
-                    child: MediaQuery.removePadding(
-                      removeTop: true,
-                      removeBottom: false,
-                      removeLeft: true,
-                      removeRight: true,
-                      context: context,
-                      child: bottomNavigationBar,
-                    ),
-                  ),
-                ],
+            builder: (_, ref, _) {
+              final navigationItems = ref
+                  .watch(currentNavigationItemsStateProvider)
+                  .value;
+              final isMobile = ref.watch(isMobileViewProvider);
+              return _HomePageView(
+                navigationItems: navigationItems,
+                pageBuilder: (_, index) {
+                  final navigationItem = navigationItems[index];
+                  return _NavigationPage(
+                    key: ValueKey(navigationItem.label),
+                    item: navigationItem,
+                    isMobile: isMobile,
+                    view: navigationItem.builder(context),
+                  );
+                },
               );
             },
-            child: Consumer(
-              builder: (_, ref, _) {
-                final navigationItems = ref
-                    .watch(currentNavigationItemsStateProvider)
-                    .value;
-                final isMobile = ref.watch(isMobileViewProvider);
-                return _HomePageView(
-                  navigationItems: navigationItems,
-                  pageBuilder: (_, index) {
-                    final navigationItem = navigationItems[index];
-                    final navigationView = navigationItem.builder(context);
-                    final scopedView = PageFocusScope(child: navigationView);
-                    final view = KeepScope(
-                      key: ValueKey(navigationItem.label),
-                      keep: navigationItem.keep,
-                      child: isMobile
-                          ? scopedView
-                          : Navigator(
-                              key: ValueKey(
-                                '${navigationItem.label.name}_navigator',
-                              ),
-                              pages: [MaterialPage(child: scopedView)],
-                              onDidRemovePage: (_) {},
-                            ),
-                    );
-                    return Consumer(
-                      key: ValueKey(navigationItem.label),
-                      builder: (_, ref, child) {
-                        final isActive = ref.watch(
-                          currentPageLabelProvider.select(
-                            (label) => label == navigationItem.label,
-                          ),
-                        );
-                        return PageActivityScope(
-                          isActive: isActive,
-                          child: ExcludeFocus(
-                            excluding: !isActive,
-                            child: child!,
-                          ),
-                        );
-                      },
-                      child: view,
-                    );
-                  },
-                );
-              },
-            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HomeShell extends ConsumerWidget {
+  const _HomeShell({required this.child});
+
+  final Widget child;
+
+  void _handleToPage(PageLabel pageLabel, WidgetRef ref) {
+    ref.read(currentPageLabelProvider.notifier).toPage(pageLabel);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(navigationStateProvider);
+    final isMobile = state.viewMode == ViewMode.mobile;
+    final navigationItems = state.navigationItems;
+    return Material(
+      color: context.colorScheme.surface,
+      child: Column(
+        children: [
+          Flexible(
+            flex: 1,
+            child: FocusTraversalGroup(
+              policy: PageTraversalPolicy(),
+              child: MediaQuery.removePadding(
+                removeTop: false,
+                removeBottom: isMobile,
+                removeLeft: isMobile,
+                removeRight: isMobile,
+                context: context,
+                child: child,
+              ),
+            ),
+          ),
+          AnimatedVisibility.bottomNavigation(
+            visible: isMobile,
+            child: MediaQuery.removePadding(
+              removeTop: true,
+              removeBottom: false,
+              removeLeft: true,
+              removeRight: true,
+              context: context,
+              child: NavigationBarTheme(
+                data: _NavigationBarDefaultsM3(context),
+                child: NavigationBar(
+                  destinations: [
+                    for (final item in navigationItems)
+                      NavigationDestination(
+                        icon: item.icon,
+                        label: Intl.message(item.label.name),
+                      ),
+                  ],
+                  onDestinationSelected: (index) {
+                    _handleToPage(navigationItems[index].label, ref);
+                  },
+                  selectedIndex: state.currentIndex,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavigationPage extends StatelessWidget {
+  const _NavigationPage({
+    super.key,
+    required this.item,
+    required this.isMobile,
+    required this.view,
+  });
+
+  final NavigationItem item;
+  final bool isMobile;
+  final Widget view;
+
+  @override
+  Widget build(BuildContext context) {
+    final scopedView = PageFocusScope(child: view);
+    final keptView = KeepScope(
+      key: ValueKey(item.label),
+      keep: item.keep,
+      child: isMobile
+          ? scopedView
+          : Navigator(
+              key: ValueKey('${item.label.name}_navigator'),
+              pages: [MaterialPage(child: scopedView)],
+              onDidRemovePage: (_) {},
+            ),
+    );
+    return Consumer(
+      builder: (_, ref, child) {
+        final isActive = ref.watch(
+          currentPageLabelProvider.select((label) => label == item.label),
+        );
+        return PageActivityScope(
+          isActive: isActive,
+          child: ExcludeFocus(excluding: !isActive, child: child!),
+        );
+      },
+      child: keptView,
     );
   }
 }
@@ -314,9 +330,7 @@ class HomeBackScopeContainer extends ConsumerWidget {
         if (canPop) {
           Navigator.of(realContext).pop();
         } else {
-          await globalState.container
-              .read(systemActionProvider.notifier)
-              .handleClose();
+          await ref.read(systemActionProvider.notifier).handleClose();
         }
         return false;
       },

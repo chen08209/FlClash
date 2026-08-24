@@ -20,7 +20,6 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
   final _requestsStateNotifier = ValueNotifier<TrackerInfosState>(
     const TrackerInfosState(),
   );
-  List<TrackerInfo> _requests = [];
   late final ScrollController _scrollController;
 
   void _onSearch(String value) {
@@ -38,16 +37,14 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
   @override
   void initState() {
     super.initState();
-    _requests = ref.read(requestsProvider).list;
     _scrollController = ScrollController(initialScrollOffset: double.maxFinite);
     _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
-      trackerInfos: _requests,
+      trackerInfos: ref.read(requestsProvider).list,
     );
-    ref.listenManual(requestsProvider.select((state) => VM(state.list)), (
-      prev,
-      next,
+    ref.listenManual(requestsProvider.select((state) => state.revision), (
+      _,
+      _,
     ) {
-      _requests = next.a;
       updateRequestsThrottler();
     });
   }
@@ -64,8 +61,9 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
       if (!mounted) {
         return;
       }
+      final requests = ref.read(requestsProvider).list;
       final isEquality = trackerInfoListEquality.equals(
-        _requests,
+        requests,
         _requestsStateNotifier.value.trackerInfos,
       );
       if (isEquality) {
@@ -74,7 +72,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
-            trackerInfos: _requests,
+            trackerInfos: requests,
           );
         }
       });

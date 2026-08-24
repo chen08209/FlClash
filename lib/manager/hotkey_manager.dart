@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
@@ -8,6 +9,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
+
+extension KeyboardModifierExt on KeyboardModifier {
+  HotKeyModifier toHotKeyModifier() {
+    return switch (this) {
+      KeyboardModifier.alt => HotKeyModifier.alt,
+      KeyboardModifier.capsLock => HotKeyModifier.capsLock,
+      KeyboardModifier.control => HotKeyModifier.control,
+      KeyboardModifier.fn => HotKeyModifier.fn,
+      KeyboardModifier.meta => HotKeyModifier.meta,
+      KeyboardModifier.shift => HotKeyModifier.shift,
+    };
+  }
+}
 
 class HotKeyManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -30,7 +44,6 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
   }
 
   Future<void> _handleHotKeyAction(HotAction action) async {
-    final ref = globalState.container;
     final commonAction = ref.read(commonActionProvider.notifier);
     final systemAction = ref.read(systemActionProvider.notifier);
     switch (action) {
@@ -39,7 +52,7 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
       case HotAction.start:
         commonAction.toggleRunning();
       case HotAction.view:
-        systemAction.updateVisible();
+        unawaited(systemAction.updateVisible());
       case HotAction.proxy:
         systemAction.updateSystemProxy();
       case HotAction.tun:
@@ -76,7 +89,7 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
   Shortcuts _buildCloseShortcuts(Widget child) {
     return Shortcuts(
       shortcuts: {
-        utils.controlSingleActivator(LogicalKeyboardKey.keyW):
+        controlSingleActivator(LogicalKeyboardKey.keyW):
             const CloseWindowIntent(),
         const SingleActivator(LogicalKeyboardKey.escape):
             const EscapeBackIntent(),
@@ -84,9 +97,8 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
       child: Actions(
         actions: {
           CloseWindowIntent: CallbackAction<CloseWindowIntent>(
-            onInvoke: (_) => globalState.container
-                .read(systemActionProvider.notifier)
-                .handleClose(false),
+            onInvoke: (_) =>
+                ref.read(systemActionProvider.notifier).handleClose(false),
           ),
           EscapeBackIntent: CallbackAction<EscapeBackIntent>(
             onInvoke: (_) => globalState.navigatorKey.currentState?.maybePop(),

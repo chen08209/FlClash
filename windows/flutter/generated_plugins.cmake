@@ -11,7 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   hotkey_manager_windows
   proxy
   screen_retriever_windows
-  tray_manager
+  tray
   url_launcher_windows
   wifi_ssid
   window_ext

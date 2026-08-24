@@ -34,8 +34,9 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
         if (!ref.read(isStartProvider) || state == globalState.lastVpnState) {
           return;
         }
-        globalState.showNotifier(
+        dialogs.showNotifier(
           currentAppLocalizations.vpnConfigChangeDetected,
+          level: MessageLevel.warning,
           actionState: MessageActionState(
             actionText: currentAppLocalizations.restart,
             action: () async {
@@ -46,7 +47,7 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
           ),
         );
       },
-      duration: const Duration(seconds: 6),
+      duration: const Duration(seconds: 10),
       fire: true,
     );
   }
