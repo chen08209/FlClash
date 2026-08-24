@@ -69,13 +69,18 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m20(label) => "${label} должен быть числом от 1024 до 49151";
 
-  static String m21(count) => "${count} секунд";
+  static String m21(count) => "${count} прокси";
 
-  static String m22(count) => "Выбрано ${count} элементов";
+  static String m22(count) =>
+      "${Intl.plural(count, one: '${count} правило', few: '${count} правила', many: '${count} правил', other: '${count} правила')}";
 
-  static String m23(label) => "${label} должен быть URL";
+  static String m23(count) => "${count} секунд";
 
-  static String m24(count) =>
+  static String m24(count) => "Выбрано ${count} элементов";
+
+  static String m25(label) => "${label} должен быть URL";
+
+  static String m26(count) =>
       "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -206,7 +211,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Чтобы приложение работало в фоне, отключите для него оптимизацию батареи. Нажмите, чтобы перейти к настройкам.",
     ),
     "batteryOptimizationStatusTip": MessageLookupByLibrary.simpleMessage(
-      "Из-за особенностей системы этот статус не всегда может быть точным.",
+      "Из-за системных ограничений статус оптимизации батареи не может быть точно получен во время работы.",
     ),
     "bind": MessageLookupByLibrary.simpleMessage("Привязать"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage(
@@ -413,6 +418,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "exit": MessageLookupByLibrary.simpleMessage("Выход"),
     "expand": MessageLookupByLibrary.simpleMessage("Стандартный"),
     "expectedStatus": MessageLookupByLibrary.simpleMessage("Ожидаемый статус"),
+    "expireTime": MessageLookupByLibrary.simpleMessage("Срок действия"),
     "exportFile": MessageLookupByLibrary.simpleMessage("Экспорт файла"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("Экспорт логов"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("Экспорт успешен"),
@@ -771,6 +777,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("Проект"),
     "providers": MessageLookupByLibrary.simpleMessage("Провайдеры"),
     "proxies": MessageLookupByLibrary.simpleMessage("Прокси"),
+    "proxiesCount": m21,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("Список прокси пуст"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Цепочки прокси"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -991,9 +998,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ruleEmpty": MessageLookupByLibrary.simpleMessage("Правило пусто"),
     "ruleName": MessageLookupByLibrary.simpleMessage("Название правила"),
-    "ruleProviders": MessageLookupByLibrary.simpleMessage("Провайдеры правил"),
     "ruleSet": MessageLookupByLibrary.simpleMessage("Набор правил"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Цель правила"),
+    "rules": MessageLookupByLibrary.simpleMessage("Правила"),
+    "rulesCount": m22,
     "save": MessageLookupByLibrary.simpleMessage("Сохранить"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения?"),
     "script": MessageLookupByLibrary.simpleMessage("Скрипт"),
@@ -1005,7 +1013,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "search": MessageLookupByLibrary.simpleMessage("Поиск"),
     "seconds": MessageLookupByLibrary.simpleMessage("Секунд"),
-    "secondsCount": m21,
+    "secondsCount": m23,
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("Выбрать прокси"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage(
@@ -1021,7 +1029,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Пожалуйста, выберите подправило",
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
-    "selectedCountTitle": m22,
+    "selectedCountTitle": m24,
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "showLess": MessageLookupByLibrary.simpleMessage("Показать меньше"),
@@ -1069,6 +1077,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Подправило не может быть пустым",
     ),
     "submit": MessageLookupByLibrary.simpleMessage("Отправить"),
+    "subscriptionInfo": MessageLookupByLibrary.simpleMessage(
+      "Информация о подписке",
+    ),
     "suspended": MessageLookupByLibrary.simpleMessage("Приостановлено..."),
     "sync": MessageLookupByLibrary.simpleMessage("Синхронизация"),
     "system": MessageLookupByLibrary.simpleMessage("Система"),
@@ -1112,6 +1123,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("Тональный акцент"),
     "tools": MessageLookupByLibrary.simpleMessage("Инструменты"),
     "torch": MessageLookupByLibrary.simpleMessage("Фонарик"),
+    "totalTraffic": MessageLookupByLibrary.simpleMessage("Общий трафик"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxy-порт"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage(
       "Использование трафика",
@@ -1142,10 +1154,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "Получить профиль через URL",
     ),
-    "urlTip": m23,
+    "urlTip": m25,
     "useHosts": MessageLookupByLibrary.simpleMessage("Использовать hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Использовать системные hosts",
+    ),
+    "usedTraffic": MessageLookupByLibrary.simpleMessage(
+      "Использованный трафик",
     ),
     "userAgent": MessageLookupByLibrary.simpleMessage("User-Agent"),
     "value": MessageLookupByLibrary.simpleMessage("Значение"),
@@ -1166,7 +1181,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
-    "yearsAgo": m24,
+    "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Упрощенный китайский"),
   };
 }

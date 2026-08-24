@@ -395,6 +395,63 @@ void main() {
     });
   });
 
+  group('UpdatingKeys provider', () {
+    test('survives a subscriber that stops watching', () {
+      const key = 'provider_geo';
+      final subscription = container.listen<bool>(
+        isUpdatingProvider(key),
+        (_, _) {},
+      );
+      container.read(updatingKeysProvider.notifier).start(key);
+      subscription.close();
+
+      expect(container.read(isUpdatingProvider(key)), isTrue);
+    });
+
+    test('overlapping operations finish independently', () {
+      const key = 'provider_rules';
+      final notifier = container.read(updatingKeysProvider.notifier);
+
+      final first = notifier.start(key);
+      final second = notifier.start(key);
+
+      notifier.stop(key, first);
+
+      expect(container.read(isUpdatingProvider(key)), isTrue);
+
+      notifier.stop(key, second);
+
+      expect(container.read(isUpdatingProvider(key)), isFalse);
+    });
+
+    test('a stale operation cannot stop a later one', () {
+      const key = 'profile_1';
+      final notifier = container.read(updatingKeysProvider.notifier);
+
+      final stale = notifier.start(key);
+      notifier.stopKeys([key]);
+      notifier.start(key);
+      notifier.stop(key, stale);
+
+      expect(container.read(isUpdatingProvider(key)), isTrue);
+    });
+
+    test('a core disconnect only discards the core scope', () {
+      final notifier = container.read(updatingKeysProvider.notifier);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      notifier.start('geo_resource_MMDB', scope: UpdatingScope.core);
+      notifier.start('provider_geo', scope: UpdatingScope.core);
+      notifier.start('profile_1');
+
+      container.read(coreStatusProvider.notifier).value =
+          CoreStatus.disconnected;
+
+      expect(container.read(isUpdatingProvider('geo_resource_MMDB')), isFalse);
+      expect(container.read(isUpdatingProvider('provider_geo')), isFalse);
+      expect(container.read(isUpdatingProvider('profile_1')), isTrue);
+    });
+  });
+
   group('CoreStatus provider', () {
     test('default is disconnected', () {
       expect(container.read(coreStatusProvider), CoreStatus.disconnected);

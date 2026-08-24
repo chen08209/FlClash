@@ -15,8 +15,8 @@ const _actionMinDuration = Duration(seconds: 6);
 const _maxBufferedMessages = 8;
 const _mobileMaxVisibleMessages = 2;
 const _desktopMaxVisibleMessages = 4;
-const _messageEnterDuration = Duration(milliseconds: 420);
-const _messageExitDuration = Duration(milliseconds: 320);
+const _messageEnterDuration = Duration(milliseconds: 500);
+const _messageExitDuration = Duration(milliseconds: 400);
 const _messageCollapseDuration = Duration(milliseconds: 200);
 const _messageEnterOffset = Offset(0.32, 0);
 const _messageMaxWidth = 500.0;
@@ -342,18 +342,18 @@ class _MessageTransitionState extends State<_MessageTransition>
     )..addStatusListener(_handleAnimationStatus);
     _size = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0, 0.5, curve: Easing.emphasizedDecelerate),
-      reverseCurve: const Interval(0, 0.55, curve: Easing.emphasizedAccelerate),
+      curve: const Interval(0, 0.8, curve: Easing.emphasizedDecelerate),
+      reverseCurve: const Interval(0, 0.65, curve: Easing.emphasizedAccelerate),
     );
     _opacity = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.08, 0.6, curve: Curves.easeOut),
-      reverseCurve: const Interval(0.35, 1, curve: Curves.easeIn),
+      curve: const Interval(0, 0.4, curve: Curves.easeOut),
+      reverseCurve: const Interval(0.5, 1, curve: Curves.easeIn),
     );
     _slide = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutBack,
-      reverseCurve: const Interval(0.35, 1, curve: Curves.easeInCubic),
+      curve: const Interval(0, 0.85, curve: Easing.emphasizedDecelerate),
+      reverseCurve: const Interval(0.45, 1, curve: Curves.easeInCubic),
     );
     _offset = _slide.drive(Tween(begin: _messageEnterOffset, end: Offset.zero));
     if (widget.visible) {
@@ -442,7 +442,7 @@ class _MessageCard extends StatelessWidget {
         },
         child: Card(
           margin: EdgeInsets.zero,
-          shape: AppShape.md,
+          shape: AppShape.lg,
           elevation: 6,
           color: message.level.containerColor(context),
           child: ConstrainedBox(

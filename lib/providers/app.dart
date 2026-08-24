@@ -391,12 +391,71 @@ class Item extends _$Item with AutoDisposeNotifierMixin {
   }
 }
 
-@riverpod
-class IsUpdating extends _$IsUpdating with AutoDisposeNotifierMixin {
+@Riverpod(keepAlive: true)
+class UpdatingKeys extends _$UpdatingKeys {
+  final _operations = <String, Set<int>>{};
+  final _scopes = <String, UpdatingScope>{};
+  int _operation = 0;
+
   @override
-  bool build(String name) {
-    return false;
+  Set<String> build() {
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.connected) {
+        _discardScope(UpdatingScope.core);
+      }
+    });
+    return const <String>{};
   }
+
+  int start(String key, {UpdatingScope scope = UpdatingScope.local}) {
+    final operation = ++_operation;
+    _operations.putIfAbsent(key, () => <int>{}).add(operation);
+    _scopes[key] = scope;
+    if (!state.contains(key)) {
+      state = {...state, key};
+    }
+    return operation;
+  }
+
+  void stop(String key, int operation) {
+    final operations = _operations[key];
+    if (operations == null) {
+      return;
+    }
+    operations.remove(operation);
+    if (operations.isNotEmpty) {
+      return;
+    }
+    _discard([key]);
+  }
+
+  void stopKeys(Iterable<String> keys) {
+    _discard(keys.toList());
+  }
+
+  void _discardScope(UpdatingScope scope) {
+    _discard(state.where((key) => _scopes[key] == scope).toList());
+  }
+
+  void _discard(List<String> keys) {
+    if (keys.isEmpty) {
+      return;
+    }
+    for (final key in keys) {
+      _operations.remove(key);
+      _scopes.remove(key);
+    }
+    final next = state.where((key) => !keys.contains(key)).toSet();
+    if (next.length == state.length) {
+      return;
+    }
+    state = next;
+  }
+}
+
+@riverpod
+bool isUpdating(Ref ref, String name) {
+  return ref.watch(updatingKeysProvider).contains(name);
 }
 
 @Riverpod(keepAlive: true)

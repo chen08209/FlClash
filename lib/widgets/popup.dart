@@ -22,6 +22,13 @@ const _itemIconSize = 20.0;
 
 const _itemPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 12);
 
+const _itemArrowPadding = EdgeInsets.only(
+  left: 12,
+  top: 12,
+  bottom: 12,
+  right: 8,
+);
+
 class CommonPopupRoute<T> extends PopupRoute<T> {
   CommonPopupRoute({
     required this.builder,
@@ -515,7 +522,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       splashColor: Colors.transparent,
       hoverColor: item.danger ? colorScheme.error.opacity10 : null,
       child: Padding(
-        padding: _itemPadding,
+        padding: arrow != null ? _itemArrowPadding : _itemPadding,
         child: Row(
           children: [
             if (item.icon != null) ...[

@@ -130,8 +130,8 @@ void main() {
   ) async {
     await pumpView(tester, permission: WifiSsidPermission.denied);
 
-    expect(find.text('Tap to authorize'), findsOneWidget);
-    expect(find.text('Authorized'), findsNothing);
+    expect(find.bySemanticsLabel('Tap to authorize'), findsOneWidget);
+    expect(find.bySemanticsLabel('Authorized'), findsNothing);
   });
 
   testWidgets('the location prerequisite reflects a granted permission', (
@@ -139,8 +139,8 @@ void main() {
   ) async {
     await pumpView(tester, permission: WifiSsidPermission.granted);
 
-    expect(find.text('Authorized'), findsOneWidget);
-    expect(find.text('Tap to authorize'), findsNothing);
+    expect(find.bySemanticsLabel('Authorized'), findsOneWidget);
+    expect(find.bySemanticsLabel('Tap to authorize'), findsNothing);
   });
 }
 

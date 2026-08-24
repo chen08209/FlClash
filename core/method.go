@@ -229,12 +229,20 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	}),
 	updateExternalProviderMethod: withArguments(func(name *string, response MethodResponse) {
 		safeGo(response, func() {
-			response.success(handleUpdateExternalProvider(*name))
+			if err := handleUpdateExternalProvider(*name); err != nil {
+				response.failure(err.Code, err.Message, err.Details)
+				return
+			}
+			response.success("")
 		})
 	}),
 	sideLoadExternalProviderMethod: withArguments(func(params *SideLoadParams, response MethodResponse) {
 		safeGo(response, func() {
-			response.success(handleSideLoadExternalProvider(params.ProviderName, []byte(params.Data)))
+			if err := handleSideLoadExternalProvider(params.ProviderName, []byte(params.Data)); err != nil {
+				response.failure(err.Code, err.Message, err.Details)
+				return
+			}
+			response.success("")
 		})
 	}),
 	updateGeoDataMethod: withArguments(func(geoType *string, response MethodResponse) {

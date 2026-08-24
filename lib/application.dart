@@ -152,6 +152,7 @@ class ApplicationState extends ConsumerState<Application> {
             ...GlobalMaterialLocalizations.delegates,
           ],
           builder: (_, child) {
+            // ignore: deprecated_member_use
             return MaterialUiCompatibilityBridge(
               child: buildManagerStack(
                 isDesktop: system.isDesktop,

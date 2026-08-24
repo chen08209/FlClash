@@ -5,6 +5,7 @@ import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -170,15 +171,28 @@ void main() {
   ) async {
     await _pumpHost(tester);
 
+    const longMessage =
+        'failed to update provider because the Go core returned a very long '
+        'error message that cannot fit on a single line';
     final result = dialogs.showAllUpdatingMessagesDialog(const [
       UpdatingMessage(label: 'profile-a', message: 'updated'),
-      UpdatingMessage(label: 'profile-b', message: 'failed'),
+      UpdatingMessage(label: 'profile-b', message: longMessage),
     ]);
     await tester.pumpAndSettle();
 
     expect(find.text('profile-a'), findsOneWidget);
     expect(find.text('profile-b'), findsOneWidget);
-    expect(find.text('failed'), findsOneWidget);
+    final messageText = tester.widget<Text>(find.text(longMessage));
+    expect(messageText.maxLines, 2);
+    expect(messageText.overflow, TextOverflow.ellipsis);
+    expect(find.byIcon(Icons.error_outline), findsNothing);
+    expect(
+      find.ancestor(
+        of: find.text(longMessage),
+        matching: find.byType(TooltipText),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();

@@ -563,6 +563,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.12.0"
+  flutter_staggered_grid_view:
+    dependency: "direct main"
+    description:
+      name: flutter_staggered_grid_view
+      sha256: "19e7abb550c96fbfeb546b23f3ff356ee7c59a019a651f8f102a4ba9b7349395"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.0"
   flutter_svg:
     dependency: "direct main"
     description:
@@ -975,7 +983,7 @@ packages:
     source: hosted
     version: "0.19.2"
   navigator_resizable:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: navigator_resizable
       sha256: "831350d4d44c6defbe06860944da1d9cbb4951ffe7cbc179cea7d049afa50622"
@@ -1384,14 +1392,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  smooth_sheets:
-    dependency: "direct main"
-    description:
-      name: smooth_sheets
-      sha256: "1dc609c2388a6462910149ae81910928ef39b323d31321f3124e1c5fc5ac62cb"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.1"
   source_gen:
     dependency: transitive
     description:

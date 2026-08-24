@@ -391,7 +391,7 @@ void main() {
     );
 
     await tester.pump(const Duration(seconds: 3));
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 500));
     expect(
       find.text('held while the finger stays down on the card'),
       findsNothing,
@@ -431,7 +431,7 @@ void main() {
     await gesture.up();
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 3));
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 500));
     expect(
       find.text('the newer message that would expire first'),
       findsNothing,

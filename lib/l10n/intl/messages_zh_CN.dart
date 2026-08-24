@@ -63,13 +63,17 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m20(label) => "${label} 必须在 1024 到 49151 之间";
 
-  static String m21(count) => "${count} 秒";
+  static String m21(count) => "${count} 个代理";
 
-  static String m22(count) => "已选择 ${count} 项";
+  static String m22(count) => "${count} 条规则";
 
-  static String m23(label) => "${label}必须为URL";
+  static String m23(count) => "${count} 秒";
 
-  static String m24(count) => "${count} 年前";
+  static String m24(count) => "已选择 ${count} 项";
+
+  static String m25(label) => "${label}必须为URL";
+
+  static String m26(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -149,7 +153,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "为保证后台运行，请关闭本应用的电池优化。点击前往设置。",
     ),
     "batteryOptimizationStatusTip": MessageLookupByLibrary.simpleMessage(
-      "受系统影响，不代表一定准确",
+      "由于系统限制，运行状态下无法正确获取电池优化状态",
     ),
     "bind": MessageLookupByLibrary.simpleMessage("绑定"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage("黑名单模式"),
@@ -284,6 +288,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "exit": MessageLookupByLibrary.simpleMessage("退出"),
     "expand": MessageLookupByLibrary.simpleMessage("标准"),
     "expectedStatus": MessageLookupByLibrary.simpleMessage("预期状态"),
+    "expireTime": MessageLookupByLibrary.simpleMessage("到期时间"),
     "exportFile": MessageLookupByLibrary.simpleMessage("导出文件"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("导出日志"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("导出成功"),
@@ -512,8 +517,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "profiles": MessageLookupByLibrary.simpleMessage("配置"),
     "profilesSort": MessageLookupByLibrary.simpleMessage("配置排序"),
     "project": MessageLookupByLibrary.simpleMessage("项目"),
-    "providers": MessageLookupByLibrary.simpleMessage("提供者"),
+    "providers": MessageLookupByLibrary.simpleMessage("外部资源"),
     "proxies": MessageLookupByLibrary.simpleMessage("代理"),
+    "proxiesCount": m21,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("代理为空"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("代理链"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -656,9 +662,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ruleEmpty": MessageLookupByLibrary.simpleMessage("规则为空"),
     "ruleName": MessageLookupByLibrary.simpleMessage("规则名称"),
-    "ruleProviders": MessageLookupByLibrary.simpleMessage("规则集"),
     "ruleSet": MessageLookupByLibrary.simpleMessage("规则集"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("规则目标"),
+    "rules": MessageLookupByLibrary.simpleMessage("规则"),
+    "rulesCount": m22,
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("是否保存更改？"),
     "script": MessageLookupByLibrary.simpleMessage("脚本"),
@@ -668,7 +675,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("滚动到已选"),
     "search": MessageLookupByLibrary.simpleMessage("搜索"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
-    "secondsCount": m21,
+    "secondsCount": m23,
     "selectAll": MessageLookupByLibrary.simpleMessage("全选"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("选择代理"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage("选择代理集"),
@@ -676,7 +683,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectSplitStrategy": MessageLookupByLibrary.simpleMessage("请选择分流策略"),
     "selectSubRule": MessageLookupByLibrary.simpleMessage("请选择子规则"),
     "selected": MessageLookupByLibrary.simpleMessage("已选择"),
-    "selectedCountTitle": m22,
+    "selectedCountTitle": m24,
     "settings": MessageLookupByLibrary.simpleMessage("设置"),
     "show": MessageLookupByLibrary.simpleMessage("显示"),
     "showLess": MessageLookupByLibrary.simpleMessage("收起"),
@@ -712,6 +719,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "subRuleEmpty": MessageLookupByLibrary.simpleMessage("子规则为空"),
     "subRuleNotEmpty": MessageLookupByLibrary.simpleMessage("子规则不能为空"),
     "submit": MessageLookupByLibrary.simpleMessage("提交"),
+    "subscriptionInfo": MessageLookupByLibrary.simpleMessage("订阅信息"),
     "suspended": MessageLookupByLibrary.simpleMessage("挂起中..."),
     "sync": MessageLookupByLibrary.simpleMessage("同步"),
     "system": MessageLookupByLibrary.simpleMessage("系统"),
@@ -741,6 +749,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("调性点缀"),
     "tools": MessageLookupByLibrary.simpleMessage("工具"),
     "torch": MessageLookupByLibrary.simpleMessage("手电筒"),
+    "totalTraffic": MessageLookupByLibrary.simpleMessage("总流量"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxy端口"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("流量统计"),
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
@@ -759,9 +768,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("上传"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("通过URL获取配置文件"),
-    "urlTip": m23,
+    "urlTip": m25,
     "useHosts": MessageLookupByLibrary.simpleMessage("使用Hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("使用系统Hosts"),
+    "usedTraffic": MessageLookupByLibrary.simpleMessage("已用流量"),
     "userAgent": MessageLookupByLibrary.simpleMessage("用户代理"),
     "value": MessageLookupByLibrary.simpleMessage("值"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("活力"),
@@ -775,7 +785,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage("重启VPN后改变生效"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV配置"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
-    "yearsAgo": m24,
+    "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("中文简体"),
   };
 }

@@ -475,6 +475,8 @@ enum LoadingTag {
 
 enum CoreStatus { connecting, connected, disconnected }
 
+enum UpdatingScope { core, local }
+
 enum RuleScene { added, disabled, custom }
 
 enum ItemPosition {

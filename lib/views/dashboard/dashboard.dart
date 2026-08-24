@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
@@ -15,7 +13,11 @@ import 'widgets/start_button.dart';
 
 typedef _IsEditWidgetBuilder = Widget Function(bool isEdit);
 
+const _compactCrossAxisCount = 8;
+const _mediumCrossAxisCount = 12;
 const _maxCrossAxisCount = 16;
+const _mediumGridBreakpoint = 480.0;
+const _maxGridBreakpoint = 840.0;
 const _maxGridWidth = 280.0 * _maxCrossAxisCount / 4;
 
 class DashboardView extends ConsumerStatefulWidget {
@@ -214,39 +216,44 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         floatingActionButton: const StartButton(),
         body: Align(
           alignment: Alignment.topCenter,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16).copyWith(bottom: 88),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: _maxGridWidth),
-                child: LayoutBuilder(
-                  builder: (_, constraints) {
-                    final columns = min(
-                      max(4 * ((constraints.maxWidth / 280).ceil()), 8),
-                      _maxCrossAxisCount,
-                    );
-                    return isEdit
-                        ? BackLayerScope(
-                            onBack: _handleExitEdit,
-                            child: SuperGrid(
-                              key: key,
+          child: Builder(
+            builder: (context) => SingleChildScrollView(
+              padding: const EdgeInsets.all(
+                16,
+              ).copyWith(bottom: 16 + BottomInsetScope.of(context)),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: _maxGridWidth),
+                  child: LayoutBuilder(
+                    builder: (_, constraints) {
+                      final columns = switch (constraints.maxWidth) {
+                        < _mediumGridBreakpoint => _compactCrossAxisCount,
+                        <= _maxGridBreakpoint => _mediumCrossAxisCount,
+                        _ => _maxCrossAxisCount,
+                      };
+                      return isEdit
+                          ? BackLayerScope(
+                              onBack: _handleExitEdit,
+                              child: SuperGrid(
+                                key: key,
+                                crossAxisCount: columns,
+                                crossAxisSpacing: spacing,
+                                mainAxisSpacing: spacing,
+                                children: children,
+                                onUpdate: () {
+                                  _handleSave();
+                                },
+                              ),
+                            )
+                          : Grid(
                               crossAxisCount: columns,
                               crossAxisSpacing: spacing,
                               mainAxisSpacing: spacing,
                               children: children,
-                              onUpdate: () {
-                                _handleSave();
-                              },
-                            ),
-                          )
-                        : Grid(
-                            crossAxisCount: columns,
-                            crossAxisSpacing: spacing,
-                            mainAxisSpacing: spacing,
-                            children: children,
-                          );
-                  },
+                            );
+                    },
+                  ),
                 ),
               ),
             ),

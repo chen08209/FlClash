@@ -398,7 +398,7 @@ final class ProxiesActionProvider
   }
 }
 
-String _$proxiesActionHash() => r'b3533dc72cb665221b5a1e859d2ed17520f1ac23';
+String _$proxiesActionHash() => r'250f2e1db398df7292c7ab3efa5cc12e40f56981';
 
 abstract class _$ProxiesAction extends $Notifier<void> {
   void build();
@@ -450,7 +450,7 @@ final class ProfilesActionProvider
   }
 }
 
-String _$profilesActionHash() => r'4a630373fb676a4cdbb5dc729c910ffe1d4a52f0';
+String _$profilesActionHash() => r'639d2bfc31789c39e63101e9b9b39f619166ae6f';
 
 abstract class _$ProfilesAction extends $Notifier<void> {
   void build();
@@ -502,9 +502,61 @@ final class GeoResourceActionProvider
   }
 }
 
-String _$geoResourceActionHash() => r'45c22a8bada9d879c3d3f1b981220bf58c4bf797';
+String _$geoResourceActionHash() => r'9952935de110081e52673da3e441b9c615a74b45';
 
 abstract class _$GeoResourceAction extends $Notifier<void> {
+  void build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<void, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<void, void>,
+              void,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(UpdatingAction)
+final updatingActionProvider = UpdatingActionProvider._();
+
+final class UpdatingActionProvider
+    extends $NotifierProvider<UpdatingAction, void> {
+  UpdatingActionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'updatingActionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$updatingActionHash();
+
+  @$internal
+  @override
+  UpdatingAction create() => UpdatingAction();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(void value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<void>(value),
+    );
+  }
+}
+
+String _$updatingActionHash() => r'86a9c59e35d39aec4a6e93bf16b069147dd0a7aa';
+
+abstract class _$UpdatingAction extends $Notifier<void> {
   void build();
   @$mustCallSuper
   @override

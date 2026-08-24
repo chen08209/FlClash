@@ -358,11 +358,11 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
       child: GridView.builder(
         key: _getPageStorageKey(),
         controller: _controller,
-        padding: const EdgeInsets.only(
+        padding: EdgeInsets.only(
           top: 16,
           left: 16,
           right: 16,
-          bottom: 96,
+          bottom: 16 + BottomInsetScope.of(context),
         ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: widget.columns,

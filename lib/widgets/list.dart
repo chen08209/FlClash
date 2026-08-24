@@ -11,6 +11,7 @@ import 'input.dart';
 import 'open_container.dart';
 import 'scaffold.dart';
 import 'sheet.dart';
+
 part 'list_selected.dart';
 
 sealed class _ListItemAction {
@@ -530,6 +531,46 @@ class ListHeader extends StatelessWidget {
             children: [...genActions(actions, space: space)],
           ),
         ],
+      ),
+    );
+  }
+}
+
+enum ListItemMetaChipTone { primary, secondary, tertiary }
+
+class ListItemMetaChip extends StatelessWidget {
+  final String label;
+  final ListItemMetaChipTone tone;
+
+  const ListItemMetaChip({super.key, required this.label, required this.tone});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final (backgroundColor, foregroundColor) = switch (tone) {
+      ListItemMetaChipTone.primary => (
+        colorScheme.primary,
+        colorScheme.onPrimary,
+      ),
+      ListItemMetaChipTone.secondary => (
+        colorScheme.secondary,
+        colorScheme.onSecondary,
+      ),
+      ListItemMetaChipTone.tertiary => (
+        colorScheme.tertiary,
+        colorScheme.onTertiary,
+      ),
+    };
+    return DecoratedBox(
+      decoration: ShapeDecoration(color: backgroundColor, shape: AppShape.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.textTheme.labelSmall?.copyWith(color: foregroundColor),
+        ),
       ),
     );
   }

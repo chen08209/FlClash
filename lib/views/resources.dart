@@ -13,91 +13,111 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' hide context;
 
-class ResourcesView extends StatelessWidget {
+class ResourcesView extends ConsumerWidget {
   const ResourcesView({super.key});
 
+  Future<void> _updateInterval(
+    BuildContext context,
+    WidgetRef ref,
+    int updateInterval,
+  ) async {
+    final appLocalizations = context.appLocalizations;
+    final value = await dialogs.showCommonDialog<String>(
+      child: InputDialog(
+        title: appLocalizations.geoAutoUpdateInterval,
+        value: updateInterval.toString(),
+        suffixText: appLocalizations.hours,
+        keyboardType: TextInputType.number,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return appLocalizations.emptyTip(
+              appLocalizations.geoAutoUpdateInterval,
+            );
+          }
+          final interval = int.tryParse(value);
+          if (interval == null) {
+            return appLocalizations.numberTip(
+              appLocalizations.geoAutoUpdateInterval,
+            );
+          }
+          if (interval <= 0) {
+            return appLocalizations.geoAutoUpdateIntervalTip;
+          }
+          return null;
+        },
+      ),
+    );
+    final interval = int.tryParse(value ?? '');
+    if (interval == null || interval <= 0) {
+      return;
+    }
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(geoUpdateInterval: interval));
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     const geoResources = GeoResource.values;
     final appLocalizations = context.appLocalizations;
+    final geoSetting = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => (
+          autoUpdate: state.geoAutoUpdate,
+          updateInterval: state.geoUpdateInterval,
+        ),
+      ),
+    );
+
+    void updateAutoUpdate(bool value) {
+      ref
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith(geoAutoUpdate: value));
+    }
+
     return CommonScaffold(
       title: context.appLocalizations.resources,
-      body: Consumer(
-        builder: (_, ref, _) {
-          final geoSetting = ref.watch(
-            patchClashConfigProvider.select(
-              (state) => (
-                autoUpdate: state.geoAutoUpdate,
-                updateInterval: state.geoUpdateInterval,
-              ),
-            ),
-          );
-          return generateListView([
-            ...generateSection(
-              title: appLocalizations.geoOptions,
-              items: [
-                ListItem.toggle(
-                  title: Text(appLocalizations.geoAutoUpdate),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ).copyWith(bottom: 16),
+        children: [
+          generateSectionV3(
+            title: appLocalizations.geoOptions,
+            items: [
+              DecorationListItem(
+                minVerticalPadding: 8,
+                contentPadding: const EdgeInsets.only(left: 16, right: 8),
+                title: Text(appLocalizations.geoAutoUpdate),
+                onPressed: () {
+                  updateAutoUpdate(!geoSetting.autoUpdate);
+                },
+                trailing: Switch(
                   value: geoSetting.autoUpdate,
-                  onChanged: (value) {
-                    ref
-                        .read(patchClashConfigProvider.notifier)
-                        .update(
-                          (state) => state.copyWith(geoAutoUpdate: value),
-                        );
-                  },
+                  onChanged: updateAutoUpdate,
                 ),
-                ListItem.input(
-                  title: Text(appLocalizations.geoAutoUpdateInterval),
-                  trailing: Text(
-                    appLocalizations.hoursCount(geoSetting.updateInterval),
-                    style: context.textTheme.bodyMedium?.toSoftBold,
-                  ),
-                  suffixText: appLocalizations.hours,
-                  dialogTitle: appLocalizations.geoAutoUpdateInterval,
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return appLocalizations.emptyTip(
-                        appLocalizations.geoAutoUpdateInterval,
-                      );
-                    }
-                    final interval = int.tryParse(value);
-                    if (interval == null) {
-                      return appLocalizations.numberTip(
-                        appLocalizations.geoAutoUpdateInterval,
-                      );
-                    }
-                    if (interval <= 0) {
-                      return appLocalizations.geoAutoUpdateIntervalTip;
-                    }
-                    return null;
-                  },
-                  value: geoSetting.updateInterval.toString(),
-                  onChanged: (value) {
-                    final intValue = int.tryParse(value ?? '') ?? 0;
-                    if (intValue <= 0) {
-                      return;
-                    }
-                    ref
-                        .read(patchClashConfigProvider.notifier)
-                        .update(
-                          (state) =>
-                              state.copyWith(geoUpdateInterval: intValue),
-                        );
-                  },
+              ),
+              DecorationListItem(
+                minVerticalPadding: 8,
+                title: Text(appLocalizations.geoAutoUpdateInterval),
+                onPressed: () {
+                  _updateInterval(context, ref, geoSetting.updateInterval);
+                },
+                trailing: Text(
+                  appLocalizations.hoursCount(geoSetting.updateInterval),
+                  style: context.textTheme.bodyMedium?.toSoftBold,
                 ),
-              ],
-            ),
-            ...generateSection(
-              title: appLocalizations.geoResources,
-              items: [
-                for (final geoResource in geoResources)
-                  _GeoResourceListItem(geoResource),
-              ],
-            ),
-          ]);
-        },
+              ),
+            ],
+          ),
+          generateSectionV3(
+            title: appLocalizations.geoResources,
+            items: [
+              for (final geoResource in geoResources)
+                _GeoResourceListItem(geoResource),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -114,6 +134,8 @@ class _GeoResourceListItem extends ConsumerStatefulWidget {
 }
 
 class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
+  late Future<FileInfo?> _fileInfoFuture;
+
   String get fileName {
     return switch (widget.type) {
       GeoResource.MMDB => MMDB,
@@ -121,6 +143,20 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
       GeoResource.GEOIP => GEOIP,
       GeoResource.GEOSITE => GEOSITE,
     };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fileInfoFuture = _getGeoFileInfo(fileName);
+  }
+
+  @override
+  void didUpdateWidget(covariant _GeoResourceListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.type != widget.type) {
+      _fileInfoFuture = _getGeoFileInfo(fileName);
+    }
   }
 
   Future<void> _updateUrl(String url) async {
@@ -159,84 +195,100 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
           .read(geoResourceActionProvider.notifier)
           .updateGeoResource(widget.type);
     }, silence: false);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _fileInfoFuture = _getGeoFileInfo(fileName);
+    });
+  }
+
+  List<CommonPopupMenuItem> _menuItems(BuildContext context, String url) {
+    final appLocalizations = context.appLocalizations;
+    return [
+      CommonPopupMenuItem(
+        icon: Icons.edit_outlined,
+        label: appLocalizations.edit,
+        onPressed: () {
+          _updateUrl(url);
+        },
+      ),
+      CommonPopupMenuItem(
+        icon: Icons.sync,
+        label: appLocalizations.sync,
+        onPressed: _handleUpdateGeoDataItem,
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
     final isUpdating = ref.watch(isUpdatingProvider(widget.type.updatingKey));
     final url = ref.watch(
       patchClashConfigProvider.select((state) => state.geoXUrl[widget.type]),
     );
-    return ListItem(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      title: Text(widget.type.name),
-      subtitle: url == null
-          ? const SizedBox()
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 6),
-                FutureBuilder<FileInfo?>(
-                  future: _getGeoFileInfo(fileName),
-                  builder: (_, snapshot) {
-                    final height = globalState.measure.bodyMediumHeight;
-                    return SizedBox(
-                      height: height,
-                      child: snapshot.data == null
-                          ? SizedBox(width: height, height: height)
-                          : Text(
-                              snapshot.data!.getDesc(context),
-                              style: context.textTheme.bodyMedium,
+    return FutureBuilder<FileInfo?>(
+      future: _fileInfoFuture,
+      builder: (context, snapshot) {
+        final fileInfo = snapshot.data;
+        return DecorationListItem(
+          minVerticalPadding: 8,
+          contentPadding: const EdgeInsets.only(left: 16, right: 0),
+          title: Text(widget.type.name),
+          subtitle: fileInfo == null
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  child: Row(
+                    spacing: 4,
+                    children: [
+                      ListItemMetaChip(
+                        label: fileInfo.size.traffic.show,
+                        tone: ListItemMetaChipTone.primary,
+                      ),
+                      ListItemMetaChip(
+                        label:
+                            fileInfo.lastModified?.getLastUpdateTimeDesc(
+                              context,
+                            ) ??
+                            context.appLocalizations.unknown,
+                        tone: ListItemMetaChipTone.tertiary,
+                      ),
+                    ],
+                  ),
+                ),
+          trailing: url == null
+              ? null
+              : SizedBox.square(
+                  dimension: kMinInteractiveDimension,
+                  child: FadeThroughBox(
+                    alignment: Alignment.center,
+                    child: isUpdating
+                        ? const SizedBox.square(
+                            key: ValueKey('loading'),
+                            dimension: kMinInteractiveDimension,
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: CommonCircleLoading(),
                             ),
-                    );
-                  },
+                          )
+                        : CommonPopupBox(
+                            key: const ValueKey('menu'),
+                            popupBuilder: (_) => CommonPopupMenu(
+                              items: _menuItems(context, url),
+                            ),
+                            targetBuilder: (open) {
+                              return IconButton(
+                                tooltip: context.appLocalizations.more,
+                                onPressed: open,
+                                icon: const Icon(Icons.more_vert),
+                              );
+                            },
+                          ),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(url, style: context.textTheme.bodyMedium?.toLight),
-                const SizedBox(height: 12),
-                Wrap(
-                  runSpacing: 6,
-                  spacing: 12,
-                  runAlignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    CommonChip(
-                      avatar: const Icon(Icons.edit),
-                      label: appLocalizations.edit,
-                      onPressed: () {
-                        _updateUrl(url);
-                      },
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          child: isUpdating
-                              ? const SizedBox(
-                                  height: 30,
-                                  width: 30,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(2),
-                                    child: CommonCircleLoading(),
-                                  ),
-                                )
-                              : CommonChip(
-                                  avatar: const Icon(Icons.sync),
-                                  label: appLocalizations.sync,
-                                  onPressed: () {
-                                    _handleUpdateGeoDataItem();
-                                  },
-                                ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-              ],
-            ),
+        );
+      },
     );
   }
 }

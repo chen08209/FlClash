@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -445,6 +448,55 @@ type blockingProxyProvider struct {
 	calls   atomic.Int32
 }
 
+type failingProxyProvider struct {
+	fakeProxyProvider
+	err error
+}
+
+func (p *failingProxyProvider) Update() error {
+	return p.err
+}
+
+func TestProviderRequestErrorCode(t *testing.T) {
+	tests := []struct {
+		err  error
+		want string
+	}{
+		{err: errors.New("503 Service Unavailable"), want: "request_bad_response"},
+		{err: fmt.Errorf("fetch: %w", context.DeadlineExceeded), want: "request_error"},
+		{err: errors.New("proxy 0: unsupported type"), want: ""},
+	}
+	for _, test := range tests {
+		if got := providerRequestErrorCode(test.err); got != test.want {
+			t.Errorf("providerRequestErrorCode(%q) = %q, want %q", test.err, got, test.want)
+		}
+	}
+}
+
+func TestUpdateExternalProviderCategorizesFailure(t *testing.T) {
+	const name = "subscription"
+	provider := &failingProxyProvider{
+		fakeProxyProvider: fakeProxyProvider{name: name, vehicle: cp.HTTP},
+		err:               errors.New("proxy 0: unsupported type"),
+	}
+	withTunnelProviders(t, map[string]cp.ProxyProvider{name: provider}, nil)
+
+	methodError := handleUpdateExternalProvider(name)
+	if methodError == nil {
+		t.Fatal("the provider error was reported as success")
+	}
+	if methodError.Code != "provider_update_error" {
+		t.Errorf("code = %q, want provider_update_error", methodError.Code)
+	}
+	if methodError.Message != provider.err.Error() {
+		t.Errorf("message = %q, want %q", methodError.Message, provider.err)
+	}
+	details, ok := methodError.Details.(map[string]any)
+	if !ok || details["providerName"] != name {
+		t.Errorf("details = %#v, want providerName %q", methodError.Details, name)
+	}
+}
+
 func (p *blockingProxyProvider) Update() error {
 	p.calls.Add(1)
 	p.started <- struct{}{}
@@ -463,7 +515,7 @@ func TestUpdateExternalProviderRunsOneAtATime(t *testing.T) {
 	// Released through the cleanup so a blocked update never wedges the run.
 	t.Cleanup(func() { close(provider.release) })
 
-	first := make(chan string, 1)
+	first := make(chan *MethodError, 1)
 	go func() { first <- handleUpdateExternalProvider(name) }()
 
 	select {
@@ -472,13 +524,13 @@ func TestUpdateExternalProviderRunsOneAtATime(t *testing.T) {
 		t.Fatal("the first update never started")
 	}
 
-	second := make(chan string, 1)
+	second := make(chan *MethodError, 1)
 	go func() { second <- handleUpdateExternalProvider(name) }()
 
 	select {
-	case message := <-second:
-		if message != "" {
-			t.Fatalf("the duplicate request reported %q", message)
+	case methodError := <-second:
+		if methodError != nil {
+			t.Fatalf("the duplicate request reported %q", methodError.Message)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("the duplicate request reached the provider instead of being coalesced")
@@ -490,8 +542,8 @@ func TestUpdateExternalProviderRunsOneAtATime(t *testing.T) {
 	}
 
 	provider.release <- struct{}{}
-	if message := <-first; message != "" {
-		t.Fatalf("the first update reported %q", message)
+	if methodError := <-first; methodError != nil {
+		t.Fatalf("the first update reported %q", methodError.Message)
 	}
 
 	if got := provider.calls.Load(); got != 1 {

@@ -194,6 +194,14 @@ class Scripts extends _$Scripts with AsyncNotifierMixin, OptimisticMixin {
     optimistic(next, () => database.scripts.remove((t) => t.id.equals(id)));
   }
 
+  void delAll(Iterable<int> ids) {
+    final scriptIds = ids.toSet();
+    optimistic(
+      value.where((item) => !scriptIds.contains(item.id)).toList(),
+      () => database.scripts.remove((t) => t.id.isIn(scriptIds)),
+    );
+  }
+
   bool isExits(String label) {
     return value.indexWhere((item) => item.label == label) != -1;
   }

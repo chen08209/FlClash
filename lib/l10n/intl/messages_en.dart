@@ -70,13 +70,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m20(label) => "${label} must be between 1024 and 49151";
 
-  static String m21(count) => "${count} seconds";
+  static String m21(count) =>
+      "${Intl.plural(count, one: '1 proxy', other: '${count} proxies')}";
 
-  static String m22(count) => "${count} items have been selected";
+  static String m22(count) =>
+      "${Intl.plural(count, one: '1 rule', other: '${count} rules')}";
 
-  static String m23(label) => "${label} must be a url";
+  static String m23(count) => "${count} seconds";
 
-  static String m24(count) =>
+  static String m24(count) => "${count} items have been selected";
+
+  static String m25(label) => "${label} must be a url";
+
+  static String m26(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -205,7 +211,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "To ensure background operation, please disable battery optimization for this app. Tap to go to settings.",
     ),
     "batteryOptimizationStatusTip": MessageLookupByLibrary.simpleMessage(
-      "Affected by the system, this status may not always be accurate.",
+      "Due to system limitations, battery optimization status cannot be accurately retrieved while running.",
     ),
     "bind": MessageLookupByLibrary.simpleMessage("Bind"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage("Blacklist mode"),
@@ -398,6 +404,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "exit": MessageLookupByLibrary.simpleMessage("Exit"),
     "expand": MessageLookupByLibrary.simpleMessage("Standard"),
     "expectedStatus": MessageLookupByLibrary.simpleMessage("Expected status"),
+    "expireTime": MessageLookupByLibrary.simpleMessage("Expiration time"),
     "exportFile": MessageLookupByLibrary.simpleMessage("Export file"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("Export logs"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("Export Success"),
@@ -728,6 +735,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("Project"),
     "providers": MessageLookupByLibrary.simpleMessage("Providers"),
     "proxies": MessageLookupByLibrary.simpleMessage("Proxies"),
+    "proxiesCount": m21,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("Proxies is empty"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Proxy chains"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -934,9 +942,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ruleEmpty": MessageLookupByLibrary.simpleMessage("Rule is empty"),
     "ruleName": MessageLookupByLibrary.simpleMessage("Rule name"),
-    "ruleProviders": MessageLookupByLibrary.simpleMessage("Rule providers"),
     "ruleSet": MessageLookupByLibrary.simpleMessage("Rule set"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Rule target"),
+    "rules": MessageLookupByLibrary.simpleMessage("Rules"),
+    "rulesCount": m22,
     "save": MessageLookupByLibrary.simpleMessage("Save"),
     "saveChanges": MessageLookupByLibrary.simpleMessage(
       "Do you want to save the changes?",
@@ -950,7 +959,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "search": MessageLookupByLibrary.simpleMessage("Search"),
     "seconds": MessageLookupByLibrary.simpleMessage("Seconds"),
-    "secondsCount": m21,
+    "secondsCount": m23,
     "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("Select proxies"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage(
@@ -966,7 +975,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Please select sub rule",
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
-    "selectedCountTitle": m22,
+    "selectedCountTitle": m24,
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "show": MessageLookupByLibrary.simpleMessage("Show"),
     "showLess": MessageLookupByLibrary.simpleMessage("Show less"),
@@ -1010,6 +1019,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Sub rule cannot be empty",
     ),
     "submit": MessageLookupByLibrary.simpleMessage("Submit"),
+    "subscriptionInfo": MessageLookupByLibrary.simpleMessage(
+      "Subscription info",
+    ),
     "suspended": MessageLookupByLibrary.simpleMessage("Suspended..."),
     "sync": MessageLookupByLibrary.simpleMessage("Sync"),
     "system": MessageLookupByLibrary.simpleMessage("System"),
@@ -1047,6 +1059,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("TonalSpot"),
     "tools": MessageLookupByLibrary.simpleMessage("Tools"),
     "torch": MessageLookupByLibrary.simpleMessage("Torch"),
+    "totalTraffic": MessageLookupByLibrary.simpleMessage("Total traffic"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxy Port"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
@@ -1073,9 +1086,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "Obtain profile through URL",
     ),
-    "urlTip": m23,
+    "urlTip": m25,
     "useHosts": MessageLookupByLibrary.simpleMessage("Use hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("Use system hosts"),
+    "usedTraffic": MessageLookupByLibrary.simpleMessage("Used traffic"),
     "userAgent": MessageLookupByLibrary.simpleMessage("User-Agent"),
     "value": MessageLookupByLibrary.simpleMessage("Value"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("Vibrant"),
@@ -1093,7 +1107,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAV configuration",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
-    "yearsAgo": m24,
+    "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };
 }

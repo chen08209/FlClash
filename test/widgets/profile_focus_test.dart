@@ -13,6 +13,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_profiles.dart';
 
+Profile urlProfile(String label) =>
+    Profile.normal(label: label, url: 'https://example.com/sub').copyWith(
+      subscriptionInfo: const SubscriptionInfo(
+        upload: 1024,
+        download: 2048,
+        total: 4096,
+        expire: 1234567890,
+      ),
+    );
+
 Future<ProviderContainer> pumpProfiles(
   WidgetTester tester, {
   required List<Profile> profiles,
@@ -30,6 +40,7 @@ Future<ProviderContainer> pumpProfiles(
   );
   addTearDown(container.dispose);
   globalState.container = container;
+  container.read(viewSizeProvider.notifier).value = const Size(900, 800);
 
   await tester.pumpWidget(
     UncontrolledProviderScope(
@@ -57,15 +68,6 @@ void main() {
   testWidgets('arrow right from a profile card focuses its more button', (
     tester,
   ) async {
-    Profile urlProfile(String label) =>
-        Profile.normal(label: label, url: 'https://example.com/sub').copyWith(
-          subscriptionInfo: const SubscriptionInfo(
-            upload: 1024,
-            download: 2048,
-            total: 4096,
-            expire: 1234567890,
-          ),
-        );
     final profiles = [
       urlProfile('url 1'),
       Profile.normal(label: 'file 1'),
@@ -108,5 +110,25 @@ void main() {
         Key(profiles[profileIndex].id.toString()),
       );
     }
+  });
+
+  testWidgets('subscription menu item opens the usage dialog', (tester) async {
+    await pumpProfiles(tester, profiles: [urlProfile('url')]);
+
+    final profileItem = find.ancestor(
+      of: find.text('url'),
+      matching: find.byType(ListItem),
+    );
+    await tester.tap(
+      find.descendant(of: profileItem, matching: find.byIcon(Icons.more_vert)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(currentAppLocalizations.subscriptionInfo));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CommonDialog), findsOneWidget);
+    expect(find.byType(SubscriptionInfoDetailView), findsOneWidget);
+    expect(find.text(currentAppLocalizations.subscriptionInfo), findsOneWidget);
   });
 }

@@ -34,6 +34,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void initState() {
     super.initState();
     coreEventManager.addListener(this);
+    ref.read(updatingActionProvider.notifier);
     ref.listenManual(currentProfileIdProvider, (prev, next) {
       if (prev != next) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -124,22 +125,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   @override
   void onGeoUpdate(String geoType, bool updating, bool skipped, String? error) {
-    final geoResource = GeoResource.fromJson(geoType.toLowerCase());
-    final key = geoResource.updatingKey;
-    final l10n = currentAppLocalizations;
-    if (!updating) {
-      if (error != null && error.isNotEmpty) {
-        dialogs.showNotifier(error, level: MessageLevel.error);
-      } else if (skipped) {
-        dialogs.showNotifier(l10n.geoSkipped(geoResource.name));
-      } else {
-        dialogs.showNotifier(
-          l10n.geoUpdated(geoResource.name),
-          level: MessageLevel.success,
-        );
-      }
-    }
-    ref.read(isUpdatingProvider(key).notifier).value = updating;
+    ref
+        .read(geoResourceActionProvider.notifier)
+        .handleCoreUpdate(geoType, updating, skipped, error);
     super.onGeoUpdate(geoType, updating, skipped, error);
   }
 }

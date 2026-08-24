@@ -111,7 +111,7 @@ the invariant hard to break beats prose that asks the next reader not to break i
 - `core/message.go` carries three event queues, and the split is load-bearing: state (loaded, geo-update), delay, and
   bulk (log, request). Delay and bulk evict their own oldest entry under backpressure; state uses `enqueueState`, which
   never evicts, because a dropped `geoUpdate{updating:false}` leaves `isUpdatingProvider` stuck at true in the UI until
-  the app restarts. Do not merge the tiers or give state eviction semantics. `enqueueState` drops silently on a full
+  `UpdatingAction` sweeps it as stale minutes later. Do not merge the tiers or give state eviction semantics. `enqueueState` drops silently on a full
   queue and must stay that way: reaching it means the host stopped reading, which `logDeliveryError` already reports,
   and reporting it from the message layer feeds the same batcher.
 - `jni_get_string` in `android/core/src/main/cpp/jni_helper.cpp` `malloc`s and hands ownership to Go, which frees through

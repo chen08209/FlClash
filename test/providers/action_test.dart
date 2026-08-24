@@ -1,17 +1,23 @@
 import 'dart:async';
 
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
+import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 
 import '../helpers/test_profiles.dart';
+
+class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 void main() {
   group('ProfilesAction', () {
@@ -137,11 +143,49 @@ void main() {
       final key = GeoResource.MMDB.updatingKey;
       expect(container.read(isUpdatingProvider(key)), false);
 
-      container.read(isUpdatingProvider(key).notifier).value = true;
+      final operation = container
+          .read(updatingKeysProvider.notifier)
+          .start(key);
       expect(container.read(isUpdatingProvider(key)), true);
 
-      container.read(isUpdatingProvider(key).notifier).value = false;
+      container.read(updatingKeysProvider.notifier).stop(key, operation);
       expect(container.read(isUpdatingProvider(key)), false);
+    });
+
+    test('forwards a manual resource update to Core', () async {
+      final core = _MockCoreHandlerInterface();
+      when(() => core.updateGeoData('MMDB')).thenAnswer((_) async => '');
+      final container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(geoResourceActionProvider.notifier);
+
+      await action.updateGeoResource(GeoResource.MMDB);
+
+      verify(() => core.updateGeoData('MMDB')).called(1);
+    });
+
+    test('propagates a failed manual Core request', () async {
+      final core = _MockCoreHandlerInterface();
+      when(
+        () => core.updateGeoData('MMDB'),
+      ).thenThrow(StateError('disconnected'));
+      final container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(geoResourceActionProvider.notifier);
+
+      await expectLater(
+        action.updateGeoResource(GeoResource.MMDB),
+        throwsStateError,
+      );
+      verify(() => core.updateGeoData('MMDB')).called(1);
     });
 
     test('updates valid resource URLs and rejects malformed URLs', () {

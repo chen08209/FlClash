@@ -63,13 +63,17 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m20(label) => "${label} は 1024 から 49151 の間でなければなりません";
 
-  static String m21(count) => "${count} 秒";
+  static String m21(count) => "${count} プロキシ";
 
-  static String m22(count) => "${count} 項目が選択されています";
+  static String m22(count) => "${count} ルール";
 
-  static String m23(label) => "${label}はURLである必要があります";
+  static String m23(count) => "${count} 秒";
 
-  static String m24(count) => "${count}年前";
+  static String m24(count) => "${count} 項目が選択されています";
+
+  static String m25(label) => "${label}はURLである必要があります";
+
+  static String m26(count) => "${count}年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -157,7 +161,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "バックグラウンド動作を保証するため、このアプリのバッテリー最適化を無効にしてください。タップして設定に移動します。",
     ),
     "batteryOptimizationStatusTip": MessageLookupByLibrary.simpleMessage(
-      "システムの影響により、この状態は必ずしも正確とは限りません。",
+      "システム制限のため、実行中はバッテリー最適化の状態を正確に取得できません。",
     ),
     "bind": MessageLookupByLibrary.simpleMessage("バインド"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage("ブラックリストモード"),
@@ -314,6 +318,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "exit": MessageLookupByLibrary.simpleMessage("終了"),
     "expand": MessageLookupByLibrary.simpleMessage("標準"),
     "expectedStatus": MessageLookupByLibrary.simpleMessage("期待されるステータス"),
+    "expireTime": MessageLookupByLibrary.simpleMessage("有効期限"),
     "exportFile": MessageLookupByLibrary.simpleMessage("ファイルをエクスポート"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("ログをエクスポート"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("エクスポート成功"),
@@ -578,6 +583,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("プロジェクト"),
     "providers": MessageLookupByLibrary.simpleMessage("プロバイダー"),
     "proxies": MessageLookupByLibrary.simpleMessage("プロキシ"),
+    "proxiesCount": m21,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("プロキシが空です"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("プロキシチェーン"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -756,9 +762,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ruleEmpty": MessageLookupByLibrary.simpleMessage("ルールが空です"),
     "ruleName": MessageLookupByLibrary.simpleMessage("ルール名"),
-    "ruleProviders": MessageLookupByLibrary.simpleMessage("ルールプロバイダー"),
     "ruleSet": MessageLookupByLibrary.simpleMessage("ルールセット"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("ルール対象"),
+    "rules": MessageLookupByLibrary.simpleMessage("ルール"),
+    "rulesCount": m22,
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("変更を保存しますか？"),
     "script": MessageLookupByLibrary.simpleMessage("スクリプト"),
@@ -768,7 +775,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("選択項目へスクロール"),
     "search": MessageLookupByLibrary.simpleMessage("検索"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
-    "secondsCount": m21,
+    "secondsCount": m23,
     "selectAll": MessageLookupByLibrary.simpleMessage("すべて選択"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("プロキシを選択"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage(
@@ -780,7 +787,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selectSubRule": MessageLookupByLibrary.simpleMessage("サブルールを選択してください"),
     "selected": MessageLookupByLibrary.simpleMessage("選択済み"),
-    "selectedCountTitle": m22,
+    "selectedCountTitle": m24,
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
     "show": MessageLookupByLibrary.simpleMessage("表示"),
     "showLess": MessageLookupByLibrary.simpleMessage("折りたたむ"),
@@ -818,6 +825,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "subRuleEmpty": MessageLookupByLibrary.simpleMessage("サブルールが空です"),
     "subRuleNotEmpty": MessageLookupByLibrary.simpleMessage("サブルールは空にできません"),
     "submit": MessageLookupByLibrary.simpleMessage("送信"),
+    "subscriptionInfo": MessageLookupByLibrary.simpleMessage("サブスクリプション情報"),
     "suspended": MessageLookupByLibrary.simpleMessage("一時停止中..."),
     "sync": MessageLookupByLibrary.simpleMessage("同期"),
     "system": MessageLookupByLibrary.simpleMessage("システム"),
@@ -849,6 +857,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("トーンスポット"),
     "tools": MessageLookupByLibrary.simpleMessage("ツール"),
     "torch": MessageLookupByLibrary.simpleMessage("ライト"),
+    "totalTraffic": MessageLookupByLibrary.simpleMessage("総通信量"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxyポート"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("トラフィック使用量"),
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
@@ -869,9 +878,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("アップロード"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URL経由でプロファイルを取得"),
-    "urlTip": m23,
+    "urlTip": m25,
     "useHosts": MessageLookupByLibrary.simpleMessage("ホストを使用"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("システムホストを使用"),
+    "usedTraffic": MessageLookupByLibrary.simpleMessage("使用済み通信量"),
     "userAgent": MessageLookupByLibrary.simpleMessage("ユーザーエージェント"),
     "value": MessageLookupByLibrary.simpleMessage("値"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("ビブラント"),
@@ -885,7 +895,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage("変更はVPN再起動後に有効"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
-    "yearsAgo": m24,
+    "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };
 }

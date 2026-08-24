@@ -167,11 +167,12 @@ class ProxiesAction extends _$ProxiesAction {
     ExternalProvider provider, {
     bool showLoading = false,
   }) async {
+    final operation = showLoading
+        ? ref
+              .read(updatingKeysProvider.notifier)
+              .start(provider.updatingKey, scope: UpdatingScope.core)
+        : null;
     try {
-      if (showLoading) {
-        ref.read(isUpdatingProvider(provider.updatingKey).notifier).value =
-            true;
-      }
       final message = await _core.updateExternalProvider(
         providerName: provider.name,
       );
@@ -181,23 +182,41 @@ class ProxiesAction extends _$ProxiesAction {
           .setProvider(await _core.getExternalProvider(provider.name));
       return '';
     } finally {
-      ref.read(isUpdatingProvider(provider.updatingKey).notifier).value = false;
+      if (operation != null) {
+        ref
+            .read(updatingKeysProvider.notifier)
+            .stop(provider.updatingKey, operation);
+      }
     }
   }
 
   Future<String> sideLoadExternalProvider(
     ExternalProvider provider,
-    String data,
-  ) async {
-    final message = await _core.sideLoadExternalProvider(
-      providerName: provider.name,
-      data: data,
-    );
-    if (message.isNotEmpty) return message;
-    ref
-        .read(providersProvider.notifier)
-        .setProvider(await _core.getExternalProvider(provider.name));
-    return '';
+    String data, {
+    bool showLoading = false,
+  }) async {
+    final operation = showLoading
+        ? ref
+              .read(updatingKeysProvider.notifier)
+              .start(provider.updatingKey, scope: UpdatingScope.core)
+        : null;
+    try {
+      final message = await _core.sideLoadExternalProvider(
+        providerName: provider.name,
+        data: data,
+      );
+      if (message.isNotEmpty) return message;
+      ref
+          .read(providersProvider.notifier)
+          .setProvider(await _core.getExternalProvider(provider.name));
+      return '';
+    } finally {
+      if (operation != null) {
+        ref
+            .read(updatingKeysProvider.notifier)
+            .stop(provider.updatingKey, operation);
+      }
+    }
   }
 
   Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) {

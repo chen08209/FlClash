@@ -59,6 +59,11 @@ class AppLocalizations {
     return Intl.message('Rule', name: 'rule', desc: '', args: []);
   }
 
+  /// `Rules`
+  String get rules {
+    return Intl.message('Rules', name: 'rules', desc: '', args: []);
+  }
+
   /// `Global`
   String get global {
     return Intl.message('Global', name: 'global', desc: '', args: []);
@@ -172,6 +177,36 @@ class AppLocalizations {
   /// `Download`
   String get download {
     return Intl.message('Download', name: 'download', desc: '', args: []);
+  }
+
+  /// `Used traffic`
+  String get usedTraffic {
+    return Intl.message(
+      'Used traffic',
+      name: 'usedTraffic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Total traffic`
+  String get totalTraffic {
+    return Intl.message(
+      'Total traffic',
+      name: 'totalTraffic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expiration time`
+  String get expireTime {
+    return Intl.message(
+      'Expiration time',
+      name: 'expireTime',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `No profile, Please add a profile`
@@ -1589,11 +1624,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Rule providers`
-  String get ruleProviders {
+  /// `Subscription info`
+  String get subscriptionInfo {
     return Intl.message(
-      'Rule providers',
-      name: 'ruleProviders',
+      'Subscription info',
+      name: 'subscriptionInfo',
       desc: '',
       args: [],
     );
@@ -4314,10 +4349,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Affected by the system, this status may not always be accurate.`
+  /// `Due to system limitations, battery optimization status cannot be accurately retrieved while running.`
   String get batteryOptimizationStatusTip {
     return Intl.message(
-      'Affected by the system, this status may not always be accurate.',
+      'Due to system limitations, battery optimization status cannot be accurately retrieved while running.',
       name: 'batteryOptimizationStatusTip',
       desc: '',
       args: [],
@@ -4524,6 +4559,30 @@ class AppLocalizations {
     return Intl.message(
       '$count entries',
       name: 'entriesCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count, plural, =1{1 proxy} other{{count} proxies}}`
+  String proxiesCount(num count) {
+    return Intl.plural(
+      count,
+      one: '1 proxy',
+      other: '$count proxies',
+      name: 'proxiesCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count, plural, =1{1 rule} other{{count} rules}}`
+  String rulesCount(num count) {
+    return Intl.plural(
+      count,
+      one: '1 rule',
+      other: '$count rules',
+      name: 'rulesCount',
       desc: '',
       args: [count],
     );

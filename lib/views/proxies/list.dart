@@ -291,7 +291,11 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                           columns: columns,
                           cardType: state.proxyCardType,
                         ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: 16 + BottomInsetScope.of(context),
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -28,4 +28,5 @@ part 'actions/theme.dart';
 part 'actions/proxies.dart';
 part 'actions/profiles.dart';
 part 'actions/geo_resource.dart';
+part 'actions/updating.dart';
 part 'generated/action.g.dart';

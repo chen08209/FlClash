@@ -11,7 +11,6 @@ import 'package:fl_clash/views/profiles/overwrite/custom/proxy_providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooth_sheets/smooth_sheets.dart';
 
 import 'icon.dart';
 import 'proxies.dart';

@@ -73,10 +73,10 @@ class ProfilesAction extends _$ProfilesAction {
     Profile profile, {
     bool showLoading = false,
   }) async {
+    final operation = showLoading
+        ? ref.read(updatingKeysProvider.notifier).start(profile.updatingKey)
+        : null;
     try {
-      if (showLoading) {
-        ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = true;
-      }
       ref.read(profilesProvider.notifier).put(profile);
       final newProfile = await profile.update(
         validate: (path) => _core.validateConfig(path),
@@ -88,7 +88,11 @@ class ProfilesAction extends _$ProfilesAction {
             .applyProfileDebounce(silence: true);
       }
     } finally {
-      ref.read(isUpdatingProvider(profile.updatingKey).notifier).value = false;
+      if (operation != null) {
+        ref
+            .read(updatingKeysProvider.notifier)
+            .stop(profile.updatingKey, operation);
+      }
     }
   }
 

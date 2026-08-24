@@ -128,6 +128,7 @@ class AdaptiveSheetScaffold extends StatefulWidget {
   final Widget body;
   final String title;
   final bool sheetTransparentToolBar;
+  final bool centerTitle;
   final List<IconButtonData> actions;
   final VoidCallback? backAction;
 
@@ -136,6 +137,7 @@ class AdaptiveSheetScaffold extends StatefulWidget {
     required this.body,
     required this.title,
     this.sheetTransparentToolBar = false,
+    this.centerTitle = true,
     this.actions = const [],
     this.backAction,
   });
@@ -225,7 +227,7 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
       forceMaterialTransparency: type == SheetType.bottomSheet ? true : false,
       leading: suffixPop || popButton == null ? null : Center(child: popButton),
       automaticallyImplyLeading: type == SheetType.page ? true : false,
-      centerTitle: true,
+      centerTitle: widget.centerTitle,
       toolbarHeight: type == SheetType.bottomSheet ? 48 : null,
       title: Text(widget.title),
       titleTextStyle: type == SheetType.bottomSheet

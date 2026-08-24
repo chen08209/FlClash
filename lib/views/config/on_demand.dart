@@ -4,8 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/permission.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -188,10 +187,25 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
           minimumSize: const Size(80, 40),
         ),
         onPressed: onPressed,
-        child: Text(
-          authorized
-              ? appLocalizations.authorized
-              : appLocalizations.tapToAuthorize,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            ExcludeSemantics(
+              child: Opacity(
+                opacity: 0,
+                child: Text(
+                  authorized
+                      ? appLocalizations.tapToAuthorize
+                      : appLocalizations.authorized,
+                ),
+              ),
+            ),
+            Text(
+              authorized
+                  ? appLocalizations.authorized
+                  : appLocalizations.tapToAuthorize,
+            ),
+          ],
         ),
       ),
     );
@@ -199,58 +213,34 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
 
   Widget _buildBatteryOptimizationItem() {
     final appLocalizations = context.appLocalizations;
+    final isStart = ref.watch(isStartProvider);
     final isLoading = ref.watch(
       loadingProvider(LoadingTag.batteryOptimization),
     );
     final disabled = ref.watch(batteryOptimizationDisableProvider);
-    final content = Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 8,
-      children: [
-        InfoMessageButton(
-          message: appLocalizations.batteryOptimizationStatusTip,
-        ),
-        _buildAuthorizeButton(
-          authorized: disabled,
-          onPressed: _handleOpenBatteryOptimizationSettings,
-        ),
-      ],
-    );
     return DecorationListItem(
       minVerticalPadding: 8,
-      title: Text(
-        appLocalizations.ignoreBatteryOptimization,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        appLocalizations.batteryOptimizationDesc,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(appLocalizations.ignoreBatteryOptimization),
+      subtitle: Text(appLocalizations.batteryOptimizationDesc),
       trailing: Stack(
         alignment: Alignment.centerRight,
         children: [
-          // Reserves the same width as the loaded content so switching
-          // in/out of the loading spinner never changes the trailing
-          // width and reflows the title/subtitle.
           Visibility(
-            visible: false,
+            visible: !isLoading && !isStart,
             maintainSize: true,
             maintainAnimation: true,
             maintainState: true,
-            child: content,
+            child: _buildAuthorizeButton(
+              authorized: disabled,
+              onPressed: _handleOpenBatteryOptimizationSettings,
+            ),
           ),
-          if (isLoading)
-            const Align(
-              alignment: Alignment.centerRight,
-              child: SizedBox.square(
-                dimension: 32,
-                child: CommonCircleLoading(),
-              ),
-            )
-          else
-            content,
+          if (isStart)
+            InfoMessageButton(
+              message: appLocalizations.batteryOptimizationStatusTip,
+            ),
+          if (!isStart && isLoading)
+            const SizedBox.square(dimension: 32, child: CommonCircleLoading()),
         ],
       ),
     );
@@ -265,16 +255,8 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     );
     return DecorationListItem(
       minVerticalPadding: 8,
-      title: Text(
-        appLocalizations.locationPermission,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        appLocalizations.locationPermissionDesc,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(appLocalizations.locationPermission),
+      subtitle: Text(appLocalizations.locationPermissionDesc),
       trailing: _buildAuthorizeButton(
         authorized: granted,
         onPressed: _handleRequestLocationPermission,

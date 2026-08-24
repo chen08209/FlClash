@@ -1672,10 +1672,63 @@ abstract class _$Item extends $Notifier<dynamic> {
   }
 }
 
-@ProviderFor(IsUpdating)
+@ProviderFor(UpdatingKeys)
+final updatingKeysProvider = UpdatingKeysProvider._();
+
+final class UpdatingKeysProvider
+    extends $NotifierProvider<UpdatingKeys, Set<String>> {
+  UpdatingKeysProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'updatingKeysProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$updatingKeysHash();
+
+  @$internal
+  @override
+  UpdatingKeys create() => UpdatingKeys();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$updatingKeysHash() => r'dc2dac955ca8831cd8de337cf2ae0bb4e7bc6335';
+
+abstract class _$UpdatingKeys extends $Notifier<Set<String>> {
+  Set<String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(isUpdating)
 final isUpdatingProvider = IsUpdatingFamily._();
 
-final class IsUpdatingProvider extends $NotifierProvider<IsUpdating, bool> {
+final class IsUpdatingProvider extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
   IsUpdatingProvider._({
     required IsUpdatingFamily super.from,
     required String super.argument,
@@ -1699,7 +1752,14 @@ final class IsUpdatingProvider extends $NotifierProvider<IsUpdating, bool> {
 
   @$internal
   @override
-  IsUpdating create() => IsUpdating();
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as String;
+    return isUpdating(ref, argument);
+  }
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(bool value) {
@@ -1720,10 +1780,10 @@ final class IsUpdatingProvider extends $NotifierProvider<IsUpdating, bool> {
   }
 }
 
-String _$isUpdatingHash() => r'934cc96cbf8cf6909d27867455a31bf3008470e6';
+String _$isUpdatingHash() => r'5055409241b737f6d0b9e43d850a5beea9c2b4c8';
 
 final class IsUpdatingFamily extends $Family
-    with $ClassFamilyOverride<IsUpdating, bool, bool, bool, String> {
+    with $FunctionalFamilyOverride<bool, String> {
   IsUpdatingFamily._()
     : super(
         retry: null,
@@ -1738,27 +1798,6 @@ final class IsUpdatingFamily extends $Family
 
   @override
   String toString() => r'isUpdatingProvider';
-}
-
-abstract class _$IsUpdating extends $Notifier<bool> {
-  late final _$args = ref.$arg as String;
-  String get name => _$args;
-
-  bool build(String name);
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<bool, bool>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<bool, bool>,
-              bool,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, () => build(_$args));
-  }
 }
 
 @ProviderFor(NetworkDetection)

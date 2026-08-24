@@ -74,7 +74,8 @@ dependencies:
   drift_flutter: ^0.3.1
   fractional_indexing: ^1.0.0
   reorderable_grid: ^1.0.13
-  smooth_sheets: ^1.1.1
+  navigator_resizable: ^3.0.3
+  flutter_staggered_grid_view: ^0.7.0
   rust_api:
     path: plugins/rust_api
   setup:

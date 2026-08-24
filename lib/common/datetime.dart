@@ -16,6 +16,9 @@ extension DateTimeExtension on DateTime {
 
   String getLastUpdateTimeDesc(BuildContext context) {
     final appLocalizations = context.appLocalizations;
+    if (year <= 1970) {
+      return appLocalizations.unknown;
+    }
     final currentDateTime = DateTime.now();
     final difference = currentDateTime.difference(this);
     final days = difference.inDays;

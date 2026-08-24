@@ -455,24 +455,91 @@ void main() {
       'stores the refreshed provider and clears the updating flag',
       () async {
         final refreshed = _provider('geo', count: 5);
+        final release = Completer<String>();
         when(
           () => core.updateExternalProvider('geo'),
-        ).thenAnswer((_) async => '');
+        ).thenAnswer((_) => release.future);
         when(
           () => core.getExternalProvider('geo'),
         ).thenAnswer((_) async => refreshed);
         final container = buildContainer();
         container.read(providersProvider.notifier).value = [_provider('geo')];
 
-        final message = await actionOf(
+        final update = actionOf(
           container,
         ).updateProvider(_provider('geo'), showLoading: true);
+
+        expect(container.read(isUpdatingProvider('provider_geo')), isTrue);
+
+        release.complete('');
+        final message = await update;
 
         expect(message, isEmpty);
         expect(container.read(providersProvider), [refreshed]);
         expect(container.read(isUpdatingProvider('provider_geo')), isFalse);
       },
     );
+
+    testWidgets('the stale sweep does not interrupt the provider update', (
+      tester,
+    ) async {
+      final refreshed = _provider('geo', count: 8);
+      final release = Completer<String>();
+      when(
+        () => core.updateExternalProvider('geo'),
+      ).thenAnswer((_) => release.future);
+      when(
+        () => core.getExternalProvider('geo'),
+      ).thenAnswer((_) async => refreshed);
+      final container = buildContainer();
+      container.read(updatingActionProvider.notifier);
+      container.read(providersProvider.notifier).value = [_provider('geo')];
+
+      final update = actionOf(
+        container,
+      ).updateProvider(_provider('geo'), showLoading: true);
+
+      await tester.pump(updatingStaleTimeout + updatingSweepInterval);
+
+      expect(container.read(isUpdatingProvider('provider_geo')), isFalse);
+
+      release.complete('');
+
+      expect(await update, isEmpty);
+      expect(container.read(providersProvider), [refreshed]);
+
+      await tester.pump(Duration.zero);
+    });
+
+    testWidgets('a core disconnect clears the provider updating state', (
+      tester,
+    ) async {
+      final release = Completer<String>();
+      when(
+        () => core.updateExternalProvider('geo'),
+      ).thenAnswer((_) => release.future);
+      when(
+        () => core.getExternalProvider('geo'),
+      ).thenAnswer((_) async => _provider('geo'));
+      final container = buildContainer();
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+
+      final update = actionOf(
+        container,
+      ).updateProvider(_provider('geo'), showLoading: true);
+
+      expect(container.read(isUpdatingProvider('provider_geo')), isTrue);
+
+      container.read(coreStatusProvider.notifier).value =
+          CoreStatus.disconnected;
+      await tester.pump();
+
+      expect(container.read(isUpdatingProvider('provider_geo')), isFalse);
+
+      release.complete('');
+      await update;
+      await tester.pump(Duration.zero);
+    });
 
     test('returns the core message without storing a provider', () async {
       when(
@@ -508,24 +575,33 @@ void main() {
   group('sideLoadExternalProvider', () {
     test('stores the provider after a successful side load', () async {
       final refreshed = _provider('rules', count: 3);
+      final release = Completer<String>();
       when(
         () => core.sideLoadExternalProvider(
           providerName: 'rules',
           data: 'payload',
         ),
-      ).thenAnswer((_) async => '');
+      ).thenAnswer((_) => release.future);
       when(
         () => core.getExternalProvider('rules'),
       ).thenAnswer((_) async => refreshed);
       final container = buildContainer();
       container.read(providersProvider.notifier).value = [_provider('rules')];
 
-      final message = await actionOf(
-        container,
-      ).sideLoadExternalProvider(_provider('rules'), 'payload');
+      final sideLoad = actionOf(container).sideLoadExternalProvider(
+        _provider('rules'),
+        'payload',
+        showLoading: true,
+      );
+
+      expect(container.read(isUpdatingProvider('provider_rules')), isTrue);
+
+      release.complete('');
+      final message = await sideLoad;
 
       expect(message, isEmpty);
       expect(container.read(providersProvider), [refreshed]);
+      expect(container.read(isUpdatingProvider('provider_rules')), isFalse);
     });
 
     test('surfaces the core message and skips the refresh', () async {

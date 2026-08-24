@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -407,36 +409,78 @@ func handleUpdateGeoData(geoType string) string {
 	return ""
 }
 
-func handleUpdateExternalProvider(providerName string) string {
-	p, exist := lookupExternalProvider(providerName)
-	if !exist {
-		return "external provider is not exist"
+func providerRequestErrorCode(err error) string {
+	message := err.Error()
+	if len(message) >= 4 && message[3] == ' ' {
+		status, parseErr := strconv.Atoi(message[:3])
+		if parseErr == nil && status >= 100 && status <= 599 {
+			return "request_bad_response"
+		}
 	}
-	key := providerUpdateScope + providerName
-	if !claimUpdate(key) {
-		return ""
-	}
-	defer releaseUpdate(key)
-	if err := p.Update(); err != nil {
-		return err.Error()
+	var urlError *url.Error
+	var networkError net.Error
+	if errors.Is(err, context.DeadlineExceeded) ||
+		errors.As(err, &urlError) ||
+		errors.As(err, &networkError) {
+		return "request_error"
 	}
 	return ""
 }
 
-func handleSideLoadExternalProvider(providerName string, data []byte) string {
+func providerMethodError(code, providerName string, err error) *MethodError {
+	return &MethodError{
+		Code:    code,
+		Message: err.Error(),
+		Details: map[string]any{"providerName": providerName},
+	}
+}
+
+func handleUpdateExternalProvider(providerName string) *MethodError {
 	p, exist := lookupExternalProvider(providerName)
 	if !exist {
-		return "external provider is not exist"
+		return providerMethodError(
+			"provider_not_found",
+			providerName,
+			errors.New("external provider does not exist"),
+		)
 	}
 	key := providerUpdateScope + providerName
 	if !claimUpdate(key) {
-		return "external provider is updating"
+		return nil
+	}
+	defer releaseUpdate(key)
+	if err := p.Update(); err != nil {
+		code := providerRequestErrorCode(err)
+		if code == "" {
+			code = "provider_update_error"
+		}
+		return providerMethodError(code, providerName, err)
+	}
+	return nil
+}
+
+func handleSideLoadExternalProvider(providerName string, data []byte) *MethodError {
+	p, exist := lookupExternalProvider(providerName)
+	if !exist {
+		return providerMethodError(
+			"provider_not_found",
+			providerName,
+			errors.New("external provider does not exist"),
+		)
+	}
+	key := providerUpdateScope + providerName
+	if !claimUpdate(key) {
+		return providerMethodError(
+			"provider_updating",
+			providerName,
+			errors.New("external provider is updating"),
+		)
 	}
 	defer releaseUpdate(key)
 	if err := sideUpdateExternalProvider(p, data); err != nil {
-		return err.Error()
+		return providerMethodError("provider_update_error", providerName, err)
 	}
-	return ""
+	return nil
 }
 
 func handleSuspend(suspended bool) bool {

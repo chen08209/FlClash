@@ -26,6 +26,33 @@ class PageActivityScope extends InheritedWidget {
   }
 }
 
+const double _floatingActionButtonHeight = 56;
+
+class BottomInsetScope extends InheritedWidget {
+  static const double floatingActionButtonInset =
+      kFloatingActionButtonMargin + _floatingActionButtonHeight;
+
+  final double inset;
+
+  const BottomInsetScope({
+    super.key,
+    required this.inset,
+    required super.child,
+  });
+
+  static double of(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<BottomInsetScope>()
+            ?.inset ??
+        0;
+  }
+
+  @override
+  bool updateShouldNotify(BottomInsetScope oldWidget) {
+    return inset != oldWidget.inset;
+  }
+}
+
 class CommonScaffoldBackActionProvider extends InheritedWidget {
   final VoidCallback? backAction;
 

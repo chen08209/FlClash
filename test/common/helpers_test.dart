@@ -151,16 +151,18 @@ void main() {
     });
 
     test('scales with width', () {
-      expect(getProfilesColumns(300), 1);
+      expect(getProfilesColumns(270), 1);
       expect(getProfilesColumns(700), 2);
       expect(getProfilesColumns(1300), 4);
     });
 
-    test('a width that fits two columns only without spacing yields one', () {
-      // 600 splits into two 300px cards, under the 320px minimum, and into two
-      // 293px cards once 14px of spacing is taken out.
-      expect(getProfilesColumns(600), 1);
-      expect(getProfilesColumns(600, spacing: 14), 1);
+    test('spacing costs a column at the breakpoint', () {
+      expect(getProfilesColumns(540), 2);
+      expect(getProfilesColumns(540, spacing: 14), 1);
+    });
+
+    test('fits two padded cards near 600px', () {
+      expect(getProfilesColumns(568, spacing: 14), 2);
     });
 
     test('every card keeps at least the minimum width', () {

@@ -5,26 +5,8 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod/misc.dart' show Override;
-import 'package:smooth_sheets/smooth_sheets.dart';
 
 import 'overwrite_stage_flow.dart';
-
-Color _sheetFillColorOf(BuildContext context) {
-  return SheetProvider.of(context)?.type == SheetType.bottomSheet
-      ? context.colorScheme.surfaceContainerLow
-      : context.colorScheme.surface;
-}
-
-Widget fadeAndSlideTransition(
-  BuildContext context,
-  Animation<double> animation,
-  Animation<double> secondaryAnimation,
-  Widget child,
-) {
-  return FadeForwardsPageTransitionsBuilder(
-    backgroundColor: _sheetFillColorOf(context),
-  ).buildTransitions(null, context, animation, secondaryAnimation, child);
-}
 
 Future<void> showOverwriteNestedSheet<T>({
   required BuildContext context,
@@ -142,7 +124,6 @@ class _OverwriteNestedSheetState<T>
       },
     );
     final sheetProvider = SheetProvider.of(context);
-    final fillColor = _sheetFillColorOf(context);
     return CommonPopScope(
       onPop: (_) async {
         unawaited(_handlePop());
@@ -152,39 +133,30 @@ class _OverwriteNestedSheetState<T>
         nestedNavigatorPop: ([data]) {
           Navigator.of(context).pop(data);
         },
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () async {
-                  await _handleClose();
-                },
+        child: SizedBox(
+          width: sheetProvider.type == SheetType.sideSheet ? 400 : null,
+          height: double.infinity,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () async {
+                    await _handleClose();
+                  },
+                ),
               ),
-            ),
-            SizedBox(
-              width: sheetProvider.type == SheetType.sideSheet ? 400 : null,
-              child: SheetViewport(
-                child: PagedSheetRouteTheme(
-                  data: const PagedSheetRouteThemeData(
-                    transitionsBuilder: fadeAndSlideTransition,
-                    transitionDuration: Duration(milliseconds: 200),
-                  ),
-                  child: PagedSheet(
-                    decoration: MaterialSheetDecoration(
-                      animationDuration: Duration.zero,
-                      size: SheetSize.stretch,
-                      color: fillColor,
-                      borderRadius: sheetProvider.type == SheetType.bottomSheet
-                          ? AppRadius.top(AppCorner.xxl)
-                          : AppRadius.none,
-                      clipBehavior: Clip.antiAlias,
-                    ),
-                    navigator: nestedNavigator,
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    child: PagedSheet(child: nestedNavigator),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

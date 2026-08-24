@@ -392,6 +392,17 @@ directives, so consumers continue to import the same public API:
 - `ProxiesAction`: group management and proxy selection.
 - `ProfilesAction`: profile CRUD, auto-update, import.
 - `GeoResourceAction`: geo resource updates and URL configuration.
+- `UpdatingAction`: stale sweep over `UpdatingKeys`.
+
+`UpdatingKeys` in `lib/providers/app.dart` owns every per-entity updating flag; `isUpdatingProvider(key)` is the
+read-only view widgets watch. Callers pair `start(key, scope: ...)` with `stop(key, operation)` using the returned
+token, so overlapping operations on one key are reference counted and a late `stop` from a superseded operation
+cannot clear a newer one. Keys started with `UpdatingScope.core` depend on the Core to make progress, so
+`UpdatingKeys` discards them itself when `coreStatusProvider` leaves `connected` — that is the state's own
+invariant, not a policy, and it must stay inside the notifier where no warm-up ordering can miss it.
+`UpdatingScope.local` keys (profile updates run entirely in Dart) survive a Core restart. `UpdatingAction` holds
+only the policy half: the periodic sweep that discards a key stuck past `updatingStaleTimeout`. Do not move the
+timeout back into `UpdatingKeys`, and do not widen the disconnect reset to every scope.
 
 ## Platform Managers
 
