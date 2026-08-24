@@ -183,10 +183,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
       onFieldSubmitted: (_) {
         _handleUpdate();
       },
-      decoration: InputDecoration(
-        border: const OutlineInputBorder(),
-        labelText: field.label(appLocalizations),
-      ),
+      decoration: InputDecoration(labelText: field.label(appLocalizations)),
       validator: (value) => validatePort(field, value, appLocalizations),
     );
   }

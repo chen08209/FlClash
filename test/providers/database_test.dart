@@ -664,11 +664,10 @@ void main() {
       final orders = rows.map((item) => item.order).toList();
       expect(orders, everyElement(isNotNull));
       expect(orders.toSet(), hasLength(2));
-      expect(
-        rows.map((item) => item.id),
-        [1, 2],
-        reason: 'new groups are appended, so the keys must be increasing',
-      );
+      expect(rows.map((item) => item.id), [
+        1,
+        2,
+      ], reason: 'new groups are appended, so the keys must be increasing');
     });
 
     test('put rejects a second group that reuses an existing name', () async {

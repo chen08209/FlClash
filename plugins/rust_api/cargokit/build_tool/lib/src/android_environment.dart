@@ -25,18 +25,17 @@ class AndroidEnvironment {
     final clang = Platform.environment['_CARGOKIT_NDK_LINK_CLANG'];
     if (clang == null) {
       throw Exception(
-          "cargo-ndk rustc linker: didn't find _CARGOKIT_NDK_LINK_CLANG env var");
+        "cargo-ndk rustc linker: didn't find _CARGOKIT_NDK_LINK_CLANG env var",
+      );
     }
     final target = Platform.environment['_CARGOKIT_NDK_LINK_TARGET'];
     if (target == null) {
       throw Exception(
-          "cargo-ndk rustc linker: didn't find _CARGOKIT_NDK_LINK_TARGET env var");
+        "cargo-ndk rustc linker: didn't find _CARGOKIT_NDK_LINK_TARGET env var",
+      );
     }
 
-    runCommand(clang, [
-      target,
-      ...args,
-    ]);
+    runCommand(clang, [target, ...args]);
   }
 
   /// Full path to Android SDK.
@@ -60,9 +59,7 @@ class AndroidEnvironment {
     return ndkPackageXml.existsSync();
   }
 
-  void installNdk({
-    required String javaHome,
-  }) {
+  void installNdk({required String javaHome}) {
     final sdkManagerExtension = Platform.isWindows ? '.bat' : '';
     final sdkManager = path.join(
       sdkPath,
@@ -73,12 +70,11 @@ class AndroidEnvironment {
     );
 
     log.info('Installing NDK $ndkVersion');
-    runCommand(sdkManager, [
-      '--install',
-      'ndk;$ndkVersion',
-    ], environment: {
-      'JAVA_HOME': javaHome,
-    });
+    runCommand(
+      sdkManager,
+      ['--install', 'ndk;$ndkVersion'],
+      environment: {'JAVA_HOME': javaHome},
+    );
   }
 
   Future<Map<String, String>> buildEnvironment() async {
@@ -96,8 +92,10 @@ class AndroidEnvironment {
       'bin',
     );
 
-    final minSdkVersion =
-        math.max(target.androidMinSdkVersion!, this.minSdkVersion);
+    final minSdkVersion = math.max(
+      target.androidMinSdkVersion!,
+      this.minSdkVersion,
+    );
 
     final exe = Platform.isWindows ? '.exe' : '';
 
@@ -121,8 +119,8 @@ class AndroidEnvironment {
     final cxxFlagsKey = 'CXXFLAGS_${target.rust}';
     final cxxFlagsValue = targetArg;
 
-    final linkerKey =
-        'cargo_target_${target.rust.replaceAll('-', '_')}_linker'.toUpperCase();
+    final linkerKey = 'cargo_target_${target.rust.replaceAll('-', '_')}_linker'
+        .toUpperCase();
 
     final ranlibKey = 'RANLIB_${target.rust}';
     final ranlibValue = path.join(toolchainPath, 'llvm-ranlib$exe');
@@ -131,19 +129,16 @@ class AndroidEnvironment {
     final rustFlagsKey = 'CARGO_ENCODED_RUSTFLAGS';
     final rustFlagsValue = _libGccWorkaround(targetTempDir, ndkVersionParsed);
 
-    final runRustTool =
-        Platform.isWindows ? 'run_build_tool.cmd' : 'run_build_tool.sh';
+    final runRustTool = Platform.isWindows
+        ? 'run_build_tool.cmd'
+        : 'run_build_tool.sh';
 
     final packagePath = (await Isolate.resolvePackageUri(
-            Uri.parse('package:build_tool/buildtool.dart')))!
-        .toFilePath();
-    final selfPath = path.canonicalize(path.join(
-      packagePath,
-      '..',
-      '..',
-      '..',
-      runRustTool,
-    ));
+      Uri.parse('package:build_tool/buildtool.dart'),
+    ))!.toFilePath();
+    final selfPath = path.canonicalize(
+      path.join(packagePath, '..', '..', '..', runRustTool),
+    );
 
     // Make sure that run_build_tool is working properly even initially launched directly
     // through dart run.
@@ -176,13 +171,15 @@ class AndroidEnvironment {
     );
     Directory(workaroundDir).createSync(recursive: true);
     if (ndkVersion.major >= 23) {
-      File(path.join(workaroundDir, 'libgcc.a'))
-          .writeAsStringSync('INPUT(-lunwind)');
+      File(
+        path.join(workaroundDir, 'libgcc.a'),
+      ).writeAsStringSync('INPUT(-lunwind)');
     } else {
       // Other way around, untested, forward libgcc.a from libunwind once Rust
       // gets updated for NDK23+.
-      File(path.join(workaroundDir, 'libunwind.a'))
-          .writeAsStringSync('INPUT(-lgcc)');
+      File(
+        path.join(workaroundDir, 'libunwind.a'),
+      ).writeAsStringSync('INPUT(-lgcc)');
     }
 
     var rustFlags = Platform.environment['CARGO_ENCODED_RUSTFLAGS'] ?? '';

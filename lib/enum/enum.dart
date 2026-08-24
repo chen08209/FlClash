@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/common/system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -450,8 +450,11 @@ enum RuleTarget {
   DIRECT,
   REJECT;
 
-  static Set<String> get baseTargets =>
-      RuleTarget.values.map((item) => item.name).toSet();
+  static final List<String> baseTargetNames = List.unmodifiable(
+    RuleTarget.values.map((item) => item.name),
+  );
+
+  static final Set<String> baseTargets = Set.unmodifiable(baseTargetNames);
 }
 
 enum RestoreStrategy { compatible, override }

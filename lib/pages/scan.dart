@@ -3,9 +3,10 @@ import 'dart:math';
 
 import 'package:fl_clash/common/color.dart';
 import 'package:fl_clash/common/context.dart';
+import 'package:fl_clash/common/shape.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -178,7 +179,10 @@ class _ScanPageState extends ConsumerState<ScanPage>
 }
 
 class ScannerOverlay extends CustomPainter {
-  const ScannerOverlay({required this.scanWindow, this.borderRadius = 12.0});
+  const ScannerOverlay({
+    required this.scanWindow,
+    this.borderRadius = AppCorner.md,
+  });
 
   final Rect scanWindow;
   final double borderRadius;

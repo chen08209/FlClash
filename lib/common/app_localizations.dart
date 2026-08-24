@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+
 import 'dart:ui';
 
 final currentAppLocalizations = AppLocalizations.current;

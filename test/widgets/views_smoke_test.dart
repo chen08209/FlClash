@@ -24,7 +24,7 @@ import 'package:fl_clash/views/theme.dart';
 import 'package:fl_clash/views/views.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:fl_clash/widgets/sheet.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
@@ -432,7 +432,9 @@ void main() {
         ),
         customOverwriteDateProvider(profile.id).overrideWithValue(
           CustomOverwriteDate(
-            proxies: const [Proxy(name: 'DIRECT', type: 'Direct')],
+            loaded: true,
+            proxyNames: const ['DIRECT'],
+            proxyTypes: const {'DIRECT': 'Direct'},
             proxyGroups: proxyGroups,
             proxyProviders: const {'provider'},
             ruleTargets: {

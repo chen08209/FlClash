@@ -6,7 +6,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 final ruleItemHeight =
     globalState.measure.bodyLargeHeight +
@@ -282,7 +282,7 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
       child: DropdownMenuTheme(
         data: DropdownMenuThemeData(
           inputDecorationTheme: InputDecorationTheme(
-            border: const OutlineInputBorder(),
+            border: AppShape.input,
             labelStyle: context.textTheme.bodyLarge?.copyWith(
               overflow: TextOverflow.ellipsis,
             ),
@@ -378,10 +378,7 @@ class _RuleContentField extends StatelessWidget {
         onSubmitted();
       },
       controller: controller,
-      decoration: InputDecoration(
-        border: const OutlineInputBorder(),
-        labelText: appLocalizations.content,
-      ),
+      decoration: InputDecoration(labelText: appLocalizations.content),
       validator: (_) {
         if (controller.text.isEmpty) {
           return appLocalizations.emptyTip(appLocalizations.content);
@@ -438,7 +435,7 @@ class _RuleFlagChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
-      radius: 8,
+      radius: AppCorner.sm,
       isSelected: isSelected,
       onPressed: onPressed,
       child: Padding(

@@ -1,7 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'fade_box.dart';
@@ -222,11 +222,7 @@ class CommonCard extends StatelessWidget {
         style:
             FilledButton.styleFrom(
               padding: padding ?? EdgeInsets.zero,
-              shape:
-                  shape ??
-                  RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(radius ?? 14),
-                  ),
+              shape: shape ?? AppShape.all(radius ?? AppCorner.md),
               iconSize: 20,
               iconColor: _buildIconColor(context),
               foregroundColor: _buildForegroundColor(context),
@@ -249,11 +245,7 @@ class CommonCard extends StatelessWidget {
         style:
             OutlinedButton.styleFrom(
               padding: padding ?? EdgeInsets.zero,
-              shape:
-                  shape ??
-                  RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(radius ?? 14),
-                  ),
+              shape: shape ?? AppShape.all(radius ?? AppCorner.md),
               iconSize: 20,
               iconColor: _buildIconColor(context),
               backgroundColor: _buildBackgroundColor(context),
@@ -305,7 +297,7 @@ class SelectIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).colorScheme.inversePrimary,
-      shape: const CircleBorder(),
+      shape: AppShape.circle,
       child: Container(
         padding: const EdgeInsets.all(4),
         child: const Icon(Icons.check, size: 16),

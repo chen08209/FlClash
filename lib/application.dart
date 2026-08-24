@@ -11,10 +11,10 @@ import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'pages/pages.dart';
 
 Widget buildManagerStack({
@@ -149,15 +149,15 @@ class ApplicationState extends ConsumerState<Application> {
           onNavigationNotification: (_) => true,
           localizationsDelegates: const [
             AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
           ],
           builder: (_, child) {
-            return buildManagerStack(
-              isDesktop: system.isDesktop,
-              onConnectivityChanged: _handleConnectivityChanged,
-              child: child!,
+            return MaterialUiCompatibilityBridge(
+              child: buildManagerStack(
+                isDesktop: system.isDesktop,
+                onConnectivityChanged: _handleConnectivityChanged,
+                child: child!,
+              ),
             );
           },
           scrollBehavior: BaseScrollBehavior(),
@@ -169,14 +169,14 @@ class ApplicationState extends ConsumerState<Application> {
             useMaterial3: true,
             pageTransitionsTheme: _pageTransitionsTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.light),
-          ),
+          ).withAppShapes,
           darkTheme: ThemeData(
             useMaterial3: true,
             pageTransitionsTheme: _pageTransitionsTheme,
             colorScheme: _getAppColorScheme(
               brightness: Brightness.dark,
             ).toPureBlack(themeProps.pureBlack),
-          ),
+          ).withAppShapes,
           home: child!,
         );
       },

@@ -5,7 +5,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/profiles/preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'custom/custom.dart';
@@ -28,6 +28,7 @@ class _OverwriteViewState extends ConsumerState<OverwriteView> {
   void initState() {
     super.initState();
     _setupAction = ref.read(setupActionProvider.notifier);
+    ref.listenManual(clashConfigProvider(widget.profileId), (_, _) {});
   }
 
   Future<void> _handlePreview() async {
@@ -162,7 +163,6 @@ class _Content extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     final profileId = ProfileIdProvider.of(context)!.profileId;
     final overwriteType = ref.watch(overwriteTypeProvider(profileId));
-    ref.listen(clashConfigProvider(profileId), (_, _) {});
     return switch (overwriteType) {
       OverwriteType.standard => const StandardContent(),
       OverwriteType.script => const ScriptContent(),

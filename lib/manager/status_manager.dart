@@ -8,7 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/widgets/theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _actionMinDuration = Duration(seconds: 6);
@@ -442,9 +442,7 @@ class _MessageCard extends StatelessWidget {
         },
         child: Card(
           margin: EdgeInsets.zero,
-          shape: const RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.all(Radius.circular(14)),
-          ),
+          shape: AppShape.md,
           elevation: 6,
           color: message.level.containerColor(context),
           child: ConstrainedBox(

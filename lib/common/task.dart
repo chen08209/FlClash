@@ -80,6 +80,23 @@ Future<List<Group>> buildGroups(ComputeGroupsState state) async {
   );
 }
 
+Future<ClashConfig> clashConfigTask(Map<String, dynamic> data) async {
+  return compute<Map<String, dynamic>, ClashConfig>(buildClashConfig, data);
+}
+
+@visibleForTesting
+ClashConfig buildClashConfig(Map<String, dynamic> configMap) {
+  final clashConfig = ClashConfig.fromJson(configMap);
+  final proxyTypeMap = <String, String>{};
+  for (final proxy in clashConfig.proxies) {
+    proxyTypeMap[proxy.name] = proxy.type;
+  }
+  for (final proxyGroup in clashConfig.proxyGroups) {
+    proxyTypeMap[proxyGroup.name] = proxyGroup.type.value;
+  }
+  return clashConfig.copyWith(proxyTypeMap: proxyTypeMap);
+}
+
 Future<({String yaml, String md5})> makeRealProfileTask(
   MakeRealProfileState data,
 ) async {

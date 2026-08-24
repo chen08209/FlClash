@@ -4,9 +4,11 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
 
 ## Version Notes
 
-- Release CI pins Flutter 3.44.4. Local SDK may diverge, so trust the CI
+- Release CI pins Flutter 3.47.1. Local SDK may diverge, so trust the CI
   version as the source of truth for release builds.
-- Dart SDK constraint: `>=3.8.0 <4.0.0`.
+- Dart SDK constraint: `>=3.8.0 <4.0.0`. The lower bound is load-bearing and
+  must not be raised to the Dart version the SDK actually ships; see
+  Dependency Ceilings.
 
 ## Forked Dependencies
 
@@ -66,11 +68,21 @@ pinned Flutter SDK resolves `analyzer` 12. `3.2.6-dev.1` is the only published
 freezed release that accepts `analyzer` 12. Move to a stable release only once
 one exists that accepts the analyzer the SDK actually resolves.
 
+The `>=3.8.0` Dart lower bound is a language-version floor, not a stale minimum.
+Dart 3.13 makes `final` on a parameter an error, and `freezed` still emits it in
+the constructors it generates for every collection field it backs with a private
+field (`const _LogsState({final  List<Log> logs = const [], ...})`); 4.0.0-dev.3
+emits it too. A pubspec's lower bound sets the package language version, so
+`>=3.8.0` keeps that generated code legal while the SDK itself runs 3.13. Raising
+the bound makes every `*.freezed.dart` fail to parse, which `flutter analyze`
+does not catch because `lib/**/generated/**` is excluded. Raise it only once
+freezed stops emitting the modifier.
+
 One `analyzer` ceiling holds most of the remaining `flutter pub outdated` list.
 The newest `build_runner`, `drift_dev`, `intl_utils`, `test`, and
 `riverpod_generator` all require `analyzer` 13; `test` 1.31.2 additionally
 requires `test_api` 0.7.13, while `flutter_test` from the pinned SDK depends on
-`test_api` 0.7.11. Raising any of those bounds therefore fails version solving.
+`test_api` 0.7.12. Raising any of those bounds therefore fails version solving.
 
 The `riverpod` chain is the visible symptom. It is held at
 `riverpod`/`flutter_riverpod` 3.3.2, `riverpod_annotation` 4.0.3, and

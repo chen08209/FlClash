@@ -8,7 +8,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/groups.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/rules.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -43,8 +43,10 @@ class _TestOverwriteData extends Notifier<CustomOverwriteDate> {
   @override
   CustomOverwriteDate build() {
     return const CustomOverwriteDate(
+      loaded: true,
       ruleTargets: {'DIRECT'},
-      proxies: [Proxy(name: 'DIRECT', type: 'Direct')],
+      proxyNames: ['DIRECT'],
+      proxyTypes: {'DIRECT': 'Direct'},
     );
   }
 
@@ -90,7 +92,9 @@ void main() {
         proxyGroupsProvider.overrideWith2((_) => _TestProxyGroups(proxyGroups)),
         customOverwriteDateProvider(profile.id).overrideWithValue(
           CustomOverwriteDate(
-            proxies: const [Proxy(name: 'DIRECT', type: 'Direct')],
+            loaded: true,
+            proxyNames: const ['DIRECT'],
+            proxyTypes: const {'DIRECT': 'Direct'},
             proxyGroups: proxyGroups,
             proxyProviders: const {'provider'},
             ruleTargets: {

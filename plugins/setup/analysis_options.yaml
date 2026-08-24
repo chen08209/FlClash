@@ -3,3 +3,10 @@ include: ../../lint_options.yaml
 analyzer:
   exclude:
     - buildkit/build_tool/**
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**

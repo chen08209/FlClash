@@ -775,7 +775,7 @@ final class CustomOverwriteDateProvider
 }
 
 String _$customOverwriteDateHash() =>
-    r'52b7eb3ac298486467443cd941fe993f22086f27';
+    r'386bdd7a3bd8f48e17bfa56d9a47fb6e0f11b4cc';
 
 final class CustomOverwriteDateFamily extends $Family
     with $FunctionalFamilyOverride<CustomOverwriteDate, int> {
@@ -855,7 +855,7 @@ final class CustomOverwriteTargetIsValidProvider
 }
 
 String _$customOverwriteTargetIsValidHash() =>
-    r'ec4d47b2ca9522a9b183380ebd3ee483d83a0da6';
+    r'cafcd9915173737f36346feec28e41221ab3657e';
 
 final class CustomOverwriteTargetIsValidFamily extends $Family
     with $FunctionalFamilyOverride<bool, (int, String?)> {
@@ -939,7 +939,7 @@ final class CustomOverwriteProxyProviderIsValidProvider
 }
 
 String _$customOverwriteProxyProviderIsValidHash() =>
-    r'5b93515706b1c8edb078f10be4cbf8c7d73b54c1';
+    r'c9b9a691686fd41605cbdf4e5adceadf1245390f';
 
 final class CustomOverwriteProxyProviderIsValidFamily extends $Family
     with $FunctionalFamilyOverride<bool, (int, String?)> {
@@ -1023,7 +1023,7 @@ final class CustomOverwriteUseIsValidProvider
 }
 
 String _$customOverwriteUseIsValidHash() =>
-    r'a6daf410cbde076b58540b8484127c0cabc2b331';
+    r'acc08a9dcc3ed111a06318ce04c265a97c3a729f';
 
 final class CustomOverwriteUseIsValidFamily extends $Family
     with $FunctionalFamilyOverride<bool, (int, List<String>)> {
@@ -1106,7 +1106,7 @@ final class CustomOverwriteProxiesIsValidProvider
 }
 
 String _$customOverwriteProxiesIsValidHash() =>
-    r'856289220d963e12b5c62434ea80cf819b471cff';
+    r'578b938d0fdca614fad63bb7eb9f8669af734de1';
 
 final class CustomOverwriteProxiesIsValidFamily extends $Family
     with $FunctionalFamilyOverride<bool, (int, List<String>)> {
@@ -1189,7 +1189,7 @@ final class InvalidProxyGroupIdsProvider
 }
 
 String _$invalidProxyGroupIdsHash() =>
-    r'3a458a1a4f6b7c52d317f3c137114f8cf585a7e0';
+    r'297bc60ef354516a01f9d36913d1c1f542cbe70f';
 
 final class InvalidProxyGroupIdsFamily extends $Family
     with $FunctionalFamilyOverride<Set<int>, int> {
@@ -3139,7 +3139,7 @@ final class ClashConfigProvider
   }
 }
 
-String _$clashConfigHash() => r'9cce2e682141f6d4588b2037f293611e78f80ff4';
+String _$clashConfigHash() => r'd984af6731ae56dbc1f517f683a40618cdfa5129';
 
 final class ClashConfigFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ClashConfig>, int> {

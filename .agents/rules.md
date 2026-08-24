@@ -374,6 +374,15 @@ Do not manually edit generated files under:
 
 After schema, model, or provider changes, run build generation and include focused tests when behavior changes.
 
+`lib/l10n/l10n.dart` is the one file that still imports `package:flutter/material.dart`.
+`intl_utils` hardcodes that import in its own template, so regenerating rewrites it and
+there is nothing to fix here; `test/lint/design_package_test.dart` exempts the generated
+l10n paths for that reason. It is harmless because the file only needs `Locale`,
+`BuildContext`, `Localizations` and `LocalizationsDelegate`, which the legacy library and
+`material_ui` both re-export from the same `package:flutter/widgets.dart`. Everything a
+human writes takes Material from `material_ui`; `cupertino_ui` is banned outright and
+survives only as a transitive dependency of `material_ui`.
+
 Strings live in `arb/intl_{en,zh_CN,ja,ru}.arb` — flat JSON, no `@` metadata. Add a key to all four, then regenerate with
 `dart run intl_utils:generate`, which rewrites `lib/l10n/`. A key present in only some locales silently falls back to
 English at runtime, so add the translation rather than leaving it out.

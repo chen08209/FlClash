@@ -625,7 +625,7 @@ as String?,
 /// @nodoc
 mixin _$CustomOverwriteDate {
 
- List<Proxy> get proxies; List<ProxyGroup> get proxyGroups; Set<String> get proxyProviders; Set<String> get ruleTargets; Set<String> get subRules;
+ bool get loaded; List<String> get proxyNames; Map<String, String> get proxyTypes; List<ProxyGroup> get proxyGroups; Set<String> get proxyProviders; Set<String> get ruleTargets; Set<String> get subRules;
 /// Create a copy of CustomOverwriteDate
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -636,16 +636,16 @@ $CustomOverwriteDateCopyWith<CustomOverwriteDate> get copyWith => _$CustomOverwr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomOverwriteDate&&const DeepCollectionEquality().equals(other.proxies, proxies)&&const DeepCollectionEquality().equals(other.proxyGroups, proxyGroups)&&const DeepCollectionEquality().equals(other.proxyProviders, proxyProviders)&&const DeepCollectionEquality().equals(other.ruleTargets, ruleTargets)&&const DeepCollectionEquality().equals(other.subRules, subRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomOverwriteDate&&(identical(other.loaded, loaded) || other.loaded == loaded)&&const DeepCollectionEquality().equals(other.proxyNames, proxyNames)&&const DeepCollectionEquality().equals(other.proxyTypes, proxyTypes)&&const DeepCollectionEquality().equals(other.proxyGroups, proxyGroups)&&const DeepCollectionEquality().equals(other.proxyProviders, proxyProviders)&&const DeepCollectionEquality().equals(other.ruleTargets, ruleTargets)&&const DeepCollectionEquality().equals(other.subRules, subRules));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(proxies),const DeepCollectionEquality().hash(proxyGroups),const DeepCollectionEquality().hash(proxyProviders),const DeepCollectionEquality().hash(ruleTargets),const DeepCollectionEquality().hash(subRules));
+int get hashCode => Object.hash(runtimeType,loaded,const DeepCollectionEquality().hash(proxyNames),const DeepCollectionEquality().hash(proxyTypes),const DeepCollectionEquality().hash(proxyGroups),const DeepCollectionEquality().hash(proxyProviders),const DeepCollectionEquality().hash(ruleTargets),const DeepCollectionEquality().hash(subRules));
 
 @override
 String toString() {
-  return 'CustomOverwriteDate(proxies: $proxies, proxyGroups: $proxyGroups, proxyProviders: $proxyProviders, ruleTargets: $ruleTargets, subRules: $subRules)';
+  return 'CustomOverwriteDate(loaded: $loaded, proxyNames: $proxyNames, proxyTypes: $proxyTypes, proxyGroups: $proxyGroups, proxyProviders: $proxyProviders, ruleTargets: $ruleTargets, subRules: $subRules)';
 }
 
 
@@ -656,7 +656,7 @@ abstract mixin class $CustomOverwriteDateCopyWith<$Res>  {
   factory $CustomOverwriteDateCopyWith(CustomOverwriteDate value, $Res Function(CustomOverwriteDate) _then) = _$CustomOverwriteDateCopyWithImpl;
 @useResult
 $Res call({
- List<Proxy> proxies, List<ProxyGroup> proxyGroups, Set<String> proxyProviders, Set<String> ruleTargets, Set<String> subRules
+ bool loaded, List<String> proxyNames, Map<String, String> proxyTypes, List<ProxyGroup> proxyGroups, Set<String> proxyProviders, Set<String> ruleTargets, Set<String> subRules
 });
 
 
@@ -673,10 +673,12 @@ class _$CustomOverwriteDateCopyWithImpl<$Res>
 
 /// Create a copy of CustomOverwriteDate
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? proxies = null,Object? proxyGroups = null,Object? proxyProviders = null,Object? ruleTargets = null,Object? subRules = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? loaded = null,Object? proxyNames = null,Object? proxyTypes = null,Object? proxyGroups = null,Object? proxyProviders = null,Object? ruleTargets = null,Object? subRules = null,}) {
   return _then(_self.copyWith(
-proxies: null == proxies ? _self.proxies : proxies // ignore: cast_nullable_to_non_nullable
-as List<Proxy>,proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
+loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
+as bool,proxyNames: null == proxyNames ? _self.proxyNames : proxyNames // ignore: cast_nullable_to_non_nullable
+as List<String>,proxyTypes: null == proxyTypes ? _self.proxyTypes : proxyTypes // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
 as List<ProxyGroup>,proxyProviders: null == proxyProviders ? _self.proxyProviders : proxyProviders // ignore: cast_nullable_to_non_nullable
 as Set<String>,ruleTargets: null == ruleTargets ? _self.ruleTargets : ruleTargets // ignore: cast_nullable_to_non_nullable
 as Set<String>,subRules: null == subRules ? _self.subRules : subRules // ignore: cast_nullable_to_non_nullable
@@ -765,10 +767,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Proxy> proxies,  List<ProxyGroup> proxyGroups,  Set<String> proxyProviders,  Set<String> ruleTargets,  Set<String> subRules)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool loaded,  List<String> proxyNames,  Map<String, String> proxyTypes,  List<ProxyGroup> proxyGroups,  Set<String> proxyProviders,  Set<String> ruleTargets,  Set<String> subRules)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CustomOverwriteDate() when $default != null:
-return $default(_that.proxies,_that.proxyGroups,_that.proxyProviders,_that.ruleTargets,_that.subRules);case _:
+return $default(_that.loaded,_that.proxyNames,_that.proxyTypes,_that.proxyGroups,_that.proxyProviders,_that.ruleTargets,_that.subRules);case _:
   return orElse();
 
 }
@@ -786,10 +788,10 @@ return $default(_that.proxies,_that.proxyGroups,_that.proxyProviders,_that.ruleT
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Proxy> proxies,  List<ProxyGroup> proxyGroups,  Set<String> proxyProviders,  Set<String> ruleTargets,  Set<String> subRules)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool loaded,  List<String> proxyNames,  Map<String, String> proxyTypes,  List<ProxyGroup> proxyGroups,  Set<String> proxyProviders,  Set<String> ruleTargets,  Set<String> subRules)  $default,) {final _that = this;
 switch (_that) {
 case _CustomOverwriteDate():
-return $default(_that.proxies,_that.proxyGroups,_that.proxyProviders,_that.ruleTargets,_that.subRules);case _:
+return $default(_that.loaded,_that.proxyNames,_that.proxyTypes,_that.proxyGroups,_that.proxyProviders,_that.ruleTargets,_that.subRules);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -806,10 +808,10 @@ return $default(_that.proxies,_that.proxyGroups,_that.proxyProviders,_that.ruleT
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Proxy> proxies,  List<ProxyGroup> proxyGroups,  Set<String> proxyProviders,  Set<String> ruleTargets,  Set<String> subRules)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool loaded,  List<String> proxyNames,  Map<String, String> proxyTypes,  List<ProxyGroup> proxyGroups,  Set<String> proxyProviders,  Set<String> ruleTargets,  Set<String> subRules)?  $default,) {final _that = this;
 switch (_that) {
 case _CustomOverwriteDate() when $default != null:
-return $default(_that.proxies,_that.proxyGroups,_that.proxyProviders,_that.ruleTargets,_that.subRules);case _:
+return $default(_that.loaded,_that.proxyNames,_that.proxyTypes,_that.proxyGroups,_that.proxyProviders,_that.ruleTargets,_that.subRules);case _:
   return null;
 
 }
@@ -821,14 +823,22 @@ return $default(_that.proxies,_that.proxyGroups,_that.proxyProviders,_that.ruleT
 
 
 class _CustomOverwriteDate implements CustomOverwriteDate {
-  const _CustomOverwriteDate({final  List<Proxy> proxies = const [], final  List<ProxyGroup> proxyGroups = const [], final  Set<String> proxyProviders = const {}, final  Set<String> ruleTargets = const {}, final  Set<String> subRules = const {}}): _proxies = proxies,_proxyGroups = proxyGroups,_proxyProviders = proxyProviders,_ruleTargets = ruleTargets,_subRules = subRules;
+  const _CustomOverwriteDate({this.loaded = false, final  List<String> proxyNames = const [], final  Map<String, String> proxyTypes = const {}, final  List<ProxyGroup> proxyGroups = const [], final  Set<String> proxyProviders = const {}, final  Set<String> ruleTargets = const {}, final  Set<String> subRules = const {}}): _proxyNames = proxyNames,_proxyTypes = proxyTypes,_proxyGroups = proxyGroups,_proxyProviders = proxyProviders,_ruleTargets = ruleTargets,_subRules = subRules;
   
 
- final  List<Proxy> _proxies;
-@override@JsonKey() List<Proxy> get proxies {
-  if (_proxies is EqualUnmodifiableListView) return _proxies;
+@override@JsonKey() final  bool loaded;
+ final  List<String> _proxyNames;
+@override@JsonKey() List<String> get proxyNames {
+  if (_proxyNames is EqualUnmodifiableListView) return _proxyNames;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_proxies);
+  return EqualUnmodifiableListView(_proxyNames);
+}
+
+ final  Map<String, String> _proxyTypes;
+@override@JsonKey() Map<String, String> get proxyTypes {
+  if (_proxyTypes is EqualUnmodifiableMapView) return _proxyTypes;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_proxyTypes);
 }
 
  final  List<ProxyGroup> _proxyGroups;
@@ -870,16 +880,16 @@ _$CustomOverwriteDateCopyWith<_CustomOverwriteDate> get copyWith => __$CustomOve
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomOverwriteDate&&const DeepCollectionEquality().equals(other._proxies, _proxies)&&const DeepCollectionEquality().equals(other._proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other._proxyProviders, _proxyProviders)&&const DeepCollectionEquality().equals(other._ruleTargets, _ruleTargets)&&const DeepCollectionEquality().equals(other._subRules, _subRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomOverwriteDate&&(identical(other.loaded, loaded) || other.loaded == loaded)&&const DeepCollectionEquality().equals(other._proxyNames, _proxyNames)&&const DeepCollectionEquality().equals(other._proxyTypes, _proxyTypes)&&const DeepCollectionEquality().equals(other._proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other._proxyProviders, _proxyProviders)&&const DeepCollectionEquality().equals(other._ruleTargets, _ruleTargets)&&const DeepCollectionEquality().equals(other._subRules, _subRules));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_proxyProviders),const DeepCollectionEquality().hash(_ruleTargets),const DeepCollectionEquality().hash(_subRules));
+int get hashCode => Object.hash(runtimeType,loaded,const DeepCollectionEquality().hash(_proxyNames),const DeepCollectionEquality().hash(_proxyTypes),const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_proxyProviders),const DeepCollectionEquality().hash(_ruleTargets),const DeepCollectionEquality().hash(_subRules));
 
 @override
 String toString() {
-  return 'CustomOverwriteDate(proxies: $proxies, proxyGroups: $proxyGroups, proxyProviders: $proxyProviders, ruleTargets: $ruleTargets, subRules: $subRules)';
+  return 'CustomOverwriteDate(loaded: $loaded, proxyNames: $proxyNames, proxyTypes: $proxyTypes, proxyGroups: $proxyGroups, proxyProviders: $proxyProviders, ruleTargets: $ruleTargets, subRules: $subRules)';
 }
 
 
@@ -890,7 +900,7 @@ abstract mixin class _$CustomOverwriteDateCopyWith<$Res> implements $CustomOverw
   factory _$CustomOverwriteDateCopyWith(_CustomOverwriteDate value, $Res Function(_CustomOverwriteDate) _then) = __$CustomOverwriteDateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Proxy> proxies, List<ProxyGroup> proxyGroups, Set<String> proxyProviders, Set<String> ruleTargets, Set<String> subRules
+ bool loaded, List<String> proxyNames, Map<String, String> proxyTypes, List<ProxyGroup> proxyGroups, Set<String> proxyProviders, Set<String> ruleTargets, Set<String> subRules
 });
 
 
@@ -907,10 +917,12 @@ class __$CustomOverwriteDateCopyWithImpl<$Res>
 
 /// Create a copy of CustomOverwriteDate
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? proxies = null,Object? proxyGroups = null,Object? proxyProviders = null,Object? ruleTargets = null,Object? subRules = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? loaded = null,Object? proxyNames = null,Object? proxyTypes = null,Object? proxyGroups = null,Object? proxyProviders = null,Object? ruleTargets = null,Object? subRules = null,}) {
   return _then(_CustomOverwriteDate(
-proxies: null == proxies ? _self._proxies : proxies // ignore: cast_nullable_to_non_nullable
-as List<Proxy>,proxyGroups: null == proxyGroups ? _self._proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
+loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
+as bool,proxyNames: null == proxyNames ? _self._proxyNames : proxyNames // ignore: cast_nullable_to_non_nullable
+as List<String>,proxyTypes: null == proxyTypes ? _self._proxyTypes : proxyTypes // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,proxyGroups: null == proxyGroups ? _self._proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
 as List<ProxyGroup>,proxyProviders: null == proxyProviders ? _self._proxyProviders : proxyProviders // ignore: cast_nullable_to_non_nullable
 as Set<String>,ruleTargets: null == ruleTargets ? _self._ruleTargets : ruleTargets // ignore: cast_nullable_to_non_nullable
 as Set<String>,subRules: null == subRules ? _self._subRules : subRules // ignore: cast_nullable_to_non_nullable
@@ -924,7 +936,7 @@ as Set<String>,
 /// @nodoc
 mixin _$CustomOverwriteSelectorState {
 
- List<Proxy> get proxies; List<String> get subRules; List<String> get proxyProviders;
+ bool get loaded; List<Proxy> get proxies; List<String> get subRules; List<String> get proxyProviders;
 /// Create a copy of CustomOverwriteSelectorState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -935,16 +947,16 @@ $CustomOverwriteSelectorStateCopyWith<CustomOverwriteSelectorState> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomOverwriteSelectorState&&const DeepCollectionEquality().equals(other.proxies, proxies)&&const DeepCollectionEquality().equals(other.subRules, subRules)&&const DeepCollectionEquality().equals(other.proxyProviders, proxyProviders));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomOverwriteSelectorState&&(identical(other.loaded, loaded) || other.loaded == loaded)&&const DeepCollectionEquality().equals(other.proxies, proxies)&&const DeepCollectionEquality().equals(other.subRules, subRules)&&const DeepCollectionEquality().equals(other.proxyProviders, proxyProviders));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(proxies),const DeepCollectionEquality().hash(subRules),const DeepCollectionEquality().hash(proxyProviders));
+int get hashCode => Object.hash(runtimeType,loaded,const DeepCollectionEquality().hash(proxies),const DeepCollectionEquality().hash(subRules),const DeepCollectionEquality().hash(proxyProviders));
 
 @override
 String toString() {
-  return 'CustomOverwriteSelectorState(proxies: $proxies, subRules: $subRules, proxyProviders: $proxyProviders)';
+  return 'CustomOverwriteSelectorState(loaded: $loaded, proxies: $proxies, subRules: $subRules, proxyProviders: $proxyProviders)';
 }
 
 
@@ -955,7 +967,7 @@ abstract mixin class $CustomOverwriteSelectorStateCopyWith<$Res>  {
   factory $CustomOverwriteSelectorStateCopyWith(CustomOverwriteSelectorState value, $Res Function(CustomOverwriteSelectorState) _then) = _$CustomOverwriteSelectorStateCopyWithImpl;
 @useResult
 $Res call({
- List<Proxy> proxies, List<String> subRules, List<String> proxyProviders
+ bool loaded, List<Proxy> proxies, List<String> subRules, List<String> proxyProviders
 });
 
 
@@ -972,9 +984,10 @@ class _$CustomOverwriteSelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of CustomOverwriteSelectorState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? proxies = null,Object? subRules = null,Object? proxyProviders = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? loaded = null,Object? proxies = null,Object? subRules = null,Object? proxyProviders = null,}) {
   return _then(_self.copyWith(
-proxies: null == proxies ? _self.proxies : proxies // ignore: cast_nullable_to_non_nullable
+loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
+as bool,proxies: null == proxies ? _self.proxies : proxies // ignore: cast_nullable_to_non_nullable
 as List<Proxy>,subRules: null == subRules ? _self.subRules : subRules // ignore: cast_nullable_to_non_nullable
 as List<String>,proxyProviders: null == proxyProviders ? _self.proxyProviders : proxyProviders // ignore: cast_nullable_to_non_nullable
 as List<String>,
@@ -1062,10 +1075,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Proxy> proxies,  List<String> subRules,  List<String> proxyProviders)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool loaded,  List<Proxy> proxies,  List<String> subRules,  List<String> proxyProviders)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CustomOverwriteSelectorState() when $default != null:
-return $default(_that.proxies,_that.subRules,_that.proxyProviders);case _:
+return $default(_that.loaded,_that.proxies,_that.subRules,_that.proxyProviders);case _:
   return orElse();
 
 }
@@ -1083,10 +1096,10 @@ return $default(_that.proxies,_that.subRules,_that.proxyProviders);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Proxy> proxies,  List<String> subRules,  List<String> proxyProviders)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool loaded,  List<Proxy> proxies,  List<String> subRules,  List<String> proxyProviders)  $default,) {final _that = this;
 switch (_that) {
 case _CustomOverwriteSelectorState():
-return $default(_that.proxies,_that.subRules,_that.proxyProviders);case _:
+return $default(_that.loaded,_that.proxies,_that.subRules,_that.proxyProviders);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1103,10 +1116,10 @@ return $default(_that.proxies,_that.subRules,_that.proxyProviders);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Proxy> proxies,  List<String> subRules,  List<String> proxyProviders)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool loaded,  List<Proxy> proxies,  List<String> subRules,  List<String> proxyProviders)?  $default,) {final _that = this;
 switch (_that) {
 case _CustomOverwriteSelectorState() when $default != null:
-return $default(_that.proxies,_that.subRules,_that.proxyProviders);case _:
+return $default(_that.loaded,_that.proxies,_that.subRules,_that.proxyProviders);case _:
   return null;
 
 }
@@ -1118,9 +1131,10 @@ return $default(_that.proxies,_that.subRules,_that.proxyProviders);case _:
 
 
 class _CustomOverwriteSelectorState implements CustomOverwriteSelectorState {
-  const _CustomOverwriteSelectorState({required final  List<Proxy> proxies, required final  List<String> subRules, required final  List<String> proxyProviders}): _proxies = proxies,_subRules = subRules,_proxyProviders = proxyProviders;
+  const _CustomOverwriteSelectorState({required this.loaded, required final  List<Proxy> proxies, required final  List<String> subRules, required final  List<String> proxyProviders}): _proxies = proxies,_subRules = subRules,_proxyProviders = proxyProviders;
   
 
+@override final  bool loaded;
  final  List<Proxy> _proxies;
 @override List<Proxy> get proxies {
   if (_proxies is EqualUnmodifiableListView) return _proxies;
@@ -1153,16 +1167,16 @@ _$CustomOverwriteSelectorStateCopyWith<_CustomOverwriteSelectorState> get copyWi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomOverwriteSelectorState&&const DeepCollectionEquality().equals(other._proxies, _proxies)&&const DeepCollectionEquality().equals(other._subRules, _subRules)&&const DeepCollectionEquality().equals(other._proxyProviders, _proxyProviders));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomOverwriteSelectorState&&(identical(other.loaded, loaded) || other.loaded == loaded)&&const DeepCollectionEquality().equals(other._proxies, _proxies)&&const DeepCollectionEquality().equals(other._subRules, _subRules)&&const DeepCollectionEquality().equals(other._proxyProviders, _proxyProviders));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_subRules),const DeepCollectionEquality().hash(_proxyProviders));
+int get hashCode => Object.hash(runtimeType,loaded,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_subRules),const DeepCollectionEquality().hash(_proxyProviders));
 
 @override
 String toString() {
-  return 'CustomOverwriteSelectorState(proxies: $proxies, subRules: $subRules, proxyProviders: $proxyProviders)';
+  return 'CustomOverwriteSelectorState(loaded: $loaded, proxies: $proxies, subRules: $subRules, proxyProviders: $proxyProviders)';
 }
 
 
@@ -1173,7 +1187,7 @@ abstract mixin class _$CustomOverwriteSelectorStateCopyWith<$Res> implements $Cu
   factory _$CustomOverwriteSelectorStateCopyWith(_CustomOverwriteSelectorState value, $Res Function(_CustomOverwriteSelectorState) _then) = __$CustomOverwriteSelectorStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Proxy> proxies, List<String> subRules, List<String> proxyProviders
+ bool loaded, List<Proxy> proxies, List<String> subRules, List<String> proxyProviders
 });
 
 
@@ -1190,9 +1204,10 @@ class __$CustomOverwriteSelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of CustomOverwriteSelectorState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? proxies = null,Object? subRules = null,Object? proxyProviders = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? loaded = null,Object? proxies = null,Object? subRules = null,Object? proxyProviders = null,}) {
   return _then(_CustomOverwriteSelectorState(
-proxies: null == proxies ? _self._proxies : proxies // ignore: cast_nullable_to_non_nullable
+loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
+as bool,proxies: null == proxies ? _self._proxies : proxies // ignore: cast_nullable_to_non_nullable
 as List<Proxy>,subRules: null == subRules ? _self._subRules : subRules // ignore: cast_nullable_to_non_nullable
 as List<String>,proxyProviders: null == proxyProviders ? _self._proxyProviders : proxyProviders // ignore: cast_nullable_to_non_nullable
 as List<String>,
@@ -1203,281 +1218,9 @@ as List<String>,
 }
 
 /// @nodoc
-mixin _$ProxiesAndGroupsSelectorState {
-
- List<Proxy> get proxies; List<ProxyGroup> get proxyGroups;
-/// Create a copy of ProxiesAndGroupsSelectorState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ProxiesAndGroupsSelectorStateCopyWith<ProxiesAndGroupsSelectorState> get copyWith => _$ProxiesAndGroupsSelectorStateCopyWithImpl<ProxiesAndGroupsSelectorState>(this as ProxiesAndGroupsSelectorState, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxiesAndGroupsSelectorState&&const DeepCollectionEquality().equals(other.proxies, proxies)&&const DeepCollectionEquality().equals(other.proxyGroups, proxyGroups));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(proxies),const DeepCollectionEquality().hash(proxyGroups));
-
-@override
-String toString() {
-  return 'ProxiesAndGroupsSelectorState(proxies: $proxies, proxyGroups: $proxyGroups)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $ProxiesAndGroupsSelectorStateCopyWith<$Res>  {
-  factory $ProxiesAndGroupsSelectorStateCopyWith(ProxiesAndGroupsSelectorState value, $Res Function(ProxiesAndGroupsSelectorState) _then) = _$ProxiesAndGroupsSelectorStateCopyWithImpl;
-@useResult
-$Res call({
- List<Proxy> proxies, List<ProxyGroup> proxyGroups
-});
-
-
-
-
-}
-/// @nodoc
-class _$ProxiesAndGroupsSelectorStateCopyWithImpl<$Res>
-    implements $ProxiesAndGroupsSelectorStateCopyWith<$Res> {
-  _$ProxiesAndGroupsSelectorStateCopyWithImpl(this._self, this._then);
-
-  final ProxiesAndGroupsSelectorState _self;
-  final $Res Function(ProxiesAndGroupsSelectorState) _then;
-
-/// Create a copy of ProxiesAndGroupsSelectorState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? proxies = null,Object? proxyGroups = null,}) {
-  return _then(_self.copyWith(
-proxies: null == proxies ? _self.proxies : proxies // ignore: cast_nullable_to_non_nullable
-as List<Proxy>,proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
-as List<ProxyGroup>,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [ProxiesAndGroupsSelectorState].
-extension ProxiesAndGroupsSelectorStatePatterns on ProxiesAndGroupsSelectorState {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ProxiesAndGroupsSelectorState value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _ProxiesAndGroupsSelectorState() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ProxiesAndGroupsSelectorState value)  $default,){
-final _that = this;
-switch (_that) {
-case _ProxiesAndGroupsSelectorState():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ProxiesAndGroupsSelectorState value)?  $default,){
-final _that = this;
-switch (_that) {
-case _ProxiesAndGroupsSelectorState() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Proxy> proxies,  List<ProxyGroup> proxyGroups)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _ProxiesAndGroupsSelectorState() when $default != null:
-return $default(_that.proxies,_that.proxyGroups);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Proxy> proxies,  List<ProxyGroup> proxyGroups)  $default,) {final _that = this;
-switch (_that) {
-case _ProxiesAndGroupsSelectorState():
-return $default(_that.proxies,_that.proxyGroups);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Proxy> proxies,  List<ProxyGroup> proxyGroups)?  $default,) {final _that = this;
-switch (_that) {
-case _ProxiesAndGroupsSelectorState() when $default != null:
-return $default(_that.proxies,_that.proxyGroups);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _ProxiesAndGroupsSelectorState implements ProxiesAndGroupsSelectorState {
-  const _ProxiesAndGroupsSelectorState({required final  List<Proxy> proxies, required final  List<ProxyGroup> proxyGroups}): _proxies = proxies,_proxyGroups = proxyGroups;
-  
-
- final  List<Proxy> _proxies;
-@override List<Proxy> get proxies {
-  if (_proxies is EqualUnmodifiableListView) return _proxies;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_proxies);
-}
-
- final  List<ProxyGroup> _proxyGroups;
-@override List<ProxyGroup> get proxyGroups {
-  if (_proxyGroups is EqualUnmodifiableListView) return _proxyGroups;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_proxyGroups);
-}
-
-
-/// Create a copy of ProxiesAndGroupsSelectorState
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$ProxiesAndGroupsSelectorStateCopyWith<_ProxiesAndGroupsSelectorState> get copyWith => __$ProxiesAndGroupsSelectorStateCopyWithImpl<_ProxiesAndGroupsSelectorState>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxiesAndGroupsSelectorState&&const DeepCollectionEquality().equals(other._proxies, _proxies)&&const DeepCollectionEquality().equals(other._proxyGroups, _proxyGroups));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_proxyGroups));
-
-@override
-String toString() {
-  return 'ProxiesAndGroupsSelectorState(proxies: $proxies, proxyGroups: $proxyGroups)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$ProxiesAndGroupsSelectorStateCopyWith<$Res> implements $ProxiesAndGroupsSelectorStateCopyWith<$Res> {
-  factory _$ProxiesAndGroupsSelectorStateCopyWith(_ProxiesAndGroupsSelectorState value, $Res Function(_ProxiesAndGroupsSelectorState) _then) = __$ProxiesAndGroupsSelectorStateCopyWithImpl;
-@override @useResult
-$Res call({
- List<Proxy> proxies, List<ProxyGroup> proxyGroups
-});
-
-
-
-
-}
-/// @nodoc
-class __$ProxiesAndGroupsSelectorStateCopyWithImpl<$Res>
-    implements _$ProxiesAndGroupsSelectorStateCopyWith<$Res> {
-  __$ProxiesAndGroupsSelectorStateCopyWithImpl(this._self, this._then);
-
-  final _ProxiesAndGroupsSelectorState _self;
-  final $Res Function(_ProxiesAndGroupsSelectorState) _then;
-
-/// Create a copy of ProxiesAndGroupsSelectorState
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? proxies = null,Object? proxyGroups = null,}) {
-  return _then(_ProxiesAndGroupsSelectorState(
-proxies: null == proxies ? _self._proxies : proxies // ignore: cast_nullable_to_non_nullable
-as List<Proxy>,proxyGroups: null == proxyGroups ? _self._proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
-as List<ProxyGroup>,
-  ));
-}
-
-
-}
-
-/// @nodoc
 mixin _$RuleTargetsSelectorState {
 
- Set<String> get ruleTargets; Set<String> get subRules;
+ bool get loaded; Set<String> get ruleTargets; Set<String> get subRules;
 /// Create a copy of RuleTargetsSelectorState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1488,16 +1231,16 @@ $RuleTargetsSelectorStateCopyWith<RuleTargetsSelectorState> get copyWith => _$Ru
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RuleTargetsSelectorState&&const DeepCollectionEquality().equals(other.ruleTargets, ruleTargets)&&const DeepCollectionEquality().equals(other.subRules, subRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RuleTargetsSelectorState&&(identical(other.loaded, loaded) || other.loaded == loaded)&&const DeepCollectionEquality().equals(other.ruleTargets, ruleTargets)&&const DeepCollectionEquality().equals(other.subRules, subRules));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(ruleTargets),const DeepCollectionEquality().hash(subRules));
+int get hashCode => Object.hash(runtimeType,loaded,const DeepCollectionEquality().hash(ruleTargets),const DeepCollectionEquality().hash(subRules));
 
 @override
 String toString() {
-  return 'RuleTargetsSelectorState(ruleTargets: $ruleTargets, subRules: $subRules)';
+  return 'RuleTargetsSelectorState(loaded: $loaded, ruleTargets: $ruleTargets, subRules: $subRules)';
 }
 
 
@@ -1508,7 +1251,7 @@ abstract mixin class $RuleTargetsSelectorStateCopyWith<$Res>  {
   factory $RuleTargetsSelectorStateCopyWith(RuleTargetsSelectorState value, $Res Function(RuleTargetsSelectorState) _then) = _$RuleTargetsSelectorStateCopyWithImpl;
 @useResult
 $Res call({
- Set<String> ruleTargets, Set<String> subRules
+ bool loaded, Set<String> ruleTargets, Set<String> subRules
 });
 
 
@@ -1525,9 +1268,10 @@ class _$RuleTargetsSelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of RuleTargetsSelectorState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? ruleTargets = null,Object? subRules = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? loaded = null,Object? ruleTargets = null,Object? subRules = null,}) {
   return _then(_self.copyWith(
-ruleTargets: null == ruleTargets ? _self.ruleTargets : ruleTargets // ignore: cast_nullable_to_non_nullable
+loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
+as bool,ruleTargets: null == ruleTargets ? _self.ruleTargets : ruleTargets // ignore: cast_nullable_to_non_nullable
 as Set<String>,subRules: null == subRules ? _self.subRules : subRules // ignore: cast_nullable_to_non_nullable
 as Set<String>,
   ));
@@ -1614,10 +1358,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Set<String> ruleTargets,  Set<String> subRules)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool loaded,  Set<String> ruleTargets,  Set<String> subRules)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RuleTargetsSelectorState() when $default != null:
-return $default(_that.ruleTargets,_that.subRules);case _:
+return $default(_that.loaded,_that.ruleTargets,_that.subRules);case _:
   return orElse();
 
 }
@@ -1635,10 +1379,10 @@ return $default(_that.ruleTargets,_that.subRules);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Set<String> ruleTargets,  Set<String> subRules)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool loaded,  Set<String> ruleTargets,  Set<String> subRules)  $default,) {final _that = this;
 switch (_that) {
 case _RuleTargetsSelectorState():
-return $default(_that.ruleTargets,_that.subRules);case _:
+return $default(_that.loaded,_that.ruleTargets,_that.subRules);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1655,10 +1399,10 @@ return $default(_that.ruleTargets,_that.subRules);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Set<String> ruleTargets,  Set<String> subRules)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool loaded,  Set<String> ruleTargets,  Set<String> subRules)?  $default,) {final _that = this;
 switch (_that) {
 case _RuleTargetsSelectorState() when $default != null:
-return $default(_that.ruleTargets,_that.subRules);case _:
+return $default(_that.loaded,_that.ruleTargets,_that.subRules);case _:
   return null;
 
 }
@@ -1670,9 +1414,10 @@ return $default(_that.ruleTargets,_that.subRules);case _:
 
 
 class _RuleTargetsSelectorState implements RuleTargetsSelectorState {
-  const _RuleTargetsSelectorState({required final  Set<String> ruleTargets, required final  Set<String> subRules}): _ruleTargets = ruleTargets,_subRules = subRules;
+  const _RuleTargetsSelectorState({required this.loaded, required final  Set<String> ruleTargets, required final  Set<String> subRules}): _ruleTargets = ruleTargets,_subRules = subRules;
   
 
+@override final  bool loaded;
  final  Set<String> _ruleTargets;
 @override Set<String> get ruleTargets {
   if (_ruleTargets is EqualUnmodifiableSetView) return _ruleTargets;
@@ -1698,16 +1443,16 @@ _$RuleTargetsSelectorStateCopyWith<_RuleTargetsSelectorState> get copyWith => __
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RuleTargetsSelectorState&&const DeepCollectionEquality().equals(other._ruleTargets, _ruleTargets)&&const DeepCollectionEquality().equals(other._subRules, _subRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RuleTargetsSelectorState&&(identical(other.loaded, loaded) || other.loaded == loaded)&&const DeepCollectionEquality().equals(other._ruleTargets, _ruleTargets)&&const DeepCollectionEquality().equals(other._subRules, _subRules));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_ruleTargets),const DeepCollectionEquality().hash(_subRules));
+int get hashCode => Object.hash(runtimeType,loaded,const DeepCollectionEquality().hash(_ruleTargets),const DeepCollectionEquality().hash(_subRules));
 
 @override
 String toString() {
-  return 'RuleTargetsSelectorState(ruleTargets: $ruleTargets, subRules: $subRules)';
+  return 'RuleTargetsSelectorState(loaded: $loaded, ruleTargets: $ruleTargets, subRules: $subRules)';
 }
 
 
@@ -1718,7 +1463,7 @@ abstract mixin class _$RuleTargetsSelectorStateCopyWith<$Res> implements $RuleTa
   factory _$RuleTargetsSelectorStateCopyWith(_RuleTargetsSelectorState value, $Res Function(_RuleTargetsSelectorState) _then) = __$RuleTargetsSelectorStateCopyWithImpl;
 @override @useResult
 $Res call({
- Set<String> ruleTargets, Set<String> subRules
+ bool loaded, Set<String> ruleTargets, Set<String> subRules
 });
 
 
@@ -1735,9 +1480,10 @@ class __$RuleTargetsSelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of RuleTargetsSelectorState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? ruleTargets = null,Object? subRules = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? loaded = null,Object? ruleTargets = null,Object? subRules = null,}) {
   return _then(_RuleTargetsSelectorState(
-ruleTargets: null == ruleTargets ? _self._ruleTargets : ruleTargets // ignore: cast_nullable_to_non_nullable
+loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
+as bool,ruleTargets: null == ruleTargets ? _self._ruleTargets : ruleTargets // ignore: cast_nullable_to_non_nullable
 as Set<String>,subRules: null == subRules ? _self._subRules : subRules // ignore: cast_nullable_to_non_nullable
 as Set<String>,
   ));

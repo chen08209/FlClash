@@ -5,7 +5,7 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
 import 'package:fl_clash/widgets/grid.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/physics.dart';
 
 /// Kept in one notifier so a builder that reads part of it also rebuilds when
@@ -44,9 +44,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
 
   /// Matches the default CommonCard shape, so the lift's shadow traces the card
   /// it is drawn behind.
-  static const _cardShape = RoundedSuperellipseBorder(
-    borderRadius: BorderRadius.all(Radius.circular(14)),
-  );
+  static const _cardShape = AppShape.md;
 
   late final ValueNotifier<List<GridItem>> _childrenNotifier;
   List<GridItem> children = [];

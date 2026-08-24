@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -6,7 +7,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/overwrite.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -31,16 +32,11 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
   }
 
   void _handleShowAddExtendPage() {
-    showExtend(
-      globalState.navigatorKey.currentState!.context,
-      builder: (_) {
-        return AdaptiveSheetScaffold(
-          body: AddProfileView(
-            context: globalState.navigatorKey.currentState!.context,
-          ),
-          title: context.appLocalizations.addProfile,
-        );
-      },
+    final context = globalState.navigatorKey.currentState!.context;
+    showAdaptivePage(
+      context,
+      title: context.appLocalizations.addProfile,
+      bodyBuilder: (context) => AddProfileView(context: context),
     );
   }
 
@@ -155,6 +151,8 @@ class _ProfilesGrid extends ConsumerWidget {
       builder: (_, constraints) {
         final columns = getProfilesColumns(
           constraints.maxWidth - _horizontalPadding * 2,
+          spacing: spacing,
+          minItemWidth: profileItemMinWidth.ap,
         );
         return Align(
           alignment: Alignment.topCenter,
@@ -234,36 +232,33 @@ class ProfileItem extends ConsumerWidget {
   }
 
   void _handleShowEditExtendPage(BuildContext context) {
-    showExtend(
+    showAdaptivePage(
       context,
-      builder: (_) {
-        return AdaptiveSheetScaffold(
-          body: EditProfileView(profile: profile, context: context),
-          title: context.appLocalizations.edit,
-        );
-      },
+      title: context.appLocalizations.edit,
+      bodyBuilder: (context) =>
+          EditProfileView(profile: profile, context: context),
     );
   }
 
   List<Widget> _buildUrlProfileInfo(BuildContext context) {
     final subscriptionInfo = profile.subscriptionInfo;
     return [
-      const SizedBox(height: 8),
-      if (subscriptionInfo != null)
+      if (subscriptionInfo != null && subscriptionInfo.total > 0) ...[
         SubscriptionInfoView(subscriptionInfo: subscriptionInfo),
+        const SizedBox(height: 10),
+      ],
       LastUpdateTimeText(
         lastUpdateDate: profile.lastUpdateDate,
-        style: context.textTheme.labelMedium?.toLighter,
+        style: context.textTheme.bodySmall?.toLighter,
       ),
     ];
   }
 
   List<Widget> _buildFileProfileInfo(BuildContext context) {
     return [
-      const SizedBox(height: 8),
       LastUpdateTimeText(
         lastUpdateDate: profile.lastUpdateDate,
-        style: context.textTheme.labelMedium?.toLight,
+        style: context.textTheme.bodySmall?.toLighter,
       ),
     ];
   }
@@ -370,14 +365,16 @@ class ProfileItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return CommonCard(
       enterActionsOnRight: true,
+      radius: AppCorner.xl,
       isSelected: profile.id == groupValue,
       onPressed: () {
         onChanged(profile.id);
       },
       child: ListItem(
         key: Key(profile.id.toString()),
-        horizontalTitleGap: 16,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        horizontalTitleGap: 12,
+        minVerticalPadding: 16,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         trailing: SizedBox(
           height: 40,
           width: 40,
@@ -432,26 +429,19 @@ class _ProfileCardTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            profile.realLabel,
-            style: context.textTheme.titleMedium,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: info,
-          ),
-        ],
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          profile.realLabel,
+          style: context.textTheme.titleMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 8),
+        ...info,
+      ],
     );
   }
 }

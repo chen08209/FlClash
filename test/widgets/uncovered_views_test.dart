@@ -9,7 +9,7 @@ import 'package:fl_clash/views/config/scripts.dart';
 import 'package:fl_clash/views/profiles/overwrite/standard.dart';
 import 'package:fl_clash/views/proxies/setting.dart';
 import 'package:fl_clash/widgets/inherited.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';

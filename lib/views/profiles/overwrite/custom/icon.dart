@@ -6,7 +6,7 @@ import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -269,7 +269,7 @@ class _IconPreview extends StatelessWidget {
                     child: file != null
                         ? CommonCard(
                             type: CommonCardType.filled,
-                            radius: 20,
+                            radius: AppCorner.md,
                             padding: const EdgeInsets.all(8),
                             child: CommonImage(
                               isSvg: srcController.text.isSvg,
@@ -303,7 +303,7 @@ class _IconSrcField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
-      radius: 20,
+      radius: AppCorner.md,
       type: CommonCardType.filled,
       child: ListTile(
         minTileHeight: dimension,

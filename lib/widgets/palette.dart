@@ -2,13 +2,15 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/widgets/card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:material_color_utilities/hct/hct.dart';
 
 import 'color_scheme_box.dart';
 import 'theme.dart';
 
 @immutable
+const _selectionRingInset = 4.0;
+
 class Palette extends StatefulWidget {
   const Palette({super.key, required this.controller});
 
@@ -194,7 +196,7 @@ class _HueTrackShape extends SliderTrackShape {
     final shader = LinearGradient(colors: colors).createShader(rect);
     final shape = RSuperellipse.fromRectAndRadius(
       rect,
-      const Radius.circular(12),
+      const Radius.circular(AppCorner.full),
     );
     context.canvas.drawRSuperellipse(shape, Paint()..shader = shader);
     _paintTrackHighlight(context.canvas, rect);
@@ -251,7 +253,7 @@ class _ChromaTrackShape extends SliderTrackShape {
     final shader = LinearGradient(colors: colors).createShader(rect);
     final shape = RSuperellipse.fromRectAndRadius(
       rect,
-      const Radius.circular(12),
+      const Radius.circular(AppCorner.full),
     );
     context.canvas.drawRSuperellipse(shape, Paint()..shader = shader);
     _paintTrackHighlight(context.canvas, rect);
@@ -261,7 +263,7 @@ class _ChromaTrackShape extends SliderTrackShape {
 void _paintTrackHighlight(Canvas canvas, Rect rect) {
   final shape = RSuperellipse.fromRectAndRadius(
     rect.deflate(1),
-    const Radius.circular(12),
+    const Radius.circular(AppCorner.full),
   );
   canvas.drawRSuperellipse(
     shape,
@@ -325,9 +327,7 @@ class _ToneGrid extends StatelessWidget {
                       child: Container(
                         decoration: ShapeDecoration(
                           color: color,
-                          shape: RoundedSuperellipseBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          shape: AppShape.sm,
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -342,18 +342,20 @@ class _ToneGrid extends StatelessWidget {
                     ),
                     if (isSelected)
                       Positioned.fill(
-                        top: -4,
-                        right: -4,
-                        bottom: -4,
-                        left: -4,
+                        top: -_selectionRingInset,
+                        right: -_selectionRingInset,
+                        bottom: -_selectionRingInset,
+                        left: -_selectionRingInset,
                         child: IgnorePointer(
                           child: Container(
                             decoration: ShapeDecoration(
                               shape: RoundedSuperellipseBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: AppRadius.all(
+                                  AppCorner.sm + _selectionRingInset,
+                                ),
                                 side: BorderSide(
                                   color: selectedBorderColor,
-                                  width: 4,
+                                  width: _selectionRingInset,
                                 ),
                               ),
                             ),
@@ -417,12 +419,7 @@ class _ColorSchemePreview extends StatelessWidget {
               Container(
                 width: itemWidth,
                 height: 44,
-                decoration: ShapeDecoration(
-                  color: bg,
-                  shape: RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
+                decoration: ShapeDecoration(color: bg, shape: AppShape.sm),
                 alignment: Alignment.center,
                 child: Text(
                   label,

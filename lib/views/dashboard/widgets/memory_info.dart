@@ -8,7 +8,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class MemoryInfo extends ConsumerStatefulWidget {
@@ -73,6 +73,7 @@ class _MemoryInfoState extends ConsumerState<MemoryInfo>
       height: getWidgetHeight(1),
       child: RepaintBoundary(
         child: CommonCard(
+          radius: AppCorner.lg,
           info: Info(
             iconData: Icons.memory,
             label: appLocalizations.memoryInfo,

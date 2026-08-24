@@ -2,7 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NetworkSpeed extends StatefulWidget {
@@ -44,6 +44,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
       height: getWidgetHeight(2),
       child: RepaintBoundary(
         child: CommonCard(
+          radius: AppCorner.lg,
           onPressed: () {},
           child: Consumer(
             builder: (_, ref, _) {

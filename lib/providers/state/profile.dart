@@ -34,15 +34,7 @@ OverwriteType overwriteType(Ref ref, int? profileId) {
 @riverpod
 Future<ClashConfig> clashConfig(Ref ref, int profileId) async {
   final configMap = await ref.read(coreHandlerProvider).getConfig(profileId);
-  final clashConfig = ClashConfig.fromJson(configMap);
-  final Map<String, String> proxyTypeMap = {};
-  for (final proxy in clashConfig.proxies) {
-    proxyTypeMap[proxy.name] = proxy.type;
-  }
-  for (final proxyGroup in clashConfig.proxyGroups) {
-    proxyTypeMap[proxyGroup.name] = proxyGroup.type.value;
-  }
-  return clashConfig.copyWith(proxyTypeMap: proxyTypeMap);
+  return clashConfigTask(configMap);
 }
 
 @riverpod

@@ -2,7 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'scaffold.dart';
 import 'side_sheet.dart';
@@ -106,6 +106,24 @@ Future<T?> showExtend<T>(
   };
 }
 
+Future<T?> showAdaptivePage<T>(
+  BuildContext context, {
+  required String title,
+  required WidgetBuilder bodyBuilder,
+  ExtendProps props = const ExtendProps(),
+}) {
+  return showExtend<T>(
+    context,
+    props: props,
+    builder: (context) {
+      final body = bodyBuilder(context);
+      return context.isMobileView
+          ? CommonScaffold(title: title, body: body)
+          : AdaptiveSheetScaffold(body: body, title: title);
+    },
+  );
+}
+
 class AdaptiveSheetScaffold extends StatefulWidget {
   final Widget body;
   final String title;
@@ -205,7 +223,7 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
     final appBar = AppBar(
       backgroundColor: backgroundColor,
       forceMaterialTransparency: type == SheetType.bottomSheet ? true : false,
-      leading: suffixPop ? null : Center(child: popButton),
+      leading: suffixPop || popButton == null ? null : Center(child: popButton),
       automaticallyImplyLeading: type == SheetType.page ? true : false,
       centerTitle: true,
       toolbarHeight: type == SheetType.bottomSheet ? 48 : null,
@@ -220,7 +238,7 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
     }
     final sheetAppBar = _SheetToolBar(appBar: appBar);
     return ClipRSuperellipse(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      borderRadius: AppRadius.top(AppCorner.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -295,9 +313,7 @@ class _SheetToolBar extends StatelessWidget {
             width: _handleSize.width,
             decoration: ShapeDecoration(
               color: context.colorScheme.onSurfaceVariant,
-              shape: RoundedSuperellipseBorder(
-                borderRadius: BorderRadius.circular(_handleSize.height / 2),
-              ),
+              shape: AppShape.all(_handleSize.height / 2),
             ),
           ),
         ),
@@ -344,16 +360,15 @@ class _TransparentToolBarBody extends StatelessWidget {
           child: ValueListenableBuilder(
             valueListenable: isScrolledController,
             builder: (_, isScrolled, child) {
+              if (!isScrolled) {
+                return ColoredBox(color: backgroundColor, child: child!);
+              }
               return ClipRSuperellipse(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
+                borderRadius: AppRadius.top(AppCorner.xxl),
                 child: BackdropFilter(
                   filter: commonFilter,
                   child: ColoredBox(
-                    color: isScrolled
-                        ? backgroundColor.opacity60
-                        : backgroundColor,
+                    color: backgroundColor.opacity60,
                     child: child!,
                   ),
                 ),

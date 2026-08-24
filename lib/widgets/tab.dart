@@ -2,9 +2,10 @@ import 'dart:math' as math;
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:fl_clash/common/shape.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
 part 'tab_segment.dart';
@@ -15,11 +16,13 @@ const EdgeInsetsGeometry _kHorizontalItemPadding = EdgeInsets.symmetric(
   horizontal: 3,
 );
 
-const Radius _kCornerRadius = Radius.circular(9);
+const double _kThumbInset = 1;
 
-const Radius _kThumbRadius = Radius.circular(8);
+const Radius _kCornerRadius = Radius.circular(AppCorner.sm + _kThumbInset);
 
-const EdgeInsets _kThumbInsets = EdgeInsets.symmetric(horizontal: 1);
+const Radius _kThumbRadius = Radius.circular(AppCorner.sm);
+
+const EdgeInsets _kThumbInsets = EdgeInsets.symmetric(horizontal: _kThumbInset);
 
 const double _kMinSegmentedControlHeight = 28.0;
 

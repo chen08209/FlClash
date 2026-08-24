@@ -7,7 +7,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -392,9 +392,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
         Card.filled(
           color: context.colorScheme.primary,
           elevation: 0,
-          shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          shape: AppShape.md,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(

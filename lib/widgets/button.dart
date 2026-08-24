@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'builder.dart';
 import 'card.dart';
@@ -73,7 +73,7 @@ class MoreActionButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: CommonCard(
-        radius: 18,
+        radius: AppCorner.md,
         onPressed: onPressed,
         child: ListTile(
           minTileHeight: 0,

@@ -7,7 +7,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/name_add_picker.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:fl_clash/widgets/sheet.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

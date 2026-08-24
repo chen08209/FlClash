@@ -3,7 +3,7 @@ import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'groups.dart';
@@ -109,7 +109,7 @@ class _CountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card.filled(
-      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
+      shape: AppShape.md,
       child: Container(
         constraints: const BoxConstraints(minWidth: 44),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -135,11 +135,7 @@ class _QuickFillBanner extends StatelessWidget {
       alignment: Alignment.bottomCenter,
       child: Container(
         clipBehavior: Clip.antiAlias,
-        decoration: ShapeDecoration(
-          shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
+        decoration: const ShapeDecoration(shape: AppShape.md),
         margin: const EdgeInsets.all(12),
         child: MaterialBanner(
           elevation: 0,

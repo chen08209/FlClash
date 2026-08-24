@@ -4,36 +4,42 @@ part of '../state.dart';
 CustomOverwriteDate customOverwriteDate(Ref ref, int profileId) {
   final overwrite = ref.watch(
     clashConfigProvider(profileId).select((state) {
+      final clashConfig = state.value;
       return CustomOverwriteSelectorState(
-        proxies: state.value?.proxies ?? [],
-        subRules: state.value?.subRules ?? [],
-        proxyProviders: state.value?.proxyProviders ?? [],
+        loaded: clashConfig != null,
+        proxies: clashConfig?.proxies ?? const [],
+        subRules: clashConfig?.subRules ?? const [],
+        proxyProviders: clashConfig?.proxyProviders ?? const [],
       );
     }),
   );
-  final proxies = overwrite.proxies;
-  final subRules = overwrite.subRules.toSet();
-  final proxyProviders = overwrite.proxyProviders.toSet();
-  final proxyGroups =
-      ref
-          .watch(
-            proxyGroupsProvider(profileId).select((state) {
-              return SelectValue(state.value);
-            }),
-          )
-          .value ??
-      [];
+  final groups = ref
+      .watch(
+        proxyGroupsProvider(profileId).select((state) {
+          return SelectValue(state.value);
+        }),
+      )
+      .value;
+  final proxyGroups = groups ?? const <ProxyGroup>[];
+  final proxyNames = <String>[];
+  final proxyTypes = <String, String>{};
+  for (final proxy in overwrite.proxies) {
+    proxyNames.add(proxy.name);
+    proxyTypes[proxy.name] = proxy.type;
+  }
   final ruleTargets = {
     ...RuleTarget.baseTargets,
-    ...proxies.map((item) => item.name),
+    ...proxyNames,
     ...proxyGroups.map((item) => item.name),
   };
   return CustomOverwriteDate(
-    proxyProviders: proxyProviders,
-    proxies: proxies,
+    loaded: overwrite.loaded && groups != null,
+    proxyProviders: overwrite.proxyProviders.toSet(),
+    proxyNames: proxyNames,
+    proxyTypes: proxyTypes,
     proxyGroups: proxyGroups,
     ruleTargets: ruleTargets,
-    subRules: subRules,
+    subRules: overwrite.subRules.toSet(),
   );
 }
 
@@ -42,7 +48,7 @@ bool customOverwriteTargetIsValid(Ref ref, int profileId, String? target) {
   final valid = ref.watch(
     customOverwriteDateProvider(
       profileId,
-    ).select((state) => state.ruleTargets.contains(target)),
+    ).select((state) => !state.loaded || state.ruleTargets.contains(target)),
   );
   return valid;
 }
@@ -54,9 +60,9 @@ bool customOverwriteProxyProviderIsValid(
   String? providerName,
 ) {
   final valid = ref.watch(
-    customOverwriteDateProvider(
-      profileId,
-    ).select((state) => state.proxyProviders.contains(providerName)),
+    customOverwriteDateProvider(profileId).select(
+      (state) => !state.loaded || state.proxyProviders.contains(providerName),
+    ),
   );
   return valid;
 }
@@ -66,7 +72,7 @@ bool customOverwriteUseIsValid(Ref ref, int profileId, List<String> use) {
   final valid = ref.watch(
     customOverwriteDateProvider(
       profileId,
-    ).select((state) => state.proxyProviders.containsAll(use)),
+    ).select((state) => !state.loaded || state.proxyProviders.containsAll(use)),
   );
   return valid;
 }
@@ -78,9 +84,9 @@ bool customOverwriteProxiesIsValid(
   List<String> proxies,
 ) {
   final valid = ref.watch(
-    customOverwriteDateProvider(
-      profileId,
-    ).select((state) => state.ruleTargets.containsAll(proxies)),
+    customOverwriteDateProvider(profileId).select(
+      (state) => !state.loaded || state.ruleTargets.containsAll(proxies),
+    ),
   );
   return valid;
 }
@@ -88,6 +94,9 @@ bool customOverwriteProxiesIsValid(
 @riverpod
 Set<int> invalidProxyGroupIds(Ref ref, int profileId) {
   final overwrite = ref.watch(customOverwriteDateProvider(profileId));
+  if (!overwrite.loaded) {
+    return const {};
+  }
   return {
     for (final proxyGroup in overwrite.proxyGroups)
       if (!overwrite.ruleTargets.containsAll(proxyGroup.proxies ?? const []) ||

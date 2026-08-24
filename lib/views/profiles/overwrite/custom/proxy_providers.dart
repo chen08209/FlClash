@@ -4,7 +4,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/name_add_picker.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/name_list_editor.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class EditProxyProvidersView extends ConsumerWidget {

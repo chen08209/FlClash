@@ -1,6 +1,6 @@
 import 'package:emoji_regex/emoji_regex.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../state.dart';
 

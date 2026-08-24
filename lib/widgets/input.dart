@@ -7,7 +7,7 @@ import 'package:fl_clash/widgets/inherited.dart';
 import 'package:fl_clash/widgets/null_status.dart';
 import 'package:fl_clash/widgets/pop_scope.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -83,7 +83,7 @@ class CommonCheckBox extends StatelessWidget {
     return Checkbox(
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
-      shape: isCircle ? const CircleBorder() : null,
+      shape: isCircle ? AppShape.circle : null,
       value: value,
       onChanged: onChanged,
     );
@@ -202,7 +202,6 @@ class _InputDialogState extends State<InputDialog> {
                 _handleUpdate();
               },
               decoration: InputDecoration(
-                border: const OutlineInputBorder(),
                 suffixText: suffixText,
                 hintText: widget.hintText,
                 labelText: widget.labelText,
@@ -294,10 +293,7 @@ class _AddDialogState extends State<AddDialog> {
                     ? null
                     : TextInputLimits.limit(widget.keyMaxLength!),
                 controller: _keyController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: keyField!.label,
-                ),
+                decoration: InputDecoration(labelText: keyField!.label),
                 validator: (String? value) {
                   String? res;
                   if (keyField!.validator != null) {
@@ -320,10 +316,7 @@ class _AddDialogState extends State<AddDialog> {
                   : TextInputLimits.limit(widget.valueMaxLength!),
               keyboardType: TextInputType.text,
               controller: _valueController,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: valueField.label,
-              ),
+              decoration: InputDecoration(labelText: valueField.label),
               onFieldSubmitted: (_) {
                 _submit();
               },

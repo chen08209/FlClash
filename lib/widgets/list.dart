@@ -4,7 +4,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 import 'input.dart';
@@ -567,10 +567,10 @@ Widget generateSectionV2({
   final genItems = items
       .map<Widget>((item) {
         return ClipRSuperellipse(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: AppRadius.xs,
           child: CommonCard(
             type: CommonCardType.filled,
-            radius: 0,
+            radius: AppCorner.none,
             child: item,
           ),
         );
@@ -581,7 +581,7 @@ Widget generateSectionV2({
       if (items.isNotEmpty && title != null)
         ListHeader(title: title, actions: actions),
       ClipRSuperellipse(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: AppRadius.md,
         child: Column(children: [...genItems]),
       ),
     ],

@@ -1,6 +1,7 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import 'snowflake.dart';
 
 mixin AutoDisposeNotifierMixin<T> on AnyNotifier<T, T> {

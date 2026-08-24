@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:fl_clash/common/shape.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/physics.dart';
 
 enum LoadingIndicatorM3EVariant { defaultStyle, contained }
@@ -186,7 +187,7 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: backgroundColor,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: AppRadius.full,
               ),
               child: Padding(
                 padding: padding,

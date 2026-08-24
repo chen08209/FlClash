@@ -11,7 +11,7 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class EditProfileView extends ConsumerStatefulWidget {
@@ -298,10 +298,7 @@ class _ProfileNameField extends StatelessWidget {
         textInputAction: TextInputAction.next,
         controller: controller,
         inputFormatters: TextInputLimits.limit(TextInputLimits.name),
-        decoration: InputDecoration(
-          border: const OutlineInputBorder(),
-          labelText: appLocalizations.name,
-        ),
+        decoration: InputDecoration(labelText: appLocalizations.name),
         validator: (String? value) {
           if (value == null || value.isEmpty) {
             return appLocalizations.profileNameNullValidationDesc;
@@ -329,10 +326,7 @@ class _ProfileUrlField extends StatelessWidget {
         inputFormatters: TextInputLimits.limit(TextInputLimits.url),
         maxLines: 5,
         minLines: 1,
-        decoration: InputDecoration(
-          border: const OutlineInputBorder(),
-          labelText: appLocalizations.url,
-        ),
+        decoration: InputDecoration(labelText: appLocalizations.url),
         validator: (String? value) {
           if (value == null || value.isEmpty) {
             return appLocalizations.profileUrlNullValidationDesc;
@@ -361,7 +355,6 @@ class _AutoUpdateIntervalField extends StatelessWidget {
         controller: controller,
         inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.interval),
         decoration: InputDecoration(
-          border: const OutlineInputBorder(),
           labelText: appLocalizations.autoUpdateInterval,
         ),
         validator: (String? value) {

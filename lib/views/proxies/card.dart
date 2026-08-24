@@ -4,7 +4,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ProxyCard extends ConsumerWidget {
@@ -62,6 +62,7 @@ class ProxyCard extends ConsumerWidget {
                     onTap: () => _handleTestCurrentDelay(ref),
                     child: Text(
                       delay > 0 ? '$delay ms' : 'Timeout',
+                      maxLines: 1,
                       style: context.textTheme.labelSmall?.copyWith(
                         overflow: TextOverflow.ellipsis,
                         color: getDelayColor(delay),
@@ -131,6 +132,7 @@ class ProxyCard extends ConsumerWidget {
               selectedProxyNameProvider(groupName),
             );
             return CommonCard(
+              radius: AppCorner.lg,
               key: key,
               onPressed: () {
                 _changeProxy(ref);
@@ -167,6 +169,7 @@ class ProxyCard extends ConsumerWidget {
                           child: TooltipText(
                             text: Text(
                               proxy.type,
+                              maxLines: 1,
                               style: context.textTheme.bodySmall?.copyWith(
                                 overflow: TextOverflow.ellipsis,
                                 color: context

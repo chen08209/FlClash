@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/color.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/common/shape.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 class InitErrorScreen extends StatelessWidget {
@@ -52,7 +53,7 @@ class InitErrorScreen extends StatelessWidget {
                 decoration: ShapeDecoration(
                   color: colorScheme.errorContainer.opacity50,
                   shape: RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.sm,
                     side: BorderSide(color: colorScheme.error.opacity50),
                   ),
                 ),
@@ -74,7 +75,7 @@ class InitErrorScreen extends StatelessWidget {
                       ? Colors.grey[900]
                       : Colors.grey[200],
                   shape: RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.sm,
                     side: BorderSide(color: Colors.grey.opacity50),
                   ),
                 ),

@@ -4,7 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/launch.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_ext/window_ext.dart';
 import 'package:window_manager/window_manager.dart';
@@ -319,9 +319,7 @@ class AppIcon extends StatelessWidget {
     return Container(
       decoration: ShapeDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: AppShape.md,
       ),
       padding: const EdgeInsets.all(8),
       child: Transform.translate(

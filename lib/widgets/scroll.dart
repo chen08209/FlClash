@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+
+const _thumbThickness = 6.0;
 
 class CommonScrollBar extends StatelessWidget {
   final ScrollController? controller;
@@ -23,8 +25,8 @@ class CommonScrollBar extends StatelessWidget {
       controller: controller,
       thumbVisibility: thumbVisibility,
       trackVisibility: trackVisibility,
-      thickness: 6,
-      radius: const Radius.circular(6),
+      thickness: _thumbThickness,
+      radius: const Radius.circular(_thumbThickness / 2),
       interactive: true,
       child: child,
     );

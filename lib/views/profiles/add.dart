@@ -1,9 +1,10 @@
 import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/pages/scan.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddProfileView extends ConsumerWidget {
@@ -131,10 +132,7 @@ class _URLFormDialogState extends State<URLFormDialog> {
               },
               onEditingComplete: _handleAddProfileFormURL,
               controller: _urlController,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: appLocalizations.url,
-              ),
+              decoration: InputDecoration(labelText: appLocalizations.url),
             ),
           ],
         ),

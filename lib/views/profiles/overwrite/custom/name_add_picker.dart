@@ -4,7 +4,7 @@ import 'package:fl_clash/features/overwrite/overwrite.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NameAddEntry {
@@ -110,10 +110,11 @@ class _NameAddPickerState extends ConsumerState<NameAddPicker>
   }
 
   List<Widget> _buildSection(NameAddSection section, bool isLast) {
-    final titles = section.entries.map((entry) => entry.title).toList();
     final dismissed = ref.watch(
       itemsProvider(section.scene == null ? key : '${key}_${section.scene}'),
     );
+    final entries = section.entries;
+    List<String>? titles;
     return [
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -123,20 +124,22 @@ class _NameAddPickerState extends ConsumerState<NameAddPicker>
       ),
       SliverList(
         delegate: SliverChildBuilderDelegate((_, index) {
-          final entry = section.entries[index];
+          final entry = entries[index];
           return _buildItem(
             entry: entry,
-            position: ItemPosition.calculateVisualPosition(
-              index,
-              titles,
-              dismissed,
-            ),
+            position: dismissed.isEmpty
+                ? ItemPosition.get(index, entries.length)
+                : ItemPosition.calculateVisualPosition(
+                    index,
+                    titles ??= [for (final entry in entries) entry.title],
+                    dismissed,
+                  ),
             dismiss: dismissed.contains(entry.title),
             onAdd: () {
               handleStage(entry.title, section.scene);
             },
           );
-        }, childCount: section.entries.length),
+        }, childCount: entries.length),
       ),
       if (!isLast) const SliverToBoxAdapter(child: SizedBox(height: 8)),
     ];

@@ -5,7 +5,7 @@ import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -66,25 +66,15 @@ class ThemeManager extends ConsumerWidget {
           top: padding.top > height * 0.3 ? 20.0 : padding.top,
         ),
       ),
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          floatingActionButtonTheme: Theme.of(context).floatingActionButtonTheme
-              .copyWith(
-                shape: const RoundedSuperellipseBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(16.0)),
-                ),
-              ),
-        ),
-        child: LayoutBuilder(
-          builder: (_, constraints) {
-            ref
-                .read(themeActionProvider.notifier)
-                .updateViewSize(
-                  Size(constraints.maxWidth, constraints.maxHeight),
-                );
-            return _buildSystemUi(child);
-          },
-        ),
+      child: LayoutBuilder(
+        builder: (_, constraints) {
+          ref
+              .read(themeActionProvider.notifier)
+              .updateViewSize(
+                Size(constraints.maxWidth, constraints.maxHeight),
+              );
+          return _buildSystemUi(child);
+        },
       ),
     );
   }

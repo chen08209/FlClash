@@ -5,7 +5,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/name_add_picker.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/name_list_editor.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class EditProxiesView extends ConsumerWidget {
@@ -71,26 +71,13 @@ class _AddProxiesView extends ConsumerWidget {
               ),
             )
             .value;
-        final proxiesAndGroups = ref.watch(
-          customOverwriteDateProvider(profileId).select((state) {
-            return ProxiesAndGroupsSelectorState(
-              proxies: [
-                for (final item in state.proxies)
-                  if (!excluded.contains(item.name)) item,
-              ],
-              proxyGroups: [
-                for (final item in state.proxyGroups)
-                  if (!excluded.contains(item.name)) item,
-              ],
-            );
-          }),
-        );
+        final overwrite = ref.watch(customOverwriteDateProvider(profileId));
         return [
           NameAddSection(
             label: appLocalizations.basicStrategy,
             scene: 'targets',
             entries: [
-              for (final target in RuleTarget.baseTargets)
+              for (final target in RuleTarget.baseTargetNames)
                 if (!excluded.contains(target))
                   NameAddEntry(title: target, subtitle: target.toLowerCase()),
             ],
@@ -99,16 +86,21 @@ class _AddProxiesView extends ConsumerWidget {
             label: appLocalizations.proxyGroup,
             scene: 'groups',
             entries: [
-              for (final group in proxiesAndGroups.proxyGroups)
-                NameAddEntry(title: group.name, subtitle: group.type.value),
+              for (final group in overwrite.proxyGroups)
+                if (!excluded.contains(group.name))
+                  NameAddEntry(title: group.name, subtitle: group.type.value),
             ],
           ),
           NameAddSection(
             label: appLocalizations.proxies,
             scene: 'proxies',
             entries: [
-              for (final proxy in proxiesAndGroups.proxies)
-                NameAddEntry(title: proxy.name, subtitle: proxy.type),
+              for (final name in overwrite.proxyNames)
+                if (!excluded.contains(name))
+                  NameAddEntry(
+                    title: name,
+                    subtitle: overwrite.proxyTypes[name],
+                  ),
             ],
           ),
         ];

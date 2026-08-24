@@ -5,7 +5,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
@@ -359,7 +359,7 @@ class _ListHeaderState extends ConsumerState<ListHeader> {
       enterActionsOnRight: true,
       enterAnimated: widget.enterAnimated,
       key: widget.key,
-      radius: 18.ap,
+      radius: AppCorner.xl.ap,
       type: CommonCardType.filled,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -423,9 +423,7 @@ class _GroupIcon extends ConsumerWidget {
                 padding: EdgeInsets.all(6.ap),
                 decoration: ShapeDecoration(
                   color: context.colorScheme.secondaryContainer,
-                  shape: RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: AppShape.all(AppCorner.fit(constraints.maxHeight)),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: IconTheme.merge(

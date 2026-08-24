@@ -4,7 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TrafficUsage extends StatelessWidget {
@@ -17,6 +17,7 @@ class TrafficUsage extends StatelessWidget {
       height: getWidgetHeight(2),
       child: RepaintBoundary(
         child: CommonCard(
+          radius: AppCorner.lg,
           info: Info(
             label: appLocalizations.trafficUsage,
             iconData: Icons.data_saver_off,
@@ -174,12 +175,7 @@ class _LegendEntry extends StatelessWidget {
         Container(
           width: 20,
           height: 8,
-          decoration: ShapeDecoration(
-            color: color,
-            shape: RoundedSuperellipseBorder(
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
+          decoration: ShapeDecoration(color: color, shape: AppShape.full),
         ),
         const SizedBox(width: 4),
         label,

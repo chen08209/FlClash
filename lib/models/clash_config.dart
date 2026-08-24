@@ -154,7 +154,9 @@ abstract class Proxy with _$Proxy {
 @freezed
 abstract class CustomOverwriteDate with _$CustomOverwriteDate {
   const factory CustomOverwriteDate({
-    @Default([]) List<Proxy> proxies,
+    @Default(false) bool loaded,
+    @Default([]) List<String> proxyNames,
+    @Default({}) Map<String, String> proxyTypes,
     @Default([]) List<ProxyGroup> proxyGroups,
     @Default({}) Set<String> proxyProviders,
     @Default({}) Set<String> ruleTargets,
@@ -166,6 +168,7 @@ abstract class CustomOverwriteDate with _$CustomOverwriteDate {
 abstract class CustomOverwriteSelectorState
     with _$CustomOverwriteSelectorState {
   const factory CustomOverwriteSelectorState({
+    required bool loaded,
     required List<Proxy> proxies,
     required List<String> subRules,
     required List<String> proxyProviders,
@@ -173,17 +176,9 @@ abstract class CustomOverwriteSelectorState
 }
 
 @freezed
-abstract class ProxiesAndGroupsSelectorState
-    with _$ProxiesAndGroupsSelectorState {
-  const factory ProxiesAndGroupsSelectorState({
-    required List<Proxy> proxies,
-    required List<ProxyGroup> proxyGroups,
-  }) = _ProxiesAndGroupsSelectorState;
-}
-
-@freezed
 abstract class RuleTargetsSelectorState with _$RuleTargetsSelectorState {
   const factory RuleTargetsSelectorState({
+    required bool loaded,
     required Set<String> ruleTargets,
     required Set<String> subRules,
   }) = _RuleTargetsSelectorState;

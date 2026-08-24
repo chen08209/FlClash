@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class FloatLayout extends StatelessWidget {
   final Widget floatingWidget;

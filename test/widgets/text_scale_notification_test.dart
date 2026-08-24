@@ -1,7 +1,7 @@
 import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/notification.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

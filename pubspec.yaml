@@ -8,8 +8,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
+  material_ui: ^1.0.1
   intl: any
   path_provider: ^2.1.5
   path: ^1.9.0

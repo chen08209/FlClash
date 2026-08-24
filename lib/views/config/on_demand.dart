@@ -8,7 +8,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
@@ -203,34 +203,56 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       loadingProvider(LoadingTag.batteryOptimization),
     );
     final disabled = ref.watch(batteryOptimizationDisableProvider);
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 8,
+      children: [
+        InfoMessageButton(
+          message: appLocalizations.batteryOptimizationStatusTip,
+        ),
+        _buildAuthorizeButton(
+          authorized: disabled,
+          onPressed: _handleOpenBatteryOptimizationSettings,
+        ),
+      ],
+    );
     return DecorationListItem(
       minVerticalPadding: 8,
-      title: Text(appLocalizations.ignoreBatteryOptimization),
-      subtitle: Text(appLocalizations.batteryOptimizationDesc),
-      trailing: isLoading
-          ? const SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SizedBox.square(dimension: 32, child: CommonCircleLoading()),
-                ],
+      title: Text(
+        appLocalizations.ignoreBatteryOptimization,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        appLocalizations.batteryOptimizationDesc,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: Stack(
+        alignment: Alignment.centerRight,
+        children: [
+          // Reserves the same width as the loaded content so switching
+          // in/out of the loading spinner never changes the trailing
+          // width and reflows the title/subtitle.
+          Visibility(
+            visible: false,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: content,
+          ),
+          if (isLoading)
+            const Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox.square(
+                dimension: 32,
+                child: CommonCircleLoading(),
               ),
             )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 8,
-              children: [
-                InfoMessageButton(
-                  message: appLocalizations.batteryOptimizationStatusTip,
-                ),
-                _buildAuthorizeButton(
-                  authorized: disabled,
-                  onPressed: _handleOpenBatteryOptimizationSettings,
-                ),
-              ],
-            ),
+          else
+            content,
+        ],
+      ),
     );
   }
 
@@ -243,8 +265,16 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     );
     return DecorationListItem(
       minVerticalPadding: 8,
-      title: Text(appLocalizations.locationPermission),
-      subtitle: Text(appLocalizations.locationPermissionDesc),
+      title: Text(
+        appLocalizations.locationPermission,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        appLocalizations.locationPermissionDesc,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
       trailing: _buildAuthorizeButton(
         authorized: granted,
         onPressed: _handleRequestLocationPermission,

@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:fl_clash/common/common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 typedef PopupAnchorResolver = Rect? Function();
 
@@ -14,11 +14,11 @@ const _anchorOverlap = 8.0;
 
 const _cardInset = 8.0;
 
-const _cardRadius = 24.0;
+const _itemRadius = AppCorner.md;
+
+const _cardRadius = _itemRadius + _cardInset;
 
 const _itemIconSize = 20.0;
-
-const _itemRadius = 12.0;
 
 const _itemPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 12);
 
@@ -352,6 +352,18 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     reverseCurve: const Interval(0.4, 1, curve: Curves.easeInOut),
   );
 
+  late final CurvedAnimation _recedeScale = CurvedAnimation(
+    parent: _controller,
+    curve: const Interval(0, 0.45, curve: Curves.easeOutCubic),
+    reverseCurve: const Interval(0.55, 1, curve: Curves.easeInCubic),
+  );
+
+  late final CurvedAnimation _recedeScrim = CurvedAnimation(
+    parent: _controller,
+    curve: const Interval(0.25, 1, curve: Curves.easeOut),
+    reverseCurve: const Interval(0, 0.75, curve: Curves.easeIn),
+  );
+
   final List<_MenuStep> _path = [];
   bool _closing = false;
 
@@ -366,6 +378,8 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     _expand.dispose();
     _container.dispose();
     _content.dispose();
+    _recedeScale.dispose();
+    _recedeScrim.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -494,7 +508,9 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       }
     }
     final child = InkWell(
-      borderRadius: BorderRadius.circular(_itemRadius),
+      customBorder: const RoundedSuperellipseBorder(
+        borderRadius: BorderRadius.all(Radius.circular(_itemRadius)),
+      ),
       onTap: onTap,
       splashColor: Colors.transparent,
       hoverColor: item.danger ? colorScheme.error.opacity10 : null,
@@ -521,14 +537,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
         ),
       ),
     );
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      child: ClipRSuperellipse(
-        borderRadius: const BorderRadius.all(Radius.circular(_itemRadius)),
-        child: child,
-      ),
-    );
+    return Semantics(button: true, enabled: enabled, child: child);
   }
 
   Widget _buildItem(BuildContext context, CommonPopupMenuItem item, int index) {
@@ -562,9 +571,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       margin: EdgeInsets.zero,
       color: context.colorScheme.surfaceContainer,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedSuperellipseBorder(
-        borderRadius: BorderRadius.circular(radius),
-      ),
+      shape: AppShape.all(radius),
       child: ConstrainedBox(
         constraints: BoxConstraints(minWidth: minWidth, maxWidth: maxWidth),
         child: Padding(
@@ -653,8 +660,9 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
-            final distance = depth - (1 - _controller.value);
-            final scale = math.max(0.0, 1 - _levelScaleStep * distance);
+            final scaleDistance = depth - (1 - _recedeScale.value);
+            final scrimDistance = depth - (1 - _recedeScrim.value);
+            final scale = math.max(0.0, 1 - _levelScaleStep * scaleDistance);
             return Transform(
               transform: Matrix4.diagonal3Values(scale, scale, 1),
               alignment: Alignment.topRight,
@@ -663,7 +671,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
                 position: DecorationPosition.foreground,
                 decoration: ShapeDecoration(
                   color: scrim.withValues(
-                    alpha: math.min(1.0, _levelScrimStep * distance),
+                    alpha: math.min(1.0, _levelScrimStep * scrimDistance),
                   ),
                   shape: const RoundedSuperellipseBorder(
                     borderRadius: BorderRadius.all(

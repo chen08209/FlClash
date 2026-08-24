@@ -50,6 +50,66 @@ void main() {
     expect(groups.single.all.map((proxy) => proxy.name), ['Beta', 'Zulu']);
   });
 
+  test(
+    'clashConfigTask parses core config data off the main isolate',
+    () async {
+      final configMap = <String, dynamic>{
+        'proxies': [
+          {'name': 'Alpha', 'type': 'ss'},
+          {'name': 'Beta', 'type': 'vmess'},
+        ],
+        'proxy-groups': [
+          {
+            'name': 'Auto',
+            'type': 'url-test',
+            'proxies': ['Alpha', 'Beta'],
+          },
+        ],
+        'rules': ['DOMAIN,example.com,Auto'],
+        'proxy-providers': {
+          'provider': {'type': 'http'},
+        },
+        'rule-providers': {
+          'ruleSet': {'type': 'http'},
+        },
+        'sub-rules': {'nested': []},
+      };
+
+      final clashConfig = await clashConfigTask(configMap);
+
+      expect(clashConfig.proxies.map((item) => item.name), ['Alpha', 'Beta']);
+      expect(clashConfig.proxyGroups.single.type, GroupType.URLTest);
+      expect(clashConfig.rules.single.ruleTarget, 'Auto');
+      expect(clashConfig.rules.single.content, 'example.com');
+      expect(clashConfig.proxyProviders, ['provider']);
+      expect(clashConfig.ruleProviders, ['ruleSet']);
+      expect(clashConfig.subRules, ['nested']);
+      expect(clashConfig.proxyTypeMap, {
+        'Alpha': 'ss',
+        'Beta': 'vmess',
+        'Auto': 'url-test',
+      });
+    },
+  );
+
+  test('buildClashConfig indexes group types by their clash value', () {
+    final clashConfig = buildClashConfig(<String, dynamic>{
+      'proxies': [
+        {'name': 'Alpha', 'type': 'ss'},
+      ],
+      'proxy-groups': [
+        {
+          'name': 'Fallback',
+          'type': 'fallback',
+          'proxies': ['Alpha'],
+        },
+      ],
+    });
+
+    expect(clashConfig.proxyTypeMap, {'Alpha': 'ss', 'Fallback': 'fallback'});
+    expect(clashConfig.rules, isEmpty);
+  });
+
   test('toGroupsTask leaves the source proxy map untouched', () async {
     final proxies = <String, dynamic>{
       'Selector': {

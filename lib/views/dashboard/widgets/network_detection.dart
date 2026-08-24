@@ -3,7 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NetworkDetection extends ConsumerStatefulWidget {
@@ -40,6 +40,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
     return SizedBox(
       height: getWidgetHeight(1),
       child: CommonCard(
+        radius: AppCorner.lg,
         onPressed: () {},
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -89,16 +89,18 @@ ProcessResult runCommand(
   Encoding? stderrEncoding = systemEncoding,
 }) {
   if (testRunCommandOverride != null) {
-    final result = testRunCommandOverride!(TestRunCommandArgs(
-      executable: executable,
-      arguments: arguments,
-      workingDirectory: workingDirectory,
-      environment: environment,
-      includeParentEnvironment: includeParentEnvironment,
-      runInShell: runInShell,
-      stdoutEncoding: stdoutEncoding,
-      stderrEncoding: stderrEncoding,
-    ));
+    final result = testRunCommandOverride!(
+      TestRunCommandArgs(
+        executable: executable,
+        arguments: arguments,
+        workingDirectory: workingDirectory,
+        environment: environment,
+        includeParentEnvironment: includeParentEnvironment,
+        runInShell: runInShell,
+        stdoutEncoding: stdoutEncoding,
+        stderrEncoding: stderrEncoding,
+      ),
+    );
     return ProcessResult(
       result.pid,
       result.exitCode,

@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 
 class FingerprintBuilder {
   FingerprintBuilder({required String rootDir})
-      : _rootDir = p.normalize(p.absolute(rootDir));
+    : _rootDir = p.normalize(p.absolute(rootDir));
 
   final String _rootDir;
   final BytesBuilder _bytes = BytesBuilder(copy: false);
@@ -26,8 +26,8 @@ class FingerprintBuilder {
 
     final relativePath =
         p.isWithin(_rootDir, absolutePath) || p.equals(_rootDir, absolutePath)
-            ? p.relative(absolutePath, from: _rootDir)
-            : absolutePath;
+        ? p.relative(absolutePath, from: _rootDir)
+        : absolutePath;
     addValue('file', p.posix.joinAll(p.split(relativePath)));
     _addBytes(file.readAsBytesSync());
   }

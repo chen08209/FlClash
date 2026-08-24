@@ -1,7 +1,7 @@
 import 'dart:ui' show PictureRecorder;
 
 import 'package:fl_clash/widgets/wave.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 WavePainter _painter({

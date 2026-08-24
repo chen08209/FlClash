@@ -1,7 +1,8 @@
 import 'dart:math';
 
 import 'package:fl_clash/providers/app.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/common/shape.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CommonDialog extends ConsumerWidget {
@@ -54,11 +55,7 @@ class CommonModal extends ConsumerWidget {
       child: Container(
         width: size.width * 0.85,
         height: size.height * 0.85,
-        decoration: ShapeDecoration(
-          shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+        decoration: const ShapeDecoration(shape: AppShape.xxl),
         clipBehavior: Clip.antiAlias,
         child: child,
       ),

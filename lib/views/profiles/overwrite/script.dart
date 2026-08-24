@@ -3,7 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/config/scripts.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ScriptContent extends ConsumerWidget {
@@ -88,7 +88,7 @@ class _ScriptOption extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: CommonCard(
         type: CommonCardType.filled,
-        radius: 18,
+        radius: AppCorner.md,
         child: RadioGroup<int>(
           groupValue: groupValue,
           onChanged: (_) {
@@ -132,7 +132,7 @@ class _ConfigureScriptsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
-      radius: 18,
+      radius: AppCorner.md,
       onPressed: onPressed,
       child: ListTile(
         minTileHeight: 0,
