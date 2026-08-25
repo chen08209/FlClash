@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -126,6 +127,28 @@ class Preferences {
   Future<void> clearSystemDnsRecord() async {
     final sharedPreferencesIns = await sharedPreferencesCompleter.future;
     await sharedPreferencesIns?.remove(systemDnsRecordKey);
+  }
+
+  Future<BootRecord?> getBootRecord() async {
+    try {
+      final sharedPreferencesIns = await sharedPreferencesCompleter.future;
+      final raw = sharedPreferencesIns?.getString(bootRecordKey);
+      if (raw == null) {
+        return null;
+      }
+      return BootRecord.fromJson(json.decode(raw));
+    } catch (e) {
+      commonPrint.log(
+        'getBootRecord error ${e.toString()}',
+        logLevel: LogLevel.warning,
+      );
+      return null;
+    }
+  }
+
+  Future<void> saveBootRecord(BootRecord record) async {
+    final sharedPreferencesIns = await sharedPreferencesCompleter.future;
+    await sharedPreferencesIns?.setString(bootRecordKey, json.encode(record));
   }
 
   Future<void> clearPreferences() async {

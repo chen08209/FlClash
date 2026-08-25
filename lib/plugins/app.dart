@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+
+const _platformProbeTimeout = Duration(seconds: 2);
 
 class App {
   static App? _instance;
@@ -138,10 +141,10 @@ class App {
 
   Future<bool> didCrashOnPreviousExecution() async {
     try {
-      return await methodChannel.invokeMethod<bool>(
-            'didCrashOnPreviousExecution',
-          ) ??
-          false;
+      final value = await methodChannel
+          .invokeMethod<bool>('didCrashOnPreviousExecution')
+          .timeout(_platformProbeTimeout);
+      return value ?? false;
     } catch (error) {
       commonPrint.log(
         'Failed to read the previous-execution crash flag: '
@@ -149,6 +152,21 @@ class App {
         logLevel: LogLevel.warning,
       );
       return false;
+    }
+  }
+
+  Future<AppExitInfo?> getLastExitInfo() async {
+    try {
+      final raw = await methodChannel
+          .invokeMapMethod<String, Object?>('getLastExitInfo')
+          .timeout(_platformProbeTimeout);
+      return AppExitInfo.fromJson(raw);
+    } catch (error) {
+      commonPrint.log(
+        'Failed to read the last process exit info: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      return null;
     }
   }
 }

@@ -237,10 +237,10 @@ packages:
     dependency: "direct main"
     description:
       name: connectivity_plus
-      sha256: "762c99f890ca8bf87f7337236f99edd42793843bc6c3631da294a76653a54bd0"
+      sha256: cad0e811a289ea2a941119dc483c204ec1684cbb9a8fc7351fe4a230b8313160
       url: "https://pub.dev"
     source: hosted
-    version: "7.3.1"
+    version: "7.2.0"
   connectivity_plus_platform_interface:
     dependency: transitive
     description:
@@ -1806,19 +1806,12 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
-  window_ext:
-    dependency: "direct main"
-    description:
-      path: "plugins/window_ext"
-      relative: true
-    source: path
-    version: "0.0.1"
   window_manager:
     dependency: "direct main"
     description:
       path: "packages/window_manager"
-      ref: "5a489acfe5799c38909e3e96abd11b78354f1809"
-      resolved-ref: "5a489acfe5799c38909e3e96abd11b78354f1809"
+      ref: "v0.5.1-flclash.1"
+      resolved-ref: "207a99ca9dbaf0585e9a337eacc4fa4848809984"
       url: "https://github.com/chen08209/window_manager"
     source: git
     version: "0.5.1"

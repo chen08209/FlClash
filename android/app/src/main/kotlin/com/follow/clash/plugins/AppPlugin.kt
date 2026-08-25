@@ -156,7 +156,15 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             }
 
             "didCrashOnPreviousExecution" -> {
-                result.success(GlobalState.didCrashOnPreviousExecution())
+                scope.launch(Dispatchers.IO) {
+                    result.success(GlobalState.didCrashOnPreviousExecution())
+                }
+            }
+
+            "getLastExitInfo" -> {
+                scope.launch(Dispatchers.IO) {
+                    result.success(GlobalState.lastExitInfo())
+                }
             }
 
             else -> {

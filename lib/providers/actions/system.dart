@@ -46,6 +46,7 @@ class SystemAction extends _$SystemAction {
     }
     await Future.wait([
       if (needSave) preferences.saveConfig(ref.read(configProvider)),
+      bootGuard.markClosed(),
       if (systemDnsCoordinator != null) systemDnsCoordinator!.shutdown(),
       if (proxy != null) proxy!.stopProxy(),
     ]);

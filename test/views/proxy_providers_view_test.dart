@@ -105,7 +105,6 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  // The trailing slot cross-fades, so both children live for one transition.
   Future<void> settleTrailing(WidgetTester tester) async {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));

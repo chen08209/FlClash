@@ -1,6 +1,7 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:tray/tray.dart';
@@ -15,21 +16,35 @@ import 'window.dart';
 class AppTray implements TrayPort {
   static AppTray? _instance;
 
+  final bool isMacOS;
+  final bool isWindows;
+
   bool _isShutDown = false;
 
-  AppTray._internal();
+  AppTray._internal({required this.isMacOS, required this.isWindows});
 
   factory AppTray() {
-    _instance ??= AppTray._internal();
+    _instance ??= AppTray._internal(
+      isMacOS: system.isMacOS,
+      isWindows: system.isWindows,
+    );
     return _instance!;
   }
 
+  @visibleForTesting
+  factory AppTray.forPlatform({
+    required bool isMacOS,
+    required bool isWindows,
+  }) {
+    return AppTray._internal(isMacOS: isMacOS, isWindows: isWindows);
+  }
+
   String get trayIconSuffix {
-    return system.isWindows ? 'ico' : 'png';
+    return isWindows ? 'ico' : 'png';
   }
 
   String getTrayIcon({required bool isStart, required bool tunEnable}) {
-    if (system.isMacOS || !isStart) {
+    if (isMacOS || !isStart) {
       return 'assets/images/icon/status_1.$trayIconSuffix';
     }
     if (!tunEnable) {
@@ -60,7 +75,7 @@ class AppTray implements TrayPort {
             isStart: trayState.isStart,
             tunEnable: trayState.tunEnable,
           ),
-          isTemplate: system.isMacOS,
+          isTemplate: isMacOS,
         ),
         toolTip: appName,
         menu: _buildMenu(trayState: trayState, read: read),
@@ -73,7 +88,7 @@ class AppTray implements TrayPort {
     required bool showTrayTitle,
     required Traffic traffic,
   }) async {
-    if (_isShutDown || !system.isMacOS) {
+    if (_isShutDown || !isMacOS) {
       return;
     }
     await Tray.instance.setTitle(showTrayTitle ? traffic.trayTitle : '');
@@ -102,7 +117,7 @@ class AppTray implements TrayPort {
         checked: false,
         onSelected: commonAction.toggleRunning,
       ),
-      if (system.isMacOS)
+      if (isMacOS)
         TrayMenuCheckbox(
           label: appLocalizations.speedStatistics,
           checked: trayState.showTrayTitle,
@@ -118,7 +133,7 @@ class AppTray implements TrayPort {
           },
         ),
       const TrayMenuSeparator(),
-      if (system.isMacOS) ..._buildGroupMenu(trayState: trayState, read: read),
+      if (isMacOS) ..._buildGroupMenu(trayState: trayState, read: read),
       if (trayState.isStart) ...[
         TrayMenuCheckbox(
           label: appLocalizations.tun,
@@ -185,7 +200,7 @@ class AppTray implements TrayPort {
   Future<void> _copyEnv(int port) async {
     final url = 'http://127.0.0.1:$port';
 
-    final cmdline = system.isWindows
+    final cmdline = isWindows
         ? 'set \$env:all_proxy=$url'
         : 'export all_proxy=$url';
 

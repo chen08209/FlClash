@@ -184,6 +184,24 @@ the invariant hard to break beats prose that asks the next reader not to break i
 
 ## Lifecycle Rules
 
+- Crash recovery is owned by `BootGuard` (`lib/common/boot_guard.dart`), and the signal it acts on is the persisted
+  `BootRecord`, never a crash reporter. The record is stamped `starting` before `startCore` and `running` once
+  `_initApp` finishes, so only a launch that died before reaching `running` is a failed launch — a crash after hours of
+  runtime, or a process the system reclaimed in the background, is not one. `ApplicationExitInfo` can only veto a
+  failure (user stop, low memory, signal, package change), never create one, and its timestamp is consumed through
+  `handledExitAt` so the same exit cannot be counted twice.
+- `BootGuard` is an Android-only mechanism and gates itself: on every other platform `evaluate`, `markRunning` and
+  `markClosed` return without touching preferences. The desktop has neither of the two attribution sources — no
+  `ApplicationExitInfo` equivalent and no Crashlytics toggle — so a bare sentinel there would read a window closed on
+  the disclaimer dialog, or a session ended by shutdown, as a failed launch. Keep the platform check inside the guard;
+  callers in `bootstrap.dart` and `SystemAction` stay unconditional.
+- `FirebaseCrashlytics.didCrashOnPreviousExecution()` corroborates a failure and must not trigger one. Its marker file is
+  cleared by a background initialization that `dataCollectionArbiter` blocks while collection is disabled, which is the
+  default here, so one real crash makes it return true on every later launch. That latch is what made the app clear the
+  selected profile on every cold start; it is also why the probe is only read when `crashlytics` is enabled, keeping
+  Firebase uninitialized until the user consents.
+- Recovery is graded: the first failed launch only skips `initStatus`, and `currentProfileId` is cleared only from
+  `crashRecoveryClearThreshold` consecutive failures on. Do not let a single interrupted launch write to the config.
 - Desktop process ownership belongs to `DesktopCoreLifecycle`; do not start/kill `FlClashCore` from providers, widgets,
   managers, or ad hoc exit callbacks. Acquire and release it through a `CoreProcessLease`.
 - `CoreController.close()` and platform `close()` implementations are terminal and idempotent. Application shutdown must
@@ -269,6 +287,27 @@ does open a file-backed database owns closing it.
 (`ubuntu-latest`) and a macOS working copy measure different coverage for the same test. Assert host-agnostic behavior,
 and leave headroom under a group floor that covers such a branch.
 
+A platform decision that drives layout takes `isDesktop`/`isMacOS` as parameters and reads `system` only at the call site,
+so every platform's outcome is reachable from one host. `getWindowHeaderHeight` and `showsWindowHeader` in
+`lib/common/layout.dart` own the window header rule for both `WindowHeaderContainer` and `overlayTopOffset` — they must
+agree, or the content is offset by a header that is not there. `WindowHeaderBar` takes its height and slots as arguments,
+which is what lets `test/manager/window_header_test.dart` measure the Windows caption bar on a macOS host.
+
+A `Stack` under loose constraints sizes to its non-positioned children, and falls back to `constraints.biggest` only when
+it has none — so a bar that fills the window must keep every slot positioned. One non-positioned child is enough to
+collapse `WindowHeaderBar` to that child's width: the macOS title did exactly that, leaving the app name over the traffic
+lights and the raw window painted black beside it, while Windows, whose slots are all positioned, stayed correct.
+`WindowHeaderLayout` positions the header across the top for the same reason, and the macOS group asserts the bar's
+width, not just its height — a height-only assertion cannot see this.
+
+The same seam carries the two other places a platform decision changed what was built: `AppTray` holds `isMacOS`/
+`isWindows` as state — `AppTray()` fills them from `system`, `AppTray.forPlatform` is the test seam — and `OnDemandView`
+takes nullable `isAndroid`/`isMacOS` that fall back to the host. Every test names the platform it means, because
+`debugDefaultTargetPlatformOverride` does not move `system` and a suite that leaves it to the host asserts the macOS
+shape on a developer machine and the Linux one on CI. `WindowHeaderContainer` builds the caption buttons on every
+non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and a `window_manager` channel mock that
+answers `isMaximized`/`isAlwaysOnTop` with a bool.
+
 Auto-dispose providers need a container-level hold before a test reads them back. `proxyGroupProvider`, `ruleProvider`,
 `itemsProvider` and friends mix in `AutoDisposeNotifierMixin`, so a `container.read` that no widget is currently watching
 rebuilds the provider from its override and silently discards whatever the code under test wrote. Add
@@ -290,6 +329,14 @@ it and skips exactly two shapes: an `icon:` holding a `Text`, which is already a
 if that wrapper disappears). Reuse an existing string before adding one; a label that depends on state goes on the button
 inside the `ValueListenableBuilder`, not outside it, or the tooltip cannot follow the icon. A row of window buttons hidden
 behind `system.isMacOS` is unreachable from a macOS test host, so extract it — `WindowHeaderActions` is the pattern.
+
+A tooltip needs an `Overlay` ancestor at build time, not at hover time: `RawTooltip` builds an `OverlayPortal`, so a
+button whose `tooltip` has nowhere to go throws "No Overlay widget found" and takes its whole subtree down with it.
+Everything `buildManagerStack` wraps around `MaterialApp.builder`'s child sits *above* the app Navigator and therefore
+above the only Overlay in the tree. A manager that renders a tooltip — `WindowHeaderLayout` and its caption buttons are
+the case that broke Windows while macOS, which renders a bare title there, stayed clean — hosts its own with
+`Overlay.wrap`, spanning the window so the tooltip is not clipped to the widget that owns it. A test only reproduces this
+by mirroring that topology: build the widget from `MaterialApp.builder`, never from `home:`.
 
 A public top-level declaration that nothing outside its own file references is dead, and no lint catches it:
 `unused_element` covers only private ones, and a barrel `export` keeps a dead file compiling and off every

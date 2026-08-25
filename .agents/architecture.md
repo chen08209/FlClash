@@ -530,7 +530,6 @@ Architecture detection is automatic. The `--description` flag passed to `flutter
 - `rust_api`: runtime Flutter Rust Bridge FFI plugin built through Cargokit.
 - `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
 - `wifi_ssid`: Wi-Fi SSID detection.
-- `window_ext`: window extensions.
 - `flutter_distributor`: app packaging/distribution.
 
 ## Rust Helper Service

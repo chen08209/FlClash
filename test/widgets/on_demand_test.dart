@@ -35,6 +35,8 @@ void main() {
     WidgetTester tester, {
     List<String> ssids = const [],
     WifiSsidPermission permission = WifiSsidPermission.denied,
+    bool isAndroid = false,
+    bool isMacOS = false,
   }) async {
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
@@ -55,7 +57,9 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: OnDemandView()),
+        child: TestApp(
+          child: OnDemandView(isAndroid: isAndroid, isMacOS: isMacOS),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -128,7 +132,11 @@ void main() {
   testWidgets('the location prerequisite reflects a denied permission', (
     tester,
   ) async {
-    await pumpView(tester, permission: WifiSsidPermission.denied);
+    await pumpView(
+      tester,
+      permission: WifiSsidPermission.denied,
+      isMacOS: true,
+    );
 
     expect(find.bySemanticsLabel('Tap to authorize'), findsOneWidget);
     expect(find.bySemanticsLabel('Authorized'), findsNothing);
@@ -137,9 +145,32 @@ void main() {
   testWidgets('the location prerequisite reflects a granted permission', (
     tester,
   ) async {
-    await pumpView(tester, permission: WifiSsidPermission.granted);
+    await pumpView(
+      tester,
+      permission: WifiSsidPermission.granted,
+      isMacOS: true,
+    );
 
     expect(find.bySemanticsLabel('Authorized'), findsOneWidget);
+    expect(find.bySemanticsLabel('Tap to authorize'), findsNothing);
+  });
+
+  testWidgets('Android also asks to be left out of battery optimization', (
+    tester,
+  ) async {
+    await pumpView(tester, isAndroid: true);
+
+    expect(find.text('Ignore Battery Optimization'), findsOneWidget);
+    expect(find.text('Location Permission'), findsOneWidget);
+  });
+
+  testWidgets('a desktop that is not macOS asks for no prerequisite', (
+    tester,
+  ) async {
+    await pumpView(tester);
+
+    expect(find.text('Ignore Battery Optimization'), findsNothing);
+    expect(find.text('Location Permission'), findsNothing);
     expect(find.bySemanticsLabel('Tap to authorize'), findsNothing);
   });
 }

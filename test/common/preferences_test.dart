@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/preferences.dart';
 import 'package:fl_clash/models/models.dart';
@@ -124,5 +125,32 @@ void main() {
 
   test('isInit resolves true once shared preferences are available', () async {
     expect(await preferences.isInit, isTrue);
+  });
+
+  group('boot record', () {
+    test('getBootRecord returns null when nothing is stored', () async {
+      expect(await preferences.getBootRecord(), isNull);
+    });
+
+    test('saveBootRecord then getBootRecord round-trips the record', () async {
+      const record = BootRecord(
+        stage: BootStage.starting,
+        profileId: 5,
+        startedAt: 111,
+        failureCount: 1,
+        lastFailedProfileId: 4,
+        handledExitAt: 99,
+      );
+
+      await preferences.saveBootRecord(record);
+
+      expect(await preferences.getBootRecord(), record);
+    });
+
+    test('getBootRecord survives a corrupt entry', () async {
+      await store.setString(bootRecordKey, 'not json');
+
+      expect(await preferences.getBootRecord(), isNull);
+    });
   });
 }

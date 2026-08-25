@@ -138,6 +138,10 @@ jobs:
             echo "flutter.sdk=$FLUTTER_ROOT"
             echo "sdk.dir=$ANDROID_HOME"
           } > local.properties
+          wrapper="$FLUTTER_ROOT/bin/cache/artifacts/gradle_wrapper"
+          test -d "$wrapper" || flutter precache
+          cp -R "$wrapper/." .
+          chmod +x gradlew
           # Modules are listed explicitly: the aggregate testDebugUnitTest task would
           # also run third-party Flutter plugin suites. `:core` is omitted because its
           # only class loads the native library through System.loadLibrary.

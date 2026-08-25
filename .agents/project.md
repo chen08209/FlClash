@@ -12,7 +12,8 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
 
 ## Forked Dependencies
 
-Three `pubspec.yaml` dependencies are pinned to a fork by commit SHA. All three
+Three `pubspec.yaml` dependencies are pinned to a fork — `window_manager` by tag,
+the other two by commit SHA. All three
 forks live under `chen08209`, the same account that owns this repository, so they
 are maintained in-house rather than tracked from a third party: advancing a pin
 is a local decision, and there is no external maintainer to wait on for the patch
@@ -29,14 +30,24 @@ diff -ru ~/.pub-cache/hosted/pub.dev/<name>-<version> ~/.pub-cache/git/<name>-<s
 ```
 
 `window_manager` — `chen08209/window_manager`, path `packages/window_manager`,
-version 0.5.1.
+version 0.5.1, pinned to the tag `v0.5.1-flclash.1` because the fork carries
+commits of its own rather than a single patch on top of a release.
 
-- Changes `windows/window_manager_plugin.cpp` only. With `titleBarStyle: hidden`
-  a maximized window uses the monitor work area (`GetMonitorInfo().rcWork`)
-  instead of upstream's `adjustNCCALCSIZE` border fudge, so the maximized window
-  no longer covers the taskbar.
-- Drop the fork once upstream constrains a hidden-title-bar maximized window to
-  the work area on Windows. Dart API is untouched, so nothing in `lib/` changes.
+- `windows/window_manager_plugin.cpp`: with `titleBarStyle: hidden` a maximized
+  window uses the monitor work area (`GetMonitorInfo().rcWork`) instead of
+  upstream's `adjustNCCALCSIZE` border fudge, so it no longer covers the taskbar.
+- `linux/window_manager_plugin.cc`: GTK drops the placement of an unmapped
+  window, so `hide` saves the geometry and the `map-event` handler applies it
+  again. Upstream only moves the window while it is hidden, which a window
+  manager is free to ignore — the window then reappears wherever it decides to
+  place it, which on this repository's Linux runner is every appearance after the
+  first, because `my_application.cc` never shows the toplevel itself.
+- Adds `setWindowCornerPreference` (Windows) and `handleShouldTerminate` /
+  `onWindowShouldTerminate` (macOS). These lived in a local `window_ext` plugin
+  until they moved here; `lib/manager/window_manager.dart` and
+  `macos/Runner/AppDelegate.swift` are the callers.
+- Drop the fork once upstream carries all three. The added APIs have call sites,
+  so this is not a pin change alone.
 
 `launch_at_startup` — `chen08209/launch_at_startup`, version 0.5.1.
 

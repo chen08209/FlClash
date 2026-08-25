@@ -65,16 +65,16 @@ const MMDB = 'GEOIP.metadb';
 const ASN = 'ASN.mmdb';
 const GEOIP = 'GEOIP.dat';
 const GEOSITE = 'GEOSITE.dat';
-final double kHeaderHeight = system.isDesktop
-    ? !system.isMacOS
-          ? 40
-          : 28
-    : 0;
+final double kHeaderHeight = getWindowHeaderHeight(
+  isDesktop: system.isDesktop,
+  isMacOS: system.isMacOS,
+);
 const profilesDirectoryName = 'profiles';
 const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
 const systemDnsRecordKey = 'system_dns_record';
+const bootRecordKey = 'boot_record';
 const defaultSystemDnsFallback = '223.5.5.5';
 const double dialogCommonWidth = 300;
 const repository = 'chen08209/FlClash';

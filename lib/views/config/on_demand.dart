@@ -12,7 +12,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
 class OnDemandView extends ConsumerStatefulWidget {
-  const OnDemandView({super.key});
+  const OnDemandView({super.key, this.isAndroid, this.isMacOS});
+
+  final bool? isAndroid;
+  final bool? isMacOS;
 
   @override
   ConsumerState createState() => _OnDemandViewState();
@@ -20,8 +23,12 @@ class OnDemandView extends ConsumerStatefulWidget {
 
 class _OnDemandViewState extends ConsumerState<OnDemandView>
     with UniqueKeyStateMixin {
+  bool get _isAndroid => widget.isAndroid ?? system.isAndroid;
+
+  bool get _isMacOS => widget.isMacOS ?? system.isMacOS;
+
   void _handlePermanentlyDeniedLocationPermission() {
-    if (system.isMacOS) {
+    if (_isMacOS) {
       final appLocalizations = context.appLocalizations;
       dialogs.showMessage(
         title: appLocalizations.locationPermissionRequired,
@@ -31,7 +38,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
           text: appLocalizations.locationPermissionGuide(appName),
         ),
       );
-    } else if (system.isAndroid) {
+    } else if (_isAndroid) {
       app?.openAppSettings();
     }
   }
@@ -268,8 +275,8 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     return generateSectionV3(
       title: context.appLocalizations.prerequisites,
       items: [
-        if (system.isAndroid) _buildBatteryOptimizationItem(),
-        if (system.isAndroid || system.isMacOS) _buildLocationPermissionItem(),
+        if (_isAndroid) _buildBatteryOptimizationItem(),
+        if (_isAndroid || _isMacOS) _buildLocationPermissionItem(),
       ],
     );
   }

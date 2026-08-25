@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:ffi/ffi.dart';
+import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/core/desktop/helper_client.dart';
@@ -63,6 +64,11 @@ class System {
   Future<bool> didCrashOnPreviousExecution() async {
     if (!isAndroid) return false;
     return await app?.didCrashOnPreviousExecution() ?? false;
+  }
+
+  Future<AppExitInfo?> lastExitInfo() async {
+    if (!isAndroid) return null;
+    return app?.getLastExitInfo();
   }
 
   /// Arguments for the `stat` call behind [checkIsAdmin].

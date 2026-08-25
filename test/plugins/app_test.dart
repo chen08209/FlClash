@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/services.dart';
@@ -112,5 +113,41 @@ void main() {
         });
 
     expect(await App().didCrashOnPreviousExecution(), isFalse);
+  });
+
+  test('reads the last process exit info from Android', () async {
+    MethodCall? receivedCall;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          receivedCall = call;
+          return <String, Object?>{
+            'reason': 10,
+            'timestamp': 1234,
+            'description': 'user requested',
+          };
+        });
+
+    final info = await App().getLastExitInfo();
+
+    expect(receivedCall?.method, 'getLastExitInfo');
+    expect(info?.reason, AppExitReason.userRequested);
+    expect(info?.timestamp, 1234);
+    expect(info?.description, 'user requested');
+  });
+
+  test('uses no exit info when Android cannot report one', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async => null);
+
+    expect(await App().getLastExitInfo(), isNull);
+  });
+
+  test('uses no exit info when the platform call fails', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async {
+          throw PlatformException(code: 'unavailable');
+        });
+
+    expect(await App().getLastExitInfo(), isNull);
   });
 }

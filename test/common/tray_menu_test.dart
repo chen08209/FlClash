@@ -72,6 +72,7 @@ void main() {
 
   late List<MethodCall> calls;
   late ProviderContainer container;
+  late AppTray tray;
 
   late Directory root;
 
@@ -97,6 +98,7 @@ void main() {
   setUp(() {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
     calls = [];
+    tray = AppTray.forPlatform(isMacOS: true, isWindows: false);
     container = ProviderContainer();
     Tray.instance.resetForTesting();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -122,8 +124,8 @@ void main() {
     return null;
   }
 
-  Future<void> update(TrayState trayState) {
-    return AppTray().update(
+  Future<void> update(TrayState trayState, {AppTray? on}) {
+    return (on ?? tray).update(
       trayState: trayState,
       traffic: const Traffic(),
       read: container.read,
@@ -134,7 +136,7 @@ void main() {
     'SystemAction.updateTray builds the menu without reading itself',
     () async {
       globalState.container = container;
-      trayPort = AppTray();
+      trayPort = tray;
       addTearDown(() => trayPort = null);
 
       await container.read(systemActionProvider.notifier).updateTray();
@@ -231,5 +233,46 @@ void main() {
     expect(submenu['label'], 'Proxy');
     final children = (submenu['items'] as List).cast<Map<Object?, Object?>>();
     expect(children.map((item) => item['label']), contains('A'));
+  });
+
+  group('a platform that is not macOS', () {
+    late AppTray windows;
+
+    setUp(() {
+      windows = AppTray.forPlatform(isMacOS: false, isWindows: true);
+    });
+
+    test('gets a plain icon, no group submenus and no speed toggle', () async {
+      await update(
+        _trayState(
+          isStart: true,
+          groups: [
+            const Group(
+              name: 'Proxy',
+              type: GroupType.Selector,
+              all: [Proxy(name: 'A', type: 'Direct')],
+            ),
+          ],
+        ),
+        on: windows,
+      );
+
+      final arguments = showCall()!.arguments as Map;
+      expect((arguments['icon'] as Map)['isTemplate'], isFalse);
+      expect(
+        _items(showCall()).where((item) => item['type'] == 'submenu'),
+        isEmpty,
+      );
+      expect(
+        _labels(showCall()),
+        isNot(contains(currentAppLocalizations.speedStatistics)),
+      );
+    });
+
+    test('never pushes a tray title', () async {
+      await windows.updateTitle(showTrayTitle: true, traffic: const Traffic());
+
+      expect(calls.where((call) => call.method == 'setTitle'), isEmpty);
+    });
   });
 }

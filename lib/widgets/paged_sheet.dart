@@ -10,12 +10,6 @@ Color _sheetColorOf(BuildContext context) {
       : ColorScheme.of(context).surface;
 }
 
-/// A route for the [PagedSheet]'s nested navigator.
-///
-/// Mixes in [ObservableRouteMixin] and wraps its content in a
-/// [ResizableNavigatorRouteContentBoundary] so that the enclosing
-/// [NavigatorResizable] can size the sheet to the current page and animate
-/// the height along with the transition.
 class PagedSheetRoute<T> extends PageRoute<T> with ObservableRouteMixin<T> {
   PagedSheetRoute({
     super.settings,
@@ -89,11 +83,6 @@ class PagedSheetRoute<T> extends PageRoute<T> with ObservableRouteMixin<T> {
   }
 }
 
-/// A sheet surface hosting a nested navigator of [PagedSheetRoute]s.
-///
-/// The sheet shrinks to the height of the current page, so it must be given
-/// bounded but non-tight constraints, e.g. by an [Align] that leaves the
-/// height loose.
 class PagedSheet extends StatelessWidget {
   const PagedSheet({
     super.key,
@@ -107,7 +96,6 @@ class PagedSheet extends StatelessWidget {
   final ShapeBorder? shape;
   final Clip clipBehavior;
 
-  /// The nested [Navigator] whose current [PagedSheetRoute] drives the height.
   final Widget child;
 
   @override

@@ -110,9 +110,11 @@ double overlayTopOffset(Ref ref) {
   final isMobileView = ref.watch(isMobileViewProvider);
   final version = ref.watch(versionProvider);
   ref.watch(viewSizeProvider);
-  double top = kHeaderHeight;
-  if ((version <= 10 || !isMobileView) && system.isMacOS || !system.isDesktop) {
-    top = 0;
-  }
-  return kToolbarHeight + top;
+  final showsHeader = showsWindowHeader(
+    isDesktop: system.isDesktop,
+    isMacOS: system.isMacOS,
+    version: version,
+    isMobileView: isMobileView,
+  );
+  return kToolbarHeight + (showsHeader ? kHeaderHeight : 0);
 }

@@ -6,7 +6,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:window_ext/window_ext.dart';
 import 'package:window_manager/window_manager.dart';
 
 class WindowManager extends ConsumerStatefulWidget {
@@ -19,7 +18,7 @@ class WindowManager extends ConsumerStatefulWidget {
 }
 
 class _WindowContainerState extends ConsumerState<WindowManager>
-    with WindowListener, WindowExtListener {
+    with WindowListener {
   @override
   Widget build(BuildContext context) {
     return widget.child;
@@ -38,7 +37,6 @@ class _WindowContainerState extends ConsumerState<WindowManager>
         });
       }
     });
-    windowExtManager.addListener(this);
     windowManager.addListener(this);
   }
 
@@ -56,9 +54,9 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   }
 
   @override
-  Future<void> onShouldTerminate() async {
+  Future<void> onWindowShouldTerminate() async {
     await ref.read(systemActionProvider.notifier).handleExit();
-    super.onShouldTerminate();
+    super.onWindowShouldTerminate();
   }
 
   @override
@@ -106,7 +104,6 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   @override
   void dispose() {
     windowManager.removeListener(this);
-    windowExtManager.removeListener(this);
     super.dispose();
   }
 }
@@ -122,22 +119,52 @@ class WindowHeaderContainer extends StatelessWidget {
       builder: (_, ref, child) {
         final isMobileView = ref.watch(isMobileViewProvider);
         final version = ref.watch(versionProvider);
-        if ((version <= 10 || !isMobileView) && system.isMacOS) {
+        final showsHeader = showsWindowHeader(
+          isDesktop: system.isDesktop,
+          isMacOS: system.isMacOS,
+          version: version,
+          isMobileView: isMobileView,
+        );
+        if (!showsHeader) {
           return child!;
         }
-        return Stack(
-          children: [
-            Column(
-              children: [
-                SizedBox(height: kHeaderHeight),
-                Expanded(flex: 1, child: child!),
-              ],
-            ),
-            const WindowHeader(),
-          ],
+        return WindowHeaderLayout(
+          height: kHeaderHeight,
+          header: const WindowHeader(),
+          child: child!,
         );
       },
       child: child,
+    );
+  }
+}
+
+class WindowHeaderLayout extends StatelessWidget {
+  const WindowHeaderLayout({
+    super.key,
+    required this.height,
+    required this.header,
+    required this.child,
+  });
+
+  final double height;
+  final Widget header;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Overlay.wrap(
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              SizedBox(height: height),
+              Expanded(flex: 1, child: child),
+            ],
+          ),
+          Positioned(top: 0, left: 0, right: 0, child: header),
+        ],
+      ),
     );
   }
 }
@@ -179,12 +206,12 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
     if (isMaximized) {
       await windowManager.unmaximize();
       if (system.isWindows) {
-        unawaited(windowExtManager.setWindowCornerPreference(round: true));
+        unawaited(windowManager.setWindowCornerPreference(round: true));
       }
     } else {
       await windowManager.maximize();
       if (system.isWindows) {
-        unawaited(windowExtManager.setWindowCornerPreference(round: false));
+        unawaited(windowManager.setWindowCornerPreference(round: false));
       }
     }
     final res = await windowManager.isMaximized();
@@ -203,43 +230,85 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
 
   @override
   Widget build(BuildContext context) {
+    return WindowHeaderBar(
+      height: kHeaderHeight,
+      onDragStart: windowManager.startDragging,
+      onDoubleTap: _updateMaximized,
+      title: system.isMacOS ? const Text(appName) : null,
+      actions: system.isMacOS
+          ? null
+          : WindowHeaderActions(
+              isPinNotifier: isPinNotifier,
+              isMaximizedNotifier: isMaximizedNotifier,
+              onPin: _updatePin,
+              onMinimize: windowManager.minimize,
+              onMaximize: _updateMaximized,
+              onClose: () {
+                ref.read(systemActionProvider.notifier).handleClose();
+              },
+            ),
+    );
+  }
+}
+
+class WindowHeaderBar extends StatelessWidget {
+  const WindowHeaderBar({
+    super.key,
+    required this.height,
+    required this.onDragStart,
+    required this.onDoubleTap,
+    this.title,
+    this.actions,
+  });
+
+  final double height;
+  final VoidCallback onDragStart;
+  final VoidCallback onDoubleTap;
+  final Widget? title;
+  final Widget? actions;
+
+  @override
+  Widget build(BuildContext context) {
     return Material(
-      child: Stack(
-        alignment: AlignmentDirectional.center,
-        children: [
-          Positioned(
-            child: GestureDetector(
-              onPanStart: (_) {
-                windowManager.startDragging();
-              },
-              onDoubleTap: () {
-                _updateMaximized();
-              },
-              child: Container(
-                color: context.colorScheme.secondary.opacity15,
-                alignment: Alignment.centerLeft,
-                height: kHeaderHeight,
-              ),
-            ),
-          ),
-          if (system.isMacOS)
-            const Text(appName)
-          else ...[
-            Positioned(
-              right: 0,
-              child: WindowHeaderActions(
-                isPinNotifier: isPinNotifier,
-                isMaximizedNotifier: isMaximizedNotifier,
-                onPin: _updatePin,
-                onMinimize: windowManager.minimize,
-                onMaximize: _updateMaximized,
-                onClose: () {
-                  ref.read(systemActionProvider.notifier).handleClose();
+      child: SizedBox(
+        height: height,
+        child: Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onPanStart: (_) {
+                  onDragStart();
                 },
+                onDoubleTap: onDoubleTap,
+                child: ColoredBox(
+                  color: context.colorScheme.secondary.opacity15,
+                ),
               ),
             ),
+            if (title != null)
+              Positioned.fill(
+                child: IgnorePointer(child: Center(child: title)),
+              ),
+            if (actions != null)
+              Positioned(
+                top: 0,
+                bottom: 0,
+                right: 0,
+                child: IconButtonTheme(
+                  data: IconButtonThemeData(
+                    style: ButtonStyle(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: WidgetStatePropertyAll(Size.square(height)),
+                      maximumSize: WidgetStatePropertyAll(Size.square(height)),
+                      padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+                    ),
+                  ),
+                  child: actions!,
+                ),
+              ),
           ],
-        ],
+        ),
       ),
     );
   }

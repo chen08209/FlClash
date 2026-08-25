@@ -14,7 +14,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   tray
   url_launcher_windows
   wifi_ssid
-  window_ext
   window_manager
 )
 
