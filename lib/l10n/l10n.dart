@@ -829,6 +829,66 @@ class AppLocalizations {
     return Intl.message('Account', name: 'account', desc: '', args: []);
   }
 
+  /// `Email`
+  String get email {
+    return Intl.message('Email', name: 'email', desc: '', args: []);
+  }
+
+  /// `Sign in`
+  String get login {
+    return Intl.message('Sign in', name: 'login', desc: '', args: []);
+  }
+
+  /// `Please enter your email`
+  String get emailRequired {
+    return Intl.message(
+      'Please enter your email',
+      name: 'emailRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please enter a valid email`
+  String get emailInvalid {
+    return Intl.message(
+      'Please enter a valid email',
+      name: 'emailInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please enter your password`
+  String get passwordRequired {
+    return Intl.message(
+      'Please enter your password',
+      name: 'passwordRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sign in to continue`
+  String get v2boardLoginTitle {
+    return Intl.message(
+      'Sign in to continue',
+      name: 'v2boardLoginTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use your service account. The app is unavailable until authentication succeeds.`
+  String get v2boardLoginDesc {
+    return Intl.message(
+      'Use your service account. The app is unavailable until authentication succeeds.',
+      name: 'v2boardLoginDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Backup`
   String get backup {
     return Intl.message('Backup', name: 'backup', desc: '', args: []);

@@ -111,8 +111,13 @@ List<String> createFlutterBuildArgs({
   return flutterBuildArgs;
 }
 
-Map<String, String> createBuildEnvironment(String env) {
-  return {'APP_ENV': env};
+Map<String, String> createBuildEnvironment(String env, {String? ossConfigUrl}) {
+  final normalizedOssConfigUrl = ossConfigUrl?.trim() ?? '';
+  return {
+    'APP_ENV': env,
+    if (normalizedOssConfigUrl.isNotEmpty)
+      'OSS_CONFIG_URL': normalizedOssConfigUrl,
+  };
 }
 
 String _getTargets(String platform, String arch, String? customTargets) {
@@ -141,7 +146,14 @@ Future<int> _package(
   required bool verbose,
 }) async {
   final file = File(p.join(rootDir, 'env.json'));
-  await file.writeAsString(jsonEncode(createBuildEnvironment(env)));
+  await file.writeAsString(
+    jsonEncode(
+      createBuildEnvironment(
+        env,
+        ossConfigUrl: Platform.environment['OSS_CONFIG_URL'],
+      ),
+    ),
+  );
 
   final flutterBuildArgs = createFlutterBuildArgs(
     platform: platform,

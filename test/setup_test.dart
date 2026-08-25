@@ -25,6 +25,19 @@ void main() {
       expect(setup.createBuildEnvironment('dev'), {'APP_ENV': 'dev'});
     });
 
+    test('includes a normalized OSS config URL when provided', () {
+      expect(
+        setup.createBuildEnvironment(
+          'stable',
+          ossConfigUrl: ' https://oss.example.com/config.json ',
+        ),
+        {
+          'APP_ENV': 'stable',
+          'OSS_CONFIG_URL': 'https://oss.example.com/config.json',
+        },
+      );
+    });
+
     test('omits verbose from flutter build args by default', () {
       final args = setup.createFlutterBuildArgs(
         platform: 'android',

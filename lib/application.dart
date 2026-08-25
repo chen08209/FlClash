@@ -9,6 +9,7 @@ import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/v2board/v2board.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -26,6 +27,7 @@ class Application extends ConsumerStatefulWidget {
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
   bool _preHasVpn = false;
+  bool _authorizedServicesInitialized = false;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -47,16 +49,22 @@ class ApplicationState extends ConsumerState<Application> {
   void initState() {
     super.initState();
     SystemNavigator.setFrameworkHandlesBack(true);
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      if (globalState.navigatorKey.currentContext != null) {
-        await globalState.attach();
-      } else {
-        exit(0);
-      }
-      _autoUpdateProfilesTask();
-      _initLink();
-      app?.initShortcuts();
-    });
+  }
+
+  Future<void> _handleAuthenticated(V2BoardSession session) async {
+    if (globalState.navigatorKey.currentContext == null) {
+      exit(0);
+    }
+    await globalState.attach();
+    await V2BoardSubscriptionManager(
+      container: globalState.container,
+      sessionStore: v2BoardSessionStore,
+    ).synchronize(session);
+    if (_authorizedServicesInitialized) return;
+    _authorizedServicesInitialized = true;
+    _autoUpdateProfilesTask();
+    _initLink();
+    app?.initShortcuts();
   }
 
   void _initLink() {
@@ -182,7 +190,12 @@ class ApplicationState extends ConsumerState<Application> {
           home: child!,
         );
       },
-      child: const HomePage(),
+      child: V2BoardGate(
+        authenticator: v2BoardClient,
+        sessionRepository: v2BoardSessionStore,
+        onAuthenticated: _handleAuthenticated,
+        child: const HomePage(),
+      ),
     );
   }
 
