@@ -1,0 +1,17 @@
+name: webdav_client
+description: Vendored webdav_client v1.2.2 with a dio 5.x compatibility fix for restore/read2File.
+publish_to: 'none'
+
+version: 1.2.2
+homepage: https://github.com/flymzero/webdav_client
+
+environment:
+  sdk: '>=2.12.0 <4.0.0'
+
+dependencies:
+  dio: ^5.1.0
+  xml: ^6.2.2
+  convert: ^3.1.1
+
+dev_dependencies:
+  test: '>=1.0.0 <2.0.0'
