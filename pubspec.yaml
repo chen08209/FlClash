@@ -48,7 +48,8 @@ dependencies:
   image_picker: ^1.2.0
   ffi: ^2.1.4
 
-  webdav_client: ^1.2.2
+  webdav_client:
+    path: plugins/webdav_client_fork
   dio: ^5.8.0+1
   win32: ^6.0.1
   re_editor: ^0.10.0
