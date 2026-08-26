@@ -161,6 +161,11 @@ TrayTitleState trayTitleState(Ref ref) {
   final showTrayTitle = ref.watch(
     appSettingProvider.select((state) => state.showTrayTitle),
   );
+  // Avoid subscribing to per-second traffic updates when the tray title is
+  // hidden, so the tray listener doesn't fire every second for nothing.
+  if (!showTrayTitle) {
+    return const TrayTitleState(showTrayTitle: false, traffic: Traffic());
+  }
   final traffic = ref.watch(
     trafficsProvider.select((state) => state.list.safeLast(const Traffic())),
   );

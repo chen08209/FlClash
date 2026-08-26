@@ -16,6 +16,8 @@ import 'window.dart';
 class Tray {
   static Tray? _instance;
 
+  String? _lastTrayTitle;
+
   Tray._internal();
 
   factory Tray() {
@@ -28,6 +30,7 @@ class Tray {
   }
 
   Future<void> destroy() async {
+    _lastTrayTitle = null;
     await trayManager.destroy();
   }
 
@@ -207,11 +210,16 @@ class Tray {
     if (!system.isMacOS) {
       return;
     }
-    if (!showTrayTitle) {
-      await trayManager.setTitle('');
-    } else {
-      await trayManager.setTitle(traffic.trayTitle);
+    // Repeated setTitle calls (even with an unchanged value) force a full
+    // NSStatusItem replicant redraw on newer macOS, which pins the CPU.
+    final title = showTrayTitle ? traffic.trayTitle : '';
+    if (title == _lastTrayTitle) {
+      return;
     }
+    // Assign after a successful platform call so a failed setTitle can retry
+    // the same title on the next update.
+    await trayManager.setTitle(title);
+    _lastTrayTitle = title;
   }
 
   Future<void> _copyEnv(int port) async {
