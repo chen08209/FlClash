@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:fl_clash/database/database.dart';
@@ -8,6 +9,15 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
+
+class _StubbedArchiveBackupAction extends BackupAction {
+  _StubbedArchiveBackupAction(this.archivePath);
+
+  final String archivePath;
+
+  @override
+  Future<String> backup() async => archivePath;
+}
 
 Profile _profile(int id, String label) => Profile(
   id: id,
@@ -42,6 +52,57 @@ void main() {
   Map<String, Object?> configMapOf(ProviderContainer container) =>
       jsonDecode(jsonEncode(container.read(configProvider).toJson()))
           as Map<String, Object?>;
+
+  group('consumeBackup owns the archive it produced', () {
+    File stubArchive() {
+      final directory = Directory.systemTemp.createTempSync('flclash_backup');
+      addTearDown(() => directory.deleteSync(recursive: true));
+      final file = File('${directory.path}/backup.zip')
+        ..writeAsBytesSync(const [80, 75, 5, 6]);
+      return file;
+    }
+
+    ProviderContainer containerFor(String archivePath) {
+      final container = ProviderContainer(
+        overrides: [
+          backupActionProvider.overrideWith(
+            () => _StubbedArchiveBackupAction(archivePath),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      return container;
+    }
+
+    test('deletes the archive once it has been sent', () async {
+      final archive = stubArchive();
+      final container = containerFor(archive.path);
+      String? sent;
+
+      final result = await actionOf(container).consumeBackup((path) async {
+        sent = path;
+        return true;
+      });
+
+      expect(result, isTrue);
+      expect(sent, archive.path);
+      expect(archive.existsSync(), isFalse);
+    });
+
+    test('deletes the archive when sending it fails', () async {
+      final archive = stubArchive();
+      final container = containerFor(archive.path);
+
+      await expectLater(
+        actionOf(
+          container,
+        ).consumeBackup((_) async => throw const SocketException('offline')),
+        throwsA(isA<SocketException>()),
+      );
+
+      expect(archive.existsSync(), isFalse);
+    });
+  });
 
   group('applyRestore writes the database', () {
     test('inserts the profiles the backup carries', () async {

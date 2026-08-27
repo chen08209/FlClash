@@ -5,6 +5,19 @@ class BackupAction extends _$BackupAction {
   @override
   void build() {}
 
+  Future<bool> consumeBackup(Future<bool> Function(String path) send) async {
+    final path = await backup();
+    if (path.isEmpty) {
+      return false;
+    }
+    try {
+      return await send(path);
+    } finally {
+      await File(path).safeDelete();
+    }
+  }
+
+  @visibleForTesting
   Future<String> backup() async {
     final res = await Future.wait([
       database.profilesDao.fileNames().get(),

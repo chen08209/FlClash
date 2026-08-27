@@ -163,7 +163,7 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
   }
 
   Future<void> putProfileDisabledRule(int profileId, Rule rule) {
-    return _put(rule, profileId: profileId, scene: RuleScene.added);
+    return _put(rule, profileId: profileId, scene: RuleScene.disabled);
   }
 
   void setCustomRulesWithBatch(int profileId, Batch b, Iterable<Rule> rules) {

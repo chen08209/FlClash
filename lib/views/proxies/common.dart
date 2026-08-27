@@ -20,12 +20,25 @@ double getItemHeight(ProxyCardType proxyCardType) {
   };
 }
 
-List<Group> getCurrentGroups(WidgetRef ref) {
-  return ref.read(currentGroupsStateProvider).value;
-}
+class GroupOffsets {
+  const GroupOffsets(this.groups, this.offsets);
 
-List<Group> getGroups(WidgetRef ref) {
-  return ref.read(groupsProvider);
+  static const empty = GroupOffsets(<Group>[], <double>[]);
+
+  final List<Group> groups;
+  final List<double> offsets;
+
+  bool get isEmpty => offsets.isEmpty;
+
+  double offsetOf(String groupName) {
+    final index = groups.indexWhere((group) => group.name == groupName);
+    if (index < 0 || index >= offsets.length) {
+      return 0;
+    }
+    return offsets[index];
+  }
+
+  Group? groupOf(String groupName) => groups.getGroup(groupName);
 }
 
 double getScrollToSelectedOffset({

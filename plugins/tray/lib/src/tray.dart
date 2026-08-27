@@ -37,6 +37,7 @@ final class Tray {
   Future<void> _queue = Future<void>.value();
   String? _signature;
   String _title = '';
+  String _requestedTitle = '';
   bool _isVisible = false;
 
   Stream<TrayEvent> get events => _events.stream;
@@ -51,7 +52,8 @@ final class Tray {
   }
 
   Future<void> setTitle(String title) {
-    return _serialize(() => _setTitle(title));
+    _requestedTitle = title;
+    return _serialize(() => _setTitle(_requestedTitle));
   }
 
   Future<void> hide() {
@@ -68,6 +70,7 @@ final class Tray {
     _queue = Future<void>.value();
     _signature = null;
     _title = '';
+    _requestedTitle = '';
     _isVisible = false;
   }
 

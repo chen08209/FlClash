@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +30,7 @@ void main() {
 
   late List<MethodCall> calls;
   late bool showResult;
+  Completer<void>? showGate;
 
   int showCount() => calls.where((call) => call.method == 'show').length;
 
@@ -35,10 +38,15 @@ void main() {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     calls = [];
     showResult = true;
+    showGate = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_channel, (call) async {
           calls.add(call);
-          return call.method == 'show' ? showResult : true;
+          if (call.method == 'show') {
+            await showGate?.future;
+            return showResult;
+          }
+          return true;
         });
     Tray.instance.resetForTesting();
   });
@@ -80,6 +88,35 @@ void main() {
       expect(showCount(), 3);
     },
   );
+
+  test('titles queued behind a stalled call collapse to the newest', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    await Tray.instance.show(_spec());
+
+    final gate = Completer<void>();
+    showGate = gate;
+    final stalled = Tray.instance.show(
+      _spec(menu: const [TrayMenuAction(label: 'a')]),
+    );
+    unawaited(Tray.instance.setTitle('1'));
+    unawaited(Tray.instance.setTitle('2'));
+    final settled = Tray.instance.setTitle('3');
+    gate.complete();
+    await stalled;
+    await settled;
+
+    final titles = calls
+        .where((call) => call.method == 'setTitle')
+        .map((call) => (call.arguments as Map)['title'])
+        .toList();
+    expect(
+      titles,
+      ['3'],
+      reason:
+          'a native call that blocks the queue must not replay every title '
+          'that piled up behind it',
+    );
+  });
 
   test('menu selection dispatches only for known integer ids', () async {
     var selected = 0;

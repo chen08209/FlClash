@@ -402,7 +402,6 @@ Future<MigrationData> migrateLegacyConfig({
   appSettingProps['restoreStrategy'] = appSettingProps['recoveryStrategy'];
   configMap['appSettingProps'] = appSettingProps;
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
-  configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
   List rawScripts = configMap['scripts'] as List<dynamic>? ?? [];
   if (rawScripts.isEmpty) {
     final scriptPropsJson = configMap['scriptProps'] as Map<String, dynamic>?;
@@ -532,15 +531,17 @@ Future<String> _backupTask<T>(
   args,
 ) async {
   BackgroundIsolateBinaryMessenger.ensureInitialized(args.token);
+  final tempPath = await appPath.tempPath;
+  final prefix = 'backup$uniqueId';
   return writeBackupArchive(
     configMap: args.configMap,
     fileNames: args.fileNames,
     databasePath: await appPath.databasePath,
     profilesDirPath: await appPath.profilesPath,
     scriptsDirPath: await appPath.scriptsDirPath,
-    zipFilePath: await appPath.tempFilePath,
-    tempDatabasePath: await appPath.tempFilePath,
-    tempConfigPath: await appPath.tempFilePath,
+    zipFilePath: join(tempPath, '$prefix.zip'),
+    tempDatabasePath: join(tempPath, '$prefix.db'),
+    tempConfigPath: join(tempPath, '$prefix.json'),
   );
 }
 

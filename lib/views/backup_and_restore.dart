@@ -64,11 +64,9 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
         if (client == null) {
           return false;
         }
-        final path = await ref.read(backupActionProvider.notifier).backup();
-        if (path.isEmpty) {
-          return false;
-        }
-        return client.backup(path);
+        return ref
+            .read(backupActionProvider.notifier)
+            .consumeBackup(client.backup);
       },
       tag: LoadingTag.backup_restore,
       title: appLocalizations.backup,
@@ -118,13 +116,15 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     final appLocalizations = context.appLocalizations;
     final res = await globalState.loadingRun<bool>(
       () async {
-        final path = await ref.read(backupActionProvider.notifier).backup();
-        if (path.isEmpty) {
-          return false;
-        }
-        final value = await picker.saveFileWithPath(getBackupFileName(), path);
-        if (value == null) return false;
-        return true;
+        return ref.read(backupActionProvider.notifier).consumeBackup((
+          path,
+        ) async {
+          final value = await picker.saveFileWithPath(
+            getBackupFileName(),
+            path,
+          );
+          return value != null;
+        });
       },
       title: appLocalizations.backup,
       tag: LoadingTag.backup_restore,

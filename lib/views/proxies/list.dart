@@ -22,7 +22,7 @@ class ProxiesListView extends ConsumerStatefulWidget {
 
 class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
   final _controller = ScrollController();
-  List<double> _groupOffsets = [];
+  GroupOffsets _groupOffsets = GroupOffsets.empty;
   double containerHeight = 0;
 
   @override
@@ -44,7 +44,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
         .updateCurrentUnfoldSet(tempUnfoldSet);
   }
 
-  List<double> _getGroupOffsets({
+  GroupOffsets _getGroupOffsets({
     required List<Group> groups,
     required int columns,
     required Set<String> currentUnfoldSet,
@@ -61,7 +61,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
         currentOffset += rowCount * rowExtent;
       }
     }
-    return offsets;
+    return GroupOffsets(groups, offsets);
   }
 
   Widget _buildProxyRow({
@@ -155,12 +155,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
         _groupOffsets.isEmpty) {
       return 0;
     }
-    final currentGroups = getCurrentGroups(ref);
-    final findIndex = currentGroups.indexWhere(
-      (item) => item.name == groupName,
-    );
-    final index = findIndex != -1 ? findIndex : 0;
-    return _groupOffsets[index];
+    return _groupOffsets.offsetOf(groupName);
   }
 
   void _scrollToMakeVisibleWithPadding({
@@ -215,8 +210,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
 
   void _scrollToGroupSelected(String groupName, int columns) {
     final currentInitOffset = _getGroupOffset(groupName);
-    final currentGroups = getCurrentGroups(ref);
-    final proxies = currentGroups.getGroup(groupName)?.all;
+    final proxies = _groupOffsets.groupOf(groupName)?.all;
     _jumpTo(
       currentInitOffset +
           8 +

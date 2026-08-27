@@ -357,6 +357,27 @@ void main() {
         isTrue,
       );
 
+      const disabled = Rule(
+        id: 33,
+        ruleAction: RuleAction.DOMAIN,
+        content: 'disabled.example',
+        ruleTarget: 'REJECT',
+        order: 'd',
+      );
+      await database.rulesDao.putProfileDisabledRule(profile.id, disabled);
+      expect(
+        (await database.rulesDao.queryProfileDisabledRules(profile.id).get())
+            .single
+            .id,
+        disabled.id,
+      );
+      expect(
+        (await database.rulesDao.queryAddedRules(profile.id).get()).map(
+          (rule) => rule.id,
+        ),
+        isNot(contains(disabled.id)),
+      );
+
       await database.rulesDao.orderGlobalRule(ruleId: global.id, order: '0');
       await database.rulesDao.orderProfileAddedRule(
         profile.id,

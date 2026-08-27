@@ -378,7 +378,7 @@ class _MapInputPageState extends ConsumerState<MapInputPage> {
   }) {
     final position = ItemPosition.get(index, length);
     return ReorderableDelayedDragStartListener(
-      key: ValueKey(value),
+      key: ValueKey(value.key),
       index: index,
       child: ItemPositionProvider(
         position: position,
