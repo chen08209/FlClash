@@ -42,7 +42,9 @@ Widget buildManagerStack({
         )
       : AndroidManager(child: TileManager(child: state));
   return AppEnvManager(
-    child: StatusManager(child: ThemeManager(child: platformState)),
+    child: LocaleManager(
+      child: StatusManager(child: ThemeManager(child: platformState)),
+    ),
   );
 }
 

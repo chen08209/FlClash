@@ -109,7 +109,6 @@ abstract class TrayState with _$TrayState {
     required bool systemProxy,
     required bool tunEnable,
     required bool isStart,
-    required String? locale,
     required List<Group> groups,
     required Map<String, String> selectedMap,
     required bool showTrayTitle,

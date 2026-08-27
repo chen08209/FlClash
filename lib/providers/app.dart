@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' show Locale;
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
@@ -123,6 +124,14 @@ class TotalTraffic extends _$TotalTraffic with AutoDisposeNotifierMixin {
   @override
   Traffic build() {
     return const Traffic();
+  }
+}
+
+@Riverpod(keepAlive: true)
+class LoadedLocale extends _$LoadedLocale with AutoDisposeNotifierMixin {
+  @override
+  Locale? build() {
+    return null;
   }
 }
 

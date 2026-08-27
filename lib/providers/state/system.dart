@@ -42,11 +42,8 @@ TrayState trayState(Ref ref) {
   );
   final appSetting = ref.watch(
     appSettingProvider.select(
-      (state) => (
-        autoLaunch: state.autoLaunch,
-        locale: state.locale,
-        showTrayTitle: state.showTrayTitle,
-      ),
+      (state) =>
+          (autoLaunch: state.autoLaunch, showTrayTitle: state.showTrayTitle),
     ),
   );
   final groups = ref.watch(currentGroupsStateProvider).value;
@@ -59,7 +56,6 @@ TrayState trayState(Ref ref) {
     systemProxy: systemProxy,
     tunEnable: clashConfig.tunEnable,
     isStart: isStart,
-    locale: appSetting.locale,
     groups: groups,
     selectedMap: selectedMap,
     showTrayTitle: appSetting.showTrayTitle,
@@ -145,7 +141,7 @@ bool shouldPatchSystemDns(Ref ref) {
 
 @riverpod
 SharedState sharedState(Ref ref) {
-  ref.watch((appSettingProvider).select((state) => state.locale));
+  ref.watch(loadedLocaleProvider);
   final currentProfile = ref.watch(
     currentProfileProvider.select(
       (state) => CurrentProfileSelectorState(

@@ -1,4 +1,5 @@
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/manager/locale_manager.dart';
 import 'package:fl_clash/manager/tray_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -6,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:tray/tray.dart';
 
 import '../helpers/test_profiles.dart';
@@ -16,10 +18,12 @@ const _codec = StandardMethodCodec();
 
 class _RecordingSystemAction extends SystemAction {
   static int updateTrayCount = 0;
+  static final List<String> updateTrayLocales = <String>[];
 
   @override
   Future<void> updateTray() async {
     updateTrayCount++;
+    updateTrayLocales.add(Intl.getCurrentLocale());
   }
 }
 
@@ -42,6 +46,7 @@ void main() {
 
   setUp(() {
     _RecordingSystemAction.updateTrayCount = 0;
+    _RecordingSystemAction.updateTrayLocales.clear();
     windowCalls = <String>[];
     Tray.instance.resetForTesting();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -89,6 +94,29 @@ void main() {
       ),
     );
     await tester.pump();
+  }
+
+  Future<void> pumpLocalizedTrayManager(
+    WidgetTester tester,
+    Locale locale,
+  ) async {
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          locale: locale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          home: const LocaleManager(
+            child: TrayManager(child: SizedBox.shrink()),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
   }
 
   testWidgets('renders its child untouched', (tester) async {
@@ -153,6 +181,45 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a language switch pushes the tray in the new language', (
+    tester,
+  ) async {
+    addTearDown(() => AppLocalizations.load(const Locale('en')));
+    container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        systemActionProvider.overrideWith(_RecordingSystemAction.new),
+      ],
+    );
+    globalState.container = container;
+    await pumpLocalizedTrayManager(tester, const Locale('en'));
+    _RecordingSystemAction.updateTrayCount = 0;
+    _RecordingSystemAction.updateTrayLocales.clear();
+
+    await pumpLocalizedTrayManager(tester, const Locale('zh', 'CN'));
+
+    expect(_RecordingSystemAction.updateTrayCount, 1);
+    expect(_RecordingSystemAction.updateTrayLocales, <String>['zh_CN']);
+  });
+
+  testWidgets('the locale a language switch starts from does not push twice', (
+    tester,
+  ) async {
+    container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        systemActionProvider.overrideWith(_RecordingSystemAction.new),
+      ],
+    );
+    globalState.container = container;
+    await pumpLocalizedTrayManager(tester, const Locale('en'));
+    _RecordingSystemAction.updateTrayCount = 0;
+
+    await pumpLocalizedTrayManager(tester, const Locale('en'));
+
+    expect(_RecordingSystemAction.updateTrayCount, 0);
   });
 
   testWidgets('tray events stop being handled after disposal', (tester) async {

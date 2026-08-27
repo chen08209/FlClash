@@ -9,6 +9,7 @@ const _leaf = SizedBox.shrink();
 Widget? _childOf(Widget widget) {
   return switch (widget) {
     AppEnvManager(:final child) => child,
+    LocaleManager(:final child) => child,
     StatusManager(:final child) => child,
     ThemeManager(:final child) => child,
     WindowManager(:final child) => child,
@@ -58,6 +59,7 @@ void main() {
   test('the desktop manager stack nests in ownership order', () {
     expect(_chainFrom(_stack(isDesktop: true)), [
       AppEnvManager,
+      LocaleManager,
       StatusManager,
       ThemeManager,
       WindowManager,
@@ -74,6 +76,7 @@ void main() {
   test('the mobile manager stack nests in ownership order', () {
     expect(_chainFrom(_stack(isDesktop: false)), [
       AppEnvManager,
+      LocaleManager,
       StatusManager,
       ThemeManager,
       AndroidManager,

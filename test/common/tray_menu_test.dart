@@ -51,7 +51,6 @@ TrayState _trayState({
     systemProxy: systemProxy,
     tunEnable: tunEnable,
     isStart: isStart,
-    locale: 'en',
     groups: groups,
     selectedMap: const {},
     showTrayTitle: showTrayTitle,
