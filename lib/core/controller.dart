@@ -48,13 +48,18 @@ class CoreController {
 
   Future<CoreLifecycleResult> close() => _interface.close();
 
-  static Future<void> initGeo() async {
+  static Future<void> ensureHomeDir() async {
     final homePath = await appPath.homeDirPath;
     final homeDir = Directory(homePath);
     final isExists = await homeDir.exists();
     if (!isExists) {
       await homeDir.create(recursive: true);
     }
+    await system.grantHomeDirAccess(homePath);
+  }
+
+  static Future<void> initGeo() async {
+    final homePath = await appPath.homeDirPath;
     const geoFileNameList = [MMDB, GEOIP, GEOSITE, ASN];
     try {
       for (final geoFileName in geoFileNameList) {
@@ -77,6 +82,7 @@ class CoreController {
   }
 
   Future<bool> init(int version) async {
+    await ensureHomeDir();
     await initGeo();
     final homeDirPath = await appPath.homeDirPath;
     return _interface.init(InitParams(homeDir: homeDirPath, version: version));

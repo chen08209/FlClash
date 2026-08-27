@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/permission.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -23,6 +25,15 @@ class OnDemandView extends ConsumerStatefulWidget {
 
 class _OnDemandViewState extends ConsumerState<OnDemandView>
     with UniqueKeyStateMixin {
+  static const _authorizeButtonPadding = 12.0;
+  static const _minAuthorizeButtonWidth = 80.0;
+  static const _inlineActionMaxWidthFactor = 0.4;
+  static const _descMaxLines = 4;
+
+  /// Matches the horizontal content padding, so a stacked action keeps the same
+  /// gap to the card edge as the text does.
+  static const _prerequisiteVerticalPadding = 16.0;
+
   bool get _isAndroid => widget.isAndroid ?? system.isAndroid;
 
   bool get _isMacOS => widget.isMacOS ?? system.isMacOS;
@@ -181,6 +192,23 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     ref.read(itemsProvider(key).notifier).value = {};
   }
 
+  double _authorizeButtonWidth() {
+    final appLocalizations = context.appLocalizations;
+    final style = context.textTheme.labelLarge;
+    final labelWidth =
+        [appLocalizations.tapToAuthorize, appLocalizations.authorized]
+            .map(
+              (label) => globalState.measure
+                  .computeTextSize(Text(label, style: style))
+                  .width,
+            )
+            .reduce(math.max);
+    return math.max(
+      _minAuthorizeButtonWidth,
+      labelWidth + _authorizeButtonPadding * 2,
+    );
+  }
+
   Widget _buildAuthorizeButton({
     required bool authorized,
     required VoidCallback onPressed,
@@ -190,8 +218,10 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       child: FilledButton(
         style: FilledButton.styleFrom(
           backgroundColor: authorized ? null : context.colorScheme.error,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          minimumSize: const Size(80, 40),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _authorizeButtonPadding,
+          ),
+          minimumSize: const Size(_minAuthorizeButtonWidth, 40),
         ),
         onPressed: onPressed,
         child: Stack(
@@ -218,6 +248,54 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     );
   }
 
+  Widget _buildPrerequisiteItem({
+    required String title,
+    required String desc,
+    required Widget action,
+  }) {
+    return DecorationListItem(
+      minVerticalPadding: _prerequisiteVerticalPadding,
+      title: LayoutBuilder(
+        builder: (context, constraints) {
+          final texts = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TooltipLabel(title),
+              Text(
+                desc,
+                maxLines: _descMaxLines,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          );
+          final isInline =
+              _authorizeButtonWidth() <=
+              constraints.maxWidth * _inlineActionMaxWidthFactor;
+          if (isInline) {
+            return Row(
+              spacing: 16,
+              children: [
+                Expanded(child: texts),
+                action,
+              ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 8,
+            children: [
+              texts,
+              Align(alignment: Alignment.centerRight, child: action),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildBatteryOptimizationItem() {
     final appLocalizations = context.appLocalizations;
     final isStart = ref.watch(isStartProvider);
@@ -225,11 +303,10 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       loadingProvider(LoadingTag.batteryOptimization),
     );
     final disabled = ref.watch(batteryOptimizationDisableProvider);
-    return DecorationListItem(
-      minVerticalPadding: 8,
-      title: Text(appLocalizations.ignoreBatteryOptimization),
-      subtitle: Text(appLocalizations.batteryOptimizationDesc),
-      trailing: Stack(
+    return _buildPrerequisiteItem(
+      title: appLocalizations.ignoreBatteryOptimization,
+      desc: appLocalizations.batteryOptimizationDesc,
+      action: Stack(
         alignment: Alignment.centerRight,
         children: [
           Visibility(
@@ -260,11 +337,10 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
         (state) => state == WifiSsidPermission.granted,
       ),
     );
-    return DecorationListItem(
-      minVerticalPadding: 8,
-      title: Text(appLocalizations.locationPermission),
-      subtitle: Text(appLocalizations.locationPermissionDesc),
-      trailing: _buildAuthorizeButton(
+    return _buildPrerequisiteItem(
+      title: appLocalizations.locationPermission,
+      desc: appLocalizations.locationPermissionDesc,
+      action: _buildAuthorizeButton(
         authorized: granted,
         onPressed: _handleRequestLocationPermission,
       ),

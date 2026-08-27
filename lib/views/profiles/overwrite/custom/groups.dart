@@ -227,7 +227,8 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   }
 
   Widget _buildItem({
-    required Widget title,
+    required String title,
+    TextStyle? titleStyle,
     Widget? trailing,
     final VoidCallback? onPressed,
     bool invalid = false,
@@ -236,6 +237,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
       invalid: invalid,
       onPressed: onPressed,
       title: title,
+      titleStyle: titleStyle,
       trailing: trailing,
     );
   }
@@ -262,7 +264,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
         );
         return _buildItem(
           invalid: invalid,
-          title: Text(appLocalizations.selectProxyProviders),
+          title: appLocalizations.selectProxyProviders,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             spacing: 2,
@@ -286,7 +288,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildFilterItem(String? filter) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.proxyFilter),
+      title: appLocalizations.proxyFilter,
       trailing: TextFormField(
         textAlign: TextAlign.end,
         initialValue: filter,
@@ -307,7 +309,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildMaxFailedTimesItem(int? maxFailedTimes) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.maxFailedTimes),
+      title: appLocalizations.maxFailedTimes,
       trailing: TextFormField(
         keyboardType: TextInputType.number,
         inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.number),
@@ -331,7 +333,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildUrlItem(String? url) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.testUrl),
+      title: appLocalizations.testUrl,
       trailing: TextFormField(
         keyboardType: TextInputType.url,
         inputFormatters: TextInputLimits.limit(TextInputLimits.url),
@@ -353,7 +355,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildIntervalItem(int? interval) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.testInterval),
+      title: appLocalizations.testInterval,
       trailing: TextFormField(
         keyboardType: TextInputType.number,
         inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.interval),
@@ -375,7 +377,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildExcludeFilterItem(String? excludeFilter) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.excludeProxyFilter),
+      title: appLocalizations.excludeProxyFilter,
       trailing: TextFormField(
         textAlign: TextAlign.end,
         initialValue: excludeFilter,
@@ -396,7 +398,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildExcludeTypeItem(String? type) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.excludeType),
+      title: appLocalizations.excludeType,
       trailing: TextFormField(
         textAlign: TextAlign.end,
         initialValue: type,
@@ -417,7 +419,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildExpectedStatusItem(String? expectedStatus) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.expectedStatus),
+      title: appLocalizations.expectedStatus,
       trailing: TextFormField(
         textAlign: TextAlign.end,
         initialValue: expectedStatus,
@@ -445,7 +447,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
         );
         return _buildItem(
           invalid: invalid,
-          title: Text(appLocalizations.selectProxies),
+          title: appLocalizations.selectProxies,
           trailing: Row(
             spacing: 2,
             mainAxisSize: MainAxisSize.min,
@@ -469,7 +471,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildTypeItem(GroupType type) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.proxyType),
+      title: appLocalizations.proxyType,
       onPressed: () {
         _showTypeOptions(type);
       },
@@ -480,7 +482,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildIconItem(String? icon) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.icon),
+      title: appLocalizations.icon,
       onPressed: () {
         _showIconEdit(icon);
       },
@@ -500,7 +502,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
   Widget _buildNameItem(String name) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.name),
+      title: appLocalizations.name,
       trailing: TextFormField(
         initialValue: name,
         keyboardType: TextInputType.name,
@@ -531,7 +533,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
     }
 
     return _buildItem(
-      title: Text(appLocalizations.hideFromList),
+      title: appLocalizations.hideFromList,
       onPressed: handleChangeHidden,
       trailing: Switch(
         value: hidden ?? false,
@@ -551,7 +553,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
     }
 
     return _buildItem(
-      title: Text(appLocalizations.testWhenUsed),
+      title: appLocalizations.testWhenUsed,
       onPressed: handleChangeLazy,
       trailing: Switch(
         value: lazy ?? false,
@@ -573,7 +575,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
     }
 
     return _buildItem(
-      title: Text(appLocalizations.disableUDP),
+      title: appLocalizations.disableUDP,
       onPressed: handleChangeDisableUDP,
       trailing: Switch(
         value: disableUDP ?? false,
@@ -686,12 +688,8 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
               items: [
                 if (id != -1)
                   _buildItem(
-                    title: Text(
-                      appLocalizations.delete,
-                      style: context.textTheme.bodyLarge?.copyWith(
-                        color: context.colorScheme.error,
-                      ),
-                    ),
+                    title: appLocalizations.delete,
+                    titleStyle: TextStyle(color: context.colorScheme.error),
                     onPressed: () {
                       _handleDelete(profileId);
                     },

@@ -104,11 +104,13 @@ class _ScriptOption extends StatelessWidget {
                 SizedBox(
                   width: 24,
                   height: 24,
-                  child: Radio<int>(
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    toggleable: true,
-                    value: value,
+                  child: ExcludeFocus(
+                    child: Radio<int>(
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      toggleable: true,
+                      value: value,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),

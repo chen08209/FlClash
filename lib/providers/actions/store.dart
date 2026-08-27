@@ -15,9 +15,7 @@ class StoreAction extends _$StoreAction {
       profileIds: profileIds,
       scriptIds: scriptIds,
     ));
-    await Future.wait(
-      pathsToDelete.map((path) => File(path).safeDelete(recursive: true)),
-    );
+    await Future.wait(pathsToDelete.map(safeDeletePath));
   }
 
   void savePreferencesDebounce() {

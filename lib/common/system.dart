@@ -120,6 +120,47 @@ class System {
     return true;
   }
 
+  static const _inheritedAclPermissions =
+      'list,search,add_file,add_subdirectory,delete,delete_child,'
+      'file_inherit,directory_inherit';
+
+  @visibleForTesting
+  static List<String> aclArguments(String homeDirPath, String userName) {
+    return [
+      '-R',
+      '+a',
+      'user:$userName allow $_inheritedAclPermissions',
+      homeDirPath,
+    ];
+  }
+
+  Future<void> grantHomeDirAccess(String homeDirPath) async {
+    if (!isMacOS) {
+      return;
+    }
+    final userName = Platform.environment['USER'];
+    if (userName == null || userName.isEmpty) {
+      return;
+    }
+    try {
+      final result = await runProcess(
+        'chmod',
+        aclArguments(homeDirPath, userName),
+      );
+      if (result.exitCode != 0) {
+        commonPrint.log(
+          'chmod +a exited with ${result.exitCode}: ${result.stderr.toString().trim()}',
+          logLevel: LogLevel.warning,
+        );
+      }
+    } catch (error) {
+      commonPrint.log(
+        'chmod +a failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+
   static String _shellEscape(String value) {
     return "'${value.replaceAll("'", "'\\''")}'";
   }

@@ -131,7 +131,25 @@ class AppPath {
 
   Future<String> getProvidersRootPath() async {
     final directory = await profilesPath;
-    return join(directory, 'providers');
+    return join(directory, providersDirectoryName);
+  }
+
+  Future<String> getProviderDirPath(int profileId, String type) async {
+    final directory = await getProvidersRootPath();
+    return join(directory, profileId.toString(), type);
+  }
+
+  Future<void> ensureProviderDirs(int profileId) async {
+    for (final type in const [
+      proxiesProviderDirectoryName,
+      rulesProviderDirectoryName,
+    ]) {
+      final directory = Directory(await getProviderDirPath(profileId, type));
+      if (await directory.exists()) {
+        continue;
+      }
+      await directory.create(recursive: true);
+    }
   }
 
   Future<String> get tempPath async {

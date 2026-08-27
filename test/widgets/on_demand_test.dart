@@ -37,8 +37,10 @@ void main() {
     WifiSsidPermission permission = WifiSsidPermission.denied,
     bool isAndroid = false,
     bool isMacOS = false,
+    Locale? locale,
+    Size size = const Size(1400, 1000),
   }) async {
-    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -58,6 +60,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
+          locale: locale,
           child: OnDemandView(isAndroid: isAndroid, isMacOS: isMacOS),
         ),
       ),
@@ -162,6 +165,72 @@ void main() {
 
     expect(find.text('Ignore Battery Optimization'), findsOneWidget);
     expect(find.text('Location Permission'), findsOneWidget);
+  });
+
+  testWidgets('a narrow row in a verbose locale keeps its text readable', (
+    tester,
+  ) async {
+    await pumpView(
+      tester,
+      isMacOS: true,
+      locale: const Locale('ru'),
+      size: const Size(360, 800),
+    );
+
+    final rowWidth = tester
+        .getSize(find.byType(DecorationListItem).first)
+        .width;
+    final descWidth = tester
+        .getSize(
+          find.text(
+            'По требованию системы для получения имени сети Wi-Fi необходимо '
+            'разрешение на геолокацию.',
+          ),
+        )
+        .width;
+
+    expect(
+      descWidth,
+      greaterThan(rowWidth * 0.5),
+      reason: 'the authorize button must not squeeze the description',
+    );
+  });
+
+  testWidgets('an action too wide for its row moves under the text', (
+    tester,
+  ) async {
+    await pumpView(
+      tester,
+      isMacOS: true,
+      locale: const Locale('ru'),
+      size: const Size(260, 800),
+    );
+
+    final desc = find.text(
+      'По требованию системы для получения имени сети Wi-Fi необходимо '
+      'разрешение на геолокацию.',
+    );
+
+    final card = tester.getRect(find.byType(DecorationListItem).first);
+    final button = tester.getRect(
+      find
+          .ancestor(
+            of: find.text('Разрешить'),
+            matching: find.byType(FilledButton),
+          )
+          .first,
+    );
+
+    expect(
+      button.top,
+      greaterThanOrEqualTo(tester.getBottomLeft(desc).dy),
+      reason: 'the button stacks under the text instead of squeezing it',
+    );
+    expect(
+      card.bottom - button.bottom,
+      card.right - button.right,
+      reason: 'a stacked button keeps the same gap to the card as the text',
+    );
   });
 
   testWidgets('a desktop that is not macOS asks for no prerequisite', (

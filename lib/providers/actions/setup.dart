@@ -433,6 +433,10 @@ class SetupAction extends _$SetupAction {
       () async {
         final configFilePath = await appPath.configFilePath;
         await File(configFilePath).safeWriteAsString(yamlString);
+        final profileId = profile?.id;
+        if (profileId != null) {
+          await appPath.ensureProviderDirs(profileId);
+        }
         final message = await _core.setupConfig(
           params: _setupParams,
           preloadInvoke: preloadInvoke,

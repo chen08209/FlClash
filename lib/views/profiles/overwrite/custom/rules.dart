@@ -124,7 +124,8 @@ class _AddOrEditRuleView extends ConsumerStatefulWidget {
 
 class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   Widget _buildItem({
-    required Widget title,
+    required String title,
+    TextStyle? titleStyle,
     Widget? trailing,
     bool? invalid,
     final VoidCallback? onPressed,
@@ -133,6 +134,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
       invalid: invalid ?? false,
       onPressed: onPressed,
       title: title,
+      titleStyle: titleStyle,
       trailing: trailing,
     );
   }
@@ -165,7 +167,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
 
   Widget _buildTypeItem(RuleAction action) {
     return _buildItem(
-      title: Text(context.appLocalizations.proxyType),
+      title: context.appLocalizations.proxyType,
       onPressed: () {
         _handleSelectedType();
       },
@@ -188,7 +190,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   Widget _buildContentItem(String? content) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.content),
+      title: appLocalizations.content,
       trailing: TextFormField(
         initialValue: content,
         keyboardType: TextInputType.name,
@@ -244,7 +246,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   Widget _buildRuleProviderItem(String? ruleProvider) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.ruleSet),
+      title: appLocalizations.ruleSet,
       onPressed: _handleSelectedRuleProvider,
       trailing: Row(
         spacing: 4,
@@ -325,7 +327,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
             : context.colorScheme.onSurfaceVariant;
         return _buildItem(
           invalid: invalid,
-          title: Text(appLocalizations.splitStrategy),
+          title: appLocalizations.splitStrategy,
           onPressed: _handleSelectedTarget,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
@@ -403,7 +405,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   Widget _buildSubRuleItem(String? subRule) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.subRule),
+      title: appLocalizations.subRule,
       onPressed: _handleSelectedSubRule,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -431,7 +433,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   Widget _buildNoResolveItem(bool? noResolve) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.noResolveHostname),
+      title: appLocalizations.noResolveHostname,
       trailing: Switch(value: noResolve ?? false, onChanged: (_) {}),
     );
   }
@@ -439,7 +441,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
   Widget _buildSrcItem(bool? src) {
     final appLocalizations = context.appLocalizations;
     return _buildItem(
-      title: Text(appLocalizations.matchSourceIp),
+      title: appLocalizations.matchSourceIp,
       trailing: Switch(value: src ?? false, onChanged: (_) {}),
     );
   }
@@ -501,12 +503,8 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
               items: [
                 if (rule.id != -1)
                   _buildItem(
-                    title: Text(
-                      appLocalizations.delete,
-                      style: context.textTheme.bodyLarge?.copyWith(
-                        color: context.colorScheme.error,
-                      ),
-                    ),
+                    title: appLocalizations.delete,
+                    titleStyle: TextStyle(color: context.colorScheme.error),
                     onPressed: () {
                       _handleDelete();
                     },

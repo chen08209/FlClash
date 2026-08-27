@@ -42,6 +42,7 @@ func handleInitClash(params *InitParams) bool {
 	defer configMu.Unlock()
 	sdkVersion.Store(int32(params.Version))
 	constant.SetHomeDir(params.HomeDir)
+	initOwnership(params.HomeDir)
 	isInit.Store(true)
 	return true
 }
@@ -632,6 +633,7 @@ func init() {
 		})
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {
+		scheduleReclaimOwnership()
 		sendMessage(Message{
 			Type: LoadedMessage,
 			Data: providerName,
@@ -642,6 +644,7 @@ func init() {
 			claimGeoUpdateFromHook(geoType)
 		} else {
 			releaseGeoUpdateFromHook(geoType)
+			scheduleReclaimOwnership()
 		}
 		status := GeoUpdateStatus{
 			Type:     geoType,

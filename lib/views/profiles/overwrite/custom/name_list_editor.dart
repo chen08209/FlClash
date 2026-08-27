@@ -228,14 +228,14 @@ class _IncludeAllCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
-      radius: AppCorner.md,
+      radius: AppCorner.xl,
       type: CommonCardType.filled,
       child: ListItem.toggle(
         minTileHeight: 54,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label),
+            Flexible(child: TooltipLabel(label)),
             CommonMinIconButtonTheme(
               child: IconButton(
                 tooltip: context.appLocalizations.tip,

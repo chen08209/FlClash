@@ -464,11 +464,13 @@ class ListItem<T> extends StatelessWidget {
         final radioDelegate = radio as _RadioAction<T>;
         return _buildListTile(
           onTap: radioDelegate.onTap,
-          leading: Radio<T>(
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            value: radioDelegate.value,
-            toggleable: true,
+          leading: ExcludeFocus(
+            child: Radio<T>(
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              value: radioDelegate.value,
+              toggleable: true,
+            ),
           ),
           trailing: trailing,
         );
@@ -502,7 +504,10 @@ class ListHeader extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        spacing: 36,
+        crossAxisAlignment: subTitle == null
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
+        spacing: actions.isEmpty ? 0 : 12,
         children: [
           Expanded(
             child: Column(
@@ -510,6 +515,8 @@ class ListHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: context.textTheme.labelLarge?.copyWith(
                     color: context.colorScheme.onSurfaceVariant.opacity80,
                     fontWeight: FontWeight.w600,

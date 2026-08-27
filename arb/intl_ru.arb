@@ -546,7 +546,7 @@
   "addSsid": "Добавить SSID",
   "editSsid": "Изменить SSID",
   "authorized": "Разрешено",
-  "tapToAuthorize": "Нажмите, чтобы разрешить",
+  "tapToAuthorize": "Разрешить",
   "suspended": "Приостановлено...",
   "geoOptions": "Настройки Geo",
   "geoAutoUpdate": "Автообновление",

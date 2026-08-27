@@ -64,7 +64,8 @@ class _FakeProcesses {
       .firstWhere((run) => run.key == key || run.executable == key)
       .arguments;
 
-  bool ran(String key) => runs.any((run) => run.key == key);
+  bool ran(String key) =>
+      runs.any((run) => run.key == key || run.executable == key);
 }
 
 const _routeOutput = '''
@@ -138,6 +139,74 @@ void main() {
         expect(arguments.last, path);
         expect(arguments.last, isNot(contains(r'\')));
       }
+    });
+  });
+
+  group('aclArguments', () {
+    test('grants the inheriting user access to the whole tree', () {
+      final arguments = System.aclArguments('/Users/a/Support', 'alice');
+
+      expect(arguments.first, '-R');
+      expect(arguments[1], '+a');
+      expect(arguments[2], startsWith('user:alice allow '));
+      expect(arguments.last, '/Users/a/Support');
+      expect(
+        arguments[2].split(' allow ').last.split(','),
+        unorderedEquals(const [
+          'list',
+          'search',
+          'add_file',
+          'add_subdirectory',
+          'delete',
+          'delete_child',
+          'file_inherit',
+          'directory_inherit',
+        ]),
+      );
+    });
+
+    test('never hands out ownership or the ACL itself', () {
+      final arguments = System.aclArguments('/Users/a/Support', 'alice');
+
+      expect(arguments[2], isNot(contains('writesecurity')));
+      expect(arguments[2], isNot(contains('chown')));
+    });
+
+    test('passes a path containing spaces through untouched', () {
+      const path = '/Users/a b/Library/Application Support/com.follow.clash';
+
+      final arguments = System.aclArguments(path, 'alice');
+
+      expect(arguments.last, path);
+      expect(arguments.last, isNot(contains(r'\')));
+    });
+  });
+
+  group('grantHomeDirAccess', () {
+    test('only touches the filesystem on macOS', () async {
+      await system.grantHomeDirAccess('/Users/a/Support');
+
+      final userName = Platform.environment['USER'];
+      expect(
+        processes.ran('chmod'),
+        system.isMacOS && userName != null && userName.isNotEmpty,
+      );
+    });
+
+    test('survives a chmod that cannot apply an ACL', () async {
+      processes.stub('chmod', '', exitCode: 1);
+
+      await expectLater(
+        system.grantHomeDirAccess('/Users/a/Support'),
+        completes,
+      );
+
+      processes.stubThrow('chmod');
+
+      await expectLater(
+        system.grantHomeDirAccess('/Users/a/Support'),
+        completes,
+      );
     });
   });
 

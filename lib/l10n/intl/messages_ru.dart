@@ -1100,9 +1100,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tabAnimationDesc": MessageLookupByLibrary.simpleMessage(
       "Действительно только в мобильном виде",
     ),
-    "tapToAuthorize": MessageLookupByLibrary.simpleMessage(
-      "Нажмите, чтобы разрешить",
-    ),
+    "tapToAuthorize": MessageLookupByLibrary.simpleMessage("Разрешить"),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP параллелизм"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
       "Включение позволит использовать параллелизм TCP",

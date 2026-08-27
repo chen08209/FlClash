@@ -36,6 +36,7 @@ class OutboundMode extends ConsumerWidget {
             child: CommonCard(
               radius: AppCorner.lg,
               onPressed: () {},
+              skipTraversal: true,
               info: Info(
                 label: appLocalizations.outboundMode,
                 iconData: Icons.call_split_sharp,

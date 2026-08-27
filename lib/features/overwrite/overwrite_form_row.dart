@@ -23,7 +23,12 @@ class InfoMessageButton extends StatelessWidget {
 }
 
 class OverwriteFormRow extends StatelessWidget {
-  final Widget title;
+  static const _spacing = 16.0;
+  static const _titleMaxLines = 2;
+  static const _titleMaxWidthFactor = 0.5;
+
+  final String title;
+  final TextStyle? titleStyle;
   final Widget? trailing;
   final bool invalid;
   final VoidCallback? onPressed;
@@ -31,36 +36,58 @@ class OverwriteFormRow extends StatelessWidget {
   const OverwriteFormRow({
     super.key,
     required this.title,
+    this.titleStyle,
     this.trailing,
     this.invalid = false,
     this.onPressed,
   });
+
+  Widget _buildTitle(double maxWidth) {
+    final text = TooltipLabel(
+      title,
+      style: titleStyle,
+      maxLines: _titleMaxLines,
+    );
+    if (trailing == null) {
+      return Flexible(child: text);
+    }
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: (maxWidth - _spacing) * _titleMaxWidthFactor,
+      ),
+      child: text,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return DecorationListItem(
       invalid: invalid,
       onPressed: onPressed,
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        spacing: 16,
-        children: [
-          title,
-          if (trailing != null)
-            Flexible(
-              child: IconTheme(
-                data: IconThemeData(
-                  size: 16.ap,
-                  color: context.colorScheme.onSurface.opacity60,
+      title: LayoutBuilder(
+        builder: (context, constraints) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            spacing: _spacing,
+            children: [
+              _buildTitle(constraints.maxWidth),
+              if (trailing != null)
+                Flexible(
+                  child: IconTheme(
+                    data: IconThemeData(
+                      size: 16.ap,
+                      color: context.colorScheme.onSurface.opacity60,
+                    ),
+                    child: Container(
+                      alignment: Alignment.centerRight,
+                      height: globalState.measure.bodyLargeHeight + 24,
+                      child: trailing,
+                    ),
+                  ),
                 ),
-                child: Container(
-                  alignment: Alignment.centerRight,
-                  height: globalState.measure.bodyLargeHeight + 24,
-                  child: trailing,
-                ),
-              ),
-            ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
