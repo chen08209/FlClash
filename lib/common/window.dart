@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -69,6 +70,11 @@ class Window {
   }
 
   Future<void> show() async {
+    if (system.isMacOS) {
+      await const MethodChannel(
+        '$packageName/macos_control_widget',
+      ).invokeMethod<void>('allowWindowPresentation');
+    }
     render?.resume();
     await windowManager.show();
     await windowManager.focus();

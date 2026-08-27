@@ -72,4 +72,21 @@ void main() {
 
     expect(calls, ['cleanup', 'window', 'core', 'exit']);
   });
+
+  test('can exit the application while preserving Core state', () async {
+    final calls = <String>[];
+    final coordinator = SystemExitCoordinator(
+      watchdogDuration: const Duration(hours: 1),
+      closeWindow: () async => calls.add('window'),
+      closeCore: () async => calls.add('core'),
+      exitApplication: () async => calls.add('exit'),
+    );
+
+    await coordinator.exit(
+      cleanup: () async => calls.add('cleanup'),
+      closeCore: false,
+    );
+
+    expect(calls, ['cleanup', 'window', 'exit']);
+  });
 }

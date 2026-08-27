@@ -9,6 +9,8 @@ PRODUCT_NAME = FlClash
 
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.follow.clash
+FLCLASH_APP_GROUP_IDENTIFIER = $(AppIdentifierPrefix)group.com.follow.clash
+FLCLASH_RUNNER_BUNDLE_IDENTIFIER = $(PRODUCT_BUNDLE_IDENTIFIER)
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2023 com.follow. All rights reserved.
