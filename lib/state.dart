@@ -20,6 +20,7 @@ import 'common/migration.dart';
 import 'database/database.dart';
 import 'enum/enum.dart';
 import 'l10n/l10n.dart';
+import 'manager/macos_control_widget_manager.dart';
 import 'models/models.dart';
 import 'providers/providers.dart';
 
@@ -35,6 +36,7 @@ class GlobalState {
   late ProviderContainer container;
   bool needInitStatus = true;
   bool _didCrashOnPreviousExecution = false;
+  bool _controlWidgetSilentLaunch = false;
 
   bool get isPre => appEnv != 'stable';
 
@@ -111,6 +113,12 @@ class GlobalState {
       utils.getLocaleForString(config.appSettingProps.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );
+    _controlWidgetSilentLaunch =
+        system.isMacOS &&
+        await macOSControlWidgetManager.isSilentLaunchRequested();
+    if (system.isMacOS) {
+      await macOSControlWidgetManager.init(container);
+    }
     await window?.init(version, config.windowProps);
     if (system.isAndroid) {
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -316,7 +324,8 @@ class GlobalState {
     container.read(profilesActionProvider.notifier).autoUpdateProfiles();
     container.read(commonActionProvider.notifier).autoCheckUpdate();
     autoLaunch?.updateStatus(container.read(appSettingProvider).autoLaunch);
-    if (!container.read(appSettingProvider).silentLaunch) {
+    if (!container.read(appSettingProvider).silentLaunch &&
+        !_controlWidgetSilentLaunch) {
       window?.show();
     } else {
       window?.hide();

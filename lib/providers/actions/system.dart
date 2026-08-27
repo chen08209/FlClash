@@ -25,18 +25,27 @@ class SystemAction extends _$SystemAction {
       closeCore: closeCore,
       exitApplication: exitApplication,
     );
-    return coordinator.exit(cleanup: () => cleanupExitResources(needSave));
+    return coordinator.exit(
+      cleanup: () => cleanupExitResources(
+        needSave,
+        preserveConnection: true,
+      ),
+      closeCore: false,
+    );
   }
 
   @protected
   Duration get exitWatchdogDuration => const Duration(seconds: 3);
 
   @protected
-  Future<void> cleanupExitResources(bool needSave) async {
+  Future<void> cleanupExitResources(
+    bool needSave, {
+    bool preserveConnection = false,
+  }) async {
     await Future.wait([
       if (needSave) preferences.saveConfig(ref.read(configProvider)),
-      if (macOS != null) macOS!.updateDns(true),
-      if (proxy != null) proxy!.stopProxy(),
+      if (!preserveConnection && macOS != null) macOS!.updateDns(true),
+      if (!preserveConnection && proxy != null) proxy!.stopProxy(),
       if (tray != null) tray!.destroy(),
     ]);
   }

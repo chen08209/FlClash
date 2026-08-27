@@ -1,5 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -16,7 +17,8 @@ const coreName = 'clash.meta';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const packageName = 'com.follow.clash';
-final unixSocketPath = '/tmp/FlClashSocket_${Random().nextInt(10000)}.sock';
+final unixSocketPath =
+    '${Directory.systemTemp.path}/FlClashSocket_${Random().nextInt(10000)}.sock';
 final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomPipeId()}';
 const helperPort = 47890;
 const helperProtocolVersionHeader = 'x-flclash-helper-protocol';
